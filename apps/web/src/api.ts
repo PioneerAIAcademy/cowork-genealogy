@@ -78,7 +78,7 @@ export const api = {
     req<SessionSummary>(`/api/sessions/${id}/continue`, { method: 'POST' }),
   resumeSession: (id: string) =>
     req<SessionSummary>(`/api/sessions/${id}/resume`, { method: 'POST' }),
-  patchSession: (id: string, body: { title?: string; model?: string }) =>
+  patchSession: (id: string, body: { title?: string; title_if_default?: string; model?: string }) =>
     req<SessionSummary>(`/api/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteSession: (id: string) => req<{ ok: true }>(`/api/sessions/${id}`, { method: 'DELETE' }),
   sessionLogs: (id: string) => req<{ ws: string; agent: string }>(`/api/sessions/${id}/logs`),

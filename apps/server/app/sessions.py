@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile
 from pydantic import BaseModel
+from sqlalchemy import update
 from sqlmodel import Session, select
 
 from . import agent_secrets, fs_oauth
@@ -79,6 +80,7 @@ class CreateSessionBody(BaseModel):
 
 class PatchSessionBody(BaseModel):
     title: str | None = None
+    title_if_default: str | None = None
     model: str | None = None
 
 
@@ -112,6 +114,24 @@ def _owned(session: Session, user: User, session_id: str) -> Project:
 
 
 _DEFAULT_TITLE = "New research session"
+_TITLE_MAX_CHARS = 120
+
+
+def _normalize_title(title: str) -> str:
+    title = title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="A session name can't be blank.")
+    return title[:_TITLE_MAX_CHARS].strip()
+
+
+def _set_title_if_default(session: Session, project: Project, title: str) -> None:
+    session.exec(
+        update(Project)
+        .where(Project.id == project.id, Project.title == _DEFAULT_TITLE)
+        .values(title=title, updated=utcnow())
+    )
+    session.commit()
+    session.refresh(project)
 
 
 def _derive_title_from_objective(objective: str | None) -> str | None:
@@ -141,11 +161,7 @@ def _maybe_backfill_title(session: Session, project: Project, research: object) 
     proj = research.get("project") if isinstance(research.get("project"), dict) else {}
     title = proj.get("title") or _derive_title_from_objective(proj.get("objective"))
     if title and title != project.title:
-        project.title = title
-        project.updated = utcnow()
-        session.add(project)
-        session.commit()
-        session.refresh(project)
+        _set_title_if_default(session, project, title)
 
 
 async def push_token_to_live_sandboxes(
@@ -337,14 +353,20 @@ def patch_session(
     session: Session = Depends(get_session),
 ) -> ProjectOut:
     project = _owned(session, user, session_id)
-    if body.title is not None:
-        project.title = body.title
+    title = body.title if body.title is not None else body.title_if_default
+    if title is not None:
+        title = _normalize_title(title)
     if body.model is not None:
         project.model = body.model
-    project.updated = utcnow()
-    session.add(project)
-    session.commit()
-    session.refresh(project)
+    if body.title is None and title is not None:
+        _set_title_if_default(session, project, title)
+    else:
+        if title is not None:
+            project.title = title
+        project.updated = utcnow()
+        session.add(project)
+        session.commit()
+        session.refresh(project)
     return ProjectOut.of(project)
 
 
