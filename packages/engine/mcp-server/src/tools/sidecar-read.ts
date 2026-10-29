@@ -13,8 +13,8 @@
 // `writerToolResult` JSON.stringifies the result, which escapes every `"`, `\`
 // and control character, and the CLI spills any result above 50,000 characters
 // to a file the model must Read back (which, on a resumed turn, is deleted at
-// turn end). So the page is shrunk until its JSON form fits in 40,000
-// characters, whatever the raw text looks like.
+// turn end). So the page is shrunk until its JSON-escaped text fits in `maxChars`
+// (40,000 at most), whatever the raw text looks like.
 
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { getProjectStore } from "../store/project-store.js";
@@ -28,6 +28,7 @@ import {
   type ResultsEnvelope,
 } from "../utils/results-staging.js";
 import { arkToBareId } from "../utils/ark.js";
+import { fitPage, requireWholeNumber } from "../utils/text-page.js";
 import {
   classifyProjectPath,
   MISSING_PROJECT_PATH_MESSAGE,
@@ -35,6 +36,10 @@ import {
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
+
+// `fitPage` lives in utils/text-page.ts, shared with the wiki tools. This module
+// still exports it: its callers and its tests import it from here.
+export { fitPage };
 
 /** Both the default page size and the hard cap on `maxChars`; also the cap on
  *  the JSON-escaped body of `content` — `JSON.stringify(content).length - 2`
@@ -169,20 +174,6 @@ export function invalidRefMessage(ref: unknown): string | null {
   return null;
 }
 
-/** Reject-not-coerce, the same posture as research_query's `offset`: a
- *  stringified "50" reaches the tool as a string (index.ts passes arguments
- *  through untouched) and would otherwise be silently coerced by `slice`. */
-function requireWholeNumber(name: string, value: unknown, min: number): number {
-  if (!Number.isInteger(value) || (value as number) < min) {
-    const got =
-      typeof value === "number" && !Number.isFinite(value) ? String(value) : JSON.stringify(value);
-    throw new Error(
-      `${name} must be a whole number ≥ ${min} (got ${got}). Send it as a number, not a string.`,
-    );
-  }
-  return value as number;
-}
-
 /** Spec §5: any NUL, or U+FFFD in more than max(1, 1%) of the first 8,192
  *  characters. The floor of one is what keeps the rule from being
  *  zero-tolerance on a short file: below 100 characters, 1% is under one, so
@@ -196,50 +187,6 @@ function looksBinary(text: string): boolean {
     if (sample.charCodeAt(i) === 0xfffd) fffd++;
   }
   return fffd > Math.max(NOT_TEXT_FFFD_FLOOR, sample.length * NOT_TEXT_FFFD_RATIO);
-}
-
-/**
- * Spec §4: the page after the serialized-envelope shrink and the surrogate
- * step. Exported so the test can pin the bound on the function itself as
- * well as on the wrapped envelope. Invariant: for `offset < text.length` the
- * page is never empty, so `nextOffset` always advances and a caller paging
- * "until truncated is false" terminates.
- */
-export function fitPage(text: string, offset: number, maxChars: number): string {
-  let page = text.slice(offset, offset + maxChars);
-  // The bound is on the ESCAPED BODY — JSON.stringify's two wrapping quotes
-  // excluded — so a plain-text page is exactly maxChars. A raw character
-  // serializes to between 1 (plain) and 6 (`\u0001`) characters, so cutting
-  // `ceil(over / 6)` always makes progress and can never overshoot to an empty
-  // page (a single character always fits): with `"` at 2 each, the excess
-  // shrinks by about a third per step and the loop settles in ~25 rounds of a
-  // 40k stringify — microseconds.
-  for (;;) {
-    const over = JSON.stringify(page).length - 2 - SIDECAR_READ_MAX_CHARS;
-    if (over <= 0 || page.length === 0) break;
-    page = page.slice(0, Math.max(0, page.length - Math.max(1, Math.ceil(over / 6))));
-  }
-  // Never split a surrogate PAIR across two pages: when the page ends on a
-  // high surrogate and the very next unit of the text is its low surrogate,
-  // move the boundary. Backwards by one unit normally; forwards by one unit
-  // when the page is that single high surrogate (maxChars: 1, or an offset
-  // landing on the pair), because backing off would leave an empty page with
-  // nextOffset === offset — a paging loop that never terminates. A lone high
-  // surrogate with no low surrogate after it is not a pair and stays put.
-  const lastCode = page.charCodeAt(page.length - 1);
-  const nextCode = text.charCodeAt(offset + page.length);
-  if (isHighSurrogate(lastCode) && isLowSurrogate(nextCode)) {
-    page = page.length > 1 ? page.slice(0, -1) : text.slice(offset, offset + 2);
-  }
-  return page;
-}
-
-function isHighSurrogate(code: number): boolean {
-  return code >= 0xd800 && code <= 0xdbff;
-}
-
-function isLowSurrogate(code: number): boolean {
-  return code >= 0xdc00 && code <= 0xdfff;
 }
 
 /** A hit read's extra fields on the result. */
