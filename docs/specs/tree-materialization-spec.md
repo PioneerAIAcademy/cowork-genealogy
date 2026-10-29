@@ -361,13 +361,19 @@ qualify.
   no party of this record is linked to a spouse, parent, child or sibling of
   the namesake.[ If '<id>' and
   '<Q>' are one person entered twice (the same parents and the same birth
-  year), hand the merge to tree-edit.]", with no suffix offering a new person,
-  since the namesake is in the tree already. When `personId` is omitted and the
-  lookup would mint after passing over a pair member, row or no row, the op is
-  refused with the same text and no person is made; a new person would
-  duplicate the namesake. When another person is eligible the lookup reuses
-  them, which makes no one new, and its warning says the person it passed over
-  has a namesake in the tree (MP1 to MP6 in `materialize-facts-namesake.test.ts`).
+  year), hand the merge to tree-edit.]", with no suffix offering a new person
+  while the record may be the namesake's, since the namesake is in the tree
+  already. When `personId` is omitted and the lookup would mint after passing
+  over a pair member, row or no row, the op is refused with the same text and no
+  person is made while the record may be the namesake's (`pairJudgement` does
+  not rule every partner out); a new person would duplicate them. When the record rules
+  every partner out, a new person duplicates no one: the lookup makes one, with
+  its warning, and an explicit copy's refusal offers to omit `personId`. When
+  another person is eligible the lookup reuses them, which makes no one new, and
+  its warning says the person it passed over has a namesake in the tree (MP1 to
+  MP7 in `materialize-facts-namesake.test.ts`). A named party has no persona of
+  its own on the record for the pair tests to compare, so its refusal keeps no
+  suffix whenever the person has a namesake in the tree.
 
 Known let-throughs, none with an executed op in the corpus:
 

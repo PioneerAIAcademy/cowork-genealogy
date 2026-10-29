@@ -1699,8 +1699,9 @@ the pair is `derivedNamesakePairs`, the tests `pairJudgement`.
   the person, who shares a first given name with them and is not known to be of
   the other sex. A first given name is the first word of a name's given part
   that names someone (`ownGivenWords`: placeholder words such as "Mrs." or
-  "Unknown" dropped), accents folded, an initial skipped; the two sets of first
-  names are compared both ways. Sex is read from `gender` case-insensitively,
+  "Unknown" dropped), accents folded, an initial skipped ("J. William" reads
+  William; a name of initials alone has none); the two sets of first names are
+  compared both ways. Sex is read from `gender` case-insensitively,
   and an unknown sex on either side still pairs.
 - **Who reads pairs.** The link cap (`assertedNamesakeVerdicts`, so
   `namesakeCallCheck`, and its static twin `namesakeTieInvariants` for the guard
@@ -1711,9 +1712,10 @@ the pair is `derivedNamesakePairs`, the tests `pairJudgement`.
   refusal read rows only; each returns at once when the project holds no row,
   so their blindness to pairs is structural. Merging two pair members is how a
   person entered twice is fixed, and must stay open.
-- **The verdict.** A row holder still needs tie (a) or (b). A person with no row
-  is allowed by tie (a) or (b) only when the record would not tie a partner as
-  well: the link is judged as the partner's, by ties (a) and (b), with the
+- **The verdict.** A row holder still needs tie (a) or (b), since the pair tests
+  say nothing about a stranger. A pair member, row or no row, is allowed by tie
+  (a) or (b) only when the record would not tie a partner as well: the link is
+  judged as the partner's, by ties (a) and (b), with the
   partner's siblings read among the partner's relatives, since a parent's
   children are the child's siblings and a tie through them ties both
   (chesworthrm, 2026-10-29). The person's assertions on the source that name a
@@ -1721,18 +1723,22 @@ the pair is `derivedNamesakePairs`, the tests `pairJudgement`.
   (a "child of" naming the father) names the persona judged. A tie that ties the
   partner too is voided: the verdict's `blockedBy` carries `pair`, and the
   reason names the partner and the relatives the record ties them through. A tie through a relative only one
-  of them has, such as the son's own wife or children, still counts. The person
-  is also allowed when `pairJudgement` finds that the record still fits them and
-  rules every partner out. A pair tie is recorded on the verdict as
+  of them has, such as the son's own wife or children, still counts. A person
+  with no row is also allowed when `pairJudgement` finds that the record still
+  fits them and rules every partner out. A pair tie is recorded on the verdict as
   `{ kind: "pair", partner, relation, test }`.
 - **What the record says** (`pairRecordFacts`). The persona is the linked
-  assertion's own. A two-party assertion speaks for two people, so for one the
-  persona is the one the person's one-party links on the record name most, and
-  with no such link there is no persona and no test applies. Read from the
-  record: the persona's role, its
+  assertion's own party, read as the cap reads parties (`recordPartyKeyer`): a
+  party re-extracted without persona ids is the same party, and negative
+  evidence (`absent`) is no party's role. A two-party assertion speaks for two
+  people, so for one the persona is the one the person's one-party links on the
+  record name most, and with no such link there is no persona and no test
+  applies. Read from the record: the persona's role, its
   birth year (a stated birth or christening, else the record's year less a
   stated age), its death or burial year, and the record's own year (its latest
-  event, else its latest birth, else the source's `when_created`).
+  event, else its latest birth, else the source's `when_created`). An undated
+  assertion's year is read from its value's words ("born circa 1850, Niles"),
+  never from a house number before a street name ("1912 Oak Street").
 - **Dates from elsewhere only** (`independentLife`). A person's birth
   (birth, christening, baptism) and death (death, burial) years come from the
   facts that do not come from the linked record. A fact counts when the starting
@@ -1750,7 +1756,10 @@ the pair is `derivedNamesakePairs`, the tests `pairJudgement`.
     birth; or, in a role where the person is alive (not a `*_of_*`, `father`,
     `mother` or `grand*` role, a household head always alive), after the
     partner's death by more than a year; or the record's death year is more than
-    a year from the partner's. The card said a death year that differs; one year
+    a year from the partner's. A persona the record shows dead, by their own
+    death, burial, cremation, death registration, probate or obituary, is not
+    required alive at its year: a will proved after the testator's death, or a
+    death registered late, rules out no one by that. The card said a death year that differs; one year
     of tolerance, because a death or burial can fall across a year boundary
     (chesworthrm, 2026-10-29). The card said before the birth; the same one year
     on the birth side, on the lifespan test only, the age test keeping its 10,
@@ -1781,9 +1790,13 @@ the pair is `derivedNamesakePairs`, the tests `pairJudgement`.
   entered twice (elsa-heikkinen-birth: Elsa Brita and Elsa Riitta, the same
   parents, both born May 1832) and 6 are wrong links already in the runs, a
   parent's entry linked to the child as well, which the role check refuses. Of
-  the 1,892 links the ties allow, 161 are held at `speculative`, the record
+  the 1,892 links the ties allow, 160 are held at `speculative`, the record
   tying a partner as well and no test telling the two apart (51 of the 1,143
-  one-party links). Of the 75 one-party parent entries a partner's ties held
+  one-party links). Reading parties as the cap does released the 161st: the
+  "child of Elizabeth Young" on her daughter Martha's 1839 christening, linked
+  to the mother, whose maiden-name-absent assertion had made her party read as
+  `absent`, so no test ran; as the `mother`, the adult role rules out her
+  daughter Elizabeth, born 1832 (young-marriage-1828). Of the 75 one-party parent entries a partner's ties held
   before the roles were read, 64 now stand; of the 11 still held, 7 are the
   wrong links. Moved to the other partner with the person's other links from
   their source, 5 of the 262 links the ties refuse pass: 2 relationship
@@ -1998,20 +2011,22 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   `extraction_append` beside an untied link from before the row. **MV1**: the
   move rule judges an un-supersede.
 - **tree-derived namesake pairs (§5.9)** — `research-append-namesake.test.ts`, its
-  pair block: `derivedNamesakePairs` (both directions, accents, initials and
-  placeholders, a shared parent, an unknown sex, the same birth year),
-  `pairRecordFacts`, `independentLife` (the starting tree whatever it cites, the
-  FamilySearch tree's own source, a fact's own assertion first, a source spanning
-  two records, an unregistered note), `pairJudgement` (each test, and what is
-  missing), `namesakeVerdicts` (asked for or not, a row holder, and a tie that
-  counts only when the record would not tie the partner as well: through the
-  son's brothers, through his own wife, through the mother when the roles say
-  nothing, a "child of" carried with the entry, no grandparent's role read, no
-  role read for a link naming the person, and the roles telling a mother of the
-  child from a wife), and end to end the son's marriage refused on the father and
+  pair block: `derivedNamesakePairs` (both directions, accents, initials read
+  past and placeholders, a shared parent, an unknown sex, the same birth year),
+  `pairRecordFacts` (no year from a house number), `independentLife` (the
+  starting tree whatever it cites, the FamilySearch tree's own source, a fact's
+  own assertion first, a source spanning two records, an unregistered note),
+  `pairJudgement` (each test, what is missing, a probate after the testator's
+  death, and a party re-extracted without persona ids), `namesakeVerdicts`
+  (asked for or not, a row holder, and a tie that counts only when the record
+  would not tie the partner as well, row or no row: through the son's brothers,
+  through his own wife, through the mother when the roles say nothing, a "child
+  of" carried with the entry, no grandparent's role read, no role read for a link
+  naming the person, and the roles telling a mother of the child from a wife),
+  and end to end the son's marriage refused on the father and
   allowed on the son, the merge route for siblings born the same year, and a
   citation onto one of them and their merge left open, since neither reads
-  pairs. `materialize-facts-namesake.test.ts` MP1 to MP6 for the copy gate, and
+  pairs. `materialize-facts-namesake.test.ts` MP1 to MP7 for the copy gate, and
   `namesake-tie.json`'s pair cases.
 - **C9s** (`research-append.test.ts`, with the score gate's circular cases) — a
   second research source citing `S1` with no record does not hide the record a
