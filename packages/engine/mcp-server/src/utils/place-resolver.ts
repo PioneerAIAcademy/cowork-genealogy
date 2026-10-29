@@ -27,7 +27,7 @@ import {
 } from "./place-api.js";
 import { stdDate } from "./date-standardize.js";
 import { earliestYear } from "./date-helpers.js";
-import { listedOneWordPlace, oneWordPlaceNeedsCountry } from "./one-word-places.js";
+import { listedOneWordPlace, oneWordPlaceIsWord, oneWordPlaceNeedsCountry } from "./one-word-places.js";
 
 // Element types of the existing fetchers, without needing their (unexported)
 // interfaces — keeps this module in lockstep with place-search.ts.
@@ -66,10 +66,11 @@ export interface ResolveOpts {
   contextPlaces?: string[];
   /**
    * The country of the record the place comes from (the last segment of its
-   * collection's coverage place), null when unknown. Asked for only by a bare
-   * single-segment input whose one-word list entry holds for one record country
-   * or is withheld in some (`oneWordPlaceNeedsCountry`); without it such an entry
-   * gives nothing. Never derived from the place text itself.
+   * collection's coverage place), null when unknown. Asked for, at most once,
+   * only by a bare single-segment input: by a one-word list entry that holds for
+   * one record country or is withheld in some (`oneWordPlaceNeedsCountry`), and
+   * by FamilySearch's top hit when neither the list nor a sibling answers.
+   * Without it neither answers. Never derived from the place text itself.
    */
   recordCountry?: () => Promise<string | null>;
 }
@@ -805,13 +806,14 @@ function topScored(entries: SearchEntry[]): SearchEntry[] {
  *
  * In order: the bundled list of one-word places answers (`listedOneWordPlace`);
  * else a sibling place from the same source that is this name, or this name
- * after "Borough of" and the like, is resolved instead; else the place is left
- * unresolved. FamilySearch's best hit is never kept, whatever its type. A list
- * entry for one record country ("Texas", US records) answers only when the
- * caller's `recordCountry` is that country, and one withheld in some ("Louth",
- * not British records) only when it is a known other country; an accent-exact
- * entry answers only its accented spellings ("Ísland" is Iceland, "Island" is
- * nothing).
+ * after "Borough of" and the like, is resolved instead; else FamilySearch's best
+ * hit for the name, only when it is the one place at the top score and lies in
+ * the caller's `recordCountry`; else the place is left unresolved. A list entry
+ * for one record country ("Texas", US records) answers only when the record's
+ * country is that country, and one withheld in some ("Louth", not British
+ * records) only when it is a known other country. An accent-exact entry answers
+ * only its accented spellings, and its spelling written without them is never
+ * standardized by any route ("Ísland" is Iceland, "Island" is nothing).
  *
  * The lead's decisions of 2026-10-26: "Mis-standardizing a place is worse than
  * not standardizing it", with listed entries at least 95% right; English
@@ -819,23 +821,30 @@ function topScored(entries: SearchEntry[]): SearchEntry[] {
  * counties and towns do not keep a country, state or province out of the list;
  * and the curated names (Georgia the US state, Republic of Georgia the country,
  * New York, Quebec, Mexico, Washington, New Jersey, Jersey the Channel Island).
- * This replaces the genealogist ruling of 2026-10-06 (option C with fallback
- * B′), which kept the best hit when FamilySearch typed it a country, state or
- * other jurisdiction, and searched inside the jurisdiction the siblings share.
- * Measured on the 3,643 one-word facts of matcher-lab m13's HOLDOUT records,
- * scored against FamilySearch's own standardization: the old routes were right
- * on 2,413 and wrong on 168; the list then the sibling is right on 2,258 and
- * wrong on 13 with the record country research_append derives, and right on
- * 2,053 and wrong on 13 with none, each of the 13 also wrong before. The cost is
- * coverage: 337 facts the old routes got right are left unresolved (454 with no
- * record country).
+ * On 2026-10-29 the lead set the bar for a place the engine standardizes itself
+ * at "around 80% including coarser and finer", which the top hit untied and in
+ * the record's country clears. This replaces the genealogist ruling of
+ * 2026-10-06 (option C with fallback B′), which kept the best hit when
+ * FamilySearch typed it a country, state or other jurisdiction, and searched
+ * inside the jurisdiction the siblings share. Measured on the 3,643 one-word
+ * facts of matcher-lab m13's HOLDOUT records, scored against FamilySearch's own
+ * standardization: the old routes were right on 2,413 and wrong on 168. With
+ * the record country research_append derives, these routes are right on 2,555
+ * and wrong on 32, and the top hit answers 330 of them (297 right, 14 coarser
+ * or finer, 19 wrong); 15 of the 32 wrong answers are on facts the old routes
+ * left blank. With none (tree_edit, tree_correct, the read paths) the list then
+ * the sibling is right on 2,053 and wrong on 13, each of the 13 also wrong
+ * before.
  */
 async function resolveBareName(name: string, opts: ResolveOpts): Promise<string | null> {
-  const country = opts.recordCountry && oneWordPlaceNeedsCountry(name) ? await opts.recordCountry() : null;
-  const listed = listedOneWordPlace(name, country);
+  if (oneWordPlaceIsWord(name)) return null;
+  let country: Promise<string | null> | undefined;
+  const recordCountry = () => (country ??= opts.recordCountry ? opts.recordCountry() : Promise.resolve(null));
+  const listed = listedOneWordPlace(name, oneWordPlaceNeedsCountry(name) ? await recordCountry() : null);
   if (listed) return listed;
 
-  const bare = normalizeKey(placeSegments(name)[0]);
+  const segment = placeSegments(name)[0];
+  const bare = normalizeKey(segment);
   const fuller = (opts.contextPlaces ?? [])
     .map(placeSegments)
     .find((segs) => {
@@ -843,7 +852,19 @@ async function resolveBareName(name: string, opts: ResolveOpts): Promise<string 
       const first = normalizeKey(segs[0]);
       return first === bare || first.replace(ADMIN_PREFIX_RE, "") === bare;
     });
-  return fuller ? resolveStandardPlace(fuller.join(", "), { date: opts.date }) : null;
+  const sibling = fuller ? await resolveStandardPlace(fuller.join(", "), { date: opts.date }) : null;
+  return sibling ?? untiedHitInCountry(segment, await recordCountry());
+}
+
+/** FamilySearch's best hit for a bare name, kept only when no other place
+ *  shares its top score and its country (the last segment of its full name) is
+ *  the record's. With no record country, nothing is searched. */
+async function untiedHitInCountry(name: string, country: string | null): Promise<string | null> {
+  if (!country) return null;
+  const entries = await getSearchEntries(name);
+  const best = pickBest(entries);
+  const places = new Set(topScored(entries).map((e) => e.placeId));
+  return best && places.size === 1 && placeSegments(best.fullName).at(-1) === country ? best.fullName : null;
 }
 
 /** "Borough of Shenandoah" spells out "Shenandoah"; "New York" does not spell out

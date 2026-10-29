@@ -189,9 +189,10 @@ tree_edit({
   `fact.place` is set and `resolveStandardPlace !== false` and no
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
   when nothing resolves), passing the places of the holder's other facts as
-  context for a bare single-segment place (see research-append-tool-spec
-  §3.6, lever B). A `personId` target whose `fact.type` is a couple event
-  (`isCoupleEventFactType`) is refused, naming the Couple route (§7).
+  context for a bare single-segment place, and no record country (see
+  research-append-tool-spec §3.6, lever B). A `personId` target whose
+  `fact.type` is a couple event (`isCoupleEventFactType`) is refused, naming the
+  Couple route (§7).
 - **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
   the provided `fact` fields onto the existing fact (id immutable) on the same
   exactly-one-target contract as `add_fact`; the `factId` must live on the named

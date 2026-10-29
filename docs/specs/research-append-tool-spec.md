@@ -685,8 +685,7 @@ with a warning rather than kept for the new place:
      A bare single-segment place ("Kent", "Shenandoah") names no parent, so
      FamilySearch's best hit for it is whichever same-named place ranks highest
      anywhere, and the country guard below cannot catch a wrong one, since a
-     one-token place names no country. The resolver never keeps that hit. In
-     order:
+     one-token place names no country. In order:
      1. the bundled one-word list answers, with no search: the text, folded
         (case, accents, punctuation and spacing; "Co. Clare" is "co clare"), is
         looked up in `config/one-word-places.json` (`listedOneWordPlace`,
@@ -696,12 +695,17 @@ with a warning rather than kept for the new place:
         countries ("Louth", not British records, where it is the Lincolnshire
         town) only when the record's country is known and another. An
         accent-exact entry applies only to its accented spellings as written
-        ("Ísland" is Iceland; the English word "Island" is never standardized);
+        ("Ísland" is Iceland), and its spelling without them is left unset by
+        every step below too (the English word "Island" is never standardized);
      2. else a sibling place from the record context whose first segment is the
         name, or the name after an administrative prefix ("Borough of", "Town
         of", "City of", "Township of", …), is resolved instead — "New York" is
         not the fuller form of "York";
-     3. else the field is left unset with the warning above.
+     3. else, when the record's country is known, FamilySearch's best hit for
+        the name (the undated name search and `pickBest`), only when no other
+        place shares its top score and the last segment of its full name is the
+        record's country; with no record country nothing is searched;
+     4. else the field is left unset with the warning above.
 
      The list is the lead's (2026-10-26): "Mis-standardizing a place is worse
      than not standardizing it", with every listed entry at least 95% right.
@@ -711,18 +715,22 @@ with a warning rather than kept for the new place:
      Washington, New Jersey and Jersey (the Channel Island) are curated. A
      country, state or province is listed even where a county or town shares its
      name ("Counties and towns should not block states or countries"; "Costa
-     Rica", "Ohio", "Peru"). The rule it replaces, the genealogist's ruling of
-     2026-10-06 (option C with fallback B′), kept a best hit FamilySearch typed a
-     country, state or other jurisdiction, and searched inside the jurisdiction
-     the siblings share. Measured on the 3,643 one-word facts of matcher-lab
+     Rica", "Ohio", "Peru"). Step 3 is the lead's bar for a place the engine
+     standardizes itself (2026-10-29): "around 80% including coarser and finer".
+     The rule it replaces, the genealogist's ruling of 2026-10-06 (option C with
+     fallback B′), kept a best hit FamilySearch typed a country, state or other
+     jurisdiction, and searched inside the jurisdiction the siblings share.
+     Measured on the 3,643 one-word facts of matcher-lab
      m13's held-out records, scored against FamilySearch's own standardization
      and re-run on the same recorded FamilySearch responses: the old rule
-     (measured at b4741d558) was right on 2,413 and wrong on 168; this rule is
-     right on 2,258 and wrong on 13 with the record's country as this tool
-     derives it, and right on 2,053 and wrong on 13 with no record country (as
-     `tree_edit` and `tree_correct` call it). Each of the 13 was also wrong
-     before. It leaves unset 337 facts the old rule got right (454 with no
-     record country). Record context is passed because of the record-structurer
+     (measured at b4741d558) was right on 2,413, coarser or finer on 113 and
+     wrong on 168, and left 949 unset. With the record's country as this tool
+     derives it, this rule is right on 2,555, coarser or finer on 44 and wrong on
+     32, and leaves 1,012 unset; step 3 answers 330 of them (297 right, 14
+     coarser or finer, 19 wrong), and 15 of the 32 wrong answers are on facts the
+     old rule left unset. With no record country (as `tree_edit` and
+     `tree_correct` call it) it is right on 2,053 and wrong on 13, each of the 13
+     also wrong before. Record context is passed because of the record-structurer
      trials (2026-10-04): with none, the will's "Shenandoah" beside "Borough of
      Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
      Temple" to France. `dev/build-one-word-places.ts` rebuilds the list from

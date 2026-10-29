@@ -793,11 +793,12 @@ describe("resolveStandardPlace — FamilySearch year bounds", () => {
 });
 
 
-// ── A bare single-segment place (the lead, 2026-10-26) ──
+// ── A bare single-segment place (the lead, 2026-10-26 and 2026-10-29) ──
 // The bundled one-word list answers, else a sibling place that spells the name
-// out, else nothing: FamilySearch's best hit is never kept. "Shenandoah" beside
-// "Borough of Shenandoah, County of Schuylkill" in one will resolved to New
-// Zealand on PR #3007's trials, "Logan LDS Temple" to France.
+// out, else FamilySearch's best hit only when no other place ties it and it lies
+// in the record's country, else nothing. "Shenandoah" beside "Borough of
+// Shenandoah, County of Schuylkill" in one will resolved to New Zealand on PR
+// #3007's trials, "Logan LDS Temple" to France.
 describe("resolveStandardPlace — a bare single-segment name", () => {
   const byName = (table: Record<string, Entry[]>) =>
     mockSearchPlace.mockImplementation(async (name: string) => table[name] ?? []);
@@ -822,42 +823,132 @@ describe("resolveStandardPlace — a bare single-segment name", () => {
     expect(mockSearchPlace).not.toHaveBeenCalled();
   });
 
-  it("leaves an unlisted name unresolved without searching, whatever FamilySearch's best hit is", async () => {
+  it("leaves an unlisted name unresolved without searching when the record's country is unknown", async () => {
     // The 2026-10-06 rule kept a best hit FamilySearch typed a jurisdiction: the
     // county for "Clare", which the list leaves out because parishes of that name
     // lie in other Irish counties, and the country Albania for "Alb", where the
     // records meant Alberta.
     byName({
-      Clare: [entry({ placeRepId: "c", fullName: "County Clare, Ireland", type: "County", score: 1 })],
-      Alb: [entry({ placeRepId: "al", fullName: "Albania", type: "Country", score: 1 })],
-      Shenandoah: [entry({ placeRepId: "nz", fullName: "Shenandoah, Westland, New Zealand", score: 0.95 })],
+      Clare: [entry({ placeRepId: "c", placeId: "c", fullName: "County Clare, Ireland", type: "County", score: 1 })],
+      Alb: [entry({ placeRepId: "al", placeId: "al", fullName: "Albania", type: "Country", score: 1 })],
+      Shenandoah: [entry({ placeRepId: "nz", placeId: "nz", fullName: "Shenandoah, Westland, New Zealand", score: 0.95 })],
     });
     expect(await resolveStandardPlace("Clare")).toBeNull();
     expect(await resolveStandardPlace("Alb")).toBeNull();
     expect(await resolveStandardPlace("Shenandoah")).toBeNull();
+    expect(await resolveStandardPlace("Clare", { recordCountry: async () => null })).toBeNull();
     expect(mockSearchPlace).not.toHaveBeenCalled();
   });
 
   it("applies an entry for one record country only with that record country, and asks for it only then", async () => {
-    // "Texas" is listed for US records only.
+    // "Texas" is listed for US records only. In a Mexican record the top hit,
+    // the US state, lies outside the record's country.
+    byName({ Texas: [entry({ placeRepId: "tx", placeId: "tx", fullName: "Texas, United States", type: "State", score: 1 })] });
     const us = vi.fn(async () => "United States");
     expect(await resolveStandardPlace("Texas", { recordCountry: us })).toBe("Texas, United States");
-    expect(await resolveStandardPlace("Texas", { recordCountry: async () => "Mexico" })).toBeNull();
-    expect(await resolveStandardPlace("Texas", { recordCountry: async () => null })).toBeNull();
-    expect(await resolveStandardPlace("Texas")).toBeNull();
     expect(await resolveStandardPlace("Kent", { recordCountry: us })).toBe("Kent, England, United Kingdom");
     expect(us).toHaveBeenCalledTimes(1);
     expect(mockSearchPlace).not.toHaveBeenCalled();
+    expect(await resolveStandardPlace("Texas", { recordCountry: async () => null })).toBeNull();
+    expect(await resolveStandardPlace("Texas")).toBeNull();
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+    expect(await resolveStandardPlace("Texas", { recordCountry: async () => "Mexico" })).toBeNull();
   });
 
   it("withholds an entry in a record country it is excepted in, and when the record's country is unknown", async () => {
-    // Bare "Louth" in a British record is the Lincolnshire town.
+    // Bare "Louth" in a British record is the Lincolnshire town, which the top
+    // hit gives when no other place ties it.
+    byName({
+      Louth: [
+        entry({ placeRepId: "li", placeId: "li", fullName: "Louth, Lincolnshire, England, United Kingdom", score: 1 }),
+        entry({ placeRepId: "ie", placeId: "ie", fullName: "County Louth, Ireland", type: "County", score: 0.9 }),
+      ],
+    });
     expect(await resolveStandardPlace("Louth", { recordCountry: async () => "United States" })).toBe(
       "County Louth, Ireland",
     );
-    expect(await resolveStandardPlace("Louth", { recordCountry: async () => "United Kingdom" })).toBeNull();
     expect(await resolveStandardPlace("Louth")).toBeNull();
     expect(mockSearchPlace).not.toHaveBeenCalled();
+    expect(await resolveStandardPlace("Louth", { recordCountry: async () => "United Kingdom" })).toBe(
+      "Louth, Lincolnshire, England, United Kingdom",
+    );
+  });
+
+  it("takes FamilySearch's best hit when no other place ties it and it lies in the record's country", async () => {
+    // Two representations of one place at the top score are one place.
+    byName({
+      Shenandoah: [
+        entry({ placeRepId: "va1", placeId: "va", fullName: "Shenandoah, Page, Virginia, United States", score: 0.9 }),
+        entry({ placeRepId: "va2", placeId: "va", fullName: "Shenandoah, Virginia, United States", score: 0.9 }),
+        entry({ placeRepId: "nz", placeId: "nz", fullName: "Shenandoah, Westland, New Zealand", score: 0.8 }),
+      ],
+    });
+    expect(await resolveStandardPlace("Shenandoah", { recordCountry: async () => "United States" })).toBe(
+      "Shenandoah, Page, Virginia, United States",
+    );
+    expect(mockSearchPlace).toHaveBeenCalledWith("Shenandoah", { date: undefined });
+  });
+
+  it("leaves the name unresolved when another place ties FamilySearch's best hit", async () => {
+    byName({
+      Shenandoah: [
+        entry({ placeRepId: "va", placeId: "va", fullName: "Shenandoah, Page, Virginia, United States", score: 0.9 }),
+        entry({ placeRepId: "ia", placeId: "ia", fullName: "Shenandoah, Page, Iowa, United States", score: 0.9 }),
+      ],
+    });
+    expect(await resolveStandardPlace("Shenandoah", { recordCountry: async () => "United States" })).toBeNull();
+  });
+
+  it("leaves the name unresolved when the best hit's last segment is not the record's country", async () => {
+    byName({
+      Shenandoah: [
+        entry({ placeRepId: "nz", placeId: "nz", fullName: "Shenandoah, Westland, New Zealand", score: 0.95 }),
+        entry({ placeRepId: "va", placeId: "va", fullName: "Shenandoah, Page, Virginia, United States", score: 0.9 }),
+      ],
+      Ballymena: [
+        entry({ placeRepId: "bm", placeId: "bm", fullName: "Ballymena, Antrim, Northern Ireland, United Kingdom", score: 1 }),
+      ],
+    });
+    expect(await resolveStandardPlace("Shenandoah", { recordCountry: async () => "United States" })).toBeNull();
+    expect(await resolveStandardPlace("Ballymena", { recordCountry: async () => "Ireland" })).toBeNull();
+    expect(await resolveStandardPlace("Ballymena", { recordCountry: async () => "United Kingdom" })).toBe(
+      "Ballymena, Antrim, Northern Ireland, United Kingdom",
+    );
+  });
+
+  it("answers from a sibling that spells the name out before the top hit", async () => {
+    byName({
+      Shenandoah: [entry({ placeRepId: "va", placeId: "va", fullName: "Shenandoah, Page, Virginia, United States", score: 1 })],
+      "Borough of Shenandoah, County of Schuylkill": [
+        entry({ placeRepId: "pa", placeId: "pa", fullName: "Shenandoah, Schuylkill, Pennsylvania, United States", score: 0.9 }),
+      ],
+    });
+    expect(
+      await resolveStandardPlace("Shenandoah", {
+        contextPlaces: ["Borough of Shenandoah, County of Schuylkill"],
+        recordCountry: async () => "United States",
+      }),
+    ).toBe("Shenandoah, Schuylkill, Pennsylvania, United States");
+  });
+
+  it("takes the top hit when a sibling spells the name out but resolves to nothing, and searches the bare name", async () => {
+    byName({
+      Shenandoah: [entry({ placeRepId: "pa", placeId: "pa", fullName: "Shenandoah, Schuylkill, Pennsylvania, United States", score: 1 })],
+    });
+    const us = vi.fn(async () => "United States");
+    expect(
+      await resolveStandardPlace("Shenandoah,", { contextPlaces: ["Borough of Shenandoah, County of Schuylkill"], recordCountry: us }),
+    ).toBe("Shenandoah, Schuylkill, Pennsylvania, United States");
+    expect(mockSearchPlace).toHaveBeenCalledWith("Borough of Shenandoah, County of Schuylkill", { date: undefined });
+    expect(mockSearchPlace).toHaveBeenCalledWith("Shenandoah", { date: undefined });
+    expect(us).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks for the record's country once when the list and the top hit both need it", async () => {
+    byName({ Texas: [entry({ placeRepId: "mx", placeId: "mx", fullName: "Texas, Hidalgo, Mexico", score: 1 })] });
+    const mexico = vi.fn(async () => "Mexico");
+    expect(await resolveStandardPlace("Texas", { recordCountry: mexico })).toBe("Texas, Hidalgo, Mexico");
+    expect(mexico).toHaveBeenCalledTimes(1);
   });
 
   it("tries the sibling route when the record's country rules a listed entry out", async () => {
@@ -868,9 +959,23 @@ describe("resolveStandardPlace — a bare single-segment name", () => {
   });
 
   it("answers an accent-exact entry only as written: 'Ísland' is Iceland, 'Island' is not a place", async () => {
-    byName({ Island: [entry({ placeRepId: "is", fullName: "Iceland", type: "Country", score: 1 })] });
+    // Not by the top hit, and not by a sibling either: the English word is never standardized.
+    byName({
+      Island: [entry({ placeRepId: "is", placeId: "is", fullName: "Iceland", type: "Country", score: 1 })],
+      Suede: [entry({ placeRepId: "se", placeId: "se", fullName: "Sweden", type: "Country", score: 1 })],
+      "Island, McLean, Kentucky": [
+        entry({ placeRepId: "ky", placeId: "ky", fullName: "Island, McLean, Kentucky, United States", score: 1 }),
+      ],
+    });
     expect(await resolveStandardPlace("Ísland")).toBe("Iceland");
     expect(await resolveStandardPlace("Island", { recordCountry: async () => "Iceland" })).toBeNull();
+    expect(await resolveStandardPlace("Suede", { recordCountry: async () => "Sweden" })).toBeNull();
+    expect(
+      await resolveStandardPlace("Island", {
+        contextPlaces: ["Island, McLean, Kentucky"],
+        recordCountry: async () => "United States",
+      }),
+    ).toBeNull();
     expect(mockSearchPlace).not.toHaveBeenCalled();
   });
 

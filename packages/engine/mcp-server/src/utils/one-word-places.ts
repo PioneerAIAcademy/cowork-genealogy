@@ -82,6 +82,13 @@ export function oneWordPlaceNeedsCountry(text: string): boolean {
   return typeof e === "object" && ("record_country" in e || "except_record_countries" in e);
 }
 
+/** The text is an accent-exact entry's spelling written without its accents:
+ *  "Island" is the English word, never a place ("Ísland" is Iceland). */
+export function oneWordPlaceIsWord(text: string): boolean {
+  const e = entryFor(text);
+  return typeof e === "object" && "accented_spellings" in e && listedOneWordPlace(text) === null;
+}
+
 /**
  * The standard place the list gives a one-word place text in a record of
  * `recordCountry` (the English name of a country; null when it is unknown), or

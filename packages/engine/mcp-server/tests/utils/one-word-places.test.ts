@@ -5,6 +5,7 @@ import {
   accentKey,
   foldPlaceKey,
   listedOneWordPlace,
+  oneWordPlaceIsWord,
   oneWordPlaceNeedsCountry,
   ONE_WORD_PLACES_PATH,
   type OneWordEntry,
@@ -170,6 +171,13 @@ describe("the bundled one-word list (the lead, 2026-10-26)", () => {
     }
     expect(listedOneWordPlace("Suède")).toBe("Sweden");
     expect(listedOneWordPlace("Suede")).toBeNull();
+  });
+
+  it("knows an accent-exact entry's spelling written without its accents for the English word it is", () => {
+    for (const text of ["Island", "ISLAND", "Isländ", "Suede"]) expect(oneWordPlaceIsWord(text), text).toBe(true);
+    for (const text of ["Ísland", "Suède", "Kent", "Texas", "Louth", "Shenandoah"]) {
+      expect(oneWordPlaceIsWord(text), text).toBe(false);
+    }
   });
 
   it("needs the record's country only for an entry with a country condition", () => {
