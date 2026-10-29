@@ -1,56 +1,8 @@
 {
-  "run_log": "v1_2026-10-22_08-57-55.json",
-  "annotator": "adeyinkaadedayo1024@mail.com",
+  "run_log": "v2.json",
+  "annotator": "eruth937@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_images_d4",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d4",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d4",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d4",
-      "dimension_source": "rubric",
-      "dimension_name": "Volume selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d4",
-      "dimension_source": "rubric",
-      "dimension_name": "Browse execution",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d4",
-      "dimension_source": "rubric",
-      "dimension_name": "Browse audit trail",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_search_images_d1",
       "dimension_source": "base",
       "dimension_name": "Correctness",
@@ -99,23 +51,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "test_id": "ut_search_images_d3",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_images_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "test_id": "ut_search_images_d3",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_images_002",
+      "test_id": "ut_search_images_d3",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -123,9 +75,33 @@
       "comment": null
     },
     {
+      "test_id": "ut_search_images_d3",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d3",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
       "test_id": "ut_search_images_002",
       "dimension_source": "rubric",
-      "dimension_name": "Volume selection",
+      "dimension_name": "Browse audit trail",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -141,7 +117,63 @@
     {
       "test_id": "ut_search_images_002",
       "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
       "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -152,7 +184,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": " Agree: volume_search listed three record types on 008116090 (wills, land deeds, loose probate papers), but the reply calls it just \"will books\" and doesn't say the wills are one section of a mixed film. Checked: the fixture still lists all three types as separate rows, so the agent had the information."
+      "comment": "I checked whether the agent selected the correct film and accurately described its contents. It selected volume 008116090, which contains the requested wills section, but described the film as a single probate book without clearly acknowledging that it also contains Land and Property Deeds and Loose Probate Papers. This misrepresents the film's mixed structure, so the response is only partially correct."
     },
     {
       "test_id": "ut_search_images_012",
@@ -160,44 +192,12 @@
       "dimension_name": "Volume selection",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": " Agree: right film, but it didn't recognize the mixed structure or aim the browse at the wills section. A researcher would page through deeds and loose papers looking for a will."
-    },
-    {
-      "test_id": "ut_search_images_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Browse audit trail",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Browse execution",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_012",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "comment": "I checked whether the agent selected the correct volume and recognized its record coverage. It chose 008116090, the correct film because it includes Wills and Estate Records. However, it did not adequately acknowledge that Land and Property Deeds and Loose Probate Papers are also included on the film or explain that the wills section is only one item-section. This meets the partial-defect description rather than a full pass."
     },
     {
       "test_id": "ut_search_images_010",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -213,7 +213,7 @@
     {
       "test_id": "ut_search_images_010",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -244,32 +244,8 @@
     },
     {
       "test_id": "ut_search_images_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_011",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_011",
       "dimension_source": "rubric",
-      "dimension_name": "Volume selection",
+      "dimension_name": "Browse audit trail",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -285,7 +261,31 @@
     {
       "test_id": "ut_search_images_011",
       "dimension_source": "rubric",
-      "dimension_name": "Browse audit trail",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
