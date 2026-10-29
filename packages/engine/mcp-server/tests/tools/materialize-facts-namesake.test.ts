@@ -652,4 +652,30 @@ describe("materialize_facts under a namesake in the tree (#3681)", () => {
     expect(both.ok, JSON.stringify(both)).toBe(true);
     expect(JSON.stringify(both)).toContain(`but '${SON}' has a recorded namesake and a namesake in the tree and its link 'pe_1'`);
   });
+
+  it("MP7 makes a new person when the record fits neither pair member, since it duplicates no one", async () => {
+    // A groom of 70 in 1871, born about 1801: not the father, born 1820, and not the son.
+    const OLD = "REC-OMAR";
+    const copied = { id: "F9", type: "Residence", value: "Niles", assertion_id: "a_124", sources: [{ ref: "S8" }] };
+    await setup(
+      {
+        ...pairResearch([link("pe_1", "a_121", PF)]),
+        assertions: [
+          assertion("a_121", "src_008", OLD, "groom", "name", "John Pratt"),
+          assertion("a_122", "src_008", OLD, "groom", "age", "70"),
+          assertion("a_123", "src_008", OLD, "groom", "marriage", "John Pratt married Ann Moss", { date: "1871" }),
+          assertion("a_124", "src_008", OLD, "groom", "residence", "Niles"),
+        ],
+      },
+      pairTree({ fatherFacts: [copied] }),
+    );
+    const explicit = await materializeFacts({ projectPath: dir, personId: PF, recordId: OLD, recordRole: "groom" });
+    expect(explicit.ok).toBe(false);
+    expect(JSON.stringify(explicit)).toContain("omit personId");
+    const r = await materializeFacts({ projectPath: dir, recordId: OLD, recordRole: "groom" });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r).toMatchObject({ created: true });
+    expect(JSON.stringify(r)).toContain(`would have reused '${PF}', but '${PF}' has a namesake in the tree`);
+    expect((await readTree()).persons.map((p: any) => p.id)).toHaveLength(3);
+  });
 });

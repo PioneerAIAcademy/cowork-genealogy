@@ -60,6 +60,7 @@ import {
   namesakeMergeRoute,
   namesakePairsText,
   namesakeVerdicts,
+  pairJudgement,
   type NamesakePartner,
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
@@ -867,13 +868,16 @@ export function existingPersonLinkRefusal(
 }
 
 /** `existingPersonLinkRefusal`'s answer, with the strong links the namesake
- *  cap refused when the namesake requirement alone refused, and whether the
- *  person it refused has a namesake in the tree, a namesake row, or both. */
+ *  cap refused when the namesake requirement alone refused, whether the person
+ *  it refused has a namesake in the tree, a namesake row, or both, and whether
+ *  the record may belong to a namesake in the tree, so that a new person for it
+ *  could duplicate them. */
 interface LinkGate {
   refusal: string | null;
   untied?: any[];
   pairMember?: boolean;
   rowHolder?: boolean;
+  partnerOpen?: boolean;
 }
 
 function linkGate(
@@ -914,11 +918,19 @@ function linkGate(
     startingTree: namesakeOpts.startingTree ?? undefined,
   });
   if (cap === null || strong.some((e) => cap.verdicts.get(e.id)?.allowed === true)) return { refusal: null };
+  const assertionOf = (id: string) => ((research?.assertions ?? []) as any[]).find((a) => a?.id === id);
   return {
     refusal: namesakeCopyRefusal(personId, cap.rows, cap.verdicts, strong, cap.pairs),
     untied: strong,
     pairMember: cap.pairs.length > 0,
     rowHolder: cap.rows.length > 0,
+    partnerOpen:
+      cap.pairs.length > 0 &&
+      strong.some(
+        (e) =>
+          pairJudgement(personId, assertionOf(e.assertion_id), cap.pairs, research, namesakeTree, namesakeOpts.startingTree ?? null)
+            .ties.length < cap.pairs.length,
+      ),
   };
 }
 
@@ -1251,9 +1263,9 @@ function personaGate(
  *  lowest numeric id. `id` is that person, or undefined when no candidate is
  *  eligible. `namesakeExcluded` is the candidate the lookup would have picked
  *  had the namesake requirement not refused it, with the links it refused and
- *  which namesakes it has. `pairRefusal` is set instead when that candidate has
- *  a namesake in the tree and no other candidate is eligible: minting would
- *  duplicate the namesake, so the op is refused (#3681). */
+ *  which namesakes it has. `pairRefusal` is set instead when no other candidate
+ *  is eligible and the record may belong to that candidate's namesake in the
+ *  tree: minting could duplicate the namesake, so the op is refused (#3681). */
 function findExistingPersonForPersona(
   tree: SimplifiedGedcomX,
   research: any,
@@ -1319,7 +1331,7 @@ function findExistingPersonForPersona(
     candidates.filter((pid) => gates.get(pid)!.refusal === null || gates.get(pid)!.untied !== undefined),
   );
   const excluded = unguarded === undefined ? undefined : gates.get(unguarded)!;
-  if (id === undefined && excluded?.pairMember) {
+  if (id === undefined && excluded?.partnerOpen) {
     return { id, pairRefusal: excluded.refusal! };
   }
   return unguarded !== id && excluded?.untied !== undefined
@@ -1375,8 +1387,8 @@ export function personaTargetRefusal(
     namesakeOpts,
   );
   if (gate.refusal === null) return null;
-  // A pair member's namesake is in the tree already: a new person would duplicate them.
-  return gate.pairMember
+  // While the record may belong to a namesake in the tree, a new person could duplicate them.
+  return gate.partnerOpen
     ? gate.refusal
     : `${gate.refusal} If this persona is someone else, omit personId: the tool then reuses the person ` +
         "this persona was already materialized onto, or mints a new one.";
@@ -1597,7 +1609,8 @@ export const materializeFactsSchema = {
     "personId is refused, and an omitted one goes to another eligible person or a new one, " +
     "with a warning. A namesake in the tree (a parent, child or sibling of the same first " +
     "given name) is judged the same way, except that an omitted personId that would make a " +
-    "new person is refused, since the namesake is in the tree already. " +
+    "new person is refused while the record may be that namesake's, since they are in the " +
+    "tree already. " +
     "When personId is omitted and " +
     "this persona was already materialized onto a tree person (detected by " +
     "assertion_id backlinks on that person's facts), the existing person is reused " +
