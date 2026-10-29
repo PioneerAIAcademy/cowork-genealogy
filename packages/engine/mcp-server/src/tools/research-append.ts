@@ -4145,6 +4145,60 @@ export function mergeCarryRefusals(
   return out;
 }
 
+/** A merge cannot bring a rejected pair back (lead, 2026-10-20). Refused in both
+ *  directions: (a) a live link the merge moves lands on a pair the researcher
+ *  rejected for the survivor, and (b) a rejection the merge moves lands on a pair
+ *  the survivor links live. Only pairs the merge creates: a link and a rejection
+ *  that already stood together before it are not this merge's doing. Nothing
+ *  overrides it. One line per pair, then the routing; `[]` when nothing is refused. */
+function mergeRejectedPairRefusals(
+  before: { research: any },
+  after: { research: any },
+  survivorOf: ReadonlyMap<string, string>,
+): string[] {
+  const live = (doc: any): any[] =>
+    ((doc?.person_evidence ?? []) as any[]).filter(
+      (e) => e && !e.superseded_by && typeof e.assertion_id === "string" && typeof e.person_id === "string",
+    );
+  const rejections = (doc: any): RejectedLink[] =>
+    Array.isArray(doc?.rejected_links) ? (doc.rejected_links as RejectedLink[]) : [];
+  // By link id: the merge remaps person ids, so a pre-merge pair key never
+  // matches the post-merge one.
+  const alreadyRejected = new Set(
+    live(before.research)
+      .filter((e) => rejectionFor(e.assertion_id, e.person_id, rejections(before.research)))
+      .map((e) => e.id),
+  );
+  const priorPersonOf = new Map<string, string>(live(before.research).map((e) => [e.id, e.person_id]));
+  const movedLinks = new Set(
+    live(before.research).filter((e) => survivorOf.has(e.person_id)).map((e) => e.id),
+  );
+  const movedRejections = new Set(
+    rejections(before.research)
+      .filter((r) => typeof r?.person_id === "string" && survivorOf.has(r.person_id))
+      .map((r) => r.id),
+  );
+  const lines: string[] = [];
+  for (const e of live(after.research)) {
+    const hit = rejectionFor(e.assertion_id, e.person_id, rejections(after.research));
+    if (!hit || !(movedLinks.has(e.id) || movedRejections.has(hit.id))) continue;
+    if (alreadyRejected.has(e.id)) continue;
+    lines.push(
+      `person_evidence '${e.id}' and rejection '${String(hit.id)}' would both stand on ` +
+        `(${e.assertion_id}, ${e.person_id}) after this merge: the researcher rejected that pair, and the ` +
+        `merge would leave a live link on it. The link stands today on ` +
+        `(${e.assertion_id}, ${priorPersonOf.get(e.id) ?? e.person_id}).`,
+    );
+  }
+  if (lines.length === 0) return [];
+  return [
+    ...lines,
+    "Nothing was written, and no justification overrides this. Ask the researcher whether each listed " +
+      "link's record is the person it stands on today. If they say it is not, have person-evidence record " +
+      "their rejection of that pair, which retires the link, then merge again. Otherwise do not merge.",
+  ];
+}
+
 /** Issue #2537: each live link the merge moves onto a survivor must pass the
  *  checks a `research_append` update re-pointing it there would: the
  *  contradiction cap, the move rule and the score gate's fabrication arm. Judged
@@ -4164,6 +4218,10 @@ export async function mergeLinkCheckRefusals(
 ): Promise<string[]> {
   const survivorOf = new Map<string, string>();
   for (const [s, c] of merges) survivorOf.set(c, s);
+  // Before the early return below: a merge that moves only a rejection can
+  // still land it on a pair the survivor links live.
+  const rejectedPairs = mergeRejectedPairRefusals(before, after, survivorOf);
+  if (rejectedPairs.length > 0) return rejectedPairs;
   const moved: Array<{ entry: any; from: string }> = [];
   for (const e of (before.research?.person_evidence ?? []) as any[]) {
     if (!e || e.superseded_by || typeof e.person_id !== "string") continue;

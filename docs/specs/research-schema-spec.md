@@ -1143,6 +1143,11 @@ evidence; it is kept and named in the response. Names and relationships carry no
 still carry them. The write is all-or-nothing with the rest of the call. The full
 contract is in `research-append-tool-spec.md`.
 
+**A merge cannot bring a rejected pair back.** `merge_tree_persons` refuses a
+merge that would leave a live link on a rejected pair, whether it moves the link
+or the rejection onto the survivor, and no justification overrides it
+(`merge-gedcomx-spec.md`, step 5a).
+
 **Immutable except `reason`.** An update that re-pointed a rejection could move it
 onto a linked pair without retiring that link, and one that rewrote
 `researcher_words` would erase the record of what was said. There is no way to
