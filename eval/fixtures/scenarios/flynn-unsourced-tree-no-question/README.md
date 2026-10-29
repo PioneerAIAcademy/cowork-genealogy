@@ -1,11 +1,13 @@
-# flynn-unsourced-tree
+# flynn-unsourced-tree-no-question
+
+Patrick Flynn parentage before any question is written: `questions` is empty and the assertion and hypothesis name no question. A question cannot be added while another is open with no proof summary, so the unsound-premise guard is tested here on the FIRST question.
 
 Patrick Flynn parentage research — the only basis for the Thomas Flynn parentage claim is an unsourced online family tree. No original records have been searched. Built for question-selection tests that exercise the **unsound-premise guard**: the skill must verify the premise before building research questions on top of it.
 
 ## State
 
 - **Objective:** Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA
-- **Questions:** q_001 (parentage, open)
+- **Questions:** none
 - **Plans:** none
 - **Log:** log_001 — online tree consulted, Thomas Flynn listed as father with no cited sources
 - **Sources:** src_001 — compiled online family tree (Ancestry Member Tree), no underlying original records cited
