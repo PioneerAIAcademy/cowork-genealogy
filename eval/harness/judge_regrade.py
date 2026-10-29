@@ -109,11 +109,12 @@ class RegradeResult:
 
 def _latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict[str, Any]] | None:
     """The log rule 2b grades (`versioning.latest_full_skill_runlog`), or None
-    when the directory is absent or the log is unreadable."""
+    when the directory is absent or the log is unreadable. Ordered by landing on
+    `origin/main`, which stands in for the BASE_SHA CI orders by."""
     if not skill_dir.is_dir():
         return None
     try:
-        return latest_full_skill_runlog(skill_dir)
+        return latest_full_skill_runlog(skill_dir, "origin/main")
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return None
 

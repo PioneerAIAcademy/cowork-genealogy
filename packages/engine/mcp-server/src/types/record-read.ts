@@ -49,7 +49,8 @@ export type RecordReadResult = SimplifiedGedcomX & {
  *  and `research_log_append` finalizes it.
  *
  *  `indexFields` is the per-persona index data the RAW body carries in
- *  `fields[]` and `toSimplified` drops, keyed by `gedcomx.persons[].id`. It is
+ *  `fields[]` and `toSimplified` drops, plus each persona's census place as
+ *  FamilySearch sends it, keyed by `gedcomx.persons[].id`. It is
  *  `record_read`-only: a `record_search` response has `fields[]` for the
  *  searched persona alone, so its staged elements never carry this. */
 export interface StagedRecordReadElement {
