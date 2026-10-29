@@ -1959,6 +1959,14 @@
             "pattern": "^log_"
           }
         },
+        "record_persona_ids": {
+          "description": "Tool-stamped by research_append, never by a caller: for each listed record found in a sidecar of the row's log_entry_ids, the persona that search result names. A record found in no sidecar has no key.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "notes": {
           "type": [
             "string",

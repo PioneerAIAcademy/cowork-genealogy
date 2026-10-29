@@ -338,6 +338,7 @@ No caching. A volume's image set can change as new images are digitized.
 |------|--------|
 | `src/types/image-search.ts` | Rewrite — reduce to `ImageSearchInput` (`{ imageGroupNumber: string }`), `ImageSearchResult` (`{ imageIds: string[] }`), and the `children/names` response type (`Record<string, string>`). Remove the old RMS-search and places-lookup types. |
 | `src/tools/image-search.ts` | Rewrite — resolution logic (split vs. apid), `children/names` fetch, value extraction + sort, schema export. Remove `placeIdToRepIds` (relocated to `place-search.ts` for `volume_search`) and `repIdToPlaceId` (deleted — no consumers). |
+| `src/utils/image-group.ts` | The resolution (split vs. apid) and a group's metadata fetch, shared with `image_transcribe`, which reads its film's coverage place there (`image-transcribe-tool-spec.md` §5.5.1). |
 | `src/tool-schemas.ts` | Keep `imageSearchSchema` in `allToolSchemas` (now the image lister). |
 | `src/index.ts` | Update the `image_search` handler to the new I/O. |
 | `manifest.json` | Keep `{ "name": "image_search" }`. |
@@ -405,7 +406,6 @@ needed for that path.
 - No underscores → it's a bare/unsplit image group number; convert to an
   apid first.
 
-This mirrors how `volume_search` derives `imageGroupPrefix` (substring
-before the first `_`): a value with no `_` is already its own prefix and
-takes the apid path; a 3-segment value carries its natural id in the
-last segment.
+The bare image group number is the substring before the first `_`: a
+value with no `_` is already that number and takes the apid path; a
+3-segment value carries its natural id in the last segment.

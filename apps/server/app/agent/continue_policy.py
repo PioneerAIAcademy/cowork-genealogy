@@ -23,7 +23,8 @@ from __future__ import annotations
 import json
 import math
 import os
-from collections.abc import Mapping
+import re
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -212,6 +213,126 @@ def project_completed(research: Mapping[str, Any] | None) -> bool:
     if not research:
         return False
     return (research.get("project") or {}).get("status") == "completed"
+
+
+# ── The completion halt (issue #3542 lead 1) ──────────────────────────────────────────
+#
+# Only proof-conclusion may write `project.status` (the plugin hook's OWNED_FIELDS), so a
+# project completes INSIDE a main-thread Agent call to it. When that call returns, the
+# main thread's next model call only paraphrases the agent's `summary_for_user`; both
+# planes end the turn there instead, from PostToolUse, and show the summary itself.
+# Measured live: `apps/server/dev/probe_posttool_halt.py`.
+
+PROOF_CONCLUSION_AGENT = "proof-conclusion"
+
+# The closing sentences proof-conclusion's `summary_for_user` ends on exactly when the
+# invocation set `project.status` to `completed` (proof-conclusion.md, `### summary_for_user`):
+# "for now" when the question's stop record lists unsearched sources. The halt requires one,
+# so a proof-conclusion call that did NOT complete the project, running beside the one that
+# did, never ends the turn on its own summary. Pinned to the agent body, both ways, by
+# `eval/harness/tests/unit/test_completion_halt_parity.py`.
+PROOF_CONCLUSION_FINISHED = (
+    "This research is finished. If you'd like a second opinion on it, just ask.",
+    "This research is finished for now. If you'd like a second opinion on it, just ask.",
+)
+
+# The runtime's frame and trailer around a subagent's return as the MODEL sees it. The
+# PostToolUse `tool_response` came without them in the probe; they are stripped anyway so
+# a string-shaped return parses the same. Ported from `eval/harness/harness/skill_runner.py`
+# (`_HAND_BACK_HEADER`, `_AGENT_RETURN_TRAILERS`, `strip_agent_return_frame`), which this
+# package cannot import.
+_HAND_BACK_HEADER = re.compile(r"^\[Subagent hand-back\][^\n]*\n", re.M)
+_AGENT_RETURN_TRAILERS = (
+    re.compile(r"(?m)^agentId:\s*\S+.*$"),
+    re.compile(r"(?s)<usage>.*?</usage>"),
+)
+
+
+def _agent_return_text(tool_response: Any) -> str:
+    """The text of an Agent result: a dict with `content` blocks (what PostToolUse
+    carries), a bare list of blocks, or a string."""
+    content = tool_response.get("content") if isinstance(tool_response, Mapping) else tool_response
+    if isinstance(content, str):
+        return content
+    if not isinstance(content, list):
+        return ""
+    parts = []
+    for block in content:
+        if isinstance(block, str):
+            parts.append(block)
+        elif isinstance(block, Mapping) and isinstance(block.get("text"), str):
+            parts.append(block["text"])
+    return "\n".join(parts)
+
+
+def summary_for_user(tool_response: Any) -> str | None:
+    """The `summary_for_user` an agent's return ends with: everything after its last line
+    reading `---` (proof-conclusion.md, `### summary_for_user`). None when there is no
+    such line or nothing follows it, which leaves the turn to end as it does today."""
+    text = _agent_return_text(tool_response).replace("\r\n", "\n")
+    m = _HAND_BACK_HEADER.search(text)
+    if m:
+        text = "\n".join(line[2:] if line.startswith("  ") else line for line in text[m.end():].split("\n"))
+    for pattern in _AGENT_RETURN_TRAILERS:
+        text = pattern.sub("", text)
+    lines = text.split("\n")
+    rules = [i for i, line in enumerate(lines) if line.strip() == "---"]
+    if not rules:
+        return None
+    return "\n".join(lines[rules[-1] + 1:]).strip() or None
+
+
+def is_proof_conclusion_call(tool_input: Any) -> bool:
+    """Whether an Agent call went to proof-conclusion, by its `subagent_type` compared
+    after the last `:`, as the step boundary's `bare_name` compares it: bare and
+    `genealogy-research:`-prefixed were both seen in the probe."""
+    name = tool_input.get("subagent_type") if isinstance(tool_input, Mapping) else None
+    return isinstance(name, str) and name.rsplit(":", 1)[-1] == PROOF_CONCLUSION_AGENT
+
+
+def status_before_call(research: Mapping[str, Any] | None) -> str:
+    """The status a completion check compares against, read just before the call:
+    `project.status`, or `"completed"` when there is no research.json to read, so the halt
+    never fires on a guess."""
+    if not research:
+        return "completed"
+    status = (research.get("project") or {}).get("status")
+    return status if isinstance(status, str) else ""
+
+
+def wants_status_before(data: Mapping[str, Any]) -> bool:
+    """Whether a PreToolUse call is one the completion halt needs the status before: a
+    main-thread (no `agent_id` key) delegation to proof-conclusion."""
+    name = data.get("tool_name")
+    return (
+        "agent_id" not in data
+        and isinstance(name, str)
+        and name in DELEGATION_TOOLS
+        and is_proof_conclusion_call(data.get("tool_input"))
+    )
+
+
+def completion_halt_summary(
+    data: Mapping[str, Any],
+    status_before: Any,
+    research_now: Callable[[], Mapping[str, Any] | None],
+) -> str | None:
+    """The summary to end the turn on, or None to let it run on: the ONE predicate both
+    planes' PostToolUse arms call. A main-thread proof-conclusion call that moved the
+    project to `completed`, whose return carries a `summary_for_user` ending on one of
+    ``PROOF_CONCLUSION_FINISHED``. The transition, not the state, so a follow-up question in
+    a project already completed never ends a turn. ``research_now`` is read only once every
+    cheaper test has passed."""
+    if (
+        not wants_status_before(data)
+        or status_before == "completed"
+        or not project_completed(research_now())
+    ):
+        return None
+    summary = summary_for_user(data.get("tool_response"))
+    if summary is None or not summary.endswith(PROOF_CONCLUSION_FINISHED):
+        return None
+    return summary
 
 
 def should_continue_run(
