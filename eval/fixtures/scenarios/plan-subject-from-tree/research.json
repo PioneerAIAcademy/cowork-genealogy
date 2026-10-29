@@ -1,0 +1,95 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find the baptism of Bridget Kerrigan, born 1871 in Pottsville, Pennsylvania",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-06-01",
+    "updated": "2026-06-01"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where was Bridget Kerrigan (I1) baptized? She was born in 1871 in Pottsville, Schuylkill County, Pennsylvania.",
+      "rationale": "Bridget Kerrigan (I1), the project subject, has an 1871 Pottsville birth in the tree and no baptism. Her parents Thomas Kerrigan (I2) and Ellen Burke (I3) are in the tree. No plan has yet been written for this question.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-06-01"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Pennsylvania, United States",
+      "for_place": "Schuylkill County, Pennsylvania",
+      "time_period": "1840-1900",
+      "jurisdictions": [
+        {
+          "name": "Schuylkill County, Pennsylvania",
+          "date_range": "1811-present"
+        },
+        {
+          "name": "Berks and Northampton Counties (parent jurisdictions)",
+          "date_range": "pre-1811"
+        }
+      ],
+      "quirks": [
+        "Schuylkill County was formed in 1811 from Berks and Northampton counties; pre-1811 records are filed under the parent counties.",
+        "Deed/land records are held by the county Recorder of Deeds from 1811; much coal-region land was leased from mining companies rather than purchased outright by laborers.",
+        "Roman Catholic parishes stayed under the Diocese of Philadelphia (an archdiocese from 1875) until the Diocese of Allentown was erected in 1961; the Diocese of Scranton, erected in 1868, took the northern counties, not Schuylkill. Sacramental registers are held at the parish/diocese, not the county.",
+        "Pennsylvania statewide civil birth/death registration did not begin until 1906; pre-1906 events are recorded in church, cemetery, and probate records instead.",
+        "Some naturalization and church films for the anthracite coal region are browse-only image groups (volume_search shows ~0% record-searchable) -- browse image-by-image.",
+        "Curated external links reach county tax and exoneration lists for 1768-1801 only, before this period."
+      ],
+      "guide_markdown": "## Schuylkill County, Pennsylvania - 1840-1900\n\nSchuylkill County (formed 1811 from Berks and Northampton) lies in Pennsylvania's anthracite coal region. Deed/land records are held by the county Recorder of Deeds from 1811; much coal-region land was leased from mining companies rather than purchased outright. Catholic parishes stayed with the Diocese (from 1875 the Archdiocese) of Philadelphia until the Diocese of Allentown was erected in 1961. Statewide civil vital registration began only in 1906 -- pre-1906 events are recorded in church, cemetery, and probate records instead. Some coal-region naturalization and church films are browse-only. Curated external links reach county tax and exoneration lists for 1768-1801 only, before this period.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Pennsylvania_Research_Tips",
+          "found": true
+        }
+      ],
+      "source": "locality-guide",
+      "created": "2026-06-01"
+    }
+  ]
+}

@@ -223,6 +223,12 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: noError,
   },
   {
+    tool: "tree_query",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath }),
+    expect: okTrue,
+  },
+  {
     // The stdio smoke runs the file store, which lists nothing; over HTTP the
     // bound store lists the project the create above wrote.
     tool: "project_list",
