@@ -2108,15 +2108,32 @@ def test_a_pr_that_adds_two_candidates_is_graded_on_the_newer_one(
     assert "rule 6: graded 2 added run log(s)" in out
 
 
-def test_a_pr_that_adds_no_run_log_is_still_graded_on_the_latest_on_disk(
+def test_a_pr_that_adds_no_run_log_is_graded_on_the_newest_run_on_disk(
     tmp_path, monkeypatch, capsys
 ):
-    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, and resolve
-    exactly as before: a released log beats every candidate whatever its version, so the
-    stale `v3.json` is graded and the newer active candidate beside it is not."""
+    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, so they are
+    graded on the run that ran last, released or not: an active candidate newer than a
+    stale release passes. Ranking the release first failed every such PR on a log `main`
+    had already superseded."""
     skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
-    _put_runlog(skill_dir, "v3.json", active=False)
-    candidate = "v4_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, "v3.json", active=False, timestamp="2026-10-01_10-00-00")
+    _put_runlog(skill_dir, "v4_2026-10-08_10-00-00.json", active=True)
+    _patch_diffs(monkeypatch, [_TRACKED_REL])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0, out
+    assert "NOT active" not in out
+
+
+def test_a_pr_that_adds_no_run_log_is_graded_on_a_release_newer_than_a_candidate(
+    tmp_path, monkeypatch, capsys
+):
+    """A candidate left beside the release of its own version line ran before that
+    release, so the release is graded, not the candidate."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False, timestamp="2026-10-08_10-00-00")
+    candidate = "v3_2026-10-01_10-00-00.json"
     _put_runlog(skill_dir, candidate, active=True)
     _patch_diffs(monkeypatch, [_TRACKED_REL])
 
@@ -3569,17 +3586,6 @@ def test_rule11_aborted_runs_are_ignored_beside_a_completed_one():
 def test_rule11_a_test_with_no_runs_is_left_to_rule_6():
     head = _r11_test(["planning", "stops-for-verdicts"])
     assert _rule11(head_test=head, head_log={"tests": [{"test_id": "ut_research_rpn", "runs": []}]}) == 0
-
-
-def test_newest_full_skill_name_prefers_a_newer_candidate_over_an_older_release():
-    names = ["v1.json", "v1.ann.json", "v2_2026-10-01_00-00-00.json", "v2_2026-10-02_00-00-00.json",
-             "v3_scratch_x.json"]
-    assert check_runlogs.newest_full_skill_name(names) == "v2_2026-10-02_00-00-00.json"
-    assert check_runlogs.newest_full_skill_name(["v2.json", "v1_2026-10-02_00-00-00.json"]) == "v2.json"
-    assert check_runlogs.newest_full_skill_name(["README.md"]) is None
-    # At one version a candidate is the later run: releasing renames one, and
-    # a candidate beside its release was run after it.
-    assert check_runlogs.newest_full_skill_name(["v2.json", "v2_2026-10-03_00-00-00.json"]) == "v2_2026-10-03_00-00-00.json"
 
 
 _R11_VALIDATOR = """import pytest

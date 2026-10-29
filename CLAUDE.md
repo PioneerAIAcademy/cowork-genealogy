@@ -818,7 +818,8 @@ Where to look first:
   installs `unboundProjectStore` as the process store so nothing falls through
   to the file backend. **No module outside
   `src/store/` imports `fs`** except auth (per-user files) and the bundled-data
-  reader — enforced by `tests/packaging/no-fs-outside-store.test.ts`, which
+  reader (`src/utils/bundled-data.ts`) — enforced by
+  `tests/packaging/no-fs-outside-store.test.ts`, which
   also fails when an exemption stops being needed. A second backend runs
   `tests/store/conformance.ts`. That second backend is `PgS3ProjectStore`
   (`pg-s3-project-store.ts`) — constructor-scoped to one project, documents in
