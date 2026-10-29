@@ -17,16 +17,18 @@ import {
   competingParentSetsInvariants,
   namesakeTieInvariants,
 } from "../../src/tools/research-append.js";
+import { startingPersonIdsOf } from "../../src/utils/starting-tree.js";
 
 const casesDir = join(dirname(fileURLToPath(import.meta.url)), "..", "guard-cases");
 const registry = JSON.parse(readFileSync(join(casesDir, "registry.json"), "utf-8"));
 
 /** One binding per registered writer guard. A guard added to the registry with a
  *  `writer_guard` and no binding here fails the first test below. */
-const WRITER_GUARDS: Record<string, (entry: any, research: any, tree?: any) => string[]> = {
+const WRITER_GUARDS: Record<string, (entry: any, research: any, tree?: any, startingTree?: any) => string[]> = {
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
-  namesakeTieInvariants,
+  namesakeTieInvariants: (entry, research, tree, startingTree) =>
+    namesakeTieInvariants(entry, research, tree, startingTree ? startingPersonIdsOf(startingTree) : undefined, startingTree),
 };
 
 interface GuardCase {
@@ -35,6 +37,8 @@ interface GuardCase {
   write: string;
   research: any;
   tree?: any;
+  /** The project's starting tree, for a guard that reads one. */
+  starting_tree?: any;
 }
 
 const writerGuards = registry.guards.filter((g: any) => g.writer_guard);
@@ -57,7 +61,7 @@ describe("guard case files: writer-tool replay", () => {
         const section = file.section ?? "proof_summaries";
         const entry = (c.research[section] ?? []).find((e: any) => e?.id === c.write);
         expect(entry, `case ${c.id}: no ${section} entry ${c.write} in its research`).toBeDefined();
-        const errors = guard(entry, c.research, c.tree);
+        const errors = guard(entry, c.research, c.tree, c.starting_tree);
         if (c.expect === "fire") expect(errors, `case ${c.id} should fire`).toHaveLength(1);
         else expect(errors, `case ${c.id} should be silent`).toEqual([]);
       });
