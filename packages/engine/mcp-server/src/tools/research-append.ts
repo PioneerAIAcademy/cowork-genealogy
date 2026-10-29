@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
-import { planItemFlags } from "../utils/plan-item-plausibility.js";
+import { compoundJurisdictionError, planItemFlags } from "../utils/plan-item-plausibility.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
@@ -1590,15 +1590,17 @@ function yearsIn(...values: unknown[]): number[] {
  *  further apart than `birthThresholdMiles` allows for the era the dates span.
  *  Fails closed: with no country difference, the pair counts as far apart unless
  *  both sides carry a standard_place with coordinates finer than a region
- *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known. */
-function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords): boolean {
+ *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known.
+ *  `unresolvedIsNear` opens the one case a slow lookup decides: a standard
+ *  place the lookup returned no coordinates for. */
+function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords, unresolvedIsNear = false): boolean {
   if (birthCountriesDiffer(assertion, birth)) return true;
   const sa = assertion?.standard_place;
   const sb = birth?.standard_place;
   if (typeof sa !== "string" || typeof sb !== "string") return true;
   const pa = coords?.get(sa);
   const pb = coords?.get(sb);
-  if (!pa || !pb) return true;
+  if (!pa || !pb) return !unresolvedIsNear;
   if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
   if (placeTypeKey(pa.type) === "county" && placeTypeKey(pb.type) === "county") return true;
   const years = yearsIn(birth.date, birth.standard_date, assertion.date);
@@ -1739,6 +1741,7 @@ function contradictionFindings(
   personLinks?: ReadonlyArray<PersonLink>,
   batchAssertions?: Map<string, any>,
   birthPlaceCoords?: BirthPlaceCoords,
+  unresolvedIsNear = false,
 ): string[] {
   const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
   if (!scope) return [];
@@ -1747,7 +1750,7 @@ function contradictionFindings(
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords));
+  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords, unresolvedIsNear));
   if (far) {
     findings.push(
       `the record states '${far.place}' (assertion '${far.id}') where the tree person ` +
@@ -1797,8 +1800,10 @@ export function coreIdentifierContradictionInvariants(
   // Prefetched in `prepareOps`. Absent, every same-country pair counts as far
   // apart, which is the place arm before the distance test.
   birthPlaceCoords?: BirthPlaceCoords,
+  // Merges only: a place the lookup did not resolve is not a contradiction.
+  unresolvedIsNear = false,
 ): string[] {
-  const findings = contradictionFindings(entry, research, tree, personLinks, batchAssertions, birthPlaceCoords);
+  const findings = contradictionFindings(entry, research, tree, personLinks, batchAssertions, birthPlaceCoords, unresolvedIsNear);
   if (findings.length === 0) return [];
   return [
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
@@ -4139,6 +4144,71 @@ export function mergeCarryRefusals(
   return out;
 }
 
+/** Issue #2537: each live link the merge moves onto a survivor must pass the
+ *  checks a `research_append` update re-pointing it there would: the
+ *  contradiction cap, the move rule and the score gate's fabrication arm. Judged
+ *  on the project after the merge (`after`: the remapped research and the merged
+ *  tree), where the survivor holds both copies' facts. A birth place the lookup
+ *  does not resolve is not a contradiction here, so a slow lookup cannot refuse
+ *  a correct merge; a different country still is. A move is an update, not
+ *  an append, so a link with no score is not asked for one; a scored link needs
+ *  a `same_person` score recorded for the survivor. One line per finding, then
+ *  the routing; `[]` when nothing is refused. */
+export async function mergeLinkCheckRefusals(
+  projectPath: string,
+  before: { research: any },
+  after: { research: any; tree: any },
+  merges: ReadonlyArray<readonly [string, string]>,
+  startingPersonIds?: ReadonlySet<string>,
+): Promise<string[]> {
+  const survivorOf = new Map<string, string>();
+  for (const [s, c] of merges) survivorOf.set(c, s);
+  const moved: Array<{ entry: any; from: string }> = [];
+  for (const e of (before.research?.person_evidence ?? []) as any[]) {
+    if (!e || e.superseded_by || typeof e.person_id !== "string") continue;
+    const to = survivorOf.get(e.person_id);
+    if (to) moved.push({ entry: { ...e, person_id: to }, from: e.person_id });
+  }
+  if (moved.length === 0) return [];
+
+  const ops: ResearchAppendOp[] = moved.map(({ entry }) => ({
+    section: "person_evidence",
+    op: "update",
+    entryId: entry.id,
+    fields: { person_id: entry.person_id },
+  }) as ResearchAppendOp);
+  const batchAssertions = batchAssertionsById(after.research, []);
+  const personLinks = batchPersonLinks(after.research, []);
+  const birthPlaceCoords = await prefetchBirthPlaceCoords(after.research, ops, after.tree, personLinks, batchAssertions);
+  const matchScores = new Map<string, MatchScoreFile>();
+  for (const recordId of recordIdsForPersonEvidence(after.research, ops)) {
+    const file = await readMatchScores(projectPath, recordId);
+    if (file !== null) matchScores.set(recordId, file);
+  }
+
+  const lines: string[] = [];
+  for (const { entry, from } of moved) {
+    const findings = [
+      ...coreIdentifierContradictionInvariants(entry, after.research, after.tree, personLinks, batchAssertions, birthPlaceCoords, true),
+      ...unexplainedMoveInvariants(entry, after.research, after.tree, batchAssertions),
+      ...personEvidenceScoreInvariants(
+        entry, after.research, after.tree, matchScores, batchAssertions, false, startingPersonIds, new Set<string>(),
+      ),
+    ];
+    for (const f of findings) {
+      lines.push(`person_evidence '${entry.id}' would move from '${from}' to '${entry.person_id}' in this merge: ${f}`);
+    }
+  }
+  if (lines.length === 0) return [];
+  return [
+    ...lines,
+    "Nothing was written. A merge moves each link onto the survivor, so it must pass the checks a link written " +
+      "there directly would. Before merging again, fix each listed link where it stands: record the same_person " +
+      "score for the survivor, or have person-evidence lower the link or name its move_bridge. If the record " +
+      "does not belong to the survivor, do not merge.",
+  ];
+}
+
 /** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a
  *  source and the resulting project holds ≥THRESHOLD sources but zero assertions;
  *  null otherwise. Gated on a real (non-noop) `sources` append so it fires at the
@@ -5277,6 +5347,25 @@ function newQuestionWhileAnotherIsOpenInvariants(_entry: any, preCallResearch: a
   ];
 }
 
+/** A `fan_pivot` question exists to advance a question whose direct evidence
+ *  ran out, so its `unblocks` must name a question still open in the pre-call
+ *  snapshot. Decidable from `questions[]` alone (ADR-0011). Every committed e2e
+ *  `fan_pivot` append that left `unblocks` empty (3 of 4) depended on an open
+ *  `q_001` it would have advanced. */
+function fanPivotUnblocksInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.selection_basis !== "fan_pivot") return [];
+  const open = (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+    .filter((q: any) => typeof q?.id === "string" && QUESTION_STILL_OPEN.has(q.status))
+    .map((q: any) => q.id as string);
+  const unblocks = Array.isArray(entry?.unblocks) ? entry.unblocks : [];
+  if (unblocks.some((id: unknown) => typeof id === "string" && open.includes(id))) return [];
+  return [
+    "a `fan_pivot` question must name in `unblocks` the open question whose direct evidence ran out" +
+      (open.length > 0 ? ` (open: ${open.sort().join(", ")})` : " — no question is open, so there is none to pivot from") +
+      ". Its family, associates and neighbors are researched to advance that question.",
+  ];
+}
+
 /** A plan item may not stand at `completed` unless some `log[]` entry carries
  *  its id in `plan_item_id`. Completing an item asserts the search it names was
  *  done; the log is where a search is recorded, so an item completed with
@@ -5360,6 +5449,86 @@ function planItemLogAttributionInvariants(
       `planItemId: null is only for an ad-hoc search that matches no plan item. If that ` +
       `search was already logged with planItemId: null, leave this item 'in_progress' ` +
       `rather than logging the same search twice.`,
+  ];
+}
+
+/**
+ * Starter vocabulary per plan-item `record_type`: the terms whose presence in an
+ * attributed `log[]` entry's tool/notes/query confirms the completing search
+ * touched this record type. **Ported verbatim from the eval validator
+ * `RECORD_TYPE_TERMS` in `eval/harness/validators/test_search_full_text.py`; the
+ * two planes must agree — change both or neither.** A `record_type` absent here
+ * gets the structural check (`planItemLogAttributionInvariants`) only, never a
+ * content assertion it has no vocabulary for.
+ */
+const RECORD_TYPE_TERMS: Record<string, readonly string[]> = {
+  probate: [
+    // No bare "estate": it is land in "real estate" (American) and in
+    // British/Irish estate records, so it passed the deed/land note this guard
+    // exists to refuse. The specific terms below carry probate without it (#3592).
+    "executor", "executrix", "administrator", "administratrix",
+    "appraise", "appraisement", "inventory", "bequeath", "testament",
+    "heir", "legatee", "probate",
+  ],
+  church: ["baptism", "baptismal", "christen", "confirmation", "burial"],
+  church_record: ["baptism", "baptismal", "christen", "confirmation", "burial"],
+  vital: ["birth", "death", "marriage"],
+  vital_record: ["birth", "death", "marriage"],
+  marriage: ["marriage", "wedding", "banns", "matrimon"],
+  census: ["census", "household", "dwelling", "enumerat"],
+  naturalization: ["naturaliz", "declaration of intent"],
+  obituary: ["obituary", "death notice"],
+};
+
+/**
+ * A plan item with a vocabulary-bearing `record_type` may not stand at
+ * `completed` unless some `log[]` entry attributed to it names a search of THAT
+ * record type. Completing a probate item off a deed/land search — the
+ * `ut_search_full_text_016`/`_020` shape, deep-dive #1651 finding 3 — claims
+ * probate work no part of the document evidences.
+ *
+ * This is the CONTENT half of the completion check; `planItemLogAttributionInvariants`
+ * is the STRUCTURAL half (some entry must name the item at all). The two never
+ * double-report: when nothing is attributed this returns [] and leaves the
+ * refusal to that gate; a `record_type` outside `RECORD_TYPE_TERMS` gets the
+ * structural check only. Keyed to the same trigger as that gate (the entry ends
+ * at `completed`) and reads the same LIVE `research.log` for the same reason —
+ * `log[]` is append-only and owned by `research_log_append`, so the live
+ * document and the pre-call snapshot carry an identical log.
+ *
+ * Mirrors the eval validator `test_plan_item_completion_matches_its_own_record_type`,
+ * including its haystack (each attributed entry's `tool`, `notes` and JSON-
+ * serialized `query`, lowercased). Decidable from `research.json` alone
+ * (ADR-0011's first question), so it is a writer-tool precondition rather than
+ * the agent-body prose it was first diagnosed as (#3592).
+ */
+export function planItemCompletionRecordTypeInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "completed") return [];
+  const pid = entry?.id;
+  if (typeof pid !== "string" || pid === "") return [];
+  const terms = RECORD_TYPE_TERMS[String(entry?.record_type ?? "").toLowerCase()];
+  if (!terms) return []; // record_type outside the starter table — structural check only
+  const attributed = (Array.isArray(research?.log) ? research.log : []).filter(
+    (e: any) => e && e.plan_item_id === pid,
+  );
+  if (attributed.length === 0) return []; // planItemLogAttributionInvariants' job, not this one's
+  const haystack = attributed
+    .map((e: any) => `${e.tool ?? ""} ${e.notes ?? ""} ${JSON.stringify(e.query ?? {})}`)
+    .join(" ")
+    .toLowerCase();
+  // Leading word-boundary only (`\bterm`), not `\bterm\b`: several terms are
+  // deliberate stems (`naturaliz`, `enumerat`, `christen`, `appraise`) and
+  // need to match plurals (`baptism`→"baptisms"), which a trailing boundary
+  // would miss; the leading boundary still rejects a substring inside a word
+  // ("their" ≠ `heir`). The eval validator uses the same rule (#3592).
+  if (terms.some((t) => new RegExp(`\\b${t}`).test(haystack))) return [];
+  return [
+    `plan_items[${pid}]: record_type '${entry.record_type}', but no log[] entry attributed to it ` +
+      `names a ${entry.record_type} search — none mentions any of ` +
+      `${terms.map((t) => `'${t}'`).join(", ")}. Completing it would claim a ${entry.record_type} ` +
+      `search the document does not record. Run and log the ${entry.record_type} search this item ` +
+      `calls for with research_log_append({ planItemId: "${pid}", ... }) before completing it, or ` +
+      `skip it with a skip_category if that search will not be done.`,
   ];
 }
 
@@ -5454,7 +5623,7 @@ const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_sear
  *  search's entry names the item. An `error` entry is not a search that ran,
  *  and an external hand-off counts only once its capture arrived.
  *
- *  **One exemption: the deferred external hand-off.** search-records runs
+ *  **Exemption 1: the deferred external hand-off.** search-records runs
  *  three nil searches, then hands the item to search-external-sites, which,
  *  with no user present to capture, logs a deferred entry and skips the item
  *  `inaccessible`. `completed` is refused there by capture-pending, so refusing
@@ -5463,7 +5632,11 @@ const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_sear
  *  `completed`, this rule stays silent and capture-pending answers alone: it
  *  lets an `inaccessible` or `user_declined` skip stand, and refuses any other
  *  category with a message naming those two. Capture-pending itself decides
- *  which entry is latest, so the two rules cannot disagree. */
+ *  which entry is latest, so the two rules cannot disagree.
+ *
+ *  **Exemption 2: the wrong record type.** Wherever the completion record-type
+ *  check would refuse `completed` (no attributed search names the item's
+ *  record type), this rule is silent too, so the skip is the item's exit (#3592). */
 export function planItemSearchedSkipInvariants(entry: any, research: any): string[] {
   if (entry?.status !== "skipped") return [];
   const pid = entry?.id;
@@ -5478,11 +5651,26 @@ export function planItemSearchedSkipInvariants(entry: any, research: any): strin
   );
   if (!ran) return [];
   if (planItemCapturePendingInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
+  // Record-type escape hatch (mirrors the capture-pending one above): if the
+  // item cannot be completed because its searches are all the wrong record type
+  // (planItemCompletionRecordTypeInvariants would refuse), then skipping is the
+  // honest exit — otherwise it deadlocks at 'in_progress', neither completable
+  // nor skippable (the stuck state #3682's dispose flow removed). #3592.
+  if (planItemCompletionRecordTypeInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
   return [
     `plan_items[${pid}]: ${ran.id} (${ran.tool}, ${ran.outcome}) shows this item's search ran, ` +
       `so it cannot be marked 'skipped', which says nothing was searched. Set it to 'completed' ` +
       `instead: ${ran.id} names this item, so the completion is attributed.`,
   ];
+}
+
+/** A plan item names one place (`compoundJurisdictionError`). Checked on an
+ *  append and on a change to `jurisdiction` only, so a compound item written
+ *  before this rule does not strand an unrelated edit. */
+function compoundJurisdictionInvariants(item: any, research: any): string[] {
+  const localities = Array.isArray(research?.localities) ? research.localities : [];
+  const error = compoundJurisdictionError(item ?? {}, localities);
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
 }
 
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
@@ -7370,6 +7558,7 @@ function applyOne(
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
       invariantErrors.push(...secondQuestionInOneCallInvariants(resultEntry, research, preCallResearch));
+      invariantErrors.push(...fanPivotUnblocksInvariants(resultEntry, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
@@ -7488,6 +7677,10 @@ function applyOne(
         );
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        if (item && storedItem?.jurisdiction !== item.jurisdiction) {
+          invariantErrors.push(...compoundJurisdictionInvariants(item, research));
+        }
+        invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
         // rule has to hold here too or it is one `{ ...entry }` spread away
         // from being bypassed. `isAppend: true` — an item arriving inline has
@@ -7535,6 +7728,7 @@ function applyOne(
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
       );
+      invariantErrors.push(...planItemCompletionRecordTypeInvariants(resultEntry, research));
     }
     // Capture-pending guard (#1226): refuse moving an item INTO a terminal
     // status while its latest external-site search still awaits a capture.
@@ -7568,6 +7762,9 @@ function applyOne(
         ),
       );
       invariantErrors.push(...planItemSearchedSkipInvariants(resultEntry, research));
+    }
+    if (op.op === "append" || storedItem?.jurisdiction !== resultEntry?.jurisdiction) {
+      invariantErrors.push(...compoundJurisdictionInvariants(resultEntry, research));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(

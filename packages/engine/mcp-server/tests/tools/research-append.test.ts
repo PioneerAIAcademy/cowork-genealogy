@@ -90,6 +90,8 @@ import {
   unlinkedParentProofInvariants,
   narrativeLengthWarnings,
   NARRATIVE_WORD_BUDGET,
+  planItemSearchedSkipInvariants,
+  planItemCompletionRecordTypeInvariants,
 } from "../../src/tools/research-append.js";
 import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
@@ -7550,6 +7552,10 @@ describe("research_append (batch ops)", () => {
     performed: "2026-05-01T10:15:00Z",
     tool: "record_search",
     query: { surname: "Test" },
+    // The seeded item is a `census` record_type (seededPlanItem), and a completed
+    // census item is one whose census search was logged — so the attributed entry
+    // names a census search, satisfying planItemCompletionRecordTypeInvariants.
+    notes: "1880 census household",
     outcome: "positive",
     results_examined: 1,
     external_site: null,
@@ -7733,6 +7739,34 @@ describe("research_append (batch ops)", () => {
     await writeProject(research);
     const r = await researchAppend(newQ());
     expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+  });
+  describe("(fan-pivot) a fan_pivot question names the open question it advances", () => {
+    const concluded = () => {
+      const research = attrResearch("completed", []);
+      (research as any).proof_summaries = [summaryFor("q_001")];
+      return research;
+    };
+    it.each([
+      ["empty unblocks", { selection_basis: "fan_pivot", depends_on: ["q_001"], unblocks: [] }],
+      ["unblocks naming no open question", { selection_basis: "fan_pivot", unblocks: ["q_009"] }],
+    ])("refuses %s — writes nothing", async (_label, fields) => {
+      await writeProject(concluded());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend(newQ(fields));
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(/fan_pivot.*unblocks.*\(open: q_001\)/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+    it("allows one whose unblocks names the open question", async () => {
+      await writeProject(concluded());
+      const r = await researchAppend(newQ({ selection_basis: "fan_pivot", depends_on: ["q_001"], unblocks: ["q_001"] }));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+    it("leaves other selection bases alone", async () => {
+      await writeProject(concluded());
+      const r = await researchAppend(newQ({ selection_basis: "objective_decomposition", unblocks: [] }));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
   });
   it("(open-question) needs BOTH halves: a summary with an item still to do still blocks", async () => {
     // E's own route can hand a concluded question fresh searches. While those
@@ -14487,6 +14521,10 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
         performed: "2026-05-01T10:15:00Z",
         tool: "external_site",
         query: { surname: "Flynn" },
+        // census record_type (seededPlanItem) — the handoff is a census search, so
+        // its entry names census, satisfying planItemCompletionRecordTypeInvariants
+        // when a captured hand-off completes the item.
+        notes: "1850 US census household handoff",
         outcome: "negative",
         results_examined: 0,
         results_ref: null,
@@ -14572,6 +14610,9 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
           performed: "2026-05-03T10:15:00Z",
           tool: "record_search",
           query: { surname: "Flynn" },
+          // census item — the later FamilySearch hit is its census search, so the
+          // record-type gate does not pre-empt the capture-pending one.
+          notes: "1880 census household for Flynn",
           outcome: "positive",
           results_examined: 1,
           results_ref: null,
@@ -14691,6 +14732,10 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       performed: "2026-05-01T10:15:00Z",
       tool: "record_search",
       query: { surname: "Test" },
+      // census record_type (validPlanItem) — its attributed search names a census
+      // search, so planItemCompletionRecordTypeInvariants does not pre-empt the
+      // gates this block exercises.
+      notes: "1880 census household",
       outcome: "positive",
       results_examined: 1,
       external_site: null,
@@ -16601,6 +16646,10 @@ describe("research_append — a search that ran is never marked skipped (#3516)"
   const URL = "https://www.ancestry.com/search/collections/1850usfedcen/?name=Patrick_Flynn";
   const logEntry = (id: string, tool: string, outcome: string, extra: Record<string, unknown> = {}) => ({
     id, plan_item_id: "pli_001", performed: "2026-05-01T10:15:00Z", tool, query: { surname: "Flynn" },
+    // census note so the search matches pli_001's (seededPlanItem) census record_type.
+    // Without it, the #3592 completion guard would refuse completion and the new
+    // searched-skip escape hatch would (correctly) allow the skip these tests refuse.
+    notes: "1850 census household",
     outcome, results_examined: 1, results_ref: null, external_site: null, ...extra,
   });
   const deferred = (id: string) =>
@@ -16674,6 +16723,88 @@ describe("research_append — a search that ran is never marked skipped (#3516)"
   it("does not fire on re-stating an item already skipped", async () => {
     await project([logEntry("log_001", "record_search", "negative")], "skipped");
     expect(singleOk(await skip())).toBeTruthy();
+  });
+});
+
+// A plan item with a vocabulary-bearing record_type may not complete unless an
+// attributed log entry names a search of that type — the probate item closed off
+// a land search (ut_search_full_text_016/_020, #3592). Content half of the
+// completion check; planItemCompletionRecordTypeInvariants.
+describe("research_append — a completed plan item needs a search of its own record type (#3592)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-rt-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const logEntry = (overrides: any) => ({
+    id: "log_001",
+    plan_item_id: "pli_006",
+    performed: "2026-01-01T00:00:00Z",
+    tool: "fulltext_search",
+    query: {},
+    outcome: "positive",
+    results_examined: 1,
+    external_site: null,
+    results_ref: null,
+    ...overrides,
+  });
+  const projectWith = async (recordType: string, entry: any) => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [
+      validPlan("pl_002", "q_001", "active", [
+        { ...seededPlanItem("pli_006"), record_type: recordType, status: "in_progress" },
+      ]),
+    ];
+    research.log = [entry];
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  };
+  const complete = () =>
+    researchAppend({
+      projectPath: dir,
+      section: "plan_items",
+      op: "update",
+      planId: "pl_002",
+      entryId: "pli_006",
+      fields: { status: "completed" },
+    } as any);
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  const itemStatus = async () => (await readResearch()).plans[0].items[0].status;
+
+  it("refuses completing a probate item off a deed/land search", async () => {
+    await projectWith(
+      "probate",
+      logEntry({ notes: "1 result in Pennsylvania Land Records, Schuylkill", query: { keywords: "+Thomas +Flynn", recordType: "deed" } }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/record_type 'probate'.*no log\[\] entry.*names a probate search/s);
+    expect(await itemStatus()).toBe("in_progress"); // refused write leaves it open — passes the validator
+  });
+
+  it("allows completing a probate item off an estate search", async () => {
+    await projectWith(
+      "probate",
+      logEntry({ notes: "Estate inventory and appraisement of Thomas Flynn", query: { keywords: "+Flynn +estate" } }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    expect(await itemStatus()).toBe("completed");
+  });
+
+  it("allows completion when the record_type carries probate only via its query filter", async () => {
+    await projectWith("probate", logEntry({ notes: "Searched Schuylkill", query: { keywords: "+Thomas +Flynn", recordType: "probate" } }));
+    expect((await complete()).ok).toBe(true);
+  });
+
+  it("does not fire for a record_type outside the starter vocabulary (structural check only)", async () => {
+    await projectWith("deed", logEntry({ notes: "Pennsylvania Land Records", query: { keywords: "+Flynn" } }));
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    expect(await itemStatus()).toBe("completed");
   });
 });
 
@@ -16830,5 +16961,23 @@ describe("research_append: a localities first place must be in the place standar
     expect(errors.join(" ")).toMatch(/ops\[1\]/);
     expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
     expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+});
+
+describe("a searched plan item the record-type check will not complete can be skipped (#3592)", () => {
+  const research = {
+    log: [{ id: "log_001", plan_item_id: "pli_006", tool: "record_search", outcome: "negative", query: { recordType: "census" } }],
+  };
+  const item = { id: "pli_006", record_type: "probate" };
+
+  it("refuses 'completed' and accepts 'skipped', so the item is never stuck in_progress", () => {
+    expect(planItemCompletionRecordTypeInvariants({ ...item, status: "completed" }, research)).toHaveLength(1);
+    expect(planItemSearchedSkipInvariants({ ...item, status: "skipped", skip_category: "not_applicable" }, research)).toEqual([]);
+  });
+
+  it("still refuses the skip when the item's own record-type search ran", () => {
+    const probate = { log: [{ ...research.log[0], query: { recordType: "probate" } }] };
+    expect(planItemCompletionRecordTypeInvariants({ ...item, status: "completed" }, probate)).toEqual([]);
+    expect(planItemSearchedSkipInvariants({ ...item, status: "skipped", skip_category: "not_applicable" }, probate)).toHaveLength(1);
   });
 });

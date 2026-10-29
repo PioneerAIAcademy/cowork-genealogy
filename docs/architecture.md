@@ -1277,10 +1277,11 @@ one on the delegation tools:
    `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
    `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
    `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
-   or any of its analysis fields set — to `conflict-resolution`. The four differ
-   in granularity and key: a whole section, a field at a particular claim value,
-   a field on presence alone, and a claim spread over several fields of one
-   section. `project` is co-written — `init-project` authors it and any writer
+   or any of its analysis fields set — to `conflict-resolution`, and
+   `OWNED_APPENDS` reserves creating a question (`op: "append"` on `questions`)
+   to `question-selection`. The five differ in granularity and key: a whole
+   section, a field at a particular claim value, a field on presence alone, a
+   claim spread over several fields of one section, and one op on a section. `project` is co-written — `init-project` authors it and any writer
    may refresh `updated` — so only the one field is routed; `conflicts` is
    opened by six skills, so only the analysis is.
 3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops every agent that holds

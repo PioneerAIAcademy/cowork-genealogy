@@ -4,6 +4,12 @@ import { join } from "path";
 import { tmpdir } from "os";
 
 import { projectContext } from "../../src/tools/project-context.js";
+import {
+  researchQuery,
+  RESEARCH_QUERY_SECTIONS,
+  RESEARCH_QUERY_OPTIONAL_SECTIONS,
+  EXTERNAL_COLLECTIONS_SECTION,
+} from "../../src/tools/research-query.js";
 import { readBuildInfo } from "../../src/utils/build-info.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
 import { getProjectStore } from "../../src/store/project-store.js";
@@ -226,6 +232,15 @@ describe("project_context", () => {
       sources: [],
       localities: [],
       awaitingUser: [],
+      // Absent here: an optional section counts 0, a required one is null
+      // because research_query would refuse it.
+      sectionCounts: Object.fromEntries(
+        RESEARCH_QUERY_SECTIONS.filter((s) => s !== EXTERNAL_COLLECTIONS_SECTION).map((s) => [
+          s,
+          RESEARCH_QUERY_OPTIONAL_SECTIONS.has(s) ? 0 : null,
+        ]),
+      ),
+      unregisteredDisagreementCount: 0,
       exhaustedImageGroups: [],
     });
   });
@@ -310,6 +325,70 @@ describe("project_context", () => {
       const r = await projectContext({ projectPath: dir });
       expect(r.ok && r.exhaustedImageGroups).toEqual([{ imageGroup: "008230326", imagesRead: 20, planItemIds: [] }]);
     });
+  });
+
+  it("counts each section exactly as research_query would return it", async () => {
+    // The promise question-selection relies on: a 0 here means that query comes
+    // back empty, so skipping it loses nothing. Held per section against the
+    // real query, not against a hand-written expectation.
+    const research: Record<string, unknown> = {
+      project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+      questions: [{ id: "q_001", question: "Where was Ann born?", status: "open" }],
+      // Ann's birthplace: England on one census, Alabama on another, and no
+      // conflict names the pair, so conflicts counts 0 while the query still
+      // has something to say.
+      assertions: [
+        { id: "a_1", fact_type: "birth", place: "England" },
+        { id: "a_2", fact_type: "birth", place: "Alabama, United States" },
+      ],
+      person_evidence: [
+        { id: "pe_1", person_id: "I2", assertion_id: "a_1" },
+        { id: "pe_2", person_id: "I2", assertion_id: "a_2" },
+      ],
+      conflicts: [],
+      hypotheses: [{ id: "h_001", claim: "c", status: "active" }],
+    };
+    for (const section of RESEARCH_QUERY_SECTIONS) {
+      if (section !== EXTERNAL_COLLECTIONS_SECTION && !(section in research)) research[section] = [];
+    }
+    await writeProject(research, { persons: [], relationships: [], sources: [] });
+
+    const r = await projectContext({ projectPath: dir });
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(Object.keys(r.sectionCounts).sort()).toEqual(
+      RESEARCH_QUERY_SECTIONS.filter((s) => s !== EXTERNAL_COLLECTIONS_SECTION).sort(),
+    );
+    expect(r.sectionCounts.assertions).toBe(2);
+    expect(r.sectionCounts.conflicts).toBe(0);
+    for (const [section, count] of Object.entries(r.sectionCounts)) {
+      const q = await researchQuery({ projectPath: dir, section } as any);
+      if (!q.ok) throw new Error(`${section}: ${q.errors.join("; ")}`);
+      expect(count, section).toBe(q.count);
+      if (section === "conflicts") {
+        expect(r.unregisteredDisagreementCount).toBe(q.unregisteredDisagreements?.length);
+        expect(r.unregisteredDisagreementCount).toBe(1);
+      }
+    }
+  });
+
+  it("counts an absent optional section 0, and is null where research_query would refuse", async () => {
+    await writeProject(
+      {
+        project: { id: "rp_001", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        hypotheses: [{ id: "h_001" }],
+        timelines: {},
+      },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir });
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.sectionCounts.localities).toBe(0);
+    expect(r.sectionCounts.hypotheses).toBe(1);
+    // A 0 here would let the agent skip a query that fails.
+    for (const section of ["conflicts", "timelines"]) {
+      expect(r.sectionCounts[section], section).toBeNull();
+      expect((await researchQuery({ projectPath: dir, section } as any)).ok, section).toBe(false);
+    }
   });
 
   describe("awaitingUser: open external-site hand-offs (spec §2.3)", () => {
