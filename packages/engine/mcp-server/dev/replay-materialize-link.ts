@@ -103,7 +103,7 @@ function rebuiltScores(file: string, assertions: any[]): Map<string, MatchScoreF
     scoreCalls++;
     const role = typeof call.args.recordRole === "string" ? call.args.recordRole : a.record_role;
     if (role !== a.record_role) otherPartyScores++;
-    const f = out.get(a.record_id) ?? { record_id: a.record_id, scores: {} };
+    const f: MatchScoreFile = out.get(a.record_id) ?? { record_id: a.record_id, scores: {} };
     f.scores[scoreKey(aid, pid)] = {
       record_id: a.record_id, record_persona_id: null, record_role: role ?? null, tree_person_id: pid, score: 0,
       matched: true, assertion_id: aid, record_source: "record_read", computed: "",
