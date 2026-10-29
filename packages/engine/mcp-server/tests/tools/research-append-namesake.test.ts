@@ -19,6 +19,8 @@ import {
   namesakeVerdicts,
 } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
+import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
+import { treeEdit } from "../../src/tools/tree-edit.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 
 // The `namesakes` section and the cap a recorded namesake puts on links to the
@@ -1740,6 +1742,22 @@ describe("tree-derived namesake pairs (#3681)", () => {
       expect(m).toContain(`Nothing rules out 'KWPP-004', '${SO}''s sibling of the same given name`);
       expect(m.indexOf("Write it as 'speculative'")).toBeLessThan(m.indexOf("hand the merge to tree-edit"));
       expect(m).toContain(`If '${SO}' and 'KWPP-004' are one person entered twice`);
+    });
+
+    it("reads no pairs on a citation or a merge, so the merge it offers stays open", async () => {
+      const t = pairTree();
+      t.persons.push(person("KWPP-004", "John", "Pratt", "Male", { facts: [fsDated("Birth", "1850")] }));
+      t.relationships.push({ id: "R4", type: "ParentChild", parent: FA, child: "KWPP-004" });
+      const r = marriageResearch({ person_evidence: [standing("pe_001", "a_001", SO)] });
+      expect(namesakeVerdicts(SO, r, t, { derivedPairs: true })?.verdicts.get("pe_001")?.allowed).toBe(false);
+      await setup(r, t);
+      const cited = await treeEdit({
+        projectPath: dir,
+        ops: [{ operation: "add_fact", personId: SO, fact: { type: "Occupation", value: "Clerk", sources: [{ ref: "S1" }] } }],
+      } as any);
+      expect(cited.ok, errs(cited)).toBe(true);
+      const merged: any = await mergeTreePersons({ projectPath: dir, merges: [["KWPP-004", SO]] });
+      expect(merged.ok, errs(merged)).toBe(true);
     });
   });
 });

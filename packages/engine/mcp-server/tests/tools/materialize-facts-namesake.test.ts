@@ -613,4 +613,43 @@ describe("materialize_facts under a namesake in the tree (#3681)", () => {
     expect(lookedUp.ok).toBe(false);
     expect(JSON.stringify(lookedUp)).toContain(route);
   });
+
+  it("MP6 reuses the eligible person the lookup finds past a pair member, and says the namesake is in the tree", async () => {
+    // The father's 1845 marriage, the groom 25: it fits the father, not the son, who was also given its residence.
+    const SON = "I1";
+    const DAD = "I2";
+    const FMAR = "REC-FMAR";
+    const born = (year: string) => ({ id: `B${year}`, type: "Birth", date: year, sources: [{ ref: "S9" }] });
+    const residence = (id: string) => ({ id, type: "Residence", value: "Niles", assertion_id: "a_114", sources: [{ ref: "S8" }] });
+    const t = {
+      persons: [
+        person(SON, "John", "Pratt", "Male", { facts: [born("1850"), residence("F1")] }),
+        person(DAD, "John", "Pratt", "Male", { facts: [born("1820"), residence("F2")] }),
+      ],
+      relationships: [{ id: "R1", type: "ParentChild", parent: DAD, child: SON }],
+      sources: [{ id: "S8", title: "Marriage" }, { id: "S9", title: "FamilySearch Family Tree" }],
+    };
+    const r = {
+      ...pairResearch([link("pe_1", "a_111", SON), link("pe_2", "a_111", DAD)]),
+      assertions: [
+        assertion("a_111", "src_008", FMAR, "groom", "name", "John Pratt"),
+        assertion("a_112", "src_008", FMAR, "groom", "age", "25"),
+        assertion("a_113", "src_008", FMAR, "groom", "marriage", "John Pratt married Mary Doe", { date: "1845" }),
+        assertion("a_114", "src_008", FMAR, "groom", "residence", "Niles"),
+      ],
+    };
+    // Both are in the starting tree, so neither reads as made from this record.
+    await setup(r, t, t);
+    const reused = await materializeFacts({ projectPath: dir, recordId: FMAR, recordRole: "groom" });
+    expect(reused.ok, JSON.stringify(reused)).toBe(true);
+    expect(JSON.stringify(reused)).toContain(
+      `would have reused '${SON}', but '${SON}' has a namesake in the tree and its link 'pe_1' from this record ` +
+        `is not tied; '${DAD}' was used instead.`,
+    );
+
+    await setup({ ...r, namesakes: [{ ...ROW, person_id: SON }] }, t, t);
+    const both = await materializeFacts({ projectPath: dir, recordId: FMAR, recordRole: "groom" });
+    expect(both.ok, JSON.stringify(both)).toBe(true);
+    expect(JSON.stringify(both)).toContain(`but '${SON}' has a recorded namesake and a namesake in the tree and its link 'pe_1'`);
+  });
 });

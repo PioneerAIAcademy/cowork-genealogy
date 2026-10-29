@@ -281,11 +281,16 @@ function applyMaterializeOp(
   if (found?.pairRefusal) throw new MaterializeFactsError(found.pairRefusal);
   const targetId = str(op.personId) ?? found?.id ?? nextId(tree, "I");
   if (found?.namesakeExcluded) {
-    const { personId: skipped, links } = found.namesakeExcluded;
+    const { personId: skipped, links, pairMember, rowHolder } = found.namesakeExcluded;
     const named = links.map((e) => `'${e.id}'`).join(", ");
+    const namesake = !pairMember
+      ? "a recorded namesake"
+      : rowHolder
+        ? "a recorded namesake and a namesake in the tree"
+        : "a namesake in the tree";
     ctx.warnings.push(
       `persona '${recordRole}' of record '${recordId}' would have reused '${skipped}', but '${skipped}' ` +
-        `has a recorded namesake and its link ${named} from this record is not tied; '${targetId}' was ` +
+        `has ${namesake} and its link ${named} from this record is not tied; '${targetId}' was ` +
         `${found.id === undefined ? "created" : "used"} instead. Route ${named} to person-evidence to tie or lower it.`,
     );
   }
@@ -863,11 +868,12 @@ export function existingPersonLinkRefusal(
 
 /** `existingPersonLinkRefusal`'s answer, with the strong links the namesake
  *  cap refused when the namesake requirement alone refused, and whether the
- *  person it refused has a namesake in the tree. */
+ *  person it refused has a namesake in the tree, a namesake row, or both. */
 interface LinkGate {
   refusal: string | null;
   untied?: any[];
   pairMember?: boolean;
+  rowHolder?: boolean;
 }
 
 function linkGate(
@@ -912,6 +918,7 @@ function linkGate(
     refusal: namesakeCopyRefusal(personId, cap.rows, cap.verdicts, strong, cap.pairs),
     untied: strong,
     pairMember: cap.pairs.length > 0,
+    rowHolder: cap.rows.length > 0,
   };
 }
 
@@ -1243,16 +1250,20 @@ function personaGate(
  *  link from one of the persona's own assertions; break remaining ties by
  *  lowest numeric id. `id` is that person, or undefined when no candidate is
  *  eligible. `namesakeExcluded` is the candidate the lookup would have picked
- *  had the namesake requirement not refused it, with the links it refused.
- *  `pairRefusal` is set instead when that candidate has a namesake in the tree
- *  and no other candidate is eligible: minting would duplicate the namesake, so
- *  the op is refused (#3681). */
+ *  had the namesake requirement not refused it, with the links it refused and
+ *  which namesakes it has. `pairRefusal` is set instead when that candidate has
+ *  a namesake in the tree and no other candidate is eligible: minting would
+ *  duplicate the namesake, so the op is refused (#3681). */
 function findExistingPersonForPersona(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsOp,
   ctx: OpContext,
-): { id: string | undefined; namesakeExcluded?: { personId: string; links: any[] }; pairRefusal?: string } {
+): {
+  id: string | undefined;
+  namesakeExcluded?: { personId: string; links: any[]; pairMember: boolean; rowHolder: boolean };
+  pairRefusal?: string;
+} {
   const personaAssertionIds = new Set<string>();
   for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
     if (a && a.record_id === op.recordId && a.record_role === op.recordRole && typeof a.id === "string") {
@@ -1307,11 +1318,21 @@ function findExistingPersonForPersona(
   const unguarded = pick(
     candidates.filter((pid) => gates.get(pid)!.refusal === null || gates.get(pid)!.untied !== undefined),
   );
-  const links = unguarded === undefined ? undefined : gates.get(unguarded)!.untied;
-  if (id === undefined && unguarded !== undefined && gates.get(unguarded)!.pairMember) {
-    return { id, pairRefusal: gates.get(unguarded)!.refusal! };
+  const excluded = unguarded === undefined ? undefined : gates.get(unguarded)!;
+  if (id === undefined && excluded?.pairMember) {
+    return { id, pairRefusal: excluded.refusal! };
   }
-  return unguarded !== id && links !== undefined ? { id, namesakeExcluded: { personId: unguarded!, links } } : { id };
+  return unguarded !== id && excluded?.untied !== undefined
+    ? {
+        id,
+        namesakeExcluded: {
+          personId: unguarded!,
+          links: excluded.untied,
+          pairMember: excluded.pairMember === true,
+          rowHolder: excluded.rowHolder === true,
+        },
+      }
+    : { id };
 }
 
 /** The persona arm's target decision (§4.3): may persona `op`'s facts land on
