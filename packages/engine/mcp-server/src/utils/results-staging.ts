@@ -94,17 +94,11 @@ export interface StagedHandle {
   returnedCount: number;
 }
 
-/** `standard_places_from` on an envelope whose facts' `standard_place` values
- *  are all FamilySearch's own standardization, none the engine's lookup. Only a
- *  live `record_read` stages one; `record_search` mixes in the resolver's. */
-export const FAMILYSEARCH_STANDARD_PLACES = "familysearch";
-
 /** The persisted staging envelope (snake_case — it is persisted project state). */
 export interface StagingEnvelope {
   tool: string;
   retrieved: string;
   returned_count: number;
-  standard_places_from?: typeof FAMILYSEARCH_STANDARD_PLACES;
   payload: { results?: unknown[] };
 }
 
@@ -131,10 +125,8 @@ export async function stageSearchResults<TResponse extends { results?: unknown[]
   // `object` compiles but hides `results` from callers that legitimately read
   // the staged argument back (three external-links-search tests do).
   response: TResponse;
-  /** Set when every fact `standard_place` in `response` is FamilySearch's own. */
-  standardPlacesFrom?: typeof FAMILYSEARCH_STANDARD_PLACES;
 }): Promise<StagedHandle | null> {
-  const { projectPath, tool, response, standardPlacesFrom } = args;
+  const { projectPath, tool, response } = args;
   const results = Array.isArray(response.results) ? response.results : [];
   if (results.length === 0) return null; // nil search retains nothing
 
@@ -160,7 +152,6 @@ export async function stageSearchResults<TResponse extends { results?: unknown[]
     tool,
     retrieved: new Date().toISOString(),
     returned_count: results.length,
-    ...(standardPlacesFrom ? { standard_places_from: standardPlacesFrom } : {}),
     payload: response,
   };
   const resultsRef = `${STAGING_SUBDIR}/${filename}`;
@@ -287,7 +278,6 @@ export async function finalizeStagedResults(args: {
     tool: envelope.tool,
     retrieved: envelope.retrieved,
     returned_count: returnedCount,
-    ...(envelope.standard_places_from ? { standard_places_from: envelope.standard_places_from } : {}),
     payload,
   };
   await getProjectStore().writeJson(projectPath, resultsRef, sidecar);

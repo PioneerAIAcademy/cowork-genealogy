@@ -13,7 +13,6 @@ import {
   readStagedResults,
   sidecarReader,
   STAGING_SUBDIR,
-  FAMILYSEARCH_STANDARD_PLACES,
 } from "../../src/utils/results-staging.js";
 
 import { backingStore } from "../helpers/store-backend.js";
@@ -429,20 +428,6 @@ describe("results-staging", () => {
       // Not consumed: research_log_append removes it only after its commit, so a
       // call refused after finalizing leaves it for the corrected re-send.
       expect(await stagingFiles()).toHaveLength(1);
-    });
-
-    it("carries a staged record's mark that its standard places are FamilySearch's own, and adds none to an unmarked one", async () => {
-      const results = [{ recordId: "A" }];
-      const marked = await stageSearchResults({
-        projectPath: dir, tool: "record_read", response: { query: {}, results }, standardPlacesFrom: FAMILYSEARCH_STANDARD_PLACES,
-      });
-      const plain = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { query: {}, results } });
-      expect(JSON.parse(await readFile(join(dir, marked!.resultsRef), "utf-8")).standard_places_from).toBe("familysearch");
-      expect(JSON.parse(await readFile(join(dir, plain!.resultsRef), "utf-8"))).not.toHaveProperty("standard_places_from");
-      await finalizeStagedResults({ projectPath: dir, stagedResultsRef: marked!.resultsRef, logId: "log_001", expectedTool: "record_read" });
-      await finalizeStagedResults({ projectPath: dir, stagedResultsRef: plain!.resultsRef, logId: "log_002", expectedTool: "record_search" });
-      expect(JSON.parse(await readFile(join(dir, "results", "log_001.json"), "utf-8")).standard_places_from).toBe("familysearch");
-      expect(JSON.parse(await readFile(join(dir, "results", "log_002.json"), "utf-8"))).not.toHaveProperty("standard_places_from");
     });
 
     it("consumeStagedResults removes the staged file, and an absent ref is not an error", async () => {

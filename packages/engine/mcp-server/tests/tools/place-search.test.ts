@@ -1016,7 +1016,7 @@ describe("placeSearchTool", () => {
     const ON_NONE = "on a fact that cites no record and has no standard_place supplied, with no other places";
     const STORES =
       `the writers store this standard_place for this place text ${ON_NONE}. A supplied standard_place is ` +
-      "kept instead when it is a FamilySearch standard place, as each result is";
+      "kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it";
     const NONE = `the writers store no standard_place for this place text ${ON_NONE}: `;
     const ONE_PART =
       "the engine leaves a one-part place unstandardized unless it can tell which place it is; " +
@@ -1050,7 +1050,7 @@ describe("placeSearchTool", () => {
         reason:
           "the writers store this standard_place for this place text on a fact that cites no record and has no " +
           `standard_place supplied, whose other places include '${sibling}'. A supplied standard_place is kept ` +
-          "instead when it is a FamilySearch standard place, as each result is",
+          "instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it",
       });
       const bare = await placeSearchTool({ placeName: "Shenandoah" });
       expect(bare.verdict).toEqual({ standardPlace: null, reason: NONE + ONE_PART });

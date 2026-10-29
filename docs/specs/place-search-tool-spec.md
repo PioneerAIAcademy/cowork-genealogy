@@ -178,7 +178,7 @@ record and has no `standard_place` supplied, or none, and why (`placeAnswer` in
 the writers use: `tree_edit` resolves a bare one-part place against the places
 of the fact's other facts, so `contextName` stands where those places stand, and
 the lookup is `resolveStandardPlace(placeName, { contextPlaces: [contextName] })`.
-- `{ "standardPlace": "Bristol, England, United Kingdom", "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is" }`
+- `{ "standardPlace": "Bristol, England, United Kingdom", "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it" }`
   (with `contextName`, "… whose other places include '<contextName>'"), or
 - `{ "standardPlace": null, "reason": "the writers store no standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places: …" }`,
   the reason naming a non-place phrase ("Same House", never looked up), a
@@ -191,8 +191,8 @@ the lookup is `resolveStandardPlace(placeName, { contextPlaces: [contextName] })
 A fact that cites a record takes FamilySearch's own standardization of the text
 on that record first, so the verdict is what a writer fills only when the record
 has none. A supplied value that is one of FamilySearch's standard places, as
-every candidate here is, is kept instead, when the place text confirms it by the
-same check. `verdict`
+every candidate here is, is kept instead when some part of the place text names
+it (tree-edit-tool-spec §4.1.1). `verdict`
 is optional in the type, for the same fixture reason as `matchType`;
 `place_search` always returns it, and `place_search_all` does not. Each
 `SimplifiedPlaceResult`:

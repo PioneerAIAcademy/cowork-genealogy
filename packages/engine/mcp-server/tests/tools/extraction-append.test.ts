@@ -544,7 +544,7 @@ describe("extraction_append: recordIds on a captured census", () => {
 // ─── recordIds and absences (issues #2937 / #2939, PLAN acceptance checks 1–2) ──
 
 import { runExtractionAppend } from "../../src/tools/extraction-append.js";
-import { FAMILYSEARCH_STANDARD_PLACES, stageSearchResults } from "../../src/utils/results-staging.js";
+import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { arkToBareId } from "../../src/utils/ark.js";
 
 describe("extraction_append: recordIds and absences", () => {
@@ -573,7 +573,6 @@ describe("extraction_append: recordIds and absences", () => {
         projectPath: projectPath!,
         tool: "record_read",
         response: { query: { recordId }, results: [el] },
-        standardPlacesFrom: FAMILYSEARCH_STANDARD_PLACES,
       });
       return { ...el.gedcomx, staged };
     },
@@ -608,40 +607,42 @@ describe("extraction_append: recordIds and absences", () => {
     );
   });
 
-  // The engine's answer for a place on a record (lead, 2026-10-26): FamilySearch's
-  // own standardization of the text on the record persona, none when its values
-  // disagree, and never another record's or an assertion's stored value.
-  it("standardizes a place by FamilySearch's own on the record persona, none when they disagree, never by another record's", async () => {
+  // The engine's answer for a place on a record (lead, 2026-10-26): each
+  // assertion carries its own fact's standard_place, and one whose fact has none
+  // takes another fact's (a Burial with the death's text), another record's or a
+  // stored assertion's value from nowhere.
+  it("standardizes each assertion by its own fact's FamilySearch value, never by another fact's or record's", async () => {
     const seeded = await research();
     seeded.assertions = [
       {
-        ...validAssertion("a_001"), record_id: "ark:/61903/1:1:OTHR-111", fact_type: "residence",
+        ...validAssertion("a_001"), record_id: "ark:/61903/1:1:OTHR-111", fact_type: "death",
         place: "Jackson, Ohio, United States", standard_place: "Jackson, Jackson, Ohio, United States",
       },
     ];
     await writeFile(join(dir, "research.json"), JSON.stringify(seeded), "utf8");
     const death = element("death");
-    death.gedcomx.persons[0].facts.push(
-      { type: "Burial", date: "1879", place: "jackson co., ó.", standard_place: "Jackson, Ohio, United States" },
-      { type: "Christening", place: "Scioto T.P., Jackson, Ohio", standard_place: "Scioto, Jackson, Ohio, United States" },
-      { type: "Christening", place: "Scioto T.P., Jackson, Ohio", standard_place: "Jackson, Ohio, United States" },
+    const facts = death.gedcomx.persons[0].facts;
+    facts.find((f: any) => f.type === "Birth").standard_place = "Jackson, Ohio, United States";
+    facts.find((f: any) => f.type === "Residence").standard_place = "Scioto, Jackson, Ohio, United States";
+    facts.push(
+      { type: "Residence", place: "Scioto T.P., Jackson, Ohio", standard_place: "Jackson, Ohio, United States" },
+      { type: "Burial", date: "1879", place: "Jackson, Ohio, United States", standard_place: "Jackson, Jackson, Ohio, United States" },
     );
     const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death]) as any, LOCAL);
     expect(r.ok, JSON.stringify(r)).toBe(true);
     const after = (await research()).assertions.filter((a: any) => a.record_id !== "ark:/61903/1:1:OTHR-111");
-    const placed = (fact_type: string) => after.find((a: any) => a.fact_type === fact_type);
-    expect(placed("birth")).toMatchObject({ place: "Jackson Co., O.", standard_place: "Jackson, Ohio, United States" });
-    expect(placed("residence").place).toBe("Scioto T.P., Jackson, Ohio");
-    expect(placed("residence")).not.toHaveProperty("standard_place");
-    expect(placed("death").place).toBe("Jackson, Ohio, United States");
-    expect(placed("death")).not.toHaveProperty("standard_place");
+    const placed = after.filter((a: any) => a.place).map((a: any) => [a.fact_type, a.place, a.standard_place]);
+    expect(placed).toEqual([
+      ["birth", "Jackson Co., O.", "Jackson, Ohio, United States"],
+      ["death", "Jackson, Ohio, United States", undefined],
+      ["residence", "Scioto T.P., Jackson, Ohio", "Scioto, Jackson, Ohio, United States"],
+      ["residence", "Scioto T.P., Jackson, Ohio", "Jackson, Ohio, United States"],
+      ["burial", "Jackson, Ohio, United States", "Jackson, Jackson, Ohio, United States"],
+    ]);
     expect(r.records[0].summary.split("\n")).toContain(
-      "Places kept as written, with no standard place found: Jackson, Ohio, United States; Scioto T.P., Jackson, Ohio.",
+      "Places kept as written, with no standard place found: Jackson, Ohio, United States.",
     );
-    expect(r.records[0].warnings).toContain(
-      "could not resolve standard_place for 'Scioto T.P., Jackson, Ohio' (left unset): FamilySearch standardized it " +
-        "differently on its record (Scioto, Jackson, Ohio, United States; Jackson, Ohio, United States)",
-    );
+    expect(r.records[0].warnings).toContain("could not resolve standard_place for 'Jackson, Ohio, United States' (left unset)");
   });
 
   // ─── an accepted hint's log entry is the record's own (issue #3157) ───────────

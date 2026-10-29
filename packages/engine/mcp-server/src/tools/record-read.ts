@@ -9,7 +9,7 @@ import {
   repIdToStandardPlace,
   repIdToStandardPlaceAt,
 } from "../utils/place-resolver.js";
-import { FAMILYSEARCH_STANDARD_PLACES, readStagedResults, stageSearchResults } from "../utils/results-staging.js";
+import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
 import { recordIndexFields } from "../utils/record-index-fields.js";
 import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
@@ -200,9 +200,6 @@ export async function recordReadTool(
             },
           ],
         },
-        // `recordReadDocument` above names each fact's `standard_place` from
-        // the place FamilySearch chose for it only, so every one is FamilySearch's.
-        standardPlacesFrom: FAMILYSEARCH_STANDARD_PLACES,
       });
     } catch (error) {
       staged = null;

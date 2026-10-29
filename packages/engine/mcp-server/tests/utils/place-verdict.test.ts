@@ -1,18 +1,43 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Offline: FamilySearch's spelling of a supplied value comes from this stub.
-vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
-  return { ...actual, familySearchFullName: vi.fn(async (name: string) => name) };
-});
+// The rule runs as written; only the Places API fetchers are replaced, by the
+// answers FamilySearch gave on 2026-10-29 (Accept-Language: en).
+vi.mock("../../src/utils/place-api.js", () => ({
+  searchPlace: vi.fn(),
+  getPlaceById: vi.fn(),
+  getPlaceReps: vi.fn(),
+  getPlaceCandidateNames: vi.fn(),
+}));
 
 import { judgeSupplied, keptSupplied, placeAnswer, unconfirmedByText } from "../../src/utils/place-verdict.js";
-import { familySearchFullName } from "../../src/utils/place-resolver.js";
+import { searchPlace, getPlaceReps } from "../../src/utils/place-api.js";
+import { __clearPlaceResolverCachesForTests } from "../../src/utils/place-resolver.js";
 
-const spelled = vi.mocked(familySearchFullName);
+/** Each standard place's search entry (its place id and type) and its place's
+ *  names, every representation's, as recorded. */
+const RECORDED: Record<string, { placeId: string; type: string; names: string[] }> = {
+  "Santo António, Funchal, Madeira, Portugal": { placeId: "3668064", type: "Parish", names: ["Santo António"] },
+  "Hawaii, United States": { placeId: "12", type: "State", names: ["Hawaii", "Havaí", "Kingdom of Hawaii"] },
+  "Springfield, Sangamon, Illinois, United States": { placeId: "380949", type: "City", names: ["Springfield"] },
+  "Kentucky, United States": { placeId: "36", type: "State", names: ["Kentucky", "Kentaki"] },
+  "Laakirchen, Gmunden, Upper Austria, Austria": { placeId: "6353624", type: "Town", names: ["Laakirchen"] },
+  "Funchal, Madeira, Portugal": { placeId: "6283660", type: "City", names: ["Funchal"] },
+};
+const search = vi.mocked(searchPlace);
+const listing = vi.mocked(getPlaceReps);
 beforeEach(() => {
-  spelled.mockReset();
-  spelled.mockImplementation(async (name: string) => name);
+  __clearPlaceResolverCachesForTests();
+  search.mockReset();
+  listing.mockReset();
+  search.mockImplementation(async (name: string) => {
+    const key = Object.keys(RECORDED).find((k) => k.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "") ===
+      name.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, ""));
+    return key === undefined ? [] : [{ placeRepId: "r", placeId: RECORDED[key].placeId, name: key.split(",")[0], fullName: key, type: RECORDED[key].type }];
+  });
+  listing.mockImplementation(async (placeId: string) => {
+    const place = Object.values(RECORDED).find((p) => p.placeId === placeId);
+    return place ? [{ placeRepId: "r", names: place.names }] : [];
+  });
 });
 
 describe("unconfirmedByText: the place text confirms a standard place", () => {
@@ -59,32 +84,56 @@ describe("unconfirmedByText: the place text confirms a standard place", () => {
 });
 
 describe("keptSupplied: what a writer keeps of a supplied standard_place", () => {
-  it("keeps it in FamilySearch's spelling, not as typed", async () => {
-    spelled.mockResolvedValueOnce("Santo António, Funchal, Madeira, Portugal");
+  it("keeps it in FamilySearch's spelling, not as typed, when a part of the text names it", async () => {
     expect(await keptSupplied("Santo Antonio, Funchal", "santo antonio, funchal, madeira, portugal")).toEqual({
       kept: "Santo António, Funchal, Madeira, Portugal",
     });
-    expect(spelled).toHaveBeenCalledWith("santo antonio, funchal, madeira, portugal");
+    expect(search).toHaveBeenCalledWith("santo antonio, funchal, madeira, portugal");
+    expect(listing).toHaveBeenCalledWith("3668064");
   });
 
-  it("keeps it as written when FamilySearch's search failed", async () => {
-    spelled.mockResolvedValueOnce(null);
+  it("keeps it as written when FamilySearch's search, or the place's listing, failed", async () => {
+    search.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
     expect(await keptSupplied("Funchal, Madeira", "Funchal, Madeira, Portugal")).toEqual({ kept: "Funchal, Madeira, Portugal" });
+    listing.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
+    expect(await keptSupplied("Boston, Suffolk, Massachusetts", "Springfield, Sangamon, Illinois, United States")).toEqual({
+      kept: "Springfield, Sangamon, Illinois, United States",
+    });
   });
 
   it("keeps none FamilySearch has no place of", async () => {
-    spelled.mockResolvedValueOnce(false);
-    expect(await keptSupplied("Funchal, Madeira", "Funchal, Madeira, Portugal")).toEqual({
+    expect(await keptSupplied("Funchal, Madeira", "Funchal, Madeira, Portugal, Europe")).toEqual({
       why: "FamilySearch's place standard has no place of that name",
     });
   });
 
-  it("keeps none for a phrase that names no place, asking FamilySearch nothing", async () => {
-    expect(await keptSupplied("with his daughter", "Hawaii, United States")).toEqual({
-      why: "it could not be confirmed, as the text names neither a country nor that place",
+  // Lead, 2026-10-29: the place must also fit the fact's own text, "yes, definitely".
+  it("keeps none that no part of the place text names, though it is a FamilySearch place", async () => {
+    const notNamed = { why: "no part of the place text names that place" };
+    expect(await keptSupplied("Boston, Suffolk, Massachusetts", "Springfield, Sangamon, Illinois, United States")).toEqual(notNamed);
+    expect(await keptSupplied("with his daughter", "Hawaii, United States")).toEqual(notNamed);
+    // A town is named by the text's first part only.
+    expect(await keptSupplied("Stötten (Nötten), Laakirchen, Gmunden", "Laakirchen, Gmunden, Upper Austria, Austria")).toEqual(notNamed);
+    expect(await keptSupplied("Laakirchen, Gmunden", "Laakirchen, Gmunden, Upper Austria, Austria")).toEqual({
+      kept: "Laakirchen, Gmunden, Upper Austria, Austria",
     });
+    expect(await keptSupplied("Havaí", "Hawaii, United States")).toEqual({ kept: "Hawaii, United States" });
+  });
+
+  it("keeps the one-word list's entry for the text, which need not spell it, reading no listing", async () => {
+    expect(await keptSupplied("Ky", "Kentucky, United States")).toEqual({ kept: "Kentucky, United States" });
+    expect(listing).not.toHaveBeenCalled();
+    expect(await keptSupplied("Kty", "Kentucky, United States")).toEqual({ why: "no part of the place text names that place" });
+  });
+
+  it("keeps none on a fact with no place, or one that names none, asking FamilySearch nothing", async () => {
+    expect(await keptSupplied(undefined, "Hawaii, United States")).toEqual({ why: "the fact has no place" });
+    expect(await keptSupplied("  ", "Hawaii, United States")).toEqual({ why: "the fact has no place" });
     expect(await keptSupplied("Same House,", "Same, Manufahi, Timor-Leste")).toEqual({ why: "'Same House,' names no place" });
-    expect(spelled).not.toHaveBeenCalled();
+    expect(await keptSupplied("Funchal, England", "Funchal, Madeira, Portugal")).toEqual({
+      why: "it names a different country than the place",
+    });
+    expect(search).not.toHaveBeenCalled();
   });
 });
 
@@ -114,11 +163,26 @@ describe("placeAnswer: the engine's own answer", () => {
 
 describe("judgeSupplied", () => {
   it("stores FamilySearch's spelling of a kept value with no warning, asking for no answer", async () => {
-    spelled.mockResolvedValueOnce("Santo António, Funchal, Madeira, Portugal");
     const answer = vi.fn();
     expect(await judgeSupplied("Santo Antonio, Funchal", "Santo Antonio, Funchal, Madeira, Portugal", answer)).toEqual({
       standardPlace: "Santo António, Funchal, Madeira, Portugal",
     });
     expect(answer).not.toHaveBeenCalled();
+  });
+
+  it("stores the engine's answer for a value it does not keep, with a warning, unless the answer is that value", async () => {
+    const lookup = (standardPlace: string) => async () => ({ standardPlace, from: "lookup" as const });
+    const text = "Stötten (Nötten), Laakirchen, Gmunden, Upper Austria, Austria";
+    const LAAKIRCHEN = "Laakirchen, Gmunden, Upper Austria, Austria";
+    expect(await judgeSupplied(text, LAAKIRCHEN, lookup("laakirchen, gmunden, upper austria, austria"))).toEqual({
+      standardPlace: "laakirchen, gmunden, upper austria, austria",
+    });
+    expect(await judgeSupplied(text, LAAKIRCHEN, lookup("Gmunden, Upper Austria, Austria"))).toEqual({
+      standardPlace: "Gmunden, Upper Austria, Austria",
+      warning:
+        `standard_place '${LAAKIRCHEN}' for '${text}' was replaced by 'Gmunden, Upper Austria, Austria', the engine's lookup: ` +
+        "no part of the place text names that place. A supplied standard_place is kept when it is a FamilySearch standard " +
+        "place (a place_search result) for the fact's own place.",
+    });
   });
 });

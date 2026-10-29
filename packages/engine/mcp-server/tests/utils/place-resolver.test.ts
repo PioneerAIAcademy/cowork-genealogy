@@ -36,7 +36,8 @@ import {
   __usePlaceTableForTests,
   isNonPlacePhrase,
   checkFirstPlace,
-  familySearchFullName,
+  familySearchPlace,
+  textNamesPlace,
   samePlace,
 } from "../../src/utils/place-resolver.js";
 
@@ -1663,27 +1664,32 @@ describe("__usePlaceTableForTests (the eval harness's offline resolver)", () => 
   });
 });
 
-describe("familySearchFullName: a supplied standard_place in FamilySearch's own spelling", () => {
-  afterEach(() => __usePlaceTableForTests(null));
-
-  it("is the entry's full name when it is the value, case and accents aside, and searches once", async () => {
+describe("familySearchPlace: a supplied standard_place as FamilySearch's own", () => {
+  it("is the entry's full name when it is the value, case and accents aside, with its place, and searches once", async () => {
     mockSearchPlace.mockResolvedValue([
-      entry({ placeRepId: "1", fullName: "Parácuaro, Michoacán, Mexico" }),
-      entry({ placeRepId: "2", fullName: "Parácuaro, Guanajuato, Mexico" }),
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Parácuaro, Michoacán, Mexico", type: "Municipality" }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Parácuaro, Guanajuato, Mexico" }),
     ]);
-    expect(await familySearchFullName("paracuaro, michoacan, MEXICO")).toBe("Parácuaro, Michoacán, Mexico");
-    expect(await familySearchFullName("Parácuaro, Michoacán, Mexico")).toBe("Parácuaro, Michoacán, Mexico");
+    const parácuaro = { fullName: "Parácuaro, Michoacán, Mexico", places: [{ placeId: "P1", type: "Municipality" }] };
+    expect(await familySearchPlace("paracuaro, michoacan, MEXICO")).toEqual(parácuaro);
+    expect(await familySearchPlace("Parácuaro, Michoacán, Mexico")).toEqual(parácuaro);
     expect(mockSearchPlace).toHaveBeenCalledTimes(1);
     expect(mockSearchPlace).toHaveBeenCalledWith("paracuaro, michoacan, MEXICO");
   });
 
   it("is the value as written when FamilySearch spells it so, though another entry folds to it too", async () => {
     mockSearchPlace.mockResolvedValue([
-      entry({ placeRepId: "1", fullName: "Santo Antonio, Funchal, Madeira, Portugal" }),
-      entry({ placeRepId: "2", fullName: "Santo António, Funchal, Madeira, Portugal" }),
+      entry({ placeRepId: "1", placeId: "P1", fullName: "Santo Antonio, Funchal, Madeira, Portugal" }),
+      entry({ placeRepId: "2", placeId: "P2", fullName: "Santo António, Funchal, Madeira, Portugal" }),
     ]);
-    expect(await familySearchFullName("Santo António, Funchal, Madeira, Portugal")).toBe("Santo António, Funchal, Madeira, Portugal");
-    expect(await familySearchFullName("santo antónio, funchal, madeira, portugal")).toBe("Santo Antonio, Funchal, Madeira, Portugal");
+    expect(await familySearchPlace("Santo António, Funchal, Madeira, Portugal")).toMatchObject({
+      fullName: "Santo António, Funchal, Madeira, Portugal",
+      places: [{ placeId: "P2" }],
+    });
+    expect(await familySearchPlace("santo antónio, funchal, madeira, portugal")).toMatchObject({
+      fullName: "Santo Antonio, Funchal, Madeira, Portugal",
+      places: [{ placeId: "P1" }],
+    });
   });
 
   it("is false when no entry's full name is the value, though the search finds its places", async () => {
@@ -1691,28 +1697,102 @@ describe("familySearchFullName: a supplied standard_place in FamilySearch's own 
       entry({ placeRepId: "1", fullName: "Union Station, Licking, Ohio, United States" }),
       entry({ placeRepId: "2", fullName: "Union Township, Licking, Ohio, United States" }),
     ]);
-    expect(await familySearchFullName("Union Station, Union Township, Licking, Ohio, United States")).toBe(false);
+    expect(await familySearchPlace("Union Station, Union Township, Licking, Ohio, United States")).toBe(false);
   });
 
   it("is null when the search fails, and a failure is not remembered", async () => {
     mockSearchPlace.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
-    expect(await familySearchFullName("Kent, England, United Kingdom")).toBeNull();
-    mockSearchPlace.mockResolvedValueOnce([entry({ placeRepId: "1", fullName: "Kent, England, United Kingdom" })]);
-    expect(await familySearchFullName("Kent, England, United Kingdom")).toBe("Kent, England, United Kingdom");
+    expect(await familySearchPlace("Kent, England, United Kingdom")).toBeNull();
+    mockSearchPlace.mockResolvedValueOnce([entry({ placeRepId: "1", placeId: "P1", fullName: "Kent, England, United Kingdom" })]);
+    expect(await familySearchPlace("Kent, England, United Kingdom")).toMatchObject({ fullName: "Kent, England, United Kingdom" });
+  });
+});
+
+// The places' own answers, as the Places API gave them on 2026-10-29
+// (Accept-Language: en): each search entry whose full name is the value, and
+// each place's listing, every representation with its names.
+describe("textNamesPlace: some part of the fact's place text names a supplied standard place", () => {
+  const ANSWERS: Record<string, { entries: Entry[]; listings: Record<string, string[][]> }> = {
+    "Santo António, Funchal, Madeira, Portugal": {
+      entries: [entry({ placeRepId: "1542672", placeId: "3668064", fullName: "Santo António, Funchal, Madeira, Portugal", type: "Parish" })],
+      listings: { "3668064": [["Santo António"]] },
+    },
+    "Hawaii, United States": {
+      entries: [entry({ placeRepId: "328", placeId: "12", fullName: "Hawaii, United States", type: "State" })],
+      listings: { "12": [["Hawaii", "Havaí", "Hawái", "Hawaï", "Гавайи"], ["Kingdom of Hawaii", "Aupuni Mōʻī o Hawaiʻi"]] },
+    },
+    "Springfield, Sangamon, Illinois, United States": {
+      entries: [entry({ placeRepId: "4033952", placeId: "380949", fullName: "Springfield, Sangamon, Illinois, United States", type: "City" })],
+      listings: { "380949": [["Springfield"]] },
+    },
+    "District Township, Berks, Pennsylvania, United States": {
+      entries: [entry({ placeRepId: "4839935", placeId: "1121325", fullName: "District Township, Berks, Pennsylvania, United States", type: "Township" })],
+      listings: { "1121325": [["District Township"], ["District Township"]] },
+    },
+    "Laakirchen, Gmunden, Upper Austria, Austria": {
+      entries: [entry({ placeRepId: "8090930", placeId: "6353624", fullName: "Laakirchen, Gmunden, Upper Austria, Austria", type: "Town" })],
+      listings: { "6353624": [["Laakirchen"]] },
+    },
+    // One full name, three places: a registration district, a town and a poor law union.
+    "West Bromwich, Staffordshire, England, United Kingdom": {
+      entries: [
+        entry({ placeRepId: "3041526", placeId: "6256198", fullName: "West Bromwich, Staffordshire, England, United Kingdom", type: "Civil Registration District" }),
+        entry({ placeRepId: "2965476", placeId: "6145561", fullName: "West Bromwich, Staffordshire, England, United Kingdom", type: "Town" }),
+        entry({ placeRepId: "3040286", placeId: "6257130", fullName: "West Bromwich, Staffordshire, England, United Kingdom", type: "Poor Law Union" }),
+      ],
+      listings: { "6256198": [["West Bromwich"]], "6145561": [["West Bromwich"], ["West Bromwich"], ["West Bromwich"]], "6257130": [["West Bromwich"]] },
+    },
+  };
+  beforeEach(() => {
+    mockSearchPlace.mockImplementation(async (name: string) => ANSWERS[name]?.entries ?? []);
+    mockGetPlaceReps.mockImplementation(async (placeId: string) => {
+      const listing = Object.values(ANSWERS).find((a) => a.listings[placeId])?.listings[placeId] ?? [];
+      return listing.map((names, i) => ({ placeRepId: `${placeId}-${i}`, names }));
+    });
+  });
+  const names = async (standard: string, text: string) => textNamesPlace((await familySearchPlace(standard)) as never, text);
+
+  it.each([
+    ["Santo Antonio, Funchal", "Santo António, Funchal, Madeira, Portugal"],
+    ["Honolulu, Hawaii", "Hawaii, United States"],
+    ["Havaí", "Hawaii, United States"],
+    ["Springfield, Sangamon County, Illinois", "Springfield, Sangamon, Illinois, United States"],
+    ["District Township, Berks County, Pennsylvania", "District Township, Berks, Pennsylvania, United States"],
+    // A town is named by the text's first part only: a later part names a jurisdiction.
+    ["Laakirchen, Gmunden, Oberösterreich", "Laakirchen, Gmunden, Upper Austria, Austria"],
+    // The town is not named by a later part, but the registration district of that name is.
+    ["St John's Church, West Bromwich, Staffordshire, England", "West Bromwich, Staffordshire, England, United Kingdom"],
+  ])("%j names %j", async (text, standard) => {
+    expect(await names(standard, text)).toBe(true);
   });
 
-  it("answers from the eval harness's table offline, in the table's spelling, case and accents aside", async () => {
-    __usePlaceTableForTests({
-      "Boston, Massachusetts": "Boston, Suffolk, Massachusetts, United States",
-      "Sé, Funchal": "Santo António, Funchal, Madeira, Portugal",
-      Nowhere: null,
-    });
-    expect(await familySearchFullName("boston, suffolk, massachusetts, united states")).toBe(
-      "Boston, Suffolk, Massachusetts, United States",
-    );
-    expect(await familySearchFullName("Santo Antonio, Funchal, Madeira, Portugal")).toBe("Santo António, Funchal, Madeira, Portugal");
-    expect(await familySearchFullName("Boston, Massachusetts")).toBe(false);
-    expect(mockSearchPlace).not.toHaveBeenCalled();
+  it.each([
+    ["with his daughter", "Hawaii, United States"],
+    ["Boston, Suffolk, Massachusetts, United States", "Springfield, Sangamon, Illinois, United States"],
+    ["District 1065, Spalding, Georgia", "District Township, Berks, Pennsylvania, United States"],
+    ["Stötten (Nötten), Laakirchen, Gmunden, Upper Austria, Austria", "Laakirchen, Gmunden, Upper Austria, Austria"],
+  ])("%j does not name %j", async (text, standard) => {
+    expect(await names(standard, text)).toBe(false);
+  });
+
+  it("is true when any place of the full name is named, whichever the search gives first", async () => {
+    const [district, town] = ANSWERS["West Bromwich, Staffordshire, England, United Kingdom"].entries;
+    mockSearchPlace.mockResolvedValue([town, district]);
+    expect(await names("West Bromwich, Staffordshire, England, United Kingdom", "St John's Church, West Bromwich, Staffordshire")).toBe(true);
+    mockSearchPlace.mockResolvedValue([town]);
+    __clearPlaceResolverCachesForTests();
+    expect(await names("West Bromwich, Staffordshire, England, United Kingdom", "St John's Church, West Bromwich, Staffordshire")).toBe(false);
+  });
+
+  it("is null when no place's listing can be read, and reads each listing once", async () => {
+    mockGetPlaceReps.mockRejectedValue(new Error("FamilySearch API error: 503"));
+    expect(await names("Hawaii, United States", "with his daughter")).toBeNull();
+    expect(await textNamesPlace({ fullName: "Nowhere", places: [{}] }, "Nowhere")).toBeNull();
+    mockGetPlaceReps.mockReset();
+    mockGetPlaceReps.mockResolvedValue([{ placeRepId: "328", names: ["Hawaii"] }]);
+    expect(await names("Hawaii, United States", "Hawaii")).toBe(true);
+    expect(await names("Hawaii, United States", "Honolulu, Hawaii")).toBe(true);
+    expect(mockGetPlaceReps).toHaveBeenCalledTimes(1);
   });
 });
 

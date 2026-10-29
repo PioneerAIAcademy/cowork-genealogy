@@ -4,17 +4,20 @@
  * 2026-10-26: "have the engine take FamilySearch's standardization from the
  * record a tree fact cites").
  *
- * A supplied standard_place is kept when the fact has a place, the value names
- * no other country than that place, the place text confirms it
- * (`unconfirmedByText`), and FamilySearch's place search finds a place whose
- * full name is the value, case and accents aside. It is kept in FamilySearch's
- * spelling. A failed search keeps it as written. Otherwise the engine's own
- * answer replaces it, or none is kept, and a warning says which and why.
+ * A supplied standard_place is kept when the fact has a place that is not a
+ * non-place phrase, the value names no other country than that place,
+ * FamilySearch's place search finds a place whose full name is the value (case
+ * and accents aside), and some part of the place text names that place, as
+ * `record_read` checks a fact's text (`textNamesPlace`), or the value is the
+ * one-word list's entry for the text (lead, 2026-10-29: the place must fit the
+ * fact's own text, "yes, definitely"). It is kept in FamilySearch's spelling. A
+ * failed lookup keeps it as written. Otherwise the engine's own answer replaces
+ * it, or none is kept, and a warning says which and why.
  *
  * The engine's own answer for a place text, which also fills a fact with none:
- * 1. FamilySearch's own standardization of the same text on the record personas
- *    the fact is about (record-standards.ts). Two different values are doubt,
- *    and doubt is no standard_place;
+ * 1. FamilySearch's own standardization of the same text on the records the
+ *    fact cites (`RecordStandards`, research_append's Lever B copy). Two
+ *    different values are doubt, and doubt is no standard_place;
  * 2. otherwise the writer's own lookup, kept only when the text confirms it.
  * A non-place phrase ("Same House") has none, and an answer naming a different
  * country than the text is dropped.
@@ -22,10 +25,11 @@
 import {
   canonicalCountry,
   countryConsistency,
-  familySearchFullName,
+  familySearchPlace,
   isNonPlacePhrase,
   placeSegments,
   standardPlaceNamedInText,
+  textNamesPlace,
 } from "./place-resolver.js";
 import { oneWordListPlace } from "./one-word-places.js";
 
@@ -51,11 +55,17 @@ export function unconfirmedByText(place: string, standardPlace: string): string 
   const parts = placeSegments(place);
   if (canonicalCountry(parts[parts.length - 1] ?? "") !== null) return "does not name the country the text names";
   const oneWord = parts.length === 1 && !/\s/.test(parts[0]);
-  const listed = oneWordListPlace(place);
-  if (oneWord || (listed !== null && placeTextKey(listed) === placeTextKey(standardPlace))) return null;
+  if (oneWord || isListAnswer(place, standardPlace)) return null;
   return standardPlaceNamedInText(place, standardPlace)
     ? null
     : "could not be confirmed, as the text names neither a country nor that place";
+}
+
+/** `standardPlace` is the one-word list's entry for `place`, case and accents
+ *  aside: "Ky" is Kentucky, "W. Va." West Virginia. */
+function isListAnswer(place: string, standardPlace: string): boolean {
+  const listed = oneWordListPlace(place);
+  return listed !== null && placeTextKey(listed) === placeTextKey(standardPlace);
 }
 
 export type PlaceAnswer =
@@ -119,16 +129,18 @@ export async function placeAnswer(
 }
 
 /** What a writer keeps of a supplied standard_place for `place`: the value in
- *  FamilySearch's spelling (as written when the search failed), or why none. */
+ *  FamilySearch's spelling (as written when a lookup failed), or why none. */
 export async function keptSupplied(place: unknown, supplied: string): Promise<{ kept: string } | { why: string }> {
   if (typeof place !== "string" || place.trim() === "") return { why: "the fact has no place" };
   if (isNonPlacePhrase(place)) return { why: `'${place}' names no place` };
   if (countryConsistency(place, supplied) === "contradiction") return { why: "it names a different country than the place" };
-  const unconfirmed = unconfirmedByText(place, supplied);
-  if (unconfirmed !== null) return { why: `it ${unconfirmed}` };
-  const spelled = await familySearchFullName(supplied);
-  if (spelled === false) return { why: "FamilySearch's place standard has no place of that name" };
-  return { kept: spelled ?? supplied };
+  const found = await familySearchPlace(supplied);
+  if (found === false) return { why: "FamilySearch's place standard has no place of that name" };
+  if (found === null) return { kept: supplied };
+  if (!isListAnswer(place, found.fullName) && (await textNamesPlace(found, place)) === false) {
+    return { why: "no part of the place text names that place" };
+  }
+  return { kept: found.fullName };
 }
 
 const KEPT_WHEN =
@@ -138,7 +150,9 @@ const KEPT_WHEN =
 /** What a writer stores when a caller supplied `supplied` for `place`: the
  *  value, in FamilySearch's spelling, with no warning when it is kept;
  *  otherwise the engine's own answer for the place text (`answer`, asked only
- *  then), or null, with a warning that says which and why. */
+ *  then), or null, with a warning that says which and why. An answer that is
+ *  the supplied value itself, case and accents aside, is stored with no
+ *  warning: nothing was replaced. */
 export async function judgeSupplied(
   place: unknown,
   supplied: string,
@@ -150,6 +164,9 @@ export async function judgeSupplied(
   const text = typeof place === "string" && place.trim() !== "" ? place : undefined;
   const head = `standard_place '${supplied}'${text === undefined ? "" : ` for '${text}'`}`;
   const a = text === undefined || isNonPlacePhrase(text) ? null : await answer(text);
+  if (a !== null && a.standardPlace !== null && placeTextKey(a.standardPlace) === placeTextKey(supplied)) {
+    return { standardPlace: a.standardPlace };
+  }
   if (a !== null && a.standardPlace !== null) {
     const whose = a.from === "record" ? "FamilySearch's standardization of the same place on the record it cites" : "the engine's lookup";
     return { standardPlace: a.standardPlace, warning: `${head} was replaced by '${a.standardPlace}', ${whose}: ${why}. ${KEPT_WHEN}` };

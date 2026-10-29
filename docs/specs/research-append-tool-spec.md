@@ -683,8 +683,8 @@ was measured and rejected. `external_links_search` is likewise persona-less but 
 Two prevention levers for the silent-wrong-geocode theme, applied per `assertions`
 append op (deliberately simple), and to an `assertions` update that sets `place` to a
 new place without setting `standard_place`. On that update the existing assertion is
-the base, Lever B's step 1 reads its record persona as on an append, its sidecar
-record gives the record's country (below), a resolved value is written into the
+the base, no sidecar value is copied (geocoding only; its sidecar record still gives
+the record's country, below), a resolved value is written into the
 update's `standard_place`, and when nothing resolves, or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
 with a warning rather than kept for the new place.
@@ -708,8 +708,8 @@ the answer's own name, its first segment, is one of the text's comma parts
 States", while "at the home of her daughter" and "at the home of her daughter,
 Mrs. John Smith" drop "Of, Trabzon, Türkiye". The check is
 `unconfirmedByText` (`src/utils/place-verdict.ts`); `tree_edit`, `tree_correct`
-and `place_search`'s verdict apply it to their own lookups and to a supplied
-value (tree-edit-tool-spec §4.1.1). A dropped answer leaves the place as written, with no
+and `place_search`'s verdict apply it to their own lookups (tree-edit-tool-spec
+§4.1.1). A dropped answer leaves the place as written, with no
 `standard_place`. The lift holds on an append and on an update that leaves
 `place` alone, such as an `informant_bias_notes` note or `extraction_append`'s
 question tie. On such an update the lifted place and its `standard_place` go
@@ -723,23 +723,8 @@ stays an opt-out, as on an append. The levers:
   and the guard; a non-place phrase such as "Same House" or "Do", tested by
   `isNonPlacePhrase` in `place-resolver.ts`, skips both steps below and stays
   unset with no warning):
-  1. FamilySearch's own standardization on the op's record persona supplies it:
-     the `standard_place` on that persona's facts, and on the facts of the
-     relationships it is a party to, for the same place text (case, accents and
-     spacing aside), in the result for the op's `record_id` in the sidecar its
-     `log_entry_id` names (for an accepted hint, the record read staged in the
-     same call), is **copied** — no geocoding call. Only a sidecar marked
-     `standard_places_from: "familysearch"` is read (research-schema-spec
-     §5.4.1): a live `record_read` marks its own, while a `record_search` sidecar
-     mixes in the engine's own lookups and an assertion's stored
-     `standard_place` may be an engine lookup or an agent's pick, so neither is
-     read. When those values differ the record is in doubt: the field stays
-     unset, with a warning and an `unresolvedPlaces` entry, and nothing is
-     geocoded. Another persona's or record's standard place for the same text
-     is never taken (lead, 2026-10-26: "have the engine take FamilySearch's
-     standardization from the record a tree fact cites";
-     `src/utils/record-standards.ts`, shared with `tree_edit`). When that gives
-     none, if the op's sidecar-matched record (§3.5) gives the op's own fact a
+  1. if the op's sidecar-matched record (§3.5; for an accepted hint, the record
+     read staged in the same call) gives the op's own fact a
      converter-resolved `standard_place`, it is **copied** — no geocoding call.
      The op's own fact is a fact of its `record_persona_id` (the persona's own,
      or one of a relationship whose `person1` or `person2` it is, as a
@@ -751,7 +736,17 @@ stays an opt-out, as on an append. The levers:
      carries the same `standard_place`: one person's name never lands on
      another's fact (a census household where FamilySearch standardized only
      the head's place), and one fact's name never lands on another fact of the
-     same person (one place named for two eras);
+     same person (one place named for two eras). When such facts carry two or
+     more different ones the record disagrees with itself: the field stays
+     unset, with a warning and an `unresolvedPlaces` entry, and nothing is
+     geocoded. An assertion's stored `standard_place`, which may be an engine
+     lookup or an agent's pick, is never read. This copy is the one way the
+     engine takes FamilySearch's standardization from a record (lead,
+     2026-10-26: "have the engine take FamilySearch's standardization from the
+     record a tree fact cites"): `tree_edit` and `tree_correct` read it for a
+     fact citing a record (tree-edit-tool-spec §4.1.1), and §5.9 for a caller's
+     timeline event (`sidecarStandardPlaces` and `RecordStandards`,
+     `research-append.ts`);
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
@@ -1760,15 +1755,18 @@ On a `timelines` append or update reached as an MCP caller
 (`researchAppendFromCaller`), each event's supplied `standard_place` is judged as
 `tree_edit` judges a fact's (tree-edit-tool-spec §4.1.1). It is kept when the
 event has a `place` that is not a non-place phrase, the value names no other
-country than it, the place text confirms it (`unconfirmedByText`, §3.6), and
-FamilySearch's place search finds a place of that full name. It is kept in
-FamilySearch's spelling, with no warning and its distances unchanged; a failed
-search keeps it as written. Otherwise the engine's answer replaces it, or it
-becomes `null`, with a warning naming the event (`events[<k>]: standard_place
-'<supplied>' … was replaced by …` or `… was not kept …`). The answer is
-FamilySearch's own standardization of the text on the record personas of the
-event's `assertion_ids` (§3.6, Lever B step 1), else `resolveStandardPlace(place)`
-when the place text confirms it; none when FamilySearch's values disagree, for a
+country than it, FamilySearch's place search finds a place of that full name,
+and some part of the place text names that place (or the value is the one-word
+list's entry for the text). It is kept in FamilySearch's spelling, with no
+warning and its distances unchanged; a failed lookup keeps it as written.
+Otherwise the engine's answer replaces it, or it becomes `null`, with a warning
+naming the event (`events[<k>]: standard_place '<supplied>' … was replaced by …`
+or `… was not kept …`); an answer that is the value itself replaces nothing. The
+answer is the `standard_place` the record of each of the event's
+`assertion_ids` gives that assertion's own fact for the event's place text
+(§3.6, Lever B step 1's copy, from the sidecar the assertion's log entry
+names), else `resolveStandardPlace(place)` when the place text confirms it
+(`unconfirmedByText`, §3.6); none when those records give two or more, for a
 non-place phrase, or for an answer naming another country. When the value is replaced by another place, or
 by none, `distance_from_previous_km` becomes `null` on that event and the next,
 since both were measured from the old value; a replacement FamilySearch finds to

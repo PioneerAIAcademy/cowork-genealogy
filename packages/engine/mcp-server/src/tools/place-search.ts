@@ -248,7 +248,8 @@ export async function placeSearchTool(
             standardPlace: answer.standardPlace,
             reason:
               `the writers store this standard_place for this place text ${on}. A supplied ` +
-              "standard_place is kept instead when it is a FamilySearch standard place, as each result is",
+              "standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some " +
+              "part of the place text names it",
           }
         : {
             standardPlace: null,

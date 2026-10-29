@@ -65,7 +65,6 @@ import {
   type PlaceCoords,
 } from "../utils/place-resolver.js";
 import { judgeSupplied, placeAnswer, unconfirmedByText } from "../utils/place-verdict.js";
-import { RecordStandards, assertionsNamed } from "../utils/record-standards.js";
 import { isSuspiciousText, TRAILING_DOUBT, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
 import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
 import { haversineDistance } from "./distance.js";
@@ -7866,16 +7865,17 @@ function applyOne(
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
 
 /** The converter-resolved standard_place a sidecar record's simplified gedcomx
- *  gives an assertion's own fact: the facts of its `record_persona_id` (the
- *  persona's own, and those of a relationship whose `person1` or `person2` it
- *  is; a ParentChild relationship's `parent`/`child` facts are not read) of its
- *  `fact_type` (`canonicalFactKey`) and with its `place` (trimmed,
- *  case-insensitive). Null unless every such fact carries the same one, so one
- *  fact's name never lands on another person's or another fact's. Never geocode
- *  what the source record already resolved. */
-function sidecarStandardPlace(gx: any, entry: any): string | null {
-  if (!gx || typeof gx !== "object") return null;
-  const persona = entry.record_persona_id;
+ *  gives one persona's own fact: the facts of `persona` (its own, and those of a
+ *  relationship whose `person1` or `person2` it is; a ParentChild relationship's
+ *  `parent`/`child` facts are not read) of type `factType` (`canonicalFactKey`)
+ *  and with place `place` (trimmed, case-insensitive). The one name every such
+ *  fact carries; every name, when they carry two or more, which the writers
+ *  read as the record disagreeing with itself; else none. So one person's name
+ *  never lands on another person's fact, and one fact's name never lands on
+ *  another fact of the same person. The one way the engine takes FamilySearch's
+ *  standardization from a record: Lever B's copy, and `RecordStandards`. */
+function sidecarStandardPlaces(gx: any, persona: unknown, factType: unknown, place: string): string[] {
+  if (!gx || typeof gx !== "object") return [];
   const facts: any[] = [];
   for (const p of Array.isArray(gx.persons) ? gx.persons : []) {
     if (p?.id === persona && Array.isArray(p.facts)) facts.push(...p.facts);
@@ -7883,19 +7883,56 @@ function sidecarStandardPlace(gx: any, entry: any): string | null {
   for (const r of Array.isArray(gx.relationships) ? gx.relationships : []) {
     if ((r?.person1 === persona || r?.person2 === persona) && Array.isArray(r.facts)) facts.push(...r.facts);
   }
-  const want = entry.place.trim().toLowerCase();
-  const names = new Set(
-    facts
-      .filter(
-        (f) =>
-          typeof f?.place === "string" &&
-          f.place.trim().toLowerCase() === want &&
-          canonicalFactKey(f.type) === canonicalFactKey(entry.fact_type),
-      )
-      .map((f) => f.standard_place),
-  );
-  const [name] = names;
-  return names.size === 1 && typeof name === "string" ? name : null;
+  const want = place.trim().toLowerCase();
+  const values = facts
+    .filter(
+      (f) =>
+        typeof f?.place === "string" &&
+        f.place.trim().toLowerCase() === want &&
+        canonicalFactKey(f.type) === canonicalFactKey(factType),
+    )
+    .map((f) => f.standard_place);
+  const names = [...new Set(values.filter((v): v is string => typeof v === "string"))];
+  return names.length === 1 && values.some((v) => typeof v !== "string") ? [] : names;
+}
+
+/**
+ * FamilySearch's standard_places for a place text on the records stored
+ * assertions cite, read through one call's sidecar reader:
+ * `sidecarStandardPlaces` on each assertion's record persona, in the result for
+ * its `record_id` in the sidecar its log entry names, for its own `fact_type`
+ * unless `factType` is given (a tree fact's own type). The distinct names those
+ * records give: one is FamilySearch's answer, two or more are doubt.
+ * `tree_edit` and `tree_correct` read a tree fact's cited records through it,
+ * and a caller's timeline its events' assertions.
+ */
+export class RecordStandards {
+  private readonly logRefs = new Map<string, string>();
+
+  constructor(
+    research: unknown,
+    private readonly read: (ref: string) => Promise<any>,
+  ) {
+    const log = (research as any)?.log;
+    for (const e of Array.isArray(log) ? log : []) {
+      if (typeof e?.id === "string" && typeof e.results_ref === "string") this.logRefs.set(e.id, e.results_ref);
+    }
+  }
+
+  async for(assertions: readonly any[], place: string, factType?: string): Promise<string[]> {
+    const names = new Set<string>();
+    for (const a of assertions) {
+      const ref = this.logRefs.get(a?.log_entry_id);
+      const results = ref ? (await this.read(ref))?.payload?.results : undefined;
+      for (const r of Array.isArray(results) ? results : []) {
+        if (typeof r?.recordId !== "string" || arkToBareId(r.recordId) !== arkToBareId(String(a.record_id ?? ""))) continue;
+        for (const name of sidecarStandardPlaces(r.gedcomx, a.record_persona_id, factType ?? a.fact_type, place)) {
+          names.add(name);
+        }
+      }
+    }
+    return [...names];
+  }
 }
 
 /** A sidecar result's record id: record_search and record_read stage GedcomX
@@ -8351,11 +8388,11 @@ async function checkLocalityFirstPlaces(
  * A caller's own standard_place on a timeline event is judged as a tree fact's
  * is (place-verdict.ts): kept, in FamilySearch's spelling and with its
  * distances, when it is a FamilySearch standard place the event's place text
- * confirms, else replaced by the engine's answer (FamilySearch's own on the
- * records of the event's assertions, else the resolver's when the text confirms
- * it) or null, with a warning. The distances measured from it, on that event
- * and the next, become null when the replacement is another place, not the
- * same place spelled another way.
+ * names, else replaced by the engine's answer (FamilySearch's own on the
+ * records of the event's assertions, `RecordStandards`, else the resolver's
+ * when the text confirms it) or null, with a warning. The distances measured
+ * from it, on that event and the next, become null when the replacement is
+ * another place, not the same place spelled another way.
  */
 async function judgeTimelinePlaces(
   ops: ResearchAppendOp[],
@@ -8389,6 +8426,12 @@ async function judgeTimelinePlaces(
       warnings.push(fmt(i, `events[${k}]: ${judged.warning}`));
     }
   }
+}
+
+/** The assertions `ids` names. */
+function assertionsNamed(ids: unknown, research: any): any[] {
+  const wanted = new Set(Array.isArray(ids) ? ids : []);
+  return (Array.isArray(research?.assertions) ? research.assertions : []).filter((a: any) => wanted.has(a?.id));
 }
 
 /** The `payload.results` of a sidecar read through `sidecarReader`, or null. */
@@ -8670,7 +8713,7 @@ async function prepareOps(
     if (e && typeof e === "object" && typeof e.id === "string") logById.set(e.id, e);
   }
   const readSidecarResults = sidecarResultsReader(readSidecar);
-  const recordStandards = new RecordStandards(research, readSidecar, options.hintReads);
+  const recordStandards = new RecordStandards(research, readSidecar);
 
   // A place variant's place given only in `value` ("birthplace") is lifted into
   // `place` here, before the lookups below and applyOne's fold. It is a
@@ -8705,9 +8748,10 @@ async function prepareOps(
    *  one-word text and a one-word list answer). A dropped lookup is warned
    *  about and listed in unresolvedPlaces, never in resolvedPlaces. A place on an assertion flagged
    *  as suspicious text is never looked up, and a refusal shows it as
-   *  WITHHELD_SUSPICIOUS. `countryRecord` is the sidecar record the assertion
-   *  comes from and `countryProducer` the tool that staged it, which give the
-   *  resolver the record's country (`recordCountryOf`). */
+   *  WITHHELD_SUSPICIOUS. `matchedRecord` is an append's sidecar-matched record
+   *  (D2), whose standard_place is copied. `countryRecord` is the sidecar record
+   *  the assertion comes from and `countryProducer` the tool that staged it,
+   *  which give the resolver the record's country (`recordCountryOf`). */
   const applyPlaceLevers = async (
     entry: any,
     i: number,
@@ -8730,11 +8774,10 @@ async function prepareOps(
       warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)${why}`);
       unresolvedPlaces.push(entry.place);
     };
-    // ── Place lever (b): never geocode what FamilySearch already standardized —
-    // take FamilySearch's own standard_place for the same text on the
-    // assertion's record persona (record-standards.ts), and none when its values
-    // disagree; else copy the standard_place the matched sidecar record gives
-    // this assertion's own fact (same persona, fact type and place string).
+    // ── Place lever (b): never geocode what the source record already
+    // resolved — copy the standard_place the matched sidecar record gives this
+    // assertion's own fact (same persona, fact type and place string,
+    // `sidecarStandardPlaces`), and none when its values disagree.
     // `standard_place: null` is an explicit opt-out
     // (skip resolution + guard); only a fully omitted field triggers
     // resolution. A non-place phrase ("Same House") is left unset, silently: it
@@ -8746,9 +8789,10 @@ async function prepareOps(
       entry.standard_place === undefined &&
       !isNonPlacePhrase(factText(entry.place)!)
     ) {
-      const fromRecord = await recordStandards.for([entry], entry.place);
+      const fromRecord = matchedRecord
+        ? sidecarStandardPlaces(matchedRecord.gedcomx, entry.record_persona_id, entry.fact_type, entry.place)
+        : [];
       let sp: string | null = fromRecord.length === 1 ? fromRecord[0] : null;
-      if (fromRecord.length === 0 && matchedRecord) sp = sidecarStandardPlace(matchedRecord.gedcomx, entry);
       if (sp) filled = "sidecar";
       if (fromRecord.length > 1) {
         unresolved(`: FamilySearch standardized it differently on its record (${fromRecord.join("; ")})`);

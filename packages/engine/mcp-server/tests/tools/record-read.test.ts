@@ -1470,8 +1470,6 @@ describe("recordReadTool — staging on a live read (#2048 / #2489)", () => {
     const envelope = JSON.parse(await readFile(join(dir, live.staged!.resultsRef), "utf8"));
     expect(envelope.tool).toBe("record_read");
     expect(envelope.returned_count).toBe(1);
-    // A live read keeps only the record's own normalized places, so it marks them FamilySearch's.
-    expect(envelope.standard_places_from).toBe("familysearch");
     expect(envelope.payload.query).toEqual({ recordId: "ark:/61903/1:1:QVS9-DHDB" });
     expect(envelope.payload.results[0].recordId).toBe("ark:/61903/1:1:QVS9-DHDB");
     expect(envelope.payload.results[0].gedcomx.persons?.[0]?.id).toBe("QVS9-DHDB");

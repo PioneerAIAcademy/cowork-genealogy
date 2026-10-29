@@ -16,14 +16,16 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
       text === "Schuylkill County, Pennsylvania" ? "Schuylkill, Pennsylvania, United States" : null,
     ),
     // Offline: every supplied standard_place is one of FamilySearch's, spelled
-    // as written, unless a test says otherwise.
-    familySearchFullName: vi.fn(async (name: string) => name),
+    // as written, and named by its fact's place text, unless a test says
+    // otherwise (the rule's own tests run it on recorded answers).
+    familySearchPlace: vi.fn(async (name: string) => ({ fullName: name, places: [{ placeId: "1" }] })),
+    textNamesPlace: vi.fn(async () => true),
   };
 });
 
 import { treeEdit, checkWarningGate } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
-import { familySearchFullName, resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { familySearchPlace, resolveStandardPlace, textNamesPlace } from "../../src/utils/place-resolver.js";
 import { validateProject } from "../../src/validation/validator.js";
 
 const minimalResearch = {
@@ -541,17 +543,20 @@ describe("tree_edit", () => {
       (await readTree()).persons[0].facts.find((f: any) => f.id === single(r).assignedIds?.fact);
     const placeWarnings = (r: any) =>
       r.validation.warnings.filter((w: string) => /^(standard_place '|could not resolve standard_place)/.test(w));
-    const realPlace = vi.mocked(familySearchFullName);
+    const realPlace = vi.mocked(familySearchPlace);
+    const spelled = (fullName: string) => ({ fullName, places: [{ placeId: "1" }] });
     /** Only OTHER is not one of FamilySearch's names; the rest are spelled as written. */
-    const onlyOtherIsFake = async (name: string) => (name === OTHER ? false : name);
+    const onlyOtherIsFake = async (name: string) => (name === OTHER ? false : spelled(name));
     beforeEach(() => {
       realPlace.mockReset();
       realPlace.mockImplementation(onlyOtherIsFake);
+      vi.mocked(textNamesPlace).mockClear();
       vi.mocked(resolveStandardPlace).mockClear();
     });
     afterEach(() => {
       realPlace.mockReset();
-      realPlace.mockImplementation(async (name: string) => name);
+      realPlace.mockImplementation(async (name: string) => spelled(name));
+      vi.mocked(textNamesPlace).mockImplementation(async () => true);
     });
 
     /** Tree source S1 is research source src_001; S2 is src_002. */
@@ -602,12 +607,11 @@ describe("tree_edit", () => {
         },
       };
     };
-    type SidecarFact = { place: string; standard_place?: string };
+    type SidecarFact = { place: string; standard_place?: string; type?: string };
     /** The sidecar log_001: record AAAA-111 with persona p1's facts, persona
      *  p2's, and the p1 + p2 couple's; record CCCC-333 with its p1's. */
     const writeSidecar = async (
       facts: { p1?: SidecarFact[]; p2?: SidecarFact[]; couple?: SidecarFact[]; others?: SidecarFact[]; other?: SidecarFact[] },
-      marked = true,
     ) => {
       const asFacts = (fs: SidecarFact[] = [], type = "Residence") => fs.map((f, i) => ({ id: `F${i + 1}`, type, ...f }));
       const record = (id: string, p1: SidecarFact[] = [], p2: SidecarFact[] = [], couple: SidecarFact[] = [], others: SidecarFact[] = []) => ({
@@ -625,7 +629,6 @@ describe("tree_edit", () => {
         join(dir, "results", "log_001.json"),
         JSON.stringify({
           log_id: "log_001", tool: "record_read", retrieved: "2026-01-01T00:00:00Z", returned_count: 2,
-          ...(marked ? { standard_places_from: "familysearch" } : {}),
           payload: { results: [record("AAAA-111", facts.p1, facts.p2, facts.couple, facts.others), record("CCCC-333", facts.other)] },
         }),
       );
@@ -746,17 +749,17 @@ describe("tree_edit", () => {
       expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledTimes(1);
     });
 
-    it("fills from FamilySearch's own value for the text on the cited persona, case and accents aside, before any lookup", async () => {
+    it("fills from the cited persona's own fact of its type and text, case and surrounding spaces aside, before any lookup", async () => {
       const { tree, research } = project(
         [assertion("a_001", "src_001", "AAAA-111", "p1", SCHUYLKILL, "District Township, Berks, Pennsylvania, United States")],
         [link("pe_001", "a_001")],
       );
       await writeProject(tree, research);
       await writeSidecar({
-        p1: [{ place: " schuylkill cóunty,  pennsylvania", standard_place: FS }],
+        p1: [{ place: " SCHUYLKILL county, Pennsylvania ", standard_place: FS }],
         p2: [{ place: SCHUYLKILL, standard_place: "Schuylkill Haven, Schuylkill, Pennsylvania, United States" }],
-        couple: [{ place: "Minersville, Pennsylvania", standard_place: MINERSVILLE }],
-        others: [{ place: "Minersville, Pennsylvania", standard_place: "Minersville, Pennsylvania, United States" }],
+        couple: [{ place: "Minersville, Pennsylvania", standard_place: MINERSVILLE, type: "Residence" }],
+        others: [{ place: "Minersville, Pennsylvania", standard_place: "Minersville, Pennsylvania, United States", type: "Residence" }],
         other: [{ place: SCHUYLKILL, standard_place: "Schuylkill, Pennsylvania, United States of America" }],
       });
       const filled = await addResidence(SCHUYLKILL);
@@ -775,13 +778,13 @@ describe("tree_edit", () => {
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
     });
 
-    it("reads no unmarked sidecar and no assertion's own standard_place, and looks the place up", async () => {
+    it("reads no fact of another type and no assertion's own standard_place, and looks the place up", async () => {
       const { tree, research } = project(
         [assertion("a_001", "src_001", "AAAA-111", "p1", SCHUYLKILL, "District Township, Berks, Pennsylvania, United States")],
         [link("pe_001", "a_001")],
       );
       await writeProject(tree, research);
-      await writeSidecar({ p1: [{ place: SCHUYLKILL, standard_place: FS }] }, false);
+      await writeSidecar({ p1: [{ place: SCHUYLKILL, standard_place: FS, type: "Census" }] });
       const r = await addResidence(SCHUYLKILL);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
@@ -815,6 +818,37 @@ describe("tree_edit", () => {
         p2: [{ place: SCHUYLKILL, standard_place: "Schuylkill Haven, Schuylkill, Pennsylvania, United States" }],
         other: [{ place: SCHUYLKILL, standard_place: "Schuylkill, Pennsylvania, United States of America" }],
       });
+      const r = await addResidence(SCHUYLKILL);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await added(r)).standard_place).toBe(FS);
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
+    it("reads the sidecar the cited assertion's own log entry names", async () => {
+      const { tree, research } = project(
+        [{ ...assertion("a_001", "src_001", "AAAA-111", "p1", SCHUYLKILL), log_entry_id: "log_002" }],
+        [link("pe_001", "a_001")],
+      );
+      research.log.push({ ...research.log[0], id: "log_002", results_ref: "results/log_002.json" });
+      await writeProject(tree, research);
+      await writeSidecar({ p1: [{ place: SCHUYLKILL, standard_place: ENGINE }] });
+      const sidecar = JSON.parse(await readFile(join(dir, "results", "log_001.json"), "utf-8"));
+      sidecar.payload.results[0].gedcomx.persons[0].facts[0].standard_place = FS;
+      await writeFile(join(dir, "results", "log_002.json"), JSON.stringify({ ...sidecar, log_id: "log_002" }));
+      const r = await addResidence(SCHUYLKILL);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await added(r)).standard_place).toBe(FS);
+    });
+
+    it("reads the record's fact of the tree fact's own type, whatever type the cited assertion is", async () => {
+      const { tree, research } = project(
+        [{ ...assertion("a_001", "src_001", "AAAA-111", "p1", SCHUYLKILL), fact_type: "census" }],
+        [link("pe_001", "a_001")],
+      );
+      await writeProject(tree, research);
+      await writeSidecar({ p1: [{ place: SCHUYLKILL, standard_place: ENGINE, type: "Census" }, { place: SCHUYLKILL, standard_place: FS }] });
       const r = await addResidence(SCHUYLKILL);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
@@ -927,7 +961,7 @@ describe("tree_edit", () => {
     it("keeps a FamilySearch standard place in FamilySearch's spelling, not as typed, silently", async () => {
       await writeProject(onePersonSourced());
       const TYPED = "schuylkill, pennsylvania";
-      realPlace.mockImplementation(async (name: string) => (name === TYPED ? FS : name));
+      realPlace.mockImplementation(async (name: string) => spelled(name === TYPED ? FS : name));
       const r = await addResidence(SCHUYLKILL, TYPED);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
@@ -936,8 +970,8 @@ describe("tree_edit", () => {
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
     });
 
-    // research_append's check on a place taken from a value (unconfirmedByText):
-    // a phrase that names no place fills, keeps and is replaced by nothing.
+    // A phrase that names no place fills nothing from a lookup (unconfirmedByText)
+    // and keeps no supplied value, which no part of it names (textNamesPlace).
     describe("a phrase that names no place", () => {
       const HAWAII = "Hawaii, United States";
       const OF = "Of, Trabzon, Türkiye";
@@ -953,6 +987,8 @@ describe("tree_edit", () => {
         vi.mocked(resolveStandardPlace).mockImplementation(async (text: string) =>
           text === SCHUYLKILL ? ENGINE : (phrases[text] ?? null),
         );
+        // No part of a phrase, nor of a list text, names the place.
+        vi.mocked(textNamesPlace).mockImplementation(async (_standard: unknown, text: string) => !(text in phrases));
       });
       afterEach(() => {
         vi.mocked(resolveStandardPlace).mockImplementation(async (text: string) => (text === SCHUYLKILL ? ENGINE : null));
@@ -993,16 +1029,16 @@ describe("tree_edit", () => {
           expect(await added(r)).not.toHaveProperty("standard_place");
         }
         expect(placeWarnings(kept)).toEqual([
-          `standard_place '${HAWAII}' for 'with his daughter' was not kept: it could not be confirmed, as the text ` +
-            `names neither a country nor that place, and the engine has none for it: the engine's place lookup answer ` +
+          `standard_place '${HAWAII}' for 'with his daughter' was not kept: no part of the place text names that place, ` +
+            `and the engine has none for it: the engine's place lookup answer ` +
             `'${HAWAII}' could not be confirmed, as the text names neither a country nor that place. ${KEPT_WHEN}`,
         ]);
         expect(placeWarnings(replaced)).toEqual([
-          `standard_place '${OTHER}' for 'at the home of her daughter' was not kept: it could not be confirmed, as ` +
-            `the text names neither a country nor that place, and the engine has none for it: the engine's place ` +
+          `standard_place '${OTHER}' for 'at the home of her daughter' was not kept: FamilySearch's place standard has ` +
+            `no place of that name, and the engine has none for it: the engine's place ` +
             `lookup answer '${OF}' could not be confirmed, as the text names neither a country nor that place. ${KEPT_WHEN}`,
         ]);
-        expect(realPlace).not.toHaveBeenCalled();
+        expect(vi.mocked(textNamesPlace)).toHaveBeenCalledWith(spelled(HAWAII), "with his daughter");
       });
 
       it("keeps a supplied one-word list answer whose text does not spell it", async () => {

@@ -104,8 +104,8 @@ const placeRepsCache = new Map<string, PlaceRep[]>();
  *  (normalized) — a dated and an undated search of one place are different
  *  queries and must not share an entry. */
 const searchEntriesCache = new Map<string, SearchEntry[]>();
-/** Folded full name -> FamilySearch's full names that fold to it, in search order. */
-const familySearchNamesCache = new Map<string, string[]>();
+/** Folded full name -> the search entries whose full name folds to it, in search order. */
+const familySearchPlacesCache = new Map<string, SearchEntry[]>();
 
 /** Test-only: when set, `resolveStandardPlace` answers from this table (keyed
  *  by the place text, normalized) and never reaches the network; a place not in
@@ -126,7 +126,7 @@ export function __clearPlaceResolverCachesForTests(): void {
   repInfoCache.clear();
   placeRepsCache.clear();
   searchEntriesCache.clear();
-  familySearchNamesCache.clear();
+  familySearchPlacesCache.clear();
 }
 
 // ─── Generic helpers ─────────────────────────────────────────────────────────
@@ -682,34 +682,58 @@ export function standardPlaceNamedInText(place: string, standardPlace: string): 
   return placeSegments(place).some((segment) => placeNameKeys(segment).some((k) => keys.has(k)));
 }
 
+/** A standard place as FamilySearch's place search gives it: its full name, and
+ *  every place (id and type) of that full name. */
+export interface FamilySearchPlace {
+  fullName: string;
+  places: { placeId?: string; type?: string }[];
+}
+
 /**
- * FamilySearch's own spelling of `name` as a standard place: the full name of a
- * place FamilySearch's place search finds whose full name is `name`, case and
- * accents aside ("santo antonio, funchal, madeira, portugal" is "Santo António,
- * Funchal, Madeira, Portugal"), and `name` itself when FamilySearch spells it
- * so. False when the search finds no such place: `name` is not one of
- * FamilySearch's standard places, as `place_search` returns them. Null when the
- * search failed, which a writer reads as no answer and keeps the value as
- * written. With the test table installed it answers offline, from the
- * standard places the table gives.
+ * The standard place FamilySearch's place search finds whose full name is
+ * `name`, case and accents aside, in FamilySearch's own spelling ("santo
+ * antonio, funchal, madeira, portugal" is "Santo António, Funchal, Madeira,
+ * Portugal"): `name` itself when FamilySearch spells it so. One full name can be
+ * several places ("West Bromwich, Staffordshire, England, United Kingdom" is a
+ * town, a registration district and a poor law union). False when the search
+ * finds no such place: `name` is not one of FamilySearch's standard places, as
+ * `place_search` returns them. Null when the search failed, which a writer reads
+ * as no answer and keeps the value as written.
  */
-export async function familySearchFullName(name: string): Promise<string | false | null> {
+export async function familySearchPlace(name: string): Promise<FamilySearchPlace | false | null> {
   const key = foldPlaceName(name);
-  let names = placeTableForTests
-    ? [...placeTableForTests.values()].filter((v): v is string => v !== null && foldPlaceName(v) === key)
-    : familySearchNamesCache.get(key);
-  if (names === undefined) {
-    let entries: SearchEntry[];
+  let entries = familySearchPlacesCache.get(key);
+  if (entries === undefined) {
     try {
-      entries = await searchPlace(name);
+      entries = (await searchPlace(name)).filter((e) => foldPlaceName(e.fullName) === key);
     } catch {
       return null;
     }
-    names = entries.map((e) => e.fullName).filter((n) => foldPlaceName(n) === key);
-    familySearchNamesCache.set(key, names);
+    familySearchPlacesCache.set(key, entries);
   }
-  if (names.length === 0) return false;
-  return names.includes(name) ? name : names[0];
+  const fullName = entries.find((e) => e.fullName === name)?.fullName ?? entries[0]?.fullName;
+  if (fullName === undefined) return false;
+  return {
+    fullName,
+    places: entries.filter((e) => e.fullName === fullName).map(({ placeId, type }) => ({ placeId, type })),
+  };
+}
+
+/**
+ * Some part of `placeText` names one of the places `standard` is the full name
+ * of: `record_read`'s own-text check (`textNaming`, as `repIdToStandardPlaceAt`
+ * applies it), here to a standard place a caller supplied. Null when no place's
+ * listing can be read.
+ */
+export async function textNamesPlace(standard: FamilySearchPlace, placeText: string): Promise<boolean | null> {
+  let read = false;
+  for (const { placeId, type } of standard.places) {
+    if (!placeId) continue;
+    const { reps, named } = await textNaming(placeId, type, placeText);
+    if (reps.some(named)) return true;
+    read ||= reps.length > 0;
+  }
+  return read ? false : null;
 }
 
 /** The FamilySearch place (its place id) a standard place names, as
@@ -1245,6 +1269,27 @@ const SETTLEMENT_TYPES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * The own-text check on place `placeId`, of FamilySearch type `type`, for a
+ * place text: `named(rep)` when some part of `placeText` (`nameParts`) is one of
+ * `rep`'s names in any language, compared as `checkFirstPlace` compares names
+ * (case, accents, "St"/"Saint" and type words ignored). A part other than the
+ * first names only a jurisdiction: when the place is a settlement by its type
+ * (`SETTLEMENT_TYPES`), only the first part is read (`parts`). `reps` is the
+ * place's listing, every representation with its names; empty when it cannot
+ * be read. `repIdToStandardPlaceAt` and `textNamesPlace` apply it.
+ */
+async function textNaming(
+  placeId: string,
+  type: string | undefined,
+  placeText: string,
+): Promise<{ reps: PlaceRep[]; parts: string[]; named: (rep: PlaceRep) => boolean }> {
+  const reps = await placeReps(placeId);
+  const all = nameParts(placeText);
+  const parts = SETTLEMENT_TYPES.has(placeTypeKey(type)) ? all.slice(0, 1) : all;
+  return { reps, parts, named: (rep) => rep.names.some((n) => parts.some((part) => sameName(part, n))) };
+}
+
+/**
  * The English name of `repId`'s place in `years`: the one full name its
  * representations valid in those years share. A FamilySearch place has a
  * representation per era, each with its own name and range: place 1959431 is
@@ -1258,15 +1303,12 @@ const SETTLEMENT_TYPES: ReadonlySet<string> = new Set([
  * Netherlands", valid to 2004).
  *
  * Null whenever that is in doubt. First, FamilySearch's choice of place: no
- * part of `placeText` (`nameParts`) is one of the place's names in any
- * language, compared as `checkFirstPlace` compares names (case, accents,
- * "St"/"Saint" and type words ignored). FamilySearch gave Q2W9-1GVF's
- * "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales" the town of Aberayron, its
- * registration district. A part other than the first names only a
- * jurisdiction: when the place is a settlement by its description's type
- * (`SETTLEMENT_TYPES`), only the first part is read, here and below.
- * KF9R-VTB's "Троицкая церковь, Крымки, Чигирин, Киев, Украина" was given the
- * city of Kyiv. For a fact whose Place field has no `Original` value
+ * part of `placeText` names the place (`textNaming`, by the type its
+ * description gives). FamilySearch gave Q2W9-1GVF's "Llanbadarn-Tref-Eglwys,
+ * Cardiganshire, Wales" the town of Aberayron, its registration district. Only
+ * the first part is read for a settlement, here and below: KF9R-VTB's
+ * "Троицкая церковь, Крымки, Чигирин, Киев, Украина" was given the city of
+ * Kyiv. For a fact whose Place field has no `Original` value
  * `record_read` passes FamilySearch's own text, which names FamilySearch's
  * choice by construction, so this check cannot catch a wrong choice there;
  * such facts are still named (all 12 in the 40-record sample are named right).
@@ -1287,10 +1329,7 @@ export async function repIdToStandardPlaceAt(
 ): Promise<string | null> {
   const chosen = await getRepInfo(repId);
   if (!chosen?.placeId) return null;
-  const reps = await placeReps(chosen.placeId);
-  const all = nameParts(placeText);
-  const parts = SETTLEMENT_TYPES.has(placeTypeKey(chosen.type)) ? all.slice(0, 1) : all;
-  const named = (rep: PlaceRep) => rep.names.some((n) => parts.some((part) => sameName(part, n)));
+  const { reps, parts, named } = await textNaming(chosen.placeId, chosen.type, placeText);
   if (!reps.some(named)) return null;
   const valid: PlaceRep[] = [];
   for (const rep of reps) {

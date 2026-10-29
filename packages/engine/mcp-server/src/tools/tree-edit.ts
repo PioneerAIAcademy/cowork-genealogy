@@ -30,6 +30,7 @@ import {
   introducedCitations,
   namesakeCitationRefusals,
   netIntroducedCitations,
+  RecordStandards,
   type IntroducedCitation,
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
@@ -58,7 +59,6 @@ import {
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace } from "../utils/place-resolver.js";
 import { judgeSupplied, placeAnswer, type PlaceAnswer } from "../utils/place-verdict.js";
-import { RecordStandards, factAssertions } from "../utils/record-standards.js";
 import { sidecarReader } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { resolveSourceRef, isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
@@ -302,6 +302,23 @@ function holderPeople(holder: FactHolder): unknown[] {
   return rel.type === "Couple" ? [rel.person1, rel.person2] : [holder.id];
 }
 
+/** The assertions a tree fact cites: the one it was minted from, and those
+ *  behind its sources (a source ref, its research sources, their assertions)
+ *  that a live person_evidence link ties to one of `people`, the persons
+ *  holding the fact. */
+function factAssertions(fact: SimplifiedFact, people: readonly unknown[], research: any): any[] {
+  const list = (v: unknown): any[] => (Array.isArray(v) ? v : []);
+  const minted = typeof fact.assertion_id === "string" ? fact.assertion_id : null;
+  const refs = new Set(list(fact.sources).map((s) => s?.ref));
+  const sources = new Set(list(research?.sources).filter((s) => refs.has(s?.gedcomx_source_description_id)).map((s) => s.id));
+  const linked = new Set(
+    list(research?.person_evidence)
+      .filter((pe) => people.includes(pe?.person_id) && !pe.superseded_by)
+      .map((pe) => pe.assertion_id),
+  );
+  return list(research?.assertions).filter((a) => a?.id === minted || (sources.has(a?.source_id) && linked.has(a?.id)));
+}
+
 /**
  * Resolve the target of add_fact/update_fact: exactly one of `personId` or
  * `relationshipId`. Facts on relationships are legal only on Couples
@@ -497,12 +514,12 @@ async function applyOperation(
 
   // A fact's standard_place (place-verdict.ts). A supplied one is kept, in
   // FamilySearch's spelling, when it is a FamilySearch standard place the fact's
-  // own place text confirms; otherwise, and to fill a fact with none unless
-  // `resolveStandardPlace` is false, the engine's answer: FamilySearch's
-  // standardization of the same text on the record personas the fact is about
-  // (`people`, the persons holding it), else the resolver's when the text
-  // confirms it, with the places of the holder's other facts (`siblings`) as
-  // context for a bare place. Never fails the edit.
+  // own place text names; otherwise, and to fill a fact with none unless
+  // `resolveStandardPlace` is false, the engine's answer: the standard_place the
+  // records it cites give the same text on facts of its own type
+  // (`RecordStandards`, for `people`, the persons holding it), else the
+  // resolver's when the text confirms it, with the places of the holder's other
+  // facts (`siblings`) as context for a bare place. Never fails the edit.
   const settlePlace = async (
     fact: SimplifiedFact,
     supplied: boolean,
@@ -513,7 +530,7 @@ async function applyOperation(
       const contextPlaces = siblings
         .map((f) => f.place)
         .filter((p): p is string => typeof p === "string" && p !== place);
-      const fromRecords = await standards.for(factAssertions(fact, people, research), place);
+      const fromRecords = await standards.for(factAssertions(fact, people, research), place, fact.type);
       return placeAnswer(place, fromRecords, () => resolveStandardPlace(place, { contextPlaces }));
     };
     if (supplied && typeof fact.standard_place === "string") {

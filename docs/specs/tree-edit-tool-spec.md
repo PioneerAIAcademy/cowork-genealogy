@@ -387,29 +387,34 @@ committed e2e corpus set one of those fields.
 Lead rulings: "have the engine take FamilySearch's standardization from the
 record a tree fact cites" (2026-10-26); the place bar is about 80% right,
 coarser and finer answers counted right, and "If we can raise accuracy and keep
-coverage the same, that's also a win" (2026-10-29). Implemented in
-`src/utils/place-verdict.ts` and `src/utils/record-standards.ts`, shared with
-`research_append` (`project_create` clears and re-resolves every supplied value,
-project-create-tool-spec "Hand-entered places").
+coverage the same, that's also a win" (2026-10-29); a supplied place must also
+fit the fact's own text, "yes, definitely" (2026-10-29). Implemented in
+`src/utils/place-verdict.ts`, and `research-append.ts`'s Lever B copy, shared
+with `research_append` (`project_create` clears and re-resolves every supplied
+value, project-create-tool-spec "Hand-entered places").
 
 **A supplied `standard_place` is kept** when all of these hold:
 - the fact has a `place`, and it is not a non-place phrase ("Same House",
   trailing punctuation aside: "Same House," too);
 - the value names no other country than the `place` (`countryConsistency`);
-- the `place` text confirms the value (`unconfirmedByText`, the check
-  research-append-tool-spec §3.6 applies to a place taken from a value): when
-  the country check cannot judge the pair, a text whose last comma part names a
-  country the check knows needs a value naming one it knows, and otherwise the
-  value's own name, its first segment, must be one of the text's comma parts,
-  unless the text is one word or the value is the one-word list's entry for the
-  text ("Ky", "W. Va."). So a phrase that names no place keeps nothing: "with
-  his daughter" does not keep "Hawaii, United States";
 - FamilySearch's place search finds a place whose full name is the value, case
   and accents aside: it is a FamilySearch standard place, as `place_search`
   returns one. The value is kept in FamilySearch's spelling, that place's full
   name ("Santo Antonio, Funchal, Madeira, Portugal" is kept as "Santo António,
-  Funchal, Madeira, Portugal"), with no warning. A search that fails keeps the
-  value as written.
+  Funchal, Madeira, Portugal"), with no warning;
+- some part of the `place` text names that place, as `record_read` checks a
+  fact's own text before it keeps FamilySearch's standard (`textNamesPlace`, the
+  check `repIdToStandardPlaceAt` applies, gedcomx-convert-spec "Places on
+  facts"): a comma part, up to any parenthesis, is one of the place's names in
+  any language (case, accents, "St"/"Saint" and type words aside), and only the
+  first part counts when the place is a settlement (a city, town, village and
+  the like), whose later parts name jurisdictions. One full name can be several
+  places, and naming any of them is enough. The one-word list's entry for the
+  text passes without it ("Ky" keeps "Kentucky, United States"). So "Boston,
+  Suffolk, Massachusetts" does not keep "Springfield, Sangamon, Illinois, United
+  States", nor "with his daughter" "Hawaii, United States".
+
+A failed search or listing keeps the value as written.
 
 It is judged whatever `resolveStandardPlace` says. Otherwise the engine's answer
 below replaces it, or the fact keeps no `standard_place`, and the response's
@@ -422,29 +427,31 @@ below replaces it, or the fact keeps no `standard_place`, and the response's
 - `standard_place '<supplied>' was not kept: the fact has no place.` (no answer
   is asked for, nor for a non-place phrase).
 
+An answer that is the supplied value itself, case and accents aside, is stored
+with no warning: nothing was replaced.
+
 `<why>` names the failed condition. Each warning ends by saying when a supplied
 value is kept.
 
 **The engine's answer** for a fact's `place`, in order:
 
-1. **FamilySearch's own standardization on the record personas the fact is
-   about.** Those are the assertion the fact was minted from (`assertion_id`),
-   and the assertions behind its `sources` (a ref's research source, that
-   source's assertions) that a person_evidence link, not superseded, ties to a
-   person holding the fact (the person, or a Couple's two partners). A persona's
-   values are the `standard_place`s on its own facts, and on the facts of the
-   relationships it is a party to, with the same place text (case, accents and
-   spacing aside), in the sidecar its assertion's log entry names. Only a sidecar
-   marked `standard_places_from: "familysearch"` is read (research-schema-spec
-   §5.4.1): a live `record_read` marks its own, while a `record_search` sidecar
-   mixes in the engine's lookups and an assertion's own `standard_place` may be
-   an engine lookup or an agent's pick, so neither is read. Two different values
-   are doubt, and doubt is no `standard_place`; nothing is looked up.
+1. **FamilySearch's standardization on the records the fact cites**, by
+   research_append's Lever B copy (research-append-tool-spec §3.6, step 1), the
+   one way the engine takes it from a record. The records are those of the
+   assertion the fact was minted from (`assertion_id`), and of the assertions
+   behind its `sources` (a ref's research source, that source's assertions)
+   that a person_evidence link, not superseded, ties to a person holding the
+   fact (the person, or a Couple's two partners). Each assertion's record, in
+   the sidecar its log entry names, gives the `standard_place` its persona's own
+   facts of the fact's type carry for the same place text, as Lever B copies
+   one; an assertion's own stored `standard_place` is never read. Two different
+   values are doubt, and doubt is no `standard_place`; nothing is looked up.
 2. **Otherwise the lookup** `resolveStandardPlace(place, { contextPlaces })`, with
    the places of the holder's other facts as context for a bare single-segment
    place, and no record country (see research-append-tool-spec §3.6, lever B).
-   Its answer stands only when the `place` text confirms it, by the same check a
-   supplied value meets (`unconfirmedByText`): "at the home of her daughter,
+   Its answer stands only when the `place` text confirms it, by the check
+   research-append-tool-spec §3.6 applies to a place taken from a value
+   (`unconfirmedByText`): "at the home of her daughter,
    Mrs. John Smith" takes nothing from a lookup that answers "Of, Trabzon,
    Türkiye", while "412 Vine St, Cincinnati" keeps "Cincinnati, Hamilton, Ohio,
    United States".
@@ -823,16 +830,17 @@ The caller (`tree-edit` skill) still:
   kept silently, in FamilySearch's spelling, even where the engine's own answer
   differs, and one whose check failed is kept as written; one on a fact with no
   place or a non-place phrase (trailing punctuation aside), one naming another
-  country, one its place text does not confirm ("with his daughter" and "Hawaii,
-  United States"; "Ky" and "W. Va." keep their list answers), and one
+  country, one no part of its place text names ("with his daughter" and
+  "Hawaii, United States"; "Ky" and "W. Va." keep their list answers), and one
   FamilySearch has no place of are replaced by the engine's answer or dropped,
   with the reason. A lookup the place text does not confirm fills and replaces
   nothing, on `tree_correct`'s `update_fact` too. `resolveStandardPlace: false`
-  does not change that. The record step reads FamilySearch's own values only:
-  from a sidecar marked `standard_places_from`, on the persona of the fact's
-  own assertion or of a cited assertion linked to its holder, never another
-  persona's or another record's, never an assertion's stored value; values that
-  disagree give none.
+  does not change that. The record's value is Lever B's copy: the persona's own
+  facts of the fact's type and place text, of the fact's own assertion or of a
+  cited assertion linked to its holder, never another persona's, another fact
+  type's or another record's, never an assertion's stored value; values that
+  disagree give none. A real record read (`record_read` on a saved recapi body,
+  staged and cited) gives its FamilySearch standard to a tree fact.
 - **update_fact** — field merge by `factId`; a place change re-resolves
   `standard_place`; id unchanged. Also merges by `relationshipId` + `factId` on a
   Couple-held fact; a `factId` not on the named holder errors. Retyping a
