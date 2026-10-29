@@ -802,51 +802,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill executed two full-text searches for Thomas Flynn and Patrick Flynn as witnesses in Schuylkill County records, both returning the same 1878 deed (ark:/61903/1:1:QV9N-YS37). The skill correctly called source_attachments to check attachment status, confirmed the record is unattached, and logged both searches with appropriate notes. The response accurately describes the record's contents (James Brennan to Michael Dougherty deed, both Flynns named, witness terms highlighted), the collection (Pennsylvania Land Records, collectionId 2220359), and the next step (record-structurer for extraction). No fabricated material or unsupported claims."
+                "rationale": "The skill executed two full-text searches as requested (Thomas Flynn + witness, Patrick Flynn + witness), both in Schuylkill County records. Both searches returned the same 1878 deed record with both names present. The skill correctly checked attachment status via source_attachments, confirmed the record is unattached, and logged both searches with appropriate notes. All factual claims are supported by tool responses: the deed exists, both Flynns appear in the names field, 'witness' and 'witnesses' appear in highlightTerms, and the record is unattached. No fabricated material."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements: ran separate searches for both Thomas Flynn and Patrick Flynn as witnesses, checked attachment status via source_attachments, logged both searches with log_006 and log_007, noted the record is unattached and ready for extraction, and provided context for the next step. The delegation required both names to be queried and attachment status to be checked\u2014both were completed."
+                "rationale": "The user delegation required two separate searches (Thomas Flynn AND Patrick Flynn as witnesses in Schuylkill County) and a check for tree attachment. The skill executed both searches, checked attachment status for the returned record, logged both searches with detailed notes, and provided a summary of findings. All required elements were addressed: both names were queried, results were returned, attachment status was checked, and the record was flagged as unattached and ready for extraction."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four tool calls passed arguments matching expected_args semantically. First fulltext_search: keywords '+Thomas +Flynn +witness' with place 'Schuylkill County, Pennsylvania' matches expected ~Flynn. Second fulltext_search: keywords '+Patrick +Flynn +witness' with same place matches expected ~Flynn. source_attachments: uris array with the ARK URL matches expected ~. research_log_append: ops array with two log entries, each with tool, query, outcome, resultsAvailable, resultsExamined, stagedResultsRef, and notes\u2014all correct structure. No critical args were wrong; no fixture_not_found errors."
+                "rationale": "All four tool calls passed arguments matching the fixture's expected_args semantically. First two fulltext_search calls used keywords '+Thomas +Flynn +witness' and '+Patrick +Flynn +witness' with place 'Schuylkill County, Pennsylvania' \u2014 both satisfy the expected ~Flynn pattern and correctly employ the + operator for required terms. source_attachments call passed the ARK URI correctly. research_log_append call included proper query objects, outcome, resultsExamined, and stagedResultsRef for both searches. No critical arguments were wrong, no fixture_not_found errors occurred, and all calls succeeded."
               },
               {
                 "source": "rubric",
                 "name": "Query construction",
                 "score": 3,
-                "rationale": "Both queries use the + operator correctly to require all terms: '+Thomas +Flynn +witness' and '+Patrick +Flynn +witness'. The place filter 'Schuylkill County, Pennsylvania' is appropriate given the delegation's scope. Both queries returned results (1 each), so no nil-retry was needed. Per the per-test note, canonical-spelling phrase queries are sufficient and variants are not required when the canonical query recovers the record\u2014both searches succeeded with the canonical form."
+                "rationale": "Both queries used correct FTS operators: '+Thomas +Flynn +witness' and '+Patrick +Flynn +witness' employ the + operator to require all three terms. The queries targeted the right field (keywords) for full-text search. Place scoping to 'Schuylkill County, Pennsylvania' was appropriate given the delegation's explicit mention of Schuylkill County records. Both queries returned results (1 record each), so no nil-retry was needed. Per the per-test note, canonical-spelling phrase queries are sufficient and variants are not required when the canonical query recovers the record \u2014 both searches succeeded with the canonical forms."
               },
               {
                 "source": "rubric",
                 "name": "FAN awareness",
                 "score": 3,
-                "rationale": "This is a direct subject search for Thomas Flynn and Patrick Flynn as witnesses in Schuylkill County records, not a FAN-pivot scenario. Per the rubric, for direct subject searches the skill is not required to pivot to FAN unprompted\u2014the dimension passes solely on whether the requested search executed correctly. Both searches executed correctly and returned the same witness record, so FAN awareness passes."
+                "rationale": "This is a direct subject search for Thomas Flynn and Patrick Flynn as witnesses in Schuylkill County records, not a FAN-expansion scenario. Per the rubric, for direct subject searches the skill is not required to pivot to FAN unprompted \u2014 the dimension passes solely on whether the requested search executed correctly. Both searches executed as requested, returning the witness record. No FAN expansion was warranted by the prompt or research state."
               },
               {
                 "source": "rubric",
                 "name": "Negative result handling",
                 "score": 3,
-                "rationale": "Both executed searches returned positive results (1 result each, the same 1878 deed). Per the rubric, when every executed search returned positive results, this dimension has nothing to grade and scores pass. No negative results were encountered, so no exhaustiveness narrative was required."
+                "rationale": "Both executed searches returned positive results (1 record each). Per the rubric, when every executed search returned positive results, this dimension has nothing to grade and scores pass. The skill is not required to provide exhaustiveness narratives for positive-result tests."
               },
               {
                 "source": "rubric",
                 "name": "Result triage",
                 "score": 3,
-                "rationale": "The skill triaged the returned result using stub fields correctly: assessed match quality by noting both Thomas Flynn and Patrick Flynn appear in the 'names' field, confirmed 'witness' and 'witnesses' in highlightTerms, checked recordPlace (Schuylkill, Pennsylvania) and recordDate (1878) for consistency with the research context, and noted the record is unattached. The skill did not claim to read the textDocument (which staging removes) and correctly deferred full transcript examination to the record-structurer agent. Triage was appropriate and grounded in available stub fields."
+                "rationale": "The skill triaged the returned result using the stub fields correctly. It assessed match quality by noting that both 'Thomas Flynn' and 'Patrick Flynn' appear in the names field, and that 'Flynn', 'witness', and 'witnesses' appear in highlightTerms, confirming the match. It noted the recordPlace (Schuylkill, Pennsylvania) and recordDate (1878) are consistent with the research context. The skill correctly deferred to the record-structurer agent for full image transcription rather than claiming to settle context from the staged result. It did not attempt to read the stripped textDocument field."
               }
             ],
-            "judge_cost_usd": 0.017313,
+            "judge_cost_usd": 0.017913699999999998,
             "duration_ms": 15396.633700001985,
             "error": null,
             "input_tokens": 12018,
-            "cached_input_tokens": 0,
-            "output_tokens": 1059
+            "cached_input_tokens": 4807,
+            "output_tokens": 1083
           },
           "started_at": 1792483348.0992093,
           "ended_at": 1792483471.848654
@@ -3305,51 +3305,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill executed a single full-text search with the wildcard query +Patrick +Fl?n* that correctly covers all four surname variants (Flynn, Flinn, Flyn, Flynne) as required. The search returned one result\u2014Hugh Devlin's 1849 will with Patrick Flinn as witness\u2014which is factually accurate per the tool response. The skill correctly identified the Flinn variant as confirmation the wildcard worked. All claims about the query construction, result details (date, place, names, role), and collection metadata are supported by the tool response. No fabricated material."
+                "rationale": "The skill executed a single full-text search with the wildcard query +Patrick +Fl?n* that correctly covers all four surname variants (Flynn, Flinn, Flyn, Flynne) as required. The search returned one result\u2014Hugh Devlin's 1849 will with Patrick Flinn as witness\u2014which is factually accurate per the tool response. The skill correctly identified the Flinn variant as the match that fired the wildcard, confirming the pattern works. All claims about the record (date, place, names, role) are supported by the tool response. No fabricated material."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements: constructed one wildcard query combining +Patrick with Fl?n* (not separate per-variant queries), executed it against Schuylkill County probate records, returned and triaged the single result, logged the search with full details (query, outcome, result count, notes on wildcard coverage), and updated the plan item status to completed. The delegation's explicit requirements\u2014one query, wildcard covering all variants, no separate per-variant searches\u2014were all met."
+                "rationale": "The skill addressed all requirements: constructed one wildcard query combining +Patrick with Fl?n* (not separate per-variant queries), executed it against Schuylkill County probate records, returned and triaged the single result, logged the search with full details, and updated the plan item status. The delegation asked for a single query covering all variants in one pass\u2014this was delivered. No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All three MCP tool calls passed correct arguments. The fulltext_search call used keywords: '+Patrick +Fl?n*' with place: 'Schuylkill County, Pennsylvania' and includeFacets: true, matching the fixture's expected_args predicate. The research_log_append call correctly recorded the query, outcome, result counts, and staged results reference. The research_append call correctly updated plan item pli_006 status to completed. No fixture_not_found errors; all calls succeeded with valid responses."
+                "rationale": "The fulltext_search call passed keywords '+Patrick +Fl?n*' with place 'Schuylkill County, Pennsylvania' and includeFacets: true. This matches the expected pattern of a required-term operator combined with a wildcard on the surname. The research_log_append and research_append calls correctly recorded the search outcome and updated plan status. All critical identifiers and arguments are correct; no fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Query construction",
                 "score": 3,
-                "rationale": "The skill constructed the optimal single wildcard query +Patrick +Fl?n* that correctly covers all four variants: Flynn (Fl?n matches Fly, * matches n), Flinn (Fl?n matches Fli, * matches n), Flyn (Fl?n matches Fly, * matches nothing), and Flynne (Fl?n matches Fly, * matches ne). The skill correctly explained why the wildcard is necessary (FTS does not phonetically expand surnames), and confirmed the pattern worked by noting the Flinn variant fired the highlight term. The query was scoped appropriately to Schuylkill County, Pennsylvania per the delegation's jurisdiction specification. No separate per-variant queries were issued, as required."
+                "rationale": "The query +Patrick +Fl?n* uses correct Lucene operators: + for required terms, ? for single-character wildcard (y/i position), and * for variable-length suffix (zero, one, or two trailing characters). This single pattern correctly covers all four variants: Flynn (Fl-y-n), Flinn (Fl-i-n), Flyn (Fl-y-n with no trailing), Flynne (Fl-i-n-ne). The skill scoped appropriately to Schuylkill County per the delegation. The returned result (Flinn) confirms the wildcard executed correctly. No zero-result retry was needed because the search succeeded."
               },
               {
                 "source": "rubric",
                 "name": "FAN awareness",
                 "score": 3,
-                "rationale": "This is a direct subject search for Patrick Flynn in probate records\u2014the prompt explicitly asks to 'Look for Patrick Flynn in pre-1850 Schuylkill County, Pennsylvania probate records.' Per the rubric, for direct subject searches the skill is not required to pivot to FAN unprompted. The skill correctly executed the requested search. The result (Patrick Flinn as witness to Hugh Devlin's will) does surface FAN connections (Hugh Devlin, John McGonigle), which the skill appropriately noted as 'worth cross-referencing' in the next step, but no FAN query was required for this direct-subject scenario."
+                "rationale": "This is a direct subject search for Patrick Flynn in probate records\u2014the prompt explicitly asks to 'look for Patrick Flynn' in a specific record type and jurisdiction. Per the rubric, direct subject searches do not require unprompted FAN pivots. The skill correctly executed the requested search. The response does note FAN potential (Hugh Devlin and John McGonigle as witnesses worth cross-referencing), which is appropriate context but not required for a pass on this dimension."
               },
               {
                 "source": "rubric",
                 "name": "Negative result handling",
                 "score": 3,
-                "rationale": "The executed search returned one positive result (Hugh Devlin's 1849 will). Since all executed searches returned results, there are no negative results to log. Per the rubric, when every executed search returned positive results, this dimension passes with nothing to grade."
+                "rationale": "The executed search returned one positive result (Hugh Devlin's will). Since all searches returned results, there are no negative results to log or evaluate. Per the rubric, when every executed search returns positive results, this dimension passes with nothing to grade."
               },
               {
                 "source": "rubric",
                 "name": "Result triage",
                 "score": 3,
-                "rationale": "The skill triaged the returned result using the stub fields the tool actually provides: names (Hugh Devlin, Mary Devlin, Patrick Flinn, John McGonigle), places (Branch Township, Schuylkill County, Pennsylvania), dates (1849), recordType (Probate), and highlightTerms (Flinn). The skill correctly assessed that Patrick Flinn appears as a witness (non-principal role), noted the date and township are consistent with a ca. 1845 birth, and appropriately deferred to image verification to confirm identity and extract facts. No claims were made about stripped fields like textDocument; the skill correctly staged the result for the record-structurer agent to transcribe the image."
+                "rationale": "The skill triaged the returned result using the stub fields provided by the tool: names (Hugh Devlin, Mary Devlin, Patrick Flinn, John McGonigle), places (Branch Township, Schuylkill County, Pennsylvania), dates (1849), recordType (Probate), and highlightTerms (Flinn). The skill correctly assessed that Patrick Flinn appears as a witness (non-principal), noted the age consistency check needed against the image, and identified this as a FAN connection. No claims were made about textDocument content or missing fields. The triage is sound and grounded in available stub data."
               }
             ],
-            "judge_cost_usd": 0.0177907,
+            "judge_cost_usd": 0.016785,
             "duration_ms": 14044.627099763602,
             "error": null,
             "input_tokens": 11420,
-            "cached_input_tokens": 4807,
-            "output_tokens": 1178
+            "cached_input_tokens": 0,
+            "output_tokens": 1073
           },
           "started_at": 1792482935.8039532,
           "ended_at": 1792483047.7362597
@@ -6429,51 +6429,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly executed a fulltext_search using the tree person ID 'KWCJ-RN4' as an nlQuery parameter, as instructed. The two results returned (1869 deed and 1885 probate inventory) are accurately described: both records genuinely place Patrick Flynn in Schuylkill County, the 1869 deed includes Thomas Flynn (supporting the father hypothesis h_001), and the 1885 probate places Patrick in the 1880s, filling a timeline gap. The skill correctly identified these as new evidence not previously in the project sources. No fabricated claims or unsupported assertions are present."
+                "rationale": "The skill correctly executed a fulltext_search with the tree person ID 'KWCJ-RN4' as the nlQuery parameter, as instructed. The two results returned (1869 deed and 1885 probate inventory) are accurately described: both records genuinely name Patrick Flynn, both are from Schuylkill County, and the 1869 deed does indeed name Thomas Flynn alongside Patrick Flynn. The skill correctly identified these as new evidence not previously in the project sources. No fabricated claims or unsupported assertions are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements: executed the fulltext_search with the correct tree person ID, explained why nlQuery was the appropriate field (upstream resolves the ID against person facts and aliases), reported both records returned by the fixture, triaged them as new evidence, and logged the search with appropriate notes. The research log entry (log_006) was created with full details of the search and results. No required elements were omitted."
+                "rationale": "The skill addressed all requirements: it executed the fulltext_search with the correct tree person ID, explained why nlQuery was the appropriate field (upstream resolves the ID against person facts), reported both records returned by the fixture, triaged them as new evidence, and logged the results with appropriate notes. The log entry (log_006) was created with correct metadata including the query, outcome, results examined, and notes about the family cluster corroboration."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The fulltext_search call passed the tree person ID 'KWCJ-RN4' correctly in the nlQuery parameter, matching the expected_args specification (~KWCJ-RN4). The projectPath was included appropriately. The research_log_append call correctly recorded the search outcome with proper metadata (tool name, query object, outcome 'positive', resultsAvailable and resultsExamined both 2, staged results reference). All arguments align with fixture expectations."
+                "rationale": "The fulltext_search call passed the tree person ID 'KWCJ-RN4' correctly in the nlQuery parameter, matching the expected_args specification (~KWCJ-RN4). The projectPath was included appropriately. The research_log_append call correctly recorded the search outcome with all required fields: tool name, query object, outcome (positive), resultsAvailable/Examined (both 2), stagedResultsRef, and detailed notes. No critical arguments were wrong or missing."
               },
               {
                 "source": "rubric",
                 "name": "Query construction",
                 "score": 3,
-                "rationale": "The skill correctly used nlQuery with the tree person ID 'KWCJ-RN4' rather than a bare keyword query like '+Patrick +Flynn'. This is the appropriate operator choice for this context: the nlQuery field allows the upstream to resolve the tree ID against the person's known facts and aliases, providing automatic expansion that a keyword query would not achieve. The skill's explanation in the response text confirms this reasoning. The single query returned 2 results with no need for filtering or retries."
+                "rationale": "The skill correctly used nlQuery with the tree person ID 'KWCJ-RN4' rather than a bare keyword query like '+Patrick +Flynn'. This is the correct operator choice for the natural-language entry point, which allows the upstream to resolve the ID against the person's known facts and aliases for query expansion. The skill did not need to retry or narrow results, as the fixture returned exactly 2 results with no excess. The query construction was appropriate for the task."
               },
               {
                 "source": "rubric",
                 "name": "FAN awareness",
                 "score": 3,
-                "rationale": "This is a direct subject search for Patrick Flynn using his tree person ID. Per the rubric, for direct subject searches the skill is not required to pivot to FAN unprompted \u2014 the dimension passes solely on whether the requested search executed correctly. The skill executed the requested search correctly, returning results that include FAN persons (Thomas Flynn, John McGrath, James Dempsey, Owen Reilly). The skill appropriately noted Thomas Flynn's co-appearance as corroborating evidence for the father hypothesis."
+                "rationale": "This is a direct subject search for Patrick Flynn using his tree person ID. Per the rubric, for direct subject searches the skill is not required to pivot to FAN unprompted \u2014 the dimension passes solely on whether the requested search executed correctly. The skill correctly executed the requested search. The fact that the results incidentally included Thomas Flynn (a FAN candidate) does not trigger a FAN requirement; the skill correctly identified this co-appearance as corroborating evidence without being required to do so."
               },
               {
                 "source": "rubric",
                 "name": "Negative result handling",
                 "score": 3,
-                "rationale": "All executed searches returned positive results (2 records returned, 2 examined). Per the rubric, when every executed search returned positive results, this dimension has nothing to grade and scores pass. The research log entry properly documents the results found and their significance."
+                "rationale": "All executed searches returned positive results (2 records). Per the rubric, when every executed search returned results, this dimension has nothing to grade and scores pass. The skill did not encounter any nil results that would require detailed negative logging."
               },
               {
                 "source": "rubric",
                 "name": "Result triage",
                 "score": 3,
-                "rationale": "The skill correctly triaged the two returned results using the stub fields available in the staged response: assessed match quality by checking that 'Patrick Flynn' appears in the names array and highlightTerms for both records; verified place consistency (both in Schuylkill County, Pennsylvania, matching known research geography); noted the 1869 date fits the timeline and the 1885 date fills a gap (t_001). The skill appropriately deferred to original image verification rather than claiming to settle context from the staged result. No attempt was made to read the stripped textDocument field."
+                "rationale": "The skill correctly triaged the two returned results using the stub fields available in the staged response: names (Patrick Flynn present in both), highlightTerms (Patrick Flynn highlighted in both), recordDate/recordPlace (1869 and 1885, both in Schuylkill County), and recordType (Land and Probate). The skill assessed match quality appropriately, noting that Patrick Flynn appears in non-principal roles (as grantee in the deed, as appraiser/creditor in the probate). The skill did not attempt to read the stripped textDocument or claim access to fields not present in the staged result. The triage correctly deferred to verifying against original images for genuine mention confirmation."
               }
             ],
-            "judge_cost_usd": 0.0166267,
+            "judge_cost_usd": 0.0166467,
             "duration_ms": 15071.671499870718,
             "error": null,
             "input_tokens": 10986,
             "cached_input_tokens": 4807,
-            "output_tokens": 1032
+            "output_tokens": 1036
           },
           "started_at": 1792483326.6082783,
           "ended_at": 1792483440.1923327
@@ -7090,39 +7090,39 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The fulltext_search call used keywords '+Thomas +Flynn' with place 'Pennsylvania' and recordType 'land', matching the expected_args pattern of '~Flynn'. The query structure is correct (using + operators for required terms), the field choice is appropriate for the intent, and the filters (place, recordType, includeFacets) are reasonable. The research_log_append call correctly captured the search parameters and outcome. No structural defects in tool arguments."
+                "rationale": "The fulltext_search call used keywords '+Thomas +Flynn' with place 'Pennsylvania' and recordType 'land', matching the expected_args pattern of '~Flynn'. The query construction is semantically correct for the delegation intent. The includeFacets parameter was appropriately added. The research_log_append call correctly captured the search parameters and outcome. No structural defects in tool arguments."
               },
               {
                 "source": "rubric",
                 "name": "Query construction",
                 "score": 3,
-                "rationale": "The query '+Thomas +Flynn' with place='Pennsylvania' and recordType='land' uses correct FTS operators (+ for required terms) and appropriate field selection. The result set is 1 record, well below the 50-result threshold where narrowing would be required per SKILL.md. The skill did not apply unnecessary filtering, probable-word boosting, or collection-scoping follow-ups to this manageable result set, which is correct behavior. The query directly targets the delegation's request."
+                "rationale": "The skill constructed an effective full-text search query using the + operator correctly to require both terms. With only 1 result returned (well below the 50-result threshold), no narrowing via filters or additional terms was needed or appropriate. The skill correctly avoided over-filtering a manageable result set. The query directly targeted the delegation's intent (Thomas Flynn in Pennsylvania land records) without unnecessary complexity."
               },
               {
                 "source": "rubric",
                 "name": "FAN awareness",
                 "score": 3,
-                "rationale": "This is a direct subject search for Thomas Flynn in land records, not a FAN-exploration prompt. Per the rubric, direct subject searches do not require unprompted FAN pivoting \u2014 the skill is graded pass solely on whether the requested search executed correctly. The search executed correctly and returned a result naming both Thomas and Patrick Flynn together, which is relevant evidence for the parentage question."
+                "rationale": "This is a direct subject search for Thomas Flynn in land records per the delegation. The rubric states that for direct subject searches, the skill is not required to pivot to FAN unprompted \u2014 the dimension passes solely on whether the requested search executed correctly. The search executed correctly, so FAN awareness scores pass."
               },
               {
                 "source": "rubric",
                 "name": "Negative result handling",
                 "score": 3,
-                "rationale": "The executed search returned 1 positive result (the 1878 deed). Since all executed searches returned results, there are no negative results to log or evaluate. Per the rubric, when every executed search returns positive results, this dimension passes with nothing to grade."
+                "rationale": "The executed search returned 1 positive result, so there are no negative results to grade. Per the rubric, when all executed searches return results, this dimension scores pass with nothing to grade."
               },
               {
                 "source": "rubric",
                 "name": "Result triage",
                 "score": 3,
-                "rationale": "The skill correctly triaged the returned result using stub fields. It identified that Thomas Flynn and Patrick Flynn appear in the 'names' field, recognized from 'highlightTerms' ('witness', 'witnesses') that both are witnesses rather than principals, noted the recordDate (1878) and recordPlace (Schuylkill County), and assessed consistency with known residence. The skill appropriately deferred full verification to the record-structurer agent and the original image, rather than claiming to settle context from the staged result alone."
+                "rationale": "The skill correctly triaged the returned result using stub fields. It assessed match quality by noting that both Thomas Flynn and Patrick Flynn appear in the 'names' field and that 'highlightTerms' shows 'witness' and 'witnesses', correctly identifying them as witnesses rather than principals. The skill appropriately deferred full verification to the record-structurer agent ('The full transcript should be verified against the original image') rather than claiming to settle context from the staged result. No attempt to read the stripped textDocument."
               }
             ],
-            "judge_cost_usd": 0.016017700000000003,
+            "judge_cost_usd": 0.015642700000000002,
             "duration_ms": 13082.72759988904,
             "error": null,
             "input_tokens": 10777,
             "cached_input_tokens": 4807,
-            "output_tokens": 952
+            "output_tokens": 877
           },
           "started_at": 1792483048.2176232,
           "ended_at": 1792483147.2207198
@@ -7754,51 +7754,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill's output is factually correct. It found a genuine 1878 deed from Branch Township, Schuylkill County, Pennsylvania, with both Thomas Flynn and Patrick Flynn named in the document. The search query correctly targeted the 1870s timeframe as requested. The log entry (log_006) was properly created with accurate metadata: 1 result returned, positive outcome, correct ARK identifier, collection ID, and record details. The skill correctly identified this as evidence potentially strengthening hypothesis h_001 (Thomas as Patrick's father) by placing both in the same transaction. No fabricated material or unsupported claims."
+                "rationale": "The skill's output is factually correct. It accurately reports finding a 1878 deed from Branch Township, Schuylkill County, Pennsylvania, with both Thomas Flynn and Patrick Flynn named in the document. The search query, result details (ARK, title, date, place, names, highlight terms), and log entry are all accurate. The skill correctly identifies this as a positive result and appropriately flags it for record-structurer follow-up. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the delegation request to search for Thomas Flynn as a witness in Schuylkill County land records from the 1870s. It executed the search, found a result, logged it with complete metadata, and provided clear next steps (record-structurer agent to examine the original image). The research log entry captures all required information: query parameters, outcome, results count, collection details, and notes about the significance of finding both Flynns in the same deed."
+                "rationale": "The skill fully addressed the delegation request to search for Thomas Flynn as a witness in Schuylkill County land records from the 1870s. It executed the search, found a relevant result, logged it properly with full details, and provided clear next steps. All required elements of the search task were completed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All three tool calls used correct arguments. The get_name_variants call for 'Thomas' was reasonable preparation. The fulltext_search call used proper Lucene operators (+Thomas +Flynn +witness), correctly scoped to Schuylkill County and the 1870-1879 date range as requested, and included includeFacets: true to enable collection filtering. The research_log_append call properly captured the search parameters and outcome. All arguments match the fixture's expected_args semantically; the keywords field satisfied the ~Flynn expectation."
+                "rationale": "All three tool calls used correct arguments. The get_name_variants call for 'Thomas' was appropriate. The fulltext_search call used proper Lucene operators (+Thomas +Flynn +witness), correct field (keywords), appropriate place scoping (Schuylkill County, Pennsylvania), correct date range (1870-1879), and includeFacets: true. The research_log_append call properly captured the search parameters and results. No structural defects or wrong identifiers."
               },
               {
                 "source": "rubric",
                 "name": "Query construction",
                 "score": 3,
-                "rationale": "The skill constructed an effective full-text search query using correct Lucene operators (+Thomas +Flynn +witness) targeting the specific intent (witness role). The query was properly scoped by place (Schuylkill County, Pennsylvania) and date range (1870-1879) as requested in the delegation. The search returned 1 result on the first call, finding the target record. Per the per-test context, the nil-ladder (name-field retry) does not apply here because keywords already returned a positive result\u2014no zero-result retry was needed or expected."
+                "rationale": "The skill constructed an effective full-text search query using proper Lucene operators: +Thomas +Flynn +witness with place and date filters. The query correctly targeted the keywords field and used the + operator to require all three terms. The search returned 1 result on the first call, finding the target record. No nil-ladder retry was needed since keywords returned a positive result. The query construction was sound and achieved the objective efficiently."
               },
               {
                 "source": "rubric",
                 "name": "FAN awareness",
                 "score": 3,
-                "rationale": "This is a direct subject search for Thomas Flynn as a witness in land records\u2014the delegation explicitly names the target and record type. Per the rubric pass criteria (b), the skill is not required to unprompted-expand to FAN exploration. The skill correctly executed the requested search. However, the skill did appropriately recognize Patrick Flynn as a FAN candidate by noting both Flynns appear in the same deed and flagging this as potentially significant evidence for the hypothesis, which demonstrates sound genealogical reasoning without overstepping the direct-search scope."
+                "rationale": "This is a direct subject search for Thomas Flynn as a witness in land records\u2014the prompt explicitly names the search target and record type. Per the rubric, direct subject searches do not require unprompted FAN expansion. The skill correctly executed the requested search. The fact that Patrick Flynn also appears in the result is noted and appropriately flagged as a FAN candidate for follow-up, but the skill was not required to pivot to FAN unprompted."
               },
               {
                 "source": "rubric",
                 "name": "Negative result handling",
                 "score": 3,
-                "rationale": "The executed search returned 1 positive result, so there are no negative results to log. Per the rubric pass criteria (a), when all executed searches return results, this dimension passes with nothing to grade. The skill's single search succeeded in finding the target record."
+                "rationale": "The executed search returned 1 positive result, so there are no negative results to evaluate. Per the rubric, when all executed searches return positive results, this dimension passes. The skill's log entry properly documents the search parameters and the single result found."
               },
               {
                 "source": "rubric",
                 "name": "Result triage",
                 "score": 3,
-                "rationale": "The skill correctly triaged the returned result using the stub fields available in the fulltext_search response. It assessed match quality by noting that both Thomas Flynn and Patrick Flynn appear in the names field, that the recordDate (1878) and recordPlace (Branch Township, Schuylkill County) match the search parameters, and that highlightTerms include 'Flynn' and 'witness'. The skill appropriately deferred the detailed role determination to the record-structurer agent (which will read the original image at staged.resultsRef), rather than claiming to know the specific witness role from the stub alone. This is correct triage methodology."
+                "rationale": "The skill correctly triaged the returned result using the stub fields available in the fulltext_search response. It assessed match quality by noting that both Thomas Flynn and Patrick Flynn appear in the names list, that the recordPlace (Branch Township, Schuylkill County) and recordDate (1878) match the search parameters, and that highlightTerms include 'Flynn' and 'witness'. The skill appropriately deferred detailed role verification to the record-structurer agent rather than claiming to know the exact witness role from the stub alone. It did not claim to read the textDocument."
               }
             ],
-            "judge_cost_usd": 0.0169967,
+            "judge_cost_usd": 0.0162617,
             "duration_ms": 13195.354499854147,
             "error": null,
             "input_tokens": 11051,
             "cached_input_tokens": 4807,
-            "output_tokens": 1093
+            "output_tokens": 946
           },
           "started_at": 1792483345.3490322,
           "ended_at": 1792483458.5345297
@@ -8549,51 +8549,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified Francisco Naveda Somarriba's parents as Juan de Naveda and Mar\u00eda de Somarriba Gonz\u00e1lez based on three Limpias parish records (1833 baptism, 1834 death, 1843 marriage). The analysis accurately interprets the records: the 1833 baptism names a younger sister with the same parents; the 1834 death record names the mother; the 1843 marriage confirms the couple. Grandparents are correctly extracted. All claims are supported by the tool responses and staged results. No fabricated material."
+                "rationale": "The skill correctly identified Francisco Naveda Somarriba's parents as Juan de Naveda and Mar\u00eda de Somarriba Gonz\u00e1lez based on three Limpias parish records (1833 baptism, 1834 death, 1843 marriage). The analysis accurately interprets the stub fields (names, dates, places, recordType) from the staged results. The grandparents are correctly named from the 1833 baptism. No fabricated material; all claims are grounded in the tool responses."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully executed the delegated task: constructed and ran the full-text search, recovered three records, analyzed findings to identify parents by name, extracted grandparents, and logged the results with proper staging reference. The plan item status was updated to 'completed' and the skill provided clear next steps (passing ARKs to record-structurer agent). All required elements of the search execution were addressed."
+                "rationale": "The skill fully executed the delegated task: constructed and ran the full-text search, recovered three records, analyzed the findings to identify the parents, and reported the results with supporting evidence. The plan item status was updated to 'completed' and the research log was appended with detailed notes. All required actions were performed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. The fulltext_search call used the required co-occurrence query '+Naveda +Somarriba' (both surnames required, not adjacent phrase), matching expected_args. Wiki_read calls for Spanish_Genealogical_Word_List and Spain_Naming_Customs were made as required by the per-test context. The research_log_append and research_append calls used correct projectPath and valid field structures. No fixture_not_found errors occurred. All critical identifiers and parameters were correct."
+                "rationale": "The fulltext_search call used the correct co-occurrence query '+Naveda +Somarriba' (both surnames required, any position), matching the expected_args pattern. The call included includeFacets: true and the correct projectPath. Wiki_read calls fetched the Spanish Genealogical Word List and Spain Naming Customs as required by the per-test context. Research log and plan update calls used correct arguments. No fixture_not_found errors; all calls matched their expected forms."
               },
               {
                 "source": "rubric",
                 "name": "Query construction",
                 "score": 3,
-                "rationale": "The skill constructed the correct co-occurrence query '+Naveda +Somarriba' requiring both surnames in any position, which is the proper decomposition for finding parents where the father's surname (Naveda) and mother's surname (Somarriba) appear on different people. The query avoided the phrase form '\"Naveda Somarriba\"' which would have missed the non-adjacent parent records. The search was unfiltered initially (no collectionId scoping), allowing discovery across the full FTS corpus. The query successfully returned 3 results without requiring narrowing."
+                "rationale": "The skill constructed the correct co-occurrence query '+Naveda +Somarriba' rather than the phrase form '\"Naveda Somarriba\"'. This decomposition is appropriate because the surnames appear on different people in parent records (father's paternal surname + mother's maternal surname). The query correctly uses the + operator for required terms. The search returned 3 results without requiring narrowing or retries. No zero-result searches occurred that would require unfiltered retries."
               },
               {
                 "source": "rubric",
                 "name": "FAN awareness",
                 "score": 3,
-                "rationale": "This is a direct subject search for Francisco Naveda Somarriba's parents, not a FAN exploration task. Per the rubric, the skill is not required to unprompted-expand to FAN for direct subject searches. The requested search executed correctly and recovered the target records. The dimension passes on correct execution of the requested search itself."
+                "rationale": "This is a direct subject search for Francisco Naveda Somarriba's parents, not a FAN-pivot scenario. Per the per-test context and rubric, the skill is not required to unprompted-expand to FAN for direct subject searches. The requested search executed correctly, identifying the parents and incidentally surfacing grandparents and a sibling (Balentina Josefa) from the same records. No FAN pivot was required."
               },
               {
                 "source": "rubric",
                 "name": "Negative result handling",
                 "score": 3,
-                "rationale": "All executed searches returned positive results (3 records total). The negative result handling dimension fires only when at least one search returns zero results. Since every search returned results, there is nothing to grade on exhaustiveness narrative or negative logging. The dimension passes by default when all searches are positive."
+                "rationale": "All three executed searches returned positive results (3 records total). Per the rubric, when every executed search returned results, this dimension passes with nothing to grade. No zero-result searches occurred, so no negative-result logging was required."
               },
               {
                 "source": "rubric",
                 "name": "Result triage",
                 "score": 3,
-                "rationale": "The skill correctly triaged the three returned results using the stub fields available in the staged response: assessed match quality by checking whether target names appeared in the 'names' field (Juan Navedas Somarriba, Mar\u00eda Somarriba Gonz\u00e1lez), verified consistency of recordPlace (Limpias, Cantabria) and recordDate (1833, 1834, 1843) with the research context, and examined highlightTerms to confirm the query terms matched. The skill did not claim to read the stripped textDocument and correctly deferred to verifying against original images as the next step (record-structurer agent)."
+                "rationale": "The skill correctly triaged the three returned results using the stub fields available in the staged response: assessed match quality by checking names (Juan Navedas Somarriba, Mar\u00eda Somarriba Gonz\u00e1lez), recordType (Baptism, Church Death, Church Marriage), recordPlace (Limpias, Cantabria), and dates (1833, 1834, 1843). The analysis correctly recognized that all three records cluster around the same couple and corroborate parentage. The skill did not attempt to read the stripped textDocument field and appropriately deferred full verification to the record-structurer agent."
               }
             ],
-            "judge_cost_usd": 0.0158207,
+            "judge_cost_usd": 0.0155357,
             "duration_ms": 13193.8296998851,
             "error": null,
             "input_tokens": 10150,
             "cached_input_tokens": 4807,
-            "output_tokens": 1038
+            "output_tokens": 981
           },
           "started_at": 1792483251.336064,
           "ended_at": 1792483358.5814176
@@ -9450,51 +9450,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and logged three full-text searches targeting Thomas Flynn in Schuylkill County deed records (1875\u20131885). All searches returned the same deed (Thomas Flynn to John McCarthy, 1879, ARK ark:/61903/1:1:QV9N-KX83), which the skill accurately described as an unindexed land record surfaced by FTS. The skill correctly noted that the existing src_008 (1881 Thomas-to-Patrick deed) is a different record with a different ARK, and correctly explained why it did not appear in FTS results (incomplete AI-transcribed corpus). No fabricated material; all claims are supported by tool responses and the before-state."
+                "rationale": "The skill correctly identified and logged three full-text searches targeting Thomas Flynn in Schuylkill County deed records (1875\u20131885). All searches returned the same deed (Thomas Flynn to John McCarthy, 1879, ARK ark:/61903/1:1:QV9N-KX83), which the skill accurately described as an unindexed land record surfaced by FTS. The skill correctly distinguished this 1879 deed from the pre-existing src_008 (1881 Thomas-to-Patrick deed with different ARK), noting the latter did not appear in FTS results due to incomplete AI-transcription coverage. All factual claims are supported by tool responses and the before-state. No fabricated material."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the delegation's request fully: searched for deed/land records naming Thomas Flynn as grantor, grantee, or party in Schuylkill County, PA, 1877\u20131882 (delegated window). Executed three searches with appropriate query variants and scoping. Logged all results. Identified the promising record (1879 deed). Noted the existing src_008 and explained the discrepancy. Did not update a plan item (correctly noted no plan item was supplied). All required work was completed."
+                "rationale": "The skill addressed the delegation's request fully: searched for deed/land records naming Thomas Flynn as grantor, grantee, or party in Schuylkill County ~1877\u20131882. Three searches were executed with appropriate variations, all logged with detailed notes. The skill identified the promising record (1879 deed), provided its ARK and collection details, and noted it is ready for record-structuring. The skill correctly noted this is ad-hoc (no plan item supplied) and did not update plan status. All required work was completed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All three fulltext_search calls used correct Lucene operators (+Thomas +Flynn, +Flynn +deed) and appropriate field choices (keywords field). Place and year filters were correctly applied to scope the search to the delegation's stated window (Schuylkill County, PA, 1875\u20131885). The second call correctly used collectionId 2220359 derived from facets returned by the first call. The research_log_append calls correctly captured query details and results. No structural defects in any call; all matched expected_args semantically."
+                "rationale": "All three fulltext_search calls used structurally valid Lucene operators (+Thomas +Flynn, +Flynn +deed) and appropriate field choices (keywords field). The first call included place filter (Schuylkill County, Pennsylvania) and year range (1875\u20131885) with includeFacets: true, which is correct for deriving collectionId. The second call correctly scoped to collectionId 2220359 (Pennsylvania Land Records, derived from facets). The third call used a keyword variant (+Flynn +deed) with place and year filters. All arguments match expected_args semantically and demonstrate proper FTS query construction."
               },
               {
                 "source": "rubric",
                 "name": "Query construction",
                 "score": 3,
-                "rationale": "Queries used correct FTS operators: +Thomas +Flynn (phrase-like with + for required terms), +Flynn +deed (keyword variant). Place and year filters appropriately scoped results to the delegation's stated jurisdiction and timeframe. The second search correctly leveraged facets from the first search to narrow to Pennsylvania Land Records collection (collectionId 2220359), confirming no additional deeds existed outside the year window. All three searches returned results; no nil-result retries were needed. Query construction was effective and well-reasoned."
+                "rationale": "Queries used correct FTS operators: + for required terms, appropriate field selection (keywords). First search included place and year filters; when it returned 1 result, the skill followed with a scoped collection search (using collectionId from facets) to confirm no additional records existed outside the year window. Third search used a keyword variant (+Flynn +deed) to broaden coverage. All three searches returned the same result, confirming exhaustive coverage. No zero-result retries were needed. Query construction is effective and demonstrates proper FTS operator usage."
               },
               {
                 "source": "rubric",
                 "name": "FAN awareness",
                 "score": 3,
-                "rationale": "This is a direct principal search for Thomas Flynn himself as a grantor/grantee in deed records. Per the per-test context, the FAN dimension passes solely on whether the requested search executed correctly. The skill executed the requested search without unprompted FAN expansion, which is the correct behavior for a direct subject search. No deduction for not pivoting to FAN."
+                "rationale": "This is a direct principal search for Thomas Flynn himself as a grantor/grantee in deed records. Per the per-test context, the FAN dimension passes solely on whether the requested search executed correctly. The skill executed the requested search without unprompted FAN expansion, which is the correct behavior for a direct subject search. No deduction applies."
               },
               {
                 "source": "rubric",
                 "name": "Negative result handling",
                 "score": 3,
-                "rationale": "All three executed searches returned positive results (the same 1879 deed record). Per the rubric, when every executed search returns results, this dimension has nothing to grade and scores pass. The skill did not encounter a nil result that would require detailed exhaustiveness documentation."
+                "rationale": "All three executed searches returned positive results (the same 1879 deed record). Since every search returned results, there is nothing to grade under negative result handling. Per the rubric, when all executed searches returned positive results, this dimension passes. Score: pass."
               },
               {
                 "source": "rubric",
                 "name": "Result triage",
                 "score": 3,
-                "rationale": "The skill correctly triaged the returned result using stub fields available in the staged response: recognized Thomas Flynn in the names field, noted the 1879 date and Branch Township/Schuylkill County places, and identified the record as a principal-role mention (grantor, not witness). The skill correctly deferred to image verification for detailed context ('The full image may reveal the property description, witnesses, and notarial language\u2026'), rather than claiming to settle context from the staged result. No attempt to read the stripped textDocument."
+                "rationale": "The skill triaged the returned result using stub fields correctly: assessed match quality from names (Thomas Flynn present as grantor), recordDate (1879, within target range), recordPlace (Branch Township, Schuylkill County, Pennsylvania, consistent with delegation), and highlightTerms (Flynn, Thomas Flynn matched). The skill recognized this as a principal-role mention (grantor, not witness) and noted it is ready for image verification rather than claiming to settle context from the staged result. No attempt to read the stripped textDocument. Triage is sound."
               }
             ],
-            "judge_cost_usd": 0.0195017,
+            "judge_cost_usd": 0.0196217,
             "duration_ms": 15167.103900108486,
             "error": null,
             "input_tokens": 13711,
             "cached_input_tokens": 4807,
-            "output_tokens": 1062
+            "output_tokens": 1086
           },
           "started_at": 1792482935.8079681,
           "ended_at": 1792483066.2859619
@@ -14055,6 +14055,5 @@
       "research_append": "afccbf7e1ba3a6b9b8539748423ad414c76c8e48a00ab34e88d1717ce0cb09ab",
       "research_log_append": "1585d48736cc340502e166cacbb5e133414bcc32768127fa357254fe479fdb4f"
     }
-  },
-  "judge_render_hash": "5367ed19690a4d9c780880f8a9dd57b80546ff71b8b873d48ecf402bb5850393"
+  }
 }

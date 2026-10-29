@@ -257,8 +257,7 @@
                 "subagent_type": "tree-survey",
                 "text": "TGAP-GF1 | Who was born to Edmund Ashby and Clara Weis between 1881 and 1886 in Dayton, Montgomery, Ohio?\nTree read: 8 ancestor generations, 4 descendant generations, 40 persons \u2014 complete scan, did not stop early.\nWhen you pick one, run init-project with that person ID and that question as the objective.\n\n---\n\nEdmund Ashby, who lived from 1850 to 1919, appears in your tree as a great-grandparent-era figure. He and his wife Clara Weis had children, but there is a seven-year gap between a child born in 1880 and the next recorded child born in 1887. That kind of gap often means a child was born in between who was either missed when the tree was built, or who died young and was never added. The family was living in Dayton, Ohio during this period, and FamilySearch holds church records, vital records, and other collections for that area and time that could reveal whether another child was born in those years. An Ohio birth record, a baptism entry, or even a death record for an infant could close this gap.\n\nPick this question and research can start from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -714,8 +713,7 @@
                 "subagent_type": "tree-survey",
                 "text": "8 generations of ancestors and 4 generations of descendants were read (63 persons total, not stopped early).\n\n---\n\nThe tree for Walter Ashby shows no holes in what was read \u2014 every line that could reasonably have a record has one, and no gaps in parents, children, dates, or places turned up across the portion of the tree surveyed."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -1171,8 +1169,7 @@
                 "subagent_type": "tree-survey",
                 "text": "TGAP-GF3 | Were there additional children born to Samuel Ashby and Ida Marsh between 1889 and 1903 in Dayton, Montgomery, Ohio?\nTree read: 8 ancestor generations, 4 descendant generations, 40 persons total; did not stop early.\nWhen you pick one, run init-project with that person ID and research question as the objective.\n\n---\n\nSamuel Ashby is a close relative of the person you are researching, born in 1855 and living until 1920 in Dayton, Montgomery, Ohio. The family tree shows that his wife, Ida Marsh, had her last recorded child in 1888, when she was only 28 years old. Because she lived well past 40, it is quite common in that era for a family to have had more children after that point, and those children may simply be missing from the tree.\n\nFamilySearch has around 4.2 million records covering Dayton, Ohio in that period, including census records, church records, and vital records. The 1900 census in particular would show the entire Ashby household and list how many children Ida had given birth to and how many were still living \u2014 a direct clue to whether any children are unaccounted for.\n\nIf you would like to dig into this, pick this question and research will start from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -1628,8 +1625,7 @@
                 "subagent_type": "tree-survey",
                 "text": "8 generations of ancestors, 4 generations of descendants, 7 persons total, read to completion without stopping early.\n\n---\n\nThe tree for Walter Ashby was read as far back as eight generations of ancestors and four generations of descendants, covering every person found along the way. Across all of those lines, the tree shows no holes in what was read \u2014 no missing parents at the end of a line, no couples without children, no gaps in birth sequences, and no missing dates or places that FamilySearch would be likely to help fill. There is nothing to suggest starting a research project at this time."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -2085,8 +2081,7 @@
                 "subagent_type": "tree-survey",
                 "text": "- **TGAP-H3A** \u2014 Who were the parents of Samuel Weis, born about 1830 in Lancaster, Lancaster, Pennsylvania?\n- **TGAP-H1B** \u2014 Who was the spouse of August Ashby, born 1858 in Lancaster, Lancaster, Pennsylvania?\n- **TGAP-H2A** \u2014 Who were the parents of Hannah Pruitt, born about 1861 in Lancaster, Lancaster, Pennsylvania?\n- **TGAP-H4A** \u2014 Where was Louise Marsh born, given that she died in 1901 in Lancaster, Lancaster, Pennsylvania?\n- **TGAP-H1A** \u2014 When and where did Edmund Ashby die, given that he was born in 1850 in Lancaster, Lancaster, Pennsylvania?\n\nTree read: 8 ancestor generations and 4 descendant generations, 120 persons total, did not stop early.\n\nWhen you pick one, run init-project with that person's ID and the research question as the objective.\n\n---\n\nHere are five places your tree has gaps that FamilySearch likely holds records for, starting with the most promising.\n\nSamuel Weis was born around 1830 in Lancaster, Pennsylvania, and his parents are completely missing from your tree. FamilySearch has flagged a pending record hint specifically about his parentage, meaning it has already spotted a document that may name his father and mother. With nine record collections covering Lancaster in that era \u2014 including church records and vital records \u2014 this is the strongest lead in your tree right now.\n\nAugust Ashby was born in 1858 in Lancaster and lived to age 73 in 1931, yet the tree shows no spouse for him at all. Census records from 1900, 1910, and 1920 would almost certainly show whether he was married and living with a family, making this a straightforward gap to close.\n\nHannah Pruitt was born around 1861 in Lancaster and both of her parents are missing. Lancaster has strong church and civil record coverage for that birth period, so finding a baptism or birth record that names her father and mother is a realistic goal.\n\nLouise Marsh died in 1901 with no birth place recorded anywhere in the tree. Census and church records for Lancaster going back to the early 1800s could establish where she was born and fill in that blank.\n\nEdmund Ashby was born in 1850 in Lancaster but has no death date in the tree at all, even though he is marked as deceased. Census records from 1900 and 1910 could help narrow down when he died, and death certificates or obituaries from Lancaster may be available for the right period.\n\nPick any one of these and research will start from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -2740,13 +2735,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly called tree_gaps with the provided personId (TGAP-ROT), received two holes, and reported only what the tool returned. Both suggestions (TGAP-M2A and TGAP-M1A) match the gaps returned. The factual claims about Hannah Pruitt (born 1861, Lancaster, missing parents, pending hint, 9 collections with 4.2M records) and August Ashby (born 1858, died 1931 at 73, no spouse, same coverage) all align with the tool response. The tree-read summary (8 ancestor generations, 4 descendant generations, 120 persons, no early stop) matches the scanned data exactly. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly called tree_gaps with the provided personId (TGAP-ROT), received two holes, and reported only what the tool returned. The two suggestions (TGAP-M2A and TGAP-M1A) match the gaps returned. The tree-read summary (8 generations ancestors, 4 descendants, 120 persons, no early stop) matches the scanned data from the response. All factual claims about Hannah Pruitt (born ~1861, Lancaster PA, missing parents, pending hint, 9 collections with 4.2M records) and August Ashby (born 1858, died 1931 at 73, Lancaster PA, no spouse, same coverage) are directly supported by the tool response. No fabricated material."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required: it called tree_gaps once with the correct personId, received two holes, and suggested both. The response includes the required hand-off information (person IDs and questions), the tree-read summary, and the user-facing prose below the separator. No required elements were omitted."
+                "rationale": "The skill addressed everything required: it called tree_gaps once with the delegation's personId, received two holes, and provided suggestions for both. The response includes the required tree-read summary, the two person IDs with their questions, the hint about running init-project, and user-facing prose below the separator line. No required elements were omitted."
               },
               {
                 "source": "base",
@@ -2758,33 +2753,33 @@
                 "source": "rubric",
                 "name": "Survey",
                 "score": 3,
-                "rationale": "The agent called tree_gaps exactly once with the delegation's personId (TGAP-ROT) and no invented parameters. The tool returned two gaps, both of which the agent kept and suggested. The agent did not walk the tree with another tool or invent holes."
+                "rationale": "The agent called tree_gaps exactly once with the delegation's personId (TGAP-ROT) and no invented parameters. The tool returned two gaps, both of which the agent kept and suggested. The agent did not walk the tree with other tools or invent holes."
               },
               {
                 "source": "rubric",
                 "name": "Coverage check",
                 "score": 3,
-                "rationale": "For TGAP-M2A, the agent cited the pending hint ('pending record hint specifically about her parents') and the coverage data (9 collections, specific record types: census, church, vital). For TGAP-M1A, the agent cited the coverage (three census years, church and vital records). The agent made no tool calls beyond tree_gaps and did not retry empty results."
+                "rationale": "For TGAP-M2A (Hannah Pruitt), the agent referenced the pending hint ('pending record hint specifically about her parents') and the coverage data (9 collections, church records, vital records, census years 1900/1910/1920). For TGAP-M1A (August Ashby), the agent referenced the coverage (Lancaster records from 1876-1931, three census years, church and vital records). No other tool calls were made beyond tree_gaps. The agent did not retry empty results."
               },
               {
                 "source": "rubric",
                 "name": "Suggestions",
                 "score": 3,
-                "rationale": "Both suggestions name one person each and one research question. TGAP-M2A: 'Who were the parents of Hannah Pruitt, born about 1861 in Lancaster, Pennsylvania?' names the person, scopes place (Lancaster, Pennsylvania) and years (born 1861). TGAP-M1A: 'Who was the spouse of August Ashby, who lived in Lancaster, Pennsylvania between 1876 and 1931?' names the person, scopes place and years. Each question is a single fact (parents, spouse), not bundled events. Two suggestions are provided when two holes were returned. No living persons are suggested (both are deceased: Hannah 1861-1934, August 1858-1931)."
+                "rationale": "Both suggestions name one person each and one research question. TGAP-M2A: 'Who were the parents of Hannah Pruitt, born about 1861 in Lancaster, Pennsylvania?' names the person, scopes place (Lancaster, Pennsylvania) and years (born ~1861), and asks for one fact (parents). TGAP-M1A: 'Who was the spouse of August Ashby, who lived in Lancaster, Pennsylvania between 1876 and 1931?' names the person, scopes place and years (1876-1931), and asks for one fact (spouse). There are 2 suggestions for 2 holes returned, no living persons are suggested (both deceased), and no person appears twice."
               },
               {
                 "source": "rubric",
                 "name": "Hand-off and prose",
                 "score": 3,
-                "rationale": "Above the '---' separator, the response provides each person's FamilySearch ID (TGAP-M2A, TGAP-M1A) with its question, the tree-read summary (8 generations ancestors, 4 descendants, 120 persons, no early stop), and the hint to run init-project with the chosen ID and question. Below the '---', plain prose with no identifiers, file names, tool names, or field names. The agent created no project and called no writer tool."
+                "rationale": "The response provides each person's FamilySearch ID (TGAP-M2A, TGAP-M1A) with its question above the separator line, the tree-read summary (8 generations, 4 generations, 120 persons, no early stop), and the hint that 'When you pick one, run init-project with that person ID and that question as the objective.' Below the '---' separator, the prose is plain English with no identifiers, file names, tool names, or field names. The agent created no project and called no writer tool."
               }
             ],
-            "judge_cost_usd": 0.013216,
+            "judge_cost_usd": 0.014055999999999999,
             "duration_ms": 15186.060699998052,
             "error": null,
             "input_tokens": 8111,
             "cached_input_tokens": 0,
-            "output_tokens": 1021
+            "output_tokens": 1189
           },
           "started_at": 1792091059.129246,
           "ended_at": 1792091098.6610663
@@ -3008,8 +3003,7 @@
                 "subagent_type": "tree-survey",
                 "text": "- TGAP-GM2 \u2014 Who were the parents of Hannah Pruitt, born about 1861 in Lancaster, Pennsylvania?\n- Tree read: 8 ancestor generations, 4 descendant generations, 40 persons total; did not stop early.\n- When you pick one, run init-project with that person ID and that question as the objective.\n\n---\n\nYour tree has one clear gap worth pursuing. Hannah Pruitt was born around 1861 in Lancaster County, Pennsylvania, and died in 1934, but her parents are entirely missing from the tree. Lancaster County has good historical coverage for that period \u2014 nine collections exist there, including census, church, and vital records, with over four million records. The 1860 census in particular falls right in her birth window and could show her family household, naming her parents and possibly siblings.\n\nPick this question and research will start from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -3465,8 +3459,7 @@
                 "subagent_type": "tree-survey",
                 "text": "TGAP-GM1 \u2014 What was the maiden name of Clara, wife of Edmund Ashby, married about 1879-1881 in Dayton, Montgomery County, Ohio?\n\nTree read: 8 ancestor generations and 4 descendant generations (40 persons), completed in full.\n\nWhen you pick one, run init-project with that person ID and research question as the objective.\n\n---\n\nEdmund Ashby's wife is recorded in the tree simply as \"Clara,\" with no last name. She was born around 1854 and died in 1927, and she appears to have married Edmund in the Dayton, Ohio area around 1879 to 1881. Without her maiden name, it is difficult to trace her own ancestry or confirm her identity in records. FamilySearch has several collections covering that locality and period, including church records and vital records, and the 1880 United States census falls right in the middle of that window \u2014 a census record from that year could name her, confirm her age, and possibly point toward her birth family.\n\nPick this question and research will start from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -3857,8 +3850,7 @@
                 "subagent_type": "tree-survey",
                 "text": "That's a search for one person \u2014 please use search-records."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -4225,8 +4217,7 @@
                 "subagent_type": "tree-survey",
                 "text": "That's planning \u2014 please use research-plan."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -4593,8 +4584,7 @@
                 "subagent_type": "tree-survey",
                 "text": "Please use question-selection."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -4788,7 +4778,7 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The response fully addresses the correct behavior for this negative test: a clear, accurate decline and routing to question-selection. No additional output was required or expected."
+                "rationale": "The response fully addresses the correct behavior for this negative test: it declines tree-survey's task and routes to the appropriate skill (question-selection). No additional output was required or expected."
               },
               {
                 "source": "base",
@@ -4797,12 +4787,12 @@
                 "rationale": "No MCP tool calls were made. The test author's notes explicitly state that calling any tool, not even tree_gaps, is a fail. Claude correctly made zero tool calls, so this dimension is N/A."
               }
             ],
-            "judge_cost_usd": 0.007579,
+            "judge_cost_usd": 0.007614,
             "duration_ms": 5007.239099999424,
             "error": null,
             "input_tokens": 6234,
             "cached_input_tokens": 0,
-            "output_tokens": 269
+            "output_tokens": 276
           },
           "started_at": 1792091436.5500197,
           "ended_at": 1792091452.97525
@@ -5026,8 +5016,7 @@
                 "subagent_type": "tree-survey",
                 "text": "TGAP-GF2 | Who was Heinrich Weis, born between 1812 and 1902 in Cincinnati, Ohio \u2014 specifically, what was his birth date and place?\nTree read: 8 ancestor generations, 4 descendant generations, 40 persons, did not stop early.\nWhen you pick one, run init-project with that person ID and that question as the objective.\n\n---\n\nYour ancestor Heinrich Weis appears in the tree without any birth information at all \u2014 no date, no place, nothing to anchor him in time beyond the fact that he died in 1902. He lived in Cincinnati, Hamilton County, Ohio, and that is actually good news for research: Ohio kept solid vital records, and Cincinnati's church communities were meticulous record-keepers. FamilySearch holds roughly 4.2 million records from that area spanning the period when Heinrich would have been born, including census records from 1850 and 1860 that could confirm his age, birthplace, and household. Church records and vital records from the same locality round out what is available.\n\nPick Heinrich and research will start from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -5483,8 +5472,7 @@
                 "subagent_type": "tree-survey",
                 "text": "TGAP-AUN \u2014 Who are the children of Ruth Ashby and Frank Ellery, married about 1906-1925 in Dayton, Montgomery, Ohio?\nTree read: 8 ancestor generations, 4 descendant generations, 40 persons, did not stop early.\nWhen the user picks one, run init-project with that person ID and that question as the objective.\n\n---\n\nRuth Ashby was born in 1880 and died in 1949. She is shown in the tree as married to a man named Frank Ellery, and the couple lived in Dayton, Montgomery County, Ohio. The tree currently shows no children for them at all, which is unusual for a married couple of that era. It is possible they had children who simply have not been added yet, or records may shed light on whether they remained childless.\n\nFamilySearch has roughly 4.2 million records covering Dayton, Ohio for the years when children would have been born, including the 1910 and 1920 federal censuses. Those census years fall squarely in the window when Ruth and Frank would have been raising a family, and census records typically list every person living in the household, making them one of the best places to find children who are missing from a tree. Church records and vital records for that area and period are also available and could confirm births.\n\nThat is the one gap the survey found in this tree. If you would like to dig into Ruth Ashby and Frank Ellery's household, pick that question and research will start from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -5940,8 +5928,7 @@
                 "subagent_type": "tree-survey",
                 "text": "TGAP-GGF | What was the death date and place of Johann Ashby, who died sometime between 1822 and 1912 in Baden, Germany?\nTree read: 8 ancestor generations, 4 descendant generations, 40 persons \u2014 did not stop early.\nWhen you pick one, run init-project with that person ID and that question as the objective.\n\n---\n\nYour great-great-grandfather Johann Ashby was born in 1822 in Baden, Germany, and is recorded in your tree as having died at some point, but no death date has been filled in. That gap matters because knowing when and where he died can open doors to records that name his parents, siblings, and other relatives. FamilySearch holds church records for the Baden region that cover his likely lifetime, and those records sometimes include burial entries with ages, which can confirm a birth year or reveal a birthplace down to the village level. Filling in his death date would be a natural first step toward learning more about that branch of the family.\n\nYou can pick this question and research will start from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -6397,8 +6384,7 @@
                 "subagent_type": "tree-survey",
                 "text": "TGAP-UNC / August Ashby (1858-1931): Who did August Ashby marry, if anyone, before 1931 in Dayton, Montgomery, Ohio?\n\nTree read: 8 ancestor generations and 4 descendant generations (40 persons total), completed in full.\n\nWhen you pick one, run init-project with that person ID and question as the objective.\n\n---\n\nAugust Ashby was a man who lived from 1858 to 1931 in Dayton, Ohio. He was 73 years old when he died, yet the family tree currently shows no spouse for him at all. For a man who lived well into adulthood during the late 1800s and early 1900s, it is quite unusual to find no record of a marriage. FamilySearch holds census records from 1880 and beyond for the Dayton, Ohio area, along with church and vital records, and any of these could show August living with a wife or list a marriage. Finding a spouse for August could also open up an entirely new branch of the family.\n\nPick this question and research can start from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -6586,51 +6572,51 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified August Ashby (TGAP-UNC, 1858-1931) as the gap to research. The question posed\u2014'Who did August Ashby marry, if anyone, before 1931 in Dayton, Montgomery, Ohio?'\u2014is factually grounded in the tree_gaps response, which shows a no_spouse gap for this person. The coverage data (census records 1880, 1890; church and vital records; 9 collections, 4.2M records) is accurately cited from the tool response. The tree-read summary (8 ancestor, 4 descendant generations, 40 persons, completed in full) matches the scanned data. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly called tree_gaps with the delegation's personId (TGAP-ROT), received one hole for August Ashby (TGAP-UNC), and reported it accurately. The suggestion names the person, cites the coverage data (census records 1880 and beyond, church and vital records from FamilySearch), and poses a single factual question scoped to place (Dayton, Montgomery, Ohio) and years (before 1931). No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required: called tree_gaps once with the correct personId (TGAP-ROT), identified the single hole returned, checked its coverage and pendingHints (which showed 0 fitting hints but legitimate coverage data), and returned one suggestion with the person ID, question, and tree-read scope. The delegation asked 'What should I research in my tree?' and the skill provided a complete answer with actionable research direction."
+                "rationale": "The skill addressed the user's request fully. It surveyed the tree with tree_gaps, identified the one hole returned, checked the coverage and pendingHints data, and produced a complete suggestion with person ID, name, lifespan, and a single research question. The tree-read summary (8 ancestor, 4 descendant generations, 40 persons, completed in full) was included as required."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The tree_gaps call passed personId 'TGAP-ROT' exactly as expected in expected_args. No extraneous parameters were added. The call matched the fixture's predicate at index 0 with kind 'predicate', indicating correct tool usage. No fixture_not_found errors occurred."
+                "rationale": "The tree_gaps call passed personId TGAP-ROT exactly as expected in expected_args. No extraneous parameters were added. The call matched the fixture's predicate and returned the hole data correctly. No other tools were invoked, which is correct for this skill."
               },
               {
                 "source": "rubric",
                 "name": "Survey",
                 "score": 3,
-                "rationale": "The agent called tree_gaps exactly once with the delegation's personId (TGAP-ROT) and no invented parameters. The tool returned one gap (August Ashby's no_spouse), which the agent kept and suggested. No multiple calls with the same arguments, no extraneous parameters."
+                "rationale": "The agent called tree_gaps exactly once with the delegation's personId (TGAP-ROT) and no invented parameters. The tool returned one gap, which the agent kept and reported. No multiple calls or extra parameters were passed."
               },
               {
                 "source": "rubric",
                 "name": "Coverage check",
                 "score": 3,
-                "rationale": "For the single hole kept (August Ashby), the agent checked the coverage data: cited the 9 collections, 4.2M records, record types (CENSUS, CHURCH_RECORD, VITAL), and census years (1880, 1890). The agent noted pendingHints showed 0 fitting hints but proceeded appropriately. No other tool calls were made beyond tree_gaps. The coverage check was thorough and grounded."
+                "rationale": "For the single hole (August Ashby), the agent checked the coverage data (9 collections, 4.2M records, CENSUS/CHURCH_RECORD/VITAL types, census years 1880 and 1890, locality-level place) and noted the pendingHints (0 fitting, 0 total). No other tool calls were made beyond tree_gaps. The agent correctly reported what FamilySearch holds without retrying empty results."
               },
               {
                 "source": "rubric",
                 "name": "Suggestions",
                 "score": 3,
-                "rationale": "The suggestion names one person (August Ashby, TGAP-UNC), one research question ('Who did August Ashby marry, if anyone, before 1931 in Dayton, Montgomery, Ohio?'), which is a single fact (spouse identity), names the person, and scopes place (Dayton, Montgomery, Ohio) and years (before 1931, within the 1876-1931 window). One hole was returned, so one suggestion is appropriate. August Ashby (1858-1931) is deceased, so no living-person violation."
+                "rationale": "The suggestion names one person (August Ashby, TGAP-UNC), states the hole in plain words (died at 73 with no spouse), cites what FamilySearch holds (census records 1880 and beyond, church and vital records), and poses one research question that is a single fact ('Who did August Ashby marry, if anyone, before 1931 in Dayton, Montgomery, Ohio?'), names the person, and scopes place and years. One suggestion was returned for one hole. No living person was suggested."
               },
               {
                 "source": "rubric",
                 "name": "Hand-off and prose",
                 "score": 3,
-                "rationale": "The return correctly provides the FamilySearch ID (TGAP-UNC) and question above the '---' line, tree-read scope (8 ancestor, 4 descendant generations, 40 persons, completed in full), and the hint to run init-project with the ID and question. Below the '---', plain prose with no identifiers, file names, tool names, or field names\u2014only user-facing narrative about August Ashby's life and the research opportunity. No project was created; no writer tool was called."
+                "rationale": "The response provides the FamilySearch ID (TGAP-UNC) and question above the --- line, reports the tree-read scope (8 ancestor, 4 descendant generations, 40 persons, completed in full), and includes the hint to run init-project with the chosen ID and question. Below the ---, plain prose with no identifiers, file names, tool names, or field names. No project was created and no writer tool was called."
               }
             ],
-            "judge_cost_usd": 0.013068,
+            "judge_cost_usd": 0.012558,
             "duration_ms": 11180.159900002764,
             "error": null,
             "input_tokens": 7858,
             "cached_input_tokens": 0,
-            "output_tokens": 1042
+            "output_tokens": 940
           },
           "started_at": 1792091098.7557414,
           "ended_at": 1792091144.1002758
@@ -6854,8 +6840,7 @@
                 "subagent_type": "tree-survey",
                 "text": "TGAP-UNC / August Ashby (1858-1931): Who was the spouse of August Ashby, who died in 1931 in Dayton, Montgomery County, Ohio?\n\nTree read: 8 ancestor generations and 4 descendant generations (40 persons total), did not stop early.\n\nWhen the user picks one, run `init-project` with that person ID and that question as the objective.\n\n---\n\nOne of the people in your tree stands out as worth researching. August Ashby was born in 1858 and died in 1931 in Dayton, Ohio, living to age 73 \u2014 yet the tree shows no spouse for him at all. For someone who lived well into adulthood, a missing spouse is a notable gap, and there are several types of records in the Dayton, Montgomery County area that could shed light on this: census records from 1880 (and possibly others), church records, and vital records, with over four million records in that area and period available through FamilySearch. Any of those could name a wife, document a household, or confirm a marriage.\n\nPick August Ashby and research on who his spouse was, and we can get started from there."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -7143,6 +7128,5 @@
       "live": "57ba4f8f14c8617781ab5e2f54ccf59285da8da84688a04808ec7ece3a2806a0"
     },
     "live_modules": {}
-  },
-  "judge_render_hash": "5367ed19690a4d9c780880f8a9dd57b80546ff71b8b873d48ecf402bb5850393"
+  }
 }

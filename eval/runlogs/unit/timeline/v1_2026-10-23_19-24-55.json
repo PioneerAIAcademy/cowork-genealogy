@@ -1554,11 +1554,11 @@
                 "rationale": "N/A. The hypothesis h_001 is parentage ('Thomas Flynn is Patrick's father'), not identity. Chronological coherence cannot settle a parentage claim \u2014 that is proof-conclusion's domain. The skill does not issue an explicit Pass/Fail/Inconclusive verdict on h_001. The reply notes that the death certificate 'names Thomas Flynn as father' and observes the household position in censuses, but these are Step-5 coherence signals (required observations), not a Step-6 verdict on the hypothesis itself. No identity-question verdict was issued, so this dimension does not apply."
               }
             ],
-            "judge_cost_usd": 0.027263,
+            "judge_cost_usd": 0.0278279,
             "duration_ms": 18219.20729102567,
             "error": null,
             "input_tokens": 19968,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 5649,
             "output_tokens": 1459
           },
           "started_at": 1792783495.891861,
@@ -2524,11 +2524,11 @@
                 "rationale": "This is not a hypothesis-testing (Mode-B) timeline. The scenario is a straightforward chronology of one documented person (William Ashford, I1) with no competing identity hypothesis. The question asks for 'the documented life timeline' and 'record gaps,' not whether multiple records describe one person or two. No coherence verdict is required or issued; this dimension does not apply."
               }
             ],
-            "judge_cost_usd": 0.0148779,
+            "judge_cost_usd": 0.014313,
             "duration_ms": 13391.554375062697,
             "error": null,
             "input_tokens": 8663,
-            "cached_input_tokens": 5649,
+            "cached_input_tokens": 0,
             "output_tokens": 1130
           },
           "started_at": 1792783600.7801542,
@@ -9756,6 +9756,5 @@
       "research_append": "4f014a80ac8230b559e1ab57b319a1ab81f77d358e1879a3d6e22726f3b41523",
       "research_query": "058ec55959f09ab1ffb9b44533e8f3f91a6bbdb463a9753a974c92cd00a793d0"
     }
-  },
-  "judge_render_hash": "5367ed19690a4d9c780880f8a9dd57b80546ff71b8b873d48ecf402bb5850393"
+  }
 }

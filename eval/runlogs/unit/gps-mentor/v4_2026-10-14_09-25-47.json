@@ -660,11 +660,11 @@
                 "rationale": "The refusal meets the standard for this dimension on a refusal artifact. The narrative_for_user is one line of plain language: 'There isn't a written-up finding yet to give a craft read on.' It names what is missing (finished prose/proof summary) and what to do about it (run proof-conclusion first, then return). The language is conversational and avoids schema vocabulary. The researcher can act on this guidance without decoding internal terminology."
               }
             ],
-            "judge_cost_usd": 0.012632,
+            "judge_cost_usd": 0.013169400000000001,
             "duration_ms": 11744.272292009555,
             "error": null,
             "input_tokens": 7907,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 5374,
             "output_tokens": 945
           },
           "started_at": 1791972224.503695,
@@ -1435,11 +1435,11 @@
                 "rationale": "The response reads as collegial and actionable throughout. Findings name specific artifacts and gaps: 'Original Source' labels, 'indirect evidence' phrasing, the Evidence Summary's catalogue structure, missing Famine/coal-economy context. Each consider_addressing item specifies a concrete next action: replace labels with plain meanings, let 1850 and 1860 run together as one thread, add historical context. The narrative_for_user appears once and in plain language ('a cousin with no genealogy background will stop on each of these'), never restated in JSON fields. No internal axis vocabulary surfaces (no mention of 'audience calibration check' as a process). The agent explicitly states the assumed audience: 'I read it as written for family rather than for a journal.' The response is terse in the structured fields and expansive in the narrative, following \u00a76.4's register split correctly."
               }
             ],
-            "judge_cost_usd": 0.020441400000000002,
+            "judge_cost_usd": 0.019904,
             "duration_ms": 17808.250291040167,
             "error": null,
             "input_tokens": 12944,
-            "cached_input_tokens": 5374,
+            "cached_input_tokens": 0,
             "output_tokens": 1392
           },
           "started_at": 1791972046.556184,
@@ -1476,6 +1476,5 @@
     "cursor": [],
     "seed": 2026
   },
-  "tool_search": true,
-  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
+  "tool_search": true
 }

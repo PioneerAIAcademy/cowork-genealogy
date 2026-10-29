@@ -189,8 +189,7 @@
                 "subagent_type": "survey-surname",
                 "text": "That's a search for one person's record \u2014 please use search-records."
               }
-            ],
-            "warnings": []
+            ]
           },
           "validators": {
             "passed": true,
@@ -1164,11 +1163,11 @@
                 "rationale": "The logged table (log_007 notes) is well-structured with two sections: 'United States Census, 1850' for population households and 'United States Census (Slave Schedule), 1850' for the slave schedule. The population section correctly groups Edmund Dixon (b. 1810, VA) and Mary Dixon (b. 1815, VA) into one household row under the shared recordArk XJQV-HH1850-A, with Edmund as head of household and Mary listed under 'Other Dixon Members'. William and James Dixon each appear in separate rows with their unique ARKs. All required columns are present: Census Year, County, Head of Household, Other Dixon Members, Record ARK, and Ruled Out. The table ends with the required hedge sentence about pre-1880 censuses."
               }
             ],
-            "judge_cost_usd": 0.018579,
+            "judge_cost_usd": 0.019010199999999998,
             "duration_ms": 13291.394599713385,
             "error": null,
             "input_tokens": 12839,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 4312,
             "output_tokens": 1148
           },
           "started_at": 1792084871.1398637,
@@ -1842,13 +1841,13 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all requirements: called place_search for Virginia, performed record_search for 1820 only (the single year in the span), logged the search with research_log_append, and produced a properly structured markdown table with all three households. The response includes appropriate context about pre-1880 census limitations and next steps. No required elements were omitted."
+                "rationale": "The skill addressed all requirements: called place_search for Virginia, executed record_search for the single year 1820 within the span, logged the search with research_log_append, and produced a properly structured markdown table with all three households. The response includes appropriate context about pre-1880 census limitations and next steps. No required elements were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed arguments matching expected values. place_search received 'Virginia' with 'United States' context (matched predicate). record_search received correct surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', and residenceYearFrom/To both 1820 (matched predicate). The projectPath was correctly included. No critical arguments were wrong and no fixture_not_found errors occurred."
+                "rationale": "All tool calls passed correct arguments. place_search received 'Virginia' and 'United States' context. record_search correctly used surname 'Dixon', recordType 'census', recordCountry 'United States', recordSubdivision 'Virginia', and residenceYearFrom/To both set to 1820. The projectPath was included as expected. All critical identifiers and parameters match the fixture's expected_args semantically."
               },
               {
                 "source": "rubric",
@@ -1860,27 +1859,27 @@
                 "source": "rubric",
                 "name": "Census coverage",
                 "score": 3,
-                "rationale": "The agent called record_search for 1820 only, which is the single year in the delegation's yearSpan (1820-1820). The call used residenceYearFrom=1820 and residenceYearTo=1820, with recordType='census'. This matches the requirement for year-by-year census searches within the requested span."
+                "rationale": "The agent correctly searched only the 1820 census year, which is the single year within the requested 1820-1820 span. The record_search call used residenceYearFrom and residenceYearTo both set to 1820, and recordType was correctly set to 'census'. No extraneous years were searched."
               },
               {
                 "source": "rubric",
                 "name": "Threshold compliance",
                 "score": null,
-                "rationale": "The totalMatches returned was 3, which is well under the 600 per-year threshold. This dimension applies only when at least one year exceeds 600 matches. Since no year exceeded the threshold, this dimension is N/A."
+                "rationale": "The totalMatches returned was 3, which is well below the 600-per-year threshold. This dimension applies only when at least one year exceeds 600 matches. Since no threshold was exceeded, this dimension is N/A."
               },
               {
                 "source": "rubric",
                 "name": "Table structure",
                 "score": 3,
-                "rationale": "The logged survey_surname entry contains a well-structured markdown table sectioned by census year (1820) and collection title ('United States Census, 1820'). The table includes all required columns: Census Year, County, Head of Household, Other Members (surname Dixon), Record ARK, and Ruled Out. The three households are properly listed with their respective counties and ARKs. The entry ends with the required pre-1880 hedge sentence about relationship columns. The table is logged as notes in the research_log_append call, not returned as a separate file."
+                "rationale": "The logged survey_surname entry contains a well-structured markdown table with correct columns: Census Year, County, Head of Household, Other Members (surname Dixon), Record ARK, and Ruled Out. The table is properly sectioned by census year (1820) and collection title (United States Census, 1820). All three households are listed with accurate data. The entry ends with the required pre-1880 hedge sentence about relationship columns. The table is logged in the notes field of the research_log_append entry as required."
               }
             ],
-            "judge_cost_usd": 0.0168182,
+            "judge_cost_usd": 0.016272000000000002,
             "duration_ms": 10337.844800204039,
             "error": null,
             "input_tokens": 11937,
-            "cached_input_tokens": 4312,
-            "output_tokens": 890
+            "cached_input_tokens": 0,
+            "output_tokens": 867
           },
           "started_at": 1792084871.1418755,
           "ended_at": 1792084938.598542
@@ -4102,6 +4101,5 @@
     "live_modules": {
       "research_log_append": "790476c5d152c947a53e9bb44690314866d13fd6b1d2b5014b0782a21759a655"
     }
-  },
-  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
+  }
 }

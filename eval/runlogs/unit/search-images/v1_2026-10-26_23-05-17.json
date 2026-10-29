@@ -606,11 +606,11 @@
                 "rationale": "The browse was logged with sufficient detail for an exhaustiveness audit. The research_log_append call included: the imageGroupNumber (004452257), recordType (Probate Records), jurisdiction (Schuylkill County, Pennsylvania), imagesExamined (00001-00020), lookingFor (burial entry for Patrick Flynn, 1882), outcome (partial), resultsExamined (20), and comprehensive notes naming the volume, the pages read in earlier turns, the attempted page, the cap refusal, the negative result, and the continuation link. This provides the scope needed to audit why the browse was incomplete and where to resume."
               }
             ],
-            "judge_cost_usd": 0.014856999999999999,
+            "judge_cost_usd": 0.0154105,
             "duration_ms": 26143.84471499943,
             "error": null,
             "input_tokens": 10112,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 5535,
             "output_tokens": 949
           },
           "started_at": 1793056249.7161322,
@@ -3216,11 +3216,11 @@
                 "rationale": "The research_log_append entry (log_006) includes comprehensive scope details: image group number 007936749, place (Schuylkill, Pennsylvania), record type (Probate Records), date range (1851\u20131930), images examined (00001, 00008, 00015), the specific will location (Will Book G, page 112), will date (14 March 1889), proved date (2 April 1889), testator name and location, named beneficiaries, and the significant finding that Patrick Flynn was not named. The notes also contextualize the finding against hypothesis h_001 and reference src_008 (1881 deed). This provides sufficient detail for an exhaustiveness audit."
               }
             ],
-            "judge_cost_usd": 0.0186265,
+            "judge_cost_usd": 0.018073,
             "duration_ms": 12837.724678000086,
             "error": null,
             "input_tokens": 12848,
-            "cached_input_tokens": 5535,
+            "cached_input_tokens": 0,
             "output_tokens": 1045
           },
           "started_at": 1793055917.8468602,
@@ -8269,6 +8269,5 @@
       "research_log_append": "4b57e59440d4d8d1308ccc23de4112663a53055ee17baebf88ea4559da551ca5",
       "sidecar_read": "a78db5f0efb59b15d812c4654b58377ab27f9b7dcd5115d9373894185096af01"
     }
-  },
-  "judge_render_hash": "5367ed19690a4d9c780880f8a9dd57b80546ff71b8b873d48ecf402bb5850393"
+  }
 }

@@ -1479,11 +1479,11 @@
                 "rationale": "N/A. The hypothesis h_001 under test is parentage ('Patrick Flynn's father was Thomas Flynn'), not identity. Chronological coherence cannot settle a parentage claim; that is proof-conclusion's domain. The skill correctly did not issue a Step-6 coherence verdict on h_001. The reply notes that the death certificate names Thomas Flynn as father and recommends routing to conflict-resolution and proof-conclusion for further work. This is a Step-5 coherence signal (surfacing evidence), not a verdict on the hypothesis itself. No identity-question verdict was issued, so this dimension does not apply."
               }
             ],
-            "judge_cost_usd": 0.02819,
+            "judge_cost_usd": 0.0287549,
             "duration_ms": 20309.259800240397,
             "error": null,
             "input_tokens": 20030,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 5649,
             "output_tokens": 1632
           },
           "started_at": 1792139237.9879684,
@@ -3707,57 +3707,57 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and resolved both place strings (Ireland and County Mayo, Ireland), called place_distance to obtain the 5,400 km transatlantic distance, and accurately flagged the geographic infeasibility of a 7-day crossing in 1850. The persisted timeline contains four events with correct dates, places, and assertion linkages. The gap detection correctly identifies the 48-year span (1860\u20131908) as significant and names searchable record types (1870, 1880, 1900 censuses). The skill appropriately deferred logical-impossibility detection to check-warnings rather than adjudicating it. No fabricated material or unsupported claims appear in the response or persisted state."
+                "rationale": "The skill produced factually accurate output. All persisted timeline events trace to tool responses and assertions on file. The baptism date (1850-05-25), census dates (1850-06-01, 1860), and death date (1908-03-12) are correct. The standard places (Ireland, Schuylkill Pennsylvania) match place_search results. The distance (5400 km) matches the place_distance response. The gap (1860\u20131908) is correctly identified as 48 years with appropriate expected records (1870, 1880, 1900 censuses). No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: resolved both unique place strings, called place_distance, flagged the geographic infeasibility in the reply, persisted a complete timeline with four events, identified the significant gap with specific expected record types, and recommended appropriate next steps (person-evidence review, check-warnings, and census searches). No required work was omitted."
+                "rationale": "The skill addressed all required elements: resolved both place strings (Ireland and County Mayo, Ireland) via separate place_search calls; called place_distance for the transatlantic pair; flagged the geographic infeasibility in the reply (7 days for ~5400 km is impossible in 1850); identified the significant 48-year gap with specific expected record types; and persisted a complete timeline with 4 events and 1 gap. All assertions referenced in the timeline are on file."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed arguments matching the fixture's expected_args semantically. place_search was called twice for two distinct place strings ('Ireland' and 'County Mayo, Ireland'), which is correct tool usage per the per-test context \u2014 resolving two different strings, not redundant calls. place_distance received the two standardized places returned by place_search. research_append received the complete timeline entry with correct structure. No critical arguments were wrong, and no calls landed in fixture_not_found."
+                "rationale": "All tool calls passed arguments matching expected values. place_search calls for 'Schuylkill County, Pennsylvania', 'Ireland', 'County Mayo, Ireland', and 'Pennsylvania' all matched expected patterns (~Schuylkill, ~Ireland, ~Ireland, ~). place_distance received 'Ireland' and 'Schuylkill, Pennsylvania, United States' (standardized forms from prior place_search results), matching expected ~Ireland and ~Pennsylvania. research_append received correct projectPath and well-formed timeline entry. No fixture_not_found errors. Two separate place_search calls for different place strings ('Ireland' vs 'County Mayo, Ireland') is correct tool usage per the per-test context, not redundancy."
               },
               {
                 "source": "rubric",
                 "name": "Tool usage \u2014 place resolution and distance",
                 "score": 3,
-                "rationale": "Every persisted standard_place traces to a place_search response in this run: 'Ireland' (from two searches), 'Schuylkill, Pennsylvania, United States' (from place_search). The distance_from_previous_km values are correct: 5400 km (from place_distance call) between the baptism and 1850 census, 0 for the two consecutive Pennsylvania events (same standard_place). Each unique place string was resolved exactly once per the per-test context. Independent calls were issued together in a single batch rather than serialized."
+                "rationale": "Every persisted standard_place traces to a place_search response: 'Ireland' from place_search results, 'Schuylkill, Pennsylvania, United States' from place_search results. The distance_from_previous_km value of 5400 on the 1850 census event traces to the place_distance call (kilometers: 5400). The 1860 and 1908 events correctly carry distance_from_previous_km: 0 because they share the same standard_place as the preceding event. The baptism event carries null (no standard_place comparison needed for first event). Each unique place string was resolved exactly once via independent calls issued together."
               },
               {
                 "source": "rubric",
                 "name": "Gap detection",
                 "score": 3,
-                "rationale": "The skill correctly identified the 48-year gap (1860\u20131908) as HIGH severity, reflecting its impact on research. The expected_events array names specific, searchable record types: '1870 census', '1880 census', '1900 census'. These are genuine records that survive and can be searched in their respective jurisdictions. The 1890 census is correctly excluded (destroyed by fire, unrecoverable). The gap description accurately reflects the undocumented span of Patrick's adult life."
+                "rationale": "The skill identified the significant 48-year gap (1860\u20131908-03-12) as HIGH severity, correctly noting it spans Patrick's entire adult life. expected_events names specific, searchable record types: '1870 census', '1880 census', '1900 census' \u2014 all real US federal censuses that survive and can be searched. The notes correctly exclude the 1890 census (destroyed by fire, unrecoverable). The gap is substantial and the expected records are appropriate to the jurisdiction and era."
               },
               {
                 "source": "rubric",
                 "name": "Deferral of logical-impossibility detection",
                 "score": 3,
-                "rationale": "The skill correctly identified the geographic infeasibility (7-day Atlantic crossing in 1850) as a coherence signal and flagged it in the reply, recommending person-evidence review and conflict-resolution. It did not adjudicate the impossibility itself or silently fold the record in. It appropriately recommended check-warnings for biological/logical checks on the full profile, deferring single-person logical-impossibility detection to that tool as required."
+                "rationale": "The skill correctly deferred single-person logical-impossibility detection to check-warnings. When the baptism date (1850-05-25) and census date (1850-06-01) surface a possible vital-limit contradiction (geographic infeasibility), the skill noted it in the reply and recommended person-evidence review ('reassess the link') and conflict-resolution ('weigh the attribution'), rather than adjudicating it as impossible itself or silently folding it in."
               },
               {
                 "source": "rubric",
                 "name": "Geographic feasibility",
                 "score": 3,
-                "rationale": "The skill resolved both places (Ireland and Schuylkill, Pennsylvania), called place_distance (obtaining 5,400 km), and compared the distance against the elapsed time (7 days). It correctly flagged the pair as infeasible: an 1850 Atlantic crossing required ~3 weeks by steamship (~150 mi/day), making a 7-day crossing impossible. The finding was reported in the reply as a coherence signal with specific reasoning. The analysis is sound and the conclusion correct."
+                "rationale": "The skill identified a distance-sensitive pair: baptism in Ireland (1850-05-25) and census in Pennsylvania (1850-06-01), only 7 days apart but ~5400 km distant. It resolved both places via place_search, called place_distance (obtaining 5400 km), compared the distance against elapsed time (7 days), and correctly flagged the pair as infeasible in the reply: 'The fastest 1850 transatlantic steamship could not cover that distance in under approximately 11 days.' This is a genuine geographic impossibility properly flagged as a coherence signal."
               },
               {
                 "source": "rubric",
                 "name": "Identity coherence (hypothesis-testing timelines)",
                 "score": null,
-                "rationale": "The hypothesis under test (h_001) concerns parentage ('Patrick Flynn's father was Thomas Flynn'), not identity. Chronological coherence cannot settle a parentage claim. The skill did not issue an explicit Pass/Fail/Inconclusive verdict on the hypothesis itself. It reported Step-5 coherence signals (the geographic infeasibility of a_014, the birthplace discrepancy on a_012) and recommended person-evidence and conflict-resolution review, which is required behaviour. No identity-question verdict was issued, so this dimension is N/A."
+                "rationale": "The hypothesis on file (h_001) concerns parentage ('Patrick Flynn's father was Thomas Flynn'), not identity. Chronological coherence cannot settle a parentage claim. The skill did not issue an explicit Pass/Fail/Inconclusive verdict on h_001 itself; it reported Step-5 coherence signals (the geographic infeasibility of a_014, recommending person-evidence review) as required. No identity-question verdict was rendered, so this dimension is N/A per the per-test context."
               }
             ],
-            "judge_cost_usd": 0.0236719,
+            "judge_cost_usd": 0.0242969,
             "duration_ms": 17493.743900209665,
             "error": null,
             "input_tokens": 16797,
             "cached_input_tokens": 5649,
-            "output_tokens": 1262
+            "output_tokens": 1387
           },
           "started_at": 1792139237.9977338,
           "ended_at": 1792139349.2917097
@@ -9956,7 +9956,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The timeline accurately reflects the persisted events, gaps, and conflicts. All four events (birth ~1845, 1850 census, 1860 census, 1908 death) are correctly dated and placed. The conflict references (c_001 on birthplace, c_002 on identity) are accurate and properly attributed to the events they affect. The gap from 1860-1908 is correctly identified as high severity with appropriate expected_events (1870, 1880, 1900 censuses, marriage). No fabricated material; all claims trace to tool responses or the before-state."
+                "rationale": "The timeline accurately reflects the persisted events, gaps, and conflicts. All four events (birth ~1845, 1850 census, 1860 census, 1908 death) are correctly dated and placed. The conflict references (c_001 on birthplace, c_002 on identity) are accurate and properly attributed to the competing assertions. The gap from 1860-1908 is correctly identified as high severity with appropriate expected_events (1870, 1880, 1900 censuses, marriage). No fabricated material; all claims trace to tool responses or the before-state."
               },
               {
                 "source": "base",
@@ -9968,45 +9968,45 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed arguments matching expected values. place_search calls for 'Schuylkill County, Pennsylvania', 'Ireland', and 'Pennsylvania' all matched expected patterns. place_distance call for Ireland to Pennsylvania matched expected args. research_query calls for project_context, person_evidence, assertions, conflicts, timelines all used correct section names and identifiers. research_append call to update t_001 was valid. No fixture_not_found errors; all calls succeeded with matched.kind='live' or 'predicate'."
+                "rationale": "All MCP tool calls passed arguments matching expected values. place_search calls for 'Schuylkill County, Pennsylvania', 'Ireland', and 'Pennsylvania' all matched expected patterns. place_distance call for Ireland and Pennsylvania matched expected args. research_query calls for project_context, person_evidence, assertions, conflicts, timelines all used correct section names and identifiers. research_append call to update t_001 was valid. No fixture_not_found errors; all calls succeeded with live matches."
               },
               {
                 "source": "rubric",
                 "name": "Tool usage \u2014 place resolution and distance",
                 "score": 3,
-                "rationale": "Every persisted standard_place traces to a place_search response: 'Ireland' (place_search result), 'Schuylkill, Pennsylvania, United States' (place_search result). The distance_from_previous_km values are correct: 0 for 1850\u21921860 (same standard_place), 0 for 1860\u21921908 (same standard_place). The Ireland\u2192Pennsylvania distance (5400 km) was obtained via place_distance call. No distances were supplied by agent knowledge or arithmetic. Each unique place was resolved exactly once; calls were issued together efficiently."
+                "rationale": "Every persisted standard_place traces to a place_search response: 'Ireland' (place_search result), 'Schuylkill, Pennsylvania, United States' (place_search result). The distance_from_previous_km values are correct: 0 for 1850\u21921860 (same standard_place), 0 for 1860\u21921908 (same standard_place). The Ireland\u2192Pennsylvania distance (5400 km) was obtained via place_distance call. All place resolutions were done efficiently in a single batch call. No fabricated distances or places."
               },
               {
                 "source": "rubric",
                 "name": "Gap detection",
                 "score": 3,
-                "rationale": "The 48-year gap (1860-1908) is correctly identified as significant and high severity. expected_events names specific, searchable record types: '1870 census', '1880 census', '1900 census', 'marriage'. These are all records that survive and can be searched in the relevant jurisdiction (US federal censuses for those years, Pennsylvania marriage records). The 1890 census is correctly excluded (destroyed, unrecoverable). The gap notes appropriately mention migration as a consideration if local searches fail."
+                "rationale": "The 48-year gap (1860-1908) is correctly identified as high severity. expected_events names specific, searchable record types: '1870 census', '1880 census', '1900 census', 'marriage'. These are all records that survive and can be searched in Schuylkill County. The notes correctly exclude the 1890 federal census (destroyed, unrecoverable). The gap's impact is properly assessed: Patrick had a son-in-law by 1908 (implying marriage), yet no intervening records exist. Severity and expected_events are well-calibrated."
               },
               {
                 "source": "rubric",
                 "name": "Deferral of logical-impossibility detection",
                 "score": 3,
-                "rationale": "The skill correctly deferred logical-impossibility detection to check-warnings. The reply notes the birthplace contradiction (Ireland vs Pennsylvania) and the identity ambiguity but does not adjudicate them as settled impossibilities. Instead, it recommends 'conflict-resolution to settle the birthplace disagreement' and notes that 'check-warnings run on I1 is also advisable for biological/logical checks the timeline does not cover.' The anomalies are flagged, not silently folded in or judged impossible."
+                "rationale": "The skill correctly deferred logical-impossibility detection to check-warnings. When noting the 1908 death certificate's Pennsylvania birthplace contradicts the 1850 and 1860 censuses' Ireland birthplace, the response flagged this as an unresolved conflict (c_001) rather than adjudicating it as impossible. The response recommends 'conflict-resolution to settle the birthplace disagreement' and 'a check-warnings run on I1 for biological/logical checks', properly routing the logical coherence judgment to the appropriate tool."
               },
               {
                 "source": "rubric",
                 "name": "Geographic feasibility",
                 "score": null,
-                "rationale": "N/A \u2014 no distance-sensitive pair exists in this timeline. The Ireland birth (~1845) and 1850 Pennsylvania census are separated by approximately five years, which is ample time for transatlantic migration. The subsequent events (1850, 1860, 1908) all occur in the same county (Schuylkill, Pennsylvania), so no distance-sensitive pair arises. Geographic feasibility applies only when two events are close in time but far in distance; this scenario has no such pair."
+                "rationale": "N/A \u2014 no distance-sensitive pair exists in this timeline. The Ireland birth (~1845) and 1850 Pennsylvania census are separated by approximately five years, providing ample time for transatlantic migration. The subsequent events (1850, 1860, 1908) all occur in the same county (Schuylkill, Pennsylvania) with distances of 0 km. No pair has both short elapsed time and large distance, so geographic feasibility analysis does not apply."
               },
               {
                 "source": "rubric",
                 "name": "Identity coherence (hypothesis-testing timelines)",
                 "score": null,
-                "rationale": "N/A \u2014 the hypothesis h_001 is a parentage claim ('Thomas Flynn is Patrick's father'), not an identity question. Identity coherence applies only to Mode-B timelines testing whether records describe one person or two. This timeline is Mode A (label: 'Patrick Flynn (I1) \u2014 person timeline', hypothesis_id: null in persisted state). The unresolved identity conflict c_002 is referenced and flagged in the events, which is the correct behavior; issuing a coherence verdict on a parentage hypothesis would be out of lane, but no such verdict appears."
+                "rationale": "N/A \u2014 the hypothesis h_001 is a parentage claim ('Patrick Flynn's parents'), not an identity question. The timeline correctly references the identity conflict c_002 (which Patrick Flynn in 1850 is the 1908 decedent?) as a separate, unresolved matter requiring conflict-resolution. The skill does not issue a Step-6 coherence verdict on h_001 itself; it appropriately defers identity adjudication to conflict-resolution. Referencing c_002 and recommending its resolution is the correct behavior, not a deduction."
               }
             ],
-            "judge_cost_usd": 0.026170899999999997,
+            "judge_cost_usd": 0.0262209,
             "duration_ms": 15193.650100380182,
             "error": null,
             "input_tokens": 19096,
             "cached_input_tokens": 5649,
-            "output_tokens": 1302
+            "output_tokens": 1312
           },
           "started_at": 1792139237.9879684,
           "ended_at": 1792139390.2330465
@@ -10066,6 +10066,5 @@
       "research_append": "c9388cb6a3ce131f85f6a579075c2083f1ef64ff6c95bfd066812841ca6f8f0f",
       "research_query": "7ee7572ae84b3f6494d74205d6ac06c766272f5c5a04d18f09ac920077a0ee3a"
     }
-  },
-  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
+  }
 }

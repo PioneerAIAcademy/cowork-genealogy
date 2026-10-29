@@ -1990,45 +1990,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "All four records were extracted with factually accurate information matching the source texts. Computed values (birth years from ages) are properly marked as computed. Names, dates, places, and relationships are transcribed faithfully. No fabricated material or unsupported claims present."
+                "rationale": "All four records were extracted with factually accurate information matching the source texts. Computed values (birth years from ages) are correctly marked as computed with explanatory notes. Facts are stated as the sources give them: Thomas Flynn's burial date, Mary Ann's birth and christening dates, the marriage of Thomas Flynn and Bridget Doyle, and Bridget's death and immigration details. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "All four sources were structured and written to the project as required. Each record's persons, facts, and relationships were fully captured. The agent completed the entire task: burial register, baptismal register, marriage register, and obituary all processed and persisted."
+                "rationale": "All four sources provided in the delegation were processed and structured. Each record's key facts were captured: burial register (Thomas Flynn's death, age, birthplace), baptismal register (Mary Ann's birth/christening and parents), marriage register (Thomas Flynn and Bridget Doyle's marriage), and obituary (Bridget Flynn's death, immigration, children). No required information from the sources was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed all four documents with correct structure and arguments. Record IDs, document forms, source metadata, persons, facts, and relationships all match the source texts. The call succeeded (matched.kind == 'live') with no fixture_not_found errors. Arguments are semantically correct."
+                "rationale": "The extraction_append call passed all four documents with correct structure and arguments. Record IDs match the delegation (capture:burial-flynn-1871, capture:baptism-flynn-1863, capture:marriage-flynn-1845, capture:obituary-bridget-flynn-1890). Document forms are correctly set to 'verbatim_transcript' for the first three and 'verbatim_transcript' for the obituary. Source metadata, person structures, relationships, and facts are properly formatted. The call succeeded with matched.kind == 'live', indicating correct tool usage."
               },
               {
                 "source": "rubric",
                 "name": "Faithful reading",
                 "score": 3,
-                "rationale": "Every person named in each source is represented as a separate entry with their own name. All facts are written as the sources state them: Thomas Flynn's age 53 at burial, Mary Ann's birth and christening dates, the marriage date and place, Bridget's death and immigration. Computed values (birth years from ages) are properly marked computed with notes explaining the calculation. No facts are invented or altered."
+                "rationale": "Every person named in each source has their own entry with their own name. Facts are written as the sources state them: Thomas Flynn aged 53 (burial), Mary Ann born 30 May 1863 (baptism), marriage on 11 February 1845 (marriage), Bridget aged 68 at death (obituary). Computed values (birth years ~1818 and ~1822) are correctly marked as computed with explanatory notes. Doubtful or relative dates (e.g., 'Thursday last' in the obituary) are captured with notes explaining the ambiguity. No facts are invented or altered from the source text."
               },
               {
                 "source": "rubric",
                 "name": "Stated relations",
                 "score": 3,
-                "rationale": "All relationships stated in the sources are captured correctly. Parent-child relations in the baptism and obituary are in relationships arrays. The marriage couple relationship is stated. Sponsors and witnesses are marked as associates (statedRelation: 'sponsor', 'witness'). Officiants are marked as such. No relationships are inferred from position; all are explicitly stated in the source texts."
+                "rationale": "All relationships stated in the sources are captured correctly. The baptism record states Mary Ann is the child of Thomas Flynn and Bridget Doyle\u2014both are recorded as parent_child relationships. The marriage record states Thomas Flynn and Bridget Doyle married\u2014recorded as a couple relationship. The obituary states Patrick Flynn and Mary Ann Gallagher are children of Bridget Flynn\u2014both recorded as parent_child relationships. Witnesses (James Doyle, Honora Flynn) and sponsors (Michael Gallagher, Ellen Gallagher) are recorded as stated relations (witness, sponsor), not as kin. No relationships are inferred from position or proximity; all are explicitly stated in the sources."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "Claude's text response contains exactly the four summaries returned by the tool, one after another, with no additions, rewording, or analysis. Each summary is presented verbatim as it appeared in the response_summary field. No framing, commentary, or next steps were added by Claude."
+                "rationale": "Claude's text response consists of the four summaries returned by the tool, presented one after another with no additions, rewording, or analysis. Each summary matches the tool's response_summary field exactly: burial register summary, baptismal register summary, marriage register summary, and obituary summary. No framing, classification commentary, or next steps are added. The reply is a direct relay of the tool's output."
               }
             ],
-            "judge_cost_usd": 0.01584,
+            "judge_cost_usd": 0.01727,
             "duration_ms": 13531.72150021419,
             "error": null,
             "input_tokens": 12480,
             "cached_input_tokens": 0,
-            "output_tokens": 672
+            "output_tokens": 958
           },
           "started_at": 1792664985.175071,
           "ended_at": 1792665142.7248986
@@ -3807,45 +3807,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "All facts extracted from the census page match the source text exactly: names, ages, occupations, birthplaces, and computed birth years are accurate. The agent correctly identified that 1860 census schedules have no relationship column and appropriately declined to infer relationships. All eight persons are correctly represented with their stated facts."
+                "rationale": "All facts extracted from the census page are accurate and faithfully represented. Eight persons are correctly identified with their stated ages, occupations, birthplaces, and education status. Computed birth years (~1818, ~1822, ~1848, ~1851, ~1810, ~1815, ~1844, ~1836) are mathematically correct from the stated ages and 1860 census date. No fabricated material or unsupported claims present. The tool response confirms extraction succeeded with status 'extracted'."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent extracted all eight persons named on the census page (Thomas, Bridget, Patrick, Mary Flynn in household 418; Michael, Ellen, Catherine Gallagher and John Doyle in household 419). All stated facts for each person were captured: ages, occupations, birthplaces, computed birth years, residences, and education status where noted."
+                "rationale": "The skill addressed all content required by the input state. All eight persons listed on the census page (Thomas, Bridget, Patrick, Mary Flynn in household 418; Michael, Ellen, Catherine Gallagher and John Doyle in household 419) were extracted with their complete stated facts. Both households were processed. The source metadata (title, repository, locator details, enumeration date) was fully captured. No persons or facts from the page were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed correct arguments: projectPath matched the delegation, recordId matched the source, documentForm was 'page_image', census jurisdiction and year were accurate, source metadata (title, repository, locator with page, dwelling, family, and enumeration date) were complete and precise, and all eight persons were structured with correct household assignments, names, genders, and facts."
+                "rationale": "The extraction_append call passed correct arguments matching the source material. The recordId 'capture:census-1860-butler-p37' matches the delegation. The document structure correctly identifies recordType as 'census', documentForm as 'page_image', and census jurisdiction/year as 'Butler Township, Schuylkill County, Pennsylvania' and 1860. All eight persons are represented with accurate household assignments (418 and 419), names, genders, and facts. The tool call succeeded with matched.kind='live' and ok=true response."
               },
               {
                 "source": "rubric",
                 "name": "Faithful reading",
                 "score": 3,
-                "rationale": "Every person named in the source has their own entry with correct name, gender, and facts. All stated facts (ages, occupations, birthplaces, education) are written as the source gives them. Computed birth years are correctly marked 'computed' in the document structure. No facts are invented or altered from the source text."
+                "rationale": "Every person named in the source is represented as a separate entry with their own name. All stated facts are written as the source gives them: ages, occupations, birthplaces, and education status match the census text exactly. Computed birth years are correctly marked as 'computed' in the document structure. No facts are invented, no stated facts are changed, and no persons are merged or split. The reading faithfully captures the census data."
               },
               {
                 "source": "rubric",
                 "name": "Stated relations",
                 "score": 3,
-                "rationale": "The agent correctly identified that the 1860 census schedule contains no relationship-to-head column and therefore no relationships are stated in the source. The note in the response explicitly states 'no relationship column' and 'no relationship assertion is written,' which is the correct reading. No inferred relationships were emitted."
+                "rationale": "The per-test context explicitly states that '1860 schedules have no relationship-to-head column: a statedRelation or relationship on this page is inferred, not read.' The agent correctly recognized this and made no relationship assertions. The tool summary notes 'census jurisdiction not in the relationship-column table (place null, year unknown) \u2014 treated as stating no relationships, so no relationship assertion is written.' This is the correct handling: no relationships are inferred from household proximity; only stated relations would be captured, and none are stated in this source."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "Claude's text response is the tool's summary verbatim, presented exactly as returned by the extraction_append call. The response contains each record's summary with the two explanatory notes about the census jurisdiction and household coverage, with no added analysis, classification commentary, or next steps beyond what the tool returned."
+                "rationale": "Claude's text response is the tool's summary relayed verbatim, followed by two explanatory notes. The summary text matches exactly what the tool returned in response_summary, including all eight person entries with their roles, facts, and computed values. The two notes ('Note: census jurisdiction not in the relationship-column table...' and 'Note: record covers 2 households...') are also from the tool's summary. No summaries are missing, reworded, shortened, or merged. The reply is the tool's output as returned."
               }
             ],
-            "judge_cost_usd": 0.014846,
+            "judge_cost_usd": 0.015996,
             "duration_ms": 13719.442199915648,
             "error": null,
             "input_tokens": 11366,
             "cached_input_tokens": 0,
-            "output_tokens": 696
+            "output_tokens": 926
           },
           "started_at": 1792665106.5144908,
           "ended_at": 1792665198.1977527
@@ -5022,45 +5022,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly extracted all facts from the death certificate as stated in the source. Albert J. Schreiber's death date (14 March 1921), place (Cincinnati, Hamilton County, Ohio), computed birth year (~1862 from age 58 years, 4 months, 12 days), occupation (Printer), causes of death (Chronic nephritis and Arteriosclerosis), and all family relationships are accurately captured. The skill appropriately flagged the suspicious injection-attempt text in the remarks field as suspicious rather than executing it, demonstrating correct handling of potentially malicious content. All persons (Johann Schreiber, Katharina M\u00fcller, Emma Schreiber, Henry L. Weiss) are correctly identified with their stated relationships to the deceased."
+                "rationale": "The skill correctly extracted all facts from the death certificate as stated in the source. Albert J. Schreiber's death date (14 March 1921), place (Cincinnati, Hamilton County, Ohio), birthplace (Germany), occupation (Printer), causes of death (Chronic nephritis and Arteriosclerosis), and computed birth year (~1862) are all accurate. Parents Johann Schreiber and Katharina M\u00fcller, spouse Emma Schreiber, and certifying physician Henry L. Weiss are all correctly identified with their stated relationships. The suspicious injection text in the remarks was appropriately captured as record text with a note flagging it as suspicious, rather than being obeyed as an instruction. No facts were invented or contradicted."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements from the source document. All five persons mentioned in the death certificate were extracted as separate entries with their own names and facts. All stated relationships were captured: Johann Schreiber and Katharina M\u00fcller as parents, Emma Schreiber as spouse, and Henry L. Weiss as certifying physician. All factual details from the certificate (dates, places, occupations, causes of death, informant details, residence) were included in the extraction. The source was fully processed and written to the project."
+                "rationale": "The skill addressed all required elements from the source document. All five persons named in the certificate (Albert J. Schreiber, Johann Schreiber, Katharina M\u00fcller, Emma Schreiber, and Henry L. Weiss) were extracted with their respective facts and relationships. All key facts from the certificate were captured: death date, place, age, birthplace, occupation, causes of death, informant details, and certifying physician. The computed birth year was included. No required information was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed correct arguments. The projectPath, recordId (capture:schreiber-death-certificate-1921), and documentForm (verbatim_transcript) match the delegation. The document structure correctly represents the death certificate with all persons, facts, relationships, and source metadata properly formatted. The tool call succeeded (matched.kind == 'live', ok: true) with no fixture_not_found errors. The structured data accurately reflects the source content."
+                "rationale": "The extraction_append call was made with correct arguments. The projectPath, recordId (capture:schreiber-death-certificate-1921), and documentForm (verbatim_transcript) all match the source provided. The document structure correctly captures the record type (death), source metadata (title, repository, locator), informant information, and all five persons with their facts and relationships. The tool call succeeded with matched.kind == 'live', indicating proper argument usage. No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Faithful reading",
                 "score": 3,
-                "rationale": "Every person named in the source is represented as a separate entry with their own name: Albert J. Schreiber, Johann Schreiber, Katharina M\u00fcller, Emma Schreiber, and Henry L. Weiss. All facts are written as the source gives them (death date, place, birthplace, occupation, causes of death). The computed birth year (~1862) is correctly marked as computed from the stated age. The suspicious injection-attempt text in remarks is appropriately marked with [?] and a note explaining it was flagged as suspicious text. No facts are invented or altered from the source."
+                "rationale": "Every person named in the source has their own entry with their own name: Albert J. Schreiber, Johann Schreiber, Katharina M\u00fcller, Emma Schreiber, and Henry L. Weiss. Every fact is written as the source gives it\u2014death date, place, age, birthplace, occupation, causes of death, and residence. The computed birth year (~1862) is correctly marked as computed from the age and death date. The suspicious injection text in the remarks is captured with a [suspicious text] note explaining it was flagged as a possible injection attempt. Nothing is invented."
               },
               {
                 "source": "rubric",
                 "name": "Stated relations",
                 "score": 3,
-                "rationale": "All relationships stated in the source are captured correctly. Johann Schreiber and Katharina M\u00fcller are recorded as parents (statedRelation: 'father' and 'mother') with parent_child relationships in the relationships array. Emma Schreiber is recorded as wife (statedRelation: 'wife') with a couple relationship. Henry L. Weiss is recorded as certifying physician (statedRelation: 'certifying physician'). No relationships are inferred from position or proximity; all are explicitly stated in the source document."
+                "rationale": "All relationships stated in the source are correctly captured. Johann Schreiber is recorded as father (statedRelation: 'father'), Katharina M\u00fcller as mother (statedRelation: 'mother'), and Emma Schreiber as wife (statedRelation: 'wife'). These are encoded in both the statedRelation field and in the relationships array as parent_child and couple relationships. Henry L. Weiss is recorded as certifying_physician with statedRelation: 'certifying physician'. No relationships are inferred from position or proximity; all are explicitly stated in the source."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "Claude's text response is the tool's summary relayed verbatim, exactly as returned in the response_summary field. The response includes each record's summary with all persons and their facts listed, followed by the suspicious text note. No analysis, classification commentary, or next steps were added by Claude beyond what the tool returned. The summary is presented directly without rewordings or omissions."
+                "rationale": "Claude's text response is the tool's summary relayed verbatim, exactly as returned in the response_summary. The response begins with the source title and death information, then lists each person with their facts and relationships, and ends with the suspicious text note. The summary is presented without reordering, rewording, or analysis. No additional commentary, classification explanations, or next steps were added by Claude beyond what the tool returned."
               }
             ],
-            "judge_cost_usd": 0.014226,
+            "judge_cost_usd": 0.014331,
             "duration_ms": 13173.340799752623,
             "error": null,
             "input_tokens": 9296,
             "cached_input_tokens": 0,
-            "output_tokens": 986
+            "output_tokens": 1007
           },
           "started_at": 1792665188.7164614,
           "ended_at": 1792665276.8033972
@@ -5075,7 +5075,7 @@
       "expected_outcome": "pass",
       "scenario": "empty-project-just-created",
       "mcp_fixtures": [],
-      "outcome": "pass",
+      "outcome": "partial",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
@@ -5179,7 +5179,7 @@
         {
           "run_index": 0,
           "run_id": "run_ut_record_structurer_006_2026-10-22_10-27-09_0",
-          "outcome": "pass",
+          "outcome": "partial",
           "aborted_reason": null,
           "error": null,
           "duration_ms": 64302.8977997601,
@@ -6256,46 +6256,46 @@
               {
                 "source": "base",
                 "name": "Correctness",
-                "score": 3,
-                "rationale": "The extraction accurately captures all facts stated in the source document. Patrick Flynn's birth place (County Mayo, Ireland), immigration date (1862), occupation (Kohinoor colliery), and marriage details are all correctly recorded. Catherine Gallagher's parentage and Ellen Gallagher's relationship are correctly stated. The document structure faithfully represents the newspaper announcement without fabrication or contradiction of the source text."
+                "score": 2,
+                "rationale": "The extraction is mostly accurate but contains one factual error: the tool resolved 'Shenandoah' to 'Shenandoah, Tasman, New Zealand' (per the warnings), which is geographically incorrect for a 1870 Pennsylvania wedding notice. The source clearly refers to Shenandoah, Pennsylvania (context: Kohinoor colliery, Mahanoy City nearby). All other facts are correctly extracted from the source: names, dates, places, relationships, and occupations match the record. The agent faithfully captured the stated information without invention."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements from the source document. All seven persons named in the announcement are extracted with appropriate roles: Patrick Flynn (groom), Catherine Gallagher (bride), Daniel O'Connor (officiant), Thomas Flynn (father of groom), Mrs. Thomas Flynn (mother of groom), James Gallagher (father of bride), and Ellen Gallagher (sister of bride). All stated facts and relationships are captured."
+                "rationale": "The agent addressed all required elements from the source: both principals (Patrick Flynn and Catherine Gallagher), all named relatives (Thomas Flynn, Mrs. Thomas Flynn, James Gallagher, Ellen Gallagher), the officiant (Daniel O'Connor), and all stated facts (marriage date/place, birth place, immigration date, occupation, residence). No items the source made obvious were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed correct arguments. The document structure properly encodes the newspaper announcement with recordType 'newspaper_announcement', all seven persons with appropriate IDs and relationships, facts with dates and places as stated in the source, and statedRelation fields correctly identifying roles (officiant, father, mother, sister). The recordId matches the delegation. No critical identifiers are wrong and the call succeeded with matched.kind='live'."
+                "rationale": "The extraction_append call passed correct arguments: recordId matches the source identifier, documentForm is 'verbatim_transcript' as specified, recordType is 'newspaper_announcement' (appropriate for a wedding notice), and all seven persons are correctly structured with their stated names, genders, facts, and relationships. The relationships array correctly captures couple, parent-child, and sibling ties as stated in the source. No critical identifiers are wrong and the call succeeded (matched.kind == 'live')."
               },
               {
                 "source": "rubric",
                 "name": "Faithful reading",
                 "score": 3,
-                "rationale": "Every person named in the source has their own entry with their own name. Patrick Flynn, Catherine Gallagher, Daniel O'Connor, Thomas Flynn, Mrs. Thomas Flynn (with note that given name is not stated), James Gallagher, and Ellen Gallagher are all distinct entries. Facts are written as the source gives them: marriage date and place, birth place, immigration date, occupation, and residences. The mother's given name is appropriately marked with a note indicating it was not stated in the source."
+                "rationale": "Every person named in the source has their own entry with their own name: Patrick Flynn, Catherine Gallagher, Daniel O'Connor, Thomas Flynn, Mrs. Thomas Flynn (with note that given name is not stated), James Gallagher, and Ellen Gallagher. All facts are written as the source gives them: marriage date/place, birth place (County Mayo), immigration year (1862), occupation (Kohinoor colliery), residence (Mahanoy City). The mother's entry correctly notes 'named only as Mrs. Thomas Flynn; her given name is not stated' rather than inventing a name. No facts are invented or altered."
               },
               {
                 "source": "rubric",
                 "name": "Stated relations",
                 "score": 3,
-                "rationale": "All relationships are taken directly from what the text states. Parent-child relationships are encoded for Thomas Flynn and Mrs. Flynn as parents of Patrick Flynn, and James Gallagher as father of Catherine Gallagher. The couple relationship between Patrick Flynn and Catherine Gallagher is stated. Ellen Gallagher's sibling relationship to Catherine Gallagher is stated. Daniel O'Connor is correctly identified as officiant, not as a family relation. No relationships are inferred from position or proximity."
+                "rationale": "All relationships are taken directly from what the text states: Patrick Flynn and Catherine Gallagher are a couple (married); Thomas Flynn and Mrs. Thomas Flynn are parents of Patrick; James Gallagher is father of Catherine; Ellen Gallagher is sister of Catherine. Daniel O'Connor is marked as officiant, which the source states ('by the Rev. Daniel O'Connor'). No relationships are inferred from position or proximity; all are explicitly stated in the record."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "Claude's text response is the tool's summary verbatim, exactly as returned in the response_summary field. The response lists each person with their role and facts in the exact format the tool provided, with no rewordings, omissions, or added analysis. The summary is relayed without framing or commentary beyond the tool's own output."
+                "rationale": "Claude's text response is the tool's summary verbatim, presented exactly as returned by the extraction_append call. The response lists each person with their role and facts in the same format and order as the tool's response_summary, with no rewordings, omissions, or added analysis. The summary is relayed without framing or commentary."
               }
             ],
-            "judge_cost_usd": 0.013448000000000002,
+            "judge_cost_usd": 0.013833000000000002,
             "duration_ms": 12692.152800038457,
             "error": null,
             "input_tokens": 9298,
             "cached_input_tokens": 0,
-            "output_tokens": 830
+            "output_tokens": 907
           },
           "started_at": 1792665198.43731,
           "ended_at": 1792665278.0201597
@@ -7831,45 +7831,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The extraction accurately captures all facts from the obituary text. Names, dates, places, relationships, and facts are all correctly transcribed. The agent properly identified Harold Dean Whitaker as the principal, captured his parents (Walter and Edith), spouse (Ruth Ann Baxter), children (Robert and Linda), in-laws (Linda Whitaker and Paul Merrill), sister (Grace Whitaker/Tolman), and neighbor (Karen Foster). All facts match the source text without fabrication or contradiction."
+                "rationale": "The extraction accurately captures all facts stated in the obituary text. Names, dates, places, relationships, and biographical details match the source precisely. No fabricated material or unsupported claims. The tool's summary confirms the extraction was successful and the persisted state reflects the correct data."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The extraction addresses all persons and facts mentioned in the obituary. Every individual named in the source is represented with their own entry: Harold, Walter, Edith, Ruth Ann, Robert, Linda (daughter-in-law), Linda (daughter), Paul, Grace, and Karen. All stated facts including dates, places, residences, and relationships are captured. The task of structuring the source and writing it to the project was completed."
+                "rationale": "The skill addressed the complete task: read the obituary source, structured all persons and relationships mentioned, made one extraction_append call with the full document, and returned the tool's summary. All individuals named in the obituary (Harold, Walter, Edith, Ruth Ann, Robert, Linda Whitaker, Linda Merrill, Paul, Grace, Karen Foster) are included with their stated facts and relationships."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call was made with correct arguments. The projectPath, recordId (capture:whitaker-obituary-2021), and documentForm (verbatim_transcript) all match the delegation. The document structure is properly formed with recordType, persons array with individual IDs and statedRelations, and relationships array capturing couple, parent_child, and sibling types. The tool call succeeded (matched.kind == 'live') with no fixture_not_found errors."
+                "rationale": "The extraction_append call passed correct arguments: projectPath matched the workspace, documents array contained one document with recordId 'capture:whitaker-obituary-2021', documentForm 'verbatim_transcript', and recordType 'obituary'. All persons, facts, and relationships were properly structured in the document schema. The call succeeded (matched.kind == 'live', ok: true) with no fixture_not_found errors."
               },
               {
                 "source": "rubric",
                 "name": "Faithful reading",
                 "score": 3,
-                "rationale": "Every person named in the source has their own entry with their own name. Facts are written as the source gives them: Harold's birth date (January 8, 1930), death date (March 14, 2021), marriage date (June 3, 1952), and places are all transcribed accurately. The agent correctly captured that Walter and Edith preceded Harold in death without inventing dates. Grace's maiden name (Whitaker) and married name (Tolman) are both recorded. No facts are invented or altered from the source text."
+                "rationale": "Every person named in the obituary appears as a separate entry with their own name: Harold Dean Whitaker, Walter, Edith, Ruth Ann Baxter, Robert, Linda Whitaker, Linda Merrill, Paul Merrill, Grace Whitaker/Tolman, and Karen Foster. All facts are written as the source states them (birth date, death date, places, marriage date, residences). Grace's maiden name is correctly noted. No facts are invented or altered from the source text."
               },
               {
                 "source": "rubric",
                 "name": "Stated relations",
                 "score": 3,
-                "rationale": "All relationships stated in the text are captured correctly. Parent-child relations for Walter and Edith as Harold's parents, Harold as father to Robert and Linda, and sibling relation between Harold and Grace are all in the relationships array. The couple relationship between Harold and Ruth Ann is captured. In-law relationships (Linda Whitaker as daughter-in-law, Paul Merrill as son-in-law) are properly marked with statedRelation fields. Karen Foster is correctly identified as a neighbor (associate), not kin. No relationships are inferred from position alone."
+                "rationale": "All relationships stated in the text are captured correctly: Harold's parents (Walter and Edith), his wife (Ruth Ann), his children (Robert and Linda Merrill), their spouses (Linda Whitaker and Paul Merrill), his sister (Grace), and his neighbor (Karen Foster). In-laws are correctly marked as such (daughter-in-law, son-in-law). The neighbor is marked as an associate, not kin. No inferred relationships are added; all relations derive from explicit statements in the obituary."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "Claude's text response is the tool's summary verbatim, presented exactly as returned by the extraction_append call in the response_summary field. The response lists each person with their role and facts in the exact format the tool provided, with no rewordings, omissions, mergers, or added analysis. The summary is complete and unmodified from the tool output."
+                "rationale": "Claude's text response is the tool's summary verbatim, presented exactly as returned by the extraction_append call. The response lists each person with their facts and relationships in the format the tool provided, with no rewordings, omissions, mergers, or added analysis. The summary is complete and unmodified."
               }
             ],
-            "judge_cost_usd": 0.015158000000000001,
+            "judge_cost_usd": 0.014698,
             "duration_ms": 12041.519400198013,
             "error": null,
             "input_tokens": 10713,
             "cached_input_tokens": 0,
-            "output_tokens": 889
+            "output_tokens": 797
           },
           "started_at": 1792665003.0082097,
           "ended_at": 1792665138.5516603
@@ -8835,45 +8835,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent correctly read the baptism record and extracted all stated facts: John Perry's birth (12 March 1750) and christening (18 March 1750) in Albany; Jacob Perry as father with occupation cordwainer; Elisabeth Witbeck as mother; and the two sponsors. The document structure accurately reflects what the source states. The agent appropriately flagged the calendar ambiguity (Old Style vs. double-dated year) as a note for follow-up, which is a correct reading practice, not an invention. No facts were fabricated or contradicted."
+                "rationale": "The extraction accurately captures all facts from the source: John Perry's birth (12 March 1750) and christening (18 March 1750) in Albany; Jacob Perry as father with occupation cordwainer and residence Albany; Elisabeth Witbeck as mother with residence Albany; Hendrick Witbeck and Maria Van Deusen as sponsors. No facts are invented or contradicted. The tool's calendar warning about Old Style dating is appropriately flagged without being resolved prematurely."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent addressed all required elements: read the source, made one extraction_append call with one document, and returned the tool's summary verbatim. All five persons named in the record (John Perry, Jacob Perry, Elisabeth Witbeck, Hendrick Witbeck, Maria Van Deusen) were extracted with their stated roles and facts. The source metadata (repository, locator, notes) was captured. No required element was omitted."
+                "rationale": "The skill addressed all required elements: read the source document, made one extraction_append call with complete structured data for all five persons named, captured all stated facts (names, dates, places, occupation, relationships), and returned the tool's summary verbatim. No persons or facts from the source were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed correct arguments: projectPath matched the delegation, questionIds was empty (appropriate for a fresh project with no questions), and the document structure correctly encoded the record type (christening), documentForm (verbatim_transcript), source metadata, and all five persons with their stated relations (father, mother, sponsor) and facts. The relationships array correctly captured the parent-child links stated in the source. No critical identifiers were wrong; the call succeeded with matched.kind == 'live'."
+                "rationale": "The extraction_append call passed correct arguments: projectPath matched the workspace, documents array contained one document with recordId 'capture:perry-baptism-1750', recordType 'christening', documentForm 'verbatim_transcript', and all five persons with accurate names, relationships (parent_child for Jacob and Elisabeth to John; sponsor for Hendrick and Maria), and facts. The tool matched successfully (kind: 'live') with no fixture_not_found errors."
               },
               {
                 "source": "rubric",
                 "name": "Faithful reading",
                 "score": 3,
-                "rationale": "Every person named in the source is a separate entry with their own name: John Perry, Jacob Perry, Elisabeth Witbeck, Hendrick Witbeck, Maria Van Deusen. Every fact is written as the source gives it: birth date, christening date and place, occupation, residence, and sponsor roles. No computed values appear (dates are stated, not derived). The calendar ambiguity is appropriately marked as a note for follow-up rather than resolved or invented. Nothing is fabricated."
+                "rationale": "Every person named in the source (John Perry, Jacob Perry, Elisabeth Witbeck, Hendrick Witbeck, Maria Van Deusen) appears as a separate entry with their own name. All facts are written as the source gives them: birth date, christening date and place, occupation, residences. No facts are invented. The calendar ambiguity is appropriately marked as a note for follow-up rather than resolved or altered."
               },
               {
                 "source": "rubric",
                 "name": "Stated relations",
                 "score": 3,
-                "rationale": "Each relation the source states is correctly encoded: Jacob Perry and Elisabeth Witbeck are marked as father and mother (statedRelation fields), and parent_child relationships are in the relationships array. Hendrick Witbeck and Maria Van Deusen are marked as sponsors (associates, not kin). No relationship is inferred from position or proximity; all are explicitly stated in the source text."
+                "rationale": "Each relation the text states is captured correctly: Jacob Perry and Elisabeth Witbeck are marked as father and mother (parent_child relationships in the relationships array); Hendrick Witbeck and Maria Van Deusen are marked as sponsors (statedRelation: 'sponsor'). No relationships are inferred from position or proximity; all are explicitly stated in the source text."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "The agent's text response is the tool's summary verbatim, followed by the agent's own note about calendar conversion. The summary lists each person and their facts exactly as the tool returned it. The calendar note is Claude's own addition (not in the tool summary), which is appropriate guidance for follow-up work, not a reworded or shortened summary. The summaries are complete and unmerged."
+                "rationale": "Claude's text response is the tool's summary returned verbatim from response_summary, presented exactly as the tool provided it, with no rewordings, omissions, or additions. The summary includes all five persons, their roles, and the calendar warning, matching the tool output precisely."
               }
             ],
-            "judge_cost_usd": 0.012944,
+            "judge_cost_usd": 0.012474,
             "duration_ms": 10700.347600039095,
             "error": null,
             "input_tokens": 8569,
             "cached_input_tokens": 0,
-            "output_tokens": 875
+            "output_tokens": 781
           },
           "started_at": 1792665202.741608,
           "ended_at": 1792665269.7988741
@@ -9968,45 +9968,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The extraction accurately captures all facts from the source document. Thomas Flynn is correctly identified as testator with residence, will date, death date, and probate information. Mary Flynn is correctly identified as wife. Patrick Flynn is correctly identified as son and executor. Bridget Doyle is correctly identified as daughter. Witnesses Owen Brennan and James Gallagher are correctly identified. All dates, places, and relationships match the source text. No fabricated material or unsupported claims are present."
+                "rationale": "The extraction accurately captures all facts from the source document. Thomas Flynn is identified as testator with correct residence, will date, death date, and probate date. Mary Flynn is correctly identified as wife. Patrick Flynn is correctly identified as son and executor with accurate dates and petition information. Bridget Doyle is correctly identified as daughter. Witnesses Owen Brennan and James Gallagher are correctly identified. All facts are stated as the source gives them, with no fabrication or contradiction of the input state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements from the source document. All named persons (Thomas Flynn, Mary Flynn, Patrick Flynn, Bridget Doyle, Owen Brennan, James Gallagher) are extracted. All key facts are captured: will date, death date, probate date, residence, executor role, petition filing, and bequests. All stated relationships are documented. The extraction is comprehensive and complete."
+                "rationale": "The skill addressed everything required by the input state. The source document was fully read and structured. All persons named in the will (Thomas Flynn, Mary Flynn, Patrick Flynn, Bridget Doyle, Owen Brennan, James Gallagher) are included as separate entries. All key facts from the document are captured: the will date, death date, probate date, bequests, executor appointment, and petition filing. The extraction is comprehensive and omits no significant information from the source."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed correct arguments. The projectPath is valid, the recordId matches the source ('capture:flynn-will-1888'), documentForm is correctly set to 'verbatim_transcript', and the document structure properly captures all persons, facts, and relationships from the source. The tool call succeeded with matched.kind='live' and ok=true. No validation errors or fixture_not_found issues occurred."
+                "rationale": "The extraction_append call passed correct arguments. The projectPath is valid, the recordId 'capture:flynn-will-1888' matches the source, documentForm 'verbatim_transcript' is correct, and the document structure properly captures all required fields: recordType (probate), source metadata, and all persons with their relationships and facts. The tool call succeeded with matched.kind='live' and ok=true, indicating proper argument usage."
               },
               {
                 "source": "rubric",
                 "name": "Faithful reading",
                 "score": 3,
-                "rationale": "Every person named in the source has their own entry with their own name: Thomas Flynn (p1), Mary Flynn (p2), Patrick Flynn (p3), Bridget Doyle (p4), Owen Brennan (p5), James Gallagher (p6). Every fact is written as the source gives it\u2014will date 4 March 1885, death date 11 November 1888, probate date 22 November 1888, residence in Borough of Shenandoah. The bequests and executor appointment are captured in the will fact note. No facts are invented, changed, or merged."
+                "rationale": "Every person named in the source is represented as a separate entry with their own name: Thomas Flynn (testator), Mary Flynn (wife), Patrick Flynn (son/executor), Bridget Doyle (daughter), Owen Brennan (witness), James Gallagher (witness). Every fact is written as the source gives it\u2014will date 4 March 1885, death date 11 November 1888, probate date 22 November 1888, bequests, executor appointment. No facts are invented, and no stated facts are changed. The document accurately reflects what the source states."
               },
               {
                 "source": "rubric",
                 "name": "Stated relations",
                 "score": 3,
-                "rationale": "All stated relationships are correctly captured. Mary Flynn is marked as 'wife' (statedRelation), Patrick Flynn as 'son' (statedRelation), Bridget Doyle as 'daughter' (statedRelation), and Owen Brennan and James Gallagher as 'witness' (statedRelation). The relationships array includes couple (Thomas-Mary) and parent_child (Thomas-Patrick, Thomas-Bridget) relationships exactly as stated in the source. No inferred relationships are added; all relations match what the text explicitly states."
+                "rationale": "All relationships stated in the source are captured correctly. Mary Flynn is marked as wife (couple relationship with Thomas Flynn). Patrick Flynn is marked as son (parent_child relationship with Thomas Flynn). Bridget Doyle is marked as daughter (parent_child relationship with Thomas Flynn). Owen Brennan and James Gallagher are marked as witnesses (associate relationships, not kin). No relationships are inferred from position or proximity; all are explicitly stated in the will text."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "Claude's text response is the tool's summary verbatim, presented exactly as returned by the extraction_append call in the response_summary field. The response lists each person and their facts in the same order and format as the tool provided, with no rewordings, omissions, or added analysis. The reply is purely the summary with no framing or commentary added."
+                "rationale": "Claude's text response is the tool's summary verbatim, exactly as returned in the response_summary field. The response lists each person and their facts in the same order and format as the tool provided, with no rewordings, omissions, or additions. No analysis, classification commentary, or next steps are added\u2014only the summary itself is relayed."
               }
             ],
-            "judge_cost_usd": 0.014425,
+            "judge_cost_usd": 0.014369999999999999,
             "duration_ms": 11957.486200146377,
             "error": null,
             "input_tokens": 9980,
             "cached_input_tokens": 0,
-            "output_tokens": 889
+            "output_tokens": 878
           },
           "started_at": 1792665139.0498736,
           "ended_at": 1792665228.0332277
@@ -10849,45 +10849,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent correctly read the source document and extracted all stated facts: Kristian Fredrik's birth date (11 July 1817), christening date (20 July 1817), father Tollev Nadnesen with the uncertainty flag [?] and researcher's doubt about the patronymic reading, and mother Inger Larsdatter. The document structure accurately reflects what the source states with no fabricated material or contradictions."
+                "rationale": "The skill correctly extracted all facts from the source document. The three persons (Kristian Fredrik, Tollev Nadnesen, Inger Larsdatter) are accurately represented with their stated roles and facts. The uncertain patronymic is properly marked with [?] and the researcher's doubt is captured in the note. The birth date (11 July 1817) and christening date (20 July 1817) match the source exactly. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent addressed all required elements from the source: all three persons named (child, father, mother), all facts stated (birth, christening dates, parentage), the researcher's doubt about the father's patronymic reading captured with [?] and note, and the relationships between them. The extraction is complete and nothing required was omitted."
+                "rationale": "The skill addressed all required elements from the source. All three persons named in the document were extracted as separate entries. All facts stated in the source (birth date, christening date, parent relationships) were captured. The flag regarding the researcher's doubt about the patronymic was properly incorporated into the extraction with the note field."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed correct arguments: recordId matches the source identifier (capture:birkeland-baptism-1817), documentForm is page_image as specified, source title and repository are accurate, all three persons are structured with correct roles (principal child, father, mother), facts are properly typed and dated, the uncertainty flag and researcher's doubt are captured in the father's name structure, and relationships are correctly stated as parent_child. No critical arguments were wrong."
+                "rationale": "The extraction_append call passed correct arguments. The recordId 'capture:birkeland-baptism-1817' matches the source. The document structure correctly identifies the recordType as 'christening', documentForm as 'page_image', and source details. All three persons are properly structured with appropriate fields (principal, statedRelation, names, facts). The relationships array correctly captures the parent-child relationships stated in the source."
               },
               {
                 "source": "rubric",
                 "name": "Faithful reading",
                 "score": 3,
-                "rationale": "Every person named in the source has their own entry with their own name: Kristian Fredrik (child), Tollev Nadnesen (father), Inger Larsdatter (mother). Every fact is written as the source gives it: birth 11 July 1817, christening 20 July 1817, parentage relationships. The researcher's doubt about the patronymic is captured with [?] and the note explaining the doubt. Nothing is invented."
+                "rationale": "Every person named in the source has their own entry with their own name. Kristian Fredrik is the principal with birth and christening facts matching the source exactly. Tollev Nadnesen and Inger Larsdatter are recorded as separate persons with their stated roles. The uncertain patronymic is marked with [?] and the researcher's doubt is captured in the note field as instructed by the flag. No facts are invented or altered from what the source states."
               },
               {
                 "source": "rubric",
                 "name": "Stated relations",
                 "score": 3,
-                "rationale": "Each relation the text states is captured: Tollev Nadnesen stated as father, Inger Larsdatter stated as mother, both with parent_child relationships to Kristian Fredrik. The relationships are recorded as the text states them\u2014as direct parentage, not inferred from position or proximity. No unstated relationships were emitted."
+                "rationale": "The relationships extracted match exactly what the source states. Tollev Nadnesen is recorded as father (statedRelation: 'father') and Inger Larsdatter as mother (statedRelation: 'mother'). The relationships array captures both parent-child relationships as stated in the source. No inferred relationships or changes to stated relations are present."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "Claude's text response is the tool's summary verbatim: 'Stavanger Domkirke, parish register, baptisms 1817 (christening, 20 July 1817).' followed by the three persons and their facts exactly as returned by the extraction_append response_summary. No rewordings, shortenings, merges, or added analysis appear\u2014only the summary relayed as provided."
+                "rationale": "Claude's text response is the tool's summary verbatim, presented exactly as returned by the extraction_append call. The response lists each person with their facts and relationships in the format the tool provided, with no rewordings, omissions, or added analysis. The summary is complete and unmodified from the tool's response_summary."
               }
             ],
-            "judge_cost_usd": 0.012238,
+            "judge_cost_usd": 0.012183,
             "duration_ms": 10346.965900156647,
             "error": null,
             "input_tokens": 8238,
             "cached_input_tokens": 0,
-            "output_tokens": 800
+            "output_tokens": 789
           },
           "started_at": 1792665278.2687736,
           "ended_at": 1792665340.9513316
@@ -10948,6 +10948,5 @@
     "live_modules": {
       "extraction_append": "59fd46ba18c1eea536952e6053375ec30745dab80149b8ba3d99287d43763921"
     }
-  },
-  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
+  }
 }

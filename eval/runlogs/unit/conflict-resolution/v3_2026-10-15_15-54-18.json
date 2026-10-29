@@ -1322,11 +1322,11 @@
                 "rationale": "Claude's resolution addresses all three competing assertions. It explains why a_002 (1850 census, Ireland) is preferred, why a_009 (1860 census, Ireland) corroborates but is partially dependent on the same household informant, and why a_012 (1908 death certificate, Pennsylvania) is less reliable due to James Brown's remote epistemic position and the 63-year delay. The resolution rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. No identity conflict covers any competing assertion's person-link, so this dimension does not apply that ownership rule."
               }
             ],
-            "judge_cost_usd": 0.023678,
+            "judge_cost_usd": 0.024111800000000003,
             "duration_ms": 16011.060122051276,
             "error": null,
             "input_tokens": 18043,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 4338,
             "output_tokens": 1127
           },
           "started_at": 1792079659.4281185,
@@ -1953,45 +1953,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the two assertions represent the same event expressed in different calendar systems. The convert_calendar tool confirmed that 14 February 1746 Old Style (when England's civil year began 25 March) converts to 14 February 1747 New Style. Claude correctly concluded no real conflict exists, that the register's 1746 is authoritative, and that the transcript's 1747 is a derivative modernisation. The reasoning is factually sound and supported by the tool responses."
+                "rationale": "Claude correctly identified that the two assertions represent the same event expressed in different calendar systems. The convert_calendar tool confirmed that 14 February 1746 Old Style (when England's civil year began 25 March) converts to 14 February 1747 New Style. Claude correctly concluded no real conflict exists, that the transcript is a derivative of the register (not independent), and that the authoritative reading is the original register entry. The reasoning about the Old Style calendar, the 1752 changeover, and the double-date notation (1746/7) is factually accurate and well-grounded in the tool responses."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the core question: whether the two dates represent a real conflict and which year to record. The response explained the calendar mechanism, identified the derivative nature of the transcript, and provided clear guidance on how to record the date (1746/7 double-date notation or 1747 N.S.). No required element was omitted."
+                "rationale": "Claude addressed the core question: whether the two dates represent a real conflict and which year to record. The response explained the calendar mechanism, identified the derivative nature of the transcript, and provided clear guidance on how to record the date (1746/7 or 1747 N.S.). The skill correctly determined that no conflict entry should be created, consistent with the instruction that fabricated conflicts should not be persisted. All required analysis was completed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made four tool calls, all with correct arguments. The first two queries (assertions and conflicts) used correct projectPath and section parameters. The convert_calendar calls passed jurisdiction 'England' and the correct date objects (1746-02-14 and 1747-02-14) with appropriate correction flags. All calls matched the live fixture and returned successfully. The second convert_calendar call on 1747-02-14 was appropriate to verify the double-correction issue, even though Claude correctly recognized not to use that result."
+                "rationale": "Claude made four tool calls, all with correct arguments. The first two calls (research_query for assertions and conflicts) used correct projectPath and section parameters. The convert_calendar calls passed jurisdiction='England' (as required by the per-test context) and the correct date parameters. The second convert_calendar call on 1747 was appropriate to verify that applying the correction twice would yield 1748, demonstrating Claude understood the double-correction risk and correctly identified it as an error to avoid."
               },
               {
                 "source": "rubric",
                 "name": "Source independence analysis",
                 "score": 3,
-                "rationale": "Claude explicitly identified that the printed transcript (a_002) is a derivative of the same register page as the original entry (a_001). The analysis named the specific informants (parish curate vs. parish register society transcriber) and explained that they share an information chain: the transcriber worked from the same register page. Claude correctly concluded these are not independent sources\u2014two readings of one entry, not two separate witnesses. This is specific to the fact type (christening date) and the informant chain."
+                "rationale": "Claude explicitly identified that the printed transcript is a derivative of the same register page, not an independent source. The response states: 'the printed transcript are two readings of the same physical page' and 'the transcript is a derivative of the register, not an independent source.' This correctly recognizes that both sources share the same informant chain (the original curate's entry) and that the transcript's 1747 is a modernization of the register's 1746, not a separate witness. The analysis is specific to the informant chain for the disputed fact (the year of baptism)."
               },
               {
                 "source": "rubric",
                 "name": "Evidence weighing",
                 "score": 3,
-                "rationale": "Claude applied the GPS preponderance hierarchy correctly by citing specific attributes: the original register (a_001) is classified as 'original' with an 'official_duty' informant (the curate), while the transcript (a_002) is 'derivative' with a 'researcher' informant. Claude weighted the original as authoritative because it is the primary source written at the time of the event, and the transcript as secondary because it is a later transcription. The weighing is grounded in source classification and informant proximity, not abstract hierarchy statements."
+                "rationale": "Claude applied the GPS preponderance hierarchy correctly by identifying the original register (a_001) as the authoritative reading because it is the original source with the curate's own year-marking, while the transcript (a_002) is derivative and secondary. The response cites specific attributes: 'The authoritative reading is the original parish register entry, a_001, \"14 Feb 1746\" as written' and notes that the transcript 'is the same date in New Style and the transcript is a derivative of the register.' The weighing correctly prioritizes the original over the derivative and explains why the transcript's modernization does not constitute independent corroboration."
               },
               {
                 "source": "rubric",
                 "name": "Resolution completeness",
                 "score": 3,
-                "rationale": "Claude addressed both competing assertions (a_001 and a_002) and explained why each matters. The resolution explained that a_001 (1746) is the authoritative reading as written by the curate, and a_002 (1747) is the same date modernised by a later transcriber. Claude explained why a_002 is not a competing date but a derivative rendering of a_001. The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. No competing assertion was left unaddressed."
+                "rationale": "Claude addressed both competing assertions (a_001 and a_002) and explained why they are not actually in conflict. The response explains that a_001 (1746) is the register's own year as written by the curate, and a_002 (1747) is the transcript's modernized rendering of the same entry. By establishing that both refer to the same underlying day through calendar conversion, Claude explained why the non-preferred assertion (a_002) is not less reliable in the sense of reporting a different event\u2014it is the same event in a different calendar system. The resolution rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details."
               }
             ],
-            "judge_cost_usd": 0.0124978,
+            "judge_cost_usd": 0.013022800000000001,
             "duration_ms": 14104.56539306324,
             "error": null,
             "input_tokens": 7564,
             "cached_input_tokens": 4338,
-            "output_tokens": 900
+            "output_tokens": 1005
           },
           "started_at": 1792079933.7150593,
           "ended_at": 1792079998.8109474
@@ -4614,45 +4614,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's analysis of c_003 is factually accurate. The geographic distance (199 miles / 320 km) was correctly quantified via place_search and place_distance tools. The reasoning about 1870 rail feasibility is sound\u2014the Pennsylvania Railroad did connect both regions, making the move physically possible. Claude correctly identified that the Schuylkill County evidence (1850, 1860, 1908) is multi-source and independent from the single 1870 Allegheny record. The decision to leave c_003 unresolved is justified: name alone cannot establish identity for a common Irish-American surname without corroborating details (age, birthplace, spouse, associates). The persisted conflict fields accurately reflect this reasoning. No fabricated material or unsupported claims."
+                "rationale": "Claude's analysis of c_003 is factually accurate. The geographic distance (199 miles / 320 km) was correctly quantified via place_search and place_distance tools. The reasoning about 1870 rail feasibility is sound\u2014railroads did connect both regions, making the move plausible but not proven. The identification problem is correctly framed: a single census entry with only a name, no corroborating details (age, birthplace, spouse), against three independent Schuylkill County sources spanning 58 years. The conclusion to leave c_003 unresolved is justified by the absence of bridging evidence. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements for c_003 resolution: independence_analysis (comparing Schuylkill multi-source cluster vs. single Allegheny record), weighing_analysis (geographic feasibility, death-certificate anchor, positive evidence pattern), and resolution_rationale (explaining why name alone is insufficient, noting the common-name problem, and identifying the absence of bridging records as the core issue). The response explicitly named record types that would be decisive (city directory, bridging census year, marriage record, naturalization paper), meeting the per-test requirement. All three competing assertions in the broader project (c_001, c_002, c_003) were acknowledged; Claude explained why c_003 was addressed first (self-contained, geographic-feasibility requirement)."
+                "rationale": "Claude addressed the full scope of c_003 resolution: retrieved all three conflicts to understand the context, examined the competing assertion (a_014), gathered source and person_evidence details, performed geographic analysis via place_search and place_distance, reviewed the timeline to identify the 1860\u20131870 gap, and wrote a complete resolution with independence_analysis, weighing_analysis, and resolution_rationale. The response also correctly noted that c_001 and c_002 remain unresolved and explained why c_003 was prioritized. All required elements were covered."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed with correct arguments. place_search calls for 'Schuylkill County, Pennsylvania' and 'Allegheny County, Pennsylvania' matched expected predicates (~Schuylkill, ~Allegheny). place_distance call used the standardPlace values returned by place_search ('Schuylkill, Pennsylvania, United States' and 'Allegheny, Pennsylvania, United States'), correctly quantifying the distance as 199 miles / 320 km. research_query calls for conflicts, questions, assertions, person_evidence, sources, and timelines all succeeded with matched.kind='live'. research_append call to update c_003 with independence_analysis, weighing_analysis, and resolution_rationale succeeded with validation=true. No fixture_not_found errors or critical argument mismatches."
+                "rationale": "All MCP tool calls passed with correct arguments. place_search calls for 'Schuylkill County, Pennsylvania' and 'Allegheny County, Pennsylvania' matched expected predicates. place_distance call used the standardPlace values returned by place_search ('Schuylkill, Pennsylvania, United States' and 'Allegheny, Pennsylvania, United States'), correctly quantifying the distance. research_query calls for conflicts, questions, assertions, person_evidence, sources, and timelines all used correct section and ID parameters. research_append call to update c_003 used correct op='update' and entryId='c_003' with all required fields. No fixture_not_found errors; all calls succeeded."
               },
               {
                 "source": "rubric",
                 "name": "Source independence analysis",
                 "score": 3,
-                "rationale": "Claude's independence_analysis correctly identifies the informant chain. The Schuylkill County evidence (a_001/a_002 from 1850, a_009 from 1860, a_013 from 1908) derives from three independent sources: two separate census enumerations by different enumerators in different years, and a death certificate by a different informant (James Brown, son-in-law). The Allegheny County record (a_014) is a single independent original from a different census year, county, and enumerator. Claude explicitly states that independence of sources does not resolve the identity question\u2014it only confirms the Allegheny record is not a derivative. The analysis is specific to the informant chain and fact type (residence/identity), not generic."
+                "rationale": "Claude correctly identified that a_014 (1870 Allegheny County census) is a single independent original source, genuinely independent of the Schuylkill County evidence cluster (a_001/a_002 from 1850 FamilySearch, a_009 from 1860 FamilySearch, a_013 from 1908 death certificate). The analysis names the specific informants and records: different enumerators in different years for the censuses, a different informant (son-in-law James Brown) for the death certificate. It correctly explains that independence of sources does not resolve the identity question\u2014it only confirms the Allegheny record is not a derivative. The analysis is specific to the conflict's fact type (residence/identity) and the informant chain."
               },
               {
                 "source": "rubric",
                 "name": "Evidence weighing",
                 "score": 3,
-                "rationale": "Claude applies the GPS preponderance hierarchy with specific grounding. Geographic feasibility (199 miles by 1870 rail) is assessed as plausible but not probative\u2014feasibility alone does not establish identity. The death-certificate anchor (1908 Schuylkill County) is cited as evidence of a return migration, creating two unexplained gaps. Most decisively, Claude weighs the pattern of positive evidence: three independent sources consistently place the subject in Schuylkill County across 58 years, while a_014 supplies only a name with no corroborating details (age, birthplace, spouse, associates). The common-name problem is grounded in historical context (Irish-American surnames in Pennsylvania coal/steel regions). The weighing contradicts neither the independence analysis nor the record's stated information_quality (a_014 is 'primary' for residence, but primary source classification does not override the lack of identifying details)."
+                "rationale": "Claude applied the GPS preponderance hierarchy with specific grounding. Geographic feasibility was correctly assessed: 199 miles by 1870 rail is traversable, so distance alone does not exclude identification\u2014this is a crucial distinction from asserting impossibility. The weighing cites specific assertion attributes: a_014 contains only name and location (no age, birthplace, spouse, associates), while the Schuylkill sources provide consistent placement across 58 years by three independent sources. The death-certificate anchor (1908 Schuylkill County) is noted as requiring unexplained return migration. The core argument\u2014that Patrick Flynn was a common Irish-American name in Pennsylvania coal/steel country, making coincidence more probable than identification without bridging evidence\u2014is grounded in historical context and the specific weakness of a_014 (name alone). The weighing does not contradict the independence finding."
               },
               {
                 "source": "rubric",
                 "name": "Resolution completeness",
                 "score": 3,
-                "rationale": "Claude's resolution_rationale addresses the single competing assertion (a_014) and explains why it is not preferred: name alone is insufficient for identification of a common Irish-American surname; the absence of bridging records (city directory, 1880 census, marriage record, naturalization paper) is the core argument; and the multi-source Schuylkill County anchor (1850, 1860, 1908) is more reliable than a single uncorroborated item. The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. The decision to leave c_003 unresolved (preferred_assertion_id: null) is justified and does not treat the competing assertion as a settled attribute of the subject. No identity-dependency issue arises here\u2014c_003 is an identity conflict, not a fact conflict dependent on an unresolved identity question."
+                "rationale": "Claude addressed the single competing assertion (a_014) and explained why it is less reliable than the Schuylkill County evidence. The resolution_rationale names the Schuylkill side (three independent sources, 58-year span, consistent location), the Allegheny side (single entry, name only, no corroborating details), and the decisive factors: common-name problem, absence of bridging records, and the need for positive evidence to override the geographic anchor. The response also identifies specific record types that would be decisive if found: city directory, bridging census year, marriage record, naturalization papers. The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. The conflict is left unresolved with no preferred assertion, which is the correct outcome given insufficient evidence."
               }
             ],
-            "judge_cost_usd": 0.0263988,
+            "judge_cost_usd": 0.0257938,
             "duration_ms": 17521.898931940086,
             "error": null,
             "input_tokens": 19145,
             "cached_input_tokens": 4338,
-            "output_tokens": 1364
+            "output_tokens": 1243
           },
           "started_at": 1792079792.6271563,
           "ended_at": 1792079907.6598227
@@ -5551,45 +5551,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 2,
-                "rationale": "The resolution is substantially correct in its core conclusion (Ireland is the birthplace) and its reasoning about informant proximity and temporal distance. However, the response attaches certainty to 'Thomas Flynn' as the informant when the record explicitly states the informant is 'Unknown household member (likely Thomas Flynn or wife)' \u2014 the informant identity is hedged, not established. The weighing_analysis states 'the census birthplace reports were supplied by a household member \u2014 almost certainly Thomas Flynn or his wife' and the resolution_rationale says 'The household informant in 1850 and 1860 \u2014 almost certainly Thomas Flynn or his wife \u2014 had firsthand knowledge.' This language treats a likely but unconfirmed informant as a certainty, which contradicts the record's own qualification. The historical narrative about immigration-origin confusion is plausible and well-grounded, but it rests partly on an informant identity the record does not establish."
+                "rationale": "The resolution is substantially correct in its core conclusion (Ireland is the birthplace) and its reasoning about informant proximity and temporal distance. However, the response attaches certainty to 'Thomas Flynn' as the informant when the record explicitly states the informant is 'Unknown household member (likely Thomas Flynn or wife)' \u2014 the informant identity is hedged in the record but stated with certainty in both the weighing_analysis and resolution_rationale. This violates the Evidence weighing dimension's requirement that 'the weighing must treat that informant as undetermined' when the record withholds certainty. The historical narrative about immigration-origin confusion is plausible and well-grounded, but the informant attribution overstates what the record establishes."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: it resolved c_001 with a preferred assertion (a_002), provided independence_analysis, weighing_analysis, and resolution_rationale, and persisted the resolution to the file with resolution_kind='competitor'. The response also acknowledged the two unresolved identity conflicts (c_002 and c_003) and explained why c_001 was resolved first. All competing assertions (a_002, a_009, a_012) were examined and addressed in the rationale."
+                "rationale": "The skill addressed the user's request to resolve c_001 and explain the historical reason for the Pennsylvania/Ireland discrepancy. All three competing assertions (a_002, a_009, a_012) are accounted for in the analysis. The resolution includes independence analysis, weighing analysis, resolution rationale, preferred assertion, resolution kind, and status update. The skill also appropriately flagged the two remaining unresolved conflicts (c_002 and c_003) and offered next steps."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. The research_query calls for conflicts, questions, assertions, and sources all used correct section names and IDs. The research_append call to update c_001 included all required fields (independence_analysis, weighing_analysis, resolution_rationale, preferred_assertion_id, resolution_kind, status) with semantically correct values. The second append call (after the first validation rejection) successfully corrected the missing resolution_kind field and persisted cleanly."
+                "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. The research_query calls for conflicts, questions, assertions, and sources all used correct section names and identifiers. The research_append call to update c_001 used correct entryId and field names. The first append attempt was rejected by validation (missing resolution_kind), but Claude immediately corrected it on the second attempt with the proper resolution_kind: 'competitor' \u2014 a single clean recovery that scores full credit per the retry policy."
               },
               {
                 "source": "rubric",
                 "name": "Source independence analysis",
                 "score": 3,
-                "rationale": "The independence_analysis correctly identifies that a_002 (1850 census) and a_009 (1860 census) are formally separate records but share a common informant source \u2014 'almost certainly Thomas Flynn or his wife' \u2014 for the birthplace fact, making them partially dependent for this specific fact. It correctly groups them as 'one evidentiary group for weighing purposes.' It also correctly identifies a_012 (1908 death certificate) as independent: different creator (Pennsylvania Department of Health), different informant (James Brown, son-in-law), no connection to the household records. The analysis is specific to the informant chain for the disputed fact (birthplace), not generic."
+                "rationale": "The independence_analysis correctly identifies that a_002 (1850 census) and a_009 (1860 census) share a common informant (the household member, likely Thomas Flynn or wife) for the birthplace fact, making them partially dependent despite being formally separate records. It also correctly establishes that a_012 (1908 death certificate) is independent of both censuses, with a different informant (James Brown, son-in-law) and no connection to the earlier records. The analysis is specific to the informant chain for the disputed birthplace fact, not generic."
               },
               {
                 "source": "rubric",
                 "name": "Evidence weighing",
                 "score": 2,
-                "rationale": "The weighing_analysis correctly applies the GPS preponderance hierarchy: it cites informant proximity (household member vs. son-in-law), temporal proximity (5 years after birth vs. 63 years), and consistency (two occasions vs. single report). However, it treats the informant identity as established ('almost certainly Thomas Flynn or his wife \u2014 who would have firsthand knowledge') when the record qualifies this as 'Unknown household member (likely Thomas Flynn or wife).' The weighing cannot rest on an informant's firsthand knowledge of a fact when the record does not establish that the informant is known. The historical reasoning about secondary-informant error is sound, but the weighing should not assume the informant's identity or relationship beyond what the record states."
+                "rationale": "The weighing_analysis correctly applies the GPS preponderance hierarchy (informant proximity, temporal proximity, consistency) and cites specific attributes of the competing assertions. However, it violates the requirement that 'the weighing must treat that informant as undetermined' when the record withholds certainty. The analysis states 'the census birthplace reports were supplied by a household member \u2014 almost certainly Thomas Flynn or his wife' and later 'The household informant in 1850 and 1860 \u2014 almost certainly Thomas Flynn or his wife \u2014 had firsthand knowledge.' The record's informant field says 'Unknown household member (likely Thomas Flynn or wife)' \u2014 the certainty marker ('almost certainly') exceeds what the record establishes. The weighing is otherwise sound in its application of the hierarchy, but this informant attribution defect is material."
               },
               {
                 "source": "rubric",
                 "name": "Resolution completeness",
                 "score": 3,
-                "rationale": "The resolution addresses all three competing assertions: a_002 (1850 census, Ireland) is preferred; a_009 (1860 census, Ireland) is explained as consistent with a_002 and part of the same evidentiary group; a_012 (1908 death certificate, Pennsylvania) is explained as secondary, late, and subject to immigration-origin confusion. The rationale explains why each non-preferred assertion is less reliable. No identity conflict covers the person-link for c_001 (it is a fact conflict, not an identity conflict), so that dimension does not apply here."
+                "rationale": "The resolution addresses all three competing assertions. It explains why a_002 (1850 census, Ireland) is preferred, why a_009 (1860 census, Ireland) corroborates it as part of the same evidentiary group, and why a_012 (1908 death certificate, Pennsylvania) is less reliable. The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. No identity conflict covers the person-link for c_001 (it is a fact conflict, not an identity conflict), so that dimension does not apply here."
               }
             ],
-            "judge_cost_usd": 0.0218178,
+            "judge_cost_usd": 0.0215528,
             "duration_ms": 14876.00097397808,
             "error": null,
             "input_tokens": 15724,
             "cached_input_tokens": 4338,
-            "output_tokens": 1132
+            "output_tokens": 1079
           },
           "started_at": 1792079907.7768667,
           "ended_at": 1792080023.533892
@@ -7539,45 +7539,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's resolution of c_002 is factually sound. The skill correctly identified that three independent records (1850 census, 1860 census, 1908 death certificate) consistently place one Patrick Flynn in Schuylkill County across 58 years in a sustained relationship with Thomas Flynn. The independence analysis correctly distinguishes src_001 and src_002 as non-independent (both from same enumerator visit) while treating src_001, src_003, and src_004 as independent. The weighing analysis properly applies the preponderance hierarchy: original records outweigh derivative, contemporary recordings outweigh later recollections. The resolution correctly notes that the competing candidate (household 197) was never extracted as evidence and the exhaustive search at q_002 found no such person. All claims are grounded in the tool responses and before-state data. The skill also correctly identified that c_001 remains unresolved and explained why c_002 should be tackled first (it is foundational to weighing c_001)."
+                "rationale": "Claude's resolution of c_002 is factually sound. The skill correctly identified that the 1850 census Patrick Flynn (dwelling 84) is the same person as the 1908 death certificate subject, based on three independent records (1850 census, 1860 census, 1908 death certificate) showing continuous residence in Schuylkill County with Thomas Flynn. The skill accurately noted that the competing candidate (household 197) was never extracted as evidence and the exhaustive search found no such person. The resolution_kind 'competitor' is correctly applied with a_001 as the preferred assertion. All factual claims are grounded in the tool responses and before-state data."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the delegation to analyze c_002 and either resolve it or flag what additional evidence would be needed. The skill resolved c_002 with complete reasoning: independence analysis, weighing analysis, and resolution rationale all present. The skill also appropriately noted that c_001 remains open and explained the prioritization logic. The response included the required structured fields (preferred_assertion_id, resolution_kind, status) and persisted them to the project file. No required elements were omitted."
+                "rationale": "Claude fully addressed the delegation to analyze c_002 and resolve it or flag needed evidence. The skill resolved the conflict completely, providing independence_analysis, weighing_analysis, resolution_rationale, preferred_assertion_id, resolution_kind, and status. The skill also appropriately noted that c_001 remains open and explained why c_002 was prioritized (it is foundational to weighing c_001). All required fields for a resolved conflict were populated."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls used correct arguments. The research_query calls queried appropriate sections (person_evidence, assertions, log, timelines, hypotheses, sources, evaluations, proof_summaries) with correct projectPath and optional parameters. The wiki_read call used a valid FamilySearch URL matching the expected pattern. The final research_append call correctly targeted c_002 with op='update' and all required fields (independence_analysis, weighing_analysis, resolution_rationale, preferred_assertion_id, resolution_kind, status). The second research_append retry after validation error was a clean single recovery with corrected args, scoring full credit per the retry policy."
+                "rationale": "All MCP tool calls passed with correct arguments. The skill queried log entries for q_002 and q_001, retrieved timelines, hypotheses, assertions, sources, evaluations, and proof_summaries\u2014all with appropriate section parameters and no fixture_not_found errors. The second attempt to update c_002 succeeded after the first failed validation (missing resolution_kind), demonstrating proper recovery. The wiki_read call for Ireland naming customs used a valid FamilySearch URL matching the expected pattern."
               },
               {
                 "source": "rubric",
                 "name": "Source independence analysis",
                 "score": 3,
-                "rationale": "Claude's independence analysis is specific and grounded in the actual informant chains. It correctly identifies that src_001 (1850 FamilySearch) and src_002 (1850 Ancestry) are not independent\u2014both derive from the same enumerator visit to dwelling 84 and represent one unit of evidence. It correctly identifies src_001, src_003 (1860 census), and src_004 (1908 death certificate) as independent: different creation events, different years, different informants. The analysis explicitly names the competing candidate (household 197, age 6) and notes that no source, assertion, or person_evidence entry exists for it. It cites the exhaustive search log at q_002 showing no competing Patrick Flynn was found across three repositories. This is not generic independence reasoning; it traces the specific informant chain for the disputed identity question."
+                "rationale": "Claude's independence_analysis correctly identifies that src_001 (1850 FamilySearch) and src_002 (1850 Ancestry) are not independent\u2014both derive from a single enumerator visit and represent one unit of evidence. It properly recognizes src_001, src_003 (1860 census), and src_004 (1908 death certificate) as three independent record-creation events with different informants. The analysis specifically notes that the competing candidate (household 197) has no extracted source or assertion, directly addressing the informant chain for the disputed identity question."
               },
               {
                 "source": "rubric",
                 "name": "Evidence weighing",
                 "score": 3,
-                "rationale": "Claude applies the GPS preponderance hierarchy with specific grounding in the assertions' attributes. It correctly prioritizes the 1860 census as 'particularly important' because it provides decade-long continuity\u2014a Patrick Flynn of exactly the right age (15, implying birth ~1845) reappears in Thomas Flynn's household ten years later. This is direct application of 'contemporary recordings outweigh later recollections' and 'direct evidence outweighs indirect.' The death certificate is weighted as an original government record that independently corroborates by naming Thomas Flynn as father. Against this, the competing candidate (household 197) has no extracted evidence and the exhaustive search found no such person. The weighing correctly concludes the preponderance is entirely on one side, not a close contest. The analysis does not rest on facts the record does not carry\u2014it treats the competing candidate as undetermined (never extracted) rather than inventing evidence against it."
+                "rationale": "Claude applies the GPS preponderance hierarchy correctly. The weighing cites specific attributes: the 1860 census provides decade-long continuity (strong positive placement), the death certificate is an original government record naming Thomas Flynn as father, and the three records span 58 years of consistent placement. The analysis correctly notes that the competing candidate has no extracted evidence and the exhaustive search found no rival. The weighing does not contradict the independence finding and properly grounds the conclusion in source classification and temporal proximity rather than abstract hierarchy."
               },
               {
                 "source": "rubric",
                 "name": "Resolution completeness",
                 "score": 3,
-                "rationale": "Claude addresses all competing assertions in c_002. The conflict has one competing assertion (a_001, the 1850 census name record), and Claude explains why it is the preferred assertion: it is part of the continuous chain of evidence (1850\u21921860\u21921908) that establishes identity. The resolution rationale explicitly addresses the conflict's stated premise\u2014the supposed second Patrick Flynn in household 197\u2014and explains why it does not undermine the resolution: no source or assertion was ever extracted for it, and the exhaustive search found no such candidate. The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. The resolution correctly treats this as an identity question (is record A's subject the same person as record B's subject) rather than a fact disagreement, as required by the per-test context."
+                "rationale": "Claude addresses all competing assertions in c_002. The conflict has one competing assertion (a_001), and the resolution explains why it is the preferred assertion: the positive chain of evidence from three independent records confirms the 1850 census child is the 1908 decedent. The resolution also addresses the non-preferred alternative (household 197) by explaining it was never extracted and the exhaustive search found no such candidate. The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details."
               }
             ],
-            "judge_cost_usd": 0.0303648,
+            "judge_cost_usd": 0.025585800000000002,
             "duration_ms": 13850.517855025828,
             "error": null,
-            "input_tokens": 23346,
+            "input_tokens": 20292,
             "cached_input_tokens": 4338,
-            "output_tokens": 1317
+            "output_tokens": 972
           },
           "started_at": 1792079783.5114098,
           "ended_at": 1792079933.5785055
@@ -9162,45 +9162,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified c_002 as the more foundational conflict to resolve first, provided sound reasoning for the prioritization, and executed a valid resolution. The independence analysis correctly notes that the three repositories (FamilySearch, Ancestry, MyHeritage) are not fully independent derivatives but cover different indexing paths. The weighing analysis appropriately emphasizes search exhaustiveness over source independence for an identity conflict, citing the 20 results examined across three repositories and the explicit search-stop finding that no competing Patrick Flynn was located. The resolution rationale correctly identifies a_001 as the preferred assertion, explains why the speculative 'household 197' candidate never materialized into evidence, and corroborates the identity with the 1860 census and 1908 death certificate. All factual claims are grounded in the tool responses and before-state. The conflict was successfully resolved with status changed to 'resolved' and resolution_kind set to 'competitor'."
+                "rationale": "Claude's resolution of c_002 is factually correct. The skill accurately identified that the identity conflict hinges on whether a second Patrick Flynn candidate exists in the 1850 census. The tool responses confirm the search across three repositories (FamilySearch, Ancestry, MyHeritage) examined 20 results and found no 'household 197, age 6' candidate. Claude correctly concluded that a_001 (the 1850 census name assertion) represents the subject, supported by continuous evidence: 1850 census (age 5), 1860 census (age 15, same household), and 1908 death certificate naming Thomas Flynn as father. The resolution is grounded in the actual search results and assertion data returned by the tools."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the full scope of the task: (1) queried both unresolved conflicts to understand the situation, (2) explained the prioritization rationale (identity conflict is more foundational than birthplace conflict), (3) resolved exactly one conflict (c_002) as instructed, (4) populated all required fields (independence_analysis, weighing_analysis, resolution_rationale, preferred_assertion_id, resolution_kind, status), and (5) left c_001 untouched. The response included a clear statement that c_001 remains for future work. No required elements were omitted."
+                "rationale": "Claude addressed the core task: identifying which of two unresolved conflicts should be tackled first and explaining the rationale. The skill correctly prioritized c_002 (identity conflict) over c_001 (birthplace conflict), explaining that the identity question is foundational\u2014until the subject's identity is confirmed, the birthplace conflict cannot be properly framed. Claude then resolved c_002 by writing the required analysis fields (independence_analysis, weighing_analysis, resolution_rationale, resolution_kind, preferred_assertion_id, status) to research.json. The skill did not attempt to resolve both conflicts simultaneously, as instructed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. The research_query calls used correct section names ('conflicts', 'questions', 'assertions', 'sources', 'person_evidence', 'hypotheses', 'timelines', 'log') and appropriate filters (status='unresolved', questionId parameters). The research_append call correctly targeted section 'conflicts', op 'update', entryId 'c_002', and included all required fields for a resolved conflict. No tool calls returned fixture_not_found errors. The second append attempt was rejected by validation (missing resolution_kind), but Claude immediately corrected it in the retry with the proper field added, demonstrating competent recovery."
+                "rationale": "All MCP tool calls passed arguments matching the fixture's expected behavior. The skill queried assertions (a_001, a_002, a_003, a_009, a_012), sources, person_evidence, full assertions list, hypotheses, timelines, and log entries for both questions\u2014all with correct projectPath and section parameters. The final research_append call to update c_002 used correct entryId, op, and fields structure. No tool calls returned fixture_not_found errors. Arguments were semantically appropriate and well-formed."
               },
               {
                 "source": "rubric",
                 "name": "Source independence analysis",
                 "score": 2,
-                "rationale": "Claude's independence analysis correctly identifies that Ancestry's index derives from the same NARA original as FamilySearch, and notes that the three repositories cover different indexing paths. However, the analysis then states that 'independence is less central than search exhaustiveness' for an identity conflict. While this reasoning is pragmatic, it somewhat sidesteps the core independence question. The analysis does not fully explain the informant chain for a_001 itself (unknown informant, most likely household member or neighbor per the assertion data), nor does it clearly articulate why the absence of a competing assertion is meaningful evidence. The analysis names the specific records and repositories involved but the reasoning about independence could be more precise about what makes the search evidence reliable for ruling out a competing candidate."
+                "rationale": "Claude's independence analysis correctly identifies that Ancestry's index derives from the same NARA original as FamilySearch, so they are not fully independent. However, the analysis then pivots to argue that 'independence is less central than search exhaustiveness' for an identity conflict. While this pivot is reasonable\u2014the conflict is about whether a competing record exists, not which of two records to believe\u2014the analysis does not fully ground the independence assessment in the specific informant chains for the disputed fact (the identity of the 1850 Patrick Flynn). The analysis names the sources and their derivation but does not deeply examine whether the informants or information chains for the name assertion (a_001) share dependencies. The reasoning is sound but somewhat generic in its treatment of independence."
               },
               {
                 "source": "rubric",
                 "name": "Evidence weighing",
                 "score": 3,
-                "rationale": "Claude applies the preponderance hierarchy with specific grounding in the assertions' attributes. The weighing correctly emphasizes that the 1850 census (a_001) is primary evidence for residence (enumerator as witness), the 1860 census (a_009, a_010) provides contemporary corroboration of age consistency and household continuity, and the 1908 death certificate (a_013) provides direct naming of Thomas Flynn as father (though secondary for birth facts). The analysis cites the search exhaustiveness (20 results examined, original image plus two indexes) and the explicit search-stop finding. The weighing does not rest on unsupported informant identities or relationships \u2014 it treats the informants as recorded (unknown for census facts, son-in-law for death certificate) and applies the hierarchy appropriately: contemporary records (1850, 1860) outweigh later recollection, and the coherent 58-year trail is presented as evidence of a single life."
+                "rationale": "Claude applies the preponderance hierarchy with specificity. The weighing analysis cites the 1850 census as original and contemporary (a_001, a_002), the 1860 census as original and contemporary (a_009, a_010), and the 1908 death certificate as original but secondary for birth facts (a_013). The analysis grounds the conclusion in concrete attributes: the search was 'reasonably exhaustive' (20 results examined across three repositories), the absence of a competing assertion is 'meaningful' because a genuine candidate would have appeared, and the continuous 58-year record trail (1850, 1860, 1908) in the same county coheres into one life. The weighing correctly prioritizes the absence of evidence for the competing candidate over speculative reasoning."
               },
               {
                 "source": "rubric",
                 "name": "Resolution completeness",
                 "score": 3,
-                "rationale": "The resolution addresses the single competing assertion (a_001) and explains why the speculative 'household 197' candidate is not a competing assertion at all \u2014 it was never extracted because the search found no such record. Claude explicitly states that 'no assertion was ever extracted for a household 197 candidate' and cites the search-stop justification. The resolution rationale names the preferred assertion (a_001), explains the affirmative case for it (1850 census placement, 1860 census corroboration, 1908 death certificate naming Thomas Flynn as father), and explains why the conflict's premise (a second Patrick Flynn) has no evidentiary support. The identity question is fully addressed: the Patrick Flynn in the 1850 Thomas Flynn household is confirmed as the subject. No competing assertions remain unaddressed."
+                "rationale": "Claude addresses all competing assertions in c_002. The conflict lists only one competing assertion (a_001, the name from the 1850 census), and Claude explains why it is the preferred assertion: the speculative 'household 197, age 6' candidate was never extracted because the search found no such record. The resolution rationale names a_001 as the preferred assertion and explains why the competing candidate (which was never materialized into an assertion) is rejected\u2014the search was exhaustive and found no evidence. The resolution is complete for a one-assertion conflict. Claude does not treat the competing assertion as a settled attribute while an unresolved identity conflict covers it; rather, the resolution resolves the identity conflict itself by confirming a_001 as the subject."
               }
             ],
-            "judge_cost_usd": 0.0289648,
+            "judge_cost_usd": 0.026803800000000003,
             "duration_ms": 17439.914450980723,
             "error": null,
-            "input_tokens": 21976,
+            "input_tokens": 20475,
             "cached_input_tokens": 4338,
-            "output_tokens": 1311
+            "output_tokens": 1179
           },
           "started_at": 1792079757.671331,
           "ended_at": 1792079884.1112206
@@ -11091,39 +11091,39 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: recorded the identity conflict on Patrick's parentage with both competing assertions (a_018 from baptism, a_004 from census), framed it as an identity question about which Thomas Flynn was the father, resolved it by excluding I3 on impossibility grounds (death in 1840 vs. baptism in 1845), and preferred I2. The conflict was fully resolved with independence_analysis, weighing_analysis, resolution_kind ('competitor'), and resolution_rationale all provided. Claude appropriately noted that pe_010 should be revisited but correctly did not attempt to rewrite person_evidence itself."
+                "rationale": "Claude addressed all required elements: (1) recorded the identity conflict c_002 with both competing assertions (a_018 and a_004); (2) framed it as an identity question about which Thomas Flynn is the father; (3) resolved it definitively in favor of I2 based on I3's death in 1840; (4) did not attempt to write the refused I3 parent-child edge; (5) appropriately noted that pe_010 should be revisited. The resolution rationale explains why I3 is excluded and why I2 is preferred, addressing all competing assertions."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed correct arguments. research_query calls for assertions (a_004, a_018), conflicts, sources (src_001, src_008), person_evidence, and additional assertions (a_013, a_014, a_016, a_017) all matched expected patterns. research_append calls to create and update conflict c_002 were properly structured. The first update attempt was rejected for missing resolution_kind, which Claude immediately corrected in the second update with resolution_kind: 'competitor'. This single clean recovery from a validation error scores full credit per the recovery policy."
+                "rationale": "All MCP tool calls used correct arguments. Query calls (research_query for assertions, conflicts, sources, person_evidence) passed appropriate section and ID parameters. The append call created c_002 with correct structure. The update calls to c_002 passed valid fields (independence_analysis, weighing_analysis, preferred_assertion_id, resolution_kind, resolution_rationale, status). The second update recovered cleanly from a validation error requiring resolution_kind, and the retry succeeded with all required fields. No fixture_not_found errors; all calls matched live."
               },
               {
                 "source": "rubric",
                 "name": "Source independence analysis",
                 "score": 3,
-                "rationale": "Claude's independence_analysis correctly identifies three independent source clusters: (1) the 1845 baptismal register (a_018, src_008) from an officiating priest, (2) the 1840 Luzerne County death record (a_016, src_006) from the county clerk, and (3) the 1850 and 1860 censuses (a_004, src_001) from different enumerators. The analysis explicitly names the informants and records involved and explains that none derives from any other\u2014they are truly independent. The analysis is specific to the identity question (which Thomas Flynn is the father), not generic."
+                "rationale": "Claude's independence analysis is specific and grounded in the actual informant chains. It identifies three independent source clusters: (1) the 1845 baptismal register (a_018, src_008) with priest as informant; (2) the 1840 death record (a_016, src_006) with county clerk as informant; (3) the 1850 and 1860 censuses (a_004, src_001) with different enumerators. Claude correctly notes these draw on independent sources and independent informants with no shared derivation. The analysis is specific to the identity question (which Thomas Flynn is the father), not generic."
               },
               {
                 "source": "rubric",
                 "name": "Evidence weighing",
                 "score": 3,
-                "rationale": "Claude applies the GPS preponderance hierarchy correctly by citing specific attributes: I3's death record is primary information created near the event (1840), while the baptism is primary but names a living father (1845). The weighing correctly identifies that I3 is categorically excluded not by hierarchy but by biological impossibility\u2014he died five years before the baptism. For I2, Claude cites his presence in two independent census records (1850, 1860) as a resident father, which is consistent indirect evidence. The weighing does not rest on unestablished facts; it grounds all claims in the record data provided."
+                "rationale": "Claude applies a decisive biological impossibility rather than abstract hierarchy weighing, which is appropriate here. The analysis cites specific attributes: I3's death date (15 September 1840, primary information from original record) versus the baptism date (3 August 1845, five years later). Claude correctly notes that I2 was alive and found co-residing with Patrick in 1850 and 1860 censuses. The weighing is grounded in concrete facts from the assertions themselves, not generic statements about source types. The impossibility argument is sound and requires no further weighing."
               },
               {
                 "source": "rubric",
                 "name": "Resolution completeness",
                 "score": 3,
-                "rationale": "Claude addresses all competing assertions: a_018 (baptism naming Thomas Flynn as father) and a_004 (1850 census household inference). The resolution explains why a_004 is preferred (I2 was alive and co-resident with Patrick in 1850 and 1860) and why a_018 cannot refer to I3 (I3 died in 1840, five years before the baptism). The rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. The identity question is clearly resolved: the father named in the 1845 baptism must be I2, not I3."
+                "rationale": "Claude addresses both competing assertions: a_018 (baptism naming Thomas Flynn as father, linked to I3) and a_004 (1850 census household position, linked to I2). The resolution explains why a_018 cannot refer to I3 (death in 1840 predates baptism by five years) and why a_004 is preferred (I2 was alive and found with Patrick in two census cycles). The rationale is specific enough to understand the reasoning without reading full assertion details. The identity question is resolved definitively: the baptism's father must be I2, not I3."
               }
             ],
-            "judge_cost_usd": 0.0234978,
+            "judge_cost_usd": 0.022934,
             "duration_ms": 14257.250227034092,
             "error": null,
             "input_tokens": 17519,
-            "cached_input_tokens": 4338,
-            "output_tokens": 1109
+            "cached_input_tokens": 0,
+            "output_tokens": 1083
           },
           "started_at": 1792079659.408614,
           "ended_at": 1792079757.395454
@@ -13173,45 +13173,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly resolved c_002 with sound reasoning. The independence analysis accurately identifies that only a_001 is formally in the competing set, notes the household-197 candidate was never extracted as an assertion, and correctly documents that three independent sources (1850, 1860, 1908 censuses/death cert) trace a coherent life. The weighing analysis properly applies the GPS hierarchy: original records outweigh derivative, contemporary recordings outweigh later recollections. The resolution rationale correctly cites the exhaustive three-repository search (FamilySearch, Ancestry, MyHeritage) that found no second Patrick Flynn candidate, and the consistent age progression (5 in 1850, 15 in 1860, consistent with ~1845 birth). The skill correctly identified c_002 as foundational\u2014resolving the identity question establishes which person's records are being compared in c_001 and c_003. No fabricated material; all claims are grounded in the tool responses and project state."
+                "rationale": "The skill correctly resolved c_002 with sound reasoning. The independence analysis accurately identifies that only one formal competing assertion exists (a_001) and that the household-197 candidate was never documented in the project. The weighing analysis properly applies the GPS hierarchy: three independent original records (1850, 1860, 1908 censuses/death certificate) from different recorders and decades, with consistent ages and father's name across 58 years. The resolution rationale correctly explains why dwelling 84 is the subject and why the household-197 concern, though methodologically sound to raise, was not substantiated by the three-repository search. All factual claims are grounded in the tool responses and before-state. The skill accurately noted that c_002 is foundational to c_001 and c_003, and correctly identified that resolving it first clears the identity question necessary for the parentage hypothesis."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required. It enumerated all three conflicts (c_001, c_002, c_003) explicitly in the text response before deciding. It provided a prioritization rationale grounded in the criteria named in the per-test context: c_002 is 'the most foundational' because it 'establishes that the 1850 Thomas Flynn household record belongs to our subject at all, which is a prerequisite for the parentage hypothesis and for c_001 and c_003 being about the right person.' This is correct reasoning\u2014c_002 is an identity question that determines whose records the other conflicts even compare. The skill then resolved c_002 completely with independence_analysis, weighing_analysis, preferred_assertion_id, and resolution_rationale. It correctly noted that c_001 and c_003 remain open and offered them as next steps. Per the per-test context, resolving exactly one conflict and offering remaining conflicts as next steps is the correct behavior."
+                "rationale": "The skill fully addressed what the input state required. It enumerated all three conflicts explicitly (c_001, c_002, c_003) before deciding, provided a clear prioritization rationale grounded in the criteria named in the per-test context (c_002 is foundational\u2014it establishes whether the 1850 record belongs to the subject at all, which is prerequisite for the parentage hypothesis and for c_001 and c_003 being about the right person), and delivered a complete, well-reasoned resolution of the chosen conflict with all required fields (independence_analysis, weighing_analysis, resolution_kind, preferred_assertion_id, resolution_rationale, status). The skill correctly noted that c_001 and c_003 remain open and offered them as next steps, which is the correct behavior per the per-test context."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. The research_query calls for conflicts, questions, assertions, person_evidence, sources, and hypotheses all used correct section names and parameters. The place_search calls for 'Schuylkill County, Pennsylvania' and 'Schuylkill County' with contextName 'Pennsylvania' are reasonable attempts to resolve place names for geographic analysis (though the results returned only the state level, not county-level detail). The research_append call to update c_002 included all required fields: independence_analysis, weighing_analysis, resolution_kind ('competitor'), preferred_assertion_id ('a_001'), resolution_rationale, and status ('resolved'). The second research_append call (after the first validation rejection) corrected the missing resolution_kind field and succeeded. This is a single clean recovery\u2014one validation rejection, immediately corrected, the retry succeeded with correct args\u2014which scores full credit per the recovery policy."
+                "rationale": "All MCP tool calls passed arguments matching the fixture's expected_args semantically. The research_query calls for conflicts, questions, assertions, person_evidence, sources, and hypotheses all used correct section names and parameters. The place_search calls for 'Schuylkill County, Pennsylvania' and 'Schuylkill County' with context 'Pennsylvania' were reasonable attempts to resolve the geographic identity question (c_003), though they returned only state-level results rather than county-level. The research_append call to update c_002 initially failed validation (missing resolution_kind), but the skill immediately corrected it in a second call with the required field added, which constitutes a single clean recovery per the retry policy\u2014the final persisted state has correct args. No fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Source independence analysis",
                 "score": 3,
-                "rationale": "The independence_analysis correctly names the specific informants and records involved. It identifies that a_001 (1850 census, src_001) came from an unknown household member; a_009 (1860 census, src_003) from a separate household member; a_012 (1908 death cert, src_004) from James Brown (son-in-law); and a_013 (death cert) also from James Brown. It explicitly states these are 'independent: three separate census years and a death certificate, created by different recorders from different informants in different decades.' It correctly notes that the household-197 candidate mentioned in the conflict description has no extracted assertion and was not found in the three-repository search. The analysis is specific to the identity conflict's fact type (whether the same person appears in multiple records), not generic. It explains the information chain: no shared derivation between the 1850 original, the 1860 original, and the 1908 death certificate."
+                "rationale": "The independence analysis is specific and grounded in the informant chain. It correctly identifies that only one formal competing assertion exists (a_001) and that the household-197 candidate has no extracted assertion or person-evidence link in the project. It names the four sources supporting the subject's side (a_001 from src_001, a_009 from src_003, a_012 and a_013 from src_004) and explains they are independent: three separate census years and a death certificate, created by different recorders from different informants in different decades. It notes that the q_002 search-stop documentation records three separate repositories (FamilySearch original, Ancestry derivative, MyHeritage derivative) all returned only one Patrick Flynn of matching age, and that the household-197 candidate appears not to have been found, suggesting it was prospective rather than documented. This is specific analysis of the informant chain, not generic assertion of independence."
               },
               {
                 "source": "rubric",
                 "name": "Evidence weighing",
                 "score": 3,
-                "rationale": "The weighing_analysis applies the GPS preponderance hierarchy with specific citation of assertion attributes. It cites the 1860 census as 'corroborating 1860 co-enumeration confirming continuity of residence a decade later'\u2014a temporal proximity argument. It notes the death certificate's 'explicit naming of Thomas Flynn as father'\u2014a direct evidence argument. It emphasizes 'three chronologically spaced records trace a coherent individual: same county, consistent ages, same father's name'\u2014applying the hierarchy that original records (all three are originals) outweigh derivative, and contemporary recordings (1850, 1860 censuses) outweigh later recollections (1908 death cert reporting birth facts). The weighing correctly treats the absence of a documented second candidate as 'the strongest attainable negative evidence' after exhaustive searching, not as positive proof. The analysis does not contradict the independence finding\u2014both identify the same three independent sources supporting the subject's identity."
+                "rationale": "The weighing analysis applies the GPS preponderance hierarchy with specific citation of assertion attributes. It cites temporal distance (three chronologically spaced records across 58 years), source classification (original records vs. derivative indexes), informant proximity (census enumerators as direct witnesses to residence; household member as informant for age/birthplace; son-in-law as secondary informant for father's name on death certificate), and contemporary recording (1850 and 1860 censuses taken near the events vs. 1908 death certificate secondary for birth facts). It correctly identifies that the 1860 co-enumeration in the same household confirms continuity of residence a decade later, and that the death certificate's explicit naming of Thomas Flynn as father is a direct statement from a family informant. The analysis does not contradict the independence finding\u2014it treats the four sources as independent corroborating items, which is consistent with the independence analysis's finding that they come from different recorders and decades."
               },
               {
                 "source": "rubric",
                 "name": "Resolution completeness",
                 "score": 3,
-                "rationale": "The resolution addresses all competing assertions in c_002. The conflict has only one formally competing assertion (a_001), but the resolution_rationale explicitly addresses why the household-197 candidate (the other side of the identity question) is rejected: 'the documented search for q_002 covered three separate repositories...and all three returned only one Patrick Flynn of matching age in the county: dwelling 84. No assertion, source record, or person-evidence link for a household-197 candidate exists in this project.' The rationale explains why the non-finding is significant: 'The non-finding after exhaustive searching is the strongest negative evidence available.' The resolution is specific enough that a reviewer can understand the reasoning without reading full assertion details. The skill does not treat the competing candidate as a settled attribute of the subject while an unresolved identity conflict covers it\u2014instead, it resolves the identity conflict by demonstrating the competing candidate was never documented."
+                "rationale": "The resolution addresses all competing assertions in c_002. There is only one formal competing assertion (a_001), and the resolution explains why it is preferred: the three-repository search found no documented second candidate (household-197), and the continuous record chain across 1850, 1860, and 1908 with consistent ages and father's name satisfies the positive-placement standard. The resolution rationale is specific enough that a reviewer can understand the reasoning without reading full assertion details. The skill correctly notes that any future discovery of a genuine household-197 record would require reopening the conflict, acknowledging the contingency of the resolution on the search outcome. The resolution does not treat a competing assertion as a settled attribute while an unresolved identity conflict covers it\u2014c_002 itself is the identity conflict being resolved, and c_001 and c_003 are noted as remaining open."
               }
             ],
-            "judge_cost_usd": 0.0292568,
+            "judge_cost_usd": 0.0286368,
             "duration_ms": 19756.079282029532,
             "error": null,
             "input_tokens": 21068,
             "cached_input_tokens": 4338,
-            "output_tokens": 1551
+            "output_tokens": 1427
           },
           "started_at": 1792079659.4162395,
           "ended_at": 1792079792.5479057
@@ -14117,6 +14117,5 @@
       "research_append": "6e45612a6d496074c785db854efcbca1e914cd05e085a44ddcc2802199b1d7cf",
       "research_query": "7ee7572ae84b3f6494d74205d6ac06c766272f5c5a04d18f09ac920077a0ee3a"
     }
-  },
-  "judge_render_hash": "a1af09c89f9ef9bd987b1b036deaae437899bdeada9ad90c29f1d0b94e69b42f"
+  }
 }
