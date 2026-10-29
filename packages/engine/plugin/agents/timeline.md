@@ -822,8 +822,7 @@ agreement. Strong confirmations include:
 - **High-severity gaps** → suggest `research-plan` to plan searches filling the
   gap on the question already open, and end the reply with "Continue with
   planning the searches?". When no question is open, suggest
-  `question-selection` instead: research-plan writes nothing when no question
-  matches.
+  `question-selection` instead.
 - **Hypothesis test fails** → suggest `hypothesis-tracking` to update the
   hypothesis status to ruled_out.
 - **A vital-limit contradiction is visible** → suggest `check-warnings` for
