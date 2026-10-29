@@ -23,6 +23,10 @@ export interface ChatMessage {
   role: 'user' | 'assistant'
   text: string
   tools: ToolChip[]
+  // A user message the HOST sent for the researcher under "Keep going" -- rendered
+  // as theirs, because it is their run, but marked so a reader can tell which
+  // messages they chose and which the run sent on their behalf.
+  auto?: boolean
   // Arrival order of text and chips. `text` accumulates into one string and `tools`
   // into one array, so the order BETWEEN them is lost -- which is why every chip in a
   // turn renders above every paragraph, 36 of them in one stretch of the captured
@@ -91,15 +95,17 @@ export const CONNECT_LOST_NOTE =
   'lost — reload the page to start a new one.'
 
 export const TURN_OUTCOME_LABELS: Record<string, string> = {
-  completed: 'Research complete.',
+  // A project can complete with sources nobody reached: the researcher may
+  // choose to conclude rather than search on. A flat "Research complete." would
+  // contradict the summary sitting directly above it, which names what was left.
+  completed: 'Research finished for now — see the summary for anything left unsearched. Send a message to research further.',
   stopped: 'Stopped — send a message to carry on.',
   queued: 'Picking up your message…',
   budget: 'Paused: this run reached its step budget. Send a message to carry on.',
   no_progress: 'Paused: the agent stopped making progress. Send a message to carry on.',
   decision: 'Waiting on you — see the question above.',
   // R4: the ask was met and the JOB is still open. It must not read like
-  // `completed` ('Research complete.'), or a plan-only request looks like a
-  // finished project.
+  // `completed` above, or a plan-only request looks like a finished project.
   delivered: "Done — that's what you asked for. Send a message to carry on.",
   mcp_unavailable: 'Paused: the genealogy tools became unavailable.',
   // Added on main while this branch was open (U13/U23 outcomes).
@@ -127,6 +133,33 @@ export const COMPACTING_LABEL = 'Still here — organising what I have found so 
 export const SPEND_CAP_LABEL =
   'Stopped: this session reached its spend limit. Everything found so far is saved — ' +
   'start a new session on this project to carry on.'
+
+// Step mode (decision 25): the replies a turn admits, as exact phrases. The host
+// decides which apply -- `step_boundary.reply_options` -- and puts the list on
+// `turn_done.options`; the browser shows one button per phrase and nothing else, so
+// a phrase it does not recognise is still shown. What it must NOT do is invent one:
+// each button sends its phrase verbatim, and `step_mode(text)` reads it back on the
+// other side. That ignores case and trailing punctuation, so "keep going!" would still
+// start a job, but a reworded label ("Carry on") would be an ordinary message.
+export const REPLY_LABELS: Record<string, string> = {
+  'Continue.': 'Continue',
+  'Keep going.': 'Keep going',
+  'Wrap it up.': 'Wrap it up',
+  'Search more.': 'Search more'
+}
+
+/** The phrases on a turn_done frame. Non-strings are dropped rather than rendered as
+ *  a button that would send `undefined` as the researcher's next message. */
+export function replyOptions(options: unknown): string[] {
+  if (!Array.isArray(options)) return []
+  return options.filter((o): o is string => typeof o === 'string' && o.trim().length > 0)
+}
+
+/** What a button reads. An unrecognised phrase labels itself, trailing stop removed,
+ *  so a phrase added on the server renders sensibly before this map catches up. */
+export function replyLabel(phrase: string): string {
+  return REPLY_LABELS[phrase] ?? phrase.replace(/\.$/, '')
+}
 
 export function turnOutcomeLabel(outcome: unknown, limit?: unknown): string | null {
   if (outcome === 'budget' && limit === 'spend') return SPEND_CAP_LABEL

@@ -8,7 +8,8 @@
     "query": {
       "standardPlace": "Louisiana, United States",
       "startYear": 1824,
-      "endYear": 1835
+      "endYear": 1835,
+      "pageSize": 50
     },
     "totalResults": 2,
     "results": [
@@ -17,14 +18,18 @@
         "title": "East Feliciana Parish, Louisiana Marriage Records, 1824-1850",
         "recordSearchablePercent": 88,
         "fulltextSearchable": true,
-        "imageCount": 640
+        "languages": [],
+        "imageCount": 640,
+        "coverages": []
       },
       {
         "imageGroupNumber": "003100202",
         "title": "West Feliciana Parish, Louisiana Marriage Records, 1824-1850",
         "recordSearchablePercent": 84,
         "fulltextSearchable": true,
-        "imageCount": 590
+        "languages": [],
+        "imageCount": 590,
+        "coverages": []
       }
     ]
   }

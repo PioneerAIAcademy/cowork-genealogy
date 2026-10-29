@@ -1882,8 +1882,7 @@ def _clean_log(test_id="ut_ip_1", outcome="pass"):
 
 
 def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
-    """A released `v1.json` beside candidates — the shape `init-project` has on
-    main, and the one `latest_full_skill_runlog` resolves backwards."""
+    """A skill's run-log directory, for released `v{N}.json` beside candidates."""
     runlogs = tmp_path / "runlogs"
     skill_dir = runlogs / skill
     skill_dir.mkdir(parents=True)
@@ -1895,11 +1894,10 @@ def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
     return skill_dir
 
 
-def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, capsys):
-    """`latest_full_skill_runlog` returns ANY released `v{N}.json` in preference to
-    every candidate, whatever the date. So a PR adding a red candidate beside a
-    clean released log would be read as clean if rule 6 used that resolution.
-    It reads the log the PR ADDED instead."""
+def test_rule6_grades_the_added_log_not_the_newest_one(tmp_path, monkeypatch, capsys):
+    """`latest_full_skill_runlog` reads the newest run on disk, so a clean run main
+    wrote after the PR's red one would be read in its place and the PR would pass.
+    Rule 6 reads the log the PR ADDED instead."""
     skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
     (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
     _write_ann(skill_dir, "v1.json", [])
@@ -1908,6 +1906,9 @@ def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, 
         json.dumps(_clean_log("ut_ip_2", "fail")), encoding="utf-8"
     )
     _write_ann(skill_dir, added, [])
+    newer = "v2_2026-09-23_09-00-00.json"
+    (skill_dir / newer).write_text(json.dumps(_clean_log()), encoding="utf-8")
+    _write_ann(skill_dir, newer, [])
     _patch_diffs(monkeypatch, [f"eval/runlogs/unit/init-project/{added}"])
 
     rc = check_runlogs.main()
@@ -1985,9 +1986,9 @@ def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch
 
 # --- Rules 2, 2b and 3 grade the run log the PR adds (#3272) ---------------------
 #
-# `latest_full_skill_runlog` prefers ANY released `v{N}.json` over every candidate, so
-# when main released a log newer than the PR's own candidate, rules 2 and 3 graded main's
-# release and the PR's own run was checked by nothing. These build that shape with a
+# `latest_full_skill_runlog` reads the newest run on disk, so when main released a log
+# newer than the PR's own candidate, rules 2 and 3 graded main's release and the PR's
+# own run was checked by nothing. These build that shape with a
 # snapshot that names a file really on disk: `_clean_log`'s empty snapshot can never be
 # stale, so a test on it would never reach rule 2's comparison.
 
@@ -2066,6 +2067,54 @@ def test_rules_2_and_2b_grade_the_candidate_the_pr_adds_not_a_newer_release(
     assert "v3.json" not in out
 
 
+@pytest.mark.parametrize("pr_edits_the_stale_file", [False, True], ids=["main-had-it", "pr-made-it"])
+def test_rule2_fallback_blocks_only_on_a_file_the_pr_changed(
+    tmp_path, monkeypatch, capsys, pr_edits_the_stale_file
+):
+    """An annotation-only PR on a skill whose latest log main had already left stale
+    (a cosmetic-skip waiver on the PR that made the change) warns. The same PR also
+    editing the stale file owes the re-run, and blocks."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False)
+    paths = [f"{_RUNLOGS_REL}/v3.ann.json"] + ([_TRACKED_REL] if pr_edits_the_stale_file else [])
+    _patch_diffs(monkeypatch, paths)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    if pr_edits_the_stale_file:
+        assert rc == 1 and _violations(out) == 1
+        assert "`v3.json`" in _only_line(out, "NOT active")
+        assert "none of which this PR changed" not in out
+    else:
+        assert rc == 0
+        warned = _only_line(out, "none of which this PR changed")
+        assert warned.startswith("::warning") and "`v3.json`" in warned
+        assert "NOT active" not in out
+
+
+@pytest.mark.parametrize("pr_adds_the_log", [True, False], ids=["own-log", "main-log"])
+def test_main_compares_rule2c_with_main_only_on_a_log_the_pr_did_not_add(
+    tmp_path, monkeypatch, capsys, pr_adds_the_log
+):
+    """`main` changed the suite's validator before this PR. A log the PR adds must
+    still match the tree it merges into; main's own latest log only warns."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    name = "v3_2026-10-29_10-00-00.json" if pr_adds_the_log else "v3.json"
+    _put_runlog(skill_dir, name, active=True, instrument=_instr())
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: _H["0"])
+    _patch_diffs(monkeypatch, [f"{_RUNLOGS_REL}/{name}" if pr_adds_the_log else f"{_RUNLOGS_REL}/v3.ann.json"])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    if pr_adds_the_log:
+        assert rc == 1 and "validators.suite" in _only_line(out, "::error")
+        assert "already has that change" not in out
+    else:
+        assert rc == 0, out
+        assert "validators.suite" in _only_line(out, "already has that change")
+
+
 def test_rule3_grades_the_annotation_of_the_candidate_the_pr_adds(
     tmp_path, monkeypatch, capsys
 ):
@@ -2108,15 +2157,32 @@ def test_a_pr_that_adds_two_candidates_is_graded_on_the_newer_one(
     assert "rule 6: graded 2 added run log(s)" in out
 
 
-def test_a_pr_that_adds_no_run_log_is_still_graded_on_the_latest_on_disk(
+def test_a_pr_that_adds_no_run_log_is_graded_on_the_newest_run_on_disk(
     tmp_path, monkeypatch, capsys
 ):
-    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, and resolve
-    exactly as before: a released log beats every candidate whatever its version, so the
-    stale `v3.json` is graded and the newer active candidate beside it is not."""
+    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, so they are
+    graded on the run that ran last, released or not: an active candidate newer than a
+    stale release passes. Ranking the release first failed every such PR on a log `main`
+    had already superseded."""
     skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
-    _put_runlog(skill_dir, "v3.json", active=False)
-    candidate = "v4_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, "v3.json", active=False, timestamp="2026-10-01_10-00-00")
+    _put_runlog(skill_dir, "v4_2026-10-08_10-00-00.json", active=True)
+    _patch_diffs(monkeypatch, [_TRACKED_REL])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0, out
+    assert "NOT active" not in out
+
+
+def test_a_pr_that_adds_no_run_log_is_graded_on_a_release_newer_than_a_candidate(
+    tmp_path, monkeypatch, capsys
+):
+    """A candidate left beside the release of its own version line ran before that
+    release, so the release is graded, not the candidate."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False, timestamp="2026-10-08_10-00-00")
+    candidate = "v3_2026-10-01_10-00-00.json"
     _put_runlog(skill_dir, candidate, active=True)
     _patch_diffs(monkeypatch, [_TRACKED_REL])
 
@@ -2704,9 +2770,9 @@ def test_main_fires_rule2b_only_when_prompt_in_diff(monkeypatch, capsys, tmp_pat
 
 # --- Rule 2c (instrument fingerprint) — issue #2479 PR 3 ---------------------
 #
-# Blocks on the suite-specific halves (`validators.suite`, `tools.fixture`),
-# warns on the corpus-wide ones (`validators.shared`, `tools.live`,
-# `live_modules`) so no change ever owes a re-run of every suite.
+# Blocks on `validators.suite`. Warns on `tools.fixture` (lead, 2026-10-29) and on
+# the corpus-wide halves (`validators.shared`, `tools.live`, `live_modules`) so no
+# change ever owes a re-run of every suite.
 
 _H = {c: c * 64 for c in "abcdef0123456789"}
 
@@ -2735,33 +2801,26 @@ def test_rule2c_passes_silently_when_nothing_moved(monkeypatch, capsys):
     assert capsys.readouterr().out == ""
 
 
-@pytest.mark.parametrize(
-    "moved, names",
-    [
-        ({"validators__suite": _H["0"]}, "validators.suite"),
-        ({"tools__fixture": _H["0"]}, "tools.fixture"),
-    ],
-    ids=["suite-validator", "fixture-tool"],
-)
-def test_rule2c_blocks_on_a_suite_specific_change(monkeypatch, capsys, moved, names):
-    _stub_current_instrument(monkeypatch, _instr(**moved))
+def test_rule2c_blocks_on_a_suite_validator_change(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 1
     out = capsys.readouterr().out
-    assert "::error" in out and names in out and "skill `demo`" in out
+    assert "::error" in out and "validators.suite" in out and "skill `demo`" in out
     assert "make eval-skill SKILL=demo" in out
 
 
 @pytest.mark.parametrize(
     "moved, names",
     [
+        ({"tools__fixture": _H["0"]}, "tools.fixture"),
         ({"validators__shared": _H["0"]}, "validators.shared"),
         ({"tools__live": _H["0"]}, "tools.live"),
         ({"live_modules__research_append": _H["0"]}, "live_modules (research_append)"),
     ],
-    ids=["shared-validators", "live-tool-schema", "live-module"],
+    ids=["fixture-tool", "shared-validators", "live-tool-schema", "live-module"],
 )
-def test_rule2c_only_warns_on_a_corpus_wide_change(monkeypatch, capsys, moved, names):
+def test_rule2c_only_warns_on_a_change_outside_the_suite_validator(monkeypatch, capsys, moved, names):
     _stub_current_instrument(monkeypatch, _instr(**moved))
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 0
@@ -2808,6 +2867,102 @@ def test_rule2c_blocks_when_the_catalog_cannot_be_read(monkeypatch, capsys):
     assert rc == 1
     out = capsys.readouterr().out
     assert "::error" in out and "tool-schemas.js" in out
+
+
+# A suite validator main already has at its current value was waived or owed on
+# the PR that changed it, so a log this PR did not add only warns on it.
+
+
+def test_rule2c_warns_on_a_suite_validator_main_already_has(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: _H["0"])
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::error" not in out
+    assert "validators.suite" in _only_line(out, "`main` already has that change")
+
+
+@pytest.mark.parametrize(
+    "base", [_H["a"], _H["1"], None], ids=["base-at-stored", "base-elsewhere", "no-base"]
+)
+def test_rule2c_blocks_on_a_suite_validator_this_pr_changed(monkeypatch, capsys, base):
+    """`main` at the stored value, `main` at a third value, or no base to read: the PR
+    changed the validator, or nothing says it did not."""
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: base)
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out and "validators.suite" in out
+    assert "already has that change" not in out
+
+
+def test_rule2c_blocks_and_skips_main_when_the_pr_added_the_log(monkeypatch, capsys):
+    """A log the PR adds is its own evidence: it must match the tree it merges into."""
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(
+        check_runlogs, "base_suite_validators", lambda skill: pytest.fail("base read for the PR's own log")
+    )
+    rc = check_runlogs.rule2c_instrument(
+        "demo", {"snapshot": {}, "instrument": _instr()}, "v1.json", compare_base=False
+    )
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule2c_reads_no_base_when_only_a_warn_only_half_moved(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"], tools__live=_H["0"]))
+    monkeypatch.setattr(
+        check_runlogs, "base_suite_validators", lambda skill: pytest.fail("base read for a warn-only half")
+    )
+    assert check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json") == 0
+
+
+def test_base_suite_validators_reads_the_base_checkout(monkeypatch, tmp_path):
+    from harness import instrument as instr_mod
+
+    validators = tmp_path / "eval" / "harness" / "validators"
+    validators.mkdir(parents=True)
+    (validators / "test_demo.py").write_text("def test_demo(ctx):\n    assert ctx\n", encoding="utf-8")
+    monkeypatch.setenv("BASE_TREE", str(tmp_path))
+    got = check_runlogs.base_suite_validators("demo")
+    assert got == instr_mod.validators_fingerprint("demo", validators)["suite"]
+
+    (validators / "test_demo.py").write_text("def test_demo(ctx):\n    assert not ctx\n", encoding="utf-8")
+    assert check_runlogs.base_suite_validators("demo") != got
+
+
+@pytest.mark.parametrize("base_tree", [None, "missing"], ids=["unset", "no-such-dir"])
+def test_base_suite_validators_is_none_with_no_base_checkout(monkeypatch, tmp_path, base_tree):
+    if base_tree is None:
+        monkeypatch.delenv("BASE_TREE", raising=False)
+    else:
+        monkeypatch.setenv("BASE_TREE", str(tmp_path / base_tree))
+    assert check_runlogs.base_suite_validators("demo") is None
+
+
+_SCOUT_REL = "packages/engine/plugin/agents/scout.md"
+
+
+@pytest.mark.parametrize(
+    "key, pr_paths, frontmatter_changed, expected",
+    [
+        (_TRACKED_REL, {_TRACKED_REL}, None, True),
+        (_TRACKED_REL, {"some/other/file.md"}, None, False),
+        (_SCOUT_REL + "#frontmatter", {_SCOUT_REL}, True, True),
+        (_SCOUT_REL + "#frontmatter", {_SCOUT_REL}, False, False),
+        (_SCOUT_REL + "#frontmatter", set(), None, False),
+    ],
+    ids=["changed", "untouched", "frontmatter-changed", "body-only", "agent-untouched"],
+)
+def test_pr_changed_snapshot_key(monkeypatch, key, pr_paths, frontmatter_changed, expected):
+    def _changed(agent):
+        assert agent == "scout" and frontmatter_changed is not None
+        return frontmatter_changed
+
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed)
+    assert check_runlogs.pr_changed_snapshot_key(key, pr_paths) is expected
 
 
 @pytest.mark.parametrize(
@@ -3152,7 +3307,7 @@ def test_a_non_test_validator_module_marks_every_suite(monkeypatch):
 
 def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeypatch, capsys, tmp_path):
     """A shared MCP fixture's `tool` field feeds `tools.fixture`; changing it is
-    graded on the PR that makes it, not left for the next author of those suites."""
+    reported on the PR that makes it. `tools.fixture` warns (lead, 2026-10-29)."""
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
     _seed_instrument_suite(runlogs, monkeypatch, _instr())
@@ -3166,8 +3321,9 @@ def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeyp
     monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: ["eval/fixtures/mcp/shared-fix.json"])
     rc = check_runlogs.main()
     out = capsys.readouterr().out
-    assert rc == 1, out
-    assert "skill `convert-dates`" in out and "tools.fixture" in out
+    assert rc == 0, out
+    warned = _only_line(out, "tools.fixture")
+    assert warned.startswith("::warning") and "skill `convert-dates`" in warned
 
 
 # --- #3568: a touched agent gates a suite only if its graded log can see it -----
@@ -3417,3 +3573,515 @@ def test_every_embedded_agent_reaches_its_suite_through_the_superset():
             if suite not in check_runlogs.skills_gated_by_agent(agent, referencing):
                 missed.append(f"{suite} embeds {agent}")
     assert not missed, missed
+
+
+# Rule 11 (#3691 item 2): a swapped gate tag on a grade_on_invariant test.
+
+_INVARIANTS = ("test_no_new_plan", "test_no_plan_writes_when_resolved", "test_resolved_question_not_reopened")
+_RPN_TAGS = ["planning", "research-plan-no-new-plan", "no-plan-writes-when-resolved"]
+_RPN_GATES = {
+    "test_no_new_plan": {"research-plan-no-new-plan"},
+    "test_no_plan_writes_when_resolved": {"no-plan-writes-when-resolved"},
+    "test_resolved_question_not_reopened": {"no-plan-writes-when-resolved"},
+    "test_stops_for_verdicts": {"stops-for-verdicts"},
+    "test_activated_run_produces_response": set(),
+}
+
+
+def _r11_test(tags, *, explanation="the invariant is no plan writes", goi=True):
+    return {
+        "test": {"id": "ut_research_rpn", "skill": "research", "tags": list(tags)},
+        "negative": {"grade_on_invariant": goi, "explanation": explanation},
+    }
+
+
+def _r11_log(*runs):
+    """One test whose runs carry {validator: outcome}."""
+    return {
+        "tests": [
+            {
+                "test_id": "ut_research_rpn",
+                "runs": [
+                    {"validators": {"results": [{"name": n, "outcome": o} for n, o in run.items()]}}
+                    for run in runs
+                ],
+            }
+        ]
+    }
+
+
+_ALL_PASS = {**{n: "passed" for n in _INVARIANTS}, "test_stops_for_verdicts": "skipped",
+             "test_activated_run_produces_response": "passed"}
+_SWAPPED = {**{n: "skipped" for n in _INVARIANTS}, "test_stops_for_verdicts": "passed",
+            "test_activated_run_produces_response": "passed"}
+
+
+def _rule11(*, base_test=None, head_test=None, base_log=None, head_log=None,
+            base_gates=_RPN_GATES, head_validators=None):
+    return check_runlogs.rule11_swapped_gate_tags(
+        "research",
+        "v2_2026-10-26_00-00-00.json",
+        base_log=base_log or _r11_log(_ALL_PASS),
+        head_log=head_log or _r11_log(_ALL_PASS),
+        base_tests={"ut_research_rpn": base_test or _r11_test(_RPN_TAGS)},
+        head_tests={"ut_research_rpn": head_test or _r11_test(_RPN_TAGS)},
+        base_gates=base_gates,
+        head_validators=set(_RPN_GATES) if head_validators is None else head_validators,
+    )
+
+
+def test_rule11_renaming_a_gating_tag_in_the_test_fails(capsys):
+    head = _r11_test(["planning", "research-plan-no-new-plan-v2", "no-plan-writes-when-resolved"])
+    run = {**_ALL_PASS, "test_no_new_plan": "skipped"}
+    assert _rule11(head_test=head, head_log=_r11_log(run)) == 1
+    out = capsys.readouterr().out
+    assert "::error::" in out and "`test_no_new_plan`" in out
+    assert "test_no_plan_writes_when_resolved" not in out
+
+
+def test_rule11_the_issue_swap_fails_naming_every_lost_validator(capsys):
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(head_test=head, head_log=_r11_log(_SWAPPED)) == 1
+    out = capsys.readouterr().out
+    for name in _INVARIANTS:
+        assert f"`{name}`" in out
+    assert "ut_research_rpn" in out
+
+
+def test_rule11_validator_deleted_at_head_is_exempt():
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(
+        head_test=head, head_log=_r11_log(_SWAPPED),
+        head_validators=set(_RPN_GATES) - set(_INVARIANTS),
+    ) == 0
+
+
+def test_rule11_edited_explanation_is_exempt():
+    head = _r11_test(["planning", "stops-for-verdicts"], explanation="retargeted to stops-for-verdicts")
+    assert _rule11(head_test=head, head_log=_r11_log(_SWAPPED)) == 0
+
+
+def test_rule11_unchanged_log_passes():
+    assert _rule11() == 0
+
+
+def test_rule11_an_ungated_validator_going_skipped_passes():
+    run = {**_ALL_PASS, "test_activated_run_produces_response": "skipped"}
+    assert _rule11(head_log=_r11_log(run)) == 0
+
+
+def test_rule11_skipped_on_only_some_runs_passes():
+    assert _rule11(head_log=_r11_log(_SWAPPED, _ALL_PASS)) == 0
+
+
+def test_rule11_skipped_on_every_run_fails():
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(head_test=head, head_log=_r11_log(_SWAPPED, _SWAPPED)) == 1
+
+
+def test_rule11_a_validator_missing_from_the_head_results_fails():
+    run = {n: o for n, o in _ALL_PASS.items() if n != "test_no_new_plan"}
+    assert _rule11(head_log=_r11_log(run)) == 1
+
+
+def test_rule11_ignores_a_test_that_is_not_grade_on_invariant():
+    head = _r11_test(["planning", "stops-for-verdicts"], goi=False)
+    assert _rule11(head_test=head, head_log=_r11_log(_SWAPPED)) == 0
+
+
+def test_rule11_a_validator_that_was_not_passing_at_base_is_not_owed():
+    base_run = {**_ALL_PASS, **{n: "skipped" for n in _INVARIANTS}}
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(base_log=_r11_log(base_run), head_test=head, head_log=_r11_log(_SWAPPED)) == 0
+
+
+def test_rule11_for_skill_warns_without_the_shas(monkeypatch, capsys):
+    monkeypatch.delenv("BASE_SHA", raising=False)
+    monkeypatch.delenv("HEAD_SHA", raising=False)
+    assert check_runlogs.rule11_for_skill("research", "v2.json", _r11_log(_SWAPPED)) == 0
+    assert "rule 11 did not run" in capsys.readouterr().out
+
+
+def test_rule11_a_validator_that_passed_on_any_base_run_is_owed():
+    base_runs = (_ALL_PASS, {**_ALL_PASS, **{n: "failed" for n in _INVARIANTS}})
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(base_log=_r11_log(*base_runs), head_test=head, head_log=_r11_log(_SWAPPED)) == 1
+
+
+def test_rule11_aborted_head_runs_are_rule_6s_not_a_swap(capsys):
+    log = _r11_log({})
+    log["tests"][0]["runs"][0]["outcome"] = "aborted"
+    assert _rule11(head_log=log) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule11_aborted_runs_are_ignored_beside_a_completed_one():
+    log = _r11_log({}, _SWAPPED)
+    log["tests"][0]["runs"][0]["outcome"] = "aborted"
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(head_test=head, head_log=log) == 1
+
+
+def test_rule11_a_test_with_no_runs_is_left_to_rule_6():
+    head = _r11_test(["planning", "stops-for-verdicts"])
+    assert _rule11(head_test=head, head_log={"tests": [{"test_id": "ut_research_rpn", "runs": []}]}) == 0
+
+
+_R11_VALIDATOR = """import pytest
+from shared_validators import *  # noqa: F401,F403
+
+
+def test_no_new_plan(test):
+    if "research-plan-no-new-plan" not in test.get("tags", []):
+        pytest.skip("x")
+
+
+def test_stops_for_verdicts(test):
+    if "stops-for-verdicts" not in test.get("tags", []):
+        pytest.skip("x")
+"""
+
+# The suite file star-imports a sibling, and `test_universal.py` runs for every
+# suite: rule 11 has to read both, as the runtime does.
+_R11_SHARED = """import pytest
+
+
+def test_shared_gate(test):
+    if "shared-gate" not in test.get("tags", []):
+        pytest.skip("x")
+"""
+
+_R11_UNIVERSAL = """import pytest
+
+
+def test_hand_back_names_its_owner(test):
+    if "hand-back" not in test.get("tags", []):
+        pytest.skip("x")
+"""
+
+_R11_BASE_TAGS = ["research-plan-no-new-plan", "hand-back", "shared-gate"]
+_R11_BASE_PASSING = {
+    "test_no_new_plan": "passed",
+    "test_stops_for_verdicts": "skipped",
+    "test_shared_gate": "passed",
+    "test_hand_back_names_its_owner": "passed",
+}
+
+
+@pytest.fixture
+def rule11_git_repo(tmp_path, monkeypatch):
+    """Main holds an older released log and a newer candidate, the test with
+    its gate tags, and the validators. Returns (repo, base sha, write_head)."""
+    repo = tmp_path / "git"
+    runlogs = repo / "eval/runlogs/unit/research"
+    tests = repo / "eval/tests/unit/research"
+    validators = repo / "eval/harness/validators"
+    for d in (runlogs, tests, validators):
+        d.mkdir(parents=True)
+    _git(repo, "init", "-q", "-b", "main")
+    (validators / "test_research.py").write_text(_R11_VALIDATOR, encoding="utf-8")
+    (validators / "shared_validators.py").write_text(_R11_SHARED, encoding="utf-8")
+    (validators / "test_universal.py").write_text(_R11_UNIVERSAL, encoding="utf-8")
+    (tests / "rpn.json").write_text(json.dumps(_r11_test(_R11_BASE_TAGS)), encoding="utf-8")
+    # The released v1 predates the test; only the newer candidate carries it.
+    (runlogs / "v1.json").write_text(json.dumps({"tests": []}), encoding="utf-8")
+    (runlogs / "v2_2026-10-01_00-00-00.json").write_text(
+        json.dumps(_r11_log(_R11_BASE_PASSING)), encoding="utf-8"
+    )
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "base")
+    base = _rev(repo)
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", repo)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", repo / "eval/tests/unit")
+
+    def write_head(tags, validator=_R11_VALIDATOR, test_file="rpn.json"):
+        _git(repo, "checkout", "-q", "-b", "pr")
+        (tests / "rpn.json").unlink()
+        (tests / test_file).write_text(json.dumps(_r11_test(tags)), encoding="utf-8")
+        (validators / "test_research.py").write_text(validator, encoding="utf-8")
+        _git(repo, "add", "-A")
+        _git(repo, "commit", "-q", "-m", "pr")
+        monkeypatch.setenv("BASE_SHA", base)
+        monkeypatch.setenv("HEAD_SHA", _rev(repo))
+
+    return repo, base, write_head
+
+
+def _r11_head_log(**skipped):
+    """The base run with the named validators flipped to skipped."""
+    return _r11_log({**_R11_BASE_PASSING, **{name: "skipped" for name in skipped}})
+
+
+_R11_HEAD_LOG = "v3_2026-10-26_00-00-00.json"
+
+
+@pytest.mark.parametrize(
+    ("dropped_tag", "lost"),
+    [
+        ("research-plan-no-new-plan", "test_no_new_plan"),
+        ("hand-back", "test_hand_back_names_its_owner"),
+        ("shared-gate", "test_shared_gate"),
+    ],
+    ids=["suite-file", "test_universal", "star-imported-sibling"],
+)
+def test_rule11_for_skill_catches_a_dropped_tag_against_a_real_merge_base(
+    rule11_git_repo, capsys, dropped_tag, lost
+):
+    _, _, write_head = rule11_git_repo
+    write_head([t for t in _R11_BASE_TAGS if t != dropped_tag] + ["stops-for-verdicts"])
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log(**{lost: 1})) == 1
+    out = capsys.readouterr().out
+    assert f"`{lost}`" in out
+    assert out.count("(gated on") == 1
+
+
+def test_rule11_for_skill_catches_a_gate_renamed_in_the_validator_only(rule11_git_repo):
+    """The test keeps its tag; the PR renames the gate in the validator, so it
+    skips. Only a gate map read at the merge base sees the tag that used to
+    reach it."""
+    _, _, write_head = rule11_git_repo
+    write_head(
+        _R11_BASE_TAGS,
+        validator=_R11_VALIDATOR.replace('"research-plan-no-new-plan" not in', '"renamed-gate" not in'),
+    )
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log(test_no_new_plan=1)) == 1
+
+
+def test_rule11_for_skill_passes_an_unchanged_test_against_a_real_merge_base(rule11_git_repo, capsys):
+    _, _, write_head = rule11_git_repo
+    write_head(_R11_BASE_TAGS + ["extra"])
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log()) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule11_for_skill_exempts_a_validator_deleted_at_head(rule11_git_repo):
+    _, _, write_head = rule11_git_repo
+    gone = _R11_VALIDATOR.replace(
+        'def test_no_new_plan(test):\n    if "research-plan-no-new-plan" not in test.get("tags", []):\n        pytest.skip("x")\n',
+        "",
+    )
+    assert "test_no_new_plan" not in gone
+    write_head([t for t in _R11_BASE_TAGS if t != "research-plan-no-new-plan"], validator=gone)
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log(test_no_new_plan=1)) == 0
+
+
+def test_rule11_for_skill_warns_on_a_moved_test_file(rule11_git_repo, capsys):
+    _, _, write_head = rule11_git_repo
+    write_head(["stops-for-verdicts"], test_file="rpn-moved.json")
+    head_log = _r11_head_log(test_no_new_plan=1, test_shared_gate=1, test_hand_back_names_its_owner=1)
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, head_log) == 0
+    out = capsys.readouterr().out
+    assert "::warning::rule 11 did not check `ut_research_rpn`" in out and "rpn-moved.json" in out
+
+
+def test_rule11_for_skill_warns_on_an_unparseable_head_validator(rule11_git_repo, monkeypatch, capsys):
+    repo, _, write_head = rule11_git_repo
+    write_head(["stops-for-verdicts"], validator="def (:\n")
+    (repo / "eval/harness/validators/test_universal.py").write_text("def (:\n", encoding="utf-8")
+    assert check_runlogs.rule11_for_skill("research", _R11_HEAD_LOG, _r11_head_log(test_no_new_plan=1)) == 0
+    assert "no validator could be read" in capsys.readouterr().out
+
+
+def test_rule11_for_skill_warns_on_an_unreadable_base(rule11_git_repo, monkeypatch, capsys):
+    _, _, write_head = rule11_git_repo
+    write_head(["stops-for-verdicts"])
+
+    def boom(path):
+        raise check_runlogs.BaseUnreadable("simulated")
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", boom)
+    assert check_runlogs.rule11_for_skill("research", "v3.json", _r11_head_log(test_no_new_plan=1)) == 0
+    out = capsys.readouterr().out
+    assert "::warning::rule 11 did not run" in out and "eval/runlogs/unit/research/" in out
+
+
+def test_rule11_for_skill_warns_when_git_cannot_find_the_merge_base(rule11_git_repo, monkeypatch, capsys):
+    """A git failure while listing the base logs is not "no logs at the base"."""
+    _, _, write_head = rule11_git_repo
+    write_head(["stops-for-verdicts"])
+    monkeypatch.setenv("HEAD_SHA", "0" * 40)
+    assert check_runlogs.rule11_for_skill("research", "v3.json", _r11_head_log(test_no_new_plan=1)) == 0
+    assert "::warning::rule 11 did not run" in capsys.readouterr().out
+
+
+def test_check_runlogs_imports_on_a_bare_interpreter():
+    """The workflow runs this script on a bare Python with no packages, and
+    rule 11's gate map must come with no `jsonschema` behind it."""
+    from tests.unit.bare_python import bare
+
+    script = Path(__file__).resolve().parents[2] / "scripts" / "check_runlogs.py"
+    proc = bare(f"import runpy; runpy.run_path({str(script)!r}, run_name='not_main')")
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_main_runs_rule11_only_on_the_log_a_pr_adds_and_its_failure_fails(tmp_path, monkeypatch):
+    skill_dir = tmp_path / "research"
+    skill_dir.mkdir()
+    for name in ("v1.json", "v2_2026-10-26_00-00-00.json"):
+        (skill_dir / name).write_text(json.dumps({"tests": []}), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    for rule in ("rule2_active", "rule2b_judge_prompt", "rule2c_instrument", "rule3_completeness"):
+        monkeypatch.setattr(check_runlogs, rule, lambda *a, **k: 0)
+    calls = []
+    monkeypatch.setattr(check_runlogs, "rule11_for_skill", lambda *a: calls.append(a[:2]) or 1)
+
+    _patch_diffs(monkeypatch, ["eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json"])
+    assert check_runlogs.main() == 1
+    assert calls == [("research", "v2_2026-10-26_00-00-00.json")]
+
+    calls.clear()
+    _patch_diffs(monkeypatch, ["eval/tests/unit/research/handle-negative-probate-result.json"])
+    check_runlogs.main()
+    assert calls == []
+
+
+def test_git_ls_at_merge_base_lists_bare_names_and_an_absent_dir_as_empty(rule11_git_repo):
+    """A suite new in this PR has no log directory at the base: that is "nothing
+    to compare", not a failed read."""
+    _, _, write_head = rule11_git_repo
+    write_head(_R11_BASE_TAGS + ["extra"])
+    assert check_runlogs.git_ls_at_merge_base("eval/runlogs/unit/research") == [
+        "v1.json",
+        "v2_2026-10-01_00-00-00.json",
+    ]
+    assert check_runlogs.git_ls_at_merge_base("eval/runlogs/unit/new-suite") == []
+
+
+# Rule 11 with no run log: a validator-only edit is compared on the gate maps.
+
+
+def _drift(head_gates, *, base_test=None, head_test=None):
+    return check_runlogs.rule11_gate_drift(
+        "research",
+        base_tests={"ut_research_rpn": base_test or _r11_test(_RPN_TAGS)},
+        head_tests={"ut_research_rpn": head_test or _r11_test(_RPN_TAGS)},
+        base_gates=_RPN_GATES,
+        head_gates=head_gates,
+    )
+
+
+def test_rule11_gate_drift_a_renamed_gate_fails(capsys):
+    head = {**_RPN_GATES, "test_no_new_plan": {"renamed-gate"}}
+    assert _drift(head) == 1
+    out = capsys.readouterr().out
+    assert "`test_no_new_plan`" in out and "renamed-gate" in out
+    assert out.count("(gated on") == 1
+
+
+@pytest.mark.parametrize(
+    "head",
+    [
+        _RPN_GATES,
+        {**_RPN_GATES, "test_no_new_plan": set()},
+        {k: v for k, v in _RPN_GATES.items() if k != "test_no_new_plan"},
+        {**_RPN_GATES, "test_no_new_plan": {"renamed-gate", "research-plan-no-new-plan"}},
+    ],
+    ids=["unchanged", "gate-removed", "validator-deleted", "gate-widened"],
+)
+def test_rule11_gate_drift_passes_what_still_runs_or_is_gone(head):
+    assert _drift(head) == 0
+
+
+def test_rule11_gate_drift_edited_explanation_is_exempt():
+    head = {**_RPN_GATES, "test_no_new_plan": {"renamed-gate"}}
+    assert _drift(head, head_test=_r11_test(_RPN_TAGS, explanation="retargeted")) == 0
+
+
+def test_rule11_gate_drift_a_test_new_at_head_is_still_checked():
+    head = {**_RPN_GATES, "test_no_new_plan": {"renamed-gate"}}
+    assert check_runlogs.rule11_gate_drift(
+        "research", base_tests={}, head_tests={"ut_research_rpn": _r11_test(_RPN_TAGS)},
+        base_gates=_RPN_GATES, head_gates=head,
+    ) == 1
+
+
+@pytest.mark.parametrize(
+    ("validator_file", "old", "new"),
+    [
+        ("test_research.py", '"research-plan-no-new-plan" not in', '"renamed-gate" not in'),
+        ("test_universal.py", '"hand-back" not in', '"hand-back-v2" not in'),
+        ("shared_validators.py", '"shared-gate" not in', '"shared-gate-v2" not in'),
+    ],
+    ids=["suite-file", "test_universal", "star-imported-sibling"],
+)
+def test_rule11_gates_for_skill_catches_a_validator_only_rename_against_a_real_merge_base(
+    rule11_git_repo, capsys, validator_file, old, new
+):
+    repo, _, write_head = rule11_git_repo
+    path = repo / "eval/harness/validators" / validator_file
+    source = path.read_text(encoding="utf-8")
+    assert old in source
+    validator = _R11_VALIDATOR
+    if validator_file == "test_research.py":
+        validator = source.replace(old, new)
+    else:
+        path.write_text(source.replace(old, new), encoding="utf-8")
+    write_head(_R11_BASE_TAGS, validator=validator)
+    assert check_runlogs.rule11_gates_for_skill("research") == 1
+    assert out_has_one_loss(capsys.readouterr().out)
+
+
+def out_has_one_loss(out):
+    return out.count("(gated on") == 1 and "::error::" in out
+
+
+def test_rule11_gates_for_skill_passes_an_unrelated_validator_edit(rule11_git_repo, capsys):
+    _, _, write_head = rule11_git_repo
+    write_head(_R11_BASE_TAGS, validator=_R11_VALIDATOR + "\n\ndef helper():\n    return 1\n")
+    assert check_runlogs.rule11_gates_for_skill("research") == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule11_gates_for_skill_warns_on_an_unreadable_base(rule11_git_repo, monkeypatch, capsys):
+    _, _, write_head = rule11_git_repo
+    write_head(_R11_BASE_TAGS + ["extra"])
+
+    def boom(path):
+        raise check_runlogs.BaseUnreadable("simulated")
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", boom)
+    assert check_runlogs.rule11_gates_for_skill("research") == 0
+    assert "::warning::rule 11 did not run for `research`" in capsys.readouterr().out
+
+
+def test_main_runs_rule11_gate_drift_on_a_validator_edit_for_every_suite_rule11_did_not_grade(
+    tmp_path, monkeypatch, capsys
+):
+    runlogs, tests = tmp_path / "runlogs", tmp_path / "tests"
+    (runlogs / "research").mkdir(parents=True)
+    (runlogs / "research" / "v2_2026-10-26_00-00-00.json").write_text(
+        json.dumps({"tests": []}), encoding="utf-8"
+    )
+    for suite in ("citation", "research"):
+        (tests / suite).mkdir(parents=True)
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", runlogs)
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests)
+    for rule in ("rule2_active", "rule2b_judge_prompt", "rule2c_instrument", "rule3_completeness"):
+        monkeypatch.setattr(check_runlogs, rule, lambda *a, **k: 0)
+    monkeypatch.setattr(check_runlogs, "rule11_for_skill", lambda *a: 0)
+    calls = []
+    monkeypatch.setattr(check_runlogs, "rule11_gates_for_skill", lambda s: calls.append(s) or 1)
+
+    _patch_diffs(monkeypatch, ["eval/harness/validators/test_universal.py"])
+    monkeypatch.delenv("BASE_SHA", raising=False)
+    check_runlogs.main()
+    assert calls == []
+    assert "rule 11 did not compare the validator gate maps" in capsys.readouterr().out
+
+    monkeypatch.setenv("BASE_SHA", "a" * 40)
+    monkeypatch.setenv("HEAD_SHA", "b" * 40)
+    assert check_runlogs.main() == 1
+    assert calls == ["citation", "research"]
+
+    calls.clear()
+    _patch_diffs(monkeypatch, [
+        "eval/harness/validators/test_universal.py",
+        "eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json",
+    ])
+    check_runlogs.main()
+    assert calls == ["citation"]
+
+    calls.clear()
+    _patch_diffs(monkeypatch, ["eval/tests/unit/research/rpn.json"])
+    check_runlogs.main()
+    assert calls == []

@@ -25,7 +25,7 @@
 // the caller supplies those. It never writes identity links. It never decides
 // which questions a fact answers; `extracted_for_question_ids` is the caller's.
 
-import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
+import type { SimplifiedFact, SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { PersonaIndexFields } from "./record-index-fields.js";
 import type { DocumentMode } from "./structured-document.js";
 
@@ -551,6 +551,7 @@ function principalRoles(
   ps: Party[],
   gx: SimplifiedGedcomX,
   principalRole: string,
+  principalId?: string,
 ): Map<string, string> {
   const roles = new Map<string, string>();
   const counters = new Map<string, number>();
@@ -558,7 +559,7 @@ function principalRoles(
   const byId = new Map(ps.map((p) => [p.id, p]));
 
   const principal =
-    ps.find((p) => p.person.principal === true)?.id ?? ps[0]?.id;
+    principalId ?? ps.find((p) => p.person.principal === true)?.id ?? ps[0]?.id;
   if (principal) roles.set(principal, principalRole);
 
   for (const parent of parentOf.get(principal ?? "") ?? []) {
@@ -1016,12 +1017,13 @@ export function extractRecord(
   const statedHouseholds: Party[][] = [];
 
   if (recordType === "census") {
-    // Decide the column from the census fact's place and year, per household.
-    const censusFact = ps
-      .flatMap((p) => p.person.facts ?? [])
-      .find((f) => /census/i.test(String(f.type ?? "")));
+    // Decide the column from the census fact's place and year, per household:
+    // the place as FamilySearch sent it when the staged read carries it.
+    const isCensus = (f: SimplifiedFact) => /census/i.test(String(f.type ?? ""));
+    const censusParty = ps.find((p) => (p.person.facts ?? []).some(isCensus));
+    const censusFact = censusParty?.person.facts?.find(isCensus);
     const year = Number(String(censusFact?.date ?? "").match(/\d{4}/)?.[0]);
-    const place = censusFact?.standard_place ?? censusFact?.place;
+    const place = censusParty?.fields?.censusPlace ?? censusFact?.standard_place ?? censusFact?.place;
     const stated =
       mode && "censusStates" in mode
         ? (mode.censusStates ?? null)
@@ -1076,9 +1078,14 @@ export function extractRecord(
   } else if (recordType === "obituary") {
     for (const [id, r] of principalRoles(ps, gx, "deceased")) roles.set(id, r);
   } else if (recordType === "probate") {
-    for (const [id, r] of principalRoles(ps, gx, mode?.hasWill ? "testator" : "decedent")) roles.set(id, r);
+    for (const [id, r] of principalRoles(ps, gx, mode?.hasWill ? "testator" : "decedent", mode?.decedentId)) roles.set(id, r);
   } else if (recordType === "newspaper_announcement") {
     for (const [id, r] of newspaperRoles(ps, gx, mode?.eventType, mode?.statedRelations)) roles.set(id, r);
+  } else if (recordType === "land" && mode?.landRoles) {
+    // A document states each party's part in the deed, so the role is read from
+    // it. A party on neither side is numbered by the stated-relation pass below.
+    const counters = new Map<string, number>();
+    for (const p of ps) roles.set(p.id, mode.landRoles.get(p.id) ?? numbered("other", counters));
   } else if (recordType === "land") {
     // `grantee` for the principal, `grantor_N` for the rest. The record is
     // indexed under the party ACQUIRING the land — a patentee, a homesteader —

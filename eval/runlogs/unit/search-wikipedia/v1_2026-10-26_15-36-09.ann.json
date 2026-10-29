@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-10-26_15-36-09.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent used the correct search, accurately recorded the returned information, and did not add unsupported or fabricated claims. The logged notes also matched the tool results."
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent completed the requested task end-to-end by searching Wikipedia, retrieving the relevant information, and logging the results without omissions."
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The search query and research-log entry matched the expected arguments correctly. All required fields were included, no identifiers were wrong, and there were no fixture errors."
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent correctly recorded the Wikipedia result in the research log, including the article title, extract, and source URL. The notes stayed faithful to the tool response without adding unsupported claims."
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The query directly targeted the requested topic, and accepting the returned “Great Famine (Ireland)” title without unnecessary re-querying followed the rubric correctly."
+    },
+    {
+      "test_id": "ut_search_wikipedia_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The reply follows the required return contract exactly: one concise line confirming the Wikipedia summary was saved, with no unnecessary narration or duplicated content."
+    },
+    {
+      "test_id": "ut_search_wikipedia_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent handled the not-found result correctly, logged it as a negative result with no fabricated information, and returned the exact required message."
+    },
+    {
+      "test_id": "ut_search_wikipedia_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent completed every required step correctly, including the search, properly structured negative log entry, and required reply. Nothing was omitted."
+    },
+    {
+      "test_id": "ut_search_wikipedia_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The search query and negative research-log entry matched the expected arguments and structure exactly. The result correctly recorded zero results without adding unsupported information."
+    },
+    {
+      "test_id": "ut_search_wikipedia_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This is a not-found test, so Template fidelity does not apply. The agent correctly recorded a negative log entry with notes=null and did not attempt to populate a template."
+    },
+    {
+      "test_id": "ut_search_wikipedia_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent sent one wikipedia_search call with query 'Hollow Creek Settlement', targeting exactly the article the delegation named. The tool returned a not-found error, and the agent accepted this response at face value without re-querying or attempting to override it."
+    },
+    {
+      "test_id": "ut_search_wikipedia_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The reply exactly matches the required one-line response for a not-found result, with no unnecessary text or unsupported claims."
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent used the correct query, accurately reflected the tool’s article content, and returned the required template without adding fabricated or unsupported information."
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent completed all required steps, returned the complete template with the correct title, extract, and source URL, and made no unsupported additions or omissions."
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent used the correct Einstein query, and the no_project response was expected for this test. There was no tool-argument error or incorrect behavior."
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent returned the required template with the correct title, exact extract, and source URL, without adding unsupported information. It fully matches the test requirements."
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The query directly targeted the requested article, the returned title matched exactly, and the agent correctly accepted the result without unnecessary re-querying."
+    },
+    {
+      "test_id": "ut_search_wikipedia_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent returned exactly the required filled template with the H1, extract, and source URL, without unnecessary narration. This fully matches the expected no-project behavior."
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent accurately logged the Wikipedia result, preserved the Unicode characters and full extract, and added no fabricated or unsupported information."
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent completed the requested lookup and successfully logged the Wikipedia summary. The single log entry contains the needed information, so the delegation was fully completed."
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The search and research-log calls used the correct arguments, identifiers, and structure. The result was properly recorded as a positive finding with the required template."
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent correctly logged the returned title, complete extract, and source URL. The entry contains no unsupported facts and accurately reflects the tool response."
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The query directly matched the requested article, and the returned title was correctly accepted and used as the H1 without unnecessary re-querying."
+    },
+    {
+      "test_id": "ut_search_wikipedia_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The reply exactly follows the required return contract: one concise confirmation with no unnecessary repetition or article content."
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent accurately recorded the returned article, including the exact extract, title, and source URL, with no fabricated or unsupported information."
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent completed the requested Wikipedia lookup and successfully logged the article. The task was fully addressed without omissions."
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The search and research-log calls used the correct arguments and required fields. No critical errors or fixture failures occurred."
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Template fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The agent correctly logged the article title, extract, and source URL using the required template structure. No unsupported facts were added."
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool query and response interpretation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The query correctly targeted the requested article, and the returned title was appropriately accepted without unnecessary re-querying or commentary."
+    },
+    {
+      "test_id": "ut_search_wikipedia_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Reply economy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The reply exactly follows the required return contract, confirming the summary was saved without adding unnecessary narration or repeating the article content."
+    }
+  ]
+}

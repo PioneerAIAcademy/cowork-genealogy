@@ -1733,3 +1733,226 @@ def test_credential_specs_match_redact_module():
     ]
     for s in battery:
         assert check_e2e_fixtures.scan_for_credentials(s) == redact.scan_for_credentials(s), s
+
+
+# --- Re-grade drift check (warn only): a label moved on an unchanged finding ---
+
+_RG_SLUG = "gosner"
+_RG_ANN = f"eval/runlogs/e2e/{_RG_SLUG}/run-{TS}.ann.json"
+_RG_EF = f"eval/tests/e2e/{_RG_SLUG}/expected-findings.json"
+_RG_FINDINGS = [
+    {"id": "f1", "type": "relationship", "description": "Catharina Gösner is the daughter"},
+    {"id": "f2", "polarity": "avoid", "description": "Does not assert the 1741 baptism"},
+]
+
+
+def _rg_write(repo: Path, rel: str, obj) -> str:
+    p = repo / rel
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(
+        obj if isinstance(obj, str) else json.dumps(obj, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return rel
+
+
+def _rg_base(tmp_path, monkeypatch, *, ann=True):
+    """A graded two-finding fixture committed at base, shaped so annotation
+    validation passes on it (fixture.json, the run log and its final tree, and
+    per_finding keyed by exactly the fixture's ids) — main() then exits 0 on a
+    clean PR rather than tripping an unrelated rung."""
+    repo, commit = _git_repo(tmp_path, monkeypatch)
+    run = f"eval/runlogs/e2e/{_RG_SLUG}/run-{TS}.json"
+    paths = [
+        _rg_write(repo, _RG_EF, {"findings": _RG_FINDINGS}),
+        _rg_write(repo, f"eval/tests/e2e/{_RG_SLUG}/fixture.json", {}),
+        _rg_write(repo, run, {"verdict": "pass"}),
+        _rg_write(repo, run.replace(".json", ".final-tree.gedcomx.json"), {}),
+    ]
+    if ann:
+        paths.append(_rg_write(repo, _RG_ANN, {
+            "annotator": "dallan", "per_finding": {"f1": "partial", "f2": "partial"},
+        }))
+    base = commit(*paths)
+    return repo, commit, base
+
+
+def _rg_head(repo, commit, base, monkeypatch, *, findings=None, ann=None) -> str:
+    """Write the PR's edits, commit them as HEAD, and set the env as main() sees it."""
+    paths = []
+    if findings is not None:
+        paths.append(_rg_write(repo, _RG_EF, {"findings": findings}))
+    if ann is not None:
+        paths.append(_rg_write(repo, _RG_ANN, ann))
+    head = commit(*paths)
+    monkeypatch.setenv("BASE_SHA", base)
+    monkeypatch.setenv("HEAD_SHA", head)
+    return head
+
+
+def _reworded_f1():
+    return [{**_RG_FINDINGS[0], "description": "Catharina is NOT the daughter"}, _RG_FINDINGS[1]]
+
+
+def test_regrade_warns_on_a_moved_label_over_an_unchanged_finding(tmp_path, monkeypatch):
+    """The PR #3605 shape: f1 reworded, f2 byte-identical, and the re-grade moved
+    BOTH labels. Only f2's move is collateral. A whole-file comparison would see
+    the file changed and stay quiet on f2 — this row is what catches that."""
+    repo, commit, base = _rg_base(tmp_path, monkeypatch)
+    head = _rg_head(repo, commit, base, monkeypatch, findings=_reworded_f1(),
+                    ann={"annotator": "claude", "per_finding": {"f1": "false", "f2": "false"}})
+    warnings = check_e2e_fixtures.check_regraded_unchanged_findings(base, head)
+    assert len(warnings) == 1, warnings
+    w = warnings[0]
+    assert _RG_ANN in w and "finding f2" in w and "'partial' → 'false'" in w, w
+    assert "finding f1" not in w, w
+
+
+def test_regrade_compares_findings_by_value_not_by_bytes(tmp_path, monkeypatch):
+    """A reformat of expected-findings.json (CRLF, indent, key order) does not
+    change a finding, so a moved label over it still warns — and the reformat
+    alone does not make every finding look edited."""
+    repo, commit, base = _rg_base(tmp_path, monkeypatch)
+    f2_reordered = dict(reversed(list(_RG_FINDINGS[1].items())))
+    _rg_write(repo, _RG_EF, json.dumps(
+        {"findings": [_RG_FINDINGS[0], f2_reordered]}, indent=4, ensure_ascii=False,
+    ).replace("\n", "\r\n"))
+    commit(_RG_EF)
+    head = _rg_head(repo, commit, base, monkeypatch, ann=json.dumps(
+        {"per_finding": {"f2": "true", "f1": "partial"}, "annotator": "claude"}, indent=4,
+    ))
+    warnings = check_e2e_fixtures.check_regraded_unchanged_findings(base, head)
+    assert len(warnings) == 1 and "finding f2" in warnings[0], warnings
+    assert "'partial' → 'true'" in warnings[0], warnings
+    assert _RG_EF in subprocess.run(
+        ["git", "-C", str(repo), "diff", "--name-only", base, head],
+        capture_output=True, text=True, encoding="utf-8", check=True,
+    ).stdout.split(), "the reformat was never committed, so this row proves nothing"
+
+
+def test_regrade_is_quiet_on_a_moved_label_over_a_changed_finding(tmp_path, monkeypatch):
+    repo, commit, base = _rg_base(tmp_path, monkeypatch)
+    head = _rg_head(repo, commit, base, monkeypatch, findings=_reworded_f1(),
+                    ann={"annotator": "claude", "per_finding": {"f1": "false", "f2": "partial"}})
+    assert check_e2e_fixtures.check_regraded_unchanged_findings(base, head) == []
+
+
+def test_regrade_is_quiet_when_a_modified_annotation_moved_no_label(tmp_path, monkeypatch):
+    """The annotation IS modified (its notes), so the selector reaches the label
+    comparison — an unmodified annotation would pass this row without it running."""
+    repo, commit, base = _rg_base(tmp_path, monkeypatch)
+    head = _rg_head(repo, commit, base, monkeypatch, findings=_reworded_f1(),
+                    ann={"annotator": "dallan", "per_finding": {"f1": "partial", "f2": "partial"},
+                         "notes": {"f1": "re-read"}})
+    changed = subprocess.run(
+        ["git", "-C", str(repo), "diff", "--name-only", base, head],
+        capture_output=True, text=True, encoding="utf-8", check=True,
+    ).stdout.split()
+    assert _RG_ANN in changed
+    assert check_e2e_fixtures.check_regraded_unchanged_findings(base, head) == []
+
+
+def test_regrade_is_quiet_on_an_annotation_added_in_the_pr(tmp_path, monkeypatch):
+    repo, commit, base = _rg_base(tmp_path, monkeypatch, ann=False)
+    head = _rg_head(repo, commit, base, monkeypatch,
+                    ann={"annotator": "claude", "per_finding": {"f1": "false", "f2": "true"}})
+    assert check_e2e_fixtures.check_regraded_unchanged_findings(base, head) == []
+
+
+def test_regrade_is_quiet_on_a_finding_absent_at_base(tmp_path, monkeypatch):
+    """A finding id new in the PR is the whole-file findings_hash rung's job.
+    Base already carries an f3 LABEL (stale key drift), so the label did move
+    and only the finding's absence at base keeps this quiet."""
+    repo, commit, _ = _rg_base(tmp_path, monkeypatch)
+    f3 = {"id": "f3", "description": "new"}
+    _rg_write(repo, _RG_ANN, {"per_finding": {"f1": "partial", "f2": "partial", "f3": "true"}})
+    base = commit(_RG_ANN)
+    head = _rg_head(repo, commit, base, monkeypatch, findings=[*_RG_FINDINGS, f3],
+                    ann={"per_finding": {"f1": "partial", "f2": "partial", "f3": "false"}})
+    assert check_e2e_fixtures.check_regraded_unchanged_findings(base, head) == []
+
+
+@pytest.mark.parametrize("base_ann,base_ef", [
+    ({"per_finding": ["f1", "f2"]}, None),          # per_finding a list
+    (None, "{not json"),                            # expected-findings unparseable
+    (None, json.dumps({"findings": {"f1": {}}})),   # findings not a list
+    (None, json.dumps(["not", "an", "object"])),    # root not an object
+])
+def test_regrade_skips_wrong_shapes_without_raising(tmp_path, monkeypatch, base_ann, base_ef):
+    repo, commit, _ = _rg_base(tmp_path, monkeypatch)
+    paths = []
+    if base_ann is not None:
+        paths.append(_rg_write(repo, _RG_ANN, base_ann))
+    if base_ef is not None:
+        paths.append(_rg_write(repo, _RG_EF, base_ef))
+    base = commit(*paths)
+    head = _rg_head(repo, commit, base, monkeypatch, findings=_RG_FINDINGS,
+                    ann={"per_finding": {"f1": "false", "f2": "false"}})
+    assert check_e2e_fixtures.check_regraded_unchanged_findings(base, head) == []
+
+
+def test_regrade_reports_an_undiffable_range_rather_than_a_silent_zero(tmp_path, monkeypatch):
+    _git_repo(tmp_path, monkeypatch)
+    warnings = check_e2e_fixtures.check_regraded_unchanged_findings("deadbeef", "cafebabe")
+    assert len(warnings) == 1 and "did not run" in warnings[0], warnings
+
+
+def test_main_prints_the_regrade_warning_and_exits_0(tmp_path, monkeypatch, capsys):
+    repo, commit, base = _rg_base(tmp_path, monkeypatch)
+    _rg_head(repo, commit, base, monkeypatch, findings=_reworded_f1(),
+             ann={"annotator": "claude", "per_finding": {"f1": "false", "f2": "false"}})
+    assert check_e2e_fixtures.main() == 0
+    out = capsys.readouterr().out
+    assert re.search(r"::warning::annotation '.*run-.*\.ann\.json' finding f2", out), out
+    assert "E2E gates OK" in out, out
+
+
+def test_main_prints_the_regrade_warning_even_when_a_blocking_gate_fires(
+    tmp_path, monkeypatch, capsys,
+):
+    """Placement: a warning printed after the gates would never reach the PR
+    that also trips one."""
+    repo, commit, base = _rg_base(tmp_path, monkeypatch)
+    one_m = _write_log(repo, f"eval/runlogs/e2e/smith/run-{TS}.json", {"betas": _1M})
+    tree, ann = _siblings(one_m)
+    (repo / tree).write_text("{}", encoding="utf-8")
+    (repo / ann).write_text("{}", encoding="utf-8")
+    commit(one_m.as_posix(), tree, ann)
+    _rg_head(repo, commit, base, monkeypatch, findings=_reworded_f1(),
+             ann={"annotator": "claude", "per_finding": {"f1": "false", "f2": "false"}})
+    assert check_e2e_fixtures.main() == 1
+    out = capsys.readouterr().out
+    assert "1M context window" in out, out
+    assert re.search(r"::warning::annotation '.*' finding f2", out), out
+
+
+def test_regrade_ignores_a_label_main_moved_after_the_branch_point(tmp_path, monkeypatch):
+    """CI's BASE_SHA is main's tip, not the merge-base. A re-grade main gained
+    after this PR branched must not be reported, reversed, on this PR."""
+    repo, commit, fork = _rg_base(tmp_path, monkeypatch)
+    git = lambda *a: subprocess.run(  # noqa: E731
+        ["git", "-C", str(repo), *a], capture_output=True, text=True,
+        encoding="utf-8", check=True,
+    ).stdout.strip()
+    trunk = git("rev-parse", "--abbrev-ref", "HEAD")
+    git("checkout", "-q", "-b", "pr")
+    pr_head = commit(_rg_write(repo, "unrelated.txt", "x"))
+    git("checkout", "-q", trunk)
+    main_tip = commit(_rg_write(repo, _RG_ANN, {
+        "annotator": "dallan", "per_finding": {"f1": "partial", "f2": "true"},
+    }))
+    assert git("merge-base", main_tip, pr_head) == fork
+    assert check_e2e_fixtures.check_regraded_unchanged_findings(main_tip, pr_head) == []
+
+
+@pytest.mark.parametrize("ann_rel", [
+    f"eval/runlogs/e2e/{_RG_SLUG}/archive/run-{TS}.ann.json",   # nested
+    f"eval/runlogs/e2e/{_RG_SLUG}/notes.ann.json",               # not run-*
+])
+def test_regrade_ignores_annotations_the_validator_does_not_read(
+    tmp_path, monkeypatch, ann_rel,
+):
+    repo, commit, _ = _rg_base(tmp_path, monkeypatch)
+    base = commit(_rg_write(repo, ann_rel, {"per_finding": {"f1": "partial", "f2": "partial"}}))
+    head = commit(_rg_write(repo, ann_rel, {"per_finding": {"f1": "partial", "f2": "false"}}))
+    assert check_e2e_fixtures.check_regraded_unchanged_findings(base, head) == []

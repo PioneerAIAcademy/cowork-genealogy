@@ -1,0 +1,891 @@
+{
+  "tool": "external_links_search",
+  "description": "external_links_search for Schuylkill County, Pennsylvania, 1865-1875, captured live 2026-10-26 with dev/try-external-links-search.ts after rows gained startYear/endYear (issue #3521). The where-else-to-search suite's own copy: real rows, dated and undated, supported and unsupported hosts, and the 200-row inline cap. Shared fixtures predate the year fields and stay unchanged.",
+  "args": {
+    "standardPlace": "~Schuylkill"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
+      "startYear": 1865,
+      "endYear": 1875
+    },
+    "totalForPlace": 347,
+    "returned": 200,
+    "results": [
+      {
+        "url": "http://genealogytrails.com/penn/schuylkill/",
+        "linkText": "Schuylkill County, Pennsylvania Records"
+      },
+      {
+        "url": "http://www.usgwarchives.net/pa/schuylkill/church.htm",
+        "linkText": "Schuylkill County Church and Religious Records"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1002",
+        "linkText": "U.S. World War II Draft Registration Cards, 1942"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1174",
+        "linkText": "U.S. Passport Applications, 1795-1925",
+        "startYear": 1795,
+        "endYear": 1925
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1248",
+        "linkText": "U.S. Circuit Court Criminal Case Files, 1790-1871",
+        "startYear": 1790,
+        "endYear": 1871
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1264",
+        "linkText": "U.S. IRS Tax Assessment Lists, 1862-1918",
+        "startYear": 1862,
+        "endYear": 1918
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1276/",
+        "linkText": "U.S., Selected Federal Census Non-Population Schedules, 1850-1880"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1411/",
+        "linkText": "JewishGen Online Worldwide Burial Registry"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1540",
+        "linkText": "U.S. City Directories"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1629/",
+        "linkText": "U.S., Naturalization Record Indexes, 1791-1992",
+        "startYear": 1791,
+        "endYear": 1992
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/1967",
+        "linkText": "Pennsylvania Veterans Burial Cards, 1777-2012",
+        "startYear": 1777,
+        "endYear": 2012
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2189/",
+        "linkText": "U.S., Quaker Meeting Records, 1681-1935",
+        "startYear": 1681,
+        "endYear": 1935
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2206",
+        "linkText": "Pennsylvania Published Archives Series, 1664-1902",
+        "startYear": 1664,
+        "endYear": 1902
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2350",
+        "linkText": "Pennsylvania Land Warrants and Applications, 1733-1952",
+        "startYear": 1733,
+        "endYear": 1952
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/23613",
+        "linkText": "Colonial and Revolutionary Families of Pennsylvania: Genealogical and Personal Memoirs"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2392",
+        "linkText": "Pennsylvania Spanish War Compensation, 1898-1934"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2393",
+        "linkText": "Pennsylvania Naturalization Records from Supreme and District Courts, 1794-1908",
+        "startYear": 1794,
+        "endYear": 1908
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2394",
+        "linkText": "Pennsylvania War of 1812 Pensions, 1866-1879",
+        "startYear": 1866,
+        "endYear": 1879
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2409",
+        "linkText": "Pennsylvania Land Warrants, 1733-1987",
+        "startYear": 1733,
+        "endYear": 1987
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2442/",
+        "linkText": "1940 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2451",
+        "linkText": "Pennsylvania, Church and Town Records, 1708-1985",
+        "startYear": 1669,
+        "endYear": 2013
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2521",
+        "linkText": "US Hochheimer Marriage Records, 1850-1900",
+        "startYear": 1850,
+        "endYear": 1900
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2705/",
+        "linkText": "U.S., Hinshaw Index to Selected Quaker Records, 1680-1940",
+        "startYear": 1680,
+        "endYear": 1940
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2717",
+        "linkText": "Pennsylvania Federal Naturalization Records, 1795-1931",
+        "startYear": 1795,
+        "endYear": 1931
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/3042/",
+        "linkText": "U.S., Surname Index to Quaker Records"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/3325",
+        "linkText": "Pennsylvania Volunteers in the War of 1812"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/3530/",
+        "linkText": "U.S. Federal Census Mortality Schedules Index, 1850-1880"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/3570",
+        "linkText": "Pennsylvania Compiled Census and Census Substitutes Index, 1772-1890",
+        "startYear": 1772,
+        "endYear": 1890
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/3753/",
+        "linkText": "U.S., Encyclopedia of American Quaker Genealogy"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48130",
+        "linkText": "Encyclopedia of American Quaker Genealogy, Vol. II: New Jersey and Pennsylvania Monthly Meetings"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48376",
+        "linkText": "Volume II: Hinman-Sotcher"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48378",
+        "linkText": "Pennsylvania Genealogies"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48381",
+        "linkText": "Early Pennsylvania Land Records"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48382",
+        "linkText": "Pennsylvania Vital Records, Vol. I"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48383",
+        "linkText": "Pennsylvania Vital Records, Vol. II"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48399/",
+        "linkText": "Biographical and Genealogical Sketches from Central Pennsylvania"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48567",
+        "linkText": "Genealogies of Pennsylvania Families"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/48607",
+        "linkText": "Pennsylvania Vital Records, Vol. III"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/49091/",
+        "linkText": "British Aliens in the United States During the War of 1812"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/49315",
+        "linkText": "Revolutionary War Bounty Land Grants"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5058/",
+        "linkText": "1790 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5199",
+        "linkText": "Pennsylvania, Card Indexes to Genealogical Scrapbooks and Research Folders"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5445/",
+        "linkText": "1890 United States Federal Census Fragment"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5998",
+        "linkText": "Pennsylvania Genealogies: Chiefly Scotch-Irish and German"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60514",
+        "linkText": "The Pension Roll of 1835, Vol. II"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60525/",
+        "linkText": "U.S., Find a Grave Index, 1600s-Current"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6061/",
+        "linkText": "1920 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60722/",
+        "linkText": "U.S., Evangelical Lutheran Church in America Church Records, 1781-1969",
+        "startYear": 1781,
+        "endYear": 1969
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/60766/",
+        "linkText": "U.S., Selected States Dutch Reformed Church Membership Records, 1701-1995",
+        "startYear": 1701,
+        "endYear": 1995
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61157",
+        "linkText": "North America, Family Histories, 1500-2000",
+        "startYear": 1500,
+        "endYear": 2000
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61173",
+        "linkText": "Pennsylvania Prison, Reformatory, and Workhouse Records, 1829-1971",
+        "startYear": 1829,
+        "endYear": 1971
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61324",
+        "linkText": "Pennsylvania County Marriage Records, 1845-1963",
+        "startYear": 1845,
+        "endYear": 1963
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61584/",
+        "linkText": "U.S., Evangelical Lutheran Church in America, Swedish American Church Records, 1800-1947",
+        "startYear": 1800,
+        "endYear": 1947
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/61877/",
+        "linkText": "Pennsylvania Grand Army of the Republic Membership Records, 1865-1936",
+        "startYear": 1865,
+        "endYear": 1956
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62116/",
+        "linkText": "U.S., Newspapers.com Marriage Index, 1800s-1999",
+        "startYear": 1800,
+        "endYear": 1999
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62200/",
+        "linkText": "Pennsylvania Veterans Card Files, 1775-1916",
+        "startYear": 1775,
+        "endYear": 1916
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6224/",
+        "linkText": "1930 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62267/",
+        "linkText": "U.S., Southern Baptist Church Records, 1750-1899",
+        "startYear": 1750,
+        "endYear": 1899
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62308/",
+        "linkText": "1950 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62460/",
+        "linkText": "Pennsylvania, U.S., Episcopal Diocese of Pennsylvania Church Records, 1759-1970",
+        "startYear": 1759,
+        "endYear": 1970
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6559",
+        "linkText": "Wyoming & Lackawanna Valleys, Pennsylvania Genealogies & Family Histories, Volume I-II"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6742/",
+        "linkText": "1880 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6961/",
+        "linkText": "U.S., Dutch Reformed Church Records in Selected States, 1639-1989",
+        "startYear": 1639,
+        "endYear": 1989
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7163/",
+        "linkText": "1870 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7486/?arrival=_pennsylvania-usa_41&count=50",
+        "linkText": "All U.S. and Canada, Passenger and Immigration Lists Index, 1500s-1900s",
+        "startYear": 1500,
+        "endYear": 1999
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7545",
+        "linkText": "United States Obituary Collection"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7590/",
+        "linkText": "1800 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7602/",
+        "linkText": "1900 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7613/",
+        "linkText": "1810 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7667/",
+        "linkText": "1860 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7678/",
+        "linkText": "U.S., Revolutionary War Pensioner Census, 1840"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7734/",
+        "linkText": "1820 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/7884/",
+        "linkText": "1910 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8054/",
+        "linkText": "1850 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8057/",
+        "linkText": "1840 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8058/",
+        "linkText": "1830 United States Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8667/",
+        "linkText": "1890 Veterans Schedules of the U.S. Federal Census"
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8769",
+        "linkText": "Pennsylvania Arriving Passenger and Crew Lists, 1800-1962",
+        "startYear": 1800,
+        "endYear": 1962
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8802",
+        "linkText": "Pennsylvania Wills and Probate Records, 1683-1993",
+        "startYear": 1683,
+        "endYear": 1993
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9040",
+        "linkText": "Pennsylvania Civil War Muster Rolls, 1860-1869",
+        "startYear": 1860,
+        "endYear": 1869
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9052/",
+        "linkText": "U.S. Select Family History and Bible Records Index"
+      },
+      {
+        "url": "http://africanamericancemeteries.com/",
+        "linkText": "African American Cemeteries Online"
+      },
+      {
+        "url": "http://africanamericancemeteries.com/pa/",
+        "linkText": "African American Cemeteries in Pennsylvania"
+      },
+      {
+        "url": "http://ancestortracks.com",
+        "linkText": "19th Century Landowner Maps"
+      },
+      {
+        "url": "http://archive.org/details/pennsylvaniamag03penngoog",
+        "linkText": "The Pennsylvania Magazine of History and Biography"
+      },
+      {
+        "url": "http://chroniclingamerica.loc.gov/",
+        "linkText": "Chronicling America, The Library of Congress"
+      },
+      {
+        "url": "http://genealogytrails.com/penn/",
+        "linkText": "Pennsylvania History and Genealogy"
+      },
+      {
+        "url": "http://genpa.org/",
+        "linkText": "The Genealogical Society of Pennsylvania"
+      },
+      {
+        "url": "http://hsp.org/",
+        "linkText": "Historical Society of Pennsylvania"
+      },
+      {
+        "url": "http://hsp.org/history-online/digital-history-projects",
+        "linkText": "Historical Society of Pennsylvania"
+      },
+      {
+        "url": "http://ldsgenealogy.com/PA/City-Directories.htm",
+        "linkText": "Pennsylvania City Directories"
+      },
+      {
+        "url": "http://ldsgenealogy.com/PA/Newspapers-and-Obituaries.htm",
+        "linkText": "Pennsylvania Newspapers and Obituaries"
+      },
+      {
+        "url": "http://mhep.org/",
+        "linkText": "The Mennonite Heritage Center"
+      },
+      {
+        "url": "http://newspaperarchive.com/",
+        "linkText": "Service Disruption FAQ for Newspaper Archive"
+      },
+      {
+        "url": "http://obituarieshelp.org/pennsylvania_newspaper_obituaries.html",
+        "linkText": "Pennsylvania Newspaper Obituaries Listings"
+      },
+      {
+        "url": "http://pagenweb.org/",
+        "linkText": "PAGenWeb"
+      },
+      {
+        "url": "http://pennsylvaniagravestones.org/surnames.php?selected_cid=35",
+        "linkText": "Lackawanna County Cemetery/Burial Records by Surname"
+      },
+      {
+        "url": "http://pennsylvaniaobits.tributes.com/browse_obituaries?state=PA",
+        "linkText": "Pennsylvania Obituaries"
+      },
+      {
+        "url": "http://pennsylvaniaresearch.com/directory-pennsylvania-genealogical-societies.html",
+        "linkText": "Pennsylvania Genealogy Society Directory"
+      },
+      {
+        "url": "http://search.ancestry.com/oldsearch/locality/dbpage.aspx?tp=2&p=41&categoryFilterID=38&showPaging=true",
+        "linkText": "Pennsylvania Newspapers Search"
+      },
+      {
+        "url": "http://usgwarchives.net/marriages/pennsylvania/pennsylvania.htm",
+        "linkText": "Pennsylvania Marriage Project"
+      },
+      {
+        "url": "http://usgwarchives.net/pa/pafiles.htm",
+        "linkText": "USGenWeb Archives Project: Pennsylvania"
+      },
+      {
+        "url": "http://usgwarchives.net/pa/schuylkill/",
+        "linkText": "Schuylkill County PA USGenWeb Archives"
+      },
+      {
+        "url": "http://www.50states.com/news/penn.htm",
+        "linkText": "Pennsylvania Newspapers Online"
+      },
+      {
+        "url": "http://www.accessgenealogy.com/pennsylvania-genealogy",
+        "linkText": "Pennsylvania Genealogy"
+      },
+      {
+        "url": "http://www.accessgenealogy.com/pennsylvania-genealogy/",
+        "linkText": "Pennsylvania Genealogy"
+      },
+      {
+        "url": "http://www.americanwars.org/",
+        "linkText": "American Wars: History of Colonial and Early American Conflicts"
+      },
+      {
+        "url": "http://www.ancestorsatrest.com/pennsylvania.shtml",
+        "linkText": "Ancestors at Rest Death Records for Pennsylvania"
+      },
+      {
+        "url": "http://www.ancestry.com/search/rectype/default.aspx?rt=36",
+        "linkText": "Search Records"
+      },
+      {
+        "url": "http://www.archives.com/GA.aspx?_act=Obituaries&klp=5obit&cam=1300&KW2=Online&utm_source=google&utm_medium=cpc&msid=cs6zat9cw_dc%7Cpcrid%7C23786043909%7Cpkw%7C%7Cpmt%7C&gclid=CMr74IHu-LkCFWuCQgodTRIAvg",
+        "linkText": "Obituary Record Search"
+      },
+      {
+        "url": "http://www.archives.com/GA.aspx?_act=obituaries&aff=90",
+        "linkText": "Obituaries & Death Notices Archive"
+      },
+      {
+        "url": "http://www.archives.gov/research/",
+        "linkText": "National Archives and Records Center"
+      },
+      {
+        "url": "http://www.archives.gov/research/alic/reference/military/ww2.html",
+        "linkText": "Military Resources: World War II"
+      },
+      {
+        "url": "http://www.archives.gov/research/chinese-americans/guide.html",
+        "linkText": "Chinese Immigration and the Chinese in the United States National Archives"
+      },
+      {
+        "url": "http://www.archives.gov/research/chinese-americans/index.html",
+        "linkText": "NARA Chinese Immigration Records"
+      },
+      {
+        "url": "http://www.archives.gov/research/immigration/",
+        "linkText": "Immigrant Records at the National Archives"
+      },
+      {
+        "url": "http://www.archives.gov/research/immigration/passenger-arrival.html",
+        "linkText": "NARA Passenger Arrival Records"
+      },
+      {
+        "url": "http://www.archives.gov/research/microfilm/m425.pdf",
+        "linkText": "NARA Descriptive Pamphlet M425"
+      },
+      {
+        "url": "http://www.archives.gov/research/military/korean-war/casualty-lists/pa-alpha.pdf",
+        "linkText": "Fatal Casualties of the Korean War Pennsylvania"
+      },
+      {
+        "url": "http://www.archives.gov/research/military/vietnam-war/casualty-lists/pa-alpha.pdf",
+        "linkText": "Fatal Casualties of the Vietnam War Pennsylvania"
+      },
+      {
+        "url": "http://www.archives.gov/research/military/ww2/army-casualties/index.html",
+        "linkText": "NARA Honor List of Dead and Missing Army and Army Air Forces Personnel"
+      },
+      {
+        "url": "http://www.archives.gov/research/naturalization/405-seamen-protection-certificates.pdf",
+        "linkText": "National Archives Seamen's Protection Certificates"
+      },
+      {
+        "url": "http://www.archives.gov/research/naturalization/420-major-immigration-laws.pdf",
+        "linkText": "NARA Immigration and Naturalization Laws, 1790-1990"
+      },
+      {
+        "url": "http://www.archives.gov/research/naturalization/naturalization.html",
+        "linkText": "Naturalization Records on Microfilm"
+      },
+      {
+        "url": "http://www.archives.gov/veterans/",
+        "linkText": "Veterans' Service Records"
+      },
+      {
+        "url": "http://www.cyndislist.com/us/pa/",
+        "linkText": "Pennsylvania Genealogical Resources List"
+      },
+      {
+        "url": "http://www.deathindexes.com/pennsylvania/index.html",
+        "linkText": "Pennsylvania Death Records and Obituaries"
+      },
+      {
+        "url": "http://www.diopa.org/",
+        "linkText": "Episcopal Diocese of Pennsylvania"
+      },
+      {
+        "url": "http://www.fold3.com/title_117/pa_eastern/",
+        "linkText": "Naturalization Petitions for the Eastern District of Pennsylvania, 1795-1930",
+        "startYear": 1795,
+        "endYear": 1930
+      },
+      {
+        "url": "http://www.fold3.com/title_119/pa_western/",
+        "linkText": "Naturalization Petitions of the US District Court for the Western District of Pennsylvania, 1820-1930",
+        "startYear": 1820,
+        "endYear": 1930
+      },
+      {
+        "url": "http://www.fold3.com/title_765/wwii_old_mans_draft_registration_cards",
+        "linkText": "US, WWII Old Mans Draft Registration Cards, 1942"
+      },
+      {
+        "url": "http://www.garrecords.org/",
+        "linkText": "Sons of Union Veterans of the Civil War"
+      },
+      {
+        "url": "http://www.genealogybank.com/gbnk/",
+        "linkText": "Genealogy, Family History & Ancestry Search"
+      },
+      {
+        "url": "http://www.genealogybuff.com/pa/",
+        "linkText": "Pennsylvania Genealogy Data"
+      },
+      {
+        "url": "http://www.idreamof.com/cemetery/pa.html",
+        "linkText": "Pennsylvania Cemeteries"
+      },
+      {
+        "url": "http://www.idreamof.com/index.html",
+        "linkText": "I Dream of Genealogy"
+      },
+      {
+        "url": "http://www.immigrantships.net/v3/arrivalsv3/philadelphiav3.html",
+        "linkText": "Records from 1684-1907, Volume 3",
+        "startYear": 1684,
+        "endYear": 1907
+      },
+      {
+        "url": "http://www.immigrantships.net/v4/arrivalsv4/philadelphiav4.html",
+        "linkText": "Records from 1727-1911, Volume 4",
+        "startYear": 1727,
+        "endYear": 1911
+      },
+      {
+        "url": "http://www.interment.net/data/us/pa/allegheny/allegcem/index.htm",
+        "linkText": "Allegheny Cemetery Burial Records, Pittsburgh, Pennsylvania"
+      },
+      {
+        "url": "http://www.interment.net/us/index.htm",
+        "linkText": "USA Cemetery Records"
+      },
+      {
+        "url": "http://www.interment.net/us/pa/index.htm",
+        "linkText": "Pennsylvania Cemetery Records Archives"
+      },
+      {
+        "url": "http://www.joycetice.com/bibles/plumley.htm",
+        "linkText": "Tri-County Bible Records"
+      },
+      {
+        "url": "http://www.loc.gov/rr/main/gar/garhome.html",
+        "linkText": "Finding Aid Grand Army of the Republic Records"
+      },
+      {
+        "url": "http://www.mapofus.org/pennsylvania/",
+        "linkText": "Pennsylvania County Maps: Interactive History & Complete List"
+      },
+      {
+        "url": "http://www.montgomery.pa-roots.com/BibleRecords/index.html",
+        "linkText": "Montgomery County PA Bible Records"
+      },
+      {
+        "url": "http://www.moravianchurcharchives.org/research/",
+        "linkText": "Moravian Archives Research"
+      },
+      {
+        "url": "http://www.naturalizationrecords.com/united-states/",
+        "linkText": "Naturalization Records in the USA"
+      },
+      {
+        "url": "http://www.naturalizationrecords.com/united-states/united-states-naturalization-records/united-states-pennsylvania/",
+        "linkText": "Database Connection Issue"
+      },
+      {
+        "url": "http://www.newhorizonsgenealogicalservices.com/",
+        "linkText": "New England and New York Colonial American Ancestry"
+      },
+      {
+        "url": "http://www.nps.gov/civilwar/search-soldiers.htm",
+        "linkText": "Pennsylvania Civil War Soldiers and Sailors Database"
+      },
+      {
+        "url": "http://www.obcgs.com/",
+        "linkText": "Old Buncombe County Genealogical Society"
+      },
+      {
+        "url": "http://www.onlinenewspapers.com/usstate/uspennsy.htm",
+        "linkText": "Pennsylvania Newspapers, Philadelphia and Statewide"
+      },
+      {
+        "url": "http://www.pagenweb.org/~somerset/bible.htm",
+        "linkText": "Somerset County Bible Records"
+      },
+      {
+        "url": "http://www.powerlibrary.org/collections/#.WC3uvbIrKUk",
+        "linkText": "PA Photos and Documents"
+      },
+      {
+        "url": "http://www.publicrecordcenter.com/pennsylvaniapublicrecord.htm",
+        "linkText": "Pennsylvania Public Records, Criminal Records and Sex Offenders"
+      },
+      {
+        "url": "http://www.searchforancestors.com/passengerlists/",
+        "linkText": "Palatine German Ship Passenger Lists to PA"
+      },
+      {
+        "url": "http://www.usgwarchives.net/pa/1pa/military/ww1/haulsee/wwi.html",
+        "linkText": "Fallen Pennsylvanians of WW I"
+      },
+      {
+        "url": "http://www.usgwarchives.net/pa/1pa/ship.htm",
+        "linkText": "Passenger Ship Records of Pennsylvania"
+      },
+      {
+        "url": "http://www.usgwarchives.net/pa/allegheny/death-index.htm",
+        "linkText": "USGenweb Vitals from Newspapers"
+      },
+      {
+        "url": "http://www.wpgs.org/",
+        "linkText": "Western Pennsylvania Genealogical Society"
+      },
+      {
+        "url": "http://yanceyfamilygenealogy.org/family_bible_index_Locations_PA.htm",
+        "linkText": "The Family Bible Index - Pennsylvania"
+      },
+      {
+        "url": "https://1950census.archives.gov/search/",
+        "linkText": "1950 Census Records"
+      },
+      {
+        "url": "https://accessgenealogy.com/",
+        "linkText": "AccessGenealogy"
+      },
+      {
+        "url": "https://accessgenealogy.com/cemetery/pennsylvania-cemetery-records.htm",
+        "linkText": "Pennsylvania Cemetery Records"
+      },
+      {
+        "url": "https://acpl-cms.wise.oclc.org/genealogy",
+        "linkText": "Allen County Public Library"
+      },
+      {
+        "url": "https://archive.org/details/genealogiesofpen0000unse",
+        "linkText": "Genealogies of Pennsylvania Families from the Pennsylvania Magazine of History and Biography"
+      },
+      {
+        "url": "https://archive.org/details/pennsylvaniasele00penn",
+        "linkText": "Pennsylvania Selective Service Local Board Areas, 1940"
+      },
+      {
+        "url": "https://archon.klnpa.org/psa/?p=collections/controlcard&id=260",
+        "linkText": "Pennsylvania State Archives War of 1812 Index of Soldiers"
+      },
+      {
+        "url": "https://billiongraves.com/cemetery/Allegheny-Cemetery/86556",
+        "linkText": "BillionGraves"
+      },
+      {
+        "url": "https://billiongraves.com/cemetery/Charles-Evans-Cemetery/83810",
+        "linkText": "Charles Evans Cemetery"
+      },
+      {
+        "url": "https://billiongraves.com/cemetery/Gettysburg-National-Cemetery/261789",
+        "linkText": "BillionGraves"
+      },
+      {
+        "url": "https://billiongraves.com/cemetery/Indiantown-Gap-National-Cemetery/88062",
+        "linkText": "BillionGraves"
+      },
+      {
+        "url": "https://billiongraves.com/cemetery/National-Cemetery-of-the-Alleghenies/180897",
+        "linkText": "BillionGraves"
+      },
+      {
+        "url": "https://billiongraves.com/cemetery/Philadelphia-National-Cemetery/180911",
+        "linkText": "BillionGraves"
+      },
+      {
+        "url": "https://billiongraves.com/cemetery/Washington-Crossing-National-Cemetery/174181",
+        "linkText": "BillionGraves"
+      },
+      {
+        "url": "https://catalog.archives.gov/id/3997688?q=A3459",
+        "linkText": "NARA Collection Description A3459"
+      },
+      {
+        "url": "https://catalog.archives.gov/id/4490777?q=philadelphia%20passenger%20lists%20index",
+        "linkText": "NARA Collection Description of Index"
+      },
+      {
+        "url": "https://catalog.archives.gov/id/4492386?q=4492386",
+        "linkText": "NARA Collection Description T840"
+      },
+      {
+        "url": "https://catalog.archives.gov/id/563421",
+        "linkText": "National Archives Collection Description M1880"
+      },
+      {
+        "url": "https://catalog.archives.gov/id/564980",
+        "linkText": "National Archives Collection Description M360 NAID 564980"
+      },
+      {
+        "url": "https://catalog.archives.gov/id/568126",
+        "linkText": "Records Relating to the Draft Registry of Aliens, 1940-1947, Pennsylvania"
+      },
+      {
+        "url": "https://catalog.hathitrust.org/Record/007074288",
+        "linkText": "Hathi Trust Digital Library"
+      },
+      {
+        "url": "https://chroniclingamerica.loc.gov/newspapers/?state=Pennsylvania&ethnicity=&language=",
+        "linkText": "Pennsylvania Digitized Newspapers"
+      },
+      {
+        "url": "https://digital.newberry.org/ahcb/pages/Pennsylvania.html",
+        "linkText": "Atlas of Historical County Boundaries"
+      },
+      {
+        "url": "https://genpa.org/",
+        "linkText": "Genealogical Society of Pennsylvania"
+      },
+      {
+        "url": "https://genpa.org/public-collections/pennsylvania-county-pages/philadelphia-county/",
+        "linkText": "Genealogical Society of Pennsylvania"
+      },
+      {
+        "url": "https://hsp.org/collections/catalogs-research-tools/subject-guides/african-american-collections",
+        "linkText": "Pennsylvania Historical Society - African American Collections"
+      },
+      {
+        "url": "https://hsp.org/collections/catalogs-research-tools/subject-guides/family-history-genealogy",
+        "linkText": "Historical Society of Pennsylvania"
+      },
+      {
+        "url": "https://hsp.org/collections/catalogs-research-tools/subject-guides/vital-records/",
+        "linkText": "Historical Society of Pennsylvania"
+      },
+      {
+        "url": "https://hsp.org/history-online",
+        "linkText": "Historical Society of Pennsylvania"
+      },
+      {
+        "url": "https://iajgscemetery.org/",
+        "linkText": "International Jewish Cemetery Project"
+      },
+      {
+        "url": "https://iajgscemetery.org/usa/pennsylvania-pa/",
+        "linkText": "Pennsylvania Jewish Cemetery Project"
+      },
+      {
+        "url": "https://immigrant.pricegen.com/search/simple.php",
+        "linkText": "Immigrant Servants Database"
+      },
+      {
+        "url": "https://ldsgenealogy.com/PA/Cemetery-Records.htm",
+        "linkText": "Pennsylvania Cemetery Records"
+      },
+      {
+        "url": "https://pennsylvania.hometownlocator.com/features/cultural,class,cemetery.cfm",
+        "linkText": "Pennsylvania Physical, Cultural, & Historic Features"
+      },
+      {
+        "url": "https://pennsylvaniagravestones.org/",
+        "linkText": "Pennsylvania Gravestone Photo Project"
+      },
+      {
+        "url": "https://search.findmypast.com/results/world-records/historical-society-of-pennsylvania-marriages",
+        "linkText": "Historical Society Of Pennsylvania Marriages, 1512-1989"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/historical-society-of-pennsylvania-births-and-baptisms",
+        "linkText": "Historical Society of Pennsylvania, Births & Baptisms"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/historical-society-of-pennsylvania-congregational-records",
+        "linkText": "Historical Society of Pennsylvania, Congregational Records"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/historical-society-of-pennsylvania-deaths-and-burials",
+        "linkText": "Historical Society of Pennsylvania, Deaths & Burials"
+      }
+    ],
+    "inlineCapped": true
+  }
+}

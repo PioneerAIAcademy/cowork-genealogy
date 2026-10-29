@@ -630,6 +630,17 @@ describe("extraction_append: recordIds and absences", () => {
     expect(after.sources[0].log_entry_id).toBe("log_001");
   });
 
+  it("gives a hint record's assertions the persona ids of the record read in the same call", async () => {
+    const census = element("census-1850-no-relationship-column");
+    await seedLog([hintEntry("log_001", census.recordId)]);
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [census.recordId] }, readerFor([census]) as any, LOCAL);
+    expect(r.records[0].status).toBe("extracted");
+    const personaIds = new Set(census.gedcomx.persons.map((p: any) => p.id));
+    const parties = (await research()).assertions.filter((a: any) => a.record_role !== "absent");
+    expect(parties.length).toBeGreaterThan(0);
+    for (const a of parties) expect(personaIds.has(a.record_persona_id)).toBe(true);
+  });
+
   it.each([
     ["a rejected hint", (rid: string) => hintEntry("log_001", rid, "negative")],
     ["a hint for another record", () => hintEntry("log_001", "ark:/61903/1:1:ZZZZ-ZZZ")],
@@ -998,7 +1009,10 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     plan_item_id: planItemId,
     performed: "2026-01-01T00:00:00Z",
     tool,
-    query: { surname: "Miller" },
+    // Every item() is record_type "census", so the search that found the record
+    // names census — satisfying planItemCompletionRecordTypeInvariants when the
+    // extracted record completes the item.
+    query: { surname: "Miller", recordType: "census" },
     outcome,
     results_examined: 1,
     external_site: null,

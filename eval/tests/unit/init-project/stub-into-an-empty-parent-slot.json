@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_init_project_012",
+    "skill": "init-project",
+    "name": "A stated parent for someone the read gives no parents gets a stub, linked and cited to the researcher",
+    "type": "positive",
+    "description": "The family fixture holds Patrick Flynn's wife Mary Kelly with no parents of her own. The user states her father, Owen Kelly. That slot is empty, so init-project adds Owen after project_create, with tree_edit: a Researcher's statement source, the stub, and a ParentChild edge to Mary citing that source (lead ruling on #3384, 2026-10-20). Tagged expects-stub so the stub validators cannot pass by adding nothing.",
+    "tags": [
+      "initialization",
+      "stubs",
+      "single-turn-decomposition",
+      "direct-arm",
+      "expects-stub"
+    ]
+  },
+  "input": {
+    "delegation": "init-project: Start a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF. I want to find his wife Mary's parents. My family has always said Mary's father was Owen Kelly.\n\nprojectPath: <workspace>",
+    "scenario": null
+  },
+  "mcp_fixtures": [
+    "person-read-flynn-family"
+  ],
+  "judge_context": [
+    "The read (person-read-flynn-family, read by project_create on the host) holds Mary Kelly as Patrick's wife with NO parents, so the father slot the user fills is empty: a stub for Owen Kelly is correct.",
+    "Owen should be a new person (gender Male, as stated; names given 'Owen', surname 'Kelly') linked as Mary's parent by a ParentChild edge, and that edge should cite a source titled \"Researcher's statement\" — never the FamilySearch Family Tree source, which does not hold him.",
+    "The family knowledge is recorded only as the stub and its Researcher's statement source: nothing for it is written to research.json.",
+    "Must NOT re-add Mary, Patrick or any person the read already holds, and must NOT stub anyone the user did not name (Mary's mother is unknown and gets no stub)."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 480
+  },
+  "judge_reads_files": true
+}

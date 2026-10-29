@@ -201,7 +201,7 @@ export const mergeTreePersonsSchema = {
     "tree): the survivor is kept, the collapsed person folds into it " +
     "(names/facts merged, never discarded) and is removed; relationships are " +
     "repointed. Every research.json reference to a collapsed id (subject persons, " +
-    "person_evidence, rejected_links, timelines, known_holdings, proof_summaries, namesakes) is " +
+    "person_evidence, rejected_links, timelines, proof_summaries, namesakes) is " +
     "repointed to the survivor. A merge is refused when a relationship joins the pair, " +
     "when it would fold a FamilySearch or starting-tree person into one made during the " +
     "run, or when it would move a link, or carry a record's data, under a recorded " +

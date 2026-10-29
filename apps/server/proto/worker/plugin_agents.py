@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from claude_agent_sdk import AgentDefinition
 
-EXPECTED_AGENT_COUNT = 29
+EXPECTED_AGENT_COUNT = 30
 
 _KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):(?:\s+(.*))?$")
 _BLOCK_INDICATORS = frozenset({">", ">-", ">+", "|", "|-", "|+"})
@@ -127,7 +127,9 @@ def load_agent_definitions(plugin_dir: Path) -> dict[str, AgentDefinition]:
     """``{name: AgentDefinition}`` for every ``<plugin_dir>/agents/*.md``.
 
     Only the fields ``AgentDefinition`` declares are passed: ``description``,
-    ``prompt``, ``tools``, ``disallowedTools``, ``model``. A frontmatter deny
+    ``prompt``, ``tools``, ``disallowedTools``, ``model``, ``effort``. The bare
+    name resolves only to this definition, so a dropped ``effort`` runs the agent
+    at the CLI default instead of its own (#3935). A frontmatter deny
     is carried so that an agent binds the same under ``agents=`` (bare name)
     as under ``plugins=`` (namespaced name) — a dropped deny fails open and
     silently. No shipped agent declares one today.
@@ -149,12 +151,14 @@ def load_agent_definitions(plugin_dir: Path) -> dict[str, AgentDefinition]:
         if denied is not None and not isinstance(denied, list):
             raise ValueError(f"{md.name}: disallowedTools is not a list")
         model = fm.get("model")
+        effort = fm.get("effort")
         out[name] = AgentDefinition(
             description=description,
             prompt=body,
             tools=list(tools) if tools else None,
             disallowedTools=list(denied) if denied else None,
             model=model if isinstance(model, str) and model else None,
+            effort=effort if isinstance(effort, str) and effort else None,
         )
     return out
 

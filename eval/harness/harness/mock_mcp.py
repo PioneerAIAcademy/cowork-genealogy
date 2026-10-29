@@ -118,8 +118,8 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # read as an error in production and a SUCCESS in every unit eval run.
 #
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
-# LIVE_TOOLS — the three that are not live here (`merge_tree_persons`,
-# `tree_forget`, `external_links_search`) have no handler to mirror. The drift lint in
+# LIVE_TOOLS — the two that are not live here (`tree_forget`,
+# `external_links_search`) have no handler to mirror. The drift lint in
 # tests/unit/test_mock_mcp.py pins that intersection, so a new tool added
 # on the TypeScript side fails here rather than silently going unmirrored.
 #
@@ -133,6 +133,7 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "tree_edit",
     "tree_correct",
     "materialize_facts",
+    "merge_tree_persons",
     "project_context",
     "research_query",
     # Every `ok: false` but `no_project` (invalid_ref, not_found, not_text) is
@@ -386,7 +387,7 @@ def _load_build_tool_catalog_uncached() -> dict[str, dict[str, Any]]:
 # a canned payload, so we materialize the staged file here (via the compiled
 # stager) and inject the handle. Without this, the live log tool has no staged
 # source to finalize and errors ("orphan sidecar" / staging error).
-STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search", "external_links_search"}
+STAGING_SEARCH_TOOLS: set[str] = {"record_search", "fulltext_search"}
 
 # The search tools whose production response carries `query: echoQuery(input)`
 # (record-search.ts, fulltext-search.ts). person_search echoes too but is
@@ -445,15 +446,15 @@ def _fixture_is_nil(response: dict[str, Any]) -> bool:
     """Whether a fixture response represents a genuinely nil search.
 
     Mirrors the production gate: an empty `results` AND a zero upstream total.
-    `record_search` reports that total as `totalMatches`, `fulltext_search` as
-    `totalResults`, and `external_links_search` as `totalForPlace`; a fixture that
+    `record_search` reports that total as `totalMatches` and `fulltext_search` as
+    `totalResults`; a fixture that
     omits its total is treated as 0, since a canned response with no total claims
     no matches. Keyed on the total because `results` is the post-`mapEntry` set in
     production, and a page that fails mapping empties it while the total does not.
     """
     if response.get("results"):
         return False
-    for key in ("totalMatches", "totalResults", "totalForPlace"):
+    for key in ("totalMatches", "totalResults"):
         total = response.get(key)
         if isinstance(total, (int, float)) and total > 0:
             return False
@@ -552,8 +553,7 @@ def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
 # runs the production function rather than a Python restatement of it: a mock
 # that hands the agent a field production strips grades tool-usage and triage
 # against a shape production never sends (#1826, #2009 — both now covered by
-# the compactors below, not by a Python mirror). `external_links_search`
-# stages but compacts nothing, so it is absent here by design.
+# the compactors below, not by a Python mirror).
 _STAGED_COMPACTORS: dict[str, str] = {
     "record_search": "compactStagedRecordSearch",
     "fulltext_search": "compactStagedFulltextSearch",
@@ -1182,6 +1182,71 @@ def _stage_person_read(
         return response
 
 
+def _store_external_collections(
+    workspace: Path,
+    args: dict[str, Any],
+    response: dict[str, Any],
+    stored_rows: list[dict[str, Any]] | None,
+) -> dict[str, Any]:
+    """Write external-collections.json the way the real `external_links_search` does.
+
+    Runs the COMPILED `dedupeCollections` + `recordExternalCollections`, so the
+    file's shape and bytes have one definition, in external-collections-store.ts.
+    The rows are the fixture's never-served `stored_rows` (raw API rows carrying
+    record_type and place) or, absent those, its inline `results[]`; a row with no
+    `place` is filed under the queried place, as production does. Adds `stored`
+    (or `collectionsError` for a non-project folder) as production does. A harness
+    fault returns the response untouched and warns: it is not a production error.
+    """
+    store_js = _MCP_BUILD / "utils" / "external-collections-store.js"
+    if not store_js.exists():
+        warnings.warn(f"mock external_links_search could not store its list: no engine build at {store_js}", stacklevel=2)
+        return response
+    rows = stored_rows if stored_rows is not None else [
+        {"url": r.get("url"), "linkText": r.get("linkText", "")}
+        for r in response.get("results") or []
+        if isinstance(r, dict) and isinstance(r.get("url"), str)
+    ]
+    posix = str(store_js).replace("\\", "/").replace("'", "\\'")
+    url = ("file:///" + posix) if sys.platform == "win32" else posix
+    script = (
+        f"import {{ dedupeCollections, recordExternalCollections, EXTERNAL_COLLECTIONS_FILE }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const i = JSON.parse(readFileSync(0, 'utf-8'));"
+        " const rows = dedupeCollections(i.rows.filter((r) => typeof r.url === 'string'), i.place);"
+        " const places = await recordExternalCollections(i.projectPath, i.place, rows);"
+        " process.stdout.write(JSON.stringify(places === null ? null : { file: EXTERNAL_COLLECTIONS_FILE, places }));"
+    )
+    input_obj = {
+        "projectPath": str(workspace).replace("\\", "/"),
+        "place": args.get("standardPlace", ""),
+        "rows": rows,
+    }
+    try:
+        proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(
+                f"mock external_links_search could not store its list: node exited "
+                f"{proc.returncode}: {proc.stderr.strip()[:200]}",
+                stacklevel=2,
+            )
+            return response
+        stored = json.loads(out)
+    except Exception as e:
+        warnings.warn(f"mock external_links_search could not store its list: {type(e).__name__}: {e}", stacklevel=2)
+        return response
+    if stored is None:
+        return {
+            **response,
+            "collectionsError": (
+                "Nothing was stored: projectPath does not name a project folder (one holding "
+                "research.json or tree.gedcomx.json)."
+            ),
+        }
+    return {**response, "stored": stored}
+
+
 def _warn_unstaged(why: str) -> None:
     """A canned person_read the mock could not stage. init-project now passes
     the staged ref to project_create and stops when there is none, so this reads
@@ -1263,6 +1328,8 @@ def create_mock_server(
             or _PERMISSIVE_SCHEMA
         )
 
+        stored_rows_by_source = dict(bucket.get("stored_rows") or {})
+
         # Capture loop variables via default args so closures bind by value.
         async def handler(
             args,
@@ -1271,6 +1338,7 @@ def create_mock_server(
             _name=tool_name,
             _workspace=workspace,
             _rank_predicated=rank_predicated,
+            _stored_rows=stored_rows_by_source,
         ):
             entry: dict[str, Any] = {
                 "tool": f"mcp__genealogy__{_name}",
@@ -1316,6 +1384,19 @@ def create_mock_server(
             ):
                 entry["attested"], parties = _record_match_score(_workspace, args, response)
                 response = _overlay_parties(response, parties)
+
+            # Production's external_links_search stores the place's full list in
+            # external-collections.json whenever it is given a projectPath (#2995).
+            if (
+                _name == "external_links_search"
+                and _workspace is not None
+                and "error" not in response
+                and isinstance(args.get("projectPath"), str)
+                and args["projectPath"].strip()
+            ):
+                response = _store_external_collections(
+                    _workspace, args, response, _stored_rows.get(source_name)
+                )
 
             # Production's person_read stages its result whenever it is given a
             # projectPath (#2944), with the same trimmed gate.
@@ -1493,7 +1574,7 @@ def create_mock_server(
                 response = reordered
 
             # The unlogged-search notes (#2056), mirrored for the same reason and
-            # inserted in the same pre-`results` slot. All three staging tools carry
+            # inserted in the same pre-`results` slot. Both staging tools carry
             # them, so this list is STAGING_SEARCH_TOOLS.
             #
             # The nil condition mirrors production's on BOTH halves, and each half
@@ -1506,14 +1587,6 @@ def create_mock_server(
             #   "the condition never held" and "the agent ignored it"
             #   indistinguishable — in the plane whose whole job is telling those
             #   apart. `_fixture_is_nil` reads whichever total the fixture carries.
-            # - external_links_search stays approximate in BOTH directions, and
-            #   structurally so: production keys on `allLinks`, the year-filtered set
-            #   before host filtering, which a fixture never carries. `totalForPlace`
-            #   sits before the year filter and `results` after the host filter, so
-            #   `allLinks` lies between the only two numbers available here. A fixture
-            #   omitting its total over-emits; one whose year filter emptied a non-zero
-            #   total under-emits. Stated structurally on purpose — the enumerated-case
-            #   version of this note went stale twice.
             if (
                 _name in STAGING_SEARCH_TOOLS
                 and "error" not in response
@@ -1576,10 +1649,11 @@ def create_mock_server(
     #
     # A tool the TEST declared a fixture for keeps its canned response and is
     # skipped here. Registering both would define the same tool name twice and
-    # the second would shadow the first. Only `person_warnings` is in both sets
-    # today: the check-warnings suite drives it from tuned fixtures covering
-    # specific tag combinations, while every other suite wants the real
-    # computation over its own workspace tree. Ordering matters and is the
+    # the second would shadow the first. Two tools are in both sets today:
+    # `person_warnings`, which the check-warnings suite drives from tuned
+    # fixtures covering specific tag combinations while every other suite wants
+    # the real computation over its own workspace tree, and `project_list`, whose
+    # hosted answers the research suite serves from fixtures. Ordering matters and is the
     # reason this is a skip rather than a precedence rule -- fixtures are
     # registered above, so the test's own declaration wins.
     fixture_backed = set(manifest.keys())
@@ -1634,10 +1708,10 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "tree_correct": ("tree-correct.js", "treeCorrect"),
     "materialize_facts": ("materialize-facts.js", "materializeFacts"),
     "merge_warnings": ("merge-warnings.js", "mergeWarnings"),
+    "merge_tree_persons": ("merge-tree-persons.js", "mergeTreePersons"),
     "person_warnings": ("person-warnings.js", "personWarningsTool"),
     "project_context": ("project-context.js", "projectContext"),
     "research_query": ("research-query.js", "researchQuery"),
-    "project_create": ("project-create.js", "projectCreate"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
     "census_children_gap": ("census-children-gap.js", "censusChildrenGapTool"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
@@ -1646,6 +1720,8 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     # Takes only `{summary}`; the handler's injected `projectPath` is the inert
     # extra key convert_calendar already tolerates.
     "research_delivered": ("research-delivered.js", "researchDelivered"),
+    # Takes no input; the injected `projectPath` is ignored the same way.
+    "project_list": ("project-list.js", "projectList"),
 }
 
 #: Compiled tools whose `projectPath` is optional and changes what the call
@@ -1683,6 +1759,8 @@ def _make_live_handler(
     """Return an async handler for a live tool."""
     if tool_name == "extraction_append":
         return _make_extraction_append_handler(workspace, call_log, manifest or {})
+    if tool_name == "project_create":
+        return _make_project_create_handler(workspace, call_log, manifest or {}, place_predicated or [])
     if tool_name == "validate_research_schema":
         return _make_validate_handler(workspace, call_log)
     if tool_name == "research_log_append":
@@ -1694,13 +1772,7 @@ def _make_live_handler(
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
-        place_table = (
-            (lambda args: _place_table(place_predicated or [], args))
-            if tool_name == "project_create" else None
-        )
-        return _make_compiled_tool_handler(
-            tool_name, js_file, export_name, workspace, call_log, place_table=place_table
-        )
+        return _make_compiled_tool_handler(tool_name, js_file, export_name, workspace, call_log)
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
@@ -2348,6 +2420,119 @@ def _make_extraction_append_handler(
             }
         )
         return _tool_envelope("extraction_append", response)
+
+    return handler
+
+
+def _mock_memory_kinds(read: dict[str, Any]) -> dict[str, str]:
+    """Which of a canned read's sources are memories, and what kind, for
+    `project_create`'s memory sources (#3384).
+
+    Production knows each memory's media type; a canned `person_read` does not
+    carry it (the response has no memory discriminator, and
+    `mcp-fixture.schema.json` is closed). So the mock reads it off the shape: a
+    source carrying `artifact_url` is a memory, a story when it came back with
+    `text` and no retained scan (`image_ref`), a document otherwise. A
+    transcribed PDF document is therefore mislabelled a story here: production
+    retains no scan for a PDF either.
+    """
+    kinds: dict[str, str] = {}
+    for src in read.get("sources") or []:
+        if not isinstance(src, dict) or not isinstance(src.get("id"), str) or "artifact_url" not in src:
+            continue
+        story = isinstance(src.get("text"), str) and src["text"].strip() != "" and not src.get("image_ref")
+        kinds[src["id"]] = "story" if story else "document"
+    return kinds
+
+
+def _make_project_create_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    manifest: dict[str, Any],
+    place_predicated: list,
+):
+    """The live `project_create`, reading the person from the test's
+    `person_read` fixtures instead of FamilySearch (#3384).
+
+    With `personId` the tool reads the person itself. Here the id is matched
+    against the loaded `person_read` fixtures, and `runProjectCreate`'s injected
+    `readPerson` serves the canned response, resolved to its first person (the
+    subject, as `readPerson` guarantees), with `_mock_memory_kinds`. Every other
+    step (the refusals, the build, the profile, the memory sources, the summary)
+    is the compiled production code. An id with no fixture is a failed read,
+    never a request. The test's place table is installed, so no place lookup
+    reaches the network. The call-log entry records the canned read as
+    `served_read`, so a validator can grade what reached the project against
+    what the read held. Principal is `LOCAL`: the harness is one user per process.
+    """
+    tool_js = _MCP_BUILD / "tools" / "project-create.js"
+
+    async def handler(args, _ws=workspace):
+        served: dict[str, Any] | None = None
+        if _ws is None or not tool_js.exists():
+            reason = "workspace not provided" if _ws is None else f"build not found: {tool_js}"
+            response: dict[str, Any] = {"ok": False, "errors": [f"project_create: {reason}"]}
+        else:
+            input_obj = dict(args)
+            input_obj["projectPath"] = str(_ws).replace("\\", "/")
+            pid = args.get("personId")
+            read = None
+            if isinstance(pid, str) and pid.strip():
+                predicated = (manifest.get("person_read") or {}).get("predicated") or []
+                hit = next(
+                    ((resp, src) for pred, resp, src in predicated if matches(pred, {"personId": pid.strip()})),
+                    None,
+                )
+                if hit is not None:
+                    read = hit[0]
+                    served = {"fixture": hit[1], "response": hit[0]}
+            payload = {
+                "input": input_obj,
+                "placeTable": _place_table(place_predicated, args),
+                "read": read,
+                "kinds": _mock_memory_kinds(read) if isinstance(read, dict) else {},
+            }
+            script = (
+                f"import {{ runProjectCreate }} from '{_node_module_url(tool_js)}';"
+                f" import {{ LOCAL }} from '{_node_module_url(_MCP_BUILD / 'auth' / 'principal.js')}';"
+                f" import {{ __usePlaceTableForTests }} from '{_node_module_url(_MCP_BUILD / 'utils' / 'place-resolver.js')}';"
+                " import { readFileSync } from 'node:fs';"
+                " const payload = JSON.parse(readFileSync(0, 'utf-8'));"
+                " __usePlaceTableForTests(payload.placeTable);"
+                " const deps = { readPerson: async (personId) => {"
+                "   if (!payload.read) throw new Error(`no person_read fixture for ${personId}`);"
+                "   const first = (payload.read.persons || [])[0];"
+                "   return { result: structuredClone(payload.read),"
+                "     resolvedId: first && typeof first.id === 'string' ? first.id : personId,"
+                "     memoryKinds: payload.kinds };"
+                " } };"
+                " const r = await runProjectCreate(payload.input, deps, LOCAL);"
+                " process.stdout.write(JSON.stringify(r));"
+            )
+            try:
+                proc = _run_node_eval(script, json.dumps(payload), timeout=NODE_EVAL_TIMEOUT_LONG)
+                if proc.stdout.strip():
+                    response = json.loads(proc.stdout)
+                else:
+                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
+                    response = {
+                        "ok": False,
+                        "errors": [f"project_create: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                    }
+            except Exception as e:
+                response = {"ok": False, "errors": [f"project_create: {e}"]}
+        entry: dict[str, Any] = {
+            "tool": "mcp__genealogy__project_create",
+            "args": dict(args),
+            "expected_args": None,
+            "matched": {"kind": "live", "index": None},
+            "response_fixture": "live:project_create",
+            "response": response,
+        }
+        if served is not None:
+            entry["served_read"] = served
+        call_log.append(entry)
+        return _tool_envelope("project_create", response)
 
     return handler
 

@@ -53,6 +53,10 @@
 //       op by op, so a call that writes one fact or name twice, or removes
 //       one, fails a floor: the shipped check judges what a call adds as a
 //       whole.
+//   §7  item 10 (PR 2): each committed e2e final state carrying rows, read as
+//       written, no row planted: the personas `research_append` stamped, and
+//       what a refusal keyed on them would refuse and spare
+//       (dev/namesake-persona-counts.ts). Zero until runs write rows.
 //
 // Exits non-zero when a floor fails: a bracket that judged or refused nothing
 // would read as coverage and be none.
@@ -84,6 +88,7 @@ import { startingPersonIdsOf } from "../src/utils/starting-tree.js";
 import { mergeGedcomx } from "../src/utils/merge-gedcomx.js";
 import { remapResearchPersonIds } from "../src/tools/merge-shared.js";
 import { personaTargetRefusal } from "../src/tools/materialize-facts.js";
+import { personaStampCounts } from "./namesake-persona-counts.js";
 import { bareName, opsOf, readRunLog, repoRoot, responseOf, toolCalls } from "./runlog-calls.js";
 
 const VERBOSE = process.argv.includes("--verbose");
@@ -1258,6 +1263,35 @@ async function section3b(): Promise<void> {
   floor(moved > 0, "§3b judged no moved link");
 }
 
+// ─── §7 item 10: the stamped namesake personas ──────────────────────────────
+
+function section7(states: FinalState[]): void {
+  const sum = { listed: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
+  const refusedByLabel: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
+  let carrying = 0;
+  for (const s of states) {
+    if (!Array.isArray(s.research?.namesakes) || s.research.namesakes.length === 0) continue;
+    carrying += 1;
+    const c = personaStampCounts(s.research);
+    for (const k of Object.keys(sum) as Array<keyof typeof sum>) sum[k] += c[k];
+    refusedByLabel[labelOf(s.slug)] += c.wouldRefuse;
+  }
+  console.log(
+    "\n§7  item 10 (PR 2): each committed e2e final state carrying rows, as written; the record_persona_ids " +
+      "research_append stamped and what a refusal keyed on them would do",
+  );
+  console.log(`    final states carrying rows: ${carrying}`);
+  console.log(
+    `    (c) listed records stamped: ${sum.stamped} of ${sum.listed}; ` +
+      `(d) unstamped though their row cites a persona search with a sidecar: ${sum.absent}`,
+  );
+  console.log(
+    `    (a) probable or confident links a persona rule would refuse: ${sum.wouldRefuse} ` +
+      `(hint is a namesake's: ${refusedByLabel.false}; the subject's own: ${refusedByLabel.true}; unlabelled: ${refusedByLabel.unlabelled})`,
+  );
+  console.log(`    (b) links on a listed record with another persona, which a record-id rule would refuse: ${sum.spared}`);
+}
+
 // ─── main ───────────────────────────────────────────────────────────────────
 
 console.log(`measured at ${sha} (working tree of this checkout)\n`);
@@ -1273,6 +1307,7 @@ await section3b();
 section4(states);
 section5(states);
 section6(lines, states);
+section7(states);
 if (floorsFailed > 0) {
   console.log(`\n${floorsFailed} floor(s) failed`);
   process.exit(1);

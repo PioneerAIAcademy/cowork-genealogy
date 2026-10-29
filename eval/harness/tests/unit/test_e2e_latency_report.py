@@ -388,3 +388,173 @@ def test_by_skill_still_prints_a_multi_query_runs_phases(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "anders-monsen-ancestry — per-skill phase breakdown" in out
     assert "excluded" not in out
+
+
+# --- --by-step: what each step cost the researcher (section F, decision 28) ---
+
+
+def _step_result(**overrides):
+    """A step-mode run: one session, several turns, `usage.per_turn` stamped."""
+    result = _result()
+    result["usage"] = {
+        **result["usage"],
+        "per_turn": [
+            {"index": 0, "step": "setup", "wall_ms": 30_000, "total_cost_usd": 0.10},
+            {"index": 1, "step": "search", "wall_ms": 90_000, "reply": "continue",
+             "total_cost_usd": 0.50},
+            {"index": 2, "step": "search", "wall_ms": 150_000, "reply": "continue",
+             "total_cost_usd": 0.70},
+            {"index": 3, "step": "conclude", "wall_ms": 60_000, "reply": "wrap up",
+             "total_cost_usd": 0.20},
+        ],
+    }
+    result.update(overrides)
+    return result
+
+
+def _step_rows(out):
+    """The table's data rows, keyed by step name."""
+    rows = {}
+    for line in out.splitlines():
+        cells = line.split()
+        if line.startswith("  ") and cells and cells[0] in {"setup", "search", "conclude"}:
+            rows[cells[0]] = cells
+    return rows
+
+
+def test_by_step_groups_the_wait_by_step_not_by_run(tmp_path, capsys):
+    """The figure decision 28 asks for is how long a researcher waits for ONE
+    response. A whole-run duration cannot answer it: this run is 5.5 minutes and
+    no single wait in it is longer than 2.5."""
+    from e2e import latency_report
+
+    path = _write(tmp_path, "run-2026-10-27_00-00-00.json", _step_result())
+    assert latency_report.main(["--by-step", str(path)]) == 0
+    out = capsys.readouterr().out
+    assert "per-step wait and spend (4 turn(s))" in out
+    rows = _step_rows(out)
+    assert set(rows) == {"setup", "search", "conclude"}, f"got {sorted(rows)}"
+    # search ran twice: nearest-rank p50 is the lower of 90s/150s, p90 the upper.
+    assert rows["search"][1:] == ["2", "90s", "150s", "1.20"], rows["search"]
+    assert rows["setup"][1:] == ["1", "30s", "30s", "0.10"], rows["setup"]
+
+
+def test_by_step_says_so_rather_than_printing_zeroes_for_a_normal_run(tmp_path, capsys):
+    """Every pre-step-mode run, and every non-step run, lacks `usage.per_turn`.
+    A table of zeroes there would read as a measurement saying each step is free."""
+    from e2e import latency_report
+
+    path = _write(tmp_path, "run-2026-09-25_00-00-00.json", _result())
+    assert latency_report.main(["--by-step", str(path)]) == 0
+    out = capsys.readouterr().out
+    assert "no per-step data" in out
+    assert "p50" not in out and "p90" not in out
+
+
+def test_by_step_keeps_a_turn_that_ran_no_step(tmp_path, capsys):
+    """A turn that ran no step still cost the researcher the wait. Dropping it
+    would make the header's turn count and the table's rows disagree."""
+    from e2e import latency_report
+
+    result = _step_result()
+    result["usage"]["per_turn"].append(
+        {"index": 4, "wall_ms": 20_000, "total_cost_usd": 0.05}
+    )
+    path = _write(tmp_path, "run-2026-10-27_00-00-01.json", result)
+    assert latency_report.main(["--by-step", str(path)]) == 0
+    out = capsys.readouterr().out
+    assert "(5 turn(s))" in out
+    assert "(no step)" in out
+
+
+def test_by_step_is_not_excluded_as_multi_query(tmp_path, capsys):
+    """A step-mode run is many turns on ONE session, so it emits one
+    `system:init` and `result_message_covers_last_query_only` does not flag it
+    today. If that ever changes, `--by-step` must still print: the exclusion is
+    about the whole-run summary's fields, and per-turn rows are not those."""
+    from e2e import latency_report
+
+    result = _multi_query_result()
+    result["usage"]["per_turn"] = _step_result()["usage"]["per_turn"]
+    path = _write(tmp_path, "run-2026-10-27_00-00-02.json", result)
+    assert latency_report.main(["--by-step", str(path)]) == 0
+    out = capsys.readouterr().out
+    assert "per-step wait and spend" in out
+    assert "excluded" not in out
+
+
+def test_by_step_reports_which_replies_the_host_sent(tmp_path, capsys):
+    """Reading a per-step table without them invites the wrong conclusion: a step
+    that is slow because the host kept saying `continue` is not a slow step."""
+    from e2e import latency_report
+
+    path = _write(tmp_path, "run-2026-10-27_00-00-03.json", _step_result())
+    assert latency_report.main(["--by-step", str(path)]) == 0
+    assert "replies the host sent: continue x2, wrap up x1" in capsys.readouterr().out
+
+
+def test_by_step_handles_a_run_that_ended_at_its_first_step(tmp_path, capsys):
+    """A legitimate shape, not a defect: a run the researcher wrapped up at the
+    first offer has one turn. p50 and p90 of a single value are that value."""
+    from e2e import latency_report
+
+    result = _step_result()
+    result["usage"]["per_turn"] = result["usage"]["per_turn"][:1]
+    path = _write(tmp_path, "run-2026-10-27_00-00-04.json", result)
+    assert latency_report.main(["--by-step", str(path)]) == 0
+    out = capsys.readouterr().out
+    assert "(1 turn(s))" in out
+    assert _step_rows(out)["setup"][1:] == ["1", "30s", "30s", "0.10"]
+
+
+def test_by_step_prints_the_wait_for_a_turn_whose_cost_never_arrived(tmp_path, capsys):
+    """Also legitimate: a turn can carry `wall_ms` and no `total_cost_usd` when
+    no ResultMessage arrived for it. The wait is still measured, so the row
+    stays and only the money is blank -- dropping it would lose a real wait."""
+    from e2e import latency_report
+
+    result = _step_result()
+    result["usage"]["per_turn"] = [
+        {"index": 0, "step": "setup", "wall_ms": 30_000},
+    ]
+    path = _write(tmp_path, "run-2026-10-27_00-00-05.json", result)
+    assert latency_report.main(["--by-step", str(path)]) == 0
+    assert _step_rows(capsys.readouterr().out)["setup"][1:] == ["1", "30s", "30s", "-"]
+
+
+def test_by_step_ignores_a_per_turn_field_it_does_not_know(tmp_path, capsys):
+    """`per_turn` rows gain fields over time (`sent` arrived with the loop). An
+    unknown key must not change the table, or every future addition breaks it."""
+    from e2e import latency_report
+
+    result = _step_result()
+    for row in result["usage"]["per_turn"]:
+        row["some_field_added_later"] = {"nested": True}
+    path = _write(tmp_path, "run-2026-10-27_00-00-06.json", result)
+    assert latency_report.main(["--by-step", str(path)]) == 0
+    assert _step_rows(capsys.readouterr().out)["search"][1:] == ["2", "90s", "150s", "1.20"]
+
+
+def test_by_step_lists_steps_in_the_order_the_run_reached_them(tmp_path, capsys):
+    """Sorting alphabetically would print `conclude` above `setup`, which reads
+    as a pipeline that runs backwards. The run's own order is also the only one
+    available here: the canonical order lives in `step_boundary`, which only the
+    orchestrator loads, and with it the SDK these reports stay clear of."""
+    from e2e import latency_report
+
+    result = _step_result()
+    # Deliberately NOT alphabetical, and `search` is revisited after `conclude`
+    # -- a run can go back, and a fixed pipeline order would flatten that.
+    result["usage"]["per_turn"] = [
+        {"index": 0, "step": "setup", "wall_ms": 10_000},
+        {"index": 1, "step": "conclude", "wall_ms": 20_000},
+        {"index": 2, "step": "search", "wall_ms": 30_000},
+        {"index": 3, "step": "conclude", "wall_ms": 40_000},
+    ]
+    path = _write(tmp_path, "run-2026-10-27_00-00-07.json", result)
+    assert latency_report.main(["--by-step", str(path)]) == 0
+    out = capsys.readouterr().out
+    assert list(_step_rows(out)) == ["setup", "conclude", "search"], list(_step_rows(out))
+    # and the revisit folded into the step it belongs to, rather than a 4th row
+    assert _step_rows(out)["conclude"][1] == "2"
+

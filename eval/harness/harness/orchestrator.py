@@ -20,7 +20,9 @@ from harness.allowed_tools import (
     format_uncovered_callee_fixtures,
     uncovered_callee_fixtures,
     declared_skill_tools,
+    load_skill_frontmatter,
     load_suite_frontmatter,
+    suite_body_path,
 )
 from harness.auth import AuthConfig
 from harness.fixtures import load_fixtures
@@ -171,6 +173,40 @@ FILE_VALIDITY_VALIDATORS = frozenset(
 )
 
 
+def session_model_for(
+    skill: str,
+    skills_dir: Path,
+    cli_model: str,
+    *,
+    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
+) -> str:
+    """The model a test session's main thread runs on.
+
+    A `SKILL.md` suite runs its skill on the main thread, so the skill's
+    `model:` wins when set: Claude Code's turn-scoped skill override
+    (code.claude.com/docs/en/skills).
+
+    An agent-keyed suite (issue #1253) never runs its agent on the main
+    thread. A direct test's main thread is the dispatcher and a routed test's
+    is the router; the agent runs as a subagent on its own `model:` and
+    `effort:`, which the CLI applies itself. Production's lead runs the
+    default model whatever a helper declares, so the dispatcher keeps
+    `cli_model`. When the agent's model was applied to the whole session, a
+    Haiku dispatcher refused or reworded delegations no production lead does
+    (issue #3870).
+
+    Kept here, not in `allowed_tools.py`, which is in the validators' import
+    closure: a change there moves rule 2c's `validators.shared` for every suite.
+    """
+    body = suite_body_path(skill, skills_dir, agents_dir=agents_dir)
+    if body.name != "SKILL.md":
+        return cli_model
+    declared = load_skill_frontmatter(body).get("model")
+    if isinstance(declared, str) and declared.strip():
+        return declared.strip()
+    return cli_model
+
+
 def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
     """True when no gating validator failed.
 
@@ -280,14 +316,7 @@ async def _run_one_test_async(
     skill_frontmatter = load_suite_frontmatter(
         spec.skill, paths.skills_dir, agents_dir=DEFAULT_PLUGIN_AGENTS
     )
-    # Honor the `model:` field in SKILL.md frontmatter when set (matches
-    # Claude Code skill-frontmatter semantics: turn-scoped model override
-    # per code.claude.com/docs/en/skills). Falls back to the CLI-provided
-    # `model` arg (which defaults to DEFAULT_MODEL) when the field is
-    # absent or empty.
-    skill_model = skill_frontmatter.get("model")
-    if isinstance(skill_model, str) and skill_model.strip():
-        model = skill_model.strip()
+    model = session_model_for(spec.skill, paths.skills_dir, model)
     # The judge reads the scenario's judge-brief.md, falling back to its whole
     # README.md until one is written; each fallback is reported (issue #2478).
     scenario_brief = load_scenario_brief(paths.scenarios_dir, spec.scenario)
@@ -416,6 +445,18 @@ def _routing_short_circuit_skills(spec: TestSpec) -> set[str] | None:
         return None
     correct = (spec.negative or {}).get("correct_skill", [])
     return set(correct) or None
+
+
+def _step_mode(spec: TestSpec) -> str | None:
+    """`execution.step_mode`: the mode this test's turn runs under (decision 25).
+
+    None -- the default, and every test in the corpus today -- means NO boundary, so
+    the test measures what it always measured. A test opts in by naming `step`, `job`
+    or `wrapup`. Enforcing by default would change what every existing test measures,
+    and the only place that would show is a paid run.
+    """
+    mode = (spec.execution or {}).get("step_mode")
+    return mode if isinstance(mode, str) and mode.strip() else None
 
 
 def _stop_at_stub(spec: TestSpec) -> bool:
@@ -624,6 +665,7 @@ async def _execute_single_run(
         stub_agents=_stub_agents(spec, paths.skills_dir),
         live_agents=_live_agents(spec),
         stop_at_stub=_stop_at_stub(spec),
+        step_mode=_step_mode(spec),
         tool_search=tool_search,
     )
 
@@ -740,7 +782,7 @@ async def _execute_single_run(
             # its validators report "skipped" on the whole population they were
             # written for — the defect behind `refinement_targets` (#2021 F12)
             # and `index_error_source` (#1606), twice.
-            "delegation": spec.delegation,
+            "delegation": getattr(result, "delegation_sent", None) or spec.delegation,
             # Also threaded in: `index_error_source`, the one attached source a
             # doctrine test declares to be an indexing error — deterministic
             # ground truth for
@@ -760,7 +802,8 @@ async def _execute_single_run(
             # A direct-agent test has no user turn (#2246) and its delegation is
             # the only text the run was handed, so it takes that slot — without
             # the fallback a year the delegation supplied reads as invented.
-            "user_message": spec.user_message or (spec.delegation or ""),
+            "user_message": spec.user_message
+            or (getattr(result, "delegation_sent", None) or spec.delegation or ""),
             # Also threaded in: `negative`, so a hand-back validator can read
             # the owner a direct-arm negative names in `correct_skill`
             # (test_check_warnings.test_hand_back_names_its_owner, issue #2118).
@@ -1079,6 +1122,7 @@ async def _execute_skill_with_retry(
     stub_agents: dict[str, str | None] | None = None,
     live_agents: set[str] | None = None,
     stop_at_stub: bool = False,
+    step_mode: str | None = None,
     attempts: int = DEFAULT_SKILL_RUN_ATTEMPTS,
     base_delay: float = 1.0,
     tool_search: bool = True,
@@ -1148,7 +1192,7 @@ async def _execute_skill_with_retry(
                     seed_pg_workspace(workspace)
                     before_snapshot = snapshot_files(workspace)
                     result = await run_skill(
-                        user_message=_prompt_for(spec),
+                        user_message=_prompt_for(spec, workspace),
                         workspace=workspace,
                         fixture_names=spec.mcp_fixtures,
                         fixtures_dir=paths.fixtures_dir,
@@ -1172,6 +1216,7 @@ async def _execute_skill_with_retry(
                         stub_agents=stub_agents,
                         live_agents=live_agents,
                         stop_at_stub=stop_at_stub,
+                        step_mode=step_mode,
                         # The skill's OWN declaration, not skill_baseline (which
                         # unions in its subagents' tools). The gap between the two
                         # is what the per-context policy guards.
@@ -1183,6 +1228,8 @@ async def _execute_skill_with_retry(
                     after_snapshot = snapshot_files(workspace)
                     _capture_context_meters(result, workspace)
                     result.pg_store_faults = pg_store_faults(workspace)
+                    if spec.is_direct:
+                        result.delegation_sent = _resolved_delegation(spec, workspace)
                     attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long
@@ -1778,7 +1825,24 @@ class MissingPairAgentError(Exception):
     """A direct test names a `skill` with no agent file of the same name."""
 
 
-def _prompt_for(spec: TestSpec) -> str:
+WORKSPACE_PLACEHOLDER = "<workspace>"
+
+
+def _resolved_delegation(spec: TestSpec, workspace: Path | None) -> str:
+    """`input.delegation` with `<workspace>` replaced by the run's folder.
+
+    A production caller always sends a real absolute path. Left literal, the
+    placeholder reads to the agent as "no project", and a Haiku agent hands back
+    naming init-project instead of surveying (#3935). Forward slashes, as the
+    mock writes `projectPath`, so a Windows dispatcher relays no backslashes.
+    """
+    delegation = spec.delegation or ""
+    if workspace is None:
+        return delegation
+    return delegation.replace(WORKSPACE_PLACEHOLDER, workspace.as_posix())
+
+
+def _prompt_for(spec: TestSpec, workspace: Path | None = None) -> str:
     """What the main thread is sent.
 
     A routed test gets its `user_message` unchanged. A direct test gets the
@@ -1801,7 +1865,7 @@ def _prompt_for(spec: TestSpec) -> str:
             f"{spec.skill!r}`; if this pair's agent is named differently, the "
             f"direct arm cannot address it."
         )
-    return direct_dispatch_prompt(spec.skill, spec.delegation or "")
+    return direct_dispatch_prompt(spec.skill, _resolved_delegation(spec, workspace))
 
 
 def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:

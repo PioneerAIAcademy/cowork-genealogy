@@ -396,7 +396,7 @@ const PROJECT_MODULES = new Set([
  *   without one.
  * - `record_read`: stages the read when inside a project; the read works
  *   without one.
- * - `external_links_search`: stages results optionally.
+ * - `external_links_search`: stores external-collections.json optionally.
  * - `same_person`: reads project context optionally for enrichment.
  * - `rank_search_matches`: reads project context optionally for scoring.
  * - `person_quality`: reads tree optionally for quality scoring.
@@ -407,6 +407,8 @@ const PROJECT_MODULES = new Set([
  *   for cap tracking; the bisect itself works without a project.
  * - `wiki_place_page`: imports the validator for enum checks, whose module
  *   imports `isInsideProject`; the page fetch works without a project.
+ * - `project_list`: takes no projectPath; it reports which projects exist,
+ *   and an empty answer is its no-project case.
  */
 const OPTIONAL_PROJECT_TOOLS = new Set([
   "build_external_search_url",
@@ -422,6 +424,7 @@ const OPTIONAL_PROJECT_TOOLS = new Set([
   "project_create",
   "volume_bisect",
   "wiki_place_page",
+  "project_list",
 ]);
 
 const SRC_ROOT = resolve(__dirname, "../../src");

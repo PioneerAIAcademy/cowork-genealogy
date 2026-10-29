@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import * as net from "node:net";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -11,6 +12,8 @@ import {
   retryAfterMs,
   RETRYABLE_STATUS,
   DEFAULT_RETRY_BUDGET_MS,
+  CONNECT_ATTEMPT_TIMEOUT_MS,
+  raiseConnectAttemptTimeout,
 } from "../../src/utils/http.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
 
@@ -318,59 +321,75 @@ describe("fetchWithRetry", () => {
   });
 
   it("does not start new attempts after budget is exhausted", async () => {
-    // Mock a slow-enough 429 that consuming the budget on the first retry
-    // prevents a third attempt.  With attempts=3 and a tiny budget, the
-    // budget — not the attempt cap — is what stops the loop.
-    mockFetch.mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(() => resolve(mockResponse(429)), 50),
-        ),
-    );
-
-    const res = await fetchWithRetry("https://example.com", {}, 1000, {
-      budgetMs: 80,
-      attempts: 3,
-      baseMs: 1,
+    // Each 429 costs 50ms of an 80ms budget, so the second attempt leaves none
+    // and the budget — not the attempt cap of 3 — stops the loop. The clock is
+    // advanced by the mock, not by a real 50ms timer: under the full engine
+    // suite's parallel load a real timer fired late, the first attempt alone
+    // spent the budget, and the loop stopped at 1 call.
+    let clock = 1_000_000;
+    const nowSpy = vi.spyOn(Date, "now").mockImplementation(() => clock);
+    mockFetch.mockImplementation(async () => {
+      clock += 50;
+      return mockResponse(429);
     });
 
-    expect(res.status).toBe(429);
-    // Budget expires before the third attempt can start.
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    try {
+      const res = await fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 80,
+        attempts: 3,
+        baseMs: 1,
+      });
+
+      expect(res.status).toBe(429);
+      // Budget expires before the third attempt can start.
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    } finally {
+      nowSpy.mockRestore();
+    }
   });
 
   it("stops instead of sleeping when the backoff would spend the rest of the budget (network error)", async () => {
     // A 40ms budget against a 200ms backoff: sleeping the remainder and then
     // retrying on ~0ms is what made probe-retry-budget.test.ts flaky (a timer
     // can wake a millisecond before Date.now() reaches the deadline).
+    // A scheduled timer is the sleep itself; a wall-clock bound failed under
+    // the full engine suite's load whether or not the code slept.
     mockFetch.mockRejectedValue(new TypeError("fetch failed"));
+    const sleeps = vi.spyOn(globalThis, "setTimeout");
 
-    const start = Date.now();
-    await expect(
-      fetchWithRetry("https://example.com", {}, 1000, {
-        budgetMs: 40,
-        attempts: 3,
-        baseMs: 200,
-      }),
-    ).rejects.toThrow(/fetch failed/);
+    try {
+      await expect(
+        fetchWithRetry("https://example.com", {}, 1000, {
+          budgetMs: 40,
+          attempts: 3,
+          baseMs: 200,
+        }),
+      ).rejects.toThrow(/fetch failed/);
 
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(Date.now() - start).toBeLessThan(30);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(sleeps).not.toHaveBeenCalled();
+    } finally {
+      sleeps.mockRestore();
+    }
   });
 
   it("stops instead of sleeping when the backoff would spend the rest of the budget (retryable status)", async () => {
     mockFetch.mockResolvedValue(mockResponse(503));
+    const sleeps = vi.spyOn(globalThis, "setTimeout");
 
-    const start = Date.now();
-    const res = await fetchWithRetry("https://example.com", {}, 1000, {
-      budgetMs: 40,
-      attempts: 3,
-      baseMs: 200,
-    });
+    try {
+      const res = await fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 40,
+        attempts: 3,
+        baseMs: 200,
+      });
 
-    expect(res.status).toBe(503);
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(Date.now() - start).toBeLessThan(30);
+      expect(res.status).toBe(503);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(sleeps).not.toHaveBeenCalled();
+    } finally {
+      sleeps.mockRestore();
+    }
   });
 
   it("throws when Retry-After exceeds remaining budget", async () => {
@@ -435,5 +454,64 @@ describe("describeFetchError", () => {
     const loop = new Error("loop") as Error & { cause?: unknown };
     loop.cause = loop;
     expect(describeFetchError(loop)).toBe("loop");
+  });
+});
+
+// Node abandons an address after 250 ms by default, which is less than the connect time to
+// the wiki host from the machine this was measured on (docs/architecture.md, the bullet on
+// fetchWithRetry). The setting is process-wide, so every test puts it back.
+describe("raiseConnectAttemptTimeout", () => {
+  const original = net.getDefaultAutoSelectFamilyAttemptTimeout();
+  afterEach(() => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(original);
+    vi.doUnmock("node:net");
+    vi.resetModules();
+  });
+
+  it("raises a lower default to the minimum", () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(250);
+    raiseConnectAttemptTimeout(2_000);
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(2_000);
+  });
+
+  it("leaves a higher default alone, such as one set through NODE_OPTIONS", () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(5_000);
+    raiseConnectAttemptTimeout(2_000);
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(5_000);
+  });
+
+  it("leaves a default equal to the minimum as it is", () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(2_000);
+    raiseConnectAttemptTimeout(2_000);
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(2_000);
+  });
+
+  it("is applied when the module loads: a process still on Node's own 250 ms comes out at the constant", async () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(250);
+    vi.resetModules();
+    const fresh = await import("../../src/utils/http.js");
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(fresh.CONNECT_ATTEMPT_TIMEOUT_MS);
+  });
+
+  it("is at least two seconds, the value the live trials passed at", () => {
+    // 20 fresh processes reading a wiki page: 11 connected at Node's 250 ms, all 20 at 2,000 ms.
+    // The slowest of 270 timed connects was 1,230 ms, so a floor of 1,000 would let the constant
+    // fall to a value no trial passed at. The constant checked against itself would pass at 250,
+    // so the floor is a literal.
+    expect(CONNECT_ATTEMPT_TIMEOUT_MS).toBeGreaterThanOrEqual(2_000);
+  });
+
+  it("does nothing, and does not throw at import, on a Node without the setting", async () => {
+    // The .mcpb is declared for Node 18.0 and up; the two calls arrived in 18.18 and 19.8.
+    vi.doMock("node:net", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("node:net")>();
+      return {
+        ...actual,
+        getDefaultAutoSelectFamilyAttemptTimeout: undefined,
+        setDefaultAutoSelectFamilyAttemptTimeout: undefined,
+      };
+    });
+    vi.resetModules();
+    await expect(import("../../src/utils/http.js")).resolves.toHaveProperty("raiseConnectAttemptTimeout");
   });
 });

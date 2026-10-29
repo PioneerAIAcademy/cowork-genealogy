@@ -1,0 +1,59 @@
+{
+  "test": {
+    "id": "ut_research_hsp",
+    "skill": "research",
+    "name": "Hosted: a message naming a listed project's subject continues that project",
+    "type": "positive",
+    "description": "The hosted pair of ut_research_011, on the same project. project_list answers hosted: one project, on the parents of Patrick Flynn, with a projectUrl, and a fresh newProjectPath. The message names Patrick Flynn, so the router continues the listed project: it reads it with project_context at the listed projectPath, finds an objective and no questions, and hands off to question-selection with that projectPath. question-selection is stubbed with the stop text, so the router writes its closing reply, whose last line is the project's projectUrl.",
+    "tags": [
+      "routing",
+      "routes-to:question-selection",
+      "uses-listed-project"
+    ]
+  },
+  "input": {
+    "user_message": "Keep researching the parents of Patrick Flynn.",
+    "scenario": "empty-project-just-created"
+  },
+  "mcp_fixtures": [
+    "project-list-hosted-flynn"
+  ],
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "project_list answered hosted: one listed project, on the parents of Patrick Flynn, at /proj_3f9a1c2e7b4d6a80 with projectUrl https://genealogy.example.org/projects/proj_3f9a1c2e7b4d6a80, and newProjectPath /proj_8c21d0e94fa7b315. The message names Patrick Flynn, so the router continues the listed project. A deterministic validator (test_named_subject_continues_the_listed_project) checks the projectPath it reads and hands off, and that the reply ending the turn ends with the projectUrl; do not grade those yourself.",
+    "The project has an objective but no questions yet. The routing table's first applicable row is 'Objective but no questions -> question-selection'.",
+    "question-selection is stubbed and returns the stop text. Grade only the quality of the router's own work: state derivation and narration.",
+    "Do not penalize the router for not completing the full research cycle: the stub prevents progress beyond the first routing decision.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records. Do NOT score Correctness or Completeness on whether the router reached the right callee. Grade only whether its narration is honest about what it delegated and did not do, and whether its state derivation is sound."
+  ],
+  "judge_reads_files": true
+}

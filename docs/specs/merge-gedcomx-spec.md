@@ -260,7 +260,7 @@ Sequence inside each tool:
    `eval/harness/scripts/dump_namesake_call_states.py`): no pair is joined by a
    relationship, and none folds a FamilySearch or starting-tree person into one
    that is neither (0 of 7 each). No committed research document records a
-   namesake (0 of 548), so the namesake checks refuse nothing yet. With rows
+   namesake yet (0 of 560), so the namesake checks have refused nothing in a committed run. With rows
    planted on the survivors, on the folded persons, or on both,
    `mergeNamesakeRefusals` refuses 7, 12 and 19 links, every one in a correct
    merge of two copies of one person whose row holder lacked what tied the other
@@ -336,7 +336,7 @@ Net guarantee: the on-disk files are always schema-valid after the call, and
   newRelatives: string[],              // Mode 1 — ids of carried-in new relatives
   researchRefsUpdated: {               // Mode 2 only; absent/zero for Mode 1
     subject_person_ids: number, person_evidence: number,
-    rejected_links: number, timelines: number, known_holdings: number,
+    rejected_links: number, timelines: number,
     proof_summaries: number, namesakes: number,
   },
   validation: { valid: true, warnings: string[] },
@@ -606,7 +606,7 @@ Tool-level (wrappers over the pure core):
   assigned ids.
 - **Within-tree persistence** — both files written; `research.json` person-id refs
   (`subject_person_ids`, `person_evidence.person_id`, `rejected_links.person_id`,
-  `timelines.person_ids`, `known_holdings.relates_to_person_ids`,
+  `timelines.person_ids`,
   `proof_summaries[].claims[].relationship.parent`/`.child`,
   `namesakes[].person_id`) repointed collapsed → survivor;
   `researchRefsUpdated` counts match.
@@ -733,7 +733,7 @@ also asserts both files are byte-unchanged):
 - **`merge_tree_persons` (Mode 2) remaps `research.json`.** The collapsed id `B`
   is an existing tree person `research.json` may reference. Repoint every person-id
   reference `B → A`: `project.subject_person_ids`, `person_evidence[].person_id`,
-  `rejected_links[].person_id`, `timelines[].person_ids`, `known_holdings[].relates_to_person_ids`,
+  `rejected_links[].person_id`, `timelines[].person_ids`,
   `proof_summaries[].claims[].relationship.parent`/`.child`, and
   `namesakes[].person_id` (so a recorded namesake keeps capping the survivor's
   links). This set is exactly `validateCrossFile`'s person-id checks in

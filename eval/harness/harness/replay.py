@@ -52,8 +52,8 @@ own module docstring that it is pure analysis over committed data, and importing
 from __future__ import annotations
 
 import copy
-import re
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -127,7 +127,6 @@ SECTION_ID_PREFIX = {
     "localities": "loc_",
     "namesakes": "ns_",
     "rejected_links": "rj_",
-    "known_holdings": "kh_",
 }
 
 _ID_RE = re.compile(r'"(?:entryId|logId)"\s*:\s*"([^"]+)"')
@@ -332,9 +331,63 @@ class ReplayResult:
         self.unmodelled[what] = self.unmodelled.get(what, 0) + 1
 
 
+def _count_overlapping(text: str, needle: str) -> int:
+    count, i = 0, text.find(needle)
+    while i != -1:
+        count += 1
+        i = text.find(needle, i + 1)
+    return count
+
+
+def _expand_edits(state: dict, op: dict, entry_id: str | None) -> dict | None:
+    """The fields an accepted `edits` op wrote, or None when the replayed text cannot
+    show them. The engine accepted each `old` only where it occurred exactly once, so
+    the same count in the replayed text reproduces the write."""
+    edits = op.get("edits")
+    if isinstance(edits, str):
+        try:
+            edits = json.loads(edits)
+        except ValueError:
+            return None
+    if op.get("section") != "proof_summaries" or not isinstance(edits, list):
+        return None
+    target = entry_id or op.get("entryId")
+    entry = next(
+        (e for e in state.get("proof_summaries") or [] if isinstance(e, dict) and e.get("id") == target),
+        None,
+    )
+    if entry is None:
+        return None
+    written: dict = {}
+    for e in edits:
+        if not isinstance(e, dict):
+            return None
+        field, old, new = e.get("field"), e.get("old"), e.get("new")
+        text = written.get(field, entry.get(field))
+        if not (isinstance(text, str) and isinstance(old, str) and old and isinstance(new, str)):
+            return None
+        if _count_overlapping(text, old) != 1:
+            return None
+        i = text.index(old)
+        written[field] = text[:i] + new + text[i + len(old):]
+    return written
+
+
 def _apply_op(state: dict, op: dict, entry_id: str | None, out: ReplayResult) -> None:
     section = op.get("section")
     verb = op.get("op") or "append"
+    # research_append expands `edits` into `fields`. Where the replayed text cannot
+    # reproduce the expansion, report it rather than replay the field as unchanged;
+    # with no `fields` beside it there is then nothing applied.
+    if op.get("edits"):
+        written = _expand_edits(state, op, entry_id)
+        if written is None:
+            out.note_unmodelled(f"{section}:edits")
+            if not isinstance(op.get("fields"), dict):
+                return
+        else:
+            fields = op.get("fields") if isinstance(op.get("fields"), dict) else {}
+            op = {**op, "fields": {**fields, **written}}
     entry = op.get("entry")
     if not isinstance(entry, dict):
         entry = op.get("fields") if isinstance(op.get("fields"), dict) else {}
@@ -449,7 +502,7 @@ def _is_staged_extraction(name: str, args: dict) -> bool:
     so nothing the replay needs is in the arguments."""
     return (
         name == "extraction_append"
-        and "recordIds" in args
+        and ("recordIds" in args or "documents" in args)
         and not args.get("ops")
         and not args.get("section")
     )
@@ -471,6 +524,8 @@ def _apply_staged_extraction(
     summary = entry.get("response_summary")
     text = summary if isinstance(summary, str) else json.dumps(summary, default=str)
     log_ids = list(dict.fromkeys(_LOG_ID_RE.findall(text.replace('\\"', '"'))))
+    if final_research and "_summary_truncated" in text:
+        log_ids += _log_ids_cut_from_summary(entry, text, final_research, out.research, log_ids)
     if not final_research or not log_ids:
         out.note_unmodelled("tool:extraction_append:record-ids")
         return
@@ -488,6 +543,61 @@ def _apply_staged_extraction(
                         out.applied += 1
         if not found:
             out.note_unmodelled("extraction_append:not-in-final")
+
+
+def _record_key(record_id) -> str:
+    return str(record_id or "").split("1:1:")[-1].split("?")[0].strip().strip("/").upper()
+
+
+def _log_ids_cut_from_summary(
+    entry: dict, text: str, final_research: dict, state: dict, seen: list[str]
+) -> list[str]:
+    """Log ids for the records a truncated summary cut off.
+
+    The capture keeps only the first few records of a long `extraction_append`
+    answer (`_summary_truncated`), so their `logId`s never reach the replay and
+    everything those records wrote is missing from the replayed notes. The call's
+    own `recordIds` are never cut: each one not visible in the summary is matched
+    to the earliest log entry in the final notes whose `query.recordId` names it
+    and that neither the summary nor the replay already accounts for -- the entry
+    this call wrote, since the replay applies calls in order. The cut can fall
+    inside a record, after its `recordId` and before its `logId`, so being named in
+    the summary is not enough; a record the summary shows with a status other than
+    `extracted` wrote nothing and is never back-filled.
+    """
+    args = entry.get("args") or {}
+    asked = args.get("recordIds")
+    if isinstance(asked, str):
+        try:
+            asked = json.loads(asked)
+        except ValueError:
+            asked = [asked]
+    if not isinstance(asked, list):
+        return []
+    seen_entries = {e.get("id"): e for e in final_research.get("log") or [] if isinstance(e, dict)}
+    accounted = {_record_key((seen_entries.get(i) or {}).get("query", {}).get("recordId")) for i in seen}
+    # A record the summary shows as not extracted wrote no log entry; any entry
+    # for it in the final notes belongs to a later call.
+    unwritten = {
+        _record_key(rid)
+        for rid, status in re.findall(
+            r'recordId\\?"\s*:\s*\\?"([^"\\]+)\\?"\s*,\s*\\?"status\\?"\s*:\s*\\?"([^"\\]+)', text)
+        if status != "extracted"
+    }
+    applied = {e.get("id") for e in state.get("log") or [] if isinstance(e, dict)} | set(seen)
+    out: list[str] = []
+    for record in asked:
+        key = _record_key(record)
+        if not key or key in unwritten or key in accounted:
+            continue
+        for e in final_research.get("log") or []:
+            if not isinstance(e, dict) or e.get("id") in applied or e.get("id") in out:
+                continue
+            query = e.get("query") or {}
+            if _record_key(query.get("recordId")) == key:
+                out.append(e["id"])
+                break
+    return out
 
 
 def replay(
@@ -575,6 +685,15 @@ def replay(
                     entry_id = _next_id(out.research, section)
                     if entry_id is not None:
                         out.synthesised_ids += 1
+            # A re-sent staged ref that was already logged answers with the
+            # existing entry's id and writes nothing, so an id the log already
+            # holds is not a second append.
+            if (
+                name == "research_log_append"
+                and entry_id is not None
+                and any(e.get("id") == entry_id for e in out.research.get("log") or [] if isinstance(e, dict))
+            ):
+                continue
             _apply_op(out.research, op, entry_id, out)
             # An assertion `update` touching a mirrored attribute ALSO rewrites
             # the tree fact minted from it (#2472). The research half is applied

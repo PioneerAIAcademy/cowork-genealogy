@@ -120,6 +120,94 @@ COMMON_WORD_EXEMPTIONS: dict[str, str] = {
 # say it is not there); only "quotes" is held to the file.
 SUPPRESSIONS: list[dict[str, str]] = [
     {
+        "file": "eval/tests/unit/init-project/negative-start-research.json",
+        "tool": "person_read",
+        "quotes": [
+            'no person_read, no person_search, no place_search, no project_create',
+        ],
+        "reason": (
+            'negative - a list of calls the guard must not make once a project exists'
+        ),
+    },
+    {
+        "file": "eval/tests/unit/init-project/negative-start-research.json",
+        "tool": "person_search",
+        "quotes": [
+            'no person_read, no person_search, no place_search, no project_create',
+        ],
+        "reason": (
+            'negative - a list of calls the guard must not make once a project exists'
+        ),
+    },
+    {
+        "file": "eval/tests/unit/init-project/negative-start-research.json",
+        "tool": "place_search",
+        "quotes": [
+            'no person_read, no person_search, no place_search, no project_create',
+        ],
+        "reason": (
+            'negative - a list of calls the guard must not make once a project exists'
+        ),
+    },
+    {
+        "file": "eval/tests/unit/init-project/new-project-from-tree.json",
+        "tool": "person_read",
+        "quotes": [
+            'must not call `person_read` or pass a `tree` beside `personId`',
+        ],
+        "reason": (
+            'negative - project_create reads the person on the host, so the agent must not call person_read'
+        ),
+    },
+    {
+        "file": "eval/tests/unit/init-project/new-project-from-search.json",
+        "tool": "person_search",
+        "quotes": [
+            'Must NOT call person_search — init-project no longer has that tool and never searches by name',
+        ],
+        "reason": (
+            'negative - init-project never searches by name and does not hold the tool'
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/init-project.md",
+        "tool": "tree_forget",
+        "quotes": [
+            'call `tree_forget`, or otherwise begin forget-and-rederive in this turn',
+        ],
+        "reason": (
+            "negative - a list of what the agent does not do; the forgetting is forget-and-rederive's step"
+        ),
+    },
+    {
+        "file": "packages/engine/plugin/agents/search-external-sites.md",
+        "tool": "catalog_search",
+        "quotes": [
+            "A `catalog_search` of the place \u2014 hand it to search-records",
+        ],
+        "reason": (
+            "cross-owner - the agent names the tool only to hand the check "
+            "BACK to search-records, which holds catalog_search in its "
+            "allowed-tools. Granting it here was considered and rejected "
+            "(issue #3185): the agent's ROUTING gate already sends catalog "
+            "work to search-records, so a second site deciding when to "
+            "search the Catalog would contradict the gate."
+        ),
+    },
+    {
+        "file": "eval/tests/unit/research-plan/negative-record-extraction-request.json",
+        "tool": "extraction_append",
+        "quotes": [
+            "The correct action is a hand-back naming extraction (`extraction_append`, or the record-structurer agent), with no plan item written and no tool called.",
+        ],
+        "reason": (
+            "cross-owner mention: a routing-negative test naming where the "
+            "work belongs, not a call research-plan is expected to make. The "
+            "same sentence says 'with no plan item written and no tool "
+            "called', so it grades the hand-back, not the call."
+        ),
+    },
+    {
         "file": "eval/tests/unit/init-project/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [

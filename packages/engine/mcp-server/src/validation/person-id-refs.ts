@@ -14,7 +14,6 @@ export type PersonIdRefField =
   | "rejected_links"
   | "subject_person_ids"
   | "timelines"
-  | "known_holdings"
   | "proof_summaries"
   | "namesakes";
 
@@ -24,7 +23,6 @@ export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
   "rejected_links",
   "subject_person_ids",
   "timelines",
-  "known_holdings",
   "proof_summaries",
   "namesakes",
 ];
@@ -45,7 +43,7 @@ export interface PersonIdRef {
 /**
  * Yield every tree-person-id reference in `research`, in the same order the
  * validator's cross-file check has always emitted them (person_evidence,
- * subject_person_ids, timelines, known_holdings, proof_summaries, namesakes).
+ * subject_person_ids, timelines, proof_summaries, namesakes).
  * Each ref carries the
  * validator's exact error path/message and an in-place setter for the remap.
  *
@@ -136,29 +134,6 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
         field: "timelines",
         path: `research.json/timelines[${i}]`,
         message: `person_ids contains '${pid}' which is not in tree.gedcomx.json persons`,
-        set: (newId) => {
-          personIds[j] = newId;
-        },
-      };
-    }
-  }
-
-  // known_holdings[].relates_to_person_ids — array.
-  const holdings = Array.isArray(research.known_holdings)
-    ? research.known_holdings
-    : [];
-  for (let i = 0; i < holdings.length; i++) {
-    if (!isObject(holdings[i])) continue;
-    const personIds = Array.isArray(holdings[i].relates_to_person_ids)
-      ? holdings[i].relates_to_person_ids
-      : [];
-    for (let j = 0; j < personIds.length; j++) {
-      const pid = personIds[j];
-      yield {
-        pid,
-        field: "known_holdings",
-        path: `research.json/known_holdings[${i}]`,
-        message: `relates_to_person_ids contains '${pid}' which is not in tree.gedcomx.json persons`,
         set: (newId) => {
           personIds[j] = newId;
         },

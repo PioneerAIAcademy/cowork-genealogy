@@ -314,6 +314,73 @@ def test_refresh_rejects_walworth_under_a_markdown_heading():
         check_refresh(*_refresh_states(stale, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
 
 
+_WALWORTH_NOTE = (
+    "^3 Reuben H. Walworth, *Hyde Genealogy* (Albany: J. Munsell, 1864), 2 vols.; "
+    "archive.org (accessed 9 October 2026)."
+)
+_SEARCHED = "searched in full, both volumes: no Iram."
+
+
+def test_refresh_accepts_walworth_footnoted_where_it_is_reported_searched():
+    """Both runs of the 25 Oct round: the searched paragraph cites Walworth by
+    footnote, and the footnotes follow the cue paragraph in the same section."""
+    narrative = (
+        _COMPLIANT_NARRATIVE.replace(_SEARCHED, _SEARCHED + "^3") + "\n\n" + _WALWORTH_NOTE
+    )
+    check_refresh(*_refresh_states(narrative, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_accepts_footnotes_citing_the_book_as_searched():
+    """ut_proof_conclusion_g9j run 0, 2026-10-26: the to-do section, a `---` rule,
+    then footnotes; footnote 4 cites the book as searched in full."""
+    narrative = (
+        "# P\n\n## What Could Resolve This\n\nDeath certificates for Iram's daughters "
+        "remain unsearched.\n\n---\n\n\u2074 Reuben H. Walworth, *Hyde Genealogy* (Albany, "
+        "1864), 2 vols., searched in full text at archive.org."
+    )
+    check_refresh(*_refresh_states(narrative, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_accepts_a_markdown_footnote_definition():
+    narrative = (
+        _COMPLIANT_NARRATIVE.replace(_SEARCHED, _SEARCHED + "[^3]")
+        + "\n\n[^3]: Reuben H. Walworth, *Hyde Genealogy* (1864)."
+    )
+    check_refresh(*_refresh_states(narrative, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_accepts_walworth_named_only_to_exclude_him():
+    """ut_proof_conclusion_g9j run 1, 2026-10-26: a to-do item about other records."""
+    narrative = (
+        "# P\n\n## What Could Resolve It\n\n(1) daughters' death certificates; (2) New "
+        "Hampshire town vital and probate records for the Lebanon Hyde families not "
+        "covered by Walworth.\n\n---\n^1 Church register, Cambridge."
+    )
+    check_refresh(*_refresh_states(narrative, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_rejects_walworth_left_to_search_through_its_footnote():
+    stale = (
+        _COMPLIANT_NARRATIVE.replace(
+            "**What could resolve it:** ",
+            "**What could resolve it:** the published family genealogy;^3 ",
+        )
+        + "\n\n"
+        + _WALWORTH_NOTE
+    )
+    with pytest.raises(AssertionError, match="still lists Walworth"):
+        check_refresh(*_refresh_states(stale, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
+def test_refresh_rejects_the_book_listed_before_the_footnote_rule():
+    stale = (
+        "# P\n\n## What Could Resolve It\n\n- Walworth, *Hyde Genealogy* (1864)\n\n---\n"
+        "^1 Church register."
+    )
+    with pytest.raises(AssertionError, match="still lists Walworth"):
+        check_refresh(*_refresh_states(stale, _COMPLIANT_SUMMARY), REFRESH_TAGGED)
+
+
 def test_refresh_rejects_a_second_summary_for_the_question():
     dup = {"id": "ps_003", "question_id": "q_002", "tier": "not_proved"}
     with pytest.raises(AssertionError, match="only proof summary"):

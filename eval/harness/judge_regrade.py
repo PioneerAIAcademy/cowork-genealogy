@@ -72,7 +72,7 @@ from harness.warning_kinds import validate_warning_kinds
 from harness.workspace import build_workspace, snapshot_files
 from harness.outcomes import aggregate_per_run_outcome
 from harness.runlog import _replace_with_retry, validate_run_log
-from harness.versioning import classify
+from harness.versioning import latest_full_skill_runlog
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 UNIT_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "unit"
@@ -108,29 +108,13 @@ class RegradeResult:
 
 
 def _latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict[str, Any]] | None:
-    """Return (filename, parsed_log) for the newest released or candidate log.
-
-    Mirrors `check_runlogs.latest_full_skill_runlog` without pulling the
-    whole script in as a dependency.
-    """
+    """The log rule 2b grades (`versioning.latest_full_skill_runlog`), or None
+    when the directory is absent or the log is unreadable. Ordered by landing on
+    `origin/main`, which stands in for the BASE_SHA CI orders by."""
     if not skill_dir.is_dir():
         return None
-    candidates: list[tuple[tuple[int, str], Path]] = []
-    for p in skill_dir.glob("v*.json"):
-        if p.name.endswith(".ann.json"):
-            continue
-        kind, version, _ts = classify(p.name)
-        if kind == "released":
-            # Prefer released; sort to the end so it wins max().
-            candidates.append(((version, "zzz"), p))
-        elif kind == "candidate":
-            candidates.append(((version, p.name), p))
-    if not candidates:
-        return None
-    candidates.sort(key=lambda c: c[0])
-    path = candidates[-1][1]
     try:
-        return (path.name, json.loads(path.read_text(encoding="utf-8")))
+        return latest_full_skill_runlog(skill_dir, "origin/main")
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return None
 
