@@ -1707,8 +1707,8 @@ the pair is `derivedNamesakePairs`, the tests `pairJudgement`.
   `namesakeCallCheck`, and its static twin `namesakeTieInvariants` for the guard
   replay) and `materialize_facts`' copy gate, which re-judges a link on every
   copy and so catches a `probable` link written before its pair existed: in the
-  committed e2e corpus 98 of the 224 links pairs refuse have their pair formed
-  during the run. The row warning (§5.6), the citation refusal and the merge
+  committed e2e corpus 102 of the 232 links pairs refuse are on a person with a
+  pair formed during the run. The row warning (§5.6), the citation refusal and the merge
   refusal read rows only; each returns at once when the project holds no row,
   so their blindness to pairs is structural. Merging two pair members is how a
   person entered twice is fixed, and must stay open.
@@ -1720,7 +1720,11 @@ the pair is `derivedNamesakePairs`, the tests `pairJudgement`.
   children are the child's siblings and a tie through them ties both
   (chesworthrm, 2026-10-29). The person's assertions on the source that name a
   second person go to the partner with the link, since one naming the person
-  (a "child of" naming the father) names the persona judged. A tie that ties the
+  (a "child of" naming the father) names the persona judged, and so do the
+  person's own entries of the parties the link speaks for: the father's own name
+  beside his daughter's "child of" him is that persona, and left behind it would
+  tie the partner through the person (a daughter's marriage read as her
+  brother's). A tie that ties the
   partner too is voided: the verdict's `blockedBy` carries `pair`, and the
   reason names the partner and the relatives the record ties them through. A tie through a relative only one
   of them has, such as the son's own wife or children, still counts. A person
@@ -1790,13 +1794,16 @@ the pair is `derivedNamesakePairs`, the tests `pairJudgement`.
   entered twice (elsa-heikkinen-birth: Elsa Brita and Elsa Riitta, the same
   parents, both born May 1832) and 6 are wrong links already in the runs, a
   parent's entry linked to the child as well, which the role check refuses. Of
-  the 1,892 links the ties allow, 160 are held at `speculative`, the record
+  the 1,892 links the ties allow, 89 are held at `speculative`, the record
   tying a partner as well and no test telling the two apart (51 of the 1,143
-  one-party links). Reading parties as the cap does released the 161st: the
-  "child of Elizabeth Young" on her daughter Martha's 1839 christening, linked
-  to the mother, whose maiden-name-absent assertion had made her party read as
-  `absent`, so no test ran; as the `mother`, the adult role rules out her
-  daughter Elizabeth, born 1832 (young-marriage-1828). Of the 75 one-party parent entries a partner's ties held
+  one-party links, 38 of the 749 two-party). Carrying the speaker's own entry
+  with a statement naming the person released 71 two-party statements, a
+  mother's "child of" from her children, a bride's "child of" her father, held
+  only through that entry. Reading parties as the cap does released one more:
+  the "child of Elizabeth Young" on her daughter Martha's 1839 christening,
+  linked to the mother, whose maiden-name-absent assertion had made her party
+  read as `absent`, so no test ran; as the `mother`, the adult role rules out
+  her daughter Elizabeth, born 1832 (young-marriage-1828). Of the 75 one-party parent entries a partner's ties held
   before the roles were read, 64 now stand; of the 11 still held, 7 are the
   wrong links. Moved to the other partner with the person's other links from
   their source, 5 of the 262 links the ties refuse pass: 2 relationship
@@ -2021,8 +2028,9 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   (asked for or not, a row holder, and a tie that counts only when the record
   would not tie the partner as well, row or no row: through the son's brothers,
   through his own wife, through the mother when the roles say nothing, a "child
-  of" carried with the entry, no grandparent's role read, no role read for a link
-  naming the person, and the roles telling a mother of the child from a wife),
+  of" carried with the entry, the person's own entry carried with a statement
+  naming them, no grandparent's role read, no role read for a link naming the
+  person, and the roles telling a mother of the child from a wife),
   and end to end the son's marriage refused on the father and
   allowed on the son, the merge route for siblings born the same year, and a
   citation onto one of them and their merge left open, since neither reads
