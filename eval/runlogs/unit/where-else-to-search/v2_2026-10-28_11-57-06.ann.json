@@ -148,14 +148,6 @@
     },
     {
       "test_id": "ut_where_else_to_search_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": "**`ut_where_else_to_search_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed correct arguments. place_search received 'Schuylkill County, Pennsylvania' (matches expected ~Schuylkill). external_links_search received standardPlace 'Schuylkill, Pennsylvania, United States' and year range 1865–1875 (±5 from 1870, matching expected ~Schuylkill). All 8 build_external_search_url calls used correct baseUrls from tool responses and appropriate site identifiers (ancestry, findmypast). No fixture_not_found errors occurred.\n\nJunior: (**`ut_where_else_to_search_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed correct arguments. place_search received 'Schuylkill County, Pennsylvania' (matches expected ~Schuylkill). external_links_search received standardPlace 'Schuylkill, Pennsylvania, United States' and year range 1865–1875 (±5 from 1870, matching expected ~Schuylkill). All 8 build_external_search_url calls used correct baseUrls from tool responses and appropriate site identifiers (ancestry, findmypast). No fixture_not_found errors occurred.\n\nJunior: (Pass - All tools passed correct arguments.)"
-    },
-    {
-      "test_id": "ut_where_else_to_search_001",
       "dimension_source": "rubric",
       "dimension_name": "Selection",
       "llm_score": 3,
@@ -185,6 +177,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_where_else_to_search_001`** — `rubric` / `Prose`\nLLM: 3 → Junior: 3\n\n> The response follows the fixed format: opening line states place and years searched with counts ('8 entries, 3 also-on-file rows'); then `---`; then an opening sentence; then 8 suggestions in the three-line shape (bold linkText with site and access; years and coverage; full link); then a closing sentence. No tool names, field names, or file names appear. No extra sentences about the person or period. Prose is beginner-readable.\n\nJunior: (Pass - The response followed the fixed format.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed correct arguments. place_search received 'Schuylkill County, Pennsylvania' (matches expected ~Schuylkill). external_links_search received standardPlace 'Schuylkill, Pennsylvania, United States' and year range 1865–1875 (±5 from 1870, matching expected ~Schuylkill). All 8 build_external_search_url calls used correct baseUrls from tool responses and appropriate site identifiers (ancestry, findmypast). No fixture_not_found errors occurred.\n\nJunior:Pass - All tool calls passed correct arguments. No fixturee_not_found errors occured.)"
     }
   ]
 }
