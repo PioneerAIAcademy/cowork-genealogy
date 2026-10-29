@@ -720,6 +720,12 @@ Architecturally:
   differences that bite"), so any budget above it is honoured only on the
   stdio paths (harnesses and hosted, both verified) and silently truncated in
   Cowork. Size a raise from the measured e2e corpus, not by guessing.
+  The same module raises Node's per-address connect-attempt timeout from its
+  250 ms default to 2 s when it loads (`raiseConnectAttemptTimeout`): measured
+  2026-10-22, every connect to the wiki host from one machine took 261 to 337 ms,
+  longer than the default wait, and 9 of 20 fresh processes reading a wiki page
+  failed with `ETIMEDOUT` at the default, none of 20 at 2 s. A connect slower than
+  2 s to an address that is not the last Node tries is still given up on.
 - **Reuse before you write:** `getValidToken(principal)` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
