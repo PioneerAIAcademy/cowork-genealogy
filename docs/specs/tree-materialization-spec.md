@@ -365,7 +365,9 @@ qualify.
   since the namesake is in the tree already. When `personId` is omitted and the
   lookup would mint after passing over a pair member, row or no row, the op is
   refused with the same text and no person is made; a new person would
-  duplicate the namesake (MP1 to MP4 in `materialize-facts-namesake.test.ts`).
+  duplicate the namesake. When another person is eligible the lookup reuses
+  them, which makes no one new, and its warning says the person it passed over
+  has a namesake in the tree (MP1 to MP6 in `materialize-facts-namesake.test.ts`).
 
 Known let-throughs, none with an executed op in the corpus:
 

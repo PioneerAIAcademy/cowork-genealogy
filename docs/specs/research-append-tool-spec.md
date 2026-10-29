@@ -2003,10 +2003,16 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   `pairRecordFacts`, `independentLife` (the starting tree whatever it cites, the
   FamilySearch tree's own source, a fact's own assertion first, a source spanning
   two records, an unregistered note), `pairJudgement` (each test, and what is
-  missing), `namesakeVerdicts` (asked for or not, a row holder), and end to end
-  the son's marriage refused on the father and allowed on the son, and the merge
-  route for siblings born the same year. `materialize-facts-namesake.test.ts`
-  MP1 to MP4 for the copy gate, and `namesake-tie.json`'s pair cases.
+  missing), `namesakeVerdicts` (asked for or not, a row holder, and a tie that
+  counts only when the record would not tie the partner as well: through the
+  son's brothers, through his own wife, through the mother when the roles say
+  nothing, a "child of" carried with the entry, no grandparent's role read, no
+  role read for a link naming the person, and the roles telling a mother of the
+  child from a wife), and end to end the son's marriage refused on the father and
+  allowed on the son, the merge route for siblings born the same year, and a
+  citation onto one of them and their merge left open, since neither reads
+  pairs. `materialize-facts-namesake.test.ts` MP1 to MP6 for the copy gate, and
+  `namesake-tie.json`'s pair cases.
 - **C9s** (`research-append.test.ts`, with the score gate's circular cases) — a
   second research source citing `S1` with no record does not hide the record a
   person was minted from: that person's link still needs no score, and one
