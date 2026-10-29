@@ -412,6 +412,21 @@ def test_dedupe_matches_on_the_subject_personas_name_not_only_the_event(tmp_path
     assert judge.duplicate_records(snap, "KWCB-QZ3", json.loads((snap / "persons" / "KWCB-QZ3" / "audit.json").read_text(encoding="utf-8"))["entries"]) == {}
 
 
+def test_dedupe_keeps_apart_two_childrens_baptisms_on_one_day_when_the_subject_is_their_parent(tmp_path):
+    snap = make_snapshot(tmp_path / "s", "KWCB-QZ3", "KWCB-QZ3", ["TWIN-111", "TWIN-222"])
+    for pid, child in (("TWIN-111", "Ann"), ("TWIN-222", "Mary")):
+        _w(
+            snap / "records" / f"{pid}.json",
+            {
+                "persons": [
+                    {"id": "p_1", "principal": True, "names": [{"given": child, "surname": "Smith"}], "facts": [{"type": "Baptism", "date": "3 Mar 1851", "place": "Kent, England"}]},
+                    {"id": "p_2", "ark": f"ark:/61903/1:1:{pid}", "names": [{"given": "John", "surname": "Smith"}], "facts": []},
+                ]
+            },
+        )
+    entries = json.loads((snap / "persons" / "KWCB-QZ3" / "audit.json").read_text(encoding="utf-8"))["entries"]
+    assert judge.duplicate_records(snap, "KWCB-QZ3", entries) == {}
+
 def test_read_all_and_dedupe_add_their_rules_to_the_delegation_only_with_their_flags(tmp_path):
     plain = judge.delegation_for("KWCB-QZ3", tmp_path)
     assert judge.READ_ALL_INSTRUCTION not in plain and judge.DEDUPE_INSTRUCTION not in plain

@@ -77,17 +77,20 @@ DEDUPE_INSTRUCTION = (
 _DEDUPE_EVENTS = {"Birth", "Christening", "Baptism", "Marriage", "Death", "Burial", "Census", "Residence"}
 
 
+def _persona_name(q: Any) -> str:
+    n = (q.get("names") or [{}])[0] if q else {}
+    return f"{n.get('given', '')} {n.get('surname', '')}".strip().lower()
+
+
 def _record_signature(rec: Any, ark: str) -> tuple[Any, ...] | None:
+    """Subject name, principals' names and events: a parent's two children's records stay apart."""
     persons = rec.get("persons") or []
-    me = next((q for q in persons if q.get("ark") == ark), None)
-    name = ""
-    if me and me.get("names"):
-        n = me["names"][0]
-        name = f"{n.get('given', '')} {n.get('surname', '')}".strip().lower()
+    name = _persona_name(next((q for q in persons if q.get("ark") == ark), None))
+    principals = tuple(sorted(_persona_name(q) for q in persons if q.get("principal")))
     facts = [f for q in persons if q.get("principal") for f in q.get("facts") or [] if f.get("type") in _DEDUPE_EVENTS]
     facts += [f for r in rec.get("relationships") or [] for f in r.get("facts") or [] if f.get("type") in _DEDUPE_EVENTS]
     ev = tuple(sorted({(f["type"], f.get("standard_date") or f.get("date") or "", (f.get("place") or "").lower()) for f in facts}))
-    return (name, ev) if ev else None
+    return (name, principals, ev) if ev else None
 
 
 def _record_richness(rec: Any) -> int:
