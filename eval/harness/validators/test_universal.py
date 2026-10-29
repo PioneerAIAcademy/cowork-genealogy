@@ -82,7 +82,7 @@ DIFFED_SECTIONS = [
     "project", "questions", "plans", "log", "sources",
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
-    "evaluations", "localities", "rejected_links",
+    "evaluations", "localities", "rejected_links", "namesakes",
 ]
 
 
@@ -2176,7 +2176,7 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
 # messages; lay-mode ruling 2026-09-18). `q_NNN` and `ps_NNN` are included
 # although #2493 left them open as navigation aids: this validator only reports.
 _INTERNAL_ID_RE = re.compile(
-    r"\b(?:q|pli|a|ps|log|src|pe|c|h|ev|tl)_\d{3,}\b"
+    r"\b(?:q|pli|a|ps|log|src|pe|c|h|ev|tl|ns)_\d{3,}\b"
     r"|\b(?:research\.json|tree\.gedcomx\.json)\b"
     r"|\b(?:conflicts|hypotheses|assertions|sources|questions|plans|evaluations"
     r"|proof_summaries|person_evidence|timelines|log)\[\]"

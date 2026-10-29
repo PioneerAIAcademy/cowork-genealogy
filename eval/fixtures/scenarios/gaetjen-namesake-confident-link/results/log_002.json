@@ -1,0 +1,4238 @@
+{
+  "log_id": "log_002",
+  "tool": "record_search",
+  "retrieved": "2026-10-07T04:13:23.893Z",
+  "returned_count": 13,
+  "payload": {
+    "query": {
+      "projectPath": "C:\\Users\\User\\Documents\\GenealogyProjects\\p2593-gaetjen",
+      "subjectId": "I1",
+      "surname": "Gaetjen",
+      "collectionId": "1417683",
+      "residencePlace": "California, United States"
+    },
+    "totalMatches": 13,
+    "paginationCappedAt": 4999,
+    "returned": 13,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:M6PZ-FKF",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "At Home"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Richard Gaetjen",
+        "score": 3.1318002,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1879",
+        "birthPlace": "California, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Henry Gaetjen, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHFN-7MN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334814085",
+              "ark": "ark:/61903/1:1:M6PZ-FKF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Richard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "At Home"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814083",
+              "ark": "ark:/61903/1:1:M6PZ-FK6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1847",
+                  "standard_date": "1847",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814084",
+              "ark": "ark:/61903/1:1:M6PZ-FKX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Emma"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Louisiana, United States",
+                  "standard_place": "Louisiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814086",
+              "ark": "ark:/61903/1:1:M6PZ-FKN",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Paul",
+                  "given": "Richard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814087",
+              "ark": "ark:/61903/1:1:M6PZ-FKJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Paul",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814088",
+              "ark": "ark:/61903/1:1:M6PZ-FKV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Paul",
+                  "given": "Richard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_334814084",
+              "child": "p_334814085"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334814083",
+              "child": "p_334814085"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334814086",
+              "child": "p_334814084"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_334814083",
+              "person2": "p_334814084"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_206986516",
+              "resource_type": "Record",
+              "title": "Household of Henry Gaetjen, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6PZ-FK6 : Wed Sep 09 13:11:52 UTC 2026), Entry for Henry Gaetjen and Emma Gaetjen, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFN-7MN",
+              "coverage": {
+                "place_rep_id": "3853449",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY1-SQJW",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334814085",
+              "resource_type": "Person",
+              "url": "#p_334814085"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "355",
+              "name": "Louisiana, United States",
+              "latitude": 31,
+              "longitude": -92
+            },
+            {
+              "id": "3853449",
+              "name": "San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_334814085",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6PZ-FKX",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "Keeping House"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Emma Gaetjen",
+        "score": 3.1318002,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1858",
+        "birthPlace": "Louisiana, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Henry Gaetjen, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHFN-7MN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334814084",
+              "ark": "ark:/61903/1:1:M6PZ-FKX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Emma"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Keeping House"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Louisiana, United States",
+                  "standard_place": "Louisiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814083",
+              "ark": "ark:/61903/1:1:M6PZ-FK6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1847",
+                  "standard_date": "1847",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814085",
+              "ark": "ark:/61903/1:1:M6PZ-FKF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Richard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814086",
+              "ark": "ark:/61903/1:1:M6PZ-FKN",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Paul",
+                  "given": "Richard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814087",
+              "ark": "ark:/61903/1:1:M6PZ-FKJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Paul",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814088",
+              "ark": "ark:/61903/1:1:M6PZ-FKV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Paul",
+                  "given": "Richard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_334814084",
+              "child": "p_334814085"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334814083",
+              "child": "p_334814085"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334814086",
+              "child": "p_334814087"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334814086",
+              "child": "p_334814084"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334814086",
+              "child": "p_334814088"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_334814083",
+              "person2": "p_334814084"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_206986516",
+              "resource_type": "Record",
+              "title": "Household of Henry Gaetjen, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6PZ-FK6 : Wed Sep 09 13:11:52 UTC 2026), Entry for Henry Gaetjen and Emma Gaetjen, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFN-7MN",
+              "coverage": {
+                "place_rep_id": "3853449",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY1-SQJW",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334814084",
+              "resource_type": "Person",
+              "url": "#p_334814084"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "355",
+              "name": "Louisiana, United States",
+              "latitude": 31,
+              "longitude": -92
+            },
+            {
+              "id": "3853449",
+              "name": "San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_334814084",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6PZ-FK6",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "Barkeeper"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Gaetjen",
+        "score": 3.1318002,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1847",
+        "birthPlace": "Germany",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Henry Gaetjen, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHFN-7MN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334814083",
+              "ark": "ark:/61903/1:1:M6PZ-FK6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Barkeeper"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1847",
+                  "standard_date": "1847",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814084",
+              "ark": "ark:/61903/1:1:M6PZ-FKX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Emma"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Louisiana, United States",
+                  "standard_place": "Louisiana, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814085",
+              "ark": "ark:/61903/1:1:M6PZ-FKF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Richard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814086",
+              "ark": "ark:/61903/1:1:M6PZ-FKN",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Paul",
+                  "given": "Richard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1830",
+                  "standard_date": "1830",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814087",
+              "ark": "ark:/61903/1:1:M6PZ-FKJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Paul",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334814088",
+              "ark": "ark:/61903/1:1:M6PZ-FKV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Paul",
+                  "given": "Richard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_334814084",
+              "child": "p_334814085"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334814083",
+              "child": "p_334814085"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334814086",
+              "child": "p_334814084"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_334814083",
+              "person2": "p_334814084"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_206986516",
+              "resource_type": "Record",
+              "title": "Household of Henry Gaetjen, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6PZ-FK6 : Wed Sep 09 13:11:52 UTC 2026), Entry for Henry Gaetjen and Emma Gaetjen, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFN-7MN",
+              "coverage": {
+                "place_rep_id": "3853449",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY1-SQJW",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334814083",
+              "resource_type": "Person",
+              "url": "#p_334814083"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "355",
+              "name": "Louisiana, United States",
+              "latitude": 31,
+              "longitude": -92
+            },
+            {
+              "id": "3853449",
+              "name": "San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_334814083",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6GY-VVV",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Works In Soda Works"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Los Angeles, Los Angeles, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Gustave Gaidke",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1843",
+        "birthPlace": "Germany",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of H. W. Stoll, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHF6-P4S",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334465758",
+              "ark": "ark:/61903/1:1:M6GY-VVV",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaidke",
+                  "given": "Gustave"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "Works In Soda Works"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Widowed"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1843",
+                  "standard_date": "1843",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Los Angeles, Los Angeles, California, United States",
+                  "standard_place": "Los Angeles, Los Angeles, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334465752",
+              "ark": "ark:/61903/1:1:M6GY-VVD",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Stoll",
+                  "given": "H. W."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Los Angeles, Los Angeles, California, United States",
+                  "standard_place": "Los Angeles, Los Angeles, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1839",
+                  "standard_date": "1839",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334465753",
+              "ark": "ark:/61903/1:1:M6GY-VV6",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Stoll",
+                  "given": "Louisa"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Los Angeles, Los Angeles, California, United States",
+                  "standard_place": "Los Angeles, Los Angeles, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1856",
+                  "standard_date": "1856",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334465754",
+              "ark": "ark:/61903/1:1:M6GY-VVX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Stoll",
+                  "given": "Mina"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Los Angeles, Los Angeles, California, United States",
+                  "standard_place": "Los Angeles, Los Angeles, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1876",
+                  "standard_date": "1876",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334465755",
+              "ark": "ark:/61903/1:1:M6GY-VVF",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Stoll",
+                  "given": "Martha"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Los Angeles, Los Angeles, California, United States",
+                  "standard_place": "Los Angeles, Los Angeles, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1877",
+                  "standard_date": "1877",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334465756",
+              "ark": "ark:/61903/1:1:M6GY-VVN",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Stoll",
+                  "given": "Albert"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Los Angeles, Los Angeles, California, United States",
+                  "standard_place": "Los Angeles, Los Angeles, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334465757",
+              "ark": "ark:/61903/1:1:M6GY-VVJ",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Stoll",
+                  "given": "Margaret"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Los Angeles, Los Angeles, California, United States",
+                  "standard_place": "Los Angeles, Los Angeles, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1821",
+                  "standard_date": "1821",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_206921912",
+              "resource_type": "Record",
+              "title": "Household of H. W. Stoll, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6GY-VVD : Wed Sep 09 13:58:18 UTC 2026), Entry for H. W. Stoll and Louisa Stoll, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHF6-P4S",
+              "coverage": {
+                "place_rep_id": "5494026",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB7-LRR",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334465758",
+              "resource_type": "Person",
+              "url": "#p_334465758"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "5494026",
+              "name": "Los Angeles, Los Angeles, California, United States",
+              "latitude": 34.0522,
+              "longitude": -118.2428
+            }
+          ]
+        },
+        "primaryId": "p_334465758",
+        "batchNumber": "C55386-1",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6PF-PPX",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Stockton, San Joaquin, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Charlotte Gadtke",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1879",
+        "birthPlace": "California, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of James Gadtke, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHFJ-SVW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334956404",
+              "ark": "ark:/61903/1:1:M6PF-PPX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charlotte",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334954301",
+              "ark": "ark:/61903/1:1:M6PF-L68",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956402",
+              "ark": "ark:/61903/1:1:M6PF-PPD",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956403",
+              "ark": "ark:/61903/1:1:M6PF-PP6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Otto",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956405",
+              "ark": "ark:/61903/1:1:M6PF-PPF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Brad M.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1854",
+                  "standard_date": "1854",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_334954301",
+              "person2": "p_334956402"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334954301",
+              "child": "p_334956404"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334954301",
+              "child": "p_334956403"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334956402",
+              "child": "p_334956403"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334956402",
+              "child": "p_334956404"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_207011346",
+              "resource_type": "Record",
+              "title": "Household of James Gadtke, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6PF-L68 : Wed Sep 09 14:01:16 UTC 2026), Entry for James Gadtke and Mary A. Gadtke, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFJ-SVW",
+              "coverage": {
+                "place_rep_id": "5492726",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY8-3VLZ",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334956404",
+              "resource_type": "Person",
+              "url": "#p_334956404"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "5492726",
+              "name": "Stockton, San Joaquin, California, United States",
+              "latitude": 37.9577,
+              "longitude": -121.2908
+            }
+          ]
+        },
+        "primaryId": "p_334956404",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6PF-PPD",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Occupation",
+            "value": "Housekeeper"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Stockton, San Joaquin, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary A. Gadtke",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1850",
+        "birthPlace": "Germany",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of James Gadtke, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHFJ-SVW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334956402",
+              "ark": "ark:/61903/1:1:M6PF-PPD",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Housekeeper"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334954301",
+              "ark": "ark:/61903/1:1:M6PF-L68",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956403",
+              "ark": "ark:/61903/1:1:M6PF-PP6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Otto",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956404",
+              "ark": "ark:/61903/1:1:M6PF-PPX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charlotte",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956405",
+              "ark": "ark:/61903/1:1:M6PF-PPF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Brad M.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1854",
+                  "standard_date": "1854",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_334954301",
+              "person2": "p_334956402"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334954301",
+              "child": "p_334956404"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334954301",
+              "child": "p_334956403"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334956402",
+              "child": "p_334956403"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334956402",
+              "child": "p_334956404"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_207011346",
+              "resource_type": "Record",
+              "title": "Household of James Gadtke, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6PF-L68 : Wed Sep 09 14:01:16 UTC 2026), Entry for James Gadtke and Mary A. Gadtke, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFJ-SVW",
+              "coverage": {
+                "place_rep_id": "5492726",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY8-3VLZ",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334956402",
+              "resource_type": "Person",
+              "url": "#p_334956402"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "5492726",
+              "name": "Stockton, San Joaquin, California, United States",
+              "latitude": 37.9577,
+              "longitude": -121.2908
+            }
+          ]
+        },
+        "primaryId": "p_334956402",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6PF-PPF",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Tailor"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Stockton, San Joaquin, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Brad M. Gadtke",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1854",
+        "birthPlace": "New York, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of James Gadtke, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHFJ-SVW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334956405",
+              "ark": "ark:/61903/1:1:M6PF-PPF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Brad M.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "Tailor"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1854",
+                  "standard_date": "1854",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334954301",
+              "ark": "ark:/61903/1:1:M6PF-L68",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956402",
+              "ark": "ark:/61903/1:1:M6PF-PPD",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956403",
+              "ark": "ark:/61903/1:1:M6PF-PP6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Otto",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956404",
+              "ark": "ark:/61903/1:1:M6PF-PPX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charlotte",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_207011346",
+              "resource_type": "Record",
+              "title": "Household of James Gadtke, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6PF-L68 : Wed Sep 09 14:01:16 UTC 2026), Entry for James Gadtke and Mary A. Gadtke, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFJ-SVW",
+              "coverage": {
+                "place_rep_id": "5492726",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY8-3VLZ",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334956405",
+              "resource_type": "Person",
+              "url": "#p_334956405"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "5492726",
+              "name": "Stockton, San Joaquin, California, United States",
+              "latitude": 37.9577,
+              "longitude": -121.2908
+            }
+          ]
+        },
+        "primaryId": "p_334956405",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6G5-P43",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Keeping House"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Martinez, Contra Costa, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Carrie Gatjen",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1855",
+        "birthPlace": "New York, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Henry Gatjen, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHF6-3XG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334388913",
+              "ark": "ark:/61903/1:1:M6G5-P43",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Carrie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "Keeping House"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388912",
+              "ark": "ark:/61903/1:1:M6G5-P4S",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1837",
+                  "standard_date": "1837",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388914",
+              "ark": "ark:/61903/1:1:M6G5-P4Q",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Meta"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1876",
+                  "standard_date": "1876",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388915",
+              "ark": "ark:/61903/1:1:M6G5-P47",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Burchard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_334388912",
+              "child": "p_334388915"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388913",
+              "child": "p_334388915"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388912",
+              "child": "p_334388914"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388913",
+              "child": "p_334388914"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_334388912",
+              "person2": "p_334388913"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_206904142",
+              "resource_type": "Record",
+              "title": "Household of Henry Gatjen, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6G5-P4S : Wed Sep 09 15:56:43 UTC 2026), Entry for Henry Gatjen and Carrie Gatjen, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHF6-3XG",
+              "coverage": {
+                "place_rep_id": "3853471",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBZ-KF7",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334388913",
+              "resource_type": "Person",
+              "url": "#p_334388913"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "3853471",
+              "name": "Martinez, Contra Costa, California, United States",
+              "latitude": 38.0194,
+              "longitude": -122.1342
+            }
+          ]
+        },
+        "primaryId": "p_334388913",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6G5-P4Q",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Martinez, Contra Costa, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Meta Gatjen",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Female",
+        "birthDate": "1876",
+        "birthPlace": "California, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Henry Gatjen, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHF6-3XG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334388914",
+              "ark": "ark:/61903/1:1:M6G5-P4Q",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Meta"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1876",
+                  "standard_date": "1876",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388912",
+              "ark": "ark:/61903/1:1:M6G5-P4S",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1837",
+                  "standard_date": "1837",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388913",
+              "ark": "ark:/61903/1:1:M6G5-P43",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Carrie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388915",
+              "ark": "ark:/61903/1:1:M6G5-P47",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Burchard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_334388912",
+              "child": "p_334388915"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388913",
+              "child": "p_334388915"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388912",
+              "child": "p_334388914"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388913",
+              "child": "p_334388914"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_334388912",
+              "person2": "p_334388913"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_206904142",
+              "resource_type": "Record",
+              "title": "Household of Henry Gatjen, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6G5-P4S : Wed Sep 09 15:56:43 UTC 2026), Entry for Henry Gatjen and Carrie Gatjen, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHF6-3XG",
+              "coverage": {
+                "place_rep_id": "3853471",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBZ-KF7",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334388914",
+              "resource_type": "Person",
+              "url": "#p_334388914"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "3853471",
+              "name": "Martinez, Contra Costa, California, United States",
+              "latitude": 38.0194,
+              "longitude": -122.1342
+            }
+          ]
+        },
+        "primaryId": "p_334388914",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6PF-L68",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Occupation",
+            "value": "Tin Smith"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Stockton, San Joaquin, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "James Gadtke",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1840",
+        "birthPlace": "Germany",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of James Gadtke, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHFJ-SVW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334954301",
+              "ark": "ark:/61903/1:1:M6PF-L68",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Tin Smith"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956402",
+              "ark": "ark:/61903/1:1:M6PF-PPD",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956403",
+              "ark": "ark:/61903/1:1:M6PF-PP6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Otto",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956404",
+              "ark": "ark:/61903/1:1:M6PF-PPX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charlotte",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956405",
+              "ark": "ark:/61903/1:1:M6PF-PPF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Brad M.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1854",
+                  "standard_date": "1854",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_334954301",
+              "person2": "p_334956402"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334954301",
+              "child": "p_334956404"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334954301",
+              "child": "p_334956403"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334956402",
+              "child": "p_334956403"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334956402",
+              "child": "p_334956404"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_207011346",
+              "resource_type": "Record",
+              "title": "Household of James Gadtke, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6PF-L68 : Wed Sep 09 14:01:16 UTC 2026), Entry for James Gadtke and Mary A. Gadtke, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFJ-SVW",
+              "coverage": {
+                "place_rep_id": "5492726",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY8-3VLZ",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334954301",
+              "resource_type": "Person",
+              "url": "#p_334954301"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "5492726",
+              "name": "Stockton, San Joaquin, California, United States",
+              "latitude": 37.9577,
+              "longitude": -121.2908
+            }
+          ]
+        },
+        "primaryId": "p_334954301",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6PF-PP6",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Stockton, San Joaquin, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Otto Gadtke",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1875",
+        "birthPlace": "California, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of James Gadtke, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHFJ-SVW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334956403",
+              "ark": "ark:/61903/1:1:M6PF-PP6",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Otto",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334954301",
+              "ark": "ark:/61903/1:1:M6PF-L68",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1840",
+                  "standard_date": "1840",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956402",
+              "ark": "ark:/61903/1:1:M6PF-PPD",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary A.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956404",
+              "ark": "ark:/61903/1:1:M6PF-PPX",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charlotte",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334956405",
+              "ark": "ark:/61903/1:1:M6PF-PPF",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Brad M.",
+                  "surname": "Gadtke"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stockton, San Joaquin, California, United States",
+                  "standard_place": "Stockton, San Joaquin, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1854",
+                  "standard_date": "1854",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_334954301",
+              "person2": "p_334956402"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334954301",
+              "child": "p_334956404"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334954301",
+              "child": "p_334956403"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334956402",
+              "child": "p_334956403"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334956402",
+              "child": "p_334956404"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_207011346",
+              "resource_type": "Record",
+              "title": "Household of James Gadtke, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6PF-L68 : Wed Sep 09 14:01:16 UTC 2026), Entry for James Gadtke and Mary A. Gadtke, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFJ-SVW",
+              "coverage": {
+                "place_rep_id": "5492726",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYY8-3VLZ",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334956403",
+              "resource_type": "Person",
+              "url": "#p_334956403"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "5492726",
+              "name": "Stockton, San Joaquin, California, United States",
+              "latitude": 37.9577,
+              "longitude": -121.2908
+            }
+          ]
+        },
+        "primaryId": "p_334956403",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6G5-P4S",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "Painter"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Martinez, Contra Costa, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Gatjen",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1837",
+        "birthPlace": "Germany",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Henry Gatjen, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHF6-3XG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334388912",
+              "ark": "ark:/61903/1:1:M6G5-P4S",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Painter"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1837",
+                  "standard_date": "1837",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388913",
+              "ark": "ark:/61903/1:1:M6G5-P43",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Carrie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388914",
+              "ark": "ark:/61903/1:1:M6G5-P4Q",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Meta"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1876",
+                  "standard_date": "1876",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388915",
+              "ark": "ark:/61903/1:1:M6G5-P47",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Burchard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_334388912",
+              "child": "p_334388915"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388913",
+              "child": "p_334388915"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388912",
+              "child": "p_334388914"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388913",
+              "child": "p_334388914"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_334388912",
+              "person2": "p_334388913"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_206904142",
+              "resource_type": "Record",
+              "title": "Household of Henry Gatjen, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6G5-P4S : Wed Sep 09 15:56:43 UTC 2026), Entry for Henry Gatjen and Carrie Gatjen, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHF6-3XG",
+              "coverage": {
+                "place_rep_id": "3853471",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBZ-KF7",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334388912",
+              "resource_type": "Person",
+              "url": "#p_334388912"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "3853471",
+              "name": "Martinez, Contra Costa, California, United States",
+              "latitude": 38.0194,
+              "longitude": -122.1342
+            }
+          ]
+        },
+        "primaryId": "p_334388912",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M6G5-P47",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Martinez, Contra Costa, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Burchard Gatjen",
+        "score": 2.4010801,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1879",
+        "birthPlace": "California, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Henry Gatjen, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHF6-3XG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334388915",
+              "ark": "ark:/61903/1:1:M6G5-P47",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Burchard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388912",
+              "ark": "ark:/61903/1:1:M6G5-P4S",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1837",
+                  "standard_date": "1837",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388913",
+              "ark": "ark:/61903/1:1:M6G5-P43",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Carrie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334388914",
+              "ark": "ark:/61903/1:1:M6G5-P4Q",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gatjen",
+                  "given": "Meta"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Martinez, Contra Costa, California, United States",
+                  "standard_place": "Martinez, Contra Costa, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1876",
+                  "standard_date": "1876",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_334388912",
+              "child": "p_334388915"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388913",
+              "child": "p_334388915"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388912",
+              "child": "p_334388914"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334388913",
+              "child": "p_334388914"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_334388912",
+              "person2": "p_334388913"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_206904142",
+              "resource_type": "Record",
+              "title": "Household of Henry Gatjen, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6G5-P4S : Wed Sep 09 15:56:43 UTC 2026), Entry for Henry Gatjen and Carrie Gatjen, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHF6-3XG",
+              "coverage": {
+                "place_rep_id": "3853471",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBZ-KF7",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334388915",
+              "resource_type": "Person",
+              "url": "#p_334388915"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "3853471",
+              "name": "Martinez, Contra Costa, California, United States",
+              "latitude": 38.0194,
+              "longitude": -122.1342
+            }
+          ]
+        },
+        "primaryId": "p_334388915",
+        "role": "Principal"
+      }
+    ]
+  }
+}

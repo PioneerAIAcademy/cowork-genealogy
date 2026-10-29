@@ -21,7 +21,7 @@
 | Host | Two Elastic Beanstalk environments in the lead's account, Python 3.12 and Node 24, one t4g.small each, behind one shared Application Load Balancer and one hostname. |
 | Database and storage | Neon Postgres (Launch plan) and one S3 bucket. Neon keeps each commit in three zones, the durability Multi-AZ RDS would give, for less. |
 | Schema | The handoff's numbered files in `apps/server/proto/sql/`, plus new numbered files for the beta's tables. One schema for both. |
-| Sign-in | Users sign in with FamilySearch every sitting; FamilySearch's tokens end after 60 unused minutes or 24 hours. Claude's sign-in server lives in the web tier, on the Python MCP SDK's handlers, and shares one FamilySearch callback with browser sign-in. |
+| Sign-in | Users sign in with FamilySearch every sitting; FamilySearch's sessions end after 8 idle hours or 24 hours. Claude's sign-in server lives in the web tier, on the Python MCP SDK's handlers, and shares one FamilySearch callback with browser sign-in. |
 | Tokens | Our access tokens last up to 24 hours. No refresh token is issued if P0.2 shows Claude accepts that. |
 | Front door | One door on the tool server. Every caller presents our own token, and the door loads that user's stored FamilySearch token and OpenRouter key. |
 | Projects | `projectPath` carries an id the server mints. The user who first writes to it owns it. |
@@ -344,7 +344,7 @@ Two hosted routing tests serve `project_list` from a fixture; every other resear
 **Reconnect fallback (if P0.2 shows no reconnect prompt inside an agent).** When `project_list` answered `hosted` in this task, the router calls `auth_status` on the main thread before the first delegation of each reply. Only when the answer carries E3's reconnect message does it call `auth_status` once more, so the door's 401 reaches Cowork on the main thread, then give that message and stop. In folder mode it makes no call. It re-runs the router's suite once.
 
 **Done when (if built),** in the router's suite with `auth_status` served from fixtures:
-- a reply whose connector session has ended, in a new task or one reopened after an idle hour, gets the reconnect line and no delegation;
+- a reply whose connector session has ended, in a new task or one reopened after eight idle hours, gets the reconnect line and no delegation;
 - a folder-mode test that serves `auth_status` (`loggedIn` false, `hasRefreshToken` true) delegates as today and never calls it;
 - the two hosted routing tests gain an `auth_status` fixture answering a live session.
 
