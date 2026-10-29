@@ -190,9 +190,10 @@ precedence is the hook's ordering, not a clause list:
   (phase 3 is unbuilt), so no path produces it.
 - **A subagent cannot deliver.** The arm requires main-thread identity
   (`"agent_id" not in data`); a subagent's call falls through to the inert tool body.
-- **A completion halt never overrides a reason already set.** If a halt during the call
-  already set a reason (a Stop, the spend cap, a lost grant lock, a superseded attempt),
-  that reason stands and the summary is not shown.
+- **A completion halt never overrides a reason already set.** It is recorded from the
+  `PostToolUse` hook, after the call. If a halt during the call already set a reason (a
+  Stop, the spend cap, a lost grant lock, a superseded attempt), that reason stands and
+  the summary is not shown.
 - **A subagent cannot trigger a completion halt.** Like delivery, it requires main-thread
   identity.
 
