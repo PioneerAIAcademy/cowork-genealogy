@@ -5276,6 +5276,25 @@ function newQuestionWhileAnotherIsOpenInvariants(_entry: any, preCallResearch: a
   ];
 }
 
+/** A `fan_pivot` question exists to advance a question whose direct evidence
+ *  ran out, so its `unblocks` must name a question still open in the pre-call
+ *  snapshot. Decidable from `questions[]` alone (ADR-0011). Every committed e2e
+ *  `fan_pivot` append that left `unblocks` empty (3 of 4) depended on an open
+ *  `q_001` it would have advanced. */
+function fanPivotUnblocksInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.selection_basis !== "fan_pivot") return [];
+  const open = (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+    .filter((q: any) => typeof q?.id === "string" && QUESTION_STILL_OPEN.has(q.status))
+    .map((q: any) => q.id as string);
+  const unblocks = Array.isArray(entry?.unblocks) ? entry.unblocks : [];
+  if (unblocks.some((id: unknown) => typeof id === "string" && open.includes(id))) return [];
+  return [
+    "a `fan_pivot` question must name in `unblocks` the open question whose direct evidence ran out" +
+      (open.length > 0 ? ` (open: ${open.sort().join(", ")})` : " — no question is open, so there is none to pivot from") +
+      ". Its family, associates and neighbors are researched to advance that question.",
+  ];
+}
+
 /** A plan item may not stand at `completed` unless some `log[]` entry carries
  *  its id in `plan_item_id`. Completing an item asserts the search it names was
  *  done; the log is where a search is recorded, so an item completed with
@@ -7428,6 +7447,7 @@ function applyOne(
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
       invariantErrors.push(...secondQuestionInOneCallInvariants(resultEntry, research, preCallResearch));
+      invariantErrors.push(...fanPivotUnblocksInvariants(resultEntry, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
