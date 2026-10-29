@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
-import { planItemFlags } from "../utils/plan-item-plausibility.js";
+import { compoundJurisdictionError, planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -1589,15 +1589,17 @@ function yearsIn(...values: unknown[]): number[] {
  *  further apart than `birthThresholdMiles` allows for the era the dates span.
  *  Fails closed: with no country difference, the pair counts as far apart unless
  *  both sides carry a standard_place with coordinates finer than a region
- *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known. */
-function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords): boolean {
+ *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known.
+ *  `unresolvedIsNear` opens the one case a slow lookup decides: a standard
+ *  place the lookup returned no coordinates for. */
+function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords, unresolvedIsNear = false): boolean {
   if (birthCountriesDiffer(assertion, birth)) return true;
   const sa = assertion?.standard_place;
   const sb = birth?.standard_place;
   if (typeof sa !== "string" || typeof sb !== "string") return true;
   const pa = coords?.get(sa);
   const pb = coords?.get(sb);
-  if (!pa || !pb) return true;
+  if (!pa || !pb) return !unresolvedIsNear;
   if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
   if (placeTypeKey(pa.type) === "county" && placeTypeKey(pb.type) === "county") return true;
   const years = yearsIn(birth.date, birth.standard_date, assertion.date);
@@ -1738,6 +1740,7 @@ function contradictionFindings(
   personLinks?: ReadonlyArray<PersonLink>,
   batchAssertions?: Map<string, any>,
   birthPlaceCoords?: BirthPlaceCoords,
+  unresolvedIsNear = false,
 ): string[] {
   const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
   if (!scope) return [];
@@ -1746,7 +1749,7 @@ function contradictionFindings(
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords));
+  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords, unresolvedIsNear));
   if (far) {
     findings.push(
       `the record states '${far.place}' (assertion '${far.id}') where the tree person ` +
@@ -1796,8 +1799,10 @@ export function coreIdentifierContradictionInvariants(
   // Prefetched in `prepareOps`. Absent, every same-country pair counts as far
   // apart, which is the place arm before the distance test.
   birthPlaceCoords?: BirthPlaceCoords,
+  // Merges only: a place the lookup did not resolve is not a contradiction.
+  unresolvedIsNear = false,
 ): string[] {
-  const findings = contradictionFindings(entry, research, tree, personLinks, batchAssertions, birthPlaceCoords);
+  const findings = contradictionFindings(entry, research, tree, personLinks, batchAssertions, birthPlaceCoords, unresolvedIsNear);
   if (findings.length === 0) return [];
   return [
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
@@ -4138,6 +4143,71 @@ export function mergeCarryRefusals(
   return out;
 }
 
+/** Issue #2537: each live link the merge moves onto a survivor must pass the
+ *  checks a `research_append` update re-pointing it there would: the
+ *  contradiction cap, the move rule and the score gate's fabrication arm. Judged
+ *  on the project after the merge (`after`: the remapped research and the merged
+ *  tree), where the survivor holds both copies' facts. A birth place the lookup
+ *  does not resolve is not a contradiction here, so a slow lookup cannot refuse
+ *  a correct merge; a different country still is. A move is an update, not
+ *  an append, so a link with no score is not asked for one; a scored link needs
+ *  a `same_person` score recorded for the survivor. One line per finding, then
+ *  the routing; `[]` when nothing is refused. */
+export async function mergeLinkCheckRefusals(
+  projectPath: string,
+  before: { research: any },
+  after: { research: any; tree: any },
+  merges: ReadonlyArray<readonly [string, string]>,
+  startingPersonIds?: ReadonlySet<string>,
+): Promise<string[]> {
+  const survivorOf = new Map<string, string>();
+  for (const [s, c] of merges) survivorOf.set(c, s);
+  const moved: Array<{ entry: any; from: string }> = [];
+  for (const e of (before.research?.person_evidence ?? []) as any[]) {
+    if (!e || e.superseded_by || typeof e.person_id !== "string") continue;
+    const to = survivorOf.get(e.person_id);
+    if (to) moved.push({ entry: { ...e, person_id: to }, from: e.person_id });
+  }
+  if (moved.length === 0) return [];
+
+  const ops: ResearchAppendOp[] = moved.map(({ entry }) => ({
+    section: "person_evidence",
+    op: "update",
+    entryId: entry.id,
+    fields: { person_id: entry.person_id },
+  }) as ResearchAppendOp);
+  const batchAssertions = batchAssertionsById(after.research, []);
+  const personLinks = batchPersonLinks(after.research, []);
+  const birthPlaceCoords = await prefetchBirthPlaceCoords(after.research, ops, after.tree, personLinks, batchAssertions);
+  const matchScores = new Map<string, MatchScoreFile>();
+  for (const recordId of recordIdsForPersonEvidence(after.research, ops)) {
+    const file = await readMatchScores(projectPath, recordId);
+    if (file !== null) matchScores.set(recordId, file);
+  }
+
+  const lines: string[] = [];
+  for (const { entry, from } of moved) {
+    const findings = [
+      ...coreIdentifierContradictionInvariants(entry, after.research, after.tree, personLinks, batchAssertions, birthPlaceCoords, true),
+      ...unexplainedMoveInvariants(entry, after.research, after.tree, batchAssertions),
+      ...personEvidenceScoreInvariants(
+        entry, after.research, after.tree, matchScores, batchAssertions, false, startingPersonIds, new Set<string>(),
+      ),
+    ];
+    for (const f of findings) {
+      lines.push(`person_evidence '${entry.id}' would move from '${from}' to '${entry.person_id}' in this merge: ${f}`);
+    }
+  }
+  if (lines.length === 0) return [];
+  return [
+    ...lines,
+    "Nothing was written. A merge moves each link onto the survivor, so it must pass the checks a link written " +
+      "there directly would. Before merging again, fix each listed link where it stands: record the same_person " +
+      "score for the survivor, or have person-evidence lower the link or name its move_bridge. If the record " +
+      "does not belong to the survivor, do not merge.",
+  ];
+}
+
 /** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a
  *  source and the resulting project holds ≥THRESHOLD sources but zero assertions;
  *  null otherwise. Gated on a real (non-noop) `sources` append so it fires at the
@@ -5276,6 +5346,25 @@ function newQuestionWhileAnotherIsOpenInvariants(_entry: any, preCallResearch: a
   ];
 }
 
+/** A `fan_pivot` question exists to advance a question whose direct evidence
+ *  ran out, so its `unblocks` must name a question still open in the pre-call
+ *  snapshot. Decidable from `questions[]` alone (ADR-0011). Every committed e2e
+ *  `fan_pivot` append that left `unblocks` empty (3 of 4) depended on an open
+ *  `q_001` it would have advanced. */
+function fanPivotUnblocksInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.selection_basis !== "fan_pivot") return [];
+  const open = (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+    .filter((q: any) => typeof q?.id === "string" && QUESTION_STILL_OPEN.has(q.status))
+    .map((q: any) => q.id as string);
+  const unblocks = Array.isArray(entry?.unblocks) ? entry.unblocks : [];
+  if (unblocks.some((id: unknown) => typeof id === "string" && open.includes(id))) return [];
+  return [
+    "a `fan_pivot` question must name in `unblocks` the open question whose direct evidence ran out" +
+      (open.length > 0 ? ` (open: ${open.sort().join(", ")})` : " — no question is open, so there is none to pivot from") +
+      ". Its family, associates and neighbors are researched to advance that question.",
+  ];
+}
+
 /** A plan item may not stand at `completed` unless some `log[]` entry carries
  *  its id in `plan_item_id`. Completing an item asserts the search it names was
  *  done; the log is where a search is recorded, so an item completed with
@@ -5572,6 +5661,15 @@ export function planItemSearchedSkipInvariants(entry: any, research: any): strin
       `so it cannot be marked 'skipped', which says nothing was searched. Set it to 'completed' ` +
       `instead: ${ran.id} names this item, so the completion is attributed.`,
   ];
+}
+
+/** A plan item names one place (`compoundJurisdictionError`). Checked on an
+ *  append and on a change to `jurisdiction` only, so a compound item written
+ *  before this rule does not strand an unrelated edit. */
+function compoundJurisdictionInvariants(item: any, research: any): string[] {
+  const localities = Array.isArray(research?.localities) ? research.localities : [];
+  const error = compoundJurisdictionError(item ?? {}, localities);
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
 }
 
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
@@ -7419,6 +7517,7 @@ function applyOne(
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
       invariantErrors.push(...secondQuestionInOneCallInvariants(resultEntry, research, preCallResearch));
+      invariantErrors.push(...fanPivotUnblocksInvariants(resultEntry, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
@@ -7537,6 +7636,9 @@ function applyOne(
         );
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        if (item && storedItem?.jurisdiction !== item.jurisdiction) {
+          invariantErrors.push(...compoundJurisdictionInvariants(item, research));
+        }
         invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
         // rule has to hold here too or it is one `{ ...entry }` spread away
@@ -7619,6 +7721,9 @@ function applyOne(
         ),
       );
       invariantErrors.push(...planItemSearchedSkipInvariants(resultEntry, research));
+    }
+    if (op.op === "append" || storedItem?.jurisdiction !== resultEntry?.jurisdiction) {
+      invariantErrors.push(...compoundJurisdictionInvariants(resultEntry, research));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(
