@@ -296,7 +296,7 @@ The bounce is not an access control. Until launch day, admission reads an allowl
 - **Done when:**
   - a cookie for user A cannot reach user B's project by any route;
   - an upload's text reaches `sidecar_read`;
-  - a submission reaches the Apps Script copy, and nothing lands in the bucket;
+  - a submission reaches a fake Apps Script endpoint, and nothing lands in the bucket; once the lead creates the real copy in January, a submission reaches it;
   - a download larger than the instance's free memory completes on the deployed instance, and its available memory stays flat.
 
 **W4 The browser app (`apps/web`, `packages/viewer-ui`).**
@@ -500,7 +500,7 @@ The lead does the items "What this is" names. The team builds the rest from thes
 | E4 Limits: per user | issue #3999 | senior | 31 Dec |
 | E5 Fit for a connector | issue #3996 | junior | 14 Dec |
 | W1 Settings: chat switch, admission, `/livez` | issue #3985 | senior | 23 Nov |
-| W1 Settings: pool, TLS, nginx | issue #3980 | senior | 7 Dec |
+| W1 Settings: pool, TLS, nginx | issue #3980 | senior | 30 Nov |
 | W2 Sign-in: users, sessions, state, redirect, budget | issue #3992 | senior | 30 Nov |
 | W2 Sign-in: Claude's authorization server | issue #3997 | senior | 7 Dec |
 | W3 Project routes: viewer data | issue #3981 | senior | 7 Dec |
@@ -552,8 +552,8 @@ The team makes these too, from one issue, with Richard reviewing:
 - install the connector build of the plugin from a test marketplace, on a separate Claude account, and check that a version bump reaches it;
 - in a fresh Cowork task, sign in and run one research session from `init-project` to a proof summary, with issue #3836 merged if it is ready;
 - let the session end, and reconnect;
-- open the project from Claude's link in a fresh browser, upload a 25 MB capture, and download a project larger than the instance's free memory;
-- link OpenRouter;
+- open the project from Claude's link in a fresh browser;
+- through the routes, since their screens are due 31 December: upload a 25 MB capture, download a project larger than the instance's free memory, and link OpenRouter;
 - record agent spawns, hook denials, approval prompts, timeouts and missed direct reads on issue #3529.
 
 A plugin fix it turns up goes in a small follow-up PR.
