@@ -15,15 +15,15 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
     resolveStandardPlace: vi.fn(async (text: string) =>
       text === "Schuylkill County, Pennsylvania" ? "Schuylkill, Pennsylvania, United States" : null,
     ),
-    // Offline: every supplied standard_place is one of FamilySearch's unless a
-    // test says otherwise.
-    isFamilySearchPlace: vi.fn(async () => true),
+    // Offline: every supplied standard_place is one of FamilySearch's, spelled
+    // as written, unless a test says otherwise.
+    familySearchFullName: vi.fn(async (name: string) => name),
   };
 });
 
 import { treeEdit, checkWarningGate } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
-import { isFamilySearchPlace, resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { familySearchFullName, resolveStandardPlace } from "../../src/utils/place-resolver.js";
 import { validateProject } from "../../src/validation/validator.js";
 
 const minimalResearch = {
@@ -541,9 +541,9 @@ describe("tree_edit", () => {
       (await readTree()).persons[0].facts.find((f: any) => f.id === single(r).assignedIds?.fact);
     const placeWarnings = (r: any) =>
       r.validation.warnings.filter((w: string) => /^(standard_place '|could not resolve standard_place)/.test(w));
-    const realPlace = vi.mocked(isFamilySearchPlace);
-    /** Only OTHER is not one of FamilySearch's names. */
-    const onlyOtherIsFake = async (name: string) => name !== OTHER;
+    const realPlace = vi.mocked(familySearchFullName);
+    /** Only OTHER is not one of FamilySearch's names; the rest are spelled as written. */
+    const onlyOtherIsFake = async (name: string) => (name === OTHER ? false : name);
     beforeEach(() => {
       realPlace.mockReset();
       realPlace.mockImplementation(onlyOtherIsFake);
@@ -551,7 +551,7 @@ describe("tree_edit", () => {
     });
     afterEach(() => {
       realPlace.mockReset();
-      realPlace.mockImplementation(async () => true);
+      realPlace.mockImplementation(async (name: string) => name);
     });
 
     /** Tree source S1 is research source src_001; S2 is src_002. */
@@ -922,6 +922,126 @@ describe("tree_edit", () => {
       expect(rel.ok, JSON.stringify(rel)).toBe(true);
       if (!rel.ok) return;
       expect((await readTree()).relationships[0].facts[0].standard_place).toBe(FS);
+    });
+
+    it("keeps a FamilySearch standard place in FamilySearch's spelling, not as typed, silently", async () => {
+      await writeProject(onePersonSourced());
+      const TYPED = "schuylkill, pennsylvania";
+      realPlace.mockImplementation(async (name: string) => (name === TYPED ? FS : name));
+      const r = await addResidence(SCHUYLKILL, TYPED);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await added(r)).standard_place).toBe(FS);
+      expect(placeWarnings(r)).toEqual([]);
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
+    // research_append's check on a place taken from a value (unconfirmedByText):
+    // a phrase that names no place fills, keeps and is replaced by nothing.
+    describe("a phrase that names no place", () => {
+      const HAWAII = "Hawaii, United States";
+      const OF = "Of, Trabzon, Türkiye";
+      const phrases: Record<string, string> = {
+        "with his daughter": HAWAII,
+        "at the home of her daughter": OF,
+        "at the home of her daughter, Mrs. John Smith": OF,
+        "412 Vine St, Cincinnati": "Cincinnati, Hamilton, Ohio, United States",
+        Ky: "Kentucky, United States",
+        "W. Va.": "West Virginia, United States",
+      };
+      beforeEach(() => {
+        vi.mocked(resolveStandardPlace).mockImplementation(async (text: string) =>
+          text === SCHUYLKILL ? ENGINE : (phrases[text] ?? null),
+        );
+      });
+      afterEach(() => {
+        vi.mocked(resolveStandardPlace).mockImplementation(async (text: string) => (text === SCHUYLKILL ? ENGINE : null));
+      });
+
+      it("fills nothing from a lookup the text does not confirm, and says why", async () => {
+        await writeProject(onePersonSourced());
+        for (const place of ["with his daughter", "at the home of her daughter", "at the home of her daughter, Mrs. John Smith"]) {
+          const r = await addResidence(place);
+          expect(r.ok, JSON.stringify(r)).toBe(true);
+          if (!r.ok) return;
+          expect(await added(r), place).not.toHaveProperty("standard_place");
+          expect(placeWarnings(r)).toEqual([
+            `could not resolve standard_place for '${place}' (left unset): the engine's place lookup answer ` +
+              `'${phrases[place]}' could not be confirmed, as the text names neither a country nor that place`,
+          ]);
+        }
+      });
+
+      it("still fills a place whose text names the answer, a one-word place, and a one-word list answer", async () => {
+        await writeProject(onePersonSourced());
+        for (const place of ["412 Vine St, Cincinnati", "Ky", "W. Va."]) {
+          const r = await addResidence(place);
+          expect(r.ok, JSON.stringify(r)).toBe(true);
+          if (!r.ok) return;
+          expect((await added(r)).standard_place, place).toBe(phrases[place]);
+          expect(placeWarnings(r)).toEqual([]);
+        }
+      });
+
+      it("keeps no supplied FamilySearch place for it, and puts no lookup in its stead", async () => {
+        await writeProject(onePersonSourced());
+        const kept = await addResidence("with his daughter", HAWAII);
+        const replaced = await addResidence("at the home of her daughter", OTHER);
+        for (const r of [kept, replaced]) {
+          expect(r.ok, JSON.stringify(r)).toBe(true);
+          if (!r.ok) return;
+          expect(await added(r)).not.toHaveProperty("standard_place");
+        }
+        expect(placeWarnings(kept)).toEqual([
+          `standard_place '${HAWAII}' for 'with his daughter' was not kept: it could not be confirmed, as the text ` +
+            `names neither a country nor that place, and the engine has none for it: the engine's place lookup answer ` +
+            `'${HAWAII}' could not be confirmed, as the text names neither a country nor that place. ${KEPT_WHEN}`,
+        ]);
+        expect(placeWarnings(replaced)).toEqual([
+          `standard_place '${OTHER}' for 'at the home of her daughter' was not kept: it could not be confirmed, as ` +
+            `the text names neither a country nor that place, and the engine has none for it: the engine's place ` +
+            `lookup answer '${OF}' could not be confirmed, as the text names neither a country nor that place. ${KEPT_WHEN}`,
+        ]);
+        expect(realPlace).not.toHaveBeenCalled();
+      });
+
+      it("keeps a supplied one-word list answer whose text does not spell it", async () => {
+        await writeProject(onePersonSourced());
+        const r = await addResidence("W. Va.", "West Virginia, United States");
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!r.ok) return;
+        expect((await added(r)).standard_place).toBe("West Virginia, United States");
+        expect(placeWarnings(r)).toEqual([]);
+      });
+
+      it("tree_correct update_fact: a place corrected to such a phrase takes no standard_place", async () => {
+        const tree = onePersonSourced();
+        (tree.persons[0].facts as any[]).push({ id: "F2", type: "Residence", place: SCHUYLKILL, standard_place: ENGINE, sources: [{ ref: "S1" }] });
+        await writeProject(tree);
+        const r = await treeCorrect({
+          projectPath: dir,
+          operation: "update_fact",
+          personId: "I1",
+          factId: "F2",
+          fact: { place: "with his daughter" },
+        });
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!r.ok) return;
+        expect((await readTree()).persons[0].facts.find((f: any) => f.id === "F2")).not.toHaveProperty("standard_place");
+      });
+    });
+
+    it("drops one whose place is a non-place phrase with trailing punctuation, asking nothing", async () => {
+      await writeProject(onePersonSourced());
+      const r = await addResidence("Same House,", "Same, Manufahi, Timor-Leste");
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(await added(r)).not.toHaveProperty("standard_place");
+      expect(placeWarnings(r)).toEqual([
+        `standard_place 'Same, Manufahi, Timor-Leste' for 'Same House,' was not kept: 'Same House,' names no place. ${KEPT_WHEN}`,
+      ]);
+      expect(realPlace).not.toHaveBeenCalled();
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
     });
   });
 

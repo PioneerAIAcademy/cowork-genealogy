@@ -171,8 +171,8 @@ packaging fixture-shape test fails a new required field across the recorded
 `eval/fixtures/mcp/` responses.
 
 `verdict` is the engine's verdict on the query text, beside the candidates: the
-`standard_place` the writers (`tree_edit`, `tree_correct`, `research_append`,
-`project_create`) store for `placeName` as the place of a fact that cites no
+`standard_place` the writers (`tree_edit`, `tree_correct`, `research_append`)
+store for `placeName` as the place of a fact that cites no
 record and has no `standard_place` supplied, or none, and why (`placeAnswer` in
 `src/utils/place-verdict.ts`; tree-edit-tool-spec §4.1.1). It uses the context
 the writers use: `tree_edit` resolves a bare one-part place against the places
@@ -184,12 +184,15 @@ the lookup is `resolveStandardPlace(placeName, { contextPlaces: [contextName] })
   the reason naming a non-place phrase ("Same House", never looked up), a
   lookup that found nothing or failed (for a one-part text, telling the caller
   to write its parent jurisdictions into the place text, e.g. "Springfield,
-  Illinois"), or an answer naming a different country than the text.
+  Illinois"), an answer naming a different country than the text, or an answer
+  the text does not confirm (`unconfirmedByText`: "at the home of her daughter,
+  Mrs. John Smith" names neither a country nor "Of, Trabzon, Türkiye").
 
 A fact that cites a record takes FamilySearch's own standardization of the text
 on that record first, so the verdict is what a writer fills only when the record
 has none. A supplied value that is one of FamilySearch's standard places, as
-every candidate here is, is kept instead. `verdict`
+every candidate here is, is kept instead, when the place text confirms it by the
+same check. `verdict`
 is optional in the type, for the same fixture reason as `matchType`;
 `place_search` always returns it, and `place_search_all` does not. Each
 `SimplifiedPlaceResult`:

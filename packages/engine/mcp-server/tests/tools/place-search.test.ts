@@ -1014,6 +1014,29 @@ describe("placeSearchTool", () => {
       });
     });
 
+    it("is none for a phrase whose lookup answer the text does not confirm, and names one the text does", async () => {
+      const hit = (id: string, name: string, fullName: string): FSPlaceSearchResponse => ({
+        entries: [{ id, score: 90.0, content: { gedcomx: { places: [{ id, display: { name, fullName, type: "City" } }] } } }],
+      });
+      routeByUrl([
+        { match: "search?q=name:%22at%20the%20home", json: hit("800", "Of", "Of, Trabzon, Türkiye") },
+        { match: "search?q=name:%22412%20Vine", json: hit("900", "Cincinnati", "Cincinnati, Hamilton, Ohio, United States") },
+        { match: "description/800", json: description("800", "Of, Trabzon, Türkiye", "8800") },
+        { match: "description/900", json: description("900", "Cincinnati, Hamilton, Ohio, United States", "8900") },
+        { match: "attributes", ok: false, status: 404 },
+      ]);
+      const phrase = await placeSearchTool({ placeName: "at the home of her daughter, Mrs. John Smith" });
+      expect(phrase.verdict).toEqual({
+        standardPlace: null,
+        reason:
+          NONE +
+          "the engine's place lookup answer 'Of, Trabzon, Türkiye' could not be confirmed, as the text names neither a " +
+          "country nor that place",
+      });
+      const named = await placeSearchTool({ placeName: "412 Vine St, Cincinnati" });
+      expect(named.verdict).toEqual({ standardPlace: "Cincinnati, Hamilton, Ohio, United States", reason: STORES });
+    });
+
     it("is none when nothing is found for a text of several parts", async () => {
       routeByUrl([{ match: "search?q=name:", json: { entries: [] } }]);
       const result = await placeSearchTool({ placeName: "Nowhereville, Kansas" });

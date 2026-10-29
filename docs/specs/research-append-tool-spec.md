@@ -699,12 +699,17 @@ trailing comma part names a country the alias table knows, since the answer
 then names none it knows: "March, Cambridgeshire, England" drops "March,
 Transvaal, South Africa", a country the table does not carry. Otherwise it is
 kept only when the text is one word, which the resolver's one-word rule (Lever
-B) judges and whose answer need not spell the text, or when the answer's own
-name, its first segment, is one of the text's comma parts (compared ignoring
-case, accents, periods, type words and an "X of" prefix): "Hilperton, Wiltshire" keeps "Hilperton, Wiltshire, England, United
-Kingdom" and "Ky" keeps "Kentucky, United States", while "at the home of her
-daughter" and "at the home of her daughter, Mrs. John Smith" drop "Of, Trabzon,
-Türkiye". A dropped answer leaves the place as written, with no
+B) judges and whose answer need not spell the text, when the answer is the
+one-word list's own entry for the text, which need not spell it either, or when
+the answer's own name, its first segment, is one of the text's comma parts
+(compared ignoring case, accents, periods, type words and an "X of" prefix):
+"Hilperton, Wiltshire" keeps "Hilperton, Wiltshire, England, United Kingdom",
+"Ky" keeps "Kentucky, United States" and "W. Va." "West Virginia, United
+States", while "at the home of her daughter" and "at the home of her daughter,
+Mrs. John Smith" drop "Of, Trabzon, Türkiye". The check is
+`unconfirmedByText` (`src/utils/place-verdict.ts`); `tree_edit`, `tree_correct`
+and `place_search`'s verdict apply it to their own lookups and to a supplied
+value (tree-edit-tool-spec §4.1.1). A dropped answer leaves the place as written, with no
 `standard_place`. The lift holds on an append and on an update that leaves
 `place` alone, such as an `informant_bias_notes` note or `extraction_append`'s
 question tie. On such an update the lifted place and its `standard_place` go
@@ -1740,14 +1745,16 @@ On a `timelines` append or update reached as an MCP caller
 (`researchAppendFromCaller`), each event's supplied `standard_place` is judged as
 `tree_edit` judges a fact's (tree-edit-tool-spec §4.1.1). It is kept when the
 event has a `place` that is not a non-place phrase, the value names no other
-country than it, and FamilySearch's place search finds a place of that full name
-(a failed search keeps it). Otherwise the engine's answer replaces it, or it
+country than it, the place text confirms it (`unconfirmedByText`, §3.6), and
+FamilySearch's place search finds a place of that full name. It is kept in
+FamilySearch's spelling, with no warning and its distances unchanged; a failed
+search keeps it as written. Otherwise the engine's answer replaces it, or it
 becomes `null`, with a warning naming the event (`events[<k>]: standard_place
 '<supplied>' … was replaced by …` or `… was not kept …`). The answer is
 FamilySearch's own standardization of the text on the record personas of the
-event's `assertion_ids` (§3.6, Lever B step 1), else `resolveStandardPlace(place)`;
-none when FamilySearch's values disagree, for a non-place phrase, or for an
-answer naming another country. When the value is replaced by another place, or
+event's `assertion_ids` (§3.6, Lever B step 1), else `resolveStandardPlace(place)`
+when the place text confirms it; none when FamilySearch's values disagree, for a
+non-place phrase, or for an answer naming another country. When the value is replaced by another place, or
 by none, `distance_from_previous_km` becomes `null` on that event and the next,
 since both were measured from the old value; a replacement FamilySearch finds to
 be the same place (`samePlace`: one place id, as `place_distance` reads each name)

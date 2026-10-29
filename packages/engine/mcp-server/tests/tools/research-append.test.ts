@@ -32,9 +32,9 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
       if (text === "Austria") return "Bohemia";
       return null;
     }),
-    // Offline: every supplied standard_place is one of FamilySearch's unless a
-    // test says otherwise.
-    isFamilySearchPlace: vi.fn(async () => true),
+    // Offline: every supplied standard_place is one of FamilySearch's, spelled
+    // as written, unless a test says otherwise.
+    familySearchFullName: vi.fn(async (name: string) => name),
     // Two standard places are one place when they are spelled alike or a test
     // pairs them.
     samePlace: vi.fn(async (a: string, b: string) => a === b),
@@ -105,7 +105,7 @@ import {
   repIdToStandardPlace,
   standardPlaceToCoords,
   checkFirstPlace,
-  isFamilySearchPlace,
+  familySearchFullName,
   samePlace,
 } from "../../src/utils/place-resolver.js";
 
@@ -1557,6 +1557,30 @@ describe("research_append (Phase 1)", () => {
       expect(p).toMatchObject({ fact_type: "birth", place: "Ky", standard_place: "Kentucky, United States" });
     });
 
+    it("on an append of a one-part text of several words that the one-word list holds, whose list answer is kept though the text does not name it", async () => {
+      await writeProject();
+      const stub = vi.mocked(resolveStandardPlace).getMockImplementation()!;
+      vi.mocked(resolveStandardPlace).mockImplementation(async (text: string) =>
+        text === "W. Va." ? "West Virginia, United States" : text === "W. Virginia" ? "Virginia, United States" : null,
+      );
+      try {
+        const listed = await appendVariant("birthplace", "W. Va.");
+        const other = await appendVariant("birthplace", "W. Virginia");
+        for (const r of [listed, other]) expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!listed.ok || !other.ok) return;
+        expect(listed.resolvedPlaces).toEqual([{ place: "W. Va.", standardPlace: "West Virginia, United States", source: "geocoded" }]);
+        expect(other.resolvedPlaces).toBeUndefined();
+        const stored = (await readResearch()).assertions;
+        expect(stored.find((x: any) => x.id === singleOk(listed).entryId)).toMatchObject({
+          place: "W. Va.",
+          standard_place: "West Virginia, United States",
+        });
+        expect(stored.find((x: any) => x.id === singleOk(other).entryId)).not.toHaveProperty("standard_place");
+      } finally {
+        vi.mocked(resolveStandardPlace).mockImplementation(stub);
+      }
+    });
+
     it.each([
       ["names its own place", "March, Cambridgeshire, England", "March, Transvaal, South Africa"],
       ["is one part", "Austria", "Bohemia"],
@@ -2896,15 +2920,15 @@ describe("research_append (Phase 3)", () => {
     const append = (events: unknown[]) =>
       researchAppendFromCaller({ projectPath: dir, section: "timelines", op: "append", entry: timeline(events) } as never);
     const events = async () => (await readResearch()).timelines[0].events;
-    const realPlace = vi.mocked(isFamilySearchPlace);
+    const realPlace = vi.mocked(familySearchFullName);
     beforeEach(() => {
-      realPlace.mockImplementation(async (name: string) => name !== OTHER && name !== TEXAS);
+      realPlace.mockImplementation(async (name: string) => (name === OTHER || name === TEXAS ? false : name));
       vi.mocked(samePlace).mockClear();
       vi.mocked(samePlace).mockImplementation(async (a: string, b: string) => a === OTHER && b === ENGINE);
       vi.mocked(resolveStandardPlace).mockClear();
     });
     afterEach(() => {
-      realPlace.mockImplementation(async () => true);
+      realPlace.mockImplementation(async (name: string) => name);
       vi.mocked(samePlace).mockImplementation(async (a: string, b: string) => a === b);
     });
     /** a_002 is persona p1 of record RRRR-111 and a_003 persona p1 of RRRR-222,
@@ -2973,7 +2997,7 @@ describe("research_append (Phase 3)", () => {
             section: "timelines",
             op: "update",
             entryId: "t_001",
-            fields: { events: [ev("Nowhereville, Kansas", OTHER, 10), ev(null, "Atlantis", 20)] },
+            fields: { events: [ev("Schuylkill, Kansas", OTHER, 10), ev(null, "Atlantis", 20)] },
           },
         ],
       } as never);
@@ -3006,6 +3030,42 @@ describe("research_append (Phase 3)", () => {
         ),
       ]);
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
+    it("keeps one in FamilySearch's spelling with no warning, its distances and the next event's kept", async () => {
+      await writeProject();
+      const TYPED = "schuylkill, pennsylvania";
+      realPlace.mockImplementation(async (name: string) => (name === TYPED ? FS : name));
+      const r = await append([ev(SCHUYLKILL, TYPED, 12), ev("Boston, Massachusetts", null, 500)]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await events()).map((e: any) => [e.standard_place, e.distance_from_previous_km])).toEqual([
+        [FS, 12],
+        [null, 500],
+      ]);
+      expect(placeWarnings(r)).toEqual([]);
+      expect(r.validation.warnings.join(" ")).not.toMatch(/events\[0\]/);
+      expect(vi.mocked(samePlace)).not.toHaveBeenCalled();
+    });
+
+    it("keeps none for a phrase that names no place, though FamilySearch has the value, and puts no lookup in its stead", async () => {
+      await writeProject();
+      realPlace.mockClear();
+      const r = await append([ev("at the home of her daughter", "Of, Trabzon, Türkiye", 40), ev("Boston, Massachusetts", null, 60)]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await events()).map((e: any) => [e.standard_place, e.distance_from_previous_km])).toEqual([
+        [null, null],
+        [null, null],
+      ]);
+      expect(placeWarnings(r)).toEqual([
+        "events[0]: standard_place 'Of, Trabzon, Türkiye' for 'at the home of her daughter' was not kept: it could not be " +
+          "confirmed, as the text names neither a country nor that place, and the engine has none for it: the engine's " +
+          "place lookup answer 'Of, Trabzon, Türkiye' could not be confirmed, as the text names neither a country nor that " +
+          "place. A supplied standard_place is kept when it is a FamilySearch standard place (a place_search result) for " +
+          "the fact's own place.",
+      ]);
+      expect(realPlace).not.toHaveBeenCalled();
     });
 
     it("leaves a tool's own timeline as it was written", async () => {

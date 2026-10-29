@@ -61,11 +61,10 @@ import {
   countryOfPlace,
   isNonPlacePhrase,
   checkFirstPlace,
-  standardPlaceNamedInText,
   samePlace,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
-import { judgeSupplied, placeAnswer } from "../utils/place-verdict.js";
+import { judgeSupplied, placeAnswer, unconfirmedByText } from "../utils/place-verdict.js";
 import { RecordStandards, assertionsNamed } from "../utils/record-standards.js";
 import { isSuspiciousText, TRAILING_DOUBT, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
 import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
@@ -6614,22 +6613,6 @@ function placeLiftable(entry: Record<string, unknown>): boolean {
   );
 }
 
-/** Why a value-derived place drops a geocoded answer the country check could
- *  not judge, or null to keep it. When the text names a country the check
- *  knows, the answer names none it knows. Otherwise the answer's own name, its
- *  first segment, must be one of the text's comma parts, unless the text is one
- *  word: that is the resolver's one-word rule's to judge, whose answer need not
- *  spell the text ("Ky" is Kentucky). */
-function unconfirmedValueAnswer(place: string, standardPlace: string): string | null {
-  const parts = placeSegments(place);
-  if (canonicalCountry(parts[parts.length - 1] ?? "") !== null) return "does not name the country the text names";
-  const oneWord = parts.length === 1 && !/\s/.test(parts[0]);
-  if (!oneWord && !standardPlaceNamedInText(place, standardPlace)) {
-    return "could not be confirmed, as the text names neither a country nor that place";
-  }
-  return null;
-}
-
 /** A folded place-of-event variant must keep its place machine-readable: lift
  *  the human `value` (which for a place-claim IS the place string, e.g.
  *  "Ireland") into `place` when `placeLiftable`. Reads `fact_type` as given, so
@@ -8340,12 +8323,13 @@ async function checkLocalityFirstPlaces(
 
 /**
  * A caller's own standard_place on a timeline event is judged as a tree fact's
- * is (place-verdict.ts): kept when it is a FamilySearch standard place for the
- * event's place, else replaced by the engine's answer (FamilySearch's own on the
- * records of the event's assertions, else the resolver's) or null, with a
- * warning. The distances measured from it, on that event and the next, become
- * null when the replacement is another place, not the same place spelled
- * another way.
+ * is (place-verdict.ts): kept, in FamilySearch's spelling and with its
+ * distances, when it is a FamilySearch standard place the event's place text
+ * confirms, else replaced by the engine's answer (FamilySearch's own on the
+ * records of the event's assertions, else the resolver's when the text confirms
+ * it) or null, with a warning. The distances measured from it, on that event
+ * and the next, become null when the replacement is another place, not the
+ * same place spelled another way.
  */
 async function judgeTimelinePlaces(
   ops: ResearchAppendOp[],
@@ -8370,6 +8354,7 @@ async function judgeTimelinePlaces(
       );
       if (judged.standardPlace === was) continue;
       event.standard_place = judged.standardPlace;
+      if (judged.warning === undefined) continue;
       if (judged.standardPlace === null || !(await samePlace(was, judged.standardPlace))) {
         for (const e of [event, events[k + 1]]) {
           if (typeof e?.distance_from_previous_km === "number") e.distance_from_previous_km = null;
@@ -8687,9 +8672,9 @@ async function prepareOps(
    *  standard_place contradicting the place's country is an error, unless
    *  `dropContradiction` or the place is `valueDerived` (lifted from `value`),
    *  when the lookup is dropped instead. A value-derived place keeps a geocoded
-   *  answer the country check cannot judge only when `unconfirmedValueAnswer`
-   *  confirms it. A dropped lookup is warned about and listed in
-   *  unresolvedPlaces, never in resolvedPlaces. A place on an assertion flagged
+   *  answer only when its text confirms it (`unconfirmedByText`, which passes a
+   *  one-word text and a one-word list answer). A dropped lookup is warned
+   *  about and listed in unresolvedPlaces, never in resolvedPlaces. A place on an assertion flagged
    *  as suspicious text is never looked up, and a refusal shows it as
    *  WITHHELD_SUSPICIOUS. `countryRecord` is the sidecar record the assertion
    *  comes from and `countryProducer` the tool that staged it, which give the
@@ -8769,7 +8754,7 @@ async function prepareOps(
       return;
     }
     if (verdict === "unverifiable" && filled === "geocoded") {
-      const unconfirmed = valueDerived ? unconfirmedValueAnswer(entry.place, sp) : null;
+      const unconfirmed = valueDerived ? unconfirmedByText(entry.place, sp) : null;
       if (unconfirmed) {
         delete entry.standard_place;
         unresolved(`: the lookup's answer '${sp}' ${unconfirmed}`);

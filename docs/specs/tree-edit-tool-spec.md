@@ -389,14 +389,27 @@ record a tree fact cites" (2026-10-26); the place bar is about 80% right,
 coarser and finer answers counted right, and "If we can raise accuracy and keep
 coverage the same, that's also a win" (2026-10-29). Implemented in
 `src/utils/place-verdict.ts` and `src/utils/record-standards.ts`, shared with
-`research_append` and `project_create`.
+`research_append` (`project_create` clears and re-resolves every supplied value,
+project-create-tool-spec "Hand-entered places").
 
 **A supplied `standard_place` is kept** when all of these hold:
-- the fact has a `place`, and it is not a non-place phrase ("Same House");
+- the fact has a `place`, and it is not a non-place phrase ("Same House",
+  trailing punctuation aside: "Same House," too);
 - the value names no other country than the `place` (`countryConsistency`);
+- the `place` text confirms the value (`unconfirmedByText`, the check
+  research-append-tool-spec §3.6 applies to a place taken from a value): when
+  the country check cannot judge the pair, a text whose last comma part names a
+  country the check knows needs a value naming one it knows, and otherwise the
+  value's own name, its first segment, must be one of the text's comma parts,
+  unless the text is one word or the value is the one-word list's entry for the
+  text ("Ky", "W. Va."). So a phrase that names no place keeps nothing: "with
+  his daughter" does not keep "Hawaii, United States";
 - FamilySearch's place search finds a place whose full name is the value, case
   and accents aside: it is a FamilySearch standard place, as `place_search`
-  returns one. A search that fails keeps the value.
+  returns one. The value is kept in FamilySearch's spelling, that place's full
+  name ("Santo Antonio, Funchal, Madeira, Portugal" is kept as "Santo António,
+  Funchal, Madeira, Portugal"), with no warning. A search that fails keeps the
+  value as written.
 
 It is judged whatever `resolveStandardPlace` says. Otherwise the engine's answer
 below replaces it, or the fact keeps no `standard_place`, and the response's
@@ -430,6 +443,11 @@ value is kept.
 2. **Otherwise the lookup** `resolveStandardPlace(place, { contextPlaces })`, with
    the places of the holder's other facts as context for a bare single-segment
    place, and no record country (see research-append-tool-spec §3.6, lever B).
+   Its answer stands only when the `place` text confirms it, by the same check a
+   supplied value meets (`unconfirmedByText`): "at the home of her daughter,
+   Mrs. John Smith" takes nothing from a lookup that answers "Of, Trabzon,
+   Türkiye", while "412 Vine St, Cincinnati" keeps "Cincinnati, Hamilton, Ohio,
+   United States".
 
 A non-place phrase has no answer, and neither does an answer whose country
 contradicts the text's (`countryConsistency`).
@@ -437,9 +455,12 @@ contradicts the text's (`countryConsistency`).
 **With none supplied** the answer fills the field, unless `resolveStandardPlace`
 is `false`. No answer leaves it unset with `could not resolve standard_place for
 '<place>' (left unset)` (plus `: <the disagreement>` when FamilySearch's values
-disagree), or `standard_place '<answer>' contradicts place '<place>' — the place
-text names a different country; cleared (left unset)`; a non-place phrase stays
-silent.
+disagree, or `: the engine's place lookup answer '<answer>' could not be
+confirmed, as the text names neither a country nor that place` or `… does not
+name the country the text names` when the text does not confirm the lookup), or
+`standard_place '<answer>' contradicts place
+'<place>' — the place text names a different country; cleared (left unset)`; a
+non-place phrase stays silent.
 
 ### 4.2 Return value (compact — never the tree)
 
@@ -759,7 +780,7 @@ Sequence (validate-before-persist, tree-only):
 | `update_relationship` retype that would duplicate an edge already on the pair | input error naming that edge; write nothing |
 | `standard_place` lookup finds nothing, or its network call fails | best-effort: leave `standard_place` unset and add a warning (none for a non-place phrase such as "Same House"); never fail the edit on a place-resolution miss |
 | FamilySearch standardized a fact's place text differently on the record personas it is about | leave `standard_place` unset, look nothing up, and add a warning naming the values (§4.1.1) |
-| A supplied `standard_place` on a fact with no place, naming another country, or not a FamilySearch standard place | write the engine's answer, or none, and add a warning saying which and why (§4.1.1); never fail the edit |
+| A supplied `standard_place` on a fact with no place, naming another country, its place text does not confirm, or not a FamilySearch standard place | write the engine's answer, or none, and add a warning saying which and why (§4.1.1); never fail the edit |
 | `update_fact` changes `place` with `resolveStandardPlace: false` and no `standard_place` | drop the old `standard_place`, with a warning |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
@@ -799,10 +820,14 @@ The caller (`tree-edit` skill) still:
   is refused in every spelling the matcher folds, and accepted on the Couple.
 - **A supplied `standard_place` (§4.1.1)** — on `add_fact`, `update_fact`,
   `add_person` and `add_relationship` facts: a FamilySearch standard place is
-  kept silently, even where the engine's own answer differs, and so is one whose
-  check failed; one on a fact with no place or a non-place phrase, one naming
-  another country, and one FamilySearch has no place of are replaced by the
-  engine's answer or dropped, with the reason. `resolveStandardPlace: false`
+  kept silently, in FamilySearch's spelling, even where the engine's own answer
+  differs, and one whose check failed is kept as written; one on a fact with no
+  place or a non-place phrase (trailing punctuation aside), one naming another
+  country, one its place text does not confirm ("with his daughter" and "Hawaii,
+  United States"; "Ky" and "W. Va." keep their list answers), and one
+  FamilySearch has no place of are replaced by the engine's answer or dropped,
+  with the reason. A lookup the place text does not confirm fills and replaces
+  nothing, on `tree_correct`'s `update_fact` too. `resolveStandardPlace: false`
   does not change that. The record step reads FamilySearch's own values only:
   from a sidecar marked `standard_places_from`, on the persona of the fact's
   own assertion or of a cited assertion linked to its holder, never another

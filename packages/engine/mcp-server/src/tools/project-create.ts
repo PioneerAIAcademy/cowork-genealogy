@@ -52,7 +52,6 @@ import {
 } from "../utils/project-io.js";
 import { validateParsed } from "../validation/validator.js";
 import { listStagedEnvelopes, type StagingEnvelope } from "../utils/results-staging.js";
-import { whyNotKept } from "../utils/place-verdict.js";
 import { sourceImageCapState } from "../utils/image-store.js";
 import {
   OCR_PHASE_BUDGET_MS,
@@ -422,11 +421,12 @@ export async function runProjectCreate(
       );
     }
 
-    // A hand-entered fact keeps a supplied standard_place only when it is a
-    // FamilySearch standard place for the fact's own place (place-verdict.ts);
-    // a value no place authority returned is a claim FamilySearch did not make.
-    // Any other is cleared, and the place is standardized here by the resolver
-    // person_read and tree_edit use.
+    // A hand-entered place is standardized here, by the resolver person_read
+    // and tree_edit use, never taken from the caller: a value no place
+    // authority returned is a claim FamilySearch did not make, and a model
+    // told to call place_search first skipped it often enough to invent one.
+    // Cleared on every hand-entered fact, not only those with a place: one with
+    // no place has nothing to resolve, so a value there could only be invented.
     const hasPlace = (f: Record<string, unknown>) => typeof f.place === "string" && f.place.trim() !== "";
     const placed = handFacts.filter(hasPlace) as unknown as SimplifiedFact[];
     const supplied = new Map<Record<string, unknown>, unknown>();
@@ -435,23 +435,22 @@ export async function runProjectCreate(
       delete f.standard_place;
     }
     const fillAll = async () => {
-      const notKept = new Map<Record<string, unknown>, string>();
-      for (const [f, was] of supplied) {
-        const why = await whyNotKept(f.place, String(was));
-        if (why === null) f.standard_place = was;
-        else notKept.set(f, why);
-      }
       // What the call budget has left, so the read and the retry together stay
       // under the bridge's abort.
       const budget = Math.min(PLACE_RETRY_BUDGET_MS, start + CALL_BUDGET_MS - Date.now());
       const filled = await fillPlaces(placed, Math.max(0, budget));
-      for (const [f, why] of notKept) {
-        const was = JSON.stringify(supplied.get(f));
-        const where = hasPlace(f) ? `for '${f.place}'` : `on a ${String(f.type ?? "")} fact`;
+      for (const [f, was] of supplied) {
+        const resolved = f.standard_place;
+        if (resolved === was) continue;
         refWarnings.push(
-          f.standard_place === undefined
-            ? `standard_place ${was} ${where} was not kept: ${why}`
-            : `standard_place ${was} ${where} was replaced by '${f.standard_place}', the engine's lookup: ${why}`,
+          !hasPlace(f)
+            ? `standard_place ${JSON.stringify(was)} on a ${String(f.type ?? "")} fact with no place was ` +
+                "not kept: project_create standardizes a hand-entered place itself, from the fact's place"
+            : resolved === undefined
+              ? `standard_place ${JSON.stringify(was)} for '${f.place}' was not kept: project_create ` +
+                  "standardizes hand-entered places itself, and could not standardize this one"
+              : `standard_place ${JSON.stringify(was)} for '${f.place}' was replaced by '${resolved}': ` +
+                  "project_create standardizes hand-entered places itself",
         );
       }
       return filled;

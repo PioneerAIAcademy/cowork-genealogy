@@ -5,32 +5,65 @@
  * record a tree fact cites").
  *
  * A supplied standard_place is kept when the fact has a place, the value names
- * no other country than that place, and FamilySearch's place search finds a
- * place whose full name is the value, case and accents aside. A failed search
- * keeps it. Otherwise the engine's own answer replaces it, or none is kept, and
- * a warning says which and why.
+ * no other country than that place, the place text confirms it
+ * (`unconfirmedByText`), and FamilySearch's place search finds a place whose
+ * full name is the value, case and accents aside. It is kept in FamilySearch's
+ * spelling. A failed search keeps it as written. Otherwise the engine's own
+ * answer replaces it, or none is kept, and a warning says which and why.
  *
  * The engine's own answer for a place text, which also fills a fact with none:
  * 1. FamilySearch's own standardization of the same text on the record personas
  *    the fact is about (record-standards.ts). Two different values are doubt,
  *    and doubt is no standard_place;
- * 2. otherwise the writer's own lookup.
+ * 2. otherwise the writer's own lookup, kept only when the text confirms it.
  * A non-place phrase ("Same House") has none, and an answer naming a different
  * country than the text is dropped.
  */
-import { countryConsistency, isFamilySearchPlace, isNonPlacePhrase, placeSegments } from "./place-resolver.js";
+import {
+  canonicalCountry,
+  countryConsistency,
+  familySearchFullName,
+  isNonPlacePhrase,
+  placeSegments,
+  standardPlaceNamedInText,
+} from "./place-resolver.js";
+import { oneWordListPlace } from "./one-word-places.js";
 
 /** A place text as the rule compares it: case, accents and spacing aside. */
 export function placeTextKey(place: string): string {
   return place.trim().toLowerCase().replace(/\s+/g, " ").normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
+/**
+ * Why the place text does not confirm `standardPlace`, or null when it does:
+ * research_append's check on a place taken from a fact's value, which also
+ * keeps a phrase that names no place ("with his daughter", "at the home of her
+ * daughter") from taking one. Only a pair the country check cannot judge is in
+ * question. When the text's last comma part names a country the check knows,
+ * the standard place names none it knows. Otherwise its own name, its first
+ * segment, must be one of the text's comma parts, unless the text is one word,
+ * which the resolver's one-word rule judges, or the standard place is the
+ * one-word list's entry for the text: neither need spell the text ("Ky" is
+ * Kentucky, "W. Va." West Virginia).
+ */
+export function unconfirmedByText(place: string, standardPlace: string): string | null {
+  if (countryConsistency(place, standardPlace) !== "unverifiable") return null;
+  const parts = placeSegments(place);
+  if (canonicalCountry(parts[parts.length - 1] ?? "") !== null) return "does not name the country the text names";
+  const oneWord = parts.length === 1 && !/\s/.test(parts[0]);
+  const listed = oneWordListPlace(place);
+  if (oneWord || (listed !== null && placeTextKey(listed) === placeTextKey(standardPlace))) return null;
+  return standardPlaceNamedInText(place, standardPlace)
+    ? null
+    : "could not be confirmed, as the text names neither a country nor that place";
+}
+
 export type PlaceAnswer =
   | { standardPlace: string; from: "record" | "lookup" }
   | {
       standardPlace: null;
-      why: "not_a_place" | "records_disagree" | "not_found" | "other_country";
-      /** The answer dropped for naming another country. */
+      why: "not_a_place" | "records_disagree" | "not_found" | "other_country" | "unconfirmed";
+      /** The answer dropped for naming another country, or for the text not confirming it. */
       dropped?: string;
       reason: string;
     };
@@ -73,31 +106,47 @@ export async function placeAnswer(
       reason: `'${answer}' names a different country than the text`,
     };
   }
+  const unconfirmed = fromRecords.length === 0 ? unconfirmedByText(place, answer) : null;
+  if (unconfirmed !== null) {
+    return {
+      standardPlace: null,
+      why: "unconfirmed",
+      dropped: answer,
+      reason: `the engine's place lookup answer '${answer}' ${unconfirmed}`,
+    };
+  }
   return { standardPlace: answer, from: fromRecords.length === 1 ? "record" : "lookup" };
 }
 
-/** Why a supplied standard_place is not kept for `place`, or null when it is. */
-export async function whyNotKept(place: unknown, supplied: string): Promise<string | null> {
-  if (typeof place !== "string" || place.trim() === "") return "the fact has no place";
-  if (isNonPlacePhrase(place)) return `'${place}' names no place`;
-  if (countryConsistency(place, supplied) === "contradiction") return "it names a different country than the place";
-  return (await isFamilySearchPlace(supplied)) === false ? "FamilySearch's place standard has no place of that name" : null;
+/** What a writer keeps of a supplied standard_place for `place`: the value in
+ *  FamilySearch's spelling (as written when the search failed), or why none. */
+export async function keptSupplied(place: unknown, supplied: string): Promise<{ kept: string } | { why: string }> {
+  if (typeof place !== "string" || place.trim() === "") return { why: "the fact has no place" };
+  if (isNonPlacePhrase(place)) return { why: `'${place}' names no place` };
+  if (countryConsistency(place, supplied) === "contradiction") return { why: "it names a different country than the place" };
+  const unconfirmed = unconfirmedByText(place, supplied);
+  if (unconfirmed !== null) return { why: `it ${unconfirmed}` };
+  const spelled = await familySearchFullName(supplied);
+  if (spelled === false) return { why: "FamilySearch's place standard has no place of that name" };
+  return { kept: spelled ?? supplied };
 }
 
 const KEPT_WHEN =
   "A supplied standard_place is kept when it is a FamilySearch standard place (a place_search result) " +
   "for the fact's own place.";
 
-/** What a writer stores when a caller supplied `supplied` for `place`, and the
- *  warning that says why when that is not `supplied`. `answer` is the engine's
- *  own answer for the place text, asked only when `supplied` is not kept. */
+/** What a writer stores when a caller supplied `supplied` for `place`: the
+ *  value, in FamilySearch's spelling, with no warning when it is kept;
+ *  otherwise the engine's own answer for the place text (`answer`, asked only
+ *  then), or null, with a warning that says which and why. */
 export async function judgeSupplied(
   place: unknown,
   supplied: string,
   answer: (place: string) => Promise<PlaceAnswer>,
 ): Promise<{ standardPlace: string | null; warning?: string }> {
-  const why = await whyNotKept(place, supplied);
-  if (why === null) return { standardPlace: supplied };
+  const k = await keptSupplied(place, supplied);
+  if ("kept" in k) return { standardPlace: k.kept };
+  const why = k.why;
   const text = typeof place === "string" && place.trim() !== "" ? place : undefined;
   const head = `standard_place '${supplied}'${text === undefined ? "" : ` for '${text}'`}`;
   const a = text === undefined || isNonPlacePhrase(text) ? null : await answer(text);

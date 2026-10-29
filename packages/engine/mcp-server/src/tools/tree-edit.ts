@@ -495,12 +495,13 @@ async function applyOperation(
   const warnings: string[] = [];
   const wantResolve = input.resolveStandardPlace !== false;
 
-  // A fact's standard_place (place-verdict.ts). A supplied one is kept when it is
-  // a FamilySearch standard place for the fact's own place; otherwise, and to
-  // fill a fact with none unless `resolveStandardPlace` is false, the engine's
-  // answer: FamilySearch's standardization of the same text on the record
-  // personas the fact is about (`people`, the persons holding it), else the
-  // resolver's, with the places of the holder's other facts (`siblings`) as
+  // A fact's standard_place (place-verdict.ts). A supplied one is kept, in
+  // FamilySearch's spelling, when it is a FamilySearch standard place the fact's
+  // own place text confirms; otherwise, and to fill a fact with none unless
+  // `resolveStandardPlace` is false, the engine's answer: FamilySearch's
+  // standardization of the same text on the record personas the fact is about
+  // (`people`, the persons holding it), else the resolver's when the text
+  // confirms it, with the places of the holder's other facts (`siblings`) as
   // context for a bare place. Never fails the edit.
   const settlePlace = async (
     fact: SimplifiedFact,
@@ -532,7 +533,7 @@ async function applyOperation(
     delete fact.standard_place;
     if (filled.why === "not_found") {
       warnings.push(`could not resolve standard_place for '${place}' (left unset)`);
-    } else if (filled.why === "records_disagree") {
+    } else if (filled.why === "records_disagree" || filled.why === "unconfirmed") {
       warnings.push(`could not resolve standard_place for '${place}' (left unset): ${filled.reason}`);
     } else if (filled.why === "other_country") {
       warnings.push(

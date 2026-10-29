@@ -33,7 +33,7 @@ import {
   __usePlaceTableForTests,
   isNonPlacePhrase,
   checkFirstPlace,
-  isFamilySearchPlace,
+  familySearchFullName,
   samePlace,
 } from "../../src/utils/place-resolver.js";
 
@@ -531,8 +531,17 @@ describe("non-place phrases are never standardized (#1962)", () => {
     }
   });
 
+  it("ignores trailing punctuation, never leading or inner punctuation", () => {
+    for (const p of ["Same House,", "Same House ;", "Unknown:", "Do,,", "Same House -", "Same House)"]) {
+      expect(isNonPlacePhrase(p), p).toBe(true);
+    }
+    for (const p of ["(Same House)", "Same, House", "Same House, Wayne,", "-Same House"]) {
+      expect(isNonPlacePhrase(p), p).toBe(false);
+    }
+  });
+
   it("accepts a real place, including one that contains a phrase word", () => {
-    for (const p of ["Same Place, Wayne, Ohio", "Same, Manufahi, Timor-Leste", "Homer", "Rural Retreat", "Dover", "Home, Clermont, Ohio"]) {
+    for (const p of ["Same Place, Wayne, Ohio", "Same, Manufahi, Timor-Leste", "Homer", "Rural Retreat", "Dover", "Home, Clermont, Ohio", "Farmington,"]) {
       expect(isNonPlacePhrase(p), p).toBe(false);
     }
   });
@@ -1201,18 +1210,27 @@ describe("__usePlaceTableForTests (the eval harness's offline resolver)", () => 
   });
 });
 
-describe("isFamilySearchPlace: a supplied standard_place is one of FamilySearch's", () => {
+describe("familySearchFullName: a supplied standard_place in FamilySearch's own spelling", () => {
   afterEach(() => __usePlaceTableForTests(null));
 
-  it("is true when an entry's full name is the value, case and accents aside, and searches once", async () => {
+  it("is the entry's full name when it is the value, case and accents aside, and searches once", async () => {
     mockSearchPlace.mockResolvedValue([
       entry({ placeRepId: "1", fullName: "Parácuaro, Michoacán, Mexico" }),
       entry({ placeRepId: "2", fullName: "Parácuaro, Guanajuato, Mexico" }),
     ]);
-    expect(await isFamilySearchPlace("paracuaro, michoacan, MEXICO")).toBe(true);
-    expect(await isFamilySearchPlace("Parácuaro, Michoacán, Mexico")).toBe(true);
+    expect(await familySearchFullName("paracuaro, michoacan, MEXICO")).toBe("Parácuaro, Michoacán, Mexico");
+    expect(await familySearchFullName("Parácuaro, Michoacán, Mexico")).toBe("Parácuaro, Michoacán, Mexico");
     expect(mockSearchPlace).toHaveBeenCalledTimes(1);
     expect(mockSearchPlace).toHaveBeenCalledWith("paracuaro, michoacan, MEXICO");
+  });
+
+  it("is the value as written when FamilySearch spells it so, though another entry folds to it too", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", fullName: "Santo Antonio, Funchal, Madeira, Portugal" }),
+      entry({ placeRepId: "2", fullName: "Santo António, Funchal, Madeira, Portugal" }),
+    ]);
+    expect(await familySearchFullName("Santo António, Funchal, Madeira, Portugal")).toBe("Santo António, Funchal, Madeira, Portugal");
+    expect(await familySearchFullName("santo antónio, funchal, madeira, portugal")).toBe("Santo Antonio, Funchal, Madeira, Portugal");
   });
 
   it("is false when no entry's full name is the value, though the search finds its places", async () => {
@@ -1220,20 +1238,27 @@ describe("isFamilySearchPlace: a supplied standard_place is one of FamilySearch'
       entry({ placeRepId: "1", fullName: "Union Station, Licking, Ohio, United States" }),
       entry({ placeRepId: "2", fullName: "Union Township, Licking, Ohio, United States" }),
     ]);
-    expect(await isFamilySearchPlace("Union Station, Union Township, Licking, Ohio, United States")).toBe(false);
+    expect(await familySearchFullName("Union Station, Union Township, Licking, Ohio, United States")).toBe(false);
   });
 
   it("is null when the search fails, and a failure is not remembered", async () => {
     mockSearchPlace.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
-    expect(await isFamilySearchPlace("Kent, England, United Kingdom")).toBeNull();
+    expect(await familySearchFullName("Kent, England, United Kingdom")).toBeNull();
     mockSearchPlace.mockResolvedValueOnce([entry({ placeRepId: "1", fullName: "Kent, England, United Kingdom" })]);
-    expect(await isFamilySearchPlace("Kent, England, United Kingdom")).toBe(true);
+    expect(await familySearchFullName("Kent, England, United Kingdom")).toBe("Kent, England, United Kingdom");
   });
 
-  it("answers from the eval harness's table offline: a place the table gives as a standard place", async () => {
-    __usePlaceTableForTests({ "Boston, Massachusetts": "Boston, Suffolk, Massachusetts, United States", Nowhere: null });
-    expect(await isFamilySearchPlace("boston, suffolk, massachusetts, united states")).toBe(true);
-    expect(await isFamilySearchPlace("Boston, Massachusetts")).toBe(false);
+  it("answers from the eval harness's table offline, in the table's spelling, case and accents aside", async () => {
+    __usePlaceTableForTests({
+      "Boston, Massachusetts": "Boston, Suffolk, Massachusetts, United States",
+      "Sé, Funchal": "Santo António, Funchal, Madeira, Portugal",
+      Nowhere: null,
+    });
+    expect(await familySearchFullName("boston, suffolk, massachusetts, united states")).toBe(
+      "Boston, Suffolk, Massachusetts, United States",
+    );
+    expect(await familySearchFullName("Santo Antonio, Funchal, Madeira, Portugal")).toBe("Santo António, Funchal, Madeira, Portugal");
+    expect(await familySearchFullName("Boston, Massachusetts")).toBe(false);
     expect(mockSearchPlace).not.toHaveBeenCalled();
   });
 });

@@ -98,8 +98,8 @@ const placeIdRepsCache = new Map<string, string[]>();
  *  (normalized) — a dated and an undated search of one place are different
  *  queries and must not share an entry. */
 const searchEntriesCache = new Map<string, SearchEntry[]>();
-/** Folded full name -> whether FamilySearch has a place of that full name. */
-const familySearchPlaceCache = new Map<string, boolean>();
+/** Folded full name -> FamilySearch's full names that fold to it, in search order. */
+const familySearchNamesCache = new Map<string, string[]>();
 
 /** Test-only: when set, `resolveStandardPlace` answers from this table (keyed
  *  by the place text, normalized) and never reaches the network; a place not in
@@ -120,7 +120,7 @@ export function __clearPlaceResolverCachesForTests(): void {
   repInfoCache.clear();
   placeIdRepsCache.clear();
   searchEntriesCache.clear();
-  familySearchPlaceCache.clear();
+  familySearchNamesCache.clear();
 }
 
 // ─── Generic helpers ─────────────────────────────────────────────────────────
@@ -206,10 +206,11 @@ const NON_PLACE_PHRASES = new Set([
   "different place", "other place",
 ]);
 
-/** The place text is a non-place phrase (NON_PLACE_PHRASES), case, spacing and
- *  periods ignored ("R.F.D.", "Do."). Such a place is never standardized. */
+/** The place text is a non-place phrase (NON_PLACE_PHRASES), case, spacing,
+ *  periods and trailing punctuation ignored ("R.F.D.", "Do.", "Same House,").
+ *  Such a place is never standardized. */
 export function isNonPlacePhrase(place: string): boolean {
-  return NON_PLACE_PHRASES.has(normalizeKey(place.replace(/\./g, " ")));
+  return NON_PLACE_PHRASES.has(normalizeKey(place.replace(/\./g, " ").replace(/[\s\p{P}]+$/u, "")));
 }
 
 /** Strip a trailing `(Type)` suffix that `describeCandidates` appends.
@@ -669,26 +670,33 @@ export function standardPlaceNamedInText(place: string, standardPlace: string): 
 }
 
 /**
- * FamilySearch's place search finds a place whose full name is `name`, case and
- * accents aside: `name` is one of FamilySearch's own standard places, as
- * `place_search` returns them. Null when the search failed, which a writer reads
- * as no answer and keeps the value. With the test table installed it answers
- * offline: a name is a place when the table gives it as a standard place.
+ * FamilySearch's own spelling of `name` as a standard place: the full name of a
+ * place FamilySearch's place search finds whose full name is `name`, case and
+ * accents aside ("santo antonio, funchal, madeira, portugal" is "Santo António,
+ * Funchal, Madeira, Portugal"), and `name` itself when FamilySearch spells it
+ * so. False when the search finds no such place: `name` is not one of
+ * FamilySearch's standard places, as `place_search` returns them. Null when the
+ * search failed, which a writer reads as no answer and keeps the value as
+ * written. With the test table installed it answers offline, from the
+ * standard places the table gives.
  */
-export async function isFamilySearchPlace(name: string): Promise<boolean | null> {
+export async function familySearchFullName(name: string): Promise<string | false | null> {
   const key = foldPlaceName(name);
-  if (placeTableForTests) return [...placeTableForTests.values()].some((v) => v !== null && foldPlaceName(v) === key);
-  const cached = familySearchPlaceCache.get(key);
-  if (cached !== undefined) return cached;
-  let entries: SearchEntry[];
-  try {
-    entries = await searchPlace(name);
-  } catch {
-    return null;
+  let names = placeTableForTests
+    ? [...placeTableForTests.values()].filter((v): v is string => v !== null && foldPlaceName(v) === key)
+    : familySearchNamesCache.get(key);
+  if (names === undefined) {
+    let entries: SearchEntry[];
+    try {
+      entries = await searchPlace(name);
+    } catch {
+      return null;
+    }
+    names = entries.map((e) => e.fullName).filter((n) => foldPlaceName(n) === key);
+    familySearchNamesCache.set(key, names);
   }
-  const found = entries.some((e) => foldPlaceName(e.fullName) === key);
-  familySearchPlaceCache.set(key, found);
-  return found;
+  if (names.length === 0) return false;
+  return names.includes(name) ? name : names[0];
 }
 
 /** The FamilySearch place (its place id) a standard place names, as
