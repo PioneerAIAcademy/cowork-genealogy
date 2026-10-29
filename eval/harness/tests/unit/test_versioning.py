@@ -10,6 +10,7 @@ from harness.versioning import (
     classify,
     classify_ann,
     is_releasable_invocation,
+    newest_full_skill_runlog,
     next_filename_for,
     prunable_candidates,
     scan_versions,
@@ -259,3 +260,64 @@ def test_prunable_rejects_keep_zero():
     rule 2 on the next edit to that skill."""
     with pytest.raises(ValueError):
         prunable_candidates(["v1_2026-07-01_00-00-00.json"], keep=0)
+
+
+# ---- newest_full_skill_runlog -----------------------------------------------
+
+
+def _newest(logs: dict[str, dict]) -> str | None:
+    got = newest_full_skill_runlog(logs, logs.__getitem__)
+    return got[0] if got else None
+
+
+def test_newest_prefers_a_candidate_run_after_the_newest_release():
+    logs = {
+        "v1.json": {"timestamp": "2026-10-01_00-00-00"},
+        "v2_2026-10-02_00-00-00.json": {},
+        "v2_2026-10-03_00-00-00.json": {},
+    }
+    assert _newest(logs) == "v2_2026-10-03_00-00-00.json"
+
+
+def test_newest_prefers_a_release_run_after_its_leftover_candidate():
+    """A candidate left beside the release of its own version line ran earlier."""
+    logs = {
+        "v3.json": {"timestamp": "2026-10-10_00-00-00"},
+        "v3_2026-10-05_00-00-00.json": {},
+    }
+    assert _newest(logs) == "v3.json"
+
+
+def test_newest_reads_only_the_highest_release():
+    logs = {
+        "v1.json": {"timestamp": "2026-10-20_00-00-00"},
+        "v2.json": {"timestamp": "2026-10-10_00-00-00"},
+        "v2_2026-10-15_00-00-00.json": {},
+    }
+    assert _newest(logs) == "v2_2026-10-15_00-00-00.json"
+
+
+def test_newest_release_wins_a_tie_and_without_a_timestamp():
+    assert _newest({"v2.json": {"timestamp": "2026-10-15_00-00-00"},
+                    "v2_2026-10-15_00-00-00.json": {}}) == "v2.json"
+    assert _newest({"v2.json": {}, "v2_2026-10-15_00-00-00.json": {}}) == "v2.json"
+    assert _newest({"v2.json": {}}) == "v2.json"
+
+
+def test_newest_orders_version_lines_by_version_without_reading_timestamps():
+    """A candidate line above the release started after it; one below, before."""
+    assert _newest({"v2.json": {"timestamp": "2026-12-01_00-00-00"},
+                    "v3_2026-10-15_00-00-00.json": {}}) == "v3_2026-10-15_00-00-00.json"
+    assert _newest({"v2.json": {"timestamp": "2026-01-01_00-00-00"},
+                    "v1_2026-10-15_00-00-00.json": {}}) == "v2.json"
+
+
+def test_newest_ignores_scratch_annotations_and_other_files():
+    logs = {
+        "v1.json": {"timestamp": "2026-10-01_00-00-00"},
+        "v1.ann.json": {},
+        "scratch_2026-10-30_00-00-00.json": {},
+        "README.md": {},
+    }
+    assert _newest(logs) == "v1.json"
+    assert _newest({"README.md": {}}) is None
