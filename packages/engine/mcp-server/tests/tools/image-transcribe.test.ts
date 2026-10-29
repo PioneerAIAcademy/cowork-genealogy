@@ -326,6 +326,26 @@ describe("imageTranscribeTool — lookingFor (second text-only call, issue #3718
     expect(result.found).toBe("NOT FOUND");
   });
 
+  it("runs the found check on what is left of the caller's budget, never a fresh one", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+      headers: new Headers({ "retry-after": "6" }),
+      json: async () => ({}),
+      text: async () => "",
+    });
+    mockOpenRouterOk("FOUND");
+    const result = await transcribe(
+      { imageId: "004884748_02613", lookingFor: "Schreck" },
+      LOCAL,
+      { ocrTimeoutMs: 5_000 },
+    );
+    expect(result.found).toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  }, 15_000);
+
   it("does not spoof found from the check reply's body text — only its final-line marker counts", async () => {
     mockOpenRouterOk("Entry: infant found abandoned, no surname given.");
     mockOpenRouterOk("An infant was found abandoned, but the page names no Schreck anywhere.");
