@@ -197,6 +197,18 @@ it is the string the skill presents as the clickable link and persists into
 `research.json`, the same caller-composed shape `build_external_search_url`
 refuses as `invalid_base_url`. Trimmed before both the check and the write.
 
+**A collection url must be stored.** A `urlGenerated` that names one collection
+(an Ancestry collection id in either spelling, a MyHeritage collection page) is
+refused unless its collection key is in `external-collections.json`, for any
+place; a site's or an archive's own search names no collection and is not
+checked. A missing file refuses with the fetch that creates it, an unreadable one
+with the read error and the re-fetch. A url already in the log is not re-checked
+unless the op opens a new hand-off (`partial` with `captureReceived: false`):
+closing a hand-off, or logging a capture that came back later, logs its url
+again, and one built before the list existed, or whose collection a re-fetch
+dropped, must stay closable. A `urlGenerated` that is not a string is refused. `captureReceived` is coerced like `resultsExamined` (a stringified `"false"` is the boolean) and refused when it is still not a boolean, so a hand-off is never saved where `awaitingUser` cannot see it. The check runs in the
+preflight pass, so a batch reports every refused op at once.
+
 **`resultsExamined` validation.** Must be a non-negative integer. A numeric
 string (`"5"`, the same stringified-argument slip `resultsAvailable` is coerced
 for) is coerced first; `NaN`, a negative or a fraction is rejected with an
@@ -417,6 +429,7 @@ it searches (`applyAltNameAutoPair`), so a log naming that half is true.
 | `notes` states the household structure of a census that carries no relationship-to-head column, without hedging it — the census the note names, or, for a `record_search` entry, the one its staged response shows; a staged `record_search` or `record_read` response whose titles are all British also supplies the jurisdiction of a census the note names without one | input error; write nothing, and in a batch no op's staged file is consumed. The message quotes the census and up to eight of the phrases it read as structure, names the missing column and quotes a compliant rewording, so the caller can fix the note in one try. See §8.2 |
 | an explicit `query` on a staged `record_search` or `fulltext_search` entry names a filter key, with a value, that the staged search never sent | input error; write nothing, and in a batch no op's staged file is consumed. The message names each key and the value the call claimed, and says how to re-send: drop the key, omit `query` so the tool fills it, or re-run the search with the filter. No override. See §8.3 |
 | a `fulltext_search` entry returned zero hits with a post-search filter set (`place`, `recordPlace0`–`3`, `recordType`, `yearFrom`/`yearTo`) and no unfiltered retry — a sibling `fulltext_search` with the same `keywords`/`nlQuery` whose filter-key set is a strict subset of this op's, in the same batch or already in `log[]` | input error; write nothing, and in a batch no op's staged file is consumed. The message names the filter keys and the exact unfiltered `fulltext_search` call to make, then says to log both in one batch. Exempt: a `name`-field query and a query with no `keywords`/`nlQuery` term. Keyed on zero hits, not `outcome`. See §8.4 |
+| an `external_site` op's `urlGenerated` names a collection whose key is not in `external-collections.json`, and either the url is not in the log or the op opens a new hand-off (`partial`, `captureReceived: false`) | input error, raised in the preflight pass so a batch names every refused op; write nothing. The message names the fix: a site-wide search, a stored url from `research_query`, or — with nothing stored or the file unreadable — `external_links_search` first |
 | `notes` (single-entry, or any op's) arrives JSON-escaped: no real newline once leading and trailing whitespace is ignored, at least two literal `\n`, and at least one literal `\n` that opens a table row (`\|`) or heading (`#`) | decoded, then handled as if sent decoded, with no warning. It decodes only `\n \r \t \" \\ \/ \uXXXX`; any other backslash (`\|`, `\*`, `\'`) is kept as sent. A second pass runs if the result still looks escaped, and no more than two. A trailing `"` is dropped first when it is the only unescaped quote in the note, since it is the escaped string's own closing quote. The decode runs before every precondition and before persistence, so the census check (§8.2) and validation judge the stored text. `unescapeJsonNotes` |
 
 ### 8.1 Non-blocking warnings (never fail the op)

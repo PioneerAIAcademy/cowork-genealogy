@@ -9794,6 +9794,34 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(await countryGiven("Texas")).toBe("United States");
   });
 
+  it("gives a bare place each other assertion's standard_place as context, else its place (QL5V-VR3K's Dongen)", async () => {
+    // record_read names the marriage and gives it the as-written "Dongen"; the
+    // births it left unnamed are geocoded against the marriage's standard.
+    await writeProject();
+    const a = (place: string, standard_place?: string | null) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: {
+        ...noId(validAssertion("x", "src_001")),
+        record_id: "rec-A",
+        place,
+        ...(standard_place !== undefined ? { standard_place } : {}),
+      },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        a("Dongen"),
+        a("Dongen", "Dongen, North Brabant, Netherlands"),
+        a("Breda, Noord-Brabant, Nederland", null),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace).mock.calls).toEqual([
+      ["Dongen", expect.objectContaining({ contextPlaces: ["Dongen, North Brabant, Netherlands", "Breda, Noord-Brabant, Nederland"] })],
+    ]);
+  });
+
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar();
@@ -9807,6 +9835,8 @@ describe("research_append (composite persist + enforcement)", () => {
             ...noId(validAssertion("x", "src_001")),
             record_id: "ark:/61903/1:1:ABCD-123",
             log_entry_id: "log_001",
+            fact_type: "residence",
+            value: "Pottsville, Pennsylvania",
             place: "Pottsville, Pennsylvania",
           },
         },
@@ -9825,6 +9855,169 @@ describe("research_append (composite persist + enforcement)", () => {
     expect((await readResearch()).assertions[1].standard_place).toBe(
       "Pottsville, Schuylkill, Pennsylvania, United States",
     );
+  });
+
+  it("copies no other person's standard_place: in a census household only the head's own fact was named (SGZQ-Y3L's shape)", async () => {
+    await writeProject(sidecarResearch());
+    const place = "Saint Peter, Carmarthenshire, Wales";
+    const census = (standard_place?: string) => ({ type: "Census", date: "1851", place, ...(standard_place ? { standard_place } : {}) });
+    await writeSidecar([
+      {
+        recordId: "ark:/61903/1:1:SGZQ-Y3L",
+        primaryId: "p_head",
+        gedcomx: {
+          persons: [
+            { id: "p_head", facts: [census("St Peter Carmarthen, Carmarthenshire, Wales, United Kingdom")] },
+            { id: "p_wife", facts: [census()] },
+            { id: "p_son", facts: [census()] },
+          ],
+        },
+      },
+    ]);
+    const assertion = (record_persona_id: string, record_role: string, fact_type = "census") => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: {
+        ...noId(validAssertion("x", "src_001")),
+        record_id: "ark:/61903/1:1:SGZQ-Y3L",
+        log_entry_id: "log_001",
+        record_persona_id,
+        record_role,
+        fact_type,
+        value: "1851",
+        date: "1851",
+        place,
+      },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        assertion("p_head", "head_of_household"),
+        assertion("p_wife", "wife"),
+        assertion("p_son", "child_1"),
+        assertion("p_head", "head_of_household", "residence"),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const saved = (await readResearch()).assertions.slice(1).map((a: any) => [a.record_persona_id, a.fact_type, a.standard_place]);
+    expect(saved).toEqual([
+      ["p_head", "census", "St Peter Carmarthen, Carmarthenshire, Wales, United Kingdom"],
+      ["p_wife", "census", undefined],
+      ["p_son", "census", undefined],
+      ["p_head", "residence", undefined],
+    ]);
+    // Each fact with no standard of its own goes to the geocoder instead.
+    expect(vi.mocked(resolveStandardPlace).mock.calls.map(([text]) => text)).toEqual([place, place, place]);
+  });
+
+  it("matches the assertion's place to its own fact's with case and surrounding spaces ignored", async () => {
+    await writeProject(sidecarResearch());
+    const standard = "St Peter Carmarthen, Carmarthenshire, Wales, United Kingdom";
+    await writeSidecar([
+      {
+        recordId: "ark:/61903/1:1:SGZQ-Y3L",
+        primaryId: "p_head",
+        gedcomx: {
+          persons: [
+            { id: "p_head", facts: [{ type: "Census", date: "1851", place: "Saint Peter, Carmarthenshire, Wales", standard_place: standard }] },
+          ],
+        },
+      },
+    ]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_id: "ark:/61903/1:1:SGZQ-Y3L",
+            log_entry_id: "log_001",
+            record_persona_id: "p_head",
+            record_role: "head_of_household",
+            fact_type: "census",
+            value: "1851",
+            date: "1851",
+            place: " saint peter, CARMARTHENSHIRE, Wales ",
+          },
+        },
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await readResearch()).assertions.at(-1).standard_place).toBe(standard);
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+  });
+
+  it("copies a couple's fact to either spouse only, and nothing when the persona's matching facts disagree", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar([
+      {
+        recordId: "ark:/61903/1:1:ABCD-123",
+        primaryId: "p_1",
+        gedcomx: {
+          persons: [
+            {
+              id: "p_1",
+              facts: [
+                // One place in two eras (Olne, 6J8F-6678), and a fact left unnamed.
+                { type: "Residence", date: "1790", place: "Olne", standard_place: "Olne, Prince-Bishopric of Liège, Holy Roman Empire" },
+                { type: "Residence", date: "1874", place: "Olne", standard_place: "Olne, Liège, Belgium" },
+                { type: "Burial", date: "1874", place: "Olne", standard_place: "Olne, Liège, Belgium" },
+                { type: "Burial", place: "Olne" },
+                { type: "Baptism", date: "1790", place: "Olne", standard_place: "Olne, Prince-Bishopric of Liège, Holy Roman Empire" },
+              ],
+            },
+            { id: "p_2" },
+            { id: "p_3" },
+          ],
+          relationships: [
+            {
+              type: "Couple",
+              person1: "p_1",
+              person2: "p_2",
+              facts: [{ type: "Marriage", date: "1850", place: "Olne", standard_place: "Olne, Liège, Belgium" }],
+            },
+          ],
+        },
+      },
+    ]);
+    const assertion = (record_persona_id: string, record_role: string, fact_type: string) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: {
+        ...noId(validAssertion("x", "src_001")),
+        record_id: "ark:/61903/1:1:ABCD-123",
+        log_entry_id: "log_001",
+        record_persona_id,
+        record_role,
+        fact_type,
+        value: "Olne",
+        place: "Olne",
+      },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        assertion("p_2", "bride", "marriage"),
+        assertion("p_1", "groom", "marriage"),
+        assertion("p_3", "witness_1", "marriage"),
+        assertion("p_1", "groom", "residence"),
+        assertion("p_1", "groom", "burial"),
+        // A Baptism is a christening, folded as research_append folds fact types.
+        assertion("p_1", "groom", "christening"),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const saved = (await readResearch()).assertions.slice(1).map((a: any) => [a.record_persona_id, a.fact_type, a.standard_place]);
+    expect(saved).toEqual([
+      ["p_2", "marriage", "Olne, Liège, Belgium"],
+      ["p_1", "marriage", "Olne, Liège, Belgium"],
+      ["p_3", "marriage", undefined],
+      ["p_1", "residence", undefined],
+      ["p_1", "burial", undefined],
+      ["p_1", "christening", "Olne, Prince-Bishopric of Liège, Holy Roman Empire"],
+    ]);
   });
 
   it("leaves a non-place phrase unstandardized: no sidecar copy, no geocode, no warning (#1962)", async () => {
@@ -9985,6 +10178,8 @@ describe("research_append (composite persist + enforcement)", () => {
             ...noId(validAssertion("x", "src_001")),
             record_id: "ark:/61903/1:1:ABCD-123",
             log_entry_id: "log_001",
+            fact_type: "residence",
+            value: "Pottsville, Pennsylvania",
             place: "Pottsville, Pennsylvania",
           },
         },
