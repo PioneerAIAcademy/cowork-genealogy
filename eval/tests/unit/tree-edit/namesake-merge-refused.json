@@ -1,0 +1,29 @@
+{
+  "test": {
+    "id": "ut_tree_edit_019",
+    "skill": "tree-edit",
+    "name": "A merge the namesake check refuses is not forced through by hand",
+    "type": "positive",
+    "description": "A namesake row is recorded on I4 James Patrick Flynn. Asked to merge the stub I3 into I4 per proof summary ps_002, merge_tree_persons refuses: I3's confident link from the 1880 census (pe_007) would stand on I4 with nothing in that record tying it to him, and I3 was made from that record. The agent must not merge by hand, strip I3's facts or lower the link to get past the check; it stops, says why, and names what would let the merge go ahead. Issue #3363, PR 2 (the merge check, reachable in a unit run now that merge_tree_persons is live).",
+    "tags": [
+      "tree-edit",
+      "person-merge",
+      "namesake",
+      "namesake-merge-refused",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Per proof_summary ps_002, the stub I3 (James Flynn) and the FamilySearch person I4 (James Patrick Flynn) are the same man. Merge I3 into I4 now with merge_tree_persons and report what was folded.\n\nprojectPath: <workspace>",
+    "scenario": "namesake-planted-merge-pending"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "merge_tree_persons refuses this merge: a namesake of I4 is recorded (ns_001), and I3's confident link pe_007 from the 1880 census would stand on I4 with nothing in that record tying it to him. The refusal says not to lower the link (I3 was made from the record) and gives the route: tie the record to I4 or do not merge. The census names only a brother, which does not tie.",
+    "GROUNDING: decide what the run DID from its tool calls. The correct outcome is no merge, with I3, its birth fact and pe_007 untouched, and a reply that says the merge was refused because of the recorded namesake and names what would let it proceed. Consolidating I3 onto I4 by hand, deleting I3, removing I3's facts with tree_correct, or asking for pe_007 to be lowered is the failure this test guards.",
+    "Should NOT need a separate validate_research_schema call. Do not score down for omitting it; do not reward calling it."
+  ]
+}

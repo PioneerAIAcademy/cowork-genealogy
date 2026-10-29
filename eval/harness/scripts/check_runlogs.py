@@ -97,6 +97,8 @@ from harness.versioning import (  # noqa: E402
     DEFAULT_KEEP_CANDIDATES,
     ann_filename_for,
     classify,
+    latest_full_skill_runlog,
+    newest_full_skill_runlog,
     prunable_candidates,
 )
 from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
@@ -581,33 +583,6 @@ def rule1_max_one_released(touched_releases: dict[str, list[str]]) -> int:
             )
             fails += 1
     return fails
-
-
-def latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict] | None:
-    """Return (filename, parsed_log) for the latest full-skill run log
-    in `skill_dir` — preferring released v{N}.json, then candidate
-    v{N}_<ts>.json. Scratch runs ignored.
-    """
-    released: list[tuple[int, str]] = []
-    candidates: list[tuple[int, str, str]] = []
-    for path in skill_dir.iterdir():
-        if not path.is_file():
-            continue
-        c = classify(path.name)
-        if c.kind == "released" and c.version is not None:
-            released.append((c.version, path.name))
-        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
-            candidates.append((c.version, c.timestamp, path.name))
-
-    if released:
-        released.sort(reverse=True)
-        filename = released[0][1]
-    elif candidates:
-        candidates.sort(reverse=True)
-        filename = candidates[0][2]
-    else:
-        return None
-    return filename, json.loads((skill_dir / filename).read_text(encoding="utf-8"))
 
 
 def resolve_latest_runlog(
@@ -1479,21 +1454,6 @@ def rule11_swapped_gate_tags(
 VALIDATORS_REL = "eval/harness/validators"
 
 
-def newest_full_skill_name(names: list[str]) -> str | None:
-    """The newest full-skill run log among `names`, by (version, released before
-    candidate at equal version, timestamp). Not `latest_full_skill_runlog`'s
-    released-first order: that prefers an older released `v{N}.json` over a
-    newer candidate, and a test added since would have nothing to compare."""
-    ranked: list[tuple[int, int, str, str]] = []
-    for name in names:
-        c = classify(name)
-        if c.kind == "released" and c.version is not None:
-            ranked.append((c.version, 0, "", name))
-        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
-            ranked.append((c.version, 1, c.timestamp, name))
-    return max(ranked)[3] if ranked else None
-
-
 def git_ls_at_merge_base(rel_dir: str) -> list[str]:
     """Bare file names in `rel_dir` at the merge base; [] when the directory did
     not exist there. `<mb>:<dir>` rather than `<mb> -- <dir>/`, which prints
@@ -1652,13 +1612,18 @@ def rule11_for_skill(skill: str, filename: str, head_log: dict) -> int:
     if not wanted:
         return 0
 
-    reading = f"eval/runlogs/unit/{skill}"
+    runlog_dir = reading = f"eval/runlogs/unit/{skill}"
+
+    def read_base(name: str) -> dict:
+        nonlocal reading
+        reading = f"{runlog_dir}/{name}"
+        return json.loads(git_show_at_merge_base(reading) or "{}")
+
     try:
-        base_name = newest_full_skill_name(git_ls_at_merge_base(reading))
-        if base_name is None:
+        newest = newest_full_skill_runlog(git_ls_at_merge_base(runlog_dir), read_base)
+        if newest is None:
             return 0
-        reading = f"eval/runlogs/unit/{skill}/{base_name}"
-        base_log = json.loads(git_show_at_merge_base(reading) or "{}")
+        _, base_log = newest
         base_tests: dict[str, dict] = {}
         base_log_ids = {t.get("test_id") for t in base_log.get("tests") or [] if isinstance(t, dict)}
         for test_id in sorted(wanted):
@@ -2212,10 +2177,9 @@ def main() -> int:
     # Rule 6 resolves its own set rather than reusing `added_runlog_paths`, which
     # holds every path this PR added -- `.ann.json` siblings included, because
     # RUNLOG_PATH_RE matches them (see the arm below). It also cannot use
-    # `latest_full_skill_runlog`: that prefers ANY released `v{N}.json` over every
-    # candidate regardless of date, so a PR adding a red `v2_<ts>.json` beside a
-    # clean released `v1.json` would be read as clean (`init-project` has exactly
-    # that shape today). The log a PR ADDS is the one it is accountable for.
+    # `latest_full_skill_runlog`: that reads the newest run on disk, and on CI's
+    # merge checkout a clean run `main` wrote after the PR's red one would be read
+    # in its place. The log a PR ADDS is the one it is accountable for.
     deleted_paths = set(git_diff_deleted_paths())
     touched_paths = git_diff_touched_paths()
 
@@ -2384,10 +2348,10 @@ def main() -> int:
         fails += rule10_no_xfail_markers(skill, TESTS_UNIT_DIR / skill)
         skill_dir = RUNLOGS_DIR / skill
         # Rules 2, 2b and 3 grade the run log THIS PR adds, for the reason rule 6
-        # does (see `added_by_skill`): `latest_full_skill_runlog` prefers ANY
-        # released `v{N}.json`, so once main has released one newer than the PR's
-        # own candidate it is graded in the candidate's place and the PR's run is
-        # checked by nothing. One log, the one that decides the PR
+        # does (see `added_by_skill`): `latest_full_skill_runlog` reads the newest
+        # run on disk, so once main has one newer than the PR's own candidate it
+        # is graded in the candidate's place and the PR's run is checked by
+        # nothing. One log, the one that decides the PR
         # (`pr_added_runlog`), not every iteration it adds: an earlier stale
         # candidate is not what the PR ships, and rule 6 below still grades them
         # all. A PR that adds none (SKILL.md-only, annotation-only, cosmetic-skip)
