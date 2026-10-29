@@ -1,6 +1,7 @@
 // record-index-fields — the per-persona index fields a FamilySearch record
-// carries in its RAW GedcomX `fields[]`, lifted onto the staged sidecar so the
-// code extractor can read them.
+// carries in its RAW GedcomX `fields[]`, and the persona's census place as
+// FamilySearch sends it, lifted onto the staged sidecar so the code extractor
+// can read them.
 //
 // WHY THIS EXISTS. `toSimplified` drops `fields[]` entirely (it maps persons,
 // names, facts, sources and places and nothing else), and `fields[]` is where a
@@ -81,6 +82,11 @@ export interface PersonaIndexFields {
   age?: string;
   fatherBirthPlace?: string;
   motherBirthPlace?: string;
+  /** The place of the persona's first census fact as FamilySearch sends it
+   *  (`place.original`). Not a `fields[]` value: the census relationship-column
+   *  decision reads it, because `record_read` may replace that fact's `place`
+   *  and `standard_place` with texts that name the jurisdiction differently. */
+  censusPlace?: string;
 }
 
 /** Read one label off a raw person's `fields[]`, first match wins. */
@@ -114,6 +120,15 @@ export function personaIndexFields(person: unknown): PersonaIndexFields | undefi
       (out as Record<string, string>)[key] = v;
       any = true;
     }
+  }
+  const facts = (person as { facts?: unknown })?.facts;
+  const census = (Array.isArray(facts) ? facts : []).find((f) =>
+    /census/i.test(String((f as { type?: unknown })?.type ?? "")),
+  ) as { place?: { original?: unknown } } | undefined;
+  const censusPlace = census?.place?.original;
+  if (typeof censusPlace === "string" && censusPlace.trim() !== "") {
+    out.censusPlace = censusPlace;
+    any = true;
   }
   return any ? out : undefined;
 }

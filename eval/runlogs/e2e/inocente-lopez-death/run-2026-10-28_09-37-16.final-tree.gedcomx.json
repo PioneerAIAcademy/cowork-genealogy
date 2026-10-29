@@ -1,0 +1,932 @@
+{
+  "persons": [
+    {
+      "id": "L8GW-R6Y",
+      "ark": "ark:/61903/4:1:L8GW-R6Y",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Inocente",
+          "surname": "Lopez",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "af73daca-8405-48fb-997f-995e44410071",
+          "type": "Birth",
+          "date": "11 JUN 1860",
+          "standard_date": "11 Jun 1860",
+          "place": "Oratorio de Consepcion, Cuscatlan, El Salvador",
+          "standard_place": "Oratorio, Ilobasco, Caba\u00f1as Oeste, Caba\u00f1as, El Salvador"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WXD7-19N"
+        },
+        {
+          "ref": "WXZ6-B62"
+        },
+        {
+          "ref": "7VLD-5LB"
+        },
+        {
+          "ref": "7VKG-HZT"
+        },
+        {
+          "ref": "7VKG-QK3"
+        }
+      ]
+    },
+    {
+      "id": "9X2W-8SL",
+      "ark": "ark:/61903/4:1:9X2W-8SL",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "38282c6e-24a0-4881-91dc-a778176b4213",
+          "preferred": true,
+          "given": "Virginia",
+          "surname": "Mendoza",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "22 JUL 1862",
+          "standard_date": "22 Jul 1862",
+          "place": "Oratorio de Consepcion, Cuscatlan, El Salvador",
+          "standard_place": "Oratorio, Ilobasco, Caba\u00f1as Oeste, Caba\u00f1as, El Salvador"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "ABT 1960",
+          "standard_date": "Abt 1960",
+          "place": "Oratorio de Consepcion, Cuscatlan, El Salvador",
+          "standard_place": "Oratorio, Ilobasco, Caba\u00f1as Oeste, Caba\u00f1as, El Salvador"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WXD7-1SX"
+        },
+        {
+          "ref": "WXZ6-BFS"
+        },
+        {
+          "ref": "7VLD-5P7"
+        },
+        {
+          "ref": "7VKG-HDW"
+        },
+        {
+          "ref": "7VKG-QZ7"
+        }
+      ]
+    },
+    {
+      "id": "L8G2-CJS",
+      "ark": "ark:/61903/4:1:L8G2-CJS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Feliz",
+          "surname": "Lopez Men",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "21 Feb 1884",
+          "standard_date": "21 Feb 1884",
+          "place": "Suchitoto, Cuscatl\u00e1n, El Salvador",
+          "standard_place": "Suchitoto, Cuscatl\u00e1n, El Salvador"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LZZR-D6M",
+      "ark": "ark:/61903/4:1:LZZR-D6M",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Luisa",
+          "surname": "Lopez Mendoza",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Luisa",
+          "surname": "Lopez Mendoza",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "11 Oct 1888",
+          "standard_date": "11 Oct 1888",
+          "place": "San Pedro Perulap\u00e1n, Cuscatl\u00e1n, El Salvador",
+          "standard_place": "San Pedro Perulap\u00e1n, Cuscatl\u00e1n, El Salvador"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "L8GW-DWX",
+      "ark": "ark:/61903/4:1:L8GW-DWX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Mariano",
+          "surname": "Lopez Mendoza",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "18 Jul 1895",
+          "standard_date": "18 Jul 1895",
+          "place": "Suchitoto, Cuscatl\u00e1n, El Salvador",
+          "standard_place": "Suchitoto, Cuscatl\u00e1n, El Salvador"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "LZZR-D6W",
+      "ark": "ark:/61903/4:1:LZZR-D6W",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Virjinia",
+          "surname": "Mendoza",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "9D4D-ZS1",
+      "ark": "ark:/61903/4:1:9D4D-ZS1",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Alberto",
+          "surname": "Lop\u00e9z",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "e10f2cfe-2d15-48df-aedc-07a175b75372",
+          "type": "Birth",
+          "date": "25 Feb 1886",
+          "standard_date": "25 Feb 1886",
+          "place": "San Pedro Perulap\u00e1n, Cuscatl\u00e1n, El Salvador",
+          "standard_place": "San Pedro Perulap\u00e1n, Cuscatl\u00e1n, El Salvador"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death"
+        },
+        {
+          "id": "14318912-3503-45f2-8429-dcda955774e2",
+          "type": "Marriage Registration",
+          "place": "Suchitoto, Cuscatl\u00e1n, El Salvador",
+          "standard_place": "Suchitoto, Cuscatl\u00e1n, El Salvador"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WX6X-SY6"
+        },
+        {
+          "ref": "WX6X-M97"
+        },
+        {
+          "ref": "WX66-124"
+        },
+        {
+          "ref": "WX66-1QD"
+        },
+        {
+          "ref": "WX66-BJW"
+        },
+        {
+          "ref": "WXDW-WLC"
+        },
+        {
+          "ref": "WXDW-9J1"
+        },
+        {
+          "ref": "WXD7-16R"
+        },
+        {
+          "ref": "WXD7-1C3"
+        },
+        {
+          "ref": "WXD7-1Q6"
+        },
+        {
+          "ref": "WXD7-PB1"
+        },
+        {
+          "ref": "WXD7-PCP"
+        },
+        {
+          "ref": "WXD7-G5Y"
+        },
+        {
+          "ref": "WXD7-GKD"
+        },
+        {
+          "ref": "WXD7-GHG"
+        },
+        {
+          "ref": "WXD7-LQJ"
+        },
+        {
+          "ref": "WXD7-2TX"
+        },
+        {
+          "ref": "WXD7-KB5"
+        },
+        {
+          "ref": "WXZX-5QR"
+        },
+        {
+          "ref": "WXZX-2JL"
+        },
+        {
+          "ref": "WXZX-KWX"
+        },
+        {
+          "ref": "WXZX-JY1"
+        },
+        {
+          "ref": "WXZX-JJT"
+        },
+        {
+          "ref": "WXZX-JQM"
+        },
+        {
+          "ref": "WXZX-N5T"
+        },
+        {
+          "ref": "WXZX-XNJ"
+        },
+        {
+          "ref": "WXZX-DZJ"
+        },
+        {
+          "ref": "WXZX-ZHV"
+        },
+        {
+          "ref": "WXZX-H1G"
+        },
+        {
+          "ref": "WXZX-HKB"
+        },
+        {
+          "ref": "WXZX-4J3"
+        },
+        {
+          "ref": "WXZX-77B"
+        },
+        {
+          "ref": "WXZ6-1NN"
+        },
+        {
+          "ref": "WXZ6-1M3"
+        },
+        {
+          "ref": "WXZ6-YJN"
+        },
+        {
+          "ref": "WXZ6-K71"
+        },
+        {
+          "ref": "7PCM-8PK"
+        },
+        {
+          "ref": "7G5P-RNG"
+        },
+        {
+          "ref": "7VL6-9SZ"
+        },
+        {
+          "ref": "7VLD-B7G"
+        },
+        {
+          "ref": "7VLD-YHH"
+        },
+        {
+          "ref": "7VLD-T23"
+        },
+        {
+          "ref": "7VLD-TC6"
+        },
+        {
+          "ref": "7VLD-RLL"
+        },
+        {
+          "ref": "7VLD-R7F"
+        },
+        {
+          "ref": "7VLD-5XZ"
+        },
+        {
+          "ref": "7VLD-P2H"
+        },
+        {
+          "ref": "7VLD-G6V"
+        },
+        {
+          "ref": "7VLD-NYV"
+        },
+        {
+          "ref": "7VLD-FBJ"
+        },
+        {
+          "ref": "7VLD-ZV2"
+        },
+        {
+          "ref": "7VKG-SD6"
+        },
+        {
+          "ref": "7VKG-SQ4"
+        },
+        {
+          "ref": "7VKG-97Z"
+        },
+        {
+          "ref": "7VKG-M6S"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "L8GW-R6Y",
+      "person2": "9X2W-8SL",
+      "facts": [
+        {
+          "id": "f0a97d45-2384-47ba-a8f1-25bd6b4ca8c2",
+          "type": "Marriage",
+          "date": "11 MAR 1885",
+          "standard_date": "11 Mar 1885",
+          "place": "Oratorio de Consepcion, Cuscatlan.El Salvador",
+          "standard_place": "Oratorio, Ilobasco, Caba\u00f1as Oeste, Caba\u00f1as, El Salvador"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "Couple",
+      "person1": "L8GW-R6Y",
+      "person2": "LZZR-D6W"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "L8GW-R6Y",
+      "child": "L8G2-CJS"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "9X2W-8SL",
+      "child": "L8G2-CJS"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "L8GW-R6Y",
+      "child": "9D4D-ZS1"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "9X2W-8SL",
+      "child": "9D4D-ZS1"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "L8GW-R6Y",
+      "child": "LZZR-D6M"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "LZZR-D6W",
+      "child": "LZZR-D6M"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "L8GW-R6Y",
+      "child": "L8GW-DWX"
+    },
+    {
+      "id": "R10",
+      "type": "ParentChild",
+      "parent": "9X2W-8SL",
+      "child": "L8GW-DWX"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_L8GW-R6Y",
+      "title": "Inocente Lopez",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Inocente Lopez (PID L8GW-R6Y); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8GW-R6Y"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_9X2W-8SL",
+      "title": "Virginia Mendoza",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Virginia Mendoza (PID 9X2W-8SL); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:9X2W-8SL"
+    },
+    {
+      "id": "sd_person_L8G2-CJS",
+      "title": "Feliz Lopez Men",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Feliz Lopez Men (PID L8G2-CJS); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8G2-CJS"
+    },
+    {
+      "id": "sd_person_LZZR-D6M",
+      "title": "Luisa Lopez Mendoza",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Luisa Lopez Mendoza (PID LZZR-D6M); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LZZR-D6M"
+    },
+    {
+      "id": "sd_person_L8GW-DWX",
+      "title": "Mariano Lopez Mendoza",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Mariano Lopez Mendoza (PID L8GW-DWX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L8GW-DWX"
+    },
+    {
+      "id": "sd_person_LZZR-D6W",
+      "title": "Virjinia Mendoza",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Virjinia Mendoza (PID LZZR-D6W); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LZZR-D6W"
+    },
+    {
+      "id": "sd_person_9D4D-ZS1",
+      "title": "Alberto Lop\u00e9z",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Alberto Lop\u00e9z (PID 9D4D-ZS1); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:9D4D-ZS1"
+    },
+    {
+      "id": "7VKG-HZT",
+      "title": "Ynocente Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGTM-QQGC : Sat Jul 13 05:26:13 UTC 2024), Entry for Alberto Lopez and Ynocente Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGTM-QQGZ"
+    },
+    {
+      "id": "7VLD-5LB",
+      "title": "Inocente Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:661Y-SPG5 : Thu Nov 21 23:57:26 UTC 2024), Entry for Alberto Lopez and Inocente Lopez, 5 May 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:661Y-SPGR"
+    },
+    {
+      "id": "WXD7-19N",
+      "title": "Inocente Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFYJ-S86 : Fri Aug 07 03:51:42 UTC 2026), Entry for Alberto Lopez Mendoza and Inocente Lopez, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFYJ-S88"
+    },
+    {
+      "id": "7VKG-QK3",
+      "title": "Ynocente Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:C9ZF-ZW3Z : Sat Jul 13 02:08:42 UTC 2024), Entry for Alberto Lopez Mendoza and Ynocente Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:C9ZF-ZWW2"
+    },
+    {
+      "id": "WXZ6-B62",
+      "title": "Inocente Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X97H-17N7 : Fri Aug 07 08:01:02 UTC 2026), Entry for Alberto L\u00f3pez and Inocente Lopez, 4 de mayo de 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X97H-17NW"
+    },
+    {
+      "id": "WXD7-1SX",
+      "title": "Birginia Mendoza, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFYJ-S86 : Fri Aug 07 03:51:42 UTC 2026), Entry for Alberto Lopez Mendoza and Inocente Lopez, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFYJ-S8D"
+    },
+    {
+      "id": "WXZ6-BFS",
+      "title": "Virginia Mendoza, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X97H-17N7 : Fri Aug 07 08:01:02 UTC 2026), Entry for Alberto L\u00f3pez and Inocente Lopez, 4 de mayo de 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X97H-17N4"
+    },
+    {
+      "id": "7VLD-5P7",
+      "title": "Virginia Mendoza, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:661Y-SPG5 : Thu Nov 21 23:57:26 UTC 2024), Entry for Alberto Lopez and Inocente Lopez, 5 May 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:661Y-SPGT"
+    },
+    {
+      "id": "7VKG-HDW",
+      "title": "Virginia Mendoza, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGTM-QQGC : Sat Jul 13 05:26:13 UTC 2024), Entry for Alberto Lopez and Ynocente Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGTM-QQG8"
+    },
+    {
+      "id": "7VKG-QZ7",
+      "title": "Virginia Mendoza, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:C9ZF-ZW3Z : Sat Jul 13 02:08:42 UTC 2024), Entry for Alberto Lopez Mendoza and Ynocente Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:C9ZF-ZWZM"
+    },
+    {
+      "id": "WX6X-SY6",
+      "title": "Alberto, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS2G-CN56 : Mon Mar 02 23:55:05 UTC 2026), Entry for Fidelina Lopes and Alberto.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS2G-CN5X"
+    },
+    {
+      "id": "WX6X-M97",
+      "title": "Alverto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6835-T91N : Mon Mar 02 23:55:39 UTC 2026), Entry for Rosario Lopez and Alverto Lopez, 7 Sep 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6835-T91J"
+    },
+    {
+      "id": "WX66-124",
+      "title": "Alverto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6835-T916 : Mon Mar 02 23:54:50 UTC 2026), Entry for Rosario Popez and Alverto Lopez, 7 Sep 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6835-T91X"
+    },
+    {
+      "id": "WX66-1QD",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP79-8HJX : Fri Aug 07 09:41:36 UTC 2026), Entry for Maxima Lopez and Alberto Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP79-8HJF"
+    },
+    {
+      "id": "WX66-BJW",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6RWC-VQHY : Fri Aug 07 11:12:43 UTC 2026), Entry for Leonardo Lopez Lara and Alberto Lopez, 7 July 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6RWC-VQHB"
+    },
+    {
+      "id": "WXDW-WLC",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMR-FQ7H : Fri Sep 11 12:42:48 UTC 2026), Entry for Segundo L\u00f3pez and Alberto L\u00f3pez, 25 de abril de 1934.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMR-FQ7C"
+    },
+    {
+      "id": "WXDW-9J1",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMT-ZN6R : Fri Aug 07 12:03:49 UTC 2026), Entry for C\u00e1stulo P\u00e9rez and Lucia P\u00e9rez, 5 de abril de 1957.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMT-ZN6B"
+    },
+    {
+      "id": "WXD7-16R",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMG-DYSR : Fri Aug 07 08:41:52 UTC 2026), Entry for Leonardo L\u00f3pez and Alberto L\u00f3pez, 11 de agosto de 1952.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMG-DYST"
+    },
+    {
+      "id": "WXD7-1C3",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68LG-4CDB : Fri Aug 07 20:06:26 UTC 2026), Entry for Felicita Lara Viuda de L\u00f3pez and Juan Torres.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68LG-4C69"
+    },
+    {
+      "id": "WXD7-1Q6",
+      "title": "Alberto Lopez Mendoza, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFYJ-S86 : Fri Aug 07 03:51:42 UTC 2026), Entry for Alberto Lopez Mendoza and Inocente Lopez, 1886.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFYJ-S86"
+    },
+    {
+      "id": "WXD7-PB1",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMK-LJS8 : Fri Aug 07 10:17:02 UTC 2026), Entry for Mariano de Jes\u00fas Traheta and Andr\u00e9s Yraheta, 2 de octubre de 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMK-LJSF"
+    },
+    {
+      "id": "WXD7-PCP",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R32-VS8N : Fri Aug 07 10:51:32 UTC 2026), Entry for Baudilio L\u00f3pez and Alberto Lopez, 29 April 1000.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6R32-VS8J"
+    },
+    {
+      "id": "WXD7-G5Y",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6YLQ-6F91 : Fri Aug 07 10:59:55 UTC 2026), Entry for Maria Alberto Lopez and Alberto Lopez, ayer.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6YLQ-6FSM"
+    },
+    {
+      "id": "WXD7-GKD",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZJ7-RDLZ : Tue Nov 26 02:41:44 UTC 2024), Entry for Mario Alberto Lopez Lara and Alberto Lopez, 9 Nov 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZJ7-RDL8"
+    },
+    {
+      "id": "WXD7-GHG",
+      "title": "Alberto L\u00f3pez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZJS-KRPF : Tue Nov 26 02:41:55 UTC 2024), Entry for Mario Alberto Lopez and Alberto L\u00f3pez, 9 Nov 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZJS-KRPN"
+    },
+    {
+      "id": "WXD7-LQJ",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFYF-TB9 : Wed Mar 12 09:45:22 UTC 2025), Entry for Maria Alberto Lopez and Alberto Lopez, 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFYF-TBS"
+    },
+    {
+      "id": "WXD7-2TX",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68JL-YL7J : Thu Nov 28 16:53:09 UTC 2024), Entry for Segundo Lopez and Alberto Lopez, 10 Jun 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68JL-YL7V"
+    },
+    {
+      "id": "WXD7-KB5",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGPF-98YF : Fri Aug 07 19:43:58 UTC 2026), Entry for Segundo Lopez and Alberto Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGPF-98YP"
+    },
+    {
+      "id": "WXZX-5QR",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP8G-2BPL : Fri Aug 07 08:56:47 UTC 2026), Entry for Pablo L\u00f3pez and Alberto L\u00f3pez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP8G-2BPG"
+    },
+    {
+      "id": "WXZX-2JL",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZNP-RQ1S : Fri Nov 29 19:49:51 UTC 2024), Entry for Baudilio Lopez and Alberto Lopez, 29 Abr.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZNP-RQ13"
+    },
+    {
+      "id": "WXZX-KWX",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZJW-FWXX : Tue Nov 26 02:41:47 UTC 2024), Entry for Pablo Lopez and Alberto Lopez, 17 Jun 1919.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZJW-FWXF"
+    },
+    {
+      "id": "WXZX-JY1",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:4Y76-YN6Z : Sat Jul 13 01:53:32 UTC 2024), Entry for Lucia Lopez and Alberto Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:4Y76-YNN2"
+    },
+    {
+      "id": "WXZX-JJT",
+      "title": "Alberto Lara, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:683B-WKF4 : Mon Mar 02 23:55:07 UTC 2026), Entry for Luc\u00eda L\u00f3pez Lara and Alberto Lara, 6 Nov 1921.",
+      "url": "https://familysearch.org/ark:/61903/1:1:683B-WKFH"
+    },
+    {
+      "id": "WXZX-JQM",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZN7-9RNL : Tue Nov 26 02:47:24 UTC 2024), Entry for Rosa Lopez Lara and Alberto Lopez, 10 Sep 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZN7-9RNG"
+    },
+    {
+      "id": "WXZX-N5T",
+      "title": "Alberto, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS2G-CN5N : Mon Mar 02 23:42:30 UTC 2026), Entry for Lucia L\u00f3pez and Alberto.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS2G-CN5J"
+    },
+    {
+      "id": "WXZX-XNJ",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6R3L-SHJW : Fri Aug 07 08:43:58 UTC 2026), Entry for <Unknown> and Alberto L\u00f3pez, ayer.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6R3L-SHJ4"
+    },
+    {
+      "id": "WXZX-DZJ",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X97X-XPSF : Thu Sep 10 12:33:10 UTC 2026), Entry for Leonardo Lopez and Alberto Lopez, 31 de marzo de 1959.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X97X-XPSN"
+    },
+    {
+      "id": "WXZX-ZHV",
+      "title": "Alberto, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XS2G-CN5K : Mon Mar 02 23:43:28 UTC 2026), Entry for Leonardo L\u00f3pez and Alberto.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XS2G-CN52"
+    },
+    {
+      "id": "WXZX-H1G",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:65RL-P6GM : Fri Aug 07 09:41:51 UTC 2026), Entry for M\u00e1xima L\u00f3pez and Alberto L\u00f3pez, 16 October 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:65RL-P6G9"
+    },
+    {
+      "id": "WXZX-HKB",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGPF-VJ86 : Wed Mar 12 03:36:48 UTC 2025), Entry for Inocente L\u00f3pez and Alberto L\u00f3pez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGPF-VJ8L"
+    },
+    {
+      "id": "WXZX-4J3",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68JL-51VV : Fri Nov 22 14:53:50 UTC 2024), Entry for Santos Inocente Lopez Lara and Alberto Lopez, 10 Jan 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68JL-51VK"
+    },
+    {
+      "id": "WXZX-77B",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMG-6RX8 : Fri Aug 07 02:39:41 UTC 2026), Entry for Inocente L\u00f3pez and Alberto L\u00f3pez, 12 May 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMG-6RXD"
+    },
+    {
+      "id": "WXZ6-1NN",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9WJ-1FRW : Fri Aug 07 09:58:58 UTC 2026), Entry for Inocente L\u00f3pez and Alberto L\u00f3pez, 13 May 1944.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9WJ-1FR4"
+    },
+    {
+      "id": "WXZ6-1M3",
+      "title": "Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGPF-H4C2 : Wed Oct 08 08:59:11 UTC 2025), Entry for Luc\u00eda Lopez and Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGPF-Z6MX"
+    },
+    {
+      "id": "WXZ6-YJN",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X97H-17N7 : Fri Aug 07 08:01:02 UTC 2026), Entry for Alberto L\u00f3pez and Inocente Lopez, 4 de mayo de 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X97H-17N7"
+    },
+    {
+      "id": "WXZ6-K71",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMV-H35M : Fri Aug 07 05:23:28 UTC 2026), Entry for Leonardo L\u00f3pez and Alberto L\u00f3pez, 26 de julio de 1952.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMV-H359"
+    },
+    {
+      "id": "7PCM-8PK",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XSMG-FJQH : Fri Aug 07 05:42:14 UTC 2026), Entry for Ram\u00f3n Rodrigo Hern\u00e1ndez and Alejo Hern\u00e1ndez, 8 de febrero de 1938.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XSMG-FJQD"
+    },
+    {
+      "id": "7G5P-RNG",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X9WM-XYCG : Fri Aug 07 10:50:19 UTC 2026), Entry for Ram\u00f3n Rodrigo and Alejo Hern\u00e1ndez, 9 de febrero de 1938.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X9WM-XYCT"
+    },
+    {
+      "id": "7VL6-9SZ",
+      "title": "Alverto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68XJ-H2Z9 : Mon Mar 02 23:43:11 UTC 2026), Entry for Leonardo Lopez and Alverto Lopez, 4 Aug 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68XJ-H2ZS"
+    },
+    {
+      "id": "7VLD-B7G",
+      "title": "Alberto L\u00f3pez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68X5-MSHL : Mon Mar 02 23:42:27 UTC 2026), Entry for Leonardo L\u00f3pez and Alberto L\u00f3pez, 4 Aug 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68X5-MSHG"
+    },
+    {
+      "id": "7VLD-YHH",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68JM-FG2S : Tue Mar 03 00:38:34 UTC 2026), Entry for Leonardo Lopez Lara and Alberto Lopez, 4 Aug 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68JM-FG23"
+    },
+    {
+      "id": "7VLD-T23",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP8G-38Q8 : Fri Aug 07 06:51:14 UTC 2026), Entry for Baudilio L\u00f3pez Lara and Alberto L\u00f3pez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP8G-38QD"
+    },
+    {
+      "id": "7VLD-TC6",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZJ8-D8ZY : Fri Nov 29 19:53:30 UTC 2024), Entry for Cirilo Lopez Lara and Alberto Lopez, 18 Jul 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6ZJ8-D8ZB"
+    },
+    {
+      "id": "7VLD-RLL",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGPF-PMR9 : Tue Mar 11 19:20:53 UTC 2025), Entry for Cirilo Lopez and Alberto Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGPF-PMR3"
+    },
+    {
+      "id": "7VLD-R7F",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFYF-YYV : Mon Mar 10 21:09:44 UTC 2025), Entry for Cirilo L\u00f3pez and Alberto L\u00f3pez, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFYF-YYK"
+    },
+    {
+      "id": "7VLD-5XZ",
+      "title": "Alberto Lopez Mendoza, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QP45-K3JW : Sat Jul 13 05:46:05 UTC 2024), Entry for Alberto Lopez Mendoza and Inocente Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QP45-K3JW"
+    },
+    {
+      "id": "7VLD-P2H",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68SK-NM4P : Fri Nov 22 14:50:39 UTC 2024), Entry for Martina Lopez Lara and Alberto Lopez, 18 Feb 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68SK-NM45"
+    },
+    {
+      "id": "7VLD-G6V",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGPF-J6RC : Tue Oct 07 22:51:46 UTC 2025), Entry for Martina Lopez and Alberto Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGPF-J6R8"
+    },
+    {
+      "id": "7VLD-NYV",
+      "title": "Alberto L\u00f3pez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6XCJ-9M94 : Fri Nov 22 02:04:21 UTC 2024), Entry for Mariano Iraheta and Andr\u00e9s Iraheta, 26 Sep 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6XCJ-9M9Z"
+    },
+    {
+      "id": "7VLD-FBJ",
+      "title": "Alberto L\u00f3pez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGPN-MPX7 : Tue Oct 07 01:30:57 UTC 2025), Entry for Gabino L\u00f3pez and Alberto L\u00f3pez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGPN-MPX6"
+    },
+    {
+      "id": "7VLD-ZV2",
+      "title": "Alberto Lopez, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:661Y-SPG5 : Thu Nov 21 23:57:26 UTC 2024), Entry for Alberto Lopez and Inocente Lopez, 5 May 1906.",
+      "url": "https://familysearch.org/ark:/61903/1:1:661Y-SPG5"
+    },
+    {
+      "id": "7VKG-SD6",
+      "title": "Alberto Lopez Mendoza, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:C9ZF-ZW3Z : Sat Jul 13 02:08:42 UTC 2024), Entry for Alberto Lopez Mendoza and Ynocente Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:C9ZF-ZW3Z"
+    },
+    {
+      "id": "7VKG-SQ4",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGTM-QQGC : Sat Jul 13 05:26:13 UTC 2024), Entry for Alberto Lopez and Ynocente Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGTM-QQGC"
+    },
+    {
+      "id": "7VKG-97Z",
+      "title": "Alberto Lara, \"El Salvador registros parroquiales y diocesanos, 1655-1977\"",
+      "citation": "\"El Salvador registros parroquiales y diocesanos, 1655-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68JL-BW41 : Thu Nov 28 16:53:13 UTC 2024), Entry for Celestina Candelaria Lara Lara and Alberto Lara, 9 May 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:68JL-BWHM"
+    },
+    {
+      "id": "7VKG-M6S",
+      "title": "Alberto Lopez, \"El Salvador Registro Civil, 1704-2001\"",
+      "citation": "\"El Salvador Registro Civil, 1704-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGPF-Z64B : Tue Mar 11 07:05:24 UTC 2025), Entry for Celestina Lopez and Alberto Lopez.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGPF-Z6HS"
+    }
+  ]
+}

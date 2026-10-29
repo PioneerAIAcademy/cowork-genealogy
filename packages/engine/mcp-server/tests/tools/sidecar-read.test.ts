@@ -294,6 +294,21 @@ describe("sidecar_read", () => {
     });
   }
 
+  // The hit split runs first, so a missing or non-string ref must not reach it:
+  // it is still "ref is required", and one bad `refs` entry fails only itself.
+  it("answers a missing or non-string ref as invalid_ref, never a crash", async () => {
+    for (const ref of [undefined, 5, null] as any[]) {
+      const r = await sidecarRead({ projectPath: dir, ref });
+      expect(r, String(ref)).toMatchObject({ ok: false, reason: "invalid_ref" });
+      expect(!r.ok && r.errors.join(" ")).toMatch(/ref is required/);
+    }
+    await put("uploads/note.txt", "a note");
+    const batch = await sidecarRead({ projectPath: dir, refs: [5 as any, "uploads/note.txt"] });
+    expect(batch.ok).toBe(true);
+    if (!batch.ok) return;
+    expect(batch.results.map((x) => (x.ok ? x.content : x.reason))).toEqual(["invalid_ref", "a note"]);
+  });
+
   it("rejects a ref that names an existing directory as invalid_ref, not not_found", async () => {
     fileStoreOnly("a ref naming a directory has no Postgres meaning: refs name rows");
     await put("uploads/scans/page-1.txt", "one");
@@ -518,5 +533,184 @@ describe("sidecar_read: a staged transcription, and several refs", () => {
   it("refuses `ref` and `refs` together, and an empty `refs`", async () => {
     expect((await sidecarRead({ projectPath: dir, ref: "uploads/note.txt", refs: ["uploads/note.txt"] } as any)).ok).toBe(false);
     expect((await sidecarRead({ projectPath: dir, refs: [] })).ok).toBe(false);
+  });
+});
+
+// ─── one full-text hit's transcript (issue #3522, spec §7) ────────────────────
+
+import { readFileSync } from "fs";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { getProjectStore } from "../../src/store/project-store.js";
+import { arkToBareId } from "../../src/utils/ark.js";
+
+const SCENARIOS = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "..", "eval", "fixtures", "scenarios");
+
+interface FulltextEnvelope {
+  log_id: string;
+  tool: string;
+  payload: { results: Array<{ id: string; textDocument?: string }> };
+}
+
+/** A committed, real fulltext_search sidecar. */
+function fulltextFixture(scenario: string, file: string): FulltextEnvelope {
+  return JSON.parse(readFileSync(join(SCENARIOS, scenario, "results", file), "utf-8"));
+}
+
+describe("sidecar_read: one full-text hit", () => {
+  // 20 hits, every one with its own distinct textDocument, so a wrong position
+  // or a wrong id can never read back the right text by accident.
+  const g9gj = fulltextFixture("g9gj-proof-update-after-later-search", "log_003.json");
+  const hits = g9gj.payload.results;
+  const transcript = (i: number) => hits[i].textDocument as string;
+  const hitRef = (i: number) => `results/log_003.json#${arkToBareId(hits[i].id)}`;
+
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sidecar-read-fulltext-"));
+    await writeFile(join(dir, "research.json"), "{}", "utf-8");
+    await writeFile(join(dir, "tree.gedcomx.json"), "{}", "utf-8");
+    await getProjectStore().writeJson(dir, "results/log_003.json", g9gj);
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("returns one hit's transcript, addressed by its id in any ARK spelling", async () => {
+    const id = hits[4].id;
+    for (const spelling of [id, arkToBareId(id), `https://www.familysearch.org/${id}`]) {
+      const r = await sidecarRead({ projectPath: dir, ref: `results/log_003.json#${spelling}` });
+      expect(r.ok, spelling).toBe(true);
+      if (!r.ok) return;
+      expect(r.content).toBe(transcript(4));
+      expect(r.truncated).toBe(false);
+      expect(r).toMatchObject({ hitId: id, hitIndex: 5, logId: "log_003" });
+    }
+  });
+
+  it("reads a hit from a staged full-text result too, with no logId yet", async () => {
+    const staged = await stageSearchResults({ projectPath: dir, tool: "fulltext_search", response: g9gj.payload });
+    const r = await sidecarRead({ projectPath: dir, ref: `${staged!.resultsRef}#${arkToBareId(hits[1].id)}` });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.content).toBe(transcript(1));
+    expect(r).toMatchObject({ hitId: hits[1].id, hitIndex: 2, logId: null });
+  });
+
+  it("lists the hits with #hits, one JSON line each, and no transcript text", async () => {
+    const r = await sidecarRead({ projectPath: dir, ref: "results/log_003.json#hits" });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const rows = r.content.split("\n").filter(Boolean).map((l) => JSON.parse(l));
+    expect(rows).toHaveLength(20);
+    rows.forEach((row, i) => {
+      expect(row).toMatchObject({ hitIndex: i + 1, hitId: hits[i].id, ref: hitRef(i), hasTranscript: true });
+      expect(row).not.toHaveProperty("textDocument");
+    });
+    for (let i = 0; i < hits.length; i++) expect(r.content).not.toContain(transcript(i).slice(0, 80));
+  });
+
+  it("refuses a bare full-text ref, naming the hit count and both ways in", async () => {
+    const r = await sidecarRead({ projectPath: dir, ref: "results/log_003.json" });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.reason).toBe("invalid_ref");
+    expect(r.errors[0]).toMatch(/20 hits/);
+    expect(r.errors[0]).toMatch(/#hits/);
+  });
+
+  it("reads hit refs inside `refs`, each on its own", async () => {
+    const r = await sidecarRead({ projectPath: dir, refs: [hitRef(0), hitRef(7)] });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.results.map((x) => (x.ok ? x.content : x.reason))).toEqual([transcript(0), transcript(7)]);
+  });
+
+  it("pages within one hit's transcript", async () => {
+    const longest = hits.reduce((best, h, i) => ((h.textDocument?.length ?? 0) > (hits[best].textDocument?.length ?? 0) ? i : best), 0);
+    const first = await sidecarRead({ projectPath: dir, ref: hitRef(longest), maxChars: 5000 });
+    expect(first.ok && first.truncated).toBe(true);
+    if (!first.ok || first.nextOffset === undefined) return;
+    const second = await sidecarRead({ projectPath: dir, ref: hitRef(longest), maxChars: 5000, offset: first.nextOffset });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(second.content).toBe(transcript(longest).slice(first.nextOffset, first.nextOffset + second.content.length));
+  });
+
+  it("answers an unknown hit, an empty selector and a missing file", async () => {
+    const unknown = await sidecarRead({ projectPath: dir, ref: "results/log_003.json#ZZZZ-ZZZZ-ZZZ" });
+    expect(unknown).toMatchObject({ ok: false, reason: "not_found" });
+    expect(!unknown.ok && unknown.errors[0]).toMatch(/20 hits/);
+
+    expect(await sidecarRead({ projectPath: dir, ref: "results/log_003.json#" })).toMatchObject({ ok: false, reason: "invalid_ref" });
+    expect(await sidecarRead({ projectPath: dir, ref: "results/log_099.json#hits" })).toMatchObject({ ok: false, reason: "not_found" });
+  });
+
+  it("says when a hit carries no transcript", async () => {
+    const bare = fulltextFixture("research-competing-parent-sets-no-hypotheses", "log_020.json");
+    await getProjectStore().writeJson(dir, "results/log_020.json", bare);
+    const r = await sidecarRead({ projectPath: dir, ref: `results/log_020.json#${arkToBareId(bare.payload.results[0].id)}` });
+    expect(r).toMatchObject({ ok: false, reason: "not_found" });
+    expect(!r.ok && r.errors[0]).toMatch(/no transcript/);
+
+    const list = await sidecarRead({ projectPath: dir, ref: "results/log_020.json#hits" });
+    expect(list.ok).toBe(true);
+    const rows = list.ok ? list.content.split("\n").map((l) => JSON.parse(l)) : [];
+    expect(rows).toHaveLength(5);
+    expect(rows.every((row) => row.hasTranscript === false)).toBe(true);
+  });
+
+  it("answers a results/ ref naming a directory as invalid_ref, inside refs too", async () => {
+    fileStoreOnly("a ref naming a directory has no Postgres meaning: refs name rows");
+    await stageSearchResults({ projectPath: dir, tool: "fulltext_search", response: g9gj.payload });
+    for (const ref of ["results/.staging", "results/.staging#hits"]) {
+      expect(await sidecarRead({ projectPath: dir, ref }), ref).toMatchObject({ ok: false, reason: "invalid_ref" });
+    }
+    await getProjectStore().writeBytes(dir, "uploads/note.txt", Buffer.from("a note", "utf-8"));
+    const batch = await sidecarRead({ projectPath: dir, refs: ["uploads/note.txt", "results/.staging"] });
+    expect(batch.ok).toBe(true);
+    if (!batch.ok) return;
+    expect(batch.results.map((x) => (x.ok ? x.content : x.reason))).toEqual(["a note", "invalid_ref"]);
+  });
+
+  it("refuses a hit selector on a record search's sidecar", async () => {
+    await getProjectStore().writeJson(dir, "results/log_001.json", {
+      log_id: "log_001", tool: "record_search", retrieved: "2026-01-01T00:00:00Z", returned_count: 1,
+      payload: { results: [{ recordId: "ark:/61903/1:1:MXHY-TP4" }] },
+    });
+    const r = await sidecarRead({ projectPath: dir, ref: "results/log_001.json#MXHY-TP4" });
+    expect(r).toMatchObject({ ok: false, reason: "invalid_ref" });
+    expect(!r.ok && r.errors[0]).toMatch(/fulltext_search.*record_search/);
+  });
+
+  it("finds a hit stored under its resolver-URL id", async () => {
+    const flynn = fulltextFixture("flynn-record-matching", "log_004.json");
+    await getProjectStore().writeJson(dir, "results/log_004.json", flynn);
+    const r = await sidecarRead({ projectPath: dir, ref: `results/log_004.json#${arkToBareId(flynn.payload.results[0].id)}` });
+    expect(r.ok).toBe(true);
+    expect(r.ok && r.content).toBe(flynn.payload.results[0].textDocument);
+  });
+
+  it("refuses a hit selector on a sidecar no full-text search wrote", async () => {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: { query: {}, results: [{ id: "004022578_00190", transcription: "Harold Dean Whitaker, 91" }] },
+    });
+    const r = await sidecarRead({ projectPath: dir, ref: `${staged!.resultsRef}#004022578_00190` });
+    expect(r).toMatchObject({ ok: false, reason: "invalid_ref" });
+    expect(!r.ok && r.errors[0]).toMatch(/fulltext_search/);
+  });
+
+  it("still reads an upload whose name holds a '#', since only results/ refs carry a hit", async () => {
+    await getProjectStore().writeBytes(dir, "uploads/notes#1.txt", Buffer.from("a note with a hash", "utf-8"));
+    const r = await sidecarRead({ projectPath: dir, ref: "uploads/notes#1.txt" });
+    expect(r.ok && r.content).toBe("a note with a hash");
+  });
+
+  it("checks every segment of an upload ref, '#' or not, so nothing after it can climb out", async () => {
+    const r = await sidecarRead({ projectPath: dir, ref: "uploads/notes#/../../research.json" });
+    expect(r).toMatchObject({ ok: false, reason: "invalid_ref" });
+    expect(!r.ok && r.errors[0]).toMatch(/'\.\.' segment/);
   });
 });
