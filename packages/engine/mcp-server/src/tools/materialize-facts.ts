@@ -75,6 +75,7 @@ import {
   isRelationshipEstablishing,
 } from "../utils/source-ref-resolver.js";
 import { recordBasisOf } from "../utils/record-basis.js";
+import { placeTextKey } from "../utils/place-verdict.js";
 
 import {
   ASSERTION_FACT_ATTRS,
@@ -302,6 +303,7 @@ function applyMaterializeOp(
   const enrichedFactIds = new Set<string>();
   let namesAdded = 0;
   let refsAttached = 0;
+  const doubted = doubtedPlaces(research, recordId);
 
   for (const a of assertions) {
     const rawType = String(a.fact_type ?? "").toLowerCase();
@@ -340,6 +342,7 @@ function applyMaterializeOp(
     // error, never null), then upsert by fact identity.
     const ref = resolveSourceRef(a, research, tree);
     const cand = factCandidate(a);
+    if (cand.place !== undefined && doubted.has(placeTextKey(cand.place))) delete cand.standard_place;
     const candFact = candAsFact(cand);
     person.facts ??= [];
     const match = person.facts.find(
@@ -359,7 +362,11 @@ function applyMaterializeOp(
         match.place = cand.place;
         fieldChanged = true;
       }
-      if (str(match.standard_place) === undefined && cand.standard_place !== undefined) {
+      if (
+        str(match.standard_place) === undefined &&
+        cand.standard_place !== undefined &&
+        placeTextKey(match.place ?? "") === placeTextKey(cand.place ?? "")
+      ) {
         match.standard_place = cand.standard_place;
         fieldChanged = true;
       }
@@ -1705,3 +1712,16 @@ export const materializeFactsSchema = {
     required: ["projectPath"],
   },
 };
+
+/** The place texts (`placeTextKey`) a record's assertions give two or more
+ *  different standard places: the record disagrees with itself about them, so
+ *  none of those standard places is copied onto the tree. */
+function doubtedPlaces(research: any, recordId: unknown): Set<string> {
+  const byText = new Map<string, Set<string>>();
+  for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
+    if (a?.record_id !== recordId || typeof a.place !== "string" || str(a.standard_place) === undefined) continue;
+    const key = placeTextKey(a.place);
+    byText.set(key, (byText.get(key) ?? new Set<string>()).add(a.standard_place));
+  }
+  return new Set([...byText].filter(([, values]) => values.size > 1).map(([key]) => key));
+}

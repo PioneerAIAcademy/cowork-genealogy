@@ -186,8 +186,9 @@ tree_edit({
   `primary: false` means "add this without a primary" — the key is deleted
   before the write and any existing primary of the type is left alone. Any
   other spelling (`"false"`, `null`, `0`) is an input error. The fact's
-  `standard_place` is the **engine's answer** for its `place` (§4.1.1); with
-  none supplied, the answer fills it unless `resolveStandardPlace` is `false`.
+  `standard_place` is settled by §4.1.1: a supplied one is kept when it is a
+  FamilySearch standard place for the `place`, and with none supplied the
+  engine's answer fills it unless `resolveStandardPlace` is `false`.
   When there is no answer the field is left unset and a warning is added,
   unless the place is a non-place phrase such as "Same House"
   (`isNonPlacePhrase`), which has no standard form to miss. A `personId`
@@ -381,54 +382,61 @@ It **warns** when it detaches, naming the fields that changed, because that fact
 then leaves the automatic-update set. 31 of 114 `update_fact` ops in the
 committed e2e corpus set one of those fields.
 
-#### 4.1.1 A fact's `standard_place`: the engine's answer
+#### 4.1.1 A fact's `standard_place`
 
-Lead rulings, 2026-10-26: "Mis-standardizing a place is worse than not
-standardizing it"; a supplied `standard_place` is kept only when the engine's own
-rules give the same answer ("A is fine"); and "let's drop the exception and have
-the engine take FamilySearch's standardization from the record a tree fact cites
-instead." Implemented in `src/utils/place-verdict.ts` and
-`src/utils/record-standards.ts`, shared with `research_append`.
+Lead rulings: "have the engine take FamilySearch's standardization from the
+record a tree fact cites" (2026-10-26); the place bar is about 80% right,
+coarser and finer answers counted right, and "If we can raise accuracy and keep
+coverage the same, that's also a win" (2026-10-29). Implemented in
+`src/utils/place-verdict.ts` and `src/utils/record-standards.ts`, shared with
+`research_append` and `project_create`.
+
+**A supplied `standard_place` is kept** when all of these hold:
+- the fact has a `place`, and it is not a non-place phrase ("Same House");
+- the value names no other country than the `place` (`countryConsistency`);
+- FamilySearch's place search finds a place whose full name is the value, case
+  and accents aside: it is a FamilySearch standard place, as `place_search`
+  returns one. A search that fails keeps the value.
+
+It is judged whatever `resolveStandardPlace` says. Otherwise the engine's answer
+below replaces it, or the fact keeps no `standard_place`, and the response's
+`validation.warnings` says which and why:
+- `standard_place '<supplied>' for '<place>' was replaced by '<answer>', the
+  engine's lookup: <why>.` (or `…, FamilySearch's standardization of the same
+  place on the record it cites: <why>.`);
+- `standard_place '<supplied>' for '<place>' was not kept: <why>, and the engine
+  has none for it: <reason>.`;
+- `standard_place '<supplied>' was not kept: the fact has no place.` (no answer
+  is asked for, nor for a non-place phrase).
+
+`<why>` names the failed condition. Each warning ends by saying when a supplied
+value is kept.
 
 **The engine's answer** for a fact's `place`, in order:
 
-1. **The records the fact cites.** A fact cites the records of the assertions
-   behind its `sources` (a ref's research source, that source's assertions'
-   `record_id`s) and of the assertion it was minted from (`assertion_id`). The
-   answer is the `standard_place` the project stores for the same place text,
-   compared with case, accents and spacing aside, on those records: on an
-   assertion from one of them, or on one of their facts (a person's or a
-   couple's) in the sidecar such an assertion was extracted from. Two different
-   values are doubt, and doubt is no `standard_place`; nothing is looked up.
+1. **FamilySearch's own standardization on the record personas the fact is
+   about.** Those are the assertion the fact was minted from (`assertion_id`),
+   and the assertions behind its `sources` (a ref's research source, that
+   source's assertions) that a person_evidence link, not superseded, ties to a
+   person holding the fact (the person, or a Couple's two partners). A persona's
+   values are the `standard_place`s on its own facts, and on the facts of the
+   relationships it is a party to, with the same place text (case, accents and
+   spacing aside), in the sidecar its assertion's log entry names. Only a sidecar
+   marked `standard_places_from: "familysearch"` is read (research-schema-spec
+   §5.4.1): a live `record_read` marks its own, while a `record_search` sidecar
+   mixes in the engine's lookups and an assertion's own `standard_place` may be
+   an engine lookup or an agent's pick, so neither is read. Two different values
+   are doubt, and doubt is no `standard_place`; nothing is looked up.
 2. **Otherwise the lookup** `resolveStandardPlace(place, { contextPlaces })`, with
    the places of the holder's other facts as context for a bare single-segment
    place (see research-append-tool-spec §3.6, lever B).
 
-A non-place phrase ("Same House") has no answer, and neither does an answer
-whose country contradicts the text's (`countryConsistency`).
-
-**A supplied `standard_place`** is kept only when it equals that answer. It is
-judged whatever `resolveStandardPlace` says, so passing `false` cannot keep one.
-Otherwise the answer replaces it, or the fact keeps no `standard_place`, and the
-response's `validation.warnings` says which and why:
-- `standard_place '<supplied>' for '<place>' was replaced by '<answer>', the
-  standard place the cited record stores.` (or `…, the engine's lookup.`);
-- `standard_place '<supplied>' for '<place>' was not kept, and the place has
-  none: <reason>.`, the reason naming the non-place phrase, the records'
-  disagreement, a lookup that found nothing (for a one-part text, telling the
-  caller to write its parent jurisdictions into the text), or the other country;
-- `standard_place '<supplied>' was not kept: there is no place text to
-  standardize.`
-
-Each ends by saying a supplied value is kept only when it is the engine's own
-answer, and that a caller who knows more writes the fuller place into the text
-("Springfield, Illinois"). There is no other exception: FamilySearch's
-standardization of the same text on a record the fact does not cite is never a
-reason to keep a value.
+A non-place phrase has no answer, and neither does an answer whose country
+contradicts the text's (`countryConsistency`).
 
 **With none supplied** the answer fills the field, unless `resolveStandardPlace`
 is `false`. No answer leaves it unset with `could not resolve standard_place for
-'<place>' (left unset)` (plus `: <the disagreement>` when the cited records
+'<place>' (left unset)` (plus `: <the disagreement>` when FamilySearch's values
 disagree), or `standard_place '<answer>' contradicts place '<place>' — the place
 text names a different country; cleared (left unset)`; a non-place phrase stays
 silent.
@@ -682,10 +690,11 @@ Sequence (validate-before-persist, tree-only):
   "call `place_search`, copy the first result's `standardPlace`" hand-step
   (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`) and makes `place`/`standard_place` atomic.
   `resolveStandardPlace: false` skips the lookup for a fact with no supplied
-  value. A supplied `standard_place` is not an override: it is kept only when it
-  is the engine's answer (§4.1.1), because agents copied `place_search`'s first
-  candidate, which is wrong often enough that keeping it unchecked broke the
-  rule that a blank beats a wrong place.
+  value. A supplied `standard_place` is kept when it is a FamilySearch standard
+  place for the fact's place (§4.1.1): an audit of 215 e2e runs found agents'
+  own values name a wrong place 2 times in 619 that have FamilySearch's truth,
+  while the engine's lookup is wrong on 13.5% of fresh multi-word record places,
+  so replacing an agent's real place with the lookup makes things worse.
 - **Competing parentage is surfaced by the writer, not by a new tool.** A
   second biological parent of one sex is refused by the warning gate under a
   `competingParentage` id, so the refusal is the detector: it
@@ -749,8 +758,8 @@ Sequence (validate-before-persist, tree-only):
 | `update_relationship` on a Couple | input error — only a ParentChild edge carries a subtype |
 | `update_relationship` retype that would duplicate an edge already on the pair | input error naming that edge; write nothing |
 | `standard_place` lookup finds nothing, or its network call fails | best-effort: leave `standard_place` unset and add a warning (none for a non-place phrase such as "Same House"); never fail the edit on a place-resolution miss |
-| The records a fact cites store different `standard_place`s for its place text | leave `standard_place` unset, look nothing up, and add a warning naming them (§4.1.1) |
-| A supplied `standard_place` that is not the engine's answer for the place text | write the answer, or none, and add a warning saying which and why (§4.1.1); never fail the edit |
+| FamilySearch standardized a fact's place text differently on the record personas it is about | leave `standard_place` unset, look nothing up, and add a warning naming the values (§4.1.1) |
+| A supplied `standard_place` on a fact with no place, naming another country, or not a FamilySearch standard place | write the engine's answer, or none, and add a warning saying which and why (§4.1.1); never fail the edit |
 | `update_fact` changes `place` with `resolveStandardPlace: false` and no `standard_place` | drop the old `standard_place`, with a warning |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
@@ -789,15 +798,16 @@ The caller (`tree-edit` skill) still:
   rejected; stale `relationshipId` rejected. A couple event on a `personId`
   is refused in every spelling the matcher folds, and accepted on the Couple.
 - **A supplied `standard_place` (§4.1.1)** — on `add_fact`, `update_fact`,
-  `add_person` and `add_relationship` facts: one equal to the engine's answer is
-  kept silently; a different one is replaced, naming the lookup or the cited
-  record; one the engine leaves blank (non-place phrase, nothing found, a
-  one-part text, another country, no place text) is dropped with the reason;
-  `resolveStandardPlace: false` cannot keep one. The cited record supplies the
-  answer, from an assertion (case and accents aside) or its own person or couple
-  fact in the assertion's sidecar, and never another record's in the same
-  sidecar; a cited record whose facts disagree, or whose answer names another
-  country, gives none; a value only another record stores is replaced.
+  `add_person` and `add_relationship` facts: a FamilySearch standard place is
+  kept silently, even where the engine's own answer differs, and so is one whose
+  check failed; one on a fact with no place or a non-place phrase, one naming
+  another country, and one FamilySearch has no place of are replaced by the
+  engine's answer or dropped, with the reason. `resolveStandardPlace: false`
+  does not change that. The record step reads FamilySearch's own values only:
+  from a sidecar marked `standard_places_from`, on the persona of the fact's
+  own assertion or of a cited assertion linked to its holder, never another
+  persona's or another record's, never an assertion's stored value; values that
+  disagree give none.
 - **update_fact** — field merge by `factId`; a place change re-resolves
   `standard_place`; id unchanged. Also merges by `relationshipId` + `factId` on a
   Couple-held fact; a `factId` not on the named holder errors. Retyping a

@@ -4,9 +4,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 // stays offline. It resolves nothing unless a test says otherwise.
 vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
-  return { ...actual, resolveStandardPlace: vi.fn(async () => null) };
+  // Offline: every supplied standard_place is one of FamilySearch's unless a
+  // test says otherwise.
+  return { ...actual, resolveStandardPlace: vi.fn(async () => null), isFamilySearchPlace: vi.fn(async () => true) };
 });
-import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { isFamilySearchPlace, resolveStandardPlace } from "../../src/utils/place-resolver.js";
 import { mkdtemp, writeFile, readFile, rm, access, mkdir } from "fs/promises";
 import { realpathSync } from "node:fs";
 import { join } from "path";
@@ -1071,14 +1073,18 @@ describe("project_create — the old-extension message init-project keys on (#29
 describe("project_create — hand-entered places are standardized by the tool", () => {
   let dir: string;
   const resolver = vi.mocked(resolveStandardPlace);
+  /** The two typed values below that are not FamilySearch standard places. */
+  const NOT_FS = new Set(["Boston, Massachusetts, United States", "Ballyowen, Ireland"]);
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "project-create-places-"));
     resolver.mockImplementation(async (place: string) =>
       /^boston/i.test(place) ? "Boston, Suffolk, Massachusetts, United States" : null,
     );
+    vi.mocked(isFamilySearchPlace).mockImplementation(async (name: string) => !NOT_FS.has(name));
   });
   afterEach(async () => {
     resolver.mockImplementation(async () => null);
+    vi.mocked(isFamilySearchPlace).mockImplementation(async () => true);
     await rm(dir, { recursive: true, force: true });
   });
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
@@ -1086,7 +1092,7 @@ describe("project_create — hand-entered places are standardized by the tool", 
     id: "I1", gender: "Male", names: [{ id: "N1", given: "Michael", surname: "Brennan" }], facts,
   });
 
-  it("replaces a standard_place the caller typed with the resolver's, and says so", async () => {
+  it("replaces a typed standard_place FamilySearch has no place of with the resolver's, and says so", async () => {
     const tree = {
       persons: [person([{ id: "F1", type: "Birth", date: "~1850", place: "Boston, Massachusetts", standard_place: "Boston, Massachusetts, United States" }])],
       relationships: [], sources: [],
@@ -1094,9 +1100,22 @@ describe("project_create — hand-entered places are standardized by the tool", 
     const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
     expect(result.ok).toBe(true);
     expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
-    expect(result.validation.warnings.join(" ")).toContain(
-      "standard_place \"Boston, Massachusetts, United States\" for 'Boston, Massachusetts' was replaced by 'Boston, Suffolk, Massachusetts, United States'",
+    expect(result.validation.warnings).toContain(
+      "standard_place \"Boston, Massachusetts, United States\" for 'Boston, Massachusetts' was replaced by " +
+        "'Boston, Suffolk, Massachusetts, United States', the engine's lookup: FamilySearch's place standard has no place of that name",
     );
+  });
+
+  it("keeps a typed FamilySearch standard place the resolver would answer differently, and says nothing", async () => {
+    const tree = {
+      persons: [person([{ id: "F1", type: "Birth", place: "Boston, Massachusetts", standard_place: "Massachusetts, United States" }])],
+      relationships: [], sources: [],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Massachusetts, United States");
+    expect(result.validation.warnings.join(" ")).not.toMatch(/standard_place/);
+    expect(result.placesFilled).toBeUndefined();
   });
 
   it("keeps a standard_place the caller typed when it is the engine's own, and says nothing", async () => {
@@ -1108,22 +1127,6 @@ describe("project_create — hand-entered places are standardized by the tool", 
     expect(result.ok).toBe(true);
     expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
     expect(result.validation.warnings.join(" ")).not.toMatch(/standard_place/);
-  });
-
-  it("refuses a typed standard_place that only a record staged in the folder gives the text", async () => {
-    await stageSearchResults({
-      projectPath: dir,
-      tool: "record_read",
-      response: {
-        query: { recordId: "ark:/61903/1:1:ABCD-123" },
-        results: [{ recordId: "ark:/61903/1:1:ABCD-123", gedcomx: { persons: [{ id: "p1", facts: [{ type: "Birth", place: "Ballyowen", standard_place: "Ballyowen, Ireland" }] }] } }],
-      },
-    });
-    const tree = { persons: [person([{ id: "F1", type: "Birth", place: "Ballyowen", standard_place: "Ballyowen, Ireland" }])], relationships: [], sources: [] };
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
-    expect(result.ok).toBe(true);
-    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
-    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Ballyowen, Ireland\" for 'Ballyowen' was not kept");
   });
 
   it("fills a hand-entered place the caller left unstandardized, and reports it", async () => {
@@ -1161,7 +1164,9 @@ describe("project_create — hand-entered places are standardized by the tool", 
     const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
     expect(result.ok).toBe(true);
     expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
-    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Ballyowen, Ireland\" for 'Ballyowen' was not kept");
+    expect(result.validation.warnings).toContain(
+      "standard_place \"Ballyowen, Ireland\" for 'Ballyowen' was not kept: FamilySearch's place standard has no place of that name",
+    );
   });
 
   it("standardizes a relationship's own fact too", async () => {
@@ -1192,7 +1197,7 @@ describe("project_create — hand-entered places are standardized by the tool", 
     });
     expect(result.ok).toBe(true);
     expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
-    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Atlantis\" on a Birth fact with no place was not kept");
+    expect(result.validation.warnings).toContain("standard_place \"Atlantis\" on a Birth fact was not kept: the fact has no place");
   });
 
   it("treats an explicit null standard_place as none supplied, with no warning", async () => {

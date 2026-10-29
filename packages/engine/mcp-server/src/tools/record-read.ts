@@ -3,7 +3,7 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { toSimplified } from "../utils/gedcomx-convert.js";
 import { repIdToStandardPlace } from "../utils/place-resolver.js";
-import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
+import { FAMILYSEARCH_STANDARD_PLACES, readStagedResults, stageSearchResults } from "../utils/results-staging.js";
 import { recordIndexFields } from "../utils/record-index-fields.js";
 import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
@@ -213,6 +213,9 @@ export async function recordReadTool(
             },
           ],
         },
+        // `toSimplified` above takes each fact's `standard_place` from the
+        // record's own `normalized` value only, so every one is FamilySearch's.
+        standardPlacesFrom: FAMILYSEARCH_STANDARD_PLACES,
       });
     } catch (error) {
       staged = null;

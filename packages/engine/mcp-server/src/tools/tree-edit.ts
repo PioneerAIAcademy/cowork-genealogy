@@ -58,7 +58,8 @@ import {
 import { maxIdNum, nextId } from "../utils/gedcomx-ids.js";
 import { resolveStandardPlace } from "../utils/place-resolver.js";
 import { judgeSupplied, placeAnswer, type PlaceAnswer } from "../utils/place-verdict.js";
-import { RecordStandards, recordsCitedBy } from "../utils/record-standards.js";
+import { RecordStandards, factAssertions } from "../utils/record-standards.js";
+import { sidecarReader } from "../utils/results-staging.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
 import { resolveSourceRef, isRelationshipEstablishing } from "../utils/source-ref-resolver.js";
 
@@ -295,6 +296,12 @@ function refuseCoupleEventOnPerson(type: unknown, op: string): void {
   );
 }
 
+/** The persons a fact on `holder` belongs to: the person, or a Couple's partners. */
+function holderPeople(holder: FactHolder): unknown[] {
+  const rel = holder as SimplifiedRelationship;
+  return rel.type === "Couple" ? [rel.person1, rel.person2] : [holder.id];
+}
+
 /**
  * Resolve the target of add_fact/update_fact: exactly one of `personId` or
  * `relationshipId`. Facts on relationships are legal only on Couples
@@ -488,45 +495,48 @@ async function applyOperation(
   const warnings: string[] = [];
   const wantResolve = input.resolveStandardPlace !== false;
 
-  // A fact's standard_place is the engine's answer for its place (place-verdict.ts):
-  // the standard place the records the fact cites store for that text, else the
+  // A fact's standard_place (place-verdict.ts). A supplied one is kept when it is
+  // a FamilySearch standard place for the fact's own place; otherwise, and to
+  // fill a fact with none unless `resolveStandardPlace` is false, the engine's
+  // answer: FamilySearch's standardization of the same text on the record
+  // personas the fact is about (`people`, the persons holding it), else the
   // resolver's, with the places of the holder's other facts (`siblings`) as
-  // context for a bare place. A supplied one is kept only when it is that
-  // answer, whatever `resolveStandardPlace` says; otherwise the answer replaces
-  // it, or none is kept, with a warning. With none supplied the answer fills it,
-  // unless `resolveStandardPlace` is false. Never fails the edit.
-  const settlePlace = async (fact: SimplifiedFact, supplied: boolean, siblings: SimplifiedFact[] = []): Promise<void> => {
-    const given = supplied && typeof fact.standard_place === "string" ? fact.standard_place : undefined;
-    if (given === undefined && !wantResolve) return;
-    const place = typeof fact.place === "string" && fact.place.trim() !== "" ? fact.place : undefined;
-    let answer: PlaceAnswer | null = null;
-    if (place !== undefined) {
+  // context for a bare place. Never fails the edit.
+  const settlePlace = async (
+    fact: SimplifiedFact,
+    supplied: boolean,
+    siblings: SimplifiedFact[],
+    people: readonly unknown[],
+  ): Promise<void> => {
+    const answer = async (place: string): Promise<PlaceAnswer> => {
       const contextPlaces = siblings
         .map((f) => f.place)
         .filter((p): p is string => typeof p === "string" && p !== place);
-      const stored = await standards.for(recordsCitedBy(fact, research), place);
-      answer = await placeAnswer(place, stored, () => resolveStandardPlace(place, { contextPlaces }));
-    }
-    if (given !== undefined) {
-      const judged = judgeSupplied(place, given, answer);
+      const fromRecords = await standards.for(factAssertions(fact, people, research), place);
+      return placeAnswer(place, fromRecords, () => resolveStandardPlace(place, { contextPlaces }));
+    };
+    if (supplied && typeof fact.standard_place === "string") {
+      const judged = await judgeSupplied(fact.place, fact.standard_place, answer);
       if (judged.standardPlace === null) delete fact.standard_place;
       else fact.standard_place = judged.standardPlace;
       if (judged.warning) warnings.push(judged.warning);
       return;
     }
-    if (answer === null) return;
-    if (answer.standardPlace !== null) {
-      fact.standard_place = answer.standardPlace;
+    const place = typeof fact.place === "string" && fact.place.trim() !== "" ? fact.place : undefined;
+    if (!wantResolve || place === undefined) return;
+    const filled = await answer(place);
+    if (filled.standardPlace !== null) {
+      fact.standard_place = filled.standardPlace;
       return;
     }
     delete fact.standard_place;
-    if (answer.why === "not_found") {
+    if (filled.why === "not_found") {
       warnings.push(`could not resolve standard_place for '${place}' (left unset)`);
-    } else if (answer.why === "records_disagree") {
-      warnings.push(`could not resolve standard_place for '${place}' (left unset): ${answer.reason}`);
-    } else if (answer.why === "other_country") {
+    } else if (filled.why === "records_disagree") {
+      warnings.push(`could not resolve standard_place for '${place}' (left unset): ${filled.reason}`);
+    } else if (filled.why === "other_country") {
       warnings.push(
-        `standard_place '${answer.dropped}' contradicts place '${place}' — the place text ` +
+        `standard_place '${filled.dropped}' contradicts place '${place}' — the place text ` +
           "names a different country; cleared (left unset)",
       );
     }
@@ -546,7 +556,7 @@ async function applyOperation(
       const fact: SimplifiedFact = { ...input.fact, id: nextId(tree, "F") };
       stripClearedPrimary(fact);
       assertNodeHasRef(fact, "the added fact", "add_fact");
-      await settlePlace(fact, input.fact.standard_place !== undefined, holder.facts ?? []);
+      await settlePlace(fact, input.fact.standard_place !== undefined, holder.facts ?? [], holderPeople(holder));
       if (fact.primary === true) clearPrimaryOfType(holder, fact.type, fact.id);
       holder.facts = [...(holder.facts ?? []), fact];
       assignedIds.fact = fact.id;
@@ -623,7 +633,7 @@ async function applyOperation(
           }
           delete existing.standard_place;
         }
-        await settlePlace(existing, input.fact.standard_place !== undefined, holder.facts ?? []);
+        await settlePlace(existing, input.fact.standard_place !== undefined, holder.facts ?? [], holderPeople(holder));
       }
       // A human CHANGING any of the fact's own string fields detaches it from
       // the assertion it was minted from (#2472) — the same reading the spec
@@ -752,7 +762,7 @@ async function applyOperation(
           stripClearedPrimary(f);
           assertNodeHasRef(f, "each inline fact", "add_person");
           f.id = nextId(tree, "F");
-          await settlePlace(f, f.standard_place !== undefined, person.facts);
+          await settlePlace(f, f.standard_place !== undefined, person.facts, []);
           factIds.push(f.id);
         }
         assignedIds.facts = factIds;
@@ -895,7 +905,7 @@ async function applyOperation(
             continue;
           }
           f.id = nextId(tree, "F");
-          await settlePlace(f, f.standard_place !== undefined, edge.facts ?? rel.facts);
+          await settlePlace(f, f.standard_place !== undefined, edge.facts ?? rel.facts, holderPeople(edge));
           // Same primary swap add_fact performs, but only when corroborating:
           // the plan scopes it to the matched edge, and `main` never swapped on
           // a newly created one. `primary` is about to become load-bearing
@@ -1242,7 +1252,7 @@ export async function executeTreeOps(input: TreeEditInput, gate: OpGate, toolNam
     );
     const tree = sanitized.tree;
     const research = await readJson(projectPath, "research.json");
-    const standards = new RecordStandards(projectPath, research);
+    const standards = new RecordStandards(research, sidecarReader(projectPath));
     // Post-heal, pre-edit snapshot (applyOperation mutates tree in place):
     // block only on errors THIS call introduces, not pre-existing drift in a
     // section it never touched (#1572).

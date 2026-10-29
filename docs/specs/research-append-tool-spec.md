@@ -683,9 +683,9 @@ was measured and rejected. `external_links_search` is likewise persona-less but 
 Two prevention levers for the silent-wrong-geocode theme, applied per `assertions`
 append op (deliberately simple), and to an `assertions` update that sets `place` to a
 new place without setting `standard_place`. On that update the existing assertion is
-the base, Lever B's step 1 reads only what the project already stores for its
-record (there is no sidecar-matched result), a resolved value is written into
-the update's `standard_place`, and when nothing resolves, or the resolved value
+the base, Lever B's step 1 reads its record persona as on an append, a resolved
+value is written into the update's `standard_place`, and when nothing resolves,
+or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
 with a warning rather than kept for the new place.
 
@@ -698,13 +698,13 @@ A geocoded answer the country check cannot judge is dropped too when the text's
 trailing comma part names a country the alias table knows, since the answer
 then names none it knows: "March, Cambridgeshire, England" drops "March,
 Transvaal, South Africa", a country the table does not carry. Otherwise it is
-kept only when the text is one comma part, which the resolver's bare-name rule
-(Lever B) has already judged, or when the answer's own name, its first
-segment, is one of the text's comma parts (compared ignoring case, accents,
-periods, type words and an "X of" prefix): "Hilperton, Wiltshire" keeps
-"Hilperton, Wiltshire, England, United Kingdom" and "Ky" keeps "Kentucky,
-United States", while "at the home of her daughter, Mrs. John Smith" drops
-"Of, Trabzon, Türkiye". A dropped answer leaves the place as written, with no
+kept only when the text is one word, which the resolver's one-word rule (Lever
+B) judges and whose answer need not spell the text, or when the answer's own
+name, its first segment, is one of the text's comma parts (compared ignoring
+case, accents, periods, type words and an "X of" prefix): "Hilperton, Wiltshire" keeps "Hilperton, Wiltshire, England, United
+Kingdom" and "Ky" keeps "Kentucky, United States", while "at the home of her
+daughter" and "at the home of her daughter, Mrs. John Smith" drop "Of, Trabzon,
+Türkiye". A dropped answer leaves the place as written, with no
 `standard_place`. The lift holds on an append and on an update that leaves
 `place` alone, such as an `informant_bias_notes` note or `extraction_append`'s
 question tie. On such an update the lifted place and its `standard_place` go
@@ -718,16 +718,22 @@ stays an opt-out, as on an append. The levers:
   and the guard; a non-place phrase such as "Same House" or "Do", tested by
   `isNonPlacePhrase` in `place-resolver.ts`, skips both steps below and stays
   unset with no warning):
-  1. the op's record supplies it: the `standard_place` the project stores for the
-     same place text (case, accents and spacing aside) on the op's `record_id`,
-     from a fact of that record in its sidecar-matched result (§3.5) or in the
-     sidecar of an assertion already stored from it, or from such an assertion
-     itself, is **copied** — no geocoding call. When those give two different
-     values the record is in doubt: the field stays unset, with a warning and an
-     `unresolvedPlaces` entry, and nothing is geocoded. Another record's
-     standard place for the same text is never taken (lead, 2026-10-26: "have
-     the engine take FamilySearch's standardization from the record a tree fact
-     cites"; `src/utils/record-standards.ts`, shared with `tree_edit`);
+  1. FamilySearch's own standardization on the op's record persona supplies it:
+     the `standard_place` on that persona's facts, and on the facts of the
+     relationships it is a party to, for the same place text (case, accents and
+     spacing aside), in the result for the op's `record_id` in the sidecar its
+     `log_entry_id` names (for an accepted hint, the record read staged in the
+     same call), is **copied** — no geocoding call. Only a sidecar marked
+     `standard_places_from: "familysearch"` is read (research-schema-spec
+     §5.4.1): a live `record_read` marks its own, while a `record_search` sidecar
+     mixes in the engine's own lookups and an assertion's stored
+     `standard_place` may be an engine lookup or an agent's pick, so neither is
+     read. When those values differ the record is in doubt: the field stays
+     unset, with a warning and an `unresolvedPlaces` entry, and nothing is
+     geocoded. Another persona's or record's standard place for the same text
+     is never taken (lead, 2026-10-26: "have the engine take FamilySearch's
+     standardization from the record a tree fact cites";
+     `src/utils/record-standards.ts`, shared with `tree_edit`);
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
@@ -1666,18 +1672,22 @@ resolve check passes the exact entry the rule exists to stop.
 ### 5.9 A caller's timeline event `standard_place` is judged
 
 On a `timelines` append or update reached as an MCP caller
-(`researchAppendFromCaller`), each event's supplied `standard_place` is kept only
-when it is the engine's answer for the event's `place` (lead, 2026-10-26; the
-rule `tree_edit` applies to a fact, tree-edit-tool-spec §4.1.1): the
-`standard_place` the records of the event's `assertion_ids` store for that text,
-case and accents aside, else `resolveStandardPlace(place)`; none when those
-records disagree, for a non-place phrase, or for an answer naming another
-country. Otherwise the answer replaces it, or it becomes `null`, with a warning
-naming the event (`events[<k>]: standard_place '<supplied>' … was replaced by …`
-or `… was not kept …`), and `distance_from_previous_km` becomes `null` on that
-event and the next, since both were measured from the old value. An event with
-no `place` keeps none. `timeline_build` writes through `researchAppend`
-directly, from the project's own standard places, and is not judged.
+(`researchAppendFromCaller`), each event's supplied `standard_place` is judged as
+`tree_edit` judges a fact's (tree-edit-tool-spec §4.1.1). It is kept when the
+event has a `place` that is not a non-place phrase, the value names no other
+country than it, and FamilySearch's place search finds a place of that full name
+(a failed search keeps it). Otherwise the engine's answer replaces it, or it
+becomes `null`, with a warning naming the event (`events[<k>]: standard_place
+'<supplied>' … was replaced by …` or `… was not kept …`). The answer is
+FamilySearch's own standardization of the text on the record personas of the
+event's `assertion_ids` (§3.6, Lever B step 1), else `resolveStandardPlace(place)`;
+none when FamilySearch's values disagree, for a non-place phrase, or for an
+answer naming another country. When the value is replaced by another place, or
+by none, `distance_from_previous_km` becomes `null` on that event and the next,
+since both were measured from the old value; a replacement FamilySearch finds to
+be the same place (`samePlace`: one place id, as `place_distance` reads each name)
+keeps them. `timeline_build` writes through `researchAppend` directly, from the
+project's own standard places, and is not judged.
 
 ## 6. Decisions recorded
 

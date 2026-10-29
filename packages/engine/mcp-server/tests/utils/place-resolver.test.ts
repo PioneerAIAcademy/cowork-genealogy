@@ -33,6 +33,8 @@ import {
   __usePlaceTableForTests,
   isNonPlacePhrase,
   checkFirstPlace,
+  isFamilySearchPlace,
+  samePlace,
 } from "../../src/utils/place-resolver.js";
 
 const mockSearchPlace = vi.mocked(searchPlace);
@@ -986,6 +988,71 @@ describe("__usePlaceTableForTests (the eval harness's offline resolver)", () => 
     mockSearchPlace.mockResolvedValue([]);
     await resolveStandardPlace("Boston, Massachusetts");
     expect(mockSearchPlace).toHaveBeenCalled();
+  });
+});
+
+describe("isFamilySearchPlace: a supplied standard_place is one of FamilySearch's", () => {
+  afterEach(() => __usePlaceTableForTests(null));
+
+  it("is true when an entry's full name is the value, case and accents aside, and searches once", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", fullName: "Parácuaro, Michoacán, Mexico" }),
+      entry({ placeRepId: "2", fullName: "Parácuaro, Guanajuato, Mexico" }),
+    ]);
+    expect(await isFamilySearchPlace("paracuaro, michoacan, MEXICO")).toBe(true);
+    expect(await isFamilySearchPlace("Parácuaro, Michoacán, Mexico")).toBe(true);
+    expect(mockSearchPlace).toHaveBeenCalledTimes(1);
+    expect(mockSearchPlace).toHaveBeenCalledWith("paracuaro, michoacan, MEXICO");
+  });
+
+  it("is false when no entry's full name is the value, though the search finds its places", async () => {
+    mockSearchPlace.mockResolvedValue([
+      entry({ placeRepId: "1", fullName: "Union Station, Licking, Ohio, United States" }),
+      entry({ placeRepId: "2", fullName: "Union Township, Licking, Ohio, United States" }),
+    ]);
+    expect(await isFamilySearchPlace("Union Station, Union Township, Licking, Ohio, United States")).toBe(false);
+  });
+
+  it("is null when the search fails, and a failure is not remembered", async () => {
+    mockSearchPlace.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
+    expect(await isFamilySearchPlace("Kent, England, United Kingdom")).toBeNull();
+    mockSearchPlace.mockResolvedValueOnce([entry({ placeRepId: "1", fullName: "Kent, England, United Kingdom" })]);
+    expect(await isFamilySearchPlace("Kent, England, United Kingdom")).toBe(true);
+  });
+
+  it("answers from the eval harness's table offline: a place the table gives as a standard place", async () => {
+    __usePlaceTableForTests({ "Boston, Massachusetts": "Boston, Suffolk, Massachusetts, United States", Nowhere: null });
+    expect(await isFamilySearchPlace("boston, suffolk, massachusetts, united states")).toBe(true);
+    expect(await isFamilySearchPlace("Boston, Massachusetts")).toBe(false);
+    expect(mockSearchPlace).not.toHaveBeenCalled();
+  });
+});
+
+describe("samePlace: two standard places name one FamilySearch place", () => {
+  it("is true when both names are one place id, each read as place_distance reads it, however spelled", async () => {
+    mockSearchPlace.mockImplementation(async (name: string) =>
+      name === "Canterbury, Kent, England"
+        ? [
+            entry({ placeRepId: "9", placeId: "P2", fullName: "Canterbury, New Zealand", score: 0.2 }),
+            entry({ placeRepId: "1", placeId: "P1", fullName: "Canterbury, Kent, England, United Kingdom", score: 0.9 }),
+          ]
+        : [
+            entry({ placeRepId: "8", placeId: "P3", fullName: "Canterbury, Kent, New Brunswick, Canada", score: 0.95 }),
+            entry({ placeRepId: "1", placeId: "P1", fullName: "Canterbury, Kent, England, United Kingdom", score: 0.9 }),
+          ],
+    );
+    expect(await samePlace("Canterbury, Kent, England", "Canterbury, Kent, England, United Kingdom")).toBe(true);
+  });
+
+  it("is false for two places, and when either search finds nothing or fails", async () => {
+    mockSearchPlace.mockImplementation(async (name: string) => {
+      if (name.startsWith("Fails")) throw new Error("FamilySearch API error: 503");
+      if (name.startsWith("Nothing")) return [];
+      return [entry({ placeRepId: name, placeId: name.startsWith("Ireland") ? "IE" : "MAYO", fullName: name, score: 1 })];
+    });
+    expect(await samePlace("Ireland", "Mayo, Ireland")).toBe(false);
+    expect(await samePlace("Nothing, Here", "Nothing, There")).toBe(false);
+    expect(await samePlace("Fails, Here", "Fails, There")).toBe(false);
   });
 });
 

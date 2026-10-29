@@ -1,24 +1,24 @@
 /**
- * The standard_place the engine gives a written place, and the rule a writer
- * applies to one an agent supplies (lead, 2026-10-26: "Mis-standardizing a place
- * is worse than not standardizing it"; "have the engine take FamilySearch's
- * standardization from the record a tree fact cites").
+ * The standard_place a writer stores for a fact's place (lead, 2026-10-29: the
+ * place bar is about 80% right, coarser and finer answers counted right;
+ * 2026-10-26: "have the engine take FamilySearch's standardization from the
+ * record a tree fact cites").
  *
- * The engine's answer for a place text, in order:
- * 1. On a fact that cites records, the standard_place the project stores for the
- *    same text, case and accents aside, on those records: an assertion from one
- *    of them, or a fact of one of them in a sidecar such an assertion came from.
- *    Two different values are doubt, and doubt is no standard_place.
- * 2. Otherwise the writer's own lookup.
+ * A supplied standard_place is kept when the fact has a place, the value names
+ * no other country than that place, and FamilySearch's place search finds a
+ * place whose full name is the value, case and accents aside. A failed search
+ * keeps it. Otherwise the engine's own answer replaces it, or none is kept, and
+ * a warning says which and why.
+ *
+ * The engine's own answer for a place text, which also fills a fact with none:
+ * 1. FamilySearch's own standardization of the same text on the record personas
+ *    the fact is about (record-standards.ts). Two different values are doubt,
+ *    and doubt is no standard_place;
+ * 2. otherwise the writer's own lookup.
  * A non-place phrase ("Same House") has none, and an answer naming a different
  * country than the text is dropped.
- *
- * A writer keeps a supplied standard_place only when it is that answer;
- * otherwise the answer replaces it, or none is kept, and a warning says which
- * and why. FamilySearch's standardization on any other record is never a reason
- * to keep one. An agent that knows more writes it into the place text.
  */
-import { countryConsistency, isNonPlacePhrase, placeSegments } from "./place-resolver.js";
+import { countryConsistency, isFamilySearchPlace, isNonPlacePhrase, placeSegments } from "./place-resolver.js";
 
 /** A place text as the rule compares it: case, accents and spacing aside. */
 export function placeTextKey(place: string): string {
@@ -35,24 +35,25 @@ export type PlaceAnswer =
       reason: string;
     };
 
-/** The engine's answer for `place`, given the distinct standard_places its cited
- *  records store for it (`stored`) and the writer's own lookup. */
+/** The engine's answer for `place`, given FamilySearch's own distinct
+ *  standard_places for it on the records the fact cites (`fromRecords`) and the
+ *  writer's own lookup. */
 export async function placeAnswer(
   place: string,
-  stored: readonly string[],
+  fromRecords: readonly string[],
   lookup: () => Promise<string | null>,
 ): Promise<PlaceAnswer> {
   if (isNonPlacePhrase(place)) {
     return { standardPlace: null, why: "not_a_place", reason: `'${place}' names no place` };
   }
-  if (stored.length > 1) {
+  if (fromRecords.length > 1) {
     return {
       standardPlace: null,
       why: "records_disagree",
-      reason: `the records it cites store different standard places for it (${stored.join("; ")})`,
+      reason: `FamilySearch standardized it differently on the record it cites (${fromRecords.join("; ")})`,
     };
   }
-  const answer = stored[0] ?? (await lookup().catch(() => null));
+  const answer = fromRecords[0] ?? (await lookup().catch(() => null));
   if (!answer) {
     return {
       standardPlace: null,
@@ -72,38 +73,38 @@ export async function placeAnswer(
       reason: `'${answer}' names a different country than the text`,
     };
   }
-  return { standardPlace: answer, from: stored.length === 1 ? "record" : "lookup" };
+  return { standardPlace: answer, from: fromRecords.length === 1 ? "record" : "lookup" };
 }
 
-const KEPT_ONLY =
-  "A supplied standard_place is kept only when it is the engine's own answer for the place text: the " +
-  "standard place the records the fact cites store for that text, else the engine's lookup. To " +
-  'standardize a place differently, write the fuller place into the text (e.g. "Springfield, Illinois").';
+/** Why a supplied standard_place is not kept for `place`, or null when it is. */
+export async function whyNotKept(place: unknown, supplied: string): Promise<string | null> {
+  if (typeof place !== "string" || place.trim() === "") return "the fact has no place";
+  if (isNonPlacePhrase(place)) return `'${place}' names no place`;
+  if (countryConsistency(place, supplied) === "contradiction") return "it names a different country than the place";
+  return (await isFamilySearchPlace(supplied)) === false ? "FamilySearch's place standard has no place of that name" : null;
+}
 
-/** What a writer stores when a caller supplied `supplied` for `place`, given the
- *  engine's `answer` (null when there is no place text), and the warning that
- *  says why when that is not `supplied`. */
-export function judgeSupplied(
+const KEPT_WHEN =
+  "A supplied standard_place is kept when it is a FamilySearch standard place (a place_search result) " +
+  "for the fact's own place.";
+
+/** What a writer stores when a caller supplied `supplied` for `place`, and the
+ *  warning that says why when that is not `supplied`. `answer` is the engine's
+ *  own answer for the place text, asked only when `supplied` is not kept. */
+export async function judgeSupplied(
   place: unknown,
   supplied: string,
-  answer: PlaceAnswer | null,
-): { standardPlace: string | null; warning?: string } {
-  if (answer === null) {
-    return {
-      standardPlace: null,
-      warning: `standard_place '${supplied}' was not kept: there is no place text to standardize. ${KEPT_ONLY}`,
-    };
+  answer: (place: string) => Promise<PlaceAnswer>,
+): Promise<{ standardPlace: string | null; warning?: string }> {
+  const why = await whyNotKept(place, supplied);
+  if (why === null) return { standardPlace: supplied };
+  const text = typeof place === "string" && place.trim() !== "" ? place : undefined;
+  const head = `standard_place '${supplied}'${text === undefined ? "" : ` for '${text}'`}`;
+  const a = text === undefined || isNonPlacePhrase(text) ? null : await answer(text);
+  if (a !== null && a.standardPlace !== null) {
+    const whose = a.from === "record" ? "FamilySearch's standardization of the same place on the record it cites" : "the engine's lookup";
+    return { standardPlace: a.standardPlace, warning: `${head} was replaced by '${a.standardPlace}', ${whose}: ${why}. ${KEPT_WHEN}` };
   }
-  if (answer.standardPlace === supplied) return { standardPlace: supplied };
-  if (answer.standardPlace !== null) {
-    const whose = answer.from === "record" ? "the standard place the cited record stores" : "the engine's lookup";
-    return {
-      standardPlace: answer.standardPlace,
-      warning: `standard_place '${supplied}' for '${place}' was replaced by '${answer.standardPlace}', ${whose}. ${KEPT_ONLY}`,
-    };
-  }
-  return {
-    standardPlace: null,
-    warning: `standard_place '${supplied}' for '${place}' was not kept, and the place has none: ${answer.reason}. ${KEPT_ONLY}`,
-  };
+  const none = a === null ? "" : `, and the engine has none for it: ${a.reason}`;
+  return { standardPlace: null, warning: `${head} was not kept: ${why}${none}. ${KEPT_WHEN}` };
 }

@@ -166,13 +166,17 @@ both producers call one code path.
 
   ```typescript
   { tool: string, retrieved: string /* ISO 8601 + tz, search time */,
-    returned_count: number, payload: object /* the verbatim response */ }
+    returned_count: number, standard_places_from?: "familysearch",
+    payload: object /* the verbatim response */ }
   ```
 
   `payload` is the producer's response object (the one with `results[]`); the
   producer knows `tool`, the `retrieved` timestamp (more accurate than log time),
-  and `returned_count` (it counted). snake_case keys — this file *is* persisted
-  project state.
+  and `returned_count` (it counted). `standard_places_from` is set by a producer
+  whose every fact `standard_place` is FamilySearch's own: a live `record_read`,
+  whose converter keeps only the record's `normalized` places, passes
+  `standardPlacesFrom`; `record_search` does not, since its resolver fills the
+  rest. snake_case keys — this file *is* persisted project state.
 
 The handle returned to the model is just `{ resultsRef, returnedCount }` (enough
 for narration like "retained 12 results"); the payload itself is not echoed back as
@@ -241,7 +245,8 @@ When the log editor is called with `stagedResultsRef`, it (host-side):
    per `research-log-editor-spec.md` §4 ("never trusted from the caller"); the
    staged file's count is advisory.
 4. Wraps it as the full sidecar `{ log_id, tool, retrieved, returned_count,
-   payload }` and writes `results/<log_id>.json`. The log entry, not the sidecar,
+   standard_places_from?, payload }`, carrying `standard_places_from` when the
+   staged file has it, and writes `results/<log_id>.json`. The log entry, not the sidecar,
    records the staged file's project-relative path as `staged_ref`, so a later
    re-send of the same ref (after a context compaction) is answered with that
    entry's id instead of a refusal, from `research.json` alone

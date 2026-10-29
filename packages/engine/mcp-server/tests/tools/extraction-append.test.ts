@@ -544,7 +544,7 @@ describe("extraction_append: recordIds on a captured census", () => {
 // ─── recordIds and absences (issues #2937 / #2939, PLAN acceptance checks 1–2) ──
 
 import { runExtractionAppend } from "../../src/tools/extraction-append.js";
-import { stageSearchResults } from "../../src/utils/results-staging.js";
+import { FAMILYSEARCH_STANDARD_PLACES, stageSearchResults } from "../../src/utils/results-staging.js";
 import { arkToBareId } from "../../src/utils/ark.js";
 
 describe("extraction_append: recordIds and absences", () => {
@@ -573,6 +573,7 @@ describe("extraction_append: recordIds and absences", () => {
         projectPath: projectPath!,
         tool: "record_read",
         response: { query: { recordId }, results: [el] },
+        standardPlacesFrom: FAMILYSEARCH_STANDARD_PLACES,
       });
       return { ...el.gedcomx, staged };
     },
@@ -607,10 +608,10 @@ describe("extraction_append: recordIds and absences", () => {
     );
   });
 
-  // The engine's answer for a place on a record (lead, 2026-10-26): the standard
-  // place that record stores for the text, none when its facts disagree, and
-  // never another record's.
-  it("standardizes a place by the record's own facts, none when they disagree, never by another record's", async () => {
+  // The engine's answer for a place on a record (lead, 2026-10-26): FamilySearch's
+  // own standardization of the text on the record persona, none when its values
+  // disagree, and never another record's or an assertion's stored value.
+  it("standardizes a place by FamilySearch's own on the record persona, none when they disagree, never by another record's", async () => {
     const seeded = await research();
     seeded.assertions = [
       {
@@ -638,8 +639,8 @@ describe("extraction_append: recordIds and absences", () => {
       "Places kept as written, with no standard place found: Jackson, Ohio, United States; Scioto T.P., Jackson, Ohio.",
     );
     expect(r.records[0].warnings).toContain(
-      "could not resolve standard_place for 'Scioto T.P., Jackson, Ohio' (left unset): its record stores different " +
-        "standard places for it (Scioto, Jackson, Ohio, United States; Jackson, Ohio, United States)",
+      "could not resolve standard_place for 'Scioto T.P., Jackson, Ohio' (left unset): FamilySearch standardized it " +
+        "differently on its record (Scioto, Jackson, Ohio, United States; Jackson, Ohio, United States)",
     );
   });
 

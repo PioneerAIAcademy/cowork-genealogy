@@ -89,6 +89,8 @@ const placeIdRepsCache = new Map<string, string[]>();
  *  (normalized) — a dated and an undated search of one place are different
  *  queries and must not share an entry. */
 const searchEntriesCache = new Map<string, SearchEntry[]>();
+/** Folded full name -> whether FamilySearch has a place of that full name. */
+const familySearchPlaceCache = new Map<string, boolean>();
 
 /** Test-only: when set, `resolveStandardPlace` answers from this table (keyed
  *  by the place text, normalized) and never reaches the network; a place not in
@@ -109,6 +111,7 @@ export function __clearPlaceResolverCachesForTests(): void {
   repInfoCache.clear();
   placeIdRepsCache.clear();
   searchEntriesCache.clear();
+  familySearchPlaceCache.clear();
 }
 
 // ─── Generic helpers ─────────────────────────────────────────────────────────
@@ -566,6 +569,46 @@ export function standardPlaceNamedInText(place: string, standardPlace: string): 
   if (!name) return false;
   const keys = new Set(placeNameKeys(name));
   return placeSegments(place).some((segment) => placeNameKeys(segment).some((k) => keys.has(k)));
+}
+
+/**
+ * FamilySearch's place search finds a place whose full name is `name`, case and
+ * accents aside: `name` is one of FamilySearch's own standard places, as
+ * `place_search` returns them. Null when the search failed, which a writer reads
+ * as no answer and keeps the value. With the test table installed it answers
+ * offline: a name is a place when the table gives it as a standard place.
+ */
+export async function isFamilySearchPlace(name: string): Promise<boolean | null> {
+  const key = foldPlaceName(name);
+  if (placeTableForTests) return [...placeTableForTests.values()].some((v) => v !== null && foldPlaceName(v) === key);
+  const cached = familySearchPlaceCache.get(key);
+  if (cached !== undefined) return cached;
+  let entries: SearchEntry[];
+  try {
+    entries = await searchPlace(name);
+  } catch {
+    return null;
+  }
+  const found = entries.some((e) => foldPlaceName(e.fullName) === key);
+  familySearchPlaceCache.set(key, found);
+  return found;
+}
+
+/** The FamilySearch place (its place id) a standard place names, as
+ *  `place_distance` measures it: the exact full-name match, else the best hit.
+ *  Null when the search fails or finds nothing. */
+async function placeIdOf(name: string): Promise<string | null> {
+  try {
+    return pickExactOrBest(await getSearchEntries(name), name)?.placeId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Two standard places name one FamilySearch place, however each is spelled. */
+export async function samePlace(a: string, b: string): Promise<boolean> {
+  const [x, y] = await Promise.all([placeIdOf(a), placeIdOf(b)]);
+  return x !== null && x === y;
 }
 
 /** Highest-scoring entry (FamilySearch ranks by relevance), else first. */

@@ -227,10 +227,17 @@ export async function placeSearchTool(
     input.placeName,
     input.contextName
   );
-  // What the writers store for the query text itself on a fact that cites no
-  // record (place-verdict.ts). `contextName` is not part of a place's text, so
-  // it narrows the candidates, never the verdict.
-  const answer = await placeAnswer(input.placeName, [], () => resolveStandardPlace(input.placeName));
+  // What the writers store for the query text on a fact with none supplied that
+  // cites no record (place-verdict.ts), read as tree_edit reads a fact's place:
+  // `contextName` stands where the fact's other places stand, the context a
+  // bare one-part place is resolved against.
+  const context = input.contextName ? [input.contextName] : [];
+  const answer = await placeAnswer(input.placeName, [], () =>
+    resolveStandardPlace(input.placeName, { contextPlaces: context }),
+  );
+  const on =
+    "on a fact that cites no record and has no standard_place supplied, " +
+    (input.contextName ? `whose other places include '${input.contextName}'` : "with no other places");
   // Spread rather than assign: an exact hit carries no `matchType` key at all.
   return {
     results: results.map(simplifyPlaceResult),
@@ -240,12 +247,12 @@ export async function placeSearchTool(
         ? {
             standardPlace: answer.standardPlace,
             reason:
-              "the writers store this standard_place for this exact place text on a fact that cites no " +
-              "record, and keep a supplied standard_place only when it is the one they store",
+              `the writers store this standard_place for this place text ${on}. A supplied ` +
+              "standard_place is kept instead when it is a FamilySearch standard place, as each result is",
           }
         : {
             standardPlace: null,
-            reason: `the writers store no standard_place for this text on a fact that cites no record: ${answer.reason}`,
+            reason: `the writers store no standard_place for this place text ${on}: ${answer.reason}`,
           },
   };
 }

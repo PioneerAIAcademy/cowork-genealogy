@@ -173,19 +173,23 @@ packaging fixture-shape test fails a new required field across the recorded
 `verdict` is the engine's verdict on the query text, beside the candidates: the
 `standard_place` the writers (`tree_edit`, `tree_correct`, `research_append`,
 `project_create`) store for `placeName` as the place of a fact that cites no
-record, or none, and why (`placeAnswer` in `src/utils/place-verdict.ts`, with
-`resolveStandardPlace(placeName)` as its lookup; tree-edit-tool-spec §4.1.1).
-- `{ "standardPlace": "Bristol, England, United Kingdom", "reason": "the writers store this standard_place for this exact place text on a fact that cites no record, and keep a supplied standard_place only when it is the one they store" }`, or
-- `{ "standardPlace": null, "reason": "the writers store no standard_place for this text on a fact that cites no record: …" }`,
+record and has no `standard_place` supplied, or none, and why (`placeAnswer` in
+`src/utils/place-verdict.ts`; tree-edit-tool-spec §4.1.1). It uses the context
+the writers use: `tree_edit` resolves a bare one-part place against the places
+of the fact's other facts, so `contextName` stands where those places stand, and
+the lookup is `resolveStandardPlace(placeName, { contextPlaces: [contextName] })`.
+- `{ "standardPlace": "Bristol, England, United Kingdom", "reason": "the writers store this standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places. A supplied standard_place is kept instead when it is a FamilySearch standard place, as each result is" }`
+  (with `contextName`, "… whose other places include '<contextName>'"), or
+- `{ "standardPlace": null, "reason": "the writers store no standard_place for this place text on a fact that cites no record and has no standard_place supplied, with no other places: …" }`,
   the reason naming a non-place phrase ("Same House", never looked up), a
   lookup that found nothing or failed (for a one-part text, telling the caller
   to write its parent jurisdictions into the place text, e.g. "Springfield,
   Illinois"), or an answer naming a different country than the text.
 
-`contextName` narrows the candidates, never the verdict: a writer stores the
-place text it is given, so context belongs in that text. A fact that cites a
-record takes the standard place that record stores for the text first, so the
-verdict is what a writer stores only when no cited record stores one. `verdict`
+A fact that cites a record takes FamilySearch's own standardization of the text
+on that record first, so the verdict is what a writer fills only when the record
+has none. A supplied value that is one of FamilySearch's standard places, as
+every candidate here is, is kept instead. `verdict`
 is optional in the type, for the same fixture reason as `matchType`;
 `place_search` always returns it, and `place_search_all` does not. Each
 `SimplifiedPlaceResult`:

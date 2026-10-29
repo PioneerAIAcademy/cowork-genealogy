@@ -198,8 +198,8 @@ TTL (`listStagedEnvelopes`):
   matches only an absent one. A `standard_date` the caller supplied must equal
   the read's own `standard_date`: this tool keeps a hand-entered one as given,
   so a value the read does not hold would otherwise be written under
-  FamilySearch's name. The fact's own `standard_place`, which this tool clears
-  and re-resolves, never takes part.
+  FamilySearch's name. The fact's own `standard_place`, which this tool judges
+  below, never takes part.
 - **A relationship** whose two endpoints both carry such an `ark` is cited to the
   Family Tree only if a staged read holds one that `relationshipMatches` it (same
   type and endpoints, a Couple in either order) **and**, when the hand-entered
@@ -222,22 +222,24 @@ hand-entered person carries a FamilySearch `ark`; a hand-built tree with none
 (the objective-only build) never touches it. A staged file already past the TTL
 by its write time is never opened.
 
-**Hand-entered places** — every fact on the objective-only build — are the
-tool's to standardize, never the caller's. Every such fact, on a person or a relationship, has any
-caller-supplied `standard_place` cleared, including a fact with no `place`. Each
-one with a `place` is then resolved with the same resolver `person_read` and
-`tree_edit` use, after every refusal and validation, in the same call and budget
-as the read's retry. A person or fact entry that is not an object is skipped
-here and left for validation to refuse at its own index. A resolved value is
-reported in `placesFilled`. A caller-supplied value that the resolver replaced or
-could not confirm, or that sat on a fact with no `place`, is named in
-`validation.warnings`; one that did not resolve — no match, a failed lookup, or
-the budget running out — is left unset, never kept. This is the writers' rule
-(tree-edit-tool-spec §4.1.1): a supplied value survives, silently, only when it
-is the engine's own answer. A hand-entered fact cites no record the project
-stores, since a new project has no assertions, so the answer is the lookup's,
-and a record staged in the folder that standardizes the same text is never a
-reason to keep a value.
+**Hand-entered places** — every fact on the objective-only build — follow the
+writers' rule (tree-edit-tool-spec §4.1.1). A caller-supplied `standard_place` is
+kept, silently, when the fact has a `place` that is not a non-place phrase, the
+value names no other country than it, and FamilySearch's place search finds a
+place whose full name is the value, case and accents aside (a failed search
+keeps it). Every other one is cleared, including one on a fact with no `place`.
+Each fact with a `place` and no kept value is then resolved with the same
+resolver `person_read` and `tree_edit` use, after every refusal and validation,
+in the same call and budget as the read's retry. A person or fact entry that is
+not an object is skipped here and left for validation to refuse at its own
+index. A resolved value is reported in `placesFilled`. A cleared value is named
+in `validation.warnings` with the reason, beside the lookup's replacement when
+there is one (`standard_place "<value>" for '<place>' was replaced by
+'<answer>', the engine's lookup: <why>`, `… was not kept: <why>`, or `… on a
+<type> fact was not kept: the fact has no place`); one that did not resolve — no
+match, a failed lookup, or the budget running out — is left unset. A
+hand-entered fact cites no record the project stores, since a new project has no
+assertions, so the engine's answer is the lookup's.
 
 **A place left unstandardized is reported, never silent.** Once the fill has
 run, every fact in the tree that still has a `place` and no `standard_place` —

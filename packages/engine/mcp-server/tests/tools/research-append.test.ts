@@ -20,6 +20,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
         return "West Bromwich, Staffordshire, England, United Kingdom";
       // What the live resolver returned for this phrase on 2026-10-26.
       if (text === "at the home of her daughter, Mrs. John Smith") return "Of, Trabzon, Türkiye";
+      if (text === "at the home of her daughter") return "Of, Trabzon, Türkiye";
       // A place the text names only by its county: the answer is a neighbour.
       if (text === "Paxcroft, Wiltshire") return "Trowbridge, Wiltshire, England, United Kingdom";
       // An endonym whose standard place is spelled in English.
@@ -31,6 +32,12 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
       if (text === "Austria") return "Bohemia";
       return null;
     }),
+    // Offline: every supplied standard_place is one of FamilySearch's unless a
+    // test says otherwise.
+    isFamilySearchPlace: vi.fn(async () => true),
+    // Two standard places are one place when they are spelled alike or a test
+    // pairs them.
+    samePlace: vi.fn(async (a: string, b: string) => a === b),
     // The birthplace cap's distance test (#3390). Unknown names resolve to null,
     // so no test reaches the live Places API.
     standardPlaceToCoords: vi.fn(async (name: string) => {
@@ -89,7 +96,7 @@ import {
 } from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
-import { resolveStandardPlace, standardPlaceToCoords, checkFirstPlace } from "../../src/utils/place-resolver.js";
+import { resolveStandardPlace, standardPlaceToCoords, checkFirstPlace, isFamilySearchPlace, samePlace } from "../../src/utils/place-resolver.js";
 
 /** Claude Code saves a tool result over this many characters to a file the agent may not be able to
  *  read back, so a refused answer has to stay well under it. */
@@ -1513,7 +1520,21 @@ describe("research_append (Phase 1)", () => {
       expect(p).not.toHaveProperty("standard_place");
     });
 
-    it("on an append of a one-part text, whose lookup the resolver's bare-name rule judges, which is kept though the text does not name it", async () => {
+    it("on an append of a one-part text of several words, whose lookup the text does not name, which is dropped", async () => {
+      await writeProject();
+      const r = await appendVariant("deathplace", "at the home of her daughter");
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings).toContain(
+        "could not resolve standard_place for 'at the home of her daughter' (left unset): the lookup's answer " +
+          "'Of, Trabzon, Türkiye' could not be confirmed, as the text names neither a country nor that place",
+      );
+      expect(r.unresolvedPlaces).toEqual(["at the home of her daughter"]);
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p).not.toHaveProperty("standard_place");
+    });
+
+    it("on an append of a one-word text, whose lookup the resolver's one-word rule judges, which is kept though the text does not name it", async () => {
       await writeProject();
       const r = await appendVariant("birthplace", "Ky");
       expect(r.ok, JSON.stringify(r)).toBe(true);
@@ -2847,14 +2868,14 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
-  // A caller's own standard_place on a timeline event is kept only when it is the
-  // engine's answer for the event's place (lead, 2026-10-26), as tree_edit
-  // judges a fact's; a tool's own timeline is not judged.
+  // A caller's own standard_place on a timeline event is judged as tree_edit
+  // judges a fact's (place-verdict.ts); a tool's own timeline is not judged.
   describe("a caller's timeline event standard_place", () => {
     const SCHUYLKILL = "Schuylkill County, Pennsylvania";
     const ENGINE = "Schuylkill, Pennsylvania, United States";
-    const RECORD = "Schuylkill, Pennsylvania";
+    const FS = "Schuylkill, Pennsylvania";
     const OTHER = "Schuylkill, Pennsylvania, USA";
+    const TEXAS = "Schuylkill, Texas, USA";
     const ev = (place: string | null, standard_place: string | null, km: number | null, ids = ["a_001"]) => ({
       date: "1850", date_certainty: "exact", event_type: "census", description: "enumerated",
       place, standard_place, assertion_ids: ids, distance_from_previous_km: km,
@@ -2864,43 +2885,74 @@ describe("research_append (Phase 3)", () => {
     const append = (events: unknown[]) =>
       researchAppendFromCaller({ projectPath: dir, section: "timelines", op: "append", entry: timeline(events) } as never);
     const events = async () => (await readResearch()).timelines[0].events;
-    /** a_002 from record R1 and a_003/a_004 from record R2 store the text: R2's
-     *  two disagree. */
-    const withRecords = () => {
+    const realPlace = vi.mocked(isFamilySearchPlace);
+    beforeEach(() => {
+      realPlace.mockImplementation(async (name: string) => name !== OTHER && name !== TEXAS);
+      vi.mocked(samePlace).mockClear();
+      vi.mocked(samePlace).mockImplementation(async (a: string, b: string) => a === OTHER && b === ENGINE);
+      vi.mocked(resolveStandardPlace).mockClear();
+    });
+    afterEach(() => {
+      realPlace.mockImplementation(async () => true);
+      vi.mocked(samePlace).mockImplementation(async (a: string, b: string) => a === b);
+    });
+    /** a_002 is persona p1 of record RRRR-111 and a_003 persona p1 of RRRR-222,
+     *  both from log_001, whose sidecar is FamilySearch's own: RRRR-111's p1
+     *  gives the text FS, and RRRR-222's p1 two values. */
+    const withRecords = async () => {
       const r = phase3Research();
-      const from = (id: string, record: string, standard_place: string) => ({
-        ...validAssertion(id), fact_type: "census", record_id: `ark:/61903/1:1:${record}`, place: SCHUYLKILL, standard_place,
+      const from = (id: string, record: string) => ({
+        ...validAssertion(id), fact_type: "census", record_id: `ark:/61903/1:1:${record}`, record_persona_id: "p1",
+        log_entry_id: "log_001", place: SCHUYLKILL, standard_place: "District Township, Berks, Pennsylvania, United States",
       });
-      r.assertions.push(from("a_002", "RRRR-111", RECORD), from("a_003", "RRRR-222", RECORD), from("a_004", "RRRR-222", OTHER));
-      return r;
+      r.assertions.push(from("a_002", "RRRR-111"), from("a_003", "RRRR-222"));
+      r.log = [{
+        id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_read", query: {},
+        outcome: "positive", results_examined: 2, external_site: null, results_ref: "results/log_001.json",
+      }] as any;
+      await writeProject(r);
+      const record = (id: string, values: string[]) => ({
+        recordId: `ark:/61903/1:1:${id}`,
+        gedcomx: { persons: [{ id: "p1", facts: values.map((v, i) => ({ id: `F${i}`, type: "Census", place: SCHUYLKILL, standard_place: v })) }] },
+      });
+      await mkdir(join(dir, "results"), { recursive: true });
+      await writeFile(join(dir, "results", "log_001.json"), JSON.stringify({
+        log_id: "log_001", tool: "record_read", retrieved: "2026-01-01T00:00:00Z", returned_count: 2,
+        standard_places_from: "familysearch",
+        payload: { results: [record("RRRR-111", [FS]), record("RRRR-222", [FS, ENGINE])] },
+      }));
     };
 
-    it("keeps the engine's own answer, replaces any other, and drops the distances measured from it", async () => {
+    it("keeps a FamilySearch standard place and replaces one that is not, keeping distances only for the same place", async () => {
       await writeProject();
       const r = await append([
-        ev(SCHUYLKILL, ENGINE, null),
-        ev("Pittsburgh, Allegheny, Pennsylvania", null, 400),
-        ev(SCHUYLKILL, OTHER, 410),
+        ev("County Mayo, Ireland", "Ireland", null),
+        ev(SCHUYLKILL, FS, 5400),
+        ev(SCHUYLKILL, OTHER, 0),
         ev("Chicago, Cook, Illinois", null, 900),
+        ev(SCHUYLKILL, TEXAS, 950),
         ev("Boston, Massachusetts", null, 1500),
       ]);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect((await events()).map((e: any) => [e.standard_place, e.distance_from_previous_km])).toEqual([
-        [ENGINE, null],
-        [null, 400],
+        ["Ireland", null],
+        [FS, 5400],
+        [ENGINE, 0],
+        [null, 900],
         [ENGINE, null],
         [null, null],
-        [null, 1500],
       ]);
       expect(placeWarnings(r)).toEqual([
-        expect.stringMatching(
-          new RegExp(`^events\\[2\\]: standard_place '${OTHER}' for '${SCHUYLKILL}' was replaced by '${ENGINE}', the engine's lookup\\. `),
-        ),
+        `events[2]: standard_place '${OTHER}' for '${SCHUYLKILL}' was replaced by '${ENGINE}', the engine's lookup: ` +
+          "FamilySearch's place standard has no place of that name. A supplied standard_place is kept when it is a " +
+          "FamilySearch standard place (a place_search result) for the fact's own place.",
+        expect.stringMatching(new RegExp(`^events\\[4\\]: standard_place '${TEXAS}' for '${SCHUYLKILL}' was replaced by '${ENGINE}'`)),
       ]);
+      expect(vi.mocked(samePlace)).toHaveBeenCalledWith(OTHER, ENGINE);
     });
 
-    it("keeps none on an update's events where the engine has none, naming each", async () => {
+    it("keeps none on an update's events where the engine has none, naming each and dropping their distances", async () => {
       await writeProject();
       expect((await append([])).ok).toBe(true);
       const r = await researchAppendFromCaller({
@@ -2910,7 +2962,7 @@ describe("research_append (Phase 3)", () => {
             section: "timelines",
             op: "update",
             entryId: "t_001",
-            fields: { events: [ev("Nowhereville, Kansas", "Nowhereville, Kansas, United States", 10), ev(null, "Atlantis", 20)] },
+            fields: { events: [ev("Nowhereville, Kansas", OTHER, 10), ev(null, "Atlantis", 20)] },
           },
         ],
       } as never);
@@ -2921,35 +2973,28 @@ describe("research_append (Phase 3)", () => {
         [null, null],
       ]);
       expect(placeWarnings(r)).toEqual([
-        expect.stringMatching(/^ops\[0\]: events\[0\]: .*was not kept, and the place has none: the engine's place lookup found no place/),
-        expect.stringMatching(/^ops\[0\]: events\[1\]: standard_place 'Atlantis' was not kept: there is no place text to standardize/),
+        expect.stringMatching(/^ops\[0\]: events\[0\]: .*was not kept: FamilySearch's place standard has no place of that name, and the engine has none for it: the engine's place lookup found no place/),
+        expect.stringMatching(/^ops\[0\]: events\[1\]: standard_place 'Atlantis' was not kept: the fact has no place\. /),
       ]);
+      expect(vi.mocked(samePlace)).not.toHaveBeenCalled();
     });
 
-    it("takes the standard place the records of the event's assertions store, and none when they disagree", async () => {
-      await writeProject(withRecords());
-      vi.mocked(resolveStandardPlace).mockClear();
-      const r = await append([ev(SCHUYLKILL, RECORD, 5, ["a_002"]), ev(SCHUYLKILL, ENGINE, 6, ["a_002"]), ev(SCHUYLKILL, RECORD, 7, ["a_003"])]);
+    it("replaces one with FamilySearch's own value on its assertions' record persona, and keeps none when they disagree", async () => {
+      await withRecords();
+      const r = await append([ev(SCHUYLKILL, OTHER, 5, ["a_002"]), ev(SCHUYLKILL, OTHER, 7, ["a_003"])]);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
-      expect((await events()).map((e: any) => e.standard_place)).toEqual([RECORD, RECORD, null]);
+      expect((await events()).map((e: any) => e.standard_place)).toEqual([FS, null]);
       expect(placeWarnings(r)).toEqual([
-        expect.stringContaining(`events[1]: standard_place '${ENGINE}' for '${SCHUYLKILL}' was replaced by '${RECORD}', the standard place the cited record stores. `),
         expect.stringContaining(
-          `events[2]: standard_place '${RECORD}' for '${SCHUYLKILL}' was not kept, and the place has none: ` +
-            `the records it cites store different standard places for it (${RECORD}; ${OTHER}). `,
+          `events[0]: standard_place '${OTHER}' for '${SCHUYLKILL}' was replaced by '${FS}', FamilySearch's standardization of the same place on the record it cites: `,
+        ),
+        expect.stringContaining(
+          `events[1]: standard_place '${OTHER}' for '${SCHUYLKILL}' was not kept: FamilySearch's place standard has no place of that name, ` +
+            `and the engine has none for it: FamilySearch standardized it differently on the record it cites (${FS}; ${ENGINE}). `,
         ),
       ]);
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
-    });
-
-    it("refuses a value that only another record stores for the text", async () => {
-      await writeProject(withRecords());
-      const r = await append([ev(SCHUYLKILL, RECORD, null, ["a_001"])]);
-      expect(r.ok, JSON.stringify(r)).toBe(true);
-      if (!r.ok) return;
-      expect((await events())[0].standard_place).toBe(ENGINE);
-      expect(placeWarnings(r)).toEqual([expect.stringContaining(`was replaced by '${ENGINE}', the engine's lookup. `)]);
     });
 
     it("leaves a tool's own timeline as it was written", async () => {
@@ -9229,7 +9274,9 @@ describe("research_append (composite persist + enforcement)", () => {
     },
   });
 
-  async function writeSidecar(records: any[] = [sidecarRecord()]) {
+  /** `familySearch`: the sidecar is marked as holding FamilySearch's own
+   *  standard places, as a live record_read's is. */
+  async function writeSidecar(records: any[] = [sidecarRecord()], familySearch = false) {
     await mkdir(join(dir, "results"), { recursive: true });
     await writeFile(
       join(dir, "results", "log_001.json"),
@@ -9239,6 +9286,7 @@ describe("research_append (composite persist + enforcement)", () => {
           tool: "record_search",
           retrieved: "2026-01-01T00:00:00Z",
           returned_count: records.length,
+          ...(familySearch ? { standard_places_from: "familysearch" } : {}),
           payload: { results: records },
         },
         null,
@@ -10085,9 +10133,9 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Dublin, Ireland", { contextPlaces: [] });
   });
 
-  it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {
+  it("copies FamilySearch's own standard_place for the same place from a marked sidecar instead of geocoding", async () => {
     await writeProject(sidecarResearch());
-    await writeSidecar();
+    await writeSidecar(undefined, true);
     const r = await researchAppend({
       projectPath: dir,
       ops: [
@@ -10267,7 +10315,7 @@ describe("research_append (composite persist + enforcement)", () => {
 
   it("resolveStandardPlace: false skips geocoding but the sidecar copy still applies", async () => {
     await writeProject(sidecarResearch());
-    await writeSidecar();
+    await writeSidecar(undefined, true);
     const r = await researchAppend({
       projectPath: dir,
       resolveStandardPlace: false,
@@ -10301,9 +10349,11 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(research.assertions[2].standard_place).toBeUndefined();
   });
 
-  // The engine's answer for a cited record's place (lead, 2026-10-26): what that
-  // record stores for the same text, from its sidecar or an assertion already
-  // stored from it, and none when those disagree.
+  // The engine's answer for a record's place (lead, 2026-10-26): FamilySearch's
+  // own standardization of the same text on the assertion's record persona,
+  // read only from a sidecar marked as FamilySearch's, and none when its values
+  // disagree. Never an assertion's stored value, which may be an engine lookup
+  // or an agent's pick.
   describe("the record's own standard place", () => {
     const POTTSVILLE = "Pottsville, Schuylkill, Pennsylvania, United States";
     const fromRecord = (place: string) => ({
@@ -10315,39 +10365,86 @@ describe("research_append (composite persist + enforcement)", () => {
       ...validAssertion(id), record_id: record, log_entry_id: "log_001", record_persona_id: "p_1", place, standard_place,
     });
 
-    it("is taken from the sidecar or an assertion already stored, case and accents aside, with no lookup", async () => {
-      const research = sidecarResearch();
-      research.assertions.push(
-        stored("a_002", "ark:/61903/1:1:ABCD-123", "Minersville, Pennsylvania", "Minersville, Schuylkill, Pennsylvania, United States"),
-      );
-      await writeProject(research);
-      const rec = sidecarRecord();
-      rec.gedcomx.persons[0]!.facts![0]!.place = " PÖTTSVILLE,  pennsylvania";
-      await writeSidecar([rec]);
-      const r = await researchAppend({ projectPath: dir, ops: [fromRecord("Pottsville, Pennsylvania"), fromRecord("minersville, pennsylvania")] });
+    it("is the persona's own and its couple's, case and accents aside, with no lookup; another persona's is not", async () => {
+      await writeProject(sidecarResearch());
+      const rec: any = sidecarRecord();
+      rec.gedcomx.persons[0].facts[0].place = " PÖTTSVILLE,  pennsylvania";
+      rec.gedcomx.persons[1].facts = [
+        { id: "F9", type: "Residence", place: "Minersville, Pennsylvania", standard_place: "Minersville, Schuylkill, Pennsylvania, United States" },
+      ];
+      rec.gedcomx.relationships = [
+        { id: "R1", type: "Couple", person1: "p_1", person2: "p_2", facts: [{ id: "F8", type: "Marriage", place: "Port Carbon, Pennsylvania", standard_place: "Port Carbon, Schuylkill, Pennsylvania, United States" }] },
+      ];
+      await writeSidecar([rec], true);
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [fromRecord("Pottsville, Pennsylvania"), fromRecord("port carbon, pennsylvania"), fromRecord("Minersville, Pennsylvania")],
+      });
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok || !("results" in r)) return;
       const after = await readResearch();
-      expect(after.assertions[2].standard_place).toBe(POTTSVILLE);
-      expect(after.assertions[3].standard_place).toBe("Minersville, Schuylkill, Pennsylvania, United States");
+      expect(after.assertions[1].standard_place).toBe(POTTSVILLE);
+      expect(after.assertions[2].standard_place).toBe("Port Carbon, Schuylkill, Pennsylvania, United States");
+      expect(after.assertions[3].standard_place).toBeUndefined();
       expect(r.resolvedPlaces?.map((p) => p.source)).toEqual(["sidecar", "sidecar"]);
-      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+      expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Minersville, Pennsylvania", expect.anything());
     });
 
-    it("is none when the record stores different standard places for the text, with a warning and no lookup", async () => {
-      await writeProject(sidecarResearch());
-      const rec = sidecarRecord();
-      rec.gedcomx.persons[0]!.facts!.push({ id: "F2", type: "Death", place: "Pottsville, Pennsylvania", standard_place: "Pottsville, Pennsylvania" });
+    it("is never read from a sidecar that mixes in the engine's lookups, nor from an assertion already stored", async () => {
+      const research = sidecarResearch();
+      research.assertions.push(
+        stored("a_002", "ark:/61903/1:1:ABCD-123", "Schuylkill County, Pennsylvania", "District Township, Berks, Pennsylvania, United States"),
+      );
+      await writeProject(research);
+      const rec: any = sidecarRecord();
+      rec.gedcomx.persons[0].facts.push({ id: "F2", type: "Death", place: "Schuylkill County, Pennsylvania", standard_place: "Schuylkill, Pennsylvania" });
       await writeSidecar([rec]);
+      const r = await researchAppend({ projectPath: dir, ops: [fromRecord("Schuylkill County, Pennsylvania")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok || !("results" in r)) return;
+      expect((await readResearch()).assertions[2].standard_place).toBe("Schuylkill, Pennsylvania, United States");
+      expect(r.resolvedPlaces).toEqual([
+        { place: "Schuylkill County, Pennsylvania", standardPlace: "Schuylkill, Pennsylvania, United States", source: "geocoded" },
+      ]);
+    });
+
+    it("is none when FamilySearch's values for the text on the persona disagree, with a warning and no lookup", async () => {
+      await writeProject(sidecarResearch());
+      const rec: any = sidecarRecord();
+      rec.gedcomx.persons[0].facts.push({ id: "F2", type: "Death", place: "Pottsville, Pennsylvania", standard_place: "Pottsville, Pennsylvania" });
+      await writeSidecar([rec], true);
       const r = await researchAppend({ projectPath: dir, ops: [fromRecord("Pottsville, Pennsylvania")] });
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok || !("results" in r)) return;
       expect((await readResearch()).assertions[1].standard_place).toBeUndefined();
       expect(r.unresolvedPlaces).toEqual(["Pottsville, Pennsylvania"]);
       expect(r.validation.warnings).toContain(
-        "could not resolve standard_place for 'Pottsville, Pennsylvania' (left unset): its record stores different " +
-          `standard places for it (${POTTSVILLE}; Pottsville, Pennsylvania)`,
+        "could not resolve standard_place for 'Pottsville, Pennsylvania' (left unset): FamilySearch standardized it " +
+          `differently on its record (${POTTSVILLE}; Pottsville, Pennsylvania)`,
       );
+      expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+    });
+
+    it("is read for an accepted hint from the record read staged in the same call", async () => {
+      const research = sidecarResearch();
+      research.log = [{
+        id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "person_record_matches",
+        query: { recordId: "ark:/61903/1:1:ABCD-123" }, outcome: "positive", results_examined: 1, external_site: null, results_ref: null,
+      }] as any;
+      await writeProject(research);
+      await mkdir(join(dir, "results", ".staging"), { recursive: true });
+      await writeFile(join(dir, "results", ".staging", "read.json"), JSON.stringify({
+        tool: "record_read", retrieved: "2026-01-01T00:00:00Z", returned_count: 1,
+        standard_places_from: "familysearch", payload: { results: [sidecarRecord()] },
+      }));
+      const r = await researchAppend(
+        { projectPath: dir, ops: [{ ...fromRecord("Pottsville, Pennsylvania"), entry: { ...fromRecord("Pottsville, Pennsylvania").entry, record_persona_id: "p_1" } }] },
+        { hintReads: new Map([["log_001", "results/.staging/read.json"]]) },
+      );
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect((await readResearch()).assertions[1].standard_place).toBe(POTTSVILLE);
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
     });
 

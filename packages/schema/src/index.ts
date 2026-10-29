@@ -610,6 +610,8 @@ export interface SidecarFile {
   tool: SidecarTool
   retrieved: string
   returned_count: number
+  /** Present when every fact standard_place in `payload` is FamilySearch's own (a live record_read). */
+  standard_places_from?: 'familysearch'
   payload: {
     results?: Array<RecordSearchResult | FulltextSearchResult>
     [key: string]: unknown

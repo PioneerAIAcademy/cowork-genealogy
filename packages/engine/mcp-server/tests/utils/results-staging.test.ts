@@ -11,7 +11,9 @@ import {
   readStagedEnvelopeQuery,
   resolveStagedRef,
   readStagedResults,
+  sidecarReader,
   STAGING_SUBDIR,
+  FAMILYSEARCH_STANDARD_PLACES,
 } from "../../src/utils/results-staging.js";
 
 import { backingStore } from "../helpers/store-backend.js";
@@ -429,6 +431,20 @@ describe("results-staging", () => {
       expect(await stagingFiles()).toHaveLength(1);
     });
 
+    it("carries a staged record's mark that its standard places are FamilySearch's own, and adds none to an unmarked one", async () => {
+      const results = [{ recordId: "A" }];
+      const marked = await stageSearchResults({
+        projectPath: dir, tool: "record_read", response: { query: {}, results }, standardPlacesFrom: FAMILYSEARCH_STANDARD_PLACES,
+      });
+      const plain = await stageSearchResults({ projectPath: dir, tool: "record_search", response: { query: {}, results } });
+      expect(JSON.parse(await readFile(join(dir, marked!.resultsRef), "utf-8")).standard_places_from).toBe("familysearch");
+      expect(JSON.parse(await readFile(join(dir, plain!.resultsRef), "utf-8"))).not.toHaveProperty("standard_places_from");
+      await finalizeStagedResults({ projectPath: dir, stagedResultsRef: marked!.resultsRef, logId: "log_001", expectedTool: "record_read" });
+      await finalizeStagedResults({ projectPath: dir, stagedResultsRef: plain!.resultsRef, logId: "log_002", expectedTool: "record_search" });
+      expect(JSON.parse(await readFile(join(dir, "results", "log_001.json"), "utf-8")).standard_places_from).toBe("familysearch");
+      expect(JSON.parse(await readFile(join(dir, "results", "log_002.json"), "utf-8"))).not.toHaveProperty("standard_places_from");
+    });
+
     it("consumeStagedResults removes the staged file, and an absent ref is not an error", async () => {
       const handle = await stageSearchResults({
         projectPath: dir,
@@ -506,6 +522,45 @@ describe("results-staging", () => {
 // logs found (11 of 3,636 ref-carrying calls): the init-project k8d pair is
 // verbatim; for the others the differing characters are the real ones and the
 // rest of the UUID is filled in.
+describe("sidecarReader", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sidecar-reader-"));
+    await mkdir(join(dir, "results"), { recursive: true });
+  });
+  afterEach(async () => rm(dir, { recursive: true, force: true }));
+
+  it("reads each sidecar once per reader, and gives null for one outside the project, missing or not JSON", async () => {
+    await writeFile(join(dir, "results", "log_001.json"), JSON.stringify({ log_id: "log_001", payload: { results: [] } }));
+    await writeFile(join(dir, "results", "log_002.json"), "{ not json");
+    const inner = backingStore();
+    let reads = 0;
+    const counting = new Proxy(inner, {
+      get(target, prop, receiver) {
+        const value = Reflect.get(target, prop, receiver);
+        if (prop !== "readText" || typeof value !== "function") return value;
+        return (...args: unknown[]) => {
+          reads++;
+          return value.apply(target, args);
+        };
+      },
+    });
+    await runWithProjectStore(counting, async () => {
+      const read = sidecarReader(dir);
+      const [a, b] = await Promise.all([read("results/log_001.json"), read("results/log_001.json")]);
+      expect(a).toEqual({ log_id: "log_001", payload: { results: [] } });
+      expect(b).toBe(a);
+      expect(reads).toBe(1);
+      expect(await read("results/log_002.json")).toBeNull();
+      expect(await read("results/log_003.json")).toBeNull();
+      expect(await read("../outside.json")).toBeNull();
+      expect(reads).toBe(3);
+      await sidecarReader(dir)("results/log_001.json");
+      expect(reads).toBe(4);
+    });
+  });
+});
+
 describe("resolveStagedRef", () => {
   let dir: string;
   beforeEach(async () => {

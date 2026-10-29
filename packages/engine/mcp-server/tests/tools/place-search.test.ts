@@ -942,8 +942,17 @@ describe("placeSearchTool", () => {
   });
 
   describe("verdict: what the writers store for the query text", () => {
-    const STORES = /^the writers store this standard_place for this exact place text on a fact that cites no record/;
-    const NONE = "the writers store no standard_place for this text on a fact that cites no record: ";
+    const ON_NONE = "on a fact that cites no record and has no standard_place supplied, with no other places";
+    const STORES =
+      `the writers store this standard_place for this place text ${ON_NONE}. A supplied standard_place is ` +
+      "kept instead when it is a FamilySearch standard place, as each result is";
+    const NONE = `the writers store no standard_place for this place text ${ON_NONE}: `;
+    const ONE_PART =
+      "the engine leaves a one-part place unstandardized unless it can tell which place it is; " +
+      'write its parent jurisdictions into the place text (e.g. "Springfield, Illinois")';
+    const shenandoah = (id: string, fullName: string, type: string): FSPlaceSearchResponse => ({
+      entries: [{ id, score: 90.0, content: { gedcomx: { places: [{ id, display: { name: "Shenandoah", fullName, type } }] } } }],
+    });
 
     it("names the standard_place the writers store", async () => {
       routeByUrl([
@@ -952,25 +961,28 @@ describe("placeSearchTool", () => {
         { match: "attributes", ok: false, status: 404 },
       ]);
       const result = await placeSearchTool({ placeName: "Bristol, England" });
-      expect(result.verdict?.standardPlace).toBe("Bristol, England, United Kingdom");
-      expect(result.verdict?.reason).toMatch(STORES);
+      expect(result.verdict).toEqual({ standardPlace: "Bristol, England, United Kingdom", reason: STORES });
     });
 
-    it("judges the query text alone: contextName narrows the candidates, not the verdict", async () => {
+    it("reads a one-part place against contextName as tree_edit reads it against the fact's other places", async () => {
+      const SCHUYLKILL = "Shenandoah, Schuylkill, Pennsylvania, United States";
       routeByUrl([
-        { match: "search?q=name:%22Paris%22", json: parisSearchResponse },
-        { match: "description/100", json: description("100", "Paris, Bear Lake, Idaho, United States", "9001") },
+        { match: "search?q=name:%22Shenandoah%2C%20Schuylkill", json: shenandoah("500", SCHUYLKILL, "Borough") },
+        { match: "search?q=name:%22Shenandoah%22", json: shenandoah("600", "Shenandoah, Page, Virginia, United States", "Town") },
+        { match: "description/600", json: description("600", "Shenandoah, Page, Virginia, United States", "8600") },
         { match: "attributes", ok: false, status: 404 },
       ]);
-      const result = await placeSearchTool({ placeName: "Paris", contextName: "Idaho" });
-      expect(result.results.map((r) => r.standardPlace)).toEqual(["Paris, Bear Lake, Idaho, United States"]);
-      expect(result.verdict).toEqual({
-        standardPlace: null,
+      const sibling = "Shenandoah, Schuylkill, Pennsylvania";
+      const withContext = await placeSearchTool({ placeName: "Shenandoah", contextName: sibling });
+      expect(withContext.verdict).toEqual({
+        standardPlace: SCHUYLKILL,
         reason:
-          NONE +
-          "the engine leaves a one-part place unstandardized unless it can tell which place it is; " +
-          'write its parent jurisdictions into the place text (e.g. "Springfield, Illinois")',
+          "the writers store this standard_place for this place text on a fact that cites no record and has no " +
+          `standard_place supplied, whose other places include '${sibling}'. A supplied standard_place is kept ` +
+          "instead when it is a FamilySearch standard place, as each result is",
       });
+      const bare = await placeSearchTool({ placeName: "Shenandoah" });
+      expect(bare.verdict).toEqual({ standardPlace: null, reason: NONE + ONE_PART });
     });
 
     it("is none for a phrase that names no place, which is never looked up", async () => {

@@ -20,7 +20,6 @@
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { planItemFlags } from "../utils/plan-item-plausibility.js";
-import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
@@ -34,7 +33,6 @@ import {
 import {
   atomicWriteJson,
   atomicWriteBoth,
-  isInsideProject,
   readProjectJson,
   formatIssues,
   withProjectLock,
@@ -62,10 +60,11 @@ import {
   isNonPlacePhrase,
   checkFirstPlace,
   standardPlaceNamedInText,
+  samePlace,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
 import { judgeSupplied, placeAnswer } from "../utils/place-verdict.js";
-import { RecordStandards, recordsOfAssertions } from "../utils/record-standards.js";
+import { RecordStandards, assertionsNamed } from "../utils/record-standards.js";
 import { isSuspiciousText, TRAILING_DOUBT, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
 import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
 import { haversineDistance } from "./distance.js";
@@ -73,7 +72,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -6615,13 +6614,15 @@ function placeLiftable(entry: Record<string, unknown>): boolean {
 
 /** Why a value-derived place drops a geocoded answer the country check could
  *  not judge, or null to keep it. When the text names a country the check
- *  knows, the answer names none it knows. When the text has more than one comma
- *  part, the answer's own name, its first segment, must be one of them; a
- *  one-part text is the resolver's bare-name rule's to judge. */
+ *  knows, the answer names none it knows. Otherwise the answer's own name, its
+ *  first segment, must be one of the text's comma parts, unless the text is one
+ *  word: that is the resolver's one-word rule's to judge, whose answer need not
+ *  spell the text ("Ky" is Kentucky). */
 function unconfirmedValueAnswer(place: string, standardPlace: string): string | null {
   const parts = placeSegments(place);
   if (canonicalCountry(parts[parts.length - 1] ?? "") !== null) return "does not name the country the text names";
-  if (parts.length > 1 && !standardPlaceNamedInText(place, standardPlace)) {
+  const oneWord = parts.length === 1 && !/\s/.test(parts[0]);
+  if (!oneWord && !standardPlaceNamedInText(place, standardPlace)) {
     return "could not be confirmed, as the text names neither a country nor that place";
   }
   return null;
@@ -8294,66 +8295,52 @@ async function checkLocalityFirstPlaces(
 }
 
 /**
- * A caller's own standard_place on a timeline event is kept only when it is the
- * engine's answer for the event's place (place-verdict.ts): the standard place
- * the records of the event's assertions store for that text, else the
- * resolver's. Otherwise the answer replaces it, or it becomes null, with a
- * warning, and the distances measured from it, on that event and the next,
- * become null too.
+ * A caller's own standard_place on a timeline event is judged as a tree fact's
+ * is (place-verdict.ts): kept when it is a FamilySearch standard place for the
+ * event's place, else replaced by the engine's answer (FamilySearch's own on the
+ * records of the event's assertions, else the resolver's) or null, with a
+ * warning. The distances measured from it, on that event and the next, become
+ * null when the replacement is another place, not the same place spelled
+ * another way.
  */
 async function judgeTimelinePlaces(
   ops: ResearchAppendOp[],
   research: any,
-  projectPath: string,
+  standards: RecordStandards,
   warnings: string[],
   fmt: (i: number, msg: string) => string,
 ): Promise<void> {
-  const standards = new RecordStandards(projectPath, research);
   for (const [i, op] of ops.entries()) {
     if (op.section !== "timelines") continue;
     const events = ((op.op === "append" ? op.entry : op.fields) as { events?: unknown } | undefined)?.events;
     if (!Array.isArray(events)) continue;
     for (const [k, event] of events.entries()) {
-      if (typeof event?.standard_place !== "string") continue;
-      const place = typeof event.place === "string" && event.place.trim() !== "" ? event.place : undefined;
-      const answer =
-        place === undefined
-          ? null
-          : await placeAnswer(
-              place,
-              await standards.for(recordsOfAssertions(event.assertion_ids, research), place),
-              () => resolveStandardPlace(place),
-            );
-      const judged = judgeSupplied(place, event.standard_place, answer);
-      if (judged.standardPlace === event.standard_place) continue;
+      const was = event?.standard_place;
+      if (typeof was !== "string") continue;
+      const judged = await judgeSupplied(event.place, was, async (place) =>
+        placeAnswer(
+          place,
+          await standards.for(assertionsNamed(event.assertion_ids, research), place),
+          () => resolveStandardPlace(place),
+        ),
+      );
+      if (judged.standardPlace === was) continue;
       event.standard_place = judged.standardPlace;
-      for (const e of [event, events[k + 1]]) {
-        if (typeof e?.distance_from_previous_km === "number") e.distance_from_previous_km = null;
+      if (judged.standardPlace === null || !(await samePlace(was, judged.standardPlace))) {
+        for (const e of [event, events[k + 1]]) {
+          if (typeof e?.distance_from_previous_km === "number") e.distance_from_previous_km = null;
+        }
       }
       warnings.push(fmt(i, `events[${k}]: ${judged.warning}`));
     }
   }
 }
 
-/** A per-call reader of a sidecar's `payload.results`, cached by ref: null when
- *  the ref is outside the project, unreadable, or holds no results array. */
-function sidecarResultsReader(projectPath: string): (ref: string) => Promise<any[] | null> {
-  const cache = new Map<string, any[] | null>();
+/** The `payload.results` of a sidecar read through `sidecarReader`, or null. */
+function sidecarResultsReader(read: (ref: string) => Promise<any>): (ref: string) => Promise<any[] | null> {
   return async (ref) => {
-    if (cache.has(ref)) return cache.get(ref)!;
-    let results: any[] | null = null;
-    if (isInsideProject(projectPath, ref)) {
-      try {
-        const sc = JSON.parse(await getProjectStore().readText(projectPath, ref));
-        if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
-          results = sc.payload.results;
-        }
-      } catch {
-        // unreadable sidecar — the document validator reports it; skip enforcement
-      }
-    }
-    cache.set(ref, results);
-    return results;
+    const results = (await read(ref))?.payload?.results;
+    return Array.isArray(results) ? results : null;
   };
 }
 
@@ -8370,6 +8357,7 @@ async function prepareOps(
   projectPath: string,
   fmt: (i: number, msg: string) => string,
   options: ResearchAppendOptions,
+  readSidecar: (ref: string) => Promise<any>,
 ): Promise<PreparedOps> {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -8626,7 +8614,8 @@ async function prepareOps(
   for (const e of Array.isArray(research.log) ? research.log : []) {
     if (e && typeof e === "object" && typeof e.id === "string") logById.set(e.id, e);
   }
-  const readSidecarResults = sidecarResultsReader(projectPath);
+  const readSidecarResults = sidecarResultsReader(readSidecar);
+  const recordStandards = new RecordStandards(research, readSidecar, options.hintReads);
 
   // A place variant's place given only in `value` ("birthplace") is lifted into
   // `place` here, before the lookups below and applyOne's fold. It is a
@@ -8660,11 +8649,9 @@ async function prepareOps(
    *  to judge. A dropped lookup is warned about and listed in unresolvedPlaces,
    *  never in resolvedPlaces. A place on an assertion flagged as suspicious text
    *  is never looked up, and a refusal shows it as WITHHELD_SUSPICIOUS. */
-  const recordStandards = new RecordStandards(projectPath, research);
   const applyPlaceLevers = async (
     entry: any,
     i: number,
-    matchedRecord: any,
     { dropContradiction = false, valueDerived = false }: { dropContradiction?: boolean; valueDerived?: boolean } = {},
   ): Promise<void> => {
     const flaggedText = isSuspiciousText(entry.informant_bias_notes);
@@ -8672,10 +8659,10 @@ async function prepareOps(
       warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)${why}`);
       unresolvedPlaces.push(entry.place);
     };
-    // ── Place lever (b): never geocode what the source record already
-    // resolved — take the standard_place its record stores for the same text
-    // (record-standards.ts), from the sidecar or an assertion already stored, and
-    // none when they disagree. `standard_place: null` is an explicit opt-out
+    // ── Place lever (b): never geocode what FamilySearch already standardized —
+    // take FamilySearch's own standard_place for the same text on the
+    // assertion's record persona (record-standards.ts), and none when its values
+    // disagree. `standard_place: null` is an explicit opt-out
     // (skip resolution + guard); only a fully omitted field triggers
     // resolution. A non-place phrase ("Same House") is left unset, silently: it
     // has no standard form.
@@ -8686,12 +8673,11 @@ async function prepareOps(
       entry.standard_place === undefined &&
       !isNonPlacePhrase(factText(entry.place)!)
     ) {
-      const record = new Set([arkToBareId(String(entry.record_id ?? ""))]);
-      const stored = await recordStandards.for(record, entry.place, matchedRecord ? [matchedRecord] : []);
-      let sp: string | null = stored.length === 1 ? stored[0] : null;
+      const fromRecord = await recordStandards.for([entry], entry.place);
+      let sp: string | null = fromRecord.length === 1 ? fromRecord[0] : null;
       if (sp) filled = "sidecar";
-      if (stored.length > 1) {
-        unresolved(`: its record stores different standard places for it (${stored.join("; ")})`);
+      if (fromRecord.length > 1) {
+        unresolved(`: FamilySearch standardized it differently on its record (${fromRecord.join("; ")})`);
       } else if (!sp && input.resolveStandardPlace !== false) {
         // resolveStandardPlace swallows network failures and returns null, so
         // a miss and a failure look the same here — both warrant the warning
@@ -8932,7 +8918,7 @@ async function prepareOps(
       }
     }
 
-    await applyPlaceLevers(entry, i, matchedRecord, { valueDerived: liftedFromValue.has(entry) });
+    await applyPlaceLevers(entry, i, { valueDerived: liftedFromValue.has(entry) });
   }
 
   // An assertions update that corrects `place` to another place and says nothing of
@@ -8960,7 +8946,7 @@ async function prepareOps(
       if (!setsPlace) {
         cur.place = merged.place;
         const view: any = { ...merged };
-        await applyPlaceLevers(view, i, null, { dropContradiction: true, valueDerived: true });
+        await applyPlaceLevers(view, i, { dropContradiction: true, valueDerived: true });
         if (typeof view.standard_place === "string") cur.standard_place = view.standard_place;
         continue;
       }
@@ -8970,7 +8956,7 @@ async function prepareOps(
     const place = factText(fields.place);
     if (place === undefined || place === factText(cur.place)) continue;
     const view: any = { ...cur, ...fields, standard_place: undefined };
-    await applyPlaceLevers(view, i, null, { dropContradiction: true, valueDerived: lifted });
+    await applyPlaceLevers(view, i, { dropContradiction: true, valueDerived: lifted });
     if (typeof view.standard_place === "string") {
       fields.standard_place = view.standard_place;
     } else if (typeof cur.standard_place === "string") {
@@ -9097,7 +9083,7 @@ async function prepareOps(
   }
 
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
-  if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, projectPath, warnings, fmt);
+  if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);
@@ -9496,7 +9482,8 @@ export async function researchAppend(
     }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
-    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options);
+    const readSidecar = sidecarReader(projectPath);
+    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options, readSidecar);
 
     const storedCollectionUrls = opsSetCollectionUrl(ops)
       ? await loadStoredCollectionUrls(projectPath)
@@ -9576,7 +9563,7 @@ export async function researchAppend(
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
 
-    await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(projectPath));
+    await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(readSidecar));
 
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
