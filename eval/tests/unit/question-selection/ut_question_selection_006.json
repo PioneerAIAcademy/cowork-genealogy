@@ -4,12 +4,10 @@
     "skill": "question-selection",
     "name": "Timeline gap outranks pending objective decomposition",
     "type": "positive",
-    "description": "The flynn-census-exhausted scenario has a high-severity timeline gap from 1860 to 1908 (missing 1870, 1880, 1900 census coverage). A high-severity gap is a search for research-plan to add to q_001, not a new question. The skill must read the timelines before deciding.",
+    "description": "The flynn-census-exhausted scenario has a high-severity timeline gap from 1860 to 1908 (missing 1870, 1880, 1900 census coverage) while q_001 is open. Under step mode a gap on the open question is a search for research-plan to add to q_001, not a new question, so the agent writes nothing.",
     "tags": [
       "question-selection",
-      "timeline-gap",
       "priority-ladder",
-      "selection-basis-timeline-gap",
       "question-selection-no-new-question",
       "direct-arm"
     ]
@@ -20,8 +18,8 @@
   },
   "judge_context": [
     "Should recognize the high-severity timeline gap from 1860 to 1908 — the 1870, 1880, and 1900 censuses have not been searched, spanning 48 years with no documented evidence about Patrick Flynn's life",
+    "The open question decides this, not the gap: with q_001 open the agent writes nothing whatever the timelines show, so it need not read them. Naming the gap is welcome but not required.",
     "**No question is written.** The unsearched census years (1870, 1880, 1900) go to research-plan as items on q_001. A `timeline_gap` question, or any new question, is the failure.",
-    "The reply should name the gap and the census years that would cover it as the work to do next on q_001.",
     "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3. The self-correction loop is the intended use of validate_research_schema — a single repair attempt is not a partial."
   ]
 }

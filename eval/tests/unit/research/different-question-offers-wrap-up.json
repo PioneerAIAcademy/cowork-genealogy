@@ -11,7 +11,7 @@
     ]
   },
   "input": {
-    "user_message": "Actually, I want to find out where Patrick Flynn is buried instead.",
+    "user_message": "/research Actually, I want to find out where Patrick Flynn is buried instead.",
     "scenario": "mid-research-flynn"
   },
   "execution": {

@@ -413,41 +413,6 @@ def test_new_question_not_vague(before_state, after_state):
 
 # --- Tag-gated: the timelines section must actually be queried (V3) ---
 
-def test_timelines_queried_before_deciding(before_state, tool_calls, test):
-    """Tag-gated: on a scenario carrying a real timeline-gap signal, the
-    skill must have actually called research_query(section='timelines')
-    before writing (or declining to write) the question -- not merely at
-    some point in the run. project_context does not return timeline data
-    -- concluding 'no gap' without this call, or querying it only after
-    the decision is already made, is fabrication, not informed absence
-    of evidence."""
-    if "selection-basis-timeline-gap" not in test.get("tags", []):
-        pytest.skip("not a selection-basis-timeline-gap scenario")
-    query_idxs = [
-        i
-        for i, call in enumerate(tool_calls)
-        if call.get("tool", "").endswith("research_query")
-        and call.get("args", {}).get("section") == "timelines"
-    ]
-    assert query_idxs, (
-        "the skill decided without ever calling "
-        "research_query(section='timelines'); project_context does not "
-        "return timeline data, so a high-severity gap cannot have been seen"
-    )
-    append_idxs = [
-        i
-        for i, call in enumerate(tool_calls)
-        if call.get("tool", "").endswith("research_append")
-    ]
-    if append_idxs:
-        assert min(query_idxs) < min(append_idxs), (
-            "the skill wrote its question before ever calling "
-            "research_query(section='timelines') -- the query must inform "
-            "the decision, not just appear somewhere in the transcript "
-            "after it was already made"
-        )
-
-
 def test_person_warnings_called_before_deciding(tool_calls, test):
     """Tag-gated: on a scenario carrying a real person_warnings contradiction,
     the skill must have actually called person_warnings before writing (or

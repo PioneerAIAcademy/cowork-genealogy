@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "Routes an uncovered independent part of the objective to question-selection instead of completing",
     "type": "positive",
-    "description": "The objective asks two independent things (a birthplace and a parentage) and only the birthplace was ever framed. That question is resolved at probable and its fact is in the tree, so the tree-encoding gate on the 'all questions resolved' row holds. Under step mode the router hands nothing off this turn: it names the unframed part as the next question and offers it with \"Continue with setting up the project?\". It must not head for the completion write. Mined from a Cowork run that concluded the birthplace and left parentage unresearched.",
+    "description": "The objective asks two independent things (a birthplace and a parentage) and only the birthplace was ever framed. That question is resolved at probable and its fact is in the tree, so the tree-encoding gate on the 'all questions resolved' row holds. Under step mode the router hands nothing off this turn: it names the unframed part as the next question and offers it with \"Continue with setting up the project?\". It must not head for the completion write. Mined from a Cowork run that concluded the birthplace and left parentage unresearched. The message asks what comes next rather than saying to keep going: \"Keep researching\" would accept the offer in the same message, and then running question-selection is the step.",
     "tags": [
       "from-cowork",
       "compound-objective-part-unframed",
@@ -14,7 +14,7 @@
     ]
   },
   "input": {
-    "user_message": "Keep researching this project — drive the workflow forward.",
+    "user_message": "/research What should we work on next?",
     "scenario": "compound-objective-part-unframed"
   },
   "execution": {

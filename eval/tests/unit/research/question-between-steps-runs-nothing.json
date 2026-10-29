@@ -11,7 +11,7 @@
     ]
   },
   "input": {
-    "user_message": "Before we go on — which census did the 1850 entry come from?",
+    "user_message": "/research Before we go on — which census did the 1850 entry come from?",
     "scenario": "mid-research-flynn"
   },
   "execution": {
