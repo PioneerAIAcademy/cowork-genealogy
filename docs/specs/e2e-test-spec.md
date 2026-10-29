@@ -1154,10 +1154,11 @@ answer reachable only via the tree will fail and the fixture won't validate.
 ### 6.1.1 Main-thread subagent-only tool block
 
 The same `PreToolUse` hook enforces the per-context tool policy in e2e: no
-member of `SUBAGENT_ONLY_TOOLS` — today just `image_read` — may be called
-on the main thread. It is a Task-spawned subagent's private tool (returning a
-page scan as inline base64); a main-thread call is the router substituting for a
-*failed* spawn and doing the work itself — a shape observed in production.
+member of `SUBAGENT_ONLY_TOOLS` — `image_read` and, since 2026-10-29, the
+tools only agents hold (the plugin hook's `AGENT_ONLY_TOOLS`) — may be called on
+the main thread. `image_read` returns a page scan as inline base64; the rest are
+an agent's step. A main-thread call is the router doing an agent's work itself —
+a shape observed in production.
 
 **`extraction_append` is no longer in this set.** Extraction of a
 FamilySearch-indexed record runs as code called from the main thread, and
@@ -1178,7 +1179,10 @@ supply. So e2e carries no declared-tools exemption: a future skill that
 legitimately declares a guarded tool would be denied here too, and closing
 that needs the predicate widened by hand.
 
-Every member is enforced. The one member, `image_read`, is
+Every member is enforced. Since 2026-10-29 the set is `image_read` plus the
+shipped hook's `AGENT_ONLY_TOOLS` — the tools only agents hold, imported into
+`context_policy` rather than copied — whose deny names the agents to delegate to.
+None is declared by a skill. `image_read` is
 declared by no skill and by no agent at all since
 the `image-reader-opus` agent was retired, and
 since `search-images` moved to `image_transcribe` (via `@plugin:image-reader` from
@@ -1196,17 +1200,19 @@ recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.
 
-This is harness-only. The plugin ships a `PreToolUse` hook that binds on the
+The `image_read` arm is harness-only; the `AGENT_ONLY_TOOLS` arm ships in the
+plugin hook too. The plugin ships a `PreToolUse` hook that binds on the
 hosted path — **measured**, by `make hook-smoke` — and binds in Cowork, probed
 live on 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher. The
 `.*research_append` arm entered the matcher 2026-08-21 and is unmeasured there;
 Cowork is a different loader and has no instrument but a live
 session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
 `bypassPermissions`). Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`: the raw
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)`: the raw
 file-write tools, the device bridge's `device_commit_files`, `research_append`
-(since the caller-ownership rules shipped), and `Agent` / `Task`, for the fork deny. It still never sees an
-`extraction_append`-shaped MCP tool call. Porting the tool-level policy there was
+(since the caller-ownership rules shipped), `Agent` / `Task`, for the fork deny,
+and a final alternative naming every `AGENT_ONLY_TOOLS` key. It still never sees an
+`extraction_append`-shaped MCP tool call. Porting the `image_read` policy there was
 **declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending. That
 decline is scoped to `image_read`: do not re-file *it* without evidence the
 sub-700 KB band is being hit. §6.1.1 covers `extraction_append` too, and ADR-0006

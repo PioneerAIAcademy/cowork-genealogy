@@ -1404,8 +1404,9 @@ describe("the main thread is denied the tools only agents hold", () => {
       const out = runGuard({ tool_name, tool_input: { personId: "I1" } });
       expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
       const reason: string = out.hookSpecificOutput.permissionDecisionReason;
-      // The route out, in the wording owner_denied uses.
-      expect(reason).toContain("invoke `@plugin:check-warnings`");
+      // The route out, in the wording owner_denied uses, naming both holders.
+      expect(reason).toMatch(/invoke `@plugin:[a-z-]+`/);
+      expect(reason).toContain("`@plugin:check-warnings`");
       expect(reason).toContain("`@plugin:question-selection`");
       // Recoverable: the turn continues so the model can delegate.
       expect(out.stopReason).toBeUndefined();
