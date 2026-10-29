@@ -1,25 +1,9 @@
 {
-  "run_log": "v36_2026-10-27_08-27-02.json",
+  "run_log": "v36_2026-10-29_07-54-34.json",
   "annotator": "Francisbucci2@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_s59",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_s59",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_s59",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,49 +11,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
-    },
-    {
-      "test_id": "ut_research_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_001",
+      "test_id": "ut_research_si3",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
-    },
-    {
-      "test_id": "ut_research_s7e",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_s7e",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_s7e",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -91,23 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_si3",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_rs5",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_rs5",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -115,23 +43,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_rs5",
+      "test_id": "ut_research_012",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_rx4",
+      "test_id": "ut_research_013",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_rx4",
+      "test_id": "ut_research_013",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -139,9 +67,73 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_rx4",
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
       "dimension_source": "base",
       "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -152,23 +144,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "judge is correct"
-    },
-    {
-      "test_id": "ut_research_gm4",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
-    },
-    {
-      "test_id": "ut_research_gm4",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "comment": "Agree. The 1861 death rules out this Robert for the 1870 bond, but nothing shows a second Robert Eastham exists, so saying the bond 'must' belong to another man goes past the evidence"
     }
   ]
 }
