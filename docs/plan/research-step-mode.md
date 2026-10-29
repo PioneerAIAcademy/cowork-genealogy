@@ -361,7 +361,10 @@ that apply:
       again, so the researcher never sees "Research complete" for it. Fixing it properly
       means stamping the project's completeness on the turn row at close and comparing with
       the previous closed turn: one column, one small query, no extra `research.json` read,
-      but a migration. Worth doing, and sized here rather than guessed at.
+      but a migration. Worth doing, and sized here rather than guessed at. The completion
+      halt (#3542 lead 1) already labels the turn whose proof-conclusion call completed the
+      project, a second completion included; the gap is left only where that halt did not
+      fire.
 - **The router stops ordering the model not to yield.** `skills/research/SKILL.md` deletes:
   - the "Continuous work" orders;
   - "Iterate — without yielding";

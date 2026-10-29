@@ -9,6 +9,7 @@ import {
   receivedKeys,
 } from "../utils/fs-image-fetch.js";
 import { imageViewerUrl } from "../utils/ark.js";
+import { imageGroupPlace } from "../utils/image-group.js";
 import {
   saveSourceImage,
   recordImageReadCap,
@@ -149,6 +150,8 @@ export async function imageTranscribeTool(
   let resolvedMemoryUrl = "";
   let apiKey: string;
   let model: string;
+  // The staged page's place: its FamilySearch image group's coverage place.
+  let groupPlace: Promise<string | null> = Promise.resolve(null);
 
   if (input.file !== undefined) {
     // An uploaded image or PDF already inside the project folder (issue #2048).
@@ -231,6 +234,12 @@ export async function imageTranscribeTool(
     // is small; the image fetch, which is not, is still behind this.
     apiKey = await getOpenRouterApiKey(principal);
     model = await getOpenRouterModel(principal);
+
+    // Looked up beside the page fetch and the OCR, for the staged element only.
+    // It never throws: any failure leaves the page without a place.
+    if (input.projectPath && (input.imageId !== undefined || input.ark !== undefined)) {
+      groupPlace = imageGroupPlace({ imageId: input.imageId, ark: input.ark }, principal);
+    }
 
     const fetched = await fetchFsImageBytes(
       resolved.url,
@@ -326,14 +335,16 @@ export async function imageTranscribeTool(
   let digest: ImageTranscribeResult["digest"];
   if (input.projectPath) {
     const id = input.file !== undefined ? captureIdFor(input.file) : label;
+    const given = {
+      ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
+      ...(input.ark !== undefined ? { ark: input.ark } : {}),
+      ...(input.memoryArtifactUrl !== undefined ? { memoryArtifactUrl: input.memoryArtifactUrl } : {}),
+      ...(input.file !== undefined ? { file: input.file } : {}),
+    };
+    const place = await groupPlace;
     const element: StagedTranscription = {
       id,
-      source: {
-        ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
-        ...(input.ark !== undefined ? { ark: input.ark } : {}),
-        ...(input.memoryArtifactUrl !== undefined ? { memoryArtifactUrl: input.memoryArtifactUrl } : {}),
-        ...(input.file !== undefined ? { file: input.file } : {}),
-      },
+      source: { ...given, ...(place ? { place } : {}) },
       content_type: contentType,
       size_bytes: sizeBytes,
       model,
@@ -347,7 +358,7 @@ export async function imageTranscribeTool(
         projectPath: input.projectPath,
         tool: "image_transcribe",
         response: {
-          query: { ...element.source, ...(input.lookingFor ? { lookingFor: input.lookingFor } : {}) },
+          query: { ...given, ...(input.lookingFor ? { lookingFor: input.lookingFor } : {}) },
           results: [element],
         },
       });

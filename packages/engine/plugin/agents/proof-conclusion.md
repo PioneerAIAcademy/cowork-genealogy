@@ -309,6 +309,8 @@ Use `tree_edit`, **batched into ONE call via its `ops[]` array**, in this order:
    - **Bounded / documented-negative case** — **a bounded or documented-negative vital conclusion (§2) is encoded here as a fact, not left off.** Use `tree_edit` `add_fact` with `primary: true`: for a bounded death, write a `Death` fact whose `date` carries the bracket verbatim (e.g. `"after 1870, before 1911"` or `"1870s"`) and whose narrative/citation records the documented negative ("no Kentucky death certificate exists — statewide registration began 1911"), with `sources[]` refs to the S-entries that establish the bracket. The absence of an *exact* date is not a reason to omit the fact — the bounded value IS the finding, and the tree must show the vital event you concluded on (bracket included) just as it must show a concluded relationship.
    - **Retiring a concluded value** — a value you concluded earlier that no longer holds is retired with `tree_correct` `update_fact` and `primary: false` (issued as a separate `tree_correct` call, not this `tree_edit` batch), which **clears** the flag rather than storing a false. That leaves the type with no primary, which is the correct state while a conflict over it is open. Only this skill sets `primary`; a merge re-marks the best fact of a vital type, so a clear may need repeating after one.
 
+   **A recorded namesake.** When `tree_edit` refuses a fact because the person has a recorded namesake, write no `person_evidence`: leave the fact off unless a record the refusal allows supports it, and name `person-evidence`, with the link that would tie the record, in the next-step hint for the caller.
+
    **Indirect evidence.** Extraction already classifies indirect claims (`record_basis: inferred`, `date_certainty: calculated`); value-bearing indirect evidence materializes with the inference encoded **honestly** — a GEDCOM `abt`/`cal`/`est` qualifier, never a bare stated year — at a **lower ref quality** reflecting the weaker evidence class. Indirect evidence **never self-concludes**: only proof-conclusion correlation sets `primary`. Purely-argumentative / negative evidence does **not** materialize as a fact (there is no positive value to write) — only its *conclusion* (e.g. a death "bef 1870" established by absence) lands, via this additive write.
 3. **Source entries (upload-time citation).** `add_source` for a new tree source (in this `tree_edit` batch), or `update_source` with its `sourceId` to refine an existing one — `update_source` lives in **`tree_correct`** (same batched `ops[]` form), so issue it as a separate `tree_correct` call. A tree `source` accepts only `title` (required), `citation`, `author`, and `url` — copy the finalized `research.json` `sources[].citation` string into the **`citation`** field; **never put citation text in a `description` field** (the tree schema allows no other keys, so the whole write fails validation). **What the tree surfaces about upload readiness:** the working tree carries *all* sourced evidence facts (materialized at link time by person-evidence); marking a fact `primary` is what records that a conclusion stands behind it. The researcher decides what reaches FamilySearch — surface the `tier` and `shortfall` so that decision is informed, and never describe a value as permitted or withheld. A bounded or documented-negative conclusion at `possible` is proof-backed in the same sense: it states a range it can defend. Copy the ESM citation onto an S-entry when you mark the fact `primary`.
 
@@ -725,11 +727,13 @@ paragraphs of plain prose with **no label, heading or field name**:
    be recorded was searched. No identifiers, file names,
    tool names or field names; a person is a name, a record is what it is
    ("the 1885 county estate file"). Never write "proof", "GPS" or
-   "exhaustive", not even inside a phrase such as "standard of proof"; say
-   "the highest standard" instead.
+   "exhaustive", not even inside a phrase such as "standard of proof" or
+   "exhaustive search"; say "the highest standard" or "a thorough search"
+   instead.
 2. One sentence: what happens next, in plain language. When this invocation
    set `project.status` to `completed`, write exactly one of these instead, and
-   nothing else in the paragraph. When the question's `search_stop` lists
+   nothing else in the paragraph, even when your next-step hint names more
+   work. When the question's `search_stop` lists
    unsearched sources (paragraph 1 names them): "This research is finished for
    now. If you'd like a second opinion on it, just ask." When it does not:
    "This research is finished. If you'd like a second opinion on it, just ask."
