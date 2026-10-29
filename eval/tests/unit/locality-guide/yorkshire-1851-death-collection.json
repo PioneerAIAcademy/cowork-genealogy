@@ -15,8 +15,12 @@
     ]
   },
   "input": {
-    "user_message": "Build a locality guide for Yorkshire, England for 1851. I'm trying to find a death record from that year. What records exist and where can I search?\n\nprojectPath: <workspace>",
+    "delegation": "Build a locality guide for Yorkshire, England for 1851. I'm trying to find a death record from that year. What records exist and where can I search?\n\nprojectPath: <workspace>",
     "scenario": "yorkshire-1851-death-collection"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 360
   },
   "mcp_fixtures": [
     "collections-search-yorkshire",

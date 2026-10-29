@@ -14,8 +14,12 @@
     ]
   },
   "input": {
-    "user_message": "Build a locality guide for Kolonica, Slovakia. I need to know what church records exist and how far back they go.\n\nprojectPath: <workspace>",
+    "delegation": "Build a locality guide for Kolonica, Slovakia. I need to know what church records exist and how far back they go.\n\nprojectPath: <workspace>",
     "scenario": "kolonica-greek-catholic-earliest"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 360
   },
   "mcp_fixtures": [
     "catalog-search-kolonica",
