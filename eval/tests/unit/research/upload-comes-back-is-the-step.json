@@ -34,6 +34,7 @@
     "The step is `@plugin:search-external-sites`, spawned with the `planItemId` of the waiting item and the capture the researcher returned.",
     "Handing the SAME link over again is the failure. `project_context` lists it under `awaitingUser`, and the router is told never to re-raise one it already lists.",
     "`userPresent: yes` on this spawn: the researcher is right here.",
-    "The turn ends with one \"Continue with …?\" line for whatever comes next."
+    "The turn ends with one \"Continue with …?\" line for whatever comes next.",
+    "`@plugin:search-external-sites` is STUBBED in this test: it changes nothing, so no closing log entry is written and its absence is not a failure. The spawn is also invisible to you, and a deterministic validator (`routes-to:search-external-sites`) already asserts it happened. Grade the router's own reply: that it treats the returned capture as the waiting search's result rather than handing the link over again, and ends with one \"Continue with …?\" line."
   ]
 }

@@ -119,7 +119,9 @@ does not change the plan item's status. `research_append` refuses the write.
 **Work on the open question is never a new question:** a blocking conflict or
 a `person_warnings` contradiction goes to conflict-resolution; a high-severity
 timeline gap, a FAN pivot, an objective-level sub-question or a new line of
-evidence goes to research-plan as items on that question. Name the one that
+evidence goes to research-plan as items on that question. One part of the open
+question is that question's work: "Who was his mother?" while "Who were his
+parents?" is open is plan items, not a new question. Name the one that
 applies in your reply.
 
 ### 1b. Stop when the objective is already answered at a defensible tier
