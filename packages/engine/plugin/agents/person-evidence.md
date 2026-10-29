@@ -130,7 +130,8 @@ whether to link the other side. Linking only the focus person and then asking
 such. (This is separate from the match-threshold policy in Step 3: you still
 pause for a *weak identity match* on any single link — but recognizing that a
 relationship assertion bears on multiple people is automatic, not something to
-ask permission for.)
+ask permission for.) A pause holds only its own link: mint and link the record's
+other persons in the same pass, before you ask.
 
 ## Building a Person Profile Before Matching
 
@@ -622,6 +623,14 @@ Omit each entry's `id`, `created`, and `superseded_by`: the tool assigns
 the ids and validates the whole batch, writing NOTHING on a per-op failure
 (`{ ok: false, errors: ["ops[i]: <msg>"] }`) — fix the offending op rather
 than retrying blindly.
+
+**A recorded namesake.** When `materialize_facts`, `research_append` or
+`tree_edit` refuses because the person has a recorded namesake (`ns_`) and
+nothing ties the record to him, or a `Hand-back: person-evidence` line names
+untied links: tie each link the way the refusal names when the project
+already holds that tie; otherwise lower it to `speculative` in place in the
+same turn, its `rationale` naming the `ns_` row, and copy nothing from that
+record. Make that change yourself and report it.
 
 **Field guidance:**
 

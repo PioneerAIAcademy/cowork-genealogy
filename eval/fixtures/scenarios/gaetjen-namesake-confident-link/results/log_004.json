@@ -1,0 +1,1078 @@
+{
+  "log_id": "log_004",
+  "tool": "record_search",
+  "retrieved": "2026-10-07T04:13:44.672Z",
+  "returned_count": 3,
+  "payload": {
+    "query": {
+      "projectPath": "C:\\Users\\User\\Documents\\GenealogyProjects\\p2593-gaetjen",
+      "subjectId": "I1",
+      "surname": "G*tj*n",
+      "givenName": "Amelia",
+      "collectionId": "1417683"
+    },
+    "totalMatches": 3,
+    "paginationCappedAt": 4999,
+    "returned": 3,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:M66G-SLL",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Bowling Green Township, Chariton, Missouri, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Louis A. Grotjan",
+        "score": 1.99198,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1876",
+        "birthPlace": "Missouri, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Mary Grotjan, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MH6H-T3K",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_327026451",
+              "ark": "ark:/61903/1:1:M66G-SLL",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Louis A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1876",
+                  "standard_date": "1876",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327026446",
+              "ark": "ark:/61903/1:1:M66G-SLN",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Mary"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1841",
+                  "standard_date": "1841",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327026447",
+              "ark": "ark:/61903/1:1:M66G-SLJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Edward"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327026448",
+              "ark": "ark:/61903/1:1:M66G-SLV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Sopia"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327026449",
+              "ark": "ark:/61903/1:1:M66G-SLK",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "August W."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327026450",
+              "ark": "ark:/61903/1:1:M66G-SL2",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Frederic H."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1874",
+                  "standard_date": "1874",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_327026446",
+              "child": "p_327026451"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327026446",
+              "child": "p_327026447"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327026446",
+              "child": "p_327026450"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327026446",
+              "child": "p_327026449"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327026446",
+              "child": "p_327026448"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_205169509",
+              "resource_type": "Record",
+              "title": "Household of Mary Grotjan, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M66G-SLN : Wed Sep 09 12:38:49 UTC 2026), Entry for Mary Grotjan and Edward Grotjan, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MH6H-T3K",
+              "coverage": {
+                "place_rep_id": "4372607",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYB6-9DTX",
+              "coverage": {
+                "place_rep_id": "352",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_327026451",
+              "resource_type": "Person",
+              "url": "#p_327026451"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "352",
+              "name": "Missouri, United States",
+              "latitude": 38.2503,
+              "longitude": -92.5003
+            },
+            {
+              "id": "4372607",
+              "name": "Bowling Green Township, Chariton, Missouri, United States",
+              "latitude": 39.39972,
+              "longitude": -93.00278
+            }
+          ]
+        },
+        "primaryId": "p_327026451",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M66G-4BJ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Bowling Green Township, Chariton, Missouri, United States"
+          },
+          {
+            "type": "Occupation",
+            "value": "Farmer"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Edward A. Grotjan",
+        "score": 1.99198,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1854",
+        "birthPlace": "Missouri, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Edward A. Grotjan, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MH6H-TS3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_327031157",
+              "ark": "ark:/61903/1:1:M66G-4BJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Edward A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1854",
+                  "standard_date": "1854",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Farmer"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031158",
+              "ark": "ark:/61903/1:1:M66G-4BV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Louisa M."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1857",
+                  "standard_date": "1857",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031159",
+              "ark": "ark:/61903/1:1:M66G-4BK",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Edward H."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1877",
+                  "standard_date": "1877",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031160",
+              "ark": "ark:/61903/1:1:M66G-4B2",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031161",
+              "ark": "ark:/61903/1:1:M66G-4BL",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Elizabeth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031162",
+              "ark": "ark:/61903/1:1:M66G-4BG",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hickman",
+                  "given": "Sophia"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1861",
+                  "standard_date": "1861",
+                  "place": "Nebraska, United States",
+                  "standard_place": "Nebraska, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_327031158",
+              "child": "p_327031159"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_327031157",
+              "person2": "p_327031158"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327031158",
+              "child": "p_327031160"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327031157",
+              "child": "p_327031160"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327031157",
+              "child": "p_327031159"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_205169463",
+              "resource_type": "Record",
+              "title": "Household of Edward A. Grotjan, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M66G-4BJ : Wed Sep 09 12:39:59 UTC 2026), Entry for Edward A. Grotjan and Louisa M. Grotjan, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MH6H-TS3",
+              "coverage": {
+                "place_rep_id": "4372607",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB6-SPY3",
+              "coverage": {
+                "place_rep_id": "352",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_327031157",
+              "resource_type": "Person",
+              "url": "#p_327031157"
+            }
+          ],
+          "places": [
+            {
+              "id": "352",
+              "name": "Missouri, United States",
+              "latitude": 38.2503,
+              "longitude": -92.5003
+            },
+            {
+              "id": "358",
+              "name": "Nebraska, United States",
+              "latitude": 41.5003,
+              "longitude": -99.7503
+            },
+            {
+              "id": "4372607",
+              "name": "Bowling Green Township, Chariton, Missouri, United States",
+              "latitude": 39.39972,
+              "longitude": -93.00278
+            }
+          ]
+        },
+        "primaryId": "p_327031157",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M66G-4B2",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Bowling Green Township, Chariton, Missouri, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Grotjan",
+        "score": -1.809818,
+        "confidence": 1,
+        "sex": "Female",
+        "birthDate": "1879",
+        "birthPlace": "Missouri, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Edward A. Grotjan, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MH6H-TS3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_327031160",
+              "ark": "ark:/61903/1:1:M66G-4B2",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031157",
+              "ark": "ark:/61903/1:1:M66G-4BJ",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Edward A."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1854",
+                  "standard_date": "1854",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031158",
+              "ark": "ark:/61903/1:1:M66G-4BV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Louisa M."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1857",
+                  "standard_date": "1857",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031159",
+              "ark": "ark:/61903/1:1:M66G-4BK",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Edward H."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1877",
+                  "standard_date": "1877",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031161",
+              "ark": "ark:/61903/1:1:M66G-4BL",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Grotjan",
+                  "given": "Elizabeth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "Missouri, United States",
+                  "standard_place": "Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_327031162",
+              "ark": "ark:/61903/1:1:M66G-4BG",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hickman",
+                  "given": "Sophia"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1861",
+                  "standard_date": "1861",
+                  "place": "Nebraska, United States",
+                  "standard_place": "Nebraska, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Bowling Green Township, Chariton, Missouri, United States",
+                  "standard_place": "Bowling Green Township, Chariton, Missouri, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_327031158",
+              "child": "p_327031159"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_327031157",
+              "person2": "p_327031158"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327031158",
+              "child": "p_327031160"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327031157",
+              "child": "p_327031160"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_327031157",
+              "child": "p_327031159"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_205169463",
+              "resource_type": "Record",
+              "title": "Household of Edward A. Grotjan, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M66G-4BJ : Wed Sep 09 12:39:59 UTC 2026), Entry for Edward A. Grotjan and Louisa M. Grotjan, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MH6H-TS3",
+              "coverage": {
+                "place_rep_id": "4372607",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB6-SPY3",
+              "coverage": {
+                "place_rep_id": "352",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_327031160",
+              "resource_type": "Person",
+              "url": "#p_327031160"
+            }
+          ],
+          "places": [
+            {
+              "id": "352",
+              "name": "Missouri, United States",
+              "latitude": 38.2503,
+              "longitude": -92.5003
+            },
+            {
+              "id": "358",
+              "name": "Nebraska, United States",
+              "latitude": 41.5003,
+              "longitude": -99.7503
+            },
+            {
+              "id": "4372607",
+              "name": "Bowling Green Township, Chariton, Missouri, United States",
+              "latitude": 39.39972,
+              "longitude": -93.00278
+            }
+          ]
+        },
+        "primaryId": "p_327031160",
+        "role": "Principal"
+      }
+    ]
+  }
+}
