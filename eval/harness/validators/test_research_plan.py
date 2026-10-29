@@ -766,10 +766,30 @@ def _plan_write_ops(args: dict) -> list[dict]:
     return [op for op in candidates if isinstance(op, dict)]
 
 
-def _question_person_pids(research: dict, tree: dict) -> set[str]:
+def _pid_tail(value: str) -> str:
+    """A FamilySearch person id as compared here: the text after an `ark`'s last
+    `:` (a bare id has none), upper-cased, so `ark:/61903/4:1:zzkr-br1` and
+    `ZZKR-BR1` are one person."""
+    return value.split("?")[0].strip().rstrip("/").rsplit(":", 1)[-1].strip().upper()
+
+
+def _subject_pids(research: dict, tree: dict) -> set[str]:
+    """The `ark` ids of the project's subjects (`project.subject_person_ids`),
+    read from the ids themselves, never by matching names."""
+    subject_ids = set((research.get("project") or {}).get("subject_person_ids") or [])
+    return {
+        _pid_tail(p["ark"])
+        for p in tree.get("persons") or []
+        if p.get("id") in subject_ids and isinstance(p.get("ark"), str) and p["ark"].strip()
+    }
+
+
+def _question_person_pids(research: dict, tree: dict, subjects: str | None = None) -> set[str]:
     """FamilySearch ids of tree persons named in an open question's text: the
     `ark` tail (`ark:/61903/4:1:<PID>`) of every person whose preferred given
-    name and surname both appear in it."""
+    name and surname both appear in it. `subjects="exclude"` leaves out the
+    project's subjects (`project.subject_person_ids`)."""
+    subject_ids = set((research.get("project") or {}).get("subject_person_ids") or [])
     text = " ".join(
         (q.get("question") or "")
         for q in research.get("questions") or []
@@ -780,6 +800,8 @@ def _question_person_pids(research: dict, tree: dict) -> set[str]:
         ark = person.get("ark") or ""
         if not ark:
             continue
+        if subjects == "exclude" and person.get("id") in subject_ids:
+            continue
         name = next(
             (n for n in person.get("names") or [] if n.get("preferred")),
             (person.get("names") or [{}])[0],
@@ -789,8 +811,61 @@ def _question_person_pids(research: dict, tree: dict) -> set[str]:
         if given and surname and re.search(rf"\b{re.escape(given)}\b", text) and re.search(
             rf"\b{re.escape(surname)}\b", text
         ):
-            pids.add(ark.split("?")[0].rstrip("/").rsplit(":", 1)[-1].strip())
+            pids.add(_pid_tail(ark))
     return pids
+
+
+def _first_plan_write(calls: list[dict]) -> int | None:
+    """Index of the first `research_append` that wrote `plans`/`plan_items`; a
+    refused write (`ok: false`) wrote nothing, so it is not it."""
+    return next(
+        (
+            i
+            for i, c in enumerate(calls)
+            if _bare(c.get("tool", "")) == "research_append"
+            and isinstance(c.get("args"), dict)
+            and (c.get("response") or {}).get("ok") is not False
+            and any(
+                op.get("section") in {"plans", "plan_items"}
+                for op in _plan_write_ops(c["args"])
+            )
+        ),
+        None,
+    )
+
+
+def test_research_plan_plans_subject_from_tree(before_state, tool_calls, test):
+    """Tag-gated (``subject-from-tree``), tier 1. Issue #3384 step 3.
+
+    `project_create` builds the starting tree from the subject's full
+    FamilySearch read, so a question about a project subject is planned from the
+    project tree: no `person_read` of that subject, at any point in the run, and
+    no `person_read` of anyone else the question's text does not name. A tagged
+    run with no plan write fails: it planned nothing."""
+    if "subject-from-tree" not in test.get("tags", []):
+        pytest.skip("not a subject-from-tree test")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    if research is None or tree is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for before-state")
+    subjects = _subject_pids(research, tree)
+    assert subjects, "subject-from-tree scenario has no project subject with an `ark`"
+
+    calls = [c for c in tool_calls or [] if isinstance(c, dict)]
+    assert _first_plan_write(calls) is not None, "no research_append wrote plans or plan_items"
+    named = _question_person_pids(research, tree, subjects="exclude")
+    rereads = [
+        (i, (c.get("args") or {}).get("personId"))
+        for i, c in enumerate(calls)
+        if _bare(c.get("tool", "")) == "person_read"
+        and isinstance((c.get("args") or {}).get("personId"), str)
+        and _pid_tail((c.get("args") or {}).get("personId")) not in named
+    ]
+    assert not rereads, (
+        f"A project subject is planned from the project tree, never re-read, and no "
+        f"other profile is read unless the question names that person: person_read "
+        f"(index, personId)={rereads}."
+    )
 
 
 def test_research_plan_reads_question_person_profile(before_state, tool_calls, test):
@@ -813,24 +888,11 @@ def test_research_plan_reads_question_person_profile(before_state, tool_calls, t
     tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
     if research is None or tree is None:
         pytest.skip("missing research.json or tree.gedcomx.json for before-state")
-    wanted = _question_person_pids(research, tree)
-    assert wanted, "profile-reread scenario names no tree person with an `ark` in an open question"
+    wanted = _question_person_pids(research, tree, subjects="exclude")
+    assert wanted, "profile-reread scenario names no non-subject tree person with an `ark` in an open question"
 
     calls = [c for c in tool_calls or [] if isinstance(c, dict)]
-    first_write = next(
-        (
-            i
-            for i, c in enumerate(calls)
-            if _bare(c.get("tool", "")) == "research_append"
-            and isinstance(c.get("args"), dict)
-            and (c.get("response") or {}).get("ok") is not False
-            and any(
-                op.get("section") in {"plans", "plan_items"}
-                for op in _plan_write_ops(c["args"])
-            )
-        ),
-        None,
-    )
+    first_write = _first_plan_write(calls)
     assert first_write is not None, "no research_append wrote plans or plan_items"
 
     reads = [
@@ -842,7 +904,7 @@ def test_research_plan_reads_question_person_profile(before_state, tool_calls, t
         i
         for i, pid in reads
         if isinstance(pid, str)
-        and pid.strip() in wanted
+        and _pid_tail(pid) in wanted
         and (calls[i].get("matched") or {}).get("kind") == "predicate"
     ]
     assert good and good[0] < first_write, (
@@ -1474,6 +1536,51 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     assert not missed, (
         "already-recorded FAN-cluster fact(s) never surfaced in the "
         "response:\n  - " + "\n  - ".join(missed)
+    )
+
+
+_PURCHASE = re.compile(r"purchas|bought|deed book 42", re.IGNORECASE)
+_PURCHASE_TAG = "sibling-purchase-stated"
+
+
+def test_research_plan_states_sibling_purchase(
+    before_state, after_state, text_response, test, agent_returns=None
+):
+    """Tag-gated (`sibling-purchase-stated`, issue #3957): the only grader of
+    whether the two Sheahan FAN tests state Patrick's 1875 deed. Their
+    `judge_context` tells the judge not to grade it: given a pass anchor, the
+    judge still scored 2 on replies that met it, for where or in what words
+    the deed was stated. This fails the run when no paragraph of the agent's
+    own reply, and no new plan item's rationale, carries "Patrick" together
+    with a purchase, a purchase verb or Deed Book 42. A
+    reply giving his 1875 residence, date or place alone is the shape it
+    rejects: replayed over every committed run of both tests, it fails seven
+    `bpx` runs from v1 to v7, all partial, and passes every run graded pass.
+
+    Unlike `report_survey_surfaces_already_attached_fan_facts`, it checks one
+    fixed fact of two fixed scenarios. A reply that mentions a purchase
+    without having read the deed passes it; the judge is not asked to catch
+    that, and the trade is a criterion graded the same way on every run."""
+    if _PURCHASE_TAG not in test.get("tags", []):
+        pytest.skip("not a sibling-purchase-stated scenario")
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "research-plan", test)
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    old_ids = {i.get("id") for p in before.get("plans") or [] for i in p.get("items") or []}
+    rationales = [
+        i.get("rationale") or ""
+        for p in after.get("plans") or []
+        for i in p.get("items") or []
+        if i.get("id") not in old_ids
+    ]
+    chunks = re.split(r"\n\s*\n", reply) + rationales
+    stated = [c for c in chunks if re.search(r"\bPatrick\b", c) and _PURCHASE.search(c)]
+    assert stated, (
+        "Patrick's already-attached 1875 deed is never stated: no paragraph of the "
+        "reply, and no new plan item's rationale, names Patrick together with a "
+        "purchase, a purchase verb or Deed Book 42."
     )
 
 

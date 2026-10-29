@@ -135,6 +135,7 @@ OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "materialize_facts",
     "merge_tree_persons",
     "project_context",
+    "tree_query",
     "research_query",
     # Every `ok: false` but `no_project` (invalid_ref, not_found, not_text) is
     # the read not happening — a failure the agent must see as one.
@@ -1712,6 +1713,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "person_warnings": ("person-warnings.js", "personWarningsTool"),
     "project_context": ("project-context.js", "projectContext"),
     "research_query": ("research-query.js", "researchQuery"),
+    "tree_query": ("tree-query.js", "treeQuery"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
     "census_children_gap": ("census-children-gap.js", "censusChildrenGapTool"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),

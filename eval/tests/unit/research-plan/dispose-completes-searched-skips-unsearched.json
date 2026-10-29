@@ -15,7 +15,7 @@
   },
   "input": {
     "delegation": "research-exhaustiveness refused the stop-gate declaration for q_001 because items on the active plan pl_002 are still open. Dispose of the named items: complete each whose search was done, or skip it with a skip_category.\n\nquestionId: q_001\nplanItemIds: pli_006, pli_004\nprojectPath: <workspace>",
-    "scenario": "flynn-identity-geographic-thin"
+    "scenario": "flynn-dispose-probate-searched"
   },
   "mcp_fixtures": [
     "place-search-schuylkill-county",
