@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a public beta, February to July 2027
 
-**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). The rest is filed as issues ("Who builds what"), due by 31 December, and not started. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
+**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
 
 ## What this is
 
@@ -365,12 +365,12 @@ Either way, the research skill's first line says that without an `Agent` tool, r
 
 **Issue #3836**, agents reading project files directly, ships as its own PR.
 - **Its read block** fires only when the file is not there, and the eval harnesses keep the strict version.
-- **In connector mode** every direct read misses, so #3836 is an input to the dress rehearsal. If it has not merged by then, the rehearsal records which reads missed, and the 4 January checkpoint decides whether the launch waits for it.
+- **In connector mode** every direct read misses, so #3836 is an input to the dress rehearsal. If it has not merged by then, the rehearsal records which reads missed, and the 18 December checkpoint decides whether the launch waits for it.
 
 ## Phase 3: release and operations
 
 **D1 Environments.** P0.3's two environments, both on the shared ALB.
-- **When the web environment joins, these environment properties:**
+- **When the web environment joins, by 11 December, these environment properties:**
   - the DSNs and the bucket;
   - `FS_TOKEN_ENC_KEY`, the same on both tiers, and the session secret;
   - the issuer and the web tier's public URL, on both tiers;
@@ -379,7 +379,7 @@ Either way, the research skill's first line says that without an `Agent` tool, r
   - the FamilySearch redirect setting, at the loopback (P0.4), and the sign-in budget;
   - `PGSSLROOTCERT=/etc/pki/tls/certs/ca-bundle.crt` on the web tier: AL2023's system bundle as a file, not libpq's `system` keyword, overriding the RDS bundle its `01-web.config` pins;
   - the transcription switch, off, on the tools tier.
-- **In January, before the dress rehearsal:** `FEEDBACK_URL`, the uploads setting and the limits.
+- **Before the dress rehearsal:** the uploads setting. **In January:** `FEEDBACK_URL` and the limits.
 - **Before gate 4's sign-in:** the redirect setting moves from the loopback to the beta's https redirect (P0.4).
 - **Once FamilySearch's approval is in writing:** the transcription switch goes on (gate 4).
 - **On launch day:** the user cap.
@@ -424,7 +424,7 @@ The page also says:
 - **Team and Enterprise plans:** an Owner adds the connector and makes the plugin available. Email us for help.
 
 **D5 Feedback triage.**
-- **Before the dress rehearsal,** the lead creates the private repo and the second Apps Script copy, with `GITHUB_REPO` set to that repo and `NOTIFICATION_EMAILS` unset. The private repo stays off the team's board, so no board skill or script lists a private issue.
+- **In January,** the lead creates the private repo and the second Apps Script copy, with `GITHUB_REPO` set to that repo and `NOTIFICATION_EMAILS` unset. The private repo stays off the team's board, so no board skill or script lists a private issue.
 - **`/triage-feedback`** also lists the private repo's open issues, after the board's Feedback column, and works each one as it works an alpha card: the same reading, checks and verdicts. Only where a verdict lands, and what it carries, change:
   - **Backlog:** the skill files a public issue carrying the instructions alpha triage would write, with a link to the private issue in place of alpha's original-feedback block. The Drive link, the zip name and the tester's own words stay on the private issue;
   - **Fold:** its comment on the open public issue links the private issue;
@@ -487,36 +487,36 @@ The team makes each of these, from the issues under "Who builds what". Each is a
 
 ## Who builds what
 
-The lead does the items "What this is" names. The team builds the rest from these issues; an issue labelled `senior` needs a senior developer. Each issue's "Blocked on" line orders them.
+The lead does the items "What this is" names. The team builds the rest from these issues; an issue labelled `senior` needs a senior developer. Each issue's "Blocked on" line orders them. Everything likely to go wrong only live, against Cowork, Claude, FamilySearch, OpenRouter or the deployed host, is due by 14 December, for the dress rehearsal before the holidays; the unit-testable rest is due 31 December.
 
-| Item | Issue | Level |
-|---|---|---|
-| S1 Schema | issue #3977 | junior |
-| E1 One front door | issue #3984 | senior |
-| E2 Project tools: links, uploads, settings | issue #3978 | junior |
-| E2 Project tools: the connector's `project_list` | issue #3991 | senior |
-| E3 Session end and wording | issue #3995 | senior |
-| E4 Limits: process-wide | issue #3979 | junior |
-| E4 Limits: per user | issue #3999 | senior |
-| E5 Fit for a connector | issue #3996 | junior |
-| W1 Settings: chat switch, admission, `/livez` | issue #3985 | senior |
-| W1 Settings: pool, TLS, nginx | issue #3980 | senior |
-| W2 Sign-in: users, sessions, state, redirect, budget | issue #3992 | senior |
-| W2 Sign-in: Claude's authorization server | issue #3997 | senior |
-| W3 Project routes: viewer data | issue #3981 | senior |
-| W3 Project routes: uploads and download | issue #3987 | senior |
-| W3 Project routes: feedback | issue #3986 | junior |
-| W3 Project routes: OpenRouter linking | issue #3988 | senior |
-| W3 Project routes: policy pages and account data | issue #3993 | junior |
-| W4 Browser app: flags, project links, list, polling | issue #3994 | junior |
-| W4 Browser app: print view | issue #3982 | junior |
-| W4 Browser app: onboarding (D4), account menu, upload, OpenRouter, download | issue #4001 | junior |
-| S2 Deleting and blocking one user | issue #4000 | senior |
-| G3 Connector tool names | issue #3989 | junior |
-| G5 Capture wording | issue #3990 | junior |
-| D3 step 6: the plugin's connector build and marketplace layout | issue #3983 | junior |
-| Reconnect fallback, if P0.2 calls for it | issue #4002 | senior |
-| After launch | issue #4003 | senior |
+| Item | Issue | Level | Due |
+|---|---|---|---|
+| S1 Schema | issue #3977 | junior | 20 Nov |
+| E1 One front door | issue #3984 | senior | 7 Dec |
+| E2 Project tools: links, uploads, settings | issue #3978 | junior | 7 Dec |
+| E2 Project tools: the connector's `project_list` | issue #3991 | senior | 14 Dec |
+| E3 Session end and wording | issue #3995 | senior | 14 Dec |
+| E4 Limits: process-wide | issue #3979 | junior | 31 Dec |
+| E4 Limits: per user | issue #3999 | senior | 31 Dec |
+| E5 Fit for a connector | issue #3996 | junior | 14 Dec |
+| W1 Settings: chat switch, admission, `/livez` | issue #3985 | senior | 30 Nov |
+| W1 Settings: pool, TLS, nginx | issue #3980 | senior | 7 Dec |
+| W2 Sign-in: users, sessions, state, redirect, budget | issue #3992 | senior | 7 Dec |
+| W2 Sign-in: Claude's authorization server | issue #3997 | senior | 14 Dec |
+| W3 Project routes: viewer data | issue #3981 | senior | 7 Dec |
+| W3 Project routes: uploads and download | issue #3987 | senior | 14 Dec |
+| W3 Project routes: feedback | issue #3986 | junior | 31 Dec |
+| W3 Project routes: OpenRouter linking | issue #3988 | senior | 14 Dec |
+| W3 Project routes: policy pages and account data | issue #3993 | junior | 14 Dec |
+| W4 Browser app: flags, project links, list, polling | issue #3994 | junior | 14 Dec |
+| W4 Browser app: print view | issue #3982 | junior | 31 Dec |
+| W4 Browser app: onboarding (D4), account menu, upload, OpenRouter, download | issue #4001 | junior | 31 Dec |
+| S2 Deleting and blocking one user | issue #4000 | senior | 31 Dec |
+| G3 Connector tool names | issue #3989 | junior | 14 Dec |
+| G5 Capture wording | issue #3990 | junior | 31 Dec |
+| D3 step 6: the plugin's connector build and marketplace layout | issue #3983 | junior | 14 Dec |
+| Reconnect fallback, if P0.2 calls for it | issue #4002 | senior | 14 Dec |
+| After launch | issue #4003 | senior | after launch |
 
 P0.2 is issue #3529. G4's writer-tool checks get an issue only if the lead chooses them; E5's `record_search` trim is in issue #3996, conditional on P0.2.
 
@@ -538,28 +538,36 @@ The team makes these too, from one issue, with Richard reviewing:
 | Dates | Work |
 |---|---|
 | 26 Oct – 8 Nov | Phase 0 |
-| 2 Nov – 31 Dec | The issues under "Who builds what". The sign-in chain first: S1 by 20 November, W1's chat switch by 30 November, E1 and W2's first half by 7 December, W2's authorization server by 14 December. Otherwise W3's viewer routes by 7 December, the issues others wait on by 14 December, and the rest by 31 December. G3 after P0.2; G4's checks, if chosen; the reconnect fallback, if P0.2 calls for it |
-| 14 – 20 Dec | The web environment joins the ALB, with D1's settings and profiles; P0.4's bounce; the first live sign-in in Cowork |
-| 4 – 17 Jan | The dress rehearsal; the rest of D1; D2–D5; L1 |
+| 2 Nov – 14 Dec | The issues due by 14 December under "Who builds what", the sign-in chain first. G3 after P0.2; G4's checks, if chosen; the reconnect fallback, if P0.2 calls for it |
+| By 11 Dec | The web environment joins the ALB, with D1's settings and profiles; P0.4's bounce |
+| 14 – 18 Dec | The first live sign-in in Cowork, then the dress rehearsal |
+| 2 Nov – 31 Dec | The issues due 31 December, all unit-testable |
+| 4 – 17 Jan | The rest of D1; D2–D5; L1 |
 | 18 – 31 Jan | Phase 4 |
 | 1 – 7 Feb | Launch |
 
-**The dress rehearsal, 4–17 January:**
+After the holidays the team is a skeleton crew, so everything likely to go wrong is tested before them.
+
+**The dress rehearsal, 14–18 December:**
 - deploy both tiers to the skeleton;
-- install the connector build of the plugin as a zip, on a separate Claude account;
-- in a fresh Cowork task, run one research session from `init-project` to a proof summary, with issue #3836 merged if it is ready;
+- install the connector build of the plugin from a test marketplace, on a separate Claude account, and check that a version bump reaches it;
+- in a fresh Cowork task, sign in and run one research session from `init-project` to a proof summary, with issue #3836 merged if it is ready;
+- let the session end, and reconnect;
+- open the project from Claude's link in a fresh browser, upload a 25 MB capture, and download a project larger than the instance's free memory;
+- link OpenRouter;
 - record agent spawns, hook denials, approval prompts, timeouts and missed direct reads on issue #3529.
 
 A plugin fix it turns up goes in a small follow-up PR.
 
-**Checkpoint, 4 January.** Cuts are taken that day if any of these hold:
-- an issue under "Who builds what", other than the After-launch one, has not merged (the reconnect fallback only if P0.2 called for it);
+**Checkpoint, 18 December.** Cuts are taken that day, while the whole team is here, if any of these hold:
+- an issue due by 14 December has not merged (the reconnect fallback only if P0.2 called for it);
+- the dress rehearsal has not passed, for a reason other than the reads issue #3836 covers;
 - G4's choice is not made, or the writer-tool checks it chose have not merged;
 - FamilySearch has not answered.
 
 The lead also decides that day whether the launch waits for issue #3836, and whether to hold the date.
 
-**Checkpoint, 18 January.** The same, if the dress rehearsal has not passed for a reason other than the reads issue #3836 covers, if D1–D5 or L1 is not done, or if acceptance steps 1–3 fail on the release candidate installed from the marketplace. If the launch waits for issue #3836 and it has not merged, the lead decides that day whether to hold the date.
+**Checkpoint, 18 January.** The same, if an issue due 31 December has not merged, if D1–D5 or L1 is not done, or if acceptance steps 1–3 fail on the release candidate installed from the marketplace. If the launch waits for issue #3836 and it has not merged, the lead decides that day whether to hold the date.
 
 **Cut list, in order:**
 1. The upload page becomes a bare file form that still runs pdf.js.
