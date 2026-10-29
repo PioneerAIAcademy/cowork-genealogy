@@ -26,7 +26,7 @@ import {
   withRetry,
   mapWithConcurrency,
   countryConsistency,
-  countryOfPlaces,
+  countryOfPlace,
   deriveContextName,
   __clearPlaceResolverCachesForTests,
   __usePlaceTableForTests,
@@ -204,50 +204,68 @@ describe("countryConsistency", () => {
   });
 });
 
-describe("countryOfPlaces (a record's country from its own places)", () => {
+describe("countryOfPlace (a record's country from its own place)", () => {
   it("is the last segment of the place", () => {
-    expect(countryOfPlaces(["Bullock, Alabama, United States"])).toBe("United States");
-    expect(countryOfPlaces(["Wallaceburg, Kent, Upper Canada, British North America"])).toBe("British North America");
-    expect(countryOfPlaces(["Tilarán, Guanacaste, Costa Rica"])).toBe("Costa Rica");
+    expect(countryOfPlace("Bullock, Alabama, United States")).toBe("United States");
+    expect(countryOfPlace("Tilarán, Guanacaste, Costa Rica")).toBe("Costa Rica");
+    expect(countryOfPlace(" Becker, Minnesota, United States ")).toBe("United States");
   });
 
   it("names a country it knows in another spelling by its English name", () => {
-    expect(countryOfPlaces(["Guadalajara, Jalisco, México"])).toBe("Mexico");
-    expect(countryOfPlaces(["Michoacán, México", "Tingambato, Michoacán, Mexico"])).toBe("Mexico");
-    expect(countryOfPlaces(["Albany, New York, U.S.A."])).toBe("United States");
-    expect(countryOfPlaces(["Fürth, Bayern, Deutschland"])).toBe("Germany");
-    expect(countryOfPlaces(["Wellington, new zealand"])).toBe("New Zealand");
+    expect(countryOfPlace("Guadalajara, Jalisco, México")).toBe("Mexico");
+    expect(countryOfPlace("Albany, New York, U.S.A.")).toBe("United States");
+    expect(countryOfPlace("Fürth, Bayern, Deutschland")).toBe("Germany");
+    expect(countryOfPlace("Wellington, new zealand")).toBe("New Zealand");
+  });
+
+  it("reads Brasil as Brazil", () => {
+    expect(countryOfPlace("Cascadura, Rio de Janeiro, Brasil")).toBe("Brazil");
+    expect(countryOfPlace("Cascadura, Rio de Janeiro, BRASIL")).toBe("Brazil");
+    expect(countryOfPlace("Cascadura, Rio de Janeiro, Brazil")).toBe("Brazil");
+  });
+
+  it("counts a historical state as the one country it lies in today", () => {
+    expect(countryOfPlace("Lidečko, Ungarisch Brod, Moravia")).toBe("Czechia");
+    expect(countryOfPlace("Sindlingen, Frankfurt, Duchy of Nassau")).toBe("Germany");
+    expect(countryOfPlace("Schwerin, Mecklenburg-Schwerin")).toBe("Germany");
+    expect(countryOfPlace("Stuttgart, Württemberg")).toBe("Germany");
+    expect(countryOfPlace("Wallaceburg, Kent, Upper Canada, British North America")).toBe("Canada");
+    expect(countryOfPlace("Honolulu, Oahu, Kingdom of Hawaii")).toBe("United States");
+    expect(countryOfPlace("Dili, Portuguese Timor")).toBe("Timor-Leste");
+  });
+
+  it("keeps the name of a historical state in several countries today, and reads only the last segment", () => {
+    expect(countryOfPlace("Tarashcha, Kiev Governorate, Russian Empire")).toBe("Russian Empire");
+    expect(countryOfPlace("Lidečko, Uherský Brod, Moravia, Czechoslovakia")).toBe("Czechoslovakia");
+    expect(countryOfPlace("Königsberg, East Prussia, Prussia")).toBe("Prussia");
+    expect(countryOfPlace("Rangoon, Burma")).toBe("Burma");
+    expect(countryOfPlace("Zwittau, Mährisch Trübau, Moravia, Austria")).toBe("Austria");
   });
 
   it.each(["England", "Scotland", "Wales", "Northern Ireland", "scotland"])(
     "reads %s as the United Kingdom, as a FamilySearch standard place names it",
     (constituent) => {
-      expect(countryOfPlaces([`Somewhere, ${constituent}`])).toBe("United Kingdom");
-      expect(countryOfPlaces([`Somewhere, ${constituent}`, "Elsewhere, Kent, England, United Kingdom"])).toBe(
-        "United Kingdom",
-      );
+      expect(countryOfPlace(`Somewhere, ${constituent}`)).toBe("United Kingdom");
     },
   );
 
   it.each([
     "World", "world", "Africa", "Antarctica", "Asia", "Europe", "North America", "South America",
     "At Sea", "Atlantic Ocean", "Pacific Ocean", "Indian Ocean", "arctic ocean",
+    "Mediterranean Sea", "Adriatic Sea, Mediterranean Sea", "north sea", "Sea of Japan", "Hawaiian Seas",
+    "Gulf of Mexico",
   ])("gives none for %s, which is no country", (top) => {
-    expect(countryOfPlaces([top])).toBeNull();
-    expect(countryOfPlaces([`Somewhere, ${top}`])).toBeNull();
+    expect(countryOfPlace(top)).toBeNull();
+    expect(countryOfPlace(`Somewhere, ${top}`)).toBeNull();
   });
 
-  it("gives the country all the places end in, and none when they end in different ones", () => {
-    expect(countryOfPlaces(["Minnesota, United States", " Becker, Minnesota, United States"])).toBe("United States");
-    expect(countryOfPlaces(["New York, United States", "Cornwall, England, United Kingdom"])).toBeNull();
-    expect(countryOfPlaces(["Cornwall, England, United Kingdom", "New York, United States"])).toBeNull();
+  it("reads a sea only in the last segment", () => {
+    expect(countryOfPlace("Port Sudan, Red Sea, Sudan")).toBe("Sudan");
   });
 
-  it("gives none for no place, and skips a place with no segment", () => {
-    expect(countryOfPlaces([])).toBeNull();
-    expect(countryOfPlaces([""])).toBeNull();
-    expect(countryOfPlaces([" , "])).toBeNull();
-    expect(countryOfPlaces(["Cook, Illinois, United States", " "])).toBe("United States");
+  it("gives none for a place with no segment", () => {
+    expect(countryOfPlace("")).toBeNull();
+    expect(countryOfPlace(" , ")).toBeNull();
   });
 });
 

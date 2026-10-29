@@ -27,7 +27,7 @@ import {
 } from "./place-api.js";
 import { stdDate } from "./date-standardize.js";
 import { earliestYear } from "./date-helpers.js";
-import { listedOneWordPlace, oneWordPlaceIsWord, oneWordPlaceNeedsCountry } from "./one-word-places.js";
+import { foldPlaceKey, listedOneWordPlace, oneWordPlaceIsWord, oneWordPlaceNeedsCountry } from "./one-word-places.js";
 
 // Element types of the existing fetchers, without needing their (unexported)
 // interfaces — keeps this module in lockstep with place-search.ts.
@@ -532,32 +532,83 @@ const NOT_COUNTRIES: ReadonlySet<string> = new Set([
   "at sea", "atlantic ocean", "pacific ocean", "indian ocean", "arctic ocean",
 ]);
 
+/** The places FamilySearch types Sea, which are no country either: each is
+ *  named with the word Sea or Seas, or is the Gulf of Mexico (all 86 of the
+ *  Places API's type 116, 2026-10-29). */
+const SEA_NAME = /\b(?:seas?|gulf)\b/i;
+
 /**
- * The record's country its own places name, named as a FamilySearch standard
- * place names it: the last segment of each place. A country `canonicalCountry`
- * knows takes its English name ("México" is Mexico, "USA" the United States),
- * and England, Scotland, Wales and Northern Ireland are the United Kingdom
- * ("Campbeltown, Argyll, Scotland" is a United Kingdom record, as "…,
- * Scotland, United Kingdom" is). Null when no place has a segment, when the
- * places end in different countries, or when the one they end in is no country
- * (`NOT_COUNTRIES`).
+ * Top-level names that are not the English name of the country the place lies
+ * in today, keyed by `foldPlaceKey`, under that country: Brazil's own name,
+ * which the country guard's alias table does not carry, and the historical
+ * states matcher-lab m13's list builder counts inside one modern country (stage
+ * S4, "historical states count inside their modern countries", `m13/final/fl.py`).
+ * Left out of that map: England, Scotland and Wales (the United Kingdom, in
+ * `countryOfPlace`); a state it puts in several modern countries (Prussia,
+ * Czechoslovakia, the Soviet Union), which keeps its own name; and Burma and
+ * German South West Africa, which it puts in the colonies they lay in (India,
+ * South Africa), though each is a country today.
  */
-export function countryOfPlaces(places: readonly string[]): string | null {
-  let country: string | null = null;
-  for (const place of places) {
-    const last = placeSegments(place).at(-1);
-    if (last === undefined) continue;
-    const known = canonicalCountry(last);
-    const named = known === null
+const COUNTRY_TODAY: ReadonlyMap<string, string> = new Map(
+  Object.entries({
+    Australia: ["christmas island"],
+    Austria: ["carinthia", "styria"],
+    Brazil: ["brasil"],
+    Canada: ["british north america", "newfoundland"],
+    Chile: ["captaincy general of chile"],
+    Czechia: ["bohemia", "moravia"],
+    France: ["brittany"],
+    Germany: [
+      "anhalt", "baden", "bavaria", "bremen", "brunswick", "duchy of arenberg meppen", "duchy of nassau", "east germany",
+      "electorate of hesse", "grafschaft greiz", "grand duchy of hesse", "hamburg", "hanover", "hohenzollern",
+      "hohenzollern hechingen", "lippe", "lubeck", "mark brandenburg", "mecklenburg schwerin", "mecklenburg strelitz",
+      "oldenburg", "pyrmont", "reuss elder line", "reuss younger line", "saxe altenburg", "saxe coburg",
+      "saxe coburg and gotha", "saxe coburg eisenach", "saxe coburg saalfeld", "saxe gotha altenburg",
+      "saxe hildburghausen", "saxe lauenburg", "saxe meiningen", "saxe weimar", "saxe weimar eisenach", "saxony",
+      "schaumburg lippe", "schwarzburg rudolstadt", "schwarzburg sondershausen", "waldeck", "waldeck pyrmont",
+      "wurttemberg",
+    ],
+    Italy: [
+      "contea di asti", "duchy of lucca", "duchy of massa and carrara", "duchy of modena and reggio",
+      "kingdom of naples", "kingdom of sicily", "napoleonic kingdom of italy", "papal states", "tuscany",
+      "two sicilies",
+    ],
+    Japan: ["ko ryukyu", "ryukyu kingdom"],
+    Mexico: ["tenochtitlan"],
+    Poland: ["duchy of belz", "duchy of warsaw"],
+    Slovenia: ["carniola"],
+    "South Africa": ["cape colony", "natal", "orange free state", "south african republic"],
+    Spain: ["castile", "catalan counties", "crown of aragon", "kingdom of aragon", "nafarroa"],
+    Switzerland: ["geneva", "three leagues"],
+    "Timor-Leste": ["portuguese timor"],
+    Ukraine: ["zaporizhian host"],
+    "United States": ["kingdom of hawaii", "new netherland", "republic of texas", "republic of vermont"],
+  }).flatMap(([country, names]) => names.map((name): [string, string] => [name, country])),
+);
+
+/**
+ * The country a record's place names, as a FamilySearch standard place names
+ * it: the place's last segment. A historical state counts as the one country it
+ * lies in today, and Brasil is Brazil (`COUNTRY_TODAY`: "Lidečko, Ungarisch
+ * Brod, Moravia" is a Czechia record); a country `canonicalCountry` knows takes
+ * its English name ("México" is Mexico, "USA" the United States); and England,
+ * Scotland, Wales and Northern Ireland are the United Kingdom ("Campbeltown,
+ * Argyll, Scotland" is a United Kingdom record, as "…, Scotland, United
+ * Kingdom" is). Null for a place with no segment, and for one that ends in no
+ * country: the World, a continent, an ocean or a sea.
+ */
+export function countryOfPlace(place: string): string | null {
+  const last = placeSegments(place).at(-1);
+  if (last === undefined) return null;
+  const known = canonicalCountry(last);
+  const named =
+    COUNTRY_TODAY.get(foldPlaceKey(last)) ??
+    (known === null
       ? last
       : UK_CONSTITUENTS.has(known)
         ? "United Kingdom"
-        : known.split(" ").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
-    if (NOT_COUNTRIES.has(named.toLowerCase())) return null;
-    if (country !== null && named !== country) return null;
-    country = named;
-  }
-  return country;
+        : known.split(" ").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "));
+  return NOT_COUNTRIES.has(named.toLowerCase()) || SEA_NAME.test(named) ? null : named;
 }
 
 /**

@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 
 // The real resolver and the bundled one-word list, offline: only FamilySearch's
 // place search is stubbed, so the record's country research_append derives for
-// a full-text or an image record is what decides the answer.
+// an image record is what decides the answer.
 vi.mock("../../src/utils/place-api.js", () => ({
   searchPlace: vi.fn(async () => []),
   getPlaceById: vi.fn(async () => null),
@@ -16,8 +16,6 @@ vi.mock("../../src/utils/place-api.js", () => ({
 import { searchPlace } from "../../src/utils/place-api.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { __clearPlaceResolverCachesForTests } from "../../src/utils/place-resolver.js";
-
-const FULLTEXT_ID = "ark:/61903/3:1:3Q9M-CSNL-S98H-M";
 
 const research = (tool: string) => ({
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -69,8 +67,7 @@ const tree = {
   sources: [{ id: "SD-001", title: "A deed" }],
 };
 
-/** A full-text record in `recordPlace`, or a page whose film covers `place`. */
-const fulltext = (recordPlace: string) => ({ tool: "fulltext_search", result: { id: FULLTEXT_ID, recordPlace }, recordId: FULLTEXT_ID });
+/** A page whose film covers `place`. */
 const page = (place: string) => ({
   tool: "image_transcribe",
   result: {
@@ -141,10 +138,10 @@ async function standardized(record: { tool: string; result: unknown; recordId: s
 const hit = (fullName: string, score: number, placeId: string) =>
   ({ name: fullName.split(",")[0], fullName, type: "City", score, placeId, placeRepId: `r${placeId}` }) as any;
 
-describe("research_append: the record country of a full-text or an image record", () => {
+describe("research_append: the record country of an image record", () => {
   it("applies a one-country list entry only to a record of that country", async () => {
-    expect(await standardized(fulltext("Bullock, Alabama, United States"), "Texas")).toBe("Texas, United States");
-    expect(await standardized(fulltext("Saltillo, Coahuila, Mexico"), "Texas")).toBeNull();
+    expect(await standardized(page("Bullock, Alabama, United States"), "Texas")).toBe("Texas, United States");
+    expect(await standardized(page("Saltillo, Coahuila, Mexico"), "Texas")).toBeNull();
     expect(await standardized(page("Trumbull, Ohio, United States"), "Boston")).toBe(
       "Boston, Suffolk, Massachusetts, United States",
     );
@@ -156,21 +153,25 @@ describe("research_append: the record country of a full-text or an image record"
       hit("Tillamook, Oregon, United States", 95, "1"),
       hit("Tillamook, Tillamook, Oregon, United States", 80, "2"),
     ]);
-    expect(await standardized(fulltext("Tillamook, Oregon, United States"), "Tillamook")).toBe(
-      "Tillamook, Oregon, United States",
-    );
     expect(await standardized(page("Columbia, Oregon, United States"), "Tillamook")).toBe(
       "Tillamook, Oregon, United States",
     );
-    expect(await standardized(fulltext("Lima, Peru"), "Tillamook")).toBeNull();
     expect(await standardized(page("Lima, Peru"), "Tillamook")).toBeNull();
   });
 
-  it("withholds an entry withheld in British records from a Scottish or a World one, and gives it elsewhere", async () => {
-    expect(await standardized(fulltext("Campbeltown, Argyll, Scotland"), "Louth")).toBeNull();
-    expect(await standardized(fulltext("World"), "Louth")).toBeNull();
+  it("keeps a top hit in Czechia for a film its coverage names by the historical state, Moravia", async () => {
+    vi.mocked(searchPlace).mockResolvedValue([hit("Lidečko, Vsetín, Zlín, Czechia", 95, "1")]);
+    expect(await standardized(page("Lidečko, Ungarisch Brod, Moravia"), "Lideczko")).toBe(
+      "Lidečko, Vsetín, Zlín, Czechia",
+    );
+    expect(await standardized(page("Zwittau, Mährisch Trübau, Moravia, Austria"), "Lideczko")).toBeNull();
+  });
+
+  it("withholds an entry withheld in British records from a Scottish, World or sea one, and gives it elsewhere", async () => {
+    expect(await standardized(page("Campbeltown, Argyll, Scotland"), "Louth")).toBeNull();
     expect(await standardized(page("World"), "Louth")).toBeNull();
-    expect(await standardized(fulltext("Dublin, Ireland"), "Louth")).toBe("County Louth, Ireland");
+    expect(await standardized(page("Irish Sea"), "Louth")).toBeNull();
+    expect(await standardized(page("Dublin, Ireland"), "Louth")).toBe("County Louth, Ireland");
     expect(await standardized(page("Boston, Suffolk, Massachusetts, United States"), "Louth")).toBe(
       "County Louth, Ireland",
     );

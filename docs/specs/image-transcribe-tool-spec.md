@@ -634,10 +634,12 @@ metadata fetch `image_search` uses):
 
 Each request has a 10 s timeout and retry budget, and the lookup runs beside the page
 fetch and the OCR. The place is cached per film, and the film per ARK, for the life of
-the process. A lookup FamilySearch answered (a place, no coverage, a 403 on a restricted
-group, a 404) is cached; one that could not reach it (a network failure, a 5xx or 429, a
-body that is not JSON) is asked again next time. Any failure stages no `place`, and none
-is ever an error.
+the process. Cached: an answer (a place, a group with no coverage place, an image name
+that is no image), and a 403 (a restricted group) or a 404 on any of its requests (the
+ARK, `group/{film}/apid`, `group/{apid}`), as no place. Anything else is asked again
+next time: a network failure, any other status (a 401 for a rejected token, a 400, a
+5xx or 429), a body that is not JSON. Any failure stages no `place`, and none is ever an
+error.
 
 **Format, measured live 2026-10-29** on every film and image ARK the e2e corpus
 transcribed: 144 groups (58 films named by imageIds, 86 more reached from ARKs). 142

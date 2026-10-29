@@ -1428,6 +1428,37 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     expect(envelope.payload.results[0].source.place).toBe("Trumbull, Ohio, United States");
   });
 
+  it("looks the place up beside the page fetch and the OCR, waiting for it only to stage the page", async () => {
+    // The lookup settles when the OCR request goes out, or after a second.
+    let settledBy: string | undefined;
+    let release: (by: string) => void = () => {};
+    imageGroupPlaceMock.mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          const timer = setTimeout(() => release("the timer"), 1_000);
+          release = (by) => {
+            clearTimeout(timer);
+            settledBy ??= by;
+            resolve("Trumbull, Ohio, United States");
+          };
+        }),
+    );
+    mockFetch.mockImplementationOnce(async () => {
+      release("the OCR request");
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => ({ choices: [{ message: { content: "Deed of sale" }, finish_reason: "stop" }] }),
+        text: async () => "",
+      };
+    });
+    const result = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect(settledBy).toBe("the OCR request");
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].source.place).toBe("Trumbull, Ohio, United States");
+  });
+
   it("stages no place when the lookup finds none", async () => {
     mockOpenRouterOk("Deed of sale");
     const result = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);

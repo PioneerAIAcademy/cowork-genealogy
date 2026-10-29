@@ -707,23 +707,29 @@ with a warning rather than kept for the new place:
      - a FamilySearch record (`record_search`, `record_read`): the last segment
        of its Collection coverage place (its `coverage.standard_place`, else its
        `coverage.place_rep_id` resolved by id);
-     - a `fulltext_search` result: the last segment of its `recordPlace`, of
-       each place when it lists several (`;`-separated), which must all end in
-       the same one (lead, 2026-10-29: "full-text records should get a record
-       country from their own place");
      - a page `image_transcribe` read: the last segment of the staged
        transcription's `source.place`, its film's coverage place (lead,
        2026-10-29: image records carry their film's country). The log entry's
        sidecar is that one transcription, so it gives the country whatever the
-       assertion's `record_id` (`capture:…`, a record ARK).
+       assertion's `record_id` (`capture:…`, a record ARK). A full-text record
+       comes this way too: it is extracted from its page, which
+       `image_transcribe` reads.
 
-     A country is named as a FamilySearch standard place names it: a country
-     the country guard's alias table knows takes its English name ("México" is
-     Mexico, "USA" the United States), and England, Scotland, Wales and
-     Northern Ireland are the United Kingdom ("Campbeltown, Argyll, Scotland" is
-     a United Kingdom record, as "…, Scotland, United Kingdom" is). There is none
-     without such a place, and none for the World, a continent or an ocean,
-     which are no country (`countryOfPlaces`).
+     A country is named as a FamilySearch standard place names it
+     (`countryOfPlace`). A historical state counts as the one country it lies
+     in today, by the list builder's own map (matcher-lab m13, stage S4:
+     "historical states count inside their modern countries"), so "…, Moravia"
+     is a Czechia record. A state that map puts in several countries keeps its
+     own name ("…, Russian Empire"), as do Burma and German South West Africa,
+     which it puts in India and South Africa, and only the last segment counts
+     ("…, Moravia, Austria" is an Austria record). "Brasil" is Brazil; a
+     country the country guard's alias table knows takes its English name
+     ("México" is Mexico, "USA" the United States); and England, Scotland,
+     Wales and Northern Ireland are the United Kingdom ("Campbeltown, Argyll,
+     Scotland" is a United Kingdom record, as "…, Scotland, United Kingdom"
+     is). There is none without such a place, and none for the World, a
+     continent, an ocean or a sea (a place FamilySearch types Sea, such as the
+     North Sea or the Gulf of Mexico), which are no country.
 
      A bare single-segment place ("Kent", "Shenandoah") names no parent, so
      FamilySearch's best hit for it is whichever same-named place ranks highest

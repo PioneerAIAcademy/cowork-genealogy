@@ -60,7 +60,7 @@ import {
   resolveStandardPlace,
   repIdToStandardPlace,
   countryConsistency,
-  countryOfPlaces,
+  countryOfPlace,
   isNonPlacePhrase,
   checkFirstPlace,
   type PlaceCoords,
@@ -7875,31 +7875,26 @@ function sidecarResultId(tool: string, r: any): string | undefined {
 
 /**
  * The country of the sidecar record an assertion comes from, by its producer,
- * never read off the assertions' places (`countryOfPlaces` names it, and says
+ * never read off the assertions' places (`countryOfPlace` names it, and says
  * which places are no country):
  * - a FamilySearch record (record_search, record_read): its Collection source's
  *   coverage place, the coverage's `standard_place` (a live `record_read`
  *   resolves it), else its `place_rep_id` resolved by id. A World collection
  *   gives none (matcher-lab m13's list builder, stage S2);
- * - a full-text result: its `recordPlace`, each of its `;`-separated places
- *   (lead, 2026-10-29: "full-text records should get a record country from
- *   their own place");
  * - a page `image_transcribe` read: its source's `place`, the coverage place of
  *   the FamilySearch image group (the film) it was read from (lead, 2026-10-29).
+ *   A full-text record is extracted from its page this way.
  * Null when the record names no such place.
  */
 async function recordCountryOf(producer: string | undefined, record: any): Promise<string | null> {
-  if (producer === "fulltext_search") {
-    return typeof record?.recordPlace === "string" ? countryOfPlaces(record.recordPlace.split(";")) : null;
-  }
   if (producer === "image_transcribe") {
-    return typeof record?.source?.place === "string" ? countryOfPlaces([record.source.place]) : null;
+    return typeof record?.source?.place === "string" ? countryOfPlace(record.source.place) : null;
   }
   const sources: any[] = Array.isArray(record?.gedcomx?.sources) ? record.gedcomx.sources : [];
   const coverage = sources.find((s) => s?.resource_type === "Collection")?.coverage;
   let place: string | null = typeof coverage?.standard_place === "string" ? coverage.standard_place : null;
   if (!place && typeof coverage?.place_rep_id === "string") place = await repIdToStandardPlace(coverage.place_rep_id);
-  return place ? countryOfPlaces([place]) : null;
+  return place ? countryOfPlace(place) : null;
 }
 
 /** The sidecar record an assertion's country comes from: the result its

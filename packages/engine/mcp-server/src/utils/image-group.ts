@@ -61,22 +61,34 @@ export async function fsGet(url: string, principal: Principal, timing: Timing): 
   }
 }
 
-export async function fetchApid(
+/** A film number's group id, or null with the status when the service refuses
+ *  it. */
+async function lookUpApid(
   imageGroupNumber: string,
   principal: Principal,
   timing: Timing,
-): Promise<string> {
+): Promise<{ status: number; apid: string | null }> {
   const response = await fsGet(
     `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(imageGroupNumber)}/apid`,
     principal,
     timing,
   );
-  if (!response.ok) {
+  if (!response.ok) return { status: response.status, apid: null };
+  return { status: response.status, apid: (await response.text()).trim() };
+}
+
+export async function fetchApid(
+  imageGroupNumber: string,
+  principal: Principal,
+  timing: Timing,
+): Promise<string> {
+  const { apid } = await lookUpApid(imageGroupNumber, principal, timing);
+  if (apid === null) {
     throw new Error(
       `Could not resolve image group number ${imageGroupNumber} to an image group.`
     );
   }
-  return (await response.text()).trim();
+  return apid;
 }
 
 /** A split Natural Group name ("007621224_005_M99P-2TQ") carries its group id
@@ -119,17 +131,18 @@ export async function fetchGroupMetadata(
 /** Each request of the lookup; it runs beside the page fetch and the OCR. */
 const LOOKUP_TIMING: Timing = { timeoutMs: 10_000, budgetMs: 10_000 };
 
-/** A lookup's answer, and whether FamilySearch gave it (cached) rather than a
- *  failure to reach it (asked again next time). */
+/** A lookup's answer, and whether it is cached rather than asked again next
+ *  time. */
 interface Outcome {
   value: string | null;
   settled: boolean;
 }
 
-/** Whether a response says what FamilySearch has, as a refusal (403) or an
- *  unknown id (404) does, rather than that it could not be asked. */
+/** The refusals cached as no place: a restricted group (403) and an unknown id
+ *  (404). Any other status, a 401 for a rejected token among them, is asked
+ *  again. */
 function settledStatus(status: number): boolean {
-  return status < 500 && status !== 429;
+  return status === 403 || status === 404;
 }
 
 /** Film number → coverage place, and image ARK → film number. */
@@ -192,8 +205,9 @@ async function lookUpArkFilm(ark: string, principal: Principal): Promise<Outcome
 }
 
 async function lookUpGroupPlace(film: string, principal: Principal): Promise<Outcome> {
-  const groupId = await resolveGroupId(film, principal, LOOKUP_TIMING);
-  const { status, meta } = await fetchGroupMetadata(groupId, principal, LOOKUP_TIMING);
+  const { status: apidStatus, apid } = await lookUpApid(film, principal, LOOKUP_TIMING);
+  if (apid === null) return { value: null, settled: settledStatus(apidStatus) };
+  const { status, meta } = await fetchGroupMetadata(apid, principal, LOOKUP_TIMING);
   if (!meta) return { value: null, settled: settledStatus(status) };
   return { value: sharedCoveragePlace(meta), settled: true };
 }
@@ -202,8 +216,9 @@ async function lookUpGroupPlace(film: string, principal: Principal): Promise<Out
  * The coverage place of the FamilySearch image group (the film) an image
  * belongs to, the metadata image_search's `item` reads: an imageId names its
  * film, and an image ARK is asked once for its image's name. Cached per film,
- * and per ARK, for the life of the process; a lookup that could not reach
- * FamilySearch is not cached. Null on any failure: it never throws.
+ * and per ARK, for the life of the process: an answer, and a 403 or 404 at any
+ * step, which gives no place. Anything else is asked again. Null on any
+ * failure: it never throws.
  */
 export async function imageGroupPlace(
   image: { imageId?: string; ark?: string },

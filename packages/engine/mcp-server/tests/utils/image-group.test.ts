@@ -199,23 +199,40 @@ describe("imageGroupPlace", () => {
     expect(await withoutSleeps(() => imageGroupPlace({ imageId: "007156564_00250" }, LOCAL))).toBeNull();
   });
 
-  it("caches what FamilySearch answered, a refusal included, but asks again after a failure to reach it", async () => {
-    serve({
-      [`${GS}/group/007156564/apid`]: { status: 200, body: "TH-F" },
-      [`${GS}/group/TH-F`]: { status: 403 },
-      [ARK_URL]: { status: 403 },
-    });
-    await imageGroupPlace({ imageId: "007156564_00001" }, LOCAL);
-    await imageGroupPlace({ imageId: "007156564_00002" }, LOCAL);
-    await imageGroupPlace({ ark: ARK }, LOCAL);
-    await imageGroupPlace({ ark: ARK }, LOCAL);
-    expect(asked()).toEqual([`${GS}/group/007156564/apid`, `${GS}/group/TH-F`, ARK_URL]);
+  it("caches a 403 or a 404 as no place, at every step", async () => {
+    const refusals: [string, Record<string, Reply>, { imageId?: string; ark?: string }][] = [];
+    for (const status of [403, 404]) {
+      refusals.push(
+        [`${status} on the group id`, { [`${GS}/group/007156564/apid`]: { status } }, { imageId: "007156564_00250" }],
+        [
+          `${status} on the group`,
+          { [`${GS}/group/007156564/apid`]: { status: 200, body: "TH-F" }, [`${GS}/group/TH-F`]: { status } },
+          { imageId: "007156564_00250" },
+        ],
+        [`${status} on the ark`, { [ARK_URL]: { status } }, { ark: ARK }],
+      );
+    }
+    for (const [label, routes, image] of refusals) {
+      __clearImageGroupCacheForTests();
+      mockFetch.mockReset();
+      serve(routes);
+      expect(await imageGroupPlace(image, LOCAL), label).toBeNull();
+      const first = asked().length;
+      expect(await imageGroupPlace(image, LOCAL), label).toBeNull();
+      expect(asked().length, label).toBe(first);
+    }
+  });
 
+  it("asks again after any other refusal, a 401 included, or a failure to reach FamilySearch", async () => {
     const transient: [string, Record<string, Reply>][] = [
       ["network", { [`${GS}/group/007156564/apid`]: new TypeError("fetch failed") }],
+      ["401 on the group id", { [`${GS}/group/007156564/apid`]: { status: 401 } }],
+      ["401 on the group", { [`${GS}/group/007156564/apid`]: { status: 200, body: "TH-F" }, [`${GS}/group/TH-F`]: { status: 401 } }],
       ["5xx", { [`${GS}/group/007156564/apid`]: { status: 200, body: "TH-F" }, [`${GS}/group/TH-F`]: { status: 503 } }],
       ["429", { [`${GS}/group/007156564/apid`]: { status: 200, body: "TH-F" }, [`${GS}/group/TH-F`]: { status: 429 } }],
       ["metadata not JSON", { [`${GS}/group/007156564/apid`]: { status: 200, body: "TH-F" }, [`${GS}/group/TH-F`]: { status: 200, body: "<html>" } }],
+      ["ark resolver 401", { [ARK_URL]: { status: 401 } }],
+      ["ark resolver 400", { [ARK_URL]: { status: 400 } }],
       ["ark resolver 5xx", { [ARK_URL]: { status: 502 } }],
       ["ark resolver not JSON", { [ARK_URL]: { status: 200, body: "<html>" } }],
     ];
@@ -231,6 +248,21 @@ describe("imageGroupPlace", () => {
         [`${GS}/group/TH-F`]: { status: 200, body: TRUMBULL },
       });
       expect(await withoutSleeps(() => imageGroupPlace(image, LOCAL)), label).toBe("Trumbull, Ohio, United States");
+    }
+  });
+
+  it("gives each of the lookup's requests a 10-second limit", async () => {
+    const timeout = vi.spyOn(AbortSignal, "timeout");
+    try {
+      serve({
+        [ARK_URL]: { status: 200, body: { name: "007156564_00250" } },
+        [`${GS}/group/007156564/apid`]: { status: 200, body: "TH-F" },
+        [`${GS}/group/TH-F`]: { status: 200, body: TRUMBULL },
+      });
+      expect(await imageGroupPlace({ ark: ARK }, LOCAL)).toBe("Trumbull, Ohio, United States");
+      expect(timeout.mock.calls.map(([ms]) => ms)).toEqual([10_000, 10_000, 10_000]);
+    } finally {
+      timeout.mockRestore();
     }
   });
 
