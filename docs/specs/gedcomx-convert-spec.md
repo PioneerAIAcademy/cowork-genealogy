@@ -424,8 +424,7 @@ equivalent.
       "qualifiers": [{ "name": "http://familysearch.org/types/qualifiers/Preferred", "value": "true" }] } ] }] }
                                                   →  place: "dos Mainhos", standard_place: "Faial, Santana, Madeira, Portugal"
                                                      (toSimplifiedRecordRead; placeIds gives this fact
-                                                      { placeId: "1831208", ids: ["1831208"], written: "dos Mainhos",
-                                                        original: "Faial, Santana, Madeira, Portugal" })
+                                                      { placeId: "1831208", original: "Faial, Santana, Madeira, Portugal" })
 ```
 
 `place` is the place as the record wrote it: `place.original` verbatim, except
@@ -468,26 +467,26 @@ When `place.original` equals an `Interpreted` text of that field, the field
 holds exactly one `Original` text, and the fact keeps a `standard_place`,
 `place` is that `Original` text. A fact that keeps no
 `standard_place` (an id-less value, an ambiguous choice, a non-place phrase)
-keeps `place.original`, so the standardized text is never lost: the code
-extractor decides a census's relationship column from `standard_place ?? place`
-(`record-extract.ts`), and an as-written text without its country ("Salem,
-Massachusetts") decides nothing.
+keeps `place.original`, so the standardized text is never lost. The code
+extractor decides a census's relationship column from neither: it reads the
+census fact's `place.original`, which `record_read` stages beside the document
+as that persona's `indexFields` `censusPlace` (`record-index-fields.ts`), so the
+as-written text ("Salem, Massachusetts" decides nothing) and the English name
+("…, Scotland, United Kingdom" reads as England and Wales; "Hormigueros, Puerto
+Rico" drops the United States) leave the decision as `main` made it. A staged
+read without it decides from `standard_place ?? place` (`record-extract.ts`).
 
 **Place ids.** `toSimplifiedRecordRead` returns `{ doc, placeIds }`. `placeIds`
-maps each fact that has a `place` and no `normalized` value, except a non-place
-phrase (below), to `{ placeId, ids, written, original, formal }`: `placeId`,
-the place id of the chosen value, when its `standard_place` came from step 2;
-`ids`, the place id of every step-2 candidate, chosen or not (empty when
-FamilySearch gave the fact none); `written`, the as-written text above, which is
-the fact's `place` when it keeps a `standard_place`; `original`,
-`place.original`, which is the fact's `place` when it keeps none (both absent
-when the place has no text); and `formal`, the fact's `date.formal` (absent when
+maps each fact whose `standard_place` came from step 2 to
+`{ placeId, original, formal }`: the place id of the chosen value,
+`place.original` (absent when the place has none), which is the fact's `place`
+when it keeps no `standard_place`, and the fact's `date.formal` (absent when
 the date has none), which dates the name. These ride beside the document, never
 on it: a fact has no field for them
 (`TREE_FACT_FIELDS` in `validation/tree-shape.ts` is a closed list).
 `record_read` uses them to name each place in English, or else to give the fact
-what `toSimplified` gives it, and to give a fact with no place id the one its
-record's same-text facts carry (below).
+what `toSimplified` gives it (below). A fact FamilySearch gave no place id takes
+none from the record's other facts, even those with the same text.
 
 The `description` reference is otherwise dropped; richer place data lives in
 the top-level `places[]` array (Rule 12).
@@ -519,8 +518,7 @@ run `standardizePlaces` over the flattened facts of a multi-result response
 callers that want no I/O. Exception — `record_read`'s live path never calls
 `toSimplifiedStandardized` and never falls back to the resolver. It calls
 `recordReadDocument` (`tools/record-read.ts`): `toSimplifiedRecordRead`, then
-the copy of a place id between same-text facts (below), then each `placeIds`
-fact that has a place id named by it, then each coverage place named by its id.
+each `placeIds` fact named by its id, then each coverage place named by its id.
 The step-2 text is in the record's language, and the engine compares standard
 places as English text (`factsEquivalent` in `merge-gedcomx.ts`,
 `standardPlaceCountry` in `research-append.ts`), so each fact's
@@ -545,7 +543,12 @@ place.** Any doubt names nothing:
   Zürich, Zürich"), or a ward or church first ("Milwaukee city, ward 10, …"),
   names its place in a later part. Of 40 names drawn at random from those the
   first part alone would drop over the matcher corpus, 33 are right, 5 coarser,
-  1 wrong and 1 undecided. Otherwise FamilySearch's
+  1 wrong and 1 undecided. Letting a later part name a settlement (FamilySearch
+  type City, Town, Village, Hamlet, Populated Place, Major City, Independent
+  City, Neighborhood or suburb, Locality or Dispersed Settlement) never, and a
+  jurisdiction always, would drop 872 names there, which take in the city of
+  Kyiv given to villages of the Kiev Governorate; of 60 drawn at random, 56 are
+  right and 4 wrong. Otherwise FamilySearch's
   choice of place is in doubt: Q2W9-1GVF's 1881 census, written
   "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", was given the town of
   Aberayron, its registration district, and SGZQ-Y3L's "Saint Peter,
@@ -581,48 +584,33 @@ place.** Any doubt names nothing:
   Netherlands" (to 1830) and "Olne, Liège, Belgium" (from 1830), and
   4M3P-3SZM's Christ Church, Middlesex has two representations with no range,
   "…, British Colonial America" and "…, United States".
-- Nothing is named when the place was renamed and no part of the fact's
-  `place` is a name the place had at the fact's date: one of the `names[]`, in
-  any language, of a representation valid then. The place was renamed when the
-  valid name's own name (the first part of the full name) differs from the
-  chosen representation's, or when the description answered the cited id with
-  another representation, whose own name is not the cited one's to compare (a
-  retired id). Names are compared as `checkFirstPlace` compares them (case,
-  accents, "St"/"Saint" and type words ignored on both sides, so "Simmern" is
-  "Kreis Simmern"). FamilySearch then matched the record's text to a name the
-  place did not have at the fact's date. A 1980 death written "Bela Vista" was
-  given representation 10979131, Bela Vista 1938–1944, whose place has been
-  Echaporã since 1944; the record more likely means another Bela Vista. So
-  does one written "Catequese", the place's name to 1937, and one citing a
-  retired id the description answers with Echaporã's representation. A new
-  jurisdiction under the same name (Olne in Belgium) is no rename. Over the
-  matcher corpus this reads 140 names as doubt that comparing only the chosen
-  representation's English name passed: 66 under the cited id (59 of them
-  1838–1866 censuses written "Киевское воеводство, Польша", the 1569–1793
-  name, given "Kiev Governorate, Russian Empire") and 74 under a retired id (49
-  of them a town's retired id that now answers its region or state, as
-  "Speyer, Pfalz, Bavaria" given "Palatinate, Bavaria"); and it names 21 that
-  rule refused, whose text gives the name at the date as well as the chosen
-  one (1870 "Nitra" given "Nyitra, Hungary").
-
-**Copying a place id within a record.** A fact with a `place` but no step-2
-candidate of its own (`ids` empty: FamilySearch standardized none of its
-values) takes the place id of the record's other facts whose as-written text
-(`written`) is the same, case, accents, commas and spacing folded
-(`placeTextKey`: "Camberwell, Surrey, England" is "camberwell surrey
-england"), when those facts carry exactly one place id between them, counting
-every candidate of each, chosen or not. Two or more is doubt, and none leaves
-the fact as it is. A fact that has candidates of its own never takes one, even when its own choice
-is in doubt, and a fact with no text or a non-place phrase takes none. The fact
-then takes its as-written text as `place` and is named by its copied id for its
-own date and its own text, by exactly the rules above, so a copy never names
-what those rules withhold; when it is not named it keeps `place.original`.
-FamilySearch often standardizes a census household's place on one person's
-fact and not on the others'. Over the matcher corpus, 641 facts are named this
-way, and 40 of them drawn at random are all right; most copies the rules leave
-unnamed share their text with facts those rules leave unnamed too. Another 946
-facts have same-text facts carrying two or more ids; naming each id for the
-fact's date would give one name for 43 of them, which this rule does not do.
+- Nothing is named when the place was renamed and the fact's `place` still
+  gives the chosen representation's name: the valid name's own name (the first
+  part of the full name) differs from the chosen representation's, and a part
+  of `place` is the chosen one's own name. Names are compared as
+  `checkFirstPlace` compares them (case, accents, "St"/"Saint" and type words
+  ignored on both sides, so "Simmern" is "Kreis Simmern"). FamilySearch then
+  matched the record's text to a name the place did not have at the fact's
+  date. A 1980 death written "Bela Vista" was given representation 10979131,
+  Bela Vista 1938–1944, whose place has been Echaporã since 1944; the record
+  more likely means another Bela Vista. A text that gives the place a name from
+  another era than the chosen one's is named: 6293-8K43's 1866 census, written
+  "Киевское воеводство, Польша" and given the Kiev Voivodeship's 1569–1793
+  representation, is "Kiev Governorate, Russian Empire". A new jurisdiction
+  under the same name (Olne in Belgium) is no rename.
+- When the description answers the cited id with another representation (a
+  retired id), the cited one's own name is unknown, so some part of `place`
+  must instead be a name the place had at the fact's date: one of the
+  `names[]`, in any language, of a representation valid then. A 1980 "Bela
+  Vista" citing a retired id the description answers with Echaporã's
+  representation is named nothing; QLNH-QVQB's 1893 "Vorden (Bronckhorst)",
+  citing 1829107, is "Vorden, Gelderland, Netherlands". Over the matcher corpus
+  this holds 74 names as doubt, most of them a town's retired id the
+  description now answers with its region or state ("Speyer, Pfalz, Bavaria"
+  given "Palatinate, Bavaria"). Reading every language for an ordinary rename
+  too would hold 67 more names as doubt (65 right, 2 coarser) and name 18 (17
+  right, 1 coarser), and it caught no wrong name, so only a retired id is read
+  that way.
 
 When nothing is named, or the name contradicts the fact's `place`
 (`countryConsistency`, the check `research_append` refuses a record on), the

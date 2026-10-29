@@ -5,7 +5,6 @@ import { toSimplifiedRecordRead, type RecordReadPlace } from "../utils/gedcomx-c
 import {
   countryConsistency,
   gedcomxDateYears,
-  placeTextKey,
   repIdToStandardPlace,
   repIdToStandardPlaceAt,
 } from "../utils/place-resolver.js";
@@ -402,9 +401,7 @@ async function readFromSidecar(
  * `Original` value has no text of its own: its `place.original` is
  * FamilySearch's own `Interpreted` text, which names FamilySearch's choice by
  * construction, so the text check cannot catch a wrong choice there. Such facts
- * are still named; all 12 in the 40-record sample are named right. A fact with
- * no place id of its own first takes the one its record's other facts with the
- * same text carry (copyPlaceIds), then is named by these same rules. Records
+ * are still named; all 12 in the 40-record sample are named right. Records
  * reached via the search sidecar already carry the search stage's standardized
  * place.
  *
@@ -414,40 +411,13 @@ async function readFromSidecar(
  */
 export async function recordReadDocument(body: GedcomX): Promise<SimplifiedGedcomX> {
   const { doc, placeIds } = toSimplifiedRecordRead(body);
-  copyPlaceIds(placeIds);
   await nameFactPlaces(placeIds);
   await resolveCoveragePlaces(doc, body);
   return doc;
 }
 
-/** Gives a fact FamilySearch gave no place id the place id of the record's
- *  other facts with its as-written text (`placeTextKey`: case, accents, commas
- *  and spacing folded), when those facts carry exactly one place id between
- *  them, counting every candidate of each; two or more is doubt. A fact with
- *  candidates of its own, even in doubt, takes none. FamilySearch often
- *  standardizes a household's place on one person's fact and not on another's.
- *  The fact then takes its as-written text as `place`, and `nameFactPlaces`
- *  names the id for its own date and text, or puts back `place.original`,
- *  exactly as for its own id. */
-function copyPlaceIds(placeIds: Map<SimplifiedFact, RecordReadPlace>): void {
-  const idsByText = new Map<string, Set<string>>();
-  for (const { written, ids } of placeIds.values()) {
-    if (written === undefined) continue;
-    const key = placeTextKey(written);
-    idsByText.set(key, new Set([...(idsByText.get(key) ?? []), ...ids]));
-  }
-  for (const [fact, place] of placeIds) {
-    if (place.ids.length > 0 || place.written === undefined) continue;
-    const ids = idsByText.get(placeTextKey(place.written));
-    if (ids?.size !== 1) continue;
-    [place.placeId] = ids;
-    fact.place = place.written;
-  }
-}
-
 async function nameFactPlaces(placeIds: Map<SimplifiedFact, RecordReadPlace>): Promise<void> {
   for (const [fact, { placeId, original, formal }] of placeIds) {
-    if (placeId === undefined) continue;
     const years = gedcomxDateYears({ original: fact.date, formal });
     const name = years === null ? null : await repIdToStandardPlaceAt(placeId, years, fact.place ?? "");
     if (name && countryConsistency(fact.place ?? "", name) !== "contradiction") {

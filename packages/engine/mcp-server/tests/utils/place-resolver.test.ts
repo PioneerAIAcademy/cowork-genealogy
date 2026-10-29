@@ -607,6 +607,12 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     "444190": { fullName: "Nitra, Slovakia", placeId: "1939489", dateRange: "+1993/", names: ["Nitra"] },
     "444191": { fullName: "Nitra, Czechoslovakia", placeId: "1939489", dateRange: "+1920/+1992", names: ["Nitra"] },
     "12200061": { fullName: "Nyitra, Hungary", placeId: "1939489", dateRange: "/+1920", names: ["Neutra", "Nitra", "Nyitra"] },
+    // The Kiev Voivodeship, place 1929438 (6293-8K43's 1866 census, written
+    // "Киевское воеводство, Польша", was given 11574124).
+    "11574124": { fullName: "Kyiv, Poland", placeId: "1929438", dateRange: "+1569/+1793", names: ["Woiwodschaft Kiew", "Киевское воеводство", "Київське воєводство", "Kyiv", "kijowskie"] },
+    "10907979": { fullName: "Kiev Governorate, Russian Empire", placeId: "1929438", dateRange: "+1721/+1917", names: ["Kiev Guberniia", "Киевская губерния", "Київська губернія", "Kiev Governorate"] },
+    "13564868": { fullName: "Kiev, Ukraine, Soviet Union", placeId: "1929438", dateRange: "+1917/+1925", names: ["Киевская губерния", "Kiev"] },
+    "5344": { fullName: "Kyiv, Ukraine", placeId: "1929438", dateRange: "+1991/", names: ["Киевская область", "Київська область", "Kyiv"] },
   };
   const placeReps: Record<string, string[]> = {
     "1959431": ["12441861", "12441860", "12441859", "418460"],
@@ -625,6 +631,7 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     "1929896": ["5736"],
     "9544725": ["11016701"],
     "1939489": ["444190", "444191", "12200061"],
+    "1929438": ["5344", "13564868", "10907979", "11574124"],
   };
   const description = (table: Record<string, Partial<Rep> & { fullName: string }>) => async (id: string) => {
     const rep = table[id];
@@ -731,21 +738,25 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     expect(await repIdToStandardPlaceAt("418460", { from: 1850, to: Infinity }, "Olne")).toBe("Olne, Liège, Belgium");
   });
 
-  it("names nothing when the place was renamed and the record's text gives none of its names at the date (6B9K-FXBZ Bela Vista 1980)", async () => {
+  it("names nothing when the place was renamed and the record's text names the chosen representation (6B9K-FXBZ Bela Vista 1980)", async () => {
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Bela Vista")).toBeNull();
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Bela Vista, São Paulo, Brasil")).toBeNull();
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Brasil, São Paulo, BELA VISTA")).toBeNull();
-    // An older name than the chosen representation's: Catequese to 1937.
-    expect(await repIdToStandardPlaceAt("10979131", year(1980), "Catequese")).toBeNull();
-    // The record's text names the place as it was named in 1980.
+    expect(await repIdToStandardPlaceAt("10979131", year(1980), "Bela Vista, Echaporã")).toBeNull();
+    // The record's text names the place as it was named in 1980, or by an older name.
     expect(await repIdToStandardPlaceAt("10979131", year(1980), "Echaporã")).toBe("Echaporã, São Paulo, Brazil");
-    expect(await repIdToStandardPlaceAt("10979131", year(1980), "Bela Vista, Echaporã")).toBe("Echaporã, São Paulo, Brazil");
+    expect(await repIdToStandardPlaceAt("10979131", year(1980), "Catequese")).toBe("Echaporã, São Paulo, Brazil");
     expect(await repIdToStandardPlaceAt("10979131", year(1940), "Bela Vista")).toBe("Bela Vista, São Paulo, Brazil");
   });
 
-  it("names a renamed place when the record's text gives a name it had at the date, in any language (6N9M-7NKV's 1870 Nitra)", async () => {
+  it("names a renamed place when the record's text gives a name from another era than the chosen one's (6293-8K43's 1866 Kiev Voivodeship)", async () => {
+    expect(await repIdToStandardPlaceAt("11574124", year(1866), "Киевское воеводство, Польша")).toBe("Kiev Governorate, Russian Empire");
+    expect(await repIdToStandardPlaceAt("11574124", year(1866), "Kyiv, Polska")).toBeNull();
+  });
+
+  it("reads the rename rule against the chosen representation's own name, even where the text also gives the name at the date (6N9M-7NKV's 1870 Nitra)", async () => {
     // 444190 is "Nitra, Slovakia" from 1993; in 1870 the place is "Nyitra, Hungary", also named "Nitra" and "Neutra".
-    expect(await repIdToStandardPlaceAt("444190", year(1870), "Nitra, Slovensko")).toBe("Nyitra, Hungary");
+    expect(await repIdToStandardPlaceAt("444190", year(1870), "Nitra, Slovensko")).toBeNull();
     expect(await repIdToStandardPlaceAt("444190", year(1870), "Neutra")).toBe("Nyitra, Hungary");
     expect(await repIdToStandardPlaceAt("444190", year(1950), "Nitra")).toBe("Nitra, Czechoslovakia");
   });

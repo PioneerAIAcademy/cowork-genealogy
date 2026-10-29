@@ -1787,7 +1787,7 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
       ],
     });
     const [birth, check] = doc.persons![0].facts!;
-    const bolivar = { placeId: "5775", ids: ["5775"], written: "Bolívar, Colombia", original: "Bolívar, Colombia" };
+    const bolivar = { placeId: "5775", original: "Bolívar, Colombia" };
     expect(placeIds.get(birth)).toStrictEqual({ ...bolivar, formal: "+1856-05-07" });
     expect(placeIds.get(check)).toStrictEqual(bolivar);
   });
@@ -1952,12 +1952,7 @@ describe("gedcomx-convert — FamilySearch's standardized place from a record re
     const fact = doc.relationships![0].facts![0];
     expect(fact.place).toBe("Ramore, Ontario, Canada");
     expect(fact.standard_place).toBe("Ramore, Black River-Matheson Township, Cochrane, Ontario, Canada");
-    expect(placeIds.get(fact)).toStrictEqual({
-      placeId: "9159962",
-      ids: ["9159962"],
-      written: "Ramore, Ontario, Canada",
-      original: "Ramore, Ontario, Canada",
-    });
+    expect(placeIds.get(fact)).toStrictEqual({ placeId: "9159962", original: "Ramore, Ontario, Canada" });
   });
 
   it("yields nothing when the candidates disagree and nothing chooses between them (65TF-GJMJ without its description)", () => {
@@ -2160,8 +2155,8 @@ describe("gedcomx-convert — a record read's as-written place when place.origin
 });
 
 describe("gedcomx-convert — a record read's as-written place keeps a census's relationship decision", () => {
-  // The code extractor decides the relationship column from
-  // `standard_place ?? place`. The as-written text here lacks the country the
+  // With no staged `censusPlace`, as here, the code extractor decides the
+  // relationship column from `standard_place ?? place`. The as-written text here lacks the country the
   // column table reads; the standardized text in place.original carries it.
   const standardized = "Salem, Essex, Massachusetts, United States";
   const asWritten = originalValue("Salem, Massachusetts");

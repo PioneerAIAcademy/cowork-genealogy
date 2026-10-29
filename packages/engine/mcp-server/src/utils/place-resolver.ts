@@ -127,12 +127,6 @@ function foldPlaceName(s: string): string {
   return normalizeKey(s).normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
-/** A place text as written, with case, accents, commas and spacing folded:
- *  "Kuopio, Kuopio" and "kuopio  kuopio" are one text. */
-export function placeTextKey(text: string): string {
-  return foldPlaceName(text.replace(/,/g, " "));
-}
-
 /** Letters NFD leaves whole, so `\p{Diacritic}` cannot strip them. */
 const UNDECOMPOSED_LETTERS: Record<string, string> = {
   "ø": "o", "æ": "ae", "œ": "oe", "ß": "ss", "ł": "l", "đ": "d", "ð": "d", "þ": "th", "ı": "i",
@@ -1074,13 +1068,13 @@ function nameParts(placeText: string): string[] {
  * such facts are still named (all 12 in the 40-record sample are named right). Then
  * the date: no representation is valid in `years`, two names are (Olne in 1830
  * is "Olne, Liège, Netherlands" and "Olne, Liège, Belgium"), a range cannot be
- * read, or a lookup fails. Null too when the place was renamed and no part of
- * `placeText` is a name it had in `years`: renamed when the valid name's own
- * name is not `repId`'s, or when the description answered with another
- * representation, whose own name is not `repId`'s to compare. Place 6283855 is
- * "Bela Vista" 1938-1944 and "Echaporã" from 1944, so a 1980 record that wrote
- * "Bela Vista", or "Catequese" (its name to 1937), doubts FamilySearch's choice
- * of place.
+ * read, or a lookup fails. Null too when the place was renamed and `placeText`
+ * gives `repId`'s own name: place 6283855 is "Bela Vista" 1938-1944 and
+ * "Echaporã" from 1944, so a 1980 record that wrote "Bela Vista" and was given
+ * representation 10979131 doubts FamilySearch's choice of place. When the
+ * description answers with another representation (a retired id), `repId`'s own
+ * name is unknown, so some part of `placeText` must be a name the place had in
+ * `years`.
  */
 export async function repIdToStandardPlaceAt(
   repId: string,
@@ -1101,8 +1095,10 @@ export async function repIdToStandardPlaceAt(
   }
   const [name, ...others] = new Set(valid.map((rep) => rep.fullName));
   if (name === undefined || others.length > 0) return null;
-  const renamed = chosen.placeRepId !== repId || !sameName(ownName(name), ownName(chosen.standardPlace));
-  if (renamed && !valid.some(named)) return null;
+  if (chosen.placeRepId !== repId) return valid.some(named) ? name : null;
+  const chosenName = ownName(chosen.standardPlace);
+  const renamed = !sameName(ownName(name), chosenName);
+  if (renamed && parts.some((part) => sameName(part, chosenName))) return null;
   return name;
 }
 

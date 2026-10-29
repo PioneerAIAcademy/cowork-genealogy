@@ -34,6 +34,8 @@ import { getValidToken } from "../../src/auth/refresh.js";
 import { repIdToStandardPlace, repIdToStandardPlaceAt } from "../../src/utils/place-resolver.js";
 import { getPlaceById, getPlaceReps } from "../../src/utils/place-api.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
+import { extractRecord } from "../../src/utils/record-extract.js";
+import { recordIndexFields } from "../../src/utils/record-index-fields.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
 
@@ -870,127 +872,91 @@ describe("record_read names FamilySearch's standards in English for each fact's 
     expect(out).toEqual(await recordReadDocument(brazilianDeath));
   });
 
-  describe("a fact FamilySearch gave no place id takes the one its record's same-text facts carry", () => {
+  it("names only a fact FamilySearch gave a place id, never from its record's same-text facts (SGTQ-PZV's 1851 census)", async () => {
+    const camberwell = "Camberwell, Surrey, England, United Kingdom";
+    mockedRepIdToStandardPlaceAt.mockImplementation(async (id) => (id === "2979603" ? camberwell : null));
     const census = { original: "1851", formal: "+1851" };
-    // FamilySearch's own text for the place, with no place id: what a record
-    // read sends for a household member it did not standardize.
-    const unplaced = (asWritten: string, original = asWritten) => ({
-      original,
+    const unplaced = {
+      original: "Camberwell, Surrey, England",
       fields: [
         {
           type: "http://gedcomx.org/Place",
-          values: [
-            { type: "http://gedcomx.org/Original", labelId: "PR_RES_PLACE_ORIG", text: asWritten },
-            ...(original !== asWritten ? [{ type: "http://gedcomx.org/Interpreted", labelId: "PR_RES_PLACE", text: original }] : []),
-          ],
+          values: [{ type: "http://gedcomx.org/Original", labelId: "PR_RES_PLACE_ORIG", text: "Camberwell, Surrey, England" }],
         },
       ],
-    });
-    const household = (...facts: object[][]) =>
-      ({ persons: facts.map((personFacts, i) => ({ id: `p${i}`, facts: personFacts })) }) as unknown as GedcomX;
-    const places = (out: { persons?: { facts?: { place?: string; standard_place?: string }[] }[] }) =>
-      out.persons?.map((p) => p.facts?.map((f) => [f.place, f.standard_place]));
-    const camberwell = "Camberwell, Surrey, England, United Kingdom";
+    };
+    const body = {
+      persons: [
+        { id: "p0", facts: [fact("Census", census, placeField("Camberwell, Surrey, England", camberwell, "2979603"))] },
+        { id: "p1", facts: [fact("Census", census, unplaced)] },
+      ],
+    } as unknown as GedcomX;
+    const out = await recordReadDocument(body);
+    expect(out.persons?.map((p) => p.facts?.map((f) => [f.place, f.standard_place]))).toEqual([
+      [["Camberwell, Surrey, England", camberwell]],
+      [["Camberwell, Surrey, England", undefined]],
+    ]);
+    expect(mockedRepIdToStandardPlaceAt.mock.calls).toEqual([["2979603", year(1851), "Camberwell, Surrey, England"]]);
+  });
 
-    it("names a household member's fact by the head's id, for its own date and text (SGTQ-PZV's 1851 census)", async () => {
-      mockedRepIdToStandardPlaceAt.mockImplementation(async (id) => (id === "2979603" ? camberwell : null));
-      const body = household(
-        [fact("Census", census, placeField("Camberwell, Surrey, England", camberwell, "2979603"))],
-        [fact("Census", census, unplaced("camberwell,  Surrey England"))],
-        [fact("Census", { original: "1852" }, unplaced("Camberwéll, Surrey, England"))],
-        [fact("Census", census, unplaced("Lambeth, Surrey, England"))],
+  it("leaves a census's relationship column to FamilySearch's own place text, not the English name (VB5N-657's 1871 Scotland, X975-557's 1920 Puerto Rico)", async () => {
+    const english: Record<string, string> = {
+      "10588866": "Killin, Perthshire, Scotland, United Kingdom",
+      "384332": "Hormigueros, Puerto Rico",
+    };
+    mockedRepIdToStandardPlaceAt.mockImplementation(async (id) => english[id] ?? null);
+    const household = (date: string, place: object, relations: string[]) =>
+      ({
+        persons: relations.map((relation, i) => ({
+          id: `p${i}`,
+          gender: { type: `http://gedcomx.org/${i === 0 ? "Male" : "Female"}` },
+          fields: [
+            {
+              values: [
+                { labelId: "FS_SORT_KEY", text: `k_00${i}` },
+                { labelId: "SOURCE_HOUSEHOLD_ID_ORIG", text: "1" },
+                ...(relation ? [{ labelId: "PR_RELATIONSHIP_TO_HEAD", text: relation }] : []),
+              ],
+            },
+          ],
+          facts: [fact("Census", { original: date, formal: `+${date}` }, place)],
+        })),
+      }) as unknown as GedcomX;
+    const decide = async (body: GedcomX) => {
+      const doc = await recordReadDocument(body);
+      const indexFields = recordIndexFields(body);
+      const out = extractRecord(
+        { recordId: "TEST-CENSUS", gedcomx: doc, ...(indexFields ? { indexFields } : {}) },
+        { logEntryId: "log_001", questionIds: [] },
       );
-      const out = await recordReadDocument(body);
-      expect(places(out)).toEqual([
-        [["Camberwell, Surrey, England", camberwell]],
-        [["camberwell,  Surrey England", camberwell]],
-        [["Camberwéll, Surrey, England", camberwell]],
-        [["Lambeth, Surrey, England", undefined]],
-      ]);
-      expect(mockedRepIdToStandardPlaceAt.mock.calls).toEqual([
-        ["2979603", year(1851), "Camberwell, Surrey, England"],
-        ["2979603", year(1851), "camberwell,  Surrey England"],
-        ["2979603", year(1852), "Camberwéll, Surrey, England"],
-      ]);
-    });
-
-    it("takes the as-written text as its place when it is named, and puts back FamilySearch's own text when it is not", async () => {
-      mockedRepIdToStandardPlaceAt.mockImplementation(async (_id, years) => (years.from === 1851 ? camberwell : null));
-      const body = household(
-        [fact("Census", census, placeField("Camberwell", camberwell, "2979603"))],
-        [fact("Census", census, unplaced("Camberwell", "Camberwell, Surrey, England"))],
-        [fact("Census", { original: "1861", formal: "+1861" }, unplaced("Camberwell", "Camberwell, Surrey, England"))],
-      );
-      const out = await recordReadDocument(body);
-      expect(places(out)).toEqual([
-        [["Camberwell", camberwell]],
-        [["Camberwell", camberwell]],
-        [["Camberwell, Surrey, England", undefined]],
-      ]);
-      expect(mockedRepIdToStandardPlaceAt).toHaveBeenCalledWith("2979603", year(1861), "Camberwell");
-    });
-
-    it("copies nothing when the same-text facts carry two place ids, or one fact carries two (doubt)", async () => {
-      mockedRepIdToStandardPlaceAt.mockImplementation(async (id) => `Place ${id}`);
-      const preferred = [{ name: "http://familysearch.org/types/qualifiers/Preferred", value: "true" }];
-      const twoCandidates = {
-        original: "Springfield",
-        fields: [
-          {
-            type: "http://gedcomx.org/Place",
-            values: [
-              { type: "http://gedcomx.org/Interpreted", text: "Springfield, Hampden, Massachusetts, United States", resource: placeUrl("4229098"), qualifiers: preferred },
-              { type: "http://gedcomx.org/Interpreted", text: "Springfield, Sangamon, Illinois, United States", resource: placeUrl("4035906") },
-            ],
-          },
-        ],
-      };
-      const disagree = household(
-        [fact("Birth", census, placeField("Springfield", "Springfield, Hampden, Massachusetts, United States", "4229098"))],
-        [fact("Birth", census, placeField("Springfield", "Springfield, Sangamon, Illinois, United States", "4035906"))],
-        [fact("Birth", census, unplaced("Springfield"))],
-      );
-      expect(places(await recordReadDocument(disagree))?.[2]).toEqual([["Springfield", undefined]]);
-      // One fact's own two candidates count as two ids, though Preferred chooses one for that fact.
-      const oneFactTwoIds = household([fact("Birth", census, twoCandidates)], [fact("Birth", census, unplaced("Springfield"))]);
-      expect(places(await recordReadDocument(oneFactTwoIds))).toEqual([
-        [["Springfield", "Place 4229098"]],
-        [["Springfield", undefined]],
-      ]);
-      expect(mockedRepIdToStandardPlaceAt.mock.calls.map(([id]) => id)).toEqual(["4229098", "4035906", "4229098"]);
-    });
-
-    it("gives no place id to a fact that has its own, even one in doubt, nor to a fact with no text or a non-place phrase", async () => {
-      mockedRepIdToStandardPlaceAt.mockImplementation(async (id) => `Place ${id}`);
-      // Two names for one id is doubt; the record's other fact with that text carries the id.
-      const twoNames = {
-        original: "Boksburg",
-        fields: [
-          {
-            type: "http://gedcomx.org/Place",
-            values: [
-              { type: "http://gedcomx.org/Interpreted", text: "Boksburg, Transvaal, Suid-Afrika", resource: placeUrl("3060644") },
-              { type: "http://gedcomx.org/Interpreted", text: "Boksburg, Transvaal, South Africa", resource: placeUrl("3060644") },
-            ],
-          },
-        ],
-      };
-      const body = household(
-        [fact("Marriage", census, placeField("Boksburg", "Boksburg, Transvaal, South Africa", "3060644"))],
-        [fact("Birth", census, twoNames)],
-        [fact("Residence", census, { id: "61dbfe76-a756-4d6b-b265-9ef39c4a524e" })],
-        [fact("Residence", census, placeField("Same House", "Same, Manufahi, Timor-Leste", "7212"))],
-        [fact("Residence", census, unplaced("Same House"))],
-      );
-      expect(places(await recordReadDocument(body))).toEqual([
-        [["Boksburg", "Place 3060644"]],
-        [["Boksburg", undefined]],
-        [[undefined, undefined]],
-        [["Same, Manufahi, Timor-Leste", undefined]],
-        [["Same House", undefined]],
-      ]);
-      expect(mockedRepIdToStandardPlaceAt.mock.calls).toEqual([["3060644", year(1851), "Boksburg"]]);
-    });
+      const census = doc.persons![0].facts![0];
+      return { place: census.place, standard: census.standard_place, stated: out.censusStatesRelationships, notes: out.notes, out };
+    };
+    // Scotland is not in the table: FamilySearch's text decides nothing, the English name would read as England and Wales.
+    const kenmore = "Kenmore, Killin, Perthshire, Scotland";
+    const scotland = await decide(
+      household("1871", { ...placeField(kenmore, "Killin, Perthshire, Scotland, United Kingdom", "10588866"), original: kenmore }, ["", ""]),
+    );
+    expect([scotland.place, scotland.standard, scotland.stated]).toEqual([
+      kenmore,
+      "Killin, Perthshire, Scotland, United Kingdom",
+      false,
+    ]);
+    expect(scotland.notes.join("\n")).toContain(`place "${kenmore}"`);
+    // The place read is the census fact's own persona's, though another persona sorts first.
+    const unplacedFirst = household("1871", { ...placeField(kenmore, "Killin, Perthshire, Scotland, United Kingdom", "10588866"), original: kenmore }, ["", ""]);
+    unplacedFirst.persons![0].facts = [fact("Birth", { original: "1840" }) as never];
+    expect((await decide(unplacedFirst)).stated).toBe(false);
+    // Puerto Rico in 1920: FamilySearch's text names the United States, the English name does not.
+    const puertoRico = await decide(
+      household("1920", placeField("Puerto Rico, Hormigueros", "Hormigueros, Puerto Rico, United States", "384332"), ["Head", "Wife"]),
+    );
+    expect([puertoRico.place, puertoRico.standard, puertoRico.stated]).toEqual([
+      "Puerto Rico, Hormigueros",
+      "Hormigueros, Puerto Rico",
+      true,
+    ]);
+    expect(new Set(puertoRico.out.assertions.map((a) => a.record_role))).toEqual(new Set(["head_of_household", "wife"]));
   });
 
   describe("with the Places API answering as it did on 2026-10-26", () => {
@@ -1079,30 +1045,6 @@ describe("record_read names FamilySearch's standards in English for each fact's 
         ["Aberayron, Cardiganshire, Wales", "Aberayron, Cardiganshire, Wales, United Kingdom"],
         // A fact with no place text of its own names none either.
         [undefined, undefined],
-      ]);
-    });
-
-    it("names a copied place id for the receiving fact's own date, or not at all where no one name is valid then", async () => {
-      const unplacedFact = (type: string, formal: string, text: string) =>
-        fact(type, { formal }, { original: text });
-      mockOk(
-        onePerson(
-          fact("Death", { formal: "+1874-04-03" }, placeField("Olne", "Olne, Liège, Belgique", "418460")),
-          unplacedFact("Baptism", "+1790", "Olne"),
-          unplacedFact("Marriage", "+1830", "Olne"),
-          fact("Residence", { formal: "+1940" }, placeField("Bela Vista", "Bela Vista, São Paulo, Brasil", "10979131")),
-          unplacedFact("Death", "+1980", "Bela Vista"),
-        ),
-      );
-      const out = await recordReadTool({ recordId: "TEST-COPY" }, LOCAL);
-      expect(factPlaces(out)).toEqual([
-        ["Olne", "Olne, Liège, Belgium"],
-        ["Olne", "Olne, Prince-Bishopric of Liège, Holy Roman Empire"],
-        // 1830: "Olne, Liège, Netherlands" and "Olne, Liège, Belgium" are both valid.
-        ["Olne", undefined],
-        ["Bela Vista", "Bela Vista, São Paulo, Brazil"],
-        // 1980: the place is Echaporã, and the text gives its 1938-1944 name.
-        ["Bela Vista", undefined],
       ]);
     });
 

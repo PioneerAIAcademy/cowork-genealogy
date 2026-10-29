@@ -158,13 +158,11 @@ export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX {
  * facts"): a fact with no `normalized` value takes the chosen `Interpreted`
  * value of its `Place` field as `standard_place`, and the as-written text from
  * the field's `Original` value as `place`. That text is in the record's
- * language, so `placeIds` maps each fact with a place (except a non-place phrase)
- * to the place ids its values name, its as-written text, `place.original` and
- * `date.formal`: `record_read` names the place in English by its id for that
- * date, or else removes the `standard_place` and puts back `place.original`,
- * and gives a fact with no place id the one its record's other facts with the
- * same text carry. These ride beside the document, never on it: the simplified
- * format has no field for them.
+ * language, so `placeIds` maps each such fact to the place id the value names,
+ * to `place.original` and to `date.formal`: `record_read` names the place in
+ * English by its id for that date, or else removes the `standard_place` and
+ * puts back `place.original`. These ride beside the document, never on it: the
+ * simplified format has no field for them.
  */
 export function toSimplifiedRecordRead(gedcomx: GedcomX): {
   doc: SimplifiedGedcomX;
@@ -174,19 +172,12 @@ export function toSimplifiedRecordRead(gedcomx: GedcomX): {
   return { doc: convert(gedcomx, placeIds), placeIds };
 }
 
-/** A record-read fact's place, as `record_read` names it. */
+/** A record-read fact's `Interpreted` standard: the place id it names,
+ *  `place.original` — the fact's `place` when it keeps no `standard_place` — and
+ *  the fact's `date.formal`, the date its place is named for. */
 export interface RecordReadPlace {
-  /** The chosen `Interpreted` value's place id, when the fact keeps that
-   *  `standard_place`. */
-  placeId?: string;
-  /** The place id of every `Interpreted` value with one, chosen or not; empty
-   *  when FamilySearch gave the fact none. */
-  ids: string[];
-  /** The as-written text: the fact's `place` when it keeps a `standard_place`. */
-  written?: string;
-  /** `place.original`: the fact's `place` when it keeps none. */
+  placeId: string;
   original?: string;
-  /** The fact's `date.formal`, the date its place is named for. */
   formal?: string;
 }
 
@@ -386,19 +377,22 @@ function placeFieldValues(place: RawPlace): (GedcomXFieldValue & { text: string 
   return values;
 }
 
-interface InterpretedCandidate {
-  name: string;
-  id: string;
-  preferred: boolean;
-}
-
-/** A record read's `Interpreted` values that name a place by its description
- *  (`…/places/description/<id>`), in order. Any other value is not a standard:
- *  one with no place id often just echoes the as-written text, and a `#…`
- *  reference can cite an authorities place id, which read as a representation
- *  id is another place. */
-function interpretedCandidates(place: RawPlace): InterpretedCandidate[] {
-  const candidates: InterpretedCandidate[] = [];
+/**
+ * The standardized place a record read carries in its `Place` field. A record
+ * read (recapi) sends no `normalized` value; FamilySearch's standard full name
+ * is the text of an `Interpreted` value whose `resource` is the place's
+ * description (`…/places/description/<id>`). Any other value is not a
+ * standard: one with no place id often just echoes the as-written text, and a
+ * `#…` reference can cite an authorities place id, which read as a
+ * representation id is another place. Among several candidates, the one marked
+ * Preferred wins, else the one `place.description` (`#place_<id>`) names, else
+ * the only one. Nothing when that choice is still in doubt: two names, one name
+ * for two place ids, or `place.original`, FamilySearch's own text for the fact,
+ * is another candidate's text (FVFW-Y6P's is Tobel's, while `place.description`
+ * names Braunau).
+ */
+function pickInterpretedPlace(place: RawPlace): { name: string; id: string } | undefined {
+  const candidates: { name: string; id: string; preferred: boolean }[] = [];
   for (const value of placeFieldValues(place)) {
     if (value.type !== INTERPRETED_VALUE || typeof value.resource !== "string") continue;
     const id = /\/places\/description\/(\d+)$/.exec(value.resource)?.[1];
@@ -408,23 +402,6 @@ function interpretedCandidates(place: RawPlace): InterpretedCandidate[] {
     );
     candidates.push({ name: value.text.trim(), id, preferred });
   }
-  return candidates;
-}
-
-/**
- * The standardized place a record read carries in its `Place` field. A record
- * read (recapi) sends no `normalized` value; FamilySearch's standard full name
- * is the text of one of its `interpretedCandidates`. Among several, the one
- * marked Preferred wins, else the one `place.description` (`#place_<id>`) names,
- * else the only one. Nothing when that choice is still in doubt: two names, one name
- * for two place ids, or `place.original`, FamilySearch's own text for the fact,
- * is another candidate's text (FVFW-Y6P's is Tobel's, while `place.description`
- * names Braunau).
- */
-function pickInterpretedPlace(
-  place: RawPlace,
-  candidates: InterpretedCandidate[],
-): { name: string; id: string } | undefined {
   const preferred = candidates.filter((c) => c.preferred);
   const chosen =
     preferred.length > 0
@@ -480,8 +457,7 @@ function simplifyFact(fact: GedcomXFact, recordRead: RecordReadPlaceIds): Simpli
     // network. Free-text places that carry neither are filled later by the
     // document-level standardization pass (toSimplifiedStandardized).
     const normalized = pickNormalizedPlace(fact.place.normalized);
-    const candidates = recordRead ? interpretedCandidates(fact.place) : [];
-    const interpreted = recordRead ? pickInterpretedPlace(fact.place, candidates) : undefined;
+    const interpreted = recordRead ? pickInterpretedPlace(fact.place) : undefined;
     const standard = normalized ?? interpreted?.name;
     // A record read can keep the as-written text only in the Place field's
     // `Original` value. It replaces `place` only when the fact keeps a
@@ -490,20 +466,19 @@ function simplifyFact(fact: GedcomXFact, recordRead: RecordReadPlaceIds): Simpli
       recordRead && original !== undefined ? asWrittenPlace(fact.place, original) : original;
     // A non-place phrase ("Same House") keeps no standard form, even one
     // FamilySearch supplies.
-    const nonPlace = isNonPlacePhrase(written ?? "");
-    const keepsStandard = standard !== undefined && !nonPlace;
+    const keepsStandard = standard !== undefined && !isNonPlacePhrase(written ?? "");
     const place = keepsStandard ? written : original;
     if (place !== undefined) out.place = place;
-    if (keepsStandard) out.standard_place = standard;
-    if (recordRead && normalized === undefined && !nonPlace) {
-      const formal = typeof fact.date?.formal === "string" ? fact.date.formal : undefined;
-      recordRead.set(out, {
-        ...(interpreted !== undefined ? { placeId: interpreted.id } : {}),
-        ids: candidates.map((c) => c.id),
-        ...(written !== undefined ? { written } : {}),
-        ...(original !== undefined ? { original } : {}),
-        ...(formal !== undefined ? { formal } : {}),
-      });
+    if (keepsStandard) {
+      out.standard_place = standard;
+      if (normalized === undefined && interpreted !== undefined) {
+        const formal = typeof fact.date?.formal === "string" ? fact.date.formal : undefined;
+        recordRead?.set(out, {
+          placeId: interpreted.id,
+          ...(original !== undefined ? { original } : {}),
+          ...(formal !== undefined ? { formal } : {}),
+        });
+      }
     }
   }
 

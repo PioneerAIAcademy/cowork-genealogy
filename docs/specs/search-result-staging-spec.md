@@ -192,8 +192,11 @@ part of `staged`.
   `indexFields` maps each persona's `gedcomx.persons[].id` to the per-person index values the raw
   FamilySearch body carries in `fields[]` and `toSimplified` drops — `relationshipToHead`,
   `sortKey`, `personNbr`, `lineNbr`, `householdId`, `age`, `fatherBirthPlace`, `motherBirthPlace`,
-  each optional. It is omitted entirely when no persona carries any, so a record type with no
-  index data stages what it always did.
+  each optional — plus `censusPlace`, the `place.original` of the persona's first census fact,
+  which the census relationship-column decision reads because `record_read` may give that fact
+  an as-written `place` and an English `standard_place` that name the jurisdiction differently.
+  It is omitted entirely when no persona carries any, so a record type with no index data stages
+  what it always did.
 
   **Only `record_read` stages it, and that asymmetry is the point.** A `record_search` response
   populates `fields[]` for the searched persona alone; every co-resident arrives with names and
