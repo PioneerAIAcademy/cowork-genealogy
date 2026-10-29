@@ -819,7 +819,10 @@ def test_the_hook_denies_the_turns_own_proc_and_logs_it(tmp_path):
 
 
 def test_read_route_chooser():
-    assert deny.read_route("/project/results/x.json", "/project") == "record_read({recordId, resultsRef})"
+    assert deny.read_route("/project/results/x.json", "/project") == (
+        "record_read({recordId, resultsRef}) for a record or search sidecar, or "
+        "sidecar_read({projectPath, ref: '<ref>#hits'}) for a fulltext_search sidecar"
+    )
     assert deny.read_route("/project/evaluations/x.json", "/project") == "sidecar_read({projectPath, ref})"
     assert deny.read_route("/project/uploads/notes.txt", "/project") == "sidecar_read({projectPath, ref})"
     assert deny.read_route("/project/research.json", "/project") == "research_query"

@@ -17,7 +17,7 @@
   },
   "input": {
     "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
-    "scenario": "flynn-multi-conflict"
+    "scenario": "flynn-multi-conflict-plan-done"
   },
   "judge_context": [
     "Should recognize that q_001 is blocked by unresolved conflicts c_001 and c_002",

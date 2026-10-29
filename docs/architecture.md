@@ -727,6 +727,12 @@ Architecturally:
   differences that bite"), so any budget above it is honoured only on the
   stdio paths (harnesses and hosted, both verified) and silently truncated in
   Cowork. Size a raise from the measured e2e corpus, not by guessing.
+  The same module raises Node's per-address connect-attempt timeout from its
+  250 ms default to 2 s when it loads (`raiseConnectAttemptTimeout`): measured
+  2026-10-22, every connect to the wiki host from one machine took 261 to 337 ms,
+  longer than the default wait, and 9 of 20 fresh processes reading a wiki page
+  failed with `ETIMEDOUT` at the default, none of 20 at 2 s. A connect slower than
+  2 s to an address that is not the last Node tries is still given up on.
 - **Reuse before you write:** `getValidToken(principal)` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
@@ -1278,10 +1284,11 @@ one on the delegation tools:
    `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
    `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
    `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
-   or any of its analysis fields set — to `conflict-resolution`. The four differ
-   in granularity and key: a whole section, a field at a particular claim value,
-   a field on presence alone, and a claim spread over several fields of one
-   section. `project` is co-written — `init-project` authors it and any writer
+   or any of its analysis fields set — to `conflict-resolution`, and
+   `OWNED_APPENDS` reserves creating a question (`op: "append"` on `questions`)
+   to `question-selection`. The five differ in granularity and key: a whole
+   section, a field at a particular claim value, a field on presence alone, a
+   claim spread over several fields of one section, and one op on a section. `project` is co-written — `init-project` authors it and any writer
    may refresh `updated` — so only the one field is routed; `conflicts` is
    opened by six skills, so only the analysis is.
 3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops every agent that holds
@@ -1475,7 +1482,7 @@ trustworthy rather than merely present:
 | `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
 | `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail. |
 | `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
-| `external-collections.json` (project root) | FamilySearch's curated external collections per place, written by `external_links_search` given a `projectPath`, read back by `research_query` (`external_collections`) and `project_context`, and shown in the viewer's Collections section (Electron `project:collections-updated`; hosted and proto `document_updated` named for the file). At the root rather than in `research.json`, because the hosted viewer re-sends `research.json` whole on every write. Not schema-validated (API data); raw writes denied like the two project documents (`external-links-search-tool-spec.md`, "Stored list"). |
+| `external-collections.json` (project root) | FamilySearch's curated external collections per place, written by `external_links_search` given a `projectPath`, read back by `research_query` (`external_collections`) and `project_context`, enforced by `research_append`, `build_external_search_url` and `research_log_append` (each refuses a collection it does not hold), and shown in the viewer's Collections section (Electron `project:collections-updated`; hosted and proto `document_updated` named for the file). At the root rather than in `research.json`, because the hosted viewer re-sends `research.json` whole on every write. Not schema-validated (API data); raw writes denied like the two project documents (`external-links-search-tool-spec.md`, "Stored list"). |
 
 **The dot-directories are load-bearing, not cosmetic.** The validator's orphan
 check lists `results/` non-recursively and errors on any top-level `*.json` no
