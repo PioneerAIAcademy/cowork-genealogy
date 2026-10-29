@@ -197,7 +197,8 @@ replacement is itself present and satisfies the join; if nothing replaced it, th
 critique no longer stands.
 
 `nextStep` orders by what blocks what: **an unsettled conflict that has weighed
-everything** outranks an unresolved conflict, which outranks a question
+everything** outranks **a conflict that wants evidence already planned**, which
+outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
@@ -213,6 +214,39 @@ conflict-resolution there would weigh the same evidence again. Once the question
 has a `not_proved` summary with `shortfall: "conflict"`, `nextStep` is null — the
 research ended on the conflict. One log entry the weighed list does not cover is
 new evidence and routes back to conflict-resolution.
+
+**A conflict that wants evidence already planned routes to the search** (step
+mode, section E). conflict-resolution sends a conflict needing new evidence to
+research-plan, which writes plan items on the SAME question rather than opening
+a helper one; hypothesis-tracking, timeline and proof-conclusion gain the same
+route in their own PRs.
+
+**Nothing acts on this rung until the router follows `nextStep`.** The field is
+advisory, and the router's conflict row still sends any conflict straight to
+conflict-resolution until step mode's PR 2 lands. Until then this rung and the
+router disagree, which `make e2e-routing-agreement` counts. When every open conflict carries an `independence_analysis` and
+the question's active plan still has an open item (one waiting only on an
+upload aside), `nextStep` names that item's search — `search-records`, or
+`search-external-sites — <pli> (<repo>)` when its repository is not
+FamilySearch. Without this rung the conflict rung below fires on every pass and
+the items those agents just asked for never run.
+
+`independence_analysis` is the marker because conflict-resolution fills it on
+every analysis, resolved or not — non-blank, so a whitespace value is not an
+analysis. A conflict not yet analysed still goes to conflict-resolution first,
+even beside an analysed one. Once the items close, the rung above decides
+whether anything is left to weigh.
+
+**It reads neither the conflict's type nor which item was planned for it.** An
+identity conflict routes to the search like any other, and any open item on the
+active plan satisfies it, not only one planned for the conflict. Both are
+deliberate: the rung's job is to stop the conflict rung firing while work is
+outstanding, not to choose the work. A record found by an item still open and
+not yet extracted outranks the search — re-running the search that found it
+would find it again. An uncited entry on a closed item does not: inconclusive
+`partial`s and link lists stay uncited for good, and `extraction_append` cites
+the read, not the search that found the record. An item waiting only on the
+researcher's upload is skipped, as it is everywhere else in this ladder.
 
 **The researcher's choice is the one rung that names no step** (step mode,
 section B). When a question's search stopped on `resources_spent`, it has no
@@ -257,7 +291,9 @@ scenario questions. The only `research` routing test among those scenarios is
 assertion cites by `log_entry_id` reports extraction. An external-site entry whose
 capture has not come back does not count, because it is an open hand-off. Otherwise
 the lowest-sequence `planned` or `in_progress` item on a plan that is still active
-decides. A repository naming FamilySearch, or none at all, reports `search-records`.
+decides, skipping any item that waits only on the researcher's upload — the same
+skip the rest of this ladder applies, so a question whose only open item is waiting
+names no search. A repository naming FamilySearch, or none at all, reports `search-records`.
 Any other repository reports `search-external-sites — <item id> (<repository>)`,
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.

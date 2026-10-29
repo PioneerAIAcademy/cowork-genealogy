@@ -10,20 +10,20 @@
     "query": {
       "standardPlace": "Edensor, Derbyshire, England, United Kingdom",
       "startYear": 1730,
-      "endYear": 1810
+      "endYear": 1810,
+      "pageSize": 50
     },
     "totalResults": 4,
     "results": [
       {
         "imageGroupNumber": "004452257",
-        "imageGroupPrefix": "004452257",
         "imageCount": null,
         "recordSearchablePercent": null,
         "fulltextSearchable": null,
         "languages": ["en", "la"],
         "coverages": [
           {
-            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "places": ["Edensor, Derbyshire, England, United Kingdom"],
             "dateRange": "1726–1812",
             "recordType": "Burial Records"
           }
@@ -31,14 +31,13 @@
       },
       {
         "imageGroupNumber": "004452258",
-        "imageGroupPrefix": "004452258",
         "imageCount": null,
         "recordSearchablePercent": null,
         "fulltextSearchable": null,
         "languages": ["en", "la"],
         "coverages": [
           {
-            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "places": ["Edensor, Derbyshire, England, United Kingdom"],
             "dateRange": "1726–1812",
             "recordType": "Christenings"
           }
@@ -46,14 +45,13 @@
       },
       {
         "imageGroupNumber": "004452259",
-        "imageGroupPrefix": "004452259",
         "imageCount": null,
         "recordSearchablePercent": null,
         "fulltextSearchable": null,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "places": ["Edensor, Derbyshire, England, United Kingdom"],
             "dateRange": "1754–1812",
             "recordType": "Marriage Records"
           }
@@ -61,14 +59,13 @@
       },
       {
         "imageGroupNumber": "004452260",
-        "imageGroupPrefix": "004452260",
         "imageCount": null,
         "recordSearchablePercent": null,
         "fulltextSearchable": null,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Edensor, Derbyshire, England, United Kingdom",
+            "places": ["Edensor, Derbyshire, England, United Kingdom"],
             "dateRange": "1730–1790",
             "recordType": "Bishop's Transcripts"
           }
