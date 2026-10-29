@@ -173,7 +173,12 @@ describe("questionStatus — the state ladder", () => {
       expect(s.nextStep).toMatch(/^research-exhaustiveness/);
     });
 
-    it("an external-site hand-off whose capture has not come back is not extraction", () => {
+    it("a question whose ONLY open item waits on an upload has no search left to name", () => {
+      // `url_generated` is what makes this a hand-off: `externalSiteOf` requires it, so
+      // without one the entry is not an external-site entry at all, the item is never
+      // counted as waiting, and the test passed while pinning the opposite of its name.
+      // With it, pli_1 is skipped by the picker exactly as it is by `hasOpenWork`, which is
+      // the all-items-waiting case beside the sequence-2 test below.
       const d = doc({
         plans: [plan([{ id: "pli_1", sequence: 1, status: "in_progress", repository: "MyHeritage" }])],
         log: [
@@ -182,11 +187,11 @@ describe("questionStatus — the state ladder", () => {
             plan_item_id: "pli_1",
             tool: "external_site",
             outcome: "partial",
-            external_site: { capture_received: false },
+            external_site: { url_generated: "https://myheritage.example/search?q=1", capture_received: false },
           },
         ],
       });
-      expect(questionStatus(d, question()).nextStep).toBe("search-external-sites — pli_1 (MyHeritage)");
+      expect(questionStatus(d, question()).nextStep).toMatch(/^research-exhaustiveness/);
     });
 
     it("a returned external-site capture is extraction", () => {
@@ -1005,8 +1010,59 @@ describe("questionStatus — ending on an unsettled conflict (section E, decisio
   });
 
   it("does not fire while a plan item is still open", () => {
+    // With the conflict already analysed this is section E's OTHER arm. Here it
+    // asks for EXTRACTION, not the search: `log_1` is a positive entry no
+    // assertion cites, so the record that may settle the conflict is already in
+    // hand. Re-running the search that found it would find it again.
     const d = doc({ plans: [plan("planned")], log, conflicts: [conflict()] });
-    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+    const step = questionStatus(d, question()).nextStep;
+    expect(step).not.toMatch(/unsettled conflict/);
+    expect(step).toMatch(/^extraction /);
+  });
+
+  it("routes to the search once nothing is left to extract", () => {
+    const d = doc({
+      plans: [plan("planned")],
+      log: [{ id: "log_2", plan_item_id: "pli_1", tool: "record_search", outcome: "negative" }],
+      conflicts: [conflict({ weighed_log_entry_ids: ["log_2"] })],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("never names a search that is waiting on the researcher's upload", () => {
+    // The rung DECIDED to fire from the set that skips upload-waiting items
+    // (`hasOpenWork`) and then PICKED from one that did not, so it named a
+    // hand-off `awaitingUser` already lists -- a link the router is told never
+    // to raise again, which stalled the question until the upload arrived.
+    const d = doc({
+      plans: [{
+        id: "pl_1", question_id: Q, status: "active",
+        items: [
+          { id: "pli_1", status: "in_progress", sequence: 1, repository: "Ancestry" },
+          { id: "pli_2", status: "planned", sequence: 2, repository: "FamilySearch" },
+        ],
+      }],
+      log: [{
+        id: "log_9", plan_item_id: "pli_1", tool: "external_site", outcome: "partial",
+        external_site: {
+          site: "ancestry", url_generated: "https://example.test/s?q=1",
+          capture_received: false,
+        },
+      }],
+      conflicts: [conflict({ weighed_log_entry_ids: ["log_9"] })],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("a blank independence_analysis is not analysed, for either rung", () => {
+    // `Boolean("   ")` is true. One rung used that and its complement required a
+    // trimmed string, so a whitespace analysis routed to a search from one and
+    // to conflict-resolution from the other.
+    const blank = conflict({ independence_analysis: "   " });
+    const open = doc({ plans: [plan("planned")], log, conflicts: [blank] });
+    expect(questionStatus(open, question()).nextStep).toMatch(/^conflict-resolution/);
+    const closed = doc({ plans: [plan("completed")], log, conflicts: [blank] });
+    expect(questionStatus(closed, question()).nextStep).toMatch(/^conflict-resolution/);
   });
 
   it("does not fire on a conflict never analysed, or one with no weighed list", () => {
@@ -1026,5 +1082,149 @@ describe("questionStatus — ending on an unsettled conflict (section E, decisio
   it("the same holds for a question already exhaustive_declared", () => {
     const s = questionStatus(settled(), question({ status: "exhaustive_declared" }));
     expect(s.nextStep).toMatch(/^proof-conclusion — unsettled conflict/);
+  });
+});
+
+describe("questionStatus — a conflict that wants new evidence (section E)", () => {
+  const openPlan = (repository = "FamilySearch") => ({
+    id: "pl_1",
+    question_id: Q,
+    status: "active",
+    items: [{ id: "pli_1", status: "planned", sequence: 1, repository }],
+  });
+  const analysed = (extra: Record<string, unknown> = {}) => ({
+    id: "cf_1",
+    status: "unresolved",
+    blocks_question_ids: [Q],
+    independence_analysis: "Both trace to the same compiled abstract.",
+    ...extra,
+  });
+
+  it("routes to the search once every open conflict has been analysed", () => {
+    // Without this the conflict rung fires forever and the items the route PRs
+    // ask research-plan to write never run -- the loop they would introduce.
+    const d = doc({ plans: [openPlan()], log: [], conflicts: [analysed()] });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("names search-external-sites when the decisive item is not FamilySearch", () => {
+    // The plan writes this arm as "the next step is search-records", right for
+    // a FamilySearch item and wrong for an Ancestry one: the router would spawn
+    // the wrong agent. The item is asked, as the dispatch arm already does.
+    const d = doc({ plans: [openPlan("Ancestry")], log: [], conflicts: [analysed()] });
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "search-external-sites — pli_1 (Ancestry)",
+    );
+  });
+
+  it("an unanalysed conflict goes to conflict-resolution first, even beside an analysed one", () => {
+    const d = doc({
+      plans: [openPlan()],
+      log: [],
+      conflicts: [analysed(), analysed({ id: "cf_2", independence_analysis: null })],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "conflict-resolution — unresolved cf_1, cf_2",
+    );
+  });
+
+  it("does not fire with no open item — that is the unsettled arm's case", () => {
+    const d = doc({
+      plans: [{ ...openPlan(), items: [{ id: "pli_1", status: "completed", repository: "FamilySearch" }] }],
+      log: [],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).not.toBe("search-records");
+  });
+
+  it("an item waiting only on an upload is not an open item here either", () => {
+    // Section I. Counting it would route forever to a search nobody can run.
+    const d = doc({
+      plans: [{
+        ...openPlan("Ancestry"),
+        items: [{ id: "pli_1", status: "in_progress", repository: "Ancestry" }],
+      }],
+      log: [{
+        id: "log_9",
+        plan_item_id: "pli_1",
+        tool: "external_site",
+        outcome: "partial",
+        external_site: {
+          site: "ancestry",
+          url_generated: "https://example.test/s?q=9",
+          capture_received: false,
+        },
+      }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+  });
+
+  it("an uncited entry on a closed item does not hold the search on extraction", () => {
+    // An inconclusive `partial` stays uncited for good, and so does the search
+    // entry behind a record `extraction_append` read. Counting either would
+    // name extraction on every pass and the new item would never run.
+    const d = doc({
+      plans: [
+        { id: "pl_0", question_id: Q, status: "completed",
+          items: [{ id: "pli_0", status: "completed", sequence: 1, repository: "FamilySearch" }] },
+        openPlan(),
+      ],
+      log: [{ id: "log_1", plan_item_id: "pli_0", tool: "record_search", outcome: "partial" }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("a search whose record was extracted does not route to extraction again", () => {
+    // The conflict round's own item, completed by extraction_append, which cites
+    // its read (`log_2`) and leaves the search that found the record uncited.
+    const d = doc({
+      plans: [{
+        id: "pl_1", question_id: Q, status: "active",
+        items: [
+          { id: "pli_1", status: "completed", sequence: 1, repository: "FamilySearch" },
+          { id: "pli_2", status: "planned", sequence: 2, repository: "FamilySearch" },
+        ],
+      }],
+      log: [
+        { id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" },
+        { id: "log_2", tool: "record_read", outcome: "positive" },
+      ],
+      assertions: [{ id: "a_9", log_entry_id: "log_2", extracted_for_question_ids: [Q] }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("a record found by an item still in progress goes to extraction first", () => {
+    const d = doc({
+      plans: [{ ...openPlan(), items: [{ id: "pli_1", status: "in_progress", sequence: 1, repository: "FamilySearch" }] }],
+      log: [{ id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^extraction /);
+  });
+});
+
+describe("questionStatus — the dispatch arm skips an item waiting on an upload (section I)", () => {
+  it("names the next search past an upload-waiting item, with no conflict open", () => {
+    const d = doc({
+      plans: [{
+        id: "pl_1", question_id: Q, status: "active",
+        items: [
+          { id: "pli_1", status: "in_progress", sequence: 1, repository: "Ancestry" },
+          { id: "pli_2", status: "planned", sequence: 2, repository: "FamilySearch" },
+        ],
+      }],
+      log: [{
+        id: "log_9", plan_item_id: "pli_1", tool: "external_site", outcome: "partial",
+        external_site: {
+          site: "ancestry", url_generated: "https://example.test/s?q=2",
+          capture_received: false,
+        },
+      }],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
   });
 });

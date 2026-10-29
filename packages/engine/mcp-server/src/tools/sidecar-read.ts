@@ -13,6 +13,7 @@
 // turn end). So the page is shrunk until its JSON form fits in 40,000
 // characters, whatever the raw text looks like.
 
+import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import {
@@ -26,7 +27,7 @@ import {
 /** Both the default page size and the hard cap on `maxChars`; also the cap on
  *  the JSON-escaped body of `content` — `JSON.stringify(content).length - 2`
  *  (spec §4). */
-export const SIDECAR_READ_MAX_CHARS = 40_000;
+export const SIDECAR_READ_MAX_CHARS = TOOL_RESULT_CHAR_BUDGET;
 
 /** The only two ref prefixes this tool serves (spec §3). */
 export const SIDECAR_READ_PREFIXES = ["evaluations", "uploads"] as const;

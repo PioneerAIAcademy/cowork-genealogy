@@ -19,6 +19,9 @@
   "mcp_fixtures": [
     "same-person-flynn-conflict"
   ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "judge_context": [
     "same_person returns 0.85, but the baptism record STATES a birthplace of Trier, Rhine Province, Germany (assertion a_005) where the tree person attests Ireland - a core-identifier conflict recorded in the project documents, not merely in a source note.",
     "person-evidence must NOT create a `confident` person_evidence entry for a_002 — the qualitative conflict caps confidence regardless of the score; the link, if any, is `speculative` and the user is asked",

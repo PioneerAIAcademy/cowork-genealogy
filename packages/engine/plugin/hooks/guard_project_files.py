@@ -120,6 +120,17 @@ OWNED_SECTIONS = {
     # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
     # cannot be written by something that could not have made the link.
     "rejected_links": "person-evidence",
+    # namesakes, 2026-10-25 (issue #3363). The leads ruled search-records the sole
+    # writer: a row caps the person's links for good, so only the agent that saw
+    # the namesake in its own search results records one. merge_tree_persons
+    # re-keys rows by tool identity and never reaches this hook.
+    "namesakes": "search-records",
+    # evaluations, 2026-10-26, lead ruling 2026-10-12 on issue 3191. One owner
+    # for mentor verdicts, so a whole-section route fits. What this closes is
+    # the MAIN-THREAD write -- the committed non-owner op is a main thread
+    # recording its own mentor verdict, which makes the second opinion
+    # self-issued. The per-agent lanes already kept every other agent off it.
+    "evaluations": "gps-mentor",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -238,10 +249,11 @@ AGENT_WRITABLE_SECTIONS = {
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
     "search-external-sites": frozenset({"plan_items"}),
-    # search-records updates the status of the plan item a search executed (Step 6).
-    # Its search log goes through research_log_append, which carries no `section`.
-    # This lane is a repo CI requirement (plugin-hooks.test.ts), not a hook route.
-    "search-records": frozenset({"plan_items"}),
+    # search-records updates the status of the plan item a search executed (Step 6)
+    # and records the namesakes its searches turn up, the section routed to it
+    # above. Its search log goes through research_log_append, which carries no
+    # `section`.
+    "search-records": frozenset({"plan_items", "namesakes"}),
     # search-hints sets the status of the "review pending hints" plan item it
     # executes (issue #3153). Its no-hints log goes through research_log_append,
     # which carries no `section`. A repo CI requirement, not a hook route.
@@ -302,7 +314,7 @@ AGENT_WRITABLE_SECTIONS = {
 # into a recoverable in-turn pivot rather than an unwritable artifact.
 OWNER_REASON = (
     "Writing research.json's `{section}` from here is disabled — that section is "
-    "owned by the {agent} agent, which applies the tier and citation rules the "
+    "owned by the {agent} agent, which applies the analysis rules the "
     "section depends on. Delegate the write: invoke `@plugin:{agent}` and let it "
     "make the research_append call. Everything else in research_append is "
     "unaffected; only this section is routed."
