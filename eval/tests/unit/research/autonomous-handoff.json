@@ -60,6 +60,7 @@
         "skill": "gps-mentor",
         "response": "Your delegation is recorded and complete. Do not invoke any further skill, do not re-invoke this one, and do not re-query project state to decide what to do next. Write your summary of what you routed and why, and stop."
       }
-    ]
+    ],
+    "sdk_message_silence_seconds": 360
   }
 }
