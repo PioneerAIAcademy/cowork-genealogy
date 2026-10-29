@@ -1,0 +1,24 @@
+{
+  "tool": "same_person",
+  "description": "same_person for the mother of the bride (Amelia Nichols, persona p_10727698603) in the same 1913 marriage against tree person I4, his wife. Answers every assertion of this record scored against I4, so the other side of the bride's 'child of Amelia Nichols' (a_026) and of the father's 'spouse of Amelia Nichols' (a_027) is answered too, whether the call names her by recordRole, by recordPersonaId or not at all. Hand-authored for ut_person_evidence_028 (issue #3363), not a live capture: the record is already attached to this person in the FamilySearch tree (S8, S33, S48 in the scenario), so a strong score is the realistic answer.",
+  "args": {
+    "assertionId": "~a_02",
+    "treePersonId": "I4"
+  },
+  "response": {
+    "matched": true,
+    "confidence": 9,
+    "score": 0.96,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "p_10727698603",
+      "name": "Amelia Nichols",
+      "role": "mother_of_bride"
+    },
+    "treePerson": {
+      "id": "I4",
+      "name": "Amelia Nichols"
+    }
+  }
+}

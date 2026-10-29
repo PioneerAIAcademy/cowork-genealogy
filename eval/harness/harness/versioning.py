@@ -16,10 +16,11 @@ See docs/plan/eval-runlog-versioning.md §A3, §A5, §A6.
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import Callable, Iterable, Literal, NamedTuple
 
 
 # Filename grammar: `YYYY-MM-DD_HH-MM-SS` — underscore separates the
@@ -104,6 +105,49 @@ def prunable_candidates(filenames: list[str], *, keep: int) -> list[str]:
     ]
     candidates.sort()
     return [name for _, _, name in candidates[:-keep]] if len(candidates) > keep else []
+
+
+def newest_full_skill_runlog(
+    names: Iterable[str], read: Callable[[str], dict]
+) -> tuple[str, dict] | None:
+    """Return (filename, parsed_log) for the full-skill run log among `names`
+    that ran last, released or candidate; `read` parses one by name. Scratch
+    runs ignored.
+
+    Ordered by when the run happened, not by kind. A candidate line above the
+    newest release starts only once that release exists (`next_filename_for`),
+    so it is newer; one below it is older. A candidate left beside the release
+    of its own version line can be either, so at equal versions the candidate's
+    filename time is compared with the release's envelope `timestamp`, which
+    the release flow preserves; the release wins a tie, and when it has no
+    `timestamp` to compare.
+    """
+    release: tuple[int, str] | None = None
+    candidate: tuple[int, str, str] | None = None
+    for name in names:
+        c = classify(name)
+        if c.kind == "released" and c.version is not None:
+            release = max(release or (c.version, name), (c.version, name))
+        elif c.kind == "candidate" and c.version is not None and c.timestamp is not None:
+            entry = (c.version, c.timestamp, name)
+            candidate = max(candidate or entry, entry)
+
+    if release is not None and (candidate is None or candidate[0] <= release[0]):
+        log = read(release[1])
+        released_at = log.get("timestamp")
+        if candidate is None or candidate[0] < release[0] or not released_at or str(released_at) >= candidate[1]:
+            return release[1], log
+    if candidate is None:
+        return None
+    return candidate[2], read(candidate[2])
+
+
+def latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict] | None:
+    """`newest_full_skill_runlog` over the run logs on disk in `skill_dir`."""
+    return newest_full_skill_runlog(
+        (p.name for p in skill_dir.iterdir() if p.is_file()),
+        lambda name: json.loads((skill_dir / name).read_text(encoding="utf-8")),
+    )
 
 
 def ann_filename_for(runlog_filename: str) -> str:
