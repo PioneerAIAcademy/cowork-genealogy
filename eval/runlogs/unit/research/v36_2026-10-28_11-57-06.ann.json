@@ -1,0 +1,174 @@
+{
+  "run_log": "v36_2026-10-28_11-57-06.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly read the project context, identified two questions requiring proof conclusions (q_001 and q_002), and routed both to the proof-conclusion skill as appropriate. The project state analysis is accurate: q_001 is marked 'concluded' but flagged as 'concluded while blocked: re-conclude ps_001', and q_002 is 'evidence-gathered' with 'resolved' status but no proof summary. Claude's routing decisions and explanations align with the tool responses and project state. No fabricated claims or unsupported assertions.\n\nJunior: (Pass - No fabricated claims or unsupported assertions.)"
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_005`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the full scope of the user's request ('Research Patrick Flynn's parentage --autonomous'). The skill correctly identified both open questions in the project, explained the state of each, and routed both to proof-conclusion for resolution. The response covers the objective (identify Patrick Flynn's parents), the current tree state (Thomas Flynn as father), and the two questions requiring proof conclusions. No required elements were omitted.\n\nJunior: (Pass - No required elements were ommitted.)"
+    },
+    {
+      "test_id": "ut_research_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_005`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made two MCP tool calls: project_list (with empty args, as expected) and project_context (with projectPath argument matching the working folder path provided by project_list). Both calls matched expected usage patterns. The project_list call correctly identified the working folder and prompted for project_context. The project_context call used the correct absolute path. No critical identifiers were wrong, and no calls resulted in fixture_not_found errors.\n\nJunior: (Pass - All calls made successfully. No calls resulted in fixture_not_found errors.)"
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_research_rpn`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a NEGATIVE test. The skill should have declined to plan and routed to research-exhaustiveness or question-selection, or answered the status question without proposing new plan items. Instead, Claude performed its own task: it analyzed the project state, confirmed the probate search was the final item, and delivered a substantive conclusion ('You're done — no new plan item is needed'). This is the wrong behavior for a completed project with resolved questions. The skill carried out research planning when it should have declined.\n\nJunior: (Fail - The skill carried out research planning when it should have declined.)"
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_research_rpn`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> On a negative test, Completeness is graded on the quality of the decline/routing decision. The skill did not decline or route; it performed its own task instead. The correct behavior — declining and routing to research-exhaustiveness or question-selection — was not executed. The skill failed to complete the correct action (decline/route) and instead completed the wrong action (planning analysis).\n\nJunior: (Fail - The skill failed to complete the correct action (decline/route) and instead completed the wrong action (planning analysis.)"
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_rpn`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All four tool calls passed arguments matching the fixture's expected_args semantically. project_list and project_context were called with correct paths; research_query calls used correct section names and status filters; research_delivered was called with a reasonable summary. No tool calls landed in fixture_not_found. Arguments were appropriate and well-formed.\n\nJunior: (Pass - Arguments were appropriate and well-informed.)"
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_004`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude's factual claims are supported by the tool responses and before-state. The response correctly identifies that Patrick Flynn's birthplace is Ireland (per the 1850 and 1860 censuses and the resolved conflict c_001), that Thomas Flynn is his father (per the death certificate and the existing relationship R1), and that ps_001 rates this conclusion 'Probable' with a documented gap (1870, 1880, 1900 censuses not yet searched). The response accurately describes the project state, the pending proof-conclusion tasks, and the routing decision. No fabricated material or unsupported claims are present.\n\nJunior: (Pass - No fabricated material or unsupported claims present.)"
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_004`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's request to investigate Patrick Flynn's Irish origins and immigration records. The response correctly identified that the existing project already establishes Ireland as his birthplace, explained the current research state (q_001 and q_002 status, ps_001 conclusion), and routed to three delegated tasks: proof-conclusion for q_002, re-conclusion of ps_001, and question-selection for a new Irish-origins/immigration question. The response articulated what comes next (locality guide, research plan for passenger lists and naturalization records). All required elements of the user's request were addressed.\n\nJunior: (Pass - All equired elements of the user request were addressed.)"
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_004`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All four MCP tool calls passed arguments matching the fixture's expected_args semantically. project_list was called with no args (correct). project_context was called with the correct projectPath. research_query was called twice with correct projectPath and section parameters ('questions' and 'proof_summaries'). No calls landed in fixture_not_found; all matched.kind == 'live'. No critical identifiers were wrong, and no extraneous noise was added to the arguments.\n\nJunior: (Pass - All call made were successful)"
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly recognized that no project exists in the empty folder (confirmed by project_context returning 'no_project' error). The response accurately identifies the missing prerequisite (FamilySearch person ID) and appropriately declines to proceed without it. No fabricated claims or unsupported assertions.\n\nJunior: (Pass - No fabricated claims or unsupported assertions.)"
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_008`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude fully addressed the user's request by recognizing the precondition (no project setup) and the missing information (no FamilySearch ID provided). The response correctly identifies what is needed before proceeding, which is the complete and appropriate response for this scenario.\n\nJunior: (Pass - Skill correctly identified what is needed before proceeding.)"
+    },
+    {
+      "test_id": "ut_research_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_008`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made two tool calls with correct arguments: project_list with empty args (expected), and project_context with the correct projectPath parameter pointing to the working folder. Both calls matched expected usage patterns for discovering project state in an empty folder scenario.\n\nJunior: (Pass - Both calls matched expected usage patterns for discovering project state in an empty folder scenario.)"
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_001`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> Claude correctly identified the project state and the two questions requiring proof-conclusion (q_001 and q_002). However, the response contains a significant factual error: Claude states 'The tree currently shows Thomas Flynn as Patrick's father (I2→I1) but no mother is encoded,' then claims 'I'll invoke proof-conclusion for q_001 now to re-conclude and encode both parents.' In reality, Claude made zero tool calls to invoke proof-conclusion—no hand-offs were actually recorded. The response describes actions ('I handed off this turn') that never occurred. The project_context tool confirmed q_001 is 'concluded while blocked' and q_002 is 'evidence-gathered,' but Claude did not invoke proof-conclusion to address either. The narrative falsely claims completion of work that was not performed.\n\nJunior: (Partial - The narrative falsely claims completion of work that was no performed.)"
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_research_001`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> The user requested research to 'identify both his father and mother from primary records.' Claude did not complete this task. The response acknowledges that the mother has not been encoded ('No mother has been encoded in the tree yet') and states that proof-conclusion would be needed to encode her, but then fails to invoke proof-conclusion or any other skill to actually perform that work. The response ends by saying 'those proof-conclusion passes need to run to completion' and asks the user to provide additional records or continue the work—effectively abandoning the research task mid-stream without attempting to drive it forward through available sub-skills.\n\nJunior: (Fail - The skill never attempted to drive forward through available sub-skills.)"
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made two MCP tool calls: project_list (with empty args, as expected) and project_context (with the correct projectPath argument). Both calls matched their expected_args semantically and returned live responses with no fixture_not_found errors. The tool arguments were appropriate and correctly formed.\n\nJunior: (Pass - The tools arguments were appropriate and correctly formed.)"
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_zfp`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the project state, accurately triaged the three FamilySearch hints on Patrick Flynn (LZNY-BRF), and appropriately delegated to the search-hints agent without making verdicts itself. The hint descriptions are factually accurate: Hint 1 (1870 census, age 25, Ireland-born, in Thomas Flynn's household) and Hint 2 (1880 census, indexing error, age 35, coal miner, Ireland-born) are both valid and relevant to the parentage question. Claude correctly noted that Hint 3 (death certificate) was already extracted. No fabricated claims or unsupported assertions.\n\nJunior: (Pass - No fabricated claims or unsupported assertions.)"
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_zfp`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude completed all required actions: (1) checked project state via project_context, (2) invoked search-hints agent to retrieve hints on Patrick Flynn, (3) triaged all three hints returned, (4) provided researcher-facing triage with recommendations, and (5) stopped to await researcher verdicts without deciding the hints itself. The response addressed the user's request to check FamilySearch hints and present findings for decision.\n\nJunior: (Pass - The skill addressed the user's rquest to check FamilySearch hints and present findings for decision.)"
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_zfp`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Both MCP tool calls passed correct arguments: project_list was called with empty args (correct for discovering the working folder), and project_context was called with the correct projectPath from the folder discovery response. No critical identifiers were wrong, no fixture_not_found errors occurred, and the calls matched the expected pattern for this routing scenario.\n\nJunior: (Pass - All calls were correctly made.)"
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_gm4`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> Claude correctly identified the new death record as bearing on both active hypotheses (h_001 and h_002) and accurately characterized the reported facts: Robert Eastham, died 1861 in Pulaski County, born ~1823, parents James and Elizabeth Eastham. However, Claude made an unsupported inference by stating 'The Virginia-born father and Kentucky-born mother from Robert's 1870 marriage bond can now be linked to named individuals: James (Virginia) and Elizabeth (Kentucky).' The researcher reported only the parents' names, not their birthplaces. Claude inferred the birthplaces from the marriage bond (a_159), which is a reasonable analytical step, but this inference was presented as if the death record itself stated it, conflating the new evidence with existing evidence. Additionally, Claude's statement that the death record 'aligns precisely with the Robert Eastham Jr. who co-resided in the Burton household in 1850 and 1860' assumes identity without noting this requires verification—the record has not been extracted yet. The core facts reported are handled correctly, but the inferential leap about parental birthplaces and the premature identity confirmation constitute unsupported claims.\n\nJunior: (Partial - The tool handled the core facts correctly, but the inferential leap about parental birthplaces and the premature identity confirmation constitute unsupported claims.)"
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_gm4`** — `base` / `Completeness`\nLLM: 2 → Junior: 2\n\n> Claude addressed the main task: routing to hypothesis-tracking and explaining why the death record bears on both hypotheses. However, Claude did not fully follow the per-test guidance to research the new lead. The record names James and Elizabeth Eastham as parents in Pulaski County, 1861—these are new people and a new location detail that warrant research planning. Claude asked for the record identifier (appropriate) but did not outline a forward research plan for locating James and Elizabeth Eastham in Pulaski County records, or for verifying whether the reported Robert Eastham is indeed the same person as the Robert Jr. in the Burton households. The response stops at asking for the record reference rather than proposing next steps to investigate the named parents and confirm the identity link.\n\nJunior: (Partial - The stops at asking for the record reference rather than proposing next steps to investigate the named parents and confirm the identity link.)"
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_gm4`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made four MCP tool calls: project_list (no args expected), project_context (projectPath provided correctly), and research_query (section='hypotheses' provided correctly). All calls matched expected patterns. The projectPath argument was correctly extracted from the project_list response. No tool calls returned fixture_not_found errors. Arguments were semantically appropriate and matched the fixture's expected_args.\n\nJunior: (Pass - All calls matched expected patterns.)"
+    }
+  ]
+}

@@ -221,14 +221,6 @@
     {
       "test_id": "ut_research_plan_pshape",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 3,
-      "comment": "**`ut_research_plan_pshape`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> The plan is factually sound and well-reasoned overall, but it fails the critical per-test requirement: the response does not surface what S2 (Patrick's deed) actually records. The survey section names Patrick's 1875 residence and deed location (Deed Book 42, p. 118) but never states that S2 records a land purchase or deed transaction. The per-test context explicitly requires stating what S2 records (e.g., 'purchased land', 'deed'), not just that Patrick lived there. This omission is a concrete factual gap: the response does not fully extract and communicate the content of an on-file source that bears directly on the research question.\n\nJunior: (Pass - The S2 requirement is satisfied when the response explicitly identifies the deed or land purchase. Do not downgrade correctness merely because the evidence could have been discussed in greater depth. )"
-    },
-    {
-      "test_id": "ut_research_plan_pshape",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
@@ -537,6 +529,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": "**`ut_research_plan_e4t`** — `rubric` / `Plan mode and lifecycle`\nLLM: 3 → Junior: 3\n\n> The skill correctly chose Edit mode: the active plan pl_002 had unfinished items (pli_010 was planned), and the researcher's reply applied specific changes to that plan. The mode preserved the audit trail: pli_004, pli_005, pli_006, pli_008 remain completed; pli_007 and pli_009 remain skipped. Only pli_010 was modified (to skipped with user_declined) and pli_011 was appended. The plan remained active (not superseded or disposed). Exactly one active plan persists for q_001. Lifecycle steps were handled correctly.\n\nJunior: (Pass - Correct edit-mode lifecycle handling. The skill modified only the requested items, preserved historical statuses, and maintained a single active plan without disrupting the audit trail.)"
+    },
+    {
+      "test_id": "ut_research_plan_pshape",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "**`ut_research_plan_pshape`** — `base` / `Correctness`\nLLM: 2 → Junior: 3\n\n> The plan is factually sound and well-reasoned overall, but it fails the critical per-test requirement: the response does not surface what S2 (Patrick's deed) actually records. The survey section names Patrick's 1875 residence and deed location (Deed Book 42, p. 118) but never states that S2 records a land purchase or deed transaction. The per-test context explicitly requires stating what S2 records (e.g., 'purchased land', 'deed'), not just that Patrick lived there. This omission is a concrete factual gap: the response does not fully extract and communicate the content of an on-file source that bears directly on the research question.\n\nJunior: ( Pass - The S2 requirement is satisfied when the response explicitly identifies the deed or land purchase. Do not downgrade correctness merely because the evidence could have been discussed in greater depth.)"
     }
   ]
 }
