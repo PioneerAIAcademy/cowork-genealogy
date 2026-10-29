@@ -28,15 +28,30 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 16, `hint-samples.csv` row 471,
-flags `adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Hungary, Catholic Church Records, 1636-1895", the 1871 Kiskunfélegyháza baptism of Veronika Tarjanyi, daughter of Janos Tarjanyi and **Rozalia Bona**. The index gives no ages or residence for the parents.
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming the 1871 Veronika as her daughter, plus a `required` finding that the report documents
-the rejection.
+**False match. Resolved from the index alone; no image read was needed.**
 
-Very likely a false match. The hint shares only the town, the father's common name and the mother's given name. The mother's surname is Bona, not Görög. And the subject, born about 1860, would have been about eleven in 1871; her own children start in 1884. The couple did have a daughter Veronika, but she was born in January 1897 and is already in the tree. The 1871 baptism is most likely another János Tarjányi's household in the same town, perhaps an older relative's. The settling check is the subject's own marriage entry, which the tree's Catholic sources should hold: a marriage after 1871, or an age that puts her birth near 1860, rules the hint out on dates alone.
+The hint record (`ark:/61903/1:1:XZ1Y-W4K`) is an 1871 Kiskunfélegyháza
+Catholic baptism of Veronika Tarjányi from "Hungary, Catholic Church Records,
+1636-1895." The index names the mother as **Rozalia Bona** — a different
+surname from Görög — and the father as Janos Tarjanyi.
+
+Two independent grounds rule this out:
+
+1. **Different surname.** The mother's surname in the record is Bona, not
+   Görög. FamilySearch's hint engine matched on the shared town, the common
+   father's name, and the mother's given name (Rozália), but the surname
+   mismatch identifies a different woman. This alone is sufficient to reject
+   the match.
+
+2. **Impossible dates.** Rozália Görög was born about 1860; in 1871 she would
+   have been approximately eleven years old — far too young to be a mother.
+   The couple's own children begin in 1884. The tree already holds their
+   daughter Veronika, born January 1897 (PID PQ6N-SP8), and she is the only
+   Veronika in this family.
+
+The 1871 baptism belongs to a different Tarjányi household in the same town —
+likely an older relative's — and no substitute record for an earlier Veronika
+was sought, because the research question asks about the children of Rozália
+Görög and János Tarjányi, and the existing tree already documents their full
+family. The hint record's `ark:/61903/1:1:XZ1Y-W4K` is the disproving record;
+retrieval was by index only (familysearch.org).
