@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
-import { planItemFlags } from "../utils/plan-item-plausibility.js";
+import { compoundJurisdictionError, planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -59,7 +59,9 @@ import {
   UK_CONSTITUENTS,
   placeTypeKey,
   resolveStandardPlace,
+  repIdToStandardPlace,
   countryConsistency,
+  countryOfPlace,
   isNonPlacePhrase,
   checkFirstPlace,
   type PlaceCoords,
@@ -82,9 +84,10 @@ import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
 import {
   collectionKey,
+  loadStoredCollectionUrls,
   readExternalCollections,
-  storedCollectionKeys,
   EXTERNAL_COLLECTIONS_FILE,
+  type StoredCollectionUrls,
   type ExternalCollectionsDoc,
   type StoredCollectionRow,
 } from "../utils/external-collections-store.js";
@@ -1587,15 +1590,17 @@ function yearsIn(...values: unknown[]): number[] {
  *  further apart than `birthThresholdMiles` allows for the era the dates span.
  *  Fails closed: with no country difference, the pair counts as far apart unless
  *  both sides carry a standard_place with coordinates finer than a region
- *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known. */
-function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords): boolean {
+ *  (`REGION_PLACE_TYPES`), they are not two counties, and some year is known.
+ *  `unresolvedIsNear` opens the one case a slow lookup decides: a standard
+ *  place the lookup returned no coordinates for. */
+function birthPlacesFarApart(assertion: any, birth: any, coords?: BirthPlaceCoords, unresolvedIsNear = false): boolean {
   if (birthCountriesDiffer(assertion, birth)) return true;
   const sa = assertion?.standard_place;
   const sb = birth?.standard_place;
   if (typeof sa !== "string" || typeof sb !== "string") return true;
   const pa = coords?.get(sa);
   const pb = coords?.get(sb);
-  if (!pa || !pb) return true;
+  if (!pa || !pb) return !unresolvedIsNear;
   if (REGION_PLACE_TYPES.has(placeTypeKey(pa.type)) || REGION_PLACE_TYPES.has(placeTypeKey(pb.type))) return true;
   if (placeTypeKey(pa.type) === "county" && placeTypeKey(pb.type) === "county") return true;
   const years = yearsIn(birth.date, birth.standard_date, assertion.date);
@@ -1736,6 +1741,7 @@ function contradictionFindings(
   personLinks?: ReadonlyArray<PersonLink>,
   batchAssertions?: Map<string, any>,
   birthPlaceCoords?: BirthPlaceCoords,
+  unresolvedIsNear = false,
 ): string[] {
   const scope = contradictionScope(entry, research, tree, personLinks, batchAssertions);
   if (!scope) return [];
@@ -1744,7 +1750,7 @@ function contradictionFindings(
   const findings: string[] = [];
 
   // ── place ────────────────────────────────────────────────────────────────
-  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords));
+  const far = disagreeingBirthPlaces(scope).find((a) => birthPlacesFarApart(a, birth, birthPlaceCoords, unresolvedIsNear));
   if (far) {
     findings.push(
       `the record states '${far.place}' (assertion '${far.id}') where the tree person ` +
@@ -1794,8 +1800,10 @@ export function coreIdentifierContradictionInvariants(
   // Prefetched in `prepareOps`. Absent, every same-country pair counts as far
   // apart, which is the place arm before the distance test.
   birthPlaceCoords?: BirthPlaceCoords,
+  // Merges only: a place the lookup did not resolve is not a contradiction.
+  unresolvedIsNear = false,
 ): string[] {
-  const findings = contradictionFindings(entry, research, tree, personLinks, batchAssertions, birthPlaceCoords);
+  const findings = contradictionFindings(entry, research, tree, personLinks, batchAssertions, birthPlaceCoords, unresolvedIsNear);
   if (findings.length === 0) return [];
   return [
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
@@ -3409,6 +3417,52 @@ export function factEvidenceParties(
   return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
 }
 
+/** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
+ *  each row the call appended, or updated through `record_ids` or
+ *  `log_entry_ids`, from the row's own search sidecars, so the first runs can
+ *  count what a persona-keyed refusal would catch. Overwrites whatever the
+ *  caller supplied; an update cannot set the field (`updatableFields`). A found
+ *  record id is stored in the sidecar's form, as an assertion's is. */
+export async function stampNamesakePersonas(
+  research: any,
+  ops: ReadonlyArray<ResearchAppendOp>,
+  applied: ReadonlyArray<AppliedOp>,
+  readResults: (ref: string) => Promise<any[] | null>,
+): Promise<void> {
+  const logById = new Map<string, any>(
+    (Array.isArray(research?.log) ? research.log : [])
+      .filter((e: any) => e && typeof e.id === "string")
+      .map((e: any) => [e.id, e]),
+  );
+  const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []) as any[];
+  for (const a of applied) {
+    if (a.section !== "namesakes" || a.noop) continue;
+    const fields = (ops[a.opIndex] as any)?.fields;
+    if (a.op === "update" && !("record_ids" in (fields ?? {})) && !("log_entry_ids" in (fields ?? {}))) continue;
+    const row = rows.find((r) => r && r.id === a.entryId);
+    if (!row) continue;
+    const stamp: Record<string, string> = {};
+    const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
+      if (typeof id !== "string") return id;
+      for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
+        const entry = logById.get(logId);
+        if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
+        const hit = (await readResults(entry.results_ref))?.find(
+          (r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === arkToBareId(id),
+        );
+        if (!hit) continue;
+        if (typeof hit.primaryId === "string" && hit.primaryId !== "") stamp[hit.recordId] = hit.primaryId;
+        return hit.recordId;
+      }
+      // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
+      return id;
+    });
+    row.record_ids = await Promise.all(recordIds);
+    if (Object.keys(stamp).length > 0) row.record_persona_ids = stamp;
+    else delete row.record_persona_ids;
+  }
+}
+
 /** What the namesake warning lists for one person. */
 export interface NamesakeRowListing {
   personId: string;
@@ -3682,15 +3736,16 @@ export function namesakeCitationRefusals(
             ? `it has no probable or confident link to '${c.personId}'`
             : judgedStrong === undefined
               ? `its only link to '${c.personId}' rests on an assertion that records an absence, which ties nothing`
-              : `its link '${judgedStrong.id}' to '${c.personId}' is not tied: ${v?.verdicts.get(judgedStrong.id)?.reasons[0] ?? "nothing in the record ties it"}`;
+              : `its link '${judgedStrong.id}' to '${c.personId}' is not tied: ${(v?.verdicts.get(judgedStrong.id)?.reasons[0] ?? "nothing in the record ties it").replace(/\.$/, "")}`;
         findings.push({
           index: c.index,
           message:
             `'${c.personId}' has a recorded namesake (${own.map((r) => `'${r.id}'`).join(", ")}), so a record goes ` +
             `onto '${c.personId}''s facts and names only when something in it ties it to '${c.personId}'. The ` +
             `${c.label} this op ${c.added ? "adds" : "changes"} cites ${ref} (research source '${src}'), and ${reason}. ` +
-            `Nothing was written. Cite only records that tie to '${c.personId}', or tie the record first through ` +
-            "person-evidence; a relationship added in this same call does not count, so add it in an earlier call.",
+            `Nothing was written. Cite only records that tie to '${c.personId}', or hand the link to the ` +
+            "person-evidence agent, which owns person_evidence, to tie it first; a relationship added in this same " +
+            "call does not count, so add it in an earlier call.",
         });
       }
     }
@@ -4089,6 +4144,71 @@ export function mergeCarryRefusals(
   return out;
 }
 
+/** Issue #2537: each live link the merge moves onto a survivor must pass the
+ *  checks a `research_append` update re-pointing it there would: the
+ *  contradiction cap, the move rule and the score gate's fabrication arm. Judged
+ *  on the project after the merge (`after`: the remapped research and the merged
+ *  tree), where the survivor holds both copies' facts. A birth place the lookup
+ *  does not resolve is not a contradiction here, so a slow lookup cannot refuse
+ *  a correct merge; a different country still is. A move is an update, not
+ *  an append, so a link with no score is not asked for one; a scored link needs
+ *  a `same_person` score recorded for the survivor. One line per finding, then
+ *  the routing; `[]` when nothing is refused. */
+export async function mergeLinkCheckRefusals(
+  projectPath: string,
+  before: { research: any },
+  after: { research: any; tree: any },
+  merges: ReadonlyArray<readonly [string, string]>,
+  startingPersonIds?: ReadonlySet<string>,
+): Promise<string[]> {
+  const survivorOf = new Map<string, string>();
+  for (const [s, c] of merges) survivorOf.set(c, s);
+  const moved: Array<{ entry: any; from: string }> = [];
+  for (const e of (before.research?.person_evidence ?? []) as any[]) {
+    if (!e || e.superseded_by || typeof e.person_id !== "string") continue;
+    const to = survivorOf.get(e.person_id);
+    if (to) moved.push({ entry: { ...e, person_id: to }, from: e.person_id });
+  }
+  if (moved.length === 0) return [];
+
+  const ops: ResearchAppendOp[] = moved.map(({ entry }) => ({
+    section: "person_evidence",
+    op: "update",
+    entryId: entry.id,
+    fields: { person_id: entry.person_id },
+  }) as ResearchAppendOp);
+  const batchAssertions = batchAssertionsById(after.research, []);
+  const personLinks = batchPersonLinks(after.research, []);
+  const birthPlaceCoords = await prefetchBirthPlaceCoords(after.research, ops, after.tree, personLinks, batchAssertions);
+  const matchScores = new Map<string, MatchScoreFile>();
+  for (const recordId of recordIdsForPersonEvidence(after.research, ops)) {
+    const file = await readMatchScores(projectPath, recordId);
+    if (file !== null) matchScores.set(recordId, file);
+  }
+
+  const lines: string[] = [];
+  for (const { entry, from } of moved) {
+    const findings = [
+      ...coreIdentifierContradictionInvariants(entry, after.research, after.tree, personLinks, batchAssertions, birthPlaceCoords, true),
+      ...unexplainedMoveInvariants(entry, after.research, after.tree, batchAssertions),
+      ...personEvidenceScoreInvariants(
+        entry, after.research, after.tree, matchScores, batchAssertions, false, startingPersonIds, new Set<string>(),
+      ),
+    ];
+    for (const f of findings) {
+      lines.push(`person_evidence '${entry.id}' would move from '${from}' to '${entry.person_id}' in this merge: ${f}`);
+    }
+  }
+  if (lines.length === 0) return [];
+  return [
+    ...lines,
+    "Nothing was written. A merge moves each link onto the survivor, so it must pass the checks a link written " +
+      "there directly would. Before merging again, fix each listed link where it stands: record the same_person " +
+      "score for the survivor, or have person-evidence lower the link or name its move_bridge. If the record " +
+      "does not belong to the survivor, do not merge.",
+  ];
+}
+
 /** Non-blocking nudge (issue #1478). Returns a warning when THIS call appended a
  *  source and the resulting project holds ≥THRESHOLD sources but zero assertions;
  *  null otherwise. Gated on a real (non-noop) `sources` append so it fires at the
@@ -4125,8 +4245,8 @@ function sourcesWithoutAssertionsWarning(research: any, applied: AppliedOp[]): s
  *
  *  **Never a refusal, and the reason matters.** Two legitimate shapes reach here
  *  with no filename: a PDF capture, and an `image_transcribe` run with no
- *  `projectPath` (nothing was staged, so there is no file to name). Refusing
- *  either would block correct work to catch a documentation gap, which is the
+ *  `projectPath` (nothing was staged, so there is no file to name); a full-text
+ *  hit's source stores no page at all and is skipped. Refusing either would block correct work to catch a documentation gap, which is the
  *  wrong trade for a provenance nudge — `guardrail-enforcement-spec.md` marks it
  *  advisory in the instrument table for exactly that reason.
  *
@@ -4146,6 +4266,10 @@ function transcriptionWithoutImageWarnings(research: any, applied: AppliedOp[]):
     if (!entry) continue;
     if (factText(entry.transcription) === undefined) continue;
     if (factText(entry.image_filename) !== undefined) continue;
+    // A full-text hit's text is FamilySearch's own transcript: no page is stored
+    // for it, so there is no filename to name.
+    const logged = (Array.isArray(research.log) ? research.log : []).find((e: any) => e?.id === entry.log_entry_id);
+    if (logged?.tool === "fulltext_search") continue;
     out.push(
       `source '${a.entryId}' records a transcription but no image_filename — name the ` +
         `page the text was read from, so a later reader can check it. The value is the ` +
@@ -5227,6 +5351,25 @@ function newQuestionWhileAnotherIsOpenInvariants(_entry: any, preCallResearch: a
   ];
 }
 
+/** A `fan_pivot` question exists to advance a question whose direct evidence
+ *  ran out, so its `unblocks` must name a question still open in the pre-call
+ *  snapshot. Decidable from `questions[]` alone (ADR-0011). Every committed e2e
+ *  `fan_pivot` append that left `unblocks` empty (3 of 4) depended on an open
+ *  `q_001` it would have advanced. */
+function fanPivotUnblocksInvariants(entry: any, preCallResearch: any): string[] {
+  if (entry?.selection_basis !== "fan_pivot") return [];
+  const open = (Array.isArray(preCallResearch?.questions) ? preCallResearch.questions : [])
+    .filter((q: any) => typeof q?.id === "string" && QUESTION_STILL_OPEN.has(q.status))
+    .map((q: any) => q.id as string);
+  const unblocks = Array.isArray(entry?.unblocks) ? entry.unblocks : [];
+  if (unblocks.some((id: unknown) => typeof id === "string" && open.includes(id))) return [];
+  return [
+    "a `fan_pivot` question must name in `unblocks` the open question whose direct evidence ran out" +
+      (open.length > 0 ? ` (open: ${open.sort().join(", ")})` : " — no question is open, so there is none to pivot from") +
+      ". Its family, associates and neighbors are researched to advance that question.",
+  ];
+}
+
 /** A plan item may not stand at `completed` unless some `log[]` entry carries
  *  its id in `plan_item_id`. Completing an item asserts the search it names was
  *  done; the log is where a search is recorded, so an item completed with
@@ -5310,6 +5453,86 @@ function planItemLogAttributionInvariants(
       `planItemId: null is only for an ad-hoc search that matches no plan item. If that ` +
       `search was already logged with planItemId: null, leave this item 'in_progress' ` +
       `rather than logging the same search twice.`,
+  ];
+}
+
+/**
+ * Starter vocabulary per plan-item `record_type`: the terms whose presence in an
+ * attributed `log[]` entry's tool/notes/query confirms the completing search
+ * touched this record type. **Ported verbatim from the eval validator
+ * `RECORD_TYPE_TERMS` in `eval/harness/validators/test_search_full_text.py`; the
+ * two planes must agree — change both or neither.** A `record_type` absent here
+ * gets the structural check (`planItemLogAttributionInvariants`) only, never a
+ * content assertion it has no vocabulary for.
+ */
+const RECORD_TYPE_TERMS: Record<string, readonly string[]> = {
+  probate: [
+    // No bare "estate": it is land in "real estate" (American) and in
+    // British/Irish estate records, so it passed the deed/land note this guard
+    // exists to refuse. The specific terms below carry probate without it (#3592).
+    "executor", "executrix", "administrator", "administratrix",
+    "appraise", "appraisement", "inventory", "bequeath", "testament",
+    "heir", "legatee", "probate",
+  ],
+  church: ["baptism", "baptismal", "christen", "confirmation", "burial"],
+  church_record: ["baptism", "baptismal", "christen", "confirmation", "burial"],
+  vital: ["birth", "death", "marriage"],
+  vital_record: ["birth", "death", "marriage"],
+  marriage: ["marriage", "wedding", "banns", "matrimon"],
+  census: ["census", "household", "dwelling", "enumerat"],
+  naturalization: ["naturaliz", "declaration of intent"],
+  obituary: ["obituary", "death notice"],
+};
+
+/**
+ * A plan item with a vocabulary-bearing `record_type` may not stand at
+ * `completed` unless some `log[]` entry attributed to it names a search of THAT
+ * record type. Completing a probate item off a deed/land search — the
+ * `ut_search_full_text_016`/`_020` shape, deep-dive #1651 finding 3 — claims
+ * probate work no part of the document evidences.
+ *
+ * This is the CONTENT half of the completion check; `planItemLogAttributionInvariants`
+ * is the STRUCTURAL half (some entry must name the item at all). The two never
+ * double-report: when nothing is attributed this returns [] and leaves the
+ * refusal to that gate; a `record_type` outside `RECORD_TYPE_TERMS` gets the
+ * structural check only. Keyed to the same trigger as that gate (the entry ends
+ * at `completed`) and reads the same LIVE `research.log` for the same reason —
+ * `log[]` is append-only and owned by `research_log_append`, so the live
+ * document and the pre-call snapshot carry an identical log.
+ *
+ * Mirrors the eval validator `test_plan_item_completion_matches_its_own_record_type`,
+ * including its haystack (each attributed entry's `tool`, `notes` and JSON-
+ * serialized `query`, lowercased). Decidable from `research.json` alone
+ * (ADR-0011's first question), so it is a writer-tool precondition rather than
+ * the agent-body prose it was first diagnosed as (#3592).
+ */
+export function planItemCompletionRecordTypeInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "completed") return [];
+  const pid = entry?.id;
+  if (typeof pid !== "string" || pid === "") return [];
+  const terms = RECORD_TYPE_TERMS[String(entry?.record_type ?? "").toLowerCase()];
+  if (!terms) return []; // record_type outside the starter table — structural check only
+  const attributed = (Array.isArray(research?.log) ? research.log : []).filter(
+    (e: any) => e && e.plan_item_id === pid,
+  );
+  if (attributed.length === 0) return []; // planItemLogAttributionInvariants' job, not this one's
+  const haystack = attributed
+    .map((e: any) => `${e.tool ?? ""} ${e.notes ?? ""} ${JSON.stringify(e.query ?? {})}`)
+    .join(" ")
+    .toLowerCase();
+  // Leading word-boundary only (`\bterm`), not `\bterm\b`: several terms are
+  // deliberate stems (`naturaliz`, `enumerat`, `christen`, `appraise`) and
+  // need to match plurals (`baptism`→"baptisms"), which a trailing boundary
+  // would miss; the leading boundary still rejects a substring inside a word
+  // ("their" ≠ `heir`). The eval validator uses the same rule (#3592).
+  if (terms.some((t) => new RegExp(`\\b${t}`).test(haystack))) return [];
+  return [
+    `plan_items[${pid}]: record_type '${entry.record_type}', but no log[] entry attributed to it ` +
+      `names a ${entry.record_type} search — none mentions any of ` +
+      `${terms.map((t) => `'${t}'`).join(", ")}. Completing it would claim a ${entry.record_type} ` +
+      `search the document does not record. Run and log the ${entry.record_type} search this item ` +
+      `calls for with research_log_append({ planItemId: "${pid}", ... }) before completing it, or ` +
+      `skip it with a skip_category if that search will not be done.`,
   ];
 }
 
@@ -5404,7 +5627,7 @@ const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_sear
  *  search's entry names the item. An `error` entry is not a search that ran,
  *  and an external hand-off counts only once its capture arrived.
  *
- *  **One exemption: the deferred external hand-off.** search-records runs
+ *  **Exemption 1: the deferred external hand-off.** search-records runs
  *  three nil searches, then hands the item to search-external-sites, which,
  *  with no user present to capture, logs a deferred entry and skips the item
  *  `inaccessible`. `completed` is refused there by capture-pending, so refusing
@@ -5413,7 +5636,11 @@ const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_sear
  *  `completed`, this rule stays silent and capture-pending answers alone: it
  *  lets an `inaccessible` or `user_declined` skip stand, and refuses any other
  *  category with a message naming those two. Capture-pending itself decides
- *  which entry is latest, so the two rules cannot disagree. */
+ *  which entry is latest, so the two rules cannot disagree.
+ *
+ *  **Exemption 2: the wrong record type.** Wherever the completion record-type
+ *  check would refuse `completed` (no attributed search names the item's
+ *  record type), this rule is silent too, so the skip is the item's exit (#3592). */
 export function planItemSearchedSkipInvariants(entry: any, research: any): string[] {
   if (entry?.status !== "skipped") return [];
   const pid = entry?.id;
@@ -5428,11 +5655,26 @@ export function planItemSearchedSkipInvariants(entry: any, research: any): strin
   );
   if (!ran) return [];
   if (planItemCapturePendingInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
+  // Record-type escape hatch (mirrors the capture-pending one above): if the
+  // item cannot be completed because its searches are all the wrong record type
+  // (planItemCompletionRecordTypeInvariants would refuse), then skipping is the
+  // honest exit — otherwise it deadlocks at 'in_progress', neither completable
+  // nor skippable (the stuck state #3682's dispose flow removed). #3592.
+  if (planItemCompletionRecordTypeInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
   return [
     `plan_items[${pid}]: ${ran.id} (${ran.tool}, ${ran.outcome}) shows this item's search ran, ` +
       `so it cannot be marked 'skipped', which says nothing was searched. Set it to 'completed' ` +
       `instead: ${ran.id} names this item, so the completion is attributed.`,
   ];
+}
+
+/** A plan item names one place (`compoundJurisdictionError`). Checked on an
+ *  append and on a change to `jurisdiction` only, so a compound item written
+ *  before this rule does not strand an unrelated edit. */
+function compoundJurisdictionInvariants(item: any, research: any): string[] {
+  const localities = Array.isArray(research?.localities) ? research.localities : [];
+  const error = compoundJurisdictionError(item ?? {}, localities);
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
 }
 
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
@@ -5508,20 +5750,6 @@ function planItemSkipInvariants(
     );
   }
   return errors;
-}
-
-/** The curated collections in `external-collections.json`, by `collectionKey`, or
- *  why they could not be read. Every place's rows, so a plan item's free-text
- *  jurisdiction never has to be matched to a stored place. Read once per call,
- *  before the sync apply loop, and only when an op sets `collection_url`. */
-export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
-
-async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
-  try {
-    return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
-  }
 }
 
 /** Plan items an op APPENDS: a `plan_items` append's entry, or a `plans` append's
@@ -7314,6 +7542,7 @@ function applyOne(
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
       invariantErrors.push(...secondQuestionInOneCallInvariants(resultEntry, research, preCallResearch));
+      invariantErrors.push(...fanPivotUnblocksInvariants(resultEntry, preCallResearch));
     }
     const statusTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(fields, "status");
@@ -7432,6 +7661,10 @@ function applyOne(
         );
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        if (item && storedItem?.jurisdiction !== item.jurisdiction) {
+          invariantErrors.push(...compoundJurisdictionInvariants(item, research));
+        }
+        invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
         // rule has to hold here too or it is one `{ ...entry }` spread away
         // from being bypassed. `isAppend: true` — an item arriving inline has
@@ -7479,6 +7712,7 @@ function applyOne(
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
       );
+      invariantErrors.push(...planItemCompletionRecordTypeInvariants(resultEntry, research));
     }
     // Capture-pending guard (#1226): refuse moving an item INTO a terminal
     // status while its latest external-site search still awaits a capture.
@@ -7512,6 +7746,9 @@ function applyOne(
         ),
       );
       invariantErrors.push(...planItemSearchedSkipInvariants(resultEntry, research));
+    }
+    if (op.op === "append" || storedItem?.jurisdiction !== resultEntry?.jurisdiction) {
+      invariantErrors.push(...compoundJurisdictionInvariants(resultEntry, research));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(
@@ -7808,33 +8045,79 @@ function applyOne(
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
 
-/** Find a converter-resolved standard_place inside a sidecar record's
- *  simplified gedcomx whose fact `place` matches `place` (trimmed,
- *  case-insensitive). Never geocode what the source record already resolved. */
-function sidecarStandardPlace(gx: any, place: string): string | null {
+/** The converter-resolved standard_place a sidecar record's simplified gedcomx
+ *  gives an assertion's own fact: the facts of its `record_persona_id` (the
+ *  persona's own, and those of a relationship whose `person1` or `person2` it
+ *  is; a ParentChild relationship's `parent`/`child` facts are not read) of its
+ *  `fact_type` (`canonicalFactKey`) and with its `place` (trimmed,
+ *  case-insensitive). Null unless every such fact carries the same one, so one
+ *  fact's name never lands on another person's or another fact's. Never geocode
+ *  what the source record already resolved. */
+function sidecarStandardPlace(gx: any, entry: any): string | null {
   if (!gx || typeof gx !== "object") return null;
-  const want = place.trim().toLowerCase();
-  const factLists: any[][] = [];
+  const persona = entry.record_persona_id;
+  const facts: any[] = [];
   for (const p of Array.isArray(gx.persons) ? gx.persons : []) {
-    if (p && Array.isArray(p.facts)) factLists.push(p.facts);
+    if (p?.id === persona && Array.isArray(p.facts)) facts.push(...p.facts);
   }
   for (const r of Array.isArray(gx.relationships) ? gx.relationships : []) {
-    if (r && Array.isArray(r.facts)) factLists.push(r.facts);
+    if ((r?.person1 === persona || r?.person2 === persona) && Array.isArray(r.facts)) facts.push(...r.facts);
   }
-  for (const facts of factLists) {
-    for (const f of facts) {
-      if (
-        f &&
-        typeof f.place === "string" &&
-        f.place.trim().toLowerCase() === want &&
-        typeof f.standard_place === "string" &&
-        f.standard_place.length > 0
-      ) {
-        return f.standard_place;
-      }
-    }
+  const want = entry.place.trim().toLowerCase();
+  const names = new Set(
+    facts
+      .filter(
+        (f) =>
+          typeof f?.place === "string" &&
+          f.place.trim().toLowerCase() === want &&
+          canonicalFactKey(f.type) === canonicalFactKey(entry.fact_type),
+      )
+      .map((f) => f.standard_place),
+  );
+  const [name] = names;
+  return names.size === 1 && typeof name === "string" ? name : null;
+}
+
+/** A sidecar result's record id: record_search and record_read stage GedcomX
+ *  personas keyed on `recordId`, the persona-less producers (full text,
+ *  external links) transcripts keyed on `id` (#2038). */
+function sidecarResultId(tool: string, r: any): string | undefined {
+  const v = PERSONA_BEARING_PRODUCERS.has(tool) ? r?.recordId : r?.id;
+  return typeof v === "string" ? v : undefined;
+}
+
+/**
+ * The country of the sidecar record an assertion comes from, by its producer,
+ * never read off the assertions' places (`countryOfPlace` names it, and says
+ * which places are no country):
+ * - a FamilySearch record (record_search, record_read): its Collection source's
+ *   coverage place, the coverage's `standard_place` (a live `record_read`
+ *   resolves it), else its `place_rep_id` resolved by id. A World collection
+ *   gives none (matcher-lab m13's list builder, stage S2);
+ * - a page `image_transcribe` read: its source's `place`, the coverage place of
+ *   the FamilySearch image group (the film) it was read from (lead, 2026-10-29).
+ *   A full-text record is extracted from its page this way.
+ * Null when the record names no such place.
+ */
+async function recordCountryOf(producer: string | undefined, record: any): Promise<string | null> {
+  if (producer === "image_transcribe") {
+    return typeof record?.source?.place === "string" ? countryOfPlace(record.source.place) : null;
   }
-  return null;
+  const sources: any[] = Array.isArray(record?.gedcomx?.sources) ? record.gedcomx.sources : [];
+  const coverage = sources.find((s) => s?.resource_type === "Collection")?.coverage;
+  let place: string | null = typeof coverage?.standard_place === "string" ? coverage.standard_place : null;
+  if (!place && typeof coverage?.place_rep_id === "string") place = await repIdToStandardPlace(coverage.place_rep_id);
+  return place ? countryOfPlace(place) : null;
+}
+
+/** The sidecar record an assertion's country comes from: the result its
+ *  record_id names, else, for a page `image_transcribe` staged, that page. The
+ *  sidecar holds the one transcription its log entry logged
+ *  (`extraction_append` logs the staged ref it cites), and a record_id the
+ *  caller chose ("capture:…", a record ARK) need not be the page's id. */
+function countrySidecarRecord(producer: string | undefined, results: any[] | null, matched: any): any {
+  if (matched) return matched;
+  return producer === "image_transcribe" && results?.length === 1 ? results[0] : null;
 }
 
 interface PreparedOps {
@@ -7968,9 +8251,15 @@ export function reextractionKey(a: any): string | undefined {
         : undefined;
   if (who === undefined) return undefined;
   const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
-  const ftKey = factTypeKey(a.fact_type);
-  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? factTypeKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
-  return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
+  return [a.source_id, arkToBareId(a.record_id), log, who, canonicalFactKey(a.fact_type)].join("\u0000");
+}
+
+/** A fact type's comparison key after the `FACT_TYPE_ALIASES` fold: "Baptism",
+ *  `baptism` and `christening` are one fact type, as are "BirthRegistration" and
+ *  `birth_registration`. */
+function canonicalFactKey(ft: unknown): string {
+  const key = factTypeKey(ft);
+  return Object.hasOwn(FACT_TYPE_ALIASES, key) ? factTypeKey(FACT_TYPE_ALIASES[key]) : key;
 }
 
 /** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
@@ -8234,6 +8523,28 @@ async function checkLocalityFirstPlaces(
       );
     }
   }
+}
+
+/** A per-call reader of a sidecar's `payload.results`, cached by ref: null when
+ *  the ref is outside the project, unreadable, or holds no results array. */
+function sidecarResultsReader(projectPath: string): (ref: string) => Promise<any[] | null> {
+  const cache = new Map<string, any[] | null>();
+  return async (ref) => {
+    if (cache.has(ref)) return cache.get(ref)!;
+    let results: any[] | null = null;
+    if (isInsideProject(projectPath, ref)) {
+      try {
+        const sc = JSON.parse(await getProjectStore().readText(projectPath, ref));
+        if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
+          results = sc.payload.results;
+        }
+      } catch {
+        // unreadable sidecar — the document validator reports it; skip enforcement
+      }
+    }
+    cache.set(ref, results);
+    return results;
+  };
 }
 
 /** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
@@ -8504,30 +8815,17 @@ async function prepareOps(
   for (const e of Array.isArray(research.log) ? research.log : []) {
     if (e && typeof e === "object" && typeof e.id === "string") logById.set(e.id, e);
   }
-  const sidecarCache = new Map<string, any[] | null>();
-  const readSidecarResults = async (ref: string): Promise<any[] | null> => {
-    if (sidecarCache.has(ref)) return sidecarCache.get(ref)!;
-    let results: any[] | null = null;
-    if (isInsideProject(projectPath, ref)) {
-      try {
-        const sc = JSON.parse(await getProjectStore().readText(projectPath, ref));
-        if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
-          results = sc.payload.results;
-        }
-      } catch {
-        // unreadable sidecar — the document validator reports it; skip enforcement
-      }
-    }
-    sidecarCache.set(ref, results);
-    return results;
-  };
+  const readSidecarResults = sidecarResultsReader(projectPath);
 
-  // The other places each record's assertions name in this batch: a bare place
-  // ("Shenandoah") is resolved against them, not against the whole world.
+  // The other places each record's assertions name in this batch, each by its
+  // standard_place when it has one, else its place: a bare place ("Shenandoah")
+  // is resolved against them, not against the whole world. A record read's
+  // named fact carries its as-written text ("Den Haag") as `place`, so the
+  // standard is the one that still names the fact's jurisdictions.
   const placesByRecord = new Map<string, string[]>();
   for (const op of ops) {
     const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
-    const place = e ? factText(e.place) : undefined;
+    const place = e ? (factText(e.standard_place) ?? factText(e.place)) : undefined;
     if (!place) continue;
     const key = String(e.record_id ?? "");
     placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
@@ -8535,15 +8833,21 @@ async function prepareOps(
 
   /** Place levers (b) then (a) on one assertion's fields, in place. A
    *  standard_place contradicting the place's country is an error, unless
-   *  `dropContradiction`, when it is left unset instead. */
+   *  `dropContradiction`, when it is left unset instead. `countryRecord` is the
+   *  sidecar record the assertion comes from and `countryProducer` the tool that
+   *  staged it, which give the resolver the record's country
+   *  (`recordCountryOf`). */
   const applyPlaceLevers = async (
     entry: any,
     i: number,
     matchedRecord: any,
-    dropContradiction = false,
+    dropContradiction: boolean,
+    countryProducer: string | undefined,
+    countryRecord: any,
   ): Promise<void> => {
     // ── Place lever (b): never geocode what the source record already
-    // resolved — copy the sidecar's standard_place for the same place string.
+    // resolved — copy the standard_place the sidecar gives this assertion's own
+    // fact (same persona, fact type and place string).
     // `standard_place: null` is an explicit opt-out (skip resolution + guard);
     // only a fully omitted field triggers resolution. A non-place phrase
     // ("Same House") is left unset, silently: it has no standard form.
@@ -8556,17 +8860,19 @@ async function prepareOps(
       let sp: string | null = null;
       let source: "sidecar" | "geocoded" | null = null;
       if (matchedRecord) {
-        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
+        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry);
         if (sp) source = "sidecar";
       }
       if (!sp && input.resolveStandardPlace !== false) {
-        // resolveStandardPlace swallows network failures and returns null, so
-        // a miss and a failure look the same here — both warrant the warning
-        // (a silently unresolved place is part of the wrong-geocode theme).
+        // resolveStandardPlace returns null on a miss and can throw on a
+        // failure (a bare name's top-hit search does), and the catch makes the
+        // two look the same here — both warrant the warning (a silently
+        // unresolved place is part of the wrong-geocode theme).
         try {
           const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
             .filter((p) => p !== entry.place);
-          sp = (await resolveStandardPlace(entry.place, { contextPlaces })) ?? null;
+          const recordCountry = () => recordCountryOf(countryProducer, countryRecord);
+          sp = (await resolveStandardPlace(entry.place, { contextPlaces, recordCountry })) ?? null;
         } catch {
           sp = null;
         }
@@ -8621,6 +8927,8 @@ async function prepareOps(
 
     // ── D2: persona/record-id matrix against the log entry's sidecar ──
     let matchedRecord: any = null;
+    let countryProducer: string | undefined;
+    let countryRecord: any = null;
     const logId = entry.log_entry_id;
     const logEntry = typeof logId === "string" ? logById.get(logId) : undefined;
     if (logEntry) {
@@ -8684,10 +8992,7 @@ async function prepareOps(
           // "expected one of:" list or silently skipped canonicalizing the id
           // (#2038). Pick the id field by producer.
           const personaBearing = PERSONA_BEARING_PRODUCERS.has(producer);
-          const resultId = (r: any): string | undefined => {
-            const v = personaBearing ? r?.recordId : r?.id;
-            return typeof v === "string" ? v : undefined;
-          };
+          const resultId = (r: any): string | undefined => sidecarResultId(producer, r);
           const key = arkToBareId(String(entry.record_id ?? ""));
           const matches = results.filter(
             (r) => r && typeof r === "object" && resultId(r) !== undefined && arkToBareId(resultId(r)!) === key,
@@ -8795,10 +9100,12 @@ async function prepareOps(
           );
           continue;
         }
+        countryProducer = producer;
+        countryRecord = countrySidecarRecord(producer, results, matchedRecord);
       }
     }
 
-    await applyPlaceLevers(entry, i, matchedRecord);
+    await applyPlaceLevers(entry, i, matchedRecord, false, countryProducer, countryRecord);
   }
 
   // An assertions update that corrects `place` to another place and says nothing of
@@ -8816,7 +9123,14 @@ async function prepareOps(
     const place = factText(fields.place);
     if (!cur || place === undefined || place === factText(cur.place)) continue;
     const view: any = { ...cur, ...fields, standard_place: undefined };
-    await applyPlaceLevers(view, i, null, true);
+    const logEntry = typeof view.log_entry_id === "string" ? logById.get(view.log_entry_id) : undefined;
+    const results = typeof logEntry?.results_ref === "string" ? await readSidecarResults(logEntry.results_ref) : null;
+    const key = arkToBareId(String(view.record_id ?? ""));
+    const record = results?.find((r) => {
+      const id = sidecarResultId(logEntry.tool, r);
+      return id !== undefined && arkToBareId(id) === key;
+    });
+    await applyPlaceLevers(view, i, null, true, logEntry?.tool, countrySidecarRecord(logEntry?.tool, results, record));
     if (typeof view.standard_place === "string") {
       fields.standard_place = view.standard_place;
     } else if (typeof cur.standard_place === "string") {
@@ -8956,14 +9270,15 @@ async function prepareOps(
 /** Lane scoping for a narrow caller (e.g. `extraction_append`).
  *
  *  This is a second FUNCTION PARAMETER, deliberately not a field on
- *  `ResearchAppendInput`: `index.ts` dispatches with `researchAppend(args)`, a
- *  single argument built from `request.params.arguments`, so an extra key on the
- *  tool input can never reach this object. The restriction is therefore
+ *  `ResearchAppendInput`: `server.ts` dispatches with `researchAppend(args)`, a
+ *  single argument built from `request.params.arguments` (and refuses a key that
+ *  is not a parameter first), so an extra key on the tool input can never reach
+ *  this object. The restriction is therefore
  *  unforgeable from the LLM side — a caller cannot widen its own lane.
  *
  *  It also lives here, in the module, rather than in the dispatch layer, because
  *  `eval/harness/harness/mock_mcp.py` imports these functions directly and never
- *  routes through `index.ts`. A gate in dispatch would be invisible to every
+ *  routes through `server.ts`. A gate in dispatch would be invisible to every
  *  eval run. */
 export interface ResearchAppendOptions {
   /** Sections this caller may write. Omitted = every section (`research_append`). */
@@ -9415,6 +9730,8 @@ export async function researchAppend(
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
+
+    await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(projectPath));
 
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on

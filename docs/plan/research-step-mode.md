@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep (#3682), proof-conclusion prep (#3889) and PR 1 (#3883) are merged; the three route PRs (#3914, #3915, #3916), PR 2 (#3917) and the conflict PR (#3937) are open. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914 and #3915, and PR 2 (#3917) are merged; the timeline route PR (#3916) and the conflict PR (#3937) are open. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -147,6 +147,15 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
       rewrites the key), and whether it moves an agent running over about two minutes to the
       background (`CLAUDE_AUTO_BACKGROUND_TASKS`). If the tool does not offer the key, neither the
       wording nor a hook can work, and this decision goes back to the lead.
+      **Measured 2026-10-29** (Praise, Cowork on macOS, Claude Code 2.1.312, a recorder plugin on
+      `PreToolUse` and `PostToolUse`): the `Agent` tool offers no `run_in_background` (its input is
+      `description`, `prompt` and `subagent_type`); a plugin hook's `updatedInput` IS applied (the
+      spawned agent ran the rewritten prompt); and an agent that ran 154.5 s stayed in the
+      foreground and returned `status: completed`. So every Cowork agent already runs in the
+      foreground and the leak this decision guards against cannot happen there. The wording stays,
+      for the hosted planes where the key exists, and is harmless in Cowork, where the model drops
+      it. No hook arm. Also seen: the `Agent` result holds only a pointer, and the agent's report
+      comes back separately through a `SubagentHandback` call. Sent to the lead with this reading.
     - **The miss rate:** after PR 2 the worker's `ev=foregrounded` log line fires only on a spawn
       the wording did not mark `false`, and the wording is the same on every plane, so that rate
       stands for Cowork's, as rider 2's halt count does.
@@ -361,7 +370,10 @@ that apply:
       again, so the researcher never sees "Research complete" for it. Fixing it properly
       means stamping the project's completeness on the turn row at close and comparing with
       the previous closed turn: one column, one small query, no extra `research.json` read,
-      but a migration. Worth doing, and sized here rather than guessed at.
+      but a migration. Worth doing, and sized here rather than guessed at. The completion
+      halt (#3542 lead 1) already labels the turn whose proof-conclusion call completed the
+      project, a second completion included; the gap is left only where that halt did not
+      fire.
 - **The router stops ordering the model not to yield.** `skills/research/SKILL.md` deletes:
   - the "Continuous work" orders;
   - "Iterate — without yielding";
@@ -589,8 +601,8 @@ that apply:
        in an autonomous run (`agents/person-evidence.md:547-558`), and it learns that from its
        delegation, which today carries only assertion ids.
        - **The router passes `userPresent: no`** to person-evidence in a turn whose message is
-         "Keep going." or "Wrap it up.", as it already does for search-external-sites
-         (`skills/research/SKILL.md:282`). e2e replies "Keep going." (section F), so it gets
+         "Keep going." or "Wrap it up.". search-external-sites gets `userPresent: no` only on an
+         autonomous run, since under "no" it logs a deferred negative and skips the item. e2e replies "Keep going." (section F), so it gets
          the same.
        - **`person-evidence.md:547-552` and `:483-485` are reworded** to key on that field, and
          an absent field means a researcher is present. Today they say the rule applies "only …
@@ -732,7 +744,7 @@ that apply:
   - **"Wrap it up."** runs B2's turn, from any state: a question one step from concluded, one in
     a conflict's evidence round, or one with no evidence yet. The router passes proof-conclusion
     `newQuestion: yes`, so the project is not marked complete. The turn ends by offering the new
-    question ("Continue with choosing the next question?"), and question-selection writes it
+    question ("Continue with setting up the project?"), and question-selection writes it
     next turn under step 1b's exception (section B2).
   - **When a blocking conflict holds the question open** (decision 12), the new question
     still starts: the wrapped-up question has a summary and no open item.
@@ -903,9 +915,8 @@ Step mode removes the runaway structurally:
   what was found and saved (PR #3235), then offers "Continue with X?".
 - **A misclassified ask costs one step, not a cycle.**
 - **A compound one-shot ask** runs its first deliverable, and offers the second as the next
-  step. That reverses `ut_research_c1k` and its validator
-  `test_every_bounded_deliverable_is_handed_off` (`eval/harness/validators/test_research.py`),
-  which require both in one turn.
+  step. That reverses `ut_research_c1k`, which required both in one turn; its `delivers:` tag
+  and that tag's validator are deleted, since no test can carry one now.
 - **A one-shot ask with a PID on a new folder** needs the project first. Once issue #3384 makes
   project creation a single `project_create` tool call, that runs inside the one-shot's turn.
   Until then, it costs one extra prompt.

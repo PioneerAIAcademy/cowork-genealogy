@@ -20,6 +20,10 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
         return "West Bromwich, Staffordshire, England, United Kingdom";
       return null;
     }),
+    // A sidecar collection's coverage rep (the record's country). Offline.
+    repIdToStandardPlace: vi.fn(
+      async (repId: string) => ({ "4321": "Coahuila, Mexico", "324": "World" } as Record<string, string>)[repId] ?? null,
+    ),
     // The birthplace cap's distance test (#3390). Unknown names resolve to null,
     // so no test reaches the live Places API.
     standardPlaceToCoords: vi.fn(async (name: string) => {
@@ -65,6 +69,8 @@ import {
   unlinkedParentProofInvariants,
   narrativeLengthWarnings,
   NARRATIVE_WORD_BUDGET,
+  planItemSearchedSkipInvariants,
+  planItemCompletionRecordTypeInvariants,
 } from "../../src/tools/research-append.js";
 import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
@@ -77,7 +83,14 @@ import {
 } from "../../src/utils/image-store.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { __testing, exampleHints } from "../../src/tools/research-append-examples.js";
-import { resolveStandardPlace, standardPlaceToCoords, checkFirstPlace } from "../../src/utils/place-resolver.js";
+import {
+  resolveStandardPlace,
+  repIdToStandardPlace,
+  standardPlaceToCoords,
+  checkFirstPlace,
+} from "../../src/utils/place-resolver.js";
+import { callTool } from "../helpers/call-tool.js";
+import { questionStatus } from "../../src/utils/question-state.js";
 
 /** Claude Code saves a tool result over this many characters to a file the agent may not be able to
  *  read back, so a refused answer has to stay well under it. */
@@ -467,15 +480,15 @@ describe("research_append (Phase 1)", () => {
     it("(8) is research_append's alone: extraction_append refuses a correction", async () => {
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink());
 
-      const r = await extractionAppend({
+      const r = await callTool("extraction_append", {
         projectPath: dir,
         section: "assertions",
         op: "update",
         entryId: "a_011",
         fields: { standard_place: "Odessa, Francis No. 127, Saskatchewan, Canada" },
-      } as any, LOCAL);
-      expect(r.ok).toBe(false);
-      expect((r.errors ?? []).join(" ")).toMatch(/Correcting an existing assertion is not an extraction/);
+      });
+      expect(r.isError).toBe(true);
+      expect(r.text).toMatch(/Correcting an existing assertion is not an extraction/);
       expect((await factF4()).standard_place).not.toBe("Odessa, Francis No. 127, Saskatchewan, Canada");
     });
 
@@ -7027,6 +7040,10 @@ describe("research_append (batch ops)", () => {
     performed: "2026-05-01T10:15:00Z",
     tool: "record_search",
     query: { surname: "Test" },
+    // The seeded item is a `census` record_type (seededPlanItem), and a completed
+    // census item is one whose census search was logged — so the attributed entry
+    // names a census search, satisfying planItemCompletionRecordTypeInvariants.
+    notes: "1880 census household",
     outcome: "positive",
     results_examined: 1,
     external_site: null,
@@ -7210,6 +7227,34 @@ describe("research_append (batch ops)", () => {
     await writeProject(research);
     const r = await researchAppend(newQ());
     expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+  });
+  describe("(fan-pivot) a fan_pivot question names the open question it advances", () => {
+    const concluded = () => {
+      const research = attrResearch("completed", []);
+      (research as any).proof_summaries = [summaryFor("q_001")];
+      return research;
+    };
+    it.each([
+      ["empty unblocks", { selection_basis: "fan_pivot", depends_on: ["q_001"], unblocks: [] }],
+      ["unblocks naming no open question", { selection_basis: "fan_pivot", unblocks: ["q_009"] }],
+    ])("refuses %s — writes nothing", async (_label, fields) => {
+      await writeProject(concluded());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend(newQ(fields));
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(/fan_pivot.*unblocks.*\(open: q_001\)/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+    it("allows one whose unblocks names the open question", async () => {
+      await writeProject(concluded());
+      const r = await researchAppend(newQ({ selection_basis: "fan_pivot", depends_on: ["q_001"], unblocks: ["q_001"] }));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+    it("leaves other selection bases alone", async () => {
+      await writeProject(concluded());
+      const r = await researchAppend(newQ({ selection_basis: "objective_decomposition", unblocks: [] }));
+      expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
   });
   it("(open-question) needs BOTH halves: a summary with an item still to do still blocks", async () => {
     // E's own route can hand a concluded question fresh searches. While those
@@ -9677,10 +9722,248 @@ describe("research_append (composite persist + enforcement)", () => {
       ],
     });
     expect(r.ok, JSON.stringify(r)).toBe(true);
-    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Shenandoah", {
-      contextPlaces: ["Borough of Shenandoah, County of Schuylkill"],
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith(
+      "Shenandoah",
+      expect.objectContaining({ contextPlaces: ["Borough of Shenandoah, County of Schuylkill"] }),
+    );
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith(
+      "Dublin, Ireland",
+      expect.objectContaining({ contextPlaces: [] }),
+    );
+  });
+
+  /** The record country research_append offered the resolver for `place`. */
+  const countryGiven = async (place: string) => {
+    const call = vi.mocked(resolveStandardPlace).mock.calls.find(([text]) => text === place);
+    expect(call, place).toBeDefined();
+    return call![1]!.recordCountry!();
+  };
+
+  /** sidecarRecord() whose collection covers `coverage`; its record's own
+   *  coverage is a Texas place, which must never count. */
+  const recordInCollection = (coverage: Record<string, string> | null) => {
+    const rec: any = sidecarRecord();
+    rec.gedcomx.sources = [
+      { id: "SD-R", resource_type: "Record", coverage: { standard_place: "Austin, Travis, Texas, United States" } },
+      ...(coverage ? [{ id: "SD-C", resource_type: "Collection", coverage }] : []),
+    ];
+    return rec;
+  };
+
+  const appendFromRecord = (place: string) => ({
+    section: "assertions" as const,
+    op: "append" as const,
+    entry: { ...noId(validAssertion("x", "src_001")), record_id: "ark:/61903/1:1:ABCD-123", log_entry_id: "log_001", place },
+  });
+
+  it("offers the resolver the record's country: its collection's coverage place", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar([recordInCollection({ standard_place: "Forêts, France", place_rep_id: "4321" })]);
+    const r = await researchAppend({ projectPath: dir, ops: [appendFromRecord("Luxemburg")] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Luxemburg")).toBe("France");
+  });
+
+  it("resolves the collection's coverage rep id by id when the sidecar names no coverage place", async () => {
+    vi.mocked(repIdToStandardPlace).mockClear();
+    await writeProject(sidecarResearch());
+    await writeSidecar([recordInCollection({ place_rep_id: "4321" })]);
+    const r = await researchAppend({ projectPath: dir, ops: [appendFromRecord("Texas")] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Texas")).toBe("Mexico");
+    expect(vi.mocked(repIdToStandardPlace)).toHaveBeenCalledWith("4321");
+  });
+
+  it("never reads the record's country off its places: with no collection coverage there is none", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar([recordInCollection(null)]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [appendFromRecord("Texas"), appendFromRecord("Austin, Travis, Texas, United States")],
     });
-    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Dublin, Ireland", { contextPlaces: [] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Texas")).toBeNull();
+  });
+
+  it("gives no record country for a World collection, so an entry withheld in some countries stays withheld", async () => {
+    const coverages: Record<string, string>[] = [{ standard_place: "World" }, { place_rep_id: "324" }];
+    for (const coverage of coverages) {
+      vi.mocked(resolveStandardPlace).mockClear();
+      await writeProject(sidecarResearch());
+      await writeSidecar([recordInCollection(coverage)]);
+      const r = await researchAppend({ projectPath: dir, ops: [appendFromRecord("Louth")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(await countryGiven("Louth"), JSON.stringify(coverage)).toBeNull();
+    }
+  });
+
+  it("offers the record's country when an update corrects an assertion's place", async () => {
+    const research = sidecarResearch();
+    research.assertions.push({
+      ...validAssertion("a_002"),
+      record_id: "ark:/61903/1:1:ABCD-123",
+      record_persona_id: "p_1",
+      log_entry_id: "log_001",
+      place: "Pottsville, Pennsylvania",
+    });
+    await writeProject(research);
+    await writeSidecar([recordInCollection({ standard_place: "Forêts, France" })]);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_002",
+      fields: { place: "Luxemburg" },
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Luxemburg")).toBe("France");
+  });
+
+  it("copies no sidecar value when an update corrects an assertion's place, and geocodes it instead", async () => {
+    // The record has a fact at the corrected place whose standard_place an
+    // append would copy.
+    const research = sidecarResearch();
+    research.assertions.push({
+      ...validAssertion("a_002"),
+      record_id: "ark:/61903/1:1:ABCD-123",
+      record_persona_id: "p_1",
+      log_entry_id: "log_001",
+      place: "Pottstown, Pennsylvania",
+    });
+    await writeProject(research);
+    await writeSidecar();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_002",
+      fields: { place: "Pottsville, Pennsylvania" },
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Pottsville, Pennsylvania", expect.anything());
+    const a = (await readResearch()).assertions.find((x: any) => x.id === "a_002");
+    expect(a.place).toBe("Pottsville, Pennsylvania");
+    expect(a.standard_place).toBeUndefined();
+  });
+
+  // ── The record's country for image records (lead, 2026-10-29) ──
+
+  /** research whose log_001 is a `tool` entry, its sidecar holding `results`. */
+  async function writeToolSidecar(tool: string, results: any[], assertions: any[] = []) {
+    const research = baseResearch();
+    research.log = [{ ...searchLogEntry("results/log_001.json"), tool }] as any;
+    research.assertions.push(...assertions);
+    await writeProject(research);
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "results", "log_001.json"),
+      JSON.stringify({
+        log_id: "log_001",
+        tool,
+        retrieved: "2026-01-01T00:00:00Z",
+        returned_count: results.length,
+        payload: { results },
+      }),
+    );
+  }
+
+  const transcription = (place?: string) => ({
+    id: "004884748_02613",
+    source: { imageId: "004884748_02613", ...(place !== undefined ? { place } : {}) },
+    content_type: "image/jpeg",
+    size_bytes: 1,
+    model: "m",
+    transcription: "Deed of sale",
+  });
+  const appendCiting = (recordId: string, place: string) => ({
+    section: "assertions" as const,
+    op: "append" as const,
+    entry: { ...noId(validAssertion("x", "src_001")), record_id: recordId, log_entry_id: "log_001", place },
+  });
+
+  it("takes an image record's country from its transcription's image-group place, whatever its record_id", async () => {
+    const films: [string, string][] = [
+      ["Trumbull, Ohio, United States", "United States"],
+      ["Campbeltown, Argyll, Scotland", "United Kingdom"],
+      ["Lidečko, Ungarisch Brod, Moravia", "Czechia"],
+    ];
+    for (const [place, country] of films) {
+      vi.mocked(resolveStandardPlace).mockClear();
+      await writeToolSidecar("image_transcribe", [transcription(place)]);
+      const r = await researchAppend({ projectPath: dir, ops: [appendCiting("capture:trumbull-deed-1890", "Texas")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(await countryGiven("Texas"), place).toBe(country);
+    }
+  });
+
+  it("gives an image record no country when its transcription has no place, or the sidecar is not one page", async () => {
+    const cases: [string, any[]][] = [
+      ["no place", [transcription()]],
+      ["a World place", [transcription("World")]],
+      ["two pages", [transcription("Trumbull, Ohio, United States"), transcription("Trumbull, Ohio, United States")]],
+    ];
+    for (const [label, results] of cases) {
+      vi.mocked(resolveStandardPlace).mockClear();
+      await writeToolSidecar("image_transcribe", results);
+      const r = await researchAppend({ projectPath: dir, ops: [appendCiting("capture:trumbull-deed-1890", "Texas")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(await countryGiven("Texas"), label).toBeNull();
+    }
+  });
+
+  it("reads a staged page's place only from an image_transcribe sidecar: a record_search result's is no country", async () => {
+    const stray = { ...sidecarRecord(), source: { place: "Ohio, United States" } };
+    await writeToolSidecar("record_search", [stray]);
+    const r = await researchAppend({ projectPath: dir, ops: [appendFromRecord("Texas")] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Texas")).toBeNull();
+  });
+
+  it("offers an image record's country when an update corrects an assertion's place", async () => {
+    const prior = {
+      ...validAssertion("a_002"),
+      record_id: "capture:trumbull-deed-1890",
+      log_entry_id: "log_001",
+      place: "Pottsville, Pennsylvania",
+    };
+    await writeToolSidecar("image_transcribe", [transcription("Trumbull, Ohio, United States")], [prior]);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_002",
+      fields: { place: "Texas" },
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Texas")).toBe("United States");
+  });
+
+  it("gives a bare place each other assertion's standard_place as context, else its place (QL5V-VR3K's Dongen)", async () => {
+    // record_read names the marriage and gives it the as-written "Dongen"; the
+    // births it left unnamed are geocoded against the marriage's standard.
+    await writeProject();
+    const a = (place: string, standard_place?: string | null) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: {
+        ...noId(validAssertion("x", "src_001")),
+        record_id: "rec-A",
+        place,
+        ...(standard_place !== undefined ? { standard_place } : {}),
+      },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        a("Dongen"),
+        a("Dongen", "Dongen, North Brabant, Netherlands"),
+        a("Breda, Noord-Brabant, Nederland", null),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace).mock.calls).toEqual([
+      ["Dongen", expect.objectContaining({ contextPlaces: ["Dongen, North Brabant, Netherlands", "Breda, Noord-Brabant, Nederland"] })],
+    ]);
   });
 
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {
@@ -9696,6 +9979,8 @@ describe("research_append (composite persist + enforcement)", () => {
             ...noId(validAssertion("x", "src_001")),
             record_id: "ark:/61903/1:1:ABCD-123",
             log_entry_id: "log_001",
+            fact_type: "residence",
+            value: "Pottsville, Pennsylvania",
             place: "Pottsville, Pennsylvania",
           },
         },
@@ -9714,6 +9999,169 @@ describe("research_append (composite persist + enforcement)", () => {
     expect((await readResearch()).assertions[1].standard_place).toBe(
       "Pottsville, Schuylkill, Pennsylvania, United States",
     );
+  });
+
+  it("copies no other person's standard_place: in a census household only the head's own fact was named (SGZQ-Y3L's shape)", async () => {
+    await writeProject(sidecarResearch());
+    const place = "Saint Peter, Carmarthenshire, Wales";
+    const census = (standard_place?: string) => ({ type: "Census", date: "1851", place, ...(standard_place ? { standard_place } : {}) });
+    await writeSidecar([
+      {
+        recordId: "ark:/61903/1:1:SGZQ-Y3L",
+        primaryId: "p_head",
+        gedcomx: {
+          persons: [
+            { id: "p_head", facts: [census("St Peter Carmarthen, Carmarthenshire, Wales, United Kingdom")] },
+            { id: "p_wife", facts: [census()] },
+            { id: "p_son", facts: [census()] },
+          ],
+        },
+      },
+    ]);
+    const assertion = (record_persona_id: string, record_role: string, fact_type = "census") => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: {
+        ...noId(validAssertion("x", "src_001")),
+        record_id: "ark:/61903/1:1:SGZQ-Y3L",
+        log_entry_id: "log_001",
+        record_persona_id,
+        record_role,
+        fact_type,
+        value: "1851",
+        date: "1851",
+        place,
+      },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        assertion("p_head", "head_of_household"),
+        assertion("p_wife", "wife"),
+        assertion("p_son", "child_1"),
+        assertion("p_head", "head_of_household", "residence"),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const saved = (await readResearch()).assertions.slice(1).map((a: any) => [a.record_persona_id, a.fact_type, a.standard_place]);
+    expect(saved).toEqual([
+      ["p_head", "census", "St Peter Carmarthen, Carmarthenshire, Wales, United Kingdom"],
+      ["p_wife", "census", undefined],
+      ["p_son", "census", undefined],
+      ["p_head", "residence", undefined],
+    ]);
+    // Each fact with no standard of its own goes to the geocoder instead.
+    expect(vi.mocked(resolveStandardPlace).mock.calls.map(([text]) => text)).toEqual([place, place, place]);
+  });
+
+  it("matches the assertion's place to its own fact's with case and surrounding spaces ignored", async () => {
+    await writeProject(sidecarResearch());
+    const standard = "St Peter Carmarthen, Carmarthenshire, Wales, United Kingdom";
+    await writeSidecar([
+      {
+        recordId: "ark:/61903/1:1:SGZQ-Y3L",
+        primaryId: "p_head",
+        gedcomx: {
+          persons: [
+            { id: "p_head", facts: [{ type: "Census", date: "1851", place: "Saint Peter, Carmarthenshire, Wales", standard_place: standard }] },
+          ],
+        },
+      },
+    ]);
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "assertions",
+          op: "append",
+          entry: {
+            ...noId(validAssertion("x", "src_001")),
+            record_id: "ark:/61903/1:1:SGZQ-Y3L",
+            log_entry_id: "log_001",
+            record_persona_id: "p_head",
+            record_role: "head_of_household",
+            fact_type: "census",
+            value: "1851",
+            date: "1851",
+            place: " saint peter, CARMARTHENSHIRE, Wales ",
+          },
+        },
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await readResearch()).assertions.at(-1).standard_place).toBe(standard);
+    expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+  });
+
+  it("copies a couple's fact to either spouse only, and nothing when the persona's matching facts disagree", async () => {
+    await writeProject(sidecarResearch());
+    await writeSidecar([
+      {
+        recordId: "ark:/61903/1:1:ABCD-123",
+        primaryId: "p_1",
+        gedcomx: {
+          persons: [
+            {
+              id: "p_1",
+              facts: [
+                // One place in two eras (Olne, 6J8F-6678), and a fact left unnamed.
+                { type: "Residence", date: "1790", place: "Olne", standard_place: "Olne, Prince-Bishopric of Liège, Holy Roman Empire" },
+                { type: "Residence", date: "1874", place: "Olne", standard_place: "Olne, Liège, Belgium" },
+                { type: "Burial", date: "1874", place: "Olne", standard_place: "Olne, Liège, Belgium" },
+                { type: "Burial", place: "Olne" },
+                { type: "Baptism", date: "1790", place: "Olne", standard_place: "Olne, Prince-Bishopric of Liège, Holy Roman Empire" },
+              ],
+            },
+            { id: "p_2" },
+            { id: "p_3" },
+          ],
+          relationships: [
+            {
+              type: "Couple",
+              person1: "p_1",
+              person2: "p_2",
+              facts: [{ type: "Marriage", date: "1850", place: "Olne", standard_place: "Olne, Liège, Belgium" }],
+            },
+          ],
+        },
+      },
+    ]);
+    const assertion = (record_persona_id: string, record_role: string, fact_type: string) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: {
+        ...noId(validAssertion("x", "src_001")),
+        record_id: "ark:/61903/1:1:ABCD-123",
+        log_entry_id: "log_001",
+        record_persona_id,
+        record_role,
+        fact_type,
+        value: "Olne",
+        place: "Olne",
+      },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        assertion("p_2", "bride", "marriage"),
+        assertion("p_1", "groom", "marriage"),
+        assertion("p_3", "witness_1", "marriage"),
+        assertion("p_1", "groom", "residence"),
+        assertion("p_1", "groom", "burial"),
+        // A Baptism is a christening, folded as research_append folds fact types.
+        assertion("p_1", "groom", "christening"),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const saved = (await readResearch()).assertions.slice(1).map((a: any) => [a.record_persona_id, a.fact_type, a.standard_place]);
+    expect(saved).toEqual([
+      ["p_2", "marriage", "Olne, Liège, Belgium"],
+      ["p_1", "marriage", "Olne, Liège, Belgium"],
+      ["p_3", "marriage", undefined],
+      ["p_1", "residence", undefined],
+      ["p_1", "burial", undefined],
+      ["p_1", "christening", "Olne, Prince-Bishopric of Liège, Holy Roman Empire"],
+    ]);
   });
 
   it("leaves a non-place phrase unstandardized: no sidecar copy, no geocode, no warning (#1962)", async () => {
@@ -9874,6 +10322,8 @@ describe("research_append (composite persist + enforcement)", () => {
             ...noId(validAssertion("x", "src_001")),
             record_id: "ark:/61903/1:1:ABCD-123",
             log_entry_id: "log_001",
+            fact_type: "residence",
+            value: "Pottsville, Pennsylvania",
             place: "Pottsville, Pennsylvania",
           },
         },
@@ -13447,6 +13897,10 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
         performed: "2026-05-01T10:15:00Z",
         tool: "external_site",
         query: { surname: "Flynn" },
+        // census record_type (seededPlanItem) — the handoff is a census search, so
+        // its entry names census, satisfying planItemCompletionRecordTypeInvariants
+        // when a captured hand-off completes the item.
+        notes: "1850 US census household handoff",
         outcome: "negative",
         results_examined: 0,
         results_ref: null,
@@ -13532,6 +13986,9 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
           performed: "2026-05-03T10:15:00Z",
           tool: "record_search",
           query: { surname: "Flynn" },
+          // census item — the later FamilySearch hit is its census search, so the
+          // record-type gate does not pre-empt the capture-pending one.
+          notes: "1880 census household for Flynn",
           outcome: "positive",
           results_examined: 1,
           results_ref: null,
@@ -13651,6 +14108,10 @@ describe("research_append — the two exhaustiveness gates (#1335, Phase 4)", ()
       performed: "2026-05-01T10:15:00Z",
       tool: "record_search",
       query: { surname: "Test" },
+      // census record_type (validPlanItem) — its attributed search names a census
+      // search, so planItemCompletionRecordTypeInvariants does not pre-empt the
+      // gates this block exercises.
+      notes: "1880 census household",
       outcome: "positive",
       results_examined: 1,
       external_site: null,
@@ -15561,6 +16022,10 @@ describe("research_append — a search that ran is never marked skipped (#3516)"
   const URL = "https://www.ancestry.com/search/collections/1850usfedcen/?name=Patrick_Flynn";
   const logEntry = (id: string, tool: string, outcome: string, extra: Record<string, unknown> = {}) => ({
     id, plan_item_id: "pli_001", performed: "2026-05-01T10:15:00Z", tool, query: { surname: "Flynn" },
+    // census note so the search matches pli_001's (seededPlanItem) census record_type.
+    // Without it, the #3592 completion guard would refuse completion and the new
+    // searched-skip escape hatch would (correctly) allow the skip these tests refuse.
+    notes: "1850 census household",
     outcome, results_examined: 1, results_ref: null, external_site: null, ...extra,
   });
   const deferred = (id: string) =>
@@ -15634,6 +16099,88 @@ describe("research_append — a search that ran is never marked skipped (#3516)"
   it("does not fire on re-stating an item already skipped", async () => {
     await project([logEntry("log_001", "record_search", "negative")], "skipped");
     expect(singleOk(await skip())).toBeTruthy();
+  });
+});
+
+// A plan item with a vocabulary-bearing record_type may not complete unless an
+// attributed log entry names a search of that type — the probate item closed off
+// a land search (ut_search_full_text_016/_020, #3592). Content half of the
+// completion check; planItemCompletionRecordTypeInvariants.
+describe("research_append — a completed plan item needs a search of its own record type (#3592)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-rt-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const logEntry = (overrides: any) => ({
+    id: "log_001",
+    plan_item_id: "pli_006",
+    performed: "2026-01-01T00:00:00Z",
+    tool: "fulltext_search",
+    query: {},
+    outcome: "positive",
+    results_examined: 1,
+    external_site: null,
+    results_ref: null,
+    ...overrides,
+  });
+  const projectWith = async (recordType: string, entry: any) => {
+    const research = baseResearch();
+    research.questions = [validQuestion("q_001")];
+    research.plans = [
+      validPlan("pl_002", "q_001", "active", [
+        { ...seededPlanItem("pli_006"), record_type: recordType, status: "in_progress" },
+      ]),
+    ];
+    research.log = [entry];
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
+  };
+  const complete = () =>
+    researchAppend({
+      projectPath: dir,
+      section: "plan_items",
+      op: "update",
+      planId: "pl_002",
+      entryId: "pli_006",
+      fields: { status: "completed" },
+    } as any);
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  const itemStatus = async () => (await readResearch()).plans[0].items[0].status;
+
+  it("refuses completing a probate item off a deed/land search", async () => {
+    await projectWith(
+      "probate",
+      logEntry({ notes: "1 result in Pennsylvania Land Records, Schuylkill", query: { keywords: "+Thomas +Flynn", recordType: "deed" } }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(false);
+    expect((r as any).errors.join(" ")).toMatch(/record_type 'probate'.*no log\[\] entry.*names a probate search/s);
+    expect(await itemStatus()).toBe("in_progress"); // refused write leaves it open — passes the validator
+  });
+
+  it("allows completing a probate item off an estate search", async () => {
+    await projectWith(
+      "probate",
+      logEntry({ notes: "Estate inventory and appraisement of Thomas Flynn", query: { keywords: "+Flynn +estate" } }),
+    );
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    expect(await itemStatus()).toBe("completed");
+  });
+
+  it("allows completion when the record_type carries probate only via its query filter", async () => {
+    await projectWith("probate", logEntry({ notes: "Searched Schuylkill", query: { keywords: "+Thomas +Flynn", recordType: "probate" } }));
+    expect((await complete()).ok).toBe(true);
+  });
+
+  it("does not fire for a record_type outside the starter vocabulary (structural check only)", async () => {
+    await projectWith("deed", logEntry({ notes: "Pennsylvania Land Records", query: { keywords: "+Flynn" } }));
+    const r = await complete();
+    expect(r.ok).toBe(true);
+    expect(await itemStatus()).toBe("completed");
   });
 });
 
@@ -15791,5 +16338,22 @@ describe("research_append: a localities first place must be in the place standar
     expect(errors.join(" ")).not.toMatch(/ops\[0\]/);
     expect((await readResearch()).localities ?? []).toHaveLength(0);
   });
-});import { questionStatus } from "../../src/utils/question-state.js";
+});
 
+describe("a searched plan item the record-type check will not complete can be skipped (#3592)", () => {
+  const research = {
+    log: [{ id: "log_001", plan_item_id: "pli_006", tool: "record_search", outcome: "negative", query: { recordType: "census" } }],
+  };
+  const item = { id: "pli_006", record_type: "probate" };
+
+  it("refuses 'completed' and accepts 'skipped', so the item is never stuck in_progress", () => {
+    expect(planItemCompletionRecordTypeInvariants({ ...item, status: "completed" }, research)).toHaveLength(1);
+    expect(planItemSearchedSkipInvariants({ ...item, status: "skipped", skip_category: "not_applicable" }, research)).toEqual([]);
+  });
+
+  it("still refuses the skip when the item's own record-type search ran", () => {
+    const probate = { log: [{ ...research.log[0], query: { recordType: "probate" } }] };
+    expect(planItemCompletionRecordTypeInvariants({ ...item, status: "completed" }, probate)).toEqual([]);
+    expect(planItemSearchedSkipInvariants({ ...item, status: "skipped", skip_category: "not_applicable" }, probate)).toHaveLength(1);
+  });
+});

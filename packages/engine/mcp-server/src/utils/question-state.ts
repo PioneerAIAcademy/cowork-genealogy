@@ -95,7 +95,8 @@ function pendingExtraction(research: any, logs: any[]): any[] {
   );
 }
 
-/** Which search destination a plan item wants, by its repository.
+/** Which search destination a plan item wants: search-hints for a `fs_hints`
+ *  item (issue #3153), else by its repository.
  *
  *  Lifted so section E's conflict-evidence arm and the ladder's own dispatch arm
  *  cannot disagree. They would: the plan writes E's arm as "the next step is
@@ -103,22 +104,38 @@ function pendingExtraction(research: any, logs: any[]): any[] {
  *  wrong for a conflict whose decisive record is on Ancestry -- the router would
  *  spawn the wrong agent. */
 function searchStepFor(item: any): string {
+  if (item?.record_type === "fs_hints") return `search-hints — ${item.id}`;
   const repo = typeof item?.repository === "string" ? item.repository.trim() : "";
   if (!repo || /familysearch/i.test(repo)) return "search-records";
   return `search-external-sites — ${item.id} (${repo})`;
 }
 
 /** The lowest-sequence `planned`/`in_progress` item on a plan that is still
- *  active, **skipping one that waits only on the researcher's upload**.
+ *  active, **skipping one that waits only on the researcher's upload**, and a
+ *  `fs_hints` item (issue #3153) that is `in_progress` with no `log[]` entry
+ *  naming it: that one is waiting on the researcher's verdicts, so it never
+ *  pins `nextStep` and the router moves to the next search. (A `planned`
+ *  `fs_hints` item is still returned: that is the one search-hints executes.)
  *
- *  `hasOpenWork` decides WHETHER a search is due from the set without those
- *  items; this picks WHICH one. Reading different sets let the ladder name a
- *  hand-off `awaitingUser` already lists — a link the router is told never to
- *  raise again — so the question stalled until the upload arrived. */
+ *  `hasOpenWork` decides WHETHER a search is due from the set without the
+ *  upload-waiting items; this picks WHICH one. Reading different sets let the
+ *  ladder name a hand-off `awaitingUser` already lists — a link the router is
+ *  told never to raise again — so the question stalled until the upload
+ *  arrived. */
 function nextUnexecutedItem(research: any, plans: any[]): any | null {
   const waitingOnUpload = awaitingUploadItemIds(research?.log);
+  const itemsNamedByLog = new Set(
+    arr(research?.log)
+      .map((l: any) => l?.plan_item_id)
+      .filter((id: any): id is string => typeof id === "string"),
+  );
+  const isWaitingHints = (i: any) =>
+    i?.record_type === "fs_hints" &&
+    i?.status === "in_progress" &&
+    !itemsNamedByLog.has(i?.id);
   const items = openItems(plans)
     .filter((i) => !waitingOnUpload.has(i?.id))
+    .filter((i) => !isWaitingHints(i))
     .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
   return items[0] ?? null;
 }
@@ -661,10 +678,10 @@ export function questionStatus(research: any, question: any, tree: any = null): 
       ? "extraction (extraction_append for FamilySearch records, record-structurer for any other source)"
       : item
         ? searchStepFor(item)
-        // Unreachable today: `hasOpenWork` reads ACTIVE plans only while the
-        // picker also takes status-less ones, so its items are a subset of the
-        // picker's and both apply the same upload skip — if the rung fired,
-        // the picker has at least that item. Kept for when the picker skips more.
+        // Reached when the only open item is a `fs_hints` item waiting on
+        // verdicts: `hasOpenWork` counts it and the picker skips it. Otherwise
+        // unreachable — `hasOpenWork`'s items are a subset of the picker's and
+        // both apply the same upload skip.
         : "research-exhaustiveness, then proof-conclusion";
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;

@@ -32,6 +32,7 @@ import { readExternalCollections } from "../utils/external-collections-store.js"
 import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
+import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
 
 const MAX_ITEMS = 50;
 
@@ -427,7 +428,7 @@ function matches(item: any, rule: FilterRule, values: string[], scope?: Set<stri
 /** The unregistered disagreements a `conflicts` read is asking about: the
  *  question's own assertions under `questionId` (project_context's scope),
  *  otherwise every assertion; narrowed to those naming any of `assertionIds`. */
-function disagreementsInScope(
+export function disagreementsInScope(
   research: any,
   input: ResearchQueryInput,
   assertionIds: string[] | undefined,
@@ -469,7 +470,7 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
           ? " Plan items live under section 'plans'."
           : section === undefined &&
               (input as unknown as Record<string, unknown>).sections !== undefined
-            ? " The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'."
+            ? ` ${SECTIONS_NEAR_MISS}`
             : "";
       throw new ResearchQueryError(
         `section ${JSON.stringify(section)} is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}.` +

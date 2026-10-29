@@ -621,6 +621,60 @@ def test_per_claim_tree_encoding(before_state, after_state, test):
     )
 
 
+# --- Naming customs left out of the conclusion (naming-not-evidence) ---
+#
+# Issue #3251: a proof summary weighed children's names as "strong
+# circumstantial support" for a parentage and put a grandmother on the wrong
+# side. The scenario plants both in h_002's notes, which the judge also reads,
+# and across six graded runs the judge quoted those notes as the run's own
+# narrative. So this reads only what the run wrote.
+
+_NAMING_CUSTOM = re.compile(
+    r"\bnam(?:ing|e)\s+(?:customs?|patterns?|conventions?|traditions?|practices?)\b"
+    r"|\bnamed\s+(?:for|after)\s+(?:(?:the|his|her|their)\s+)?"
+    r"(?:(?:paternal|maternal)\s+)?grand(?:father|mother|parent)s?\b",
+    re.IGNORECASE,
+)
+_MATERNAL_GRANDMOTHER = re.compile(r"\bmaternal\s+grandmother\b", re.IGNORECASE)
+_BARE_EXCLUSION = re.compile(r"\b(?:not|never|no|excluded)\b", re.IGNORECASE)
+_EXCLUSION_SPOILERS = re.compile(
+    r"Thomas|Bridget|grand|first\s+(?:son|daughter)|support|consistent|suggest",
+    re.IGNORECASE,
+)
+
+
+def _naming_sentences(text):
+    joined = re.sub(r"[ \t]*\n(?![ \t]*\n)[ \t]*", " ", text or "")
+    sentences = re.split(r"(?<=[.!?])\s+|\n\s*\n", joined)
+    hits = []
+    for s in sentences:
+        if _MATERNAL_GRANDMOTHER.search(s):
+            hits.append(s.strip())
+        elif _NAMING_CUSTOM.search(s) and not (
+            _BARE_EXCLUSION.search(s) and not _EXCLUSION_SPOILERS.search(s)
+        ):
+            hits.append(s.strip())
+    return hits
+
+
+def test_naming_custom_not_cited(after_state, agent_returns, text_response, test):
+    """Tagged `naming-not-evidence`: the q_001 proof summary's narrative and
+    the agent's reply leave naming customs out. A bare exclusion ("naming
+    patterns are not evidence and were not considered") passes; a sentence
+    that describes the custom, ties it to a candidate, or names a maternal
+    grandmother fails, whatever it concludes."""
+    if "naming-not-evidence" not in test.get("tags", []):
+        pytest.skip("not a naming-not-evidence test")
+    ps = _proof_summary_for_question(after_state, "q_001")
+    assert ps is not None, "no proof_summaries entry for q_001 found in after_state"
+    reply = agent_return_text(agent_returns, "proof-conclusion") or (text_response or "")
+    hits = _naming_sentences(ps.get("narrative_markdown") or "") + _naming_sentences(reply)
+    assert not hits, (
+        "the conclusion cites a naming custom or a maternal grandmother; children's "
+        f"names are not evidence of a parentage: {hits!r}"
+    )
+
+
 #: Tiers that are a final answer rather than a stalled one. A disproved
 #: conclusion is as settled as a proved one -- the evidence refutes the claim --
 #: so asking why it is not "higher" is a category error. `not_proved` is
@@ -804,12 +858,22 @@ _STILL_TO_SEARCH_CUE = re.compile(
     r"|remain(?:s|ing)? unsearched|still (?:to search|unsearched)|unexamined|next step",
     re.I,
 )
+_FOOTNOTE_DEF = re.compile(r"[ \t]*(?:\^(\d+)|\[\^(\d+)\]:)[ \t]")
+_FOOTNOTE_REF = re.compile(r"\^(\d+)|\[\^(\d+)\]")
+
+
+def _footnote_number(line):
+    m = _FOOTNOTE_DEF.match(line)
+    return (m.group(1) or m.group(2)) if m else None
 
 
 def _still_to_search_text(text):
     """Each section's text, split at heading lines and at a `---` rule, from
     its first still-to-search cue to its end. The rule is where footnotes start:
-    a footnote citing the Hyde Genealogy as searched is not a to-do item."""
+    a footnote citing the Hyde Genealogy as searched is not a to-do item. A
+    footnote inside that text counts only when the text cites it: the footnotes
+    gather every citation in the narrative, those of records it reports as
+    searched too."""
     parts = []
     for para in re.split(
         r"\n(?=[ \t]*(?:#{1,6}[ \t]|\*\*[^*\n]+\*\*[ \t]*$|(?:-{3,}|\*{3,}|_{3,})[ \t]*$))",
@@ -817,7 +881,11 @@ def _still_to_search_text(text):
     ):
         m = _STILL_TO_SEARCH_CUE.search(para)
         if m:
-            parts.append(para[m.start():])
+            lines = para[m.start():].split("\n")
+            kept = [line for line in lines if _footnote_number(line) is None]
+            cited = {a or b for a, b in _FOOTNOTE_REF.findall("\n".join(kept))}
+            kept += [line for line in lines if _footnote_number(line) in cited]
+            parts.append("\n".join(kept))
     return "\n".join(parts)
 
 
@@ -871,6 +939,21 @@ def test_stale_proof_refreshed(before_state, after_state, test):
         f"{_STALE_PROOF_ID}'s {', '.join(stale)} still lists Walworth's Hyde "
         "Genealogy as still to search, though log_021 searched both volumes"
     )
+
+
+def test_namesake_untied_death_not_encoded(before_state, after_state, test):
+    """Tag-gated (`namesake-encoding`): with a namesake recorded on I1 and the
+    estate record untied to him, no Death or Burial fact is added to I1."""
+    if "namesake-encoding" not in (test.get("tags") or []):
+        pytest.skip("not a namesake-encoding test")
+
+    def facts(state):
+        tree = state.get("tree_gedcomx_json") or {}
+        person = next((p for p in tree.get("persons") or [] if p.get("id") == "I1"), {})
+        return person.get("facts") or []
+
+    added = [f for f in facts(after_state) if f not in facts(before_state) and f.get("type") in ("Death", "Burial")]
+    assert not added, f"a death was encoded onto I1 from a record untied to him under the namesake row: {added}"
 
 
 # --- Narrative edit form (issue #3542, lead 2c) --------------------------
