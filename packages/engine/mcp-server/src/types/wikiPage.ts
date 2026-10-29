@@ -1,3 +1,5 @@
+import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
+
 export interface WikiReadInput {
   url: string;
   /** UTF-16 code-unit offset of the first character to return. Default 0. */
@@ -18,10 +20,9 @@ export interface WikiPageResult {
 }
 
 /** The most one part of a page may hold: the JSON-escaped body of `content`, in
- *  characters. Claude Code saves a tool result over 50,000 characters to a file, and an
- *  agent without Bash cannot read it back; the envelope around `content` is a few
- *  hundred more. Shared by `wiki_read` and `wiki_place_page`. */
-export const WIKI_PAGE_MAX_CHARS = 40_000;
+ *  characters. It is the shared `TOOL_RESULT_CHAR_BUDGET`, used by `wiki_read` and
+ *  `wiki_place_page`. */
+export const WIKI_PAGE_MAX_CHARS = TOOL_RESULT_CHAR_BUDGET;
 
 /** What both wiki page tools say about paging in their description. The continuation
  *  sentence is the one thing an agent needs; agent bodies do not repeat it. It carries no
