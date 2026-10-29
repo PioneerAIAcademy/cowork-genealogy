@@ -47,6 +47,7 @@ from e2e.turn_loop import Turn as TurnRecord, accumulate_usage, stream_turns
 from harness.skill_runner import load_step_boundary  # one loader for both harness planes
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
+    OWNED_APPENDS as OWNED_APPEND_OWNERS,  # the SHIPPED hook's map, not a copy
     OWNED_DECLARATIONS as OWNED_DECLARATION_OWNERS,  # the SHIPPED hook's map, not a copy
     OWNED_FIELDS as OWNED_FIELD_OWNERS,  # the SHIPPED hook's map, not a copy
     OWNED_CLAIMS as OWNED_CLAIM_ROUTES,  # the SHIPPED hook's map, not a copy
@@ -2531,7 +2532,7 @@ async def _run_agent(
         # block above says the whole tool is reserved for a subagent, which is
         # true of image_read and false of research_append: that one is
         # the general writer, called from the main thread constantly for plans,
-        # questions, conflicts and the log. Sharing the branch handed the agent
+        # conflicts and the log. Sharing the branch handed the agent
         # a deny telling it the tool was off-limits, and a narration naming the
         # wrong agent and the wrong artifact.
         if (denied := main_thread_owned_section(input_data)) is not None:
@@ -2556,13 +2557,20 @@ async def _run_agent(
                     f"`{bare}` is unaffected; delegate this write rather than "
                     "making it here."
                 )
+            elif rule == "owned_append":
+                text = (
+                    f"`{bare}` denied on `{owned}` — adding an entry there is "
+                    f"routed to the {OWNED_APPEND_OWNERS[owned]} agent. Updating an "
+                    f"existing entry is unaffected; delegate the new entry rather "
+                    "than adding it here."
+                )
             elif rule == "declaration":
                 owned_section, _, field = owned.partition(".")
                 agent = OWNED_DECLARATION_OWNERS[(owned_section, field)]
                 text = (
                     f"`{bare}` denied on `{owned_section}` — writing a stop-gate "
                     f"`stopped_because` value is routed to the {agent} agent. "
-                    "Writing `stopped_because: null` (new question) and non-gate "
+                    "A question-selection question with `stopped_because: null` and non-gate "
                     "values (`resources_spent`, `blocked_by_conflict`) are both "
                     "unaffected; delegate the stop-gate claim rather than making "
                     "it here."

@@ -59,6 +59,8 @@ repo's identifier-casing rule):
   projectStatus: string | null,          // research.project.status
   objective: string | null,              // research.project.objective, verbatim
   subjectPersonIds: string[],            // research.project.subject_person_ids; [] when absent
+  narrationGuidance: string | null,      // researcher_profile.narration_guidance, verbatim
+  subscriptions: string[],               // researcher_profile.subscriptions; [] when absent
   openQuestions: [{
     id: string,                          // q_*
     question: string,                    // truncated to ≤140 chars (139 + "…")
@@ -115,6 +117,8 @@ repo's identifier-casing rule):
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
+  sectionCounts: { [section: string]: number | null },  // entries per research_query section — §2.6
+  unregisteredDisagreementCount: number,         // what research_query's conflicts adds — §2.6
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -161,6 +165,12 @@ Projection rules:
   only surface that returns the objective: `research_query` serves array sections only, so without it a
   cold-started agent sees the objective — and any doubt it states about its own premise — only by reading
   `research.json` whole.
+- **`narrationGuidance`** / **`subscriptions`** — `researcher_profile.narration_guidance`
+  (verbatim; `null` when absent or not a string) and `researcher_profile.subscriptions` (strings
+  only; `[]` when absent). Every skill's Narration line and `search-external-sites` read these;
+  no other tool returns them, and Cowork's VM cannot `Read` `research.json`. Tree
+  facts are not here: `tree_query` serves them, so this projection does not grow for callers
+  that never need them.
 - **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only, `[]` when absent. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.
@@ -497,6 +507,33 @@ The description tells the router never to delegate a browse of a listed film and
 send its `planItemIds` to `research-plan` to dispose of (lead, 2026-10-28); the
 `research` router's `search-images` row says the same.
 
+### 2.6 `sectionCounts` — which sections a query would find empty
+
+```typescript
+sectionCounts: { [section: string]: number | null }   // every research.json section research_query serves
+unregisteredDisagreementCount: number
+```
+
+One key per section in `research_query`'s `RESEARCH_QUERY_SECTIONS` except
+`external_collections` (counted by §2.4), each the length of that research.json
+array. An absent section in `RESEARCH_QUERY_OPTIONAL_SECTIONS` counts 0, as
+`research_query` answers it; a section `research_query` would refuse — a required
+one absent, or any one present but not an array — is `null`. The contract is that
+a 0 matches the `count` an unfiltered `research_query` of that section would
+return, so a consumer may treat the 0 as having read the section and skip the
+call, and may never treat a `null` that way. The disagreement count comes from
+`research_query`'s own `disagreementsInScope`, so the two cannot drift.
+
+`conflicts` is the one section whose query returns more than its items: it also
+reports `unregisteredDisagreements`, project-wide when no `questionId` is given.
+`unregisteredDisagreementCount` is that list's length, so `conflicts: 0` with a
+non-zero count still needs the query.
+
+Why: question-selection reads several sections before it picks a question. In
+the October 2026 e2e corpus 98 of 98 of those reads came back empty; in two
+hosted sessions of 2026-10-05/06, 12 of 21 did. The reads were issued in
+parallel, so the counts save tokens and calls more than wall-clock time.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** One fixed shape, no field
@@ -581,7 +618,13 @@ untouched.
   filtering; preferred-name rendering; `sourceRefs` unioned (distinct) across
   person/fact/name references; per-source `recordIds` (distinct, verbatim)
   and `assertionCount`; `projectStatus` echoed.
-- **empty project** — empty arrays, `ok: true`.
+- **empty project** — empty arrays, every `sectionCounts` value 0, `ok: true`.
+- **`sectionCounts`** — for every section, equal to the unfiltered
+  `research_query` `count`; `unregisteredDisagreementCount` equal to that
+  query's `conflicts` `unregisteredDisagreements` length, including on a project
+  where `conflicts` counts 0 and one disagreement is unregistered; an absent
+  optional section counts 0; an absent required section, or one that is not an
+  array, is `null` and `research_query` refuses it.
 - **truncation** — a 200-char question comes back at 140 chars ending in `…`;
   a 140-char question is untouched.
 - **missing file** — `{ ok: false, errors }`, when the folder holds the other

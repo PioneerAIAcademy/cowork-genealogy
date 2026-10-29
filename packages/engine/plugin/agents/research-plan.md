@@ -142,7 +142,7 @@ subject triggers** (Step 3 pre-work) and **write the plan**:
 | `project_context`, `research_query`, `external_links_search` | FS-curated third-party collections, stored per place (Step 2(b)) |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
-| `person_read` | The question person's FamilySearch profile — relatives, facts and attached sources the project tree lacks. Never a relative's profile: the parents it proposes are leads to plan searches for |
+| `person_read` | The question person's FamilySearch profile — relatives, facts and attached sources the project tree lacks. Never a project subject's (plan them from the project tree), and never a relative's profile: the parents it proposes are leads to plan searches for |
 | `wiki_read` | One FamilySearch wiki record-type page by constructed URL, for the Step 3 pre-work triggers only |
 | `research_append` | Write `plans` / `plan_items` (assigns ids, validates, enforces the one-active-plan invariant) |
 
@@ -185,8 +185,10 @@ check whether starting-point facts are documented or merely assumed.
 Flag unsupported assumptions (e.g., "widow = mother of all children")
 and add plan items to verify them before relying on them.
 
-**Read the question person's FamilySearch profile first.** For each
-person the question is about whose tree entry has an `ark`, call
+**Read the question person's FamilySearch profile first, unless they are a
+project subject.** Plan a person in `project_context`'s `subjectPersonIds` from the
+project tree, and never call `person_read` for them. For every other person the
+question's text names whose tree entry has an `ark`, call
 `person_read({ personId, projectPath })` with the id after the ark's last `:`, before
 writing any plan item. Whatever it holds that the project tree lacks —
 parents, spouses, facts, attached sources — is a lead: state it in the
@@ -859,8 +861,8 @@ the caller, in this order:
 - when a baptism may not exist (Step 3), the `pli_` id of the item for the
   subject's own death or burial entry; if the plan has none, append it before
   you return
-- for a review, the next item and why; when nothing was written, the one-line
-  reason
+- for a review, the next item and why, then what follows it and why; when
+  nothing was written, the one-line reason
 - the hand-back: search-records for FamilySearch items, search-external-sites
   for the others, or the destination a routing case names, and whether the
   delegation already authorized execution
