@@ -309,7 +309,7 @@ described under "Who actually writes a row" below.
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 | `warning_justifications` | (none — writer-tool only) | none: no tool returns it (`research_query` excludes it, `project_context` omits it) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
 | `namesakes` | search-records (sole writer: the plugin hook routes the section to it); `research_append` stamps `record_persona_ids` | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate), `tree_edit` and `tree_correct` (the citation check) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` or `record_persona_ids` (Section 5.15). Optional section — absent until a namesake is recorded |
-| `rejected_links` | person-evidence | any caller via `research_query` | Mutable (`reason` may be filled in later); never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
+| `rejected_links` | person-evidence | any caller via `research_query` | Immutable except `reason`, which may be filled in later; `research_append` refuses an update that sets any other field (Section 5.14). Never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
 `plans[].items[]` rather than a top-level property of this file. It carries the
@@ -840,7 +840,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `move_bridge` | string or null | no | What explains a move outside the person's attested residence cluster: the sentence quoted from the destination's `{Jurisdiction}_Emigration_and_Immigration` page that names arrivals from the person's prior country, or the record id that documents the move. Null or absent means nothing bridges it. When the linked record's residence lies in a different country from every Residence fact the tree attests for the person, a `confident` link without it is refused by `research_append`; `probable` is unaffected |
 | `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool for this `(assertion_id, person_id)` pairing. `research_append` REFUSES an append that leaves this null where a record persona is reachable, so null is no longer a free default: it is correct where nothing can be scored (an image-, external-site- or PDF-sourced assertion, a full-text hit, a search that retained no sidecar) and it is REQUIRED where the tree person was minted out of the very record being cited, since scoring a persona against a person created from it only confirms itself |
 | `created` | string | yes | ISO 8601 date |
-| `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
+| `superseded_by` | string or null | no | `pe_` ID if this linking was revised, or the `rj_` ID of the rejection that retired it (Section 5.14). An `rj_` value must name an existing `rejected_links` entry |
 
 **Cardinality:** One assertion can have multiple person_evidence entries linking it to different persons. This is the expected pattern for assertions that imply relationships — e.g., a_004 ("Listed in household of Thomas Flynn, position consistent with child") is evidence for both I1 (Patrick, the child) and I2 (Thomas, the head). Create one `pe_` entry per person the assertion bears on. The `person-evidence` skill writes all links; extraction (`extraction_append`) does not create provisional links.
 
@@ -1112,6 +1112,42 @@ is not him" indistinguishable from "we have not checked."
 re-opens the same pair and spends the search again. Deleting is also how a
 disagreement gets erased rather than answered.
 
+**Only the researcher creates a rejection** (lead, 2026-10-20). A rejection is the
+researcher's statement that a record is not this person. The person-evidence agent
+writes one only when the researcher clearly says the pair is not a match; when they
+are unsure, it neither links nor rejects. In an autonomous or "Keep going" turn a
+weak match is simply left unlinked. The engine cannot see who spoke, so each row
+carries the researcher's exact words in `researcher_words`: a hedge read as a no,
+or a rejection written in a turn the researcher never spoke in, is then visible in
+the viewer and in feedback triage. That makes a slip visible, not impossible.
+
+`researcher_words` is its own field, not `reason` made required and verbatim:
+`reason` is optional on purpose (below) and mutable, so it cannot hold a record.
+`research_append` requires `researcher_words` on every append; the JSON Schema
+leaves it optional, because a whole-document validation would otherwise fail every
+write to a project that already holds a row written before the field existed.
+
+**The researcher speaks to the `research` orchestrator, not to person-evidence**
+(Richard, 2026-10-27). The hedge-to-no misread happens in the relay, so when
+`research` delegates a "not him" it passes the researcher's message verbatim, and
+person-evidence copies those words into `researcher_words` rather than the
+delegation's paraphrase of them.
+
+**A rejection undoes the link.** When `research_append` appends a rejection for a
+pair with a live `person_evidence` link, the same write sets that link's
+`superseded_by` to the rejection's `rj_` id and removes the tree facts on that
+person carrying the link's `assertion_id`. A fact whose `sources[]` also cites a
+ref other than the assertion's own source description holds another record's
+evidence; it is kept and named in the response. Names and relationships carry no
+`assertion_id`, so they are never removed, and the response says the person may
+still carry them. The write is all-or-nothing with the rest of the call. The full
+contract is in `research-append-tool-spec.md`.
+
+**Immutable except `reason`.** An update that re-pointed a rejection could move it
+onto a linked pair without retiring that link, and one that rewrote
+`researcher_words` would erase the record of what was said. There is no way to
+retract a rejection: a researcher who changes their mind starts a new project.
+
 **Optional section** (not in `required`): absent on projects that predate it.
 
 | Field | Type | Required | Description |
@@ -1120,6 +1156,7 @@ disagreement gets erased rather than answered.
 | `assertion_id` | string | yes | `^a_[0-9]+$` — the assertion proposing the link |
 | `person_id` | string | yes | The tree person the assertion was proposed against |
 | `reason` | string or null | no | Why it was rejected. Optional on purpose: **a rejection is never a demand for the right answer.** Requiring a reason would push a researcher who simply knows it is wrong into inventing a justification, and a fabricated reason is worse than none |
+| `researcher_words` | string | no in the schema; required by `research_append` on append | The researcher's own message saying the pair is not a match, verbatim — never a paraphrase. Non-empty |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
 
 ### 5.15 `namesakes`
@@ -1222,7 +1259,7 @@ assertions
 person_evidence
   ├─ assertion_id ───────────────────────────────► assertions[].id
   ├─ person_id ──────────────────────────────────► tree.gedcomx.json persons[].id
-  └─ superseded_by ──────────────────────────────► person_evidence[].id
+  └─ superseded_by ──────────────────────────────► person_evidence[].id or rejected_links[].id
 
 conflicts
   ├─ competing_assertion_ids ────────────────────► assertions[].id

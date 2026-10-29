@@ -583,6 +583,13 @@ exists because an autonomous run linked a death certificate scored
 0.026 at `probable` — a different person's death entered the tree as
 the subject's.)
 
+**Recording a rejection.** Append a `rejected_links` entry only when the
+researcher's message clearly says this record is not this person. When
+they are unsure, neither link nor reject. Put the researcher's message,
+copied verbatim, in `researcher_words`; your own analysis goes in
+`reason`. The same write retires the pair's live link and removes the
+facts it put on the person; report what the response names as kept.
+
 **Disclose the score.** Whenever a `same_person` score was computed for
 a link decision, state it in the pe_ entry's rationale (e.g. "score
 0.32; linked on strong non-name correlation") — an undisclosed score
