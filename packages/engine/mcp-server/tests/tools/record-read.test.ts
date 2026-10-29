@@ -871,16 +871,18 @@ describe("record_read names FamilySearch's standards in English for each fact's 
       ],
     } as unknown as GedcomX);
     const out = await recordReadTool({ recordId: "X1SW-6LB" }, LOCAL);
+    // The converter keeps no rep id from a local reference to an authorities
+    // place (`authorityPlaceRefs`), so those three carry none to name.
     expect(out.sources?.map((s) => [s.coverage?.place_rep_id, s.coverage?.standard_place])).toEqual([
-      ["1927095", undefined],
+      [undefined, undefined],
       ["436389", "Place 436389"],
       ["7344713", "Place 7344713"],
       ["422758", "Place 422758"],
       ["1927095", undefined],
-      ["1942949", undefined],
+      [undefined, undefined],
       ["12345", undefined],
       ["8", undefined],
-      ["1927096", undefined],
+      [undefined, undefined],
     ]);
     expect(mockedRepIdToStandardPlace.mock.calls).toEqual([["436389"], ["7344713"], ["422758"]]);
   });

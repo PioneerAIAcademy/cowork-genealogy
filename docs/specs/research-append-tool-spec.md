@@ -682,7 +682,8 @@ was measured and rejected. `external_links_search` is likewise persona-less but 
 Two prevention levers for the silent-wrong-geocode theme, applied per `assertions`
 append op (deliberately simple), and to an `assertions` update that sets `place` to a
 new place without setting `standard_place`. On that update the existing assertion is
-the base, no sidecar is consulted (geocoding only), a resolved value is written into
+the base, no sidecar value is copied (geocoding only; its sidecar record still gives
+the record's country, below), a resolved value is written into
 the update's `standard_place`, and when nothing resolves, or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
 with a warning rather than kept for the new place:
@@ -709,29 +710,93 @@ with a warning rather than kept for the new place:
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
-     it: each of the call's other assertions with the same `record_id` by its
-     `standard_place` when it has one, else its `place`. A record read's named
-     fact carries its as-written text as `place` ("Den Haag"), so its standard
-     is what still names the fact's jurisdictions.
-     A bare single-segment place ("Shenandoah") has no context of its own, so
-     the resolver uses that record context: a sibling place whose first segment
-     is the name, or the name after an administrative prefix ("Borough of",
-     "Town of", "City of", "Township of", …), is resolved instead — "New York" is
-     not the fuller form of "York", else a best match typed continent, country,
-     state or province is kept as it is, even against the record's area (a bare
-     "Germany" beside Gettysburg is not Germany Township; the cost: a bare
-     "Washington" beside Kentucky places is the state), else only a candidate
-     whose own name starts with the same word and has a segment equal to a
-     jurisdiction the siblings share counts (a variant-name hit, "Laxton" for
-     "Lexington", never does), else the best match is kept only
-     when FamilySearch types it a jurisdiction (continent, country, state,
-     province, territory, county, district, region, or first/second-level admin
-     division) and is otherwise left unset (genealogist ruling 2026-10-06, option
-     C with fallback B′). Measured on
-     the record-structurer trials (2026-10-04): with no context, the will's "Shenandoah" beside "Borough
-     of Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
-     Temple" to France, and the country guard below cannot catch either, since a
-     one-token place names no country.
+     it: the places the call's other assertions with the same `record_id` name,
+     each by its `standard_place` when it has one, else its `place` (a record
+     read's named fact carries its as-written text as `place`, "Den Haag"),
+     and the record's country, from the sidecar record the assertion comes from
+     and never read off the record's facts or the place text, by the tool that
+     staged it:
+     - a FamilySearch record (`record_search`, `record_read`): the last segment
+       of its Collection coverage place (its `coverage.standard_place`, else its
+       `coverage.place_rep_id` resolved by id);
+     - a page `image_transcribe` read: the last segment of the staged
+       transcription's `source.place`, its film's coverage place (lead,
+       2026-10-29: image records carry their film's country). The log entry's
+       sidecar is that one transcription, so it gives the country whatever the
+       assertion's `record_id` (`capture:…`, a record ARK). A full-text record
+       comes this way too: it is extracted from its page, which
+       `image_transcribe` reads.
+
+     A country is named as a FamilySearch standard place names it
+     (`countryOfPlace`). A historical state counts as the one country it lies
+     in today, by the list builder's own map (matcher-lab m13, stage S4:
+     "historical states count inside their modern countries"), so "…, Moravia"
+     is a Czechia record. A state that map puts in several countries keeps its
+     own name ("…, Russian Empire"), as do Burma and German South West Africa,
+     which it puts in India and South Africa, and only the last segment counts
+     ("…, Moravia, Austria" is an Austria record). "Brasil" is Brazil; a
+     country the country guard's alias table knows takes its English name
+     ("México" is Mexico, "USA" the United States); and England, Scotland,
+     Wales and Northern Ireland are the United Kingdom ("Campbeltown, Argyll,
+     Scotland" is a United Kingdom record, as "…, Scotland, United Kingdom"
+     is). There is none without such a place, and none for the World, a
+     continent, an ocean or a sea (a place FamilySearch types Sea, such as the
+     North Sea or the Gulf of Mexico), which are no country.
+
+     A bare single-segment place ("Kent", "Shenandoah") names no parent, so
+     FamilySearch's best hit for it is whichever same-named place ranks highest
+     anywhere, and the country guard below cannot catch a wrong one, since a
+     one-token place names no country. In order:
+     1. the bundled one-word list answers, with no search: the text, folded
+        (case, accents, punctuation and spacing; "Co. Clare" is "co clare"), is
+        looked up in `config/one-word-places.json` (`listedOneWordPlace`,
+        `src/utils/one-word-places.ts`). Most entries apply to every record. An
+        entry for one record country ("Texas", US records) applies only when
+        the record's country is that country, and one withheld in some record
+        countries ("Louth", not British records, where it is the Lincolnshire
+        town) only when the record's country is known and another. An
+        accent-exact entry applies only to its accented spellings as written
+        ("Ísland" is Iceland), and its spelling without them is left unset by
+        every step below too (the English word "Island" is never standardized);
+     2. else a sibling place from the record context whose first segment is the
+        name, or the name after an administrative prefix ("Borough of", "Town
+        of", "City of", "Township of", …), is resolved instead — "New York" is
+        not the fuller form of "York";
+     3. else, when the record's country is known, FamilySearch's best hit for
+        the name (the undated name search and `pickBest`), only when no other
+        place shares its top score (a hit is told apart by its place id, else
+        by its representation id) and the last segment of its full name is the
+        record's country; with no record country nothing is searched;
+     4. else the field is left unset with the warning above.
+
+     The list is the lead's (2026-10-26): "Mis-standardizing a place is worse
+     than not standardizing it", with every listed entry at least 95% right.
+     English historic counties and Irish counties are listed over their foreign
+     namesakes ("Kent" is the English county, "Dublin" County Dublin), and
+     Georgia (the US state), Republic of Georgia, New York, Quebec, Mexico,
+     Washington, New Jersey and Jersey (the Channel Island) are curated. A
+     country, state or province is listed even where a county or town shares its
+     name ("Counties and towns should not block states or countries"; "Costa
+     Rica", "Ohio", "Peru"). Step 3 is the lead's bar for a place the engine
+     standardizes itself (2026-10-29): "around 80% including coarser and finer".
+     The rule it replaces, the genealogist's ruling of 2026-10-06 (option C with
+     fallback B′), kept a best hit FamilySearch typed a country, state or other
+     jurisdiction, and searched inside the jurisdiction the siblings share.
+     Measured on the 3,643 one-word facts of matcher-lab
+     m13's held-out records, scored against FamilySearch's own standardization
+     and re-run on the same recorded FamilySearch responses: the old rule
+     (measured at b4741d558) was right on 2,413, coarser or finer on 113 and
+     wrong on 168, and left 949 unset. With the record's country as this tool
+     derives it, this rule is right on 2,555, coarser or finer on 44 and wrong on
+     32, and leaves 1,012 unset; step 3 answers 330 of them (297 right, 14
+     coarser or finer, 19 wrong), and 15 of the 32 wrong answers are on facts the
+     old rule left unset. With no record country (as `tree_edit` and
+     `tree_correct` call it) it is right on 2,053 and wrong on 13, each of the 13
+     also wrong before. Record context is passed because of the record-structurer
+     trials (2026-10-04): with none, the will's "Shenandoah" beside "Borough of
+     Shenandoah, County of Schuylkill" resolved to New Zealand and "Logan LDS
+     Temple" to France. `dev/build-one-word-places.ts` rebuilds the list from
+     matcher-lab's `m13/one_word_places_final.json`.
 
   Every value the tool resolved is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`

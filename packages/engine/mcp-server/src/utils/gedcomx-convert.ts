@@ -199,9 +199,8 @@ function convert(gedcomx: GedcomX, recordRead: RecordReadPlaceIds): SimplifiedGe
     out.relationships = relationships.map((r) => simplifyRelationship(r, recordRead));
   }
 
-  const places = (Array.isArray(gedcomx.places) ? gedcomx.places : []).map(
-    simplifyPlaceDescription,
-  );
+  const rawPlaces = Array.isArray(gedcomx.places) ? gedcomx.places : [];
+  const places = rawPlaces.map(simplifyPlaceDescription);
 
   const sourceDescriptions = Array.isArray(gedcomx.sourceDescriptions)
     ? gedcomx.sourceDescriptions
@@ -213,8 +212,9 @@ function convert(gedcomx: GedcomX, recordRead: RecordReadPlaceIds): SimplifiedGe
     // record read's entries are `place_<id>`, so none is copied: record_read
     // names its coverage by the id. A coverage with no place takes no name,
     // even beside an entry with no id.
+    const authorityRefs = authorityPlaceRefs(rawPlaces);
     out.sources = sourceDescriptions.map((desc) => {
-      const source = simplifySourceDescription(desc);
+      const source = simplifySourceDescription(desc, authorityRefs);
       const coverage = source.coverage;
       if (coverage?.place_rep_id !== undefined) {
         const name = places.find((place) => place.id === coverage.place_rep_id)?.name;
@@ -587,11 +587,30 @@ function simplifySourceRef(
   return out;
 }
 
+/** The local references ("#place_1927074") to places the document identifies
+ *  only by an authority place id (`…/authorities/v1/place/1927074`). A coverage
+ *  naming one carries a place id, not a rep id: read as a rep, 1927074 is Minto,
+ *  New South Wales, Australia. In matcher-lab m13's 20,388 record reads, 1,407
+ *  coverages were such references, all on collection sources; the 1,221 local
+ *  references on record sources carry no identifier, and each is the rep id of
+ *  one of the record's own facts. */
+function authorityPlaceRefs(places: GedcomXPlaceDescription[]): Set<string> {
+  const refs = new Set<string>();
+  for (const p of places) {
+    const primary = p.identifiers?.["http://gedcomx.org/Primary"]?.[0];
+    if (p.id && primary?.includes("/authorities/")) refs.add(`#${p.id}`);
+  }
+  return refs;
+}
+
 /** Exported for `person-read`, which converts the descriptions a relative's own
  *  `/sources` read returns before shaping them. Same GedcomX shape as the tree body's,
- *  so converting them any other way would be a parallel copy of this that drifts. */
+ *  so converting them any other way would be a parallel copy of this that drifts.
+ *  `authorityRefs` (`authorityPlaceRefs`) are the coverage places that carry no
+ *  rep id. */
 export function simplifySourceDescription(
   desc: GedcomXSourceDescription,
+  authorityRefs: ReadonlySet<string> = new Set(),
 ): SimplifiedSourceDescription {
   const out: SimplifiedSourceDescription = {};
   if (desc.id !== undefined) out.id = desc.id;
@@ -615,7 +634,7 @@ export function simplifySourceDescription(
     const simplified: SimplifiedSourceDescription["coverage"] = {};
     let hasCoverage = false;
 
-    if (cov.spatial?.description) {
+    if (cov.spatial?.description && !authorityRefs.has(cov.spatial.description)) {
       const placeIdMatch = cov.spatial.description.match(/(\d+)$/);
       if (placeIdMatch) {
         simplified.place_rep_id = placeIdMatch[1];
