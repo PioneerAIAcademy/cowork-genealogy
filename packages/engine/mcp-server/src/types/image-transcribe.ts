@@ -111,7 +111,11 @@ export interface ImageTranscribeResult extends ImageTranscribeToolResponse {
 export interface StagedTranscription {
   /** The imageId / ark / memory URL, or `capture:<basename>` for a `file`. */
   id: string;
-  source: { imageId?: string; ark?: string; memoryArtifactUrl?: string; file?: string };
+  /** The input read, and for an imageId or ark its FamilySearch image group's
+   *  coverage place ("Trumbull, Ohio, United States"): the place every coverage
+   *  of the film shares, absent when the lookup failed or found none.
+   *  research_append takes the record's country from it. */
+  source: { imageId?: string; ark?: string; memoryArtifactUrl?: string; file?: string; place?: string };
   content_type: string;
   size_bytes: number;
   model: string;
