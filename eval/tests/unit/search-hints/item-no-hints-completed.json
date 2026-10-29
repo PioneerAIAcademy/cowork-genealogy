@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_search_hints_007",
+    "skill": "search-hints",
+    "name": "No pending hints: one negative log entry naming the hints item, then the item is completed",
+    "type": "positive",
+    "description": "The router hands search-hints the planned hints item pli_007 for Patrick Flynn (LZNY-BRF). FamilySearch returns no pending matches. Finding none is a result, not a failure: triage logs one negative person_record_matches entry naming pli_007 and sets the item completed, since completing an item needs a log entry that names it (issue #3153).",
+    "tags": [
+      "triage",
+      "pending-only",
+      "writes-nothing",
+      "item-ends:completed",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Review the pending FamilySearch hints on Patrick Flynn for plan item pli_007.\n\npersonId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn-hints-item"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-no-pending",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "The pending-only listing for LZNY-BRF comes back empty: there are no hints to review, and saying so is the correct finding",
+    "Exactly one new log entry: tool person_record_matches, plan_item_id pli_007, outcome negative, resultsExamined 0",
+    "The hints item pli_007 ends completed, written through research_append on plan_items after the log entry",
+    "No hint lines are invented, nothing is recommended, and no other search is skipped or stopped because there were no hints",
+    "No evidence write, no tree edit"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

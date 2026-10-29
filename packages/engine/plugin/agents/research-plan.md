@@ -545,6 +545,8 @@ table and contextual factors checklist.
 
 ### 4. Sequence the plan items
 
+**On an identity or parentage question whose person has an `ark` in `tree.gedcomx.json`, make the first item a review of that person's pending FamilySearch hints.** Emit one plan item at `sequence: 1` with `record_type: "fs_hints"`, `repository: "FamilySearch"`, and the `rationale` "Review pending FamilySearch hints on <PID> before searching — an attached hint may already answer the question.", where <PID> is the id at the end of that `ark` (e.g. `ZZKR-TH2`). Emit none when the person has no `ark`, and none on any other question.
+
 Order items for efficient discovery (BCG Standard 15):
 
 1. **Highest probability first** — indexed sources where the subject
@@ -777,15 +779,16 @@ re-issue it first. Then present the plan:
   like "...and start executing it," "...and continue with exhaustive
   research," or "...don't stop to check in with me" — hand execution back to
   your caller as already authorized instead of asking: search-records for
-  FamilySearch items, search-external-sites for others, naming the plan item
+  FamilySearch items, search-external-sites for others, search-hints for the
+  `fs_hints` hints-review item, naming the plan item
   and never the result you expect. You execute nothing yourself.
   If only some items can execute right now (e.g. one
   repository or tool is unavailable but another isn't), hand back those and
   report the block on the rest — don't let an item that's blocked for any
   reason hold up items that aren't.
 - Otherwise, suggest next step: "Would you like me to start executing this
-  plan?" (`search-records` / `search-external-sites`, depending on
-  the repositories)
+  plan?" (`search-records` / `search-external-sites` / `search-hints`, depending on
+  the item)
 - **A plan item that ends at an external archive the researcher must open
   themselves** (Archion, Matricula, a paid site): give the link — the parish or
   collection page, never just the site name — what the record would settle,

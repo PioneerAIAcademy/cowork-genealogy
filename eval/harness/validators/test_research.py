@@ -1135,3 +1135,39 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
         if not subject.get("names"):
             problems.append("subject block carries no names")
     assert not problems, "; ".join(problems)
+
+
+_HINTS_HANDOFF_TAG = "asserts-hints-handoff"
+_HINTS_PID = re.compile(r"hints on (\S+) before")
+
+
+def test_hints_item_handoff_carries_its_ids(test, builtin_tool_calls, before_state):
+    """Tag-gated: the spawn of ``search-hints`` for a planned ``fs_hints`` item
+    carries the item's ``planItemId``, its plan's ``planId``, and the
+    ``personId`` read out of the item's rationale (issue #3153). Without the
+    item id search-hints writes no status, and the item is routed to it again
+    on every pass. The judge sees no spawn prompt, so this is the only check.
+    """
+    if _HINTS_HANDOFF_TAG not in (test.get("tags") or []):
+        pytest.skip("not a hints-handoff test")
+    research = before_state.get("research_json") or {}
+    held = [
+        (plan["id"], item)
+        for plan in research.get("plans", [])
+        if plan.get("status") == "active"
+        for item in plan.get("items", [])
+        if item.get("record_type") == "fs_hints" and item.get("status") == "planned"
+    ]
+    assert held, "Scenario drift: no planned fs_hints item on an active plan."
+    plan_id, item = held[0]
+    pid = _HINTS_PID.search(item.get("rationale") or "")
+    assert pid, f"Scenario drift: {item['id']}'s rationale names no FamilySearch id."
+    prompts = _spawn_prompts(builtin_tool_calls, "search-hints")
+    assert prompts, "No recorded spawn of 'search-hints' to assert a hand-off on."
+    wanted = {"planItemId": item["id"], "planId": plan_id, "personId": pid.group(1)}
+    missing = [
+        f"{name} {value}"
+        for name, value in wanted.items()
+        if not any(re.search(rf"\b{re.escape(value)}\b", p) for p in prompts)
+    ]
+    assert not missing, f"the search-hints hand-off does not carry {', '.join(missing)}"
