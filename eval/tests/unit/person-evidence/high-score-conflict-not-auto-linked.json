@@ -20,7 +20,8 @@
     "same-person-flynn-conflict"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
   },
   "judge_context": [
     "same_person returns 0.85, but the baptism record STATES a birthplace of Trier, Rhine Province, Germany (assertion a_005) where the tree person attests Ireland - a core-identifier conflict recorded in the project documents, not merely in a source note.",
