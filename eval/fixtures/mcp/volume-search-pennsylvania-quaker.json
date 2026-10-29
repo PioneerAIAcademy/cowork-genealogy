@@ -8,20 +8,20 @@
     "query": {
       "standardPlace": "Pennsylvania, United States",
       "startYear": 1750,
-      "endYear": 1800
+      "endYear": 1800,
+      "pageSize": 50
     },
     "totalResults": 1,
     "results": [
       {
         "imageGroupNumber": "001188322",
-        "imageGroupPrefix": "001188322",
         "imageCount": 145,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Philadelphia, Pennsylvania, United States",
+            "places": ["Philadelphia, Pennsylvania, United States"],
             "dateRange": "1750-1800",
             "recordType": "Philadelphia Yearly Meeting Minutes"
           }

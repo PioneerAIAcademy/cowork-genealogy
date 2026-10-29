@@ -122,11 +122,6 @@ const ALLOWLIST: Array<{ relPath: string; phrase: string; reason: string }> = [
     phrase: "that a locally-minted stub returns a degenerate score — was **refuted by probing the live API**",
     reason: "labels the claim refuted by live probing",
   },
-  {
-    relPath: "eval/fixtures/mcp/same-person-flynn-degenerate.json",
-    phrase: "produced because the TREE CANDIDATE IS THIN: I1 is a local stub",
-    reason: "attributes the near-zero score to a thin subject and refutes the ARK cause in the same description",
-  },
 ];
 
 const files = discover();

@@ -20,7 +20,15 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   };
 });
 
-import { volumeSearchTool } from "../../src/tools/volume-search.js";
+import { readFileSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import {
+  volumeSearchTool,
+  fitToBudget,
+  mergeCoverages,
+  RESULT_CHAR_BUDGET,
+} from "../../src/tools/volume-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import type {
@@ -141,18 +149,18 @@ describe("volumeSearchTool", () => {
       standardPlace: "Edensor, Derbyshire, England, United Kingdom",
       startYear: 1730,
       endYear: 1810,
+      pageSize: 50,
     });
     expect(result.totalResults).toBe(1);
     expect(result.results).toHaveLength(1);
     expect(result.results[0].imageGroupNumber).toBe("004452257");
-    expect(result.results[0].imageGroupPrefix).toBe("004452257");
     expect(result.results[0].imageCount).toBe(412);
     expect(result.results[0].recordSearchablePercent).toBe(89);
     expect(result.results[0].fulltextSearchable).toBe(true);
     expect(result.results[0].languages).toEqual(["en", "la"]);
     expect(result.results[0].coverages).toEqual([
       {
-        place: "Edensor, Derbyshire, England, United Kingdom",
+        places: ["Edensor, Derbyshire, England, United Kingdom"],
         dateRange: "1726–1812",
         recordType: "Burial Records",
       },
@@ -216,7 +224,7 @@ describe("volumeSearchTool", () => {
   });
 
   // 5. Fixed fields
-  it("sends types NATURAL, active true, pageSize 100, returnChildCounts true", async () => {
+  it("sends types NATURAL, active true, pageSize 50, returnChildCounts true", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
 
     await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
@@ -224,18 +232,12 @@ describe("volumeSearchTool", () => {
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(body.types).toEqual(["NATURAL"]);
     expect(body.active).toBe(true);
-    expect(body.pageSize).toBe(100);
+    expect(body.pageSize).toBe(50);
     expect(body.returnChildCounts).toBe(true);
   });
 
-  // 6. imageGroupPrefix derivation
-  it("derives imageGroupPrefix for bare groupName", async () => {
-    setupCalls([2968392], makeSearchResponse([makeGroup({ groupName: "004452257" })]), []);
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
-    expect(result.results[0].imageGroupPrefix).toBe("004452257");
-  });
-
-  it("derives imageGroupPrefix for 3-segment groupName", async () => {
+  // 6. The split group name is returned whole; no derived prefix
+  it("returns a 3-segment groupName whole and no imageGroupPrefix", async () => {
     setupCalls(
       [2968392],
       makeSearchResponse([makeGroup({ groupName: "007621224_005_M99P-2TQ" })]),
@@ -243,7 +245,9 @@ describe("volumeSearchTool", () => {
     );
     const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].imageGroupNumber).toBe("007621224_005_M99P-2TQ");
-    expect(result.results[0].imageGroupPrefix).toBe("007621224");
+    // record_search, fulltext_search and image_search all take the split name, so
+    // the prefix was dead weight on every volume (issue #3611).
+    expect(result.results[0]).not.toHaveProperty("imageGroupPrefix");
   });
 
   // 7. recordSearchablePercent calculation
@@ -342,7 +346,7 @@ describe("volumeSearchTool", () => {
   });
 
   // 13. Coverage mapping
-  it("maps coverages to place, dateRange, recordType", async () => {
+  it("maps coverages to places, dateRange, recordType", async () => {
     setupCalls(
       [2968392],
       makeSearchResponse([
@@ -356,7 +360,7 @@ describe("volumeSearchTool", () => {
     );
     const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     expect(result.results[0].coverages[0]).toEqual({
-      place: "Edensor",
+      places: ["Edensor"],
       dateRange: "1726–1812",
       recordType: "Burial Records",
     });
@@ -385,8 +389,11 @@ describe("volumeSearchTool", () => {
     );
     const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom" }, LOCAL);
     const coverages = result.results[0].coverages;
-    // Opaque internal id — nothing a reader can use.
+    // Opaque internal id — nothing a reader can use. A bare `title:` prefix
+    // leaves nothing behind either, so both rows end with no type and no date
+    // and merge into this first one.
     expect(coverages[0].recordType).toBeUndefined();
+    expect(coverages).toHaveLength(6);
     // `title:` marks provenance, not a placeholder: the value is a real record
     // type and every live `title:`-prefixed value observed was one. Dropping
     // these hid the Swedish mantalslängder from volume_search (issue #572).
@@ -394,13 +401,11 @@ describe("volumeSearchTool", () => {
     expect(coverages[2].recordType).toBe("Probate records");
     // Unprefixed values are unaffected.
     expect(coverages[3].recordType).toBe("Burial Records");
-    // A bare prefix leaves nothing behind, so the field stays absent.
-    expect(coverages[4].recordType).toBeUndefined();
     // dateRange carries the same provenance prefix and is stripped the same way.
-    expect(coverages[5].dateRange).toBe("1683-1700");
-    expect(coverages[5].recordType).toBe("Court records");
+    expect(coverages[4].dateRange).toBe("1683-1700");
+    expect(coverages[4].recordType).toBe("Court records");
     // An unprefixed date range is untouched.
-    expect(coverages[6].dateRange).toBe("1726-1812");
+    expect(coverages[5].dateRange).toBe("1726-1812");
   });
 
   // 15. Empty result set
@@ -415,8 +420,8 @@ describe("volumeSearchTool", () => {
 
   const EDENSOR_P = "Edensor, Derbyshire, England, United Kingdom";
 
-  // 15a-15b. Structured coverage dates
-  it("parses startYear/endYear from the ISO date pair", async () => {
+  // 15a-15b. Structured coverage dates feed dateRange; the years are not emitted
+  it("keeps datesOrig as dateRange and emits no startYear/endYear", async () => {
     setupCalls(
       [2968392],
       makeSearchResponse([
@@ -435,24 +440,31 @@ describe("volumeSearchTool", () => {
     );
     const result = await volumeSearchTool({ standardPlace: EDENSOR_P }, LOCAL);
     const c = result.results[0].coverages[0];
-    expect(c.startYear).toBe(1726);
-    expect(c.endYear).toBe(1812);
     // datesOrig present, so dateRange stays the archival display text.
     expect(c.dateRange).toBe("1726-1812");
+    // dateRange already carries the span; the structured pair repeated it on
+    // every row, which was a third of an oversized page (issue #3611).
+    expect(c).not.toHaveProperty("startYear");
+    expect(c).not.toHaveProperty("endYear");
   });
 
-  it("omits startYear/endYear when the date pair is absent", async () => {
+  it("says which side of a one-sided span is open", async () => {
     setupCalls(
       [2968392],
       makeSearchResponse([
-        makeGroup({ coverages: [{ place: "Edensor", datesOrig: "1726-1812" }] }),
+        makeGroup({
+          coverages: [
+            { place: "Edensor", todateString: "1812-12-31T23:59:59.999" },
+            { place: "Edensor", fromdateString: "1870-01-01T00:00:00" },
+          ],
+        }),
       ]),
       []
     );
     const result = await volumeSearchTool({ standardPlace: EDENSOR_P }, LOCAL);
-    const c = result.results[0].coverages[0];
-    expect(c.startYear).toBeUndefined();
-    expect(c.endYear).toBeUndefined();
+    // With the structured years gone, dateRange is the only date on a row. A bare
+    // "1870" would read as that one year, not as an open end.
+    expect(result.results[0].coverages.map((c) => c.dateRange)).toEqual(["until 1812", "from 1870"]);
   });
 
   it("derives dateRange from the pair when datesOrig is absent", async () => {
@@ -510,7 +522,7 @@ describe("volumeSearchTool", () => {
     expect(result.results[0].coverages[0].dateRange).toBe("1683-1700");
   });
 
-  it("surfaces recordTypeConceptId, the stable key behind recordType", async () => {
+  it("surfaces recordTypeConceptId only where recordType is missing", async () => {
     setupCalls(
       [2968392],
       makeSearchResponse([
@@ -532,7 +544,8 @@ describe("volumeSearchTool", () => {
     const result = await volumeSearchTool({ standardPlace: EDENSOR_P }, LOCAL);
     const [named, placeholder] = result.results[0].coverages;
     expect(named.recordType).toBe("Konfirmationslängd");
-    expect(named.recordTypeConceptId).toBe(101655);
+    // Readable text present: the id adds nothing a reader uses, so it is left off.
+    expect(named).not.toHaveProperty("recordTypeConceptId");
     // recordType is dropped as an opaque id, but the concept id still identifies it.
     expect(placeholder.recordType).toBeUndefined();
     expect(placeholder.recordTypeConceptId).toBe(124231);
@@ -851,5 +864,297 @@ describe("volumeSearchTool", () => {
     ).rejects.toThrow(
       'No place representations found for "Edensor, Derbyshire, England, United Kingdom".'
     );
+  });
+});
+
+// ─── Answer size (issue #3611) ───────────────────────────────────────────
+
+// Over 50,000 characters Claude Code saves a tool result to a file the calling
+// agents cannot Read. The fixture is the largest page measured in the hosted
+// bundles: Freeborn, Minnesota 1870–1900, 100 volumes, a 99,517-character answer.
+const FREEBORN: {
+  response: MetadataRmsSearchResponse;
+  fulltextIds: string[];
+} = JSON.parse(
+  readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "volume-search", "freeborn-1870-1900.json"),
+    "utf8"
+  )
+);
+const FREEBORN_P = "Freeborn, Minnesota, United States";
+const HARD_LIMIT = 50_000;
+
+function serveFreeborn(groups: MetadataRmsGroup[]) {
+  mockFetch
+    .mockResolvedValueOnce(
+      makeOkResponse({ groups, numberReturned: groups.length, totalCount: 163, nextPageToken: "tok" })
+    )
+    .mockResolvedValueOnce(makeFulltextResponse(FREEBORN.fulltextIds));
+}
+
+function triples(groups: { coverages?: { place?: string; datesOrig?: string; recordTypeOrig?: string }[] }[]) {
+  return new Set(
+    groups.flatMap((g) =>
+      (g.coverages ?? []).map((c) => JSON.stringify([c.place, c.datesOrig, c.recordTypeOrig]))
+    )
+  );
+}
+
+describe("volumeSearchTool answer size", () => {
+  it("fits the real first page under the budget with no coverage cut", async () => {
+    // At the default pageSize of 50 the first page is volumes 0–49, which holds
+    // all seven statewide muster rolls (31–48 coverage rows each) and is the
+    // worst 50-volume window of the fixture.
+    serveFreeborn(FREEBORN.response.groups!.slice(0, 50));
+
+    const result = await volumeSearchTool({ standardPlace: FREEBORN_P, startYear: 1870, endYear: 1900 }, LOCAL);
+
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(50);
+    expect(result.results).toHaveLength(50);
+    // Merging alone is what makes it fit: the budget net never fired.
+    expect(result.results.filter((g) => g.coverageCount != null)).toEqual([]);
+    expect(JSON.stringify(result).length).toBeLessThan(RESULT_CHAR_BUDGET);
+  });
+
+  it("loses no place, date range or record type when merging", async () => {
+    const groups = FREEBORN.response.groups!.slice(0, 50);
+    serveFreeborn(groups);
+
+    const result = await volumeSearchTool({ standardPlace: FREEBORN_P }, LOCAL);
+
+    const out = new Set(
+      result.results.flatMap((g) =>
+        g.coverages.flatMap((c) => c.places.map((p) => JSON.stringify([p, c.dateRange, c.recordType])))
+      )
+    );
+    expect(out).toEqual(triples(groups));
+  });
+
+  it("keeps a full page of 100 under the limit by shortening coverages, never dropping a volume", async () => {
+    serveFreeborn(FREEBORN.response.groups!);
+
+    const result = await volumeSearchTool({ standardPlace: FREEBORN_P, pageSize: 100 }, LOCAL);
+
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(100);
+    expect(result.results).toHaveLength(100);
+    expect(result.nextPageToken).toBe("tok");
+    const size = JSON.stringify(result).length;
+    expect(size).toBeLessThan(HARD_LIMIT);
+    expect(size).toBeLessThanOrEqual(RESULT_CHAR_BUDGET);
+    const shortened = result.results.filter((g) => g.coverageCount != null);
+    expect(shortened.length).toBeGreaterThan(0);
+    for (const g of shortened) expect(g.coverageCount).toBeGreaterThan(g.coverages.length);
+  });
+});
+
+describe("fitToBudget", () => {
+  const coverage = (n: number) => ({ places: [`Town ${n}, Somewhere, United States`], dateRange: `${1800 + n}`, recordType: "Muster rolls" });
+  const volume = (id: string, rows: number) => ({
+    imageGroupNumber: id,
+    imageCount: 10,
+    recordSearchablePercent: null,
+    fulltextSearchable: null,
+    languages: ["en"],
+    coverages: Array.from({ length: rows }, (_, i) => coverage(i)),
+  });
+  const page = (vols: ReturnType<typeof volume>[]) => ({
+    query: { standardPlace: "X", pageSize: vols.length },
+    totalResults: vols.length,
+    results: vols,
+  });
+
+  it("returns an answer already under budget unchanged", () => {
+    const input = page([volume("a", 3)]);
+    expect(fitToBudget(input, 10_000)).toBe(input);
+  });
+
+  it("shortens only the volumes over the cap and marks exactly those", () => {
+    const input = page([volume("big", 40), volume("small", 2)]);
+    const budget = JSON.stringify(input).length - 100;
+
+    const out = fitToBudget(input, budget);
+
+    expect(JSON.stringify(out).length).toBeLessThanOrEqual(budget);
+    expect(out.results.map((g) => g.imageGroupNumber)).toEqual(["big", "small"]);
+    expect(out.results[0].coverageCount).toBe(40);
+    expect(out.results[0].coverages.length).toBeLessThan(40);
+    expect(out.results[1]).not.toHaveProperty("coverageCount");
+    expect(out.results[1].coverages).toHaveLength(2);
+  });
+
+  it("shortens the longest volume first and leaves neighbours it has room for whole", () => {
+    // Capping only "big" at 20 frees ~12,000 characters, so the 25-row neighbours
+    // must keep all their rows even though they are over the first cap too.
+    const input = page([volume("m1", 25), volume("big", 200), volume("m2", 25)]);
+    const budget = JSON.stringify(input).length - 1_000;
+
+    const out = fitToBudget(input, budget);
+
+    expect(JSON.stringify(out).length).toBeLessThanOrEqual(budget);
+    expect(out.results.map((g) => g.imageGroupNumber)).toEqual(["m1", "big", "m2"]);
+    expect(out.results[1].coverages).toHaveLength(20);
+    expect(out.results[1].coverageCount).toBe(200);
+    for (const g of [out.results[0], out.results[2]]) {
+      expect(g.coverages).toHaveLength(25);
+      expect(g).not.toHaveProperty("coverageCount");
+    }
+  });
+
+  it("keeps every volume and returns the most-shortened answer when nothing fits", () => {
+    const input = page([volume("a", 5), volume("b", 5)]);
+    const out = fitToBudget(input, 10);
+    expect(out.results).toHaveLength(2);
+    expect(out.results.every((g) => g.coverages.length === 1 && g.coverageCount === 5)).toBe(true);
+  });
+});
+
+describe("mergeCoverages", () => {
+  it("merges rows that differ only by place, in first-seen order without duplicates", () => {
+    expect(
+      mergeCoverages([
+        { place: "Albert Lea", dateRange: "1881-1884", recordType: "Muster rolls" },
+        { place: "Austin", dateRange: "1881-1884", recordType: "Muster rolls" },
+        { place: "Albert Lea", dateRange: "1881-1884", recordType: "Muster rolls" },
+        { place: "Albert Lea", dateRange: "1890", recordType: "Muster rolls" },
+      ])
+    ).toEqual([
+      { places: ["Albert Lea", "Austin"], dateRange: "1881-1884", recordType: "Muster rolls" },
+      { places: ["Albert Lea"], dateRange: "1890", recordType: "Muster rolls" },
+    ]);
+  });
+
+  it("merges on the visible recordType even when the concept ids differ", () => {
+    // Keyed on the id, these would print as two identical-looking rows.
+    const out = mergeCoverages([
+      { place: "A", dateRange: "1900", recordType: "Census", recordTypeConceptId: 1 },
+      { place: "B", dateRange: "1900", recordType: "Census", recordTypeConceptId: 2 },
+    ]);
+    expect(out).toEqual([{ places: ["A", "B"], dateRange: "1900", recordType: "Census" }]);
+  });
+
+  it("keeps rows with no recordType apart when their concept ids differ, and shows the ids", () => {
+    const out = mergeCoverages([
+      { place: "A", dateRange: "1900", recordTypeConceptId: 1 },
+      { place: "B", dateRange: "1900", recordTypeConceptId: 2 },
+    ]);
+    expect(out).toEqual([
+      { places: ["A"], dateRange: "1900", recordTypeConceptId: 1 },
+      { places: ["B"], dateRange: "1900", recordTypeConceptId: 2 },
+    ]);
+  });
+
+  it("merges one span written with an en-dash and with a hyphen, keeping the first text", () => {
+    // datesOrig writes "1881–1884"; the fallback from the structured pair writes "1881-1884".
+    const out = mergeCoverages([
+      { place: "A", dateRange: "1881–1884", recordType: "Muster rolls" },
+      { place: "B", dateRange: "1881-1884", recordType: "Muster rolls" },
+    ]);
+    expect(out).toEqual([{ places: ["A", "B"], dateRange: "1881–1884", recordType: "Muster rolls" }]);
+  });
+
+  it("merges one span written with an em-dash or a spaced hyphen", () => {
+    const out = mergeCoverages([
+      { place: "A", dateRange: "1881—1884", recordType: "Muster rolls" },
+      { place: "B", dateRange: "1881 - 1884", recordType: "Muster rolls" },
+      { place: "C", dateRange: "1881-1884", recordType: "Muster rolls" },
+    ]);
+    expect(out).toEqual([{ places: ["A", "B", "C"], dateRange: "1881—1884", recordType: "Muster rolls" }]);
+  });
+
+  it("leaves places empty rather than listing a blank place", () => {
+    expect(mergeCoverages([{ place: "", dateRange: "1900" }])).toEqual([{ places: [], dateRange: "1900" }]);
+  });
+});
+
+describe("pageSize", () => {
+  it("sends a caller's pageSize and echoes it in query", async () => {
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
+    const result = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageSize: 20 },
+      LOCAL
+    );
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(20);
+    expect(result.query.pageSize).toBe(20);
+  });
+
+  it.each([0, 101, 2.5, "50", -1, Number.NaN])("refuses pageSize %s before any request", async (pageSize) => {
+    await expect(
+      volumeSearchTool(
+        { standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageSize: pageSize as number },
+        LOCAL
+      )
+    ).rejects.toThrow("pageSize must be a whole number from 1 to 100.");
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("accepts the bounds 1 and 100", async () => {
+    for (const pageSize of [1, 100]) {
+      setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
+      await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageSize }, LOCAL);
+    }
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(1);
+    expect(JSON.parse(mockFetch.mock.calls[2][1].body).pageSize).toBe(100);
+  });
+
+  it("names pageSize in the 409 recovery instruction", async () => {
+    mockFetch.mockResolvedValueOnce(makeErrorResponse(409, "", ""));
+    await expect(
+      volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageToken: "stale" }, LOCAL)
+    ).rejects.toThrow(/recordTypeGroups and pageSize/);
+  });
+});
+
+describe("volumeSearchTool — summary", () => {
+  // The page call and the rollup's own 1,000-a-page call run together, so the
+  // fetch mock answers by request body rather than by call order.
+  function routeFetch(rollupSearch: () => unknown) {
+    mockFetch.mockImplementation(async (url: string, init?: { body?: string }) => {
+      if (url.includes("/fulltext/")) return makeFulltextResponse([]);
+      const body = JSON.parse(init?.body ?? "{}");
+      if (body.pageSize === 1000) return rollupSearch();
+      return makeOkResponse(makeSearchResponse([makeGroup()]));
+    });
+  }
+
+  it("refuses summary alongside pageToken, before any call", async () => {
+    await expect(
+      volumeSearchTool({ standardPlace: "Edensor", summary: true, pageToken: "abc" }, LOCAL)
+    ).rejects.toThrow(/first page only/);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("adds the rollup when asked", async () => {
+    routeFetch(() =>
+      makeOkResponse(
+        makeSearchResponse([
+          makeGroup({ coverages: [{ recordTypeConceptId: 123363, recordTypeConceptIdHierarchy: [123363] }] }),
+        ])
+      )
+    );
+    const result = await volumeSearchTool({ standardPlace: "Edensor", summary: true }, LOCAL);
+    expect(result.results).toHaveLength(1);
+    expect(result.summary).toMatchObject({
+      totalVolumes: 1,
+      complete: true,
+      byRecordType: [{ group: "Census", volumes: 1, browseOnly: 0 }],
+    });
+    expect(result.summaryError).toBeUndefined();
+  });
+
+  it("still returns the page, with summaryError, when the rollup fails", async () => {
+    routeFetch(() => makeErrorResponse(400, "Bad Request", "pageSize too large"));
+    const result = await volumeSearchTool({ standardPlace: "Edensor", summary: true }, LOCAL);
+    expect(result.results).toHaveLength(1);
+    expect(result.summary).toBeUndefined();
+    expect(result.summaryError).toMatch(/400.*pageSize too large/);
+  });
+
+  it("makes no rollup call when summary is not asked for", async () => {
+    routeFetch(() => {
+      throw new Error("rollup must not run");
+    });
+    const result = await volumeSearchTool({ standardPlace: "Edensor" }, LOCAL);
+    expect(result.summary).toBeUndefined();
+    expect(result.summaryError).toBeUndefined();
   });
 });

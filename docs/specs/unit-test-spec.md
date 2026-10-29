@@ -267,7 +267,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "name": "string (short human-readable name)",
     "type": "positive",
     "description": "string (1-2 sentences: what this test verifies and why it matters)",
-    "tags": ["string (freeform tags for filtering and grouping)"],
+    "tags": ["string (filtering, grouping, and validator gates — a tag is a grading input)"],
     "expected_outcome": "pass | xfail (default: pass)",
     "xfail_reason": "string (required when expected_outcome is xfail)"
   },
@@ -306,7 +306,7 @@ Fixtures are reusable. When a junior creates a new fixture (or a dev creates one
     "name": "string (short human-readable name)",
     "type": "negative",
     "description": "string (1-2 sentences: what this test verifies and why it matters)",
-    "tags": ["string (freeform tags for filtering and grouping)"],
+    "tags": ["string (filtering, grouping, and validator gates — a tag is a grading input)"],
     "expected_outcome": "pass | xfail (default: pass)",
     "xfail_reason": "string (required when expected_outcome is xfail)"
   },
@@ -754,6 +754,8 @@ On a direct test the harness:
 
 - builds a workspace staging `.claude/agents/` and **no skills at all** — the
   conversion doc's acceptance check made literal;
+- runs the main thread on the harness default model, never on the agent's
+  `model:`. The agent runs as a subagent on its own `model:` and `effort:` (§11);
 - sends the main thread a harness-owned dispatcher prompt whose only instruction
   is to relay `delegation` verbatim into `Agent{subagent_type: "<skill>"}`. The
   agent's name is the test's `skill`; a direct test whose skill has no
@@ -944,7 +946,7 @@ Only present when `test.type` is `"negative"`.
 |-------|------|----------|-------------|
 | `correct_skill` | string[] | yes | Skills that should handle this request instead. Each entry must be a valid skill directory name. `[]` = no skill should fire (out-of-scope user message). `["x"]` = exactly skill x is expected. `["x", "y"]` = any one of these is acceptable |
 | `explanation` | string | yes | Why the tested skill should not activate. Documents the boundary between the two skills so reviewers (and the description optimizer) understand the discrimination |
-| `grade_on_invariant` | boolean | no | `false` (default). When `true`, this negative test is graded **solely** on its deterministic invariant validator(s) in `eval/harness/validators/test_<skill>.py`, gated on one of the test's tags — routing and activation are NOT gated. Use it for a routing-flaky negative where every plausible route is state-safe. Requires a tag-gated validator that actually runs; the runnability gate enforces that much. **It does not enforce enough:** every tool the gated validator asserts about must also be **reachable in this test** — present in the test's own `mcp_fixtures`, or in `mock_mcp.LIVE_TOOLS`. The mock server advertises only those (`mock_mcp.create_mock_server`, `for tool_name, bucket in manifest.items()`), so a "tool X was not called" assertion against a tool this test registers nowhere is offered to no model and can never fire — the test passes green forever while asserting nothing about X. Declare the fixture even when you expect it to go unused, and say so in the test `description` so it is not later removed as dead weight |
+| `grade_on_invariant` | boolean | no | `false` (default). When `true`, this negative test is graded **solely** on its deterministic invariant validator(s) in `eval/harness/validators/test_<skill>.py`, gated on one of the test's tags — routing and activation are NOT gated. Use it for a routing-flaky negative where every plausible route is state-safe. Requires a tag-gated validator that actually runs; the runnability gate enforces that much, and `check_runlogs.py` rule 11 blocks a PR whose added run log skips a validator that gated on a tag the test carried at the merge base and passed there (a swapped or renamed tag). **It does not enforce enough:** every tool the gated validator asserts about must also be **reachable in this test** — present in the test's own `mcp_fixtures`, or in `mock_mcp.LIVE_TOOLS`. The mock server advertises only those (`mock_mcp.create_mock_server`, `for tool_name, bucket in manifest.items()`), so a "tool X was not called" assertion against a tool this test registers nowhere is offered to no model and can never fire — the test passes green forever while asserting nothing about X. Declare the fixture even when you expect it to go unused, and say so in the test `description` so it is not later removed as dead weight |
 
 ### 5.6 `runs_per_test`
 
@@ -964,11 +966,12 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `max_wall_clock_seconds` | integer | 300 | Maximum wall-clock seconds for the skill execution phase (excludes judge) |
 | `max_tool_calls` | integer | 50 | Maximum MCP tool calls. Bounds fixture consumption and accidental fan-out |
 | `max_input_tokens_per_turn` | integer | 200000 | Maximum input tokens to the model in any single turn |
-| `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster |
+| `sdk_message_silence_seconds` | integer | 180 | Maximum seconds the harness will wait between SDK messages before aborting with `sdk_stream_silence` (retryable). Bump per-test only for skills whose model spends >180s on a single thinking/generation step before emitting its first message — open-ended conflict-resolution prompts and multi-persona extraction are the typical cases. Don't bump the default (60s→180s already covers the long tail) — a tighter watchdog catches real upstream stalls faster. While a subagent task is open (`task_started` seen, no terminal `task_notification`/`task_updated` yet) the window is `max(this, 600)`: CLI 2.1.294 streams nothing from a subagent turn that makes no tool call, so its final report is silent until the task ends (`SUBAGENT_TASK_SILENCE_SECONDS`) |
 | `run_agents` | array | `[]` | **Any test type, routed tests only.** Agents this test lets run LIVE when the skill under test spawns them; every other spawn except the suite's own agent is denied by default — see below |
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 | `stop_at_stub` | boolean | `false` | **Positive tests only.** The first hand-off to a stubbed name ends the run instead of continuing — see below. Requires a non-empty `stub_skills` |
+| `step_mode` | string | omitted | The step boundary this test's turn runs under (`step` / `job` / `wrapup`; decision 25, `docs/plan/research-step-mode.md`). Omitted means no boundary, which is what every committed test runs under |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
@@ -1759,7 +1762,7 @@ Shared validation code in `eval/harness/validators/`. These run on every test re
 - **Append-only enforcement** — existing log entries were not modified or deleted. Operates on the diff.
 - **No-delete enforcement** — no entries were removed from any section. Operates on the diff.
 - **Enum validation** — all enum fields use values from research-schema-spec.md Section 2. Operates on the full output.
-- **Full reference-integrity validation** (`test_project_files_pass_full_validation`) — beyond jsonschema, drives the compiled TypeScript `validateParsed` (the single source of truth, `packages/engine/mcp-server/src/validation/validator.ts`, via `harness/ts_validator.py`) over `research.json` + `tree.gedcomx.json` together. Catches the integrity jsonschema cannot express: dangling `ParentChild`/`Couple` endpoints, cross-file id references (`subject_person_ids`, `known_holdings.relates_to_person_ids`, `gedcomx_source_description_id`), and ancestry cycles. This is what makes a from-scratch write via the `Write` tool (init-project) safe, where no writer tool ran to validate-before-persist. Called **without** `projectPath`, so it runs research + gedcomx + cross-file checks on the parsed objects with no disk access and no sidecar-integrity blast radius. Drive the compiled validator rather than re-porting it to Python — reference integrity is real logic, and a second copy would drift. **Skips (never fails) only when the compiled `build/` is absent or `node` is not installed**: `build/` is not in the run-log snapshot, so a validation *failure* on an un-built machine would wrongly red the suite; but a validator *crash* (node ran and errored) is surfaced as a failure, never mistaken for a missing build. Operates on the full output.
+- **Full reference-integrity validation** (`test_project_files_pass_full_validation`) — beyond jsonschema, drives the compiled TypeScript `validateParsed` (the single source of truth, `packages/engine/mcp-server/src/validation/validator.ts`, via `harness/ts_validator.py`) over `research.json` + `tree.gedcomx.json` together. Catches the integrity jsonschema cannot express: dangling `ParentChild`/`Couple` endpoints, cross-file id references (`subject_person_ids`, `gedcomx_source_description_id`), and ancestry cycles. This is what makes a from-scratch write via the `Write` tool (init-project) safe, where no writer tool ran to validate-before-persist. Called **without** `projectPath`, so it runs research + gedcomx + cross-file checks on the parsed objects with no disk access and no sidecar-integrity blast radius. Drive the compiled validator rather than re-porting it to Python — reference integrity is real logic, and a second copy would drift. **Skips (never fails) only when the compiled `build/` is absent or `node` is not installed**: `build/` is not in the run-log snapshot, so a validation *failure* on an un-built machine would wrongly red the suite; but a validator *crash* (node ran and errored) is surfaced as a failure, never mistaken for a missing build. Operates on the full output.
 - **Duplicate-id detection** (`test_no_duplicate_tree_ids`) — no two tree `persons` / `relationships` / `sources` share an `id`. Kept **separate** from full validation because the TS `validateGedcomx` does not check it (it only adds ids to a set, never checks membership), and because it is pure Python it runs even when the compiled validator is unavailable. Operates on the full output.
 
 ### Skill-specific validators (per skill)
@@ -1819,7 +1822,18 @@ validators skipped). That run predates `test_no_wiki_no_write`, the tag-gated
 validator added 2026-07-29; nothing has been vacuous since. The load-time gate
 proves a validator *gates on* the test's tags, never that it *executes*, so a
 tag-gated validator carrying a second, state-dependent skip could still go
-vacuous — none does today, and nothing checks for one.
+vacuous — none does today, and nothing checks for one at run time.
+
+What the load-time gate cannot see is a **swap**: a tag that still reaches
+*some* gate, just not the one it used to, so the invariant the test was written
+for stops running and the test stays green. That is a PR-time comparison, not a
+runtime check, and `check_runlogs.py` rule 11 makes it: in the run log a PR
+adds, a `grade_on_invariant` test may not skip (on every run) a validator that
+is gated on a tag the test carried at the merge base and that passed in the
+merge base's newest log — unless that validator is gone or the PR edits the
+test's `negative.explanation`. A PR that edits a validator file but adds no
+log for a suite is compared on the gate maps instead: a validator still gated,
+but on none of the test's tags, blocks the same way.
 
 ### Conventions
 
@@ -2212,6 +2226,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 | Role | Model | Rationale |
 |------|-------|-----------|
 | Skill execution | Sonnet (pinned version) | Matches what Cowork uses. Needed for genealogical reasoning. |
+| Agent-keyed suite: dispatching main thread | Harness default (`DEFAULT_MODEL`) | The main thread only relays or routes; production's lead runs the default whatever a helper declares. |
+| Agent-keyed suite: the agent | Its own `model:` / `effort:` frontmatter | Applied by the CLI to the subagent. The model matches every surface. The effort matches Cowork, but on the hosted alpha `ORCHESTRATOR_EFFORT` makes `real_agent.spawn_effort` write `high` onto every spawn, which outranks the agent's `effort:`. |
 | LLM judge | Haiku | Grading against a structured rubric is a classification task, not a reasoning task. ~20x cheaper than Sonnet. Upgrade selectively if specific dimensions prove unreliable. |
 
 **Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is ~5x cheaper than Haiku for the judge role. If Google APIs are already in use, Flash is a viable option that reduces judge cost from ~$0.01 per test to ~$0.002. The harness should support configurable judge model selection so the cheapest adequate model can be used.

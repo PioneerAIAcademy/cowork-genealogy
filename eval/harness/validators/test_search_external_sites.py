@@ -531,6 +531,41 @@ def test_triage_closes_its_open_handoff(before_state, after_state, test):
     assert closing, "the triage logged no external_site entry with capture_received true"
 
 
+def test_base_url_is_the_plan_items_collection_url(before_state, tool_calls, test):
+    """Tag-gated (collection-url): a plan item that names its curated collection
+    (`collection_url`, a row of the stored `external-collections.json`) is searched
+    from that collection, and the stored list is not fetched again (#2995).
+
+    Fails iff the run built no URL, built one for a planned item with a different
+    `baseUrl`, or called `external_links_search` — the place is already stored.
+    """
+    if "collection-url" not in test.get("tags", []):
+        pytest.skip("not a collection-url test")
+    wanted = {
+        item_id: item.get("collection_url")
+        for item_id, item in _plan_items(before_state).items()
+        if isinstance(item, dict) and isinstance(item.get("collection_url"), str)
+    }
+    calls = [c for c in (tool_calls or []) if isinstance(c, dict)]
+    built = [c for c in calls if str(c.get("tool", "")).split("__")[-1] == "build_external_search_url"]
+    assert built, "no build_external_search_url call — the plan item's search was never built"
+    errors = []
+    for call in built:
+        args = _as_mapping(call.get("args")) or {}
+        url = wanted.get(args.get("planItemId"))
+        if url is not None and args.get("baseUrl") != url:
+            errors.append(
+                f"{args.get('planItemId')}: baseUrl {args.get('baseUrl')!r} is not the "
+                f"plan item's collection_url {url!r}"
+            )
+    if not any(_as_mapping(c.get("args")).get("planItemId") in wanted for c in built):
+        errors.append(f"no build_external_search_url call names a plan item with a collection_url ({sorted(wanted)})")
+    fetched = [c for c in calls if str(c.get("tool", "")).split("__")[-1] == "external_links_search"]
+    if fetched:
+        errors.append(f"external_links_search was called {len(fetched)}x although the place's list is stored")
+    assert not errors, "the plan item's collection was not used:\n  - " + "\n  - ".join(errors)
+
+
 def test_archion_browse_handoff(tool_calls, test):
     """Tag-gated (archion-browse): the parish page goes to the builder as
     `baseUrl`, with `projectPath`, so the hand-off is logged by the tool once."""
@@ -694,37 +729,21 @@ def _plan_items(state):
 
 
 def test_log_entries_do_not_carry_each_others_fields(before_state, after_state, test):
-    """V2. SKILL.md step 4 writes two entries per search, each owning one field.
-
-    The `external_links_search` entry carries the staged handle and must not
-    carry `external_site` (SKILL.md: "Do not pass externalSite here - that field
-    is only for external_site entries"); the `external_site` entry carries the
-    site detail and must not carry the handle ("that handle belongs on the
-    external_links_search entry above").
-
-    No corpus violation yet - this guards a rule the skill states twice and
-    nothing enforced.
+    """V2. An `external_site` entry carries the site detail and never a staged
+    `results_ref`: an external search stages nothing, so a handle there is one
+    copied from another entry.
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests record log entries")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
 
-    errors = []
-    for entry in _new_external_entries(before_state, after_state, "external_links_search"):
-        if entry.get("external_site"):
-            errors.append(
-                f"log[{entry.get('id')}] is an external_links_search entry but "
-                f"carries external_site - that field belongs only on an "
-                f"external_site entry"
-            )
-    for entry in _new_external_entries(before_state, after_state, "external_site"):
-        if entry.get("results_ref"):
-            errors.append(
-                f"log[{entry.get('id')}] is an external_site entry but carries "
-                f"results_ref - the staged handle belongs on the "
-                f"external_links_search entry"
-            )
+    errors = [
+        f"log[{entry.get('id')}] is an external_site entry but carries "
+        f"results_ref - an external search stages nothing"
+        for entry in _new_external_entries(before_state, after_state, "external_site")
+        if entry.get("results_ref")
+    ]
     assert not errors, (
         "log entries carrying each other's fields:\n  - " + "\n  - ".join(errors)
     )
@@ -925,106 +944,47 @@ def test_the_log_is_append_only(before_state, after_state, test):
 
 # --- #2521 Half 2: collection-ID provenance (reporting-only) ----------
 
-#: Case-INSENSITIVE. Case A base URLs arrive verbatim from `external_links_search`
-#: curated links and the tool never re-encodes them (spec §3.2), so the host and
-#: path casing is whatever the curator wrote. A case-sensitive pattern made
-#: `https://www.Ancestry.com/...` skip the whole check silently, and a tier-2
-#: skip is indistinguishable from a clean run in the run log.
-_COLLECTION_URL = re.compile(r"ancestry\.[a-z.]+/search/collections/(\d+)", re.I)
-
-#: Field names that ARE a collection id, so the value needs no prose context.
-#: `research_log_append` writes `query.collectionId`; a source may carry
-#: `collection_id`. Matching only prose scored the structured field that
-#: actually records provenance as no provenance at all, while free text counted.
-_ID_FIELD_NAMES = frozenset({"collectionid", "collection_id"})
-
-#: The collection-naming token must sit IMMEDIATELY before the id, allowing
-#: only a separator ("collection 8054", "collections/8054", "col. no. 8054").
-#: Two weaker rules were tried and both admitted coincidences: matching the
-#: token anywhere in the string let "Collection of 8054 letters, Smith family
-#: papers" back collection 8054, and so did a 24-character proximity window,
-#: because "Collection of " is only 14 characters wide. Word order is what
-#: separates a backing from a count that happens to follow the word.
-_CTX_WINDOW = 24
-_CTX_TOKEN = re.compile(r"(?:collections?|col\.)\s*/?\s*(?:no\.?|#)?\s*$", re.I)
-
-#: Sections whose mention of a collection id counts as backing. `questions` and
-#: `proof_summaries` are excluded: both are written downstream of the search, so
-#: a mention there restates the URL rather than recording where the collection
-#: came from.
-_TRACE_SECTIONS = ("assertions", "sources", "plans", "localities", "log")
+#: The engine's own key (`collectionKey` in external-collections-store.ts): an
+#: Ancestry id in either URL form, `/search/collections/<id>` or `?dbid=<id>`,
+#: keys on `ancestry:<id>`. Case-INSENSITIVE: a curated base URL arrives verbatim
+#: and the tool never re-encodes it, so the host casing is whatever the curator
+#: wrote.
+_ANCESTRY_ID = re.compile(
+    r"ancestry\.[a-z.]+/search/collections/(\d+)/?(?:[?#]|$)|[?&]dbid=(\d+)", re.I
+)
+_EXTERNAL_COLLECTIONS_FILE = "external-collections.json"
 
 
-def _mentions_collection(path, value, cid, bound):
-    """Does this one leaf record that `cid` is a collection?
-
-    Three accepted shapes, each measured against the committed corpus and the
-    `search-external-sites` fixtures:
-
-    - a field whose NAME is a collection id (`query.collectionId`);
-    - the `record_id` form `ancestry:<cid>:<slug>`, which record-extraction
-      writes and `mid-research-flynn` carries — note the cid must be in the
-      collection position, so `ancestry:1234:john-8054` does NOT back 8054;
-    - prose naming a collection within `_CTX_WINDOW` characters before the id.
-    """
-    leaf = path.rsplit(".", 1)[-1].split("[")[0].lower()
-    if leaf in _ID_FIELD_NAMES and str(value).strip() == cid:
-        return True
-    if not isinstance(value, str):
-        return False
-    match = bound.search(value)
-    if match is None:
-        return False
-    if re.search(r"ancestry:" + re.escape(cid) + r":", value, re.I):
-        return True
-    return _CTX_TOKEN.search(value[max(0, match.start() - _CTX_WINDOW):match.start()]) is not None
+def ancestry_collection_key(url):
+    """`ancestry:<id>` for an Ancestry collection URL in either form, else None."""
+    if not isinstance(url, str) or not re.search(r"ancestry\.", url, re.I):
+        return None
+    match = _ANCESTRY_ID.search(url)
+    return f"ancestry:{match.group(1) or match.group(2)}" if match else None
 
 
-def _collection_id_is_backed(research, cid, owner_prefix, leaves=None):
-    """Is `cid` recorded as a collection anywhere outside the owner entry?
+def stored_collection_keys(collections_doc):
+    """Every row key in an `external-collections.json` document, any place.
 
-    Returns the first matching path, or None. `leaves` is an optional
-    pre-flattened [(path, value)] list — the caller builds it once and reuses it
-    across every URL in the run rather than re-walking the document per id.
-
-    Two exclusions carry the design:
-
-    - **The owner entry.** `research_log_append` writes `query.collectionId`
-      into the SAME entry as `external_site.url_generated`, so counting it makes
-      every id self-backing and the check vacuous.
-    - **Every `url_generated`, on any entry.** A second entry emitting a URL
-      against the same collection is the repeat-search case this check exists to
-      catch — one run searching a collection for two people, or regenerating a
-      URL after a failed capture. Excluding only the owner let two such entries
-      back each other and the check went silent on exactly that shape.
-    """
-    cid = str(cid)
-    bound = re.compile(r"(?<!\d)" + re.escape(cid) + r"(?!\d)")
-    for path, value in (leaves if leaves is not None else _flatten(research)):
-        if path.startswith(owner_prefix) or path.endswith(".url_generated"):
-            continue
-        if not path.startswith(_TRACE_SECTIONS):
-            continue
-        if _mentions_collection(path, value, cid, bound):
-            return path
-    return None
+    Anything that is not the file's shape yields an empty set — no stored list."""
+    places = collections_doc.get("places") if isinstance(collections_doc, dict) else None
+    keys = set()
+    for entry in (places.values() if isinstance(places, dict) else []):
+        rows = entry.get("rows") if isinstance(entry, dict) else None
+        for row in rows if isinstance(rows, list) else []:
+            if isinstance(row, dict) and isinstance(row.get("key"), str):
+                keys.add(row["key"])
+    return keys
 
 
-def _flatten(node, path=""):
-    """[(dotted path, leaf)] for the whole document, built once per run."""
-    out = []
-    stack = [(node, path)]
-    while stack:
-        cur, cur_path = stack.pop()
-        if isinstance(cur, dict):
-            for k, v in cur.items():
-                stack.append((v, f"{cur_path}.{k}" if cur_path else str(k)))
-        elif isinstance(cur, list):
-            for i, v in enumerate(cur):
-                stack.append((v, f"{cur_path}[{i}]"))
-        else:
-            out.append((cur_path, cur))
-    return out
+def _stored_keys_after(after_state):
+    raw = (after_state.get("files") or {}).get(_EXTERNAL_COLLECTIONS_FILE)
+    if not isinstance(raw, str):
+        return set()
+    try:
+        return stored_collection_keys(json.loads(raw))
+    except ValueError:
+        return set()
 
 
 def report_collection_scoped_url_with_no_backed_collection_id(
@@ -1033,36 +993,21 @@ def report_collection_scoped_url_with_no_backed_collection_id(
     """#2521 Half 2, ruling C (lead 2026-09-24): measure, do not yet enforce.
 
     A `build_external_search_url` call can emit a perfectly-formed URL that
-    searches the wrong collection — the tester's report on the feedback bundle
-    got Michigan marriages for a New York death query. The tool cannot know: on
-    the Case A path it appends parameters to a caller-supplied baseUrl and has
-    no idea which collection an id names.
+    searches the wrong collection, or one recalled from memory. An Ancestry
+    collection id on a URL this run generated is **backed** when its
+    `ancestry:<id>` key is a row of the project's `external-collections.json` —
+    the list FamilySearch curates for the place, which `external_links_search`
+    stores. Both URL forms count (`/search/collections/<id>` and `?dbid=<id>`).
+    No stored list means nothing is backed.
 
     **Reporting-only on purpose.** `report_*` is tier 2
     (`validator_runner.split_observations`): it hands the judge an anonymous
-    observation and cannot gate a run. The accept-set is re-decided by the lead
-    on the count this produces, so a gating `test_*` would enforce a rule nobody
-    has chosen and red the skill's next paid eval on 4 committed instances.
+    observation and cannot gate a run.
 
-    **Judges only the entries THIS run appended.** Every positive test in the
-    suite runs on a scenario whose seeded log already carries a
-    collection-scoped URL, so reading the whole after-state made the check
-    evaluate a URL the agent never wrote, on every test. That also means a crash
-    here is not merely a bad observation: `validator_runner` builds a crash
-    result WITHOUT `reporting_only` ("a crash is a validator bug, so it gates
-    whatever the prefix"), so an unguarded `.get()` on a malformed entry gates a
-    paid run. Every access below is isinstance-guarded for that reason.
-
-    **What this knowingly lets through.** It asks whether the collection id is
-    recorded elsewhere in the document, which is NOT the origin question. Two
-    corpus entries carry a trace whose own prose says the id was never staged —
-    `johann-widmer-vitals` log_021 ("not in the curated inline set") and
-    `maria-fuenmayor-parents` log_037 ("No Ancestry-specific curated links
-    returned") — and both pass. The origin question is not answerable from
-    committed artifacts at all: no collection id on a generated URL appears in
-    any `external_links_search` `response_summary`, 49 of 245 committed calls
-    are `_summary_truncated`, the staged sidecar is not committed, and
-    `validators/conftest.py` exposes no sidecar fixture.
+    **Judges only the entries THIS run appended**, so a URL seeded in the
+    scenario's log is never graded as the agent's. A crash here gates a paid run
+    (`validator_runner` builds a crash result without `reporting_only`), so every
+    access is isinstance-guarded.
     """
     if test.get("type") != "positive":
         pytest.skip("only positive tests generate URLs")
@@ -1076,59 +1021,35 @@ def report_collection_scoped_url_with_no_backed_collection_id(
     }
     log = research.get("log")
     log = log if isinstance(log, list) else []
-    leaves = _flatten(research)
+    stored = _stored_keys_after(after_state)
 
     considered, unbacked = 0, []
-    for index, entry in enumerate(log):
+    for entry in log:
         if not isinstance(entry, dict) or entry.get("id") not in new_ids:
             continue
         detail = _as_mapping(entry.get("external_site"))
-        url = detail.get("url_generated") if isinstance(detail, dict) else None
-        if not isinstance(url, str):
+        key = ancestry_collection_key(detail.get("url_generated") if isinstance(detail, dict) else None)
+        if key is None:
             continue
-        match = _COLLECTION_URL.search(url)
-        if match is None:
-            continue
-        cid = match.group(1)
         considered += 1
-        # Evaluated per ENTRY, deliberately uncached. The answer depends on
-        # `owner_prefix`, which changes every time round this loop, so keying a
-        # cache on the collection id alone reuses the first entry's answer for
-        # every later entry naming the same collection — wrong in both
-        # directions. With the backing text in the first entry it fires on two
-        # when one is unbacked; with the text in the second it passes
-        # everything, and that second entry's only backing is its own notes,
-        # which is exactly the self-backing the owner exclusion exists to
-        # reject. `leaves` is already flattened once per run, so this costs one
-        # pass over a flat list.
-        if _collection_id_is_backed(research, cid, f"log[{index}].", leaves) is None:
-            unbacked.append((entry.get("id"), cid))
+        if key not in stored:
+            unbacked.append((entry.get("id"), key))
 
-    # Skip ONLY when there was nothing of this shape to judge, rather than
-    # whenever `unbacked` is empty.
-    #
-    # Be clear about what this does and does not buy. Outside this repo's unit
-    # suite the two are indistinguishable: `validator_runner.as_dicts` drops
-    # every `reporting_only` result and `split_observations` forwards only
-    # tier-2 results that FAILED, so a clean pass and a skip both reach the
-    # judge and the run log as nothing at all. The distinction is enforceable
-    # only here, by `skip_blind.expect_passes` in the companion suite — which is
-    # the point: it is what stops a skip gate that over-matches from reading as
-    # a clean run forever. It does not make a retired check visible in
-    # production, and nothing in this design does.
+    # Skip ONLY when there was nothing of this shape to judge, so a skip gate that
+    # over-matches cannot read as a clean run (`skip_blind.expect_passes`).
     if considered == 0:
         pytest.skip("this run appended no collection-scoped external-site URL")
     if not unbacked:
         return
 
-    named = ", ".join(f"{cid} (entry {eid})" for eid, cid in unbacked)
+    named = ", ".join(f"{key} (entry {eid})" for eid, key in unbacked)
     plural = "s" if len(unbacked) > 1 else ""
     raise AssertionError(
         f"{len(unbacked)} collection-scoped Ancestry URL{plural} generated this "
-        f"run name{'' if plural else 's'} collection {named}, and no plan item, "
-        "assertion, source, locality or other log entry in research.json records "
-        "that id as a collection — so nothing in the project says where the "
-        "collection came from"
+        f"run name{'' if plural else 's'} {named}, which "
+        f"{'are' if plural else 'is'} not a curated collection stored in "
+        f"{_EXTERNAL_COLLECTIONS_FILE} — so nothing says FamilySearch curates "
+        f"{'them' if plural else 'it'} for the place"
     )
 
 

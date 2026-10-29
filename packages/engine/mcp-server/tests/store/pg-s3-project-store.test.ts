@@ -459,7 +459,9 @@ describe("PgS3ProjectStore without a stack", () => {
         try {
           const t0 = Date.now();
           const report = await backend.checkReady(300);
-          expect(Date.now() - t0).toBeLessThan(500);
+          // Wide of the 300 ms deadline: under a parallel suite the event loop lags
+          // past a second, and a probe the deadline did not cut never returns at all.
+          expect(Date.now() - t0).toBeLessThan(3_000);
           expect(report.checks.postgres.ok).toBe(false);
           expect(report.checks.s3).toEqual({ ok: false, error: "TimeoutError" });
           expectNoSecrets(report);

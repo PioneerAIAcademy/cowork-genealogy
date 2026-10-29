@@ -241,7 +241,7 @@ filter is a refinement, not a requirement.
 
 ## Errors
 
-LLM-actionable, as `person_ancestors`: 401 → call `login`; 403/404/410 → the
+LLM-actionable, as `person_ancestors`: 401 → call `login` (the hosted reconnect instruction in hosted mode); 403/404/410 → the
 person is restricted / not found / deleted; 429 → wait and retry; 400 → the
 upstream message. A root that cannot be read fails the call. A failed
 descendancy read of an ancestor's household is skipped and counted in `notes` (that household adds no
