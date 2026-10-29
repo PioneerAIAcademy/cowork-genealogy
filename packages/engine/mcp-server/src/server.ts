@@ -110,6 +110,7 @@ import {
   projectContext,
   type ProjectContextInput,
 } from "./tools/project-context.js";
+import { projectList } from "./tools/project-list.js";
 import { extractionAppend } from "./tools/extraction-append.js";
 import { timelineBuild } from "./tools/timeline-build.js";
 import type { TimelineBuildInput } from "./types/timeline-build.js";
@@ -821,6 +822,15 @@ export function createServer(principal: Principal): Server {
         return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
       }
     }
+    if (request.params.name === "project_list") {
+      try {
+        const result = await projectList();
+        return { content: [{ type: "text", text: JSON.stringify(result) }] };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
     if (request.params.name === "research_query") {
       try {
         const args = request.params.arguments as unknown as ResearchQueryInput;
@@ -834,7 +844,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "project_create") {
       try {
         const args = request.params.arguments as unknown as ProjectCreateInput;
-        const result = await projectCreate(args);
+        const result = await projectCreate(args, principal);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

@@ -26,6 +26,8 @@ import {
   getOpenRouterModel,
   HOSTED_REAUTH_INSTRUCTION,
   HOSTED_SESSION_MANAGED_MESSAGE,
+  REJECTED_TOKEN_MESSAGE,
+  rejectedTokenMessage,
   DEFAULT_WIKI_API_URL,
   OPENROUTER_API_KEY_MISSING_MESSAGE,
 } from "../../src/auth/config.js";
@@ -52,6 +54,18 @@ describe("bearer principal", () => {
 
   it("getValidToken with an empty bearer token sends the user to the web app's reconnect", async () => {
     await expect(getValidToken(bearerPrincipal(""))).rejects.toThrow(HOSTED_REAUTH_INSTRUCTION);
+  });
+
+  it("a token FamilySearch rejects (401) sends a bearer to the reconnect and the desktop to login", async () => {
+    expect(await rejectedTokenMessage(bearer)).toBe(HOSTED_REAUTH_INSTRUCTION);
+    expect(await rejectedTokenMessage(LOCAL)).toBe(REJECTED_TOKEN_MESSAGE);
+    expect(REJECTED_TOKEN_MESSAGE).toMatch(/login tool/);
+  });
+
+  it("a tool's own 401 text is kept on the desktop and replaced in hosted mode", async () => {
+    const own = "FamilySearch session not accepted; call the login tool to re-authenticate.";
+    expect(await rejectedTokenMessage(LOCAL, own)).toBe(own);
+    expect(await rejectedTokenMessage(bearer, own)).toBe(HOSTED_REAUTH_INSTRUCTION);
   });
 
   it("loadConfig is the carried config, with hosted implied", async () => {

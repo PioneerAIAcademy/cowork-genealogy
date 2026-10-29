@@ -12,6 +12,7 @@ export interface AppAPI {
   getVersion: () => Promise<string>
   onResearchUpdated: (callback: (data: unknown) => void) => void
   onGedcomxUpdated: (callback: (data: unknown) => void) => void
+  onCollectionsUpdated: (callback: (data: unknown) => void) => void
   onWatchError: (callback: (error: string) => void) => void
   onFolderNotice: (callback: (message: string) => void) => void
   onSidecarUpdated: (callback: (event: { logId: string; mtime: number }) => void) => void
@@ -22,6 +23,7 @@ export interface AppAPI {
     folderPath: string | null
     research: unknown
     gedcomx: unknown
+    collections: unknown
     notice: string | null
   }>
   listProjectFiles: () => Promise<ProjectFile[]>

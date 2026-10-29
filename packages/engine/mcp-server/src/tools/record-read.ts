@@ -20,6 +20,7 @@ import type {
   RecordReadResult,
   StagedRecordReadElement,
 } from "../types/record-read.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const RECAPI_BASE =
   "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
@@ -127,10 +128,7 @@ export async function recordReadTool(
   });
 
   if (res.status === 401) {
-    throw new Error(
-      "FamilySearch rejected the access token (401). The session may have " +
-        "expired or been revoked — call the login tool to re-authenticate.",
-    );
+    throw new Error(await rejectedTokenMessage(principal));
   }
   if (res.status === 403) {
     throw new Error(

@@ -1,0 +1,43 @@
+{
+  "tool": "wiki_search",
+  "description": "FamilySearch Wiki search for Billy parish, County Antrim church/Presbyterian records. Trimmed verbatim from the alpha-feedback transcript (case feedback-2026-10-07, locality-guide subagent, query 'Billy parish County Antrim church records Presbyterian baptism'). The decisive detail: the retrieved Ballylinny Civil Parish page places the Ballylinny Presbyterian population at Ballyclare (registers from 1837) — a different civil parish from Billy (Bushmills, barony of Lower Dunluce) — while Billy's own page lists no Presbyterian register.",
+  "args": {
+    "query": "~Billy"
+  },
+  "response": {
+    "query": "Billy parish County Antrim church records Presbyterian baptism",
+    "total_chunks_searched": 1240565,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.69,
+        "chunk_text": "### Cemeteries  \nThe townland of Ballylinny has two graveyards one is Presbyterian the other is not stated.\n\n### Church records  \n#### Catholic  \nThe Roman Catholics living in the civil parish have a meeting place in Ballyclare. The parish is part of Ballyclare and part of Carrickfergus in the diocese of Connor. Ballyclare's earliest register for baptisms is July 1869 and for marriages February 1870. The records have been indexed by the Ulster Historical Foundation.  \n#### Church of Ireland  \nAs stated above the church was destroyed in Ballylinny, parishioners meet at the Carnmoney parish church. The registers in Carnmoney begin as follows: baptisms: 1788; marriages 1789; deaths: 1845.  \n#### Presbyterian  \nThe Presbyterian population in Ballylinny attended church in Ballyclare and church registers begin for both baptisms and marriages in 1837. The original register are in the custody of the local church. Microfilm copies of these records can be found at the Public Record Office of Northern Ireland (PRONI) film number MIC 1P/327 (1851-); FamilySearch Library film number 973220 (cover baptisms/marriages from 1837).",
+        "page_title": "Ballylinny Civil Parish, County Antrim, Northern Ireland Genealogy",
+        "section_heading": "Church records",
+        "source_url": "https://www.familysearch.org/en/wiki/Ballylinny_Civil_Parish,_County_Antrim,_Northern_Ireland_Genealogy#Church_records"
+      },
+      {
+        "rank": 2,
+        "relevance_score": 0.72,
+        "chunk_text": "## History  \nBilly is a parish, partly in the barony of Carey, but chiefly in that of Lower Dunluce, poor union of Coleraine, county of Antrim and province of Ulster; containing the post town of Bushmills and a portion of Dunserverick. This parish was formerly the head of an ecclesiastical union, that comprised also the parishes of Armoy, Ballyclug, Donegore, and Kilbride. In the Roman Catholic divisions the parish forms part of the district of Coleraine. There are meeting houses for Presbyterians, for Covenanters, and Wesleyan Methodists.",
+        "page_title": "Billy Civil Parish, County Antrim, Northern Ireland Genealogy",
+        "section_heading": "History",
+        "source_url": "https://www.familysearch.org/en/wiki/Billy_Civil_Parish,_County_Antrim,_Northern_Ireland_Genealogy#History"
+      },
+      {
+        "rank": 3,
+        "relevance_score": 0.61,
+        "chunk_text": "## Church records  \n* See [Ireland Church Records](https://www.familysearch.org/en/wiki/Ireland_Church_Records) for more information.\n\n### Catholic\n\n### Church of Ireland\n\n### Presbyterian\n\n### Methodist\n\n### Society of Friends\n\n### Others",
+        "page_title": "Billy Civil Parish, County Antrim, Northern Ireland Genealogy",
+        "section_heading": "Church records",
+        "source_url": "https://www.familysearch.org/en/wiki/Billy_Civil_Parish,_County_Antrim,_Northern_Ireland_Genealogy#Church_records"
+      }
+    ],
+    "query_time_ms": 2527.84,
+    "timing": {
+      "embed_ms": 726.72,
+      "search_ms": 1374.66,
+      "rerank_ms": 426.35
+    }
+  }
+}

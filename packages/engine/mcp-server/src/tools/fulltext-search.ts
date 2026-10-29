@@ -22,6 +22,7 @@ import {
 } from "../utils/results-staging.js";
 import { compactStagedFulltextSearch } from "../utils/staged-compaction.js";
 import { fetchFulltextSearchable } from "../utils/fulltext-searchable.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 export type { FulltextSearchInput } from "../types/fulltext-search.js";
 
@@ -233,9 +234,7 @@ export async function fulltextSearchTool(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(
-        "FamilySearch session expired; call the login tool to re-authenticate."
-      );
+      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session expired; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
       throw new Error(
@@ -319,8 +318,7 @@ export async function fulltextSearchTool(
           ).replace("{refs}", formatUnloggedRefs(unloggedStaged.map((s) => s.ref))),
         }
       : {}),
-    // What separates this tool from external_links_search is only that no HOST
-    // FILTER narrows the inline copy. `results` is still the post-`mapEntry` set —
+    // `results` is the post-`mapEntry` set —
     // `mapEntry` returns null on a missing `entry.id` and those nulls are filtered
     // out above — so an empty `results` means nothing survived mapping, not that
     // the search found nothing. `totalResults` (`data.results`) is independent, so

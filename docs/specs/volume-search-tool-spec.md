@@ -37,8 +37,8 @@ volume_search       →  discovers IMAGE GROUPS (volumes) covering a place + yea
 image_search        →  lists the IMAGE IDs within one image group
 image_read         →  reads a SINGLE IMAGE
 fulltext_search    →  searches OCR text; accepts imageGroupNumber to scope to one volume
-record_search      →  searches indexed records by person (will gain an image_group_number
-                       filter in a later PR; accepts either imageGroupNumber or imageGroupPrefix)
+record_search      →  searches indexed records by person; its imageGroupNumber filter
+                       accepts the bare image group number or the full split name
 ```
 
 ### Image group numbers and Natural Groups
@@ -104,7 +104,9 @@ place fetchers all hit anonymous endpoints.
 | `startYear` | integer | No | Earliest year of interest, inclusive (e.g., `1730`). Omit for all periods. |
 | `endYear` | integer | No | Latest year of interest, inclusive (e.g., `1810`). Must be ≥ `startYear`. Omit for all periods. |
 | `recordTypeGroups` | string[] | No | One or more record-type group names from the closed vocabulary in [Record-type filtering](#record-type-filtering). Results are restricted to volumes carrying at least one matching coverage. Multiple groups are **OR**-ed. Omit to search all record types. |
-| `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`** that produced it (see [Pagination](#pagination)). |
+| `pageSize` | integer | No | Volumes per page, 1–100. Defaults to **50**, the most that fits the [answer-size budget](#answer-size) on every measured page. Sent as the request body's `pageSize`, so it is part of what a `pageToken` is bound to. |
+| `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`/`pageSize`** that produced it (see [Pagination](#pagination)). |
+| `summary` | boolean | No | First page only (refused with `pageToken`). Adds `summary`: every matching volume, not just this page, counted by record-type group. See [Summary](#summary-record-type-rollup). |
 
 ### Fixed fields (always sent in the group-search request body)
 
@@ -112,7 +114,7 @@ place fetchers all hit anonymous endpoints.
 |-------|-------|-----------|
 | `types` | `["NATURAL"]` | Only query Natural Groups, for correct granularity |
 | `active` | `true` | Only return available groups |
-| `pageSize` | `100` | One page per call (see Pagination) |
+| `pageSize` | the `pageSize` input, else `50` | One page per call (see [Pagination](#pagination) and [Answer size](#answer-size)) |
 | `returnChildCounts` | `true` | Populates `childCount` / `indexedChildCount` / `noIndexableDataChildCount` **inline** on each group in the search response |
 
 `returnChildCounts: true` is sent, and the group-search response returns the
@@ -164,7 +166,7 @@ sub-year/ISO-day precision. So `startYear: 1730, endYear: 1810` yields:
   },
   "types": ["NATURAL"],
   "active": true,
-  "pageSize": 100
+  "pageSize": 50
 }
 ```
 
@@ -464,8 +466,10 @@ roots observed by section `roots`, **six carry no label at all**: `122797`,
 
 The concept id is the only stable key.
 
-`recordTypeConceptId` is surfaced on each coverage in the [Output](#output) so a
-consumer can reason about the tree without depending on display text.
+`recordTypeConceptId` is surfaced in the [Output](#output) on a coverage row whose
+display name is missing, so a consumer can still identify that type. Where the
+name is present the id is left off: no agent reads it, and repeated on every row it
+was part of what overflowed the answer (see [Answer size](#answer-size)).
 
 ### What the filter excludes, and what it does not
 
@@ -547,7 +551,7 @@ Probed against the live endpoint (see `metadata-search-documentation.txt`).
 
 | API field | Type | Used for |
 |-----------|------|----------|
-| `groupName` | string | `imageGroupNumber` and (derived) `imageGroupPrefix` |
+| `groupName` | string | `imageGroupNumber` |
 | `childCount` | number? | `imageCount` and the `recordSearchablePercent` numerator base |
 | `indexedChildCount` | number? | `recordSearchablePercent` numerator |
 | `noIndexableDataChildCount` | number? | excluded from the `recordSearchablePercent` denominator |
@@ -567,17 +571,16 @@ Group fields intentionally **ignored**: `creators`, `custodians`,
 
 | API field | Type | Used for |
 |-----------|------|----------|
-| `place` | string | `place` (resolved, human-readable) |
+| `place` | string | an entry in `places` (resolved, human-readable) |
 | `datesOrig` | string? | `dateRange` (when present, e.g. `"1726–1812"`; a `title:` prefix is stripped) |
 | `recordTypeOrig` | string? | `recordType` (when present and not an opaque `concept-id:` value; a `title:` prefix is stripped) |
-| `recordTypeConceptId` | number? | `recordTypeConceptId` — the stable key, and what [record-type filtering](#record-type-filtering) matches on |
-| `fromdateString` | string? | `startYear`, and `dateRange` when `datesOrig` is absent |
-| `todateString` | string? | `endYear`, and `dateRange` when `datesOrig` is absent |
+| `recordTypeConceptId` | number? | `recordTypeConceptId` when `recordType` is absent — what [record-type filtering](#record-type-filtering) matches on |
+| `fromdateString` | string? | `dateRange` when `datesOrig` is absent |
+| `todateString` | string? | `dateRange` when `datesOrig` is absent |
 
 Coverage fields **consumed**: `place`, `datesOrig`, `recordTypeOrig`,
-`recordTypeConceptId`, and `fromdateString`/`todateString` (parsed to
-`startYear`/`endYear`, and used to derive `dateRange` when `datesOrig` is
-absent).
+`recordTypeConceptId`, and `fromdateString`/`todateString` (their leading years
+derive `dateRange` when `datesOrig` is absent).
 
 Coverage fields intentionally **ignored**: `placeRepId`,
 `placeRepIdHierarchy`, `placeCoordinates`, `placeOrig`,
@@ -652,7 +655,7 @@ on the full `groupName` is exact — no prefix fallback is needed.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `query` | object | Echo of input (`standardPlace`, `startYear?`, `endYear?`, `recordTypeGroups?`) |
+| `query` | object | Echo of input (`standardPlace`, `startYear?`, `endYear?`, `recordTypeGroups?`) plus the effective `pageSize`, always present, so a follow-up page can repeat it |
 | `totalResults` | number | `totalCount` from the API (across all pages) |
 | `nextPageToken` | string? | Present only when more pages remain; pass back as `pageToken` |
 | `results` | VolumeGroup[] | The matched image groups (this page) |
@@ -661,28 +664,26 @@ on the full `groupName` is exact — no prefix fallback is needed.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `imageGroupNumber` | string | The group's `groupName` (e.g., `"004452257"` or `"007621224_005_M99P-2TQ"`). Pass to `image_search` to list its images, or to `fulltext_search` (as its `imageGroupNumber`) to search this volume's text. |
-| `imageGroupPrefix` | string | The bare image group number: the substring before the first `_` if any underscore is present, else the whole `groupName`. (`"007621224_005_M99P-2TQ"` → `"007621224"`; `"004452257"` → `"004452257"`.) Either this or the full `imageGroupNumber` can be passed to `record_search`'s image-group filter (coming in a later PR; see [Relationship to other tools](#relationship-to-other-tools)). |
+| `imageGroupNumber` | string | The group's `groupName` (e.g., `"004452257"` or `"007621224_005_M99P-2TQ"`). Pass to `image_search` to list its images, to `fulltext_search` (as its `imageGroupNumber`) to search this volume's text, or to `record_search`'s `imageGroupNumber` filter — all three accept the split form, which is why no separate bare-number prefix is returned. |
 | `imageCount` | number \| null | Total images in the group (`childCount`); `null` if counts couldn't be fetched. |
 | `recordSearchablePercent` | number \| null | Percent of indexable images that are indexed into searchable records; `null` if not computable or counts couldn't be fetched. |
 | `fulltextSearchable` | boolean \| null | `true`/`false` from the full-text endpoint; `null` if the check failed. |
 | `title` | string? | Human-readable title, when present. |
 | `volumes` | string[]? | Volume identifiers (e.g., `["Libro 9"]`), when present. |
 | `languages` | string[] | Language codes (e.g., `["en", "la"]`); `[]` when absent. |
-| `coverages` | SimplifiedCoverage[] | What this volume covers. |
+| `coverages` | SimplifiedCoverage[] | What this volume covers, one row per distinct date range and record type (see [Merging coverage rows](#merging-coverage-rows)). |
+| `coverageCount` | number? | Present only when the [answer-size budget](#answer-size) shortened `coverages`: the number of rows before shortening. Absent on every volume of an answer that fit. |
 
 **Each `SimplifiedCoverage`:**
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `place` | string | Human-readable place (e.g., `"Edensor, Derbyshire, England, United Kingdom"`). |
+| `places` | string[] | Every human-readable place (e.g., `"Edensor, Derbyshire, England, United Kingdom"`) whose upstream row shares this row's date range and record type, in first-seen order, without duplicates. `[]` when no upstream row named a place. |
 | `dateRange` | string? | Human-readable date range (from `datesOrig`, e.g., `"1726–1812"`), when present. A `^title:` prefix is stripped and the value kept, as on `recordType`. Omitted if nothing remains after stripping. |
 | `recordType` | string? | Record type (from `recordTypeOrig`, e.g., `"Burial Records"`), when present. Omitted when the API returns an opaque internal id (a value matching `^concept-id:`). A `^title:` prefix is **stripped and the value kept** — that prefix marks provenance (the type came from the volume's title rather than the concept taxonomy), not a placeholder, so `"title:Taxation"` surfaces as `"Taxation"`. Omitted if nothing remains after stripping. |
-| `recordTypeConceptId` | number? | The concept id behind `recordType` (from `recordTypeConceptId`), when present. **The stable key** — `recordType` is locale- and collection-specific display text and is sometimes an unusable placeholder, whereas the id is constant across locales and is what [record-type filtering](#record-type-filtering) matches on. Surfaced so a consumer can identify a type it cannot read the name of. |
-| `startYear` | number? | First year covered, parsed from `fromdateString`. |
-| `endYear` | number? | Last year covered, parsed from `todateString`. |
+| `recordTypeConceptId` | number? | The concept id behind the record type (from `recordTypeConceptId`), **only when `recordType` is absent** — the API sent no display name, or only an opaque `concept-id:` placeholder. The id is constant across locales and is what [record-type filtering](#record-type-filtering) matches on, so it is how a consumer identifies a type it cannot read the name of. |
 
-**Why the date pair is surfaced, and why `dateRange` falls back to it.**
+**Why `dateRange` falls back to the structured pair.**
 `datesOrig` is display text and is **absent more often than the structured pair**:
 over 4 pages per place, window 1500–1950, Wayne, Ohio has `datesOrig` on 335 of
 463 coverages while `fromdateString`/`todateString` are present on **462**. Emitting
@@ -691,10 +692,15 @@ only `datesOrig` therefore drops a date the API supplied on ~27% of Wayne's rows
 `"1870-1880"` with a hyphen, in one place) and carries the `title:` prefix, which
 the pair never does — 0 occurrences in 2161 coverages.
 
-So: `dateRange` keeps the archival display string when there is one, and is
-**derived from the pair when `datesOrig` is absent**; `startYear`/`endYear` are
-always emitted when the pair is present, because a consumer cannot compare or
-filter on `"1882–1896"`.
+So `dateRange` keeps the archival display string when there is one, and is
+**derived from the pair when `datesOrig` is absent** — `"1683-1700"`, `"from 1870"`
+when only the start year is present, and `"until 1812"` when only the end year is.
+
+**The pair itself is not emitted.** `startYear`/`endYear` were once returned on every
+row, alongside a `dateRange` that already carried the span; no
+agent read them, and on the oversized pages they were a third of the answer.
+`dateRange` is the only date on a row, which is why a one-sided span names its
+open side: a bare `"1870"` would read as that one year.
 
 Note the raw `fromDate`/`toDate` are epoch **milliseconds, negative before 1970**
 (`-8899027200000`), so the ISO-shaped `fromdateString`/`todateString` are the
@@ -704,7 +710,10 @@ fields to parse.
 `src/tools/collections-search.ts` already derives a display range from a
 `startYear`/`endYear` pair — `` `${startYear}-${endYear}` `` when both are
 present, the bare start year when only one is. `dateRange`'s fallback must produce
-the same shape, so the two tools do not describe the same span differently. Those
+the same shape for a two-sided span, so the two tools do not describe it
+differently. A one-sided span is the exception: `collections_search` also returns
+`startYear`/`endYear`, which say which side is open, and this tool no longer does,
+so here the open side is spelled out. Those
 fields are also already typed `startYear?: number` / `endYear?: number` on
 `FSSearchMetadata` (`src/types/collection.ts`), which is the naming and type this
 spec follows.
@@ -729,6 +738,25 @@ change to their parsing surface risks those for no benefit to this tool. Extract
 the year locally instead, and treat a value that does not begin with four digits
 as absent rather than guessing.
 
+### Merging coverage rows
+
+Upstream rows that differ only by place are merged into one row whose `places`
+lists them all. Statewide series repeat one date range and record type across
+dozens of towns — Freeborn, Minnesota's seven muster-roll volumes carry 31–48 rows
+each — and that repetition was most of an oversized page.
+
+- **Key:** `(dateRange, recordType)` when the row has a `recordType`; otherwise
+  `(dateRange, recordTypeConceptId)`. An en-dash, an em-dash or a spaced hyphen in
+  `dateRange` keys as a bare hyphen, since `datesOrig` and the fallback write one
+  span several ways; the first-seen text
+  is what the row shows. Keying on the visible text means two rows
+  that print the same are always one row, even when their concept ids differ.
+- **Order:** rows in first-seen order; places within a row in first-seen order,
+  each once.
+- **Lossless:** every `(place, dateRange, recordType)` triple upstream sent is
+  still in the answer — unless the [answer-size budget](#answer-size) shortened the
+  volume, which it marks with `coverageCount`.
+
 ### Output example
 
 ```json
@@ -736,25 +764,22 @@ as absent rather than guessing.
   "query": {
     "standardPlace": "Edensor, Derbyshire, England, United Kingdom",
     "startYear": 1730,
-    "endYear": 1810
+    "endYear": 1810,
+    "pageSize": 50
   },
   "totalResults": 6,
   "results": [
     {
       "imageGroupNumber": "004452257",
-      "imageGroupPrefix": "004452257",
       "imageCount": 412,
       "recordSearchablePercent": 89,
       "fulltextSearchable": false,
       "languages": ["en", "la"],
       "coverages": [
         {
-          "place": "Edensor, Derbyshire, England, United Kingdom",
+          "places": ["Edensor, Derbyshire, England, United Kingdom"],
           "dateRange": "1726–1812",
-          "recordType": "Burial Records",
-          "recordTypeConceptId": 104497,
-          "startYear": 1726,
-          "endYear": 1812
+          "recordType": "Burial Records"
         }
       ]
     }
@@ -778,8 +803,13 @@ as absent rather than guessing.
     "(recordSearchablePercent), and whether it is full-text searchable " +
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
-    "Results are paginated — pass back nextPageToken (with the same standardPlace, " +
-    "years and record-type groups) as pageToken to get the next page. " +
+    "Each coverage row lists every place (`places`) that shares its date range and " +
+    "record type. " +
+    "Results are paginated, 50 volumes a page by default — pass back nextPageToken " +
+    "(with the same standardPlace, years, record-type groups and pageSize) as " +
+    "pageToken to get the next page. A volume carrying coverageCount had its " +
+    "coverages shortened to fit the answer; call again with a smaller pageSize, " +
+    "starting from the first page, to see them all. " +
     "Optionally narrow to record-type groups with recordTypeGroups. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
@@ -814,12 +844,31 @@ as absent rather than guessing.
           "all of its coverage rows, so some will carry other record types and " +
           "years outside the requested range. Omit to search all record types.",
       },
+      pageSize: {
+        type: "integer",
+        minimum: 1,
+        maximum: 100,
+        description:
+          "Volumes per page, 1–100. Defaults to 50. Every page of one search " +
+          "must use the same pageSize.",
+      },
       pageToken: {
         type: "string",
         description:
           "Pagination cursor. Pass the nextPageToken from a previous " +
           "response, together with the same standardPlace/startYear/endYear/" +
-          "recordTypeGroups, to fetch the next page.",
+          "recordTypeGroups/pageSize, to fetch the next page.",
+      },
+      summary: {
+        type: "boolean",
+        description:
+          "Set true on a place survey to also get `summary`: every matching volume " +
+          "(not just this page) counted by record-type group, with how many are " +
+          "browse-only and how many full-text-only, plus an untyped bucket. A volume " +
+          "counts in every group its " +
+          "coverages reach, parents included. First page only — not with pageToken. " +
+          "Slower: it reads all matching volumes. If it cannot be computed, the page " +
+          "still returns, with `summaryError` saying why.",
       },
     },
     required: ["standardPlace"],
@@ -846,6 +895,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `startYear` not an integer year | Throw: `"startYear must be an integer year (e.g., 1730)."` |
 | `endYear` not an integer year | Throw: `"endYear must be an integer year (e.g., 1810)."` |
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
+| `pageSize` not a whole number from 1 to 100 | Throw: `"pageSize must be a whole number from 1 to 100."` — before any request. Covers `0`, `101`, `2.5`, `NaN` and a numeric string (`"50"`), since nothing validates input against the advertised schema server-side |
 | Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
 | `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group(s): <names>. Valid groups: <list>."` — plural, because the input is an array and several entries can be wrong at once, so one error should let the caller fix them all. Never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
 | `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — nothing validates input against the advertised JSON Schema server-side — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |
@@ -853,7 +903,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
 | Group-search API returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
 | Group-search API returns 403 | Throw: `"FamilySearch volume search API error: 403 Forbidden."` |
-| Group-search API returns 409 | Throw: `"FamilySearch volume search API error: 409.{ body, when non-empty } A pageToken is only valid alongside a byte-identical search and it expires; re-issue this search from the first page with the same standardPlace, year range and recordTypeGroups, omitting pageToken."` A real 409 arrives bodyless, so `statusText` is empty and the generic row below rendered it as `"409 ."` — a status, a space and a full stop. **Assert no cause**: no 409 on this path is reproducible, so the message says what to do, never why upstream refused. Not added to the retry set either — 409 is not transient, and a blind retry on a possibly-stale cursor can skip or duplicate rows |
+| Group-search API returns 409 | Throw: `"FamilySearch volume search API error: 409.{ body, when non-empty } A pageToken is only valid alongside a byte-identical search and it expires; re-issue this search from the first page with the same standardPlace, year range, recordTypeGroups and pageSize, omitting pageToken."` A real 409 arrives bodyless, so `statusText` is empty and the generic row below rendered it as `"409 ."` — a status, a space and a full stop. **Assert no cause**: no 409 on this path is reproducible, so the message says what to do, never why upstream refused. Not added to the retry set either — 409 is not transient, and a blind retry on a possibly-stale cursor can skip or duplicate rows |
 | Group-search API other non-OK | Throw: `"FamilySearch volume search API error: {status} {statusText}.{ body, when non-empty }"` |
 | Group-search network error | Throw: `"Could not reach FamilySearch volume search API: {cause}."` (`{cause}` from `describeFetchError`, `src/utils/http.ts`) |
 | Group missing inline count fields | Set `imageCount` and `recordSearchablePercent` to `null` for that group; continue |
@@ -868,8 +918,9 @@ The full-text sub-fetch failure is **non-fatal** — a partial result with
 
 ### Pre-request
 
-1. Validate `standardPlace` (required) and the integer years
-   (`startYear`/`endYear`, with `endYear` ≥ `startYear`).
+1. Validate `standardPlace` (required), the integer years
+   (`startYear`/`endYear`, with `endYear` ≥ `startYear`) and `pageSize` (a whole
+   number from 1 to 100, when present).
 2. Resolve `standardPlace` → `placeId` via `standardPlaceToPlaceId`,
    then `placeId` → `placeRepIds` via `placeIdToRepIds` (both anonymous).
 3. If `recordTypeGroups` is present and non-empty, map each name through the
@@ -915,14 +966,13 @@ The full-text sub-fetch failure is **non-fatal** — a partial result with
 For each group in `response.groups`:
 
 1. `imageGroupNumber` ← `group.groupName`
-2. `imageGroupPrefix` ← `group.groupName` before first `_`, else whole
-3. `imageCount` ← `childCount` (or `null`)
-4. `recordSearchablePercent` ← computed (or `null`)
-5. `fulltextSearchable` ← membership in the full-text set (or `null`)
-6. `title` ← `group.title` (when present)
-7. `volumes` ← `group.volumes` (when present)
-8. `languages` ← `group.languages ?? []`
-9. For each `group.coverages` entry:
+2. `imageCount` ← `childCount` (or `null`)
+3. `recordSearchablePercent` ← computed (or `null`)
+4. `fulltextSearchable` ← membership in the full-text set (or `null`)
+5. `title` ← `group.title` (when present)
+6. `volumes` ← `group.volumes` (when present)
+7. `languages` ← `group.languages ?? []`
+8. Map each `group.coverages` entry to a row:
    - `place` ← `coverage.place`
    - `dateRange` ← `coverage.datesOrig` (when present), with a leading
      `^title:\s*` stripped and the result trimmed; omitted when the
@@ -931,11 +981,47 @@ For each group in `response.groups`:
      `^concept-id:`, with a leading `^title:\s*` stripped and the result
      trimmed; omitted when the result is empty
    - `recordTypeConceptId` ← `coverage.recordTypeConceptId` (when present)
-   - `startYear` / `endYear` ← the leading year of
-     `coverage.fromdateString` / `coverage.todateString` (when present)
-   - when `coverage.datesOrig` is absent but the pair is present, `dateRange`
-     is `` `${startYear}-${endYear}` ``, matching `collections_search`
-     exactly — including when the years are equal, so `"1683-1683"`
+   - when `dateRange` is still empty, it is derived from the leading years of
+     `coverage.fromdateString` / `coverage.todateString`:
+     `` `${startYear}-${endYear}` ``, matching `collections_search` exactly —
+     including when the years are equal, so `"1683-1683"` — `` `from ${startYear}` ``
+     when only the start year is present, and `` `until ${endYear}` `` when only
+     the end year is
+9. `coverages` ← those rows [merged](#merging-coverage-rows); a merged row carries
+   `recordTypeConceptId` only when it has no `recordType`
+
+### Answer size
+
+After every group is mapped, the whole answer is serialized compactly — as the
+server sends it — and measured against `RESULT_CHAR_BUDGET` (40,000 characters).
+Over the budget, `coverages` are cut to the first 20 rows, then 10, 5, 3 and 1.
+Within each cap the longest lists are cut first, one volume at a time, stopping
+as soon as the answer fits, so one oversized volume does not cost its neighbours
+rows they had room for; every volume that was cut gets `coverageCount`. Volumes are never dropped: the upstream cursor has already moved
+past them, so a dropped volume could not be reached by any later page. If even a
+cap of 1 does not fit, that most-shortened answer is returned.
+
+Why 40,000: over 50,000 characters Claude Code saves a tool result to a file and
+hands the agent a preview, and the agents that call this tool (`locality-guide`,
+`research-plan`, `search-images`) cannot `Read` a file that large, so the volumes
+past the preview are silently lost. The margin absorbs the envelope
+the server wraps the answer in.
+
+Measured on the hosted feedback bundles of 2026-10-05 to 2026-10-19, where 10 of
+33 calls overflowed at the old fixed page of 100:
+
+| Call | Volumes | Before | After merging, page 50 | After merging, page 100 |
+|---|---|---|---|---|
+| Freeborn, Minnesota 1870–1900 | 100 | 99,517 | 36,939 | 51,117 (budget cuts to 3 rows/volume) |
+| Pulaski, Kentucky 1820–1900 | 91 | 64,888 | 25,711 | 36,478 |
+| Darwen, Lancashire 1770–1830 | 34 | 49,936 | 27,373 | 27,373 |
+| Neidenburg, East Prussia 1915–1930 | 87 | 43,140 | 19,684 | 30,775 |
+
+So at the default page of 50 the budget never fires on any measured call, and it
+is a backstop for denser places and for a caller who asks for 100. A page size
+alone could not have fixed Freeborn: its first seven volumes are statewide muster
+rolls of ~5,400 characters each, and only 12 volumes fit in 40,000 unmerged. The
+Freeborn page is pinned as `tests/fixtures/volume-search/freeborn-1870-1900.json`.
 
 ---
 
@@ -947,17 +1033,17 @@ docs):
 - `nextPageToken` is **only valid with the exact same searchSpec** — the
   tool must rebuild a byte-for-byte identical body and append the token.
   Therefore the caller passes `pageToken` **together with the same
-  `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`** — the filter is
-  part of the body, so omitting it on the follow-up call would silently widen
-  the search mid-pagination. The year → ISO date derivation
+  `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`/`pageSize`** — the
+  filter and the page size are part of the body, so omitting the filter on the
+  follow-up call would silently widen the search mid-pagination. The year → ISO date derivation
   (`"${startYear}-01-01"` / `"${endYear}-12-31"`) is deterministic, so the
   same years always produce the same `fromDateString`/`toDateString` and
   hence the same body.
 - The token is a client-side cursor with a **~9-day TTL** (the database
   is repaired every 9 days); stale tokens may skip or duplicate rows. A
   rejected cursor surfaces as a 409, and the error text names this recovery —
-  re-issue page 1 with the identical `standardPlace`, years and
-  `recordTypeGroups`, omitting `pageToken`.
+  re-issue page 1 with the identical `standardPlace`, years,
+  `recordTypeGroups` and `pageSize`, omitting `pageToken`.
 
 > **`standardPlace` re-resolution caveat (since the input is now a name, not a
 > placeId).** Each page re-resolves `standardPlace` → `placeId` → `placeRepIds`
@@ -970,11 +1056,65 @@ docs):
 > fully-qualified name, resolution is exact-match and stable in practice; if a
 > stale cursor is ever rejected, the caller simply re-issues page 1.
 
-The tool returns **one page (≤ 100 groups) per call** plus
-`nextPageToken` when more remain. It does **not** auto-aggregate all
+The tool returns **one page per call** — `pageSize` groups, 50 by default and at
+most 100 — plus `nextPageToken` when more remain. The default is 50 because that is
+what fits the [answer-size budget](#answer-size) on every measured page without
+shortening a volume's coverages. It does **not** auto-aggregate all
 pages — that would walk every page (and full-text batch) for what is
 usually just a scoping question. `totalResults` tells the caller how many
 groups exist in total.
+
+---
+
+## Summary (record-type rollup)
+
+`summary: true` is the one exception to "no auto-aggregation": a place survey
+(locality-guide) needs to say how many volumes of each kind exist, and a page
+cannot. On 2026-10-22, hosted locality-guide surveys matched a median of 24–81
+volumes, a 90th percentile of 700–1,000 and a maximum of 4,261, so a 10-row
+volume list would have been complete in about 1 survey in 7. The counts are
+always complete. research-plan's own calls are narrow (median 0 volumes) and do
+not ask for it.
+
+**Output** — `summary` beside the usual page:
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `totalVolumes` | integer | Upstream `totalCount` for the search. |
+| `complete` | boolean | False when the volumes exceeded the rollup's cap (10 pages of 1,000) or fewer came back than upstream counted. |
+| `byRecordType` | `{ group, volumes, browseOnly, fulltextOnly }[]` | One row per [record-type group](#the-group-vocabulary) with at least one volume, in vocabulary order. |
+| `untyped` | `{ volumes, browseOnly, fulltextOnly }` | Volumes whose coverages reach no group. |
+
+A volume counts in **every** group its coverages reach, ancestors included (a
+Baptism volume is also Religious), exactly as a `recordTypeGroups: [group]`
+filter would return it: a coverage is in a group when its
+`recordTypeConceptIdHierarchy` (or, absent that, its `recordTypeConceptId`)
+contains an id from `conceptIdsForGroups([group])`. Buckets can therefore sum
+past `totalVolumes`.
+
+A volume with no indexed images (`indexedChildCount` 0 or absent) counts in
+`fulltextOnly` when the full-text endpoint lists it (reachable by
+`fulltext_search`, so research-plan routes it there) and in `browseOnly` when it
+does not (image by image). An indexed volume counts in neither. Both are `null`,
+not 0, when any full-text batch failed: unknown is not "none".
+
+**How it fetches.** The rollup runs beside the page call, with its own body:
+the same search at `pageSize: 1000` (upstream answers 400 above that; probed
+2026-10-22) and no `nextPageToken`. If more remain it fetches pages 2..n in
+parallel by the undocumented 1-based `pageNumber`, which matched the token pages
+exactly on Kings, New York 1890–1910 (3,919 groups, no overlap between pages 1
+and 2). If those pages come back short or duplicated, it re-walks by
+`nextPageToken`, slower but exact. The API has no facet or per-type count
+parameter. Full-text status is checked only for volumes with no indexed images,
+in parallel batches of 100 (the endpoint fails on 1,000 names); at about 6 s per
+batch it is the slow step.
+
+**Cost.** Measured live 2026-10-22: Freeborn, Minnesota 1870–1900 (163 volumes)
+21 s; Kings, New York 1890–1910 (3,919 volumes) 40 s on one run and a 30 s
+body-read timeout on a 1,000-group page on another.
+
+**Failure.** The summary never fails the call. If the rollup throws, the page
+returns as usual with `summaryError` carrying the message and no `summary`.
 
 ---
 
@@ -1022,6 +1162,20 @@ images are digitized, indexed, or full-text processed.
 | `docs/catalog.md` | Extend the `volume_search` catalog row to name `recordTypeGroups` and that selecting a group also returns the groups nested beneath it |
 | `CLAUDE.md` | Extend the `search-helpers.ts` note to name `collections_search`/`volume_search` among its consumers and `formatYearRange` as the single shared date-range format |
 
+### Edits for answer size
+
+| File | Edit |
+|---|---|
+| `src/types/volume-search.ts` | `pageSize?` on `VolumeSearchInput`; `SimplifiedCoverage` becomes `{ places, dateRange?, recordType?, recordTypeConceptId? }`; `VolumeGroup` loses `imageGroupPrefix` and gains `coverageCount?`; `query` gains `pageSize` |
+| `src/tools/volume-search.ts` | Validate and send `pageSize` (default 50); `mergeCoverages` and `fitToBudget`, both exported for their tests; drop `imageGroupPrefix`; `pageSize` and `coverageCount` in the schema descriptions and the 409 text |
+| `tests/tools/volume-search.test.ts` | Cases 26–33 |
+| `tests/fixtures/volume-search/freeborn-1870-1900.json` | **New.** The largest measured page, reverse-mapped to the RMS response shape |
+| `tests/packaging/mcp-fixture-shape.test.ts` | Check every `volume_search` eval fixture's `query`, volumes and coverage rows against the interfaces above — the top-level check cannot see inside `results[]` |
+| `eval/fixtures/mcp/volume-search-*.json` | Regenerated in the new shape |
+| `dev/try-volume-search.ts` | `--pageSize`; print the compact answer's size; `--sizeOnly` to skip the dump |
+| `dev/probe-dgs-items.ts` | Derive the prefix from `imageGroupNumber`; read `places[0]`; send `pageSize: 100` so its 10-page walk keeps its reach |
+| `docs/specs/image-search-tool-spec.md` | Drop the reference to `volume_search`'s `imageGroupPrefix` |
+
 ---
 
 ## Testing
@@ -1030,23 +1184,23 @@ images are digitized, indexed, or full-text processed.
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
-| 1 | Returns groups for standardPlace + year range | Happy path |
+| 1 | Returns groups for standardPlace + year range, echoing `pageSize: 50` in `query` | Happy path |
 | 2 | Throws when standardPlace is missing | Required-input validation |
 | 3 | Throws when startYear/endYear is not an integer, or endYear < startYear | Year validation |
 | 4 | Resolves standardPlace → placeId → placeRepIds and passes them in `coverage.placeRepIds` | Input conversion |
-| 5 | Sends fixed fields `types:["NATURAL"]`, `active:true`, `pageSize:100`, `returnChildCounts:true` | Request construction |
-| 6 | Derives `imageGroupPrefix` for both bare and 3-segment `groupName`s | Prefix rule |
+| 5 | Sends fixed fields `types:["NATURAL"]`, `active:true`, `pageSize:50` (the default), `returnChildCounts:true` | Request construction |
+| 6 | Returns a 3-segment `groupName` whole as `imageGroupNumber`, with no `imageGroupPrefix` | No derived prefix |
 | 7 | Computes `recordSearchablePercent` = round(indexed / (total − nonIndexable) × 100) | Counts math |
 | 8 | Sets `recordSearchablePercent: null` when denominator ≤ 0 | Zero-denominator edge |
 | 9 | Sets `imageCount`/`recordSearchablePercent: null` when a group omits inline count fields | Missing-counts path |
 | 10 | Sets `fulltextSearchable: true/false` from the groupNumber endpoint | Full-text mapping |
 | 11 | Sets `fulltextSearchable: null` after the full-text call fails 3× | Full-text failure path |
 | 12 | Batches `groupName`s in chunks of ≤ 100 | Batch sizing |
-| 13 | Maps coverages to `{ place, dateRange?, recordType?, recordTypeConceptId?, startYear?, endYear? }`; drops `placeId`/`placeRelevance` | Coverage mapping |
+| 13 | Maps coverages to `{ places, dateRange?, recordType?, recordTypeConceptId? }`; drops `placeId`/`placeRelevance` | Coverage mapping |
 | 14 | Omits `recordType` for `concept-id:…`; strips a `title:` prefix and keeps the type | Record-type normalization |
 | 15 | Handles empty `{"totalCount":0}` response | Zero-result path |
 | 15a | Strips a `title:` prefix from `dateRange`; derives `dateRange` from the date pair when `datesOrig` is absent | Date normalization |
-| 15b | Parses `startYear`/`endYear` from `fromdateString`/`todateString`; omits both when the pair is absent | Structured dates |
+| 15b | Emits no `startYear`/`endYear`; a one-sided span reads `"from <year>"` or `"until <year>"`; `recordTypeConceptId` appears only on a row with no `recordType` | Structured dates and concept ids |
 | 15c | `recordTypeGroups` maps each group name to its anchor **and stray** ids and sends them in `coverage.recordTypeConceptIds` | Group expansion |
 | 15d | A parent group's request ids retrieve its nested groups' volumes (containment), send the strays of every group nested beneath it, and two groups OR rather than intersect | Group semantics |
 | 15e | An unrecognised group name throws and names the valid set — it does **not** fall through to an unfiltered or empty search | Unknown-group guard |
@@ -1062,6 +1216,14 @@ images are digitized, indexed, or full-text processed.
 | 23 | A bodyless 409 carries the re-issue-from-page-1 recovery and never renders as a bare `409 .` | Paging conflict |
 | 24 | A 409 **with** a body includes it alongside the recovery | Upstream detail preserved |
 | 25 | A non-409 non-OK keeps `{status} {statusText}.`, appends any body, and does **not** carry the pageToken advice | Generic arm, previously covered by no test |
+| 26 | The real Freeborn first page at the default `pageSize` sends `pageSize: 50`, fits under 40,000 characters, and no volume carries `coverageCount` | Default page fits by merging alone |
+| 27 | On that page every upstream `(place, dateRange, recordType)` triple is in the answer | Merge is lossless |
+| 28 | The full 100-volume Freeborn page at `pageSize: 100` stays under the budget, keeps all 100 volumes and `nextPageToken`, and every shortened volume carries `coverageCount` > its row count | Budget backstop |
+| 29 | `fitToBudget` returns an in-budget answer unchanged, marks only the volumes it cut, cuts the longest volume first and leaves neighbours it has room for whole, and keeps every volume when nothing fits | Budget rules |
+| 30 | `mergeCoverages` merges on the visible `recordType` despite differing concept ids, keeps id-only rows apart, merges en-dash, em-dash, spaced-hyphen and hyphen spellings of one span, dedupes places in order, and lists no blank place | Merge key |
+| 31 | A caller's `pageSize` is sent and echoed; `1` and `100` are accepted | Page size |
+| 32 | `0`, `101`, `2.5`, `-1`, `NaN` and `"50"` are refused before any request | Page-size validation |
+| 33 | The 409 recovery names `pageSize` | Paging conflict |
 
 ### Smoke test
 
@@ -1196,6 +1358,7 @@ ships.)
 
 ### Terminology
 
-The tool uses `imageGroupNumber` / `imageGroupPrefix` consistently on
-all LLM-facing surfaces. The underlying API's legacy field name is
+The tool uses `imageGroupNumber` consistently on all LLM-facing surfaces
+(an `imageGroupPrefix` was once returned beside it; every consuming tool takes the
+full number, so it was dropped to keep the answer small). The underlying API's legacy field name is
 `groupName`; it is mapped on output.

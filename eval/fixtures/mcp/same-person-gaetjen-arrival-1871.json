@@ -1,0 +1,23 @@
+{
+  "tool": "same_person",
+  "description": "same_person for the Germans to America index persona (Herm Gaetjen, b. 1854 Prussia, arrived New York 2 Jun 1871) against tree person I1, at the live pre-link score measured on 2026-10-12 (issue #3363): no match, 0.006. The June 1871 arrival also leaves about four years before the 1875 naturalization, short of the five years' residence then required.",
+  "args": {
+    "assertionId": "~a_01",
+    "treePersonId": "~I1"
+  },
+  "response": {
+    "matched": false,
+    "score": 0.006,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "Herm Gaetjen",
+      "role": "passenger_1"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Hermann Gaetjen"
+    }
+  }
+}

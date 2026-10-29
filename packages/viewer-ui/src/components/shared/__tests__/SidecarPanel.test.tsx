@@ -144,8 +144,12 @@ describe('SidecarPanel — status branches', () => {
     })
     render(<SidecarPanel />)
     expect(screen.getByText('Tree matches')).toBeInTheDocument()
-    expect(screen.getByText('Patrick Flynn (Schuylkill County)')).toBeInTheDocument()
-    expect(screen.getByText('Patrick J. Flynn')).toBeInTheDocument()
+    // The engine sends only a PID and a star count, so those are what render.
+    expect(screen.getByText('KW7C-X9P')).toBeInTheDocument()
+    expect(screen.getByText('LZ5J-2RT')).toBeInTheDocument()
+    // Both stars asserted: without these, dropping the stars expression is green.
+    expect(screen.getByText('5/5')).toBeInTheDocument()
+    expect(screen.getByText('3/5')).toBeInTheDocument()
   })
 })
 

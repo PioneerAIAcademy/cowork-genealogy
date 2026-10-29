@@ -9,6 +9,7 @@ import type {
   JsonWrite,
   ProjectDirState,
   ProjectEntry,
+  ProjectListing,
   ProjectPathClass,
   ProjectStore,
   WriteJsonBothOptions,
@@ -330,5 +331,10 @@ export class PgRoutingStore implements ProjectStore {
 
   remove(projectPath: string, ref: string): Promise<void> {
     return this.route(projectPath, true, (s) => s.remove(projectPath, ref));
+  }
+
+  /** Each test directory is its own project, named by its path, as on the file store. */
+  async listProjects(): Promise<ProjectListing> {
+    return { mode: "folder" };
   }
 }

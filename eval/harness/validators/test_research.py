@@ -495,7 +495,7 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
 # the two in step). Plus the tree ids `project_context` hands over (`I1`, `S3`...),
 # the kind every measured miss copied from the projection.
 _PROJECT_ID_PREFIXES = (
-    "rp_", "kh_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
+    "rp_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
     "h_", "t_", "ps_", "ev_", "loc_", "ns_",
 )
 _PROJECT_ID_RE = re.compile(
@@ -860,6 +860,74 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
         f"requires the delegation message to name the focus and the target_id. "
         f"Prompts seen: {[p[:160] for p in prompts]}"
     )
+
+
+def _hosted_listing(tool_calls) -> dict:
+    """The hosted answer ``project_list`` gave the router, read from the call log."""
+    for call in tool_calls or []:
+        if bare_tool_name(str(call.get("tool") or "")) == "project_list":
+            response = call.get("response")
+            if isinstance(response, dict) and response.get("mode") == "hosted":
+                return response
+    return {}
+
+
+def _first_handoff_args(callee: str | None, builtin_tool_calls) -> str | None:
+    """The first main-thread hand-off to ``callee``, a ``Skill`` call or a spawn,
+    as JSON text; None when there is none."""
+    from harness.skill_runner import read_skill_tool_input
+
+    for call in builtin_tool_calls or []:
+        if "agent_id" in call:
+            continue
+        args = call.get("args") or {}
+        name = read_skill_tool_input(args)[0] if call.get("tool") == "Skill" else args.get("subagent_type")
+        if name == callee:
+            return json.dumps(args)
+    return None
+
+
+def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_calls):
+    """Tag-gated (``uses-new-project-path``). The hosted ``project_list`` answer
+    lists no project about the message's person, so the first hand-off names
+    ``newProjectPath`` and no listed project's path."""
+    if "uses-new-project-path" not in (test.get("tags") or []):
+        pytest.skip("not a new-project-path test")
+    listing = _hosted_listing(tool_calls)
+    new_path = listing.get("newProjectPath")
+    assert new_path, f"the router never received a hosted project_list answer with a newProjectPath: {listing}"
+    callee = _expected_skill(test)
+    handoff = _first_handoff_args(callee, builtin_tool_calls)
+    assert handoff is not None, f"no hand-off to '{callee}' to read a projectPath from"
+    assert new_path in handoff, f"the '{callee}' hand-off must name newProjectPath {new_path!r}; got {handoff[:300]}"
+    listed = [p.get("projectPath") for p in listing.get("projects") or [] if p.get("projectPath")]
+    named = [p for p in listed if p in handoff]
+    assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
+
+
+def test_named_subject_continues_the_listed_project(test, tool_calls, builtin_tool_calls, text_response):
+    """Tag-gated (``uses-listed-project``). The message names the one listed
+    project's subject, so the router reads that project, the first hand-off names
+    its ``projectPath``, and the reply that ends the turn ends with its
+    ``projectUrl``."""
+    if "uses-listed-project" not in (test.get("tags") or []):
+        pytest.skip("not a listed-project test")
+    projects = _hosted_listing(tool_calls).get("projects") or []
+    assert len(projects) == 1, f"expected a hosted project_list answer listing one project; got {projects}"
+    path, url = projects[0].get("projectPath"), projects[0].get("projectUrl")
+    read_paths = [
+        (c.get("args") or {}).get("projectPath")
+        for c in tool_calls or []
+        if bare_tool_name(str(c.get("tool") or "")) == "project_context"
+    ]
+    assert path in read_paths, f"project_context was never called with the listed projectPath {path!r}: {read_paths}"
+    callee = _expected_skill(test)
+    handoff = _first_handoff_args(callee, builtin_tool_calls)
+    assert handoff is not None and path in handoff, (
+        f"the '{callee}' hand-off must name {path!r}; got {(handoff or '')[:300]}"
+    )
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    assert lines and url in lines[-1], f"the reply that ends the turn must end with {url!r}; its last line: {lines[-1:]}"
 
 
 def test_bounded_transcription_is_delivered_in_place(

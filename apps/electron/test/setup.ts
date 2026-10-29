@@ -25,11 +25,18 @@ const apiStub: AppAPI = {
   submitFeedback: () => Promise.resolve({ ok: true }),
   getSessionLog: () => Promise.resolve({ hasSessionLog: false, sizeBytes: 0 }),
   getState: () =>
-    Promise.resolve({ folderPath: null, research: null, gedcomx: null, notice: null }),
+    Promise.resolve({
+      folderPath: null,
+      research: null,
+      gedcomx: null,
+      collections: null,
+      notice: null
+    }),
   selectFolder: () => Promise.resolve(null),
   listProjectFiles: () => Promise.resolve([]),
   onResearchUpdated: () => {},
   onGedcomxUpdated: () => {},
+  onCollectionsUpdated: () => {},
   onWatchError: () => {},
   onFolderNotice: () => {},
   onSidecarUpdated: () => {},
