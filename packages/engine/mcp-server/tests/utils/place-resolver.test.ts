@@ -278,6 +278,8 @@ describe("endsWithItsJurisdiction: the text ends with the state or province a st
     ["La Unión, Guerrero, Mexico", "La Unión de Isidoro Montes de Oca, Guerrero, Mexico"],
     ["near Nueva Italia, Michoacán, Mexico", "Nueva Italia de Ruiz, Múgica, Michoacan, Mexico"],
     ["St. Bartholomew, Wednesbury, Staffordshire, England", "Wednesbury, Staffordshire, England, United Kingdom"],
+    // A later part names the place itself, though no jurisdiction of it.
+    ["St. Bartholomew, Wednesbury, England", "Wednesbury, Staffordshire, England, United Kingdom"],
   ])("%j holds %j", (place, standard) => {
     expect(endsWithItsJurisdiction(place, standard)).toBe(true);
   });
