@@ -1,6 +1,6 @@
-# Self-hosted remote MCP server: a public beta, January to July 2027
+# Self-hosted remote MCP server: a public beta, February to July 2027
 
-**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26); the rest is not started. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
+**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
 
 ## What this is
 
@@ -8,10 +8,10 @@
 - A web app shows each user's projects, takes uploads, links the user's own OpenRouter account for transcription, collects feedback and offers a download.
 - It runs two of the three tiers in [the handoff plan](familysearch-handoff.md), configured for the beta: the Python web tier with chat switched off, and the MCP tool server. There is no worker and no queue, because Claude runs in Cowork.
 - The beta's code is the handoff's code. Every remaining difference is listed under "Differences from the handoff", with its reason.
-- The lead makes every change to the handoff's built code, as items in this plan. Each change before launch is additive and keeps the handoff's behavior as the default, so nothing there needs rework; the two After-launch changes replace the worker's FamilySearch bearer and the grant refresher. The handoff plan's "Alignment with the self-hosted beta" section lists them.
+- The team builds the code, from one issue per item or part of an item, and Richard reviews every change to the handoff's code. Each change before launch is additive and keeps the handoff's behavior as the default, so nothing there needs rework; the two After-launch changes replace the worker's FamilySearch bearer and the grant refresher. The handoff plan's "Alignment with the self-hosted beta" section lists them.
 - It deploys to the lead's own AWS account and Neon, and uses no FamilySearch AWS resources.
-- It runs from the week of 11 January to July 2027. Then everything is deleted.
-- The lead builds it with Claude.
+- It runs from the week of 1 February to July 2027. Then everything is deleted.
+- The lead does what needs his AWS account, Neon or GeneFun: the domain and FamilySearch's approval (P0.1), the skeleton (P0.3), the loopback bounce (P0.4), the environments, monitoring and release (D1–D3), the private feedback repo, its Apps Script copy and `/triage-feedback` (D5), the policies (L1), every decision and checkpoint, the Phase 4 runs and the July purge. Every other item is an issue; "Who builds what" lists them.
 
 ## Decisions (lead, 2026-10-25 and 2026-10-26)
 
@@ -135,7 +135,7 @@ Measure, in a Cowork task:
 - **Network.**
   - A Route 53 zone, an ACM certificate, and one ALB with a 443 listener.
   - The ALB's idle timeout is set by hand to 1,800 s, since Beanstalk cannot set it on a shared ALB.
-  - The deep-check 404 rules go on now. Until the web environment joins, the listener's default action forwards to the tools environment. The other path rules go on when the web environment joins in week 5.
+  - The deep-check 404 rules go on now. Until the web environment joins, the listener's default action forwards to the tools environment. The other path rules go on when the web environment joins.
   - The runbook records every hand-made rule. Before rebuilding or terminating an environment, delete the rules that forward to it, and set the default action to a fixed 404 if it forwards there. After a rebuild, re-create them on the new target group, and point the default action back at it if it was moved.
 - **Access:** a security group the lead owns, admitting 443 only from his address and Anthropic's 160.79.104.0/21 until the sign-in server deploys.
 - **The tools environment:** Node 24, running the probe bundle with eb-tools' `.platform` and `.ebextensions` unchanged, under the immutable policy. Options set at creation, as on the web environment later:
@@ -168,7 +168,7 @@ Before launch, the lead signs in through a loopback bounce:
 
 The bounce is not an access control. Until launch day, admission reads an allowlist holding the lead's and the acceptance accounts' emails.
 
-**Done when (week 5, once the web tier is deployed):** the bounce signs the lead in, and an email off the allowlist is refused.
+**Done when (once the web tier is deployed):** the bounce signs the lead in, and an email off the allowlist is refused.
 
 ## Phase 1: shared code
 
@@ -258,7 +258,7 @@ The bounce is not an access control. Until launch day, admission reads an allowl
 - **One callback** serves both flows, told apart by the signed state cookie. With chat off, it consumes the single-use state record before it calls FamilySearch; with chat on, the signed state cookie alone guards it, as today. It then stores the FamilySearch token, encrypted with Fernet as today.
   - **Admission:** with chat off, it creates a user only in the connector flow, with the terms accepted, under the admission check. It refuses a blocked user.
   - **Newcomers:** a browser with no account sees the onboarding steps.
-- **FamilySearch budget,** off unless set (D1 sets it in week 5): the web tier's FamilySearch calls (the code exchange and the identity read) share one small process-wide budget. With chat off, a sign-in takes both its units only once its signed state cookie matches an unused state record, and before it consumes that record; a missing, mismatched or used state is refused without touching the budget. Past the budget, the callback answers 503 "busy, try again" with the state intact, so a reload retries.
+- **FamilySearch budget,** off unless set (D1 sets it when the web environment joins): the web tier's FamilySearch calls (the code exchange and the identity read) share one small process-wide budget. With chat off, a sign-in takes both its units only once its signed state cookie matches an unused state record, and before it consumes that record; a missing, mismatched or used state is refused without touching the budget. Past the budget, the callback answers 503 "busy, try again" with the state intact, so a reload retries.
 - **Done when:**
   - a test drives the connector flow against a fake FamilySearch, replaying the `/authorize` and `/token` parameters P0.2 recorded: authorize, consent, callback, token, a tool call through compose's tools tier, and the 24-hour end;
   - a `/token` request with no `Origin` succeeds;
@@ -291,12 +291,12 @@ The bounce is not an access control. Until launch day, admission reads an allowl
   - the key is stored under the same Fernet key;
   - unlinking.
 - **Pages:**
-  - with chat off: `/privacy`, `/terms`, and the onboarding page at `/` for a browser with no session;
+  - with chat off: `/privacy`, `/terms`, and the onboarding screen, which the SPA shows a signed-out browser whose link names no project (the server never sees a link's hash, so a project link goes to sign-in);
   - the account menu, which shows the account id, and with chat off a deletion code. The code is an HMAC of the user id under the session secret, shown only there.
 - **Done when:**
   - a cookie for user A cannot reach user B's project by any route;
   - an upload's text reaches `sidecar_read`;
-  - a submission reaches the Apps Script copy, and nothing lands in the bucket;
+  - a submission reaches a fake Apps Script endpoint, and nothing lands in the bucket; once the lead creates the real copy in January, a submission reaches it;
   - a download larger than the instance's free memory completes on the deployed instance, and its available memory stays flat.
 
 **W4 The browser app (`apps/web`, `packages/viewer-ui`).**
@@ -348,7 +348,7 @@ Two hosted routing tests serve `project_list` from a fixture; every other resear
 - a folder-mode test that serves `auth_status` (`loggedIn` false, `hasRefreshToken` true) delegates as today and never calls it;
 - the two hosted routing tests gain an `auth_status` fixture answering a live session.
 
-**G3 Connector tool names (week 3, after P0.2).**
+**G3 Connector tool names (after P0.2).**
 - **The rule:** a route is accepted if its prefix is predictable, and both sign-in and an agent's tool call work through it.
 - **The work:** add its spelling to every agent's `tools:`. Update `tests/packaging/tool-names.ts`, `agent-tool-names.test.ts`, ADR-0004, CLAUDE.md's "Dual-spelled tool names" and `docs/architecture.md`.
 - **Merging:** it merges under per-skill cosmetic labels, applied after its last push.
@@ -365,12 +365,12 @@ Either way, the research skill's first line says that without an `Agent` tool, r
 
 **Issue #3836**, agents reading project files directly, ships as its own PR.
 - **Its read block** fires only when the file is not there, and the eval harnesses keep the strict version.
-- **In connector mode** every direct read misses, so #3836 is an input to the dress rehearsal. If it has not merged by then, the rehearsal records which reads missed, and the 7 December checkpoint decides whether the launch waits for it.
+- **In connector mode** every direct read misses, so #3836 is an input to the dress rehearsal. If it has not merged by then, the rehearsal records which reads missed, and the 18 December checkpoint decides whether the launch waits for it.
 
 ## Phase 3: release and operations
 
 **D1 Environments.** P0.3's two environments, both on the shared ALB.
-- **In week 5, with the web environment, these environment properties:**
+- **When the web environment joins, by 4 December, these environment properties:**
   - the DSNs and the bucket;
   - `FS_TOKEN_ENC_KEY`, the same on both tiers, and the session secret;
   - the issuer and the web tier's public URL, on both tiers;
@@ -379,11 +379,11 @@ Either way, the research skill's first line says that without an `Agent` tool, r
   - the FamilySearch redirect setting, at the loopback (P0.4), and the sign-in budget;
   - `PGSSLROOTCERT=/etc/pki/tls/certs/ca-bundle.crt` on the web tier: AL2023's system bundle as a file, not libpq's `system` keyword, overriding the RDS bundle its `01-web.config` pins;
   - the transcription switch, off, on the tools tier.
-- **In weeks 7–8:** `FEEDBACK_URL`, the uploads setting and the limits.
+- **Before the dress rehearsal:** the uploads setting. **In January:** `FEEDBACK_URL` and the limits.
 - **Before gate 4's sign-in:** the redirect setting moves from the loopback to the beta's https redirect (P0.4).
 - **Once FamilySearch's approval is in writing:** the transcription switch goes on (gate 4).
 - **On launch day:** the user cap.
-- **Instance profiles:** the tools tier's from P0.3, the web tier's in week 5. Each has `AWSElasticBeanstalkWebTier`, as the handoff's tiers have, the SSM agent's managed policy, and one inline statement denying `bedrock:*` and `aws-marketplace:*`, which the beta never uses. In week 5 both gain object access and `s3:ListBucket` on the bucket.
+- **Instance profiles:** the tools tier's from P0.3, the web tier's when it joins. Each has `AWSElasticBeanstalkWebTier`, as the handoff's tiers have, the SSM agent's managed policy, and one inline statement denying `bedrock:*` and `aws-marketplace:*`, which the beta never uses. Then both gain object access and `s3:ListBucket` on the bucket.
 
 **D2 Monitoring.**
 - **Alarms:**
@@ -424,7 +424,7 @@ The page also says:
 - **Team and Enterprise plans:** an Owner adds the connector and makes the plugin available. Email us for help.
 
 **D5 Feedback triage.**
-- **In week 3,** before W3's done-when posts to it, the lead creates the private repo and the second Apps Script copy, with `GITHUB_REPO` set to that repo and `NOTIFICATION_EMAILS` unset. The private repo stays off the team's board, so no board skill or script lists a private issue.
+- **In January,** the lead creates the private repo and the second Apps Script copy, with `GITHUB_REPO` set to that repo and `NOTIFICATION_EMAILS` unset. The private repo stays off the team's board, so no board skill or script lists a private issue.
 - **`/triage-feedback`** also lists the private repo's open issues, after the board's Feedback column, and works each one as it works an alpha card: the same reading, checks and verdicts. Only where a verdict lands, and what it carries, change:
   - **Backlog:** the skill files a public issue carrying the instructions alpha triage would write, with a link to the private issue in place of alpha's original-feedback block. The Drive link, the zip name and the tester's own words stay on the private issue;
   - **Fold:** its comment on the open public issue links the private issue;
@@ -446,7 +446,7 @@ The terms say:
 - what acceptable use is;
 - FamilySearch's terms apply to FamilySearch content.
 
-## Phase 4: launch gates (4–10 January)
+## Phase 4: launch gates (18–31 January)
 
 1. **Security reviews** as each item merges: E1, E3, W2, W3 and W4, with `/security-review` and `/code-review ultra`.
 2. **The acceptance run,** on a release candidate that carries issue #3836 if the launch waits for it, with a new Claude account and a new FamilySearch account on the allowlist:
@@ -472,7 +472,7 @@ The purge, rehearsed on a copy first:
 
 ## Changes to the handoff's code
 
-The lead makes each of these, as items in this plan. Each is additive and keeps the handoff's behavior as the default, so Richard reworks nothing. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there; E1 and W1 add `/livez` there as a health path that touches no store.
+The team makes each of these, from the issues under "Who builds what". Each is additive and keeps the handoff's behavior as the default, so Richard reworks nothing. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there; E1 and W1 add `/livez` there as a health path that touches no store.
 - **Done:** PR #3852 added `project_list` (`src/tools/project-list.ts`, `src/server.ts`, `src/tool-schemas.ts`, `manifest.json`, `dev/smoke-calls.ts`, `dev/smoke-http.ts` and the stores) and the research router's project step, which `eb-worker.zip` carries. On the handoff's tools tier, `project_list` lists the worker's project. A worker bundle with the router's project step needs a tools tier that has `project_list`, so tools deploys first.
 - **Web tier,** `apps/server/proto/web/` (`app.py`, `auth.py`, `feedback.py`, `spa.py`): W1, W2 and W3. Chat on stays the default.
 - **Web bundle,** `apps/server/proto/eb-web/`: the nginx file.
@@ -485,9 +485,44 @@ The lead makes each of these, as items in this plan. Each is additive and keeps 
 - **The plugin,** which `eb-worker.zip` carries: G3's spelling, G5's wording and the reconnect fallback.
 - **If chosen or needed:** G4's writer-tool checks, in the writer tools they touch, and E5's `record_search` trim (`src/tools/record-search.ts`).
 
+## Who builds what
+
+The lead does the items "What this is" names. The team builds the rest from these issues; an issue labelled `senior` needs a senior developer. Each issue's "Blocked on" line orders them. Everything likely to go wrong only live, against Cowork, Claude, FamilySearch, OpenRouter or the deployed host, is due by 14 December, for the dress rehearsal before the holidays; the unit-testable rest is due 31 December.
+
+| Item | Issue | Level | Due |
+|---|---|---|---|
+| S1 Schema | issue #3977 | junior | 13 Nov |
+| E1 One front door | issue #3984 | senior | 7 Dec |
+| E2 Project tools: links, uploads, settings | issue #3978 | junior | 7 Dec |
+| E2 Project tools: the connector's `project_list` | issue #3991 | senior | 14 Dec |
+| E3 Session end and wording | issue #3995 | senior | 14 Dec |
+| E4 Limits: process-wide | issue #3979 | junior | 31 Dec |
+| E4 Limits: per user | issue #3999 | senior | 31 Dec |
+| E5 Fit for a connector | issue #3996 | junior | 14 Dec |
+| W1 Settings: chat switch, admission, `/livez` | issue #3985 | senior | 23 Nov |
+| W1 Settings: pool, TLS, nginx | issue #3980 | senior | 30 Nov |
+| W2 Sign-in: users, sessions, state, redirect, budget | issue #3992 | senior | 30 Nov |
+| W2 Sign-in: Claude's authorization server | issue #3997 | senior | 7 Dec |
+| W3 Project routes: viewer data | issue #3981 | senior | 7 Dec |
+| W3 Project routes: uploads and download | issue #3987 | senior | 14 Dec |
+| W3 Project routes: feedback | issue #3986 | junior | 31 Dec |
+| W3 Project routes: OpenRouter linking | issue #3988 | senior | 14 Dec |
+| W3 Project routes: policy pages and account data | issue #3993 | junior | 14 Dec |
+| W4 Browser app: flags, project links, list, polling | issue #3994 | junior | 14 Dec |
+| W4 Browser app: print view | issue #3982 | junior | 31 Dec |
+| W4 Browser app: onboarding (D4), account menu, upload, OpenRouter, download | issue #4001 | junior | 31 Dec |
+| S2 Deleting and blocking one user | issue #4000 | senior | 31 Dec |
+| G3 Connector tool names | issue #3989 | junior | 14 Dec |
+| G5 Capture wording | issue #3990 | junior | 31 Dec |
+| D3 step 6: the plugin's connector build and marketplace layout | issue #3983 | junior | 14 Dec |
+| Reconnect fallback, if P0.2 calls for it | issue #4002 | senior | 14 Dec |
+| After launch | issue #4003 | senior | after launch |
+
+P0.2 is issue #3529. G4's writer-tool checks get an issue only if the lead chooses them; E5's `record_search` trim is in issue #3996, conditional on P0.2.
+
 ## After launch (February–March 2027)
 
-The lead makes these too, with Richard reviewing:
+The team makes these too, from one issue, with Richard reviewing:
 - **The worker's half of the one door.**
   - The worker mints a per-attempt token, stamps its hash on the turn with `STAMP_BEARER_SQL`, and puts only that token in `mcp.json`. The door admits it as it admits today's stamp, on its open turn and project, then loads the FamilySearch token stored for the turn's project owner and applies E3's session-end hook, as it does for a connector token.
   - The tools tier gets `FS_TOKEN_ENC_KEY` and `SELECT` on `familysearch_tokens` and `users`.
@@ -500,41 +535,44 @@ The lead makes these too, with Richard reviewing:
 
 ## Timeline (proposed)
 
-| Weeks | Dates | Work |
-|---|---|---|
-| 1–2 | 26 Oct – 8 Nov | Phase 0 |
-| 2–3 | 2 – 15 Nov | S1; G3 after P0.2 |
-| 3–6 | 9 Nov – 6 Dec | E1 with E2's connector half; E3–E5; W1–W3; S2; D5's repo and Apps Script copy; G4's checks, if chosen; the reconnect fallback, if P0.2 calls for it |
-| 5 | 23 – 29 Nov | The web environment joins the ALB, with D1's week-5 settings and profiles; P0.4's bounce; the first live sign-in in Cowork |
-| 6 | 30 Nov – 6 Dec | The dress rehearsal |
-| 7–8 | 7 – 20 Dec | W4, G5, the rest of D1, D2–D5, L1 |
-| 9–10 | 21 Dec – 3 Jan | Holiday slack |
-| 11 | 4 – 10 Jan | Phase 4 |
-| 12 | 11 – 17 Jan | Launch |
+| Dates | Work |
+|---|---|
+| 26 Oct – 8 Nov | Phase 0 |
+| 2 Nov – 14 Dec | The issues due by 14 December under "Who builds what", the sign-in chain first. G3 after P0.2; G4's checks, if chosen; the reconnect fallback, if P0.2 calls for it |
+| By 4 Dec | The web environment joins the ALB, with D1's settings and profiles; P0.4's bounce |
+| 7 – 11 Dec | The first live sign-in in Cowork, and its fixes |
+| 14 – 18 Dec | The dress rehearsal |
+| 2 Nov – 31 Dec | The issues due 31 December, all unit-testable |
+| 4 – 17 Jan | The rest of D1; D2–D5; L1 |
+| 18 – 31 Jan | Phase 4 |
+| 1 – 7 Feb | Launch |
 
-**The dress rehearsal, before 7 December:**
+**The dress rehearsal, 14–18 December:**
 - deploy both tiers to the skeleton;
-- install the connector build of the plugin as a zip, on a separate Claude account;
-- in a fresh Cowork task, run one research session from `init-project` to a proof summary, with issue #3836 merged if it is ready;
+- install the connector build of the plugin from a test marketplace, on a separate Claude account, and check that a version bump reaches it;
+- in a fresh Cowork task, sign in and run one research session from `init-project` to a proof summary, with issue #3836 merged if it is ready;
+- let the session end, and reconnect;
+- open the project from Claude's link in a fresh browser;
+- through the routes, since their screens are due 31 December: upload a 25 MB capture, download a project larger than the instance's free memory, and link OpenRouter;
 - record agent spawns, hook denials, approval prompts, timeouts and missed direct reads on issue #3529.
 
 A plugin fix it turns up goes in a small follow-up PR.
 
-**Checkpoint, 7 December.** Cuts are taken that day if any of these hold:
-- E1–E5, W1–W3, S2, or the reconnect fallback P0.2 called for, has not merged;
-- G4's choice is not made, or the writer-tool checks it chose have not merged;
+**Checkpoint, 18 December.** Cuts are taken that day, while the whole team is here, if any of these hold:
+- an issue due by 14 December has not merged (the reconnect fallback only if P0.2 called for it);
 - the dress rehearsal has not passed, for a reason other than the reads issue #3836 covers;
+- G4's choice is not made, or the writer-tool checks it chose have not merged;
 - FamilySearch has not answered.
 
 The lead also decides that day whether the launch waits for issue #3836, and whether to hold the date.
 
-**Checkpoint, 21 December.** The same, if W4, D1–D5 or L1 has not merged, or if acceptance steps 1–3 fail on the release candidate installed from the marketplace. If the launch waits for issue #3836 and it has not merged, the lead decides that day whether to hold the date.
+**Checkpoint, 18 January.** The same, if an issue due 31 December has not merged, if D1–D5 or L1 is not done, or if acceptance steps 1–3 fail on the release candidate installed from the marketplace. If the launch waits for issue #3836 and it has not merged, the lead decides that day whether to hold the date.
 
 **Cut list, in order:**
 1. The upload page becomes a bare file form that still runs pdf.js.
 2. The feedback form becomes an email address.
 3. Polling becomes a Refresh button.
-4. Uploads move to February. The uploads setting goes off on both tiers, and pasting the text is the January capture path.
+4. Uploads move to March. The uploads setting goes off on both tiers, and pasting the text is the launch's capture path.
 
 **Not cuttable:** sign-in, isolation between users, the policies, FamilySearch's approval and the connector's tool names.
 
