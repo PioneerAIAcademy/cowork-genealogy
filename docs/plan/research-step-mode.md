@@ -147,6 +147,15 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
       rewrites the key), and whether it moves an agent running over about two minutes to the
       background (`CLAUDE_AUTO_BACKGROUND_TASKS`). If the tool does not offer the key, neither the
       wording nor a hook can work, and this decision goes back to the lead.
+      **Measured 2026-10-29** (Praise, Cowork on macOS, Claude Code 2.1.312, a recorder plugin on
+      `PreToolUse` and `PostToolUse`): the `Agent` tool offers no `run_in_background` (its input is
+      `description`, `prompt` and `subagent_type`); a plugin hook's `updatedInput` IS applied (the
+      spawned agent ran the rewritten prompt); and an agent that ran 154.5 s stayed in the
+      foreground and returned `status: completed`. So every Cowork agent already runs in the
+      foreground and the leak this decision guards against cannot happen there. The wording stays,
+      for the hosted planes where the key exists, and is harmless in Cowork, where the model drops
+      it. No hook arm. Also seen: the `Agent` result holds only a pointer, and the agent's report
+      comes back separately through a `SubagentHandback` call. Sent to the lead with this reading.
     - **The miss rate:** after PR 2 the worker's `ev=foregrounded` log line fires only on a spawn
       the wording did not mark `false`, and the wording is the same on every plane, so that rate
       stands for Cowork's, as rider 2's halt count does.
