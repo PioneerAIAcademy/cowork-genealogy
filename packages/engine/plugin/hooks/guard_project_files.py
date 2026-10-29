@@ -14,7 +14,8 @@ add-to-an-existing-project tools is what produced the bypass this guard exists t
 prevent: in an empty folder every one of them refuses with "not found in
 projectPath", so an agent told to use them had nowhere to go and reached for the
 shell instead. A deny has to leave a working alternative, and in an empty folder
-`project_create` is the only one.
+`project_create` is the only one. The main session cannot call it, or the tree
+writers, so the message also names the agent that holds each.
 `research/SKILL.md` has forbidden it in prose since the beginning and no
 skill's `allowed-tools` lists bare Write/Edit; this is the same rule as a
 denial. See `docs/specs/guardrail-enforcement-spec.md` §6, issue #940.
@@ -529,10 +530,13 @@ OUT_OF_LANE_REASON = (
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "
     "must go through the writer tools. To CREATE a new project use project_create, "
-    "which writes both files together; to add to an existing one use "
-    "research_append, research_log_append, tree_edit or tree_correct. These "
+    "which writes both files together (from the main session, invoke "
+    "`@plugin:init-project`, which calls it); to add to an existing one use "
+    "research_append or research_log_append, and for the tree tree_edit or "
+    "tree_correct (from the main session, invoke `@plugin:tree-edit`). These "
     "validate before persisting. Direct file writes never validate. "
-    "external-collections.json is written only by external_links_search given a projectPath."
+    "external-collections.json is written only by external_links_search given a projectPath "
+    "(from the main session, invoke `@plugin:locality-guide`)."
 )
 
 FORK_REASON = (

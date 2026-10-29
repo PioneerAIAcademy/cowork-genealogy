@@ -1398,6 +1398,19 @@ describe("the main thread is denied the tools only agents hold", () => {
     `mcp__Genealogy_Research__${tool}`,
   ];
 
+  // The raw-write deny reaches the main session too, so every writer tool it
+  // names that the main session cannot call must come with an agent that can.
+  it("the protected-file deny names, for each agent-only writer it suggests, an agent holding it", () => {
+    const { agentOnly } = guardAgentOnlyTables();
+    const reason = runGuard({ tool_name: "Write", tool_input: { file_path: "/project/research.json" } })
+      .hookSpecificOutput.permissionDecisionReason as string;
+    const named = Object.keys(agentOnly).filter((t) => new RegExp(`\\b${t}\\b`).test(reason));
+    expect(named).toEqual(expect.arrayContaining(["project_create", "tree_edit", "external_links_search"]));
+    for (const tool of named) {
+      expect(agentOnly[tool].some((a) => reason.includes(`\`@plugin:${a}\``)), tool).toBe(true);
+    }
+  });
+
   it.each(SPELLINGS("census_children_gap"))(
     "denies a main-thread %s and names both agents that hold it",
     (tool_name) => {
