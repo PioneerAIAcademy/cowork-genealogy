@@ -666,8 +666,8 @@ describe("volumeSearchTool", () => {
   });
 
   it("rejects a non-array recordTypeGroups with a readable error", async () => {
-    // The schema's enum is client-advisory — nothing validates input server-side
-    // — so a bare string is a reachable mistake. Without this the tool would
+    // The schema's enum is client-advisory — the server checks argument names,
+    // not values — so a bare string is a reachable mistake. Without this the tool would
     // throw "filter is not a function" from inside validate().
     await expect(
       volumeSearchTool({

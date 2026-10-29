@@ -5191,7 +5191,8 @@ def test_the_delivery_summary_reaches_a_human():
 
 def test_an_empty_summary_does_not_corrupt_the_stop_reason():
     """`summary` is declared required but NOTHING enforces it: the hook halts before the
-    body, and the server does not validate inputSchema. An argument-free call must still
+    body, and the server refuses unknown argument names but never a call for a missing
+    required key alone. An argument-free call must still
     produce a clean reason rather than a dangling 'Delivered: '."""
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",

@@ -172,7 +172,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       personReadRef: STAGED_REF,
     }),
     expect: (res) => ({
-      ok: res.body?.ok === false && /personReadRef is no longer accepted/.test(JSON.stringify(res.body?.errors ?? "")),
+      // Refused by server.ts's unknown-argument guard, with project_create's own text.
+      ok: res.isError && /personReadRef is no longer accepted/.test(String(res.body?.error ?? "")),
       detail: brief(res, 300),
     }),
   },

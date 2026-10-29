@@ -2,7 +2,12 @@ import { describe, it, expect } from "vitest";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { ACCEPTED_ALIASES, nearestParameters, rejectUnknownArgs } from "../../src/utils/unknown-args.js";
 import { callTool } from "../helpers/call-tool.js";
-import { SECTIONS_NEAR_MISS, treeCorrectRejection, treeEditRejection } from "../../src/utils/tool-hint-messages.js";
+import {
+  PERSON_READ_REF_REMOVED,
+  SECTIONS_NEAR_MISS,
+  treeCorrectRejection,
+  treeEditRejection,
+} from "../../src/utils/tool-hint-messages.js";
 
 const LUXEMBOURG = { surname: "X", recordCountry: "Luxembourg" };
 
@@ -80,6 +85,50 @@ describe("rejectUnknownArgs through the server (#3736)", () => {
     const r = await callTool("image_read", { memoryArtifactUrl: "https://example.org/x" });
     expect(r.isError).toBe(true);
     expect(r.text).toContain("image_read has no parameter `memoryArtifactUrl`");
+  });
+});
+
+describe("rejectUnknownArgs: what it echoes back", () => {
+  it("sends project_create's own message for the removed personReadRef", async () => {
+    const r = await callTool("project_create", { projectPath: "/p", objective: "o", personReadRef: "results/x.json" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain(PERSON_READ_REF_REMOVED);
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it("cuts an over-long key short and suggests nothing for it", () => {
+    const key = "k".repeat(100_000);
+    const out = rejectUnknownArgs("record_search", { surname: "X", [key]: 1 })!;
+    expect(out).toContain(`record_search has no parameter \`${"k".repeat(64)}…\` (100000 characters).`);
+    expect(out).not.toContain("the nearest are");
+    expect(out).not.toContain("takes no parameters");
+    expect(out.length).toBeLessThan(400);
+  });
+
+  it("never splits a surrogate pair at the cut", () => {
+    const key = "a".repeat(63) + "😀" + "b";
+    const out = rejectUnknownArgs("record_search", { [key]: 1 })!;
+    expect(out).toContain(`\`${"a".repeat(63)}…\``);
+    expect(out).not.toMatch(/[\ud800-\udbff](?![\udc00-\udfff])/);
+  });
+
+  it("names ten unknown keys and counts the rest", () => {
+    const many = Object.fromEntries(Array.from({ length: 5000 }, (_, i) => [`x${i}`, 1]));
+    const out = rejectUnknownArgs("record_search", many)!;
+    expect(out.match(/has no parameter/g)).toHaveLength(10);
+    expect(out).toContain("4990 more keys are not parameters either.");
+    expect(out.length).toBeLessThan(2000);
+    const eleven = Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`x${i}`, 1]));
+    expect(rejectUnknownArgs("record_search", eleven)).toContain("1 more key is not a parameter either.");
+  });
+
+  it("says a no-parameter tool takes none, whatever the key's length", () => {
+    expect(rejectUnknownArgs("project_list", { ["p".repeat(200)]: 1 })).toContain("project_list takes no parameters; drop `");
+  });
+
+  it("cuts a long key short in image_search's item hint too", () => {
+    const out = rejectUnknownArgs("image_search", { imageGroupNumber: "1", ["item".repeat(50)]: 1 })!;
+    expect(out).toContain(`image_search has no parameter \`${"item".repeat(16)}…\`; to address one item`);
   });
 });
 

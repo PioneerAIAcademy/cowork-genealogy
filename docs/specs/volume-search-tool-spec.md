@@ -889,7 +889,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `startYear` not an integer year | Throw: `"startYear must be an integer year (e.g., 1730)."` |
 | `endYear` not an integer year | Throw: `"endYear must be an integer year (e.g., 1810)."` |
 | `endYear` < `startYear` | Throw: `"endYear must be greater than or equal to startYear."` |
-| `pageSize` not a whole number from 1 to 100 | Throw: `"pageSize must be a whole number from 1 to 100."` — before any request. Covers `0`, `101`, `2.5`, `NaN` and a numeric string (`"50"`), since nothing validates input against the advertised schema server-side |
+| `pageSize` not a whole number from 1 to 100 | Throw: `"pageSize must be a whole number from 1 to 100."` — before any request. Covers `0`, `101`, `2.5`, `NaN` and a numeric string (`"50"`), since the server checks argument names, not types |
 | Resolved place has no placeRepIds | Throw: `"No place representations found for \"{standardPlace}\"."` |
 | `recordTypeGroups` contains an unrecognised name | Throw: `"Unknown record-type group(s): <names>. Valid groups: <list>."` — plural, because the input is an array and several entries can be wrong at once, so one error should let the caller fix them all. Never fall through to an unfiltered or empty search, since the API answers an unrecognised concept id with `totalCount: 0` and status `200`, which is indistinguishable from a genuine absence of records |
 | `recordTypeGroups` is not an array | Throw: `"recordTypeGroups must be an array of group names."` The schema's `enum` is advisory — the server checks argument names, not types — so a bare string (`"Tax"`) reaches the handler and would otherwise fail deep inside id expansion with an error naming neither the field nor the fix |

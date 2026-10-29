@@ -24,6 +24,12 @@ export function retiredExtractionMessage(retired: readonly string[]): string {
 export const SECTIONS_NEAR_MISS =
   "The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'.";
 
+/** `project_create`'s removed `personReadRef`. */
+export const PERSON_READ_REF_REMOVED =
+  "personReadRef is no longer accepted: pass personId, the subject's FamilySearch ID, " +
+  "and project_create reads the person and builds the starting tree itself. Do not " +
+  "call person_read first.";
+
 /** The cross-tool redirects of `tree_edit` and `tree_correct`. */
 export const treeEditRejection = (operation: string): string =>
   `tree_edit only adds — '${operation}' is a correction/removal op; ` +

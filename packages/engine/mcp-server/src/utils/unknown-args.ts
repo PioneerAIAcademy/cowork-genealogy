@@ -9,6 +9,7 @@
 import { allToolSchemas } from "../tool-schemas.js";
 import { RECORD_TYPE_GROUP_NAMES } from "./record-type-groups.js";
 import {
+  PERSON_READ_REF_REMOVED,
   RETIRED_EXTRACTION_KEYS,
   retiredExtractionMessage,
   SECTIONS_NEAR_MISS,
@@ -18,6 +19,21 @@ import {
 import { levenshteinDistance } from "./string-similarity.js";
 
 const NEAREST = 3;
+/** A longer key is echoed cut short and gets no suggestions: the edit-distance
+ *  pass costs its length times every parameter's, on the shared event loop. */
+const MAX_KEY_CHARS = 64;
+/** Unknown keys named one by one; the rest are counted. */
+const MAX_NAMED_KEYS = 10;
+
+/** `key` as a refusal echoes it: whole, or its first MAX_KEY_CHARS characters
+ *  and an ellipsis, never splitting a surrogate pair. */
+function shownKey(key: string): string {
+  if (key.length <= MAX_KEY_CHARS) return key;
+  let cut = key.slice(0, MAX_KEY_CHARS);
+  const last = cut.charCodeAt(cut.length - 1);
+  if (last >= 0xd800 && last <= 0xdbff) cut = cut.slice(0, -1);
+  return `${cut}…`;
+}
 
 type Schema = { name: string; inputSchema?: { properties?: Record<string, any> } };
 const SCHEMAS = allToolSchemas as ReadonlyArray<Schema>;
@@ -62,7 +78,7 @@ const HINTS: Readonly<Record<string, Hint>> = {
     if (key === undefined) return null;
     return {
       message:
-        `image_search has no parameter \`${key}\`; to address one item use \`item\` / \`itemImage\`, ` +
+        `image_search has no parameter \`${shownKey(key)}\`; to address one item use \`item\` / \`itemImage\`, ` +
         "or drop it to list the whole group.",
       covers: [key],
     };
@@ -97,6 +113,10 @@ const HINTS: Readonly<Record<string, Hint>> = {
   // `update_fact`): the redirect, not a nearest-parameter line per key.
   tree_edit: (unknown, args) => crossToolOp(unknown, args, "tree_correct", treeEditRejection),
   tree_correct: (unknown, args) => crossToolOp(unknown, args, "tree_edit", treeCorrectRejection),
+  project_create: (unknown) =>
+    unknown.some(([k]) => k === "personReadRef")
+      ? { message: PERSON_READ_REF_REMOVED, covers: ["personReadRef"] }
+      : null,
   research_query: (unknown) =>
     unknown.some(([k]) => k === "sections")
       ? { message: `research_query has no parameter \`sections\`. ${SECTIONS_NEAR_MISS}`, covers: ["sections"] }
@@ -141,15 +161,20 @@ export function rejectUnknownArgs(toolName: string, args: unknown): string | nul
   const lines: string[] = [];
   const hint = HINTS[toolName]?.(unknown, args as Record<string, unknown>) ?? null;
   if (hint) lines.push(hint.message);
-  for (const [key] of unknown) {
-    if (hint?.covers.includes(key)) continue;
-    const nearest = nearestParameters(key, parameters).map((p) => `\`${p}\``).join(", ");
-    lines.push(
-      nearest === ""
-        ? `${toolName} takes no parameters; drop \`${key}\`.`
-        : `${toolName} has no parameter \`${key}\`; the nearest are ${nearest}.`,
-    );
+  const rest = unknown.map(([k]) => k).filter((k) => !hint?.covers.includes(k));
+  for (const key of rest.slice(0, MAX_NAMED_KEYS)) {
+    const shown = shownKey(key);
+    if (parameters.length === 0) {
+      lines.push(`${toolName} takes no parameters; drop \`${shown}\`.`);
+    } else if (shown !== key) {
+      lines.push(`${toolName} has no parameter \`${shown}\` (${key.length} characters).`);
+    } else {
+      const nearest = nearestParameters(key, parameters).map((p) => `\`${p}\``).join(", ");
+      lines.push(`${toolName} has no parameter \`${key}\`; the nearest are ${nearest}.`);
+    }
   }
+  const more = rest.length - MAX_NAMED_KEYS;
+  if (more > 0) lines.push(more === 1 ? "1 more key is not a parameter either." : `${more} more keys are not parameters either.`);
   lines.push("Nothing was run: an argument the tool does not take would have been ignored, not applied.");
   return lines.join(" ");
 }
