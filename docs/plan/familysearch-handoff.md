@@ -427,8 +427,6 @@ The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools t
 - a compose shim that models only sqsd;
 - a CDN Service binding for F18, so that U28 is not needed.
 
-**A finding (2026-10-26).** Step 19 and `grants.py` take an 8-hour idle limit from FamilySearch documentation, and the start gate admits a session up to `FS_GRANT_MAX_START_AGE_S` (26,400 s) old. FamilySearch's API reference says an access token expires 24 hours after it is issued, or after 60 unused minutes (`developers.familysearch.org/main/reference/getaccesstoken`); `docs/testing-guides/oauth-tool-testing-guide.md` gives the 8 hours to the refresh token. The refresher renews only a patron with an open turn (`DUE_SQL` in `grants.py`), so the first message after an idle hour can start its run on an expired access token.
-
 ## Not in scope
 
 - The E2B/Fly/Neon alpha's token-refresh race (issue #2887): PR #2977 merged 2026-09-29 (engine 401 re-read; it re-reads only under `LOCAL`, so a bearer is unaffected), PR #2973 merged 2026-09-29.
