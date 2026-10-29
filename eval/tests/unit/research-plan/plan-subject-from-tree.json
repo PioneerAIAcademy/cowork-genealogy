@@ -1,0 +1,50 @@
+{
+  "test": {
+    "id": "ut_research_plan_subj",
+    "skill": "research-plan",
+    "name": "A question about the project subject is planned from the project tree, with no FamilySearch re-read",
+    "type": "positive",
+    "description": "Issue #3384 step 3. The project subject is Bridget Kerrigan (I1, ark ZZKR-BR1); project_create built the starting tree from her full FamilySearch read, so the project already holds what a re-read returns (fixture person-read-kerrigan-subject equals her tree entry). q_001 asks when and where she was baptized. The plan must be written from the project tree, with no person_read of ZZKR-BR1. GRADING: the absence of the re-read is deterministic (`subject-from-tree` tag -> test_research_plan_plans_subject_from_tree, which reads the call log); the judge grades the plan itself. Twin of ut_research_plan_prof, where the question person is a relative and the read is required.",
+    "tags": [
+      "planning",
+      "subject-from-tree",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status",
+      "issue-3384",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 -- when and where was Bridget Kerrigan baptized?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "plan-subject-from-tree"
+  },
+  "mcp_fixtures": [
+    "person-read-kerrigan-subject",
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "volume-search-schuylkill",
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: Bridget Kerrigan (I1) is the project's subject, and the project tree was built from her full FamilySearch read when the project was created. The plan is written from what the project tree records for her: born 1871 in Pottsville, Schuylkill County, Pennsylvania, daughter of Thomas Kerrigan (I2) and Ellen Burke (I3). Re-reading her FamilySearch profile is the defect, and it is checked by a deterministic validator; do not re-derive it.",
+    "The plan should target a baptism near her 1871 Pottsville birth, using what the tree gives: the parents' names (Thomas Kerrigan, born 1842 in Pottsville, and Ellen Burke, born in Ireland) and the place point toward Pottsville parish registers, with civil or later records naming her parents as corroboration. A plan that never uses her birth year, place or parents fails Completeness.",
+    "Do not penalize the plan for not citing attached sources: the project tree records none for her, and that is what FamilySearch holds too."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 300
+  }
+}

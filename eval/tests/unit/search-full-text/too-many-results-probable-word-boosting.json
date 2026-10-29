@@ -18,7 +18,8 @@
     "wiki-search-any"
   ],
   "execution": {
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 360
   },
   "judge_context": [
     "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",

@@ -4,8 +4,15 @@ import { join } from "path";
 import { tmpdir } from "os";
 
 import { projectContext } from "../../src/tools/project-context.js";
+import {
+  researchQuery,
+  RESEARCH_QUERY_SECTIONS,
+  RESEARCH_QUERY_OPTIONAL_SECTIONS,
+  EXTERNAL_COLLECTIONS_SECTION,
+} from "../../src/tools/research-query.js";
 import { readBuildInfo } from "../../src/utils/build-info.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
+import { getProjectStore } from "../../src/store/project-store.js";
 
 describe("project_context", () => {
   let dir: string;
@@ -225,7 +232,163 @@ describe("project_context", () => {
       sources: [],
       localities: [],
       awaitingUser: [],
+      // Absent here: an optional section counts 0, a required one is null
+      // because research_query would refuse it.
+      sectionCounts: Object.fromEntries(
+        RESEARCH_QUERY_SECTIONS.filter((s) => s !== EXTERNAL_COLLECTIONS_SECTION).map((s) => [
+          s,
+          RESEARCH_QUERY_OPTIONAL_SECTIONS.has(s) ? 0 : null,
+        ]),
+      ),
+      unregisteredDisagreementCount: 0,
+      exhaustedImageGroups: [],
     });
+  });
+
+  describe("exhaustedImageGroups: films whose browse cap is spent (#3549)", () => {
+    const PROJECT = { id: "rp_001", objective: "T", status: "active", created: "2026-01-01", updated: "2026-01-01" };
+    const id = (group: string, n: number) => `${group}_${String(n).padStart(5, "0")}`;
+    async function browseLog(lines: string[]) {
+      await getProjectStore().appendText(dir, "results/image-browse.jsonl", lines.map((l) => `${l}\n`).join(""));
+    }
+    function reads(group: string, count: number): string[] {
+      return Array.from({ length: count }, (_, i) =>
+        JSON.stringify({ image_group: group, image_id: id(group, i + 1), tool: "image_transcribe", at: "2026-10-14T00:00:00Z" }),
+      );
+    }
+    function logEntry(planItemId: string, tool: string, query: Record<string, unknown>) {
+      return { id: `log_${planItemId}`, plan_item_id: planItemId, performed: "2026-10-14T00:00:00Z", tool, query, outcome: "partial" };
+    }
+    function plan(planId: string, status: string, items: Record<string, string>) {
+      return {
+        id: planId,
+        question_id: "q_001",
+        status,
+        created: "2026-10-14",
+        items: Object.entries(items).map(([itemId, itemStatus], n) => ({ id: itemId, sequence: n + 1, status: itemStatus })),
+      };
+    }
+
+    it("lists only open items on an active plan, so a disposed item drops off", async () => {
+      await writeProject(
+        {
+          project: PROJECT,
+          plans: [
+            plan("pl_001", "superseded", { pli_001: "planned" }),
+            plan("pl_002", "active", { pli_002: "completed", pli_003: "skipped", pli_004: "in_progress", pli_005: "planned" }),
+          ],
+          log: ["pli_001", "pli_002", "pli_003", "pli_004", "pli_005"].map((itemId) =>
+            logEntry(itemId, "image_search", { imageGroupNumber: "004452257_001_ABCD-123" }),
+          ),
+        },
+        { persons: [], relationships: [], sources: [] },
+      );
+      await browseLog(reads("004452257", 20));
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok && r.exhaustedImageGroups).toEqual([
+        { imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_004", "pli_005"] },
+      ]);
+    });
+
+    it("lists a film at the cap with the plan items that browsed it, and only image_search entries", async () => {
+      await writeProject(
+        {
+          project: PROJECT,
+          plans: [plan("pl_001", "active", { pli_002: "planned", pli_003: "planned", pli_004: "planned" })],
+          log: [
+            logEntry("pli_002", "image_search", { imageGroupNumber: "004452257_001_ABCD-123" }),
+            logEntry("pli_002", "image_search", { imageGroupNumber: "004452257_002_ABCD-456" }),
+            logEntry("pli_003", "fulltext_search", { imageGroupNumber: "004452257" }),
+            logEntry("pli_004", "image_search", { imageGroupNumber: "004000001" }),
+          ],
+        },
+        { persons: [], relationships: [], sources: [] },
+      );
+      await browseLog([...reads("004452257", 20), ...reads("004000001", 3)]);
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok && r.exhaustedImageGroups).toEqual([
+        { imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_002"] },
+      ]);
+    });
+
+    it("counts distinct images, so 19 plus a re-read is not exhausted", async () => {
+      await writeProject({ project: PROJECT }, { persons: [], relationships: [], sources: [] });
+      const nineteen = reads("004452257", 19);
+      await browseLog([...nineteen, nineteen[0]]);
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok && r.exhaustedImageGroups).toEqual([]);
+    });
+
+    it("skips a torn line, and lists a film with no browse logged against a plan item", async () => {
+      await writeProject({ project: PROJECT }, { persons: [], relationships: [], sources: [] });
+      await browseLog(["{not json", ...reads("008230326", 20)]);
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok && r.exhaustedImageGroups).toEqual([{ imageGroup: "008230326", imagesRead: 20, planItemIds: [] }]);
+    });
+  });
+
+  it("counts each section exactly as research_query would return it", async () => {
+    // The promise question-selection relies on: a 0 here means that query comes
+    // back empty, so skipping it loses nothing. Held per section against the
+    // real query, not against a hand-written expectation.
+    const research: Record<string, unknown> = {
+      project: { id: "rp_001", objective: "x", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+      questions: [{ id: "q_001", question: "Where was Ann born?", status: "open" }],
+      // Ann's birthplace: England on one census, Alabama on another, and no
+      // conflict names the pair, so conflicts counts 0 while the query still
+      // has something to say.
+      assertions: [
+        { id: "a_1", fact_type: "birth", place: "England" },
+        { id: "a_2", fact_type: "birth", place: "Alabama, United States" },
+      ],
+      person_evidence: [
+        { id: "pe_1", person_id: "I2", assertion_id: "a_1" },
+        { id: "pe_2", person_id: "I2", assertion_id: "a_2" },
+      ],
+      conflicts: [],
+      hypotheses: [{ id: "h_001", claim: "c", status: "active" }],
+    };
+    for (const section of RESEARCH_QUERY_SECTIONS) {
+      if (section !== EXTERNAL_COLLECTIONS_SECTION && !(section in research)) research[section] = [];
+    }
+    await writeProject(research, { persons: [], relationships: [], sources: [] });
+
+    const r = await projectContext({ projectPath: dir });
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(Object.keys(r.sectionCounts).sort()).toEqual(
+      RESEARCH_QUERY_SECTIONS.filter((s) => s !== EXTERNAL_COLLECTIONS_SECTION).sort(),
+    );
+    expect(r.sectionCounts.assertions).toBe(2);
+    expect(r.sectionCounts.conflicts).toBe(0);
+    for (const [section, count] of Object.entries(r.sectionCounts)) {
+      const q = await researchQuery({ projectPath: dir, section } as any);
+      if (!q.ok) throw new Error(`${section}: ${q.errors.join("; ")}`);
+      expect(count, section).toBe(q.count);
+      if (section === "conflicts") {
+        expect(r.unregisteredDisagreementCount).toBe(q.unregisteredDisagreements?.length);
+        expect(r.unregisteredDisagreementCount).toBe(1);
+      }
+    }
+  });
+
+  it("counts an absent optional section 0, and is null where research_query would refuse", async () => {
+    await writeProject(
+      {
+        project: { id: "rp_001", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        hypotheses: [{ id: "h_001" }],
+        timelines: {},
+      },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir });
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.sectionCounts.localities).toBe(0);
+    expect(r.sectionCounts.hypotheses).toBe(1);
+    // A 0 here would let the agent skip a query that fails.
+    for (const section of ["conflicts", "timelines"]) {
+      expect(r.sectionCounts[section], section).toBeNull();
+      expect((await researchQuery({ projectPath: dir, section } as any)).ok, section).toBe(false);
+    }
   });
 
   describe("awaitingUser: open external-site hand-offs (spec §2.3)", () => {

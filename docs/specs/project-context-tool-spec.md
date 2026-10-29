@@ -107,9 +107,16 @@ repo's identifier-casing rule):
     planItemId: string | null,
     performed: string | null,
   }],
+  exhaustedImageGroups: [{               // films whose browse cap is spent — §2.5
+    imageGroup: string,                  // film number, e.g. "008230326"
+    imagesRead: number,                  // distinct images counted, >= 20
+    planItemIds: string[],               // open plan items with an image_search log entry on it
+  }],
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
+  sectionCounts: { [section: string]: number | null },  // entries per research_query section — §2.6
+  unregisteredDisagreementCount: number,         // what research_query's conflicts adds — §2.6
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -464,6 +471,61 @@ its values can sum past `total`. Places and record types are sorted. The field i
 absent when no list is stored, and also when the file cannot be read: a broken
 cache file must never fail the whole projection.
 
+### 2.5 `exhaustedImageGroups` — films whose browse cap is spent
+
+The image cap (`image-transcribe-tool-spec.md` §5.8) allows 20 distinct images per
+film per project, and nothing resets it. A cap refusal only reaches the agent that
+hit it, so a router that re-spawns `search-images` for the same plan item pays for
+an agent that is refused on its first page (2 of 4 browse spawns in one hosted
+session of 2026-10-14). This field lets the router see the spent film before it spawns.
+
+Computed at read time from `results/image-browse.jsonl`, the cap's own log
+(`exhaustedImageGroups` in `src/utils/browse-budget.ts`, which shares its line
+parser with the cap check): every film with at least 20 distinct `image_id`s, sorted
+by film. Nothing is persisted. `planItemIds` are the distinct `plan_item_id`s of
+`research.json` `log` entries with `tool: "image_search"` whose
+`query.imageGroupNumber` belongs to that film (its part before the first `_`), so
+the router can match the plan item it is about to delegate (plan items carry no
+image group). Only `image_search` entries count: that is the tool `search-images`
+logs a browse under, and a `fulltext_search` entry scoped to the same film is not a
+browse. Only items still `planned` or `in_progress` on an `active` plan are listed:
+once `research-plan` disposes of an item it drops off, so the router does not send it
+back on the next pass; the film itself stays listed while its cap is spent. `[]` when
+no film is spent, and when the log is absent or unreadable — like
+the cap itself, the field never fails a call. Reads that named no project are
+counted in memory only and are not visible here.
+
+The description tells the router never to delegate a browse of a listed film and to
+send its `planItemIds` to `research-plan` to dispose of (lead, 2026-10-28); the
+`research` router's `search-images` row says the same.
+
+### 2.6 `sectionCounts` — which sections a query would find empty
+
+```typescript
+sectionCounts: { [section: string]: number | null }   // every research.json section research_query serves
+unregisteredDisagreementCount: number
+```
+
+One key per section in `research_query`'s `RESEARCH_QUERY_SECTIONS` except
+`external_collections` (counted by §2.4), each the length of that research.json
+array. An absent section in `RESEARCH_QUERY_OPTIONAL_SECTIONS` counts 0, as
+`research_query` answers it; a section `research_query` would refuse — a required
+one absent, or any one present but not an array — is `null`. The contract is that
+a 0 matches the `count` an unfiltered `research_query` of that section would
+return, so a consumer may treat the 0 as having read the section and skip the
+call, and may never treat a `null` that way. The disagreement count comes from
+`research_query`'s own `disagreementsInScope`, so the two cannot drift.
+
+`conflicts` is the one section whose query returns more than its items: it also
+reports `unregisteredDisagreements`, project-wide when no `questionId` is given.
+`unregisteredDisagreementCount` is that list's length, so `conflicts: 0` with a
+non-zero count still needs the query.
+
+Why: question-selection reads several sections before it picks a question. In
+the October 2026 e2e corpus 98 of 98 of those reads came back empty; in two
+hosted sessions of 2026-10-05/06, 12 of 21 did. The reads were issued in
+parallel, so the counts save tokens and calls more than wall-clock time.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** One fixed shape, no field
@@ -548,7 +610,13 @@ untouched.
   filtering; preferred-name rendering; `sourceRefs` unioned (distinct) across
   person/fact/name references; per-source `recordIds` (distinct, verbatim)
   and `assertionCount`; `projectStatus` echoed.
-- **empty project** — empty arrays, `ok: true`.
+- **empty project** — empty arrays, every `sectionCounts` value 0, `ok: true`.
+- **`sectionCounts`** — for every section, equal to the unfiltered
+  `research_query` `count`; `unregisteredDisagreementCount` equal to that
+  query's `conflicts` `unregisteredDisagreements` length, including on a project
+  where `conflicts` counts 0 and one disagreement is unregistered; an absent
+  optional section counts 0; an absent required section, or one that is not an
+  array, is `null` and `research_query` refuses it.
 - **truncation** — a 200-char question comes back at 140 chars ending in `…`;
   a 140-char question is untouched.
 - **missing file** — `{ ok: false, errors }`, when the folder holds the other
@@ -563,6 +631,13 @@ untouched.
   a capture on a different URL closes nothing; an earlier capture does not
   close a later hand-off; a `positive` entry with `capture_received: false`
   never lists; a non-`external_site` entry never lists.
+- **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan
+  items of its `image_search` entries, across sub-volumes of the film, and not those
+  of a `fulltext_search` entry on it; 19 images plus a re-read does not list; a torn
+  log line is skipped; a spent film with no `image_search` entry lists with
+  `planItemIds: []`; an empty project gives `[]`; a `completed` or `skipped` item,
+  and an item on a `superseded` plan, drop off while `planned` and `in_progress`
+  items on the active plan stay.
 
 ## 6. Consumers / wiring
 
