@@ -68,6 +68,7 @@ import {
   documentToExtract,
   type StructuredDocument,
 } from "../utils/structured-document.js";
+import { RETIRED_EXTRACTION_KEYS, retiredExtractionMessage } from "../utils/tool-hint-messages.js";
 
 /** The sections extraction writes: one record's source plus its assertions, and
  *  the question ids a re-found record gains. */
@@ -100,21 +101,9 @@ export async function runExtractionAppend(
 ): Promise<ExtractionBatchResult> {
   const MODES = ["recordIds", "documents", "absences", "personId"] as const;
   const got = MODES.filter((k) => (input as any)?.[k] !== undefined);
-  // The hand-built forms, in both spellings (`ops`, and one flat op), and the
-  // one-record extractor mode (`logEntryId` + `recordId`).
-  const retired = (["ops", "section", "op", "entry", "entryId", "fields", "logEntryId", "recordId"] as const).filter((k) => (input as any)?.[k] !== undefined);
+  const retired = RETIRED_EXTRACTION_KEYS.filter((k) => (input as any)?.[k] !== undefined);
   if (retired.length > 0) {
-    return {
-      ok: false,
-      records: [],
-      errors: [
-        `extraction_append no longer takes ${retired.map((k) => `\`${k}\``).join(" or ")}: roles and ` +
-          "classifications are decided in code, so there is nothing for a caller to compose. Send " +
-          "`recordIds` for FamilySearch records, `documents` (from the record-structurer agent) for " +
-          "any other source, or `absences` for people a search did not find. Correcting an " +
-          "existing assertion is not an extraction and is not done here.",
-      ],
-    };
+    return { ok: false, records: [], errors: [retiredExtractionMessage(retired)] };
   }
   if (got.length !== 1) {
     return {
