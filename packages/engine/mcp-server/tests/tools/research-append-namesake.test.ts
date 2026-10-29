@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
+import { mkdtemp, mkdir, writeFile, readFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { LOCAL } from "../../src/auth/principal.js";
@@ -1116,6 +1116,103 @@ describe("namesake cap", () => {
       expect(r.ok, errs(r)).toBe(true);
       expect(wn(r)).toHaveLength(1);
       expect(wn(r)[0]).toContain("'F1' Occupation (cites S2)");
+    });
+  });
+
+  // ─── record_persona_ids, stamped from the row's own search (item 10) ─────────
+
+  describe("record_persona_ids stamp (item 10)", () => {
+    const log = (id: string, tool: string, resultsRef: string | null) => ({
+      id, plan_item_id: null, performed: "2026-10-24", tool, query: "John Smith 1873", outcome: "positive",
+      results_examined: 1, results_ref: resultsRef, results_available: 1, notes: null, external_site: null,
+    });
+    const SEARCH = log("log_001", "record_search", "results/log_001.json");
+    async function setupSearch(logs: unknown[] = [SEARCH], result: Record<string, unknown> = { recordId: REC.voter, primaryId: "p_555" }) {
+      await setup(research({ namesakes: [], log: logs }));
+      await mkdir(join(dir, "results"), { recursive: true });
+      const sidecar = { log_id: "log_001", tool: "record_search", retrieved: "2026-10-24T00:00:00Z", returned_count: 1,
+        payload: { query: {}, results: [{ ...result, gedcomx: { persons: [{ id: result.primaryId }] } }] } };
+      await writeFile(join(dir, "results", "log_001.json"), JSON.stringify(sidecar));
+    }
+    const appendRow = (extra: Record<string, unknown>) =>
+      researchAppend({
+        projectPath: dir, section: "namesakes", op: "append",
+        entry: { person_id: P, name: ROW.name, place: ROW.place, time_period: ROW.time_period, notes: null, ...extra },
+      } as any);
+    const row = async () => (await readResearch()).namesakes[0];
+
+    it("stamps the persona the row's search names, storing the record id in the sidecar's form", async () => {
+      await setupSearch();
+      const r = await appendRow({ record_ids: ["VOT2-002"], log_entry_ids: ["log_001"] });
+      expect(r.ok, errs(r)).toBe(true);
+      expect((await row()).record_ids).toEqual([REC.voter]);
+      expect((await row()).record_persona_ids).toEqual({ [REC.voter]: "p_555" });
+    });
+
+    it("overwrites a stamp the caller supplies", async () => {
+      await setupSearch();
+      const r = await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"], record_persona_ids: { [REC.voter]: "p_999" } });
+      expect(r.ok, errs(r)).toBe(true);
+      expect((await row()).record_persona_ids).toEqual({ [REC.voter]: "p_555" });
+    });
+
+    it("drops a supplied stamp when no sidecar names the record", async () => {
+      await setupSearch();
+      const r = await appendRow({ record_ids: [REC.voter], record_persona_ids: { [REC.voter]: "p_999" } });
+      expect(r.ok, errs(r)).toBe(true);
+      expect((await row()).record_persona_ids).toBeUndefined();
+    });
+
+    it("accepts a row with no log_entry_ids, unstamped", async () => {
+      await setupSearch();
+      const r = await appendRow({ record_ids: [REC.voter] });
+      expect(r.ok, errs(r)).toBe(true);
+      expect((await row()).record_persona_ids).toBeUndefined();
+    });
+
+    it("accepts a record its search's sidecar does not hold, unstamped and unchanged", async () => {
+      await setupSearch();
+      const r = await appendRow({ record_ids: ["DTH3-003"], log_entry_ids: ["log_001"] });
+      expect(r.ok, errs(r)).toBe(true);
+      expect((await row()).record_ids).toEqual(["DTH3-003"]);
+      expect((await row()).record_persona_ids).toBeUndefined();
+    });
+
+    it("accepts a row whose log entry staged no sidecar", async () => {
+      await setupSearch([log("log_001", "record_search", null)]);
+      const r = await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"] });
+      expect(r.ok, errs(r)).toBe(true);
+      expect((await row()).record_persona_ids).toBeUndefined();
+    });
+
+    it("stamps nothing from a full-text search, which names no persona", async () => {
+      await setupSearch([log("log_001", "fulltext_search", "results/log_001.json")]);
+      const r = await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"] });
+      expect(r.ok, errs(r)).toBe(true);
+      expect((await row()).record_persona_ids).toBeUndefined();
+    });
+
+    it("refuses an update that sets the stamp", async () => {
+      await setupSearch();
+      expect((await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"] })).ok).toBe(true);
+      const r = await researchAppend({
+        projectPath: dir, section: "namesakes", op: "update", entryId: "ns_001",
+        fields: { record_persona_ids: { [REC.voter]: "p_999" } },
+      } as any);
+      expect(r.ok).toBe(false);
+      expect(errs(r)).toContain("not updatable on 'namesakes': record_persona_ids");
+    });
+
+    it("re-stamps when an update sets record_ids, and keeps the stamp on a notes update", async () => {
+      await setupSearch();
+      expect((await appendRow({ record_ids: [REC.voter] })).ok).toBe(true);
+      expect((await row()).record_persona_ids).toBeUndefined();
+      const update = (fields: Record<string, unknown>) =>
+        researchAppend({ projectPath: dir, section: "namesakes", op: "update", entryId: "ns_001", fields } as any);
+      expect((await update({ record_ids: [REC.voter], log_entry_ids: ["log_001"] })).ok).toBe(true);
+      expect((await row()).record_persona_ids).toEqual({ [REC.voter]: "p_555" });
+      expect((await update({ notes: "Checked again." })).ok).toBe(true);
+      expect((await row()).record_persona_ids).toEqual({ [REC.voter]: "p_555" });
     });
   });
 });

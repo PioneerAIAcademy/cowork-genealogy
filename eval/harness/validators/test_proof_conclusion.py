@@ -858,12 +858,22 @@ _STILL_TO_SEARCH_CUE = re.compile(
     r"|remain(?:s|ing)? unsearched|still (?:to search|unsearched)|unexamined|next step",
     re.I,
 )
+_FOOTNOTE_DEF = re.compile(r"[ \t]*(?:\^(\d+)|\[\^(\d+)\]:)[ \t]")
+_FOOTNOTE_REF = re.compile(r"\^(\d+)|\[\^(\d+)\]")
+
+
+def _footnote_number(line):
+    m = _FOOTNOTE_DEF.match(line)
+    return (m.group(1) or m.group(2)) if m else None
 
 
 def _still_to_search_text(text):
     """Each section's text, split at heading lines and at a `---` rule, from
     its first still-to-search cue to its end. The rule is where footnotes start:
-    a footnote citing the Hyde Genealogy as searched is not a to-do item."""
+    a footnote citing the Hyde Genealogy as searched is not a to-do item. A
+    footnote inside that text counts only when the text cites it: the footnotes
+    gather every citation in the narrative, those of records it reports as
+    searched too."""
     parts = []
     for para in re.split(
         r"\n(?=[ \t]*(?:#{1,6}[ \t]|\*\*[^*\n]+\*\*[ \t]*$|(?:-{3,}|\*{3,}|_{3,})[ \t]*$))",
@@ -871,7 +881,11 @@ def _still_to_search_text(text):
     ):
         m = _STILL_TO_SEARCH_CUE.search(para)
         if m:
-            parts.append(para[m.start():])
+            lines = para[m.start():].split("\n")
+            kept = [line for line in lines if _footnote_number(line) is None]
+            cited = {a or b for a, b in _FOOTNOTE_REF.findall("\n".join(kept))}
+            kept += [line for line in lines if _footnote_number(line) in cited]
+            parts.append("\n".join(kept))
     return "\n".join(parts)
 
 
@@ -925,6 +939,21 @@ def test_stale_proof_refreshed(before_state, after_state, test):
         f"{_STALE_PROOF_ID}'s {', '.join(stale)} still lists Walworth's Hyde "
         "Genealogy as still to search, though log_021 searched both volumes"
     )
+
+
+def test_namesake_untied_death_not_encoded(before_state, after_state, test):
+    """Tag-gated (`namesake-encoding`): with a namesake recorded on I1 and the
+    estate record untied to him, no Death or Burial fact is added to I1."""
+    if "namesake-encoding" not in (test.get("tags") or []):
+        pytest.skip("not a namesake-encoding test")
+
+    def facts(state):
+        tree = state.get("tree_gedcomx_json") or {}
+        person = next((p for p in tree.get("persons") or [] if p.get("id") == "I1"), {})
+        return person.get("facts") or []
+
+    added = [f for f in facts(after_state) if f not in facts(before_state) and f.get("type") in ("Death", "Burial")]
+    assert not added, f"a death was encoded onto I1 from a record untied to him under the namesake row: {added}"
 
 
 # --- Narrative edit form (issue #3542, lead 2c) --------------------------
