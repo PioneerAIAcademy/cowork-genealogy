@@ -1,0 +1,14 @@
+{
+  "tool": "image_transcribe",
+  "description": "Catch-all for any other page of film 008230326: an ordinary Alsweiler civil birth page naming nobody the test hunts, so stepping costs a turn and gives nothing. No `found`. Order it after image-transcribe-alsweiler-births-staub and before image-transcribe-any.",
+  "args": {
+    "imageId": "~008230326_"
+  },
+  "response": {
+    "transcription": "Geburts-Register der Bürgermeisterei Alsweiler.\n\nNr. 41. Alsweiler ... erschien Johann Klein, Bergmann ... ein Kind männlichen Geschlechts ... Mathias.\n\nNr. 42. Alsweiler ... erschien Peter Müller, Ackerer ... ein Kind weiblichen Geschlechts ... Anna Maria.",
+    "metadata": {
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1655012
+    }
+  }
+}
