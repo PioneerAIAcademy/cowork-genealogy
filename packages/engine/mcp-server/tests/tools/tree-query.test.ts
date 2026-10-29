@@ -35,7 +35,10 @@ const TREE = {
   relationships: [
     {
       id: "R1", type: "http://gedcomx.org/Couple", person1: "I1", person2: "I2",
-      facts: [{ type: "Marriage", date: "1885", place: "Dayton, Ohio", sources: [{ ref: "S4" }] }],
+      facts: [
+        { type: "Marriage", date: "1885", place: "Dayton, Ohio", sources: [{ ref: "S4" }] },
+        { type: "http://gedcomx.org/Divorce", date: "1901" },
+      ],
       notes: ["m. at home"],
       sources: [{ ref: "S6" }],
     },
