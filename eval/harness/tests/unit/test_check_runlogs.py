@@ -1882,8 +1882,7 @@ def _clean_log(test_id="ut_ip_1", outcome="pass"):
 
 
 def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
-    """A released `v1.json` beside candidates — the shape `init-project` has on
-    main, and the one `latest_full_skill_runlog` resolves backwards."""
+    """A skill's run-log directory, for released `v{N}.json` beside candidates."""
     runlogs = tmp_path / "runlogs"
     skill_dir = runlogs / skill
     skill_dir.mkdir(parents=True)
@@ -1895,11 +1894,10 @@ def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
     return skill_dir
 
 
-def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, capsys):
-    """`latest_full_skill_runlog` returns ANY released `v{N}.json` in preference to
-    every candidate, whatever the date. So a PR adding a red candidate beside a
-    clean released log would be read as clean if rule 6 used that resolution.
-    It reads the log the PR ADDED instead."""
+def test_rule6_grades_the_added_log_not_the_newest_one(tmp_path, monkeypatch, capsys):
+    """`latest_full_skill_runlog` reads the newest run on disk, so a clean run main
+    wrote after the PR's red one would be read in its place and the PR would pass.
+    Rule 6 reads the log the PR ADDED instead."""
     skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
     (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
     _write_ann(skill_dir, "v1.json", [])
@@ -1908,6 +1906,9 @@ def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, 
         json.dumps(_clean_log("ut_ip_2", "fail")), encoding="utf-8"
     )
     _write_ann(skill_dir, added, [])
+    newer = "v2_2026-09-23_09-00-00.json"
+    (skill_dir / newer).write_text(json.dumps(_clean_log()), encoding="utf-8")
+    _write_ann(skill_dir, newer, [])
     _patch_diffs(monkeypatch, [f"eval/runlogs/unit/init-project/{added}"])
 
     rc = check_runlogs.main()
@@ -1985,9 +1986,9 @@ def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch
 
 # --- Rules 2, 2b and 3 grade the run log the PR adds (#3272) ---------------------
 #
-# `latest_full_skill_runlog` prefers ANY released `v{N}.json` over every candidate, so
-# when main released a log newer than the PR's own candidate, rules 2 and 3 graded main's
-# release and the PR's own run was checked by nothing. These build that shape with a
+# `latest_full_skill_runlog` reads the newest run on disk, so when main released a log
+# newer than the PR's own candidate, rules 2 and 3 graded main's release and the PR's
+# own run was checked by nothing. These build that shape with a
 # snapshot that names a file really on disk: `_clean_log`'s empty snapshot can never be
 # stale, so a test on it would never reach rule 2's comparison.
 
