@@ -554,7 +554,10 @@ def _project_read_target(tool_name: str, tool_input: dict | None, *, cwd: str) -
 def _project_read_route(target: str, root: str) -> str:
     """The MCP tool that replaces a direct read of `target`."""
     if _under(target, root + "/results"):
-        return "record_read({recordId, resultsRef})"
+        return (
+            "record_read({recordId, resultsRef}) for a record or search sidecar, or "
+            "sidecar_read({projectPath, ref: '<ref>#hits'}) for a fulltext_search sidecar"
+        )
     if _under(target, root + "/evaluations") or _under(target, root + "/uploads"):
         return "sidecar_read({projectPath, ref})"
     if _basename(target) == "research.json":
@@ -580,7 +583,11 @@ def project_read_denied(
     survive if the default outside the project ever flips to deny.
 
     The reason names the MCP route that replaces the read, chosen by target: a
-    `results/` sidecar -> `record_read({recordId, resultsRef})`; a verdict body
+    `results/` sidecar -> `record_read({recordId, resultsRef})` for a record or
+    search sidecar, or `sidecar_read({projectPath, ref: '<ref>#hits'})` for a
+    `fulltext_search` one -- one fixed message naming both, because the hosted
+    port (`apps/server/proto/worker/deny.py`) has no project folder to inspect
+    and the two must stay identical; a verdict body
     under `evaluations/` or a text upload under `uploads/` ->
     `sidecar_read({projectPath, ref})`; research.json -> `research_query`;
     anything else -> `project_context`.

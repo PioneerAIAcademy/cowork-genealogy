@@ -409,6 +409,10 @@ AGENT_WRITABLE_SECTIONS = {
     # above. Its search log goes through research_log_append, which carries no
     # `section`.
     "search-records": frozenset({"plan_items", "namesakes"}),
+    # search-hints sets the status of the "review pending hints" plan item it
+    # executes (issue #3153). Its no-hints log goes through research_log_append,
+    # which carries no `section`. A repo CI requirement, not a hook route.
+    "search-hints": frozenset({"plan_items"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire

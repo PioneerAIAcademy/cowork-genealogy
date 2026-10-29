@@ -345,9 +345,9 @@ The transcription quirks and HTR error patterns are in the appendix
 ### 6. Triage results
 
 Each staged result carries only flat stub fields — the full transcript
-(`textDocument`) is dropped from the response and no MCP tool reads it back. It
-is still on disk at `staged.resultsRef`, but reading it pulls the whole page
-(79–136 KB) back into context. Triage from the stubs first:
+(`textDocument`) is dropped from the response. It is still on disk at
+`staged.resultsRef`, but reading it pulls the whole page (79–136 KB) back into
+context. Triage from the stubs first:
 - **Did your terms hit?** `highlightTerms` lists the matched terms and phrases
   as bare strings (e.g. `["Patrick", "Flynn", "Flynn Patrick"]`) — they confirm
   which query terms appear in the transcript, not where or in what role.
@@ -427,7 +427,9 @@ research_append({
 })
 ```
 
-Set `completed` (search executed). For `skipped` (unnecessary), always
+Set `completed` only for a nil search or one with no candidate worth
+extracting. A search with promising hits sets the item `in_progress`;
+extraction completes it. For `skipped` (unnecessary), always
 include `skip_category` and `skip_reason` — a bare skip is refused:
 
 ```
@@ -511,11 +513,16 @@ collision, not a match (step 8).
 
 ### 11. Name records for extraction
 
-For each promising record, name the record's `id` (ARK) and the context
-that survives staging — `names`/`places`/`dates`, `title`, `recordType`,
-`recordPlace`, `highlightTerms` — so the orchestrator can transcribe each record's page
-with `image_transcribe` and hand its `staged.resultsRef` to the record-structurer
-agent. You do neither yourself. The plan item's status stays as-is; extraction will
+For each promising record, name its ready-made ref: the log entry's
+`results_ref` from step 7, then `#`, then the hit's `id` (e.g.
+`results/log_007.json#3QS7-99W7-GYFS`). Add the context that survives staging
+— `names`/`places`/`dates`, `title`, `recordType`, `recordPlace`,
+`highlightTerms` — so the orchestrator can hand that ref to the
+record-structurer agent as the record's `resultsRef`/`transcriptionRef`, with
+the hit's `id` as its `recordId`. Only when a hit's transcript is too garbled to
+extract does the orchestrator instead transcribe the page with
+`image_transcribe` on the hit's `id` and hand over that `staged.resultsRef`.
+You do neither yourself. The plan item's status stays as-is; extraction will
 complete it when it runs.
 
 ### 12. Present results
@@ -556,8 +563,9 @@ Return the following to the caller:
 
 - the plan item executed (id and description) — or "ad-hoc" if none
 - count of searches run, and which returned results
-- for positive results: the ARK(s) of promising records, their `title` /
-  `recordType`, and the `log_` id created
+- for positive results: each promising record's `results/<log_id>.json#<id>`
+  ref (its log entry's `results_ref`, then `#`, then the hit's `id`), its
+  `title` / `recordType`, and the `log_` id created
 - for nil results: what was searched and why it is declared negative
 - the plan item's new `status` if it moved
 - next-step hint (e.g. "three records ready for the record-structurer agent",

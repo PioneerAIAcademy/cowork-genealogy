@@ -103,9 +103,11 @@ Both tools keep identical batched `ops`, id rules, and validate-on-write
 semantics (everything in §4–§7). An op sent to the wrong tool is
 rejected before anything is applied, with a redirect naming the sibling tool
 (`tree_edit only adds — 'update_name' is a correction/removal op; corrections
-and removals live in tree_correct`, and the mirror-image message on
+and removals live in tree_correct.`, and the mirror-image message on
 `tree_correct`); in a batch the rejection is indexed `ops[i]: …` and nothing
-is written. Each tool's description cross-references the other. Everywhere
+is written. When a single op also carries the other tool's keys (`factId` on an
+`update_fact`), `server.ts`'s unknown-argument guard sends this same redirect
+before the handler runs (`src/utils/tool-hint-messages.ts` holds the wording). Each tool's description cross-references the other. Everywhere
 this spec says `tree_edit` about the shared pipeline (§4.1–§7), the behavior
 applies to whichever tool admits the op.
 

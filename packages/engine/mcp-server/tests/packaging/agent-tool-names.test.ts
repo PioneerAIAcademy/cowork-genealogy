@@ -764,6 +764,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "person_read",
       "person_record_matches",
       "record_read",
+      "research_append",
       "research_log_append",
       "research_query",
       "sidecar_read",
