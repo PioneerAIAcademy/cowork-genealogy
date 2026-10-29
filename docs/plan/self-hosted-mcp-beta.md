@@ -546,8 +546,6 @@ The team makes these too, from one issue, with Richard reviewing:
 | 18 – 31 Jan | Phase 4 |
 | 1 – 7 Feb | Launch |
 
-After the holidays the team is a skeleton crew, so everything likely to go wrong is tested before them.
-
 **The dress rehearsal, 14–18 December:**
 - deploy both tiers to the skeleton;
 - install the connector build of the plugin from a test marketplace, on a separate Claude account, and check that a version bump reaches it;
