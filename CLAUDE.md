@@ -892,7 +892,10 @@ Where to look first:
   `collections_search` and `volume_search`.
 - **`src/utils/place-api.ts`** — the low-level FamilySearch Places API
   fetchers (raw HTTP, no caching): `searchPlace`, `getPlaceById`,
-  `getPlaceByPrimaryId`, `getPlaceRepIds`, `getPlaceCandidateNames`,
+  `getPlaceByPrimaryId`, `getPlaceReps` (every representation of a place, with
+  its English name, date range and names in every language) and its ids-only
+  `getPlaceRepIds`,
+  `getPlaceCandidateNames`,
   `getPlaceWikipediaUrl` (the place's curated `WIKIPEDIA_LINK` attribute),
   `extractPrimaryId`. Both `place-resolver.ts` and `place-search.ts` build on
   these (no util→tool dependency). A new tool needing a place fetcher imports

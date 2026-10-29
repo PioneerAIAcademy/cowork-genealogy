@@ -47,9 +47,26 @@ export interface GedcomXFact {
     original?: string;
     normalized?: { value: string; lang?: string }[];
     description?: string;
+    fields?: GedcomXField[];
   };
   value?: string;
   sources?: GedcomXSourceReference[];
+}
+
+/** A FamilySearch index field. On a fact's place, the `http://gedcomx.org/Place`
+ *  field holds the as-written `Original` value and FamilySearch's `Interpreted`
+ *  (standardized) values. */
+export interface GedcomXField {
+  type?: string;
+  values?: GedcomXFieldValue[];
+}
+
+export interface GedcomXFieldValue {
+  type?: string;
+  labelId?: string;
+  text?: string;
+  resource?: string;
+  qualifiers?: GedcomXQualifier[];
 }
 
 export interface GedcomXRelationship {
@@ -106,10 +123,13 @@ export interface GedcomXCoverage {
 
 export interface GedcomXPlaceDescription {
   id?: string;
+  identifiers?: Record<string, string[]>;
+  /** Some record reads cite the place here instead, with no `id`:
+   *  `{ resource: "…/places/description/7344713", resourceId: "place_7344713" }`. */
+  place?: { resource?: string; resourceId?: string };
   names?: { value: string }[];
   latitude?: number;
   longitude?: number;
-  identifiers?: Record<string, string[]>;
 }
 
 // SimplifiedGedcomX types — token-efficient format for LLM consumption.
@@ -151,9 +171,12 @@ export interface SimplifiedFact {
   standard_date?: string;
   place?: string;
   // Standardized place name (the snake_case data-format spelling of
-  // `standardPlace`). Populated from raw `place.normalized` by `toSimplified`,
-  // or by the network standardization pass (`toSimplifiedStandardized`) for
-  // free-text places. Dropped on `toGedcomX`, like `standard_date`.
+  // `standardPlace`). Populated by the converter from raw `place.normalized`; on
+  // a record read with none, by `record_read` from the place id of the chosen
+  // `Interpreted` place value, named in English for the fact's date
+  // (`toSimplifiedRecordRead`, then `recordReadDocument`); or by the network
+  // standardization pass (`toSimplifiedStandardized`) for free-text places.
+  // Dropped on `toGedcomX`, like `standard_date`.
   standard_place?: string;
   value?: string;
   // The `research.json` assertion this fact was minted from — the backlink an
