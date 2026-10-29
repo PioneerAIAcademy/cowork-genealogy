@@ -189,6 +189,10 @@ def owning_skills(tool: str, args: dict[str, Any] | None) -> list[str]:
             elif section == "conflicts":
                 owners.append("conflict-resolution")
             elif section == "questions":
+                # Creating a question is routed to question-selection (the
+                # hook's OWNED_APPENDS); updates are not.
+                if op.get("op") == "append":
+                    owners.append("question-selection")
                 fields = op.get("fields") if isinstance(op.get("fields"), dict) else op.get("entry")
                 ss = (fields or {}).get("search_stop") if isinstance(fields, dict) else None
                 _GATE = {"question_answered", "record_exhausted", "nothing_further_reachable"}
@@ -1222,19 +1226,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # `agent:citation` on that row -- rather than an unnamed-delegate
         # bypass. Do not read its presence here as evidence of a hook route.
         "citation",
-        # Same shape as search-images and citation, and NOT a hook route
-        # (issue #2115). This conversion is cost- and context-motivated: the
-        # folded body stops occupying the orchestrator's context on every run
-        # that touches question selection, and a cheaper model can be pinned per
-        # agent. No hook routes anything to this agent. It writes `questions`,
-        # which does carry a routed claim -- a stop-gate `search_stop.stopped_because`
-        # belongs to research-exhaustiveness -- but creating a question
-        # writes `stopped_because: null`, which the guard explicitly permits, so no
-        # route was added and none is needed. It is listed because the set is
-        # asserted equal to the shipped agent files, and so a legitimate
+        # A converted skill (issue #2115), and a hook route since issue #3548:
+        # the guard's OWNED_APPENDS routes every `questions` append here. Its
+        # creations write `stopped_because: null`, which the stop-gate claim
+        # route (research-exhaustiveness) permits. It is listed because the set
+        # is asserted equal to the shipped agent files, and so a legitimate
         # `research_append` of a new question from this agent does not read as
-        # an unnamed-delegate bypass. Do not read its presence here as evidence
-        # of a hook route.
+        # an unnamed-delegate bypass.
         "question-selection",
         # A converted skill (issue #2118) with no hook route. Its one write is a
         # `log` entry through `research_log_append` (#3524), which carries no
@@ -1353,7 +1351,7 @@ DEDICATED_AGENT_NAMES = frozenset(
         # names `agent:search-full-text` on the `plan_items` and `log` rows.
         "search-full-text",
         # Same shape as citation (issue #2122): a converted skill. The hook lanes
-        # it to `project`, `researcher_profile`, `known_holdings` and `sources` and routes
+        # it to `project`, `researcher_profile` and `sources` and routes
         # nothing to it; `ownership.json` names `agent:init-project` on those
         # rows, the `project` row, and the three tree rows `project_create` writes.
         "init-project",
@@ -1919,6 +1917,19 @@ _CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I | re.ASCII)
 _SETTLED_CONFLICT_STATUSES = frozenset({"resolved", "moot"})
 
 
+def is_settled_conflict(conflict: Any) -> bool:
+    """The Python copy of the engine's `isSettledConflict` (validator.ts).
+
+    `tests/unit/test_settled_conflict_parity.py` runs both over the same
+    statuses; change one and that test makes you change the other.
+    """
+    if not isinstance(conflict, dict):
+        return False
+    status = conflict.get("status")
+    # A non-string status (a list, say) is unhashable here; TS Set.has returns false.
+    return isinstance(status, str) and status in _SETTLED_CONFLICT_STATUSES
+
+
 def find_unpersisted_conflict_resolutions(
     research: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
@@ -2005,8 +2016,7 @@ def find_unpersisted_conflict_resolutions(
     settled_conflict_ids = {
         _cid(c.get("id"))
         for c in conflicts
-        if isinstance(c, dict)
-        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        if is_settled_conflict(c)
         and _cid(c.get("id"))
     }
     # A resolved conflict can back a question WITHOUT being cited on the
@@ -2019,8 +2029,7 @@ def find_unpersisted_conflict_resolutions(
     settled_blocked_qids = {
         q
         for c in conflicts
-        if isinstance(c, dict)
-        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        if is_settled_conflict(c)
         and isinstance(c.get("blocks_question_ids"), list)
         for q in c["blocks_question_ids"]
     }

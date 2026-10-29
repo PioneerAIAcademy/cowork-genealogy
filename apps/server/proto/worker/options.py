@@ -1,5 +1,6 @@
 """The worker's ``ClaudeAgentOptions`` and its hooks: ``PreToolUse`` (deny and log),
-``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration) and, on the D18
+``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration, and end the turn when a
+proof-conclusion call completes the project) and, on the D18
 autonomous arm only, ``Stop`` (veto the model's voluntary yield, ``make_stop_hook``).
 
 This is the prototype option set (plan: "Container layout", "Removing the shell",
@@ -75,9 +76,12 @@ from app.agent.continue_policy import (
     TERMINAL_NO_PROGRESS,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
+    completion_halt_summary,
     project_completed,
     should_continue_run,
+    status_before_call,
     terminal_reason,
+    wants_status_before,
 )
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
@@ -103,6 +107,7 @@ GATEWAY_AGENT_MODELS = {
     "claude-sonnet-5": "us.anthropic.claude-sonnet-5",
     # Not yet served through TAP's gateway: first seen there at U14's check.
     "claude-haiku-5-5": "us.anthropic.claude-haiku-5-5",
+    "claude-sonnet-5-5": "us.anthropic.claude-sonnet-5-5",
 }
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 # The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
@@ -735,12 +740,23 @@ def make_posttool_hook(
     turn_id: str,
     finish: Callable[[str], None],
     log: Callable[..., None] | None = None,
+    research: Callable[[], Mapping[str, Any] | None] | None = None,
+    status_before: Callable[[str | None], Any] | None = None,
+    on_completed: Callable[[str], None] | None = None,
 ):
     """The worker's ``PostToolUse`` / ``PostToolUseFailure`` callback: ``finish(tool_use_id)``
     stamps the row the PreToolUse hook wrote with the call's duration (acceptance
-    criterion 4). Never raises and never changes what the model sees; a failed stamp is
-    one log line. A call in flight when its worker is killed keeps a NULL duration.
-    U19: a FamilySearch tool answering with the sign-in instruction logs ``ev=reauth_hit``."""
+    criterion 4). Never raises; a failed stamp is one log line. Its one effect on the turn
+    is the completion halt below. A call in flight when its worker is killed keeps a NULL duration.
+    U19: a FamilySearch tool answering with the sign-in instruction logs ``ev=reauth_hit``.
+
+    The completion halt (#3542 lead 1), armed when ``research``, ``status_before`` (the
+    project's status read just before this call, by its ``tool_use_id``) and
+    ``on_completed`` are given: after the main-thread proof-conclusion call that completes the project, end the
+    turn on the agent's ``summary_for_user``, the same predicate as the alpha. Exactly
+    ``{"continue_": False, "stopReason": ...}``: ``_halt``'s deny half is PreToolUse-shaped
+    and means nothing after the call ran. ``on_completed`` records the turn ``completed``,
+    because no Stop hook fires after a halt (``dev/probe_posttool_halt.py``)."""
 
     async def _posttool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         data = input_data if isinstance(input_data, dict) else {}
@@ -758,7 +774,19 @@ def make_posttool_hook(
                     agent_id=data.get("agent_id"))
         except Exception:  # noqa: BLE001, S110 - an alarm signal must not fail the call
             pass
-        return {}
+        if research is None or status_before is None or on_completed is None:
+            return {}
+        try:
+            summary = completion_halt_summary(data, status_before(use_id), research)
+            if summary is None:
+                return {}
+            on_completed(summary)
+            return {"continue_": False, "stopReason": summary}
+        except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+            if log is not None:
+                log(ev="completion_halt_failed", turn_id=turn_id,
+                    error=f"{type(exc).__name__}: {exc}")
+            return {}
 
     return _posttool
 

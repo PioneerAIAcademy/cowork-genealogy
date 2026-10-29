@@ -14,6 +14,7 @@ import { join, resolve, dirname } from "path";
 import { randomUUID } from "node:crypto";
 import { getProjectStore } from "../store/project-store.js";
 import { isInsideProject, assertInsideProject, projectRelativeRef, readProjectJson } from "./project-io.js";
+import { arkToBareId } from "./ark.js";
 
 /** The mandatory staging subdirectory. Invisible to the validator orphan check
  *  (which scans results/ non-recursively for top-level *.json). */
@@ -78,6 +79,16 @@ export const STAGING_CAPABLE_TOOLS = new Set([
  * assertion drawn from one was refused outright.
  */
 export const PERSONA_BEARING_PRODUCERS = new Set(["record_search", "record_read"]);
+
+/**
+ * An accepted FamilySearch hint's log entry: the positive `person_record_matches`
+ * verdict `search-hints` logs. It stages nothing, so the record behind it is read
+ * by `extraction_append`, whose staged read verifies the persona ids written under
+ * this entry (research_append D2) and the validator accepts them (D5).
+ */
+export function isAcceptedHint(logEntry: any): boolean {
+  return logEntry?.tool === "person_record_matches" && logEntry?.outcome === "positive";
+}
 
 export interface StagedHandle {
   resultsRef: string;
@@ -170,6 +181,7 @@ export async function checkStagedResults(args: {
 }): Promise<{ envelope: StagingEnvelope; returnedCount: number }> {
   const { projectPath, stagedResultsRef, expectedTool } = args;
   const store = getProjectStore();
+  if (stagedResultsRef.includes("#")) throw new Error(hitSelectorRefusal(stagedResultsRef));
 
   // 1. Path-traversal guard, then require the ref to live under results/.staging/.
   const abs = assertInsideProject(projectPath, stagedResultsRef);
@@ -676,7 +688,9 @@ export async function resolveStagedRef(
 ): Promise<{ ref: string; correctedFrom?: string }> {
   const ref = rawRef.trim();
   const store = getProjectStore();
-  if (ref === "" || ref.includes("..") || (await store.exists(projectPath, ref).catch(() => false))) {
+  // A '#' carries a hit selector, not a copy slip: `<uuid>#1` is two edits from
+  // `<uuid>`, and correcting it would read the whole file as if it were the hit.
+  if (ref === "" || ref.includes("..") || ref.includes("#") || (await store.exists(projectPath, ref).catch(() => false))) {
     return { ref };
   }
   const slash = ref.lastIndexOf("/");
@@ -742,6 +756,7 @@ export async function readStagedResults(
   projectPath: string,
   rawRef: string,
 ): Promise<unknown[]> {
+  if (rawRef.includes("#")) throw new Error(hitSelectorRefusal(rawRef));
   // Read-only, so a near-copy is read through to the one staged file it names
   // (resolveStagedRef) with nothing persisted under the mis-copied name.
   const { ref: stagedResultsRef } = await resolveStagedRef(projectPath, rawRef);
@@ -773,4 +788,128 @@ export async function readStagedResults(
     );
   }
   return results;
+}
+
+// ─── full-text hit refs (issue #3522) ────────────────────────────────────────
+
+/** The fragment that asks `sidecar_read` for a full-text sidecar's hit list. */
+export const HIT_INDEX_FRAGMENT = "hits";
+
+/**
+ * Split a `results/<file>#<hit>` ref into its file and its hit selector. Only a
+ * `results/` ref carries one: a `results/` filename never holds a `#` (staged
+ * names are UUIDs, finalized ones `log_NNN.json`), while an upload's may. The
+ * split is at the first `#`, so an ARK or a resolver URL in the selector keeps
+ * its `/`, `:` and any later `#`.
+ */
+export function splitHitRef(ref: string): { base: string; hit?: string } {
+  const i = ref.indexOf("#");
+  if (i === -1 || !ref.startsWith("results/")) return { base: ref };
+  return { base: ref.slice(0, i), hit: ref.slice(i + 1) };
+}
+
+/** The refusal every reader but `sidecar_read` gives a ref carrying a hit selector. */
+export function hitSelectorRefusal(ref: string): string {
+  const { base } = splitHitRef(ref);
+  return (
+    `'${ref}' carries a '#…' hit selector, which only sidecar_read (one full-text hit's ` +
+    `transcript) and extraction_append's transcriptionRef read. Pass '${base}' here.`
+  );
+}
+
+/** A results/ envelope read whole: what wrote it, its log entry, and its rows. */
+export interface ResultsEnvelope {
+  ref: string;
+  tool: string | null;
+  /** The finalized sidecar's `log_id`; null for a staged file. */
+  logId: string | null;
+  results: unknown[];
+}
+
+/** Why `readResultsEnvelope` could not read a ref. */
+export class ResultsEnvelopeError extends Error {
+  constructor(
+    readonly kind: "not_a_results_file" | "missing" | "invalid",
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * Read a staged (`results/.staging/<uuid>.json`) or finalized
+ * (`results/<log_id>.json`) envelope whole, with no near-copy correction: the
+ * caller holds an exact ref (a hit ref is handed out ready-made, never typed).
+ * Read-only.
+ */
+export async function readResultsEnvelope(projectPath: string, ref: string): Promise<ResultsEnvelope> {
+  let abs: string;
+  try {
+    abs = assertInsideProject(projectPath, ref);
+  } catch (e) {
+    throw new ResultsEnvelopeError("not_a_results_file", e instanceof Error ? e.message : String(e));
+  }
+  const underStaging = isInsideProject(join(projectPath, STAGING_SUBDIR), abs);
+  const topLevelSidecar = dirname(abs) === resolve(projectPath, "results") && abs.endsWith(".json");
+  if (!underStaging && !topLevelSidecar) {
+    throw new ResultsEnvelopeError(
+      "not_a_results_file",
+      `'${ref}' is neither a staged handle under ${STAGING_SUBDIR}/ nor a finalized results/<log_id>.json sidecar.`,
+    );
+  }
+  let text: string;
+  try {
+    text = await getProjectStore().readText(projectPath, projectRelativeRef(projectPath, ref));
+  } catch (e: any) {
+    if (e?.code === "ENOENT" || e?.code === "ENOTDIR") {
+      throw new ResultsEnvelopeError("missing", `'${ref}' does not exist in this project.`);
+    }
+    // `results/.staging` itself, or a path no file can have: a ref problem, not an unreadable file.
+    if (e?.code === "EISDIR" || e?.code === "ENAMETOOLONG") {
+      throw new ResultsEnvelopeError("not_a_results_file", `'${ref}' names a directory or an impossible path, not a results file.`);
+    }
+    throw e;
+  }
+  let envelope: { tool?: unknown; log_id?: unknown; payload?: { results?: unknown } };
+  try {
+    envelope = JSON.parse(text);
+  } catch {
+    throw new ResultsEnvelopeError("invalid", `'${ref}' is invalid JSON.`);
+  }
+  const results = envelope?.payload?.results;
+  if (!Array.isArray(results)) {
+    throw new ResultsEnvelopeError("invalid", `'${ref}' has no payload.results array.`);
+  }
+  return {
+    ref,
+    tool: typeof envelope.tool === "string" ? envelope.tool : null,
+    logId: !underStaging && typeof envelope.log_id === "string" ? envelope.log_id : null,
+    results,
+  };
+}
+
+/** A full-text hit row, as `fulltext_search` stages it. */
+export interface FulltextHitRow {
+  id: string;
+  title?: string;
+  recordDate?: string;
+  recordPlace?: string;
+  sourceUrl?: string;
+  textDocument?: string;
+}
+
+/**
+ * Find the hit a selector names in a full-text envelope's rows, by bare id: the
+ * selector and the stored id may each be a bare id, an ARK or a resolver URL.
+ * Returns its row and 1-based position, or null.
+ */
+export function findFulltextHit(
+  results: unknown[],
+  selector: string,
+): { row: FulltextHitRow; hitIndex: number } | null {
+  const want = arkToBareId(selector);
+  const i = results.findIndex(
+    (r) => typeof (r as { id?: unknown })?.id === "string" && arkToBareId((r as { id: string }).id) === want,
+  );
+  return i === -1 ? null : { row: results[i] as FulltextHitRow, hitIndex: i + 1 };
 }

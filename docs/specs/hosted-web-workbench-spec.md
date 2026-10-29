@@ -292,7 +292,9 @@ and web (WebSocket transport).
 >    `readOnly=true`, which the web client always sends, such a session gets
 >    `{wssUrl, token, readOnly: true, message}` with no secrets, config or grant
 >    written, so its chat replays and the client shows no composer; without it,
->    410 before resuming. `/resume` and the read endpoints stay open, so an ended
+>    410 before resuming. The credential proxy refuses such a session's Claude
+>    calls (403), so a turn left running in its resumed sandbox stops at its
+>    next call. `/resume` and the read endpoints stay open, so an ended
 >    session's research can still be read; the control plane is then out of the
 >    streaming path entirely (affinity-free, the AWS-no-sticky requirement). The
 >    in-sandbox server is `apps/server/app/sandbox_server.py`. Full rationale:
@@ -335,7 +337,7 @@ and electron share code" requires).
 >   job builds either one — see `docs/architecture.md`, "Two products, one repo".
 > - **The counts have moved:** **27** skills (not 28) and **47** MCP tools in
 >   `allToolSchemas`/`manifest.json` (not 30).
-> - **`viewer-ui` holds 13 section components**, not 11 — see the note under
+> - **`viewer-ui` holds 14 section components**, not 11 — see the note under
 >   §4.1, which explains why 11 is still the right number *there*.
 > - **`/apps/cowork-plugin` and `/apps/mcpb` were never created.** Both artifacts
 >   are still built by top-level `scripts/` (`build-mcpb.mjs`, `package-plugin.mjs`,
@@ -379,8 +381,8 @@ interface ResearchTransport {
 
 ~90% of the renderer (App, 11 sections, shared components, `lib/schema.ts`,
 `progress.ts`, `relationship-label.ts`) moves into `viewer-ui` unchanged. **11 is
-the count that actually moved** (2026-06-07); two sections were added
-later, so the package holds **13** today.
+the count that actually moved** (2026-06-07); four sections were added
+later and one deleted, so the package holds **14** today.
 
 > **As built, verified 2026-08-02.** The interface shipped essentially verbatim
 > (`packages/viewer-ui/src/transport.ts`), with an Electron IPC adapter
@@ -390,16 +392,20 @@ later, so the package holds **13** today.
 > path in Electron, session title on the web) and a **required** `notice` (the
 > folder-in-subfolder heads-up, replayed to a late-mounting renderer through the
 > hydration snapshot); a `SubscriptionHandlers.onNotice` handler carries that
-> same heads-up as a push; and three **optional** methods were added rather than
+> same heads-up as a push; a **required** `collections` (the project-root
+> `external-collections.json`, `null` when absent) with a
+> `SubscriptionHandlers.onCollections` push carries the stored collection lists
+> to the Collections section; and three **optional** methods were added rather than
 > dropped — `selectFolder?`, `getFeedbackContext?`, `getSourceImage?` — each
 > optional precisely because one host cannot serve it.
 >
-> **The "11 sections" above is correct and must not be changed to 13.** Exactly
+> **The "11 sections" above is correct and must not be changed to 14.** Exactly
 > 11 section components existed when this was written, and exactly those 11 moved
-> in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14)
-> and `LocalitiesSection` (2026-07-15) were built afterwards, in `viewer-ui`
+> in the extraction (`371e5db5`). `KnownInformationSection` (2026-06-14, since
+> deleted), `LocalitiesSection` (2026-07-15), `EvaluationsSection` (2026-08-04)
+> and `CollectionsSection` (2026-10-27) were built afterwards, in `viewer-ui`
 > directly — they were never part of the migration this sentence describes. The
-> package holds 13 today; the migration moved 11.
+> package holds 14 today; the migration moved 11.
 
 ---
 
@@ -591,6 +597,11 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   server) are never deduped and pass through unchanged.
 > - `research_updated`/`gedcomx_updated` always carry the **full** document; the
 >   "or patch" option was never taken.
+> - **`document_updated` was added** for `external-collections.json`:
+>   `{type:"document_updated", name:"external-collections.json", data}`, sent at
+>   connect and when that file changes, never on a `research.json` write. It is
+>   the frame the proto tier already sends for any root document other than the
+>   two above, so one client case serves both tiers.
 > - **Lay mode: the server answers the hand-back itself (lead
 >   ruling 2026-09-18).** Every hand-back the prompts produce ends with the
 >   literal `Next: <step>. Continue?` (terminal `Research complete.`).

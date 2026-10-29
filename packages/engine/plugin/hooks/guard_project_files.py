@@ -100,9 +100,9 @@ _MAX_PATH_LEN = 4096
 # `docs/specs/schemas/ownership.json`; a row reaches this map only when its
 # `enforceableAt` names the `hook` plane, it declares a `hookCallers` agent, AND
 # the whole section is routed. A row that satisfies the first two but routes only
-# one FIELD lands in OWNED_DECLARATIONS below instead — `questions` is that
-# shape, and adding it here would deny `question-selection` its own 197 corpus
-# question creations.
+# one FIELD lands in OWNED_DECLARATIONS below instead, and one that routes only
+# APPENDS lands in OWNED_APPENDS — `questions` is both shapes, and adding it here
+# would deny research-exhaustiveness and proof-conclusion the updates they own.
 #
 # The section name is hardcoded rather than read from the manifest because a
 # hook runs in the VM with no access to the repo — `cwd` is the sandbox and the
@@ -120,6 +120,17 @@ OWNED_SECTIONS = {
     # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
     # cannot be written by something that could not have made the link.
     "rejected_links": "person-evidence",
+    # namesakes, 2026-10-25 (issue #3363). The leads ruled search-records the sole
+    # writer: a row caps the person's links for good, so only the agent that saw
+    # the namesake in its own search results records one. merge_tree_persons
+    # re-keys rows by tool identity and never reaches this hook.
+    "namesakes": "search-records",
+    # evaluations, 2026-10-26, lead ruling 2026-10-12 on issue 3191. One owner
+    # for mentor verdicts, so a whole-section route fits. What this closes is
+    # the MAIN-THREAD write -- the committed non-owner op is a main thread
+    # recording its own mentor verdict, which makes the second opinion
+    # self-issued. The per-agent lanes already kept every other agent off it.
+    "evaluations": "gps-mentor",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -129,9 +140,9 @@ OWNED_SECTIONS = {
 # `proof_summaries` is a whole section with one owner, so a section rule fits it.
 # `search_stop` is not: it is a REQUIRED property of every question
 # (`research.schema.json`, `$defs.question.required`), so `question-selection`
-# writes it on every question it creates, from the main thread, with no
-# `agent_id`. Measured over 159 committed e2e runs, 197 of the 392 ops carrying
-# the field are exactly those creations — a presence-keyed rule denies every one.
+# writes it on every question it creates. Measured over 159 committed e2e runs,
+# 197 of the 392 ops carrying the field are exactly those creations — a
+# presence-keyed rule denies every one.
 #
 # So the rule keys on the CLAIM, not the field: any op setting a non-null
 # `search_stop.stopped_because`. A question being created carries
@@ -160,6 +171,19 @@ OWNED_DECLARATIONS = {("questions", "search_stop"): "research-exhaustiveness"}
 # any write of it asserts the project's state, so the write IS the claim and
 # presence is the right key.
 OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
+
+# Op-scoped routing: section -> the BARE agent name that may APPEND to it. Fifth
+# granularity. `questions` is updated by three agents (research-exhaustiveness
+# stops a question, proof-conclusion resolves it), so neither a section route nor
+# a lane fits; only CREATING a question is one agent's step, because
+# question-selection is where the in-flight, answered-objective and scope checks
+# run. The router's instruction to delegate did not hold: in hosted feedback the
+# main thread minted a question itself in 3 of 15 sessions (issue #3548). Since
+# question-selection became an agent, every committed creation comes from it --
+# 28 of 28 in the October 2026 e2e runs, 0 from the main thread -- so this denies
+# nothing honest. A main-thread `update` that rewrites a question's text is
+# knowingly allowed: updates are shared, and no corpus run shows one.
+OWNED_APPENDS = {"questions": "question-selection"}
 
 # Claim-scoped routing over SEVERAL fields: section -> (the BARE agent name that
 # may make the claim, the fields whose truthy value is the claim, the status
@@ -238,10 +262,15 @@ AGENT_WRITABLE_SECTIONS = {
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
     "search-external-sites": frozenset({"plan_items"}),
-    # search-records updates the status of the plan item a search executed (Step 6).
-    # Its search log goes through research_log_append, which carries no `section`.
-    # This lane is a repo CI requirement (plugin-hooks.test.ts), not a hook route.
-    "search-records": frozenset({"plan_items"}),
+    # search-records updates the status of the plan item a search executed (Step 6)
+    # and records the namesakes its searches turn up, the section routed to it
+    # above. Its search log goes through research_log_append, which carries no
+    # `section`.
+    "search-records": frozenset({"plan_items", "namesakes"}),
+    # search-hints sets the status of the "review pending hints" plan item it
+    # executes (issue #3153). Its no-hints log goes through research_log_append,
+    # which carries no `section`. A repo CI requirement, not a hook route.
+    "search-hints": frozenset({"plan_items"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
@@ -250,14 +279,12 @@ AGENT_WRITABLE_SECTIONS = {
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),
-    # question-selection appends new `q_` entries and writes nothing else. A
-    # lane is required by tests/packaging/plugin-hooks.test.ts for every agent
-    # granted research_append, so this row exists even though NO hook route
-    # points at this agent -- do not read it as one. It is deliberately narrow:
-    # `questions` carries a routed claim: any non-null `search_stop.stopped_because`
-    # belongs to research-exhaustiveness. Creating a question writes
-    # `stopped_because: null`, which the guard permits, so this
-    # lane widens nothing.
+    # question-selection appends new `q_` entries and writes nothing else.
+    # OWNED_APPENDS routes every `questions` append here. Deliberately narrow:
+    # `questions` carries a routed claim -- any non-null
+    # `search_stop.stopped_because` belongs to research-exhaustiveness. Creating
+    # a question writes `stopped_because: null`, which the guard permits, so
+    # this lane widens nothing.
     "question-selection": frozenset({"questions"}),
     # locality-guide writes one `localities` entry per surveyed place, and
     # nothing else in research.json.
@@ -274,15 +301,15 @@ AGENT_WRITABLE_SECTIONS = {
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.
     "conflict-resolution": frozenset({"conflicts"}),
-    # init-project writes the volunteered holdings and site subscriptions
-    # through research_append after project_create, which itself writes the
+    # init-project writes site subscriptions through research_append after
+    # project_create, which itself writes the
     # project, the fixed researcher profile and one `sources` entry per
     # transcribed memory (issue #3384). It owns `project` (ownership.json);
     # `project.status` stays routed to proof-conclusion above. A lane, not a
     # route: nothing is routed to this agent. It leaves out `questions`, which
     # question-selection owns (issue #2122), and `sources`, which only
     # project_create writes for it.
-    "init-project": frozenset({"project", "researcher_profile", "known_holdings"}),
+    "init-project": frozenset({"project", "researcher_profile"}),
     # research-plan writes plans and their items and nothing else in
     # research.json. A lane, not a route: tests/packaging/plugin-hooks.test.ts
     # requires one for every agent granted research_append, and nothing is
@@ -298,7 +325,7 @@ AGENT_WRITABLE_SECTIONS = {
 # into a recoverable in-turn pivot rather than an unwritable artifact.
 OWNER_REASON = (
     "Writing research.json's `{section}` from here is disabled — that section is "
-    "owned by the {agent} agent, which applies the tier and citation rules the "
+    "owned by the {agent} agent, which applies the analysis rules the "
     "section depends on. Delegate the write: invoke `@plugin:{agent}` and let it "
     "make the research_append call. Everything else in research_append is "
     "unaffected; only this section is routed."
@@ -309,8 +336,26 @@ DECLARATION_REASON = (
     "a non-null `stopped_because` value is owned by the {agent} agent, which "
     "applies the seven stop criteria this claim rests on. "
     "Delegate it: invoke `@plugin:{agent}` and let it make the research_append "
-    "call. Only non-null `stopped_because` is routed — creating a question with "
-    "`stopped_because: null` is unaffected, as is everything else in `{section}`."
+    "call. Only non-null `stopped_because` is routed by this rule — a "
+    "`stopped_because: null` question that question-selection creates is "
+    "unaffected, as is every other update in `{section}`."
+)
+
+APPEND_HANDOFF_REASON = (
+    "Adding to research.json's `{section}` is not your step — a new entry there "
+    "is created by the {agent} agent, which checks for work already in flight, "
+    "an objective already answered, and the objective's scope first. Report the "
+    "entry you would add and hand off; do not add it yourself. Updating an "
+    "existing entry is unaffected."
+)
+
+APPEND_REASON = (
+    "Adding to research.json's `{section}` from here is disabled — a new entry "
+    "there is created by the {agent} agent, which checks for work already in "
+    "flight, an objective already answered, and the objective's scope first. "
+    "Delegate it: invoke `@plugin:{agent}` and let it make the research_append "
+    "call. Only `op: \"append\"` is routed — updating an existing entry is "
+    "unaffected."
 )
 
 OWNED_FIELD_REASON = (
@@ -480,7 +525,9 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     branch on `rule` and never on the shape of the first element. A fifth,
     `claim`, returns the bare section of an `OWNED_CLAIMS` route: a conflict's
     analytical product (a resolve, or any analysis field), reached by anyone
-    but its owning agent.
+    but its owning agent. A sixth, `owned_append`, returns the bare section of
+    an `OWNED_APPENDS` route: an `op: "append"` there, made by anyone but its
+    owning agent.
 
     `proof_summaries` is owned by `proof-conclusion`
     (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
@@ -543,6 +590,20 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
         # A routed section, reached by anyone but its owning agent.
         if section in OWNED_SECTIONS and caller != OWNED_SECTIONS[section]:
             return (section, "routed", caller)
+        # A routed APPEND, made by anyone but its owning agent. Before the
+        # declaration loop: a main-thread question append that also carries a
+        # stop claim is refused either way, and this message names the agent
+        # that can make the append, where the declaration one names an agent
+        # that may not. An agent whose lane lacks the section is left to the
+        # lane arm below, whose "hand off" fits a subagent, which cannot invoke
+        # another agent.
+        if (
+            section in OWNED_APPENDS
+            and op.get("op") == "append"
+            and caller != OWNED_APPENDS[section]
+            and (writable is None or section in writable)
+        ):
+            return (section, "owned_append", caller)
         # A routed CLAIM, reached by anyone but its owning agent. Read from the
         # op's own payload — `fields` on an update, `entry` on an append — and
         # only when `stopped_because` is non-null. A `stopped_because: null`
@@ -602,6 +663,50 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     return None
 
 
+def deny_reason(denied: tuple) -> str:
+    """The deny text for an `owner_denied` triple.
+
+    One copy, imported by the harness (`context_policy.owned_section_denial`),
+    so a new rule tag is added in one place. A tag missing here falls through
+    to the lane arm, which raises KeyError for the main thread's `caller == ""`.
+    """
+    section, rule, caller = denied
+    # Branch on `rule`, never on the shape of `section` — a "declaration"
+    # return carries a dotted `section.field`, which is a key in neither
+    # OWNED_SECTIONS nor AGENT_WRITABLE_SECTIONS.
+    if rule == "routed":
+        reason = OWNER_REASON.format(section=section, agent=OWNED_SECTIONS[section])
+    elif rule == "owned_append":
+        # A subagent cannot invoke another agent, so it is told to hand off.
+        template = APPEND_HANDOFF_REASON if caller else APPEND_REASON
+        reason = template.format(section=section, agent=OWNED_APPENDS[section])
+    elif rule == "declaration":
+        owned_section, _, field = section.partition(".")
+        reason = DECLARATION_REASON.format(
+            section=owned_section,
+            field=field,
+            agent=OWNED_DECLARATIONS[(owned_section, field)],
+        )
+    elif rule == "claim":
+        owner, claim_fields, _status = OWNED_CLAIMS[section]
+        reason = CLAIM_REASON.format(
+            section=section,
+            fields=", ".join(f"`{f}`" for f in claim_fields),
+            agent=owner,
+        )
+    elif rule == "owned_field":
+        owned_section, _, field = section.partition(".")
+        reason = OWNED_FIELD_REASON.format(
+            section=owned_section,
+            field=field,
+            agent=OWNED_FIELDS[(owned_section, field)],
+        )
+    else:
+        allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
+        reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
+    return reason
+
+
 def decision(payload: dict) -> dict:
     """The hook's stdout payload: a deny, or `{}` for no opinion."""
     tool_input = payload.get("tool_input")
@@ -619,36 +724,7 @@ def decision(payload: dict) -> dict:
 
     denied = owner_denied(tool_name, tool_input, payload)
     if denied is not None:
-        section, rule, caller = denied
-        # Branch on `rule`, never on the shape of `section` — a "declaration"
-        # return carries a dotted `section.field`, which is a key in neither
-        # OWNED_SECTIONS nor AGENT_WRITABLE_SECTIONS.
-        if rule == "routed":
-            reason = OWNER_REASON.format(section=section, agent=OWNED_SECTIONS[section])
-        elif rule == "declaration":
-            owned_section, _, field = section.partition(".")
-            reason = DECLARATION_REASON.format(
-                section=owned_section,
-                field=field,
-                agent=OWNED_DECLARATIONS[(owned_section, field)],
-            )
-        elif rule == "claim":
-            owner, claim_fields, _status = OWNED_CLAIMS[section]
-            reason = CLAIM_REASON.format(
-                section=section,
-                fields=", ".join(f"`{f}`" for f in claim_fields),
-                agent=owner,
-            )
-        elif rule == "owned_field":
-            owned_section, _, field = section.partition(".")
-            reason = OWNED_FIELD_REASON.format(
-                section=owned_section,
-                field=field,
-                agent=OWNED_FIELDS[(owned_section, field)],
-            )
-        else:
-            allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
-            reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
+        reason = deny_reason(denied)
         return {
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",

@@ -326,16 +326,25 @@ export function probateDecedentId(doc: StructuredDocument): string | undefined {
   return undefined;
 }
 
+/** The party the probate roles would make the decedent: the probate/will/death
+ *  carrier, else the flagged principal, else the first party. */
+export function probateDecedentOrDefault(doc: StructuredDocument): string | undefined {
+  return probateDecedentId(doc) ?? (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
+}
+
+/** `p1 (Paul Meacham)`, for an error that names a party. */
+export function partyName(doc: StructuredDocument, id: string): string {
+  const n = doc.persons.find((p) => p.id === id)?.names[0];
+  return `${id} (${[n?.given, n?.surname].filter((x) => typeof x === "string" && x).join(" ")})`;
+}
+
 const PETITIONER_RELATION = /\b(administrat(?:or|rix)|executor|executrix)\b/;
 
 /** The refusals that read a structured document's own words. Each runs before
  *  anything is written: after the log entry, a refusal would orphan it. */
 function validateDocumentRoles(doc: StructuredDocument, path: string): string[] {
   const errs: string[] = [];
-  const nameOf = (id: string) => {
-    const n = doc.persons.find((p) => p.id === id)?.names[0];
-    return `${id} (${[n?.given, n?.surname].filter(Boolean).join(" ")})`;
-  };
+  const nameOf = (id: string) => partyName(doc, id);
 
   if (doc.recordType === "land") {
     const sides = new Set(landSides(doc).values());
@@ -350,7 +359,7 @@ function validateDocumentRoles(doc: StructuredDocument, path: string): string[] 
   }
 
   if (doc.recordType === "probate") {
-    const id = probateDecedentId(doc) ?? (doc.persons.find((p) => p.principal) ?? doc.persons[0])?.id;
+    const id = probateDecedentOrDefault(doc);
     const rel = normRelation(doc.persons.find((p) => p.id === id)?.statedRelation);
     if (id !== undefined && PETITIONER_RELATION.test(rel)) {
       errs.push(

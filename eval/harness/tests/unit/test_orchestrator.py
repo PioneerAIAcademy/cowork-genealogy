@@ -2098,6 +2098,61 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
         "is recorded passed=False for every test of every skill"
     )
 
+
+def test_resolved_workspace_reaches_both_the_prompt_and_the_validators(tmp_path, monkeypatch):
+    """`<workspace>` is replaced in what the dispatcher is sent AND in the
+    `delegation` the verbatim-relay validator compares against (#3935). If only
+    one side is replaced, that gating validator fails every direct test whose
+    delegation carries the placeholder, 393 of them."""
+    spec = load_test(WIKI_TEST_PATH)
+    spec.skill = "research-exhaustiveness"
+    spec.raw["test"]["skill"] = "research-exhaustiveness"
+    spec.raw["input"]["delegation"] = "DELEGATION-SENTINEL\nprojectPath: <workspace>"
+    spec.delegation = spec.raw["input"]["delegation"]
+    spec.raw["input"].pop("user_message", None)
+    spec.user_message = ""
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    sent = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        sent["prompt"] = kwargs["user_message"]
+        sent["workspace"] = kwargs["workspace"]
+        return SkillRunResult(
+            text_response="done",
+            skills_invoked=[],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    expected = f"DELEGATION-SENTINEL\nprojectPath: {sent['workspace'].as_posix()}"
+    assert expected in sent["prompt"], "the dispatcher was not sent the resolved path"
+    assert captured["test"].get("delegation") == expected, (
+        "the validators compare against a delegation the dispatcher was not sent"
+    )
+    assert captured["test"].get("user_message") == expected
+
+
 def test_the_skill_runs_no_result_message_reaches_the_run_entry(tmp_path, monkeypatch):
     """The same second hop, for `no_result_message` (#2189, review of #2356).
 

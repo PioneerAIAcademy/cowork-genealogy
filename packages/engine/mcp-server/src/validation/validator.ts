@@ -31,7 +31,7 @@ import {
 } from "./tree-shape.js";
 import { iteratePersonIdRefs } from "./person-id-refs.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
 import { isNonNegativeInteger } from "../utils/search-helpers.js";
 
 // Enum definitions (single source of truth, matching Python validator)
@@ -93,11 +93,6 @@ const CLOSED_ENUMS = {
     "GenealogyBank", "FindAGrave-Plus",
     "FamilySearch-Partner", "LibraryAccess", "other", "none",
   ]),
-  holding_type: new Set([
-    "document", "prior_research", "oral_knowledge", "gedcom",
-    "photo", "artifact", "other",
-  ]),
-  holding_confidence: new Set(["confident", "unsure"]),
   severity: new Set(["high", "medium", "low"]),
   evaluation_focus: new Set([
     "pre-exhaustiveness", "conclusion-readiness", "proof-critique", "on-demand",
@@ -256,7 +251,6 @@ export const ISO_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}[:-]\d{2}[:-]\d{2}(
 // so a new id-prefixed section cannot get here without a check, or drift from it.
 export const ID_PREFIXES: Record<string, string> = {
   project: "rp_",
-  known_holdings: "kh_",
   questions: "q_",
   plans: "pl_",
   plan_items: "pli_",
@@ -442,6 +436,24 @@ function checkIdPrefix(
   }
 }
 
+// Every reference resolves an id against one set, so two entries sharing an id
+// are indistinguishable to it -- PR #2353 keyed a guard on a conflict id and
+// suppressed a real finding because two same-id entries were two conflicts.
+// Keep the message free of array indexes: `validateIntroduced` matches a
+// pre-existing error by message, so an old duplicate never blocks a write.
+function addUniqueId(
+  seen: Set<any>,
+  objId: any,
+  section: string,
+  path: string,
+  report: ValidationReport
+): void {
+  if (typeof objId === "string" && seen.has(objId)) {
+    addError(report, path, `duplicate ${section} id '${objId}' — ids must be unique; an earlier entry already uses it`);
+  }
+  seen.add(objId);
+}
+
 // The schema gives these id arrays an item pattern (`^q_`); without this check
 // a writer persisted `extracted_for_question_ids: ["flynn-household-origins"]`,
 // which the JSON schema then rejected (ut_search_records_003, issue #2116).
@@ -524,6 +536,19 @@ function checkIsoDate(
  * join test alongside it covers that in the meantime.
  */
 export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
+
+/** Whether a `conflicts[]` entry is settled: `resolved` or `moot` (issue #2359).
+ *  Use it wherever a gate asks "is this conflict settled?" — comparing `status`
+ *  inline is how `disputedSourceIds` came to treat a `moot` conflict as still
+ *  disputing its sources. Not every status read asks that question:
+ *  `resolvedAgainstIds` deliberately exonerates on `resolved` alone, and
+ *  `utils/question-state.ts` tests `status !== "unresolved"`, which agrees with
+ *  this on any document the validator accepts. The harness keeps a Python copy,
+ *  `is_settled_conflict` in `eval/harness/harness/skill_invocation.py`;
+ *  `test_settled_conflict_parity.py` runs both over the same conflicts. */
+export function isSettledConflict(c: any): boolean {
+  return SETTLED_CONFLICT_STATUSES.has(c?.status);
+}
 
 function checkRefExists(
   refId: string,
@@ -653,7 +678,7 @@ const NULLABLE_FIELDS = new Set([
 // tests/validation/validator.test.ts.
 export const RESEARCH_SHAPES = {
   document: new Set([
-    "project", "researcher_profile", "known_holdings", "questions", "plans",
+    "project", "researcher_profile", "questions", "plans",
     "log", "sources", "assertions", "person_evidence", "rejected_links", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
     "localities", "warning_justifications", "namesakes",
@@ -664,10 +689,6 @@ export const RESEARCH_SHAPES = {
   ]),
   researcher_profile: new Set([
     "experience_level", "subscriptions", "narration_guidance", "intended_audience",
-  ]),
-  known_holding: new Set([
-    "id", "holding_type", "description", "relates_to_person_ids",
-    "relevant_facts", "confidence", "promoted", "created",
   ]),
   question: new Set([
     "id", "question", "rationale", "selection_basis", "priority", "status",
@@ -773,7 +794,7 @@ export const RESEARCH_SHAPES = {
   ]),
   namesake: new Set([
     "id", "person_id", "name", "place", "time_period", "record_ids",
-    "log_entry_ids", "notes", "created",
+    "log_entry_ids", "record_persona_ids", "notes", "created",
   ]),
 };
 
@@ -807,7 +828,18 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(report, path, `missing top-level section '${section}'`);
     }
   }
-  checkAllowedKeys(data, RESEARCH_SHAPES.document, "research documents", path, report);
+  // Projects created before #2069 still carry the deleted known_holdings
+  // section, and no tool can remove a top-level key, so it warns instead of
+  // failing every later validation.
+  const { known_holdings: retiredHoldings, ...current } = data;
+  if (retiredHoldings !== undefined) {
+    addWarning(
+      report,
+      path,
+      "retired section 'known_holdings' is ignored: it was deleted from the schema (#2069) and nothing reads it. No action needed."
+    );
+  }
+  checkAllowedKeys(current, RESEARCH_SHAPES.document, "research documents", path, report);
 
   if (typeof data.project !== "object" || data.project === null) {
     addError(report, path, "project must be an object");
@@ -869,41 +901,6 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
   }
 
-  // Known holdings (optional)
-  const holdings = data.known_holdings;
-  if (holdings !== null && holdings !== undefined) {
-    if (!Array.isArray(holdings)) {
-      addError(report, `${path}/known_holdings`, "known_holdings must be an array");
-    } else {
-      for (let i = 0; i < holdings.length; i++) {
-        const kh = holdings[i];
-        const khPath = `${path}/known_holdings[${i}]`;
-        if (!isObjectEntry(kh, khPath, report)) continue;
-        checkRequired(kh, [
-          "id", "holding_type", "description", "confidence", "promoted", "created",
-        ], khPath, report, NULLABLE_FIELDS);
-        checkAllowedKeys(kh, RESEARCH_SHAPES.known_holding, "known_holdings entries", khPath, report);
-        if ("id" in kh) {
-          checkIdPrefix(kh.id, ID_PREFIXES.known_holdings, khPath, report);
-        }
-        if ("holding_type" in kh) {
-          checkEnum(kh.holding_type, "holding_type", khPath, report);
-        }
-        if ("confidence" in kh) {
-          checkEnum(kh.confidence, "holding_confidence", khPath, report);
-        }
-        if ("promoted" in kh && typeof kh.promoted !== "boolean") {
-          addError(report, khPath, "promoted must be a boolean");
-        }
-        checkIsoDate(kh, "created", khPath, report);
-        const rtp = kh.relates_to_person_ids;
-        if (rtp !== null && rtp !== undefined && !Array.isArray(rtp)) {
-          addError(report, khPath, "relates_to_person_ids must be an array");
-        }
-      }
-    }
-  }
-
   // Questions
   const questions = Array.isArray(data.questions) ? data.questions : [];
   for (let i = 0; i < questions.length; i++) {
@@ -919,7 +916,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
 
     if ("id" in q) {
       checkIdPrefix(q.id, ID_PREFIXES.questions, qp, report);
-      ids.questions.add(q.id);
+      addUniqueId(ids.questions, q.id, "question", qp, report);
     }
     if ("status" in q) {
       checkEnum(q.status, "question_status", qp, report);
@@ -1035,7 +1032,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(pl, RESEARCH_SHAPES.plan, "plans", pp, report);
     if ("id" in pl) {
       checkIdPrefix(pl.id, ID_PREFIXES.plans, pp, report);
-      ids.plans.add(pl.id);
+      addUniqueId(ids.plans, pl.id, "plan", pp, report);
     }
     if ("status" in pl) {
       checkEnum(pl.status, "plan_status", pp, report);
@@ -1094,7 +1091,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkAllowedKeys(item, RESEARCH_SHAPES.plan_item, "plan items", ip, report);
       if ("id" in item) {
         checkIdPrefix(item.id, ID_PREFIXES.plan_items, ip, report);
-        ids.plan_items.add(item.id);
+        addUniqueId(ids.plan_items, item.id, "plan item", ip, report);
       }
       if ("status" in item) {
         checkEnum(item.status, "plan_item_status", ip, report);
@@ -1150,7 +1147,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(entry, RESEARCH_SHAPES.log_entry, "log entries", lp, report);
     if ("id" in entry) {
       checkIdPrefix(entry.id, ID_PREFIXES.log, lp, report);
-      ids.log.add(entry.id);
+      addUniqueId(ids.log, entry.id, "log", lp, report);
     }
     if ("outcome" in entry) {
       checkEnum(entry.outcome, "log_outcome", lp, report);
@@ -1221,7 +1218,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(src, RESEARCH_SHAPES.source, "sources", sp, report);
     if ("id" in src) {
       checkIdPrefix(src.id, ID_PREFIXES.sources, sp, report);
-      ids.sources.add(src.id);
+      addUniqueId(ids.sources, src.id, "source", sp, report);
     }
     if ("source_classification" in src) {
       checkEnum(src.source_classification, "source_classification", sp, report);
@@ -1291,7 +1288,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     );
     if ("id" in a) {
       checkIdPrefix(a.id, ID_PREFIXES.assertions, ap, report);
-      ids.assertions.add(a.id);
+      addUniqueId(ids.assertions, a.id, "assertion", ap, report);
     }
     checkIdPrefixArray(a.extracted_for_question_ids, ID_PREFIXES.questions, `${ap}.extracted_for_question_ids`, report);
     if ("information_quality" in a) {
@@ -1419,13 +1416,17 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   // a rejection is kept so a later step cannot silently re-link the same pair -- is
   // only as good as the rows it is read back from.
   const rejectedLinks = Array.isArray(data.rejected_links) ? data.rejected_links : [];
+  const rejectedIds = new Set<any>();
   for (let i = 0; i < rejectedLinks.length; i++) {
     const rj = rejectedLinks[i];
     const rp = `${path}/rejected_links[${i}]`;
     if (!isObjectEntry(rj, rp, report)) continue;
     checkRequired(rj, ["id", "assertion_id", "person_id", "created"], rp, report, NULLABLE_FIELDS);
     checkAllowedKeys(rj, RESEARCH_SHAPES.rejected_link_entry, "rejected_links entries", rp, report);
-    if ("id" in rj) checkIdPrefix(rj.id, ID_PREFIXES.rejected_links, rp, report);
+    if ("id" in rj) {
+      checkIdPrefix(rj.id, ID_PREFIXES.rejected_links, rp, report);
+      addUniqueId(rejectedIds, rj.id, "rejected_links", rp, report);
+    }
     for (const field of ["assertion_id", "person_id"] as const) {
       if (field in rj && typeof rj[field] !== "string") {
         addError(report, rp, `${field} must be a string`);
@@ -1458,7 +1459,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(pe, RESEARCH_SHAPES.person_evidence_entry, "person_evidence entries", pp, report);
     if ("id" in pe) {
       checkIdPrefix(pe.id, ID_PREFIXES.person_evidence, pp, report);
-      ids.person_evidence.add(pe.id);
+      addUniqueId(ids.person_evidence, pe.id, "person_evidence", pp, report);
     }
     if ("confidence" in pe) {
       checkEnum(pe.confidence, "person_evidence_confidence", pp, report);
@@ -1496,7 +1497,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(c, RESEARCH_SHAPES.conflict, "conflicts", cp, report);
     if ("id" in c) {
       checkIdPrefix(c.id, ID_PREFIXES.conflicts, cp, report);
-      ids.conflicts.add(c.id);
+      addUniqueId(ids.conflicts, c.id, "conflict", cp, report);
     }
     checkIdPrefixArray(c.blocks_question_ids, ID_PREFIXES.questions, `${cp}.blocks_question_ids`, report);
     if ("conflict_type" in c) {
@@ -1516,7 +1517,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       // Collected here, and read by the proof_summaries block below. Safe
       // because validateResearch is a single sequential pass and conflicts
       // precede proof_summaries in it.
-      if (SETTLED_CONFLICT_STATUSES.has(c.status) && typeof c.id === "string") {
+      if (isSettledConflict(c) && typeof c.id === "string") {
         ids.settled_conflicts.add(c.id);
       }
     }
@@ -1574,7 +1575,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(h, RESEARCH_SHAPES.hypothesis, "hypotheses", hp, report);
     if ("id" in h) {
       checkIdPrefix(h.id, ID_PREFIXES.hypotheses, hp, report);
-      ids.hypotheses.add(h.id);
+      addUniqueId(ids.hypotheses, h.id, "hypothesis", hp, report);
     }
     checkIdPrefixArray(h.related_question_ids, ID_PREFIXES.questions, `${hp}.related_question_ids`, report);
     if ("status" in h) {
@@ -1597,7 +1598,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(t, RESEARCH_SHAPES.timeline, "timelines", tp, report);
     if ("id" in t) {
       checkIdPrefix(t.id, ID_PREFIXES.timelines, tp, report);
-      ids.timelines.add(t.id);
+      addUniqueId(ids.timelines, t.id, "timeline", tp, report);
     }
 
     // The loops below read a non-array as empty, so an object or string here
@@ -1652,7 +1653,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(ps, RESEARCH_SHAPES.proof_summary, "proof_summaries", psp, report);
     if ("id" in ps) {
       checkIdPrefix(ps.id, ID_PREFIXES.proof_summaries, psp, report);
-      ids.proof_summaries.add(ps.id);
+      addUniqueId(ids.proof_summaries, ps.id, "proof summary", psp, report);
     }
     if ("tier" in ps) {
       checkEnum(ps.tier, "proof_tier", psp, report);
@@ -1910,13 +1911,17 @@ function validateNamesakes(data: any, ids: ResearchIds, path: string, report: Va
     addError(report, `${path}/namesakes`, "namesakes must be an array");
     return;
   }
+  const namesakeIds = new Set<any>();
   for (let i = 0; i < rows.length; i++) {
     const ns = rows[i];
     const np = `${path}/namesakes[${i}]`;
     if (!isObjectEntry(ns, np, report)) continue;
     checkRequired(ns, ["id", "person_id", "name", "place", "record_ids", "created"], np, report, new Set());
     checkAllowedKeys(ns, RESEARCH_SHAPES.namesake, "namesakes entries", np, report);
-    if ("id" in ns && ns.id !== null) checkIdPrefix(ns.id, ID_PREFIXES.namesakes, np, report);
+    if ("id" in ns && ns.id !== null) {
+      checkIdPrefix(ns.id, ID_PREFIXES.namesakes, np, report);
+      addUniqueId(namesakeIds, ns.id, "namesake", np, report);
+    }
     for (const field of ["person_id", "name", "place"]) {
       if (field in ns && ns[field] !== null && (typeof ns[field] !== "string" || ns[field] === "")) {
         addError(report, np, `'${field}' must be a non-empty string`);
@@ -1944,6 +1949,19 @@ function validateNamesakes(data: any, ids: ResearchIds, path: string, report: Va
         });
       }
     }
+    if ("record_persona_ids" in ns) {
+      const stamp = ns.record_persona_ids;
+      if (stamp === null || typeof stamp !== "object" || Array.isArray(stamp)) {
+        addError(report, np, "record_persona_ids must be an object");
+      } else {
+        const listed = new Set(Array.isArray(ns.record_ids) ? ns.record_ids : []);
+        for (const [rid, persona] of Object.entries(stamp)) {
+          const sp = `${np}/record_persona_ids/${rid}`;
+          if (typeof persona !== "string" || persona === "") addError(report, sp, "must be a non-empty string");
+          if (!listed.has(rid)) addError(report, sp, "keys a record not in record_ids");
+        }
+      }
+    }
     checkIsoDate(ns, "created", np, report);
   }
 }
@@ -1964,6 +1982,7 @@ function validateEvaluations(
     }
   }
 
+  const evSeen = new Set<any>();
   for (let i = 0; i < evaluations.length; i++) {
     const ev = evaluations[i];
     const ep = `${path}/evaluations[${i}]`;
@@ -1977,6 +1996,7 @@ function validateEvaluations(
 
     if ("id" in ev) {
       checkIdPrefix(ev.id, ID_PREFIXES.evaluations, ep, report);
+      addUniqueId(evSeen, ev.id, "evaluation", ep, report);
     }
     if ("focus" in ev) {
       checkEnum(ev.focus, "evaluation_focus", ep, report);
@@ -2056,6 +2076,7 @@ function validateLocalities(
   // their required and stray keys are not deep-checked here (same precedent as
   // structured_value).
   const localities = Array.isArray(data.localities) ? data.localities : [];
+  const localityIds = new Set<any>();
   for (let i = 0; i < localities.length; i++) {
     const loc = localities[i];
     const lp = `${path}/localities[${i}]`;
@@ -2070,6 +2091,7 @@ function validateLocalities(
     checkAllowedKeys(loc, RESEARCH_SHAPES.locality, "localities", lp, report);
     if ("id" in loc) {
       checkIdPrefix(loc.id, ID_PREFIXES.localities, lp, report);
+      addUniqueId(localityIds, loc.id, "locality", lp, report);
     }
     if ("created" in loc) checkIsoDate(loc, "created", lp, report);
     if ("updated" in loc && loc.updated != null) checkIsoDate(loc, "updated", lp, report);
@@ -2521,7 +2543,7 @@ function validateCrossFile(
   }
 
   // Check tree-person-id references (person_evidence, subject_person_ids,
-  // timelines, known_holdings, proof_summaries[].claims[].relationship,
+  // timelines, proof_summaries[].claims[].relationship,
   // namesakes). The
   // set of fields walked here is shared with the merge_tree_persons remap via
   // PERSON_ID_REF_FIELDS so the two cannot drift; the walker preserves this
@@ -2643,6 +2665,20 @@ async function validateSidecars(
     }
 
     if (!entry.results_ref) {
+      // An accepted hint stages nothing: extraction_append verified the persona id
+      // against its own read at write time. What can still be checked is that the
+      // assertion is about the hinted record.
+      if (isAcceptedHint(entry)) {
+        const hinted = typeof entry.query?.recordId === "string" ? arkToBareId(entry.query.recordId) : "";
+        if (hinted === "" || arkToBareId(String(a.record_id ?? "")) !== hinted) {
+          addError(
+            report,
+            ap,
+            `has record_persona_id under hint entry '${logId}', but record_id '${a.record_id}' is not the hinted record '${entry.query?.recordId ?? ""}'`,
+          );
+        }
+        continue;
+      }
       addError(report, ap, `has record_persona_id but its log entry '${logId}' has no sidecar (results_ref is null)`);
       continue;
     }

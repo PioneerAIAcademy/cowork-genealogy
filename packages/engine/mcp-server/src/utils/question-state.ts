@@ -95,14 +95,57 @@ function pendingExtraction(research: any, logs: any[]): any[] {
   );
 }
 
-/** The lowest-sequence `planned`/`in_progress` item on a plan that is still active. */
-function nextUnexecutedItem(plans: any[]): any | null {
-  const items = plans
-    .filter((p) => p?.status === undefined || p?.status === "active")
-    .flatMap((p) => arr(p?.items))
-    .filter((i) => i?.status === "planned" || i?.status === "in_progress")
+/** Which search destination a plan item wants: search-hints for a `fs_hints`
+ *  item (issue #3153), else by its repository.
+ *
+ *  Lifted so section E's conflict-evidence arm and the ladder's own dispatch arm
+ *  cannot disagree. They would: the plan writes E's arm as "the next step is
+ *  search-records", which is right for the FamilySearch item it had in mind and
+ *  wrong for a conflict whose decisive record is on Ancestry -- the router would
+ *  spawn the wrong agent. */
+function searchStepFor(item: any): string {
+  if (item?.record_type === "fs_hints") return `search-hints — ${item.id}`;
+  const repo = typeof item?.repository === "string" ? item.repository.trim() : "";
+  if (!repo || /familysearch/i.test(repo)) return "search-records";
+  return `search-external-sites — ${item.id} (${repo})`;
+}
+
+/** The lowest-sequence `planned`/`in_progress` item on a plan that is still
+ *  active, **skipping one that waits only on the researcher's upload**, and a
+ *  `fs_hints` item (issue #3153) that is `in_progress` with no `log[]` entry
+ *  naming it: that one is waiting on the researcher's verdicts, so it never
+ *  pins `nextStep` and the router moves to the next search. (A `planned`
+ *  `fs_hints` item is still returned: that is the one search-hints executes.)
+ *
+ *  `hasOpenWork` decides WHETHER a search is due from the set without the
+ *  upload-waiting items; this picks WHICH one. Reading different sets let the
+ *  ladder name a hand-off `awaitingUser` already lists — a link the router is
+ *  told never to raise again — so the question stalled until the upload
+ *  arrived. */
+function nextUnexecutedItem(research: any, plans: any[]): any | null {
+  const waitingOnUpload = awaitingUploadItemIds(research?.log);
+  const itemsNamedByLog = new Set(
+    arr(research?.log)
+      .map((l: any) => l?.plan_item_id)
+      .filter((id: any): id is string => typeof id === "string"),
+  );
+  const isWaitingHints = (i: any) =>
+    i?.record_type === "fs_hints" &&
+    i?.status === "in_progress" &&
+    !itemsNamedByLog.has(i?.id);
+  const items = openItems(plans)
+    .filter((i) => !waitingOnUpload.has(i?.id))
+    .filter((i) => !isWaitingHints(i))
     .sort((a, b) => (Number(a?.sequence) || 0) - (Number(b?.sequence) || 0));
   return items[0] ?? null;
+}
+
+/** The `planned`/`in_progress` items on a plan that is active or status-less. */
+function openItems(plans: any[]): any[] {
+  return plans
+    .filter((p) => p?.status === undefined || p?.status === "active")
+    .flatMap((p) => arr(p?.items))
+    .filter((i) => i?.status === "planned" || i?.status === "in_progress");
 }
 
 /** Fact types that name one event per person, so two values are a disagreement
@@ -457,6 +500,40 @@ function ownedLogEntries(research: any, itemIds: Set<any>): any[] {
   );
 }
 
+/** Whether conflict-resolution has analysed this conflict.
+ *
+ *  One definition for both rungs. `Boolean(c.independence_analysis)` accepted
+ *  `"   "`, which the unsettled rung rejected — so a whitespace analysis routed
+ *  to a search from one rung and to conflict-resolution from its complement. */
+function isAnalysed(conflict: any): boolean {
+  return typeof conflict?.independence_analysis === "string"
+    && conflict.independence_analysis.trim() !== "";
+}
+
+/** Section E: every open conflict is analysed, and the question has open items
+ *  that could settle it.
+ *
+ *  The open-items complement of `unsettledConflictWeighed`: that one fires when
+ *  nothing is left to search, this one when something is. Without it the
+ *  conflict rung below sends every pass back to conflict-resolution and the
+ *  items the route PRs ask research-plan to write never run.
+ *
+ *  `independence_analysis` is the marker because conflict-resolution fills it on
+ *  every analysis, resolved or not. A conflict not yet analysed still goes to
+ *  conflict-resolution first, even beside an analysed one. */
+function conflictEvidenceWanted(
+  research: any,
+  openConflictIds: string[],
+  plans: any[],
+): boolean {
+  if (openConflictIds.length === 0) return false;
+  if (!hasOpenWork(research, plans)) return false;
+  const open = new Set(openConflictIds);
+  return arr(research?.conflicts)
+    .filter((c) => open.has(c?.id))
+    .every((c) => isAnalysed(c));
+}
+
 /** Section E's ending on an unsettled conflict: every open conflict has been
  *  analysed (`independence_analysis`) over every log entry the question owns
  *  (`weighed_log_entry_ids`), and nothing is left to search. Re-running
@@ -477,7 +554,7 @@ function unsettledConflictWeighed(
   return arr(research?.conflicts)
     .filter((c) => open.has(c?.id))
     .every((c) => {
-      const analysed = typeof c?.independence_analysis === "string" && c.independence_analysis.trim() !== "";
+      const analysed = isAnalysed(c);
       const weighed = new Set(arr(c?.weighed_log_entry_ids));
       return analysed && Array.isArray(c?.weighed_log_entry_ids) && owned.every((id) => weighed.has(id));
     });
@@ -556,6 +633,28 @@ export function questionStatus(research: any, question: any, tree: any = null): 
       : `proof-conclusion — unsettled conflict ${openConflictIds.join(", ")} has weighed every ` +
         "log entry and nothing is left to search: conclude at the tier the evidence reaches " +
         "and leave the question open";
+  } else if (conflictEvidenceWanted(research, openConflictIds, plans)) {
+    // Section E: a conflict that needs new evidence becomes plan items on this
+    // question rather than a helper question. Routing to conflict-resolution
+    // again would hand it the evidence it has already weighed.
+    // Extraction first, but only for entries on items still open: search-records
+    // leaves its item `in_progress` until the record is extracted, and
+    // re-running that search would find the record again. An entry on a closed
+    // item is not waiting on extraction: `extraction_append` cites the read, not
+    // the search that found it, and inconclusive `partial`s and link lists stay
+    // uncited for good, so counting them would hold the question here forever.
+    const openIds = new Set(openItems(plans).map((i) => i?.id));
+    const awaitingExtraction = logs.filter((e) => openIds.has(e?.plan_item_id));
+    const item = nextUnexecutedItem(research, plans);
+    nextStep = pendingExtraction(research, awaitingExtraction).length > 0
+      ? "extraction (extraction_append for FamilySearch records, record-structurer for any other source)"
+      : item
+        ? searchStepFor(item)
+        // Reached when the only open item is a `fs_hints` item waiting on
+        // verdicts: `hasOpenWork` counts it and the picker skips it. Otherwise
+        // unreachable — `hasOpenWork`'s items are a subset of the picker's and
+        // both apply the same upload skip.
+        : "research-exhaustiveness, then proof-conclusion";
   } else if (openConflictIds.length > 0) {
     nextStep = `conflict-resolution — unresolved ${openConflictIds.join(", ")}`;
   } else if (noneLinked && summaries.length === 0) {
@@ -609,11 +708,9 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   } else {
     // planned or searching, nothing to extract: the next unexecuted item decides
     // between the routing table's two search destinations, by its repository.
-    const item = nextUnexecutedItem(plans);
-    const repo = typeof item?.repository === "string" ? item.repository.trim() : "";
+    const item = nextUnexecutedItem(research, plans);
     if (!item) nextStep = "research-exhaustiveness, then proof-conclusion";
-    else if (!repo || /familysearch/i.test(repo)) nextStep = "search-records";
-    else nextStep = `search-external-sites — ${item.id} (${repo})`;
+    else nextStep = searchStepFor(item);
   }
 
   // Copied verbatim, never re-mapped or re-validated: this tool skips malformed

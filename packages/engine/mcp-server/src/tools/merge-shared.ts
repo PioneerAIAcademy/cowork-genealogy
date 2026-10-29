@@ -38,7 +38,6 @@ export interface ResearchRefsUpdated {
   person_evidence: number;
   rejected_links: number;
   timelines: number;
-  known_holdings: number;
   proof_summaries: number;
   namesakes: number;
 }
@@ -221,7 +220,6 @@ export function remapResearchPersonIds(
     person_evidence: 0,
     rejected_links: 0,
     timelines: 0,
-    known_holdings: 0,
     proof_summaries: 0,
     namesakes: 0,
   };

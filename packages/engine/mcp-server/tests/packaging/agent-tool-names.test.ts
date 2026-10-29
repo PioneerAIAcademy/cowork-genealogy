@@ -764,6 +764,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "person_read",
       "person_record_matches",
       "record_read",
+      "research_append",
       "research_log_append",
       "research_query",
       "sidecar_read",
@@ -802,6 +803,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_append",
       "research_log_append",
       "sidecar_read",
+      "volume_bisect",
       "volume_search",
     ],
     denies: [],
@@ -969,8 +971,8 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // declared less `place_search` (project_create standardizes places), plus
   // `Read`, which it had as the main thread: a large `person_read` result is
   // persisted to a file the agent pages through. Its `research_append` is laned
-  // to `project` (which it owns), `researcher_profile`, `known_holdings` and
-  // `sources` (guard_project_files.py). It reviews nothing and spawns nothing,
+  // to `project` (which it owns), `researcher_profile` and `sources`
+  // (guard_project_files.py). It reviews nothing and spawns nothing,
   // so no spawn tool.
   "init-project.md": {
     tools: [

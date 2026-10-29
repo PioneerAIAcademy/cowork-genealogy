@@ -103,9 +103,11 @@ Both tools keep identical batched `ops`, id rules, and validate-on-write
 semantics (everything in §4–§7). An op sent to the wrong tool is
 rejected before anything is applied, with a redirect naming the sibling tool
 (`tree_edit only adds — 'update_name' is a correction/removal op; corrections
-and removals live in tree_correct`, and the mirror-image message on
+and removals live in tree_correct.`, and the mirror-image message on
 `tree_correct`); in a batch the rejection is indexed `ops[i]: …` and nothing
-is written. Each tool's description cross-references the other. Everywhere
+is written. When a single op also carries the other tool's keys (`factId` on an
+`update_fact`), `server.ts`'s unknown-argument guard sends this same redirect
+before the handler runs (`src/utils/tool-hint-messages.ts` holds the wording). Each tool's description cross-references the other. Everywhere
 this spec says `tree_edit` about the shared pipeline (§4.1–§7), the behavior
 applies to whichever tool admits the op.
 
@@ -189,9 +191,10 @@ tree_edit({
   `fact.place` is set and `resolveStandardPlace !== false` and no
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
   when nothing resolves), passing the places of the holder's other facts as
-  context for a bare single-segment place (see research-append-tool-spec
-  §3.6, lever B). A `personId` target whose `fact.type` is a couple event
-  (`isCoupleEventFactType`) is refused, naming the Couple route (§7).
+  context for a bare single-segment place, and no record country (see
+  research-append-tool-spec §3.6, lever B). A `personId` target whose
+  `fact.type` is a couple event (`isCoupleEventFactType`) is refused, naming the
+  Couple route (§7).
 - **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
   the provided `fact` fields onto the existing fact (id immutable) on the same
   exactly-one-target contract as `add_fact`; the `factId` must live on the named
@@ -526,7 +529,7 @@ cited record reads as made from it, and does not tie it.
 A finding refuses the whole call and nothing is written, `ops[i]: <text>` in the
 batch form:
 
-> `'<P>' has a recorded namesake ('<ns>'), so a record goes onto '<P>''s facts and names only when something in it ties it to '<P>'. The <fact '<F>' (<type>) | name '<N>' (<given surname>)> this op <adds | changes> cites <S> (research source '<src>'), and <it has no probable or confident link to '<P>' | its link '<pe>' to '<P>' is not tied: <the cap's first reason> | its only link to '<P>' rests on an assertion that records an absence, which ties nothing>. Nothing was written. Cite only records that tie to '<P>', or tie the record first through person-evidence; a relationship added in this same call does not count, so add it in an earlier call.`
+> `'<P>' has a recorded namesake ('<ns>'), so a record goes onto '<P>''s facts and names only when something in it ties it to '<P>'. The <fact '<F>' (<type>) | name '<N>' (<given surname>)> this op <adds | changes> cites <S> (research source '<src>'), and <it has no probable or confident link to '<P>' | its link '<pe>' to '<P>' is not tied: <the cap's first reason> | its only link to '<P>' rests on an assertion that records an absence, which ties nothing>. Nothing was written. Cite only records that tie to '<P>', or hand the link to the person-evidence agent, which owns person_evidence, to tie it first; a relationship added in this same call does not count, so add it in an earlier call.`
 
 **Measured** at `bb8af9a54` by `dev/measure-namesake-cap.ts` §6 over the committed
 e2e runs, with a row planted on every person holding a live `probable` or
@@ -542,11 +545,13 @@ rebuilds the refs a fact or name carried before an update from the starting tree
 and the run's earlier citing writes; it also judges every update charged none
 and every one of its refs, and the ten updates that move a count between those
 two are read from their run logs instead (`TRACED_PRIOR_REFS`; a floor fails on
-one that is not). Known let through: a ref cited
+one that is not). Known let throughs: a ref cited
 before its record is registered as a research source is never judged, even when
 a later call restates it (committed instance: `antonio-lucas-spouse` 2026-08-04,
-S5 on I12 since `add_person` at call 184, restated at call 214). Labelled cases:
-`tests/tools/tree-edit-namesake.test.ts`.
+S5 on I12 since `add_person` at call 184, restated at call 214); and one `S` entry
+backing both the row holder's own tied record and the namesake's passes on the
+tied one, so a fact copied from the namesake's record gets through (no committed
+instance; T16c). Labelled cases: `tests/tools/tree-edit-namesake.test.ts`.
 
 ---
 

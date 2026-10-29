@@ -98,5 +98,62 @@ async function main(): Promise<void> {
   r = await researchAppend({ projectPath: dir, section: "person_evidence",
     op: "update", entryId: peId, fields: { superseded_by: "pe_002" } } as any);
   console.log(`  update superseded_by only    -> ${r.ok ? "ACCEPTED" : "REFUSED (regression)"}`);
+
+  // --- #3552: one score per record persona -----------------------------------
+  // a_002 is another fact of P1; a_003 is a fact of the record with no persona id.
+  const PERSONA_RESEARCH = {
+    ...RESEARCH,
+    assertions: [
+      ...RESEARCH.assertions,
+      { ...RESEARCH.assertions[0], id: "a_002", fact_type: "birth", value: "1850" },
+      { ...RESEARCH.assertions[0], id: "a_003", fact_type: "birth", value: "1851", record_persona_id: null },
+    ],
+  };
+  const personaProject = async (): Promise<string> => {
+    const d = await project();
+    await writeFile(join(d, "research.json"), JSON.stringify(PERSONA_RESEARCH, null, 2), "utf8");
+    await recordMatchScore(d, { record_id: "rec_A", record_persona_id: "P1",
+      record_role: "principal", tree_person_id: "I1", score: 0.82, matched: true,
+      assertion_id: "a_001", record_source: "record_read", computed: "2026-10-27T00:00:00Z",
+      party_resolved: true });
+    return d;
+  };
+  const linkTo = (d: string, assertionId: string) => ({ ...link(d, "I1", 0.82),
+    entry: { ...link(d, "I1", 0.82).entry, assertion_id: assertionId } });
+
+  dir = await personaProject();
+  r = await researchAppend(linkTo(dir, "a_002") as any);
+  console.log(`  persona: 2nd fact, scored    -> ${r.ok ? "ACCEPTED" : "REFUSED"}`);
+
+  dir = await personaProject();
+  r = await researchAppend(linkTo(dir, "a_003") as any);
+  console.log(`  persona: fact with no id     -> ${r.ok ? "ACCEPTED (bypass)" : "REFUSED"}`);
+
+  // A reused hint: persona ids under the hint's sidecar-less entry are verified
+  // against the read extraction_append staged in the same call.
+  const hintProject = async (): Promise<string> => {
+    const d = await project();
+    await writeFile(join(d, "research.json"), JSON.stringify({ ...RESEARCH,
+      log: [{ id: "log_h", plan_item_id: null, performed: "2026-10-27T00:00:00Z",
+        tool: "person_record_matches", query: { recordId: "rec_A" }, outcome: "positive",
+        results_examined: 1, external_site: null, results_ref: null }] }, null, 2), "utf8");
+    await mkdir(join(d, "results", ".staging"), { recursive: true });
+    await writeFile(join(d, "results", ".staging", "read.json"), JSON.stringify({ tool: "record_read",
+      payload: { results: [{ recordId: "rec_A", gedcomx: { persons: [{ id: "P1" }] } }] } }), "utf8");
+    return d;
+  };
+  const hintFact = { section: "assertions", op: "append", entry: { source_id: "src_001",
+    record_id: "rec_A", record_role: "principal", fact_type: "birth", value: "1850",
+    information_quality: "primary", informant: "self", informant_proximity: "participant",
+    record_basis: "stated", extracted_for_question_ids: [], log_entry_id: "log_h",
+    record_persona_id: "P1" } };
+  dir = await hintProject();
+  r = await researchAppend({ projectPath: dir, ops: [hintFact] } as any,
+    { hintReads: new Map([["log_h", "results/.staging/read.json"]]) });
+  console.log(`  hint: persona id, read named -> ${r.ok ? "ACCEPTED" : "REFUSED"}`);
+  if (!r.ok) console.log(`     ${String(r.errors?.[0]).slice(0, 110)}`);
+  dir = await hintProject();
+  r = await researchAppend({ projectPath: dir, ops: [hintFact] } as any);
+  console.log(`  hint: persona id, no read    -> ${r.ok ? "ACCEPTED (bypass)" : "REFUSED"}`);
 }
 main().catch((e) => { console.error(e); process.exit(1); });

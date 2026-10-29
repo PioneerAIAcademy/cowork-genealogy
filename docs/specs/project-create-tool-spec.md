@@ -160,7 +160,7 @@ init-project, and only when the person is not already there (lead ruling,
 `parent`, or a relative's parents in `project_context`) means no stub even when
 the name differs; for a spouse, child or sibling, a match is the same first given
 name within that relationship, whatever the surname. When no stub is added the
-researcher's statement is reported and recorded as an `oral_knowledge` holding.
+researcher's statement is reported and not recorded.
 A stub is linked by the relative's tree id, and its edge is cited to a
 "Researcher's statement" source. A wrong stub can be undone only by
 `merge_tree_persons` into the right person; `tree_correct` cannot remove one.
@@ -309,9 +309,9 @@ the tree; and the house researcher profile.
   alone), and the conflict and proof steps read the entry, so the note travels
   with it.
 
-**What it deliberately does not write:** `known_holdings`, and the profile's
-`subscriptions`. Both come from what the researcher actually said, and are
-written afterwards through `research_append`.
+**What it deliberately does not write:** the profile's `subscriptions`. They
+come from what the researcher actually said, and are written afterwards through
+`research_append`.
 
 **Refusals**, each leaving the directory exactly as it was:
 
@@ -322,7 +322,7 @@ written afterwards through `research_append`.
 | `objective` absent, empty, or whitespace | A project is the pursuit of a stated question, and every later step plans against it |
 | The pair fails validation | Including a `subjectPersonIds` entry the tree does not contain |
 | `projectPath` absent | — |
-| `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. A caller built against the old contract would otherwise fall into the hand-built path with a FamilySearch PID as its subject |
+| `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. Over MCP `server.ts`'s unknown-argument guard sends this message before the handler runs (`PERSON_READ_REF_REMOVED`, `src/utils/tool-hint-messages.ts`); a direct call gets it from the handler. A caller built against the old contract would otherwise fall into the hand-built path with a FamilySearch PID as its subject |
 | `personId` present but not a non-empty string | — |
 | `tree` with any entry beside `personId` | "People the researcher names beside a read" above |
 | The read fails (no login, a person FamilySearch does not hold, the read holds no person with the requested id) | The read's own message, which names the remedy (log in; check the ID) |
@@ -380,8 +380,8 @@ the write ahead of the validation and watching two cases go red.
 ## 6. Enforcement
 
 > `packages/engine/mcp-server/tests/tools/project-create.test.ts` — the refusals,
-> the atomic no-write-on-failure property, the house profile on every create and
-> no `known_holdings`; with `personId` (an injected reader serving
+> the atomic no-write-on-failure property, the house profile on every create;
+> with `personId` (an injected reader serving
 > `person-read-flynn-family.json`: a merged-person redirect, a memory with
 > `text`/`image_ref`/`artifact_url`, a top-level `notes`): the tree against a
 > committed literal, the memory source exactly, the summary and its 2,000-character

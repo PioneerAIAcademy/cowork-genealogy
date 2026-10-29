@@ -8,20 +8,20 @@
     "query": {
       "standardPlace": "Mississippi Territory, United States",
       "startYear": 1798,
-      "endYear": 1817
+      "endYear": 1817,
+      "pageSize": 50
     },
     "totalResults": 1,
     "results": [
       {
         "imageGroupNumber": "004498712",
-        "imageGroupPrefix": "004498712",
         "imageCount": 143,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Mississippi Territory, United States",
+            "places": ["Mississippi Territory, United States"],
             "dateRange": "1799-1817",
             "recordType": "Territorial land and court records"
           }

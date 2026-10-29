@@ -16,7 +16,8 @@
       "needs-review",
       "pre-1880-census-household",
       "topical-fixture-required",
-      "direct-arm"
+      "direct-arm",
+      "no-namesake-row"
     ]
   },
   "input": {
@@ -42,7 +43,8 @@
     "Tool Arguments: score 3 if record_search was called with projectPath AND subjectId (subjectId is what triggers host-side ranking) plus appropriate search parameters. A validate_research_schema call with a project path after writing is acceptable if made — do not penalize it, and do not reward it. Only score 2 if record_search had clearly wrong arguments, or omitted subjectId when the research subject is known. Do NOT expect a separate rank_search_matches call — ranking is part of record_search now.",
     "IMPORTANT — Completeness grading: score 3 if the skill (a) found the conflicted result, (b) flagged the conflict with reasoning, (c) logged and offered next steps. Do NOT penalize for stopping after the conflicted result — stopping is CORRECT behavior. A conflicted result is NOT nil; the nil-escalation rules do not apply here. The Completeness dimension should NOT require the skill to search further after identifying a qualitative conflict",
     "record_read is stocked but OPTIONAL. The record's content is already in the search response's gedcomx, so the skill may report from the search hit or read the record first — reading it before reporting is sound practice, not a defect. Score neither path down. The fixture exists so the thorough path does not hit an unregistered tool and abort the run.",
-    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here.",
+    "No namesake row: the conflict here leaves open that the candidate is the subject, so the skill must not record him as a namesakes row; a row would cap the subject's own links. Flagging him needs-review is the whole correct handling."
   ],
   "judge_reads_files": true
 }
