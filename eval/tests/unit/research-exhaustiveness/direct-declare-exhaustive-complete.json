@@ -13,7 +13,7 @@
     ]
   },
   "input": {
-    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and declining without a write if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording the decline if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "flynn-exhaustive-ready"
   },
   "mcp_fixtures": [

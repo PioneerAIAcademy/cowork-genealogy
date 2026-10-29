@@ -54,8 +54,8 @@ export async function imageReadTool(input: ImageReadInput, principal: Principal)
   const browse = await checkImageBrowseCap(input, input.projectPath, "image_read");
 
   // `memoryShape` must be forwarded, not defaulted. `ImageReadInput extends
-  // FsImageInput`, so `memoryArtifactUrl` is already accepted here and the
-  // schema has no `additionalProperties: false` -- dropping the flag sent the
+  // FsImageInput`, so a direct call can carry `memoryArtifactUrl` (server.ts
+  // refuses it, as an unadvertised key, on the MCP path) -- dropping the flag sent the
   // FamilySearch bearer to an artifact URL that needs no credential, and made a
   // PDF artifact fail as "Expected an image response".
   const { bytes, contentType, sizeBytes, resolvedUrl } = await fetchFsImageBytes(
