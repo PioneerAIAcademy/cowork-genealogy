@@ -547,7 +547,7 @@ table and contextual factors checklist.
 
 ### 4. Sequence the plan items
 
-**On an identity or parentage question, make the first item a review of the subject's pending FamilySearch hints.** Emit one plan item at `sequence: 1` with `record_type: "fs_hints"`, `repository: "FamilySearch"`, and the subject's FamilySearch id in its `rationale`, phrased exactly "Review pending FamilySearch hints on <PID> before searching — an attached hint may already answer the question." (The router reads the PID back out of this line to pass `personId` to search-hints, so keep that wording.) The router sends this item to `search-hints`. It is one read that can save searches and never blocks them: once it is awaiting the researcher's verdicts the router skips it and runs the next item. Emit it only on identity and parentage questions — never on others.
+**On an identity or parentage question whose person has an `ark` in `tree.gedcomx.json`, make the first item a review of that person's pending FamilySearch hints.** Emit one plan item at `sequence: 1` with `record_type: "fs_hints"`, `repository: "FamilySearch"`, and the `rationale` "Review pending FamilySearch hints on <PID> before searching — an attached hint may already answer the question.", where <PID> is the id at the end of that `ark` (e.g. `ZZKR-TH2`). Emit none when the person has no `ark`, and none on any other question.
 
 Order items for efficient discovery (BCG Standard 15):
 

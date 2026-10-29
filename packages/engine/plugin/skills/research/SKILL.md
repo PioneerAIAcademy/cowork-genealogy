@@ -493,7 +493,9 @@ person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay it
 return as-is, and stop: whether to accept a hint is the researcher's decision,
 which only the user can supply (§"When to stop"). When the researcher answers,
 spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
-verdicts as `{ark, verdict}` per hint, verbatim. Never pass a verdict the
+verdicts as `{ark, verdict}` per hint, verbatim, plus `planItemId` and `planId`
+when the question's active plan holds an `in_progress` `fs_hints` item whose
+`rationale` names that `personId`. Never pass a verdict the
 researcher did not state — a triage recommendation is not one. The accepted
 hints' positive log entries then route to extraction through the table.
 

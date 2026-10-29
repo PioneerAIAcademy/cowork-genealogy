@@ -113,6 +113,18 @@ def test_triage_writes_only_item_status(before_state, after_state, tool_calls, t
     extraction)."""
     if "writes-nothing" not in test.get("tags", []):
         pytest.skip("not a triage test")
+    if not _held_item(test):
+        writes = _calls(tool_calls, "research_log_append") + _calls(tool_calls, "research_append")
+        new_logs = (
+            _new_log_entries(before_state, after_state)
+            if before_state.get("research_json") is not None
+            else []
+        )
+        assert not writes and not new_logs, (
+            f"triage with no plan item handed over wrote to the project ({len(writes)} "
+            f"call(s), {len(new_logs)} new log entries); it must write nothing"
+        )
+        return
     for c in _calls(tool_calls, "research_append"):
         section = ((c.get("args") or {}).get("section")) or ""
         assert section == "plan_items", (
