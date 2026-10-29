@@ -121,16 +121,42 @@ def _unfiltered_call(keywords, **kwargs):
     return c
 
 
+def _log_fts(keywords, **filter_kwargs):
+    """A research_log_append op that LOGS a filtered fulltext nil, so the
+    filtered-nil check (scoped to logged nils, issue #3432) applies to it. A fire
+    case pairs this with its `_filtered_nil_call`; an unlogged probe omits it."""
+    return call("research_log_append", ops=[{
+        "tool": "fulltext_search",
+        "outcome": "negative",
+        "resultsExamined": 0,
+        "query": {"keywords": keywords, **filter_kwargs},
+    }])
+
+
 def test_filtered_nil_retry_fires_when_no_retry_follows():
-    """Validator fires when a filtered nil has no unfiltered follow-up."""
+    """Validator fires when a LOGGED filtered nil has no unfiltered follow-up."""
     calls = [
         _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
+        _log_fts("+Flynn +Patrick", recordPlace1="Pennsylvania"),
     ]
     with pytest.raises(AssertionError) as e:
         check_filtered_nil_retry(calls)
     msg = str(e.value)
     assert "recordPlace1" in msg
     assert "+Flynn +Patrick" in msg
+
+
+def test_filtered_nil_from_an_unlogged_probe_does_not_fire():
+    """An unlogged exploratory filtered nil is not held to the retry — the check
+    shadows the write-boundary guard, which governs only logged findings (#3432,
+    the ut_search_full_text_015 shape: a bare surname hit a catch-all nil and the
+    agent recovered via the name field without logging the probe)."""
+    calls = [
+        _filtered_nil_call("+Flynn", place="Schuylkill County, Pennsylvania"),
+        # no _log_fts — the probe was never logged
+        call("fulltext_search", name="Thomas Flynn"),  # recovered via the name field
+    ]
+    check_filtered_nil_retry(calls)  # does not raise
 
 
 def test_filtered_nil_retry_passes_when_unfiltered_retry_follows():
@@ -159,6 +185,7 @@ def test_filtered_nil_variant_is_not_covered_by_the_canonical_spelling():
     calls = [
         _unfiltered_call("+Flynn +witness"),
         _filtered_nil_call("+Flinn +witness", recordPlace1="Pennsylvania"),
+        _log_fts("+Flinn +witness", recordPlace1="Pennsylvania"),
     ]
     with pytest.raises(AssertionError):
         check_filtered_nil_retry(calls)
@@ -169,6 +196,7 @@ def test_filtered_nil_is_not_covered_by_a_broader_positive_search():
     calls = [
         _unfiltered_call("+Flynn"),
         _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
+        _log_fts("+Flynn +Patrick", recordPlace1="Pennsylvania"),
     ]
     with pytest.raises(AssertionError):
         check_filtered_nil_retry(calls)
@@ -453,6 +481,7 @@ def test_filtered_nil_is_not_answered_by_a_different_filter():
     calls = [
         _filtered_nil_call("+Flynn", recordPlace1="Pennsylvania"),
         _unfiltered_call("+Flynn", recordPlace2="Schuylkill"),
+        _log_fts("+Flynn", recordPlace1="Pennsylvania"),
     ]
     with pytest.raises(AssertionError):
         check_filtered_nil_retry(calls)
@@ -665,7 +694,10 @@ def test_record_place_fails_plain_text_on_a_later_call_only():
 
 def test_filtered_nil_retry_fires_on_a_place_nil_with_no_retry():
     with pytest.raises(AssertionError):
-        check_filtered_nil_retry([_filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania")])
+        check_filtered_nil_retry([
+            _filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania"),
+            _log_fts("+Flynn +Patrick", place="Schuylkill County, Pennsylvania"),
+        ])
 
 
 def test_filtered_nil_retry_passes_a_place_nil_followed_by_an_unfiltered_retry():
@@ -673,3 +705,45 @@ def test_filtered_nil_retry_passes_a_place_nil_followed_by_an_unfiltered_retry()
         _filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania"),
         _unfiltered_call("+Flynn +Patrick"),
     ])
+
+
+# --- Leading word-boundary + dropped bare `estate` (#3592). A trailing
+# --- boundary would break the deliberate stems (naturaliz/baptism); dropping
+# --- bare `estate` keeps "real estate" (land) from passing the probate check.
+
+def _completion(record_type, notes, keywords="+Flynn", tool="record_search"):
+    before = {"research_json": {"plans": [
+        {"id": "pl_rt", "items": [{"id": "pli_rt", "record_type": record_type, "status": "in_progress"}]},
+    ]}}
+    after = {"research_json": {
+        "log": [{"id": "log_rt", "plan_item_id": "pli_rt", "tool": tool,
+                 "query": {"keywords": keywords}, "notes": notes}],
+        "plans": [{"id": "pl_rt", "items": [
+            {"id": "pli_rt", "record_type": record_type, "status": "completed"}]}],
+    }}
+    return before, after
+
+
+def test_plan_item_completion_passes_a_naturalization_stem():
+    """`naturaliz` is a stem: the leading boundary matches "naturalization"
+    where a trailing boundary would not."""
+    check_plan_item_completion(*_completion(
+        "naturalization", "Naturalization record, declaration of intent, Schuylkill County"))
+
+
+def test_plan_item_completion_passes_a_baptism_plural():
+    """`baptism` must match the plural "baptisms" -- a trailing boundary misses it."""
+    check_plan_item_completion(*_completion(
+        "church", "Parish baptisms register, St. Patrick's, 1850"))
+
+
+def test_plan_item_completion_fires_on_a_real_estate_deed_note():
+    """With bare `estate` dropped, a "real estate" deed note (land, not probate)
+    no longer passes the probate check -- the guard fires."""
+    before, after = _completion(
+        "probate", "Thomas Flynn real estate deed, Schuylkill County",
+        keywords="+Thomas +Flynn", tool="fulltext_search")
+    with pytest.raises(AssertionError) as e:
+        check_plan_item_completion(before, after)
+    assert "pli_rt" in str(e.value)
+    assert "probate" in str(e.value)

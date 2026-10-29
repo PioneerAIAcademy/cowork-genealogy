@@ -77,6 +77,10 @@ export interface SmokeStep {
 const REAL_IMAGE_ID = "004884748_02613";
 const FS_PID = "KNDX-MKG";
 const STAGED_REF = "results/.staging/smoke.json";
+// Staged, not finalized: a results/<log>.json no log entry names fails the
+// later validate_research_schema row as an orphan sidecar.
+const FULLTEXT_REF = "results/.staging/smoke-fulltext.json";
+const FULLTEXT_HIT = { id: "ark:/61903/3:1:TEST-0001", textDocument: "Smoke full-text transcript." };
 
 const SEED_TREE = {
   persons: [
@@ -140,6 +144,14 @@ function reauth(res: CallResult, ctx: SmokeCtx): Expectation {
   if (ctx.mode === "bearer") return noError(res);
   const ok = res.isError && carries(res, HOSTED_REAUTH_INSTRUCTION);
   return { ok, detail: ok ? "isError with HOSTED_REAUTH_INSTRUCTION" : brief(res) };
+}
+
+/** Write a JSON fixture into the project on this host; a no-op for a server-side anchor. */
+async function writeHostFixture(ctx: SmokeCtx, ref: string, body: unknown): Promise<void> {
+  if (!ctx.hostProjectDir) return;
+  const file = join(ctx.hostProjectDir, ...ref.split("/"));
+  await mkdir(join(file, ".."), { recursive: true });
+  await writeFile(file, JSON.stringify(body), "utf-8");
 }
 
 function keyMissing(res: CallResult): Expectation {
@@ -221,6 +233,12 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath }),
     expect: noError,
+  },
+  {
+    tool: "tree_query",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath }),
+    expect: okTrue,
   },
   {
     // The stdio smoke runs the file store, which lists nothing; over HTTP the
@@ -354,6 +372,32 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: okTrue,
   },
   {
+    // One full-text hit by its bare id (#3522). fulltext_search needs a token,
+    // so the sidecar is staged by hand; against a server-side anchor it cannot
+    // be, and the missing file is the achievable assertion.
+    tool: "sidecar_read",
+    label: "sidecar_read (full-text hit)",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, ref: `${FULLTEXT_REF}#TEST-0001` }),
+    before: (ctx) =>
+      writeHostFixture(ctx, FULLTEXT_REF, { tool: "fulltext_search", payload: { results: [FULLTEXT_HIT] } }),
+    expect: (res, ctx) => {
+      if (!ctx.hostProjectDir) {
+        const ok = res.isError && res.body?.reason === "not_found";
+        return { ok, detail: ok ? "no host fixtures: missing full-text sidecar refused" : brief(res) };
+      }
+      return {
+        ok:
+          !res.isError &&
+          res.body?.ok === true &&
+          res.body?.content === FULLTEXT_HIT.textDocument &&
+          res.body?.hitId === FULLTEXT_HIT.id &&
+          res.body?.hitIndex === 1,
+        detail: brief(res),
+      };
+    },
+  },
+  {
     tool: "tree_edit",
     offline: true,
     args: (ctx) => ({
@@ -406,12 +450,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     // anchor it cannot, so the missing-ref error is the achievable assertion.
     tool: "rank_search_matches",
     args: (ctx) => ({ projectPath: ctx.projectPath, stagedResultsRef: STAGED_REF, subjectId: "P1" }),
-    before: async (ctx) => {
-      if (!ctx.hostProjectDir) return;
-      const file = join(ctx.hostProjectDir, ...STAGED_REF.split("/"));
-      await mkdir(join(file, ".."), { recursive: true });
-      await writeFile(file, JSON.stringify({ payload: { results: [{}] } }), "utf-8");
-    },
+    before: (ctx) => writeHostFixture(ctx, STAGED_REF, { payload: { results: [{}] } }),
     expect: (res, ctx) => {
       if (!ctx.hostProjectDir) {
         const ok = res.isError && carries(res, "does not exist or is invalid JSON");
