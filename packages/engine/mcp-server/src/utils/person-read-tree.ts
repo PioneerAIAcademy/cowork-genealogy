@@ -1,12 +1,12 @@
-// person-read-tree — build the starting tree host-side from a staged
-// `person_read` (issue #2944 Stage B).
+// person-read-tree — build the starting tree host-side from a FamilySearch
+// person read (issues #2944, #3384).
 //
 // Until this existed, init-project made the model re-type the whole read into
 // `project_create`'s `tree` argument: about 51 KB of output for a 15-person
 // pedigree, and on a 12-person read with 104 relationships the model spent its
 // entire 32,000-token output cap rewriting the tree in thinking and never made
-// the call (alpha #3033). The read is already on the host, so the host builds
-// the tree from it and the model passes a reference.
+// the call (alpha #3033). `project_create` now reads the person itself and
+// builds the tree here; the read never passes through the model.
 //
 // The build follows the rules init-project's Step 3 gave the model: local
 // `I`/`N`/`F`/`R`/`S` ids, the canonical `ark`, the response-only source fields
@@ -16,11 +16,10 @@
 // and the page the read came from, not one person, since it is cited on every
 // relative's facts too.
 //
-// Stubs the researcher's own statements imply (a maiden name's parent) arrive as
-// ADDITIONS. The model cannot see the ids minted here, so in ref mode every id
-// it writes is a label: re-minted after the staged ids, and a staged person is
-// named by FamilySearch PID. An `I<n>` the model wrote would otherwise land on
-// whichever staged person got that id, and no validator could tell.
+// A person the researcher names whom the read lacks is not added here: the
+// model never sees the read, so it cannot tell whether that person is already
+// in it. It is added after the create, with `tree_edit` (lead ruling,
+// 2026-10-20). `normalizeHandBuilt` is the other build, for a tree with no read.
 
 import type { SimplifiedFact, SimplifiedRelationship } from "../types/gedcomx.js";
 import { treePidOfArk } from "./ark.js";
@@ -47,20 +46,13 @@ export interface StagedPersonRead {
 }
 
 export interface IdMap {
-  /** FamilySearch PID -> tree `I` id (ref mode). */
+  /** FamilySearch PID -> tree `I` id (built from a read). */
   persons: Record<string, string>;
-  /** FamilySearch source id -> tree `S` id (ref mode). */
+  /** FamilySearch source id -> tree `S` id (built from a read). */
   sources: Record<string, string>;
-  /** Addition person label -> minted `I` id (ref mode), so a later step can
-   *  name a stub (e.g. `known_holdings.relates_to_person_ids`). */
-  additions: Record<string, string>;
-  /** The tree id of the FamilySearch-tree source: `S1` in ref mode; without a
-   *  ref, the generic one, when something hand-entered was cited to it. */
+  /** The tree id of the FamilySearch-tree source: `S1` when built from a read;
+   *  in a hand-built tree, the generic one, when something was cited to it. */
   familySearchTreeSource?: string;
-  /** Ref mode: the generic FamilySearch-tree source an ADDITION's facts or
-   *  relationships were cited to, when one was. Never `S1`, which names the
-   *  page of the read's subject, and an addition is not on that read. */
-  additionsTreeSource?: string;
   /** The tree id of the researcher's-statement source, when one was created. */
   statementSource?: string;
 }
@@ -76,19 +68,17 @@ export interface BuiltTree {
   tree: { persons: Obj[]; relationships: Obj[]; sources: Obj[] };
   idMap: IdMap;
   subjectPersonIds: string[];
-  /** The facts the caller's additions brought, in the tree as built. */
-  additionFacts: Obj[];
   /** The place retry for the read's facts, plus any `extra` facts in the same
-   *  time budget. Not run by the build: the caller runs it once every refusal
-   *  of its own has passed, so a refused call never waits on the network. */
-  fillPlaces: (extra?: SimplifiedFact[]) => Promise<FilledPlace[]>;
-  treeCited: TreeCited;
+   *  time budget (`budgetMs`, default `PLACE_RETRY_BUDGET_MS`). Not run by the
+   *  build: the caller runs it once every refusal of its own has passed, so a
+   *  refused call never waits on the network. */
+  fillPlaces: (extra?: SimplifiedFact[], budgetMs?: number) => Promise<FilledPlace[]>;
 }
 
 /** How long the place retry may run. `project_create` is one MCP call, and the
  *  Cowork device bridge aborts any call at 60s; whatever resolved by then is
  *  kept, and a place still unresolved keeps `place` alone. */
-const PLACE_RETRY_BUDGET_MS = 20_000;
+export const PLACE_RETRY_BUDGET_MS = 20_000;
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -122,22 +112,7 @@ export function factsOf(tree: { persons?: unknown; relationships?: unknown }): O
   return [...arr(tree.persons), ...arr(tree.relationships)].flatMap((o) => arr(o.facts));
 }
 
-/** An addition collection: absent is empty, anything but an array of objects
- *  is refused. `arr` drops a bad entry, which for a citation would silently
- *  re-cite the fact to the researcher's statement. */
-function list(v: unknown, where: string): Obj[] {
-  if (v === undefined) return [];
-  if (!Array.isArray(v) || !v.every(isObj)) {
-    throw new TreeBuildError(
-      `${where} must be an array of objects` +
-        (where.endsWith("sources") ? ' such as [{"ref": "<source id>"}]' : "") +
-        `; got ${JSON.stringify(v)}.`,
-    );
-  }
-  return v;
-}
-
-function displayName(person: Obj | undefined): string {
+export function displayName(person: Obj | undefined): string {
   const n = arr(person?.names)[0] ?? {};
   return [n.given, n.surname].filter((s) => typeof s === "string" && s !== "").join(" ") || "Unknown";
 }
@@ -288,35 +263,19 @@ interface StagedIndex {
 }
 
 /**
- * How a repeated relationship reads in the refusal below.
- *
- * Built from the relationship's own fields rather than by de-mangling
- * `relationshipKey`, whose internal `pc` marker and trailing subtype slot are
- * not for a reader.
- */
-function describeRelationship(r: Obj): string {
-  const sub = typeof r.subtype === "string" ? ` ${r.subtype}` : "";
-  if (r.type === "Couple") return `Couple${sub} ${[r.person1, r.person2].map(String).sort().join(" ")}`;
-  return `${String(r.type)}${sub} ${String(r.parent)} ${String(r.child)}`;
-}
-
-/**
- * Build the tree from a staged read, then merge `additions`. Throws
- * `TreeBuildError` for an addition that names neither a staged person (by PID)
- * nor one of its own labels.
+ * Build the starting tree from a FamilySearch read. Throws `TreeBuildError`
+ * when the read holds no subject, or a `subjectPersonIds` entry names no one in
+ * it.
  */
 export async function buildFromStagedRead(args: {
   staged: StagedPersonRead;
-  additions?: { persons?: unknown[]; relationships?: unknown[]; sources?: unknown[] };
   subjectPersonIds?: unknown;
   now: Date;
-  /** What the staged reads hold; without it every addition is the researcher's statement. */
-  evidence?: TreeEvidence;
 }): Promise<BuiltTree> {
   const { staged, now } = args;
   const read = staged.gedcomx ?? {};
   const minter = new Minter(new Set());
-  const idMap: IdMap = { persons: {}, sources: {}, additions: {} };
+  const idMap: IdMap = { persons: {}, sources: {} };
 
   // Persons: the subject first, so it is I1 (init-project's convention), then
   // the response order.
@@ -327,9 +286,9 @@ export async function buildFromStagedRead(args: {
   const subject = readPersons.find((p) => typeof p.id === "string" && p.id.toUpperCase() === wanted);
   if (!subject) {
     throw new TreeBuildError(
-      `the staged read holds no person ${JSON.stringify(staged.personId)}, so it cannot seed a ` +
-        "project for them. Call person_read again with that FamilySearch ID and projectPath, and " +
-        "pass the new staged.resultsRef as personReadRef.",
+      `the read holds no person ${JSON.stringify(staged.personId)}, so it cannot seed a ` +
+        "project for them. Check the FamilySearch ID and create the project again with it as " +
+        "personId.",
     );
   }
   const subjectPid: string = subject.id;
@@ -416,20 +375,11 @@ export async function buildFromStagedRead(args: {
 
   const tree = { persons, relationships, sources };
   const subjectId = idMap.persons[subjectPid];
-  // The read's facts, captured before additions join so the caller can treat
-  // the additions' facts as hand-entered. The retry runs LAST so every refusal
-  // below is instant.
+  // The read's facts, for the place retry. It runs LAST, in the caller, so
+  // every refusal below is instant.
   const readFacts = collectFacts(tree as never) as SimplifiedFact[];
-  // A staged person's tree id -> its own FamilySearch id (never an alias).
-  const stagedPid = new Map<string, string>();
-  for (const p of ordered) if (typeof p.id === "string") stagedPid.set(idMap.persons[p.id], p.id);
-  const { labels, treeCited } = mergeAdditions(
-    tree, args.additions, minter, idMap, index, now, args.evidence, stagedPid,
-  );
-  const fromRead = new Set<object>(readFacts);
-  const additionFacts = factsOf(tree).filter((f) => !fromRead.has(f));
 
-  // subjectPersonIds: a staged PID or an addition label; defaults to the subject.
+  // subjectPersonIds: FamilySearch PIDs from the read; defaults to the subject.
   let subjectPersonIds: string[];
   if (args.subjectPersonIds === undefined) {
     subjectPersonIds = [subjectId];
@@ -438,13 +388,12 @@ export async function buildFromStagedRead(args: {
       throw new TreeBuildError("subjectPersonIds must be an array of ids");
     }
     subjectPersonIds = args.subjectPersonIds.map((v) => {
-      const mapped =
-        typeof v === "string" ? index.persons.get(pidKey(v)) ?? labels.get(v) : undefined;
+      const mapped = typeof v === "string" ? index.persons.get(pidKey(v)) : undefined;
       if (!mapped) {
         throw new TreeBuildError(
-          `subjectPersonIds entry ${JSON.stringify(v)} is neither a FamilySearch ID in the staged ` +
-            "read nor a person in `tree`. With personReadRef, name a staged person by its " +
-            "FamilySearch ID (e.g. \"LZNY-BRF\"); the tree's `I` ids are assigned here.",
+          `subjectPersonIds entry ${JSON.stringify(v)} is not a FamilySearch ID in the read. ` +
+            "With personId, name a person from the read by their FamilySearch ID (e.g. " +
+            "\"LZNY-BRF\"); the tree's `I` ids are assigned here.",
         );
       }
       return mapped;
@@ -455,9 +404,7 @@ export async function buildFromStagedRead(args: {
     tree,
     idMap,
     subjectPersonIds,
-    additionFacts,
-    fillPlaces: (extra = []) => retryUnresolvedPlaces([...readFacts, ...extra]),
-    treeCited,
+    fillPlaces: (extra = [], budgetMs) => retryUnresolvedPlaces([...readFacts, ...extra], budgetMs),
   };
 }
 
@@ -479,12 +426,15 @@ export interface FilledPlace {
  * already been validated and written (it would reach one of the two files and
  * not the other).
  */
-export async function retryUnresolvedPlaces(facts: SimplifiedFact[]): Promise<FilledPlace[]> {
+export async function retryUnresolvedPlaces(
+  facts: SimplifiedFact[],
+  budgetMs: number = PLACE_RETRY_BUDGET_MS,
+): Promise<FilledPlace[]> {
   const copies = facts.map((f) => ({ ...f }));
   await Promise.race([
     standardizePlaces(copies),
     new Promise<void>((resolve) => {
-      const t = setTimeout(resolve, PLACE_RETRY_BUDGET_MS);
+      const t = setTimeout(resolve, Math.max(0, budgetMs));
       t.unref?.();
     }),
   ]);
@@ -520,202 +470,6 @@ export function unresolvedPlacesOf(facts: readonly Obj[]): string[] {
   return [...out.values()];
 }
 
-/**
- * Merge additions into a staged-built tree. Every id in an addition is a label
- * and is re-minted; person labels -> ids go in `idMap.additions`. Endpoints and
- * refs must name a staged PID / FamilySearch source id or an addition label.
- * Person and source labels follow one rule set: unique, and never a staged id.
- * Returns the person label map.
- */
-function mergeAdditions(
-  tree: BuiltTree["tree"],
-  additions: { persons?: unknown[]; relationships?: unknown[]; sources?: unknown[] } | undefined,
-  minter: Minter,
-  idMap: IdMap,
-  index: StagedIndex,
-  now: Date,
-  evidence: TreeEvidence | undefined,
-  stagedPid: Map<string, string>,
-): { labels: Map<string, string>; treeCited: TreeCited } {
-  const personLabel = new Map<string, string>();
-  const treeCited: TreeCited = { facts: 0, relationships: 0 };
-  if (!additions) return { labels: personLabel, treeCited };
-  const persons = list(additions.persons, "tree.persons");
-  const relationships = list(additions.relationships, "tree.relationships");
-  const sources = list(additions.sources, "tree.sources");
-
-  const mintedFor = new Map<Obj, string>();
-  const additionArks = new Map<string, string>();
-  for (const p of persons) {
-    const label = typeof p.id === "string" ? p.id : undefined;
-    // An ark naming a person already in the read means that person was copied
-    // in as an addition, which would put them in the tree twice; no validator
-    // rejects two persons with one ark. An ark for someone the read does NOT
-    // hold (a second person_read) is legitimate and kept.
-    const arkPid = treePidOfArk(p.ark);
-    if (arkPid && additionArks.has(pidKey(arkPid))) {
-      throw new TreeBuildError(
-        `tree persons ${JSON.stringify(additionArks.get(pidKey(arkPid)))} and ` +
-          `${JSON.stringify(label ?? "(unlabelled)")} carry the ark of the same person, ${arkPid}; ` +
-          "add each person once.",
-      );
-    }
-    if (arkPid) additionArks.set(pidKey(arkPid), label ?? "(unlabelled)");
-    if (arkPid && index.persons.has(pidKey(arkPid))) {
-      throw new TreeBuildError(
-        `tree person ${JSON.stringify(label ?? "(unlabelled)")} carries the ark of ${arkPid.trim()}, ` +
-          "who is already in the staged read, so this would add them twice. With personReadRef " +
-          "`tree` holds only people the read does not contain.",
-      );
-    }
-    if (label !== undefined) {
-      if (personLabel.has(label)) {
-        throw new TreeBuildError(
-          `tree person label ${JSON.stringify(label)} is used twice; give each addition its own label.`,
-        );
-      }
-      if (index.persons.has(pidKey(label))) {
-        throw new TreeBuildError(
-          `tree person ${JSON.stringify(label)} is a FamilySearch ID already in the staged read. ` +
-            "Additions are new people only; link to a staged person by naming its FamilySearch ID " +
-            "in a relationship.",
-        );
-      }
-    }
-    const id = minter.mint("I");
-    if (label !== undefined) personLabel.set(label, id);
-    mintedFor.set(p, id);
-  }
-  idMap.additions = Object.fromEntries(personLabel);
-
-  const sourceLabel = new Map<string, string>();
-  for (const s of sources) {
-    const label = typeof s.id === "string" ? s.id : undefined;
-    if (label !== undefined) {
-      if (sourceLabel.has(label)) {
-        throw new TreeBuildError(
-          `tree source label ${JSON.stringify(label)} is used twice; give each addition source its own label.`,
-        );
-      }
-      if (index.sources.has(label)) {
-        throw new TreeBuildError(
-          `tree source ${JSON.stringify(label)} is a FamilySearch source already in the staged read; ` +
-            "cite it by that id instead of adding it again.",
-        );
-      }
-    }
-    const id = minter.mint("S");
-    if (label !== undefined) sourceLabel.set(label, id);
-    // Kept as given, not picked: an unknown field is the caller's mistake and
-    // the validator refuses it, rather than this build quietly dropping it.
-    const { id: _sid, ...given } = s;
-    tree.sources.push({ id, ...given });
-  }
-
-  const endpoint = (value: unknown, where: string): string => {
-    if (typeof value === "string") {
-      const mapped = index.persons.get(pidKey(value)) ?? personLabel.get(value);
-      if (mapped) return mapped;
-    }
-    throw new TreeBuildError(
-      `${where} names ${JSON.stringify(value)}, which is neither a FamilySearch ID in the staged ` +
-        "read nor a person in `tree`. With personReadRef, name a staged person by its FamilySearch " +
-        "ID (e.g. \"LZNY-BRF\"): the tree's `I` ids are assigned here, so an `I` id you write would " +
-        "land on whichever staged person received it.",
-    );
-  };
-  const refs = (value: unknown, where: string): Obj[] =>
-    list(value, `${where} sources`).map((r) => {
-      const mapped =
-        typeof r.ref === "string" ? sourceLabel.get(r.ref) ?? index.sources.get(r.ref) : undefined;
-      if (!mapped) {
-        throw new TreeBuildError(
-          `${where} cites source ${JSON.stringify(r.ref)}, which is neither a source in \`tree\` ` +
-            "nor a FamilySearch source in the staged read.",
-        );
-      }
-      return { ...r, ref: mapped };
-    });
-
-  const statement = lazyStatementSource(tree, minter, idMap, now);
-  const treeSource = lazyTreeSource(tree, minter, idMap, now, "additionsTreeSource");
-  // An unsourced fact cites the Family Tree only when `held` (what a staged read
-  // holds on that person or relationship) contains it.
-  const fact = (f: Obj, where: string, held: Obj[] | undefined): Obj => {
-    const { id: _id, sources: rs, ...rest } = f;
-    const sourced = refs(rs, where);
-    if (sourced.length) return { id: minter.mint("F"), ...rest, sources: sourced };
-    if (held && heldFact(f, held)) {
-      treeCited.facts++;
-      return { id: minter.mint("F"), ...rest, sources: [treeSource()] };
-    }
-    return { id: minter.mint("F"), ...rest, sources: [statement()] };
-  };
-  // A tree id -> its FamilySearch id: a staged person's own, or an addition's ark.
-  const additionPid = new Map<string, string>();
-  for (const p of persons) {
-    const pid = treePidOfArk(p.ark);
-    if (pid) additionPid.set(mintedFor.get(p)!, pid);
-  }
-  const pidOf = (id: unknown) =>
-    typeof id === "string" ? stagedPid.get(id) ?? additionPid.get(id) : undefined;
-
-  for (const p of persons) {
-    const id = mintedFor.get(p)!;
-    const label = typeof p.id === "string" ? p.id : `(person ${id})`;
-    const { id: _id, names, facts, sources: rs, ...rest } = p;
-    const out: Obj = { id, ...rest };
-    out.names = list(names, `tree person ${label}'s names`).map((n) => {
-      const { id: _nid, sources: ns, ...nrest } = n;
-      const nameRefs = refs(ns, `tree person ${label}'s name`);
-      return { id: minter.mint("N"), ...nrest, ...(nameRefs.length ? { sources: nameRefs } : {}) };
-    });
-    const held = heldOnPerson(additionPid.get(id), evidence);
-    const builtFacts = list(facts, `tree person ${label}'s facts`).map((f) =>
-      fact(f, `tree person ${label}'s fact`, held),
-    );
-    if (builtFacts.length) out.facts = builtFacts;
-    const personRefs = refs(rs, `tree person ${label}`);
-    if (personRefs.length) out.sources = personRefs;
-    tree.persons.push(out);
-  }
-  // Matched, not keyed. "Is this relationship already here" is the looser
-  // question: an untyped edge restating a staged Biological one IS a repeat,
-  // while a Step edge beside it is a second relationship. The exact
-  // `relationshipKey` answers a different question — which tree object is
-  // this — and keying on it here would let an untyped repeat through.
-  const existing: SimplifiedRelationship[] = [...tree.relationships];
-  for (const r of relationships) {
-    const where = `tree relationship ${typeof r.id === "string" ? r.id : ""}`.trim();
-    const { id: _id, facts, sources: rs, ...rest } = r;
-    const out: Obj = { id: minter.mint("R"), ...rest };
-    for (const key of ["parent", "child", "person1", "person2"] as const) {
-      if (key in out) out[key] = endpoint(out[key], `${where} ${key}`);
-    }
-    if (existing.some((e) => relationshipMatches(e, out as SimplifiedRelationship))) {
-      throw new TreeBuildError(
-        `${where} repeats a relationship already in the tree (${describeRelationship(out)}); ` +
-          "the read's relationships are imported already.",
-      );
-    }
-    existing.push(out as SimplifiedRelationship);
-    const asPids = evidence && pidEndpoints(out, pidOf, evidence);
-    const held = asPids ? heldRelationships(asPids, evidence!) : [];
-    const builtFacts = list(facts, `${where} facts`).map((f) =>
-      fact(f, `${where} fact`, held.length ? held.flatMap((h) => arr(h.facts)) : undefined),
-    );
-    if (builtFacts.length) out.facts = builtFacts;
-    const relRefs = refs(rs, where);
-    if (relRefs.length) out.sources = relRefs;
-    else if (held.length) {
-      treeCited.relationships++;
-      out.sources = [treeSource()];
-    } else out.sources = [statement()];
-    tree.relationships.push(out);
-  }
-  return { labels: personLabel, treeCited };
-}
-
 /** A `{ref, quality: 1}` to one "Researcher's statement" source, created the
  *  first time something hand-built has no source of its own. */
 function lazyStatementSource(
@@ -745,19 +499,18 @@ function lazyTreeSource(
   minter: Minter,
   idMap: IdMap,
   now: Date,
-  key: "familySearchTreeSource" | "additionsTreeSource",
 ): () => Obj {
   return () => {
-    if (!idMap[key]) {
-      idMap[key] = minter.mint("S");
+    if (!idMap.familySearchTreeSource) {
+      idMap.familySearchTreeSource = minter.mint("S");
       tree.sources.push({
-        id: idMap[key],
+        id: idMap.familySearchTreeSource,
         title: "FamilySearch Family Tree",
         citation: `FamilySearch Family Tree (https://www.familysearch.org/tree : accessed ${accessDate(now)}).`,
         url: "https://www.familysearch.org/tree",
       });
     }
-    return { ref: idMap[key], quality: 1 };
+    return { ref: idMap.familySearchTreeSource, quality: 1 };
   };
 }
 
@@ -811,14 +564,14 @@ export function normalizeHandBuilt(
     for (const f of arr(r.facts)) note(f.id);
   }
   const minter = new Minter(taken);
-  const idMap: IdMap = { persons: {}, sources: {}, additions: {} };
+  const idMap: IdMap = { persons: {}, sources: {} };
   const built = {
     persons: tree.persons as Obj[],
     relationships: tree.relationships as Obj[],
     sources: tree.sources as Obj[],
   };
   const statement = lazyStatementSource(built, minter, idMap, now);
-  const treeSource = lazyTreeSource(built, minter, idMap, now, "familySearchTreeSource");
+  const treeSource = lazyTreeSource(built, minter, idMap, now);
   const treeCited: TreeCited = { facts: 0, relationships: 0 };
   // Only an absent id is minted. Any other value is the caller's, kept for the
   // validator to judge, as relationships and subjectPersonIds name it as given.

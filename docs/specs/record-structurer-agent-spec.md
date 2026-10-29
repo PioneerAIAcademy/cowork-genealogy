@@ -113,7 +113,7 @@ is §11.7's code.
   deduces one from who lived with whom. On a census, the column's value goes
   in `statedRelation`, and code decides whether the schedule had that column.
 - **`statedRelation` is relative to the principal** (2026-10-04), in the
-  text's word. A principal has none. Where there are two principals, a parent
+  text's word. A principal has none, except on a land document, where every party's `statedRelation` is their part in the deed (research-append §11.7). Where there are two principals, a parent
   is `father` or `mother`, tied to the child by `parent_child`, and code names
   the side (§11.7). Everyone named gets an entry, the officiant included.
   On a christening, birth, death or burial with exactly one person flagged

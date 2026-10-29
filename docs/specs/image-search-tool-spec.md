@@ -307,7 +307,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `imageGroupNumber` not provided | Throw: `"image_search requires an imageGroupNumber."` |
 | apid lookup (unsplit form) returns non-OK | Throw: `"Could not resolve image group number {imageGroupNumber} to an image group."` |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
-| `children/names` returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
+| `children/names` returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` In hosted mode, the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`) instead, via `rejectedTokenMessage`, since `login` cannot open a sign-in page there. |
 | `children/names` returns 403 | Throw: `"FamilySearch image search API error: 403 Forbidden."` |
 | `children/names` other non-OK | Throw: `"FamilySearch image search API error: {status} {statusText}."` |
 | Network error (either call) | Throw: `"Could not reach FamilySearch image search API: {cause}."` (`{cause}` from `describeFetchError`, `src/utils/http.ts`) |
@@ -405,7 +405,6 @@ needed for that path.
 - No underscores → it's a bare/unsplit image group number; convert to an
   apid first.
 
-This mirrors how `volume_search` derives `imageGroupPrefix` (substring
-before the first `_`): a value with no `_` is already its own prefix and
-takes the apid path; a 3-segment value carries its natural id in the
-last segment.
+The bare image group number is the substring before the first `_`: a
+value with no `_` is already that number and takes the apid path; a
+3-segment value carries its natural id in the last segment.

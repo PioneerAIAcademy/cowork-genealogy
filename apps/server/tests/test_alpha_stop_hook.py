@@ -47,12 +47,15 @@ def _call(hook, payload=None):
 
 def test_the_stop_hook_is_bound_alongside_the_existing_pretool_hook(tmp_path, monkeypatch):
     hooks = _hooks(tmp_path, monkeypatch)
-    assert sorted(hooks) == ["PreToolUse", "Stop"]
+    assert sorted(hooks) == ["PostToolUse", "PreToolUse", "Stop"]
+    # PostToolUse is the completion halt (test_completion_halt.py), scoped to delegations.
+    assert [m.kw["matcher"] for m in hooks["PostToolUse"]] == [real_agent._DELEGATION_MATCHER]
     assert hooks["Stop"][0].kw["matcher"] is None, "a Stop has no tool to match on"
     # TWO PreToolUse matchers, and the split is load-bearing. The deny hook keeps the
     # narrow matcher issue #1915 gave it; the COUNTER has to be unscoped (below).
     matchers = [m.kw["matcher"] for m in hooks["PreToolUse"]]
-    assert matchers == [None, real_agent._PRETOOL_MATCHER], matchers
+    # The third reads the status before a proof-conclusion call (the completion halt).
+    assert matchers == [None, real_agent._PRETOOL_MATCHER, real_agent._DELEGATION_MATCHER], matchers
 
 
 def test_the_tool_counter_sees_the_tools_a_research_loop_actually_runs(tmp_path, monkeypatch):
@@ -90,8 +93,10 @@ def test_the_tool_counter_sees_the_tools_a_research_loop_actually_runs(tmp_path,
         "the run did five tool calls between the two yields; a counter that missed them ends it here"
 
 
-def test_a_zero_cap_leaves_the_session_exactly_as_it_was(tmp_path, monkeypatch):
-    assert list(_hooks(tmp_path, monkeypatch, max_nudges=0)) == ["PreToolUse"]
+def test_a_zero_cap_binds_no_stop_hook(tmp_path, monkeypatch):
+    # The completion halt's PostToolUse stays: it is not part of autonomy, and step mode
+    # (a zero cap) still ends a completed project's turn on the agent's summary.
+    assert sorted(_hooks(tmp_path, monkeypatch, max_nudges=0)) == ["PostToolUse", "PreToolUse"]
 
 
 def test_it_vetoes_the_yield_while_the_project_is_unfinished(tmp_path, monkeypatch):
@@ -321,7 +326,15 @@ def test_the_cap_is_configurable_and_a_bad_value_never_breaks_the_import(raw, ca
     # the figures unchanged.
     #
     # Lowering it further is a real decision, not a test fix: read config.py first.
-    assert real_agent.AUTONOMOUS_MAX_NUDGES >= 26
+    # **The floor is gone, and that is the decision, not a test fix.** It protected a
+    # CONTINUOUS run from being truncated mid-way by too small a cap. Under step mode
+    # (decision 25) there is no continuous run to truncate: every turn is one step, and
+    # a turn that stops has finished it. The premise the floor rested on is gone, so
+    # enforcing it would be enforcing a ruling against the evidence.
+    #
+    # What replaces it is the pin below on the shipped value, which is now 0 -- the
+    # value the old floor existed to forbid. Raising it again is the real decision now.
+    assert real_agent.AUTONOMOUS_MAX_NUDGES == 0
 
 
 # ── 1d: the cap has to REACH the sandbox, and must not crash it ──────────────────
@@ -357,7 +370,7 @@ def test_both_providers_pass_the_cap_into_the_sandbox_and_honour_auto_continue(m
 
     # THE pin on the shipped value. Deliberately a literal, not `_DEFAULT`: this is the
     # one place that asserts what the number is, so a change has to be made here on
-    # purpose. 30 as of 2026-10-13; the reasoning is in config.py.
+    # purpose. 0 as of 2026-10-21 (step mode, decision 25); the reasoning is in config.py.
     #
     # The env var is cleared first because `Settings` reads it: without this the pin
     # asserts "the value this shell happens to export" rather than the COMPILED-IN
@@ -365,8 +378,8 @@ def test_both_providers_pass_the_cap_into_the_sandbox_and_honour_auto_continue(m
     # spurious red here. Found by checking that the guard still accepts a legitimate
     # operator override (review of the 60 -> 30 change, 2026-10-13).
     monkeypatch.delenv("AUTONOMOUS_MAX_NUDGES", raising=False)
-    assert Settings().autonomous_max_nudges == 30
-    assert real_agent._DEFAULT_MAX_NUDGES == 30, \
+    assert Settings().autonomous_max_nudges == 0
+    assert real_agent._DEFAULT_MAX_NUDGES == 0, \
         "the in-sandbox fallback must match the setting, or they disagree where nobody looks"
 
     for source in (inspect.getsource(e2b.E2BProvider._agent_env),

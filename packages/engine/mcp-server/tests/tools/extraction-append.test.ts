@@ -675,6 +675,17 @@ describe("extraction_append: recordIds and absences", () => {
     expect(after.sources[0].log_entry_id).toBe("log_001");
   });
 
+  it("gives a hint record's assertions the persona ids of the record read in the same call", async () => {
+    const census = element("census-1850-no-relationship-column");
+    await seedLog([hintEntry("log_001", census.recordId)]);
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [census.recordId] }, readerFor([census]) as any, LOCAL);
+    expect(r.records[0].status).toBe("extracted");
+    const personaIds = new Set(census.gedcomx.persons.map((p: any) => p.id));
+    const parties = (await research()).assertions.filter((a: any) => a.record_role !== "absent");
+    expect(parties.length).toBeGreaterThan(0);
+    for (const a of parties) expect(personaIds.has(a.record_persona_id)).toBe(true);
+  });
+
   it.each([
     ["a rejected hint", (rid: string) => hintEntry("log_001", rid, "negative")],
     ["a hint for another record", () => hintEntry("log_001", "ark:/61903/1:1:ZZZZ-ZZZ")],

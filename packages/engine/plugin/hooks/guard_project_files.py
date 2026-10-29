@@ -120,6 +120,17 @@ OWNED_SECTIONS = {
     # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
     # cannot be written by something that could not have made the link.
     "rejected_links": "person-evidence",
+    # namesakes, 2026-10-25 (issue #3363). The leads ruled search-records the sole
+    # writer: a row caps the person's links for good, so only the agent that saw
+    # the namesake in its own search results records one. merge_tree_persons
+    # re-keys rows by tool identity and never reaches this hook.
+    "namesakes": "search-records",
+    # evaluations, 2026-10-26, lead ruling 2026-10-12 on issue 3191. One owner
+    # for mentor verdicts, so a whole-section route fits. What this closes is
+    # the MAIN-THREAD write -- the committed non-owner op is a main thread
+    # recording its own mentor verdict, which makes the second opinion
+    # self-issued. The per-agent lanes already kept every other agent off it.
+    "evaluations": "gps-mentor",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -170,7 +181,7 @@ OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
 # conflict writing only the schema's required fields, and a section route denies
 # every one (53 of 218 landed corpus `conflicts` ops). `OWNED_DECLARATIONS` keys
 # on one field set to one value; the conflict's analytical product is spread over
-# six fields and a status. So the rule keys on the PRODUCT: an op that sets
+# seven fields and a status. So the rule keys on the PRODUCT: an op that sets
 # `status: "resolved"`, or carries any analysis field truthy. A skeleton open, and
 # a re-open that sets `status: "unresolved"` and clears the analysis, claim
 # nothing and pass. `resolution_kind` and `resolved_value` are listed so a write
@@ -185,6 +196,10 @@ OWNED_CLAIMS = {
             "resolution_rationale",
             "resolution_kind",
             "resolved_value",
+            # What moves a question from conflict-resolution to ending on an
+            # unsettled conflict. Unrouted, the main thread could stamp it onto
+            # an analysed conflict and end the research with no weighing.
+            "weighed_log_entry_ids",
         ),
         "resolved",
     ),
@@ -234,10 +249,11 @@ AGENT_WRITABLE_SECTIONS = {
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
     "search-external-sites": frozenset({"plan_items"}),
-    # search-records updates the status of the plan item a search executed (Step 6).
-    # Its search log goes through research_log_append, which carries no `section`.
-    # This lane is a repo CI requirement (plugin-hooks.test.ts), not a hook route.
-    "search-records": frozenset({"plan_items"}),
+    # search-records updates the status of the plan item a search executed (Step 6)
+    # and records the namesakes its searches turn up, the section routed to it
+    # above. Its search log goes through research_log_append, which carries no
+    # `section`.
+    "search-records": frozenset({"plan_items", "namesakes"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
@@ -270,14 +286,15 @@ AGENT_WRITABLE_SECTIONS = {
     # nothing else in research.json. A hypothesis or question change its finding
     # implies is handed back to the main thread, not made here.
     "conflict-resolution": frozenset({"conflicts"}),
-    # init-project writes the fixed researcher profile, the volunteered
-    # holdings and one `sources` entry per transcribed memory, through
-    # research_append after project_create. It owns `project` (ownership.json),
-    # which project_create writes; `project.status` stays routed to
-    # proof-conclusion above. A lane, not a route: nothing is routed to this
-    # agent. It leaves out `questions`, which question-selection owns
-    # (issue #2122).
-    "init-project": frozenset({"project", "researcher_profile", "known_holdings", "sources"}),
+    # init-project writes site subscriptions through research_append after
+    # project_create, which itself writes the
+    # project, the fixed researcher profile and one `sources` entry per
+    # transcribed memory (issue #3384). It owns `project` (ownership.json);
+    # `project.status` stays routed to proof-conclusion above. A lane, not a
+    # route: nothing is routed to this agent. It leaves out `questions`, which
+    # question-selection owns (issue #2122), and `sources`, which only
+    # project_create writes for it.
+    "init-project": frozenset({"project", "researcher_profile"}),
     # research-plan writes plans and their items and nothing else in
     # research.json. A lane, not a route: tests/packaging/plugin-hooks.test.ts
     # requires one for every agent granted research_append, and nothing is
@@ -293,7 +310,7 @@ AGENT_WRITABLE_SECTIONS = {
 # into a recoverable in-turn pivot rather than an unwritable artifact.
 OWNER_REASON = (
     "Writing research.json's `{section}` from here is disabled — that section is "
-    "owned by the {agent} agent, which applies the tier and citation rules the "
+    "owned by the {agent} agent, which applies the analysis rules the "
     "section depends on. Delegate the write: invoke `@plugin:{agent}` and let it "
     "make the research_append call. Everything else in research_append is "
     "unaffected; only this section is routed."

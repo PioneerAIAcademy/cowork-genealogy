@@ -1338,6 +1338,13 @@ DEDICATED_AGENT_NAMES = frozenset(
         # asserted equal to the shipped agent files. `ownership.json` names it on
         # no row.
         "tree-survey",
+        # A new agent (issue #3521): one-shot, after a FamilySearch records search
+        # it lists curated external collections with prefilled links. It needs no
+        # project and writes nothing, so no hook routes to it. Listed because the
+        # set is asserted equal to the shipped agent files. `ownership.json` names
+        # it on the `log` row only because `build_external_search_url` could log
+        # if handed a `projectPath`, which its body never passes.
+        "where-else-to-search",
         # Same shape as search-images and citation (issue #2120): a
         # cost-motivated conversion, no hook route. It writes `log` entries via
         # `research_log_append` and updates `plan_items` status via
@@ -1346,7 +1353,7 @@ DEDICATED_AGENT_NAMES = frozenset(
         # names `agent:search-full-text` on the `plan_items` and `log` rows.
         "search-full-text",
         # Same shape as citation (issue #2122): a converted skill. The hook lanes
-        # it to `project`, `researcher_profile`, `known_holdings` and `sources` and routes
+        # it to `project`, `researcher_profile` and `sources` and routes
         # nothing to it; `ownership.json` names `agent:init-project` on those
         # rows, the `project` row, and the three tree rows `project_create` writes.
         "init-project",
@@ -1912,6 +1919,19 @@ _CONFLICT_ID_RE = re.compile(r"\bc_\d+\b", re.I | re.ASCII)
 _SETTLED_CONFLICT_STATUSES = frozenset({"resolved", "moot"})
 
 
+def is_settled_conflict(conflict: Any) -> bool:
+    """The Python copy of the engine's `isSettledConflict` (validator.ts).
+
+    `tests/unit/test_settled_conflict_parity.py` runs both over the same
+    statuses; change one and that test makes you change the other.
+    """
+    if not isinstance(conflict, dict):
+        return False
+    status = conflict.get("status")
+    # A non-string status (a list, say) is unhashable here; TS Set.has returns false.
+    return isinstance(status, str) and status in _SETTLED_CONFLICT_STATUSES
+
+
 def find_unpersisted_conflict_resolutions(
     research: dict[str, Any] | None,
 ) -> list[dict[str, Any]]:
@@ -1998,8 +2018,7 @@ def find_unpersisted_conflict_resolutions(
     settled_conflict_ids = {
         _cid(c.get("id"))
         for c in conflicts
-        if isinstance(c, dict)
-        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        if is_settled_conflict(c)
         and _cid(c.get("id"))
     }
     # A resolved conflict can back a question WITHOUT being cited on the
@@ -2012,8 +2031,7 @@ def find_unpersisted_conflict_resolutions(
     settled_blocked_qids = {
         q
         for c in conflicts
-        if isinstance(c, dict)
-        and c.get("status") in _SETTLED_CONFLICT_STATUSES
+        if is_settled_conflict(c)
         and isinstance(c.get("blocks_question_ids"), list)
         for q in c["blocks_question_ids"]
     }

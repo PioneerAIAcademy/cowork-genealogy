@@ -19,13 +19,14 @@
 // entry is a compile error, not silent drift.
 export * from './enums.generated.js'
 import type {
-  ConflictStatus, ConflictType, DateCertainty, RecordBasis, HoldingConfidence,
-  HoldingType, HypothesisStatus, InformantProximity, InformationQuality,
+  ConflictStatus, ConflictType, DateCertainty, RecordBasis,
+  HypothesisStatus, InformantProximity, InformationQuality,
   LogOutcome, NotReachedKind, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
   ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
-  StoppedBecause, Subscription, LocalityPageSection, ResolutionKind, SkipCategory,
+  StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, ResolutionKind,
+  SkipCategory, RegistrationEvent, RegistrationLevel,
 } from './enums.generated.js'
 
 // ============================================================
@@ -106,6 +107,7 @@ export interface PlanItem {
   status: PlanItemStatus
   skip_category?: SkipCategory
   skip_reason?: string
+  collection_url?: string
 }
 
 export interface Plan {
@@ -241,6 +243,7 @@ export interface Conflict {
   competing_assertion_ids: string[]
   independence_analysis?: string | null
   weighing_analysis?: string | null
+  weighed_log_entry_ids?: string[]
   preferred_assertion_id?: string | null
   resolution_rationale?: string | null
   resolution_kind?: ResolutionKind | null
@@ -325,17 +328,6 @@ export interface ProofSummary {
   claims?: ProofClaim[]
 }
 
-export interface KnownHolding {
-  id: string
-  holding_type: HoldingType
-  description: string
-  relevant_facts?: string | null
-  relates_to_person_ids?: string[]
-  confidence: HoldingConfidence
-  promoted: boolean
-  created: string
-}
-
 export interface EvaluationEntry {
   id: string
   focus: EvaluationFocus
@@ -351,6 +343,7 @@ export interface LocalityPageRead {
   section: LocalityPageSection
   url?: string | null
   found: boolean
+  outcome?: LocalityPageOutcome
 }
 
 export interface LocalityJurisdiction {
@@ -362,6 +355,37 @@ export interface LocalityCollection {
   id: string
   title: string
   date_range?: string | null
+  person_count?: number | null
+  record_count?: number | null
+}
+
+export interface LocalityRegistrationStart {
+  event: RegistrationEvent
+  level: RegistrationLevel
+  year: number
+  source_url: string
+}
+
+export interface LocalityVolumeCounts {
+  volumes: number
+  browse_only: number | null
+  fulltext_only: number | null
+}
+
+export interface LocalityVolumeBucket {
+  group: string
+  volumes: number
+  browse_only: number | null
+  fulltext_only: number | null
+}
+
+export interface LocalityVolumeSummary {
+  start_year?: number | null
+  end_year?: number | null
+  total_volumes: number
+  complete: boolean
+  by_record_type: LocalityVolumeBucket[]
+  untyped: LocalityVolumeCounts
 }
 
 export interface Locality {
@@ -374,6 +398,8 @@ export interface Locality {
   quirks?: string[]
   guide_markdown?: string | null
   pages_read: LocalityPageRead[]
+  registration_start?: LocalityRegistrationStart[]
+  volume_summary?: LocalityVolumeSummary
   source: string
   created: string
   updated?: string
@@ -397,6 +423,8 @@ export interface Namesake {
   time_period?: string | null
   record_ids: string[]
   log_entry_ids?: string[]
+  /** Stamped by research_append: listed record id to the persona its search result names. */
+  record_persona_ids?: Record<string, string>
   notes?: string | null
   created: string
 }
@@ -404,7 +432,6 @@ export interface Namesake {
 export interface ResearchData {
   project: Project
   researcher_profile?: ResearcherProfile
-  known_holdings?: KnownHolding[]
   questions: Question[]
   plans: Plan[]
   log: LogEntry[]
@@ -522,18 +549,31 @@ export interface GedcomxData {
 // Sidecar payloads (results/log_NNN.json) — per research-schema-spec §5.4.1
 // ============================================================
 
+/** Mirrors the engine's `TreeMatch` (`mcp-server/src/types/record-search.ts`).
+ *  Both fields are required there, so neither is optional here. */
 export interface TreeMatch {
-  personId: string
-  personName: string
-  treeId?: string
-  ark?: string
+  treePersonId: string
+  stars: number
 }
 
+/** A PARTIAL view of the engine's `RecordSearchResult`
+ *  (`mcp-server/src/types/record-search.ts`): the viewer types only the fields
+ *  it renders. A subset is fine; a field the engine never emits is not, and
+ *  neither is a field required here that is optional there — both make the
+ *  type assert something a real sidecar does not carry.
+ *  `record-search-mirror-drift.test.ts` enforces exactly that. */
 export interface RecordSearchResult {
-  primaryId: string
-  personId?: string
+  /** The engine's required identity field. Optional here because the
+   *  `record_read` adapter in SidecarResultCard builds results without it. */
+  recordId?: string
+  /** Optional in the engine, so optional here. */
+  primaryId?: string
   personName?: string
   score?: number
+  /** The record ARK as `record_search` emits it. The footer link reads this. */
+  recordArk?: string
+  /** NOT an engine field: synthesized by SidecarResultCard's `record_read`
+   *  adapter, and emitted by the mock agent and the sample-project seeds. */
   arkUrl?: string
   collectionTitle?: string
   recordTitle?: string

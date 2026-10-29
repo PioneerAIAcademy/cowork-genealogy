@@ -85,8 +85,8 @@ Each invocation does one of three things, and returns:
    1. Call `project_context` and look for the `awaitingUser` row whose
       `urlGenerated` the results came from.
    2. **No row matches** → the search was never handed off. Run steps 1–3 in
-      full first: `place_search`, `external_links_search`, `collections_search`,
-      then `build_external_search_url` without `projectPath`.
+      full first: steps 1–2, `collections_search`, then
+      `build_external_search_url` without `projectPath`.
    3. Steps 5–7: triage, log the closing entry, update the plan item, and
       return the numbered list. A "no access" reply is this invocation too,
       logged `outcome: "error"`.
@@ -233,8 +233,9 @@ archive for the place) *before or alongside* a Newspapers.com URL — never
 instead of it if the user named Newspapers.com. The archives hold *different
 papers*: a title digitised only by a state archive is absent from Newspapers.com
 whatever the subscription, so a paid-only search can return a confident nil on a
-paper that was never there to find. `locality-guide` output for the place often
-already names the right regional archive; read it before guessing.
+paper that was never there to find. The place's `localities` entry often names
+the right regional archive in `guide_markdown` (`research_query` section
+`localities`; `project_context` omits it); read it before guessing.
 
 **Check access.** Read `researcher_profile.subscriptions` in
 `research.json`.
@@ -270,52 +271,27 @@ either when the researcher wants that domain specifically.
 ### 1. Find the plan item
 
 Read `research.json` `plans[]` and pick the item(s) targeting an external
-repository. Note the record type, the place, and the year window — you'll
-match all three against the curated links below.
+repository. Note the record type, the place, the year window, and its
+`collection_url` if it has one.
 
-### 2. Resolve the place and fetch curated links
+### 2. Find the curated collection
 
-```
-place_search({ placeName: "<place name>" })
-```
+**The plan item carries `collection_url`** → that is your curated URL; go to
+Case A. Do not fetch or search the list.
 
-Take the `standardPlace` from the response — do not guess it — and pass it
-to `external_links_search` with the plan item's year window, your target
-site as `host`, and `projectPath` so the full curated set is retained on disk:
+Otherwise resolve the place — `place_search({ placeName })`, use its
+`standardPlace`, never a guess — and read the stored list:
 
 ```
-external_links_search({
-  standardPlace: "<standardPlace>",
-  startYear: <year>,
-  endYear: <year>,
-  host: "<target-site host, e.g. ancestry.com>",
-  projectPath: "<absolute path of the current working directory>"
-})
+project_context({ projectPath })   // externalCollections: places already fetched
+research_query({ projectPath, section: "external_collections", place: "<standardPlace>", recordType: "<e.g. Census>" })
 ```
 
-`host` narrows the returned `results[]` toward your target site (so a
-link-dense place can't overflow the response); `projectPath` stages the **full**
-year-filtered set (all sites) to disk and returns a `staged.resultsRef` — hold
-it for the step-4 log. `results[]` is a flat list of `{ url, linkText }`. Consume
-it:
-1. **Filter to your target site** — keep only links whose URL is for your site,
-   e.g. `result.url.includes("ancestry.com")`. `host` already narrows this
-   server-side, but filter here too so you stay correct if any off-site links
-   come through.
-2. **Dedupe by URL** — FS repeats the same URL once per record-type
-   category. Collapse duplicates, and say so in one line when it happens
-   ("collection 8800 appeared 3× under different labels — collapsed to one")
-   so the dedup is visible, not silent.
-3. **Match `linkText` to the plan item's record type.** `linkText` names
-   the collection in plain English ("Pennsylvania Wills and Probate
-   Records"); the collection ID is embedded in the URL path. This match is
-   what step 3 acts on.
-
-**How many links survived the site filter (call it `matched`):**
-- `matched > 0` → a curated URL for your site exists; go to Case A.
-- `matched === 0` but `totalForPlace > 0` → FS curates this place but nothing
-  matches your site + year window; widen the window or fall back (Case B).
-- `totalForPlace === 0` → no curated links here at all; fall back (Case B).
+A place absent from `externalCollections` was never fetched: call
+`external_links_search({ standardPlace, host: "<e.g. ancestry.com>",
+projectPath })` once (it stores the list), then read as above. Keep rows
+whose `url` is on your target site; a row for the plan item's record type and
+years → Case A, none → Case B.
 
 ### 2b. Check FamilySearch's own holdings
 
@@ -336,7 +312,8 @@ or census years exist in this `collections_search` result, never in memory.
 
 ### 3. Build the URL
 
-**First, call `research_query` with `section: "conflicts"`.** Do this before
+**First, call `research_query` with `section: "conflicts"` and no `status`
+filter** — a resolved conflict names the value to encode. Do this before
 the `build_external_search_url` call, every time you are about to pass a
 place or date. `project_context` does not return `conflicts[]` and neither
 does the rendered project state, so this call is the only way you can see
@@ -356,12 +333,12 @@ in-flight entry is written, and log the search once at step 6.
 
 **Case A — a curated URL exists for the target site.**
 
-First, confirm the curated link actually fits the plan item. Compare its
-`linkText` record type against what you're searching for: a probate plan
+A plan item's `collection_url` already fits; use it. Otherwise confirm the
+curated link fits the plan item. Compare its `link_text` record type against what you're searching for: a probate plan
 item needs a probate/wills/estate collection, not a census or vital-records
 one. **If the only curated link is for a different record type, do not
 present it as the search** — that silently sends the user to the wrong
-collection. Either pick a curated link whose `linkText` matches, or, if
+collection. Either pick a curated link whose `link_text` matches, or, if
 none matches, fall back to Case B and say which record type you were
 looking for.
 
@@ -403,7 +380,7 @@ build_external_search_url({
 | `findagrave` | `givenName`/`surname`, `birthYear`, `deathYear` | No place parameter |
 | `newspapers` | `givenName`/`surname`/`keywords`, `searchYear`/`searchPlace` | Generic slots — pass whichever event's year/place the search targets (an obituary search passes the death window). `searchYear` is a plain year or a hyphenated range (`"1880-1905"`) when the exact year isn't known; any other shape is rejected with a note. `searchPlace` must name a US state to scope at all (`"Schuylkill, Pennsylvania"`) — the site scopes by state and county, and a place without one is reported unused. `keywords` adds free-text terms alongside the name (e.g. "obituary") |
 | `chronicling_america` | `givenName`/`surname`/`keywords`, `searchStartYear`/`searchEndYear`, `usState` | `usState` is the state's name or postal abbreviation; the tool emits the working facet form. Pass the plan item's whole `date_range` as the window, never one year of it. On `outside_coverage`, say the page corpus does not reach that period and route to the state/regional archive for the place or a paid site |
-| `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (`locality-guide` output often already names the right one, or a curated link) |
+| `digital_newspaper_archive` | `givenName`/`surname`/`keywords` only | **`baseUrl` is required** — this site has no fixed URL; use the specific archive's own search endpoint (the place's `localities` entry `guide_markdown` often already names the right one, or a curated link) |
 | `archives_gov` | `givenName`/`surname`, `keywords` | National Archives Catalog — `keywords` is free text (a record type), not the name. No place parameter: a place passed here is ignored and reported in `notes` |
 | `archive_org` | `givenName`/`surname`/`keywords` | Internet Archive — no structured name/date/place fields; the name is only a free-text term here |
 | `billiongraves` | `givenName`/`surname`, `birthYear`/`deathYear` | Cemetery records, GPS-tagged |
@@ -412,6 +389,7 @@ build_external_search_url({
 | `library_archives_canada` | `givenName`/`surname`, `birthYear` | Census search only — no death data (census records the living) |
 | `american_ancestors` | `givenName`/`surname`/`keywords`, `birthPlace`/`deathPlace`, `birthYear` | Keyword-only — the site's own structured name fields do not bind |
 | `italian_genealogy` | `givenName`/`surname`/`keywords` | A discussion forum, not a records database — keyword search over posts only |
+| `openarch` | `givenName`/`surname`, one event's year — `marriageYear`/`birthYear`/`deathYear`, marriage first | Open Archieven, Dutch records — the year becomes a `YYYY-YYYY` period inside the one `name` field. Event type and place are never URL filters (they hide church-book records and re-spelled places): pass the event's place anyway and relay the tool's note telling the user to narrow by type and place on the results page. A call with no name part is refused |
 | `archion` | none — browse site | German Protestant church books; viewing the scans needs an Archion pass. **Pass the parish page as `baseUrl`** — from the delegation or a `localities` entry, never from memory; it comes back unchanged, with the path through the site in `notes`. Without one the tool returns the site root and says so |
 | `matricula` | none — browse site | Chiefly Catholic church books; free. Same as `archion`: pass the parish page as `baseUrl` |
 
@@ -453,33 +431,6 @@ sites" below):
 - Widen with spelling variants or wildcards when a search returns little.
 
 ### 4. Log the search, then present the URL
-
-**First, persist the curated-links fetch.** If `external_links_search`
-returned a `staged.resultsRef` (present whenever the year-filtered set was
-non-empty), log the fetch as its **own** entry so the full curated set is
-retained on disk — it rides along when the user submits feedback, and makes the
-fetch part of the research record. This is separate from the external-site log
-below:
-
-```
-research_log_append({
-  projectPath: <absolute path of the current working directory>,
-  planItemId: "<pli_XXX or null>",
-  tool: "external_links_search",
-  query: { standardPlace: "<standardPlace>", host: "<host>", startYear: <year>, endYear: <year> },
-  outcome: "<positive if returned > 0, else negative>",
-  resultsExamined: <returned>,
-  notes: "Curated external links for <place>.",
-  // Grades the FETCH, not the search: `positive` whenever links came back,
-  // even if none fit the plan item's record type. Put that in `notes`
-  // ("2 links returned, both wrong record type: tax lists and an 1850
-  // census"). The search's own outcome is the `external_site` entry below.
-  stagedResultsRef: staged.resultsRef   // omit only when there is no staged handle (empty year-filtered set)
-})
-```
-
-Do **not** pass `externalSite` here — that field is only for `external_site`
-entries.
 
 The site search itself is already logged: `build_external_search_url` wrote its
 in-flight `external_site` entry (`outcome: "partial"`, `captureReceived: false`)
@@ -631,9 +582,10 @@ not mark it `completed` for handing over a URL.
 | Results already in the delegation, read and triaged | `completed` |
 | Capture arrived unusable (login page, truncated) | `in_progress` |
 | User *reports* a nil, no capture | `in_progress` |
-| Site inaccessible **and the user asks to skip it** | `skipped` |
+| Site inaccessible **and the user asks to skip it** | `skipped`, `skip_category: "user_declined"`, their reason in `skip_reason` |
 | Site inaccessible, user has not decided | `in_progress` |
-| Capture required, and no user is present to make one | `skipped` |
+| User declines the item itself (a courthouse visit, a search they don't want) | `skipped`, `skip_category: "user_declined"`, their words in `skip_reason` |
+| Capture required, and no user is present to make one | `skipped`, `skip_category: "inaccessible"`, `skip_reason` says no user can capture |
 
 `skipped` on any other row requires the user to have asked for it — never infer
 it from an access failure alone. On `{ ok: false }`, surface the errors and fix the
@@ -664,7 +616,7 @@ the natural next move in your return:
 | PDF cuts off results (lazy loading) | "Scroll to the bottom and back to the top before printing to PDF" |
 | PDF missing images/thumbnails | "Record images may not print — screenshot the document viewer separately" |
 | PDF links aren't clickable | Construct record URLs from visible record IDs/database names instead of extracted links |
-| User can't access the site | Log `outcome: "error"` with the access limitation. Ask whether to skip the site: on their yes, `skipped`; otherwise `in_progress` (step 7). Offer the fallback plan item if one exists |
+| User can't access the site | Log `outcome: "error"` with the access limitation. Ask whether to skip the site: on their yes, `skipped` with `skip_category: "user_declined"` and their reason in `skip_reason`; otherwise `in_progress` (step 7). Offer the fallback plan item if one exists |
 
 ## User-contributed sources
 
@@ -754,8 +706,9 @@ the record might still be findable through other methods.
 
 After online searches across multiple sites return negative
 results, note the possibility of undigitized records and suggest:
-- Checking the FamilySearch Catalog for microfilmed collections
-  that are browsable but not indexed
+- A `catalog_search` of the place — hand it to search-records; the
+  Catalog lists registers filmed or imaged but never indexed, which
+  `collections_search` does not reach
 - Contacting the relevant county courthouse or church archive
 - Consulting finding aids for archival collections at state or
   national archives

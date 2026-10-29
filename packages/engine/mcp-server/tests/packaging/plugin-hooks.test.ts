@@ -755,6 +755,125 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("person_evidence");
   });
 
+  // ── caller-routed sections: research_append + namesakes (issue #3363) ──
+  //
+  // Section-scoped like person_evidence. The owner also writes plan_items, so a
+  // row batched with its plan item's status is the case its lane must admit.
+  const NS_OWNER = "genealogy-research:search-records";
+
+  it.each([
+    ["append, no agent_id (main thread)", { section: "namesakes", op: "append", entry: {} }, {}],
+    ["update in place, no agent_id", { section: "namesakes", op: "update", entryId: "ns_001", fields: {} }, {}],
+    ["agent_type present but agent_id absent", { section: "namesakes", op: "append" }, { agent_type: NS_OWNER }],
+    ["a general-purpose stand-in", { section: "namesakes", op: "append" }, { agent_id: "a1", agent_type: "general-purpose" }],
+    ["the person-evidence agent", { section: "namesakes", op: "append" }, { agent_id: "a1", agent_type: PE_OWNER }],
+  ])("denies research_append on namesakes — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("namesakes");
+  });
+
+  it("names search-records as the route out of a main-thread namesakes write", () => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input: { section: "namesakes", op: "append", entry: {} } });
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:search-records");
+  });
+
+  it.each([
+    ["a row", { section: "namesakes", op: "append", entry: {} }],
+    [
+      "a row batched with its plan item's status",
+      {
+        ops: [
+          { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+          { section: "namesakes", op: "append", entry: {} },
+        ],
+      },
+    ],
+  ])("permits the search-records agent — %s", (_label, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, agent_id: "agent-1", agent_type: NS_OWNER });
+    expect(out).toEqual({});
+  });
+
+  // ── caller-routed sections: research_append + evaluations (issue #3191) ──
+  //
+  // Section-scoped like proof_summaries and person_evidence. What this route
+  // uniquely closes is the MAIN-THREAD write: the out-of-lane rule fires only
+  // for callers carrying an agent_id, and the one committed non-owner write
+  // was a main thread recording its own mentor verdict before gps-mentor was
+  // spawned (katalin-horak-son, tool_calls[93]/[94]) — a second opinion issued
+  // by the thread whose work it reviews.
+  const GM_OWNER = "genealogy-research:gps-mentor";
+
+  it.each([
+    ["append, no agent_id (main thread)", { section: "evaluations", op: "append", entry: {} }, {}],
+    // The superseded_by retirement is an update; an arm that saw only appends
+    // would leave that path open.
+    ["update in place, no agent_id", { section: "evaluations", op: "update", entryId: "ev_001", fields: { superseded_by: "ev_002" } }, {}],
+    // agent_type WITHOUT agent_id is the `--agent` main thread, not a subagent.
+    ["agent_type present but agent_id absent", { section: "evaluations", op: "append" }, { agent_type: GM_OWNER }],
+    ["a general-purpose stand-in", { section: "evaluations", op: "append" }, { agent_id: "a1", agent_type: "general-purpose" }],
+    // Another owning agent is still not THIS owner.
+    ["the proof-conclusion agent", { section: "evaluations", op: "append" }, { agent_id: "a1", agent_type: OWNER }],
+    // A main-thread batch mixing a legitimate plan_items status update with an
+    // evaluations append is denied whole — research_append is all-or-nothing.
+    ["batched with a legitimate plan_items update", { ops: [
+      { section: "plan_items", op: "update", entryId: "pli_009", fields: { status: "completed" } },
+      { section: "evaluations", op: "append", entry: {} },
+    ] }, {}],
+    // research_append decodes a stringified `ops` (coerceJsonArg) and applies
+    // it, so the hook must read the same shape (PR #3036's `_decoded`).
+    ["stringified ops", { ops: JSON.stringify([{ section: "evaluations", op: "append", entry: {} }]) }, {}],
+  ])("denies research_append on evaluations — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:gps-mentor");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["namespaced agent_type, as production reports it", GM_OWNER],
+    ["bare agent_type", "gps-mentor"],
+  ])("permits the gps-mentor agent its real call — %s", (_label, agent_type) => {
+    // The shape the agent emits: the verdict body as the top-level `verdict`
+    // argument, the pointer append, and the superseded_by update on the prior
+    // entry for the same focus + target. One call or two (the committed m2r
+    // run splits the update into a second call) — both shapes pass the route.
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: {
+        verdict: { focus: "proof-critique", target_id: "ps_001", verdict: "address_first" },
+        ops: [
+          { section: "evaluations", op: "append", entry: { focus: "proof-critique", target_id: "ps_001", superseded_by: null } },
+          { section: "evaluations", op: "update", entryId: "ev_001", fields: { superseded_by: "ev_002" } },
+        ],
+      },
+      agent_id: "agent-1",
+      agent_type,
+    });
+    expect(out).toEqual({});
+  });
+
+  it("denies the gps-mentor agent a section outside its own lane", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "hypotheses", op: "append", entry: {} },
+      agent_id: "agent-1",
+      agent_type: GM_OWNER,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("evaluations");
+  });
+
+  it("still has no opinion on a main-thread plan_items status update", () => {
+    // The evaluations route must not touch the status flip the plans row
+    // blesses for the main-thread skill callers.
+    expect(runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "plan_items", op: "update", entryId: "pli_009", fields: { status: "completed" }, planId: "pl_001" },
+    })).toEqual({});
+  });
+
   // ── claim-routed: conflicts (issue #1852) ──
   //
   // CLAIM-scoped over several fields, not section-scoped: six skills open a
@@ -788,6 +907,10 @@ describe("the guard script's decisions", () => {
     ["resolution_rationale alone", { resolution_rationale: "..." }],
     ["resolution_kind alone", { resolution_kind: "tree" }],
     ["resolved_value alone", { resolved_value: "1850" }],
+    // What moves a question from conflict-resolution to ending on an unsettled
+    // conflict. Unrouted, the main thread could stamp it onto an analysed
+    // conflict and end the research without a weighing.
+    ["weighed_log_entry_ids alone", { weighed_log_entry_ids: ["log_1"] }],
     // The only moot the tool accepts carries a rationale, so a moot is the
     // agent's too. Pinned so nobody "fixes" the hook to let one through.
     ["a moot, with the rationale the tool requires", { status: "moot", resolution_rationale: "a different Patrick" }],
@@ -873,6 +996,17 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("researcher_profile");
   });
 
+  it("denies the init-project agent a hand-written source: project_create writes the memories", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { section: "sources", op: "append", entry: {} },
+      agent_id: "agent-1",
+      agent_type: IP_AGENT,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+  });
+
   it("denies the init-project agent the project status, which proof-conclusion owns", () => {
     const out = runGuard({
       tool_name: "mcp__genealogy__research_append",
@@ -887,13 +1021,10 @@ describe("the guard script's decisions", () => {
   it.each([
     ["project (its objective)", { section: "project", op: "update", fields: { objective: "x" } }],
     ["researcher_profile", { section: "researcher_profile", op: "update", fields: {} }],
-    ["known_holdings", { section: "known_holdings", op: "append", entry: {} }],
-    ["sources (a memory's transcription)", { section: "sources", op: "append", entry: {} }],
-    ["all three in one batch", {
+    ["both in one batch", {
       ops: [
+        { section: "project", op: "update", fields: { objective: "x" } },
         { section: "researcher_profile", op: "update", fields: {} },
-        { section: "known_holdings", op: "append", entry: {} },
-        { section: "sources", op: "append", entry: {} },
       ],
     }],
   ])("permits the init-project agent its own lane — %s", (_label, tool_input) => {

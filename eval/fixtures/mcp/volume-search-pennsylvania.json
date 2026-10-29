@@ -6,20 +6,20 @@
   },
   "response": {
     "query": {
-      "standardPlace": "Pennsylvania, United States"
+      "standardPlace": "Pennsylvania, United States",
+      "pageSize": 50
     },
     "totalResults": 3,
     "results": [
       {
         "imageGroupNumber": "008120441",
-        "imageGroupPrefix": "008120441",
         "imageCount": 1180,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Pennsylvania, United States",
+            "places": ["Pennsylvania, United States"],
             "dateRange": "1683–1994",
             "recordType": "Probate Records"
           }
@@ -27,14 +27,13 @@
       },
       {
         "imageGroupNumber": "008120442",
-        "imageGroupPrefix": "008120442",
         "imageCount": 674,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Pennsylvania, United States",
+            "places": ["Pennsylvania, United States"],
             "dateRange": "1852–1968",
             "recordType": "Death Records"
           }
@@ -42,19 +41,71 @@
       },
       {
         "imageGroupNumber": "008120443",
-        "imageGroupPrefix": "008120443",
         "imageCount": 351,
         "recordSearchablePercent": 15,
         "fulltextSearchable": false,
         "languages": ["en", "de"],
         "coverages": [
           {
-            "place": "Pennsylvania, United States",
+            "places": ["Pennsylvania, United States"],
             "dateRange": "1790–1915",
             "recordType": "Naturalization Records"
           }
         ]
       }
-    ]
+    ],
+    "summary": {
+      "totalVolumes": 3,
+      "complete": true,
+      "byRecordType": [
+        {
+          "group": "Vital",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Death",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Migration",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Naturalization",
+          "volumes": 1,
+          "browseOnly": 0,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Legal",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Court",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        },
+        {
+          "group": "Probate",
+          "volumes": 1,
+          "browseOnly": 1,
+          "fulltextOnly": 0
+        }
+      ],
+      "untyped": {
+        "volumes": 0,
+        "browseOnly": 0,
+        "fulltextOnly": 0
+      }
+    }
   }
 }

@@ -487,12 +487,15 @@ rules, including what does *not* need reinstalling:
 [`skill-lifecycle.md`](skill-lifecycle.md#rebuilding-and-reinstalling).)
 
 Then unzip the **original feedback zip** into a *fresh* folder, so Cowork sees
-the pristine user state rather than your iterated-on one:
+the pristine user state rather than your iterated-on one. From the repo root
+(on Windows, `python` instead of `python3`):
 
 ```bash
-mkdir -p ~/feedback/<slug>-cowork-check
-unzip -d ~/feedback/<slug>-cowork-check ~/Downloads/feedback-<timestamp>.zip
+python3 -I scripts/extract_feedback_zip.py ~/Downloads/feedback-<timestamp>.zip ~/feedback/<slug>-cowork-check
 ```
+
+Not plain `unzip`: on macOS it fails on a non-ASCII file name. The script
+expands the `~` itself, so the same line works in Command Prompt and PowerShell.
 
 No symlinks, no `.claude/skills/`, no reset machinery — Cowork loads from its
 installed plugin bundle, so the fresh unzip is all it needs. Open that folder in

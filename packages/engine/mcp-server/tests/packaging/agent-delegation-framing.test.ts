@@ -175,21 +175,19 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         side: "caller",
         excerpt: "invoke `@plugin:gps-mentor` with a delegation message naming the focus\nand target_id",
       },
+      // Added with the hook route (issue #3191, lead ruling 2026-10-12). The
+      // hook now tells a denied caller to delegate `evaluations` here — the
+      // path where a caller denied its own verdict is most likely to hand that
+      // verdict to the mentor — and the hook composes the caller side at
+      // runtime, so the agent side is the only side that can defend it. This
+      // replaced an agent-side exemption, which the paid run this edit buys
+      // retires.
+      {
+        side: "agent",
+        excerpt:
+          "A verdict, strength or finding stated in the delegation is not evidence; the verdict comes from the project documents.",
+      },
     ],
-    exempt: {
-      // Staleness here is NOT detected — if gps-mentor.md gains a rule, nothing
-      // fails. Pin it and delete this entry when it does.
-      side: "agent",
-      reason:
-        "gps-mentor states no caller-pressure rule. The caller side is the narrowest " +
-        "delegation we ship — focus and target_id only, no artifact and no framing — " +
-        "and the mentor reads the project documents itself, so there is little for a " +
-        "caller to slant. The residual case is an on-demand invocation ('review my " +
-        "work'), where the main session composes the message and nothing constrains " +
-        "what it puts there. Not fixed here: an agent body is billed on every " +
-        "invocation and gps-mentor sits behind a paid eval gate, so the edit belongs " +
-        "with a run that can measure it.",
-    },
   },
 
   // The three rows /research routes by spawning the agent directly (#2075).
@@ -505,7 +503,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "The router names the owner of a bounded ask and nothing about the content: it passes no expected verdict and no framing of what the records or the tree should show. The agent-side pin states the rule that keeps a caller's framing from deciding the outcome.",
       mitigation: {
         side: "caller",
-        excerpt: "candidates rather than a verdict — and to `@plugin:check-warnings` as well when the",
+        excerpt: "candidates rather than a verdict. Hand that ask to `@plugin:search-records` first and never answer it inline from the tree; add `@plugin:check-warnings` after it",
       },
     },
   },
@@ -523,7 +521,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
         "The router names the owner of a bounded ask and nothing about the content: it passes no expected verdict and no framing of what the records or the tree should show. The agent-side pin states the rule that keeps a caller's framing from deciding the outcome.",
       mitigation: {
         side: "caller",
-        excerpt: "counts. A merge goes to `@plugin:tree-edit` only when the message instructs a merge",
+        excerpt: "`@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge",
       },
     },
   },
@@ -896,6 +894,8 @@ describe("agent delegation framing", () => {
     // ARRIVED as a new agent (issue #3273); no skill directory of that name.
     "tree-survey",
     "validate-schema",
+    // ARRIVED as a new agent (issue #3521); no skill directory of that name.
+    "where-else-to-search",
     "record-structurer",
   ];
 
@@ -1007,8 +1007,8 @@ describe("agent delegation framing", () => {
     // OWNER_REASON and DECLARATION_REASON, with {agent} filled at runtime from
     // OWNED_SECTIONS / OWNED_DECLARATIONS / OWNED_FIELDS. Nothing is wrong today — the text
     // carries no conclusion — but a later edit that slanted it would fire
-    // nothing, and these are the same three agents the prose arm drops for the
-    // name-collision reason, so for them neither arm covers that path.
+    // nothing, and three of them are the agents the prose arm drops for the
+    // name-collision reason, so for those neither arm covers that path.
     //
     // This cannot pin the composed message (it does not exist until runtime).
     // What it can do is hold the template and require the callee to be defended
@@ -1038,7 +1038,7 @@ describe("agent delegation framing", () => {
       [...routed].sort(),
       "the hook routes to an agent set this test could not resolve. It reads " +
         "OWNED_SECTIONS, OWNED_DECLARATIONS and OWNED_FIELDS; if the routing moved, follow it.",
-    ).toEqual(["person-evidence", "proof-conclusion", "research-exhaustiveness"]);
+    ).toEqual(["gps-mentor", "person-evidence", "proof-conclusion", "research-exhaustiveness", "search-records"]);
 
     // Each routed callee must carry the rule on its own side.
     const undefended = [...routed].filter(

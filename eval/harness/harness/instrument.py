@@ -54,6 +54,10 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
+    # A writer like tree_edit, with no network path. Live since 2026-10-25 (issue
+    # #3363): its refusals read the workspace's own documents, so no fixture can
+    # stand in for them, and before then no unit test could call it at all.
+    "merge_tree_persons",
     # Reads tree.gedcomx.json from the workspace. The compiled-tool handler
     # computes every tag from the workspace tree, so a live handler is more
     # faithful than a canned answer. Its one networked check
@@ -142,7 +146,7 @@ LIVE_TOOLS: set[str] = {
 }
 
 # The compiled entry module each live handler loads, relative to the build dir.
-# Kept apart from mock_mcp's `_COMPILED_TOOLS` because five live tools are served
+# Kept apart from mock_mcp's `_COMPILED_TOOLS` because six live tools are served
 # by dedicated handlers that never consult that table.
 LIVE_MODULES: dict[str, str] = {
     "validate_research_schema": "tools/validate-research-schema.js",
@@ -153,6 +157,7 @@ LIVE_MODULES: dict[str, str] = {
     "tree_correct": "tools/tree-correct.js",
     "materialize_facts": "tools/materialize-facts.js",
     "merge_warnings": "tools/merge-warnings.js",
+    "merge_tree_persons": "tools/merge-tree-persons.js",
     "person_warnings": "tools/person-warnings.js",
     "person_quality": "tools/person-quality.js",
     "project_context": "tools/project-context.js",
