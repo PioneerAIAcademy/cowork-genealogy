@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_search_images_d8",
+    "skill": "search-images",
+    "name": "A citation with an item number goes to image_search's item route, not a page-through of the film (direct-agent arm)",
+    "type": "positive",
+    "description": "#3549 lead 3, regression guard: a citation like 'DGS 004528134, Item 5, Image 10' must go to image_search's item route (bare film number plus item, and itemImage), never a page-through of the film from image 1, every page counting toward the 20-image cap. Measured 2026-10-28: the agent took the route on main with no body instruction, taught by image_search's own description, so the body carries only a one-line mention. This case keeps a future body or description edit from losing it. The item mock returns item 5 as group 004528134_005_M9S4-77Q with imageId 004528134_00821, the docket entry sought.",
+    "tags": [
+      "browse",
+      "unindexed",
+      "direct-arm",
+      "item-route",
+      "lookingfor-no-navigation"
+    ]
+  },
+  "input": {
+    "delegation": "A probate index cites the Schuylkill County Orphans' Court docket entry for Thomas Flynn's estate as 'DGS 004528134, Item 5, Image 10'. Browse to that page on FamilySearch, confirm whether it is the Thomas Flynn estate entry, and log the browse.\n\nimageGroupNumber: 004528134\nlooking_for: the Orphans' Court docket entry for the estate of Thomas Flynn, 1889\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "image-search-item-schuylkill-orphans-court",
+    "image-transcribe-schuylkill-orphans-court-flynn",
+    "volume-search-any",
+    "image-search-any",
+    "image-transcribe-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour. The browse is ad hoc (no plan item).",
+    "The citation names a bare film (004528134), an item (5) and an image within it (10). The right first move is image_search({imageGroupNumber: '004528134', item: 5, itemImage: 10}); it returns the item as group 004528134_005_M9S4-77Q, place Schuylkill, and imageId 004528134_00821. Then one image_transcribe of 004528134_00821, which is the docket entry for the estate of Thomas Flynn, 1889 (FOUND).",
+    "HARNESS NOTE: the item fixture matches only a call that carries item: 5. A whole-film image_search with no item falls to the image-search-any catch-all and returns an empty list, so an agent that ignores the item route sees an empty group. Reading pages from the start of the film to count to the item is the failure this test exists for.",
+    "A deterministic validator (test_item_route_before_transcribe) checks that an image_search call with `item` precedes every image_transcribe. Do not re-grade that; grade the triage, the log and the return.",
+    "Should append a research_log_append entry with tool image_search naming the film, the item and the image read; outcome positive. The return names 004528134_00821 with its staged.resultsRef and hands it to record-structurer; it should mention checking the item's returned place (Schuylkill) against the citation.",
+    "The agent's return should end with the summary_for_user block: a `---` line followed by two unlabeled paragraphs in plain language, with no identifiers, file names, tool names or field names in them."
+  ]
+}

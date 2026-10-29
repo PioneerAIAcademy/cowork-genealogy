@@ -17,6 +17,7 @@ import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 import { collectSourceRefs } from "../utils/tree-person.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
+import { exhaustedImageGroups } from "../utils/browse-budget.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -62,6 +63,43 @@ export interface ProjectContextLocality {
 
 /** An external-site URL handed to the user and not yet answered (spec §2.3). */
 export type ProjectContextAwaitingUser = AwaitingHandOff;
+
+/** A film whose 20-image browse cap is spent in this project (image-transcribe spec §5.8). */
+export interface ProjectContextExhaustedImageGroup {
+  imageGroup: string;
+  imagesRead: number;
+  /** Open plan items with an `image_search` log entry on this film. */
+  planItemIds: string[];
+}
+
+/** Each exhausted film with the open plan items whose `image_search` log
+ *  entries browsed it. Only `image_search` entries: that is what search-images
+ *  logs, and a `fulltext_search` entry scoped to the same film is not a browse.
+ *  Only items still `planned` or `in_progress` on an `active` plan: once an item
+ *  is disposed of it must drop off, or the router sends it back every pass. */
+async function exhaustedGroupsWithPlanItems(
+  projectPath: string,
+  research: any,
+): Promise<ProjectContextExhaustedImageGroup[]> {
+  const groups = await exhaustedImageGroups(projectPath);
+  if (groups.length === 0) return [];
+  const open = new Set<string>();
+  for (const p of Array.isArray(research?.plans) ? research.plans : []) {
+    if (!p || typeof p !== "object" || p.status !== "active") continue;
+    for (const i of Array.isArray(p.items) ? p.items : []) {
+      if (i && typeof i.id === "string" && (i.status === "planned" || i.status === "in_progress")) open.add(i.id);
+    }
+  }
+  const byGroup = new Map<string, string[]>(groups.map((g) => [g.imageGroup, []]));
+  for (const e of Array.isArray(research?.log) ? research.log : []) {
+    if (!e || typeof e !== "object" || e.tool !== "image_search") continue;
+    const num = e.query?.imageGroupNumber;
+    if (typeof num !== "string" || typeof e.plan_item_id !== "string" || !open.has(e.plan_item_id)) continue;
+    const ids = byGroup.get(num.split("_")[0]);
+    if (ids && !ids.includes(e.plan_item_id)) ids.push(e.plan_item_id);
+  }
+  return groups.map((g) => ({ ...g, planItemIds: byGroup.get(g.imageGroup) ?? [] }));
+}
 
 export interface ProjectContextCollectionCounts {
   total: number;
@@ -120,6 +158,8 @@ export type ProjectContextResult =
       localities: ProjectContextLocality[];
       /** Open external-site hand-offs: the user was sent a URL and nothing has come back. */
       awaitingUser: ProjectContextAwaitingUser[];
+      /** Films whose browse cap is spent in this project; nothing resets it. */
+      exhaustedImageGroups: ProjectContextExhaustedImageGroup[];
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent when no
@@ -271,6 +311,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
   const externalCollections = await externalCollectionCounts(input.projectPath);
+  const exhausted = await exhaustedGroupsWithPlanItems(input.projectPath, research);
 
   return {
     ok: true,
@@ -294,6 +335,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     sources,
     localities,
     awaitingUser,
+    exhaustedImageGroups: exhausted,
     ...(externalCollections ? { externalCollections } : {}),
   };
 }
@@ -397,6 +439,9 @@ export const projectContextSchema = {
     "when absent). For tree facts, dates, places, marriages and arks call tree_query. " +
     "externalCollections counts stored curated " +
     "collections per place by record type (rows: research_query external_collections). " +
+    "exhaustedImageGroups [{imageGroup, imagesRead, planItemIds}] lists films whose 20-image " +
+    "browse cap is spent in this project; nothing resets it, not a new agent or session. Never " +
+    "delegate a browse of one: send its planItemIds to research-plan to dispose of. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
