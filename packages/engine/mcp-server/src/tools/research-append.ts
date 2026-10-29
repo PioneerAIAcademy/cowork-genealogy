@@ -19,7 +19,7 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
-import { planItemFlags } from "../utils/plan-item-plausibility.js";
+import { compoundJurisdictionError, planItemFlags } from "../utils/plan-item-plausibility.js";
 import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -5481,6 +5481,15 @@ export function planItemSearchedSkipInvariants(entry: any, research: any): strin
   ];
 }
 
+/** A plan item names one place (`compoundJurisdictionError`). Checked on an
+ *  append and on a change to `jurisdiction` only, so a compound item written
+ *  before this rule does not strand an unrelated edit. */
+function compoundJurisdictionInvariants(item: any, research: any): string[] {
+  const localities = Array.isArray(research?.localities) ? research.localities : [];
+  const error = compoundJurisdictionError(item ?? {}, localities);
+  return error ? [`plan_items[${item?.id ?? "(new)"}]: ${error}`] : [];
+}
+
 /** The seven `skip_category` values, for the refusal message. Kept as a literal
  *  rather than read from the schema: the validator already enforces membership,
  *  and what this list is for is telling the agent what to pick. */
@@ -7458,6 +7467,9 @@ function applyOne(
         );
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        if (item && storedItem?.jurisdiction !== item.jurisdiction) {
+          invariantErrors.push(...compoundJurisdictionInvariants(item, research));
+        }
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
         // rule has to hold here too or it is one `{ ...entry }` spread away
         // from being bypassed. `isAppend: true` — an item arriving inline has
@@ -7538,6 +7550,9 @@ function applyOne(
         ),
       );
       invariantErrors.push(...planItemSearchedSkipInvariants(resultEntry, research));
+    }
+    if (op.op === "append" || storedItem?.jurisdiction !== resultEntry?.jurisdiction) {
+      invariantErrors.push(...compoundJurisdictionInvariants(resultEntry, research));
     }
     if (op.op === "append" || Object.prototype.hasOwnProperty.call(itemFields, "collection_url")) {
       invariantErrors.push(

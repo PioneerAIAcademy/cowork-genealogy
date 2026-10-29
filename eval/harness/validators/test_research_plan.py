@@ -645,8 +645,9 @@ def test_research_plan_plans_subject_from_tree(before_state, tool_calls, test):
 
     `project_create` builds the starting tree from the subject's full
     FamilySearch read, so a question about a project subject is planned from the
-    project tree: no `person_read` of that subject, at any point in the run. A
-    tagged run with no plan write fails: it planned nothing."""
+    project tree: no `person_read` of that subject, at any point in the run, and
+    no `person_read` of anyone else the question's text does not name. A tagged
+    run with no plan write fails: it planned nothing."""
     if "subject-from-tree" not in test.get("tags", []):
         pytest.skip("not a subject-from-tree test")
     research = before_state.get("research_json")
@@ -658,16 +659,18 @@ def test_research_plan_plans_subject_from_tree(before_state, tool_calls, test):
 
     calls = [c for c in tool_calls or [] if isinstance(c, dict)]
     assert _first_plan_write(calls) is not None, "no research_append wrote plans or plan_items"
+    named = _question_person_pids(research, tree, subjects="exclude")
     rereads = [
         (i, (c.get("args") or {}).get("personId"))
         for i, c in enumerate(calls)
         if _bare(c.get("tool", "")) == "person_read"
         and isinstance((c.get("args") or {}).get("personId"), str)
-        and _pid_tail((c.get("args") or {}).get("personId")) in subjects
+        and _pid_tail((c.get("args") or {}).get("personId")) not in named
     ]
     assert not rereads, (
-        f"A project subject is planned from the project tree, never re-read: "
-        f"person_read of a subject (index, personId)={rereads}."
+        f"A project subject is planned from the project tree, never re-read, and no "
+        f"other profile is read unless the question names that person: person_read "
+        f"(index, personId)={rereads}."
     )
 
 
@@ -1339,6 +1342,51 @@ def report_survey_surfaces_already_attached_fan_facts(before_state, text_respons
     assert not missed, (
         "already-recorded FAN-cluster fact(s) never surfaced in the "
         "response:\n  - " + "\n  - ".join(missed)
+    )
+
+
+_PURCHASE = re.compile(r"purchas|bought|deed book 42", re.IGNORECASE)
+_PURCHASE_TAG = "sibling-purchase-stated"
+
+
+def test_research_plan_states_sibling_purchase(
+    before_state, after_state, text_response, test, agent_returns=None
+):
+    """Tag-gated (`sibling-purchase-stated`, issue #3957): the only grader of
+    whether the two Sheahan FAN tests state Patrick's 1875 deed. Their
+    `judge_context` tells the judge not to grade it: given a pass anchor, the
+    judge still scored 2 on replies that met it, for where or in what words
+    the deed was stated. This fails the run when no paragraph of the agent's
+    own reply, and no new plan item's rationale, carries "Patrick" together
+    with a purchase, a purchase verb or Deed Book 42. A
+    reply giving his 1875 residence, date or place alone is the shape it
+    rejects: replayed over every committed run of both tests, it fails seven
+    `bpx` runs from v1 to v7, all partial, and passes every run graded pass.
+
+    Unlike `report_survey_surfaces_already_attached_fan_facts`, it checks one
+    fixed fact of two fixed scenarios. A reply that mentions a purchase
+    without having read the deed passes it; the judge is not asked to catch
+    that, and the trade is a criterion graded the same way on every run."""
+    if _PURCHASE_TAG not in test.get("tags", []):
+        pytest.skip("not a sibling-purchase-stated scenario")
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "research-plan", test)
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    old_ids = {i.get("id") for p in before.get("plans") or [] for i in p.get("items") or []}
+    rationales = [
+        i.get("rationale") or ""
+        for p in after.get("plans") or []
+        for i in p.get("items") or []
+        if i.get("id") not in old_ids
+    ]
+    chunks = re.split(r"\n\s*\n", reply) + rationales
+    stated = [c for c in chunks if re.search(r"\bPatrick\b", c) and _PURCHASE.search(c)]
+    assert stated, (
+        "Patrick's already-attached 1875 deed is never stated: no paragraph of the "
+        "reply, and no new plan item's rationale, names Patrick together with a "
+        "purchase, a purchase verb or Deed Book 42."
     )
 
 

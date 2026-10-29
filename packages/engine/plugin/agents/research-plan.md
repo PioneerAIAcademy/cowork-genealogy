@@ -188,7 +188,7 @@ and add plan items to verify them before relying on them.
 **Read the question person's FamilySearch profile first, unless they are a
 project subject.** Plan a person in `project_context`'s `subjectPersonIds` from the
 project tree, and never call `person_read` for them. For every other person the
-question is about whose tree entry has an `ark`, call
+question's text names whose tree entry has an `ark`, call
 `person_read({ personId, projectPath })` with the id after the ark's last `:`, before
 writing any plan item. Whatever it holds that the project tree lacks —
 parents, spouses, facts, attached sources — is a lead: state it in the
@@ -861,8 +861,8 @@ the caller, in this order:
 - when a baptism may not exist (Step 3), the `pli_` id of the item for the
   subject's own death or burial entry; if the plan has none, append it before
   you return
-- for a review, the next item and why; when nothing was written, the one-line
-  reason
+- for a review, the next item and why, then what follows it and why; when
+  nothing was written, the one-line reason
 - the hand-back: search-records for FamilySearch items, search-external-sites
   for the others, or the destination a routing case names, and whether the
   delegation already authorized execution
