@@ -704,7 +704,8 @@ with a warning rather than kept for the new place:
      and the record's country — the last segment of the sidecar record's
      Collection coverage place (its `coverage.standard_place`, else its
      `coverage.place_rep_id` resolved by id), never read off the record's facts
-     or the place text; none without a sidecar record or a collection coverage.
+     or the place text; none without a sidecar record or a collection coverage,
+     and none for a collection that covers the World, which is no country.
      A bare single-segment place ("Kent", "Shenandoah") names no parent, so
      FamilySearch's best hit for it is whichever same-named place ranks highest
      anywhere, and the country guard below cannot catch a wrong one, since a
@@ -726,7 +727,8 @@ with a warning rather than kept for the new place:
         not the fuller form of "York";
      3. else, when the record's country is known, FamilySearch's best hit for
         the name (the undated name search and `pickBest`), only when no other
-        place shares its top score and the last segment of its full name is the
+        place shares its top score (a hit is told apart by its place id, else
+        by its representation id) and the last segment of its full name is the
         record's country; with no record country nothing is searched;
      4. else the field is left unset with the warning above.
 

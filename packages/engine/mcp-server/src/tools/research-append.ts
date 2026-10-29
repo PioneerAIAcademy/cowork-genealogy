@@ -7875,13 +7875,16 @@ function sidecarResultId(tool: string, r: any): string | undefined {
 /** The country of a sidecar record: the last segment of its Collection source's
  *  coverage place, which is the coverage's `standard_place` (a live
  *  `record_read` resolves it), else its `place_rep_id` resolved by id. Null when
- *  the record names no collection coverage. Never read off the record's facts. */
+ *  the record names no collection coverage, or its collection covers the World,
+ *  which is no country (matcher-lab m13's list builder, stage S2). Never read
+ *  off the record's facts. */
 async function recordCountryOf(gx: any): Promise<string | null> {
   const sources: any[] = Array.isArray(gx?.sources) ? gx.sources : [];
   const coverage = sources.find((s) => s?.resource_type === "Collection")?.coverage;
   let place: string | null = typeof coverage?.standard_place === "string" ? coverage.standard_place : null;
   if (!place && typeof coverage?.place_rep_id === "string") place = await repIdToStandardPlace(coverage.place_rep_id);
-  return place ? (placeSegments(place).at(-1) ?? null) : null;
+  const country = place ? placeSegments(place).at(-1) : undefined;
+  return country && country !== "World" ? country : null;
 }
 
 interface PreparedOps {
@@ -8616,9 +8619,10 @@ async function prepareOps(
         if (sp) source = "sidecar";
       }
       if (!sp && input.resolveStandardPlace !== false) {
-        // resolveStandardPlace swallows network failures and returns null, so
-        // a miss and a failure look the same here — both warrant the warning
-        // (a silently unresolved place is part of the wrong-geocode theme).
+        // resolveStandardPlace returns null on a miss and can throw on a
+        // failure (a bare name's top-hit search does), and the catch makes the
+        // two look the same here — both warrant the warning (a silently
+        // unresolved place is part of the wrong-geocode theme).
         try {
           const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
             .filter((p) => p !== entry.place);

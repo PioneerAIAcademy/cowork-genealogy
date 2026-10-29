@@ -858,12 +858,13 @@ async function resolveBareName(name: string, opts: ResolveOpts): Promise<string 
 
 /** FamilySearch's best hit for a bare name, kept only when no other place
  *  shares its top score and its country (the last segment of its full name) is
- *  the record's. With no record country, nothing is searched. */
+ *  the record's. A hit is counted by its place id, else by its representation
+ *  id. With no record country, nothing is searched. */
 async function untiedHitInCountry(name: string, country: string | null): Promise<string | null> {
   if (!country) return null;
   const entries = await getSearchEntries(name);
   const best = pickBest(entries);
-  const places = new Set(topScored(entries).map((e) => e.placeId));
+  const places = new Set(topScored(entries).map((e) => e.placeId ?? e.placeRepId));
   return best && places.size === 1 && placeSegments(best.fullName).at(-1) === country ? best.fullName : null;
 }
 

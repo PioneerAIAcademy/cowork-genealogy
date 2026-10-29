@@ -21,7 +21,9 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
       return null;
     }),
     // A sidecar collection's coverage rep (the record's country). Offline.
-    repIdToStandardPlace: vi.fn(async (repId: string) => (repId === "4321" ? "Coahuila, Mexico" : null)),
+    repIdToStandardPlace: vi.fn(
+      async (repId: string) => ({ "4321": "Coahuila, Mexico", "324": "World" } as Record<string, string>)[repId] ?? null,
+    ),
     // The birthplace cap's distance test (#3390). Unknown names resolve to null,
     // so no test reaches the live Places API.
     standardPlaceToCoords: vi.fn(async (name: string) => {
@@ -9633,6 +9635,18 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(await countryGiven("Texas")).toBeNull();
   });
 
+  it("gives no record country for a World collection, so an entry withheld in some countries stays withheld", async () => {
+    const coverages: Record<string, string>[] = [{ standard_place: "World" }, { place_rep_id: "324" }];
+    for (const coverage of coverages) {
+      vi.mocked(resolveStandardPlace).mockClear();
+      await writeProject(sidecarResearch());
+      await writeSidecar([recordInCollection(coverage)]);
+      const r = await researchAppend({ projectPath: dir, ops: [appendFromRecord("Louth")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(await countryGiven("Louth"), JSON.stringify(coverage)).toBeNull();
+    }
+  });
+
   it("offers the record's country when an update corrects an assertion's place", async () => {
     const research = sidecarResearch();
     research.assertions.push({
@@ -9653,6 +9667,33 @@ describe("research_append (composite persist + enforcement)", () => {
     });
     expect(r.ok, JSON.stringify(r)).toBe(true);
     expect(await countryGiven("Luxemburg")).toBe("France");
+  });
+
+  it("copies no sidecar value when an update corrects an assertion's place, and geocodes it instead", async () => {
+    // The record has a fact at the corrected place whose standard_place an
+    // append would copy.
+    const research = sidecarResearch();
+    research.assertions.push({
+      ...validAssertion("a_002"),
+      record_id: "ark:/61903/1:1:ABCD-123",
+      record_persona_id: "p_1",
+      log_entry_id: "log_001",
+      place: "Pottstown, Pennsylvania",
+    });
+    await writeProject(research);
+    await writeSidecar();
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "assertions",
+      op: "update",
+      entryId: "a_002",
+      fields: { place: "Pottsville, Pennsylvania" },
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Pottsville, Pennsylvania", expect.anything());
+    const a = (await readResearch()).assertions.find((x: any) => x.id === "a_002");
+    expect(a.place).toBe("Pottsville, Pennsylvania");
+    expect(a.standard_place).toBeUndefined();
   });
 
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {

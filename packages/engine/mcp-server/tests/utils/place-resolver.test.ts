@@ -916,6 +916,35 @@ describe("resolveStandardPlace — a bare single-segment name", () => {
     );
   });
 
+  it("does not take a Luxembourg record's top hit in Belgium's province of Luxembourg", async () => {
+    byName({ Arlon: [entry({ placeRepId: "ar", placeId: "ar", fullName: "Arlon, Luxembourg, Belgium", score: 1 })] });
+    expect(await resolveStandardPlace("Arlon", { recordCountry: async () => "Luxembourg" })).toBeNull();
+    expect(await resolveStandardPlace("Arlon", { recordCountry: async () => "Belgium" })).toBe("Arlon, Luxembourg, Belgium");
+  });
+
+  it("does not take a record from the country Georgia's top hit in the US state", async () => {
+    // FamilySearch names the country Republic of Georgia.
+    byName({ Macon: [entry({ placeRepId: "ma", placeId: "ma", fullName: "Macon, Bibb, Georgia, United States", score: 1 })] });
+    expect(await resolveStandardPlace("Macon", { recordCountry: async () => "Republic of Georgia" })).toBeNull();
+    expect(await resolveStandardPlace("Macon", { recordCountry: async () => "United States" })).toBe(
+      "Macon, Bibb, Georgia, United States",
+    );
+  });
+
+  it("counts a top-scored hit with no place id as a place of its own", async () => {
+    byName({
+      Shenandoah: [
+        entry({ placeRepId: "va", fullName: "Shenandoah, Page, Virginia, United States", score: 0.9 }),
+        entry({ placeRepId: "ia", fullName: "Shenandoah, Page, Iowa, United States", score: 0.9 }),
+      ],
+      Ballymena: [entry({ placeRepId: "bm", fullName: "Ballymena, Antrim, Northern Ireland, United Kingdom", score: 1 })],
+    });
+    expect(await resolveStandardPlace("Shenandoah", { recordCountry: async () => "United States" })).toBeNull();
+    expect(await resolveStandardPlace("Ballymena", { recordCountry: async () => "United Kingdom" })).toBe(
+      "Ballymena, Antrim, Northern Ireland, United Kingdom",
+    );
+  });
+
   it("answers from a sibling that spells the name out before the top hit", async () => {
     byName({
       Shenandoah: [entry({ placeRepId: "va", placeId: "va", fullName: "Shenandoah, Page, Virginia, United States", score: 1 })],
