@@ -1131,7 +1131,9 @@ the CLI spills an oversized tool result for the model to read back; a
 `Glob` with no `path` is treated as the project root. Recorded as
 `"blocked_by": "path"` with the resolved `path`. Both entries carry the
 `reason` the agent was shown, which names the MCP route that replaces the
-read: `record_read({recordId, resultsRef})` for a `results/` sidecar,
+read: `record_read({recordId, resultsRef})` for a record or search sidecar
+under `results/` and, in the same fixed message,
+`sidecar_read({projectPath, ref: '<ref>#hits'})` for a `fulltext_search` one,
 `sidecar_read({projectPath, ref})` for a verdict body under `evaluations/` or a
 text upload under `uploads/`, `research_query` for `research.json`,
 `project_context` otherwise. Each flag is recorded in the `usage` block (§8.1) because a run

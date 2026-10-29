@@ -76,8 +76,10 @@ Current live tools:
 - sidecar_read: a paged read of one sidecar text file under the workspace's
   own `evaluations/`, `uploads/` or `results/` — deterministic in workspace
   state like research_query, so a fixture could only drift from what was
-  actually written. gps-mentor reads a prior verdict body through it, and an
-  `image_transcribe` caller the page staged under `results/.staging/`.
+  actually written. gps-mentor reads a prior verdict body through it, an
+  `image_transcribe` caller the page staged under `results/.staging/`, and a
+  full-text caller one hit's transcript from a `fulltext_search` sidecar via
+  `results/<file>#<hit id>` (or the hit list via `results/<file>#hits`).
 - timeline_build: runs the compiled tool against the workspace, so the person
   timeline it writes is computed from the links the run actually made. Its
   Places lookups are answered from the test's own `place_search` fixtures

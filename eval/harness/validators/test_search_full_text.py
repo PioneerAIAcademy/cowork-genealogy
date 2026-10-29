@@ -508,8 +508,8 @@ def _completed_plan_items(before_state, after_state):
 
 
 def test_plan_item_completion_matches_its_own_record_type(before_state, after_state):
-    """SKILL.md step 8: set completed (search executed) or skipped
-    (unnecessary). A plan item's own search is what it says it is -- e.g.
+    """Agent body step 8: set completed for a nil or no-candidate search,
+    in_progress for one with promising hits, or skipped (unnecessary). A plan item's own search is what it says it is -- e.g.
     a record_type probate item calls for a will/estate search. Deep-dive
     #1651 finding 3: a plan item was repeatedly marked completed by an
     unrelated ad-hoc search (a witness/deed query, an nlQuery tree-ID
