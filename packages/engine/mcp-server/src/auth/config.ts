@@ -58,6 +58,17 @@ export const HOSTED_REAUTH_INSTRUCTION =
   "at the top of the app to sign in again, then ask me to continue. (Do not call " +
   "the login tool: it cannot open a sign-in page from here.)";
 
+/** What hosted `login` answers. It must not claim the session was rejected:
+ *  login is called after an image 403 with a working token, and that claim
+ *  confirmed the wrong diagnosis. It matches neither REAUTH_HITS nor
+ *  REAUTH_ENTRY (apps/server/proto/turn.py), which count as auth failures. */
+export const HOSTED_LOGIN_UNAVAILABLE =
+  "The login tool is not available in the web app, and this answer says " +
+  "nothing about whether the current FamilySearch session works. Only if a " +
+  "FamilySearch tool itself reported a sign-in problem, ask the user to click " +
+  "the Reconnect button at the top of the app, then continue. An image that " +
+  "fails with 403 is restricted, not a sign-in problem.";
+
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
   "No OpenRouter API key is configured. Tell the user to get one at " +
   "https://openrouter.ai/keys and enter it in Claude Desktop under Settings → " +

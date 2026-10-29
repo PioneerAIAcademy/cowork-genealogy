@@ -12,7 +12,7 @@ vi.mock("../../src/auth/config.js", async (importOriginal) => {
 
 import { loginTool, loginToolSchema } from "../../src/tools/login.js";
 import { performLogin } from "../../src/auth/login.js";
-import { isHostedMode, HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
+import { isHostedMode, HOSTED_LOGIN_UNAVAILABLE } from "../../src/auth/config.js";
 
 const mockedPerformLogin = vi.mocked(performLogin);
 const mockedIsHostedMode = vi.mocked(isHostedMode);
@@ -56,8 +56,12 @@ describe("loginTool", () => {
     const result = await loginTool({}, LOCAL);
 
     expect(result.success).toBe(false);
-    expect(result.message).toBe(HOSTED_REAUTH_INSTRUCTION);
-    expect(result.message).toMatch(/Reconnect FamilySearch/);
+    // It must not claim the session was rejected: agents call login after an
+    // image 403 with a working token, and the old text confirmed that wrong
+    // diagnosis (lucia-skora-parents).
+    expect(result.message).toBe(HOSTED_LOGIN_UNAVAILABLE);
+    expect(result.message).not.toMatch(/not accepting this session/i);
+    expect(result.message).toMatch(/Reconnect button/);
     expect(mockedPerformLogin).not.toHaveBeenCalled();
   });
 });

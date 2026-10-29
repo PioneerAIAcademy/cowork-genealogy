@@ -160,8 +160,12 @@ replaced by `HOSTED_REAUTH_INSTRUCTION`, which routes the user to the web app's
 "Reconnect FamilySearch" button rather than the `login` tool. The loopback
 `login` flow cannot complete in the VM (its callback binds the sandbox's
 `127.0.0.1:1837`, while the registered redirect resolves on the user's laptop),
-so `loginTool` likewise short-circuits to that instruction in hosted mode
-instead of starting a doomed flow. `isHostedMode(principal)` gates both; the desktop
+so `loginTool` short-circuits in hosted mode instead of starting a doomed flow.
+It answers `HOSTED_LOGIN_UNAVAILABLE`, not `HOSTED_REAUTH_INSTRUCTION`: `login` checks
+nothing, so it must not claim the session was rejected. An agent that called it after an
+image 403 with a working token read that claim as confirmation. The text points at the
+app's Reconnect button only for a sign-in problem a FamilySearch tool itself reported,
+and carries no anchor the prototype counts as an auth failure. `isHostedMode(principal)` gates both; the desktop
 `.mcpb` never sets the flag, so its behavior is unchanged.
 
 **401 re-read.** `fsFetch` and `fsFetchWithTimeout`
