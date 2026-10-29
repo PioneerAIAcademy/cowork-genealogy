@@ -143,12 +143,13 @@ England death/burial). For **the person you searched** (the matched persona):
   its place id with `repIdToStandardPlaceAt`: the English name, when exactly one
   name is valid across all of that place's representations at the fact's date
   (FamilySearch's `date.formal`, else `date.original` as `stdDate` reads it).
-  Any doubt — a fact whose own text names none of the chosen place's names,
-  FamilySearch's own text naming another candidate place, no date, no such
-  name, two names, a failed lookup, a place renamed since the name the fact's
-  text gives it, or a name that contradicts the fact's place text — leaves the
-  fact with `place.original` and no `standard_place`, as `toSimplified` gives
-  it; FamilySearch's text is never kept. A fact with no place id of its own
+  Any doubt — a fact whose own text names none of the chosen place's names
+  (only its first part may name a settlement), FamilySearch's own text naming
+  another candidate place, no date, no such name, two names, a failed lookup, a
+  place renamed since the name the fact's text gives it, or a name in another
+  country, US state, Puerto Rico or Canadian province than the fact's place
+  text — leaves the fact with `place.original` and no `standard_place`, as
+  `toSimplified` gives it; FamilySearch's text is never kept. A fact with no place id of its own
   takes no standard. A fact with no as-written text of its own (no `Original`
   value) is checked against FamilySearch's own text, which always passes; those
   facts are still named. Staged records carry the search stage's standardized

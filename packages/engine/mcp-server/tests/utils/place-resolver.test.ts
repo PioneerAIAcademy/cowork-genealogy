@@ -28,6 +28,7 @@ import {
   withRetry,
   mapWithConcurrency,
   countryConsistency,
+  divisionContradiction,
   deriveContextName,
   sharedJurisdiction,
   __clearPlaceResolverCachesForTests,
@@ -212,6 +213,43 @@ describe("countryConsistency", () => {
     ["Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States", "unverifiable"],
   ])("%s vs %s → %s", (place, standard, expected) => {
     expect(countryConsistency(place as string, standard as string)).toBe(expected);
+  });
+});
+
+describe("divisionContradiction — a US state, Puerto Rico or Canadian province other than the text's", () => {
+  // The four corpus shapes it refuses (matcher corpus, 2026-10-29), each with
+  // the name FamilySearch gave it.
+  it.each([
+    ["St Leonard, St Leonard, Quebec", "Saint Leonard, St. Leonard, Madawaska, New Brunswick, Canada"],
+    ["Hormigueros, 1, Hormigueros, Puerto Rico", "Puerto Rico, Hidalgo, Texas, United States"],
+    ["6906 W. Lloyd St., Wisconsin", "Wisconsin Township, Jackson, Minnesota, United States"],
+    ["Springfield, Massachusetts", "Springfield, Penobscot, Maine, United States"],
+  ])("refuses %s named %s", (place, standard) => {
+    expect(divisionContradiction(place, standard)).toBe(true);
+  });
+
+  it.each([
+    ["by postal code", "Springfield, MA", "Springfield, Penobscot, Maine, United States"],
+    ["after a trailing country", "Springfield, Massachusetts, United States", "Springfield, Penobscot, Maine, United States"],
+    ["after British North America", "Saint-Roch, Canada East, British North America", "Saint-Roch, Toronto, Ontario, Canada"],
+    ["with its accent", "Saint-Roch, Québec", "Saint-Roch, Toronto, Ontario, Canada"],
+    ["in French", "Edmundston, Nouveau-Brunswick", "Edmundston, Quebec, Canada"],
+    ["as a territory", "Ogden, Utah Territory", "Ogden, Boise, Idaho, United States"],
+    ["by its 1840s name", "Montreal, Lower Canada", "Montreal, York, Canada West, British North America"],
+  ])("reads the text's state or province %s", (_label, place, standard) => {
+    expect(divisionContradiction(place, standard)).toBe(true);
+  });
+
+  it.each([
+    ["the same state", "Salem, Essex, Massachusetts", "Salem, Essex, Massachusetts, United States"],
+    ["the same province by another name", "Montreal, Canada East", "Montreal, Montreal, Quebec, Canada"],
+    ["a county of that name", "Marietta, Washington", "Marietta, Washington, Ohio, United States"],
+    ["no state or province in the name", "Paris, Texas", "Paris, Île-de-France, France"],
+    ["no state or province in the text", "Kenmore, Killin, Perthshire, Scotland", "Killin, Perthshire, Scotland, United Kingdom"],
+    ["a state only in the text's earlier parts", "Texas, Hormigueros", "Puerto Rico, Hidalgo, Texas, United States"],
+    ["an empty text", "", "Springfield, Penobscot, Maine, United States"],
+  ])("does not refuse %s", (_label, place, standard) => {
+    expect(divisionContradiction(place, standard)).toBe(false);
   });
 });
 
@@ -537,82 +575,83 @@ describe("gedcomxDateYears — the years a GEDCOM X date spans", () => {
 });
 
 describe("repIdToStandardPlaceAt — the one name a place's representations valid at a date share", () => {
-  // Live Places API data, fetched 2026-10-26 (Accept-Language: en). The place's
-  // listing gives every representation's name, range and own names in every
-  // language; the chosen representation's description gives its place. A
-  // representation's names are its own name unless listed.
-  type Rep = { fullName: string; placeId: string; dateRange?: string; placeRepId?: string; names?: string[] };
+  // Live Places API data, fetched 2026-10-26 (Accept-Language: en; types
+  // 2026-10-29). The place's listing gives every representation's name, range
+  // and own names in every language; the chosen representation's description
+  // gives its place and type. A representation's names are its own name unless
+  // listed.
+  type Rep = { type?: string; fullName: string; placeId: string; dateRange?: string; placeRepId?: string; names?: string[] };
   const reps: Record<string, Rep> = {
     // Olne, place 1959431 (6J8F-6678 chose 418460 for an 1874 death).
-    "418460": { fullName: "Olne, Prince-Bishopric of Liège, Holy Roman Empire", placeId: "1959431", dateRange: "/+1795" },
-    "12441859": { fullName: "Olne, L'Ourthe, France", placeId: "1959431", dateRange: "+1795/+1815" },
-    "12441860": { fullName: "Olne, Liège, Netherlands", placeId: "1959431", dateRange: "+1815/+1830" },
-    "12441861": { fullName: "Olne, Liège, Belgium", placeId: "1959431", dateRange: "+1830/" },
+    "418460": { type: "Municipality", fullName: "Olne, Prince-Bishopric of Liège, Holy Roman Empire", placeId: "1959431", dateRange: "/+1795" },
+    "12441859": { type: "Municipality", fullName: "Olne, L'Ourthe, France", placeId: "1959431", dateRange: "+1795/+1815" },
+    "12441860": { type: "Municipality", fullName: "Olne, Liège, Netherlands", placeId: "1959431", dateRange: "+1815/+1830" },
+    "12441861": { type: "Municipality", fullName: "Olne, Liège, Belgium", placeId: "1959431", dateRange: "+1830/" },
     // Caracas, place 5061582 (WS89-MGMM chose 2241910 for a 1794 baptism).
-    "2241910": { fullName: "Caracas, Libertador, Distrito Capital, Venezuela", placeId: "5061582", dateRange: "+1999/" },
-    "13598205": { fullName: "Caracas, Distrito Federal, Venezuela", placeId: "5061582", dateRange: "+1567/+1999" },
+    "2241910": { type: "City", fullName: "Caracas, Libertador, Distrito Capital, Venezuela", placeId: "5061582", dateRange: "+1999/" },
+    "13598205": { type: "City", fullName: "Caracas, Distrito Federal, Venezuela", placeId: "5061582", dateRange: "+1567/+1999" },
     // Braunau, place 6268992: a range with a three-digit year.
-    "11861494": { fullName: "Braunau, Thurgau, Switzerland", placeId: "6268992", dateRange: "+1999/" },
-    "11912912": { fullName: "Braunau, Tobel, Thurgau, Switzerland", placeId: "6268992", dateRange: "+1803/+1998" },
-    "3057466": { fullName: "Braunau, Thurgau, Switzerland", placeId: "6268992", dateRange: "+762/+1803" },
+    "11861494": { type: "Municipality", fullName: "Braunau, Thurgau, Switzerland", placeId: "6268992", dateRange: "+1999/" },
+    "11912912": { type: "Village", fullName: "Braunau, Tobel, Thurgau, Switzerland", placeId: "6268992", dateRange: "+1803/+1998" },
+    "3057466": { type: "Municipality", fullName: "Braunau, Thurgau, Switzerland", placeId: "6268992", dateRange: "+762/+1803" },
     // Bolívar, place 1929942: one representation, from 1886 (6589-3NS5, born 1856).
-    "5775": { fullName: "Bolívar, Colombia", placeId: "1929942", dateRange: "+1886/" },
+    "5775": { type: "Department", fullName: "Bolívar, Colombia", placeId: "1929942", dateRange: "+1886/" },
     // Bela Vista, place 6283855 (6B9K-FXBZ chose 10979131 for a 1980 death
     // written "Bela Vista"): renamed Echaporã in 1944.
-    "11261236": { fullName: "Catequese, Campos Novos, São Paulo, Brazil", placeId: "6283855", dateRange: "+1928/+1937" },
-    "11818622": { fullName: "Bela Vista, Campos Novos, São Paulo, Brazil", placeId: "6283855", dateRange: "+1937/+1938" },
-    "10979131": { fullName: "Bela Vista, São Paulo, Brazil", placeId: "6283855", dateRange: "+1938/+1944" },
-    "3052592": { fullName: "Echaporã, São Paulo, Brazil", placeId: "6283855", dateRange: "+1944/" },
+    "11261236": { type: "District", fullName: "Catequese, Campos Novos, São Paulo, Brazil", placeId: "6283855", dateRange: "+1928/+1937" },
+    "11818622": { type: "Civil Registration District", fullName: "Bela Vista, Campos Novos, São Paulo, Brazil", placeId: "6283855", dateRange: "+1937/+1938" },
+    "10979131": { type: "Municipality", fullName: "Bela Vista, São Paulo, Brazil", placeId: "6283855", dateRange: "+1938/+1944" },
+    "3052592": { type: "Municipality", fullName: "Echaporã, São Paulo, Brazil", placeId: "6283855", dateRange: "+1944/" },
     // Kuopio (QLVZ-74MS, census "from 1854 to 1863", written "Kuopio, Kuopio")
     // and Boda (no range at all).
-    "422411": { fullName: "Kuopion kaupunki, Kuopio, Finland", placeId: "1962838", dateRange: "+1775/+1998" },
-    "10909387": { fullName: "Kuopio, Pohjois-Savo, Finland", placeId: "1962838", dateRange: "+1998/" },
-    "3461825": { fullName: "Boda, Kopparberg, Sweden", placeId: "6373646" },
+    "422411": { type: "City", fullName: "Kuopion kaupunki, Kuopio, Finland", placeId: "1962838", dateRange: "+1775/+1998" },
+    "10909387": { type: "City", fullName: "Kuopio, Pohjois-Savo, Finland", placeId: "1962838", dateRange: "+1998/" },
+    "3461825": { type: "Parish", fullName: "Boda, Kopparberg, Sweden", placeId: "6373646" },
     // Christ Church, Middlesex, place 1357800 (4M3P-3SZM chose 5407392 for a
     // 1732 marriage): two representations, neither with a range.
-    "5407391": { fullName: "Christ Church, Middlesex, Virginia, United States", placeId: "1357800" },
-    "5407392": { fullName: "Christ Church, Middlesex, Virginia, British Colonial America", placeId: "1357800" },
+    "5407391": { type: "Place of Worship", fullName: "Christ Church, Middlesex, Virginia, United States", placeId: "1357800" },
+    "5407392": { type: "Place of Worship", fullName: "Christ Church, Middlesex, Virginia, British Colonial America", placeId: "1357800" },
     // Kälbertshausen, place 3901588: one representation with no range beside dated ones.
-    "9724551": { fullName: "Kälbertshausen, Hüffenhardt, Mosbach, Baden-Württemberg, Germany", placeId: "3901588", dateRange: "+1945/+1973" },
-    "8933333": { fullName: "Kälbertshausen, Mosbach, Baden-Württemberg, Germany", placeId: "3901588", dateRange: "+1945/+1973" },
-    "6721274": { fullName: "Kälbertshausen, Mosbach, Baden, Germany", placeId: "3901588", dateRange: "+1871/+1945" },
-    "8933334": { fullName: "Kälbertshausen, Hüffenhardt, Mosbach, Baden, Germany", placeId: "3901588", dateRange: "+1871/+1945" },
-    "13833387": { fullName: "Kälbertshausen, Mosbach, Baden", placeId: "3901588", dateRange: "+1806/+1871" },
-    "8933335": { fullName: "Kälbertshausen, Hüffenhardt, Neckar-Odenwald-Kreis, Baden-Württemberg, Germany", placeId: "3901588" },
+    "9724551": { type: "Populated Place", fullName: "Kälbertshausen, Hüffenhardt, Mosbach, Baden-Württemberg, Germany", placeId: "3901588", dateRange: "+1945/+1973" },
+    "8933333": { type: "Populated Place", fullName: "Kälbertshausen, Mosbach, Baden-Württemberg, Germany", placeId: "3901588", dateRange: "+1945/+1973" },
+    "6721274": { type: "Populated Place", fullName: "Kälbertshausen, Mosbach, Baden, Germany", placeId: "3901588", dateRange: "+1871/+1945" },
+    "8933334": { type: "Populated Place", fullName: "Kälbertshausen, Hüffenhardt, Mosbach, Baden, Germany", placeId: "3901588", dateRange: "+1871/+1945" },
+    "13833387": { type: "Village", fullName: "Kälbertshausen, Mosbach, Baden", placeId: "3901588", dateRange: "+1806/+1871" },
+    "8933335": { type: "Populated Place", fullName: "Kälbertshausen, Hüffenhardt, Neckar-Odenwald-Kreis, Baden-Württemberg, Germany", placeId: "3901588" },
     // Simmern, place 6162326: names with type words.
-    "11973621": { fullName: "Kreis Simmern, Rhineland, Prussia, Germany", placeId: "6162326", dateRange: "+1871/+1969" },
-    "7806009": { fullName: "Kreis Simmern, Rhineland, Prussia", placeId: "6162326", dateRange: "+1814/+1871" },
-    "13838056": { fullName: "Arrondissement Simmern, Rhin-et-Moselle, France", placeId: "6162326", dateRange: "+1794/+1814" },
-    "13838055": { fullName: "Oberamt Simmern, Palatinate, Holy Roman Empire", placeId: "6162326", dateRange: "+1673/+1794" },
+    "11973621": { type: "District", fullName: "Kreis Simmern, Rhineland, Prussia, Germany", placeId: "6162326", dateRange: "+1871/+1969" },
+    "7806009": { type: "District", fullName: "Kreis Simmern, Rhineland, Prussia", placeId: "6162326", dateRange: "+1814/+1871" },
+    "13838056": { type: "District", fullName: "Arrondissement Simmern, Rhin-et-Moselle, France", placeId: "6162326", dateRange: "+1794/+1814" },
+    "13838055": { type: "District", fullName: "Oberamt Simmern, Palatinate, Holy Roman Empire", placeId: "6162326", dateRange: "+1673/+1794" },
     // Aberayron, place 6256682: Q2W9-1GVF's 1881 census, written
     // "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", was given the town.
-    "10579232": { fullName: "Aberayron, Cardiganshire, Wales, United Kingdom", placeId: "6256682", dateRange: "+1801/" },
-    "3040252": { fullName: "Aberayron, Cardiganshire, Wales", placeId: "6256682", dateRange: "/+1801" },
+    "10579232": { type: "Town", fullName: "Aberayron, Cardiganshire, Wales, United Kingdom", placeId: "6256682", dateRange: "+1801/" },
+    "3040252": { type: "Poor Law Union", fullName: "Aberayron, Cardiganshire, Wales", placeId: "6256682", dateRange: "/+1801" },
     // Carmarthen, place 5059906: SGZQ-Y3L's 1851 census, written "Saint Peter,
     // Carmarthenshire, Wales", was given the town. Named in Welsh and English.
-    "2242535": { fullName: "Carmarthen, Carmarthenshire, Wales, United Kingdom", placeId: "5059906", dateRange: "+1996/", names: ["Caerfyrddin", "Carmarthen"] },
-    "2242536": { fullName: "Carmarthen, Dyfed, Wales, United Kingdom", placeId: "5059906", dateRange: "+1974/+1996", names: ["Caerfyrddin", "Carmarthen"] },
-    "10579589": { fullName: "Carmarthen, Carmarthenshire, Wales, United Kingdom", placeId: "5059906", dateRange: "+1801/+1974", names: ["Caerfyrddin", "Carmarthen"] },
-    "10278967": { fullName: "Carmarthen, Carmarthenshire, Wales", placeId: "5059906", dateRange: "/+1801", names: ["Caerfyrddin", "Carmarthen"] },
+    "2242535": { type: "Town", fullName: "Carmarthen, Carmarthenshire, Wales, United Kingdom", placeId: "5059906", dateRange: "+1996/", names: ["Caerfyrddin", "Carmarthen"] },
+    "2242536": { type: "Town", fullName: "Carmarthen, Dyfed, Wales, United Kingdom", placeId: "5059906", dateRange: "+1974/+1996", names: ["Caerfyrddin", "Carmarthen"] },
+    "10579589": { type: "Town", fullName: "Carmarthen, Carmarthenshire, Wales, United Kingdom", placeId: "5059906", dateRange: "+1801/+1974", names: ["Caerfyrddin", "Carmarthen"] },
+    "10278967": { type: "Town", fullName: "Carmarthen, Carmarthenshire, Wales", placeId: "5059906", dateRange: "/+1801", names: ["Caerfyrddin", "Carmarthen"] },
     // Florence, place 5061195 (X7S5-8J2Z's 1813 baptism, written "Firenze,
     // Firenze, Toscana, Italia"): named in German, English and Italian.
-    "7344713": { fullName: "Florence, Florence, Tuscany, Italy", placeId: "5061195", dateRange: "+1861/", names: ["Florenz", "Florence", "Firenze"] },
-    "12114895": { fullName: "Florence, Florence, Tuscany", placeId: "5061195", dateRange: "+1569/+1860", names: ["Florenz", "Florence", "Firenze"] },
+    "7344713": { type: "Municipality", fullName: "Florence, Florence, Tuscany, Italy", placeId: "5061195", dateRange: "+1861/", names: ["Florenz", "Florence", "Firenze"] },
+    "12114895": { type: "Municipality", fullName: "Florence, Florence, Tuscany", placeId: "5061195", dateRange: "+1569/+1860", names: ["Florenz", "Florence", "Firenze"] },
     // Piauí, place 1929896 (6B9K-FXBZ's 1905 birth, written "Liro, Piaui").
-    "5736": { fullName: "Piauí, Brazil", placeId: "1929896", dateRange: "+1889/", names: ["Piauí", "Piauí"] },
+    "5736": { type: "State", fullName: "Piauí, Brazil", placeId: "1929896", dateRange: "+1889/", names: ["Piauí", "Piauí"] },
     // La Matriz, place 9544725 (ZMX8-MHT2's 1896 baptism, written `Ecuador,
     // Chimborazo, Guano, La Matriz "El Carmen" de Guano`).
-    "11016701": { fullName: "La Matriz, Guano, Chimborazo, Ecuador", placeId: "9544725", dateRange: "+1845/" },
+    "11016701": { type: "Parish", fullName: "La Matriz, Guano, Chimborazo, Ecuador", placeId: "9544725", dateRange: "+1845/" },
     // Nitra, place 1939489 (6N9M-7NKV's 1870 baptism, written "Nitra, Slovensko").
-    "444190": { fullName: "Nitra, Slovakia", placeId: "1939489", dateRange: "+1993/", names: ["Nitra"] },
-    "444191": { fullName: "Nitra, Czechoslovakia", placeId: "1939489", dateRange: "+1920/+1992", names: ["Nitra"] },
-    "12200061": { fullName: "Nyitra, Hungary", placeId: "1939489", dateRange: "/+1920", names: ["Neutra", "Nitra", "Nyitra"] },
+    "444190": { type: "District", fullName: "Nitra, Slovakia", placeId: "1939489", dateRange: "+1993/", names: ["Nitra"] },
+    "444191": { type: "District", fullName: "Nitra, Czechoslovakia", placeId: "1939489", dateRange: "+1920/+1992", names: ["Nitra"] },
+    "12200061": { type: "County (Top level)", fullName: "Nyitra, Hungary", placeId: "1939489", dateRange: "/+1920", names: ["Neutra", "Nitra", "Nyitra"] },
     // The Kiev Voivodeship, place 1929438 (6293-8K43's 1866 census, written
     // "Киевское воеводство, Польша", was given 11574124).
-    "11574124": { fullName: "Kyiv, Poland", placeId: "1929438", dateRange: "+1569/+1793", names: ["Woiwodschaft Kiew", "Киевское воеводство", "Київське воєводство", "Kyiv", "kijowskie"] },
-    "10907979": { fullName: "Kiev Governorate, Russian Empire", placeId: "1929438", dateRange: "+1721/+1917", names: ["Kiev Guberniia", "Киевская губерния", "Київська губернія", "Kiev Governorate"] },
-    "13564868": { fullName: "Kiev, Ukraine, Soviet Union", placeId: "1929438", dateRange: "+1917/+1925", names: ["Киевская губерния", "Kiev"] },
-    "5344": { fullName: "Kyiv, Ukraine", placeId: "1929438", dateRange: "+1991/", names: ["Киевская область", "Київська область", "Kyiv"] },
+    "11574124": { type: "Province", fullName: "Kyiv, Poland", placeId: "1929438", dateRange: "+1569/+1793", names: ["Woiwodschaft Kiew", "Киевское воеводство", "Київське воєводство", "Kyiv", "kijowskie"] },
+    "10907979": { type: "Governorate", fullName: "Kiev Governorate, Russian Empire", placeId: "1929438", dateRange: "+1721/+1917", names: ["Kiev Guberniia", "Киевская губерния", "Київська губернія", "Kiev Governorate"] },
+    "13564868": { type: "Governorate", fullName: "Kiev, Ukraine, Soviet Union", placeId: "1929438", dateRange: "+1917/+1925", names: ["Киевская губерния", "Kiev"] },
+    "5344": { type: "Region", fullName: "Kyiv, Ukraine", placeId: "1929438", dateRange: "+1991/", names: ["Киевская область", "Київська область", "Kyiv"] },
   };
   const placeReps: Record<string, string[]> = {
     "1959431": ["12441861", "12441860", "12441859", "418460"],
@@ -703,6 +742,42 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
     expect(await repIdToStandardPlaceAt("11016701", year(1896), "La Matriz de Guano")).toBeNull();
     expect(await repIdToStandardPlaceAt("5736", year(1905), "Piaui (Liro)")).toBe("Piauí, Brazil");
     expect(await repIdToStandardPlaceAt("5736", year(1905), "Liro (Piaui)")).toBeNull();
+  });
+
+  it("reads only the first part for a settlement, where a later part names a jurisdiction (KF9R-VTB's Krymki, 68ZW-7WGQ's Hankamäki)", async () => {
+    // Live 2026-10-29: FamilySearch gave the 1847 death in the village of
+    // Krymki the city of Kyiv, and the 1915 census written largest first
+    // the village of Hankamäki.
+    const settlements: Record<string, Rep> = {
+      "5345": { type: "City", fullName: "Kyiv, Ukraine", placeId: "1929439", dateRange: "+1991/", names: ["Киев", "Київ", "Kyiv"] },
+      "11853155": { type: "City", fullName: "Kiev, Kiev, Kiev Governorate, Russian Empire", placeId: "1929439", dateRange: "+1796/+1922", names: ["Kiev", "Киев", "Київ"] },
+      "10944403": { type: "Village", fullName: "Hankamäki, Hankasalmi, Kuopio, Finland", placeId: "9497521" },
+    };
+    mockGetPlaceById.mockImplementation(description({ ...reps, ...settlements }));
+    mockGetPlaceReps.mockImplementation(
+      listing({ ...reps, ...settlements }, { ...placeReps, "1929439": ["5345", "11853155"], "9497521": ["10944403"] }),
+    );
+    expect(await repIdToStandardPlaceAt("5345", year(1847), "Троицкая церковь, Крымки, Чигирин, Киев, Украина")).toBeNull();
+    expect(await repIdToStandardPlaceAt("5345", year(1847), "Киев, Киев, Украина")).toBe("Kiev, Kiev, Kiev Governorate, Russian Empire");
+    expect(await repIdToStandardPlaceAt("10944403", year(1915), "Kuopion, Hankamäki")).toBeNull();
+    expect(await repIdToStandardPlaceAt("10944403", year(1915), "Hankamäki, Kuopion")).toBe("Hankamäki, Hankasalmi, Kuopio, Finland");
+    // A jurisdiction (a state, a district) is named by any part.
+    expect(await repIdToStandardPlaceAt("5736", year(1905), "Liro, Piaui")).toBe("Piauí, Brazil");
+    expect(await repIdToStandardPlaceAt("11973621", year(1850), "Mittelstrimmig, Simmern")).toBe("Kreis Simmern, Rhineland, Prussia");
+  });
+
+  it("reads the rename rule against a settlement's first part only (6T22-VN4N's 1906 Maceió, Alagoas)", async () => {
+    // Live 2026-10-29: FamilySearch gave the marriage 10956281, the town of
+    // "Alagoas, Alagoas, Brazil" (1815-1819), whose place is Maceió from 1819.
+    // The text's "Alagoas" is the state.
+    const maceio: Record<string, Rep> = {
+      "3055303": { type: "Town", fullName: "Maceió, Alagoas, Brazil", placeId: "6288778", dateRange: "+1819/" },
+      "10956281": { type: "Town", fullName: "Alagoas, Alagoas, Brazil", placeId: "6288778", dateRange: "+1815/+1819" },
+    };
+    mockGetPlaceById.mockImplementation(description(maceio));
+    mockGetPlaceReps.mockImplementation(listing(maceio, { "6288778": ["3055303", "10956281"] }));
+    expect(await repIdToStandardPlaceAt("10956281", year(1906), "Maceió, Alagoas, Brasil")).toBe("Maceió, Alagoas, Brazil");
+    expect(await repIdToStandardPlaceAt("10956281", year(1906), "Alagoas, Alagoas, Brasil")).toBeNull();
   });
 
   it("names nothing when no representation is valid at the date (6589-3NS5 Bolívar, born 1856)", async () => {
@@ -818,9 +893,9 @@ describe("repIdToStandardPlaceAt — the one name a place's representations vali
   it("names a retired representation id from its place's listing, which does not hold it (QLNH-QVQB's 1829107)", async () => {
     // The description answers 1829107 with representation 439844, valid to 2004.
     const vorden: Record<string, Rep> = {
-      "1829107": { fullName: "Vorden, Gelderland, Netherlands", placeId: "1935460", dateRange: "/+2004", placeRepId: "439844" },
-      "11132478": { fullName: "Vorden, Bronckhorst, Gelderland, Netherlands", placeId: "1935460", dateRange: "+2005/" },
-      "439844": { fullName: "Vorden, Gelderland, Netherlands", placeId: "1935460", dateRange: "/+2004" },
+      "1829107": { type: "Municipality", fullName: "Vorden, Gelderland, Netherlands", placeId: "1935460", dateRange: "/+2004", placeRepId: "439844" },
+      "11132478": { type: "Village", fullName: "Vorden, Bronckhorst, Gelderland, Netherlands", placeId: "1935460", dateRange: "+2005/" },
+      "439844": { type: "Municipality", fullName: "Vorden, Gelderland, Netherlands", placeId: "1935460", dateRange: "/+2004" },
     };
     mockGetPlaceById.mockImplementation(description(vorden));
     mockGetPlaceReps.mockImplementation(listing(vorden, { "1935460": ["11132478", "439844"] }));

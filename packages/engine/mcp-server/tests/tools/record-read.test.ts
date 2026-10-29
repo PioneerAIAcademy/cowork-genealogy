@@ -770,6 +770,25 @@ describe("record_read names FamilySearch's standards in English for each fact's 
     expect(factPlaces(out)).toEqual([["Olne", "Olne, Liège, Netherlands"]]);
   });
 
+  it("drops a name in another state or province than the one the fact's text ends with (X7N1-CP7N's St Leonard, Quebec)", async () => {
+    // FamilySearch gave the 1921 census the parish of St. Leonard in Madawaska,
+    // New Brunswick. The second fact is constructed: the same choice for a text
+    // that ends in New Brunswick keeps it.
+    mockedRepIdToStandardPlaceAt.mockResolvedValue("Saint Leonard, St. Leonard, Madawaska, New Brunswick, Canada");
+    const fsText = "Saint Leonard, St. Leonard, Madawaska, Nouveau-Brunswick, Canada";
+    mockOk(
+      onePerson(
+        fact("Census", { original: "1921", formal: "+1921" }, placeField("St Leonard, St Leonard, Quebec", fsText, "9156951")),
+        fact("Census", { original: "1921", formal: "+1921" }, placeField("St Leonard, New Brunswick", fsText, "9156951")),
+      ),
+    );
+    const out = await recordReadTool({ recordId: "X7N1-CP7N" }, LOCAL);
+    expect(factPlaces(out)).toEqual([
+      [fsText, undefined],
+      ["St Leonard, New Brunswick", "Saint Leonard, St. Leonard, Madawaska, New Brunswick, Canada"],
+    ]);
+  });
+
   it("names every coverage place by its id's own name, whatever its dates: the volume, not the event (6J8F-6678)", async () => {
     mockedRepIdToStandardPlaceAt.mockResolvedValue("Olne, Liège, Belgium");
     mockedRepIdToStandardPlace.mockImplementation(async (id) =>
@@ -957,23 +976,31 @@ describe("record_read names FamilySearch's standards in English for each fact's 
       true,
     ]);
     expect(new Set(puertoRico.out.assertions.map((a) => a.record_role))).toEqual(new Set(["head_of_household", "wife"]));
+    // The first census fact decides, as on main: one with no place decides nothing,
+    // though a later persona's census place would name the United States.
+    const placelessFirst = household("1920", placeField("Puerto Rico, Hormigueros", "Hormigueros, Puerto Rico, United States", "384332"), ["Head", "Wife"]);
+    placelessFirst.persons![0].facts = [fact("Census", { original: "1920", formal: "+1920" }) as never];
+    const placeless = await decide(placelessFirst);
+    expect(placeless.stated).toBe(false);
+    expect(placeless.notes.join("\n")).toContain("place null, year 1920");
   });
 
   describe("with the Places API answering as it did on 2026-10-26", () => {
-    // Live answers (Accept-Language: en): place 6283855 is Bela Vista
-    // 1938-1944 and Echaporã from 1944; place 1959431 is Olne, Belgium from 1830.
-    const reps: Record<string, { fullName: string; placeId: string; dateRange?: string }> = {
-      "11261236": { fullName: "Catequese, Campos Novos, São Paulo, Brazil", placeId: "6283855", dateRange: "+1928/+1937" },
-      "11818622": { fullName: "Bela Vista, Campos Novos, São Paulo, Brazil", placeId: "6283855", dateRange: "+1937/+1938" },
-      "10979131": { fullName: "Bela Vista, São Paulo, Brazil", placeId: "6283855", dateRange: "+1938/+1944" },
-      "3052592": { fullName: "Echaporã, São Paulo, Brazil", placeId: "6283855", dateRange: "+1944/" },
-      "5736": { fullName: "Piauí, Brazil", placeId: "1929896", dateRange: "+1889/" },
-      "418460": { fullName: "Olne, Prince-Bishopric of Liège, Holy Roman Empire", placeId: "1959431", dateRange: "/+1795" },
-      "12441859": { fullName: "Olne, L'Ourthe, France", placeId: "1959431", dateRange: "+1795/+1815" },
-      "12441860": { fullName: "Olne, Liège, Netherlands", placeId: "1959431", dateRange: "+1815/+1830" },
-      "12441861": { fullName: "Olne, Liège, Belgium", placeId: "1959431", dateRange: "+1830/" },
-      "10579232": { fullName: "Aberayron, Cardiganshire, Wales, United Kingdom", placeId: "6256682", dateRange: "+1801/" },
-      "3040252": { fullName: "Aberayron, Cardiganshire, Wales", placeId: "6256682", dateRange: "/+1801" },
+    // Live answers (Accept-Language: en; types looked up 2026-10-29): place
+    // 6283855 is Bela Vista 1938-1944 and Echaporã from 1944; place 1959431 is
+    // Olne, Belgium from 1830.
+    const reps: Record<string, { type: string; fullName: string; placeId: string; dateRange?: string }> = {
+      "11261236": { type: "District", fullName: "Catequese, Campos Novos, São Paulo, Brazil", placeId: "6283855", dateRange: "+1928/+1937" },
+      "11818622": { type: "Civil Registration District", fullName: "Bela Vista, Campos Novos, São Paulo, Brazil", placeId: "6283855", dateRange: "+1937/+1938" },
+      "10979131": { type: "Municipality", fullName: "Bela Vista, São Paulo, Brazil", placeId: "6283855", dateRange: "+1938/+1944" },
+      "3052592": { type: "Municipality", fullName: "Echaporã, São Paulo, Brazil", placeId: "6283855", dateRange: "+1944/" },
+      "5736": { type: "State", fullName: "Piauí, Brazil", placeId: "1929896", dateRange: "+1889/" },
+      "418460": { type: "Municipality", fullName: "Olne, Prince-Bishopric of Liège, Holy Roman Empire", placeId: "1959431", dateRange: "/+1795" },
+      "12441859": { type: "Municipality", fullName: "Olne, L'Ourthe, France", placeId: "1959431", dateRange: "+1795/+1815" },
+      "12441860": { type: "Municipality", fullName: "Olne, Liège, Netherlands", placeId: "1959431", dateRange: "+1815/+1830" },
+      "12441861": { type: "Municipality", fullName: "Olne, Liège, Belgium", placeId: "1959431", dateRange: "+1830/" },
+      "10579232": { type: "Town", fullName: "Aberayron, Cardiganshire, Wales, United Kingdom", placeId: "6256682", dateRange: "+1801/" },
+      "3040252": { type: "Poor Law Union", fullName: "Aberayron, Cardiganshire, Wales", placeId: "6256682", dateRange: "/+1801" },
     };
     const placeReps: Record<string, string[]> = {
       "6283855": ["3052592", "10979131", "11818622", "11261236"],
@@ -992,7 +1019,7 @@ describe("record_read names FamilySearch's standards in English for each fact's 
       vi.mocked(getPlaceById).mockImplementation(async (id: string) => {
         const rep = reps[id];
         return rep
-          ? ({ placeRepId: id, name: rep.fullName.split(",")[0], type: "City", ...rep } as Awaited<ReturnType<typeof getPlaceById>>)
+          ? ({ placeRepId: id, name: rep.fullName.split(",")[0], ...rep } as Awaited<ReturnType<typeof getPlaceById>>)
           : null;
       });
       // Each representation's names in the listing are its own name.

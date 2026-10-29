@@ -121,6 +121,10 @@ describe("personaIndexFields", () => {
     expect(personaIndexFields(census({ original: "Kenmore, Killin, Perthshire, Scotland" }))).toEqual({
       censusPlace: "Kenmore, Killin, Perthshire, Scotland",
     });
+    // As sent: not trimmed.
+    expect(personaIndexFields(census({ original: " Kenmore, Killin, Perthshire, Scotland " }))?.censusPlace).toBe(
+      " Kenmore, Killin, Perthshire, Scotland ",
+    );
     expect(personaIndexFields(census({ original: "  " }))).toBeUndefined();
     expect(personaIndexFields(census({ original: 1871 }))).toBeUndefined();
     expect(personaIndexFields(census())).toBeUndefined();

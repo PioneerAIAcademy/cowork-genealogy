@@ -709,7 +709,10 @@ with a warning rather than kept for the new place:
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
-     it: the places the call's other assertions with the same `record_id` name.
+     it: each of the call's other assertions with the same `record_id` by its
+     `standard_place` when it has one, else its `place`. A record read's named
+     fact carries its as-written text as `place` ("Den Haag"), so its standard
+     is what still names the fact's jurisdictions.
      A bare single-segment place ("Shenandoah") has no context of its own, so
      the resolver uses that record context: a sibling place whose first segment
      is the name, or the name after an administrative prefix ("Borough of",

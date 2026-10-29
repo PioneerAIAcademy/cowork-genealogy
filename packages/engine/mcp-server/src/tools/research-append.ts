@@ -8564,12 +8564,15 @@ async function prepareOps(
   }
   const readSidecarResults = sidecarResultsReader(projectPath);
 
-  // The other places each record's assertions name in this batch: a bare place
-  // ("Shenandoah") is resolved against them, not against the whole world.
+  // The other places each record's assertions name in this batch, each by its
+  // standard_place when it has one, else its place: a bare place ("Shenandoah")
+  // is resolved against them, not against the whole world. A record read's
+  // named fact carries its as-written text ("Den Haag") as `place`, so the
+  // standard is the one that still names the fact's jurisdictions.
   const placesByRecord = new Map<string, string[]>();
   for (const op of ops) {
     const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
-    const place = e ? factText(e.place) : undefined;
+    const place = e ? (factText(e.standard_place) ?? factText(e.place)) : undefined;
     if (!place) continue;
     const key = String(e.record_id ?? "");
     placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);

@@ -38,6 +38,8 @@ interface RepInfo {
   /** The representation the description answered with: another one than the
    *  id asked for when FamilySearch has retired that id. */
   placeRepId: string;
+  /** Its place type, as the description gives it ("City", "County"). */
+  type?: string;
   placeId?: string;
   latitude?: number;
   longitude?: number;
@@ -564,6 +566,55 @@ export function countryConsistency(place: string, standardPlace: string): "ok" |
   return "contradiction";
 }
 
+/** The US states, the District of Columbia, Puerto Rico and the Canadian
+ *  provinces, by name (diacritics folded), as their postal codes. */
+const DIVISIONS: Record<string, string> = {
+  alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA", colorado: "CO",
+  connecticut: "CT", delaware: "DE", florida: "FL", georgia: "GA", hawaii: "HI", idaho: "ID",
+  illinois: "IL", indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY", louisiana: "LA", maine: "ME",
+  maryland: "MD", massachusetts: "MA", michigan: "MI", minnesota: "MN", mississippi: "MS", missouri: "MO",
+  montana: "MT", nebraska: "NE", nevada: "NV", "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM",
+  "new york": "NY", "north carolina": "NC", "north dakota": "ND", ohio: "OH", oklahoma: "OK", oregon: "OR",
+  pennsylvania: "PA", "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", tennessee: "TN",
+  texas: "TX", utah: "UT", vermont: "VT", virginia: "VA", washington: "WA", "west virginia": "WV",
+  wisconsin: "WI", wyoming: "WY", "district of columbia": "DC", "puerto rico": "PR",
+  ontario: "ON", "canada west": "ON", "upper canada": "ON", quebec: "QC", "canada east": "QC",
+  "lower canada": "QC", "nova scotia": "NS", "new brunswick": "NB", "nouveau-brunswick": "NB",
+  manitoba: "MB", "british columbia": "BC", "prince edward island": "PE", saskatchewan: "SK",
+  alberta: "AB", newfoundland: "NL",
+};
+const DIVISION_CODES: ReadonlySet<string> = new Set(Object.values(DIVISIONS));
+
+/** The US state, Puerto Rico or Canadian province one part of a place names,
+ *  by name ("Utah Territory", "Québec") or postal code ("QC"), else null. */
+function divisionOf(part: string): string | null {
+  const key = foldPlaceName(part).replace(/\.$/, "");
+  const name = key.replace(/ (?:territory|state)$/, "");
+  if (Object.hasOwn(DIVISIONS, name)) return DIVISIONS[name];
+  return DIVISION_CODES.has(key.toUpperCase()) ? key.toUpperCase() : null;
+}
+
+/**
+ * `countryConsistency` one level down, for the United States and Canada: true
+ * when the place text's last part, after a trailing "United States", "Canada"
+ * or "British North America", names a US state, Puerto Rico or a Canadian
+ * province, and the standard place names one or more of them among its
+ * jurisdictions (every part but its own name), none of them that one. "St
+ * Leonard, St Leonard, Quebec" was given Madawaska, New Brunswick, and
+ * "Hormigueros, 1, Hormigueros, Puerto Rico" the town of Puerto Rico in Hidalgo,
+ * Texas. A standard place that names none is not judged.
+ */
+export function divisionContradiction(place: string, standardPlace: string): boolean {
+  const parts = placeSegments(place);
+  const nation = (part: string) =>
+    ["united states", "canada"].includes(canonicalCountry(part) ?? "") || foldPlaceName(part) === "british north america";
+  while (parts.length > 0 && nation(parts[parts.length - 1])) parts.pop();
+  const written = parts.length > 0 ? divisionOf(parts[parts.length - 1]) : null;
+  if (written === null) return false;
+  const named = placeSegments(standardPlace).slice(1).map(divisionOf);
+  return named.some((code) => code !== null) && !named.includes(written);
+}
+
 /** Highest-scoring entry (FamilySearch ranks by relevance), else first. */
 function pickBest(entries: SearchEntry[]): SearchEntry | undefined {
   if (entries.length === 0) return undefined;
@@ -956,6 +1007,7 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
     ? {
         standardPlace: place.fullName,
         placeRepId: place.placeRepId,
+        type: place.type,
         placeId: place.placeId,
         latitude: place.latitude,
         longitude: place.longitude,
@@ -1044,6 +1096,20 @@ function nameParts(placeText: string): string[] {
   return placeSegments(placeText).map((part) => part.replace(/[("].*/, ""));
 }
 
+/** FamilySearch place types that are a settlement, not a jurisdiction. */
+const SETTLEMENT_TYPES: ReadonlySet<string> = new Set([
+  "city",
+  "town",
+  "village",
+  "hamlet",
+  "populated place",
+  "major city",
+  "independent city",
+  "neighborhood or suburb",
+  "locality",
+  "dispersed settlement",
+]);
+
 /**
  * The English name of `repId`'s place in `years`: the one full name its
  * representations valid in those years share. A FamilySearch place has a
@@ -1062,13 +1128,17 @@ function nameParts(placeText: string): string[] {
  * language, compared as `checkFirstPlace` compares names (case, accents,
  * "St"/"Saint" and type words ignored). FamilySearch gave Q2W9-1GVF's
  * "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales" the town of Aberayron, its
- * registration district. For a fact whose Place field has no `Original` value
+ * registration district. A part other than the first names only a
+ * jurisdiction: when the place is a settlement by its description's type
+ * (`SETTLEMENT_TYPES`), only the first part is read, here and below.
+ * KF9R-VTB's "Троицкая церковь, Крымки, Чигирин, Киев, Украина" was given the
+ * city of Kyiv. For a fact whose Place field has no `Original` value
  * `record_read` passes FamilySearch's own text, which names FamilySearch's
  * choice by construction, so this check cannot catch a wrong choice there;
- * such facts are still named (all 12 in the 40-record sample are named right). Then
- * the date: no representation is valid in `years`, two names are (Olne in 1830
- * is "Olne, Liège, Netherlands" and "Olne, Liège, Belgium"), a range cannot be
- * read, or a lookup fails. Null too when the place was renamed and `placeText`
+ * such facts are still named (all 12 in the 40-record sample are named right).
+ * Then the date: no representation is valid in `years`, two names are (Olne in
+ * 1830 is "Olne, Liège, Netherlands" and "Olne, Liège, Belgium"), a range
+ * cannot be read, or a lookup fails. Null too when the place was renamed and `placeText`
  * gives `repId`'s own name: place 6283855 is "Bela Vista" 1938-1944 and
  * "Echaporã" from 1944, so a 1980 record that wrote "Bela Vista" and was given
  * representation 10979131 doubts FamilySearch's choice of place. When the
@@ -1084,7 +1154,8 @@ export async function repIdToStandardPlaceAt(
   const chosen = await getRepInfo(repId);
   if (!chosen?.placeId) return null;
   const reps = await placeReps(chosen.placeId);
-  const parts = nameParts(placeText);
+  const all = nameParts(placeText);
+  const parts = SETTLEMENT_TYPES.has(placeTypeKey(chosen.type)) ? all.slice(0, 1) : all;
   const named = (rep: PlaceRep) => rep.names.some((n) => parts.some((part) => sameName(part, n)));
   if (!reps.some(named)) return null;
   const valid: PlaceRep[] = [];

@@ -538,17 +538,20 @@ place.** Any doubt names nothing:
   names (case, accents, "St"/"Saint" and type words ignored). A part is a
   comma-separated part without anything from its first "(" or `"` on:
   QLNH-QVQB's "Vorden (Bronckhorst)" is "Vorden", and ZMX8-MHT2's
-  `La Matriz "El Carmen" de Guano` is "La Matriz". Any part may name it, not
-  only the first: a text that names its places largest first ("Switzerland,
-  Zürich, Zürich"), or a ward or church first ("Milwaukee city, ward 10, …"),
-  names its place in a later part. Of 40 names drawn at random from those the
-  first part alone would drop over the matcher corpus, 33 are right, 5 coarser,
-  1 wrong and 1 undecided. Letting a later part name a settlement (FamilySearch
-  type City, Town, Village, Hamlet, Populated Place, Major City, Independent
-  City, Neighborhood or suburb, Locality or Dispersed Settlement) never, and a
-  jurisdiction always, would drop 872 names there, which take in the city of
-  Kyiv given to villages of the Kiev Governorate; of 60 drawn at random, 56 are
-  right and 4 wrong. Otherwise FamilySearch's
+  `La Matriz "El Carmen" de Guano` is "La Matriz". Any part may name a
+  jurisdiction ("Liro, Piaui" names the state of Piauí), but only the first
+  part may name a settlement: a place whose description types it City, Town,
+  Village, Hamlet, Populated Place, Major City, Independent City, Neighborhood
+  or suburb, Locality or Dispersed Settlement. KF9R-VTB's 1847 death, written
+  "Троицкая церковь, Крымки, Чигирин, Киев, Украина", was given the city of
+  Kyiv. Over the matcher corpus this names 872 facts fewer and 3 more (the
+  rename rule below reads the same parts). `research_append` geocodes each fact
+  it leaves unnamed, so end to end what `extraction_append` saves changes only
+  where its geocode differs: on the 40 records whose village text was named
+  the city of Kyiv, 44 assertions go from the city (1 right) to 37 right or
+  coarser and 7 wrong; for 60 of the 872 facts drawn at random, every one keeps
+  a standard, 49 the same one, 9 another right one, 1 goes from wrong to right
+  and 1 from one wrong place to another. Otherwise FamilySearch's
   choice of place is in doubt: Q2W9-1GVF's 1881 census, written
   "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", was given the town of
   Aberayron, its registration district, and SGZQ-Y3L's "Saint Peter,
@@ -587,7 +590,10 @@ place.** Any doubt names nothing:
 - Nothing is named when the place was renamed and the fact's `place` still
   gives the chosen representation's name: the valid name's own name (the first
   part of the full name) differs from the chosen representation's, and a part
-  of `place` is the chosen one's own name. Names are compared as
+  of `place` is the chosen one's own name, only the first part for a
+  settlement. 6T22-VN4N's 1906 marriage, written "Maceió, Alagoas, Brasil" and
+  given the town's 1815–1819 representation "Alagoas, Alagoas, Brazil", is
+  "Maceió, Alagoas, Brazil": its "Alagoas" is the state. Names are compared as
   `checkFirstPlace` compares them (case, accents, "St"/"Saint" and type words
   ignored on both sides, so "Simmern" is "Kreis Simmern"). FamilySearch then
   matched the record's text to a name the place did not have at the fact's
@@ -612,10 +618,19 @@ place.** Any doubt names nothing:
   right, 1 coarser), and it caught no wrong name, so only a retired id is read
   that way.
 
-When nothing is named, or the name contradicts the fact's `place`
-(`countryConsistency`, the check `research_append` refuses a record on), the
-fact gets what `toSimplified` gives it: `place.original` and no
-`standard_place`. FamilySearch's own text is never kept.
+When nothing is named, or the name contradicts the fact's `place`, the fact
+gets what `toSimplified` gives it: `place.original` and no `standard_place`.
+FamilySearch's own text is never kept. A name contradicts the `place` when it
+names another country (`countryConsistency`, the check `research_append`
+refuses a record on), or another US state, Puerto Rico or Canadian province
+(`divisionContradiction`): the `place`'s last part, after a trailing "United
+States", "Canada" or "British North America", names one by name or postal code
+("Quebec", "Utah Territory", "Canada East", "QC"), and the name's parts after
+its own name name others and not that one. X7N1-CP7N's 1921 census, written
+"St Leonard, St Leonard, Quebec", was given the parish in Madawaska, New
+Brunswick, and V6CR-R26's "Hormigueros, 1, Hormigueros, Puerto Rico" the town
+of Puerto Rico in Hidalgo, Texas. On its own, over the matcher corpus, it
+refuses those and two more shapes, 15 names in all, and no other.
 
 A coverage place is named by its id's own name (`repIdToStandardPlace`),
 whatever the coverage's dates, as on any other read: coverage describes the

@@ -4,6 +4,7 @@ import { fsFetch } from "../utils/fs-fetch.js";
 import { toSimplifiedRecordRead, type RecordReadPlace } from "../utils/gedcomx-convert.js";
 import {
   countryConsistency,
+  divisionContradiction,
   gedcomxDateYears,
   repIdToStandardPlace,
   repIdToStandardPlaceAt,
@@ -391,14 +392,16 @@ async function readFromSidecar(
  * for the fact, which it sends whatever language the date is written in, else
  * the date as stdDate reads it. Any doubt leaves the fact as toSimplified gives
  * it — `place.original`, no standard_place: a fact whose own text names none of
- * the place's names in any language (Q2W9-1GVF's "Llanbadarn-Tref-Eglwys,
- * Cardiganshire, Wales", given the town of Aberayron), a date neither can read,
- * no such name, two names, a failed lookup, a place renamed since the name the
- * fact's text gives it ("Bela Vista" in 1980, when that place was Echaporã), or
- * a name that contradicts the fact's place text (countryConsistency, which makes
- * research_append refuse the record). The fact's own text is the Place field's
- * `Original` value, else `place.original`. A fact whose Place field has no
- * `Original` value has no text of its own: its `place.original` is
+ * the place's names in any language, only its first part naming a settlement
+ * (Q2W9-1GVF's "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", given the town
+ * of Aberayron), a date neither can read, no such name, two names, a failed
+ * lookup, a place renamed since the name the fact's text gives it ("Bela Vista"
+ * in 1980, when that place was Echaporã), or a name that contradicts the
+ * fact's place text (countryConsistency, which makes research_append refuse the
+ * record; divisionContradiction, a US state, Puerto Rico or Canadian province
+ * other than the one the text ends with). The fact's own text is the Place
+ * field's `Original` value, else `place.original`. A fact whose Place field has
+ * no `Original` value has no text of its own: its `place.original` is
  * FamilySearch's own `Interpreted` text, which names FamilySearch's choice by
  * construction, so the text check cannot catch a wrong choice there. Such facts
  * are still named; all 12 in the 40-record sample are named right. Records
@@ -420,7 +423,8 @@ async function nameFactPlaces(placeIds: Map<SimplifiedFact, RecordReadPlace>): P
   for (const [fact, { placeId, original, formal }] of placeIds) {
     const years = gedcomxDateYears({ original: fact.date, formal });
     const name = years === null ? null : await repIdToStandardPlaceAt(placeId, years, fact.place ?? "");
-    if (name && countryConsistency(fact.place ?? "", name) !== "contradiction") {
+    const text = fact.place ?? "";
+    if (name && countryConsistency(text, name) !== "contradiction" && !divisionContradiction(text, name)) {
       fact.standard_place = name;
     } else {
       delete fact.standard_place;

@@ -9569,6 +9569,34 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledWith("Dublin, Ireland", { contextPlaces: [] });
   });
 
+  it("gives a bare place each other assertion's standard_place as context, else its place (QL5V-VR3K's Dongen)", async () => {
+    // record_read names the marriage and gives it the as-written "Dongen"; the
+    // births it left unnamed are geocoded against the marriage's standard.
+    await writeProject();
+    const a = (place: string, standard_place?: string | null) => ({
+      section: "assertions" as const,
+      op: "append" as const,
+      entry: {
+        ...noId(validAssertion("x", "src_001")),
+        record_id: "rec-A",
+        place,
+        ...(standard_place !== undefined ? { standard_place } : {}),
+      },
+    });
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        a("Dongen"),
+        a("Dongen", "Dongen, North Brabant, Netherlands"),
+        a("Breda, Noord-Brabant, Nederland", null),
+      ],
+    });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(vi.mocked(resolveStandardPlace).mock.calls).toEqual([
+      ["Dongen", { contextPlaces: ["Dongen, North Brabant, Netherlands", "Breda, Noord-Brabant, Nederland"] }],
+    ]);
+  });
+
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar();
