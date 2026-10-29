@@ -9696,6 +9696,140 @@ describe("research_append (composite persist + enforcement)", () => {
     expect(a.standard_place).toBeUndefined();
   });
 
+  // ── The record's country for full-text and image records (lead, 2026-10-29) ──
+
+  /** research whose log_001 is a `tool` entry, its sidecar holding `results`. */
+  async function writeToolSidecar(tool: string, results: any[], assertions: any[] = []) {
+    const research = baseResearch();
+    research.log = [{ ...searchLogEntry("results/log_001.json"), tool }] as any;
+    research.assertions.push(...assertions);
+    await writeProject(research);
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "results", "log_001.json"),
+      JSON.stringify({
+        log_id: "log_001",
+        tool,
+        retrieved: "2026-01-01T00:00:00Z",
+        returned_count: results.length,
+        payload: { results },
+      }),
+    );
+  }
+
+  const FULLTEXT_ID = "ark:/61903/3:1:3Q9M-CSNL-S98H-M";
+  const fulltextResult = (id: string, recordPlace?: string) => ({
+    id,
+    collectionId: "3158845",
+    title: "Deed",
+    ...(recordPlace !== undefined ? { recordPlace } : {}),
+  });
+  const transcription = (place?: string) => ({
+    id: "004884748_02613",
+    source: { imageId: "004884748_02613", ...(place !== undefined ? { place } : {}) },
+    content_type: "image/jpeg",
+    size_bytes: 1,
+    model: "m",
+    transcription: "Deed of sale",
+  });
+  const appendCiting = (recordId: string, place: string) => ({
+    section: "assertions" as const,
+    op: "append" as const,
+    entry: { ...noId(validAssertion("x", "src_001")), record_id: recordId, log_entry_id: "log_001", place },
+  });
+
+  it("takes a full-text record's country from the recordPlace of the result its record_id names", async () => {
+    await writeToolSidecar("fulltext_search", [
+      fulltextResult("ark:/61903/3:1:3Q9M-AAAA-BBBB-C", "Saltillo, Coahuila, Mexico"),
+      fulltextResult(FULLTEXT_ID, "Bullock, Alabama, United States"),
+    ]);
+    const r = await researchAppend({ projectPath: dir, ops: [appendCiting(FULLTEXT_ID, "Texas")] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Texas")).toBe("United States");
+  });
+
+  it("gives a full-text record no country when its record_id names no result, or its result no country", async () => {
+    const cases: [string, any[]][] = [
+      ["no result", [fulltextResult("ark:/61903/3:1:3Q9M-AAAA-BBBB-C", "Bullock, Alabama, United States")]],
+      ["no recordPlace", [fulltextResult(FULLTEXT_ID)]],
+      ["a World place", [fulltextResult(FULLTEXT_ID, "World")]],
+      ["a continent", [fulltextResult(FULLTEXT_ID, "North America")]],
+      ["two countries", [fulltextResult(FULLTEXT_ID, "New York, United States; Cornwall, England, United Kingdom")]],
+    ];
+    for (const [label, results] of cases) {
+      vi.mocked(resolveStandardPlace).mockClear();
+      await writeToolSidecar("fulltext_search", results);
+      const r = await researchAppend({ projectPath: dir, ops: [appendCiting(FULLTEXT_ID, "Louth")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(await countryGiven("Louth"), label).toBeNull();
+    }
+  });
+
+  it("names a full-text record's country as a standard place does: a Scottish record is a United Kingdom one", async () => {
+    await writeToolSidecar("fulltext_search", [
+      fulltextResult(FULLTEXT_ID, "Campbeltown, Argyll, Scotland; Argyll, Scotland"),
+    ]);
+    const r = await researchAppend({ projectPath: dir, ops: [appendCiting(FULLTEXT_ID, "Louth")] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Louth")).toBe("United Kingdom");
+  });
+
+  it("takes an image record's country from its transcription's image-group place, whatever its record_id", async () => {
+    await writeToolSidecar("image_transcribe", [transcription("Trumbull, Ohio, United States")]);
+    const r = await researchAppend({ projectPath: dir, ops: [appendCiting("capture:trumbull-deed-1890", "Texas")] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Texas")).toBe("United States");
+  });
+
+  it("gives an image record no country when its transcription has no place, or the sidecar is not one page", async () => {
+    const cases: [string, any[]][] = [
+      ["no place", [transcription()]],
+      ["a World place", [transcription("World")]],
+      ["two pages", [transcription("Trumbull, Ohio, United States"), transcription("Trumbull, Ohio, United States")]],
+    ];
+    for (const [label, results] of cases) {
+      vi.mocked(resolveStandardPlace).mockClear();
+      await writeToolSidecar("image_transcribe", results);
+      const r = await researchAppend({ projectPath: dir, ops: [appendCiting("capture:trumbull-deed-1890", "Texas")] });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(await countryGiven("Texas"), label).toBeNull();
+    }
+  });
+
+  it("reads each producer's own place only: a record_search result's recordPlace or source place is no country", async () => {
+    const stray = { ...sidecarRecord(), recordPlace: "Bullock, Alabama, United States", source: { place: "Ohio, United States" } };
+    await writeToolSidecar("record_search", [stray]);
+    const r = await researchAppend({ projectPath: dir, ops: [appendFromRecord("Texas")] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await countryGiven("Texas")).toBeNull();
+  });
+
+  it("offers a full-text or image record's country when an update corrects an assertion's place", async () => {
+    const sidecars: [string, any[], string][] = [
+      ["fulltext_search", [fulltextResult(FULLTEXT_ID, "Bullock, Alabama, United States")], FULLTEXT_ID],
+      ["image_transcribe", [transcription("Trumbull, Ohio, United States")], "capture:trumbull-deed-1890"],
+    ];
+    for (const [tool, results, recordId] of sidecars) {
+      vi.mocked(resolveStandardPlace).mockClear();
+      const prior = {
+        ...validAssertion("a_002"),
+        record_id: recordId,
+        log_entry_id: "log_001",
+        place: "Pottsville, Pennsylvania",
+      };
+      await writeToolSidecar(tool, results, [prior]);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_002",
+        fields: { place: "Texas" },
+      });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect(await countryGiven("Texas"), tool).toBe("United States");
+    }
+  });
+
   it("copies the sidecar's resolved standard_place for the same place string instead of geocoding", async () => {
     await writeProject(sidecarResearch());
     await writeSidecar();

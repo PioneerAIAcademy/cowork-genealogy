@@ -701,11 +701,30 @@ with a warning rather than kept for the new place:
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
      it: the places the call's other assertions with the same `record_id` name,
-     and the record's country — the last segment of the sidecar record's
-     Collection coverage place (its `coverage.standard_place`, else its
-     `coverage.place_rep_id` resolved by id), never read off the record's facts
-     or the place text; none without a sidecar record or a collection coverage,
-     and none for a collection that covers the World, which is no country.
+     and the record's country, from the sidecar record the assertion comes from
+     and never read off the record's facts or the place text, by the tool that
+     staged it:
+     - a FamilySearch record (`record_search`, `record_read`): the last segment
+       of its Collection coverage place (its `coverage.standard_place`, else its
+       `coverage.place_rep_id` resolved by id);
+     - a `fulltext_search` result: the last segment of its `recordPlace`, of
+       each place when it lists several (`;`-separated), which must all end in
+       the same one (lead, 2026-10-29: "full-text records should get a record
+       country from their own place");
+     - a page `image_transcribe` read: the last segment of the staged
+       transcription's `source.place`, its film's coverage place (lead,
+       2026-10-29: image records carry their film's country). The log entry's
+       sidecar is that one transcription, so it gives the country whatever the
+       assertion's `record_id` (`capture:…`, a record ARK).
+
+     A country is named as a FamilySearch standard place names it: a country
+     the country guard's alias table knows takes its English name ("México" is
+     Mexico, "USA" the United States), and England, Scotland, Wales and
+     Northern Ireland are the United Kingdom ("Campbeltown, Argyll, Scotland" is
+     a United Kingdom record, as "…, Scotland, United Kingdom" is). There is none
+     without such a place, and none for the World, a continent or an ocean,
+     which are no country (`countryOfPlaces`).
+
      A bare single-segment place ("Kent", "Shenandoah") names no parent, so
      FamilySearch's best hit for it is whichever same-named place ranks highest
      anywhere, and the country guard below cannot catch a wrong one, since a

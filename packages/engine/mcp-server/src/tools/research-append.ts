@@ -60,6 +60,7 @@ import {
   resolveStandardPlace,
   repIdToStandardPlace,
   countryConsistency,
+  countryOfPlaces,
   isNonPlacePhrase,
   checkFirstPlace,
   type PlaceCoords,
@@ -7872,19 +7873,43 @@ function sidecarResultId(tool: string, r: any): string | undefined {
   return typeof v === "string" ? v : undefined;
 }
 
-/** The country of a sidecar record: the last segment of its Collection source's
- *  coverage place, which is the coverage's `standard_place` (a live
- *  `record_read` resolves it), else its `place_rep_id` resolved by id. Null when
- *  the record names no collection coverage, or its collection covers the World,
- *  which is no country (matcher-lab m13's list builder, stage S2). Never read
- *  off the record's facts. */
-async function recordCountryOf(gx: any): Promise<string | null> {
-  const sources: any[] = Array.isArray(gx?.sources) ? gx.sources : [];
+/**
+ * The country of the sidecar record an assertion comes from, by its producer,
+ * never read off the assertions' places (`countryOfPlaces` names it, and says
+ * which places are no country):
+ * - a FamilySearch record (record_search, record_read): its Collection source's
+ *   coverage place, the coverage's `standard_place` (a live `record_read`
+ *   resolves it), else its `place_rep_id` resolved by id. A World collection
+ *   gives none (matcher-lab m13's list builder, stage S2);
+ * - a full-text result: its `recordPlace`, each of its `;`-separated places
+ *   (lead, 2026-10-29: "full-text records should get a record country from
+ *   their own place");
+ * - a page `image_transcribe` read: its source's `place`, the coverage place of
+ *   the FamilySearch image group (the film) it was read from (lead, 2026-10-29).
+ * Null when the record names no such place.
+ */
+async function recordCountryOf(producer: string | undefined, record: any): Promise<string | null> {
+  if (producer === "fulltext_search") {
+    return typeof record?.recordPlace === "string" ? countryOfPlaces(record.recordPlace.split(";")) : null;
+  }
+  if (producer === "image_transcribe") {
+    return typeof record?.source?.place === "string" ? countryOfPlaces([record.source.place]) : null;
+  }
+  const sources: any[] = Array.isArray(record?.gedcomx?.sources) ? record.gedcomx.sources : [];
   const coverage = sources.find((s) => s?.resource_type === "Collection")?.coverage;
   let place: string | null = typeof coverage?.standard_place === "string" ? coverage.standard_place : null;
   if (!place && typeof coverage?.place_rep_id === "string") place = await repIdToStandardPlace(coverage.place_rep_id);
-  const country = place ? placeSegments(place).at(-1) : undefined;
-  return country && country !== "World" ? country : null;
+  return place ? countryOfPlaces([place]) : null;
+}
+
+/** The sidecar record an assertion's country comes from: the result its
+ *  record_id names, else, for a page `image_transcribe` staged, that page. The
+ *  sidecar holds the one transcription its log entry logged
+ *  (`extraction_append` logs the staged ref it cites), and a record_id the
+ *  caller chose ("capture:…", a record ARK) need not be the page's id. */
+function countrySidecarRecord(producer: string | undefined, results: any[] | null, matched: any): any {
+  if (matched) return matched;
+  return producer === "image_transcribe" && results?.length === 1 ? results[0] : null;
 }
 
 interface PreparedOps {
@@ -8592,14 +8617,16 @@ async function prepareOps(
   /** Place levers (b) then (a) on one assertion's fields, in place. A
    *  standard_place contradicting the place's country is an error, unless
    *  `dropContradiction`, when it is left unset instead. `countryRecord` is the
-   *  sidecar record the assertion comes from, whose collection gives the
-   *  resolver the record's country (`recordCountryOf`). */
+   *  sidecar record the assertion comes from and `countryProducer` the tool that
+   *  staged it, which give the resolver the record's country
+   *  (`recordCountryOf`). */
   const applyPlaceLevers = async (
     entry: any,
     i: number,
     matchedRecord: any,
-    dropContradiction = false,
-    countryRecord: any = matchedRecord,
+    dropContradiction: boolean,
+    countryProducer: string | undefined,
+    countryRecord: any,
   ): Promise<void> => {
     // ── Place lever (b): never geocode what the source record already
     // resolved — copy the sidecar's standard_place for the same place string.
@@ -8626,7 +8653,7 @@ async function prepareOps(
         try {
           const contextPlaces = (placesByRecord.get(String(entry.record_id ?? "")) ?? [])
             .filter((p) => p !== entry.place);
-          const recordCountry = () => recordCountryOf(countryRecord?.gedcomx);
+          const recordCountry = () => recordCountryOf(countryProducer, countryRecord);
           sp = (await resolveStandardPlace(entry.place, { contextPlaces, recordCountry })) ?? null;
         } catch {
           sp = null;
@@ -8682,6 +8709,8 @@ async function prepareOps(
 
     // ── D2: persona/record-id matrix against the log entry's sidecar ──
     let matchedRecord: any = null;
+    let countryProducer: string | undefined;
+    let countryRecord: any = null;
     const logId = entry.log_entry_id;
     const logEntry = typeof logId === "string" ? logById.get(logId) : undefined;
     if (logEntry) {
@@ -8853,10 +8882,12 @@ async function prepareOps(
           );
           continue;
         }
+        countryProducer = producer;
+        countryRecord = countrySidecarRecord(producer, results, matchedRecord);
       }
     }
 
-    await applyPlaceLevers(entry, i, matchedRecord);
+    await applyPlaceLevers(entry, i, matchedRecord, false, countryProducer, countryRecord);
   }
 
   // An assertions update that corrects `place` to another place and says nothing of
@@ -8881,7 +8912,7 @@ async function prepareOps(
       const id = sidecarResultId(logEntry.tool, r);
       return id !== undefined && arkToBareId(id) === key;
     });
-    await applyPlaceLevers(view, i, null, true, record);
+    await applyPlaceLevers(view, i, null, true, logEntry?.tool, countrySidecarRecord(logEntry?.tool, results, record));
     if (typeof view.standard_place === "string") {
       fields.standard_place = view.standard_place;
     } else if (typeof cur.standard_place === "string") {

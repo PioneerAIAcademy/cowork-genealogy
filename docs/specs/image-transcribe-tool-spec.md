@@ -535,7 +535,9 @@ This uses the same underlying name-variant tables as `get_name_variants`, withou
    paid `mistral-ocr`) is the alternative request shape — not built, because the measured
    path works with no plugin fee.
 5. **Stage** (with `projectPath`): the transcription is retained host-side through the
-   search tools' channel (§5.5) and a `digest` is computed. Best-effort.
+   search tools' channel (§5.5) and a `digest` is computed. Best-effort. For an `imageId`
+   or `ark`, the staged source carries the image group's coverage place (§5.5.1), looked
+   up beside steps 1–4.
 6. **Return** `staged` / `digest` / `found` + light metadata (§5.5) — the text only when
    staging failed. No image block.
 
@@ -599,18 +601,54 @@ Text only, no image block:
 ```
 
 **The staged element** (one per call, `results[0]` of the envelope, snake_case — it is
-persisted project state): `{ id, source: { imageId | ark | memoryArtifactUrl | file },
+persisted project state): `{ id, source: { imageId | ark | memoryArtifactUrl | file, place? },
 content_type, size_bytes, model, transcription, truncated?, found?, image_ref? }`, where
 `image_ref` is the `imageRef` of the scan retained under `images/`, absent whenever no
 scan was retained (the save failed, the content is not an image, such as a PDF, or the
-input was a `file`); the envelope's
-`query` is `source` plus `lookingFor`. `extraction_append`'s documents mode logs it as
+input was a `file`), and `source.place` is the image group's coverage place (§5.5.1),
+absent when it was not looked up or none was found; the envelope's
+`query` is the input `source` (without `place`) plus `lookingFor`. `extraction_append`'s documents mode logs it as
 `image_transcribe` and finalizes it into `results/<log_id>.json` exactly as a search page;
 a ref a caller already finalized with `research_log_append` is cited through that log
 entry rather than logged again. `sidecar_read` reads either form back.
 
 The transcription is the full page (every relevant entry, not just the `lookingFor`
 target), original spelling/language, with `[?]` / `[illegible]` / `[torn]` marks.
+
+#### 5.5.1 The image group's coverage place (`source.place`)
+
+`research_append` takes a page's record country from it (lead, 2026-10-29: image records
+carry their film's country; `research-append-tool-spec.md`, the place levers). Looked up
+only for an `imageId` or `ark` read with `projectPath`, never for a `file` or a memory, by
+`imageGroupPlace` (`src/utils/image-group.ts`, which also holds the group-id resolution and
+metadata fetch `image_search` uses):
+
+1. **The film.** An `imageId` names it (`004884748_02613` is film `004884748`), and so
+   does a DGS distribution URL. An image ARK is asked once: its resolver URL with
+   `Accept: application/json` answers `{ name: "007156564_00250", apid, … }`.
+2. **The group.** `group-service/group/{film}/apid`, then `group-service/group/{apid}`,
+   the metadata `image_search`'s `item` reads its place from.
+3. **The place.** The trailing segments every `coverages[].place` shares: a film of one
+   parish gives the parish, one of several towns in a province the province, and a film
+   whose coverages end in different countries gives none.
+
+Each request has a 10 s timeout and retry budget, and the lookup runs beside the page
+fetch and the OCR. The place is cached per film, and the film per ARK, for the life of
+the process. A lookup FamilySearch answered (a place, no coverage, a 403 on a restricted
+group, a 404) is cached; one that could not reach it (a network failure, a 5xx or 429, a
+body that is not JSON) is asked again next time. Any failure stages no `place`, and none
+is ever an error.
+
+**Format, measured live 2026-10-29** on every film and image ARK the e2e corpus
+transcribed: 144 groups (58 films named by imageIds, 86 more reached from ARKs). 142
+answered and 2 were refused (403); every one that answered had a coverage place. The
+place is a FamilySearch standard place with the country **last**: in all 147 of the
+coverages' top-level places (`placeRepIdHierarchy[0]`, resolved by id), it is the last
+segment and never the first ("San Lorenzo, Grant, New Mexico, United States"). 25 groups
+list more than one coverage place, and 3 of them end in different countries (Austria and
+Hungary; Slovakia, Hungary and Czechoslovakia, twice), which is why the place is the
+shared one rather than `coverages[0]`. Of 117 image ARKs, 102 named their image, 11 were
+refused (403) and 4 answered 400.
 
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 
@@ -1429,6 +1467,13 @@ passed unedited across the move:*
   `OCR_MAX_TOKENS` and `MAX_OCR_INPUT_BYTES` so
   existing importers keep their paths
 - `docs/specs/volume-bisect-tool-spec.md` — the second producer's contract
+
+*Image-group place (§5.5.1):*
+- `src/utils/image-group.ts` — `imageGroupPlace`, and the group-id resolution and metadata
+  fetch lifted from `image-search.ts`, which imports them
+- `src/tools/image-transcribe.ts` — the lookup beside the fetch, `source.place` on the staged element
+- `src/types/image-transcribe.ts` — `place` on `StagedTranscription.source`
+- `tests/utils/image-group.test.ts`, `tests/tools/image-transcribe.test.ts`
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write

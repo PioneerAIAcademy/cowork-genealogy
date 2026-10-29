@@ -523,6 +523,43 @@ export function placeSegments(place: string): string[] {
     .filter((s) => s.length > 0);
 }
 
+/** FamilySearch's top-level places that are no country, lower-cased: the
+ *  World, the places it types Continent, and those it types Ocean ("At Sea" is
+ *  one). Probed with the Places API, 2026-10-29. */
+const NOT_COUNTRIES: ReadonlySet<string> = new Set([
+  "world",
+  "africa", "antarctica", "asia", "europe", "north america", "south america",
+  "at sea", "atlantic ocean", "pacific ocean", "indian ocean", "arctic ocean",
+]);
+
+/**
+ * The record's country its own places name, named as a FamilySearch standard
+ * place names it: the last segment of each place. A country `canonicalCountry`
+ * knows takes its English name ("México" is Mexico, "USA" the United States),
+ * and England, Scotland, Wales and Northern Ireland are the United Kingdom
+ * ("Campbeltown, Argyll, Scotland" is a United Kingdom record, as "…,
+ * Scotland, United Kingdom" is). Null when no place has a segment, when the
+ * places end in different countries, or when the one they end in is no country
+ * (`NOT_COUNTRIES`).
+ */
+export function countryOfPlaces(places: readonly string[]): string | null {
+  let country: string | null = null;
+  for (const place of places) {
+    const last = placeSegments(place).at(-1);
+    if (last === undefined) continue;
+    const known = canonicalCountry(last);
+    const named = known === null
+      ? last
+      : UK_CONSTITUENTS.has(known)
+        ? "United Kingdom"
+        : known.split(" ").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+    if (NOT_COUNTRIES.has(named.toLowerCase())) return null;
+    if (country !== null && named !== country) return null;
+    country = named;
+  }
+  return country;
+}
+
 /**
  * Compare the country the place TEXT names (its trailing token, when that token
  * is a recognized country) against the standard_place's segments.

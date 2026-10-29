@@ -21,6 +21,14 @@ vi.mock("../../src/utils/fs-image-fetch.js", async (importOriginal) => {
   return { ...actual, fetchFsImageBytes: fetchFsImageBytesMock };
 });
 
+// The image-group place lookup asks FamilySearch over the stubbed fetch; it is
+// stubbed itself so it never takes an OpenRouter response. No place by default.
+const imageGroupPlaceMock = vi.hoisted(() => vi.fn());
+vi.mock("../../src/utils/image-group.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/image-group.js")>();
+  return { ...actual, imageGroupPlace: imageGroupPlaceMock };
+});
+
 import {
   imageTranscribeTool,
   imageTranscribeMcpTool,
@@ -123,6 +131,8 @@ beforeEach(() => {
     contentType: "image/jpeg",
     sizeBytes: 3,
   });
+  imageGroupPlaceMock.mockReset();
+  imageGroupPlaceMock.mockResolvedValue(null);
 });
 
 afterEach(() => {
@@ -1387,6 +1397,60 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(result.staged).toBeUndefined();
     expect(result.digest).toBeUndefined();
+    expect(imageGroupPlaceMock, "no staged page, so no place to look up").not.toHaveBeenCalled();
+  });
+
+  it("saves a FamilySearch page's image-group place on the staged source, and keeps it out of the query", async () => {
+    imageGroupPlaceMock.mockResolvedValue("Trumbull, Ohio, United States");
+    mockOpenRouterOk("Deed of sale");
+    const result = await transcribe({ imageId: "004884748_02613", projectPath: dir, lookingFor: "Mays" }, LOCAL);
+    expect(imageGroupPlaceMock).toHaveBeenCalledWith({ imageId: "004884748_02613", ark: undefined }, LOCAL);
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].source).toEqual({
+      imageId: "004884748_02613",
+      place: "Trumbull, Ohio, United States",
+    });
+    expect(envelope.payload.query).toEqual({ imageId: "004884748_02613", lookingFor: "Mays" });
+  });
+
+  it("looks up an ark's image-group place by the ark it read", async () => {
+    imageGroupPlaceMock.mockResolvedValue("Trumbull, Ohio, United States");
+    mockOpenRouterOk("Deed of sale");
+    const result = await transcribe(
+      { imageArk: "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WJ-M3P?i=4&cc=1", projectPath: dir },
+      LOCAL,
+    );
+    expect(imageGroupPlaceMock).toHaveBeenCalledWith(
+      { imageId: undefined, ark: "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WJ-M3P?i=4&cc=1" },
+      LOCAL,
+    );
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].source.place).toBe("Trumbull, Ohio, United States");
+  });
+
+  it("stages no place when the lookup finds none", async () => {
+    mockOpenRouterOk("Deed of sale");
+    const result = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect(imageGroupPlaceMock).toHaveBeenCalledTimes(1);
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].source).toEqual({ imageId: "004884748_02613" });
+  });
+
+  it("looks up no place for an uploaded file or a memory", async () => {
+    imageGroupPlaceMock.mockResolvedValue("Trumbull, Ohio, United States");
+    await writeFile(join(dir, "uploads", "scan.jpg"), JPEG);
+    mockOpenRouterOk("an upload");
+    const upload = await transcribe({ file: "uploads/scan.jpg", projectPath: dir }, LOCAL);
+    mockOpenRouterOk("a memory");
+    const memory = await transcribe(
+      { memoryArtifactUrl: "https://sg30p0.familysearch.org/ark:/61903/3:1:ABCD/v2/12345/dist.jpg?ctx=x", projectPath: dir },
+      LOCAL,
+    );
+    expect(imageGroupPlaceMock).not.toHaveBeenCalled();
+    for (const r of [upload, memory]) {
+      const envelope = JSON.parse(await readFile(join(dir, r.staged!.resultsRef), "utf8"));
+      expect(envelope.payload.results[0].source).not.toHaveProperty("place");
+    }
   });
 
   it("a staging failure is non-fatal: the text still returns, with staged: null and the reason", async () => {
