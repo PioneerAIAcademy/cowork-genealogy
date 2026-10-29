@@ -668,15 +668,17 @@ export async function snapshotPerson(ctx: Ctx, inputPid: string, opts: SnapshotP
   writeJson(join(dir, "warnings.json"), w.ok ? w.value : errorBody(w.error));
 
   let relationshipUnscored = 0;
+  const unscoredReasons: Record<string, number> = {};
   if (ctx.samePerson) {
     const tree = readJson(join(dir, "tree.gedcomx.json"));
     const rows: Json[] = [];
     for (const e of personas) {
-      if (e.level !== "subject") {
+      const row = await scoreEntry(ctx, calls, errors, copyKey, read, tree, sid, e);
+      if (e.level !== "subject" && row.unscored) {
         relationshipUnscored += 1;
-        continue;
+        unscoredReasons[row.unscored] = (unscoredReasons[row.unscored] ?? 0) + 1;
       }
-      rows.push(await scoreSamePerson(ctx, calls, errors, copyKey, tree, sid, e.ark!));
+      rows.push(row);
     }
     writeJson(join(dir, "same-person.json"), rows);
   } else {
@@ -692,33 +694,106 @@ export async function snapshotPerson(ctx: Ctx, inputPid: string, opts: SnapshotP
     outcome: finish({
       audit_counts: counts,
       relationship_unscored: relationshipUnscored,
+      relationship_unscored_reasons: unscoredReasons,
       ...(unreadRelationshipSources !== null ? { relationship_sources_unread: unreadRelationshipSources } : {}),
     }),
     copyKey,
   };
 }
 
-async function scoreSamePerson(
+export type PersonaSelection = { persona_id: string; selected_by: string } | { unscored: string };
+
+type EdgeRole = "parent" | "child" | "spouse";
+
+/** The subject's role on each tree edge that cites the source, from `person-read.json`. */
+function subjectRoles(read: PersonReadResult, sid: string, entry: AuditEntry): EdgeRole[] {
+  const ids = new Set(entry.source_ids);
+  const roles = new Set<EdgeRole>();
+  for (const r of read.relationships ?? []) {
+    if (!(r.sources ?? []).some((s) => ids.has(s.ref))) continue;
+    if (r.type === "Couple" && (r.person1 === sid || r.person2 === sid)) roles.add("spouse");
+    else if (r.type === "ParentChild" && r.parent === sid) roles.add("parent");
+    else if (r.type === "ParentChild" && r.child === sid) roles.add("child");
+  }
+  return [...roles];
+}
+
+/** The record personas that hold `role` relative to P, plus P if P already holds it. */
+function roleCandidates(record: Json, p: Json, role: EdgeRole): Json[] {
+  const rels: Json[] = record.relationships ?? [];
+  const ids = new Set<string>();
+  for (const r of rels) {
+    if (role === "spouse") {
+      if (r.type !== "Couple") continue;
+      if (r.person1 === p.id) ids.add(r.person2);
+      if (r.person2 === p.id) ids.add(r.person1);
+      if (r.person1 === p.id || r.person2 === p.id) ids.add(p.id);
+    } else if (r.type === "ParentChild") {
+      const holder = role === "parent" ? r.parent : r.child;
+      const other = role === "parent" ? r.child : r.parent;
+      if (other === p.id) ids.add(holder);
+      if (holder === p.id) ids.add(p.id);
+    }
+  }
+  return (record.persons ?? []).filter((x: Json) => ids.has(x.id));
+}
+
+/**
+ * The record persona that is the audited person, or why none can be chosen.
+ * Subject-level: the ARK's own persona. Relationship-level: the ARK names the
+ * other party, so take the persona holding the subject's role relative to it,
+ * narrowed by the subject's gender. Never guesses.
+ */
+export function selectSubjectPersona(read: PersonReadResult, sid: string, entry: AuditEntry, record: Json): PersonaSelection {
+  if (!record || record.is_error || !entry.ark) return { unscored: "record_unreadable" };
+  const p = personaFor(record, entry.ark);
+  if (!p) return { unscored: "record_unreadable" };
+  if (entry.level === "subject") return { persona_id: p.id, selected_by: "ark" };
+
+  const gender = read.persons?.find((x) => x.id === sid)?.gender;
+  const picks = new Map<string, EdgeRole>();
+  let ambiguous = false;
+  const roles = subjectRoles(read, sid, entry);
+  if (roles.length === 0) return { unscored: "no_relationship" };
+  for (const role of roles) {
+    let cands = roleCandidates(record, p, role);
+    if (gender && gender !== "Unknown") cands = cands.filter((c) => c.gender === gender);
+    if (cands.length === 0) return { unscored: "no_relationship" };
+    if (cands.length > 1) ambiguous = true;
+    else picks.set(cands[0].id, role);
+  }
+  if (ambiguous) return { unscored: "ambiguous" };
+  if (picks.size > 1) return { unscored: "edges_disagree" };
+  const [[persona_id, role]] = [...picks];
+  return { persona_id, selected_by: `role:${role}` };
+}
+
+/** Score one persona source: pick the persona, then ask `same_person`. An unselectable relationship-level source gets an `unscored` row. */
+async function scoreEntry(
   ctx: Ctx,
   calls: Record<string, number>,
   errors: CallError[],
   copyKey: string,
+  read: PersonReadResult,
   tree: Json,
   sid: string,
-  ark: string,
+  entry: AuditEntry,
 ): Promise<Json> {
+  const ark = entry.ark!;
   const record = readRecord(ctx.out, copyKey, arkToBareId(ark));
-  if (!record || record.is_error) return { ark, ...errorBody(record?.error ?? "record not read") };
-  const persona = personaFor(record, ark);
-  if (!persona) {
+  const sel = selectSubjectPersona(read, sid, entry, record);
+  if ("unscored" in sel) {
+    if (entry.level !== "subject") return { ark, unscored: sel.unscored };
+    if (!record || record.is_error) return { ark, ...errorBody(record?.error ?? "record not read") };
     const error = `no persona matching the ARK ${ark}`;
     errors.push({ tool: "same_person", key: ark, error, class: "permanent" });
     return { ark, ...errorBody(error) };
   }
   const s = await call(ctx, calls, errors, "same_person", ark, () =>
-    ctx.tools.samePerson({ gedcomx1: tree, primaryId1: sid, gedcomx2: recordGedcomx(record), primaryId2: persona.id }),
+    ctx.tools.samePerson({ gedcomx1: tree, primaryId1: sid, gedcomx2: recordGedcomx(record), primaryId2: sel.persona_id }),
   );
-  return s.ok ? { ark, result: s.value } : { ark, ...errorBody(s.error) };
+  const tag = { persona_id: sel.persona_id, selected_by: sel.selected_by };
+  return s.ok ? { ark, ...tag, result: s.value } : { ark, ...tag, ...errorBody(s.error) };
 }
 
 export function readPids(file: string): string[] {
@@ -830,6 +905,7 @@ export function runBaseline(snapshot: string, threshold = DEFAULT_THRESHOLD): Ba
   const flaggedPersons: Record<string, Set<string>> = {};
   const flaggedSources: Record<string, Set<string>> = {};
   const counts = { persons: 0, living: 0, not_ready: 0, person_read_failed: 0, unscorable: 0, relationship_unscored: 0, merged_duplicate: 0 };
+  const unscoredReasons: Record<string, number> = {};
   const walls: number[] = [];
   const callTotals: number[] = [];
   const scores: number[] = [];
@@ -863,6 +939,9 @@ export function runBaseline(snapshot: string, threshold = DEFAULT_THRESHOLD): Ba
     walls.push(meta.wall_ms ?? 0);
     callTotals.push(Object.values(meta.calls ?? {}).reduce((a: number, b) => a + (b as number), 0));
     counts.relationship_unscored += meta.relationship_unscored ?? 0;
+    for (const [reason, n] of Object.entries(meta.relationship_unscored_reasons ?? {})) {
+      unscoredReasons[reason] = (unscoredReasons[reason] ?? 0) + (n as number);
+    }
     const audit: AuditList = readJson(join(dir, "audit.json"));
     const byKey = new Map(audit.entries.map((e) => [e.key, e]));
     counts.unscorable += audit.entries.filter((e) => e.class !== "persona").length;
@@ -908,7 +987,7 @@ export function runBaseline(snapshot: string, threshold = DEFAULT_THRESHOLD): Ba
   const signals = [...new Set([...Object.keys(flaggedPersons)])].sort();
   const summary = {
     threshold,
-    counts,
+    counts: { ...counts, relationship_unscored_reasons: unscoredReasons },
     flagged: Object.fromEntries(
       signals.map((s) => [s, { persons: flaggedPersons[s]?.size ?? 0, sources: flaggedSources[s]?.size ?? 0 }]),
     ),
@@ -1163,7 +1242,8 @@ async function plantOne(ctx: Ctx, f: FixtureSpecEntry): Promise<void> {
     }
     if (ctx.samePerson) {
       samePersonRows = samePersonRows.filter((r) => toArk(r.ark) !== donorArk);
-      samePersonRows.push(await scoreSamePerson(ctx, calls, errors, f.id, planted.tree, sid, donorArk));
+      const entry = planted.audit.entries.find((e) => e.ark === donorArk)!;
+      samePersonRows.push(await scoreEntry(ctx, calls, errors, f.id, planted.read, planted.tree, sid, entry));
     }
   } else if (f.type === "indexing_error") {
     const ark = toArk(f.edit!.persona_ark);
@@ -1172,9 +1252,10 @@ async function plantOne(ctx: Ctx, f: FixtureSpecEntry): Promise<void> {
     if (!record || record.is_error) throw new Error(`plant ${f.id}: host record ${ark} not in the snapshot`);
     const { record: edited } = applyIndexingPlant(record, f.edit!);
     writeJson(join(dst, "records", `${id}.json`), edited);
-    if (ctx.samePerson && audit.entries.some((e) => e.ark === ark && e.level === "subject")) {
+    const entry = audit.entries.find((e) => e.ark === ark && e.class === "persona");
+    if (ctx.samePerson && entry) {
       samePersonRows = samePersonRows.filter((r) => toArk(r.ark) !== ark);
-      samePersonRows.push(await scoreSamePerson(ctx, calls, errors, f.id, tree, sid, ark));
+      samePersonRows.push(await scoreEntry(ctx, calls, errors, f.id, read, tree, sid, entry));
     }
   }
   failIf();

@@ -83,9 +83,10 @@ import { MONTH_NUM } from "../utils/date-constants.js";
 import { treeDiff } from "./tree-diff.js";
 import {
   collectionKey,
+  loadStoredCollectionUrls,
   readExternalCollections,
-  storedCollectionKeys,
   EXTERNAL_COLLECTIONS_FILE,
+  type StoredCollectionUrls,
   type ExternalCollectionsDoc,
   type StoredCollectionRow,
 } from "../utils/external-collections-store.js";
@@ -5361,6 +5362,86 @@ function planItemLogAttributionInvariants(
   ];
 }
 
+/**
+ * Starter vocabulary per plan-item `record_type`: the terms whose presence in an
+ * attributed `log[]` entry's tool/notes/query confirms the completing search
+ * touched this record type. **Ported verbatim from the eval validator
+ * `RECORD_TYPE_TERMS` in `eval/harness/validators/test_search_full_text.py`; the
+ * two planes must agree — change both or neither.** A `record_type` absent here
+ * gets the structural check (`planItemLogAttributionInvariants`) only, never a
+ * content assertion it has no vocabulary for.
+ */
+const RECORD_TYPE_TERMS: Record<string, readonly string[]> = {
+  probate: [
+    // No bare "estate": it is land in "real estate" (American) and in
+    // British/Irish estate records, so it passed the deed/land note this guard
+    // exists to refuse. The specific terms below carry probate without it (#3592).
+    "executor", "executrix", "administrator", "administratrix",
+    "appraise", "appraisement", "inventory", "bequeath", "testament",
+    "heir", "legatee", "probate",
+  ],
+  church: ["baptism", "baptismal", "christen", "confirmation", "burial"],
+  church_record: ["baptism", "baptismal", "christen", "confirmation", "burial"],
+  vital: ["birth", "death", "marriage"],
+  vital_record: ["birth", "death", "marriage"],
+  marriage: ["marriage", "wedding", "banns", "matrimon"],
+  census: ["census", "household", "dwelling", "enumerat"],
+  naturalization: ["naturaliz", "declaration of intent"],
+  obituary: ["obituary", "death notice"],
+};
+
+/**
+ * A plan item with a vocabulary-bearing `record_type` may not stand at
+ * `completed` unless some `log[]` entry attributed to it names a search of THAT
+ * record type. Completing a probate item off a deed/land search — the
+ * `ut_search_full_text_016`/`_020` shape, deep-dive #1651 finding 3 — claims
+ * probate work no part of the document evidences.
+ *
+ * This is the CONTENT half of the completion check; `planItemLogAttributionInvariants`
+ * is the STRUCTURAL half (some entry must name the item at all). The two never
+ * double-report: when nothing is attributed this returns [] and leaves the
+ * refusal to that gate; a `record_type` outside `RECORD_TYPE_TERMS` gets the
+ * structural check only. Keyed to the same trigger as that gate (the entry ends
+ * at `completed`) and reads the same LIVE `research.log` for the same reason —
+ * `log[]` is append-only and owned by `research_log_append`, so the live
+ * document and the pre-call snapshot carry an identical log.
+ *
+ * Mirrors the eval validator `test_plan_item_completion_matches_its_own_record_type`,
+ * including its haystack (each attributed entry's `tool`, `notes` and JSON-
+ * serialized `query`, lowercased). Decidable from `research.json` alone
+ * (ADR-0011's first question), so it is a writer-tool precondition rather than
+ * the agent-body prose it was first diagnosed as (#3592).
+ */
+export function planItemCompletionRecordTypeInvariants(entry: any, research: any): string[] {
+  if (entry?.status !== "completed") return [];
+  const pid = entry?.id;
+  if (typeof pid !== "string" || pid === "") return [];
+  const terms = RECORD_TYPE_TERMS[String(entry?.record_type ?? "").toLowerCase()];
+  if (!terms) return []; // record_type outside the starter table — structural check only
+  const attributed = (Array.isArray(research?.log) ? research.log : []).filter(
+    (e: any) => e && e.plan_item_id === pid,
+  );
+  if (attributed.length === 0) return []; // planItemLogAttributionInvariants' job, not this one's
+  const haystack = attributed
+    .map((e: any) => `${e.tool ?? ""} ${e.notes ?? ""} ${JSON.stringify(e.query ?? {})}`)
+    .join(" ")
+    .toLowerCase();
+  // Leading word-boundary only (`\bterm`), not `\bterm\b`: several terms are
+  // deliberate stems (`naturaliz`, `enumerat`, `christen`, `appraise`) and
+  // need to match plurals (`baptism`→"baptisms"), which a trailing boundary
+  // would miss; the leading boundary still rejects a substring inside a word
+  // ("their" ≠ `heir`). The eval validator uses the same rule (#3592).
+  if (terms.some((t) => new RegExp(`\\b${t}`).test(haystack))) return [];
+  return [
+    `plan_items[${pid}]: record_type '${entry.record_type}', but no log[] entry attributed to it ` +
+      `names a ${entry.record_type} search — none mentions any of ` +
+      `${terms.map((t) => `'${t}'`).join(", ")}. Completing it would claim a ${entry.record_type} ` +
+      `search the document does not record. Run and log the ${entry.record_type} search this item ` +
+      `calls for with research_log_append({ planItemId: "${pid}", ... }) before completing it, or ` +
+      `skip it with a skip_category if that search will not be done.`,
+  ];
+}
+
 // A plan item whose external-site search is still awaiting a capture must not
 // be marked terminal (`completed`/`skipped`): search-external-sites cannot
 // search a paywalled site — it hands the user a URL and waits for a PDF — so a
@@ -5452,7 +5533,7 @@ const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_sear
  *  search's entry names the item. An `error` entry is not a search that ran,
  *  and an external hand-off counts only once its capture arrived.
  *
- *  **One exemption: the deferred external hand-off.** search-records runs
+ *  **Exemption 1: the deferred external hand-off.** search-records runs
  *  three nil searches, then hands the item to search-external-sites, which,
  *  with no user present to capture, logs a deferred entry and skips the item
  *  `inaccessible`. `completed` is refused there by capture-pending, so refusing
@@ -5461,7 +5542,11 @@ const SEARCH_THAT_RAN = new Set(["record_search", "fulltext_search", "image_sear
  *  `completed`, this rule stays silent and capture-pending answers alone: it
  *  lets an `inaccessible` or `user_declined` skip stand, and refuses any other
  *  category with a message naming those two. Capture-pending itself decides
- *  which entry is latest, so the two rules cannot disagree. */
+ *  which entry is latest, so the two rules cannot disagree.
+ *
+ *  **Exemption 2: the wrong record type.** Wherever the completion record-type
+ *  check would refuse `completed` (no attributed search names the item's
+ *  record type), this rule is silent too, so the skip is the item's exit (#3592). */
 export function planItemSearchedSkipInvariants(entry: any, research: any): string[] {
   if (entry?.status !== "skipped") return [];
   const pid = entry?.id;
@@ -5476,6 +5561,12 @@ export function planItemSearchedSkipInvariants(entry: any, research: any): strin
   );
   if (!ran) return [];
   if (planItemCapturePendingInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
+  // Record-type escape hatch (mirrors the capture-pending one above): if the
+  // item cannot be completed because its searches are all the wrong record type
+  // (planItemCompletionRecordTypeInvariants would refuse), then skipping is the
+  // honest exit — otherwise it deadlocks at 'in_progress', neither completable
+  // nor skippable (the stuck state #3682's dispose flow removed). #3592.
+  if (planItemCompletionRecordTypeInvariants({ ...entry, status: "completed" }, research).length > 0) return [];
   return [
     `plan_items[${pid}]: ${ran.id} (${ran.tool}, ${ran.outcome}) shows this item's search ran, ` +
       `so it cannot be marked 'skipped', which says nothing was searched. Set it to 'completed' ` +
@@ -5556,20 +5647,6 @@ function planItemSkipInvariants(
     );
   }
   return errors;
-}
-
-/** The curated collections in `external-collections.json`, by `collectionKey`, or
- *  why they could not be read. Every place's rows, so a plan item's free-text
- *  jurisdiction never has to be matched to a stored place. Read once per call,
- *  before the sync apply loop, and only when an op sets `collection_url`. */
-export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
-
-async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
-  try {
-    return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : String(e) };
-  }
 }
 
 /** Plan items an op APPENDS: a `plan_items` append's entry, or a `plans` append's
@@ -7460,6 +7537,7 @@ function applyOne(
         );
         if (item && alreadyCompleted.has(item.id)) continue;
         invariantErrors.push(...planItemLogAttributionInvariants(item, research));
+        invariantErrors.push(...planItemCompletionRecordTypeInvariants(item, research));
         // Inline `items[]` on a `plans` op reaches the same field, so the skip
         // rule has to hold here too or it is one `{ ...entry }` spread away
         // from being bypassed. `isAppend: true` — an item arriving inline has
@@ -7507,6 +7585,7 @@ function applyOne(
       invariantErrors.push(
         ...planItemLogAttributionInvariants(resultEntry, research, op.op === "append"),
       );
+      invariantErrors.push(...planItemCompletionRecordTypeInvariants(resultEntry, research));
     }
     // Capture-pending guard (#1226): refuse moving an item INTO a terminal
     // status while its latest external-site search still awaits a capture.
@@ -7836,33 +7915,37 @@ function applyOne(
 
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
 
-/** Find a converter-resolved standard_place inside a sidecar record's
- *  simplified gedcomx whose fact `place` matches `place` (trimmed,
- *  case-insensitive). Never geocode what the source record already resolved. */
-function sidecarStandardPlace(gx: any, place: string): string | null {
+/** The converter-resolved standard_place a sidecar record's simplified gedcomx
+ *  gives an assertion's own fact: the facts of its `record_persona_id` (the
+ *  persona's own, and those of a relationship whose `person1` or `person2` it
+ *  is; a ParentChild relationship's `parent`/`child` facts are not read) of its
+ *  `fact_type` (`canonicalFactKey`) and with its `place` (trimmed,
+ *  case-insensitive). Null unless every such fact carries the same one, so one
+ *  fact's name never lands on another person's or another fact's. Never geocode
+ *  what the source record already resolved. */
+function sidecarStandardPlace(gx: any, entry: any): string | null {
   if (!gx || typeof gx !== "object") return null;
-  const want = place.trim().toLowerCase();
-  const factLists: any[][] = [];
+  const persona = entry.record_persona_id;
+  const facts: any[] = [];
   for (const p of Array.isArray(gx.persons) ? gx.persons : []) {
-    if (p && Array.isArray(p.facts)) factLists.push(p.facts);
+    if (p?.id === persona && Array.isArray(p.facts)) facts.push(...p.facts);
   }
   for (const r of Array.isArray(gx.relationships) ? gx.relationships : []) {
-    if (r && Array.isArray(r.facts)) factLists.push(r.facts);
+    if ((r?.person1 === persona || r?.person2 === persona) && Array.isArray(r.facts)) facts.push(...r.facts);
   }
-  for (const facts of factLists) {
-    for (const f of facts) {
-      if (
-        f &&
-        typeof f.place === "string" &&
-        f.place.trim().toLowerCase() === want &&
-        typeof f.standard_place === "string" &&
-        f.standard_place.length > 0
-      ) {
-        return f.standard_place;
-      }
-    }
-  }
-  return null;
+  const want = entry.place.trim().toLowerCase();
+  const names = new Set(
+    facts
+      .filter(
+        (f) =>
+          typeof f?.place === "string" &&
+          f.place.trim().toLowerCase() === want &&
+          canonicalFactKey(f.type) === canonicalFactKey(entry.fact_type),
+      )
+      .map((f) => f.standard_place),
+  );
+  const [name] = names;
+  return names.size === 1 && typeof name === "string" ? name : null;
 }
 
 /** A sidecar result's record id: record_search and record_read stage GedcomX
@@ -8038,9 +8121,15 @@ export function reextractionKey(a: any): string | undefined {
         : undefined;
   if (who === undefined) return undefined;
   const log = typeof a.log_entry_id === "string" && a.log_entry_id !== "" ? a.log_entry_id : "";
-  const ftKey = factTypeKey(a.fact_type);
-  const fact = Object.hasOwn(FACT_TYPE_ALIASES, ftKey) ? factTypeKey(FACT_TYPE_ALIASES[ftKey]) : ftKey;
-  return [a.source_id, arkToBareId(a.record_id), log, who, fact].join("\u0000");
+  return [a.source_id, arkToBareId(a.record_id), log, who, canonicalFactKey(a.fact_type)].join("\u0000");
+}
+
+/** A fact type's comparison key after the `FACT_TYPE_ALIASES` fold: "Baptism",
+ *  `baptism` and `christening` are one fact type, as are "BirthRegistration" and
+ *  `birth_registration`. */
+function canonicalFactKey(ft: unknown): string {
+  const key = factTypeKey(ft);
+  return Object.hasOwn(FACT_TYPE_ALIASES, key) ? factTypeKey(FACT_TYPE_ALIASES[key]) : key;
 }
 
 /** The canonical spelling of a fact_type for a message (the alias fold §3.7 applies). */
@@ -8598,12 +8687,15 @@ async function prepareOps(
   }
   const readSidecarResults = sidecarResultsReader(projectPath);
 
-  // The other places each record's assertions name in this batch: a bare place
-  // ("Shenandoah") is resolved against them, not against the whole world.
+  // The other places each record's assertions name in this batch, each by its
+  // standard_place when it has one, else its place: a bare place ("Shenandoah")
+  // is resolved against them, not against the whole world. A record read's
+  // named fact carries its as-written text ("Den Haag") as `place`, so the
+  // standard is the one that still names the fact's jurisdictions.
   const placesByRecord = new Map<string, string[]>();
   for (const op of ops) {
     const e = op.section === "assertions" && op.op === "append" ? (op.entry as any) : null;
-    const place = e ? factText(e.place) : undefined;
+    const place = e ? (factText(e.standard_place) ?? factText(e.place)) : undefined;
     if (!place) continue;
     const key = String(e.record_id ?? "");
     placesByRecord.set(key, [...(placesByRecord.get(key) ?? []), place]);
@@ -8624,7 +8716,8 @@ async function prepareOps(
     countryRecord: any,
   ): Promise<void> => {
     // ── Place lever (b): never geocode what the source record already
-    // resolved — copy the sidecar's standard_place for the same place string.
+    // resolved — copy the standard_place the sidecar gives this assertion's own
+    // fact (same persona, fact type and place string).
     // `standard_place: null` is an explicit opt-out (skip resolution + guard);
     // only a fully omitted field triggers resolution. A non-place phrase
     // ("Same House") is left unset, silently: it has no standard form.
@@ -8637,7 +8730,7 @@ async function prepareOps(
       let sp: string | null = null;
       let source: "sidecar" | "geocoded" | null = null;
       if (matchedRecord) {
-        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry.place);
+        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry);
         if (sp) source = "sidecar";
       }
       if (!sp && input.resolveStandardPlace !== false) {
