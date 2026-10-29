@@ -110,7 +110,7 @@ repo's identifier-casing rule):
   exhaustedImageGroups: [{               // films whose browse cap is spent — §2.5
     imageGroup: string,                  // film number, e.g. "008230326"
     imagesRead: number,                  // distinct images counted, >= 20
-    planItemIds: string[],               // plan items with an image_search log entry on it
+    planItemIds: string[],               // open plan items with an image_search log entry on it
   }],
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
@@ -486,7 +486,10 @@ by film. Nothing is persisted. `planItemIds` are the distinct `plan_item_id`s of
 the router can match the plan item it is about to delegate (plan items carry no
 image group). Only `image_search` entries count: that is the tool `search-images`
 logs a browse under, and a `fulltext_search` entry scoped to the same film is not a
-browse. `[]` when no film is spent, and when the log is absent or unreadable — like
+browse. Only items still `planned` or `in_progress` on an `active` plan are listed:
+once `research-plan` disposes of an item it drops off, so the router does not send it
+back on the next pass; the film itself stays listed while its cap is spent. `[]` when
+no film is spent, and when the log is absent or unreadable — like
 the cap itself, the field never fails a call. Reads that named no project are
 counted in memory only and are not visible here.
 
@@ -597,7 +600,9 @@ untouched.
   items of its `image_search` entries, across sub-volumes of the film, and not those
   of a `fulltext_search` entry on it; 19 images plus a re-read does not list; a torn
   log line is skipped; a spent film with no `image_search` entry lists with
-  `planItemIds: []`; an empty project gives `[]`.
+  `planItemIds: []`; an empty project gives `[]`; a `completed` or `skipped` item,
+  and an item on a `superseded` plan, drop off while `planned` and `in_progress`
+  items on the active plan stay.
 
 ## 6. Consumers / wiring
 

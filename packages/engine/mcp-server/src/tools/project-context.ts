@@ -68,24 +68,33 @@ export type ProjectContextAwaitingUser = AwaitingHandOff;
 export interface ProjectContextExhaustedImageGroup {
   imageGroup: string;
   imagesRead: number;
-  /** Plan items with an `image_search` log entry on this film. */
+  /** Open plan items with an `image_search` log entry on this film. */
   planItemIds: string[];
 }
 
-/** Each exhausted film with the plan items whose `image_search` log entries
- *  browsed it. Only `image_search` entries: that is what search-images logs, and
- *  a `fulltext_search` entry scoped to the same film is not a browse. */
+/** Each exhausted film with the open plan items whose `image_search` log
+ *  entries browsed it. Only `image_search` entries: that is what search-images
+ *  logs, and a `fulltext_search` entry scoped to the same film is not a browse.
+ *  Only items still `planned` or `in_progress` on an `active` plan: once an item
+ *  is disposed of it must drop off, or the router sends it back every pass. */
 async function exhaustedGroupsWithPlanItems(
   projectPath: string,
-  log: unknown,
+  research: any,
 ): Promise<ProjectContextExhaustedImageGroup[]> {
   const groups = await exhaustedImageGroups(projectPath);
   if (groups.length === 0) return [];
+  const open = new Set<string>();
+  for (const p of Array.isArray(research?.plans) ? research.plans : []) {
+    if (!p || typeof p !== "object" || p.status !== "active") continue;
+    for (const i of Array.isArray(p.items) ? p.items : []) {
+      if (i && typeof i.id === "string" && (i.status === "planned" || i.status === "in_progress")) open.add(i.id);
+    }
+  }
   const byGroup = new Map<string, string[]>(groups.map((g) => [g.imageGroup, []]));
-  for (const e of Array.isArray(log) ? log : []) {
+  for (const e of Array.isArray(research?.log) ? research.log : []) {
     if (!e || typeof e !== "object" || e.tool !== "image_search") continue;
     const num = e.query?.imageGroupNumber;
-    if (typeof num !== "string" || typeof e.plan_item_id !== "string") continue;
+    if (typeof num !== "string" || typeof e.plan_item_id !== "string" || !open.has(e.plan_item_id)) continue;
     const ids = byGroup.get(num.split("_")[0]);
     if (ids && !ids.includes(e.plan_item_id)) ids.push(e.plan_item_id);
   }
@@ -297,7 +306,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
   const externalCollections = await externalCollectionCounts(input.projectPath);
-  const exhausted = await exhaustedGroupsWithPlanItems(input.projectPath, research?.log);
+  const exhausted = await exhaustedGroupsWithPlanItems(input.projectPath, research);
 
   return {
     ok: true,
