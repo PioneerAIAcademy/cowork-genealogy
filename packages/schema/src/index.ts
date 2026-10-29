@@ -423,6 +423,8 @@ export interface Namesake {
   time_period?: string | null
   record_ids: string[]
   log_entry_ids?: string[]
+  /** Stamped by research_append: listed record id to the persona its search result names. */
+  record_persona_ids?: Record<string, string>
   notes?: string | null
   created: string
 }

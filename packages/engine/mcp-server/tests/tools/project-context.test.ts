@@ -6,6 +6,7 @@ import { tmpdir } from "os";
 import { projectContext } from "../../src/tools/project-context.js";
 import { readBuildInfo } from "../../src/utils/build-info.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
+import { getProjectStore } from "../../src/store/project-store.js";
 
 describe("project_context", () => {
   let dir: string;
@@ -225,6 +226,89 @@ describe("project_context", () => {
       sources: [],
       localities: [],
       awaitingUser: [],
+      exhaustedImageGroups: [],
+    });
+  });
+
+  describe("exhaustedImageGroups: films whose browse cap is spent (#3549)", () => {
+    const PROJECT = { id: "rp_001", objective: "T", status: "active", created: "2026-01-01", updated: "2026-01-01" };
+    const id = (group: string, n: number) => `${group}_${String(n).padStart(5, "0")}`;
+    async function browseLog(lines: string[]) {
+      await getProjectStore().appendText(dir, "results/image-browse.jsonl", lines.map((l) => `${l}\n`).join(""));
+    }
+    function reads(group: string, count: number): string[] {
+      return Array.from({ length: count }, (_, i) =>
+        JSON.stringify({ image_group: group, image_id: id(group, i + 1), tool: "image_transcribe", at: "2026-10-14T00:00:00Z" }),
+      );
+    }
+    function logEntry(planItemId: string, tool: string, query: Record<string, unknown>) {
+      return { id: `log_${planItemId}`, plan_item_id: planItemId, performed: "2026-10-14T00:00:00Z", tool, query, outcome: "partial" };
+    }
+    function plan(planId: string, status: string, items: Record<string, string>) {
+      return {
+        id: planId,
+        question_id: "q_001",
+        status,
+        created: "2026-10-14",
+        items: Object.entries(items).map(([itemId, itemStatus], n) => ({ id: itemId, sequence: n + 1, status: itemStatus })),
+      };
+    }
+
+    it("lists only open items on an active plan, so a disposed item drops off", async () => {
+      await writeProject(
+        {
+          project: PROJECT,
+          plans: [
+            plan("pl_001", "superseded", { pli_001: "planned" }),
+            plan("pl_002", "active", { pli_002: "completed", pli_003: "skipped", pli_004: "in_progress", pli_005: "planned" }),
+          ],
+          log: ["pli_001", "pli_002", "pli_003", "pli_004", "pli_005"].map((itemId) =>
+            logEntry(itemId, "image_search", { imageGroupNumber: "004452257_001_ABCD-123" }),
+          ),
+        },
+        { persons: [], relationships: [], sources: [] },
+      );
+      await browseLog(reads("004452257", 20));
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok && r.exhaustedImageGroups).toEqual([
+        { imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_004", "pli_005"] },
+      ]);
+    });
+
+    it("lists a film at the cap with the plan items that browsed it, and only image_search entries", async () => {
+      await writeProject(
+        {
+          project: PROJECT,
+          plans: [plan("pl_001", "active", { pli_002: "planned", pli_003: "planned", pli_004: "planned" })],
+          log: [
+            logEntry("pli_002", "image_search", { imageGroupNumber: "004452257_001_ABCD-123" }),
+            logEntry("pli_002", "image_search", { imageGroupNumber: "004452257_002_ABCD-456" }),
+            logEntry("pli_003", "fulltext_search", { imageGroupNumber: "004452257" }),
+            logEntry("pli_004", "image_search", { imageGroupNumber: "004000001" }),
+          ],
+        },
+        { persons: [], relationships: [], sources: [] },
+      );
+      await browseLog([...reads("004452257", 20), ...reads("004000001", 3)]);
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok && r.exhaustedImageGroups).toEqual([
+        { imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_002"] },
+      ]);
+    });
+
+    it("counts distinct images, so 19 plus a re-read is not exhausted", async () => {
+      await writeProject({ project: PROJECT }, { persons: [], relationships: [], sources: [] });
+      const nineteen = reads("004452257", 19);
+      await browseLog([...nineteen, nineteen[0]]);
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok && r.exhaustedImageGroups).toEqual([]);
+    });
+
+    it("skips a torn line, and lists a film with no browse logged against a plan item", async () => {
+      await writeProject({ project: PROJECT }, { persons: [], relationships: [], sources: [] });
+      await browseLog(["{not json", ...reads("008230326", 20)]);
+      const r = await projectContext({ projectPath: dir });
+      expect(r.ok && r.exhaustedImageGroups).toEqual([{ imageGroup: "008230326", imagesRead: 20, planItemIds: [] }]);
     });
   });
 

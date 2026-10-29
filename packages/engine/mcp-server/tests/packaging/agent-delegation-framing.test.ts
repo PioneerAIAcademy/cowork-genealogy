@@ -1038,7 +1038,7 @@ describe("agent delegation framing", () => {
       [...routed].sort(),
       "the hook routes to an agent set this test could not resolve. It reads " +
         "OWNED_SECTIONS, OWNED_DECLARATIONS and OWNED_FIELDS; if the routing moved, follow it.",
-    ).toEqual(["gps-mentor", "person-evidence", "proof-conclusion", "research-exhaustiveness"]);
+    ).toEqual(["gps-mentor", "person-evidence", "proof-conclusion", "research-exhaustiveness", "search-records"]);
 
     // Each routed callee must carry the rule on its own side.
     const undefended = [...routed].filter(

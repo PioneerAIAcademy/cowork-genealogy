@@ -260,7 +260,7 @@ Sequence inside each tool:
    `eval/harness/scripts/dump_namesake_call_states.py`): no pair is joined by a
    relationship, and none folds a FamilySearch or starting-tree person into one
    that is neither (0 of 7 each). No committed research document records a
-   namesake (0 of 548), so the namesake checks refuse nothing yet. With rows
+   namesake yet (0 of 560), so the namesake checks have refused nothing in a committed run. With rows
    planted on the survivors, on the folded persons, or on both,
    `mergeNamesakeRefusals` refuses 7, 12 and 19 links, every one in a correct
    merge of two copies of one person whose row holder lacked what tied the other

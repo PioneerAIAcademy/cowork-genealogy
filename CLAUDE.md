@@ -83,6 +83,13 @@ locked-out audience.
   `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
 - `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
+- `small-and-simple/` — single-purpose functions (a few FamilySearch calls and
+  an LLM call each) for FamilySearch to run inside its own Node server.
+  Independent of everything else here: own `package.json` and lockfile, imports
+  nothing from `packages/`, and its CI job is `small-and-simple.yml`. It
+  re-implements engine pieces (user agent, retry, image fetch) on purpose, so
+  "Code reuse" below does not apply across that line. Its README owns the
+  contract each solution follows.
 - `scripts/` — Build scripts for every artifact (`scripts/eb_bundles/` for the
   Beanstalk bundles).
 - `packages/engine/mcp-server/dev/` — Developer-only scripts: `try-*.ts` one-shot
@@ -811,7 +818,8 @@ Where to look first:
   installs `unboundProjectStore` as the process store so nothing falls through
   to the file backend. **No module outside
   `src/store/` imports `fs`** except auth (per-user files) and the bundled-data
-  reader — enforced by `tests/packaging/no-fs-outside-store.test.ts`, which
+  reader (`src/utils/bundled-data.ts`) — enforced by
+  `tests/packaging/no-fs-outside-store.test.ts`, which
   also fails when an exemption stops being needed. A second backend runs
   `tests/store/conformance.ts`. That second backend is `PgS3ProjectStore`
   (`pg-s3-project-store.ts`) — constructor-scoped to one project, documents in
