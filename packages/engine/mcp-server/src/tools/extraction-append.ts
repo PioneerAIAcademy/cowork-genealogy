@@ -42,7 +42,14 @@ import {
   type ExtractResult,
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
-import { readStagedResults, STAGING_SUBDIR } from "../utils/results-staging.js";
+import {
+  findFulltextHit,
+  readResultsEnvelope,
+  readStagedResults,
+  splitHitRef,
+  STAGING_SUBDIR,
+  type FulltextHitRow,
+} from "../utils/results-staging.js";
 import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { arkToBareId } from "../utils/ark.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -183,7 +190,8 @@ export interface DocumentInput {
   /** The `results/` ref of the StagedTranscription the agent read. */
   transcriptionRef?: string;
   /** `image_transcribe`'s imageRef. The source's image_filename comes from the
-   *  staged transcription's `image_ref` when it has one; this is the fallback. */
+   *  staged transcription's `image_ref` when it has one; this is the fallback.
+   *  A full-text hit `transcriptionRef` writes no image_filename at all. */
   imageFilename?: string;
 }
 
@@ -338,15 +346,16 @@ export interface PlanItemsOutcome {
 /**
  * Completes the plan item behind a record this call extracted or re-sent. An
  * `in_progress` item on an active plan completes once ANY of its plan-tied
- * positive or partial `record_search` entries lists, in its sidecar, a record
- * that now has an assertion (lead, 2026-10-19: "every entry" left 124 of 617
+ * positive or partial `record_search` or `fulltext_search` entries lists, in its
+ * sidecar, a record or hit that now has an assertion (lead, 2026-10-19: "every entry" left 124 of 617
  * previously-completed FamilySearch items stuck, and one extraction already
  * puts "the plan item's evidence in hand", lead, 2026-08-23). Read off the
  * saved results, so a reused read, a re-send and a record two items both found
- * are covered alike (lead, 2026-10-20). Only `record_search` sidecars: a
- * full-text result names an image, never a record. Each item is its own write,
- * because one refused item fails a whole batch; a refusal is reported and
- * never fails the extraction.
+ * are covered alike (lead, 2026-10-20). `record_search` sidecars list records by
+ * `recordId`; `fulltext_search` sidecars list hits by `id`, and a hit is
+ * extracted under that id (issue #3522, Richard, 2026-10-28). Each item is its
+ * own write, because one refused item fails a whole batch; a refusal is
+ * reported and never fails the extraction.
  */
 async function completePlanItems(
   projectPath: string,
@@ -365,13 +374,14 @@ async function completePlanItems(
   const extracted = [...bareIds].filter((b) => sourceIdsForRecordIds(research, widen(b)).size > 0);
   if (extracted.length === 0) return undefined;
   const sidecarCache = new Map<string, Set<string>>();
-  const listed = async (ref: string): Promise<Set<string>> => {
+  const listed = async (ref: string, tool: string): Promise<Set<string>> => {
     let ids = sidecarCache.get(ref);
     if (!ids) {
       ids = new Set<string>();
+      const key = tool === "fulltext_search" ? "id" : "recordId";
       try {
         for (const r of (await readStagedResults(projectPath, ref)) as any[]) {
-          if (typeof r?.recordId === "string") ids.add(arkToBareId(r.recordId));
+          if (typeof r?.[key] === "string") ids.add(arkToBareId(r[key]));
         }
       } catch {
         // An unreadable sidecar lists nothing; the item stays as it is.
@@ -386,13 +396,13 @@ async function completePlanItems(
     const searches = log.filter(
       (e) =>
         e?.plan_item_id === item.itemId &&
-        e?.tool === "record_search" &&
+        (e?.tool === "record_search" || e?.tool === "fulltext_search") &&
         (e?.outcome === "positive" || e?.outcome === "partial") &&
         typeof e?.results_ref === "string",
     );
     let hit = false;
     for (const e of searches) {
-      const ids = await listed(e.results_ref);
+      const ids = await listed(e.results_ref, e.tool);
       // A search "lists the record" when it lists any of its persona ARKs.
       if (extracted.some((b) => [...widen(b)].some((x) => ids.has(x)))) {
         hit = true;
@@ -1082,22 +1092,31 @@ const FORM_NOTE: Record<string, string> = {
   compiled_work: "read from a compiled work",
 };
 
+/** The note on a document extracted from a full-text hit's own transcript
+ *  (issue #3522): FamilySearch's machine transcription, not one of ours. */
+const FULLTEXT_NOTE = "read from FamilySearch's full-text machine transcription of the page image";
+
 /** The source entry for a document. `derivative` for everything but a compiled
- *  work (genealogist ruling, 2026-09-30): nothing on this path is `original`. */
+ *  work (genealogist ruling, 2026-09-30): nothing on this path is `original`.
+ *  A full-text hit adds no field and no value: its text is a machine transcript
+ *  like our own OCR, so it differs only in the note and the page URL. */
 function buildDocumentSource(
   d: DocumentInput,
   logEntryId: string,
   transcription: string | undefined,
   stagedImageRef: string | undefined,
+  fulltextHit?: FulltextHitRow,
 ): Record<string, unknown> {
   const src = d.document.source;
   // Derived at the write boundary, like transcription_truncated: the scan the
-  // staged text was read from beats whatever the agent relayed.
-  const imageFilename = stagedImageRef ?? d.imageFilename;
+  // staged text was read from beats whatever the agent relayed. A full-text hit
+  // stores no scan, so a relayed filename there names nothing this source read.
+  const imageFilename = fulltextHit ? undefined : (stagedImageRef ?? d.imageFilename);
+  const url = src.url ?? fulltextHit?.sourceUrl;
   const accessed = todayIso();
   const head = [src.title, src.creator, src.created, src.locator].filter(Boolean).join(", ");
   return {
-    citation: `${head} (${src.url ? `${src.url} : ` : ""}accessed ${accessed}).`,
+    citation: `${head} (${url ? `${url} : ` : ""}accessed ${accessed}).`,
     citation_detail: {
       who: src.creator ?? "the record's parties",
       what: src.title,
@@ -1110,8 +1129,8 @@ function buildDocumentSource(
     repository: src.repository,
     access_date: accessed,
     log_entry_id: logEntryId,
-    notes: [FORM_NOTE[d.document.documentForm], src.notes].filter(Boolean).join(". "),
-    ...(src.url ? { url: src.url } : {}),
+    notes: [fulltextHit ? FULLTEXT_NOTE : FORM_NOTE[d.document.documentForm], src.notes].filter(Boolean).join(". "),
+    ...(url ? { url } : {}),
     ...(transcription ? { transcription } : {}),
     ...(imageFilename ? { image_filename: imageFilename } : {}),
   };
@@ -1154,6 +1173,57 @@ function coerceComputed(f: unknown): void {
     } else out.push(c);
   }
   fact.computed = [...new Set(out)];
+}
+
+/**
+ * Cite one full-text hit (`<base>#<hit>`) for a document, or say why not. The
+ * hit must belong to a LOGGED `fulltext_search` (a staged search has no entry to
+ * cite yet), exist in that search's results, carry a transcript, and be the
+ * document's own record: a hit is extracted under its own id, so two documents
+ * read from one hit share a recordId.
+ */
+async function citeFulltextHit(
+  projectPath: string,
+  log: any[],
+  recordId: string,
+  ref: string,
+  base: string,
+  hit: string,
+): Promise<{ logId: string; resultsRef: string; hit: FulltextHitRow } | string> {
+  if (base.startsWith(`${STAGING_SUBDIR}/`)) {
+    return (
+      `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
+      `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
+      `'<its results_ref>#<hit id>'.`
+    );
+  }
+  const entry = log.find((e) => e?.results_ref === base && typeof e?.id === "string");
+  if (!entry || entry.tool !== "fulltext_search") {
+    return (
+      `transcriptionRef '${ref}': a '#…' hit selector cites one hit of a logged fulltext_search, and ` +
+      (entry ? `${base} holds the results of a ${entry.tool} entry (${entry.id}).` : `no log entry names ${base}.`)
+    );
+  }
+  let results: unknown[];
+  try {
+    results = (await readResultsEnvelope(projectPath, base)).results;
+  } catch (e) {
+    return `transcriptionRef '${ref}': ${e instanceof Error ? e.message : String(e)}`;
+  }
+  const found = findFulltextHit(results, hit);
+  if (!found) {
+    return `transcriptionRef '${ref}': ${entry.id}'s results hold no hit '${hit}' (${results.length} hits).`;
+  }
+  if (arkToBareId(found.row.id) !== arkToBareId(recordId)) {
+    return (
+      `recordId '${recordId}' is not the hit its transcriptionRef cites (${found.row.id}): a full-text ` +
+      `hit is extracted under its own id.`
+    );
+  }
+  if (typeof found.row.textDocument !== "string" || found.row.textDocument === "") {
+    return `transcriptionRef '${ref}': hit ${found.row.id} carries no transcript to extract from.`;
+  }
+  return { logId: entry.id, resultsRef: base, hit: found.row };
 }
 
 /**
@@ -1228,10 +1298,39 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
   // `results/<log_id>.json`) is cited, not logged a second time as a
   // `user_provided` entry, which would drop the scan's text from the source.
   const log: any[] = Array.isArray(research.log) ? research.log : [];
-  const cited = new Map<DocOutcome, { logId: string; resultsRef: string }>();
-  for (const o of outcomes) {
+  const cited = new Map<DocOutcome, { logId: string; resultsRef: string; hit?: FulltextHitRow }>();
+  // One document per full-text hit: a hit is extracted under its own id, so a
+  // second document from the same hit would re-persist that record.
+  const hitDocument = new Map<string, number>();
+  for (const [i, o] of outcomes.entries()) {
     const ref = o.d.transcriptionRef;
-    if (o.status !== "extracted" || !ref || ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
+    if (o.status !== "extracted" || !ref) continue;
+    const { base, hit } = splitHitRef(ref);
+    // A full-text hit (`results/<log>.json#<hit id>`, issue #3522) is extracted
+    // from FamilySearch's own transcript and cites the search that found it.
+    if (hit !== undefined) {
+      let refusal = await citeFulltextHit(input.projectPath, log, o.recordId, ref, base, hit);
+      if (typeof refusal !== "string") {
+        const key = arkToBareId(refusal.hit.id);
+        const first = hitDocument.get(key);
+        if (first !== undefined) {
+          refusal =
+            `documents[${first}] already cites hit ${refusal.hit.id}: put every person you need from ` +
+            `one full-text hit in a single document.`;
+        } else {
+          hitDocument.set(key, i);
+        }
+      }
+      if (typeof refusal === "string") {
+        o.status = "refused";
+        o.errors = [refusal];
+        o.summary = `${o.recordId}: not extracted: ${refusal}`;
+      } else {
+        cited.set(o, refusal);
+      }
+      continue;
+    }
+    if (ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
     // Only a page logged as image_transcribe: a search sidecar cited here would
     // be written as a source with no text, and its search would read as extracted.
     const entry = log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe" && typeof e?.id === "string");
@@ -1283,7 +1382,9 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
         o.logId = lr.logId;
         let transcription: string | undefined;
         let stagedImageRef: string | undefined;
-        if (o.d.transcriptionRef && lr.resultsRef) {
+        if (c?.hit) {
+          transcription = c.hit.textDocument;
+        } else if (o.d.transcriptionRef && lr.resultsRef) {
           try {
             const rows = await readStagedResults(input.projectPath, lr.resultsRef);
             const row = (rows as any[]).find((r) => typeof r?.transcription === "string");
@@ -1297,7 +1398,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
         const { extract, mode } = documentToExtract(o.recordId, o.d.document, censusStatedRelationships);
         const extraction = extractRecord(extract, { logEntryId: lr.logId, questionIds: input.questionIds ?? [], mode });
         const ops: ResearchAppendOp[] = [
-          { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription, stagedImageRef) },
+          { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription, stagedImageRef, c?.hit) },
           ...extraction.assertions.map((a) => ({
             section: "assertions" as const,
             op: "append" as const,
@@ -1321,11 +1422,12 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
           })),
         ];
         const src = o.d.document.source;
+        const sdUrl = src.url ?? c?.hit?.sourceUrl;
         const written = await researchAppend(
           {
             projectPath: input.projectPath,
             ops,
-            sourceDescription: src.url ? { title: src.title, url: src.url } : { title: src.title },
+            sourceDescription: sdUrl ? { title: src.title, url: sdUrl } : { title: src.title },
           } as ResearchAppendInput,
           { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
         );
@@ -1613,7 +1715,11 @@ export const extractionAppendSchema = {
             },
             transcriptionRef: {
               type: "string",
-              description: "The `results/` ref of the transcription the document was read from.",
+              description:
+                "The `results/` ref of the transcription the document was read from. For one " +
+                "hit of a logged `fulltext_search`, `<its results_ref>#<hit id>` (the `ref` " +
+                "`sidecar_read`'s `#hits` lists), with `recordId` that hit's id: the document " +
+                "is cited to that search's log entry, not a new one.",
             },
             imageFilename: {
               type: "string",
