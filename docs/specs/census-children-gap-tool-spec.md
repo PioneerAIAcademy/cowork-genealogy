@@ -74,7 +74,8 @@ days fall mid-year: a child born in 1900 cannot be placed before or after
 1 June 1900 from the year alone. When the year alone decides it, a bare year is
 enough.
 
-Unknown extra keys are ignored.
+An unknown top-level key is refused by `server.ts`'s unknown-argument guard
+(`rejectUnknownArgs`); unknown keys inside a `knownChildren` entry are ignored.
 
 **Tree mode.** The tool reads `tree.gedcomx.json`, finds the mother, and takes
 every child on a `ParentChild` relationship from her, unless its subtype denies

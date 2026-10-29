@@ -21,5 +21,8 @@
     "Should evaluate whether the existing `rationale` cites multiple matching attributes (name, place, date) and addresses why competing candidates were ruled out — not just 'names match'. Grade whether the REVIEW identifies those gaps; the stored rationale was written by the fixture, not by the agent, so its own quality is never scored against the agent.",
     "This is a review. Not persisting a change is correct in a review and is not penalized, including proposing an edit to pe_005 and asking for authorization (test_pe005_unchanged_when_review_confirms requires pe_005 unchanged). Grade the content of any proposed change against item 0 as usual.",
     "The death certificate's Pennsylvania birthplace (a_012) against the censuses' Ireland is conflict c_001, and c_001 is RESOLVED: Ireland accepted, the certificate's entry rejected as the son-in-law informant's likely error. A resolved conflict is not an open contradiction, so it does not cap this link. A review that downgrades pe_005 on that ground is a calibration error, not a correct downgrade (genealogist ruling, 2026-09-29). Naming c_001 and explaining why it does not reduce the tier is good work."
-  ]
+  ],
+  "execution": {
+    "sdk_message_silence_seconds": 300
+  }
 }
