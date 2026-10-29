@@ -151,6 +151,11 @@ export type ProjectContextResult =
       /** research.project.subject_person_ids verbatim (strings only); [] when absent. The
        *  router has no other way to see who the research is about. */
       subjectPersonIds: string[];
+      /** research.researcher_profile.narration_guidance verbatim; null when absent. Every
+       *  agent's Narration line reads it, and no other tool returns it (#3836). */
+      narrationGuidance: string | null;
+      /** research.researcher_profile.subscriptions, strings only; [] when absent. */
+      subscriptions: string[];
       openQuestions: ProjectContextQuestion[];
       /** Advisory per-question state and next step. Nothing gates on it. */
       questionStatuses: QuestionStatus[];
@@ -347,6 +352,14 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     subjectPersonIds: (Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
       (id: unknown): id is string => typeof id === "string",
     ),
+    narrationGuidance:
+      typeof research?.researcher_profile?.narration_guidance === "string"
+        ? research.researcher_profile.narration_guidance
+        : null,
+    subscriptions: (Array.isArray(research?.researcher_profile?.subscriptions)
+      ? research.researcher_profile.subscriptions
+      : []
+    ).filter((x: unknown): x is string => typeof x === "string"),
     openQuestions,
     questionStatuses,
     persons,
@@ -453,7 +466,11 @@ export const projectContextSchema = {
     "nothing has answered yet — do not raise them again; when the user brings back a " +
     "capture, or says they cannot access the site, log that as the row's closing " +
     "entry with the same urlGenerated. subjectPersonIds are the project's subject " +
-    "persons (research.project.subject_person_ids). externalCollections counts stored curated " +
+    "persons (research.project.subject_person_ids). narrationGuidance is " +
+    "researcher_profile.narration_guidance verbatim (null when absent): the narration " +
+    "style every skill applies; subscriptions is researcher_profile.subscriptions ([] " +
+    "when absent). For tree facts, dates, places, marriages and arks call tree_query. " +
+    "externalCollections counts stored curated " +
     "collections per place by record type (rows: research_query external_collections). " +
     "sectionCounts gives the entry count of every research.json section research_query " +
     "serves (null when research_query would refuse the section), and unregisteredDisagreementCount the project-wide count of " +

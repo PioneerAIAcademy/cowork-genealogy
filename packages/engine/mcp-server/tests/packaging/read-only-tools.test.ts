@@ -41,6 +41,7 @@ const PINNED = [
   "sidecar_read",
   "source_attachments",
   "tree_gaps",
+  "tree_query",
   "validate_research_schema",
   "volume_bisect",
   "volume_search",
