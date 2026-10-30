@@ -745,7 +745,8 @@ def _host_kw(tmp_path):
     ("Read", {"file_path": "/proc/1/environ"}),
     ("Read", {"file_path": "/dev/fd/3"}),
     ("Read", {"file_path": "/dev/stdin"}),
-    ("Read", {"file_path": "{up}proc/self/environ"}),
+    pytest.param("Read", {"file_path": "{up}proc/self/environ"}, marks=pytest.mark.skipif(
+        sys.platform == "win32", reason="a relative climb to / lands on a drive root, not /proc")),
     ("Grep", {"pattern": "ANTHROPIC", "path": "/proc/self"}),
     ("Grep", {"pattern": "x", "path": "/"}),
     ("Glob", {"pattern": "/proc/*/environ"}),
@@ -2613,6 +2614,13 @@ def _start_env(monkeypatch):
     monkeypatch.setenv("WORKER_TURN_USERS", "none")
     monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
     monkeypatch.setenv("TOOL_SERVER_URL", "http://tools:8787/mcp")
+    if sys.platform == "win32":
+        # Both run before the start configuration these tests read, and both are
+        # POSIX-only: a python3 beside sys.executable, and os.geteuid / pwd. Stubbed to
+        # what the Linux image yields with WORKER_TURN_USERS=none; Linux runs the real
+        # ones (#4043).
+        monkeypatch.setattr(worker, "require_hook_python", lambda: f"{sys.executable} 3.12")
+        monkeypatch.setattr(worker, "setup_turn_users", lambda exe: worker.turn_users.DISABLED)
 
 
 def _stop_at_prepare(monkeypatch):
