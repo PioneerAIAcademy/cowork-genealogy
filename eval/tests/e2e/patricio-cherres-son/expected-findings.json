@@ -15,7 +15,10 @@
         "mother": "Nicolasa Gavilanes"
       },
       "supporting_sources": [
-        "Ecuador, Catholic Church Records, 1565-2023 — burial entry for Julio Cesar Cherres, died 17 May 1908, San Pedro de Guanujo parish death register 1894–1915, parents Patricio Cherres and Nicolasa Gavianes"
+        "Ecuador, Catholic Church Records, 1565-2023 — burial entry for Julio Cesar Cherres, died 17 May 1908, San Pedro de Guanujo parish death register 1894–1915, entry 63, parents Patricio Cherres and Nicolasa Gavianes (ark:/61903/1:1:8HQL-MNW2)",
+        "1908 register page image (ark:/61903/3:1:33SQ-G5JB-YX9), entry 63: \"Julio Cesar... hijo legítimo de Patricio Cherres y Nicolaza Gavilanes\" — image-confirmed the parish is San Pedro de Guanujo, correcting the index's auto-standardized event place of San Pedro, Córdoba, Bolívar, Colombia, which is a place-matching error (Colombia's Bolívar department also contains a Córdoba municipality)",
+        "Image reading licensed by calibration against two other indexed entries on the same page image: entry 54 Andrés Calunia/Caluña, whose page date (30 Apr 1908) matches the index exactly, and entry 55 Jasinto Carabajal/Carvajal, whose mother (Teodora) and date (30 Apr 1908) both match the index exactly; a third entry, 56 José Salazar, matched the index on mother and age but not the month (index gives 5 Mar 1908, the page reads 5 May 1908 — an index transcription error, consistent with the register's own chronological ordering)",
+        "The same page also indexes a second death entry naming a father \"Patricio Cherres\" with a different mother, Victoria Gavilanes (María Victoria Cherres); Julio César's own entry specifically names the mother as Nicolaza/Nicolasa Gavilanes, matching the subject's wife and distinguishing this entry from the other Patricio Cherres family on the same page"
       ],
       "required": true
     }
