@@ -30,8 +30,8 @@ export const PER_USER_ENV = [
  * had — the mounted `config.json` for `http.js` — so that each getter's own default still
  * applies, exactly as with a sparse `config.json`.
  *
- * A switch takes `true` or `false` (trimmed, any case) and throws on anything else, so
- * `http.js` refuses to start. Unset means "as today", so a lenient parse would turn
+ * A switch takes `true` or `false` (trimmed, any case) and `WEB_PUBLIC_URL` an http(s)
+ * URL; anything else throws, so `http.js` refuses to start. Unset means "as today", so a lenient parse would turn
  * `TRANSCRIPTION_ENABLED=off` into transcription left running.
  */
 export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): AppConfig {
@@ -40,7 +40,13 @@ export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): App
   if (env.POP_STATS_URL) out.popStatsUrl = env.POP_STATS_URL;
   if (env.OPENROUTER_API_KEY) out.openRouterApiKey = env.OPENROUTER_API_KEY;
   if (env.OPENROUTER_MODEL) out.openRouterModel = env.OPENROUTER_MODEL;
-  if (env.WEB_PUBLIC_URL) out.webPublicUrl = env.WEB_PUBLIC_URL;
+  const webPublicUrl = env.WEB_PUBLIC_URL?.trim();
+  if (webPublicUrl) {
+    if (!/^https?:\/\/[^/\s]/i.test(webPublicUrl)) {
+      throw new Error(`WEB_PUBLIC_URL must be an http(s) URL, got ${JSON.stringify(env.WEB_PUBLIC_URL)}`);
+    }
+    out.webPublicUrl = webPublicUrl;
+  }
   const uploads = envSwitch(env, "UPLOADS_ENABLED");
   if (uploads !== undefined) out.uploadsEnabled = uploads;
   const transcription = envSwitch(env, "TRANSCRIPTION_ENABLED");

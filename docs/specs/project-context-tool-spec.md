@@ -566,7 +566,8 @@ stripped) **and** the bound store has a `projectId`; `uploadUrl` only when
 path, `/project`. The file store has no id, so the desktop gets no link. On the
 hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
 `UPLOADS_ENABLED` (`src/hosted-config-env.ts`); a switch other than
-`true`/`false` refuses start-up. The tool therefore takes the principal as its
+`true`/`false`, or a `WEB_PUBLIC_URL` that is not an http(s) URL, refuses
+start-up with exit 2. A dotfile under `uploads/` is not an upload. The tool therefore takes the principal as its
 last parameter.
 
 What nothing checks: that the web tier writes the text layer under the name

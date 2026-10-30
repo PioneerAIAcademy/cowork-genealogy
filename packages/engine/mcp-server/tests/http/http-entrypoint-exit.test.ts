@@ -134,6 +134,18 @@ describe("build/http.js store environment", () => {
     expect(r.stderr).toMatch(/invalid value.*GENEALOGY_S3_FORCE_PATH_STYLE/);
   }, TEST_TIMEOUT_MS);
 
+  it.each([
+    ["TRANSCRIPTION_ENABLED", "off", /invalid value: TRANSCRIPTION_ENABLED must be true or false/],
+    ["UPLOADS_ENABLED", "1", /invalid value: UPLOADS_ENABLED must be true or false/],
+    ["WEB_PUBLIC_URL", "beta.example.org", /invalid value: WEB_PUBLIC_URL must be an http\(s\) URL/],
+  ])("exits 2 naming %s when it is set to %j", async (name, value, message) => {
+    const r = await runHttp({ ...BASE, [name]: value });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toMatch(message);
+    // Refused before the store is built, as the other environment checks are.
+    expect(r.stderr).not.toMatch(/s3 credentials:/);
+  }, TEST_TIMEOUT_MS);
+
   it("exits 2 naming an orphan sweep grace under its floor", async () => {
     const r = await runHttp({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: "60" });
     expect(r.code, r.stderr).toBe(2);

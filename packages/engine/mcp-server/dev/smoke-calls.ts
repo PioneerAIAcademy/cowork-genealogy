@@ -130,6 +130,17 @@ function carries(res: CallResult, msg: string): boolean {
 
 const noError = (res: CallResult): Expectation => ({ ok: !res.isError, detail: brief(res) });
 
+/** No link when the server has no WEB_PUBLIC_URL (the default); when a developer's
+ *  exported one reaches compose, a viewer link, and an upload link only beside it. */
+const linksWellFormed = (body: any): boolean => {
+  const { projectUrl, uploadUrl } = body;
+  if (projectUrl === undefined) return uploadUrl === undefined;
+  return (
+    /^https?:\/\/[^/]+.*\/#\/p\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(projectUrl) &&
+    (uploadUrl === undefined || uploadUrl === `${projectUrl}/upload`)
+  );
+};
+
 const okTrue = (res: CallResult): Expectation => ({
   ok: !res.isError && res.body?.ok === true,
   detail: brief(res),
@@ -218,9 +229,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       subjectPersonIds: ["P1"],
       tree: SEED_TREE,
     }),
-    // WEB_PUBLIC_URL is unset in the smoke, so no link.
     expect: (res) => ({
-      ok: !res.isError && res.body?.ok === true && !("projectUrl" in res.body),
+      ok: !res.isError && res.body?.ok === true && linksWellFormed(res.body),
       detail: res.body?.ok === true ? `wrote ${res.body.filesWritten.join(", ")}` : brief(res, 300),
     }),
   },
@@ -234,9 +244,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     tool: "project_context",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath }),
-    // WEB_PUBLIC_URL is unset in the smoke, so no link.
     expect: (res) => ({
-      ok: !res.isError && !("projectUrl" in (res.body ?? {})) && !("uploadUrl" in (res.body ?? {})),
+      ok: !res.isError && linksWellFormed(res.body ?? {}),
       detail: brief(res, 300),
     }),
   },

@@ -647,7 +647,7 @@ describe("project_context uploads", () => {
   }
 
   it("lists each upload once, pairing an X.txt with its X as that upload's text layer", async () => {
-    for (const name of ["census.pdf", "census.pdf.txt", "notes.txt", "b.jpg"]) await upload(name);
+    for (const name of ["census.pdf", "census.pdf.txt", "notes.txt", "b.jpg", ".DS_Store"]) await upload(name);
     const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;

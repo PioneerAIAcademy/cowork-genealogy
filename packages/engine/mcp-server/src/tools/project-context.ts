@@ -131,6 +131,8 @@ async function projectUploads(projectPath: string): Promise<ProjectContextUpload
   } catch {
     return [];
   }
+  // A dotfile (a Finder `.DS_Store`) is not something the user uploaded.
+  entries = entries.filter((e) => !e.name.startsWith("."));
   const names = new Set(entries.map((e) => e.name));
   const isTextLayer = (name: string) => name.endsWith(".txt") && names.has(name.slice(0, -".txt".length));
   return entries

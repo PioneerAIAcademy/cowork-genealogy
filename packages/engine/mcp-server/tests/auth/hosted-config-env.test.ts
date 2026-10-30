@@ -4,6 +4,13 @@ import { configFromEnv, PER_USER_ENV } from "../../src/hosted-config-env.js";
 // The prototype's HTTP entrypoint builds its AppConfig through this, so what it does with an
 // absent or empty variable decides whether a container silently loses a per-user value.
 
+/** A value each strictly parsed variable accepts. */
+const VALID: Record<string, string> = {
+  WEB_PUBLIC_URL: "https://beta.example",
+  UPLOADS_ENABLED: "true",
+  TRANSCRIPTION_ENABLED: "true",
+};
+
 describe("configFromEnv", () => {
   it("layers the set variables over the base", () => {
     const config = configFromEnv({
@@ -37,6 +44,19 @@ describe("configFromEnv", () => {
     expect(config.uploadsEnabled).toBe(true);
     expect("transcriptionEnabled" in config).toBe(false);
   });
+
+  it("trims WEB_PUBLIC_URL, and a blank one leaves the base's value", () => {
+    expect(configFromEnv({ WEB_PUBLIC_URL: " https://beta.example " }).webPublicUrl).toBe("https://beta.example");
+    const base = { webPublicUrl: "https://from-the-file.example" };
+    expect(configFromEnv({ WEB_PUBLIC_URL: "   " }, base).webPublicUrl).toBe("https://from-the-file.example");
+  });
+
+  it.each(["beta.example.org", "ftp://beta.example", "https://", "/#/p"])(
+    "refuses WEB_PUBLIC_URL %j, which would make links nobody can open",
+    (raw) => {
+      expect(() => configFromEnv({ WEB_PUBLIC_URL: raw })).toThrow(/WEB_PUBLIC_URL must be an http\(s\) URL/);
+    },
+  );
 
   it.each(["off", "1", "yes", "on", "0"])("refuses a switch set to %j rather than guessing", (raw) => {
     expect(() => configFromEnv({ TRANSCRIPTION_ENABLED: raw })).toThrow(/TRANSCRIPTION_ENABLED must be true or false/);
@@ -74,7 +94,7 @@ describe("configFromEnv", () => {
       "TRANSCRIPTION_ENABLED",
     ]);
     const keys = Object.keys(
-      configFromEnv(Object.fromEntries(PER_USER_ENV.map((name) => [name, name.endsWith("_ENABLED") ? "true" : "set"]))),
+      configFromEnv(Object.fromEntries(PER_USER_ENV.map((name) => [name, VALID[name] ?? "set"]))),
     );
     expect(keys).toHaveLength(PER_USER_ENV.length);
   });

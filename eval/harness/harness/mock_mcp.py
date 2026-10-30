@@ -1724,7 +1724,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     # Takes only `{summary}`; the handler's injected `projectPath` is the inert
     # extra key convert_calendar already tolerates.
     "research_delivered": ("research-delivered.js", "researchDelivered"),
-    # Takes no input; the injected `projectPath` is ignored the same way.
+    # Takes no input: called as `projectList(LOCAL)` (`_COMPILED_TOOLS_WITHOUT_INPUT`).
     "project_list": ("project-list.js", "projectList"),
 }
 
