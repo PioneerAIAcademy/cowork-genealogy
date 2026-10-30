@@ -1011,8 +1011,8 @@ export const rankSearchMatchesSchema = {
     "candidate against the subject person, and returns every scored candidate " +
     "sorted by match score — no bulk gedcomx crosses the wire. Treat the result " +
     "as a REVIEW SURFACE (confirm with role/age cross-checks), not an " +
-    "accept/reject. When `subjectResolvable` is false, READ THE `diagnostic` " +
-    "FIELD — it means one of two opposite things. Either the subject carries no " +
+    "accept/reject. Whenever a `diagnostic` is present, READ IT; when " +
+    "`subjectResolvable` is false it means one of two opposite things. Either the subject carries no " +
     "dated or placed fact, so the scores are noise and `matches` is withheld " +
     "deliberately (give the subject a dated/placed fact, or narrow the query — " +
     "do NOT hand-triage the stubs, and do NOT re-score with `same_person` " +

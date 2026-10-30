@@ -52,7 +52,7 @@ Who fills the keys:
 | Desktop `.mcpb` | the developer edits `config.json` |
 | Hosted alpha (Fly + E2B) | `hosted_config()` (`apps/server/app/fs_oauth.py`) writes them into each sandbox on create and every connect, from `MATCHER_URL` and `MATCHER_API_KEY`: `"service"` with the URL and key when both are set, else `"familysearch"`. It always writes `matcher`, so unsetting the service switches a sandbox back. |
 | Beta tool server (`http.ts`) | `configFromEnv` (`src/hosted-config-env.ts`) layers `MATCHER_URL` and `MATCHER_API_KEY` over its config; both set means the service, one alone nothing |
-| Eval harnesses | nothing, so FamilySearch's matcher |
+| Eval harnesses | the unit harness serves `same_person`, ranking and `record_search` from fixtures; the e2e harness runs the engine on the developer's own `~/.familysearch-mcp/config.json`, so it scores with whichever matcher that names |
 
 ## What each call site sends
 
@@ -143,10 +143,12 @@ and the alpha's, the beta's and the desktop's feedback redactors drop the value 
 | Property | Test |
 |---|---|
 | FamilySearch is sent what it was sent before the shim, and the outputs differ only in the removed and added fields | `tests/tools/matcher-familysearch-parity.test.ts`, against a golden generated on the shim's merge base |
+| FamilySearch's concurrency and retries at each call site | `tests/tools/rank-search-matches.test.ts`, `tests/tools/same-person.test.ts` |
 | The service request, cut, timeout, checks, pair errors, call failures, 401s, no fallback | `tests/utils/matcher.test.ts` |
 | The keys and their errors | `tests/auth/config.test.ts` |
 | Ranking's call, floors and unscored-candidate rule | `tests/tools/rank-search-matches.test.ts`, `tests/tools/record-search.test.ts` |
 | `same_person`'s documents, answers and attestation under the service | `tests/tools/same-person.test.ts` |
 | Who fills the keys | `apps/server/tests/test_hosted_config.py`, `tests/auth/hosted-config-env.test.ts`, `apps/server/tests/test_proto_config.py` |
 | The redactors | `eval/harness/tests/unit/test_redact.py`, `apps/server/tests/test_feedback.py`, `apps/server/tests/test_proto_feedback.py`, `apps/electron/src/main/__tests__/feedback.test.ts` |
+| No unit-eval fixture serves a removed field, nested or not | `tests/packaging/mcp-fixture-shape.test.ts` |
 | The live service contract | nothing in CI; `dev/try-matcher-service.ts` against a running service |

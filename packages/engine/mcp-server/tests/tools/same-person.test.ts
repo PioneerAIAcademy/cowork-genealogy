@@ -521,6 +521,40 @@ describe("samePerson", () => {
       expect(result.matches.map((m) => m.candidateId).sort()).toEqual(["c-john", "c-mary"]);
     });
 
+    it("asks FamilySearch 5 pairs at a time and retries a pair that fails once", async () => {
+      const given = ["Adam", "Bert", "Carl", "Dirk", "Emil", "Finn", "Gust", "Hans"];
+      const kids = (prefix: string) =>
+        given.map((g, i) => ({ id: `${prefix}-${g}`, given: g, year: String(1810 + 2 * i) }));
+      let inFlight = 0;
+      let peak = 0;
+      let failed = false;
+      mockFetch.mockImplementation(async (_url: string, opts: { body: string }) => {
+        peak = Math.max(peak, ++inFlight);
+        await new Promise((r) => setTimeout(r, 5));
+        inFlight--;
+        const about2: string =
+          JSON.parse(opts.body).entries[1].content.gedcomx.sourceDescriptions[0].about;
+        if (about2 === "#c-Adam" && !failed) {
+          failed = true;
+          throw new Error("transient FS failure");
+        }
+        return { ok: true, json: async () => matchResponse };
+      });
+
+      const result = await samePerson({
+        gedcomx1: household("I1", kids("t")),
+        primaryId1: "I1",
+        gedcomx2: household("I2", kids("c")),
+        primaryId2: "I2",
+        matchRelatives: true,
+      }, LOCAL);
+
+      if (!("matchRelatives" in result)) throw new Error("expected relatives result");
+      expect(peak).toBe(5);
+      expect(result.matches).toHaveLength(8);
+      expect(mockFetch).toHaveBeenCalledTimes(9);
+    });
+
     it("still validates the focus ids in relatives mode", async () => {
       await expect(
         samePerson({
@@ -755,6 +789,18 @@ describe("samePerson — project-relative arm", () => {
     });
     expect(file.scores["a_005|I1"]).not.toHaveProperty("matched");
     expect(file.scores["a_005|I1"]).not.toHaveProperty("confidence");
+  });
+
+  it("asks FamilySearch once, and rethrows its failure rather than retrying it", async () => {
+    await project();
+    mockFetch.mockResolvedValueOnce({
+      ok: false, status: 503, statusText: "Service Unavailable", json: async () => ({}),
+    });
+    mockFetch.mockResolvedValue({ ok: true, json: async () => matchResponse });
+    await expect(
+      samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
+    ).rejects.toThrow(/matchTwoExamples API error: 503/);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it("sends the matching mob as the tree side, not the whole tree", async () => {

@@ -1153,3 +1153,81 @@ describe("same_person fixtures that call the project arm carry the project resul
     expect(servesProjectArm(["assertionId"])).toBe(false);
   });
 });
+
+// ─── no fixture serves a field the matcher shim removed ─────────────────────
+//
+// The shape check above reads top-level keys, so it fails a top-level `matched`
+// on a same_person answer but cannot see one inside a row. The shim removed
+// three that live in rows: `matchConfidence` from ranking stubs and
+// record_search rows, and `confidence` and `matched` from same_person's
+// relatives triples. A fixture is served verbatim, so one that still carries
+// them teaches the eval a field neither matcher returns.
+
+const RETIRED_MATCHER_FIELDS: Record<string, readonly string[]> = {
+  rank_search_matches: ["matchConfidence"],
+  record_search: ["matchConfidence"],
+  same_person: ["matched", "confidence"],
+};
+
+/** Every path below the top level at which a response carries a field its tool
+ *  lost to the matcher shim. Top-level keys are the shape check's. */
+function retiredMatcherFields(tool: unknown, response: unknown): string[] {
+  const retired = typeof tool === "string" ? RETIRED_MATCHER_FIELDS[tool] : undefined;
+  if (!retired) return [];
+  const found: string[] = [];
+  const walk = (node: unknown, path: string, nested: boolean): void => {
+    if (Array.isArray(node)) {
+      node.forEach((item, i) => walk(item, `${path}[${i}]`, nested));
+    } else if (typeof node === "object" && node !== null) {
+      for (const [key, value] of Object.entries(node)) {
+        if (nested && retired.includes(key)) found.push(`${path}.${key}`);
+        walk(value, `${path}.${key}`, true);
+      }
+    }
+  };
+  walk(response, "response", false);
+  return found;
+}
+
+describe("no fixture serves a field the matcher shim removed", () => {
+  it("has fixtures of each tool to check: a zero-length scan proves nothing", () => {
+    for (const tool of Object.keys(RETIRED_MATCHER_FIELDS)) {
+      expect(fixtures.some((f) => f.tool === tool), tool).toBe(true);
+    }
+  });
+
+  it("finds none in a ranking stub, a record_search row or a relatives triple", () => {
+    const bad = fixtures.flatMap((f) =>
+      retiredMatcherFields(f.tool, f.response).map((path) => `${f.name}: ${path}`),
+    );
+    expect(bad, "neither matcher returns these fields; delete them from the fixtures").toEqual([]);
+  });
+
+  it("rejects each one at any depth, and accepts what the tools still return", () => {
+    expect(retiredMatcherFields("rank_search_matches", { matches: [{ matchScore: 0.9, matchConfidence: 5 }] }))
+      .toEqual(["response.matches[0].matchConfidence"]);
+    expect(retiredMatcherFields("record_search", { results: [{ recordId: "r", matchConfidence: 5 }] }))
+      .toEqual(["response.results[0].matchConfidence"]);
+    expect(retiredMatcherFields("record_search", { ranked: { matches: [{ matchConfidence: 5 }] } }))
+      .toEqual(["response.ranked.matches[0].matchConfidence"]);
+    expect(
+      retiredMatcherFields("same_person", {
+        matchRelatives: true,
+        matches: [{ role: "child", score: 0.9, confidence: 4, matched: true }],
+      }),
+    ).toEqual(["response.matches[0].confidence", "response.matches[0].matched"]);
+
+    // FamilySearch's own search confidence on a record_search row is not the matcher's
+    expect(retiredMatcherFields("record_search", { results: [{ recordId: "r", score: 1.2, confidence: 4, matchScore: 0.9 }] }))
+      .toEqual([]);
+    expect(retiredMatcherFields("rank_search_matches", { matches: [{ matchScore: null, relativeTerms: {} }] }))
+      .toEqual([]);
+    expect(retiredMatcherFields("same_person", { matchRelatives: true, matches: [{ score: 0.9, preScore: 0.5 }] }))
+      .toEqual([]);
+    // a top-level key is the shape check's to fail; another tool's confidence is its own
+    expect(retiredMatcherFields("same_person", { score: 0.9, matched: true })).toEqual([]);
+    expect(retiredMatcherFields("person_record_matches", { matches: [{ confidence: 3 }] })).toEqual([]);
+    expect(retiredMatcherFields("rank_search_matches", null)).toEqual([]);
+    expect(retiredMatcherFields(undefined, { matches: [{ matchConfidence: 5 }] })).toEqual([]);
+  });
+});

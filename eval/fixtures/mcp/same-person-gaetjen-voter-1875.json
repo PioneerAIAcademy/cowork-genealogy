@@ -1,6 +1,6 @@
 {
   "tool": "same_person",
-  "description": "same_person for the 1875 San Francisco Great Register persona (Hermann Gatjen, 21, b. Germany, naturalized 13 Aug 1875) against tree person I1 Hermann Gaetjen, at the live pre-link score measured on 2026-10-12 (issue #3363): 0.43, confidence 3. The #3179 run that the scenario was mined from scored it near-certain only after its own links were in place.",
+  "description": "same_person for the 1875 San Francisco Great Register persona (Hermann Gatjen, 21, b. Germany, naturalized 13 Aug 1875) against tree person I1 Hermann Gaetjen, at the live pre-link score measured on 2026-10-12 (issue #3363): 0.43. The #3179 run that the scenario was mined from scored it near-certain only after its own links were in place.",
   "args": {
     "assertionId": "~a_00",
     "treePersonId": "~I1"

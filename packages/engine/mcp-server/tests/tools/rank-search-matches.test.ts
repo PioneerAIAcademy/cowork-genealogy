@@ -1793,6 +1793,27 @@ describe("rank_search_matches", () => {
       });
     });
 
+    it("FamilySearch: scores 10 at a time and retries a pair that fails once", async () => {
+      await writeTree();
+      let inFlight = 0;
+      let peak = 0;
+      let failed = false;
+      scorePairMock.mockImplementation(async (_g1, id1) => {
+        peak = Math.max(peak, ++inFlight);
+        await new Promise((r) => setTimeout(r, 5));
+        inFlight--;
+        if (id1 === "p1" && !failed) {
+          failed = true;
+          throw new Error("FamilySearch matchTwoExamples API error: 503 Service Unavailable.");
+        }
+        return scoreResult(0.9);
+      });
+      const out = await rank(SUBJECT_ID, 20);
+      expect(peak).toBe(10);
+      expect(out.scoringErrors).toBe(0);
+      expect(scorePairMock).toHaveBeenCalledTimes(21);
+    });
+
     it("logs which matcher and model made each score", async () => {
       await writeTree();
       useService({ p1: 0.9, p2: "deadline" });
