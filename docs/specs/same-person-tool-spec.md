@@ -964,8 +964,10 @@ tools:
 2. Schema in `allToolSchemas` (`src/tool-schemas.ts`).
 3. `if (request.params.name === "same_person") { ... }` block in `CallToolRequestSchema`.
 
-The arm casts `request.params.arguments` and passes it straight through, so
-widening `SamePersonInput` needs no change here.
+The arm casts `request.params.arguments` and passes it straight through, but
+`server.ts` first refuses any key the schema does not list
+(`rejectUnknownArgs`), so widening `SamePersonInput` needs the new parameter on
+`samePersonSchema` too.
 
 ---
 

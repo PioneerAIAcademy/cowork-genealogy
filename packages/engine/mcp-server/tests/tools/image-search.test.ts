@@ -9,6 +9,7 @@ import { imageSearchTool } from "../../src/tools/image-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
+import { callTool } from "../helpers/call-tool.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -648,21 +649,19 @@ describe("image_search — item / itemImage", () => {
     ["page", 10],
     ["frame", "632"],
   ])("rejects the misspelled address %s instead of serving the whole film", async (key, value) => {
-    await expect(
-      imageSearchTool({ imageGroupNumber: "004528134", [key]: value } as never, LOCAL),
-    ).rejects.toThrow(
+    const r = await callTool("image_search", { imageGroupNumber: "004528134", [key]: value });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain(
       `image_search has no parameter \`${key}\`; to address one item use \`item\` / \`itemImage\`, or drop it to list the whole group.`,
     );
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("lets an unrelated text key through and lists the film", async () => {
-    mockFetch.mockResolvedValueOnce(okApid("TH-FILM")).mockResolvedValueOnce(okChildren());
-    const r = await imageSearchTool(
-      { imageGroupNumber: "004528134", lookingFor: "Flynn family" } as never,
-      LOCAL,
-    );
-    expect(r).toEqual({ imageIds: Object.values(SAMPLE_CHILDREN).sort() });
+  it("refuses an unrelated text key too, naming the nearest parameters", async () => {
+    const r = await callTool("image_search", { imageGroupNumber: "004528134", lookingFor: "Flynn family" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("image_search has no parameter `lookingFor`; the nearest are");
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("gives up with a readable error when the deadline passes", async () => {

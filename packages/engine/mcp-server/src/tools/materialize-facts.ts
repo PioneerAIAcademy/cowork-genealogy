@@ -55,7 +55,14 @@ import type {
 } from "../types/materialize-facts.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { checkWarningGate } from "./tree-edit.js";
-import { mintedFromThisRecord, namesakeVerdicts } from "./research-append.js";
+import {
+  mintedFromThisRecord,
+  namesakeMergeRoute,
+  namesakePairsText,
+  namesakeVerdicts,
+  pairJudgement,
+  type NamesakePartner,
+} from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -109,8 +116,17 @@ class MaterializeFactsError extends Error {}
  *  op order inside a batch cannot change its answer; and the call's warnings. */
 interface OpContext {
   startingPersonIds: ReadonlySet<string>;
+  /** The write-once baseline, for the namesake pair tests' dates (#3681). */
+  startingTree: SimplifiedGedcomX | null;
   beforeTree: SimplifiedGedcomX;
   warnings: string[];
+}
+
+/** How the link gate reads namesakes: `derivedPairs` adds the namesakes in the
+ *  tree to the recorded rows (#3681), dated against `startingTree`. */
+export interface NamesakeGateOptions {
+  startingTree?: SimplifiedGedcomX | null;
+  derivedPairs?: boolean;
 }
 
 /** The party of a record an op writes: which of the record's roles are its own,
@@ -263,13 +279,19 @@ function applyMaterializeOp(
 
   // ── Create-or-enrich: find the target person, or mint it (§4.3) ──
   const found = str(op.personId) === undefined ? findExistingPersonForPersona(tree, research, op, ctx) : undefined;
+  if (found?.pairRefusal) throw new MaterializeFactsError(found.pairRefusal);
   const targetId = str(op.personId) ?? found?.id ?? nextId(tree, "I");
   if (found?.namesakeExcluded) {
-    const { personId: skipped, links } = found.namesakeExcluded;
+    const { personId: skipped, links, pairMember, rowHolder } = found.namesakeExcluded;
     const named = links.map((e) => `'${e.id}'`).join(", ");
+    const namesake = !pairMember
+      ? "a recorded namesake"
+      : rowHolder
+        ? "a recorded namesake and a namesake in the tree"
+        : "a namesake in the tree";
     ctx.warnings.push(
       `persona '${recordRole}' of record '${recordId}' would have reused '${skipped}', but '${skipped}' ` +
-        `has a recorded namesake and its link ${named} from this record is not tied; '${targetId}' was ` +
+        `has ${namesake} and its link ${named} from this record is not tied; '${targetId}' was ` +
         `${found.id === undefined ? "created" : "used"} instead. Route ${named} to person-evidence to tie or lower it.`,
     );
   }
@@ -610,6 +632,7 @@ function applyNamedPartyOp(
   if (existingId !== undefined) {
     const refusal = namedPartyTargetRefusal(
       tree, research, assertion, relatedRole, existingId, op.gender, ctx.startingPersonIds, { given, surname }, ctx.beforeTree,
+      { startingTree: ctx.startingTree, derivedPairs: true },
     );
     if (refusal !== null) throw new MaterializeFactsError(refusal);
   }
@@ -823,9 +846,10 @@ function applyOp(
  *  (`partyTrace`) is a re-copy, not a claimed identity. Otherwise a live
  *  `probable` or `confident` person_evidence link must tie one of `qualifying`
  *  to that person: a `speculative` link is a candidate, not an identity, and an
- *  unlinked one is not even that. When that person has a recorded namesake, one
- *  such link must also pass the namesake cap, which reads relatives from
- *  `namesakeTree`. Returns the refusal text, naming `what` must be linked.
+ *  unlinked one is not even that. When that person has a recorded namesake, or,
+ *  with `namesakeOpts.derivedPairs`, a namesake in the tree, one such link must
+ *  also pass the namesake cap, which reads relatives from `namesakeTree`.
+ *  Returns the refusal text, naming `what` must be linked.
  *  Exported so the corpus replay runs this rule rather than a copy. */
 export function existingPersonLinkRefusal(
   tree: SimplifiedGedcomX,
@@ -837,15 +861,23 @@ export function existingPersonLinkRefusal(
   startingPersonIds: ReadonlySet<string> | undefined,
   party: RecordParty,
   namesakeTree: SimplifiedGedcomX = tree,
+  namesakeOpts: NamesakeGateOptions = {},
 ): string | null {
-  return linkGate(tree, research, personId, recordId, qualifying, what, startingPersonIds, party, namesakeTree).refusal;
+  return linkGate(tree, research, personId, recordId, qualifying, what, startingPersonIds, party, namesakeTree, namesakeOpts)
+    .refusal;
 }
 
 /** `existingPersonLinkRefusal`'s answer, with the strong links the namesake
- *  cap refused when the namesake requirement alone refused. */
+ *  cap refused when the namesake requirement alone refused, whether the person
+ *  it refused has a namesake in the tree, a namesake row, or both, and whether
+ *  the record may belong to a namesake in the tree, so that a new person for it
+ *  could duplicate them. */
 interface LinkGate {
   refusal: string | null;
   untied?: any[];
+  pairMember?: boolean;
+  rowHolder?: boolean;
+  partnerOpen?: boolean;
 }
 
 function linkGate(
@@ -858,6 +890,7 @@ function linkGate(
   startingPersonIds: ReadonlySet<string> | undefined,
   party: RecordParty,
   namesakeTree: SimplifiedGedcomX,
+  namesakeOpts: NamesakeGateOptions = {},
 ): LinkGate {
   if (!(tree.persons ?? []).some((p) => p?.id === personId)) return { refusal: null };
   const trace = mintedFromThisRecord(personId, recordId, research, tree, startingPersonIds)
@@ -879,9 +912,26 @@ function linkGate(
       "does not qualify.";
     return { refusal: trace === null ? plain : `${notThisPartysStub(personId, recordId, trace)} ${plain}` };
   }
-  const cap = namesakeVerdicts(personId, research, namesakeTree, { startingPersonIds });
+  const cap = namesakeVerdicts(personId, research, namesakeTree, {
+    startingPersonIds,
+    derivedPairs: namesakeOpts.derivedPairs,
+    startingTree: namesakeOpts.startingTree ?? undefined,
+  });
   if (cap === null || strong.some((e) => cap.verdicts.get(e.id)?.allowed === true)) return { refusal: null };
-  return { refusal: namesakeCopyRefusal(personId, cap.rows, cap.verdicts, strong), untied: strong };
+  const assertionOf = (id: string) => ((research?.assertions ?? []) as any[]).find((a) => a?.id === id);
+  return {
+    refusal: namesakeCopyRefusal(personId, cap.rows, cap.verdicts, strong, cap.pairs),
+    untied: strong,
+    pairMember: cap.pairs.length > 0,
+    rowHolder: cap.rows.length > 0,
+    partnerOpen:
+      cap.pairs.length > 0 &&
+      strong.some(
+        (e) =>
+          pairJudgement(personId, assertionOf(e.assertion_id), cap.pairs, research, namesakeTree, namesakeOpts.startingTree ?? null)
+            .ties.length < cap.pairs.length,
+      ),
+  };
 }
 
 /** Where a person minted from record `recordId` came from. `thisParty`: a fact
@@ -941,12 +991,30 @@ function namesakeCopyRefusal(
   rows: any[],
   verdicts: ReadonlyMap<string, { reasons: string[]; source: string }>,
   strong: any[],
+  pairs: readonly NamesakePartner[] = [],
 ): string {
   const [first, ...rest] = strong;
   const verdict = verdicts.get(first.id);
   const reason = verdict?.reasons[0] ?? "its assertion records an absence, which ties nothing";
   const others =
     rest.length === 0 ? "" : ` Nothing ties ${rest.map((e) => `'${e.id}'`).join(", ")} either.`;
+  if (rows.length === 0) {
+    const alsoUntold =
+      rest.length === 0 ? "" : ` Nothing tells ${rest.map((e) => `'${e.id}'`).join(", ")} apart either.`;
+    return (
+      `'${personId}' has a namesake in the tree (${namesakePairsText(personId, pairs)}), so a record's facts ` +
+      `reach '${personId}' only through a link the namesake cap allows. '${first.id}' ties assertion ` +
+      `'${first.assertion_id}' to '${personId}' at '${first.confidence}', but nothing in source ` +
+      `'${verdict?.source ?? ""}' tells it apart from that namesake (${reason}).${alsoUntold} ` +
+      "Route that link to person-evidence, which lowers it to 'speculative' naming the namesake, or ties it " +
+      "with a record that dates either of them (a date read from this record does not count) or another " +
+      `party of this record linked to a spouse, parent or child of '${personId}', counted only while no party ` +
+      "of this record is linked to a spouse, parent, child or sibling of the namesake." +
+      namesakeMergeRoute(personId, pairs)
+    );
+  }
+  const alsoPaired =
+    pairs.length > 0 ? ` '${personId}' also has a namesake in the tree (${namesakePairsText(personId, pairs)}).` : "";
   return (
     `'${personId}' has a recorded namesake (${rows.map((r) => `'${r.id}'`).join(", ")}), so a record's ` +
     `facts reach '${personId}' only through a link the namesake cap allows. '${first.id}' ties ` +
@@ -956,7 +1024,8 @@ function namesakeCopyRefusal(
     `child of '${personId}' already in the tree; one made from this record alone does not count) or ` +
     "lowers it to 'speculative' naming the namesake. When the project holds no such tie yet, " +
     "person-evidence lowers it now: a party still to extract or a record still to find is not a tie, " +
-    "and the link can be raised once the tie is made."
+    "and the link can be raised once the tie is made." +
+    alsoPaired
   );
 }
 
@@ -1102,6 +1171,7 @@ export function namedPartyTargetRefusal(
   startingPersonIds: ReadonlySet<string>,
   name: { given?: string; surname?: string } | undefined,
   namesakeTree: SimplifiedGedcomX = tree,
+  namesakeOpts: NamesakeGateOptions = {},
 ): string | null {
   const recordId = assertion.record_id;
   const roleOf = (role: unknown) => normNamePart(String(role ?? ""));
@@ -1158,10 +1228,12 @@ export function namedPartyTargetRefusal(
     surname: typeof name?.surname === "string" ? name.surname : undefined,
   };
   const party: RecordParty = writesFacts ? namedParty : { ...namedParty, names: [...namedParty.names, opName] };
-  const refusal = existingPersonLinkRefusal(
-    tree, research, personId, String(recordId), qualifying, what, startingPersonIds, party, namesakeTree,
+  const gate = linkGate(
+    tree, research, personId, String(recordId), qualifying, what, startingPersonIds, party, namesakeTree, namesakeOpts,
   );
-  return refusal === null ? null : `${refusal} If this party is someone else, omit personId to mint a new person.`;
+  if (gate.refusal === null) return null;
+  // A pair member's namesake is in the tree already: a new person would duplicate them.
+  return gate.pairMember ? gate.refusal : `${gate.refusal} If this party is someone else, omit personId to mint a new person.`;
 }
 
 /** May the persona `(recordId, recordRole)`'s facts land on `personId`, by
@@ -1180,6 +1252,7 @@ function personaGate(
   return linkGate(
     tree, research, personId, recordId, qualifying, "this persona", ctx.startingPersonIds,
     personaParty(research, recordId, recordRole), ctx.beforeTree,
+    { startingTree: ctx.startingTree, derivedPairs: true },
   );
 }
 
@@ -1189,13 +1262,20 @@ function personaGate(
  *  link from one of the persona's own assertions; break remaining ties by
  *  lowest numeric id. `id` is that person, or undefined when no candidate is
  *  eligible. `namesakeExcluded` is the candidate the lookup would have picked
- *  had the namesake requirement not refused it, with the links it refused. */
+ *  had the namesake requirement not refused it, with the links it refused and
+ *  which namesakes it has. `pairRefusal` is set instead when no other candidate
+ *  is eligible and the record may belong to that candidate's namesake in the
+ *  tree: minting could duplicate the namesake, so the op is refused (#3681). */
 function findExistingPersonForPersona(
   tree: SimplifiedGedcomX,
   research: any,
   op: MaterializeFactsOp,
   ctx: OpContext,
-): { id: string | undefined; namesakeExcluded?: { personId: string; links: any[] } } {
+): {
+  id: string | undefined;
+  namesakeExcluded?: { personId: string; links: any[]; pairMember: boolean; rowHolder: boolean };
+  pairRefusal?: string;
+} {
   const personaAssertionIds = new Set<string>();
   for (const a of (Array.isArray(research.assertions) ? research.assertions : []) as any[]) {
     if (a && a.record_id === op.recordId && a.record_role === op.recordRole && typeof a.id === "string") {
@@ -1250,8 +1330,21 @@ function findExistingPersonForPersona(
   const unguarded = pick(
     candidates.filter((pid) => gates.get(pid)!.refusal === null || gates.get(pid)!.untied !== undefined),
   );
-  const links = unguarded === undefined ? undefined : gates.get(unguarded)!.untied;
-  return unguarded !== id && links !== undefined ? { id, namesakeExcluded: { personId: unguarded!, links } } : { id };
+  const excluded = unguarded === undefined ? undefined : gates.get(unguarded)!;
+  if (id === undefined && excluded?.partnerOpen) {
+    return { id, pairRefusal: excluded.refusal! };
+  }
+  return unguarded !== id && excluded?.untied !== undefined
+    ? {
+        id,
+        namesakeExcluded: {
+          personId: unguarded!,
+          links: excluded.untied,
+          pairMember: excluded.pairMember === true,
+          rowHolder: excluded.rowHolder === true,
+        },
+      }
+    : { id };
 }
 
 /** The persona arm's target decision (§4.3): may persona `op`'s facts land on
@@ -1266,6 +1359,7 @@ export function personaTargetRefusal(
   op: MaterializeFactsOp,
   startingPersonIds?: ReadonlySet<string>,
   namesakeTree: SimplifiedGedcomX = tree,
+  namesakeOpts: NamesakeGateOptions = {},
 ): string | null {
   const personId = str(op.personId);
   if (personId === undefined) return null;
@@ -1274,7 +1368,7 @@ export function personaTargetRefusal(
   );
   if (!persona.some(writesPersonLevel)) return null;
   const { qualifying, heldBy } = personaQualifying(research, op.recordId, op.recordRole, personId);
-  const refusal = existingPersonLinkRefusal(
+  const gate = linkGate(
     tree,
     research,
     personId,
@@ -1290,10 +1384,13 @@ export function personaTargetRefusal(
     startingPersonIds,
     personaParty(research, op.recordId, op.recordRole),
     namesakeTree,
+    namesakeOpts,
   );
-  return refusal === null
-    ? null
-    : `${refusal} If this persona is someone else, omit personId: the tool then reuses the person ` +
+  if (gate.refusal === null) return null;
+  // While the record may belong to a namesake in the tree, a new person could duplicate them.
+  return gate.partnerOpen
+    ? gate.refusal
+    : `${gate.refusal} If this persona is someone else, omit personId: the tool then reuses the person ` +
         "this persona was already materialized onto, or mints a new one.";
 }
 
@@ -1303,7 +1400,10 @@ function requireLinkToExistingPerson(
   op: MaterializeFactsOp,
   ctx: OpContext,
 ): void {
-  const refusal = personaTargetRefusal(tree, research, op, ctx.startingPersonIds, ctx.beforeTree);
+  const refusal = personaTargetRefusal(tree, research, op, ctx.startingPersonIds, ctx.beforeTree, {
+    startingTree: ctx.startingTree,
+    derivedPairs: true,
+  });
   if (refusal !== null) throw new MaterializeFactsError(refusal);
 }
 
@@ -1345,12 +1445,13 @@ export async function materializeFacts(
     const research = await readJson(projectPath, "research.json");
     // The write-once baseline, so the link rule can tell a person the project
     // began with from a stub a run minted. Fail-open: no baseline, empty set.
-    const startingPersonIds = startingPersonIdsOf(await readStartingTree(projectPath));
+    const startingTree = await readStartingTree(projectPath);
+    const startingPersonIds = startingPersonIdsOf(startingTree);
     // Post-heal, pre-materialize snapshot (applyMaterializeOp mutates tree in
     // place): block only on errors THIS call introduces, not pre-existing drift
     // in a section it never touched (#1572).
     const beforeTree = structuredClone(tree);
-    const ctx: OpContext = { startingPersonIds, beforeTree, warnings: [] };
+    const ctx: OpContext = { startingPersonIds, startingTree, beforeTree, warnings: [] };
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {
@@ -1506,7 +1607,10 @@ export const materializeFactsSchema = {
     "them alone count. When that person has a recorded namesake (research.json " +
     "`namesakes`), the link must also pass the namesake cap: otherwise an explicit " +
     "personId is refused, and an omitted one goes to another eligible person or a new one, " +
-    "with a warning. " +
+    "with a warning. A namesake in the tree (a parent, child or sibling of the same first " +
+    "given name) is judged the same way, except that an omitted personId that would make a " +
+    "new person is refused while the record may be that namesake's, since they are in the " +
+    "tree already. " +
     "When personId is omitted and " +
     "this persona was already materialized onto a tree person (detected by " +
     "assertion_id backlinks on that person's facts), the existing person is reused " +

@@ -19,7 +19,7 @@ describe("research_delivered", () => {
   });
 
   it("does not throw on a missing or null summary", () => {
-    // The server does not validate inputSchema, so the body is what has to cope.
+    // The server checks argument names, not types, so the body is what has to cope.
     expect(() => researchDelivered({} as never)).not.toThrow();
     expect(researchDelivered({ summary: null } as never).summary).toBe("");
   });
