@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_search_hints_010",
+    "skill": "search-hints",
+    "name": "Hints found on an autonomous run: the hints item is skipped as inaccessible, naming the pending hint count",
+    "type": "positive",
+    "description": "The router hands search-hints the planned hints item pli_007 for Patrick Flynn (LZNY-BRF) with userPresent: no, an autonomous run with nobody to give verdicts. Three hints are pending. Triage still recommends a verdict for each, but no verdict will arrive, so it sets pli_007 skipped with skip_category inaccessible and a skip_reason naming the pending hint count, rather than leaving it in_progress to block the question (issue #3153).",
+    "tags": [
+      "triage",
+      "pending-only",
+      "writes-nothing",
+      "item-ends:skipped",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Review the pending FamilySearch hints on Patrick Flynn for plan item pli_007.\n\npersonId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002\nuserPresent: no\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn-hints-item"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-pending",
+    "person-record-matches-flynn",
+    "record-read-flynn-hint-1870-census-m70c",
+    "record-read-flynn-hint-1880-census-m80c",
+    "record-read-flynn-hint-death-cert-mdef",
+    "record-read-flynn-hint-1860-census-mabc",
+    "image-transcribe-flynn-1880-census-m80c",
+    "image-transcribe-any",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "Three hints are pending: the 1870 census (M70C), the 1880 census (M80C) and the 1908 death certificate (MDEF, already linked by pe_005). Triage still gives each its recommendation line",
+    "The hints item pli_007 ends skipped, skip_category inaccessible, with a skip_reason naming the pending hint count and that no researcher is present to give verdicts",
+    "It does not leave pli_007 in_progress: no verdict will arrive on an autonomous run",
+    "No log entry is written, and no verdict is recorded on the researcher's behalf"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 420
+  }
+}

@@ -72,8 +72,9 @@
   "judge_context": [
     "This is a ROUTING test and the hand-off is asserted deterministically. Do NOT grade routing, and do NOT grade whether the research was driven to completion.",
     "Every callee here is STUBBED, and each stub tells the router its delegation 'changed no project state' and not to walk further down the routing table. So one hand-off and a summary is the only outcome the harness permits. The v8 run failed this test for 'did not drive the research to completion', which no behaviour could have satisfied.",
-    "The question's shape is on the skill's own bounded list (whether a person's children are complete), but it arrives with `--autonomous`, which means drive it to completion. Grade only this: does the reply treat the request as a JOB rather than announcing a single deliverable and closing? Framing it as the first step of ongoing work is correct.",
-    "Do not penalise the reply for reporting what the stubbed callee did, and do not reward it for claiming project state changed when the stub said it did not."
+    "The question's shape is on the skill's own bounded list (whether a person's children are complete), but it arrives with `--autonomous`, so it is a JOB rather than a bounded ask. A job still runs ONE step per turn; what `--autonomous` settles is that the router walks the routing table rather than treating the message as one deliverable. Grade only that.",
+    "Do not penalise the reply for reporting what the stubbed callee did, and do not reward it for claiming project state changed when the stub said it did not.",
+    "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists."
   ],
   "judge_reads_files": true
 }

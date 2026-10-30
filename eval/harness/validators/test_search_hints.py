@@ -2,8 +2,9 @@
 
 search-hints reviews the FamilySearch hints on one tree person. Triage asks
 `person_record_matches` for the PENDING matches only, reads each hint, reads the
-record image before recommending against a hint, and writes nothing. Record mode
-logs one `research_log_append` entry per verdict the researcher stated.
+record image before recommending against a hint, and writes nothing but the
+status of its plan item (issue #3153). Record mode logs one `research_log_append`
+entry per verdict the researcher stated, then completes the item.
 
 These are the mechanical checks; whether a recommendation is genealogically
 sound lives in the rubric. Each check reads a deterministic artifact — the call
@@ -33,6 +34,8 @@ _HINT_LINE = re.compile(
 )
 # The 1880 census page's image (fixture image-transcribe-flynn-1880-census-m80c).
 _M80C_IMAGE = "3Q9M-CS80-L7Q2"
+# The hints item the delegation hands over, `planItemId: pli_007` (issue #3153).
+_PLAN_ITEM_ID = re.compile(r"planItemId\W*(pli_[A-Za-z0-9_]+)")
 
 
 def _calls(tool_calls, name: str) -> list[dict]:
@@ -65,6 +68,21 @@ def _verdict_for(reply: str, pid: str) -> str | None:
     return hits[0] if hits else None
 
 
+def _held_item(test) -> str | None:
+    """The `pli_` id of the hints item the delegation hands over, or None for a
+    review the researcher asked for directly, with no plan item."""
+    m = _PLAN_ITEM_ID.search(str(test.get("delegation") or ""))
+    return m.group(1) if m else None
+
+
+def _plan_item(state, item_id: str) -> dict | None:
+    plans = ((state or {}).get("research_json") or {}).get("plans") or []
+    for item in (i for p in plans for i in (p.get("items") or [])):
+        if item.get("id") == item_id:
+            return item
+    return None
+
+
 # --- The hints list is the pending matches -----------------------------
 
 def test_hint_list_asks_for_pending_only(tool_calls, test):
@@ -87,14 +105,42 @@ def test_hint_list_asks_for_pending_only(tool_calls, test):
 
 # --- Triage -------------------------------------------------------------
 
-def test_triage_writes_nothing(before_state, after_state, tool_calls, test):
-    """Triage recommends; the researcher decides. No log entry, no write."""
+def test_triage_writes_only_item_status(before_state, after_state, tool_calls, test):
+    """Triage recommends; the researcher decides. Its only writes are the plan
+    item's status, through `research_append` on `plan_items`, and — on no hints
+    — one `negative` log entry naming the item (issue #3153). No evidence write,
+    no tree edit, and no positive log entry (that would read as evidence awaiting
+    extraction)."""
     if "writes-nothing" not in test.get("tags", []):
         pytest.skip("not a triage test")
-    writes = _calls(tool_calls, "research_log_append") + _calls(tool_calls, "research_append")
-    assert not writes, f"triage wrote to the project ({len(writes)} call(s)); it must write nothing"
+    if not _held_item(test):
+        writes = _calls(tool_calls, "research_log_append") + _calls(tool_calls, "research_append")
+        new_logs = (
+            _new_log_entries(before_state, after_state)
+            if before_state.get("research_json") is not None
+            else []
+        )
+        assert not writes and not new_logs, (
+            f"triage with no plan item handed over wrote to the project ({len(writes)} "
+            f"call(s), {len(new_logs)} new log entries); it must write nothing"
+        )
+        return
+    for c in _calls(tool_calls, "research_append"):
+        section = ((c.get("args") or {}).get("section")) or ""
+        assert section == "plan_items", (
+            f"triage called research_append on section '{section}'; triage writes only "
+            f"the plan item's status (plan_items)"
+        )
     if before_state.get("research_json") is not None:
-        assert not _new_log_entries(before_state, after_state), "triage added a log entry"
+        new_logs = _new_log_entries(before_state, after_state)
+        assert len(new_logs) <= 1, (
+            f"triage added {len(new_logs)} log entries; at most one (the no-hints negative entry)"
+        )
+        for e in new_logs:
+            assert e.get("outcome") == "negative", (
+                "triage's only log entry is the no-hints negative entry; a positive entry reads "
+                "as evidence awaiting extraction"
+            )
 
 
 def test_image_read_before_reject(tool_calls, agent_returns, text_response, test):
@@ -172,15 +218,59 @@ def test_thin_hint_is_not_enough_information(agent_returns, text_response, test)
     )
 
 
+# --- How triage leaves the hints item -------------------------------------
+
+_ENDING = re.compile(r"item-ends:(completed|in_progress|skipped)")
+
+
+def test_hints_item_ends_as_tagged(before_state, after_state, test):
+    """Triage sets the hints item by how it went (issue #3153): no hints →
+    one negative log entry naming the item, then `completed`; hints found with
+    the researcher present → `in_progress`, nothing logged, waiting on verdicts;
+    hints unreadable, or nobody present to decide → `skipped` /
+    `inaccessible`. The tag names the ending the fixture forces."""
+    endings = [m.group(1) for t in test.get("tags", []) if (m := _ENDING.fullmatch(t))]
+    if not endings:
+        pytest.skip("not a hints-item ending test")
+    expected = endings[0]
+    held = _held_item(test)
+    assert held, "an item-ends test must hand over a planItemId in its delegation"
+    item = _plan_item(after_state, held)
+    assert item is not None, f"the hints item {held} is gone from plans"
+    assert item.get("status") == expected, (
+        f"the hints item {held} ended {item.get('status')!r}; this fixture forces {expected!r}"
+    )
+    naming = [e for e in _new_log_entries(before_state, after_state) if e.get("plan_item_id") == held]
+    if expected == "completed":
+        assert len(naming) == 1 and naming[0].get("outcome") == "negative", (
+            f"no hints completes the item through one negative log entry naming it; got "
+            f"{[(e.get('id'), e.get('outcome')) for e in naming]}"
+        )
+    elif expected == "in_progress":
+        assert not naming, (
+            f"hints found leaves the item waiting on verdicts with nothing logged; got "
+            f"{[e.get('id') for e in naming]} naming it, which the router reads as the item executed"
+        )
+    else:
+        assert item.get("skip_category") == "inaccessible", (
+            f"a hints item that could not be reviewed is skipped as inaccessible; got "
+            f"skip_category {item.get('skip_category')!r}"
+        )
+
+
 # --- Record mode --------------------------------------------------------
 
 def test_record_mode_logs_each_verdict(before_state, after_state, agent_returns, text_response, test):
-    """One log entry per stated verdict: tool person_record_matches, no plan
-    item, outcome following the verdict. The accepted hint's log id comes back
-    with its ark, so record-extraction reuses the entry instead of writing a
-    second one."""
+    """One log entry per stated verdict: tool person_record_matches, outcome
+    following the verdict. With a hints item handed over, each entry names it
+    (`plan_item_id = planItemId`) and the item ends `completed` — the engine
+    refuses a `completed` write with no log entry naming the item. Without one
+    (the researcher asked directly) the entries name no plan item. The accepted
+    hint's log id comes back with its ark, so record-extraction reuses the entry
+    instead of writing a second one (issue #3153)."""
     if "record-mode" not in test.get("tags", []):
         pytest.skip("not a record-mode test")
+    held = _held_item(test)
     entries = _new_log_entries(before_state, after_state)
     assert len(entries) == 2, f"expected 2 new log entries (one per verdict), got {len(entries)}"
 
@@ -200,7 +290,16 @@ def test_record_mode_logs_each_verdict(before_state, after_state, agent_returns,
         assert entry.get("tool") == "person_record_matches", (
             f"{pid}: tool is {entry.get('tool')!r}, not 'person_record_matches'"
         )
-        assert entry.get("plan_item_id") is None, f"{pid}: plan_item_id should be null for a hint review"
+        if held:
+            assert entry.get("plan_item_id") == held, (
+                f"{pid}: a hint-review verdict entry must name its fs_hints plan item "
+                f"({held}), or record mode cannot complete the item; got {entry.get('plan_item_id')!r}"
+            )
+        else:
+            assert entry.get("plan_item_id") is None, (
+                f"{pid}: no hints item was handed over, so plan_item_id should be null; "
+                f"got {entry.get('plan_item_id')!r}"
+            )
         assert entry.get("outcome") == outcome, (
             f"{pid}: outcome {entry.get('outcome')!r} does not follow the researcher's verdict ({outcome})"
         )
@@ -209,6 +308,12 @@ def test_record_mode_logs_each_verdict(before_state, after_state, agent_returns,
             "an accepted hint already linked (MDEF, src_004, pe_005) was logged; its source "
             "already carries the evidence, and a positive entry with no new assertion sends "
             "/research back to record-extraction for a record the project holds"
+        )
+    if held:
+        item = _plan_item(after_state, held)
+        assert item is not None, f"the hints item {held} is gone from plans"
+        assert item.get("status") == "completed", (
+            f"the verdicts are logged but the hints item {held} is {item.get('status')!r}, not completed"
         )
     accepted_id = _for("M70C")["id"]
     reply = _reply(agent_returns, text_response, test)

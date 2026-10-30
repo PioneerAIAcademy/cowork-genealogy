@@ -14,10 +14,14 @@ add-to-an-existing-project tools is what produced the bypass this guard exists t
 prevent: in an empty folder every one of them refuses with "not found in
 projectPath", so an agent told to use them had nowhere to go and reached for the
 shell instead. A deny has to leave a working alternative, and in an empty folder
-`project_create` is the only one.
+`project_create` is the only one. The main session cannot call it, or the tree
+writers, so the message also names the agent that holds each.
 `research/SKILL.md` has forbidden it in prose since the beginning and no
 skill's `allowed-tools` lists bare Write/Edit; this is the same rule as a
 denial. See `docs/specs/guardrail-enforcement-spec.md` §6, issue #940.
+
+It also denies the main thread the tools only agents hold (AGENT_ONLY_TOOLS,
+issue #3528), naming the agents to delegate to, and denies a fork.
 
 **Why this ships in the plugin rather than only in the host.** A `PreToolUse`
 hook is the only instrument that can restrain the MAIN THREAD — a per-agent
@@ -80,6 +84,145 @@ DEVICE_WRITE_TOOLS = ("device_commit_files",)
 # environment is not ours to set, and this hook is the one thing that reaches it.
 DELEGATION_TOOLS = ("Agent", "Task")
 FORK_SUBAGENT_TYPE = "fork"
+
+# MCP tools held only by agents, denied on the MAIN THREAD (no `agent_id` key),
+# mapped to the BARE names of the agents whose `tools:` grant them -- the deny
+# names every one, so the model has a route out instead of a wall. Issue #3528:
+# when the main thread holds a tool it calls it rather than delegating, and both
+# production paths give it every tool. Measured in hosted feedback (#3694,
+# #3720): dozens of main-thread `record_search` / `image_transcribe` calls and
+# no delegation at all.
+#
+# HAND-KEPT, not derived from "agents' tools minus skills' allowed-tools" (lead,
+# 2026-10-20). Derivation would make a skill's `allowed-tools` a main-thread
+# restriction, which it is not (CLAUDE.md: a grant, not a restriction), and the
+# list would grow silently on every skill-to-agent conversion. So a tool held
+# only by agents is placed on this map or on MAIN_THREAD_OK by a person, with a
+# reason, and `tests/packaging/plugin-hooks.test.ts` fails when one is on
+# neither, when one is on a list it no longer qualifies for, or when an owner
+# list here drifts from the agents' frontmatter. hooks.json's matcher must name
+# every key here, or the script is never run for it.
+#
+# Held in the hook because the hook runs in the VM with no access to the repo.
+AGENT_ONLY_TOOLS = {
+    "build_external_search_url": ("search-external-sites", "where-else-to-search"),
+    "catalog_search": ("locality-guide", "search-records"),
+    "census_children_gap": ("check-warnings", "question-selection"),
+    "collections_search": (
+        "gps-mentor",
+        "locality-guide",
+        "research-plan",
+        "search-external-sites",
+    ),
+    "convert_calendar": ("conflict-resolution", "convert-dates"),
+    "external_links_search": (
+        "locality-guide",
+        "research-plan",
+        "search-external-sites",
+        "where-else-to-search",
+    ),
+    "fulltext_search": ("search-full-text",),
+    "get_name_variants": ("search-full-text",),
+    "image_search": ("search-images",),
+    "materialize_facts": ("person-evidence",),
+    "merge_tree_persons": ("proof-conclusion", "tree-edit"),
+    "merge_warnings": ("person-evidence", "proof-conclusion"),
+    "person_person_matches": ("tree-edit",),
+    "person_quality": ("person-evidence", "source-evaluation"),
+    "person_record_matches": ("search-hints", "tree-edit"),
+    "person_warnings": (
+        "check-warnings",
+        "person-evidence",
+        "question-selection",
+        "source-evaluation",
+    ),
+    "place_distance": (
+        "conflict-resolution",
+        "gps-mentor",
+        "person-evidence",
+        "timeline",
+    ),
+    "place_population": ("historical-context", "locality-guide"),
+    "place_search": (
+        "conflict-resolution",
+        "gps-mentor",
+        "historical-context",
+        "locality-guide",
+        "person-evidence",
+        "research-plan",
+        "search-external-sites",
+        "survey-surname",
+        "timeline",
+        "tree-edit",
+        "where-else-to-search",
+    ),
+    "place_search_all": (
+        "conflict-resolution",
+        "historical-context",
+        "locality-guide",
+        "research-plan",
+        "timeline",
+        "tree-edit",
+    ),
+    "project_create": ("init-project",),
+    "rank_search_matches": ("search-records",),
+    "record_search": ("search-records", "survey-surname"),
+    "same_person": ("person-evidence", "search-records"),
+    "tree_correct": ("proof-conclusion", "tree-edit"),
+    "tree_edit": ("init-project", "person-evidence", "proof-conclusion", "tree-edit"),
+    "tree_gaps": ("tree-survey",),
+    "volume_bisect": ("search-images",),
+    "volume_search": ("locality-guide", "research-plan", "search-images"),
+    "wiki_place_page": ("gps-mentor", "locality-guide"),
+    "wiki_read": (
+        "citation",
+        "conflict-resolution",
+        "historical-context",
+        "locality-guide",
+        "person-evidence",
+        "research-exhaustiveness",
+        "research-plan",
+        "search-full-text",
+        "search-records",
+        "timeline",
+    ),
+    "wiki_search": (
+        "gps-mentor",
+        "historical-context",
+        "locality-guide",
+        "search-familysearch-wiki",
+        "search-full-text",
+        "search-records",
+    ),
+    "wikipedia_search": ("historical-context", "locality-guide", "search-wikipedia"),
+}
+
+# Tools held only by agents that the main thread may still call, each with the
+# legitimate main-thread call that keeps it off AGENT_ONLY_TOOLS. Seeded from the
+# false-deny replay over the committed e2e runs made after the skills became
+# agents (issue #3528's PR body has the counts). A tool leaves this map when a
+# skill declares it -- it is then not held only by agents -- and the drift test
+# says so.
+MAIN_THREAD_OK = {
+    "image_transcribe": (
+        "research/SKILL.md delivers a bounded transcription itself (lead, "
+        "2026-10-18; issue #2490 retires the wrapper agent)"
+    ),
+    "sidecar_read": (
+        "research/SKILL.md shows the page of that transcription from its staged ref"
+    ),
+    "record_read": (
+        "the only tool that returns the imageArk that transcription needs from a "
+        "record ARK"
+    ),
+    "research_log_append": (
+        "logs that transcription; every replayed main-thread call logged one"
+    ),
+    "research_append": (
+        "routed per section by owner_denied below, whose reason names the one "
+        "agent that owns the section; a tool-level deny would name sixteen"
+    ),
+}
 
 # A path never contains a newline, and is never longer than the platform allows.
 # Both bounds exist to keep the scan below off file CONTENT travelling in the
@@ -267,6 +410,10 @@ AGENT_WRITABLE_SECTIONS = {
     # above. Its search log goes through research_log_append, which carries no
     # `section`.
     "search-records": frozenset({"plan_items", "namesakes"}),
+    # search-hints sets the status of the "review pending hints" plan item it
+    # executes (issue #3153). Its no-hints log goes through research_log_append,
+    # which carries no `section`. A repo CI requirement, not a hook route.
+    "search-hints": frozenset({"plan_items"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
@@ -383,10 +530,13 @@ OUT_OF_LANE_REASON = (
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "
     "must go through the writer tools. To CREATE a new project use project_create, "
-    "which writes both files together; to add to an existing one use "
-    "research_append, research_log_append, tree_edit or tree_correct. These "
+    "which writes both files together (from the main session, invoke "
+    "`@plugin:init-project`, which calls it); to add to an existing one use "
+    "research_append or research_log_append, and for the tree tree_edit or "
+    "tree_correct (from the main session, invoke `@plugin:tree-edit`). These "
     "validate before persisting. Direct file writes never validate. "
-    "external-collections.json is written only by external_links_search given a projectPath."
+    "external-collections.json is written only by external_links_search given a projectPath "
+    "(from the main session, invoke `@plugin:locality-guide`)."
 )
 
 FORK_REASON = (
@@ -394,6 +544,13 @@ FORK_REASON = (
     "without the plugin agent's instructions and tool limits. Delegate to the named "
     "plugin agent the step calls for (its name is the subagent_type), or do the step "
     "yourself."
+)
+
+AGENT_ONLY_REASON = (
+    "Calling {tool} from the main session is disabled — only agents hold it, and "
+    "each applies rules its result depends on. Delegate the step: invoke "
+    "{invocations} — whichever owns the work in hand — with the task and "
+    "projectPath, and let that agent make the {tool} call."
 )
 
 
@@ -659,6 +816,30 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     return None
 
 
+def agent_only_denied(tool_name: str, payload: dict) -> str | None:
+    """The bare tool name when a main-thread call reaches AGENT_ONLY_TOOLS, else None.
+
+    The main thread is told apart by the ABSENCE of the `agent_id` key, as in
+    `owner_denied`: `agent_type` alone is also present on the main thread of a
+    session started with `--agent`. Matched on the bare tail, so every server
+    spelling is caught.
+    """
+    if "agent_id" in payload:
+        return None
+    bare = _basename(tool_name.replace("__", "/"))
+    return bare if bare in AGENT_ONLY_TOOLS else None
+
+
+def agent_only_reason(tool: str) -> str:
+    """The deny text for a main-thread call to an AGENT_ONLY_TOOLS member.
+
+    One copy, imported by the harness (`context_policy.subagent_only_denial`).
+    """
+    calls = [f"`@plugin:{a}`" for a in AGENT_ONLY_TOOLS[tool]]
+    invocations = calls[0] if len(calls) == 1 else ", ".join(calls[:-1]) + " or " + calls[-1]
+    return AGENT_ONLY_REASON.format(tool=tool, invocations=invocations)
+
+
 def deny_reason(denied: tuple) -> str:
     """The deny text for an `owner_denied` triple.
 
@@ -715,6 +896,16 @@ def decision(payload: dict) -> dict:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason": FORK_REASON.format(tool=tool_name),
+            },
+        }
+
+    tool = agent_only_denied(tool_name, payload)
+    if tool is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": agent_only_reason(tool),
             },
         }
 
