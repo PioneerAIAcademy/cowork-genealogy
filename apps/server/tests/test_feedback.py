@@ -998,6 +998,31 @@ def test_redact_multiple_keys():
     assert out.count(b"[REDACTED_API_KEY]") == 2
 
 
+MATCHER_KEY = "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0"  # FAKE
+# A Bash `cat` of the sandbox's config.json, as a transcript JSONL line holds it.
+MATCHER_LINE = (
+    '{"type":"user","content":"{\\"hosted\\": true, \\"matcher\\": \\"service\\", '
+    '\\"matcherUrl\\": \\"https://matcher.example.org\\", \\"matcherApiKey\\": \\"' + MATCHER_KEY + '\\"}"}\n'
+)
+
+
+def test_redact_matcher_key_by_its_field():
+    """64 hex characters look like any other hex string, so only the field name finds it."""
+    out = fb._redact_api_keys(MATCHER_LINE.encode())
+    assert MATCHER_KEY.encode() not in out
+    assert b'\\"matcherApiKey\\": \\"[REDACTED_API_KEY]\\"' in out
+    assert b"https://matcher.example.org" in out
+
+
+def test_redact_matcher_key_by_its_field_str():
+    out = fb._redact_api_keys_str(MATCHER_LINE)
+    assert MATCHER_KEY not in out
+    assert '\\"matcherApiKey\\": \\"[REDACTED_API_KEY]\\"' in out
+    assert "https://matcher.example.org" in out
+    assert fb._redact_api_keys_str('{"matcherApiKey": "' + MATCHER_KEY + '"}') == \
+        '{"matcherApiKey": "[REDACTED_API_KEY]"}'
+
+
 def test_redact_api_keys_str():
     text = "I pasted sk-ant-api03-AAAAAAAAAAAAAAAAAAAAAA into the field"
     out = fb._redact_api_keys_str(text)
