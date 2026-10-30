@@ -2492,7 +2492,10 @@ def _no_aws(argv):
 
 @pytest.mark.parametrize("cmd", [["plan"], ["up", "--phase", "all", "--phase", "signin", "--phase", "resolver",
                                             "--dry-run"],
-                                 ["down", "--dry-run"], ["probe", "--case", "kill_window", "--case",
+                                 pytest.param(["down", "--dry-run"], marks=pytest.mark.skipif(
+                                     sys.platform == "win32", reason="names a file after the <run> placeholder; "
+                                     "< and > are illegal in a Windows filename")),
+                                 ["probe", "--case", "kill_window", "--case",
                                                          "idle_session_60s", "--case", "graviton_boot", "--dry-run"],
                                  ["probe", "--case", "slots_4", "--case", "worker_xlarge", "--dry-run"],
                                  ["cpu", "--start", "2026-10-10T12:00:00Z", "--end", "2026-10-10T12:30:00Z", "--dry-run"],
