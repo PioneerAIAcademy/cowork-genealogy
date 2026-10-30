@@ -104,6 +104,17 @@ def test_a_real_estate_item_is_not_probate(record_type):
         _check(*_states(items))
 
 
+@pytest.mark.parametrize("record_type,rationale", [
+    ("civil_war_pension", "Children born to the widow are named in the file."),
+    ("Civil War service", "Gives the date each son was born."),
+    ("church_membership", "Members' children born in the congregation are listed."),
+])
+def test_a_type_naming_civil_war_or_church_membership_is_not_a_birth_record(record_type, rationale):
+    items = _without(2) + [_item(9, record_type, rationale)]
+    with pytest.raises(AssertionError, match="reason for: birth"):
+        _check(*_states(items))
+
+
 def test_a_draft_registration_is_not_a_birth_record():
     items = _without(2) + [_item(9, "military_draft_registration", "Gives the date each son was born.")]
     with pytest.raises(AssertionError, match="reason for: birth"):
@@ -133,6 +144,14 @@ def test_a_skip_filed_as_other_is_credited_from_its_reason(n, reason):
 ])
 def test_birth_recognised_under_other_spellings(record_type, rationale):
     items = _without(2) + [_item(7, record_type, rationale)]
+    _check(*_states(items))
+
+
+@pytest.mark.parametrize("rationale", ["", "Birth registers are indexed separately."])
+def test_a_skipped_vital_item_is_credited_from_its_reason(rationale):
+    items = _without(4) + [_item(9, "vital_record", rationale, status="skipped",
+                                 skip_category="no_coverage",
+                                 skip_reason="No death register survives before 1880.")]
     _check(*_states(items))
 
 

@@ -135,7 +135,8 @@ def test_open_ended_range(date_range):
 
 
 @pytest.mark.parametrize("date_range", ["1862-1865 (after enlistment)", "1862-1865, later service",
-                                        "1860s"])
+                                        "1860s", "1862-1865 (present with regiment)",
+                                        "1862-1865, forward units", "1862-1865 onward march"])
 def test_a_range_stopping_at_the_window_fails_whatever_words_follow(date_range):
     with pytest.raises(AssertionError, match="reaches 1879"):
         check_reach(BEFORE, _after(CENSUSES + [_item(3, "military", date_range)]), TAGGED)

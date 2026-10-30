@@ -494,11 +494,12 @@ _PENSION_REACH_BY_TEST_ID = {
 # plan whose every military item stopped at 1865 would pass on it, the same
 # hole as any-item-reaches-past (mechanism 3 on the issue).
 _PENSION_RECORD_TYPE_RE = re.compile(r"military|pension", re.IGNORECASE)
-# A decade ("1870s") reaches its last year. "later"/"after" open a range only as
-# its last word: "1862-1865 (after enlistment)" stops at 1865.
+# A decade ("1870s") reaches its last year. An open-ended word opens a range
+# only as its last word: "1862-1865 (after enlistment)" and "1862-1865 (present
+# with regiment)" stop at 1865.
 _DATE_RANGE_YEAR_RE = re.compile(r"\b(1\d{3}|20\d{2})(s?)\b")
 _OPEN_ENDED_RE = re.compile(
-    r"[-–—]\s*$|\b(?:present|onwards?|forward)\b|\b(?:later|after)\s*$|\+\s*$", re.IGNORECASE
+    r"[-–—]\s*$|\b(?:present|onwards?|forward|later|after)\s*$|\+\s*$", re.IGNORECASE
 )
 
 
@@ -570,7 +571,10 @@ def test_pension_item_reaches_past_window(before_state, after_state, test):
 # cemetery item's rationale mentioned children "born", and no item searched for
 # a birth. Death is not matched on a probate rationale that merely says the
 # subject died.
-_VITAL_RECORD_TYPES = re.compile(r"vital|church|parish|civil|birth|marriage|death|cemetery|burial", re.IGNORECASE)
+_VITAL_RECORD_TYPES = re.compile(
+    r"vital|church(?![ _-]?member)|parish|civil(?![ _-]?war)|birth|marriage|death|cemetery|burial",
+    re.IGNORECASE,
+)
 _CENSUS_RE = re.compile(r"\bcensus", re.IGNORECASE)
 _PROBATE_RECORD_TYPE_RE = re.compile(r"probate|(?<!real[_ ])estate|\bwills?\b", re.IGNORECASE)
 _PROBATE_TEXT_RE = re.compile(r"\bprobate|\bestates?\b|\bwills\b|\btestament", re.IGNORECASE)
@@ -595,7 +599,8 @@ def _vital_events(record_type: str, rationale: str) -> set[str]:
 
 
 def _covered_events(item: dict) -> set[str]:
-    """The one event an item searches, or skips. A `skipped` item filed under a
+    """The one event an item searches, or skips. A `skipped` item counts for the
+    event its `skip_reason` names before its rationale's, and one filed under a
     `record_type` that names no event counts for the first of the five its
     `skip_reason` names: the agent is told to write the reason, not which type
     to file the skip under."""
@@ -605,6 +610,10 @@ def _covered_events(item: dict) -> set[str]:
     if _PROBATE_RECORD_TYPE_RE.search(record_type):
         return {"probate"}
     if _VITAL_RECORD_TYPES.search(record_type):
+        if item.get("status") == "skipped":
+            events = _vital_events(record_type, str(item.get("skip_reason") or ""))
+            if events:
+                return events
         return _vital_events(record_type, str(item.get("rationale") or ""))
     if item.get("status") != "skipped":
         return set()
