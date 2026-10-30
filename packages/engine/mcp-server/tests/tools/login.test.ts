@@ -62,6 +62,9 @@ describe("loginTool", () => {
     expect(result.message).toBe(HOSTED_LOGIN_UNAVAILABLE);
     expect(result.message).not.toMatch(/not accepting this session/i);
     expect(result.message).toMatch(/Reconnect button/);
+    // Hedged like RESTRICTED_IMAGE_GUIDANCE: the agent reaches this right
+    // after a 403, which is not always a restriction.
+    expect(result.message).toMatch(/403 is most likely restricted/);
     expect(mockedPerformLogin).not.toHaveBeenCalled();
   });
 });

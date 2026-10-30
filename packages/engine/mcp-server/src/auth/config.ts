@@ -67,7 +67,7 @@ export const HOSTED_LOGIN_UNAVAILABLE =
   "nothing about whether the current FamilySearch session works. Only if a " +
   "FamilySearch tool itself reported a sign-in problem, ask the user to click " +
   "the Reconnect button at the top of the app, then continue. An image that " +
-  "fails with 403 is restricted, not a sign-in problem.";
+  "fails with 403 is most likely restricted, not a sign-in problem.";
 
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
   "No OpenRouter API key is configured. Tell the user to get one at " +
