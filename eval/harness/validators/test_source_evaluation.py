@@ -1118,31 +1118,34 @@ def test_census_drift_is_not_a_finding(
 # source id fails. That the ARK is the finding's OWN source's is deliberately
 # not checked: any returned ARK passes.
 
-_ARK_RE = re.compile(r"ark:/61903/[^\s)\]>\"'|*`,]+")
+_ARK_RE = re.compile(r"ark:/61903/[^\s)\]>\"'|*`,?#]+")
+# A finding heading: `1.`, `1)`, `1:`, `1 —`, `Finding 1`, or a bold bare `**1**`.
 _FINDING_HEAD_RE = re.compile(
-    r"^\s*[#*_\s]*(?:finding\s+)?\d{1,2}(?!\d)\s*(?:[.):]|\s[—–-])", re.IGNORECASE
+    r"^(\s*)[#*_\s]*(?:finding\s+)?(\d{1,2})(?!\d)\s*(?:[.):]|\s[\u2014\u2013-])", re.IGNORECASE
 )
+_BOLD_NUMBER_RE = re.compile(r"^(\s*)[#\s]*\*\*(\d{1,2})\*\*\s")
 # Opens a section after the findings. Matched on the line's own text, never a
-# finding's body: an unchecked-source phrase only as a markdown or bold heading,
-# or followed by a colon within a short label ("Could not check: ..."); a
-# checklist code only alone on its line.
-_UNCHECKED_PHRASE = r"(?:could\s+not\s+(?:check|verify)|unverifi|unchecked)"
-_UNCHECKED_LABEL_RE = re.compile(_UNCHECKED_PHRASE + r"[^:\n]{0,60}:", re.IGNORECASE)
+# finding's body: a heading (markdown or bold), a bare `Could not check:` label,
+# or a checklist code alone on its line.
+_UNCHECKED_PHRASE = r"(?:could\s+not\s+(?:check|verify)|unverifi\w*|unchecked)"
+_UNCHECKED_LABEL_RE = re.compile(r"could\s+not\s+(?:check|verify)\s*:", re.IGNORECASE)
 _UNCHECKED_HEAD_RE = re.compile(_UNCHECKED_PHRASE, re.IGNORECASE)
-_AFTER_FINDINGS_RE = re.compile(
+_LATER_BLOCK_RE = re.compile(
     r"(?:the\s+)?impossible[- ]date|(?:from\s+)?familysearch'?s?\s+(?:own\s+)?"
-    r"(?:profile\s+)?(?:checklist|suggestions)|"
-    r"(?:COHERENCE|CONSISTENCY|VERIFIABILITY|COMPLETENESS)\s*:?\s*$",
+    r"(?:profile\s+)?(?:checklist|suggestions)",
     re.IGNORECASE,
 )
+_CHECKLIST_CODE_RE = re.compile(r"(?:COHERENCE|CONSISTENCY|VERIFIABILITY|COMPLETENESS)\s*:?\s*$")
 
 
 def _opens_after_findings(raw: str) -> bool:
     lead = raw.lstrip()
     heading = lead.startswith(("#", "**", "__"))
-    text = _unemphasised(lead).lstrip("# ")
-    if _AFTER_FINDINGS_RE.match(text) or _UNCHECKED_LABEL_RE.match(text):
+    text = _unemphasised(lead).lstrip("# ").rstrip()
+    if _CHECKLIST_CODE_RE.match(text) or _UNCHECKED_LABEL_RE.match(text):
         return True
+    if _LATER_BLOCK_RE.match(text):
+        return heading or text.endswith(":")
     return heading and bool(_UNCHECKED_HEAD_RE.match(text))
 
 
@@ -1169,32 +1172,53 @@ def _words(text: str) -> str:
     return " ".join(re.findall(r"[a-z0-9]+", text.lower()))
 
 
+def _finding_head(raw: str) -> tuple[int, int] | None:
+    """(indent, number) when `raw` opens a numbered item."""
+    m = _BOLD_NUMBER_RE.match(raw) or _FINDING_HEAD_RE.match(_unemphasised(raw))
+    return (len(m.group(1)), int(m.group(2))) if m else None
+
+
 def _numbered_findings(reply: str) -> list[str]:
-    """Each numbered finding before the first after-findings section, with its body."""
+    """Each numbered finding before the first after-findings section, with its
+    body. A finding is numbered one past the last and indented no deeper than
+    the first, so a numbered list inside a finding's body stays in that body."""
     findings: list[str] = []
+    first_indent = 0
     for raw in reply.splitlines():
         if _opens_after_findings(raw):
             break
-        line = _unemphasised(raw)
-        if _FINDING_HEAD_RE.match(line):
-            findings.append(line)
+        head = _finding_head(raw)
+        if head and head[1] == len(findings) + 1 and (not findings or head[0] <= first_indent):
+            if not findings:
+                first_indent = head[0]
+            findings.append(_unemphasised(raw))
         elif findings:
-            findings[-1] += "\n" + line
+            findings[-1] += "\n" + _unemphasised(raw)
     return findings
 
 
-def _is_unchecked_item(finding: str, arkless: list[dict]) -> bool:
-    """A numbered item reporting a source that has no record to link: its
-    heading says so, or names such a source by id or by its whole title."""
+def _collection(title: str) -> str:
+    """A source title's distinctive part: the quoted collection name when there
+    is one, without parentheticals or year ranges."""
+    quoted = re.search(r'"([^"]+)"', title)
+    text = re.sub(r"\([^)]*\)", "", quoted.group(1) if quoted else title)
+    return _words(re.sub(r"\d{4}(?:\s*[-\u2013]\s*\d{4})?", "", text))
+
+
+def _is_unchecked_item(finding: str, sources: list[dict]) -> bool:
+    """A numbered item about a source with no record to link: its heading
+    names such a source, by id or by its whole title, and names no source that
+    has one. A hedged heading ("birth unverified") is not enough."""
     head = finding.splitlines()[0]
-    if _UNCHECKED_HEAD_RE.search(head):
-        return True
     head_words = _words(head)
-    for s in arkless:
+
+    def named(s: dict) -> bool:
         title = _words((s.get("title") or "").split("(")[0])
-        if (s.get("id") and s["id"] in head) or (title and title in head_words):
-            return True
-    return False
+        return bool((s.get("id") and s["id"] in head) or (title and title in head_words))
+
+    arkless = [s for s in sources if not _ark(s.get("url"))]
+    linked = [c for s in sources if _ark(s.get("url")) and (c := _collection(s.get("title") or ""))]
+    return any(named(s) for s in arkless) and not any(c in head_words for c in linked)
 
 
 def test_findings_carry_record_link(tool_calls, text_response, test, agent_returns=None):
@@ -1227,11 +1251,10 @@ def test_findings_carry_record_link(tool_calls, text_response, test, agent_retur
         "name each finding's source by its url, not its internal id"
     )
 
-    arkless = [s for s in sources if not _ark(s.get("url"))]
     unlinked = [
         f.splitlines()[0].strip()
         for f in _numbered_findings(reply)
-        if not _is_unchecked_item(f, arkless) and not (_arks(f) & allowed)
+        if not _is_unchecked_item(f, sources) and not (_arks(f) & allowed)
     ]
     assert not unlinked, (
         f"a finding carries no record link person_read returned: {unlinked[0][:160]!r}. "

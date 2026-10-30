@@ -34,7 +34,7 @@ Requires authentication (OAuth tokens obtained via the `login` tool).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `uris` | string[] | **Yes** | List of source ARKs (canonical `ark:/61903/...`) — record personas (`1:1:`) and/or document images (`3:1:`/`3:2:`). Full resolver URLs are also accepted. |
+| `uris` | string[] | **Yes** | List of source ARKs (canonical `ark:/61903/...`) — record personas (`1:1:`) and/or document images (`3:1:`/`3:2:`). Full resolver URLs are also accepted, with or without `www.`, and are sent in one canonical form. For a source already on a tree person, pass its `url` from `person_read`, never an ARK built from its `id` (a source-description id, not a record id). |
 
 Example (mixing a record persona and a document image in one call):
 
@@ -112,7 +112,7 @@ results (`3:1:`/`3:2:` document images).
           "Its `id` is a source-description id, not a record id, so an ARK " +
           "built from it names a different record or none. `unattached` also " +
           "covers an ARK that names no record, so confirm a surprising " +
-          "`unattached` with record_read before acting on it."
+          "`unattached` on a record ARK (1:1:) with record_read before acting on it."
       }
     },
     required: ["uris"]

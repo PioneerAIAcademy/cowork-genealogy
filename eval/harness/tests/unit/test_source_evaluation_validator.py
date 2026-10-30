@@ -1690,3 +1690,70 @@ def test_finding_links_on_every_committed_x6b_return():
             _check_links(_with_links(reply, _ALL_LINKS))
             checked += 1
     assert checked >= 3, f"replayed only {checked} x6b returns"
+
+
+# Shapes `/code-review` found on the first version, each pinned both ways.
+
+
+def test_a_numbered_sub_list_inside_a_finding_stays_in_its_body():
+    _check_links(
+        f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n   Next steps:\n"
+        "   1. Request the certificate.\n   2. Correct the index.\n"
+    )
+
+
+def test_a_second_finding_after_a_sub_list_is_still_checked():
+    with pytest.raises(AssertionError, match="Minnesota State Census"):
+        _check_links(
+            f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n"
+            "   1. Request the certificate.\n   2. Correct the index.\n\n"
+            "2. Minnesota State Census, 1885 — misattributed\n   Next: detach it.\n"
+        )
+
+
+@pytest.mark.parametrize("body", [
+    "   Could not verify the year: the certificate is offline.",
+    "   The impossible-date check flagged nothing here.",
+    "   Unverified: the informant.",
+])
+def test_body_lines_do_not_end_the_findings(body):
+    with pytest.raises(AssertionError, match="Minnesota State Census"):
+        _check_links(
+            f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n{body}\n\n"
+            "2. Minnesota State Census, 1885 — misattributed\n   Next: detach it.\n"
+        )
+
+
+def test_a_hedged_heading_is_still_a_finding():
+    with pytest.raises(AssertionError, match="birth unverified"):
+        _check_links(
+            f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+            "2. Minnesota State Census, 1885 — misattributed, birth unverified\n"
+        )
+
+
+def test_a_memory_titled_with_the_persons_name_exempts_no_finding():
+    sources = _HOLE_SOURCES["sources"] + [
+        {"id": "SD-HOLE-F", "title": "Christian P. Hole", "url": "https://ancestors.familysearch.org/en/KD96-TV2/memories"}
+    ]
+    calls = [{"tool": "mcp__genealogy__person_read", "response": dict(_HOLE_SOURCES, sources=sources)}]
+    with pytest.raises(AssertionError, match="Minnesota State Census"):
+        _check_links(
+            f"1. Christian P. Hole, Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+            "2. Christian P. Hole, Minnesota State Census, 1885 — misattributed\n",
+            calls=calls,
+        )
+
+
+def test_a_bold_bare_number_is_a_finding():
+    with pytest.raises(AssertionError, match="Minnesota State Census"):
+        _check_links(
+            f"**1** Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+            "**2** Minnesota State Census, 1885 — misattributed\n"
+        )
+
+
+def test_a_link_with_a_query_string_names_the_same_record():
+    _check_links(
+        f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}?lang=en\n"
+    )

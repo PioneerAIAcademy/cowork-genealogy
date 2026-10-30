@@ -2,7 +2,7 @@ import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { describeFetchError } from "../utils/http.js";
-import { arkToUrl } from "../utils/ark.js";
+import { arkToUrl, toArk } from "../utils/ark.js";
 import { withSessionTree } from "../utils/session-tree.js";
 import type {
   SourceAttachmentsInput,
@@ -101,10 +101,11 @@ export async function sourceAttachmentsTool(
 
   // Callers pass ARKs (canonical `ark:/61903/...`, the form record_search and
   // fulltext_search now emit) or full resolver URLs. The attachments API keys
-  // on resolver URLs, so expand each input; keep the original→URL mapping so
+  // on resolver URLs, so expand each input to one canonical form (a
+  // person_read `url` comes without `www.`); keep the original→URL mapping so
   // the response can be re-keyed to the caller's input string.
   const urlByInput = new Map<string, string>();
-  for (const uri of input.uris) urlByInput.set(uri, arkToUrl(uri));
+  for (const uri of input.uris) urlByInput.set(uri, arkToUrl(toArk(uri)));
   const apiUris = [...new Set(urlByInput.values())];
 
   // Chunked because FamilySearch rejects a batch over ATTACHMENTS_URI_CAP
@@ -178,7 +179,7 @@ export const sourceAttachmentsSchema = {
           "Its `id` is a source-description id, not a record id, so an ARK " +
           "built from it names a different record or none. `unattached` also " +
           "covers an ARK that names no record, so confirm a surprising " +
-          "`unattached` with record_read before acting on it.",
+          "`unattached` on a record ARK (1:1:) with record_read before acting on it.",
       },
     },
     required: ["uris"],
