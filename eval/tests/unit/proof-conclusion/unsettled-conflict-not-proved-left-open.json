@@ -14,7 +14,7 @@
     ]
   },
   "input": {
-    "delegation": "Conclude q_001 — the mother of Cornelis van Noord. Conflict c_001 on her name is unresolved, has weighed every search in the log, and no plan item is open: conclude at the tier the evidence reaches and leave the question open.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "delegation": "Conclude q_001 — the mother of Cornelis van Noord.\n\nquestionId: q_001\nprojectPath: <workspace>",
     "scenario": "dutch-mother-searched-out-weighed"
   },
   "judge_context": [

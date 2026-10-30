@@ -28,8 +28,12 @@ import {
   competingParentSets,
   conflictBlocksCompletion,
   conflictCoverageLogIds,
+  datetimeMs,
+  endsOnConflict,
   isAnalysed,
+  questionLastSearchedMs,
   questionTiedAssertionIds,
+  unsettledConflictEnding,
   whyConflictBlocksCompletion,
 } from "../utils/question-state.js";
 import {
@@ -5060,10 +5064,9 @@ function questionResolvedInvariants(
           "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
           "sources behind it have never been correlated. This is not the same as a question " +
           "researched and found empty, which `not_proved` does close — here the work is " +
-          "unfinished rather than finished with nothing. Leave the question open, record the " +
-          "attempt at `not_proved`, and " +
-          conflictNextMove(beforeResearch, [...blocking]) +
-          "; resolve it after.",
+          "unfinished rather than finished with nothing. Leave the question open and record the " +
+          "attempt at `not_proved`, then " +
+          conflictNextMove(beforeResearch, entry?.id, "invoke conflict-resolution; resolve it after."),
       ];
     }
   }
@@ -5293,27 +5296,28 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
       "is reachable, and tiering down to `possible` does not repair it. Record " +
       "the attempt at `not_proved`, naming the conflict and what would settle " +
       "it, then " +
-      conflictNextMove(beforeResearch, blocking) +
-      ". Re-conclude by updating that same summary once the conflict is resolved.",
+      conflictNextMove(
+        beforeResearch,
+        entry?.question_id,
+        "invoke conflict-resolution. Re-conclude by updating that same summary once the " +
+          "conflict is resolved.",
+      ),
   ];
 }
 
-/** What a refusal over unresolved conflicts tells the agent to do next. When
- *  conflict-resolution has already found nothing left to search on every one
- *  (`weighed_log_entry_ids`), invoking it again weighs the same evidence again,
- *  so the move is the section E ending instead. */
-function conflictNextMove(research: any, conflictIds: string[]): string {
-  const byId = new Map<string, any>(
-    (Array.isArray(research?.conflicts) ? research.conflicts : []).map((c: any) => [c?.id, c]),
+/** What a refusal over unresolved conflicts tells the agent to do next. In
+ *  section E's ending, read with the ladder's own predicate, invoking
+ *  conflict-resolution again weighs the same evidence again, so the move is
+ *  the ending instead; otherwise it is `otherwise`. */
+function conflictNextMove(research: any, questionId: unknown, otherwise: string): string {
+  const question = (Array.isArray(research?.questions) ? research.questions : []).find(
+    (q: any) => q?.id === questionId,
   );
-  const searchedOut =
-    conflictIds.length > 0 &&
-    conflictIds.every((id) => Array.isArray(byId.get(id)?.weighed_log_entry_ids));
-  return searchedOut
-    ? "give it `shortfall: \"conflict\"` and leave the question open: conflict-resolution has " +
+  return question && unsettledConflictEnding(research, question)
+    ? "give the summary `shortfall: \"conflict\"` and stop there: conflict-resolution has " +
         "already weighed every log entry and found nothing left to search, so invoking it " +
-        "again would weigh the same evidence again"
-    : "invoke conflict-resolution";
+        "again would weigh the same evidence again."
+    : otherwise;
 }
 
 /** One conclusion per question — the manifest's own rule, now enforced.
@@ -5381,11 +5385,12 @@ function narrativeAndSearchSummaryTogether(
   const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
   const narrative = has("narrative_markdown");
   const summary = has("exhaustive_search_summary");
-  if (narrative === summary) return [];
+  if (narrative && summary) return [];
   const since = typeof priorUpdated === "string" ? datetimeMs(priorUpdated) : NaN;
   if (Number.isNaN(since)) return [];
   const qid = entry?.question_id;
   if (typeof qid !== "string" || qid === "") return [];
+  if (!narrative && !summary) return staleEndingRefresh(op, qid, priorUpdated, research);
   const itemIds = new Set<string>();
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (plan?.question_id !== qid) continue;
@@ -5418,12 +5423,27 @@ function narrativeAndSearchSummaryTogether(
   ];
 }
 
-/** Epoch ms of an `iso_datetime`, accepting the dash-separated time form the
- *  schema allows (`2026-05-01T10-15-00Z`); NaN when it does not parse. */
-function datetimeMs(value: string): number {
-  const m = /^(\d{4}-\d{2}-\d{2}T\d{2})[:-](\d{2})[:-](\d{2})(?:[.-](\d+))?(.*)$/.exec(value);
-  if (!m) return Date.parse(value);
-  return Date.parse(`${m[1]}:${m[2]}:${m[3]}${m[4] ? "." + m[4] : ""}${m[5]}`);
+/** Section E: an update that sends neither text field leaves `updated` where it
+ *  was (`restampOn`), so in the ending a summary older than the question's
+ *  latest search would stay older on every pass and the ladder would send the
+ *  question back to proof-conclusion forever. There, the refresh must rewrite
+ *  the text. "Older" is the ladder's own test (`endsOnConflict`), so an upload
+ *  counts as a search; outside the ending a field-only update is ordinary. */
+function staleEndingRefresh(op: any, qid: string, priorUpdated: unknown, research: any): string[] {
+  const question = (Array.isArray(research?.questions) ? research.questions : []).find(
+    (q: any) => q?.id === qid,
+  );
+  if (!question || !unsettledConflictEnding(research, question)) return [];
+  const lastSearched = questionLastSearchedMs(research, qid);
+  if (endsOnConflict({ shortfall: "conflict", updated: priorUpdated }, lastSearched)) return [];
+  return [
+    `proof_summaries update of ${op.entryId ?? "(no entryId)"} sends neither ` +
+      "`narrative_markdown` nor `exhaustive_search_summary`, but question " +
+      `${qid} has been searched since this summary was last written, and it is ending on an ` +
+      "unsettled conflict. The summary ends the research only once it is rewritten over that " +
+      "evidence: read the newer log entries, rewrite both fields, and pass both in this update " +
+      "with `shortfall: \"conflict\"`.",
+  ];
 }
 
 /** A `proof_summaries` write when the persons this proof bears on — its
@@ -7857,8 +7877,19 @@ function stampWeighedLogEntryIds(entry: any, op: ResearchAppendOp, research: any
     return;
   }
   if (!analysed) return;
-  if (declared) entry.weighed_log_entry_ids = conflictCoverageLogIds(research, entry);
-  else delete entry.weighed_log_entry_ids;
+  if (!declared) {
+    delete entry.weighed_log_entry_ids;
+    return;
+  }
+  const covered = conflictCoverageLogIds(research, entry);
+  if (covered.length === 0) {
+    throw new ResearchAppendError(
+      "`weighed_log_entry_ids` declares that nothing is left to search, but no question this " +
+        "conflict blocks has a log entry yet, so nothing has been searched. Drop the field and " +
+        "name the record that would settle the conflict.",
+    );
+  }
+  entry.weighed_log_entry_ids = covered;
 }
 
 function applyOne(

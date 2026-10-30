@@ -2406,6 +2406,18 @@ describe("research_append (Phase 2)", () => {
       researchAppend({ projectPath: dir, section: "conflicts", op: "update", entryId: "c_001", fields });
     const nextStep = (research: any) =>
       questionStatus(research, research.questions.find((x: any) => x.id === "q_001")).nextStep;
+    // The ending's documents: c_001 found searched out over all of q_001's log.
+    function searchedOutResearch() {
+      const research = weighedResearch();
+      research.conflicts[0] = { ...research.conflicts[0], ...ANALYSIS, weighed_log_entry_ids: ["log_001", "log_002", "log_003"] };
+      return research;
+    }
+    const summaryEntry = (tier: string, shortfall: string) => ({
+      question_id: "q_001", tier, vehicle: "summary", shortfall,
+      supporting_assertion_ids: [], resolved_conflict_ids: [],
+      exhaustive_search_summary: "s", narrative_markdown: "## C\n...",
+      updated: "2026-01-03T00:00:00.000Z",
+    });
 
     it("stamps every log entry the blocked question owns, the closing upload included", async () => {
       await writeProject(weighedResearch());
@@ -2571,6 +2583,138 @@ describe("research_append (Phase 2)", () => {
       const msg = r.errors.join(" ");
       expect(msg).toMatch(/shortfall: "conflict"/);
       expect(msg).not.toMatch(/invoke conflict-resolution/);
+    });
+
+    // Change request: the refusal asks the ladder, not whether the field is
+    // present, so a search the stamp has not weighed sends it back.
+    it("the tier refusal says invoke conflict-resolution once an unweighed search is logged", async () => {
+      const research = weighedResearch();
+      research.conflicts[0] = {
+        ...research.conflicts[0],
+        ...ANALYSIS,
+        competing_assertion_ids: ["a_001", "a_002"],
+        weighed_log_entry_ids: ["log_001", "log_002"],
+      };
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...summaryEntry("probable", "none"), supporting_assertion_ids: ["a_001"] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/invoke conflict-resolution/);
+    });
+
+    it("a resolve in the ending gets the ending text, said once", async () => {
+      const research = searchedOutResearch();
+      research.proof_summaries = [{ ...summaryEntry("not_proved", "conflict"), id: "ps_001" }];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "questions", op: "update", entryId: "q_001",
+        fields: { status: "resolved", resolved: "2026-01-04" },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toMatch(/stop there/);
+      expect(msg).not.toMatch(/invoke conflict-resolution/);
+      expect(msg.match(/question open/g)?.length).toBe(1);
+    });
+
+    it("refuses the declaration when no question the conflict blocks has been searched", async () => {
+      const research = weighedResearch();
+      research.log = [];
+      await writeProject(research);
+      const r = await update(SEARCHED_OUT);
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/nothing has been searched/);
+    });
+
+    it("keeps the declaration through a rationale-only follow-up edit", async () => {
+      await writeProject(weighedResearch());
+      expect((await update(SEARCHED_OUT)).ok).toBe(true);
+      const r = await update({ resolution_rationale: "No record left to search can settle it." });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002", "log_003"]);
+    });
+
+    // Change request blocker 2: the arm asks for the tier the evidence
+    // reaches, so any summary with `shortfall: "conflict"` ends it.
+    it.each([
+      ["not_proved", "conflict", true],
+      ["possible", "conflict", true],
+      ["probable", "conflict", true],
+      ["probable", "none", false],
+      ["not_proved", "gap", false],
+    ])("a fresh %s/%s summary ends the research: %s", (tier, shortfall, ends) => {
+      const research = searchedOutResearch();
+      research.proof_summaries = [summaryEntry(tier, shortfall)];
+      const step = nextStep(research);
+      if (ends) expect(step).toBeNull();
+      else expect(step).toMatch(/^proof-conclusion — unsettled conflict c_001/);
+    });
+
+    // Change request blocker 1: `updated` moves only when a text field is
+    // sent, so a field-only refresh of a stale summary would leave the ladder
+    // on proof-conclusion forever.
+    describe("refreshing a stale summary in the ending", () => {
+      const stale = (logPerformed?: Record<string, string>) => {
+        const research = searchedOutResearch();
+        for (const [id, at] of Object.entries(logPerformed ?? {})) {
+          research.log.find((e: any) => e.id === id)!.performed = at;
+        }
+        research.proof_summaries = [
+          { ...summaryEntry("not_proved", "conflict"), id: "ps_001", updated: "2026-01-01T00:00:00.000Z" },
+        ];
+        return research;
+      };
+      const refresh = (fields: Record<string, unknown>) =>
+        researchAppend({ projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields });
+
+      it.each([
+        [{ tier: "not_proved", shortfall: "conflict" }],
+        [{ supporting_assertion_ids: [] }],
+      ])("refuses a field-only update %j", async (fields) => {
+        await writeProject(stale());
+        const r = await refresh(fields);
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.errors.join(" ")).toMatch(/sends neither `narrative_markdown` nor `exhaustive_search_summary`/);
+      });
+
+      it("refuses it when only the researcher's upload is newer than the summary", async () => {
+        const research = stale();
+        for (const e of research.log) e.performed = "2025-12-31T00:00:00Z";
+        research.log.find((e: any) => e.id === "log_003")!.performed = "2026-01-02T00:00:00Z";
+        await writeProject(research);
+        expect((await refresh({ tier: "not_proved" })).ok).toBe(false);
+      });
+
+      it("a refresh sending both texts ends the research", async () => {
+        await writeProject(stale());
+        const r = await refresh({ narrative_markdown: "## C\nrewritten", exhaustive_search_summary: "rewritten" });
+        expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+        expect(nextStep(await readResearch())).toBeNull();
+      });
+
+      it("accepts a field-only update on a fresh summary", async () => {
+        const research = stale();
+        research.proof_summaries[0].updated = "2026-01-03T00:00:00.000Z";
+        await writeProject(research);
+        const r = await refresh({ supporting_assertion_ids: [] });
+        expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      });
+
+      it("accepts a field-only update outside the ending", async () => {
+        const research = stale();
+        delete research.conflicts[0].weighed_log_entry_ids;
+        await writeProject(research);
+        const r = await refresh({ supporting_assertion_ids: [] });
+        expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      });
     });
   });
 

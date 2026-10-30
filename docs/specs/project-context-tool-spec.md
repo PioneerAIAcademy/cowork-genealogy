@@ -219,8 +219,8 @@ log entry the question owns (the same coverage set as the researcher's choice be
 no `planned` or `in_progress` item is left (one waiting only on an upload aside),
 `nextStep` is `proof-conclusion — unsettled conflict …`: re-running
 conflict-resolution there would weigh the same evidence again. Once the question
-has a `not_proved` summary with `shortfall: "conflict"` whose `updated` is not
-older than the question's latest log entry, `nextStep` is null — the research ended
+has a summary with `shortfall: "conflict"`, at whatever tier the evidence reached,
+whose `updated` is not older than the question's latest log entry, `nextStep` is null — the research ended
 on the conflict. An older one predates the evidence just weighed, so
 proof-conclusion refreshes it. One log entry the weighed list does not cover is
 new evidence and routes back to conflict-resolution.

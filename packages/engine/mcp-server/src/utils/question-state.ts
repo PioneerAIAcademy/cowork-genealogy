@@ -517,12 +517,7 @@ export function conflictCoverageLogIds(research: any, conflict: any): string[] {
         .map((a) => a?.id),
     );
     if (!conflictBlocksQuestion(conflict, qid, assertionIds)) continue;
-    const itemIds = new Set(
-      arr(research?.plans)
-        .filter((p) => p?.question_id === qid)
-        .flatMap((p) => arr(p?.items).map((i) => i?.id)),
-    );
-    for (const e of ownedLogEntries(research, itemIds)) {
+    for (const e of ownedLogEntries(research, questionItemIds(research, qid))) {
       if (typeof e?.id === "string") ids.add(e.id);
     }
   }
@@ -590,6 +585,64 @@ function unsettledConflictWeighed(
     });
 }
 
+/** Epoch ms of an `iso_datetime`, accepting the dash-separated time form the
+ *  schema allows (`2026-05-01T10-15-00Z`); NaN when it does not parse. */
+export function datetimeMs(value: string): number {
+  const m = /^(\d{4}-\d{2}-\d{2}T\d{2})[:-](\d{2})[:-](\d{2})(?:[.-](\d+))?(.*)$/.exec(value);
+  if (!m) return Date.parse(value);
+  return Date.parse(`${m[1]}:${m[2]}:${m[3]}${m[4] ? "." + m[4] : ""}${m[5]}`);
+}
+
+/** The plan-item ids of a question's plans. */
+function questionItemIds(research: any, qid: unknown): Set<any> {
+  return new Set(
+    arr(research?.plans)
+      .filter((p) => p?.question_id === qid)
+      .flatMap((p) => arr(p?.items).map((i) => i?.id)),
+  );
+}
+
+/** Epoch ms of the latest entry a question owns (`ownedLogEntries`, so an
+ *  upload counts), or -Infinity with none. A summary written before it
+ *  predates evidence the question has since gathered. */
+export function questionLastSearchedMs(research: any, qid: unknown): number {
+  return Math.max(
+    -Infinity,
+    ...ownedLogEntries(research, questionItemIds(research, qid))
+      .map((e) => (typeof e?.performed === "string" ? datetimeMs(e.performed) : NaN))
+      .filter((t) => !Number.isNaN(t)),
+  );
+}
+
+/** Section E's ending, read as the ladder reads it but without its `resolved`
+ *  gate, so a refusal can ask it about the question it is resolving: every
+ *  conflict blocking the question was found searched out over every log entry
+ *  the question owns, and no plan item is open. */
+export function unsettledConflictEnding(research: any, question: any): boolean {
+  const qid = question?.id;
+  const plans = arr(research?.plans).filter((p) => p?.question_id === qid);
+  const assertionIds = new Set(
+    arr(research?.assertions)
+      .filter((a) => arr(a?.extracted_for_question_ids).includes(qid))
+      .map((a) => a?.id),
+  );
+  const openConflictIds = arr(research?.conflicts)
+    .filter((c) => conflictBlocksQuestion(c, qid, assertionIds))
+    .map((c) => c?.id)
+    .filter((id): id is string => typeof id === "string");
+  return unsettledConflictWeighed(research, openConflictIds, plans, questionItemIds(research, qid));
+}
+
+/** Whether a summary is the ending's terminal marker: `shortfall: "conflict"`
+ *  at whatever tier the evidence reached, written no earlier than the
+ *  question's latest search. A summary with no parseable `updated` predates
+ *  the stamp and counts. */
+export function endsOnConflict(summary: any, lastSearched: number): boolean {
+  if (summary?.shortfall !== "conflict") return false;
+  const written = typeof summary?.updated === "string" ? datetimeMs(summary.updated) : NaN;
+  return Number.isNaN(written) || written >= lastSearched;
+}
+
 /**
  * The state of one question plus the step it is waiting on.
  *
@@ -655,21 +708,12 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
   if (!resolved && unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
     // Section E. The summary is the terminal marker: once proof-conclusion has
-    // written a `not_proved` with `shortfall: "conflict"`, the research has ended
-    // on the conflict and nothing further is due. A summary written before the
-    // question's latest search predates the evidence just weighed, so it does not
-    // end the research; proof-conclusion refreshes it.
-    const lastSearched = Math.max(
-      -Infinity,
-      ...ownedLogEntries(research, itemIds)
-        .map((e) => (typeof e?.performed === "string" ? Date.parse(e.performed) : NaN))
-        .filter((t) => !Number.isNaN(t)),
-    );
-    const ended = summaries.some((s) => {
-      if (s?.tier !== "not_proved" || s?.shortfall !== "conflict") return false;
-      const written = typeof s?.updated === "string" ? Date.parse(s.updated) : NaN;
-      return Number.isNaN(written) || written >= lastSearched;
-    });
+    // written one with `shortfall: "conflict"`, at the tier the evidence reaches,
+    // the research has ended on the conflict and nothing further is due. A
+    // summary written before the question's latest search predates the evidence
+    // just weighed, so it does not end the research; proof-conclusion refreshes it.
+    const lastSearched = questionLastSearchedMs(research, qid);
+    const ended = summaries.some((s) => endsOnConflict(s, lastSearched));
     nextStep = ended
       ? null
       : `proof-conclusion — unsettled conflict ${openConflictIds.join(", ")} has weighed every ` +

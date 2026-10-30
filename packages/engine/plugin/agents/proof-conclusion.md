@@ -160,12 +160,14 @@ conflict is resolved, you update that same `ps_NNN` in place.
 
 **The unsettled-conflict ending.** When `project_context`'s `nextStep` for this
 question starts `proof-conclusion — unsettled conflict`, conflict-resolution has
-already weighed every log entry and found nothing left to search. Write the
-summary as above with `shortfall: "conflict"`, leave the question open, and route
+already weighed every log entry and found nothing left to search. Write or
+refresh the summary at the tier the evidence reaches (`not_proved` when step 4
+blocks) with `shortfall: "conflict"`, leave the question open, and route
 nowhere: re-running conflict-resolution weighs the same evidence again.
-Report the exact failing IDs and route to the missing skill for each gap
-(extraction, `person-evidence`, or `conflict-resolution`) instead of
-asking — who decides changes nothing about whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
+
+Outside that ending, when the gate declines, report the exact failing IDs and
+route to the missing skill for each gap (extraction, `person-evidence`, or
+`conflict-resolution`) instead of asking — who decides changes nothing about whether the gate runs. Advisory unlinked fact/negative assertions (step 3)
 do **not** stop the gate — surface them as a note and continue.
 
 Only when the blocking checks pass, proceed to Step 1.
@@ -360,7 +362,7 @@ Present a terse summary ONLY:
 
 - **Tier + rationale** — the tier and a one-to-two-sentence why (which GPS components are met vs. incomplete).
 - **What was written** — the `ps_NNN` id, plus a concise bulleted "what changed" in the tree: **name the concluded relationship(s) first** (e.g. "ParentChild: Peter Geach → Elizabeth Geach"), then facts / sources added or removed, with ids/counts — not the prose. One short line per tool action. If tier ≥ probable for a parentage or marriage question and you wrote **no** relationship, that is a bug — return to §6 before presenting.
-- **Next step** — in this order, first that applies: the delegation passed `newQuestion: yes` → "Continue with setting up the project?"; you wrote `not_proved` with `shortfall: "conflict"` in the unsettled-conflict ending (preconditions, step 4) → "The research has ended on an unsettled conflict.", with no "Continue with …?" line; the question is still open → the step that unblocks it; another question is still open → that question's own next step; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**.
+- **Next step** — in this order, first that applies: the delegation passed `newQuestion: yes` → "Continue with setting up the project?"; you wrote the summary with `shortfall: "conflict"` in the unsettled-conflict ending (preconditions) → "The research has ended on an unsettled conflict.", with no "Continue with …?" line; the question is still open → the step that unblocks it; another question is still open → that question's own next step; every question `resolved` and the project `completed` → "The project is complete."; a fact the objective asks for has no question → question-selection; otherwise → **research-plan**.
 - **What would advance the tier**, when it is `probable`, `possible` or `not_proved`, unless the research has ended on an unsettled conflict: one line naming a **reasonably obtainable** record — never a privacy-restricted or sealed one (a recent vital record under embargo) — and naming **research-plan** as where that search would be planned. Never question-selection: advancing a tier is a search on the question already answered. Say it even when the project is complete, where it is what more would take rather than the next step.
 - If the question cannot be identified: "Cannot identify the question. Candidates: [`q_` id — text, …]". Evaluate nothing and write nothing.
 

@@ -792,17 +792,21 @@ that apply:
     so conflict-resolution declares it by sending the field. `research_append` fills the value
     from the helper the ladder reads (`conflictCoverageLogIds`), because the set includes an
     upload matched to its hand-off by URL, which an agent building the list by hand misses, and
-    clears the field on any other analysis or a settle. It mirrors
+    clears the field on any other analysis write (one carrying `independence_analysis`) or a
+    settle. It refuses the declaration when the coverage set is empty. It mirrors
     `search_stop.log_entry_ids`. "The question's log entries" is B's coverage set: entries on
     its plans' items plus closing entries matched by `closesHandOff`.
   - **The ladder gains one arm, above the conflict arm.** It applies when there is at least
     one open conflict, every open conflict carries `independence_analysis` and a
     `weighed_log_entry_ids` that covers every log entry of the question, and no plan item is
     open (an item waiting only on an upload aside). Then:
-    - if the question has a `not_proved` summary with `shortfall: "conflict"`, there is no next
-      step: "the research ended on an unsettled conflict";
+    - if the question has a summary with `shortfall: "conflict"`, at whatever tier the evidence
+      reached, whose `updated` is not older than the question's latest log entry, there is no
+      next step: "the research ended on an unsettled conflict";
     - otherwise the next step is proof-conclusion, which writes or refreshes that summary and
-      leaves the question open (decision 12).
+      leaves the question open (decision 12). An update that refreshes a stale summary must
+      send both text fields, since only those move `updated`; `research_append` refuses one
+      that sends neither.
   - **The summary is the terminal marker, not `search_stop`.** proof-conclusion may not write
     `search_stop`: the plugin hook routes every non-null `stopped_because` to
     research-exhaustiveness (`guard_project_files.py`, `OWNED_DECLARATIONS`, pinned in
@@ -813,9 +817,8 @@ that apply:
     PR 1 corrects it.
   - **A later upload or steer** adds a log entry the weighed list does not cover, so the
     conflict goes back to conflict-resolution. If that pass still settles nothing, the arm
-    finds the old `not_proved`/`conflict` summary and stops without refreshing it; the
-    conflict's own analysis records the new evidence. That is the accepted cost of using the
-    summary as the marker.
+    finds the old `conflict` summary older than the new entry and routes to proof-conclusion,
+    which refreshes it over the new evidence.
   - **The router's conflict row** follows the ladder's `nextStep` for the question, not the
     bare presence of a conflict. A new row above it (`skills/research/SKILL.md:220`): when
     `project_context` reports no next step for an unresolved question, run nothing and name
@@ -1251,12 +1254,13 @@ in parallel with PR 2.
   conflict carries the field, so PR 1's unsettled-conflict arm never fires and routing is
   today's.
   - **`research_append`:** fills `weighed_log_entry_ids` on the unresolved analysis that sends
-    it, refuses it without an analysis, and clears it on any other analysis or a settle
+    it, refuses it without an analysis or with nothing searched, and clears it on any other
+    analysis write or a settle
     (ADR-0011: the value is decidable from the documents; the declaration is not);
   - **conflict-resolution:** ends a pass
     that settles nothing and names nothing to search without a Continue line (E);
-  - **proof-conclusion:** in that state, writes or refreshes `not_proved` with
-    `shortfall: "conflict"`, leaves the question open, and its report ends without a Continue
+  - **proof-conclusion:** in that state, writes or refreshes a summary at the tier the
+    evidence reaches with `shortfall: "conflict"`, leaves the question open, and its report ends without a Continue
     line (E);
   - **tests:** the conflict-resolution and proof-conclusion cases for the unsettled conflict in
     acceptance item 7. The "a following continue runs no step" case needs PR 2's router rows
@@ -1418,8 +1422,8 @@ in parallel with PR 2.
      extracted, otherwise the next item's search (search-records for FamilySearch);
    - a concluded, unresolved question with no open conflict routes to proof-conclusion;
    - an analysed, unresolved conflict that has weighed every log entry, with no open item,
-     routes to proof-conclusion; once the question has a `not_proved` summary with
-     `shortfall: "conflict"`, there is no next step; one more log entry sends it back to
+     routes to proof-conclusion; once the question has a summary with `shortfall: "conflict"`
+     no older than its latest log entry, at any tier, there is no next step; one more log entry sends it back to
      conflict-resolution; the same holds for a question already `exhaustive_declared`;
    - the arm does not fire with no open conflict, or for a conflict-blocked question with no log
      entries whose conflict carries no `weighed_log_entry_ids`; that question goes to

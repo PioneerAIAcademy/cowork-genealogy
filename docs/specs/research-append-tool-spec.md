@@ -476,8 +476,9 @@ record-extraction consolidation; see
   the tool replaces the sent value with `conflictCoverageLogIds` — every log entry
   of every question the conflict blocks, including a closing upload matched to its
   hand-off by URL, which an agent's own list misses. The field is refused on a write
-  with no non-blank `independence_analysis` (the ladder's `isAnalysed`), and removed
-  by an analysis write that does not send it and by any write that leaves the
+  with no non-blank `independence_analysis` (the ladder's `isAnalysed`) and when the
+  coverage set is empty (nothing searched yet), and removed
+  by an analysis write (one carrying `independence_analysis`) that does not send it and by any write that leaves the
   conflict settled, so a stale declaration cannot end the research on evidence that
   has moved. A write carrying neither leaves it as it was.
 - **Scope: `S` entry only.** The composite's tree write is
