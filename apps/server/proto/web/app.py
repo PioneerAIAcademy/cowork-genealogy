@@ -12,6 +12,10 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   GET  /api/sessions/{id}/events?after=N       one-shot poll read (JSON)
   GET  /api/sessions/{id}/events/stream        text/event-stream; Last-Event-ID resume
   GET/POST /api/sessions, GET/PATCH/DELETE /api/sessions/{id}, POST .../resume, GET .../state
+  GET  /api/projects                         the patron's projects
+  GET  /api/projects/{id}/state               viewer state; ETag revalidation
+  GET  /api/projects/{id}/sidecar/{log_id}     search-result body
+  GET  /api/projects/{id}/image?filename=      persisted source page scan
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
   GET  /callback   (patron sign-in, web/auth.py; every /api/sessions route needs the cookie)
   GET  .../sidecar/{log_id} -> 404;  .../image, .../logs, .../files -> 501
@@ -103,6 +107,8 @@ from fastapi import Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
+from starlette.datastructures import MutableHeaders
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
@@ -327,6 +333,8 @@ class Turn:
 
 
 class Store(Protocol):
+    async def list_projects(self, owner_id: str) -> list[dict[str, Any]]: ...
+    async def project_owner(self, project_id: str) -> str | None: ...
     async def create_session(
         self, title: str, model: str, project_id: str | None, owner: str, may_create_or_claim: bool
     ) -> SessionRow: ...
@@ -433,6 +441,12 @@ def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, n
     return turn_message.queue_body(
         turn_id, session.session_id, session.project_id, text, enqueued_at, nudges
     )
+
+
+def project_label(research: Any) -> str | None:
+    """The research title, then objective; empty strings count as absent."""
+    project = (research or {}).get("project") or {}
+    return project.get("title") or project.get("objective") or None
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
@@ -844,6 +858,25 @@ class PgStore:
                         (row["project_id"], row["project_id"]),
                     )
         return True
+
+    async def list_projects(self, owner_id: str) -> list[dict[str, Any]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT p.project_id AS id, "
+                "COALESCE(NULLIF(r.doc->'project'->>'title', ''), "
+                "NULLIF(r.doc->'project'->>'objective', '')) AS label, "
+                "(SELECT max(d.updated_at) FROM documents d WHERE d.project_id = p.project_id) AS updated_at "
+                "FROM projects p LEFT JOIN documents r ON r.project_id = p.project_id AND r.name = 'research.json' "
+                "WHERE p.owner_id = %s ORDER BY updated_at DESC NULLS LAST, p.project_id",
+                (owner_id,),
+            )
+            return list(await cur.fetchall())
+
+    async def project_owner(self, project_id: str) -> str | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute("SELECT owner_id FROM projects WHERE project_id = %s", (project_id,))
+            row = await cur.fetchone()
+            return row["owner_id"] if row else None
 
     async def document_versions(self, project_id: str) -> dict[str, int]:
         async with await self._connect() as conn:
@@ -1536,6 +1569,27 @@ def create_app(
     app.state.ping_s = ping_s if ping_s is not None else _env_float("SSE_PING_S", 15.0)
     app.state.stream_max_polls = stream_max_polls
 
+    class ProjectCacheHeaders:
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            path = scope.get("path", "")
+            if scope["type"] != "http" or not (path == "/api/projects" or path.startswith("/api/projects/")):
+                await self.app(scope, receive, send)
+                return
+
+            async def send_headers(message: Message) -> None:
+                if message["type"] == "http.response.start":
+                    headers = MutableHeaders(scope=message)
+                    headers["Cache-Control"] = "private, no-cache"
+                    headers.add_vary_header("Cookie")
+                await send(message)
+
+            await self.app(scope, receive, send_headers)
+
+    app.add_middleware(ProjectCacheHeaders)
+
     def _store(request: Request) -> Store:
         return request.app.state.store
 
@@ -1571,6 +1625,12 @@ def create_app(
         if row is None or row.owner_id is None or row.owner_id != user.id:
             raise HTTPException(status_code=404, detail="Session not found")
         return row
+
+    async def _project(request: Request, project_id: str, user: User) -> None:
+        """Missing, foreign and NULL-owner projects all answer the same 404."""
+        owner = await _store(request).project_owner(project_id)
+        if owner is None or owner != user.id:
+            raise HTTPException(status_code=404, detail="Project not found")
 
     # -- health ---------------------------------------------------------------------
 
@@ -1716,6 +1776,50 @@ def create_app(
         resp.delete_cookie(auth.FS_OAUTH_COOKIE, path="/")
         return resp
 
+    # -- projects -----------------------------------------------------------------
+
+    @app.get("/api/projects")
+    async def list_projects(request: Request, user: User = Depends(current_user)) -> list[dict[str, Any]]:
+        """[{id: str, label: str | None, updated_at: ISO-8601 str | None}]."""
+        return await _store(request).list_projects(user.id)
+
+    @app.get("/api/projects/{project_id}/state")
+    async def project_state(project_id: str, request: Request, user: User = Depends(current_user)) -> Response:
+        """{label, research, gedcomx, sidecars: [], version: rN-tN}, or an empty 304; both with ETag."""
+        await _project(request, project_id, user)
+        docs = await _store(request).documents(project_id)
+        rv, research = docs.get("research.json", (0, None))
+        tv, gedcomx = docs.get("tree.gedcomx.json", (0, None))
+        tag = f"r{rv}-t{tv}"
+        etag = f'"{tag}"'
+        matches = [value.strip().removeprefix("W/") for value in request.headers.get("If-None-Match", "").split(",")]
+        if etag in matches or "*" in matches:
+            return Response(status_code=304, headers={"ETag": etag})
+        return JSONResponse({
+            "label": project_label(research),
+            "research": research,
+            "gedcomx": gedcomx,
+            "sidecars": [],
+            "version": tag,
+        }, headers={"ETag": etag})
+
+    @app.get("/api/projects/{project_id}/sidecar/{log_id}")
+    async def project_sidecar(
+        project_id: str, log_id: str, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        """{raw: str, mtime: float} for a search-result sidecar."""
+        await _project(request, project_id, user)
+        return await _sidecar(request, project_id, log_id)
+
+    @app.get("/api/projects/{project_id}/image")
+    async def project_image(
+        project_id: str, request: Request, filename: str | None = None,
+        user: User = Depends(current_user),
+    ) -> Response:
+        """The source page scan's bytes, with Content-Type: image/jpeg."""
+        await _project(request, project_id, user)
+        return await _image(request, project_id, filename)
+
     # -- sessions -----------------------------------------------------------------
 
     @app.get("/api/sessions")
@@ -1795,6 +1899,9 @@ def create_app(
         session_id: str, log_id: str, request: Request, user: User = Depends(current_user)
     ) -> dict:
         row = await _session(request, session_id, user)
+        return await _sidecar(request, row.project_id, log_id)
+
+    async def _sidecar(request: Request, project_id: str, log_id: str) -> dict:
         try:
             sidecar_key(log_id)
         except ValueError:
@@ -1818,7 +1925,7 @@ def create_app(
         # below already does this; these three did not.
         def _read() -> object:
             with psycopg.connect(_pg_dsn()) as conn:
-                return fetch_sidecar(conn, blobs, row.project_id, log_id)
+                return fetch_sidecar(conn, blobs, project_id, log_id)
 
         blob = await asyncio.to_thread(_read)
         payload = sidecar_payload(blob)
@@ -1854,6 +1961,9 @@ def create_app(
         # runs, so a foreign session learned the route exists and what it takes. The
         # ownership suite caught it.
         row = await _session(request, session_id, user)
+        return await _image(request, row.project_id, filename)
+
+    async def _image(request: Request, project_id: str, filename: str | None) -> Response:
         if not filename or ".." in filename or not IMAGE_REF_RE.match(filename):
             raise HTTPException(status_code=400, detail="not an image reference")
         blobs = request.app.state.blobs
@@ -1865,7 +1975,7 @@ def create_app(
         # Off the event loop, for the reason given on the sidecar route above.
         def _read() -> object:
             with psycopg.connect(_pg_dsn()) as conn:
-                return fetch_blob(conn, blobs, row.project_id, filename)
+                return fetch_blob(conn, blobs, project_id, filename)
 
         blob = await asyncio.to_thread(_read)
         if blob is None:

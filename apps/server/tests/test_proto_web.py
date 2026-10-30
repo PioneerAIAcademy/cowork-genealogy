@@ -84,7 +84,7 @@ USER_B = User("usr_b", "b@example.org")
 
 class FakeStore:
     """Re-implements the store in Python. The owner DECISION is the route's (``_session``
-    compares ``owner_id``), so these tests exercise the real rule; only ``list_sessions``
+    compares ``owner_id``), so these tests exercise the real rule; only the lists
     and ``create_session`` filter by owner here, mirroring the SQL that
     ``test_proto_auth.py`` runs against a scripted connection."""
 
@@ -140,6 +140,16 @@ class FakeStore:
 
     async def list_sessions(self, owner: str) -> list[SessionRow]:
         return [r for r in self.sessions.values() if r.owner_id == owner]
+
+    async def list_projects(self, owner_id: str) -> list[dict[str, Any]]:
+        rows = [{"id": pid, "label": app.project_label(self.docs.get(pid, {}).get("research.json", (0, None))[1]),
+                 "updated_at": T0 if self.docs.get(pid) else None}
+                for pid, owner in self.owners.items() if owner == owner_id]
+        # All fake documents have T0 as their write time; real timestamps are tested in _pg.
+        return sorted(rows, key=lambda r: (r["updated_at"] is None, r["id"]))
+
+    async def project_owner(self, project_id: str) -> str | None:
+        return self.owners.get(project_id)
 
     async def get_session(self, session_id: str) -> SessionRow | None:
         return self.sessions.get(session_id)
@@ -1420,6 +1430,218 @@ def _per_session_routes() -> list[tuple[str, str]]:
         if path.startswith("/api/sessions/{session_id}"):
             pairs += [(m, path) for m in sorted(route.methods - {"HEAD"})]
     return sorted(pairs)
+
+
+def _per_project_routes() -> list[tuple[str, str]]:
+    """Every route under /api/projects/{project_id}, read off the app itself."""
+    pairs = []
+    for route in create_app(FakeStore(), FakeQueue()).routes:
+        path = getattr(route, "path", "")
+        if path.startswith("/api/projects/{project_id}"):
+            pairs += [(m, path) for m in sorted(route.methods - {"HEAD"})]
+    return sorted(pairs)
+
+
+def _project_path(path: str, project_id: str) -> str:
+    return path.replace("{project_id}", project_id).replace("{log_id}", "q_001")
+
+
+def test_the_route_sweep_sees_every_per_project_route():
+    # 3 routes: state, sidecar, image. A new one must be decided on, not missed.
+    assert len(_per_project_routes()) == 3, _per_project_routes()
+
+
+@pytest.mark.parametrize(("method", "path"), _per_project_routes())
+async def test_second_user_gets_404_on_every_project_route(method, path):
+    store, queue = FakeStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    url = _project_path(path, "proj_a")
+    async with make_client(store, queue, user=USER_B.id) as c:
+        r = await c.request(method, url)
+    assert r.status_code == 404, (method, path, r.status_code, r.text)
+    assert r.json() == {"detail": "Project not found"}
+    # The owner gets through, even with no session on the project.
+    async with make_client(store, queue) as c:
+        r = await c.request(method, url)
+    assert r.status_code not in (401, 403, 422), (method, path, r.status_code)
+    assert r.status_code != 404 or r.json()["detail"] != "Project not found", (method, path)
+
+
+@pytest.mark.parametrize(("method", "path"), _per_project_routes() + [("GET", "/api/projects")])
+async def test_project_routes_require_a_cookie(method, path):
+    store, queue = FakeStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    async with make_client(store, queue, user=None) as c:
+        r = await c.request(method, _project_path(path, "proj_a"))
+    assert r.status_code == 401, (method, path, r.status_code)
+    _assert_project_cache_headers(r)
+
+
+@pytest.mark.parametrize(("method", "path"), _per_project_routes())
+async def test_missing_foreign_and_null_owner_projects_are_indistinguishable(method, path):
+    store, queue = FakeStore(), FakeQueue()
+    store.owners.update({"proj_a": USER_A.id, "proj_null": None})
+    async with make_client(store, queue, user=USER_B.id) as c:
+        responses = [await c.request(method, _project_path(path, pid))
+                     for pid in ("proj_missing", "proj_a", "proj_null")]
+    for r in responses:
+        assert r.status_code == 404 and r.json() == {"detail": "Project not found"}
+        assert (r.status_code, r.content, dict(r.headers)) == (
+            responses[0].status_code, responses[0].content, dict(responses[0].headers))
+        _assert_project_cache_headers(r)
+
+
+async def test_list_projects_returns_only_the_callers_projects_with_research_labels():
+    store, queue = FakeStore(), FakeQueue()
+    projects = {
+        "proj_title": {"title": "Title", "objective": "Objective"},
+        "proj_objective": {"objective": "Objective"},
+        "proj_empty_title": {"title": "", "objective": "Fallback"},
+        "proj_neither": {},
+        "proj_empty": {"title": "", "objective": ""},
+    }
+    for pid, project in projects.items():
+        store.owners[pid] = USER_A.id
+        store.docs[pid] = {"research.json": (1, {"project": project})}
+    store.owners.update({"proj_no_docs": USER_A.id, "proj_b": USER_B.id, "proj_null": None})
+    async with make_client(store, queue) as c:
+        r = await c.get("/api/projects")
+    assert r.status_code == 200
+    rows = {r["id"]: r for r in r.json()}
+    assert {pid: row["label"] for pid, row in rows.items()} == {
+        "proj_title": "Title", "proj_objective": "Objective", "proj_empty_title": "Fallback",
+        "proj_neither": None, "proj_empty": None, "proj_no_docs": None,
+    }
+    assert rows["proj_no_docs"]["updated_at"] is None
+    for pid in projects:
+        assert set(rows[pid]) == {"id", "label", "updated_at"}
+        assert datetime.fromisoformat(rows[pid]["updated_at"].replace("Z", "+00:00")) == T0
+    _assert_project_cache_headers(r)
+    async with make_client(store, queue, user=USER_B.id) as c:
+        assert (await c.get("/api/projects")).json() == [{"id": "proj_b", "label": None, "updated_at": None}]
+
+
+async def test_project_state_etag_changes_for_research_and_tree_versions():
+    store, queue = FakeStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    research = {"project": {"title": "", "objective": "Find Flynn"}}
+    tree = {"persons": [{"id": "p1"}]}
+    store.docs["proj_a"] = {"research.json": (3, research), "tree.gedcomx.json": (1, tree)}
+    async with make_client(store, queue) as c:
+        r = await c.get("/api/projects/proj_a/state")
+        assert r.status_code == 200 and r.headers["etag"] == '"r3-t1"'
+        assert r.json() == {"label": "Find Flynn", "research": research, "gedcomx": tree,
+                            "sidecars": [], "version": "r3-t1"}
+        _assert_project_cache_headers(r)
+        cached = await c.get("/api/projects/proj_a/state", headers={"If-None-Match": r.headers["etag"]})
+        assert cached.status_code == 304 and cached.content == b""
+        assert cached.headers["etag"] == r.headers["etag"]
+        _assert_project_cache_headers(cached)
+        store.docs["proj_a"]["research.json"] = (4, research)
+        changed = await c.get("/api/projects/proj_a/state", headers={"If-None-Match": r.headers["etag"]})
+        assert changed.status_code == 200 and changed.headers["etag"] == '"r4-t1"'
+        assert changed.json()["version"] == "r4-t1"
+        store.docs["proj_a"]["tree.gedcomx.json"] = (2, tree)
+        changed = await c.get("/api/projects/proj_a/state", headers={"If-None-Match": changed.headers["etag"]})
+        assert changed.status_code == 200 and changed.headers["etag"] == '"r4-t2"'
+        assert changed.json()["version"] == "r4-t2"
+
+
+@pytest.mark.parametrize("condition", ['"r0-t0"', ' W/"r0-t0" ', '"other", W/"r0-t0"', "*"])
+async def test_project_state_matches_weak_multiple_and_wildcard_etags(condition):
+    store, queue = FakeStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    async with make_client(store, queue) as c:
+        r = await c.get("/api/projects/proj_a/state")
+        assert r.json() == {"label": None, "research": None, "gedcomx": None, "sidecars": [], "version": "r0-t0"}
+        assert r.headers["etag"] == '"r0-t0"'
+        r = await c.get("/api/projects/proj_a/state", headers={"If-None-Match": condition})
+    assert r.status_code == 304 and r.content == b"" and r.headers["etag"] == '"r0-t0"'
+
+
+async def test_second_user_with_the_owners_current_etag_gets_404():
+    store, queue = FakeStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    store.docs["proj_a"] = {"research.json": (3, {"project": {"title": "Private"}})}
+    async with make_client(store, queue) as c:
+        current = await c.get("/api/projects/proj_a/state")
+    async with make_client(store, queue, user=USER_B.id) as c:
+        r = await c.get("/api/projects/proj_a/state", headers={"If-None-Match": current.headers["etag"]})
+    assert r.status_code == 404 and r.json() == {"detail": "Project not found"}
+    assert "etag" not in r.headers
+
+
+@pytest.mark.parametrize("suffix", ["image", "sidecar/bad%20id"])
+async def test_second_user_gets_404_before_project_filename_or_log_id_validation(suffix):
+    store, queue = FakeStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    async with make_client(store, queue, user=USER_B.id) as c:
+        r = await c.get(f"/api/projects/proj_a/{suffix}")
+    assert r.status_code == 404 and r.json() == {"detail": "Project not found"}
+    async with make_client(store, queue) as c:
+        r = await c.get(f"/api/projects/proj_a/{suffix}")
+    assert r.status_code == 400
+    _assert_project_cache_headers(r)
+
+
+def _assert_project_cache_headers(response):
+    assert response.headers["cache-control"] == "private, no-cache"
+    assert "cookie" in {value.strip().lower() for value in response.headers["vary"].split(",")}
+
+
+async def test_project_blob_successes_have_cache_headers_and_sessions_stay_unchanged(monkeypatch):
+    import contextlib
+    import psycopg
+    from web.project_blobs import Blob
+    from web.sidecar import SidecarBlob
+
+    store, queue = FakeStore(), FakeQueue()
+    row = store.seed_session()
+    blobs = object()
+    calls = []
+
+    def read_sidecar(conn, bucket, project_id, log_id):
+        assert bucket is blobs
+        calls.append((project_id, log_id))
+        return SidecarBlob(raw='{"results": []}', mtime=123.0)
+
+    def read_image(conn, bucket, project_id, filename):
+        assert bucket is blobs
+        calls.append((project_id, filename))
+        return Blob(body=b"scan", s3_key="key")
+
+    monkeypatch.setattr(psycopg, "connect", lambda *a, **kw: contextlib.nullcontext(object()))
+    monkeypatch.setattr(app, "fetch_sidecar", read_sidecar)
+    monkeypatch.setattr(app, "fetch_blob", read_image)
+    async with make_client(store, queue, blobs=blobs) as c:
+        for prefix in (f"/api/projects/{row.project_id}", f"/api/sessions/{row.session_id}"):
+            sidecar = await c.get(f"{prefix}/sidecar/q_001")
+            image = await c.get(f"{prefix}/image", params={"filename": "images/a.jpg"})
+            assert sidecar.status_code == 200 and sidecar.json() == {"raw": '{"results": []}', "mtime": 123.0}
+            assert image.status_code == 200 and image.content == b"scan"
+            assert image.headers["content-type"] == "image/jpeg"
+            for r in (sidecar, image):
+                if prefix.startswith("/api/projects/"):
+                    _assert_project_cache_headers(r)
+                else:
+                    assert "cache-control" not in r.headers and "vary" not in r.headers
+    assert calls == [(row.project_id, "q_001"), (row.project_id, "images/a.jpg")] * 2
+
+
+async def test_project_cache_headers_preserve_existing_vary_and_match_only_the_project_prefix():
+    application = create_app(FakeStore(), FakeQueue())
+
+    @application.get("/api/projects/{project_id}/vary")
+    @application.get("/api/projects-extra")
+    async def varying():
+        return app.Response(headers={"Vary": "Accept-Encoding"})
+
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t") as c:
+        r = await c.get("/api/projects/proj_a/vary")
+        _assert_project_cache_headers(r)
+        assert r.headers["vary"] == "Accept-Encoding, Cookie"
+        r = await c.get("/api/projects-extra")
+    assert "cache-control" not in r.headers and r.headers["vary"] == "Accept-Encoding"
 
 
 _BODIES = {"/api/sessions/{session_id}/messages": {"text": "Find Thomas Flynn"},
