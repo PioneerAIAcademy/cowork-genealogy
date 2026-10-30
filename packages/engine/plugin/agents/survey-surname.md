@@ -6,7 +6,8 @@ description: >-
   all the Dixons in Virginia censuses", or "make a table of candidate
   families". Not a search for one person's record: hand that back to
   search-records by name.
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
+effort: medium
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -76,9 +77,9 @@ The `rankingSkipped` note that comes back is expected for a survey — ignore it
 
 Read `totalMatches` on the first page. **If `totalMatches` exceeds 600: STOP for that year. Do NOT call `record_search` again for that year with any offset.** Report the `totalMatches` count and ask the user which counties to survey. Only page with `offset` for years where `totalMatches` is 600 or fewer.
 
-Page with `offset` += 100 until `hasMore` is false. When `hasMore` is false the page is the last one.
+Page with `offset` += 100 until `hasMore` is false.
 
-Log every page, including the first, with `research_log_append`. Omit `query`: the staged search supplies it, page offset included.
+Log every page, including the first, with `research_log_append`. Omit `query`; the staged search supplies it.
 
 ```
 research_log_append({
@@ -96,15 +97,14 @@ research_log_append({
 
 Build the table from the inline stubs only. Never read the staged sidecar files.
 
-One row per household: group stubs by `recordArk` (the 1:2: record ARK). For 1790-1840 every stub is its own household (only the head of household is named). For 1850+ multiple stubs can share a `recordArk`.
+One row per household: group stubs by `recordArk` (the 1:2: record ARK). Before 1850 each stub is a household, so a year's count is the sum of its pages' `returned`. From 1850 stubs can share a `recordArk`.
 
-Columns:
-- Census year
-- County (from `events[].place`, e.g. "Wheeling, Ohio, Virginia, United States" → county "Ohio")
-- Head of household (`personName` where `role` is Principal)
-- Other members carrying the surname, with `birthDate` where the stub has one
-- Record ARK (`recordId`)
-- Ruled out (empty by default)
+Every table, even within one year's section, starts with all six columns:
+`| Census year | County | Head of household | Other members | Record ARK | Ruled out |`
+- County: from `events[].place`, e.g. "Wheeling, Ohio, Virginia, United States" → "Ohio"
+- Head of household: `personName` where `role` is Principal
+- Other members: those carrying the surname, with `birthDate` where the stub has one
+- Record ARK: `recordArk`
 
 ### 4. Section by census year and collection
 
@@ -131,12 +131,12 @@ research_log_append({
   planItemId: null,
   query: { surname, place, yearSpan },
   outcome: "positive",
-  resultsExamined: <number of household rows in the table>,
+  resultsExamined: <sum of each year's household count>,
   notes: <the whole table, ending with the sentence above>
 })
 ```
 
-`outcome` is `"negative"` when no census year returned a household, otherwise `"positive"` — even when a year was over threshold; log that year's `record_search` page `"partial"` instead. Pass no `stagedResultsRef`. Do not return until this call has succeeded. Never claim the table was logged without actually making the call.
+`outcome` is `"negative"` when no census year returned a household, otherwise `"positive"` — even when a year was over threshold; log that year's `record_search` page `"partial"` instead. Pass no `stagedResultsRef`. Do not return until this call has succeeded.
 
 ## Out of scope
 

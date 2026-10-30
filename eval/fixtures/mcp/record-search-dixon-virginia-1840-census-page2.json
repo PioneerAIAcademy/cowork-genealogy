@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "FamilySearch record search for Dixon surname in the 1840 Virginia census, page 2. Returns 2 remaining results with hasMore false. Listed before page 1 in mcp_fixtures because matching is first-match and this predicate includes offset.",
+  "description": "FamilySearch record search for Dixon surname in the 1840 Virginia census, page 2. Returns the 2 remaining results with hasMore false. Listed before page 1 in mcp_fixtures because matching is first-match and this predicate includes offset.",
   "args": {
     "surname": "~Dixon",
     "residenceYearFrom": 1840,
@@ -16,7 +16,7 @@
       "residenceYearFrom": 1840,
       "residenceYearTo": 1840
     },
-    "totalMatches": 6,
+    "totalMatches": 102,
     "paginationCappedAt": 4999,
     "returned": 2,
     "offset": 100,
@@ -27,11 +27,15 @@
         "personId": "XJQV-1840-E",
         "recordId": "XJQV-1840-E",
         "personName": "Samuel Dixon",
-        "score": 0.78,
+        "score": 0.75,
         "sex": "Male",
         "role": "Principal",
         "events": [
-          { "type": "Residence", "date": "1840", "place": "Henrico, Virginia, United States" }
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Henrico, Virginia, United States"
+          }
         ],
         "collectionId": "1803960",
         "collectionTitle": "United States Census, 1840",
@@ -43,10 +47,21 @@
               "id": "P1",
               "gender": "Male",
               "names": [
-                { "id": "N1", "preferred": true, "given": "Samuel", "surname": "Dixon", "type": "BirthName" }
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Samuel",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
               ],
               "facts": [
-                { "id": "F1", "type": "Residence", "date": "1840", "place": "Henrico, Virginia, United States" }
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Henrico, Virginia, United States"
+                }
               ]
             }
           ],
@@ -57,11 +72,15 @@
         "personId": "XJQV-1840-F",
         "recordId": "XJQV-1840-F",
         "personName": "Richard Dixon",
-        "score": 0.75,
+        "score": 0.748,
         "sex": "Male",
         "role": "Principal",
         "events": [
-          { "type": "Residence", "date": "1840", "place": "Frederick, Virginia, United States" }
+          {
+            "type": "Residence",
+            "date": "1840",
+            "place": "Frederick, Virginia, United States"
+          }
         ],
         "collectionId": "1803960",
         "collectionTitle": "United States Census, 1840",
@@ -73,10 +92,21 @@
               "id": "P1",
               "gender": "Male",
               "names": [
-                { "id": "N1", "preferred": true, "given": "Richard", "surname": "Dixon", "type": "BirthName" }
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Richard",
+                  "surname": "Dixon",
+                  "type": "BirthName"
+                }
               ],
               "facts": [
-                { "id": "F1", "type": "Residence", "date": "1840", "place": "Frederick, Virginia, United States" }
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Frederick, Virginia, United States"
+                }
               ]
             }
           ],

@@ -1,0 +1,18 @@
+{
+  "tool": "person_record_matches",
+  "description": "Patrick Flynn (LZNY-BRF) with no pending FamilySearch hints: the pending-only listing comes back empty. Used by search-hints' no-hints ending test (issue #3153).",
+  "args": {
+    "id": "LZNY-BRF",
+    "status": [
+      "pending"
+    ]
+  },
+  "response": {
+    "queryArk": "ark:/61903/4:1:LZNY-BRF",
+    "resultCount": 0,
+    "returned": 0,
+    "title": "Matches for ark:/61903/4:1:LZNY-BRF",
+    "updated": "2026-05-01T10:00:00.000Z",
+    "matches": []
+  }
+}

@@ -474,6 +474,45 @@ describe("circular corroboration (issue #2943)", () => {
       expect(coPartyRelation("child", "witness")).toBeNull();
       expect(coPartyRelation("child", "child")).toBeNull();
     });
+
+    it("reads two parents of one principal as a couple, the same suffix only", () => {
+      expect(coPartyRelation("father_of_deceased", "mother_of_deceased")).toEqual({ relation: "spouse", gender: "female" });
+      expect(coPartyRelation("mother_of_groom", "father_of_groom")).toEqual({ relation: "spouse", gender: "male" });
+      expect(coPartyRelation("father_of_deceased", "mother")).toEqual({ relation: "spouse", gender: "female" });
+      expect(coPartyRelation("father_of_groom", "mother_of_bride")).toBeNull();
+      expect(coPartyRelation("father_of_deceased", "father_of_deceased")).toBeNull();
+    });
+  });
+
+  describe("parents of one principal (chesworthrm, 2026-10-29)", () => {
+    const MAR = "ark:/61903/1:1:MAR4-004";
+    const marriage = (otherParent: [role: string, name: string]) =>
+      research({
+        sources: [source("src_005", "S7")],
+        assertions: [
+          assertion("a_050", "src_005", MAR, "groom", "name", "William Latham"),
+          assertion("a_051", "src_005", MAR, "father_of_groom", "name", "John Latham"),
+          assertion("a_052", "src_005", MAR, otherParent[0], "name", otherParent[1]),
+        ],
+      });
+    /** John and Harriet's marriage edge sourced to their son's marriage alone. */
+    const baseline = () => {
+      const t = startingTree({ couple: ["S7"] });
+      t.sources.push({ id: "S7", title: "Marriage of William Latham", url: `https://www.familysearch.org/${MAR}` });
+      return t;
+    };
+    const entry = { id: "pe_001", assertion_id: "a_051", person_id: J, confidence: "probable", superseded_by: null };
+
+    it("reads the groom's mother beside the groom's father as his wife, so a probable link is judged on their edge", () => {
+      const v = circularCorroborationVerdict(entry, marriage(["mother_of_groom", "Harriet Latham"]), baseline(), baseline());
+      expect(v).toMatchObject({ kind: "relationship", refused: true, relatives: [{ id: H, relation: "spouse" }] });
+    });
+
+    it("stays silent on the bride's mother beside the groom's father: no couple", () => {
+      const v = circularCorroborationVerdict(entry, marriage(["mother_of_bride", "Ann Smith"]), baseline(), baseline());
+      expect(v?.kind).toBe("subject");
+      expect(v?.refused).toBe(false);
+    });
   });
 
   describe("sameEntryOf", () => {
