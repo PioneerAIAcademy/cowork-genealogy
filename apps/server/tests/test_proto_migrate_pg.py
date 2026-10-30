@@ -215,6 +215,39 @@ def test_an_early_004_database_is_repaired_not_just_recorded():
         assert "nudges" in columns(dsn, "turns") and "tool_use_id" in columns(dsn, "tool_calls")
 
 
+def test_a_second_user_with_the_same_familysearch_id_is_refused():
+    """S1 keys beta users by FamilySearch id; NULL ids still allow dev-login users."""
+    with database(apply=False) as dsn:
+        migrate.migrate(dsn)
+        sql(dsn, "INSERT INTO users (id, email, familysearch_id) VALUES ('u1', 'one@example.org', 'fs1')")
+        with pytest.raises(psycopg.errors.UniqueViolation):
+            sql(dsn, "INSERT INTO users (id, email, familysearch_id) VALUES ('u2', 'two@example.org', 'fs1')")
+        sql(dsn, "INSERT INTO users (id, email, familysearch_id) VALUES "
+                 "('dev1', 'dev1@example.org', NULL), ('dev2', 'dev2@example.org', NULL)")
+        assert sql(dsn, "SELECT id FROM users WHERE familysearch_id IS NULL ORDER BY id") == [("dev1",), ("dev2",)]
+
+
+def test_deleting_a_user_removes_their_codes_and_tokens():
+    """S1's codes and connector tokens cascade with their user and leave another user's rows."""
+    with database(apply=False) as dsn:
+        migrate.migrate(dsn)
+        sql(dsn, "INSERT INTO users (id, email) VALUES ('u1', 'one@example.org'), ('u2', 'two@example.org')")
+        for user_id, token_hash, code_hash in (("u1", "a" * 64, "b" * 64), ("u2", "c" * 64, "d" * 64)):
+            sql(dsn, "INSERT INTO connector_tokens (token_sha256, user_id, client_id, scopes, expires_at) "
+                     "VALUES (%s, %s, 'client', %s, now() + interval '1 hour')",
+                (token_hash, user_id, ["read"]))
+            sql(dsn, "INSERT INTO authorization_codes (code_sha256, user_id, client_id, redirect_uri, "
+                     "redirect_uri_provided_explicitly, code_challenge, scopes, expires_at) "
+                     "VALUES (%s, %s, 'client', 'https://example.org/callback', true, 'challenge', %s, "
+                     "now() + interval '5 minutes')", (code_hash, user_id, ["read"]))
+        assert sql(dsn, "SELECT user_id FROM connector_tokens ORDER BY user_id") == [("u1",), ("u2",)]
+        assert sql(dsn, "SELECT user_id FROM authorization_codes ORDER BY user_id") == [("u1",), ("u2",)]
+        sql(dsn, "DELETE FROM users WHERE id = 'u1'")
+        assert sql(dsn, "SELECT token_sha256, user_id FROM connector_tokens") == [("c" * 64, "u2")]
+        assert sql(dsn, "SELECT code_sha256, user_id FROM authorization_codes") == [("d" * 64, "u2")]
+        assert sql(dsn, "SELECT id FROM users") == [("u2",)]
+
+
 # ── the lock ─────────────────────────────────────────────────────────────────────
 
 
