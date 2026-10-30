@@ -207,7 +207,8 @@ export const mergeTreePersonsSchema = {
     "run, or when it would move a link, or carry a record's data, under a recorded " +
     "namesake with nothing in that record tying it to the person, or when a link it moves " +
     "would fail a check research_append runs on that link (a contradicted birth, an " +
-    "unexplained move, or a match score not recorded for the survivor). " +
+    "unexplained move, or a match score not recorded for the survivor), or when it " +
+    "would leave a live link on a pair the researcher rejected. " +
     "Both files are written both-or-neither and NOT returned — you get a compact " +
     "summary including how many research references were updated. On a validation " +
     "failure nothing is written and `{ ok: false, errors }` is returned.",

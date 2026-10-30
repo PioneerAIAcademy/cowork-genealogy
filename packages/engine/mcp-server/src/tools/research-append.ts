@@ -20,7 +20,6 @@
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { compoundJurisdictionError, planItemFlags } from "../utils/plan-item-plausibility.js";
-import { getProjectStore } from "../store/project-store.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
@@ -34,7 +33,6 @@ import {
 import {
   atomicWriteJson,
   atomicWriteBoth,
-  isInsideProject,
   readProjectJson,
   formatIssues,
   withProjectLock,
@@ -63,15 +61,18 @@ import {
   countryOfPlace,
   isNonPlacePhrase,
   checkFirstPlace,
+  samePlace,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
+import { isProse, judgeSupplied, placeAnswer, unconfirmedByText } from "../utils/place-verdict.js";
+import { isSuspiciousText, TRAILING_DOUBT, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
 import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
 import { haversineDistance } from "./distance.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -165,7 +166,9 @@ const SECTIONS: Record<string, SectionConfig> = {
   sources: { prefix: "src_" },
   assertions: { prefix: "a_" },
   person_evidence: { prefix: "pe_", stampTimestamp: CREATED_DATE },
-  rejected_links: { prefix: "rj_", stampTimestamp: CREATED_DATE },
+  // Immutable but for `reason`: re-pointing a rejection would move it onto a
+  // linked pair without retiring that link, and `researcher_words` is a record.
+  rejected_links: { prefix: "rj_", stampTimestamp: CREATED_DATE, updatableFields: ["reason"] },
   // Phase 2
   questions: { prefix: "q_", stampTimestamp: CREATED_DATE },
   plans: { prefix: "pl_", stampTimestamp: CREATED_DATE },
@@ -4743,6 +4746,60 @@ export function mergeCarryRefusals(
   return out;
 }
 
+/** A merge cannot bring a rejected pair back (lead, 2026-10-20). Refused in both
+ *  directions: (a) a live link the merge moves lands on a pair the researcher
+ *  rejected for the survivor, and (b) a rejection the merge moves lands on a pair
+ *  the survivor links live. Only pairs the merge creates: a link and a rejection
+ *  that already stood together before it are not this merge's doing. Nothing
+ *  overrides it. One line per pair, then the routing; `[]` when nothing is refused. */
+function mergeRejectedPairRefusals(
+  before: { research: any },
+  after: { research: any },
+  survivorOf: ReadonlyMap<string, string>,
+): string[] {
+  const live = (doc: any): any[] =>
+    ((doc?.person_evidence ?? []) as any[]).filter(
+      (e) => e && !e.superseded_by && typeof e.assertion_id === "string" && typeof e.person_id === "string",
+    );
+  const rejections = (doc: any): RejectedLink[] =>
+    Array.isArray(doc?.rejected_links) ? (doc.rejected_links as RejectedLink[]) : [];
+  // By link id: the merge remaps person ids, so a pre-merge pair key never
+  // matches the post-merge one.
+  const alreadyRejected = new Set(
+    live(before.research)
+      .filter((e) => rejectionFor(e.assertion_id, e.person_id, rejections(before.research)))
+      .map((e) => e.id),
+  );
+  const priorPersonOf = new Map<string, string>(live(before.research).map((e) => [e.id, e.person_id]));
+  const movedLinks = new Set(
+    live(before.research).filter((e) => survivorOf.has(e.person_id)).map((e) => e.id),
+  );
+  const movedRejections = new Set(
+    rejections(before.research)
+      .filter((r) => typeof r?.person_id === "string" && survivorOf.has(r.person_id))
+      .map((r) => r.id),
+  );
+  const lines: string[] = [];
+  for (const e of live(after.research)) {
+    const hit = rejectionFor(e.assertion_id, e.person_id, rejections(after.research));
+    if (!hit || !(movedLinks.has(e.id) || movedRejections.has(hit.id))) continue;
+    if (alreadyRejected.has(e.id)) continue;
+    lines.push(
+      `person_evidence '${e.id}' and rejection '${String(hit.id)}' would both stand on ` +
+        `(${e.assertion_id}, ${e.person_id}) after this merge: the researcher rejected that pair, and the ` +
+        `merge would leave a live link on it. The link stands today on ` +
+        `(${e.assertion_id}, ${priorPersonOf.get(e.id) ?? e.person_id}).`,
+    );
+  }
+  if (lines.length === 0) return [];
+  return [
+    ...lines,
+    "Nothing was written, and no justification overrides this. Ask the researcher whether each listed " +
+      "link's record is the person it stands on today. If they say it is not, have person-evidence record " +
+      "their rejection of that pair, which retires the link, then merge again. Otherwise do not merge.",
+  ];
+}
+
 /** Issue #2537: each live link the merge moves onto a survivor must pass the
  *  checks a `research_append` update re-pointing it there would: the
  *  contradiction cap, the move rule and the score gate's fabrication arm. Judged
@@ -4762,6 +4819,10 @@ export async function mergeLinkCheckRefusals(
 ): Promise<string[]> {
   const survivorOf = new Map<string, string>();
   for (const [s, c] of merges) survivorOf.set(c, s);
+  // Before the early return below: a merge that moves only a rejection can
+  // still land it on a pair the survivor links live.
+  const rejectedPairs = mergeRejectedPairRefusals(before, after, survivorOf);
+  if (rejectedPairs.length > 0) return rejectedPairs;
   const moved: Array<{ entry: any; from: string }> = [];
   for (const e of (before.research?.person_evidence ?? []) as any[]) {
     if (!e || e.superseded_by || typeof e.person_id !== "string") continue;
@@ -6634,6 +6695,8 @@ interface SingleSuccess {
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
+  /** Places looked up and left with no standard_place (§3.6). */
+  unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
 }
@@ -6643,6 +6706,7 @@ interface BatchSuccess {
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
+  unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
   /** Set only by `extraction_append`'s EXTRACTOR MODE, which builds its own ops
@@ -7084,6 +7148,84 @@ function rewriteLinkedFacts(
   return { mutated, warnings, mutationWarnings, undo };
 }
 
+// ─── #3601: a rejection undoes its link ──────────────────────────────────────
+
+/**
+ * Retire every live link on a pair this call rejected, and remove the tree facts
+ * that link minted.
+ *
+ * A rejection is the researcher saying the record is not this person, so the link
+ * and the facts it put on the person go with it, in the same write. The link's
+ * `superseded_by` names the rejection, so the audit trail says why it ended.
+ *
+ * A fact is "minted by the link" when it sits on the rejected person and carries
+ * the rejected `assertion_id`. One whose `sources[]` also cites a ref other than
+ * that assertion's own source description holds another record's evidence, so it
+ * is kept and named. Names and relationships carry no `assertion_id`, so they are
+ * never removed; the response says the person may still carry them.
+ *
+ * A post-apply pass for the reason `rewriteLinkedFacts` is one: `applyOne` has no
+ * way to report a tree mutation.
+ */
+function retireRejectedLinks(
+  applied: AppliedOp[],
+  research: any,
+  tree: SimplifiedGedcomX,
+): { mutated: boolean; warnings: string[] } {
+  const warnings: string[] = [];
+  let mutated = false;
+  const rejections: any[] = Array.isArray(research?.rejected_links) ? research.rejected_links : [];
+  const links: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
+  const sources: any[] = Array.isArray(research?.sources) ? research.sources : [];
+
+  for (const a of applied) {
+    if (a.section !== "rejected_links" || a.op !== "append" || a.noop) continue;
+    const rj = rejections.find((r) => r && r.id === a.entryId);
+    if (!rj || typeof rj.assertion_id !== "string" || typeof rj.person_id !== "string") continue;
+    const live = links.filter(
+      (pe) => pe && !pe.superseded_by && pe.assertion_id === rj.assertion_id && pe.person_id === rj.person_id,
+    );
+    if (live.length === 0) continue;
+    for (const pe of live) pe.superseded_by = rj.id;
+
+    const assertion = assertions.find((x) => x && x.id === rj.assertion_id);
+    const source = sources.find((s) => s && s.id === assertion?.source_id);
+    const ownRef = source?.gedcomx_source_description_id;
+    const person = (tree?.persons ?? []).find((p) => p && p.id === rj.person_id);
+    const removed: string[] = [];
+    const kept: string[] = [];
+    if (person && Array.isArray(person.facts)) {
+      person.facts = person.facts.filter((f) => {
+        if (!f || f.assertion_id !== rj.assertion_id) return true;
+        const otherEvidence = (f.sources ?? []).some((s) => typeof s?.ref === "string" && s.ref !== ownRef);
+        if (otherEvidence) {
+          kept.push(f.id ?? f.type ?? "(fact)");
+          return true;
+        }
+        removed.push(f.id ?? f.type ?? "(fact)");
+        return false;
+      });
+    }
+    if (removed.length > 0) mutated = true;
+
+    const retired = live.map((pe) => pe.id).join(", ");
+    warnings.push(
+      `${rj.id} retired ${retired} (superseded_by '${rj.id}')` +
+        (removed.length > 0 ? ` and removed ${removed.join(", ")} from ${rj.person_id}` : "") +
+        `. ${rj.person_id} may still carry names or relationships from ${rj.assertion_id}'s record; ` +
+        "check them with person_read and correct with tree_correct.",
+    );
+    if (kept.length > 0) {
+      warnings.push(
+        `${kept.join(", ")} on ${rj.person_id} came from ${rj.assertion_id} but also cites another ` +
+          "record, so it was kept. Check whether that other record still supports it.",
+      );
+    }
+  }
+  return { mutated, warnings };
+}
+
 /**
  * A plan this call CREATED that ends the call with no items, while the same
  * call's `plan_items` ops wrote into a different plan — the misroute that
@@ -7341,10 +7483,11 @@ const FACT_TYPE_ALIASES: Record<string, string> = {
 };
 
 /** Normalized keys of the place-of-event fact_type variants. When the model
- *  labels an assertion with one of these, `canonicalizeAssertionLabels` folds
- *  the type into the event (via FACT_TYPE_ALIASES) AND lifts the place value
- *  into the `place` field if it is not already there — so the machine-readable
- *  place survives the fold and the assertion reads as the event's place-claim. */
+ *  labels an assertion with one of these, `liftVariantPlace` lifts the place
+ *  value into the `place` field if it is not already there, and
+ *  `canonicalizeAssertionLabels` folds the type into the event (via
+ *  FACT_TYPE_ALIASES) — so the machine-readable place survives the fold and the
+ *  assertion reads as the event's place-claim. */
 const PLACE_VARIANT_KEYS = new Set([
   "birthplace",
   "placeofbirth",
@@ -7359,12 +7502,54 @@ function isBlank(v: unknown): boolean {
   return typeof v !== "string" || v.trim() === "";
 }
 
+/** The place text `value` holds: the value without the `[?]` a doubted reading
+ *  ends with, which stays in `value`, so the lifted place is as clean as a
+ *  document's own `place`. "" for a non-string value. */
+function valuePlaceText(entry: Record<string, unknown>): string {
+  return typeof entry.value === "string" ? entry.value.replace(TRAILING_DOUBT, "") : "";
+}
+
+/** `value` may be lifted into `place`: neither `place` nor `standard_place` is
+ *  set, the value holds text that is not a date (the assertion's own `date`, as
+ *  a document's place variant given only a date carries it in `value` too, or
+ *  any text `stdDate` reads), and the assertion is not an absence, whose value
+ *  says what the record lacks rather than naming a place, nor flagged as
+ *  suspicious text, which stays in `value`: as a place it would be carried onto
+ *  the tree. */
+function placeLiftable(entry: Record<string, unknown>): boolean {
+  const text = valuePlaceText(entry);
+  return (
+    isBlank(entry.place) &&
+    isBlank(entry.standard_place) &&
+    !isBlank(text) &&
+    text !== entry.date &&
+    stdDate(text) === "" &&
+    entry.record_basis !== "absent" &&
+    !isSuspiciousText(entry.informant_bias_notes as string | undefined)
+  );
+}
+
+/** A folded place-of-event variant must keep its place machine-readable: lift
+ *  the human `value` (which for a place-claim IS the place string, e.g.
+ *  "Ireland") into `place` when `placeLiftable`. Reads `fact_type` as given, so
+ *  it runs before the fold renames it. Returns whether it lifted. `prepareOps`
+ *  calls it before its place lookups, so a lifted place is standardized, as a
+ *  value-derived place. */
+function liftVariantPlace(entry: Record<string, unknown>): boolean {
+  if (typeof entry.fact_type !== "string" || !PLACE_VARIANT_KEYS.has(factTypeKey(entry.fact_type)) || !placeLiftable(entry)) {
+    return false;
+  }
+  entry.place = valuePlaceText(entry);
+  return true;
+}
+
 /** Best-effort canonicalization of an assertion's `fact_type` in place. Maps a
  *  known alias (by normalized key) to its canonical spelling, and folds a
- *  place-of-event variant into the event type while lifting its place value into
- *  the `place` field (see the doc comment on FACT_TYPE_ALIASES). Leaves an
- *  unrecognized value untouched (open enum). No-op for a non-assertion entry
- *  (only assertions carry `fact_type`) or a non-string value. */
+ *  place-of-event variant into the event type, whose place value `prepareOps`
+ *  has already lifted into the `place` field (see the doc comment on
+ *  FACT_TYPE_ALIASES). Leaves an unrecognized value untouched (open enum). No-op
+ *  for a non-assertion entry (only assertions carry `fact_type`) or a non-string
+ *  value. */
 function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
   const ft = entry.fact_type;
   if (typeof ft !== "string") return;
@@ -7376,12 +7561,6 @@ function canonicalizeAssertionLabels(entry: Record<string, unknown>): void {
     ? FACT_TYPE_ALIASES[key]
     : undefined;
   if (canonical) entry.fact_type = canonical;
-  // A folded place-of-event variant must keep its place machine-readable: if
-  // neither `place` nor `standard_place` is set, lift the human `value` (which
-  // for a place-claim IS the place string, e.g. "Ireland") into `place`.
-  if (PLACE_VARIANT_KEYS.has(key) && isBlank(entry.place) && isBlank(entry.standard_place) && !isBlank(entry.value)) {
-    entry.place = entry.value;
-  }
 }
 
 /** TWO DIFFERENT FIELDS SHARE THE VALUE `"absent"` IN THIS FUNCTION.
@@ -8092,6 +8271,19 @@ function applyOne(
   // validation.warnings (via the caller's flatMap over AppliedOp.warnings), never
   // thrown. Distinct from invariantErrors, which reject the write (#1006).
   const opWarnings: string[] = keptCompletedWarning ? [keptCompletedWarning] : [];
+  // Only the researcher rejects a pair (lead, 2026-10-20), and the engine cannot
+  // see who spoke. Their exact words make a rejection written on a hedge, or in a
+  // turn they never spoke in, visible in the viewer and in feedback triage.
+  if (section === "rejected_links" && op.op === "append") {
+    const words = resultEntry.researcher_words;
+    if (typeof words !== "string" || words.trim() === "") {
+      invariantErrors.push(
+        "a rejection needs `researcher_words`: the researcher's own message saying this record " +
+          "is not this person, copied verbatim, not paraphrased. Only the researcher rejects a " +
+          "pair. If they did not clearly say it is not a match, do not reject it; leave it unlinked.",
+      );
+    }
+  }
   // A question may only reach `resolved` once a proof summary for it exists.
   // Same "only when THIS op sets it" discipline as the proof_summaries block
   // below — an unrelated update to an already-resolved question must not
@@ -8625,16 +8817,18 @@ function applyOne(
 // ─── Composite persist + enforcement pre-pass ───────────────────────────────
 
 /** The converter-resolved standard_place a sidecar record's simplified gedcomx
- *  gives an assertion's own fact: the facts of its `record_persona_id` (the
- *  persona's own, and those of a relationship whose `person1` or `person2` it
- *  is; a ParentChild relationship's `parent`/`child` facts are not read) of its
- *  `fact_type` (`canonicalFactKey`) and with its `place` (trimmed,
- *  case-insensitive). Null unless every such fact carries the same one, so one
- *  fact's name never lands on another person's or another fact's. Never geocode
- *  what the source record already resolved. */
-function sidecarStandardPlace(gx: any, entry: any): string | null {
-  if (!gx || typeof gx !== "object") return null;
-  const persona = entry.record_persona_id;
+ *  gives one persona's own fact: the facts of `persona` (its own, and those of a
+ *  relationship whose `person1` or `person2` it is; a ParentChild relationship's
+ *  `parent`/`child` facts are not read) of type `factType` (`canonicalFactKey`)
+ *  and with place `place` (trimmed, case-insensitive). The one name every such
+ *  fact carries; every name, when they carry two or more, which the writers
+ *  read as the record disagreeing with itself; else none. So one person's name
+ *  never lands on another person's fact, and one fact's name never lands on
+ *  another fact of the same person. An assertion naming no persona reads
+ *  nothing. The one way the engine takes FamilySearch's standardization from a
+ *  record: Lever B's copy, and `RecordStandards`. */
+function sidecarStandardPlaces(gx: any, persona: unknown, factType: unknown, place: string): string[] {
+  if (!gx || typeof gx !== "object" || typeof persona !== "string" || persona === "") return [];
   const facts: any[] = [];
   for (const p of Array.isArray(gx.persons) ? gx.persons : []) {
     if (p?.id === persona && Array.isArray(p.facts)) facts.push(...p.facts);
@@ -8642,19 +8836,56 @@ function sidecarStandardPlace(gx: any, entry: any): string | null {
   for (const r of Array.isArray(gx.relationships) ? gx.relationships : []) {
     if ((r?.person1 === persona || r?.person2 === persona) && Array.isArray(r.facts)) facts.push(...r.facts);
   }
-  const want = entry.place.trim().toLowerCase();
-  const names = new Set(
-    facts
-      .filter(
-        (f) =>
-          typeof f?.place === "string" &&
-          f.place.trim().toLowerCase() === want &&
-          canonicalFactKey(f.type) === canonicalFactKey(entry.fact_type),
-      )
-      .map((f) => f.standard_place),
-  );
-  const [name] = names;
-  return names.size === 1 && typeof name === "string" ? name : null;
+  const want = place.trim().toLowerCase();
+  const values = facts
+    .filter(
+      (f) =>
+        typeof f?.place === "string" &&
+        f.place.trim().toLowerCase() === want &&
+        canonicalFactKey(f.type) === canonicalFactKey(factType),
+    )
+    .map((f) => f.standard_place);
+  const names = [...new Set(values.filter((v): v is string => typeof v === "string"))];
+  return names.length === 1 && values.some((v) => typeof v !== "string") ? [] : names;
+}
+
+/**
+ * FamilySearch's standard_places for a place text on the records stored
+ * assertions cite, read through one call's sidecar reader:
+ * `sidecarStandardPlaces` on each assertion's record persona, in the result for
+ * its `record_id` in the sidecar its log entry names, for its own `fact_type`
+ * unless `factType` is given (a tree fact's own type). The distinct names those
+ * records give: one is FamilySearch's answer, two or more are doubt.
+ * `tree_edit` and `tree_correct` read a tree fact's cited records through it,
+ * and a caller's timeline its events' assertions.
+ */
+export class RecordStandards {
+  private readonly logRefs = new Map<string, string>();
+
+  constructor(
+    research: unknown,
+    private readonly read: (ref: string) => Promise<any>,
+  ) {
+    const log = (research as any)?.log;
+    for (const e of Array.isArray(log) ? log : []) {
+      if (typeof e?.id === "string" && typeof e.results_ref === "string") this.logRefs.set(e.id, e.results_ref);
+    }
+  }
+
+  async for(assertions: readonly any[], place: string, factType?: string): Promise<string[]> {
+    const names = new Set<string>();
+    for (const a of assertions) {
+      const ref = this.logRefs.get(a?.log_entry_id);
+      const results = ref ? (await this.read(ref))?.payload?.results : undefined;
+      for (const r of Array.isArray(results) ? results : []) {
+        if (typeof r?.recordId !== "string" || arkToBareId(r.recordId) !== arkToBareId(String(a.record_id ?? ""))) continue;
+        for (const name of sidecarStandardPlaces(r.gedcomx, a.record_persona_id, factType ?? a.fact_type, place)) {
+          names.add(name);
+        }
+      }
+    }
+    return [...names];
+  }
 }
 
 /** A sidecar result's record id: record_search and record_read stage GedcomX
@@ -8723,6 +8954,8 @@ interface PreparedOps {
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces: ResolvedPlaceEcho[];
+  /** Places looked up and given no standard form, each also a warning. */
+  unresolvedPlaces: string[];
   warnings: string[];
   /** Verdict sidecar to write iff the whole call validates. */
   verdictFile?: { relPath: string; body: unknown };
@@ -9104,25 +9337,61 @@ async function checkLocalityFirstPlaces(
   }
 }
 
-/** A per-call reader of a sidecar's `payload.results`, cached by ref: null when
- *  the ref is outside the project, unreadable, or holds no results array. */
-function sidecarResultsReader(projectPath: string): (ref: string) => Promise<any[] | null> {
-  const cache = new Map<string, any[] | null>();
-  return async (ref) => {
-    if (cache.has(ref)) return cache.get(ref)!;
-    let results: any[] | null = null;
-    if (isInsideProject(projectPath, ref)) {
-      try {
-        const sc = JSON.parse(await getProjectStore().readText(projectPath, ref));
-        if (sc && typeof sc === "object" && Array.isArray(sc.payload?.results)) {
-          results = sc.payload.results;
+/**
+ * A caller's own standard_place on a timeline event is judged as a tree fact's
+ * is (place-verdict.ts): kept, in FamilySearch's spelling and with its
+ * distances, when it is a FamilySearch standard place that fits the event's
+ * place text (`fitsText`), else replaced by the engine's answer (FamilySearch's
+ * own on the records of the event's assertions, `RecordStandards`, else the
+ * resolver's when it fits the text) or null, with a warning. The distances
+ * measured from it, on that event and the next, become null when the
+ * replacement is another place, not the same place spelled another way.
+ */
+async function judgeTimelinePlaces(
+  ops: ResearchAppendOp[],
+  research: any,
+  standards: RecordStandards,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): Promise<void> {
+  for (const [i, op] of ops.entries()) {
+    if (op.section !== "timelines") continue;
+    const events = ((op.op === "append" ? op.entry : op.fields) as { events?: unknown } | undefined)?.events;
+    if (!Array.isArray(events)) continue;
+    for (const [k, event] of events.entries()) {
+      const was = event?.standard_place;
+      if (typeof was !== "string") continue;
+      const judged = await judgeSupplied(event.place, was, async (place) =>
+        placeAnswer(
+          place,
+          await standards.for(assertionsNamed(event.assertion_ids, research), place),
+          () => resolveStandardPlace(place),
+        ),
+      );
+      if (judged.standardPlace === was) continue;
+      event.standard_place = judged.standardPlace;
+      if (judged.warning === undefined) continue;
+      if (judged.standardPlace === null || !(await samePlace(was, judged.standardPlace))) {
+        for (const e of [event, events[k + 1]]) {
+          if (typeof e?.distance_from_previous_km === "number") e.distance_from_previous_km = null;
         }
-      } catch {
-        // unreadable sidecar — the document validator reports it; skip enforcement
       }
+      warnings.push(fmt(i, `events[${k}]: ${judged.warning}`));
     }
-    cache.set(ref, results);
-    return results;
+  }
+}
+
+/** The assertions `ids` names. */
+function assertionsNamed(ids: unknown, research: any): any[] {
+  const wanted = new Set(Array.isArray(ids) ? ids : []);
+  return (Array.isArray(research?.assertions) ? research.assertions : []).filter((a: any) => wanted.has(a?.id));
+}
+
+/** The `payload.results` of a sidecar read through `sidecarReader`, or null. */
+function sidecarResultsReader(read: (ref: string) => Promise<any>): (ref: string) => Promise<any[] | null> {
+  return async (ref) => {
+    const results = (await read(ref))?.payload?.results;
+    return Array.isArray(results) ? results : null;
   };
 }
 
@@ -9138,11 +9407,13 @@ async function prepareOps(
   tree: SimplifiedGedcomX,
   projectPath: string,
   fmt: (i: number, msg: string) => string,
-  hintReads?: ReadonlyMap<string, string>,
+  options: ResearchAppendOptions,
+  readSidecar: (ref: string) => Promise<any>,
 ): Promise<PreparedOps> {
   const errors: string[] = [];
   const warnings: string[] = [];
   const resolvedPlaces: ResolvedPlaceEcho[] = [];
+  const unresolvedPlaces: string[] = [];
   let treeMutated = false;
   // Read the attestations this batch's person_evidence ops will be checked
   // against. Here rather than in `applyOne`, which is synchronous and holds no
@@ -9394,7 +9665,19 @@ async function prepareOps(
   for (const e of Array.isArray(research.log) ? research.log : []) {
     if (e && typeof e === "object" && typeof e.id === "string") logById.set(e.id, e);
   }
-  const readSidecarResults = sidecarResultsReader(projectPath);
+  const readSidecarResults = sidecarResultsReader(readSidecar);
+  const recordStandards = new RecordStandards(research, readSidecar);
+
+  // A place variant's place given only in `value` ("birthplace") is lifted into
+  // `place` here, before the lookups below and applyOne's fold. It is a
+  // value-derived place, whose lookup applyPlaceLevers must confirm.
+  const liftedFromValue = new Set<object>();
+  for (const op of ops) {
+    if (op.section === "assertions" && op.op === "append" && op.entry && typeof op.entry === "object") {
+      const e = op.entry as Record<string, unknown>;
+      if (liftVariantPlace(e)) liftedFromValue.add(e);
+    }
+  }
 
   // The other places each record's assertions name in this batch, each by its
   // standard_place when it has one, else its place: a bare place ("Shenandoah")
@@ -9412,37 +9695,62 @@ async function prepareOps(
 
   /** Place levers (b) then (a) on one assertion's fields, in place. A
    *  standard_place contradicting the place's country is an error, unless
-   *  `dropContradiction`, when it is left unset instead. `countryRecord` is the
-   *  sidecar record the assertion comes from and `countryProducer` the tool that
-   *  staged it, which give the resolver the record's country
-   *  (`recordCountryOf`). */
+   *  `dropContradiction` or the place is `valueDerived` (lifted from `value`),
+   *  when the lookup is dropped instead. A value-derived place, or one written
+   *  as prose (`isProse`), keeps a geocoded answer only when its text confirms
+   *  it (`unconfirmedByText`, which passes a one-word text and a one-word list
+   *  answer). A dropped lookup is warned about and listed in unresolvedPlaces,
+   *  never in resolvedPlaces. A place on an assertion flagged
+   *  as suspicious text is never looked up, and a refusal shows it as
+   *  WITHHELD_SUSPICIOUS. `matchedRecord` is an append's sidecar-matched record
+   *  (D2), whose standard_place is copied. `countryRecord` is the sidecar record
+   *  the assertion comes from and `countryProducer` the tool that staged it,
+   *  which give the resolver the record's country (`recordCountryOf`). */
   const applyPlaceLevers = async (
     entry: any,
     i: number,
-    matchedRecord: any,
-    dropContradiction: boolean,
-    countryProducer: string | undefined,
-    countryRecord: any,
+    {
+      dropContradiction = false,
+      valueDerived = false,
+      countryProducer,
+      countryRecord = null,
+      matchedRecord = null,
+    }: {
+      dropContradiction?: boolean;
+      valueDerived?: boolean;
+      countryProducer?: string;
+      countryRecord?: any;
+      matchedRecord?: any;
+    } = {},
   ): Promise<void> => {
+    const flaggedText = isSuspiciousText(entry.informant_bias_notes);
+    const unresolved = (why = "") => {
+      warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)${why}`);
+      unresolvedPlaces.push(entry.place);
+    };
     // ── Place lever (b): never geocode what the source record already
-    // resolved — copy the standard_place the sidecar gives this assertion's own
-    // fact (same persona, fact type and place string).
-    // `standard_place: null` is an explicit opt-out (skip resolution + guard);
-    // only a fully omitted field triggers resolution. A non-place phrase
-    // ("Same House") is left unset, silently: it has no standard form.
-    let geocoded = false;
+    // resolved — copy the standard_place the matched sidecar record gives this
+    // assertion's own fact (same persona, fact type and place string,
+    // `sidecarStandardPlaces`), and none when its values disagree.
+    // `standard_place: null` is an explicit opt-out
+    // (skip resolution + guard); only a fully omitted field triggers
+    // resolution. A non-place phrase ("Same House") is left unset, silently: it
+    // has no standard form.
+    let filled: "sidecar" | "geocoded" | null = null;
     if (
+      !flaggedText &&
       factText(entry.place) !== undefined &&
       entry.standard_place === undefined &&
       !isNonPlacePhrase(factText(entry.place)!)
     ) {
-      let sp: string | null = null;
-      let source: "sidecar" | "geocoded" | null = null;
-      if (matchedRecord) {
-        sp = sidecarStandardPlace(matchedRecord.gedcomx, entry);
-        if (sp) source = "sidecar";
-      }
-      if (!sp && input.resolveStandardPlace !== false) {
+      const fromRecord = matchedRecord
+        ? sidecarStandardPlaces(matchedRecord.gedcomx, entry.record_persona_id, entry.fact_type, entry.place)
+        : [];
+      let sp: string | null = fromRecord.length === 1 ? fromRecord[0] : null;
+      if (sp) filled = "sidecar";
+      if (fromRecord.length > 1) {
+        unresolved(`: FamilySearch standardized it differently on its record (${fromRecord.join("; ")})`);
+      } else if (!sp && input.resolveStandardPlace !== false) {
         // resolveStandardPlace returns null on a miss and can throw on a
         // failure (a bare name's top-hit search does), and the catch makes the
         // two look the same here — both warrant the warning (a silently
@@ -9455,47 +9763,48 @@ async function prepareOps(
         } catch {
           sp = null;
         }
-        if (sp) {
-          source = "geocoded";
-          geocoded = true;
-        } else {
-          warnings.push(`could not resolve standard_place for '${entry.place}' (left unset)`);
-        }
+        if (sp) filled = "geocoded";
+        else unresolved();
       }
-      if (sp && source) {
-        entry.standard_place = sp;
-        resolvedPlaces.push({ place: entry.place, standardPlace: sp, source });
-      }
+      if (sp) entry.standard_place = sp;
     }
 
     // ── Place lever (a): country-contradiction guard on the final pair
     // (supplied or resolved). Skipped when standard_place is null/absent.
-    if (typeof entry.place === "string" && typeof entry.standard_place === "string") {
-      const verdict = countryConsistency(entry.place, entry.standard_place);
-      if (verdict === "contradiction" && dropContradiction) {
-        entry.standard_place = undefined;
-        return;
-      }
-      if (verdict === "contradiction") {
-        errors.push(
-          fmt(
-            i,
-            `standard_place '${entry.standard_place}' contradicts place '${entry.place}' — the place text ` +
-              "names a different country. Re-resolve with place_search / place_search_all and supply the " +
-              "correct standard_place, or set standard_place: null if no standard form exists.",
-          ),
-        );
-        return;
-      }
-      if (verdict === "unverifiable" && geocoded) {
-        warnings.push(
-          `resolved standard_place '${entry.standard_place}' for place '${entry.place}' — the country ` +
-            "could not be cross-checked (either the place text names no country, or the standard place " +
-            "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
-            "right place",
-        );
-      }
+    if (typeof entry.place !== "string" || typeof entry.standard_place !== "string") return;
+    const sp: string = entry.standard_place;
+    const verdict = countryConsistency(entry.place, sp);
+    if (verdict === "contradiction" && (dropContradiction || valueDerived)) {
+      delete entry.standard_place;
+      unresolved(`: the lookup's answer '${sp}' names a different country`);
+      return;
     }
+    if (verdict === "contradiction") {
+      errors.push(
+        fmt(
+          i,
+          `standard_place '${sp}' contradicts place '${flaggedText ? WITHHELD_SUSPICIOUS : entry.place}' — the place text ` +
+            "names a different country. Re-resolve with place_search / place_search_all and supply the " +
+            "correct standard_place, or set standard_place: null if no standard form exists.",
+        ),
+      );
+      return;
+    }
+    if (verdict === "unverifiable" && filled === "geocoded") {
+      const unconfirmed = valueDerived || isProse(entry.place) ? unconfirmedByText(entry.place, sp) : null;
+      if (unconfirmed) {
+        delete entry.standard_place;
+        unresolved(`: the lookup's answer '${sp}' ${unconfirmed}`);
+        return;
+      }
+      warnings.push(
+        `resolved standard_place '${sp}' for place '${entry.place}' — the country ` +
+          "could not be cross-checked (either the place text names no country, or the standard place " +
+          "names none that is recognized — e.g. a historical polity like 'Bohemia'); verify it is the " +
+          "right place",
+      );
+    }
+    if (filled) resolvedPlaces.push({ place: entry.place, standardPlace: sp, source: filled });
   };
 
   for (let i = 0; i < ops.length; i++) {
@@ -9513,7 +9822,7 @@ async function prepareOps(
     if (logEntry) {
       // An accepted hint's entry stages nothing; extraction_append read the record
       // in the same call and names that staged read, which stands in for a sidecar.
-      const hintRef = isAcceptedHint(logEntry) ? hintReads?.get(logEntry.id) : undefined;
+      const hintRef = isAcceptedHint(logEntry) ? options.hintReads?.get(logEntry.id) : undefined;
       const ref = hintRef ?? logEntry.results_ref;
       const producer = hintRef ? "record_read" : logEntry.tool;
       if (!ref) {
@@ -9684,8 +9993,21 @@ async function prepareOps(
       }
     }
 
-    await applyPlaceLevers(entry, i, matchedRecord, false, countryProducer, countryRecord);
+    await applyPlaceLevers(entry, i, { valueDerived: liftedFromValue.has(entry), countryProducer, countryRecord, matchedRecord });
   }
+
+  /** The record country's source for an assertion update's lookups: the sidecar
+   *  record the stored assertion comes from. No sidecar value is copied. */
+  const updateCountrySource = async (view: any): Promise<{ countryProducer?: string; countryRecord: any }> => {
+    const logEntry = typeof view.log_entry_id === "string" ? logById.get(view.log_entry_id) : undefined;
+    const results = typeof logEntry?.results_ref === "string" ? await readSidecarResults(logEntry.results_ref) : null;
+    const key = arkToBareId(String(view.record_id ?? ""));
+    const record = results?.find((r) => {
+      const id = sidecarResultId(logEntry.tool, r);
+      return id !== undefined && arkToBareId(id) === key;
+    });
+    return { countryProducer: logEntry?.tool, countryRecord: countrySidecarRecord(logEntry?.tool, results, record) };
+  };
 
   // An assertions update that corrects `place` to another place and says nothing of
   // `standard_place` gets the same levers, with the existing assertion as the
@@ -9697,26 +10019,40 @@ async function prepareOps(
     if (op.section !== "assertions" || op.op !== "update" || typeof op.entryId !== "string") continue;
     const fields = (op as any).fields;
     if (!fields || typeof fields !== "object") continue;
-    if (!Object.prototype.hasOwnProperty.call(fields, "place") || Object.prototype.hasOwnProperty.call(fields, "standard_place")) continue;
+    if (Object.prototype.hasOwnProperty.call(fields, "standard_place")) continue;
     const cur = ((research.assertions ?? []) as any[]).find((a: any) => a?.id === op.entryId);
+    if (!cur) continue;
+    const setsPlace = Object.prototype.hasOwnProperty.call(fields, "place");
+    // A stored place variant still holding its place in `value` gets it lifted
+    // here, before the lookups. Onto the stored entry when the op leaves `place`
+    // alone: a note or a question tie is not a place correction for
+    // rewriteLinkedFacts to carry onto the tree. A stored `standard_place: null`
+    // stays an opt-out, as on an append.
+    const merged = { ...cur, ...fields };
+    const lifted = liftVariantPlace(merged);
+    if (lifted) {
+      if (!setsPlace) {
+        cur.place = merged.place;
+        const view: any = { ...merged };
+        await applyPlaceLevers(view, i, { dropContradiction: true, valueDerived: true, ...(await updateCountrySource(view)) });
+        if (typeof view.standard_place === "string") cur.standard_place = view.standard_place;
+        continue;
+      }
+      fields.place = merged.place;
+    }
+    if (!setsPlace) continue;
     const place = factText(fields.place);
-    if (!cur || place === undefined || place === factText(cur.place)) continue;
+    if (place === undefined || place === factText(cur.place)) continue;
     const view: any = { ...cur, ...fields, standard_place: undefined };
-    const logEntry = typeof view.log_entry_id === "string" ? logById.get(view.log_entry_id) : undefined;
-    const results = typeof logEntry?.results_ref === "string" ? await readSidecarResults(logEntry.results_ref) : null;
-    const key = arkToBareId(String(view.record_id ?? ""));
-    const record = results?.find((r) => {
-      const id = sidecarResultId(logEntry.tool, r);
-      return id !== undefined && arkToBareId(id) === key;
-    });
-    await applyPlaceLevers(view, i, null, true, logEntry?.tool, countrySidecarRecord(logEntry?.tool, results, record));
+    await applyPlaceLevers(view, i, { dropContradiction: true, valueDerived: lifted, ...(await updateCountrySource(view)) });
     if (typeof view.standard_place === "string") {
       fields.standard_place = view.standard_place;
     } else if (typeof cur.standard_place === "string") {
       fields.standard_place = null;
+      const shown = isSuspiciousText(view.informant_bias_notes) ? WITHHELD_SUSPICIOUS : place;
       warnings.push(
         `assertion '${op.entryId}': cleared standard_place '${cur.standard_place}' because its place ` +
-          `was corrected to '${place}' and no standard form was found for the new place`,
+          `was corrected to '${shown}' and no standard form was found for the new place`,
       );
     }
   }
@@ -9835,13 +10171,14 @@ async function prepareOps(
   }
 
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
+  if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
   const verdictFile = prepareVerdict(input, ops, fmt, errors);
   if (errors.length > 0) throw new ResearchAppendError(errors);
   // Last, so this batch's assertions carry the standard_place resolved above.
   const birthPlaceCoords = await prefetchBirthPlaceCoords(research, ops, tree, personLinks, batchAssertions);
-  return { treeMutated, matchScores, batchAssertions, startingPersonIds, startingTree, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, warnings, verdictFile, birthPlaceCoords };
+  return { treeMutated, matchScores, batchAssertions, startingPersonIds, startingTree, createdAssertions, personLinks, sourceDescriptionId, sourceReuse, resolvedPlaces, unresolvedPlaces, warnings, verdictFile, birthPlaceCoords };
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -9882,6 +10219,10 @@ export interface ResearchAppendOptions {
    *  message refuses the call, so a caller that chose its op from an earlier
    *  read writes nothing when that read went stale. */
   precondition?: (research: any) => string | null;
+  /** Set only by `researchAppendFromCaller`: a timeline event's standard_place
+   *  is the caller's own, so it is judged (`judgeTimelinePlaces`). A tool builds
+   *  its timeline from the project's own standard places. */
+  judgeSuppliedPlaces?: boolean;
 }
 
 /**
@@ -10079,7 +10420,7 @@ export async function researchAppendFromCaller(
   if (errors.length > 0) {
     return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
   }
-  return researchAppend(input);
+  return researchAppend(input, { judgeSuppliedPlaces: true });
 }
 
 export async function researchAppend(
@@ -10230,7 +10571,8 @@ export async function researchAppend(
     }
 
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
-    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options.hintReads);
+    const readSidecar = sidecarReader(projectPath);
+    const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options, readSidecar);
 
     const storedCollectionUrls = opsSetCollectionUrl(ops)
       ? await loadStoredCollectionUrls(projectPath)
@@ -10309,19 +10651,22 @@ export async function researchAppend(
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
+    // #3601: a rejection retires its pair's live link and that link's facts,
+    // in this same all-or-nothing write.
+    const retire = retireRejectedLinks(applied, research, tree);
 
-    await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(projectPath));
+    await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(readSidecar));
 
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
     // may arrive in any order within the call.
     const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
 
-    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
+    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.
-    let treeMutated = prep.treeMutated || rewrite.mutated;
+    let treeMutated = prep.treeMutated || rewrite.mutated || retire.mutated;
     let rewriteWarnings = [...rewrite.warnings, ...rewrite.mutationWarnings];
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
@@ -10389,7 +10734,7 @@ export async function researchAppend(
         const retry = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
         if (retry.valid) {
           validation = retry;
-          treeMutated = prep.treeMutated;
+          treeMutated = prep.treeMutated || retire.mutated;
           // The mutation half described a tree change that no longer exists.
           rewriteWarnings = [
             ...rewrite.warnings,
@@ -10464,10 +10809,11 @@ export async function researchAppend(
       valid: true as const,
       warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
-    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces"> = {};
+    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
     if (prep.sourceReuse) extras.sourceReuse = prep.sourceReuse;
     if (prep.resolvedPlaces.length > 0) extras.resolvedPlaces = prep.resolvedPlaces;
+    if (prep.unresolvedPlaces.length > 0) extras.unresolvedPlaces = prep.unresolvedPlaces;
 
     if (isBatch) {
       return {

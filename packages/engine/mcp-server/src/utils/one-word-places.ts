@@ -76,6 +76,12 @@ function entryFor(text: string): OneWordEntry | undefined {
   return table.get(foldPlaceKey(text));
 }
 
+/** The place the list holds for a text, whatever the entry's condition, or null. */
+export function oneWordListPlace(text: string): string | null {
+  const e = entryFor(text);
+  return e === undefined ? null : typeof e === "string" ? e : e.place;
+}
+
 /** The list holds the text under a condition on the record's country. */
 export function oneWordPlaceNeedsCountry(text: string): boolean {
   const e = entryFor(text);
