@@ -5,6 +5,14 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
+// FamilySearch's matcher unless a test names the service: LOCAL reads the
+// developer's own config.json, which may name the service.
+const matcherSettingsMock = vi.hoisted(() => vi.fn());
+vi.mock("../../src/auth/config.js", async (orig) => ({
+  ...(await orig<typeof import("../../src/auth/config.js")>()),
+  getMatcherSettings: matcherSettingsMock,
+}));
+
 // Place standardization runs inside the converter now; stub the network
 // resolver so these tool tests stay offline and deterministic (no standard_place
 // is added — that behavior is covered in gedcomx-standardize.test.ts).
@@ -47,6 +55,8 @@ beforeEach(() => {
   mockFetch.mockReset();
   mockedGetValidToken.mockReset();
   mockedGetValidToken.mockResolvedValue("test-token");
+  matcherSettingsMock.mockReset();
+  matcherSettingsMock.mockResolvedValue({ backend: "familysearch" });
 });
 
 afterEach(() => {
@@ -64,6 +74,21 @@ function makeOkResponse(body: FSSearchResponse): {
     status: 200,
     statusText: "OK",
     json: async () => body,
+  };
+}
+
+/** FamilySearch's matchTwoExamples answer: one candidate at `score`. */
+function matchResponse(score: number) {
+  return {
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    json: async () => ({
+      entries: [{ id: "https://familysearch.org/ark:/61903/4:1:KCWM-J9H", score }],
+      results: 1,
+      title: "Matches for ark:/61903/4:1:KGS8-LY1",
+      updated: "2026-10-30T00:00:00.000Z",
+    }),
   };
 }
 
@@ -1356,6 +1381,26 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
   // rows but matches nobody is the same situation as a nil search — the subject
   // is not in this jurisdiction — so it gets the same hint.
   it("fires when the search returned rows but ranking matched nobody", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }))
+      .mockResolvedValue(matchResponse(0.005));
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+      subjectId: "I2",
+    }, LOCAL);
+
+    expect(out.totalMatches).toBe(1);
+    expect(out.ranked?.subjectResolvable).toBe(false);
+    expect(out.jurisdictionHints).toBeDefined();
+  });
+
+  // A candidate the matcher could not score might be the subject, so a page
+  // with one claims no negative and offers no other jurisdiction.
+  it("stays silent when the ranking could not score the rows", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
     );
@@ -1369,8 +1414,34 @@ describe("recordSearchTool — jurisdiction hints on a nil marriage search", () 
     }, LOCAL);
 
     expect(out.totalMatches).toBe(1);
-    expect(out.ranked?.subjectResolvable).toBe(false);
-    expect(out.jurisdictionHints).toBeDefined();
+    expect(out.ranked?.scoringErrors).toBe(1);
+    expect(out.ranked?.subjectResolvable).toBeUndefined();
+    expect(out.ranked?.diagnostic).toMatch(/^1 of the 1 candidates could not be scored/);
+    expect(out.jurisdictionHints).toBeUndefined();
+  });
+
+  it("keeps the search and reports rankingError when the matcher service fails, never asking FamilySearch", async () => {
+    matcherSettingsMock.mockResolvedValue({ backend: "service", url: "http://matcher.test", apiKey: "k".repeat(32) });
+    mockFetch
+      .mockResolvedValueOnce(makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }))
+      .mockResolvedValue({ ok: false, status: 401, statusText: "Unauthorized", json: async () => ({ error: { code: "unauthorized" } }) });
+
+    const out = await recordSearchTool({
+      surname: "Wood",
+      recordType: "marriage",
+      marriagePlace: "Hill, Texas, United States",
+      projectPath: dir,
+      subjectId: "I2",
+    }, LOCAL);
+
+    expect(out.totalMatches).toBe(1);
+    expect(out.results).toHaveLength(1);
+    expect(out.ranked).toBeUndefined();
+    expect(out.rankingError).toMatch(/matcher service rejected/);
+    expect(out.jurisdictionHints).toBeUndefined();
+    const urls = mockFetch.mock.calls.map((c) => String(c[0]));
+    expect(urls.some((u) => u.includes("matchTwoExamples"))).toBe(false);
+    expect(urls.filter((u) => u === "http://matcher.test/v1/score")).toHaveLength(1);
   });
 
   // Review defect: the exclusion only read `marriagePlace`, but the caller scopes
@@ -2332,9 +2403,9 @@ describe("recordSearchTool — surnameVariantHints on a search that did not find
     // can be shown. The note must not claim the rows are empty: one of them may
     // be the subject under a different spelling.
     it("fires, says 'did not identify the subject', precedes results, and is not staged", async () => {
-      mockFetch.mockResolvedValueOnce(
-        makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
-      );
+      mockFetch
+        .mockResolvedValueOnce(makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }))
+        .mockResolvedValue(matchResponse(0.005));
 
       const out = await recordSearchTool(
         { surname: "Halsteinsdatter", projectPath: dir, subjectId: "I2" },
@@ -2353,6 +2424,22 @@ describe("recordSearchTool — surnameVariantHints on a search that did not find
         await readFile(join(dir, out.staged!.resultsRef), "utf-8"),
       );
       expect(JSON.stringify(staged)).not.toContain("surnameVariantHints");
+    });
+
+    it("stays silent when the ranking could not score the rows", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeOkResponse({ results: 1, index: 0, entries: [lincolnEntry()] }),
+      );
+
+      const out = await recordSearchTool(
+        { surname: "Halsteinsdatter", projectPath: dir, subjectId: "I2" },
+        LOCAL,
+      );
+
+      expect(out.totalMatches).toBe(1);
+      expect(out.ranked?.subjectResolvable).toBeUndefined();
+      expect(out.ranked?.diagnostic).toMatch(/^1 of the 1 candidates could not be scored/);
+      expect(out.surnameVariantHints).toBeUndefined();
     });
   });
 });

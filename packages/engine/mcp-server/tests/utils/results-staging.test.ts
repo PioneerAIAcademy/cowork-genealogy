@@ -12,6 +12,7 @@ import {
   resolveStagedRef,
   readStagedResults,
   readSidecarSearch,
+  sidecarReader,
   checkStagedResults,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
@@ -508,6 +509,45 @@ describe("results-staging", () => {
 // logs found (11 of 3,636 ref-carrying calls): the init-project k8d pair is
 // verbatim; for the others the differing characters are the real ones and the
 // rest of the UUID is filled in.
+describe("sidecarReader", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sidecar-reader-"));
+    await mkdir(join(dir, "results"), { recursive: true });
+  });
+  afterEach(async () => rm(dir, { recursive: true, force: true }));
+
+  it("reads each sidecar once per reader, and gives null for one outside the project, missing or not JSON", async () => {
+    await writeFile(join(dir, "results", "log_001.json"), JSON.stringify({ log_id: "log_001", payload: { results: [] } }));
+    await writeFile(join(dir, "results", "log_002.json"), "{ not json");
+    const inner = backingStore();
+    let reads = 0;
+    const counting = new Proxy(inner, {
+      get(target, prop, receiver) {
+        const value = Reflect.get(target, prop, receiver);
+        if (prop !== "readText" || typeof value !== "function") return value;
+        return (...args: unknown[]) => {
+          reads++;
+          return value.apply(target, args);
+        };
+      },
+    });
+    await runWithProjectStore(counting, async () => {
+      const read = sidecarReader(dir);
+      const [a, b] = await Promise.all([read("results/log_001.json"), read("results/log_001.json")]);
+      expect(a).toEqual({ log_id: "log_001", payload: { results: [] } });
+      expect(b).toBe(a);
+      expect(reads).toBe(1);
+      expect(await read("results/log_002.json")).toBeNull();
+      expect(await read("results/log_003.json")).toBeNull();
+      expect(await read("../outside.json")).toBeNull();
+      expect(reads).toBe(3);
+      await sidecarReader(dir)("results/log_001.json");
+      expect(reads).toBe(4);
+    });
+  });
+});
+
 describe("resolveStagedRef", () => {
   let dir: string;
   beforeEach(async () => {

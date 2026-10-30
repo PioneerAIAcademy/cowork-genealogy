@@ -15,7 +15,8 @@ import {
   type SearchPlaceResult,
   type GetPlaceResult,
 } from "../utils/place-api.js";
-import { deriveContextName, mapWithConcurrency } from "../utils/place-resolver.js";
+import { deriveContextName, mapWithConcurrency, resolveStandardPlace } from "../utils/place-resolver.js";
+import { placeAnswer } from "../utils/place-verdict.js";
 
 // Re-export the low-level FamilySearch places fetchers so existing tool/test
 // imports keep resolving from here. Their implementations live in
@@ -226,11 +227,34 @@ export async function placeSearchTool(
     input.placeName,
     input.contextName
   );
-  // Spread rather than assign: an exact hit's response must stay
-  // byte-identical to the pre-fallback shape (no `matchType` key at all).
+  // What the writers store for the query text on a fact with none supplied that
+  // cites no record (place-verdict.ts), read as tree_edit reads a fact's place:
+  // `contextName` stands where the fact's other places stand, the context a
+  // bare one-part place is resolved against.
+  const context = input.contextName ? [input.contextName] : [];
+  const answer = await placeAnswer(input.placeName, [], () =>
+    resolveStandardPlace(input.placeName, { contextPlaces: context }),
+  );
+  const on =
+    "on a fact that cites no record and has no standard_place supplied, " +
+    (input.contextName ? `whose other places include '${input.contextName}'` : "with no other places");
+  // Spread rather than assign: an exact hit carries no `matchType` key at all.
   return {
     results: results.map(simplifyPlaceResult),
     ...(matchType ? { matchType } : {}),
+    verdict:
+      answer.standardPlace !== null
+        ? {
+            standardPlace: answer.standardPlace,
+            reason:
+              `the writers store this standard_place for this place text ${on}. A supplied ` +
+              "standard_place is kept instead when it is a FamilySearch standard place, as each result is, and some " +
+              "part of the place text names it",
+          }
+        : {
+            standardPlace: null,
+            reason: `the writers store no standard_place for this place text ${on}: ${answer.reason}`,
+          },
   };
 }
 

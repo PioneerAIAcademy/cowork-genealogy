@@ -744,6 +744,24 @@ async function pruneStale(projectPath: string): Promise<void> {
   );
 }
 
+/** A per-call reader of sidecar envelopes, cached by ref so a call reads each
+ *  file once: null when the ref is outside the project or unreadable. */
+export function sidecarReader(projectPath: string): (ref: string) => Promise<Record<string, any> | null> {
+  const cache = new Map<string, Promise<Record<string, any> | null>>();
+  const read = async (ref: string): Promise<Record<string, any> | null> => {
+    if (!isInsideProject(projectPath, ref)) return null;
+    try {
+      return JSON.parse(await getProjectStore().readText(projectPath, ref));
+    } catch {
+      return null;
+    }
+  };
+  return (ref) => {
+    if (!cache.has(ref)) cache.set(ref, read(ref));
+    return cache.get(ref)!;
+  };
+}
+
 /**
  * Read a staged/finalized sidecar's `payload.results` array (read-only — NEVER
  * unlinks, so a staged handle can still be finalized afterward). Accepts EITHER

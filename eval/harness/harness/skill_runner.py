@@ -1249,8 +1249,8 @@ async def run_skill(
             # canned text all win over the default (#3568).
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
-        # context_policy.SUBAGENT_ONLY_TOOLS — image_read; `extraction_append`
-        # left the set in issue #2937) on
+        # context_policy.SUBAGENT_ONLY_TOOLS — image_read and the shipped hook's
+        # AGENT_ONLY_TOOLS; `extraction_append` left the set in issue #2937) on
         # the main thread UNLESS this skill declared it itself. That exemption is
         # now REACHED rather than theoretical: record-extraction declares
         # `extraction_append` and calls it from the main thread. Checked BEFORE

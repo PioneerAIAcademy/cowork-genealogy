@@ -64,6 +64,7 @@ from app.agent.continue_policy import (
     delivered_stop_reason,
     foreground_rewrite,
     DELIVERY_GUIDANCE,
+    HOSTED_PLANE_ENV,
     DELIVERED_TOOL,
     CONTINUE_REASON,
     env_float,
@@ -146,8 +147,10 @@ def parse_blocked_tools(value: str | None) -> frozenset[str]:
 WRITE_DENY_REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json must "
     "go through the writer tools. To CREATE a new project use project_create, which "
-    "writes both files together; to add to an existing one use research_append, "
-    "research_log_append, tree_edit or tree_correct. These validate before persisting. "
+    "writes both files together (from the main session, invoke `@plugin:init-project`, "
+    "which calls it); to add to an existing one use research_append or "
+    "research_log_append, and for the tree tree_edit or tree_correct (from the main "
+    "session, invoke `@plugin:tree-edit`). These validate before persisting. "
     "Direct file writes never validate."
 )
 
@@ -972,8 +975,9 @@ def build_worker_options(
         f"reached through the genealogy MCP tools with projectPath {cwd!r} — it is not "
         "readable as files: your working directory is an empty anchor. Read the project "
         "with project_context, research_query, record_read and sidecar_read, and change "
-        "it only through the writer tools (project_create, research_append, "
-        "research_log_append, tree_edit, tree_correct). Follow the genealogy skills, and "
+        "it only through research_append and research_log_append, or by invoking the agent "
+        "that holds the write (`@plugin:init-project` creates a project, `@plugin:tree-edit` "
+        "edits the tree). Follow the genealogy skills, and "
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style."
     )
@@ -986,6 +990,7 @@ def build_worker_options(
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
         # main thread's context and tools, not a plugin agent's `tools:` list.
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        HOSTED_PLANE_ENV: "1",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,
     }

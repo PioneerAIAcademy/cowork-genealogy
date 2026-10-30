@@ -185,6 +185,7 @@ depends on another shipping first.
 | §6 | Append ownership by caller (`questions`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | a `questions` op with `op: "append"` from anything but the `question-selection` agent, in either the single-op or `ops[]` form (including a stringified `ops`). An agent whose lane lacks `questions` meets the lane arm instead. Updates are untouched, so research-exhaustiveness and proof-conclusion keep theirs; a main-thread update that rewrites a question's text is knowingly allowed (ADR-0011 limit 1) | **enforcing** (since 2026-10-28). The main thread minted a question itself in 3 of 15 hosted sessions (feedback 2026-10-05 to 10-18); 28 of 28 October 2026 e2e creations came from the agent, so it refuses nothing in the corpus. **Nothing proves this arm binds in Cowork** (`docs/architecture.md` §9.4 gap 1); `make hook-smoke` proves the hook binds in the hosted loader, through a different arm |
 | §6 | Claim ownership by caller (`conflicts`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | a `conflicts` op from anything but the `conflict-resolution` agent that sets `status: "resolved"` or `"moot"` with its rationale, or sets any of `independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind`, `resolved_value` or `weighed_log_entry_ids` truthy — single-op or `ops[]`, `fields` or `entry`, stringified or not. A skeleton open (the schema's required fields only) and a re-open to `unresolved` claim nothing and pass, because six skills open conflicts | **enforcing** (since 2026-09-29). Nothing proves this arm binds in Cowork (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
 | §6 | Section ownership by caller (`evaluations`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | an `evaluations` write from anything but the `gps-mentor` agent — the main thread included, which was the one committed non-owner shape: a main thread recording its own mentor verdict before gps-mentor was spawned — in either the single-op or `ops[]` form, stringified or not, on append **and** update | **enforcing** (since 2026-10-26, lead ruling 2026-10-12; nothing proves this arm binds in Cowork (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs) |
+| §6 | Main-thread deny of the tools only agents hold (`AGENT_ONLY_TOOLS`) | plugin hook — Cowork, hosted, the prototype worker, wherever the plugin loads; **and both harnesses**, which import the map into `context_policy.SUBAGENT_ONLY_TOOLS` rather than copy it (the unit harness through `test_no_main_thread_subagent_only_calls`) | a call with no `agent_id` key to a tool held by agents and declared by no skill, under any server spelling. The deny names every agent that holds the tool as an `@plugin:<agent>` invocation, so the model delegates instead of meeting a wall. Five such tools stay callable (`MAIN_THREAD_OK`): `image_transcribe`, `sidecar_read`, `record_read` and `research_log_append`, which `research` uses to deliver and log a transcription itself, and `research_append`, which `owner_denied` routes per section. **Hand-kept, not derived** (lead, 2026-10-20): deriving the list as "agents' tools minus skills' `allowed-tools`" would turn `allowed-tools` into a main-thread restriction, which it is not, and would grow it silently on every skill-to-agent conversion. So a person places each tool only agents hold on `AGENT_ONLY_TOOLS` or on `MAIN_THREAD_OK` with its reason, and `plugin-hooks.test.ts` fails when a tool is on neither, on a list it no longer qualifies for, or carries owners that differ from the agents' `tools:`. The `hooks.json` matcher names each denied tool (not `.*`, which would start a `python3` for every MCP call) | **enforcing** (since 2026-10-29). Replayed over the 12 committed e2e runs that invoke no converted skill (measured at 54a8e1561), it would refuse 25 calls in 3 of them (10 `fulltext_search`, 9 `record_search`, one each of six more), every one the router running a search agent's step itself. The `research` unit suite makes 0 such calls in its 12 newest logs, nor do the 350 other unit runs whose threads can be told apart. The **hosted** binding is proven by `make hook-smoke`'s agent-only case (§6.4; BOUND 2026-10-29, Claude Code 2.1.308), which no CI job runs; nothing proves it binds in Cowork (`docs/architecture.md` §9.4 gap 1) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which `make e2e-advisories SINCE=all` now reports (fired / acted / ignored / condition-never-held / not-observable per advisory, split by `agent_type`). A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
@@ -1851,7 +1852,7 @@ before — in Cowork, the one environment the closure was built for. Every test
 was green, including the one named "matches every tool the guard script itself
 denies", which restated the three raw-write tool names inline instead of reading
 them from the script. The matcher is now
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task` — `.*`-prefixed on the
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)` — the last alternative naming every `AGENT_ONLY_TOOLS` key — `.*`-prefixed on the
 namespaced arms so they bind under an anchored full match as well as a substring
 search, and against both the bare and the `mcp__remote-devices__`-namespaced
 spelling — and `tests/packaging/plugin-hooks.test.ts` derives the expected tool
@@ -1887,10 +1888,12 @@ with the credential-read arm. The foreground arm is the one entry
 here that is NOT a deny: it allows the call and rewrites `run_in_background` to
 `False`, and it needs the matcher exactly as much as a deny does, because an arm
 the matcher cannot reach is inert with the suite green. And it is **not** "the
-plugin's minus `.*research_append`" — it is that minus `.*research_append`
-**plus `Bash`, `Read`, `Grep` and `Glob`**. The plugin's is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`.
-`research_append` is absent here because this hook returns `{}` for it, so
+plugin's minus `.*research_append`" — it is that minus `.*research_append` and
+the plugin's last alternative, **plus `Bash`, `Read`, `Grep` and `Glob`**. The
+plugin's is
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)`, whose last alternative names the tools only agents hold.
+Those are absent here because the plugin hook, which binds on the hosted path
+too, already denies them. `research_append` is absent because this hook returns `{}` for it, so
 binding it would only widen the blast radius of a starved callback; `Bash` is
 present because this hook carries the credential-exfiltration arm; `Read`, `Grep`
 and `Glob` are present because this hook carries the credential-read arm.
@@ -2281,6 +2284,15 @@ so a preflight runs the script directly with a synthetic payload and requires a
 deny back; a packaging problem reports as VOID (preflight), never as "does not
 bind". The preflight was proven to fail four ways — script absent, script always
 allowing, script exiting non-zero, script printing non-JSON.
+
+**A third case, since 2026-10-29: a main-thread `convert_calendar`.** It is a tool
+only agents hold (`AGENT_ONLY_TOOLS`), the cheapest to provoke — pure
+computation, no network, no project — and it reaches the script only through the
+matcher's agent-only alternative, so a pass proves that alternative binds. The
+expected text is `agent_only_reason("convert_calendar")`, imported; arm B gets the
+tool's own answer back. Measured 2026-10-29 (Claude Code 2.1.308, agent SDK
+0.2.172): **BOUND** — arm A `DENIED_BY_GUARD`, arm B `NOT_DENIED` with the
+calendar answer returned.
 
 **Measured 2026-09-09** (Claude Code 2.1.258, agent SDK 0.2.128): the hosted SDK
 loader **does** bind it. Arm A came back `DENIED_BY_GUARD` with `OWNER_REASON` on

@@ -4,9 +4,11 @@
 
 `rank_search_matches` re-ranks a staged `record_search` result set by **match
 score** against the research subject, replacing FamilySearch's unreliable search
-ranker with its authoritative person matcher. It reads the host-side staged
+ranker with a person matcher. It reads the host-side staged
 results file, scores **every** staged candidate against the subject with the
-`matchTwoExamples` engine (the same one `same_person` uses), writes the full
+active matcher (`matchPairs`, the call `same_person` makes; config.json's
+`matcher` picks FamilySearch's `matchTwoExamples` or the matcher service,
+`docs/specs/matcher-shim-spec.md`), writes the full
 score set to a calibration log, and returns **every scored candidate, ordered
 by match score**, as compact, gedcomx-free stubs. `top` narrows that only when
 the caller asks.
@@ -128,19 +130,37 @@ snake_case envelope it reads.
    facts, e.g. a not-in-FS `I1` person) can score uniformly near-zero against
    every candidate. The cause is **thin content, not an unresolvable id** — the
    determinant is content richness, as the probe 12 lines above measures: an
-   ark-less subject scores 0.99999 on the correct record. Detect it: when **every**
-   `matchScore` is null or below a degenerate floor (≈0.01), set
+   ark-less subject scores 0.99999 on the correct record. Detect it: when no
+   `matchScore` clears the active matcher's floor, set
    `subjectResolvable: false` in the output so the skill treats it as *no match
    signal* (fall back to the manual `same_person` / cross-check path) rather than
-   promoting a meaningless order as authoritative.
-3. **Score every candidate.** One `getValidToken(principal)`. Wrap each pair in a per-item
-   `try/catch` (as `same_person`'s relatives mode does — the `mapWithConcurrency(pairs, PAIR_CONCURRENCY` loop in `src/tools/same-person.ts`),
-   and **skip candidates with no `gedcomx` or no `primaryId`** (both optional on
-   `RecordSearchResult`) with `matchScore: null` and **no FS call** — a
-   person-less doc is a certain-400 and must not burn three retries. For the
-   rest, `scorePair(result.gedcomx, result.primaryId, subjectDoc, subjectId,
-   token)` via `mapWithConcurrency(results, 10, …)` + `withRetry`
-   (`place-resolver.ts`). **Concurrency 10** — confirmed with the
+   promoting a meaningless order as authoritative. The floors, and why an
+   unscored candidate blocks the claim, are in **Floors** below.
+
+   **Floors.** Each comes from the active matcher: FamilySearch's are 0.01 and
+   0.01; the service returns its own in every response's `model.cutoffs.floors`
+   (`thin_subject`, `real_negative`).
+
+   | Floor | Applies to | No candidate scores above it |
+   |---|---|---|
+   | thin-subject | a subject with no dated or placed fact | diagnostic (a): the ranking is withheld (`matches: []`) |
+   | real-negative | a subject with such a fact | diagnostic (b): a real negative; page deeper or narrow |
+
+   A candidate that failed to score might have cleared the floor, so a page
+   with one claims no negative: `subjectResolvable` stays unset, (b) gives way to
+   a diagnostic counting the unscored candidates and saying to rank again, and a
+   thin subject's ranking is still withheld, its diagnostic also counting them.
+   A candidate skipped for lacking a `gedcomx` or `primaryId` is not a failure.
+   A null score never counts toward a floor.
+3. **Score every candidate, the page in one `matchPairs` call.** **Skip
+   candidates with no `gedcomx` or no `primaryId`** (both optional on
+   `RecordSearchResult`) with `matchScore: null` and **no call** — a
+   person-less doc is a certain-400 and must not burn three retries. FamilySearch's
+   matcher scores the rest as `scorePair(result.gedcomx, result.primaryId,
+   subjectDoc, subjectId)`, the enriched subject alone, 10 at a time with
+   `withRetry`. The matcher service takes the whole page in one POST, each pair's
+   tree the project tree with the enriched subject in place of the tree person,
+   cut around the subject; a service call that scores no pair throws. **Concurrency 10** — confirmed with the
    `matchTwoExamples` developer; it deliberately overrides `same_person`'s
    conservative `PAIR_CONCURRENCY = 5` (`PAIR_CONCURRENCY` in `src/tools/same-person.ts`), and there is no
    batch endpoint. **Candidate ceiling:** the pool is bounded by the
@@ -186,10 +206,13 @@ across real searches and a match-score threshold can be chosen later from data.
     "death_date": "17 Sep 1982",
     "collection_title": "Find A Grave Index",
     "match_score": 0.99999,
-    "match_confidence": 5
+    "scorer": "familysearch",
+    "model": null
   }
   ```
 - snake_case (persisted project artifact, per the repo casing rule).
+- `scorer` names the matcher that made the score (`familysearch` or `service`);
+  `model` is the service's model version, `null` for FamilySearch's matcher.
 - **Best-effort:** a score-log write failure never fails a successful rank call
   (mirror staging's best-effort contract — surface a `scoreLogError` note in the
   return, don't throw).
@@ -234,8 +257,7 @@ Sorted by `matchScore` descending; no gedcomx.
       "deathDate": "17 Sep 1982", "deathPlace": "Grapevine, Tarrant, Texas, United States",
       "collectionTitle": "Find A Grave Index",
       "recordArk": "ark:/61903/1:2:…",
-      "matchScore": 0.99999,       // 0–1; null on persistent FS-call failure — never dropped
-      "matchConfidence": 5,        // 1–5; omitted on no-match
+      "matchScore": 0.99999,       // 0–1; null when scoring failed — never dropped
       "attachedToSubject": false,  // only when checkAttachments
       "attachedToOther": true,
       "birthYearConflict": true,   // only when the birth years differ by more than 2
@@ -255,7 +277,7 @@ ANNOTATED in place with `matchScore` / `matchRank` / `searchRank` /
 `attachedTo*` and ordered best first, and `ranked` carries metadata only
 (ruled 2026-09-15). Measured on this branch at 50 rows, and pinned by
 `tests/utils/staged-compaction.test.ts` so it cannot go stale silently: the
-rejected drop shape is 36,956 bytes, the shipped one 35,206 — 4.7% smaller.
+rejected drop shape is 35,956 bytes, the shipped one 34,206 — 4.9% smaller.
 
 The saving is STRUCTURAL rather than a leaner row. The drop shape's stub
 reintroduced `collectionTitle` on every scored row, immediately after
@@ -432,8 +454,9 @@ as a signal there, and neither test strictly contains the other.
   which is the correct direction to fail (ranks everyone, never silently gates
   them).
 
-Independent of the withholding branch (`subjectResolvable: false` +
-`matches: []`), which fires on zero dated/placed facts. A subject with a
+Independent of the withholding branch (`matches: []`, with
+`subjectResolvable: false` when every candidate was scored), which fires on zero
+dated/placed facts. A subject with a
 city-only residence has a placed fact (withholding does not fire) but may still
 be `subjectTooThin` (no narrow date, no relative). Both can be true
 simultaneously.
@@ -485,14 +508,16 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
 
 - `src/types/rank-search-matches.ts` — input + response types.
 - `src/tools/rank-search-matches.ts` — the tool.
-- `src/utils/match-engine.ts` — **new shared module** lifted from
+- `src/utils/matcher.ts` — `matchPairs`, the one matching call, and its two
+  backends (`docs/specs/matcher-shim-spec.md`).
+- `src/utils/match-engine.ts` — FamilySearch's backend, lifted from
   `same-person.ts`. This is a *closure*, not two functions: `scorePair` (`:112`)
   pulls `throwForBadStatus` (`:274`), `parseArkFromTitle` (`:268`), the `URL`
-  const, and the `SamePersonApiResponse`/`SamePersonResult` types;
+  const, and the `SamePersonApiResponse`/`FamilySearchMatch` types;
   `buildRawWithAnchor` (`:231`) pulls `toValidFsArk` (`:222`), `randomFsId`
   (`:211`), and the `FS_ID_ALPHABET`/`VALID_FS_ID_RE`/`DEFAULT_ARK_TYPE`/`PERSISTENT_ID`
-  consts — plus the mint-hardening from Behavior §2. `same_person` re-imports the
-  module; its public contract is unchanged.
+  consts — plus the mint-hardening from Behavior §2. Only `matcher.ts` calls
+  `scorePair`.
 - `dev/try-rank-search-matches.ts` — one-shot live smoke test.
 - `tests/tools/rank-search-matches.test.ts` — unit tests.
 - Wiring: `src/tool-schemas.ts` (`allToolSchemas`), `src/index.ts` (dispatch),

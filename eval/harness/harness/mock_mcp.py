@@ -634,12 +634,8 @@ def _record_match_score(
         "treePersonId": tree_person_id,
         "role": args.get("recordRole"),
         "recordPersonaId": args.get("recordPersonaId"),
-        "result": {
-            "score": score,
-            "matched": bool(response.get("matched")),
-            **({"confidence": response["confidence"]}
-               if isinstance(response.get("confidence"), (int, float)) else {}),
-        },
+        # The fixtures were recorded against FamilySearch's matcher.
+        "result": {"score": score, "scorer": "familysearch", "model": None},
     }
     # `recordMatchScore` is read-modify-write and its docstring requires the
     # caller to hold the project lock. Production takes it in

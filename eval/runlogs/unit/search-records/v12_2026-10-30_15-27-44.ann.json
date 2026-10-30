@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-10-11_05-34-20.json",
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
+  "run_log": "v12_2026-10-30_15-27-44.json",
+  "annotator": "dallan@quass.org",
   "corrections": [
     {
-      "test_id": "ut_timeline_001",
+      "test_id": "ut_search_records_025",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_001",
+      "test_id": "ut_search_records_025",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_001",
+      "test_id": "ut_search_records_025",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,47 +27,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_001",
+      "test_id": "ut_search_records_025",
       "dimension_source": "rubric",
-      "dimension_name": "Tool usage — place resolution and distance",
+      "dimension_name": "Search strategy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_001",
+      "test_id": "ut_search_records_025",
       "dimension_source": "rubric",
-      "dimension_name": "Gap detection",
+      "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_001",
+      "test_id": "ut_search_records_025",
       "dimension_source": "rubric",
-      "dimension_name": "Deferral of logical-impossibility detection",
+      "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_001",
+      "test_id": "ut_search_records_025",
       "dimension_source": "rubric",
-      "dimension_name": "Geographic feasibility",
+      "dimension_name": "Nil escalation",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_002",
+      "test_id": "ut_search_records_016",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -75,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_002",
+      "test_id": "ut_search_records_016",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -83,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_002",
+      "test_id": "ut_search_records_016",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -91,47 +83,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_002",
+      "test_id": "ut_search_records_016",
       "dimension_source": "rubric",
-      "dimension_name": "Tool usage — place resolution and distance",
+      "dimension_name": "Search strategy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_002",
+      "test_id": "ut_search_records_016",
       "dimension_source": "rubric",
-      "dimension_name": "Gap detection",
+      "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_002",
+      "test_id": "ut_search_records_016",
       "dimension_source": "rubric",
-      "dimension_name": "Deferral of logical-impossibility detection",
+      "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_002",
+      "test_id": "ut_search_records_016",
       "dimension_source": "rubric",
-      "dimension_name": "Geographic feasibility",
+      "dimension_name": "Nil escalation",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_004",
+      "test_id": "ut_search_records_018",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -139,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_004",
+      "test_id": "ut_search_records_018",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -147,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_004",
+      "test_id": "ut_search_records_018",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -155,47 +139,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_004",
+      "test_id": "ut_search_records_018",
       "dimension_source": "rubric",
-      "dimension_name": "Tool usage — place resolution and distance",
+      "dimension_name": "Search strategy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_004",
+      "test_id": "ut_search_records_018",
       "dimension_source": "rubric",
-      "dimension_name": "Gap detection",
+      "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_004",
+      "test_id": "ut_search_records_018",
       "dimension_source": "rubric",
-      "dimension_name": "Deferral of logical-impossibility detection",
+      "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_004",
+      "test_id": "ut_search_records_018",
       "dimension_source": "rubric",
-      "dimension_name": "Geographic feasibility",
-      "llm_score": null,
-      "corrected_score": null,
+      "dimension_name": "Nil escalation",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_004",
-      "dimension_source": "rubric",
-      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_006",
+      "test_id": "ut_search_records_019",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -203,7 +179,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_006",
+      "test_id": "ut_search_records_019",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -211,7 +187,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_006",
+      "test_id": "ut_search_records_019",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -219,47 +195,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_006",
+      "test_id": "ut_search_records_019",
       "dimension_source": "rubric",
-      "dimension_name": "Tool usage — place resolution and distance",
+      "dimension_name": "Search strategy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_006",
+      "test_id": "ut_search_records_019",
       "dimension_source": "rubric",
-      "dimension_name": "Gap detection",
+      "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_006",
+      "test_id": "ut_search_records_019",
       "dimension_source": "rubric",
-      "dimension_name": "Deferral of logical-impossibility detection",
+      "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_006",
+      "test_id": "ut_search_records_019",
       "dimension_source": "rubric",
-      "dimension_name": "Geographic feasibility",
+      "dimension_name": "Nil escalation",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_006",
-      "dimension_source": "rubric",
-      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_search_records_020",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -267,7 +235,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_search_records_020",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -275,7 +243,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_search_records_020",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -283,43 +251,35 @@
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_search_records_020",
       "dimension_source": "rubric",
-      "dimension_name": "Tool usage — place resolution and distance",
+      "dimension_name": "Search strategy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_search_records_020",
       "dimension_source": "rubric",
-      "dimension_name": "Gap detection",
+      "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_search_records_020",
       "dimension_source": "rubric",
-      "dimension_name": "Deferral of logical-impossibility detection",
+      "dimension_name": "Log quality",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_timeline_007",
+      "test_id": "ut_search_records_020",
       "dimension_source": "rubric",
-      "dimension_name": "Geographic feasibility",
+      "dimension_name": "Nil escalation",
       "llm_score": null,
       "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_timeline_007",
-      "dimension_source": "rubric",
-      "dimension_name": "Identity coherence (hypothesis-testing timelines)",
-      "llm_score": 3,
-      "corrected_score": 3,
       "comment": null
     }
   ]

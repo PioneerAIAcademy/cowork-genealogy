@@ -22,7 +22,8 @@
     "Each new household member must be minted with materialize_facts, which resolves the source-ref from the assertion's own source_id and refuses the write without it. tree_edit add_person is NOT an acceptable equivalent here even when the caller hand-writes a ref: add_person applies its mandatory-ref guard to inline FACTS only and copies a names[].sources through untouched, so the provenance is asserted by the caller rather than resolved from the record. Grade an add_person mint down on Correctness.",
     "The Thomas->John and Thomas->Bridget parent-child edges (relationship assertions a_004 / a_007, src_001 -> tree source S1) are written via tree_edit add_relationship with a source-ref, at LOWER ref quality — a pre-1880 census parent-child relationship is INDIRECT (inferred from household position; no relationship column before 1880).",
     "A merge_warnings dry-run coherence gate is IDEAL but NOT REQUIRED for pass in this scenario. The skill is working from pre-extracted assertions and does not have the record's candidateGedcomx document that merge_warnings requires as input. Calling merge_warnings is a plus; skipping it because the candidate document is unavailable should NOT downgrade the Person minting dimension from pass to partial.",
-    "Patrick (I1, Thomas's child via R1) is absent from this 1850 census. ANY acknowledgment of Patrick's non-appearance in the census satisfies this requirement — whether the skill says 'Patrick was not in this household,' 'Patrick does not appear in the 1850 census,' 'I did not touch Patrick,' or explicitly flags it as an identity question. Grade this as PASS if the skill mentions Patrick's absence in any form. The only failure is silently renaming or overwriting Patrick to match a census persona."
+    "Patrick (I1, Thomas's child via R1) is absent from this 1850 census. ANY acknowledgment of Patrick's non-appearance in the census satisfies this requirement — whether the skill says 'Patrick was not in this household,' 'Patrick does not appear in the 1850 census,' 'I did not touch Patrick,' or explicitly flags it as an identity question. Grade this as PASS if the skill mentions Patrick's absence in any form. The only failure is silently renaming or overwriting Patrick to match a census persona.",
+    "Before minting, the skill may score a household persona against a tree person it could already be: John (a_002) or Bridget (a_005) against Patrick (I1), or Thomas's own assertion a_001 against I2. That is the 'already in the tree' check, and a fixture answers each of those calls, so do not grade it down. John and Bridget score low against Patrick, which is a reason to mint them, not a conflict."
   ],
   "execution": {
     "max_turns": 40,
@@ -30,6 +31,9 @@
     "sdk_message_silence_seconds": 600
   },
   "mcp_fixtures": [
-    "same-person-flynn-1850-head"
+    "same-person-flynn-1850-head",
+    "same-person-flynn-1850-head-own",
+    "same-person-flynn-1850-john-patrick",
+    "same-person-flynn-1850-bridget-patrick"
   ]
 }
