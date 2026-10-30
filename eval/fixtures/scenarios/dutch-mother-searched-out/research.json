@@ -129,6 +129,17 @@
           "rationale": "Cornelis's own death act names his parents, in the declarant's words rather than the 1828 clerk's.",
           "fallback_for": null,
           "status": "completed"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "birth",
+          "jurisdiction": "Zuid-Holland, Netherlands",
+          "date_range": "1828",
+          "repository": "FamilySearch",
+          "rationale": "The court's duplicate of the 1828 birth register is a separate copy in another hand, and may read the first letter the municipal copy blots.",
+          "fallback_for": null,
+          "status": "completed"
         }
       ]
     }
@@ -222,7 +233,7 @@
       "results_available": 0,
       "results_ref": null,
       "external_site": null,
-      "notes": "The municipality's bevolkingsregister begins in 1850; Cornelis had left the household by then, and the 1850 register lists the father as a widower with no wife entered."
+      "notes": "The municipality's bevolkingsregister begins in 1850. It lists the father as a widower with no wife entered, and Cornelis, married that year, at his own address until he departs in 1853 \"naar zee\" (to sea). Neither entry names his mother."
     },
     {
       "id": "log_006",
@@ -277,7 +288,26 @@
       "results_available": 0,
       "results_ref": null,
       "external_site": null,
-      "notes": "No death act for Cornelis van Noord in Zuid-Holland or any other Dutch province, 1850-1950. The 1850 population register marks him departed in 1853 \"naar zee\" (to sea) with no later address, and no Dutch register records his death, so no act exists that names his parents."
+      "notes": "No death act for Cornelis van Noord in Zuid-Holland or any other Dutch province, 1850-1950. He went to sea in 1853 (log_005) with no later address, and no Dutch register records his death, so no act exists that names his parents."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_009",
+      "performed": "2026-06-18T09:00:00Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Cornelis",
+        "surname": "van Noord",
+        "birthDate": "1828",
+        "birthPlace": "Zuid-Holland, Netherlands",
+        "collection": "Netherlands, Civil Registration, Births (duplicate registers)"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "results_available": 0,
+      "results_ref": null,
+      "external_site": null,
+      "notes": "The duplicate of the 1828 birth register that the court of first instance kept does not survive: its 1828 volume is missing from the archive's holdings. Only the municipal copy is extant, and it blots the first letter of the mother's given name."
     }
   ],
   "sources": [
@@ -303,11 +333,11 @@
       "citation": "Tienjarige tafels (ten-year marriage index), Zuid-Holland, Netherlands, 1843-1852, Cornelis van Noord",
       "citation_detail": {
         "who": "Municipal clerk, Zuid-Holland",
-        "what": "Ten-year marriage index, Huwelijkse bijlagen 1843-1852",
+        "what": "Tienjarige tafels van huwelijken (ten-year marriage index) 1843-1852",
         "when_created": "1843-1852",
         "when_accessed": "2026-06-10",
         "where": "FamilySearch (familysearch.org)",
-        "where_within": "Gemeentearchief, Huwelijkse bijlagen"
+        "where_within": "Gemeentearchief, Tienjarige tafels 1843-1852"
       },
       "source_classification": "original",
       "repository": "FamilySearch",

@@ -1070,7 +1070,7 @@ def test_unsettled_conflict_not_proved_left_open(before_state, after_state, test
     s = summaries[0]
     assert (s.get("tier"), s.get("shortfall")) == ("not_proved", "conflict"), (
         f"q_001's summary is tier {s.get('tier')!r}, shortfall {s.get('shortfall')!r}; "
-        "the ladder ends the research only on not_proved with shortfall conflict"
+        "the name conflict blocks identity, so the tier reached is not_proved, with shortfall conflict"
     )
     before_q = next(q for q in before_state.get("questions") or [] if q.get("id") == "q_001")
     after_q = next(q for q in after_state.get("questions") or [] if q.get("id") == "q_001")

@@ -602,23 +602,30 @@ function questionItemIds(research: any, qid: unknown): Set<any> {
   );
 }
 
+/** The log entries a question owns: its plan items' entries plus each upload
+ *  that closes one of their hand-offs. */
+export function questionOwnedLogEntries(research: any, qid: unknown): any[] {
+  return ownedLogEntries(research, questionItemIds(research, qid));
+}
+
 /** Epoch ms of the latest entry a question owns (`ownedLogEntries`, so an
  *  upload counts), or -Infinity with none. A summary written before it
  *  predates evidence the question has since gathered. */
 export function questionLastSearchedMs(research: any, qid: unknown): number {
   return Math.max(
     -Infinity,
-    ...ownedLogEntries(research, questionItemIds(research, qid))
+    ...questionOwnedLogEntries(research, qid)
       .map((e) => (typeof e?.performed === "string" ? datetimeMs(e.performed) : NaN))
       .filter((t) => !Number.isNaN(t)),
   );
 }
 
-/** Section E's ending, read as the ladder reads it but without its `resolved`
- *  gate, so a refusal can ask it about the question it is resolving: every
- *  conflict blocking the question was found searched out over every log entry
- *  the question owns, and no plan item is open. */
+/** Section E's ending, read as the ladder reads it: every conflict blocking an
+ *  open question was found searched out over every log entry the question
+ *  owns, and no plan item is open. Callers pass the pre-call snapshot, where a
+ *  question being resolved in the same call is still open. */
 export function unsettledConflictEnding(research: any, question: any): boolean {
+  if (question?.status === "resolved" || Boolean(question?.resolved)) return false;
   const qid = question?.id;
   const plans = arr(research?.plans).filter((p) => p?.question_id === qid);
   const assertionIds = new Set(

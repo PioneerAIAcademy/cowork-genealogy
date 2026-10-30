@@ -2607,6 +2607,60 @@ describe("research_append (Phase 2)", () => {
       expect(r.errors.join(" ")).toMatch(/invoke conflict-resolution/);
     });
 
+    // Change request round 2, item 1: a conflict on a cited source that blocks
+    // another question was never weighed, so the ending's text does not apply.
+    it("the tier refusal says invoke conflict-resolution when it also names an unweighed conflict", async () => {
+      const research = searchedOutResearch();
+      research.conflicts.push({ ...validConflict(), ...ANALYSIS, id: "c_002", blocks_question_ids: ["q_009"] });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...summaryEntry("probable", "none"), supporting_assertion_ids: ["a_001"] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toMatch(/c_002/);
+      expect(msg).toMatch(/invoke conflict-resolution/);
+      expect(msg).not.toMatch(/stop there/);
+    });
+
+    // Item 3: the ending is the ladder's, resolved gate included.
+    describe("a resolved question sharing the searched-out conflict", () => {
+      const resolvedResearch = () => {
+        const research = searchedOutResearch();
+        research.questions[0].status = "resolved";
+        research.proof_summaries = [
+          { ...summaryEntry("not_proved", "conflict"), id: "ps_001", updated: "2026-01-01T00:00:00.000Z" },
+        ];
+        return research;
+      };
+
+      it("accepts a field-only update of its stale summary", async () => {
+        await writeProject(resolvedResearch());
+        const r = await researchAppend({
+          projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+          fields: { supporting_assertion_ids: [] },
+        });
+        expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      });
+
+      it("gets invoke conflict-resolution from the tier refusal", async () => {
+        await writeProject(resolvedResearch());
+        const r = await researchAppend({
+          projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+          fields: { tier: "probable", shortfall: "none", supporting_assertion_ids: ["a_001"] },
+        });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toMatch(/invoke conflict-resolution/);
+        expect(msg).not.toMatch(/stop there/);
+      });
+    });
+
     it("a resolve in the ending gets the ending text, said once", async () => {
       const research = searchedOutResearch();
       research.proof_summaries = [{ ...summaryEntry("not_proved", "conflict"), id: "ps_001" }];
@@ -2621,6 +2675,7 @@ describe("research_append (Phase 2)", () => {
       expect(msg).toMatch(/stop there/);
       expect(msg).not.toMatch(/invoke conflict-resolution/);
       expect(msg.match(/question open/g)?.length).toBe(1);
+      expect(msg).toMatch(/at the tier reached/);
     });
 
     it("refuses the declaration when no question the conflict blocks has been searched", async () => {
@@ -2630,7 +2685,7 @@ describe("research_append (Phase 2)", () => {
       const r = await update(SEARCHED_OUT);
       expect(r.ok).toBe(false);
       if (r.ok) return;
-      expect(r.errors.join(" ")).toMatch(/nothing has been searched/);
+      expect(r.errors.join(" ")).toMatch(/covers no log entry/);
     });
 
     it("keeps the declaration through a rationale-only follow-up edit", async () => {
@@ -2691,6 +2746,32 @@ describe("research_append (Phase 2)", () => {
         research.log.find((e: any) => e.id === "log_003")!.performed = "2026-01-02T00:00:00Z";
         await writeProject(research);
         expect((await refresh({ tier: "not_proved" })).ok).toBe(false);
+      });
+
+      // Item 2: the one-field rule counts the upload too, in the ending only.
+      describe("a one-field refresh when only the upload is newer", () => {
+        const uploadOnly = () => {
+          const research = stale();
+          for (const e of research.log) e.performed = "2025-12-31T00:00:00Z";
+          research.log.find((e: any) => e.id === "log_003")!.performed = "2026-01-02T00:00:00Z";
+          return research;
+        };
+
+        it("is refused in the ending", async () => {
+          await writeProject(uploadOnly());
+          const r = await refresh({ narrative_markdown: "## C\nrewritten" });
+          expect(r.ok).toBe(false);
+          if (r.ok) return;
+          expect(r.errors.join(" ")).toMatch(/without `exhaustive_search_summary`.*log_003/);
+        });
+
+        it("is accepted outside the ending", async () => {
+          const research = uploadOnly();
+          delete research.conflicts[0].weighed_log_entry_ids;
+          await writeProject(research);
+          const r = await refresh({ narrative_markdown: "## C\nrewritten" });
+          expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+        });
       });
 
       it("a refresh sending both texts ends the research", async () => {

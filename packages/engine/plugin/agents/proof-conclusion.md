@@ -155,7 +155,8 @@ narrative states that identity across the cited sources is not established,
 names the conflict and the specific attribute in dispute, and says what would
 settle it. Do **not** resolve the question, and do **not** write the tree —
 `not_proved` is below the encoding threshold (§6), so no relationship or fact
-is asserted. Then route to `conflict-resolution`. Re-invoked after the
+is asserted. Then, outside the unsettled-conflict ending, route to
+`conflict-resolution`. Re-invoked after the
 conflict is resolved, you update that same `ps_NNN` in place.
 
 **The unsettled-conflict ending.** When `project_context`'s `nextStep` for this

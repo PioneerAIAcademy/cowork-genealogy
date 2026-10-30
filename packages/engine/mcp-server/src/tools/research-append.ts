@@ -32,6 +32,7 @@ import {
   endsOnConflict,
   isAnalysed,
   questionLastSearchedMs,
+  questionOwnedLogEntries,
   questionTiedAssertionIds,
   unsettledConflictEnding,
   whyConflictBlocksCompletion,
@@ -5065,8 +5066,13 @@ function questionResolvedInvariants(
           "sources behind it have never been correlated. This is not the same as a question " +
           "researched and found empty, which `not_proved` does close — here the work is " +
           "unfinished rather than finished with nothing. Leave the question open and record the " +
-          "attempt at `not_proved`, then " +
-          conflictNextMove(beforeResearch, entry?.id, "invoke conflict-resolution; resolve it after."),
+          "attempt at the tier reached (`not_proved` when the conflict blocks identity), then " +
+          conflictNextMove(
+            beforeResearch,
+            entry?.id,
+            [...blocking],
+            "invoke conflict-resolution; resolve it after.",
+          ),
       ];
     }
   }
@@ -5299,6 +5305,7 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
       conflictNextMove(
         beforeResearch,
         entry?.question_id,
+        blocking,
         "invoke conflict-resolution. Re-conclude by updating that same summary once the " +
           "conflict is resolved.",
       ),
@@ -5308,12 +5315,24 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
 /** What a refusal over unresolved conflicts tells the agent to do next. In
  *  section E's ending, read with the ladder's own predicate, invoking
  *  conflict-resolution again weighs the same evidence again, so the move is
- *  the ending instead; otherwise it is `otherwise`. */
-function conflictNextMove(research: any, questionId: unknown, otherwise: string): string {
+ *  the ending instead; otherwise it is `otherwise`. The ending applies only
+ *  when every conflict the refusal names was itself found searched out: a
+ *  conflict on a cited source that blocks another question may never have
+ *  been weighed. */
+function conflictNextMove(
+  research: any,
+  questionId: unknown,
+  conflictIds: string[],
+  otherwise: string,
+): string {
   const question = (Array.isArray(research?.questions) ? research.questions : []).find(
     (q: any) => q?.id === questionId,
   );
-  return question && unsettledConflictEnding(research, question)
+  const conflicts = Array.isArray(research?.conflicts) ? research.conflicts : [];
+  const weighed = conflictIds.every((id) =>
+    conflicts.some((c: any) => c?.id === id && Array.isArray(c?.weighed_log_entry_ids)),
+  );
+  return question && weighed && unsettledConflictEnding(research, question)
     ? "give the summary `shortfall: \"conflict\"` and stop there: conflict-resolution has " +
         "already weighed every log entry and found nothing left to search, so invoking it " +
         "again would weigh the same evidence again."
@@ -5391,6 +5410,11 @@ function narrativeAndSearchSummaryTogether(
   const qid = entry?.question_id;
   if (typeof qid !== "string" || qid === "") return [];
   if (!narrative && !summary) return staleEndingRefresh(op, qid, priorUpdated, research);
+  // In section E's ending the ladder counts an upload as a search, so the
+  // rule does too: a refresh that ends the research must cover it.
+  const question = (Array.isArray(research?.questions) ? research.questions : []).find(
+    (q: any) => q?.id === qid,
+  );
   const itemIds = new Set<string>();
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (plan?.question_id !== qid) continue;
@@ -5398,14 +5422,14 @@ function narrativeAndSearchSummaryTogether(
       if (typeof item?.id === "string") itemIds.add(item.id);
     }
   }
-  const later = (Array.isArray(research?.log) ? research.log : [])
-    .filter(
-      (e: any) =>
-        e &&
-        itemIds.has(e.plan_item_id) &&
-        typeof e.performed === "string" &&
-        datetimeMs(e.performed) > since,
-    )
+  const entries =
+    question && unsettledConflictEnding(research, question)
+      ? questionOwnedLogEntries(research, qid)
+      : (Array.isArray(research?.log) ? research.log : []).filter(
+          (e: any) => e && itemIds.has(e.plan_item_id),
+        );
+  const later = entries
+    .filter((e: any) => e && typeof e.performed === "string" && datetimeMs(e.performed) > since)
     .map((e: any) => e.id ?? "(no id)");
   if (later.length === 0) return [];
   const [set, missing] = narrative
@@ -7884,9 +7908,10 @@ function stampWeighedLogEntryIds(entry: any, op: ResearchAppendOp, research: any
   const covered = conflictCoverageLogIds(research, entry);
   if (covered.length === 0) {
     throw new ResearchAppendError(
-      "`weighed_log_entry_ids` declares that nothing is left to search, but no question this " +
-        "conflict blocks has a log entry yet, so nothing has been searched. Drop the field and " +
-        "name the record that would settle the conflict.",
+      "`weighed_log_entry_ids` declares that nothing is left to search, but this conflict " +
+        "covers no log entry: it blocks no question, or no question it blocks has a log entry " +
+        "yet, so there is no search to declare it over. Drop the field and name the record that " +
+        "would settle the conflict.",
     );
   }
   entry.weighed_log_entry_ids = covered;
