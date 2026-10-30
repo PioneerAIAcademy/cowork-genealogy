@@ -592,10 +592,13 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     f"{tool_name} on {protected} is disabled — all writes to "
                     "research.json/tree.gedcomx.json must go through the writer tools. "
                     "To CREATE a new project use project_create, which writes both files "
-                    "together; to add to an existing one use research_append, "
-                    "research_log_append, tree_edit or tree_correct. These validate "
+                    "together (from the main session, invoke `@plugin:init-project`, which "
+                    "calls it); to add to an existing one use research_append or "
+                    "research_log_append, and for the tree tree_edit or tree_correct (from "
+                    "the main session, invoke `@plugin:tree-edit`). These validate "
                     "before persisting. Direct file writes never validate. "
-                    "external-collections.json is written only by external_links_search given a projectPath."
+                    "external-collections.json is written only by external_links_search given a "
+                    "projectPath (from the main session, invoke `@plugin:locality-guide`)."
                 ),
             },
         }

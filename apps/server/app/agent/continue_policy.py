@@ -99,8 +99,9 @@ DELIVERED_REASON = (
 # would report `delivered` where `completed` is true and the run ends on its own. Calling
 # it instead of asking would swallow a question nobody answers: an ask waits, a delivery
 # does not. Calling it before any project exists let a "Research PID X. <question>" first
-# message be answered from one `person_read` and delivered as a "single lookup", with no
-# project and no research (issue #3768; 10 of 15 local replays, 2026-10-29). That is also why the carrier is a separate tool rather than AskUserQuestion --
+# message be answered from a lookup and delivered as a "single lookup", with no project and
+# no research (issue #3768: 11 of 15 local replays on `main` created no project and 6 of 15
+# ended on `research_delivered`, 2026-10-30). That is also why the carrier is a separate tool rather than AskUserQuestion --
 # one tool carrying both speech acts leaves the hook with no discriminator.
 # Set in the SDK env by both hosted planes (`real_agent._sdk_env`, the prototype worker's
 # options). The plugin's `no_project_route.py` hook reads it and stays silent, so its
