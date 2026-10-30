@@ -1866,11 +1866,13 @@ describe("research_append (Phase 2)", () => {
     expect((await readResearch()).conflicts[0].status).toBe("resolved");
   });
 
-  // Section E. `weighed_log_entry_ids` tells the ladder new evidence from
-  // evidence already weighed, so the tool computes it from the helper the
-  // ladder reads instead of trusting a hand-built list: the set includes the
-  // upload that closes a hand-off, which carries no `plan_item_id`.
-  describe("stamps weighed_log_entry_ids on every analysis (section E)", () => {
+  // Section E. `weighed_log_entry_ids` marks the analysis that found nothing
+  // left to search, which only conflict-resolution can say, so it is opt-in.
+  // Its value tells the ladder new evidence from evidence already weighed, so
+  // the tool computes it from the helper the ladder reads instead of trusting a
+  // hand-built list: the set includes the upload that closes a hand-off, which
+  // carries no `plan_item_id`.
+  describe("stamps weighed_log_entry_ids when an analysis finds nothing left to search (section E)", () => {
     const URL = "https://example.test/ancestry-search";
     const log = (id: string, extra: Record<string, unknown>) => ({
       id,
@@ -1914,12 +1916,16 @@ describe("research_append (Phase 2)", () => {
       weighing_analysis: "Neither side outweighs the other.",
       resolution_rationale: "Nothing on file can settle it.",
     };
+    // The declaration: the caller's value is replaced, so any list will do.
+    const SEARCHED_OUT = { ...ANALYSIS, weighed_log_entry_ids: [] };
     const update = (fields: Record<string, unknown>) =>
       researchAppend({ projectPath: dir, section: "conflicts", op: "update", entryId: "c_001", fields });
+    const nextStep = (research: any) =>
+      questionStatus(research, research.questions.find((x: any) => x.id === "q_001")).nextStep;
 
     it("stamps every log entry the blocked question owns, the closing upload included", async () => {
       await writeProject(weighedResearch());
-      const r = await update(ANALYSIS);
+      const r = await update(SEARCHED_OUT);
       expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
       expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002", "log_003"]);
     });
@@ -1931,7 +1937,7 @@ describe("research_append (Phase 2)", () => {
       expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002", "log_003"]);
     });
 
-    it("stamps on append too, when the new conflict carries its analysis", async () => {
+    it("stamps on append too, when the new conflict carries its analysis and the declaration", async () => {
       const research = weighedResearch();
       research.conflicts = [];
       await writeProject(research);
@@ -1939,10 +1945,31 @@ describe("research_append (Phase 2)", () => {
         projectPath: dir,
         section: "conflicts",
         op: "append",
-        entry: { ...validConflict(), blocks_question_ids: ["q_001"], ...ANALYSIS },
+        entry: { ...validConflict(), blocks_question_ids: ["q_001"], ...SEARCHED_OUT },
       });
       expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
       expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002", "log_003"]);
+    });
+
+    // Review finding 1: an analysis that names a decisive record nobody has
+    // planned yet leaves every log entry weighed and no item open, the same
+    // documents as searched out. Only the declaration tells them apart.
+    it("does not stamp an analysis that does not declare the search done, and the ladder keeps the conflict", async () => {
+      await writeProject(weighedResearch());
+      const r = await update(ANALYSIS);
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      const research = await readResearch();
+      expect(research.conflicts[0].weighed_log_entry_ids).toBeUndefined();
+      expect(nextStep(research)).toMatch(/^conflict-resolution/);
+    });
+
+    it("clears a stale stamp when a later analysis names something left to search", async () => {
+      const research = weighedResearch();
+      research.conflicts[0] = { ...research.conflicts[0], ...ANALYSIS, weighed_log_entry_ids: ["log_001"] };
+      await writeProject(research);
+      const r = await update({ ...ANALYSIS, resolution_rationale: "The 1843 duplicate register could settle it." });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toBeUndefined();
     });
 
     it("leaves the field alone on a write that carries no analysis", async () => {
@@ -1954,8 +1981,25 @@ describe("research_append (Phase 2)", () => {
       expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001"]);
     });
 
-    it("does not stamp a conflict the write settles", async () => {
+    it("refuses the declaration on a write that carries no analysis", async () => {
       await writeProject(weighedResearch());
+      const r = await update({ weighed_log_entry_ids: ["log_001", "log_002", "log_003"] });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/independence_analysis/);
+      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toBeUndefined();
+    });
+
+    it("refuses the declaration beside a weighing with no independence analysis, as the ladder would not count it", async () => {
+      await writeProject(weighedResearch());
+      const r = await update({ weighing_analysis: "Neither side outweighs the other.", weighed_log_entry_ids: [] });
+      expect(r.ok).toBe(false);
+    });
+
+    it("clears the field on a write that settles the conflict", async () => {
+      const research = weighedResearch();
+      research.conflicts[0].weighed_log_entry_ids = ["log_001", "log_002", "log_003"];
+      await writeProject(research);
       const r = await update({ ...ANALYSIS, status: "resolved", preferred_assertion_id: "a_001", resolution_kind: "competitor" });
       expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
       expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toBeUndefined();
@@ -1963,20 +2007,86 @@ describe("research_append (Phase 2)", () => {
 
     it("the ladder reads the stamp: proof-conclusion next, then no step once the summary ends it", async () => {
       await writeProject(weighedResearch());
-      expect((await update(ANALYSIS)).ok).toBe(true);
+      expect((await update(SEARCHED_OUT)).ok).toBe(true);
       const research = await readResearch();
-      const q = research.questions.find((x: any) => x.id === "q_001");
-      expect(questionStatus(research, q).nextStep).toMatch(/^proof-conclusion — unsettled conflict c_001/);
-      research.proof_summaries = [{ question_id: "q_001", tier: "not_proved", shortfall: "conflict" }];
-      expect(questionStatus(research, q).nextStep).toBeNull();
+      expect(nextStep(research)).toMatch(/^proof-conclusion — unsettled conflict c_001/);
+      research.proof_summaries = [
+        { question_id: "q_001", tier: "not_proved", shortfall: "conflict", updated: "2026-01-03T00:00:00.000Z" },
+      ];
+      expect(nextStep(research)).toBeNull();
     });
 
-    it("a later upload is evidence the stamp does not cover, until the next analysis", async () => {
+    // Review finding 6: a summary the gate wrote before the latest search does
+    // not end the research; it predates the evidence just weighed.
+    it("a not_proved summary older than the question's latest search does not end it", async () => {
+      await writeProject(weighedResearch());
+      expect((await update(SEARCHED_OUT)).ok).toBe(true);
+      const research = await readResearch();
+      research.proof_summaries = [
+        { question_id: "q_001", tier: "not_proved", shortfall: "conflict", updated: "2026-01-01T00:00:00.000Z" },
+      ];
+      expect(nextStep(research)).toMatch(/^proof-conclusion — unsettled conflict c_001/);
+    });
+
+    // Review finding 12: the upload arrives AFTER the stamp, which is the case
+    // the stamp cannot have covered.
+    it("an upload logged after the stamp sends the question back to conflict-resolution, until the next declaration", async () => {
       const research = weighedResearch();
+      const upload = research.log.find((e: any) => e.id === "log_003");
       research.log = research.log.filter((e: any) => e.id !== "log_003");
       await writeProject(research);
-      expect((await update(ANALYSIS)).ok).toBe(true);
-      expect((await readResearch()).conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002"]);
+      expect((await update(SEARCHED_OUT)).ok).toBe(true);
+      const after = await readResearch();
+      expect(after.conflicts[0].weighed_log_entry_ids).toEqual(["log_001", "log_002"]);
+      expect(nextStep(after)).toMatch(/^proof-conclusion/);
+      after.log.push(upload);
+      expect(nextStep(after)).toMatch(/^conflict-resolution/);
+      await writeProject(after);
+      expect((await update(SEARCHED_OUT)).ok).toBe(true);
+      expect(nextStep(await readResearch())).toMatch(/^proof-conclusion/);
+    });
+
+    // Review finding 13: the stamp unions every question the conflict blocks,
+    // and a resolved one keeps the routing it had before section E.
+    it("a resolved question the conflict also blocks does not take the unsettled-conflict arm", async () => {
+      const research = weighedResearch();
+      research.conflicts[0].blocks_question_ids = ["q_001", "q_009"];
+      const q9 = research.questions.find((x: any) => x.id === "q_009");
+      q9.status = "resolved";
+      await writeProject(research);
+      expect((await update(SEARCHED_OUT)).ok).toBe(true);
+      const after = await readResearch();
+      const step = questionStatus(after, after.questions.find((x: any) => x.id === "q_009")).nextStep;
+      expect(step ?? "").not.toMatch(/^proof-conclusion — unsettled conflict/);
+    });
+
+    // Review finding 11: proof-conclusion's refusal no longer sends it back
+    // to conflict-resolution once that pass found nothing left to search.
+    it("the tier refusal names the ending, not conflict-resolution, once the conflict is searched out", async () => {
+      const research = weighedResearch();
+      research.conflicts[0] = {
+        ...research.conflicts[0],
+        ...ANALYSIS,
+        competing_assertion_ids: ["a_001", "a_002"],
+        weighed_log_entry_ids: ["log_001", "log_002", "log_003"],
+      };
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: {
+          question_id: "q_001", tier: "probable", vehicle: "summary",
+          shortfall: "none", supporting_assertion_ids: ["a_001"],
+          resolved_conflict_ids: [], exhaustive_search_summary: "s",
+          narrative_markdown: "## C\n...",
+        },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join(" ");
+      expect(msg).toMatch(/shortfall: "conflict"/);
+      expect(msg).not.toMatch(/invoke conflict-resolution/);
     });
   });
 

@@ -6,7 +6,7 @@ the state step mode's section E calls "ending on an unsettled conflict".
 ## Differences from `dutch-mother-searched-out`
 
 - **c_001 has weighed every log entry** (`weighed_log_entry_ids`: `log_001`-`log_007`),
-  as `research_append` stamps it on that analysis.
+  as `research_append` stamps it on the analysis that declared nothing left to search.
 - **`resolution_rationale` says the conflict cannot be settled and no record left to
   search can settle it,** naming the five searches and why each failed.
 

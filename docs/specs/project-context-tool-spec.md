@@ -212,14 +212,17 @@ outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
 
 **An unsettled conflict that has weighed everything ends the research** (step
-mode, section E; decision 12). When every open conflict carries an
-`independence_analysis` and a `weighed_log_entry_ids` covering every log entry
-the question owns (the same coverage set as the researcher's choice below), and
+mode, section E; decision 12). When the question is unresolved and every open
+conflict carries an `independence_analysis` and a `weighed_log_entry_ids` (present
+only once conflict-resolution has declared nothing left to search) covering every
+log entry the question owns (the same coverage set as the researcher's choice below), and
 no `planned` or `in_progress` item is left (one waiting only on an upload aside),
 `nextStep` is `proof-conclusion — unsettled conflict …`: re-running
 conflict-resolution there would weigh the same evidence again. Once the question
-has a `not_proved` summary with `shortfall: "conflict"`, `nextStep` is null — the
-research ended on the conflict. One log entry the weighed list does not cover is
+has a `not_proved` summary with `shortfall: "conflict"` whose `updated` is not
+older than the question's latest log entry, `nextStep` is null — the research ended
+on the conflict. An older one predates the evidence just weighed, so
+proof-conclusion refreshes it. One log entry the weighed list does not cover is
 new evidence and routes back to conflict-resolution.
 
 **A conflict that wants evidence already planned routes to the search** (step

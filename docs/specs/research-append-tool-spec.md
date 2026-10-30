@@ -468,6 +468,17 @@ record-extraction consolidation; see
   supplied `source_id` always wins (rare multi-source batches). Calls with zero or
   2+ sources append ops auto-stamp nothing: assertion `source_id` requirements are
   exactly as before.
+- **`weighed_log_entry_ids` stamp (conflicts, step mode section E).** A conflict
+  write that sends `weighed_log_entry_ids` declares that its analysis found nothing
+  left to search; whether a decisive record is still unsearched cannot be read from
+  the documents, so only that declaration says it. On an entry left `unresolved`,
+  the tool replaces the sent value with `conflictCoverageLogIds` — every log entry
+  of every question the conflict blocks, including a closing upload matched to its
+  hand-off by URL, which an agent's own list misses. The field is refused on a write
+  with no non-blank `independence_analysis` (the ladder's `isAnalysed`), and removed
+  by an analysis write that does not send it and by any write that leaves the
+  conflict settled, so a stale declaration cannot end the research on evidence that
+  has moved. A write carrying neither leaves it as it was.
 - **Scope: `S` entry only.** The composite's tree write is
   limited to the source-description `S` entry — `research_append` **owns S-entry
   creation** but never writes names or relationships into `tree.gedcomx.json`,

@@ -20,10 +20,10 @@
   },
   "judge_context": [
     "c_001 must stay `unresolved` with `preferred_assertion_id: null`. The birth act's first letter is unreadable and the only legible reading is a derivative index; nothing searched since breaks that tie. Resolving it to either name is the failure.",
-    "The five records c_001 named as decisive (the marriage act itself, the mother's death act, the population register, a sibling's birth act, the parents' marriage act) are all in the log as searched, and each note says why it cannot settle the name: missing volume, no act, register begins too late, no sibling, no indexed marriage. The pass should say so in `resolution_rationale`: no record left to search can settle it.",
+    "The five records c_001 named as decisive (the marriage act itself, the mother's death act, the population register, a sibling's birth act, the parents' marriage act) are all in the log as searched, and each note says why it cannot settle the name: the marriage act lost in both register copies with no surviving supplements, no death act, register begins too late, no sibling, no parents' marriage in the civil or church registers. The pass should say so in `resolution_rationale`: no record left to search can settle it.",
     "**The reply must not end with, or contain, a \"Continue with ...?\" line.** There is nothing to plan, so offering planning would re-run this same weighing. Naming research-plan or question-selection as the next step, or recommending a new research question, is the failure this test exists for.",
     "Do not charge the agent for naming a record that is genuinely absent from the log, if it says why that record could settle the name and does not offer to plan it. Do charge it for proposing again any of the five records already searched.",
-    "Do not require the agent to write `weighed_log_entry_ids`: `research_append` stamps it on the analysis write. A validator checks the stamp.",
+    "The analysis write declares the search done by carrying `weighed_log_entry_ids` (any list; `research_append` replaces it with every log entry). A validator checks that; do not grade the list's contents.",
     "The analysis fields (`independence_analysis`, `weighing_analysis`) should be refreshed on this pass, since there is new evidence to weigh."
   ],
   "judge_reads_files": true,

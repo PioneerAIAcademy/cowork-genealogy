@@ -501,8 +501,9 @@ function ownedLogEntries(research: any, itemIds: Set<any>): any[] {
 }
 
 /** The log entries an unresolved `conflict` has weighed when it is analysed
- *  now: every entry owned by a question it blocks. `research_append` stamps
- *  this as `weighed_log_entry_ids` on each analysis write, so the writer and
+ *  now: every entry owned by any question it blocks, a union when it blocks
+ *  several. `research_append` stamps this as `weighed_log_entry_ids` on the
+ *  analysis that finds nothing left to search, so the writer and
  *  `unsettledConflictWeighed` below read one coverage set. A conflict blocking
  *  no question weighs nothing. */
 export function conflictCoverageLogIds(research: any, conflict: any): string[] {
@@ -533,7 +534,7 @@ export function conflictCoverageLogIds(research: any, conflict: any): string[] {
  *  One definition for both rungs. `Boolean(c.independence_analysis)` accepted
  *  `"   "`, which the unsettled rung rejected — so a whitespace analysis routed
  *  to a search from one rung and to conflict-resolution from its complement. */
-function isAnalysed(conflict: any): boolean {
+export function isAnalysed(conflict: any): boolean {
   return typeof conflict?.independence_analysis === "string"
     && conflict.independence_analysis.trim() !== "";
 }
@@ -563,8 +564,9 @@ function conflictEvidenceWanted(
 }
 
 /** Section E's ending on an unsettled conflict: every open conflict has been
- *  analysed (`independence_analysis`) over every log entry the question owns
- *  (`weighed_log_entry_ids`), and nothing is left to search. Re-running
+ *  analysed (`independence_analysis`), conflict-resolution found nothing left
+ *  to search over every log entry the question owns (`weighed_log_entry_ids`,
+ *  present only on that finding), and no plan item is open. Re-running
  *  conflict-resolution there weighs the same evidence again, forever, so the
  *  question goes to proof-conclusion instead, which concludes at the tier the
  *  evidence reaches and leaves it open (decision 12). A log entry the weighed
@@ -651,11 +653,23 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   // user asks for one — so `critiqued` never gates what comes next.
   let nextStep: string | null = null;
   const resolved = question?.status === "resolved" || Boolean(question?.resolved);
-  if (unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
+  if (!resolved && unsettledConflictWeighed(research, openConflictIds, plans, itemIds)) {
     // Section E. The summary is the terminal marker: once proof-conclusion has
     // written a `not_proved` with `shortfall: "conflict"`, the research has ended
-    // on the conflict and nothing further is due.
-    const ended = summaries.some((s) => s?.tier === "not_proved" && s?.shortfall === "conflict");
+    // on the conflict and nothing further is due. A summary written before the
+    // question's latest search predates the evidence just weighed, so it does not
+    // end the research; proof-conclusion refreshes it.
+    const lastSearched = Math.max(
+      -Infinity,
+      ...ownedLogEntries(research, itemIds)
+        .map((e) => (typeof e?.performed === "string" ? Date.parse(e.performed) : NaN))
+        .filter((t) => !Number.isNaN(t)),
+    );
+    const ended = summaries.some((s) => {
+      if (s?.tier !== "not_proved" || s?.shortfall !== "conflict") return false;
+      const written = typeof s?.updated === "string" ? Date.parse(s.updated) : NaN;
+      return Number.isNaN(written) || written >= lastSearched;
+    });
     nextStep = ended
       ? null
       : `proof-conclusion — unsettled conflict ${openConflictIds.join(", ")} has weighed every ` +

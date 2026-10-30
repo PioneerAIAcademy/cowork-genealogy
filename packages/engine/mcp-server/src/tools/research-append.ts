@@ -29,6 +29,7 @@ import {
   competingParentSets,
   conflictBlocksCompletion,
   conflictCoverageLogIds,
+  isAnalysed,
   questionTiedAssertionIds,
   whyConflictBlocksCompletion,
 } from "../utils/question-state.js";
@@ -4999,7 +5000,9 @@ function questionResolvedInvariants(
           "sources behind it have never been correlated. This is not the same as a question " +
           "researched and found empty, which `not_proved` does close — here the work is " +
           "unfinished rather than finished with nothing. Leave the question open, record the " +
-          "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+          "attempt at `not_proved`, and " +
+          conflictNextMove(beforeResearch, [...blocking]) +
+          "; resolve it after.",
       ];
     }
   }
@@ -5228,9 +5231,28 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
       "what the open conflict puts in question — so no tier above `not_proved` " +
       "is reachable, and tiering down to `possible` does not repair it. Record " +
       "the attempt at `not_proved`, naming the conflict and what would settle " +
-      "it, then invoke conflict-resolution. Re-conclude by updating that same " +
-      "summary once the conflict is resolved.",
+      "it, then " +
+      conflictNextMove(beforeResearch, blocking) +
+      ". Re-conclude by updating that same summary once the conflict is resolved.",
   ];
+}
+
+/** What a refusal over unresolved conflicts tells the agent to do next. When
+ *  conflict-resolution has already found nothing left to search on every one
+ *  (`weighed_log_entry_ids`), invoking it again weighs the same evidence again,
+ *  so the move is the section E ending instead. */
+function conflictNextMove(research: any, conflictIds: string[]): string {
+  const byId = new Map<string, any>(
+    (Array.isArray(research?.conflicts) ? research.conflicts : []).map((c: any) => [c?.id, c]),
+  );
+  const searchedOut =
+    conflictIds.length > 0 &&
+    conflictIds.every((id) => Array.isArray(byId.get(id)?.weighed_log_entry_ids));
+  return searchedOut
+    ? "give it `shortfall: \"conflict\"` and leave the question open: conflict-resolution has " +
+        "already weighed every log entry and found nothing left to search, so invoking it " +
+        "again would weigh the same evidence again"
+    : "invoke conflict-resolution";
 }
 
 /** One conclusion per question — the manifest's own rule, now enforced.
@@ -7630,23 +7652,34 @@ function validateRelationshipDirection(entry: Record<string, unknown>): void {
   ]);
 }
 
-/** The fields an analysis writes: conflict-resolution fills both on every
- *  pass, resolved or not. */
-const CONFLICT_ANALYSIS_FIELDS = ["independence_analysis", "weighing_analysis"] as const;
-
-/** Section E. `weighed_log_entry_ids` is the coverage set the ladder compares
- *  with the question's log to tell new evidence from evidence already weighed,
- *  so it is computed here, from the helper the ladder reads, on every write that
- *  carries an analysis. A caller's own value is replaced: by hand the set misses
- *  the uploads matched to their hand-offs by URL. Only an unresolved conflict is
- *  stamped, the one state the field is read in. */
+/** Section E. `weighed_log_entry_ids` marks the analysis that found nothing
+ *  left to search, and holds the coverage set the ladder compares with the
+ *  question's log to tell new evidence from evidence already weighed. Whether a
+ *  decisive record is still unsearched cannot be read from the documents, so
+ *  conflict-resolution declares it by sending the field; the value is computed
+ *  here, from the helper the ladder reads, because by hand the set misses the
+ *  uploads matched to their hand-offs by URL. An analysis that does not declare
+ *  it clears it, as does settling the conflict: either way a stale finding
+ *  would end the research on evidence that has moved. */
 function stampWeighedLogEntryIds(entry: any, op: ResearchAppendOp, research: any): void {
   const written: Record<string, unknown> = (op.op === "append" ? op.entry : op.fields) ?? {};
-  const analysed = CONFLICT_ANALYSIS_FIELDS.some(
-    (k) => typeof written[k] === "string" && (written[k] as string).trim() !== "",
-  );
-  if (!analysed || entry?.status !== "unresolved") return;
-  entry.weighed_log_entry_ids = conflictCoverageLogIds(research, entry);
+  const declared = Object.prototype.hasOwnProperty.call(written, "weighed_log_entry_ids");
+  const analysed = isAnalysed(written);
+  if (declared && !analysed) {
+    throw new ResearchAppendError(
+      "`weighed_log_entry_ids` declares that the analysis in this write found nothing left " +
+        "to search, so it is accepted only in a write that also carries a non-blank " +
+        "`independence_analysis` (and `weighing_analysis`). Re-send it with the analysis, " +
+        "or drop it.",
+    );
+  }
+  if (entry?.status !== "unresolved") {
+    delete entry.weighed_log_entry_ids;
+    return;
+  }
+  if (!analysed) return;
+  if (declared) entry.weighed_log_entry_ids = conflictCoverageLogIds(research, entry);
+  else delete entry.weighed_log_entry_ids;
 }
 
 function applyOne(

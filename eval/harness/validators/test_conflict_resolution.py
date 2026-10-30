@@ -1186,10 +1186,11 @@ def _question_log_ids(state, qid):
 
 
 def test_unsettled_conflict_stays_open_and_weighed(after_state, test):
-    """A pass that cannot settle c_001 keeps it unresolved, and the analysis
-    write leaves `weighed_log_entry_ids` covering every log entry of q_001.
-    The tool stamps the field; this checks the stamp reached the project in a
-    real run, which is what moves the ladder to proof-conclusion."""
+    """A pass that cannot settle c_001 keeps it unresolved, and its analysis
+    write declares nothing left to search, so `weighed_log_entry_ids` covers
+    every log entry of q_001. The agent sends the field and the tool fills it;
+    this checks both reached the project in a real run, which is what moves the
+    ladder to proof-conclusion."""
     if _UNSETTLED_TAG not in (test.get("tags") or []):
         pytest.skip(f"not a {_UNSETTLED_TAG} test")
     conflict = next((c for c in after_state.get("conflicts") or [] if c.get("id") == "c_001"), None)
@@ -1200,8 +1201,8 @@ def test_unsettled_conflict_stays_open_and_weighed(after_state, test):
     assert conflict.get("preferred_assertion_id") is None, "c_001 names a preferred assertion"
     missing = sorted(_question_log_ids(after_state, "q_001") - set(conflict.get("weighed_log_entry_ids") or []))
     assert not missing, (
-        f"c_001's weighed_log_entry_ids misses {missing}: either the pass wrote no "
-        "analysis or research_append did not stamp it, and the ladder sends q_001 "
+        f"c_001's weighed_log_entry_ids misses {missing}: the pass did not declare "
+        "nothing left to search on its analysis write, and the ladder sends q_001 "
         "back to conflict-resolution"
     )
 

@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914 and #3915, and PR 2 (#3917) are merged; the timeline route PR (#3916) and the conflict PR (#3937) are open. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, and PR 2 (#3917) are merged; the conflict PR (#3937) is open. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -786,9 +786,13 @@ that apply:
   because conflict-resolution fills both analysis fields on every pass and conflicts carry no
   timestamp. So:
   - **A new optional conflict field, `weighed_log_entry_ids`:** the question's log entries
-    conflict-resolution has weighed. `research_append` stamps it on every analysis write, from
-    the helper the ladder reads (`conflictCoverageLogIds`), because the set includes an upload
-    matched to its hand-off by URL, which an agent building the list by hand misses. It mirrors
+    conflict-resolution has weighed, on the analysis that found nothing left to search. Whether
+    a decisive record is still unsearched cannot be read from the documents (an analysis that
+    names one leaves every entry weighed and no item open, exactly as a searched-out one does),
+    so conflict-resolution declares it by sending the field. `research_append` fills the value
+    from the helper the ladder reads (`conflictCoverageLogIds`), because the set includes an
+    upload matched to its hand-off by URL, which an agent building the list by hand misses, and
+    clears the field on any other analysis or a settle. It mirrors
     `search_stop.log_entry_ids`. "The question's log entries" is B's coverage set: entries on
     its plans' items plus closing entries matched by `closesHandOff`.
   - **The ladder gains one arm, above the conflict arm.** It applies when there is at least
@@ -1246,8 +1250,9 @@ in parallel with PR 2.
   PR 1, independent of PR 2.** It needs PR 1's `weighed_log_entry_ids` field; until it lands no
   conflict carries the field, so PR 1's unsettled-conflict arm never fires and routing is
   today's.
-  - **`research_append`:** stamps `weighed_log_entry_ids` on every write carrying an analysis
-    to an unresolved conflict (ADR-0011: decidable from the documents alone);
+  - **`research_append`:** fills `weighed_log_entry_ids` on the unresolved analysis that sends
+    it, refuses it without an analysis, and clears it on any other analysis or a settle
+    (ADR-0011: the value is decidable from the documents; the declaration is not);
   - **conflict-resolution:** ends a pass
     that settles nothing and names nothing to search without a Continue line (E);
   - **proof-conclusion:** in that state, writes or refreshes `not_proved` with
@@ -1464,7 +1469,7 @@ in parallel with PR 2.
      question in a conflict's evidence round, each end with a refreshed summary and the new
      question offered;
    - a conflict-resolution pass that cannot settle the conflict and names nothing to search
-     writes `weighed_log_entry_ids` and ends without a "Continue with …?" line; proof-conclusion
+     declares `weighed_log_entry_ids` on its analysis and ends without a "Continue with …?" line; proof-conclusion
      then writes `not_proved` with `shortfall: "conflict"` and no `search_stop`, and a following
      "continue" runs no step (with PR 2's router rows);
    - with one wrapped-up `not_proved` question with no open conflict, and one proved question,

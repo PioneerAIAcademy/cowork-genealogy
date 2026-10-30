@@ -71,7 +71,7 @@
           "jurisdiction": "Zuid-Holland, Netherlands",
           "date_range": "1843",
           "repository": "FamilySearch",
-          "rationale": "The marriage act itself names the groom's mother in full, where the index abbreviates.",
+          "rationale": "The marriage act itself names the groom's mother in full, where the index abbreviates; its duplicate copy and the marriage supplements' birth extract are independent readings of her name.",
           "fallback_for": null,
           "status": "completed"
         },
@@ -113,9 +113,9 @@
           "sequence": 7,
           "record_type": "marriage",
           "jurisdiction": "Zuid-Holland, Netherlands",
-          "date_range": "1815-1828",
+          "date_range": "1795-1828",
           "repository": "FamilySearch",
-          "rationale": "The parents' own marriage act names the bride as she signed.",
+          "rationale": "The parents' own marriage act, civil from 1811 or a church entry before it, names the bride as she signed.",
           "fallback_for": null,
           "status": "completed"
         }
@@ -176,7 +176,7 @@
       "results_available": 0,
       "results_ref": null,
       "external_site": null,
-      "notes": "The 1843 marriage register volume the index points to is missing from the series: the images run from act 12 to act 61 with acts 13-48 absent, and act 31 is the one the index cites. No other year carries a marriage of Cornelis van Noord."
+      "notes": "The 1843 marriage act the index cites (act 31) is lost in both copies: the municipal register's images run from act 12 to act 61 with acts 13-48 absent, and the duplicate the court of first instance kept is missing the same quire. The 1843 marriage supplements (huwelijksbijlagen), which would hold the groom's birth extract copied in 1843, do not survive for that year. No other year carries a marriage of Cornelis van Noord."
     },
     {
       "id": "log_004",
@@ -240,14 +240,14 @@
         "surname": "van Noord",
         "givenName": "Pieter",
         "marriagePlace": "Zuid-Holland, Netherlands",
-        "marriageDate": "1815-1828"
+        "marriageDate": "1795-1828"
       },
       "outcome": "negative",
       "results_examined": 0,
       "results_available": 0,
       "results_ref": null,
       "external_site": null,
-      "notes": "No marriage of Pieter van Noord 1815-1828 in Zuid-Holland; the parents married outside the province or before civil registration reached it, and neither is indexed."
+      "notes": "No marriage of Pieter van Noord in the Zuid-Holland civil registers, kept from 1811, nor in the church marriage and banns registers (DTB) of the municipality and its neighbours before that, 1795-1811; the parents married at a place no record on file names."
     }
   ],
   "sources": [
@@ -385,10 +385,6 @@
       "status": "unresolved",
       "blocks_question_ids": [
         "q_001"
-      ],
-      "weighed_log_entry_ids": [
-        "log_001",
-        "log_002"
       ]
     }
   ],

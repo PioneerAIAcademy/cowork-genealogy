@@ -71,7 +71,7 @@
           "jurisdiction": "Zuid-Holland, Netherlands",
           "date_range": "1843",
           "repository": "FamilySearch",
-          "rationale": "The marriage act itself names the groom's mother in full, where the index abbreviates.",
+          "rationale": "The marriage act itself names the groom's mother in full, where the index abbreviates; its duplicate copy and the marriage supplements' birth extract are independent readings of her name.",
           "fallback_for": null,
           "status": "completed"
         },
@@ -113,9 +113,9 @@
           "sequence": 7,
           "record_type": "marriage",
           "jurisdiction": "Zuid-Holland, Netherlands",
-          "date_range": "1815-1828",
+          "date_range": "1795-1828",
           "repository": "FamilySearch",
-          "rationale": "The parents' own marriage act names the bride as she signed.",
+          "rationale": "The parents' own marriage act, civil from 1811 or a church entry before it, names the bride as she signed.",
           "fallback_for": null,
           "status": "completed"
         }
@@ -176,7 +176,7 @@
       "results_available": 0,
       "results_ref": null,
       "external_site": null,
-      "notes": "The 1843 marriage register volume the index points to is missing from the series: the images run from act 12 to act 61 with acts 13-48 absent, and act 31 is the one the index cites. No other year carries a marriage of Cornelis van Noord."
+      "notes": "The 1843 marriage act the index cites (act 31) is lost in both copies: the municipal register's images run from act 12 to act 61 with acts 13-48 absent, and the duplicate the court of first instance kept is missing the same quire. The 1843 marriage supplements (huwelijksbijlagen), which would hold the groom's birth extract copied in 1843, do not survive for that year. No other year carries a marriage of Cornelis van Noord."
     },
     {
       "id": "log_004",
@@ -240,14 +240,14 @@
         "surname": "van Noord",
         "givenName": "Pieter",
         "marriagePlace": "Zuid-Holland, Netherlands",
-        "marriageDate": "1815-1828"
+        "marriageDate": "1795-1828"
       },
       "outcome": "negative",
       "results_examined": 0,
       "results_available": 0,
       "results_ref": null,
       "external_site": null,
-      "notes": "No marriage of Pieter van Noord 1815-1828 in Zuid-Holland; the parents married outside the province or before civil registration reached it, and neither is indexed."
+      "notes": "No marriage of Pieter van Noord in the Zuid-Holland civil registers, kept from 1811, nor in the church marriage and banns registers (DTB) of the municipality and its neighbours before that, 1795-1811; the parents married at a place no record on file names."
     }
   ],
   "sources": [
@@ -381,7 +381,7 @@
       "independence_analysis": "The birth act (a_002) and the ten-year index (a_003) are independent records, but the index is a derivative abstract of a marriage act, and the act's own reading is not on file. The researcher's reading of the birth-act image is a third reading of the same entry as a_002, not an independent witness.",
       "weighing_analysis": "Neither side outweighs the other: the birth act is the original but its first letter is unreadable, and the index is legible but derivative. Each reading is consistent with the other two letters; nothing on file breaks the tie.",
       "preferred_assertion_id": null,
-      "resolution_rationale": "Cannot be settled, and no record left to search can settle it. Every record that could name the mother in full was searched: the 1843 marriage act is missing from its register, and there is no death act for her, no population-register entry, no sibling's birth act and no parents' marriage act. The birth act's first letter stays unreadable.",
+      "resolution_rationale": "Cannot be settled, and no record left to search can settle it. Every record that could name the mother in full was searched: the 1843 marriage act is lost in both register copies and its marriage supplements do not survive, and there is no death act for her, no population-register entry, no sibling's birth act and no parents' marriage act. The birth act's first letter stays unreadable.",
       "status": "unresolved",
       "blocks_question_ids": [
         "q_001"
