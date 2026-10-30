@@ -103,9 +103,11 @@ Both tools keep identical batched `ops`, id rules, and validate-on-write
 semantics (everything in §4–§7). An op sent to the wrong tool is
 rejected before anything is applied, with a redirect naming the sibling tool
 (`tree_edit only adds — 'update_name' is a correction/removal op; corrections
-and removals live in tree_correct`, and the mirror-image message on
+and removals live in tree_correct.`, and the mirror-image message on
 `tree_correct`); in a batch the rejection is indexed `ops[i]: …` and nothing
-is written. Each tool's description cross-references the other. Everywhere
+is written. When a single op also carries the other tool's keys (`factId` on an
+`update_fact`), `server.ts`'s unknown-argument guard sends this same redirect
+before the handler runs (`src/utils/tool-hint-messages.ts` holds the wording). Each tool's description cross-references the other. Everywhere
 this spec says `tree_edit` about the shared pipeline (§4.1–§7), the behavior
 applies to whichever tool admits the op.
 
@@ -189,9 +191,10 @@ tree_edit({
   `fact.place` is set and `resolveStandardPlace !== false` and no
   `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
   when nothing resolves), passing the places of the holder's other facts as
-  context for a bare single-segment place (see research-append-tool-spec
-  §3.6, lever B). A `personId` target whose `fact.type` is a couple event
-  (`isCoupleEventFactType`) is refused, naming the Couple route (§7).
+  context for a bare single-segment place, and no record country (see
+  research-append-tool-spec §3.6, lever B). A `personId` target whose
+  `fact.type` is a couple event (`isCoupleEventFactType`) is refused, naming the
+  Couple route (§7).
 - **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
   the provided `fact` fields onto the existing fact (id immutable) on the same
   exactly-one-target contract as `add_fact`; the `factId` must live on the named

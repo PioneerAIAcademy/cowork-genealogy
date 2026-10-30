@@ -131,7 +131,26 @@ function ownedSections(src: string): string[] {
   for (const [section] of claimRoutes(src)) {
     if (!sections.includes(section)) sections.push(section);
   }
+
+  for (const [section] of appendRoutes(src)) {
+    if (!sections.includes(section)) sections.push(section);
+  }
   return sections;
+}
+
+/**
+ * `[section, owner]` for each entry in the guard's `OWNED_APPENDS` — a section
+ * whose `op: "append"` alone is routed (`questions`).
+ */
+function appendRoutes(src: string): [string, string][] {
+  const body = src.match(/^OWNED_APPENDS\s*=\s*\{([^}]*)\}/m)?.[1];
+  if (body === undefined) {
+    throw new Error(
+      `OWNED_APPENDS not found in ${GUARD}. If it was renamed, update this ` +
+        `helper — do not hardcode the section names back into the test.`,
+    );
+  }
+  return [...body.matchAll(/["']([^"']+)["']\s*:\s*["']([^"']+)["']/g)].map((m) => [m[1], m[2]]);
 }
 
 /**
@@ -197,6 +216,59 @@ function runGuard(payload: unknown): any {
   return JSON.parse(execGuard(JSON.stringify(payload)));
 }
 
+/**
+ * The guard's AGENT_ONLY_TOOLS (tool -> owning agents) and MAIN_THREAD_OK keys,
+ * read by loading the script rather than by regex: the dict values are tuples
+ * and strings that carry their own parentheses.
+ */
+function guardAgentOnlyTables(): { agentOnly: Record<string, string[]>; mainThreadOk: string[] } {
+  if (!PYTHON) throw new Error(`No Python 3 found (tried: ${describePythonCandidates()}).`);
+  const [cmd, ...pre] = PYTHON;
+  const code =
+    "import json, runpy, sys; g = runpy.run_path(sys.argv[1]); " +
+    "print(json.dumps({'agentOnly': g['AGENT_ONLY_TOOLS'], 'mainThreadOk': sorted(g['MAIN_THREAD_OK'])}))";
+  return JSON.parse(execFileSync(cmd, [...pre, "-c", code, GUARD], { encoding: "utf-8" }));
+}
+
+/** Every MCP tool name the server advertises, from the `.mcpb` manifest. */
+function manifestToolNames(): string[] {
+  const manifest = JSON.parse(
+    readFileSync(join(REPO_ROOT, "packages", "engine", "mcp-server", "manifest.json"), "utf-8"),
+  ) as { tools: { name: string }[] };
+  return manifest.tools.map((t) => t.name);
+}
+
+/**
+ * Which plugin files grant each MCP tool: agents through `tools:`, skills through
+ * `allowed-tools:`. An agent with no `tools:` key inherits every tool.
+ */
+function toolHolders(): { agents: Map<string, string[]>; skillDeclared: Set<string> } {
+  const all = manifestToolNames();
+  const agents = new Map<string, string[]>();
+  const agentsDir = join(PLUGIN_DIR, "agents");
+  for (const f of readdirSync(agentsDir).filter((f) => f.endsWith(".md")).sort()) {
+    const text = readFileSync(join(agentsDir, f), "utf-8");
+    const block = frontmatterBlock(text);
+    const inherits = block !== null && !("tools" in parseFrontmatter(block));
+    const held = inherits
+      ? all
+      : extractList(text, "tools").flatMap((e) => grantedTools(e, all));
+    for (const tool of new Set(held.filter((t) => all.includes(t)))) {
+      agents.set(tool, [...(agents.get(tool) ?? []), f.slice(0, -3)]);
+    }
+  }
+  const skillDeclared = new Set<string>();
+  const skillsDir = join(PLUGIN_DIR, "skills");
+  for (const d of readdirSync(skillsDir, { withFileTypes: true })) {
+    const skillMd = join(skillsDir, d.name, "SKILL.md");
+    if (!d.isDirectory() || !existsSync(skillMd)) continue;
+    for (const e of extractList(readFileSync(skillMd, "utf-8"), "allowed-tools")) {
+      for (const t of grantedTools(e, all)) skillDeclared.add(t);
+    }
+  }
+  return { agents, skillDeclared };
+}
+
 describe("plugin hooks are packaged and wired", () => {
   it("ships the hooks directory in the zip", () => {
     // Without "hooks" in INCLUDE the directory is silently absent from the
@@ -249,32 +321,37 @@ describe("plugin hooks are packaged and wired", () => {
     expect(declared.length).toBeGreaterThan(0);
     expect(ownedSections.sort()).toEqual(declared);
 
-    // And the agent each row names is the one the script routes to. Both maps
-    // again: a field-scoped row's owner lives in OWNED_DECLARATIONS, keyed on
-    // the (section, field) tuple, so reading only OWNED_SECTIONS leaves the
-    // owner `undefined` and the assertion fails on a row that is in fact
-    // correct.
+    // And every agent the script routes a row to is named in that row's
+    // hookCallers. All five maps: a field-scoped row's owner lives in
+    // OWNED_DECLARATIONS, keyed on the (section, field) tuple, so reading only
+    // OWNED_SECTIONS leaves the owner `undefined` and the assertion fails on a
+    // row that is in fact correct. A section can have more than one route
+    // (`questions`: its stop claim and its appends), so owners is a list.
     const src = readFileSync(GUARD, "utf-8");
-    const owners: Record<string, string> = wholeSectionOwners(src);
+    const owners: Record<string, string[]> = {};
+    const add = (section: string, owner: string) => (owners[section] ??= []).push(owner);
+    for (const [section, owner] of Object.entries(wholeSectionOwners(src))) add(section, owner);
     for (const m of (src.match(/^OWNED_DECLARATIONS\s*=\s*\{([^}]*)\}/m)?.[1] ?? "").matchAll(
       /\(\s*["']([^"']+)["']\s*,\s*["'][^"']+["']\s*\)\s*:\s*["']([^"']+)["']/g,
     )) {
-      owners[m[1]] = m[2];
+      add(m[1], m[2]);
     }
     for (const m of (src.match(/^OWNED_FIELDS\s*=\s*\{([^}]*)\}/m)?.[1] ?? "").matchAll(
       /\(\s*["']([^"']+)["']\s*,\s*["'][^"']+["']\s*\)\s*:\s*["']([^"']+)["']/g,
     )) {
-      owners[m[1]] = m[2];
+      add(m[1], m[2]);
     }
-    for (const [section, owner] of claimRoutes(src)) owners[section] = owner;
+    for (const [section, owner] of claimRoutes(src)) add(section, owner);
+    for (const [section, owner] of appendRoutes(src)) add(section, owner);
     for (const row of manifest.rows) {
       if (!(row.enforceableAt ?? []).includes("hook")) continue;
       const fromManifest = (row.hookCallers ?? [])
         .filter((c: string) => c.startsWith("agent:"))
         .map((c: string) => c.slice("agent:".length));
-      expect(fromManifest, `${row.section}: manifest names no hookCallers agent`).toContain(
-        owners[row.section],
-      );
+      expect(owners[row.section], `${row.section}: the script routes it to no agent`).toBeDefined();
+      for (const owner of owners[row.section]) {
+        expect(fromManifest, `${row.section}: manifest hookCallers omits ${owner}`).toContain(owner);
+      }
     }
   });
 
@@ -464,7 +541,9 @@ describe("plugin hooks are packaged and wired", () => {
         expect(matches(spelling), `matcher does not cover ${spelling}`).toBe(true);
       }
     }
-    for (const tool of ownerRoutedTools) {
+    const agentOnlyTools = Object.keys(guardAgentOnlyTables().agentOnly);
+    expect(agentOnlyTools.length).toBeGreaterThan(0);
+    for (const tool of [...ownerRoutedTools, ...agentOnlyTools]) {
       // An MCP tool, so all THREE server spellings — the same rule agent
       // frontmatter follows, and for the same reason: the server's name is
       // chosen by whoever registers it and the plugin cannot control that.
@@ -475,6 +554,44 @@ describe("plugin hooks are packaged and wired", () => {
       ]) {
         expect(matches(spelling), `matcher does not cover ${spelling}`).toBe(true);
       }
+    }
+  });
+
+  it("names, on exactly one list, every tool only agents hold, with its real owners", () => {
+    // AGENT_ONLY_TOOLS is hand-kept, not derived (lead, 2026-10-20): a person
+    // decides whether the main thread may call a tool only agents hold. This is
+    // what makes the decision unavoidable — a tool granted to an agent and to no
+    // skill must be denied (AGENT_ONLY_TOOLS) or allowed with a reason
+    // (MAIN_THREAD_OK), and the deny must name every agent that can take the step.
+    const { agentOnly, mainThreadOk } = guardAgentOnlyTables();
+    const { agents, skillDeclared } = toolHolders();
+    const heldOnlyByAgents = [...agents.keys()].filter((t) => !skillDeclared.has(t)).sort();
+    // A scan that read no frontmatter would make every assertion below vacuous.
+    expect(heldOnlyByAgents.length, "no tool is held only by agents — the scan read nothing").toBeGreaterThan(20);
+
+    const listed = new Set([...Object.keys(agentOnly), ...mainThreadOk]);
+    expect(
+      heldOnlyByAgents.filter((t) => !listed.has(t)),
+      "these tools are held only by agents and are on neither AGENT_ONLY_TOOLS nor " +
+        "MAIN_THREAD_OK in hooks/guard_project_files.py. Add each to one: to the deny " +
+        "map with its owning agents (and to hooks.json's matcher), or to MAIN_THREAD_OK " +
+        "with the legitimate main-thread call that keeps it there.",
+    ).toEqual([]);
+    expect(
+      [...listed].filter((t) => !heldOnlyByAgents.includes(t)).sort(),
+      "these tools are listed but are no longer held only by agents — a skill now " +
+        "declares them, or no agent holds them. Remove them from the guard's lists.",
+    ).toEqual([]);
+    expect(
+      mainThreadOk.filter((t) => t in agentOnly),
+      "a tool is both denied and allowed on the main thread",
+    ).toEqual([]);
+    for (const [tool, owners] of Object.entries(agentOnly)) {
+      expect(
+        [...owners].sort(),
+        `AGENT_ONLY_TOOLS["${tool}"] does not name the agents whose tools: grant it, ` +
+          "so the deny would send the model to the wrong agent or miss one",
+      ).toEqual(agents.get(tool) ?? []);
     }
   });
 });
@@ -643,8 +760,9 @@ describe("the guard script's decisions", () => {
     ["an empty fields ping from the owner", { section: "project", op: "update", fields: {} }, { agent_id: "a1", agent_type: OWNER }],
     // project_create writes the whole section at project start and is gated by
     // `owner_denied`'s research_append check, not by this arm. Low-information
-    // by design — it pins that the gate stays tool-scoped.
-    ["project_create setting status at creation", { section: "project", op: "update", fields: { status: "active" } }, { tool_name: "mcp__genealogy__project_create" }],
+    // by design — it pins that the gate stays tool-scoped. From init-project,
+    // its only holder: on the main thread project_create is an agent-only tool.
+    ["project_create setting status at creation", { section: "project", op: "update", fields: { status: "active" } }, { tool_name: "mcp__genealogy__project_create", agent_id: "a1", agent_type: "init-project" }],
   ])("allows research_append on project — %s", (_label, tool_input, extra) => {
     const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out.hookSpecificOutput).toBeUndefined();
@@ -1096,18 +1214,21 @@ describe("the guard script's decisions", () => {
   //
   // Field-scoped, not section-scoped, and the difference is the whole design.
   // `search_stop` is a REQUIRED property of every question, so
-  // `question-selection` writes it on every question it creates from the main
-  // thread — with `stopped_because: null`. A section rule, or a
+  // `question-selection` writes it on every question it creates — with
+  // `stopped_because: null`. A section rule, or a
   // presence-keyed field rule, denies all of those. The hook only fires when
   // `stopped_because` is a stop-gate value.
   const EXH_OWNER = "genealogy-research:research-exhaustiveness";
+  // Appends come from question-selection: a main-thread append is refused
+  // earlier, by the append route, before this claim is read.
+  const QS_CALLER = { agent_id: "a1", agent_type: "genealogy-research:question-selection" };
   const DECLARE = { stopped_because: "question_answered", log_entry_ids: ["log_001"], stop_criteria: null, not_reached: [] };
 
   it.each([
     ["update, no agent_id (main thread)",
       { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: DECLARE } }, {}],
     ["append carrying a gate-value declaration",
-      { section: "questions", op: "append", entry: { search_stop: DECLARE } }, {}],
+      { section: "questions", op: "append", entry: { search_stop: DECLARE } }, QS_CALLER],
     // An append carrying BOTH keys. research_append's op schema declares
     // `entry` and `fields`, and applyOne ignores `fields` on an append — so a
     // check that read `fields` first and fell back only when it was not a dict
@@ -1115,7 +1236,7 @@ describe("the guard script's decisions", () => {
     // the only plane that binds in Cowork; a missing deny fails open silently.
     ["append carrying both entry and an empty fields",
       { section: "questions", op: "append",
-        entry: { search_stop: DECLARE }, fields: {} }, {}],
+        entry: { search_stop: DECLARE }, fields: {} }, QS_CALLER],
     ["batched ops form",
       { ops: [{ section: "plan_items", op: "update" },
               { section: "questions", op: "update", entryId: "q_001", fields: { search_stop: DECLARE } }] }, {}],
@@ -1157,12 +1278,100 @@ describe("the guard script's decisions", () => {
     // creating a question. `stopped_because: null` is not a stop-gate value.
     ["question-selection creating a question (stopped_because: null)",
       { section: "questions", op: "append",
-        entry: { question: "Who were the parents?", search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] } } }],
+        entry: { question: "Who were the parents?", search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] } } },
+      QS_CALLER],
     // An unrelated question edit from the main thread.
     ["a status-only update",
-      { section: "questions", op: "update", entryId: "q_001", fields: { status: "in_progress" } }],
-  ])("has no opinion on %s", (_label, tool_input) => {
-    expect(runGuard({ tool_name: "mcp__genealogy__research_append", tool_input })).toEqual({});
+      { section: "questions", op: "update", entryId: "q_001", fields: { status: "in_progress" } }, {}],
+  ])("has no opinion on %s", (_label, tool_input, extra) => {
+    expect(runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra })).toEqual({});
+  });
+
+  // Question appends (issue #3548): creating a question is question-selection's
+  // step; updating one is shared with research-exhaustiveness and
+  // proof-conclusion.
+  const QS_AGENT = "genealogy-research:question-selection";
+  const NEW_QUESTION = {
+    section: "questions",
+    op: "append",
+    entry: { question: "Who were Ann's parents?", search_stop: { stopped_because: null } },
+  };
+
+  it.each([
+    ["the main thread", {}],
+    ["the main thread, in a batch beside a legitimate op", null],
+    ["the main thread of an --agent session (agent_type, no agent_id)", { agent_type: QS_AGENT }],
+  ])("routes a new question from %s to question-selection", (_who, caller) => {
+    const tool_input =
+      caller === null
+        ? { ops: [{ section: "plans", op: "append", entry: {} }, NEW_QUESTION] }
+        : NEW_QUESTION;
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...(caller ?? {}) });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("invoke `@plugin:question-selection`");
+  });
+
+  it.each([
+    ["proof-conclusion, whose lane holds questions for its resolve", "proof-conclusion"],
+    ["research-exhaustiveness, whose lane holds questions for its stop", EXH_OWNER],
+    // Not laned at all: the general-purpose stand-in a failed spawn falls back to.
+    ["an unlaned subagent", "general-purpose"],
+  ])("tells %s to hand a new question off, since it cannot invoke an agent", (_who, agent_type) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: NEW_QUESTION,
+      agent_id: "a1",
+      agent_type,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("hand off");
+    expect(out.hookSpecificOutput.permissionDecisionReason).not.toContain("invoke `@plugin:");
+  });
+
+  it("leaves an agent whose lane lacks questions to the lane arm", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: NEW_QUESTION,
+      agent_id: "a1",
+      agent_type: "genealogy-research:research-plan",
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("`plan_items`");
+  });
+
+  it("routes a new question sent as a stringified ops batch", () => {
+    // research_append runs coerceJsonArg on `ops`, so a string is applied there.
+    const out = runGuard({
+      tool_name: "mcp__genealogy__research_append",
+      tool_input: { ops: JSON.stringify([NEW_QUESTION]) },
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:question-selection");
+  });
+
+  it("permits question-selection's own new question", () => {
+    expect(
+      runGuard({
+        tool_name: "mcp__genealogy__research_append",
+        tool_input: NEW_QUESTION,
+        agent_id: "a1",
+        agent_type: QS_AGENT,
+      }),
+    ).toEqual({});
+  });
+
+  it.each([
+    ["the main thread moving a question in progress", {}, { status: "in_progress" }],
+    ["proof-conclusion resolving it", { agent_id: "a1", agent_type: "proof-conclusion" }, { status: "resolved", resolved: true }],
+  ])("leaves question updates alone: %s", (_who, caller, fields) => {
+    expect(
+      runGuard({
+        tool_name: "mcp__genealogy__research_append",
+        tool_input: { section: "questions", op: "update", entryId: "q_001", fields },
+        ...caller,
+      }),
+    ).toEqual({});
   });
 
   it("holds the exhaustiveness agent to its own lane", () => {
@@ -1180,4 +1389,92 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("`questions`");
   });
 
+});
+
+describe("the main thread is denied the tools only agents hold", () => {
+  const SPELLINGS = (tool: string) => [
+    `mcp__genealogy__${tool}`,
+    `mcp__remote-devices__Genealogy_Research__${tool}`,
+    `mcp__Genealogy_Research__${tool}`,
+  ];
+
+  // The raw-write deny reaches the main session too, so every writer tool it
+  // names that the main session cannot call must come with an agent that can.
+  it("the protected-file deny names, for each agent-only writer it suggests, an agent holding it", () => {
+    const { agentOnly } = guardAgentOnlyTables();
+    const reason = runGuard({ tool_name: "Write", tool_input: { file_path: "/project/research.json" } })
+      .hookSpecificOutput.permissionDecisionReason as string;
+    const named = Object.keys(agentOnly).filter((t) => new RegExp(`\\b${t}\\b`).test(reason));
+    expect(named).toEqual(expect.arrayContaining(["project_create", "tree_edit", "external_links_search"]));
+    for (const tool of named) {
+      expect(agentOnly[tool].some((a) => reason.includes(`\`@plugin:${a}\``)), tool).toBe(true);
+    }
+  });
+
+  it.each(SPELLINGS("census_children_gap"))(
+    "denies a main-thread %s and names both agents that hold it",
+    (tool_name) => {
+      const out = runGuard({ tool_name, tool_input: { personId: "I1" } });
+      expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+      const reason: string = out.hookSpecificOutput.permissionDecisionReason;
+      // The route out, in the wording owner_denied uses, naming both holders.
+      expect(reason).toMatch(/invoke `@plugin:[a-z-]+`/);
+      expect(reason).toContain("`@plugin:check-warnings`");
+      expect(reason).toContain("`@plugin:question-selection`");
+      // Recoverable: the turn continues so the model can delegate.
+      expect(out.stopReason).toBeUndefined();
+    },
+  );
+
+  it("names every one of a tool's agents, however many there are", () => {
+    const reason: string = runGuard({ tool_name: "mcp__genealogy__place_search", tool_input: {} })
+      .hookSpecificOutput.permissionDecisionReason;
+    for (const agent of guardAgentOnlyTables().agentOnly.place_search) {
+      expect(reason).toContain(`\`@plugin:${agent}\``);
+    }
+  });
+
+  it.each([
+    ["the namespaced agent_type production reports", { agent_id: "a1", agent_type: "genealogy-research:check-warnings" }],
+    ["the bare agent_type the harnesses report", { agent_id: "a1", agent_type: "question-selection" }],
+  ])("lets the same call through from an agent: %s", (_how, caller) => {
+    expect(
+      runGuard({ tool_name: "mcp__genealogy__census_children_gap", tool_input: { personId: "I1" }, ...caller }),
+    ).toEqual({});
+  });
+
+  it("still denies a session started with --agent, which carries agent_type without agent_id", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__census_children_gap",
+      tool_input: { personId: "I1" },
+      agent_type: "research",
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
+  it.each([
+    // The router reads the person itself; a skill declares it.
+    "person_read",
+    // research/SKILL.md delivers a bounded transcription itself (issue #2490).
+    "image_transcribe",
+    "sidecar_read",
+    "record_read",
+    "research_log_append",
+  ])("has no opinion on a main-thread %s", (tool) => {
+    expect(runGuard({ tool_name: `mcp__genealogy__${tool}`, tool_input: {} })).toEqual({});
+  });
+
+  it("leaves a main-thread research_append to the section rules", () => {
+    // MAIN_THREAD_OK: a plan_items status update is no section's routed claim.
+    expect(
+      runGuard({
+        tool_name: "mcp__genealogy__research_append",
+        tool_input: { section: "plan_items", op: "update", entryId: "pli_001", fields: { status: "completed" } },
+      }),
+    ).toEqual({});
+  });
+
+  it("does not deny image_read, which no agent holds", () => {
+    expect(runGuard({ tool_name: "mcp__genealogy__image_read", tool_input: {} })).toEqual({});
+  });
 });

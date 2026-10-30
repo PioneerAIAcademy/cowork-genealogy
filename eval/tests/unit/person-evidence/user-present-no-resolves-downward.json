@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_person_evidence_up1",
+    "skill": "person-evidence",
+    "name": "userPresent: no resolves a weak match downward, on a wrap-up",
+    "type": "positive",
+    "description": "Plan section B2. The downward resolution used to key on 'an autonomous run where no user can ever confirm'. A wrap-up has the researcher present and still needs it, so the rule now keys on the delegation's `userPresent: no`. `ut_person_evidence_023` is the autonomous half of this; this is the wrap-up half, and it is the case the old wording could not express.",
+    "tags": [
+      "step-mode",
+      "wrap-up"
+    ]
+  },
+  "input": {
+    "delegation": "The researcher is wrapping this question up. Link assertion a_002 (the Patrick Flynn baptism record) to the right person in the tree, or handle it per the threshold policy if it should not be linked.\n\nuserPresent: no\nprojectPath: <workspace>",
+    "scenario": "flynn-birthplace-conflict-stated"
+  },
+  "mcp_fixtures": [
+    "same-person-flynn-weak"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_reads_files": true,
+  "judge_context": [
+    "`userPresent: no` is what makes the downward resolution apply. The researcher being mid-conversation is irrelevant: they asked to wrap up, so there is nobody to pause with on THIS link.",
+    "A weak match, or one capped at `speculative` by a qualitative conflict, becomes a NO-LINK: no `pe_` entry, and no rejection recorded either — only the researcher records one.",
+    "The absence of a user never upgrades confidence. Linking at `probable` to close the question off is the failure this rule exists for.",
+    "The returned summary names the candidate, the score, and what conflicted, so the researcher can pick it up later."
+  ]
+}

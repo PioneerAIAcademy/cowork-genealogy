@@ -207,8 +207,9 @@ function kindOf(value: unknown): string {
  * The `ark` a caller meant, settled before the input forms are counted.
  * `imageArk` is record_read's name for a page image and the key
  * research_log_append logs an image entry under, so callers carry it forward;
- * nothing refuses an unknown key, so without this fold the value was dropped
- * and the call failed as if no image had been named. When both name the same
+ * server.ts's unknown-argument guard accepts it as an alias on image_read and
+ * image_transcribe, and without this fold the value would be dropped and the
+ * call fail as if no image had been named. When both name the same
  * image, sameImageChoice says which is read; two that do not are refused
  * rather than one being picked, and so is an `ark` that is not a string, which
  * would otherwise be dropped for `imageArk` without a word. The resulting
@@ -260,13 +261,14 @@ export function resolveFsImageInput(
   input: FsImageInput,
   caller: string
 ): { url: string; label: string; fallbackUrl?: string; memoryShape: boolean } {
+  // image_read does not advertise memoryArtifactUrl, and server.ts refuses an
+  // unadvertised key, so its errors must not send a caller to one.
+  const keys = caller === "image_read" ? "imageId or ark" : "imageId, ark, or memoryArtifactUrl";
   const given = [input.imageId, input.ark, input.memoryArtifactUrl].filter(
     (v) => v !== undefined
   ).length;
   if (given > 1) {
-    throw new Error(
-      "Provide exactly one of imageId, ark, or memoryArtifactUrl."
-    );
+    throw new Error(`Provide exactly one of ${keys}.`);
   }
   if (input.memoryArtifactUrl !== undefined) {
     if (!MEMORY_ARTIFACT_PATTERN.test(input.memoryArtifactUrl)) {
@@ -296,7 +298,7 @@ export function resolveFsImageInput(
     return { url, label: input.ark, fallbackUrl, memoryShape: false };
   }
   throw new Error(
-    `${caller} requires one of imageId, ark, or memoryArtifactUrl. ${receivedKeys(input)}`
+    `${caller} requires one of ${keys}. ${receivedKeys(input)}`
   );
 }
 

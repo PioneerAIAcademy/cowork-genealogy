@@ -1140,7 +1140,9 @@ the CLI spills an oversized tool result for the model to read back; a
 `Glob` with no `path` is treated as the project root. Recorded as
 `"blocked_by": "path"` with the resolved `path`. Both entries carry the
 `reason` the agent was shown, which names the MCP route that replaces the
-read: `record_read({recordId, resultsRef})` for a `results/` sidecar,
+read: `record_read({recordId, resultsRef})` for a record or search sidecar
+under `results/` and, in the same fixed message,
+`sidecar_read({projectPath, ref: '<ref>#hits'})` for a `fulltext_search` one,
 `sidecar_read({projectPath, ref})` for a verdict body under `evaluations/` or a
 text upload under `uploads/`, `research_query` for `research.json`,
 `project_context` otherwise. Each flag is recorded in the `usage` block (§8.1) because a run
@@ -1154,10 +1156,11 @@ answer reachable only via the tree will fail and the fixture won't validate.
 ### 6.1.1 Main-thread subagent-only tool block
 
 The same `PreToolUse` hook enforces the per-context tool policy in e2e: no
-member of `SUBAGENT_ONLY_TOOLS` — today just `image_read` — may be called
-on the main thread. It is a Task-spawned subagent's private tool (returning a
-page scan as inline base64); a main-thread call is the router substituting for a
-*failed* spawn and doing the work itself — a shape observed in production.
+member of `SUBAGENT_ONLY_TOOLS` — `image_read` and, since 2026-10-29, the
+tools only agents hold (the plugin hook's `AGENT_ONLY_TOOLS`) — may be called on
+the main thread. `image_read` returns a page scan as inline base64; the rest are
+an agent's step. A main-thread call is the router doing an agent's work itself —
+a shape observed in production.
 
 **`extraction_append` is no longer in this set.** Extraction of a
 FamilySearch-indexed record runs as code called from the main thread, and
@@ -1178,7 +1181,10 @@ supply. So e2e carries no declared-tools exemption: a future skill that
 legitimately declares a guarded tool would be denied here too, and closing
 that needs the predicate widened by hand.
 
-Every member is enforced. The one member, `image_read`, is
+Every member is enforced. Since 2026-10-29 the set is `image_read` plus the
+shipped hook's `AGENT_ONLY_TOOLS` — the tools only agents hold, imported into
+`context_policy` rather than copied — whose deny names the agents to delegate to.
+None is declared by a skill. `image_read` is
 declared by no skill and by no agent at all since
 the `image-reader-opus` agent was retired, and
 since `search-images` moved to `image_transcribe` (via `@plugin:image-reader` from
@@ -1196,17 +1202,19 @@ recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.
 
-This is harness-only. The plugin ships a `PreToolUse` hook that binds on the
+The `image_read` arm is harness-only; the `AGENT_ONLY_TOOLS` arm ships in the
+plugin hook too. The plugin ships a `PreToolUse` hook that binds on the
 hosted path — **measured**, by `make hook-smoke` — and binds in Cowork, probed
 live on 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher. The
 `.*research_append` arm entered the matcher 2026-08-21 and is unmeasured there;
 Cowork is a different loader and has no instrument but a live
 session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
 `bypassPermissions`). Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`: the raw
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)`: the raw
 file-write tools, the device bridge's `device_commit_files`, `research_append`
-(since the caller-ownership rules shipped), and `Agent` / `Task`, for the fork deny. It still never sees an
-`extraction_append`-shaped MCP tool call. Porting the tool-level policy there was
+(since the caller-ownership rules shipped), `Agent` / `Task`, for the fork deny,
+and a final alternative naming every `AGENT_ONLY_TOOLS` key. It still never sees an
+`extraction_append`-shaped MCP tool call. Porting the `image_read` policy there was
 **declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending. That
 decline is scoped to `image_read`: do not re-file *it* without evidence the
 sub-700 KB band is being hit. §6.1.1 covers `extraction_append` too, and ADR-0006
@@ -1248,11 +1256,13 @@ entries in the committed corpus. `research_append` writes a named section, and
 
 **This arm is caller-scoped, not main-thread-scoped**, which is the trap: it is
 easy to describe as "the router doing a delegate's job" because that is the
-`routed` rule, and miss that `owner_denied` has **four**. `out_of_lane` fires
+`routed` rule, and miss that `owner_denied` has **six**. `out_of_lane` fires
 for a **named** subagent reaching outside the lanes `AGENT_WRITABLE_SECTIONS`
 grants it; `declaration` fires on a routed claim, field-scoped rather than
 section-scoped; and `owned_field` fires on a routed field keyed on presence
-rather than on a claim value (`project.status`). All reach this array — the append happens before the rule
+rather than on a claim value (`project.status`); `claim` fires on a conflict's
+analytical product; and `owned_append` fires on a `questions` append from
+anyone but question-selection. All reach this array — the append happens before the rule
 branch — so an entry here does not imply a main-thread caller. Most committed
 entries are `routed`; at least one is `out_of_lane` (6 and 1 of 7 — measured at
 7315364c).
@@ -2039,7 +2049,7 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, thread, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
-| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` — §6.1.1; `extraction_append` was the other, until indexed-record extraction moved to a main-thread call), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
+| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` and, since 2026-10-29, the shipped hook's `AGENT_ONLY_TOOLS` — §6.1.1; `extraction_append` was a member until indexed-record extraction moved to a main-thread call), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }` — plus `thread` (`main` / `sub`) on `assistant` entries from `harness_schema_version` 8, since a subagent's own messages stream through the same branch. The nine `harness` / `blocked` append sites have no message in scope and carry no `thread`, so select on `kind == "assistant"` **and** `thread == "main"`, never on the absence of the key. `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
 | `usage.per_turn` | **Step mode only** — one row per turn: `{index, step, wall_ms, sent, reply, duration_ms, duration_api_ms, num_turns, total_cost_usd}`. Written by `turn_loop.accumulate_usage`. The top-level quantities keep their whole-run meaning, so every existing reader works unchanged — but not all by summing: `total_cost_usd` and `duration_api_ms` are RUNNING totals the CLI already reports, so the latest turn's value is taken rather than the sum, which would multiply them (decided by the lead, 2026-10-26: a `ResultMessage` now arrives per TURN, and a plain assignment would have recorded only the last one and understated corpus spend quietly). `wall_ms` and `step` come from the turn rather than the `ResultMessage`. A turn that ran no step carries no `step`. Absent on every non-step run; `make e2e-latency BY_STEP=1` prints per-step p50/p90 wait and spend from it, in the order the run reached the steps, and says "no per-step data" rather than zeroes when it is absent. |

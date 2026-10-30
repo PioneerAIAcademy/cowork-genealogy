@@ -819,7 +819,10 @@ def test_the_hook_denies_the_turns_own_proc_and_logs_it(tmp_path):
 
 
 def test_read_route_chooser():
-    assert deny.read_route("/project/results/x.json", "/project") == "record_read({recordId, resultsRef})"
+    assert deny.read_route("/project/results/x.json", "/project") == (
+        "record_read({recordId, resultsRef}) for a record or search sidecar, or "
+        "sidecar_read({projectPath, ref: '<ref>#hits'}) for a fulltext_search sidecar"
+    )
     assert deny.read_route("/project/evaluations/x.json", "/project") == "sidecar_read({projectPath, ref})"
     assert deny.read_route("/project/uploads/notes.txt", "/project") == "sidecar_read({projectPath, ref})"
     assert deny.read_route("/project/research.json", "/project") == "research_query"
@@ -1041,6 +1044,19 @@ def test_the_plugin_ships_thirty_agents_and_two_skills():
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
     assert "\nEXPECTED_SKILLS = 2\n" in Path(worker.__file__).read_text(encoding="utf-8")
+
+
+def test_an_agents_effort_reaches_its_bare_name_definition():
+    from proto.worker.plugin_agents import load_agent_definitions
+
+    defs = load_agent_definitions(PLUGIN_DIR)
+    declared = {}
+    for md in sorted((PLUGIN_DIR / "agents").glob("*.md")):
+        head = md.read_text(encoding="utf-8").split("\n---", 1)[0]
+        line = next((x for x in head.splitlines() if x.startswith("effort:")), None)
+        declared[md.stem] = line.split(":", 1)[1].strip() if line else None
+    assert any(declared.values()), "no shipped agent declares effort; this test checks nothing"
+    assert {n: d.effort for n, d in defs.items()} == declared
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -5178,7 +5194,8 @@ def test_the_delivery_summary_reaches_a_human():
 
 def test_an_empty_summary_does_not_corrupt_the_stop_reason():
     """`summary` is declared required but NOTHING enforces it: the hook halts before the
-    body, and the server does not validate inputSchema. An argument-free call must still
+    body, and the server refuses unknown argument names but never a call for a missing
+    required key alone. An argument-free call must still
     produce a clean reason rather than a dangling 'Delivered: '."""
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
