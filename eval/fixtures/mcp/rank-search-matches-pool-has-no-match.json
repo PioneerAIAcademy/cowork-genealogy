@@ -24,7 +24,6 @@
         "birthPlace": "Ireland",
         "collectionTitle": "United States Census, 1850",
         "matchScore": 0.0071,
-        "matchConfidence": 1,
         "candidateFactCount": 3,
         "attachedToSubject": false,
         "attachedToOther": false
@@ -40,7 +39,6 @@
         "birthPlace": null,
         "collectionTitle": "United States Census, 1850",
         "matchScore": 0.0034,
-        "matchConfidence": 1,
         "candidateFactCount": 0,
         "attachedToSubject": false,
         "attachedToOther": false
@@ -56,7 +54,6 @@
         "birthPlace": "Pennsylvania, United States",
         "collectionTitle": "United States Census, 1850",
         "matchScore": 0.0009,
-        "matchConfidence": 1,
         "candidateFactCount": 4,
         "attachedToSubject": false,
         "attachedToOther": true

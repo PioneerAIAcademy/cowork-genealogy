@@ -30,6 +30,8 @@ describe("research_append from a caller — assertions are extraction's", () => 
     ["an update of the value", { section: "assertions", op: "update", entryId: "a_001", fields: { value: "Tannetje van Noord" } }],
     ["an update of the value alongside the notes", { section: "assertions", op: "update", entryId: "a_001", fields: { value: "Y", informant_bias_notes: "re-read" } }],
     ["an update with no fields", { section: "assertions", op: "update", entryId: "a_001", fields: {} }],
+    // #3678: only extraction_append's re-extraction retires an assertion.
+    ["a retirement", { section: "assertions", op: "update", entryId: "a_001", fields: { superseded_by: "retracted", superseded_reason: "wrong" } }],
   ])("refuses %s and writes nothing", async (_label, call) => {
     const before = await files();
     const r = await researchAppendFromCaller({ projectPath: dir, ...(call as object) } as never);

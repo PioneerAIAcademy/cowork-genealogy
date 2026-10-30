@@ -25,7 +25,6 @@ import {
   type ScoredPair,
 } from "../../dev/matcher-accuracy.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
-import type { SamePersonResult } from "../../src/types/same-person.js";
 
 const pair = (slug: string, label: 0 | 1, score: number): ScoredPair => ({ slug, label, score });
 
@@ -317,18 +316,11 @@ describe("main", () => {
         fetched.push(ark);
         return recordFor(ark);
       },
-      score: async (g1, id1, g2, id2): Promise<SamePersonResult> => {
+      score: async (g1, id1, g2, id2) => {
         const ark = g1.persons?.find((p) => p.id === id1)?.ark;
         scored.push({ id1, id2, ark });
         treeSides.push((g2.persons ?? []).map((p) => p.id ?? "(no id)"));
-        return {
-          matched: true,
-          score: scores[ark ?? ""] ?? 0,
-          queryArk: "",
-          candidateArk: "",
-          apiTitle: "",
-          updated: "",
-        };
+        return { score: scores[ark ?? ""] ?? 0 };
       },
       ensureLogin: async () => {},
       log: (line) => lines.push(line),
@@ -583,9 +575,9 @@ describe("main", () => {
 
     expect(await main(["--csv", csv], {}, deps())).toBe(0);
     expect(readFileSync(csv, "utf8").trim().split("\n")).toEqual([
-      "slug,identity,label,persona_ark,persona_id,score,matched,confidence",
-      "a-same,same,1,ark:/61903/1:1:AAAA-AAA,p_2,0.9,true,",
-      "b-different,different,0,ark:/61903/1:1:BBBB-BBB,p_2,0.1,true,",
+      "slug,identity,label,persona_ark,persona_id,score",
+      "a-same,same,1,ark:/61903/1:1:AAAA-AAA,p_2,0.9",
+      "b-different,different,0,ark:/61903/1:1:BBBB-BBB,p_2,0.1",
     ]);
   });
 

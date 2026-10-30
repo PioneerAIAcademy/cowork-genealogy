@@ -116,12 +116,17 @@ without the call, the hosted arm never halts, and the nudge arm pushes it on int
 research. The cost of naming it in the body is one inert call per bounded turn in Cowork;
 the cost of not naming it was the conflict. One skill body names it, not every skill.
 
-It carries two exclusions, both load-bearing:
+It carries three exclusions, all load-bearing:
 
 - **Not when the research objective itself is finished.** That run ends on its own and its
   outcome is `completed`; reporting `delivered` there would mislabel a finished project.
 - **Not in place of asking the researcher a question.** An ask waits for an answer; a
   delivery waits for nothing.
+- **Not while no project exists yet.** A "Research PID X. <question>" first message read
+  as "a single record or lookup": the main thread answered it from one `person_read` and
+  delivered, with no project and no research. A request to research a person is a research
+  job. The exclusion is keyed on the project, not the message: a turn that starts a project
+  and then gives just a plan creates the project first and still delivers.
 
 ## Ending the turn when a project completes
 

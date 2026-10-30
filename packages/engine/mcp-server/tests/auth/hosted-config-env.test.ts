@@ -12,7 +12,7 @@ const VALID: Record<string, string> = {
 };
 
 describe("configFromEnv", () => {
-  it("layers the set variables over the base", () => {
+  it("layers every set variable over the base", () => {
     const config = configFromEnv({
       WIKI_API_URL: "http://wiki:8000",
       POP_STATS_URL: "http://pop:9000",
@@ -21,6 +21,8 @@ describe("configFromEnv", () => {
       WEB_PUBLIC_URL: "https://beta.example",
       UPLOADS_ENABLED: "true",
       TRANSCRIPTION_ENABLED: "false",
+      MATCHER_URL: "http://matcher:8765",
+      MATCHER_API_KEY: "matcher-key",
     });
     expect(config).toEqual({
       wikiApiUrl: "http://wiki:8000",
@@ -30,6 +32,9 @@ describe("configFromEnv", () => {
       webPublicUrl: "https://beta.example",
       uploadsEnabled: true,
       transcriptionEnabled: false,
+      matcher: "service",
+      matcherUrl: "http://matcher:8765",
+      matcherApiKey: "matcher-key",
     });
   });
 
@@ -105,6 +110,17 @@ describe("configFromEnv", () => {
     expect("openRouterModel" in config).toBe(false);
   });
 
+  it.each([
+    ["the URL alone", { MATCHER_URL: "http://matcher:8765" }],
+    ["the key alone", { MATCHER_API_KEY: "matcher-key" }],
+    ["the URL with an empty key", { MATCHER_URL: "http://matcher:8765", MATCHER_API_KEY: "" }],
+  ])("names no matcher from %s", (_label, env) => {
+    const config = configFromEnv(env);
+    expect("matcher" in config).toBe(false);
+    expect("matcherUrl" in config).toBe(false);
+    expect("matcherApiKey" in config).toBe(false);
+  });
+
   it("does not mutate the base it was given", () => {
     const base = { wikiApiUrl: "http://from-the-file:8000" };
     configFromEnv({ WIKI_API_URL: "http://from-the-env:8000" }, base);
@@ -122,10 +138,23 @@ describe("configFromEnv", () => {
       "WEB_PUBLIC_URL",
       "UPLOADS_ENABLED",
       "TRANSCRIPTION_ENABLED",
+      "MATCHER_URL",
+      "MATCHER_API_KEY",
     ]);
     const keys = Object.keys(
       configFromEnv(Object.fromEntries(PER_USER_ENV.map((name) => [name, VALID[name] ?? "set"]))),
     );
-    expect(keys).toHaveLength(PER_USER_ENV.length);
+    expect(keys.sort()).toEqual([
+      "matcher",
+      "matcherApiKey",
+      "matcherUrl",
+      "openRouterApiKey",
+      "openRouterModel",
+      "popStatsUrl",
+      "transcriptionEnabled",
+      "uploadsEnabled",
+      "webPublicUrl",
+      "wikiApiUrl",
+    ]);
   });
 });

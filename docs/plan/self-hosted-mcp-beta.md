@@ -382,6 +382,7 @@ Either way, the research skill's first line says that without an `Agent` tool, r
 - **Before the dress rehearsal:** the uploads setting. **In January:** `FEEDBACK_URL` and the limits.
 - **Before gate 4's sign-in:** the redirect setting moves from the loopback to the beta's https redirect (P0.4).
 - **Once FamilySearch's approval is in writing:** the transcription switch goes on (gate 4).
+- **When the matcher service is turned on:** `MATCHER_URL` and `MATCHER_API_KEY`, on the tools tier.
 - **On launch day:** the user cap.
 - **Instance profiles:** the tools tier's from P0.3, the web tier's when it joins. Each has `AWSElasticBeanstalkWebTier`, as the handoff's tiers have, the SSM agent's managed policy, and one inline statement denying `bedrock:*` and `aws-marketplace:*`, which the beta never uses. Then both gain object access and `s3:ListBucket` on the bucket.
 

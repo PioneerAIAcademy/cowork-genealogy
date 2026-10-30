@@ -55,6 +55,11 @@ describe("rankForReview", () => {
     expect(out[0].id).toBe("pe_low");
   });
 
+  it("gives no reason for a low match score: no cut on the score is labelled", () => {
+    const [top] = rankForReview([link({ match_score: 0.2 })]);
+    expect(top.reasons.join("; ")).not.toMatch(/low match score/);
+  });
+
   it("does not treat a MISSING match score as a score of zero", () => {
     // 28 of the captured run's 191 links have none. Reading absent as 0 would put
     // every one of them at the top and bury the 39 real conflicts.

@@ -22,6 +22,8 @@ export const PER_USER_ENV = [
   "WEB_PUBLIC_URL",
   "UPLOADS_ENABLED",
   "TRANSCRIPTION_ENABLED",
+  "MATCHER_URL",
+  "MATCHER_API_KEY",
 ] as const;
 
 /**
@@ -56,6 +58,12 @@ export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): App
   if (uploads !== undefined) out.uploadsEnabled = uploads;
   const transcription = envSwitch(env, "TRANSCRIPTION_ENABLED");
   if (transcription !== undefined) out.transcriptionEnabled = transcription;
+  // The matcher service needs both; one alone names no service to call.
+  if (env.MATCHER_URL && env.MATCHER_API_KEY) {
+    out.matcher = "service";
+    out.matcherUrl = env.MATCHER_URL;
+    out.matcherApiKey = env.MATCHER_API_KEY;
+  }
   return out;
 }
 

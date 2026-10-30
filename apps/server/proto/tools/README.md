@@ -70,14 +70,13 @@ autocommits exactly as before. The worker sends the pair on every call
 (`options.tool_server_headers`).
 
 `baseConfig` is `~/.familysearch-mcp/config.json`, read once at startup with
-`loadConfig(LOCAL)`, and then the seven keys `PER_USER_ENV` names (`WIKI_API_URL`,
-`POP_STATS_URL`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `WEB_PUBLIC_URL`,
-`UPLOADS_ENABLED`, `TRANSCRIPTION_ENABLED`) from the environment over it
-(`src/hosted-config-env.ts`), and only where set, so an absent one leaves the file's value
-and then the compiled default. A switch other than `true`/`false`, or a `WEB_PUBLIC_URL`
-that is not a plain http(s) URL, exits 2 before listening. In compose the file is
-`./config.json` (`{"hosted": true}`) mounted read-only and the seven come from the `tools` service's environment: a container receives a secret as
-environment, not as a file in an image. One shared process, so these are per-stack rather
+`loadConfig(LOCAL)`, and then the variables `PER_USER_ENV` names from the environment over
+it (`src/hosted-config-env.ts`), and only where set, so an absent one leaves the file's
+value and then the compiled default. A switch other than `true`/`false`, or a
+`WEB_PUBLIC_URL` that is not a plain http(s) URL, exits 2 before listening. In compose the
+file is `./config.json` (`{"hosted": true}`) mounted read-only and those come from the
+`tools` service's environment: a container receives a secret as environment, not as a file
+in an image. One shared process, so these are per-stack rather
 than per patron — which is what a one-patron prototype wants; per-patron config would have
 to ride the request, as the bearer and the project id do.
 
@@ -126,7 +125,7 @@ smoke names all three.
   --port 8080`, equal to the template's `PORT`; the template sets
   `PGSSLMODE=verify-full` and `NODE_EXTRA_CA_CERTS` at the CA's absolute path, so TLS is
   configured without a query string in `GENEALOGY_PG_DSN`. The store variables and the
-  seven config overrides above stay API-level settings. The image (`Dockerfile`) and the
+  config overrides above stay API-level settings. The image (`Dockerfile`) and the
   bundle both run Node 24.
 - **The transport smoke** — every advertised tool but the three exclusions, in
   `no-bearer` mode by default (`--bearer <token>`, or an unexpired

@@ -1122,7 +1122,7 @@ when the key is needed: no tool reads a credential from the environment, and
 `getOpenRouterApiKey` stays the single resolution point with a single source. That is
 what the "no env-var fallback" rule protects, and it holds. What does **not** hold, and
 was claimed here until 2026-09-20, is the stronger sentence that the server makes zero
-`process.env` reads: `http.ts` reads these four, `index.ts` reads
+`process.env` reads: `http.ts` reads the variables `PER_USER_ENV` names, `index.ts` reads
 `GENEALOGY_OPENROUTER_API_KEY`, and a shipped tool
 (`research-append.ts`) reads two debug-hold variables, which `http.ts` also reads
 only to name them at start-up (`research-append-tool-spec.md` §11.5). The bridge is at the

@@ -265,6 +265,7 @@ F6, F7, F8, F11 (concurrency), F16, U24, U25 ─► go-live
    - `WIKI_API_URL`, `POP_STATS_URL`: F16's hosts; the default is outside step 2's egress.
    - `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`: only if F9 allows. Model default `google/gemini-3.7-flash`.
    - `WEB_PUBLIC_URL`, `UPLOADS_ENABLED`, `TRANSCRIPTION_ENABLED`: leave unset (the self-hosted beta's settings; unset means no viewer or upload link and transcription as today). A switch other than `true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no `#`, `?`, credentials, backslash, space or control character, exits 2 before listening.
+   - `MATCHER_URL`, `MATCHER_API_KEY`: the matcher service's address and this tier's key; set both to score with the service, and leave unset to score with FamilySearch's matcher.
 
    **Never set in production:** `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS`, `GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS`. The packaging guard refuses any `GENEALOGY_DEBUG_*` in a template (U11); one set at API level prints `debug holds set (never in production): NAME="value"` on stderr before listen, so it shows in step 14's logs.
 

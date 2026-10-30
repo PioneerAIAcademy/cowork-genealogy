@@ -348,6 +348,8 @@ services:
       WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-}
       UPLOADS_ENABLED: ${UPLOADS_ENABLED:-}
       TRANSCRIPTION_ENABLED: ${TRANSCRIPTION_ENABLED:-}
+      MATCHER_URL: ${MATCHER_URL:-}
+      MATCHER_API_KEY: ${MATCHER_API_KEY:-}
     # Project state lives in Postgres/S3, so nothing writes to the rootfs; /tmp is the
     # one rw path.
     read_only: true
