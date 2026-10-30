@@ -2614,11 +2614,13 @@ def _start_env(monkeypatch):
     monkeypatch.setenv("WORKER_TURN_USERS", "none")
     monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
     monkeypatch.setenv("TOOL_SERVER_URL", "http://tools:8787/mcp")
-    # Both run before the start configuration these tests read, and both are POSIX-only:
-    # a python3 beside sys.executable, and os.geteuid / pwd. Stubbed to what the Linux
-    # image yields with WORKER_TURN_USERS=none, so the tests also run on Windows (#4043).
-    monkeypatch.setattr(worker, "require_hook_python", lambda: f"{sys.executable} 3.12")
-    monkeypatch.setattr(worker, "setup_turn_users", lambda exe: worker.turn_users.DISABLED)
+    if sys.platform == "win32":
+        # Both run before the start configuration these tests read, and both are
+        # POSIX-only: a python3 beside sys.executable, and os.geteuid / pwd. Stubbed to
+        # what the Linux image yields with WORKER_TURN_USERS=none; Linux runs the real
+        # ones (#4043).
+        monkeypatch.setattr(worker, "require_hook_python", lambda: f"{sys.executable} 3.12")
+        monkeypatch.setattr(worker, "setup_turn_users", lambda exe: worker.turn_users.DISABLED)
 
 
 def _stop_at_prepare(monkeypatch):

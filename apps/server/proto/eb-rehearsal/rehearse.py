@@ -635,6 +635,9 @@ class Rehearsal:
     # files
 
     def file(self, name: str, obj) -> str:
+        # A dry run names files after the "<run>" placeholder; < and > are illegal in a
+        # Windows filename (issue #4043). Real run ids never contain them.
+        name = re.sub(r"[<>]", "_", name)
         path = write_private(self.files / name, json.dumps(obj, indent=2) + "\n")
         return f"file://{path}"
 

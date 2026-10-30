@@ -34,16 +34,28 @@ def _find_bash() -> str | None:
     Git for Windows install: that puts only `cmd/git.exe` on PATH and leaves
     bash at `<git-root>/bin/bash.exe`, invisible to `which`. Deriving it from
     git's own location covers that without hardcoding an install path, and
-    works for both the `cmd/` and `bin/` git layouts.
+    works for the `cmd/`, `bin/` and `mingw64/bin/` git layouts.
+
+    A `which` hit under System32 or WindowsApps is WSL's launcher, which runs the
+    script in Linux, outside the test's files; it is skipped (issue #4043). Same
+    rule as apps/server/tests/_bash.py.
     """
     found = shutil.which("bash")
     if found:
-        return found
+        resolved = str(Path(found).resolve()).lower()
+        system_root = os.environ.get("SystemRoot")
+        wsl = "windowsapps" in resolved or (
+            bool(system_root) and resolved.startswith(str(Path(system_root).resolve()).lower()))
+        if not wsl:
+            return found
     git = shutil.which("git")
     if not git:
         return None
-    candidate = Path(git).resolve().parent.parent / "bin" / "bash.exe"
-    return str(candidate) if candidate.is_file() else None
+    for parent in list(Path(git).resolve().parents)[:3]:
+        candidate = parent / "bin" / "bash.exe"
+        if candidate.is_file():
+            return str(candidate)
+    return None
 
 
 BASH = _find_bash()
