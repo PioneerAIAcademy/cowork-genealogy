@@ -1,0 +1,15 @@
+{
+  "tool": "image_transcribe",
+  "description": "Image 008230326_00076 of the Alsweiler civil birth register: the first page of 1853, where volume-bisect-alsweiler-births-1853 puts the start of the year: entries 1 to 4, naming nobody the test hunts. Film-anchored full id (see image-transcribe-schuylkill-probate-flynn-will on why). Order it before image-transcribe-alsweiler-births-any, whose one page repeats on every other image. Invented entry text; the register and place are real.",
+  "args": {
+    "imageId": "~008230326_00076"
+  },
+  "response": {
+    "transcription": "Geburts-Register der Bürgermeisterei Alsweiler, 1853.\n\nNr. 1. Alsweiler, den 2. Januar 1853. Vor mir erschien Johann Klein, Bergmann ... ein Kind männlichen Geschlechts ... Mathias.\n\nNr. 2. Alsweiler, den 8. Januar 1853. Vor mir erschien Peter Müller, Ackerer ... ein Kind weiblichen Geschlechts ... Anna Maria.\n\nNr. 3. Alsweiler, den 14. Januar 1853. Vor mir erschien Michel Recktenwald, Tagelöhner ... ein Kind männlichen Geschlechts ... Nikolaus.\n\nNr. 4. Alsweiler, den 19. Januar 1853. Vor mir erschien Jacob Becker, Schmied ... ein Kind weiblichen Geschlechts ... Elisabetha.",
+    "metadata": {
+      "imageId": "008230326_00076",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1688420
+    }
+  }
+}

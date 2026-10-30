@@ -291,7 +291,8 @@ say the key must be set in `~/.familysearch-mcp/config.json` (field
 `openRouterApiKey`) — never ask for it to be pasted into the chat, which would
 land it in the session transcript. Do not retry with a browser or a web fetch;
 those are unavailable and waste turns. Never invent, infer, or guess a page's
-contents when the read failed.
+contents when the read failed. A browse stopped by the image cap is unfinished:
+log it `outcome: "partial"`, never `"error"`.
 
 **Listing a volume's images IS a completed browse — log it (step 6) before you
 present anything or defer reading.** The `image_search` call is the browse event
@@ -320,7 +321,9 @@ reach a browse you correctly declined because the volume was already searchable
 (step 2) — there was no browse to record. The tool assigns the log id and
 `performed` timestamp and validates-before-persist; you supply the judgment.
 `image_search` does not stage results, so **omit `stagedResultsRef`** (no
-sidecar is written, exactly like a nil full-text search):
+sidecar is written, exactly like a nil full-text search). Log the browse as
+`tool: "image_search"` even when you read pages, and never pass a page's
+`staged.resultsRef` as `stagedResultsRef`:
 
 ```
 research_log_append({
