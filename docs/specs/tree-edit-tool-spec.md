@@ -172,6 +172,7 @@ tree_edit({
   subtype?: string,                 // update_relationship
 
   resolveStandardPlace?: boolean,   // default true: auto-resolve standard_place when place is set
+                                    //   or changed; a place sent back unchanged keeps its standard_place
 })
 ```
 
