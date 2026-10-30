@@ -131,12 +131,14 @@ function carries(res: CallResult, msg: string): boolean {
 const noError = (res: CallResult): Expectation => ({ ok: !res.isError, detail: brief(res) });
 
 /** No link when the server has no WEB_PUBLIC_URL (the default); when a developer's
- *  exported one reaches compose, a viewer link, and an upload link only beside it. */
+ *  exported one reaches compose, a viewer link, and an upload link only beside it. It does
+ *  not read `process.env.WEB_PUBLIC_URL`: compose can take it from a `.env` file this
+ *  process never sees. */
 const linksWellFormed = (body: any): boolean => {
   const { projectUrl, uploadUrl } = body;
   if (projectUrl === undefined) return uploadUrl === undefined;
   return (
-    /^https?:\/\/[^/]+.*\/#\/p\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(projectUrl) &&
+    /^https?:\/\/[^/#?\s@]+[^#?\s]*\/#\/p\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(projectUrl) &&
     (uploadUrl === undefined || uploadUrl === `${projectUrl}/upload`)
   );
 };

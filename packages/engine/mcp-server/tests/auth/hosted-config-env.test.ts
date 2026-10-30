@@ -51,8 +51,38 @@ describe("configFromEnv", () => {
     expect(configFromEnv({ WEB_PUBLIC_URL: "   " }, base).webPublicUrl).toBe("https://from-the-file.example");
   });
 
-  it.each(["beta.example.org", "ftp://beta.example", "https://", "/#/p"])(
-    "refuses WEB_PUBLIC_URL %j, which would make links nobody can open",
+  it.each([
+    "https://beta.example/app",
+    "http://localhost:8085",
+    "HTTPS://Beta.Example/",
+    "http://[::1]:8085",
+    "https://beta.example/a//b@c",
+  ])("accepts WEB_PUBLIC_URL %j", (raw) => {
+    expect(configFromEnv({ WEB_PUBLIC_URL: raw }).webPublicUrl).toBe(raw);
+  });
+
+  it.each([
+    "beta.example.org",
+    "ftp://beta.example",
+    "https://",
+    "/#/p",
+    "https://beta.example/#/",
+    "https://beta.example/#",
+    "https://beta.example?x=1",
+    "https://user:pw@beta.example",
+    "https://user@beta.example",
+    "https:user:pw@beta.example",
+    "https:///beta.example",
+    "https:\\\\user:pw@beta.example",
+    "https://beta.example\\@evil.example",
+    "https://beta.example/a b",
+    "https://beta.example\\path",
+    "http://beta.example:99999",
+    "http://x:notaport",
+    "https://beta.example\x01",
+    "https://beta.example/app\x00",
+  ])(
+    "refuses WEB_PUBLIC_URL %j, which would make links nobody can open or leak credentials",
     (raw) => {
       expect(() => configFromEnv({ WEB_PUBLIC_URL: raw })).toThrow(/WEB_PUBLIC_URL must be an http\(s\) URL/);
     },

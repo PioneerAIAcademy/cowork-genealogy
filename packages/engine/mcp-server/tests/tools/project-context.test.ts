@@ -676,6 +676,27 @@ describe("project_context uploads", () => {
     expect(r.uploads?.map((u) => u.name)).toEqual(["y.pdf", "z.pdf", "m.pdf", "a.pdf"]);
     expect(r.uploads?.[3].uploaded).toBe(new Date(1_000_000).toISOString());
   });
+
+  it("omits uploads, and still answers, when the listing fails", async () => {
+    await upload("census.pdf");
+    const store = getProjectStore();
+    const failing = new Proxy(store, {
+      get(target, key) {
+        if (key === "list") {
+          return async (projectPath: string, dirRef: string) => {
+            if (dirRef === "uploads") throw new Error("listing failed");
+            return target.list(projectPath, dirRef);
+          };
+        }
+        const value = Reflect.get(target, key, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const r = await runWithProjectStore(failing, () => projectContext({ projectPath: dir }, LOCAL));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect("uploads" in r).toBe(false);
+  });
 });
 
 describe("project_context and project_create links", () => {

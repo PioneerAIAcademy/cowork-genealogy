@@ -10,6 +10,7 @@
 // compose `tools` service's environment to it, so a key added here reaches the service.
 
 import type { AppConfig } from "./types/auth.js";
+import { isHttpUrl } from "./utils/search-helpers.js";
 
 /** The variable names, in the order they appear on `AppConfig`. Read as source text by the
  *  prototype's config test, so keep them literal. */
@@ -30,8 +31,9 @@ export const PER_USER_ENV = [
  * had — the mounted `config.json` for `http.js` — so that each getter's own default still
  * applies, exactly as with a sparse `config.json`.
  *
- * A switch takes `true` or `false` (trimmed, any case) and `WEB_PUBLIC_URL` an http(s)
- * URL; anything else throws, so `http.js` refuses to start. Unset means "as today", so a lenient parse would turn
+ * A switch takes `true` or `false` (trimmed, any case) and `WEB_PUBLIC_URL` a plain http(s)
+ * URL with no `#`, `?`, credentials, backslash, space or control character; anything else
+ * throws, so `http.js` refuses to start. Unset means "as today", so a lenient parse would turn
  * `TRANSCRIPTION_ENABLED=off` into transcription left running.
  */
 export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): AppConfig {
@@ -42,8 +44,11 @@ export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): App
   if (env.OPENROUTER_MODEL) out.openRouterModel = env.OPENROUTER_MODEL;
   const webPublicUrl = env.WEB_PUBLIC_URL?.trim();
   if (webPublicUrl) {
-    if (!/^https?:\/\/[^/\s]/i.test(webPublicUrl)) {
-      throw new Error(`WEB_PUBLIC_URL must be an http(s) URL, got ${JSON.stringify(env.WEB_PUBLIC_URL)}`);
+    if (!isPlainHttpUrl(webPublicUrl)) {
+      throw new Error(
+        "WEB_PUBLIC_URL must be an http(s) URL with no '#', '?', credentials, backslash, space or " +
+          `control character, got ${JSON.stringify(env.WEB_PUBLIC_URL)}`,
+      );
     }
     out.webPublicUrl = webPublicUrl;
   }
@@ -52,6 +57,17 @@ export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): App
   const transcription = envSwitch(env, "TRANSCRIPTION_ENABLED");
   if (transcription !== undefined) out.transcriptionEnabled = transcription;
   return out;
+}
+
+/** The links append `/#/p/<id>` to the raw value, so a `#`, a `?` or credentials in it break or
+ *  leak every link; `new URL` alone accepts `https:user:pw@host` and treats `\` as `/`. */
+function isPlainHttpUrl(raw: string): boolean {
+  return (
+    /^https?:\/\/[^/]/i.test(raw) &&
+    !/[\\\s#?\x00-\x1f\x7f]/.test(raw) &&
+    !/^https?:\/\/[^/]*@/i.test(raw) &&
+    isHttpUrl(raw)
+  );
 }
 
 function envSwitch(env: NodeJS.ProcessEnv, name: string): boolean | undefined {

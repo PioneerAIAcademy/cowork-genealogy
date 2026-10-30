@@ -343,7 +343,8 @@ services:
       WIKI_API_URL: ${WIKI_API_URL:-}
       POP_STATS_URL: ${POP_STATS_URL:-}
       # Unset: no viewer or upload link, transcription as today. A switch other than
-      # true/false, or a WEB_PUBLIC_URL that is not http(s), refuses start-up.
+      # true/false, or a WEB_PUBLIC_URL that is not a plain http(s) URL with no '#', '?',
+      # credentials, backslash, space or control character, refuses start-up.
       WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-}
       UPLOADS_ENABLED: ${UPLOADS_ENABLED:-}
       TRANSCRIPTION_ENABLED: ${TRANSCRIPTION_ENABLED:-}

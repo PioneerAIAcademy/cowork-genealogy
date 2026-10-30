@@ -552,7 +552,7 @@ uploadUrl?: string    // `${projectUrl}/upload`
 `uploads` lists the store's `uploads/` entries, newest first, ties by name. An
 entry `X.txt` whose `X` is also an entry is X's **text layer**, not an upload: it
 sets X's `hasText` and is not listed. A `notes.txt` with no `notes` beside it is
-an upload. `<name>` is the full basename with its extension (`census.pdf` →
+an upload. A dotfile is not an upload. `<name>` is the full basename with its extension (`census.pdf` →
 `census.pdf.txt`), the name `upload_key()` gives an upload
 (`apps/server/proto/web/project_blobs.py`); the web tier's text-layer writer
 must use that name. `uploads` is **omitted** when there are none, so
@@ -566,9 +566,10 @@ stripped) **and** the bound store has a `projectId`; `uploadUrl` only when
 path, `/project`. The file store has no id, so the desktop gets no link. On the
 hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
 `UPLOADS_ENABLED` (`src/hosted-config-env.ts`); a switch other than
-`true`/`false`, or a `WEB_PUBLIC_URL` that is not an http(s) URL, refuses
-start-up with exit 2. A dotfile under `uploads/` is not an upload. The tool therefore takes the principal as its
-last parameter.
+`true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no
+`#`, `?`, credentials, backslash, space or control character, refuses start-up
+with exit 2. The tool takes the principal as its last parameter because the
+links read the per-user config.
 
 What nothing checks: that the web tier writes the text layer under the name
 this side reads. Each side is tested against its own fixture.
@@ -683,8 +684,9 @@ untouched.
   so `make engine-test-pg` runs it on Postgres/S3); no uploads → key absent.
   With a project-id store: both links with both settings, no `uploadUrl` while
   uploads are off or unset, neither link without `webPublicUrl` or without a
-  store id. `tests/http/http-server.test.ts` 2d drives the same through
-  `startHttpServer`'s `baseConfig`.
+  store id; a failing listing omits `uploads` and still answers.
+  `tests/http/http-server.test.ts` 2d drives both links, with both settings on,
+  through `startHttpServer`'s `baseConfig`.
 - **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan
   items of its `image_search` entries, across sub-volumes of the film, and not those
   of a `fulltext_search` entry on it; 19 images plus a re-read does not list; a torn
