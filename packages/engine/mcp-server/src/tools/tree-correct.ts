@@ -133,7 +133,7 @@ export const treeCorrectSchema = {
       ark: { type: "string", description: "update_person: the FamilySearch ARK to set." },
       resolveStandardPlace: {
         type: "boolean",
-        description: "Default true: auto-resolve standard_place when a fact place is set. Pass false to skip the lookup.",
+        description: "Default true: auto-resolve standard_place when a fact's place is set or changed; a place sent back unchanged keeps its standard_place. Pass false to skip the lookup.",
       },
       ops: {
         type: "array",
