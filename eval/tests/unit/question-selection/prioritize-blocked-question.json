@@ -4,14 +4,12 @@
     "skill": "question-selection",
     "name": "Select a question that addresses an unresolved conflict",
     "type": "positive",
-    "description": "Two conflicts are listed in `blocks_question_ids: ['q_001']`. The natural next question is one that gathers evidence to resolve them — not a question that ignores the conflicts and pursues new directions.",
+    "description": "Two conflicts are listed in `blocks_question_ids: ['q_001']`. Settling them is work on q_001 (conflict-resolution, then plan items), so no new question is written; the reply names what is outstanding on q_001.",
     "tags": [
       "question-selection",
       "conflict-driven",
       "blocked-questions",
-      "selection-basis-unresolved-conflict",
-      "new-question-exhaustive-declaration-unstarted",
-      "unblocks-nonempty",
+      "question-selection-no-new-question",
       "direct-arm"
     ]
   },
@@ -21,6 +19,7 @@
   },
   "judge_context": [
     "Should recognize that q_001 is blocked by unresolved conflicts c_001 and c_002",
-    "The proposed question should target evidence that would distinguish the competing assertions — for c_001 (birthplace) that might be a marriage record or naturalization papers; for c_002 (identity) it might be a later census or vital record that anchors the subject's identity"
+    "**No question is proposed.** A conflict needing new evidence goes to `conflict-resolution`, which analyses it and routes the deciding record types to `research-plan` as items on q_001. The old 'blocking conflict' exception that admitted a question here is retired, along with the `unblocks` rule the tool no longer reads.",
+    "**`research_append` REFUSES a new question here** (step mode, section E): `q_001` is still `in_progress` and its active plan has an open item (`pli_006`). The exemption needs a proof summary AND nothing open; the summary alone is not enough. So writing a question is not a judgement call the agent can get right — the call fails. Report that the question is still open, name what is outstanding, and route the work there instead."
   ]
 }
