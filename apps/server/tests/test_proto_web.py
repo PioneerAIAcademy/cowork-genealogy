@@ -177,8 +177,16 @@ class FakeStore:
     async def document_versions(self, project_id: str) -> dict[str, int]:
         return {name: v for name, (v, _) in self.docs.get(project_id, {}).items()}
 
-    async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]:
-        return dict(self.docs.get(project_id, {}))
+    async def project_versions(self, project_id: str) -> tuple[str | None, dict[str, int]]:
+        if project_id not in self.owners:
+            return None, {}
+        return self.owners[project_id], {name: v for name, (v, _) in self.docs.get(project_id, {}).items()
+                                        if name in ("research.json", "tree.gedcomx.json")}
+
+    async def documents(
+        self, project_id: str, names: tuple[str, ...] | None = None
+    ) -> dict[str, tuple[int, Any]]:
+        return {name: doc for name, doc in self.docs.get(project_id, {}).items() if names is None or name in names}
 
     async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict | None]:
         """PgStore.admit_message's sequence over the fake's own steps (U23 D7: an older held
@@ -1565,6 +1573,46 @@ async def test_project_state_etag_changes_for_research_and_tree_versions():
         assert changed.json()["version"] == "r4-t2"
 
 
+@pytest.mark.parametrize("status", [200, 304])
+async def test_project_state_reads_owner_and_versions_once_and_only_loads_viewer_documents(status):
+    class CountingStore(FakeStore):
+        project_versions_calls = 0
+        project_owner_calls = 0
+        document_versions_calls = 0
+        documents_names = None
+
+        async def project_versions(self, project_id):
+            self.project_versions_calls += 1
+            return await super().project_versions(project_id)
+
+        async def project_owner(self, project_id):
+            self.project_owner_calls += 1
+            return await super().project_owner(project_id)
+
+        async def document_versions(self, project_id):
+            self.document_versions_calls += 1
+            return await super().document_versions(project_id)
+
+        async def documents(self, project_id, names=None):
+            self.documents_names = names
+            return await super().documents(project_id, names)
+
+    store, queue = CountingStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    store.docs["proj_a"] = {
+        "research.json": (3, {"project": {"title": "Private"}}),
+        "tree.gedcomx.json": (1, {"persons": []}),
+        "starting-tree.gedcomx.json": (9, {"persons": [{"id": "starting"}]}),
+    }
+    headers = {"If-None-Match": '"r3-t1"'} if status == 304 else {}
+    async with make_client(store, queue) as c:
+        r = await c.get("/api/projects/proj_a/state", headers=headers)
+    assert r.status_code == status and r.headers["etag"] == '"r3-t1"'
+    assert store.project_versions_calls == 1
+    assert store.project_owner_calls == store.document_versions_calls == 0
+    assert store.documents_names == (("research.json", "tree.gedcomx.json") if status == 200 else None)
+
+
 @pytest.mark.parametrize("condition", ['"r0-t0"', ' W/"r0-t0" ', '"other", W/"r0-t0"', "*"])
 async def test_project_state_matches_weak_multiple_and_wildcard_etags(condition):
     store, queue = FakeStore(), FakeQueue()
@@ -1591,9 +1639,9 @@ async def test_project_state_304_does_not_load_documents():
     class CountingStore(FakeStore):
         documents_calls = 0
 
-        async def documents(self, project_id):
+        async def documents(self, project_id, names=None):
             self.documents_calls += 1
-            return await super().documents(project_id)
+            return await super().documents(project_id, names)
 
     store, queue = CountingStore(), FakeQueue()
     store.owners["proj_a"] = USER_A.id
@@ -1610,8 +1658,8 @@ async def test_project_state_200_uses_the_loaded_document_versions():
     research = {"project": {"title": "Updated"}}
 
     class UpdatingStore(FakeStore):
-        async def document_versions(self, project_id):
-            versions = await super().document_versions(project_id)
+        async def project_versions(self, project_id):
+            versions = await super().project_versions(project_id)
             self.docs[project_id]["research.json"] = (4, research)
             return versions
 

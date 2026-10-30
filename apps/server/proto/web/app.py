@@ -338,6 +338,7 @@ class Turn:
 class Store(Protocol):
     async def list_projects(self, owner_id: str) -> list[dict[str, Any]]: ...
     async def project_owner(self, project_id: str) -> str | None: ...
+    async def project_versions(self, project_id: str) -> tuple[str | None, dict[str, int]]: ...
     async def create_session(
         self, title: str, model: str, project_id: str | None, owner: str, may_create_or_claim: bool
     ) -> SessionRow: ...
@@ -346,7 +347,9 @@ class Store(Protocol):
     async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None: ...
     async def delete_session(self, session_id: str) -> bool: ...
     async def document_versions(self, project_id: str) -> dict[str, int]: ...
-    async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]: ...
+    async def documents(
+        self, project_id: str, names: tuple[str, ...] | None = None
+    ) -> dict[str, tuple[int, Any]]: ...
     async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]: ...
     async def fail_turn(self, turn_id: str, reason: str) -> None: ...
     async def put_back_held(self, turn_id: str) -> bool: ...
@@ -386,9 +389,9 @@ class Queue(Protocol):
 def _pg_dsn() -> str:
     """The web tier's Postgres DSN, resolved as the lifespan resolves it (``PgStore``).
 
-    The three blob routes below open their own SYNCHRONOUS connection -- `fetch_sidecar`,
-    `fetch_blob` and `put_blob` are sync, and `app.state.store` is an async pool -- so
-    they cannot borrow the store's. They referenced a bare `PG_DSN` that this module has
+    `_sidecar`, `_image` and the upload route below open their own SYNCHRONOUS connection --
+    `fetch_sidecar`, `fetch_blob` and `put_blob` are sync, and `app.state.store` is async --
+    so they cannot borrow the store's. They referenced a bare `PG_DSN` that this module has
     never defined, which made all three raise `NameError` and answer 500 on every call
     that got past validation. Nothing caught it: the route tests stub the client, and
     `make harness-lint`'s F821 pass covered `eval/harness` but not `apps/server`.
@@ -458,6 +461,10 @@ def project_label(research: Any) -> str | None:
         return title
     objective = project.get("objective")
     return objective if isinstance(objective, str) and objective else None
+
+
+def _version_tag(research_version: int, tree_version: int) -> str:
+    return f"r{research_version}-t{tree_version}"
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
@@ -873,32 +880,49 @@ class PgStore:
     async def list_projects(self, owner_id: str) -> list[dict[str, Any]]:
         async with await self._connect() as conn:
             cur = await conn.execute(
-                "SELECT p.project_id AS id, "
-                "COALESCE(CASE WHEN jsonb_typeof(r.doc->'project'->'title') = 'string' "
-                "THEN NULLIF(r.doc->'project'->>'title', '') END, "
-                "CASE WHEN jsonb_typeof(r.doc->'project'->'objective') = 'string' "
-                "THEN NULLIF(r.doc->'project'->>'objective', '') END) AS label, "
+                "SELECT p.project_id AS id, r.doc->'project' AS project, "
                 "(SELECT max(d.updated_at) FROM documents d WHERE d.project_id = p.project_id) AS updated_at "
                 "FROM projects p LEFT JOIN documents r ON r.project_id = p.project_id AND r.name = 'research.json' "
                 "WHERE p.owner_id = %s ORDER BY updated_at DESC NULLS LAST, p.project_id",
                 (owner_id,),
             )
-            return list(await cur.fetchall())
+            return [{"id": r["id"], "label": project_label({"project": r["project"]}), "updated_at": r["updated_at"]}
+                    for r in await cur.fetchall()]
 
     async def project_owner(self, project_id: str) -> str | None:
         async with await self._connect() as conn:
-            cur = await conn.execute("SELECT owner_id FROM projects WHERE project_id = %s", (project_id,))
+            cur = await conn.execute(grants.OWNER_SQL, (project_id,))
             row = await cur.fetchone()
             return row["owner_id"] if row else None
+
+    async def project_versions(self, project_id: str) -> tuple[str | None, dict[str, int]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT p.owner_id, d.name, d.version FROM projects p "
+                "LEFT JOIN documents d ON d.project_id = p.project_id "
+                "AND d.name IN ('research.json', 'tree.gedcomx.json') WHERE p.project_id = %s",
+                (project_id,),
+            )
+            rows = await cur.fetchall()
+            if not rows:
+                return None, {}
+            return rows[0]["owner_id"], {r["name"]: r["version"] for r in rows if r["name"] is not None}
 
     async def document_versions(self, project_id: str) -> dict[str, int]:
         async with await self._connect() as conn:
             cur = await conn.execute("SELECT name, version FROM documents WHERE project_id = %s", (project_id,))
             return {r["name"]: r["version"] for r in await cur.fetchall()}
 
-    async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]:
+    async def documents(
+        self, project_id: str, names: tuple[str, ...] | None = None
+    ) -> dict[str, tuple[int, Any]]:
+        query = "SELECT name, version, doc FROM documents WHERE project_id = %s"
+        params: tuple[Any, ...] = (project_id,)
+        if names is not None:
+            query += " AND name = ANY(%s)"
+            params += (list(names),)
         async with await self._connect() as conn:
-            cur = await conn.execute("SELECT name, version, doc FROM documents WHERE project_id = %s", (project_id,))
+            cur = await conn.execute(query, params)
             return {r["name"]: (r["version"], r["doc"]) for r in await cur.fetchall()}
 
     # -- U20 feedback reads ------------------------------------------------------------
@@ -1587,8 +1611,11 @@ def create_app(
             self.app = app
 
         async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-            path = get_route_path(scope) if scope["type"] == "http" else ""
-            if scope["type"] != "http" or not (path == "/api/projects" or path.startswith("/api/projects/")):
+            if scope["type"] != "http":
+                await self.app(scope, receive, send)
+                return
+            path = get_route_path(scope)
+            if not (path == "/api/projects" or path.startswith("/api/projects/")):
                 await self.app(scope, receive, send)
                 return
 
@@ -1647,11 +1674,13 @@ def create_app(
             raise HTTPException(status_code=404, detail="Session not found")
         return row
 
-    async def _project(request: Request, project_id: str, user: User) -> None:
+    def _check_project_owner(owner: str | None, user: User) -> None:
         """Missing, foreign and NULL-owner projects all answer the same 404."""
-        owner = await _store(request).project_owner(project_id)
         if owner is None or owner != user.id:
             raise HTTPException(status_code=404, detail="Project not found")
+
+    async def _project(request: Request, project_id: str, user: User) -> None:
+        _check_project_owner(await _store(request).project_owner(project_id), user)
 
     # -- health ---------------------------------------------------------------------
 
@@ -1807,18 +1836,19 @@ def create_app(
     @app.get("/api/projects/{project_id}/state")
     async def project_state(project_id: str, request: Request, user: User = Depends(current_user)) -> Response:
         """{label, research, gedcomx, sidecars: [], version: rN-tN}, or an empty 304; both with ETag."""
-        await _project(request, project_id, user)
         store = _store(request)
-        versions = await store.document_versions(project_id)
-        etag = f'"r{versions.get("research.json", 0)}-t{versions.get("tree.gedcomx.json", 0)}"'
+        owner, versions = await store.project_versions(project_id)
+        _check_project_owner(owner, user)
+        tag = _version_tag(versions.get("research.json", 0), versions.get("tree.gedcomx.json", 0))
+        etag = f'"{tag}"'
         condition = ",".join(request.headers.getlist("if-none-match"))
         matches = [value.strip().removeprefix("W/") for value in condition.split(",")]
         if etag in matches or "*" in matches:
             return Response(status_code=304, headers={"ETag": etag})
-        docs = await store.documents(project_id)
+        docs = await store.documents(project_id, ("research.json", "tree.gedcomx.json"))
         rv, research = docs.get("research.json", (0, None))
         tv, gedcomx = docs.get("tree.gedcomx.json", (0, None))
-        tag = f"r{rv}-t{tv}"
+        tag = _version_tag(rv, tv)
         etag = f'"{tag}"'
         return JSONResponse({
             "label": project_label(research),
@@ -2078,7 +2108,7 @@ def create_app(
         # Off the event loop, for the reason given on the sidecar route above: this one
         # also does an S3 PUT, so it is the longest of the three.
         def _write() -> int:
-            with psycopg.connect(_pg_dsn()) as conn:
+            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
                 n = put_blob(conn, blobs, row.project_id, key, body, content_type=content_type)
                 conn.commit()
                 return n

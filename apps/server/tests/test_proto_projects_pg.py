@@ -86,17 +86,38 @@ def test_project_owner_returns_none_for_missing_and_null_owner_projects(pg_dsn):
     assert asyncio.run(store.project_owner("proj_missing")) is None
 
 
+def test_project_versions_returns_owner_and_only_viewer_document_versions(pg_dsn):
+    sql(pg_dsn, "INSERT INTO users (id, email) VALUES ('usr_versions', 'versions@example.test')")
+    for pid, owner in (("proj_versions", "usr_versions"), ("proj_versions_null", None),
+                       ("proj_versions_empty", "usr_versions")):
+        sql(pg_dsn, "INSERT INTO projects (project_id, owner_id) VALUES (%s, %s)", (pid, owner))
+    for pid in ("proj_versions", "proj_versions_null"):
+        for name, version in (("research.json", 3), ("tree.gedcomx.json", 1), ("starting-tree.gedcomx.json", 9)):
+            sql(pg_dsn, "INSERT INTO documents (project_id, name, version, doc) VALUES (%s, %s, %s, %s)",
+                (pid, name, version, Jsonb({})))
+    store = PgStore(pg_dsn)
+    versions = {"research.json": 3, "tree.gedcomx.json": 1}
+    assert asyncio.run(store.project_versions("proj_versions")) == ("usr_versions", versions)
+    assert asyncio.run(store.project_versions("proj_versions_null")) == (None, versions)
+    assert asyncio.run(store.project_versions("proj_versions_empty")) == ("usr_versions", {})
+    assert asyncio.run(store.project_versions("proj_missing")) == (None, {})
+
+
 def test_documents_and_document_versions_follow_real_row_updates(pg_dsn):
     sql(pg_dsn, "INSERT INTO projects (project_id) VALUES ('proj_documents')")
     docs = {
         "research.json": (3, {"project": {"title": "Original"}}),
         "tree.gedcomx.json": (1, {"persons": []}),
+        "starting-tree.gedcomx.json": (9, {"persons": [{"id": "starting"}]}),
     }
     for name, (version, doc) in docs.items():
         sql(pg_dsn, "INSERT INTO documents (project_id, name, version, doc) VALUES (%s, %s, %s, %s)",
             ("proj_documents", name, version, Jsonb(doc)))
     store = PgStore(pg_dsn)
     assert asyncio.run(store.documents("proj_documents")) == docs
+    names = ("research.json", "tree.gedcomx.json")
+    assert asyncio.run(store.documents("proj_documents", names)) == {name: docs[name] for name in names}
+    assert asyncio.run(store.documents("proj_documents", ())) == {}
     assert asyncio.run(store.document_versions("proj_documents")) == {name: v for name, (v, _) in docs.items()}
 
     updated = {"project": {"title": "Updated"}}
