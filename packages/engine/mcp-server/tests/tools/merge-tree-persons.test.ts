@@ -1083,4 +1083,51 @@ describe("merge_tree_persons: pair and namesake checks", () => {
     const text = await refusedText([[T, "I7"]], bornElsewhere("Madrid, Spain", "Madrid, España"));
     expect(text).toContain("'speculative'");
   });
+
+  // ─── a merge cannot bring a rejected pair back ────────────────────────────
+
+  const rejection = (id: string, assertionId: string, personId: string) => ({
+    id, assertion_id: assertionId, person_id: personId, researcher_words: "not him", created: "2026-10-01",
+  });
+  const withRejections = (p: { tree: any; research: any }, ...rows: any[]) => {
+    (p.research as any).rejected_links = rows;
+    return p;
+  };
+
+  it("MR1 refuses moving a live link onto a pair the researcher rejected for the survivor", async () => {
+    const text = await refusedText([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_011", T)));
+    expect(text).toContain(`person_evidence 'pe_001' and rejection 'rj_001' would both stand on (a_011, ${T})`);
+    expect(text).toContain("The link stands today on (a_011, I7)");
+    expect(text).toContain("no justification overrides this");
+  });
+
+  it("MR2 refuses moving a rejection onto a pair the survivor links live", async () => {
+    const p = withRejections(moved(), rejection("rj_001", "a_011", "I7"));
+    p.research.person_evidence = [link("pe_001", "a_011", T)];
+    const text = await refusedText([[T, "I7"]], p);
+    expect(text).toContain(`person_evidence 'pe_001' and rejection 'rj_001' would both stand on (a_011, ${T})`);
+  });
+
+  it("MR3 writes nothing when it refuses", async () => {
+    const p = withRejections(moved(), rejection("rj_001", "a_011", T));
+    await write(p);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await mergeTreePersons({ projectPath: dir, merges: [[T, "I7"]] });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("MR4 merges when the moved link was already retired", async () => {
+    await merged([[T, "I7"]], withRejections(moved({ extra: { superseded_by: "rj_002" } }),
+      rejection("rj_001", "a_011", T), rejection("rj_002", "a_011", "I7")));
+  });
+
+  it("MR5 merges when the rejection names a different assertion", async () => {
+    await merged([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_012", T)));
+  });
+
+  it("MR6 does not blame the merge for a link and rejection that already stood together", async () => {
+    // Pre-dates the rule that a rejection retires its link; both move onto the survivor together.
+    await merged([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_011", "I7")));
+  });
 });

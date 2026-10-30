@@ -237,7 +237,15 @@ materialize_facts({ projectPath, ops: [ <either form>, ... ] })
    `primary`."
    - **Same fact** (`factsEquivalent` **and** equal `value`) → **union** the
      new ref into its `sources[]` (ref-set dedup). Corroboration accumulates
-     as refs.
+     as refs, and fills an attribute the fact lacks. A `standard_place` is
+     filled only when the fact's place is the assertion's own place text (case,
+     accents and spacing aside), or the fact had none and takes the
+     assertion's: a standard place never sits beside another place's text.
+   - **A record in doubt about a place.** When a record's assertions give one
+     place text two or more different `standard_place`s, none of them is
+     copied onto the tree; the fact keeps its `place` with no
+     `standard_place`. Another record's value for the same text does not
+     count.
    - **Incompatible date/place, OR a different `value`** → the facts
      **coexist** as separate facts; the new one carries its ref. A competing
      value is *surfaced* (see §4.4), never overwritten.
