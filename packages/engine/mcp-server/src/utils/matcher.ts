@@ -36,8 +36,8 @@ const SERVICE_TIMEOUT_MS = 15_000;
 /**
  * Score every pair with the matcher config.json names. The answer keeps the
  * pairs' order; a pair that could not be scored has a null score and its error.
- * The service throws instead when it scores no pair of the call (section
- * "Call failures" of the spec); FamilySearch never does.
+ * The service throws instead when it scores no pair of the call; FamilySearch
+ * never does.
  */
 export async function matchPairs(
   pairs: MatchPair[],
