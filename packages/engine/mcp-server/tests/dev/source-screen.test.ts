@@ -140,7 +140,7 @@ function fakeTools(w: World): Tools {
     samePerson: (input) =>
       go("same_person", input.primaryId1, () => {
         const persona = input.gedcomx2.persons.find((p: Json) => p.id === input.primaryId2);
-        return { matched: true, score: w.scores?.[persona.ark] ?? 0.9 };
+        return { score: w.scores?.[persona.ark] ?? 0.9 };
       }),
     compiledTreeRead: (a) =>
       go("compiled_tree_read", a, () => {
@@ -529,7 +529,7 @@ describe("relationship-level sources in snapshot, baseline and plant", () => {
     const out = mkTmp();
     const w = edgeWorld([asParent], parentsRecord());
     await snap(out, ["AAAA-111"], w);
-    expect(rowsOf(out)).toEqual([{ ark: ark("E1"), persona_id: "f", selected_by: "role:parent", result: { matched: true, score: 0.9 } }]);
+    expect(rowsOf(out)).toEqual([{ ark: ark("E1"), persona_id: "f", selected_by: "role:parent", result: { score: 0.9 } }]);
     expect(metaOf(out)).toMatchObject({ relationship_unscored: 0, relationship_unscored_reasons: {} });
   });
 

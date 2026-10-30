@@ -203,7 +203,6 @@ export function annotateResultsWithRanking(
     row.matchRank = stub.matchRank;
     row.searchRank = stub.searchRank;
     row.matchScore = stub.matchScore;
-    if (stub.matchConfidence !== undefined) row.matchConfidence = stub.matchConfidence;
     if (stub.candidateFactCount !== undefined) {
       row.candidateFactCount = stub.candidateFactCount;
     }

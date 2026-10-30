@@ -78,6 +78,7 @@
 import { createHash } from "node:crypto";
 import { getProjectStore } from "../store/project-store.js";
 import { toArk } from "./ark.js";
+import type { MatcherBackend } from "../types/matcher.js";
 
 /** The dot-directory attestations live in, relative to the project root. */
 export const SCORES_SUBDIR = "results/.scores";
@@ -91,11 +92,12 @@ export interface RecordedMatchScore {
   record_persona_id: string | null;
   record_role: string | null;
   tree_person_id: string;
-  /** 0-1 from FamilySearch. The number a `match_score` is checked against. */
+  /** 0-1 from the matcher named in `scorer`. The number a `match_score` is checked against. */
   score: number;
-  /** 1-5 bucket; absent when the API treats the pair as a non-match. */
-  confidence?: number;
-  matched: boolean;
+  /** Which matcher computed `score`: config.json's `matcher` at the time. */
+  scorer: MatcherBackend;
+  /** The matcher service's model version; null for FamilySearch's matcher, which reports none. */
+  model: string | null;
   /** The assertion the call was made for. Half the map key, with
    *  `tree_person_id` -- see the header. Null only on the explicit
    *  two-document arm, which records nothing. */
