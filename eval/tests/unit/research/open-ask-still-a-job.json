@@ -71,7 +71,8 @@
   "judge_context": [
     "This is a ROUTING test. The only assertion that matters is whether Skill('question-selection') is the first Skill call. A deterministic validator (test_routes_to_expected_skill) owns that check -- do not grade the routing decision yourself.",
     "'Find the parents of X' is an OPEN ask, not a bounded one: it names a research question, not one deliverable. The router must walk the routing table as it would for any job.",
-    "Do not penalise the reply for not naming a deliverable, and do not reward it for stopping early. Stopping early is the failure this test exists to catch."
+    "Do not penalise the reply for not naming a deliverable. The failure this test exists to catch is treating an open ask as a bounded one — ending with a deliverable instead of entering the routing table. Ending after the FIRST step of that table, with its offer line, is correct.",
+    "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists."
   ],
   "judge_reads_files": true
 }

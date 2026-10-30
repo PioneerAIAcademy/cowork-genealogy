@@ -50,6 +50,6 @@ objective's own wording.
 
 ## Used by
 
-- `ut_research_utf` (`routes-to:question-selection`), the bug direction.
+- `ut_research_utf`, the bug direction.
 - Its twin, `compound-objective-fully-covered`, holds this same state with an
   objective that `q_001` fully answers, for the other direction.
