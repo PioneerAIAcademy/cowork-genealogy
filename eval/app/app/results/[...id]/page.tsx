@@ -880,7 +880,11 @@ const TracePane = memo(function TracePane({
                         </>
                       ) : (
                         <Badge size="xs" color="red" variant="light">
-                          {matched.kind === 'none' ? 'fixture_not_found' : 'no fixture'}
+                          {matched.kind === 'unknown_args_refused'
+                            ? 'unknown args refused'
+                            : matched.kind === 'none'
+                              ? 'fixture_not_found'
+                              : 'no fixture'}
                         </Badge>
                       )}
                     </Group>

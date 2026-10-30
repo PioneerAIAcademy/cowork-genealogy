@@ -442,7 +442,14 @@ export interface RunLogToolCall {
    */
   expected_args: Record<string, unknown> | null;
   matched: {
-    kind: 'predicate' | 'queue' | 'queue_reused' | 'none';
+    kind:
+      | 'predicate'
+      | 'queue'
+      | 'queue_reused'
+      | 'none'
+      | 'live'
+      | 'staged_ref_refused'
+      | 'unknown_args_refused';
     index: number | null;
   };
   response_fixture: string | null;

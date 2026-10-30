@@ -137,27 +137,27 @@ def test_predicate_match_dispatches_to_matching_fixture():
         tmp = Path(tmp)
         (tmp / "ohio.json").write_text(json.dumps({
             "tool": "record_search",
-            "args": {"args.q": "Ohio"},
+            "args": {"args.surname": "Ohio"},
             "response": {"hits": "ohio-fixture"},
         }), encoding="utf-8")
         (tmp / "iowa.json").write_text(json.dumps({
             "tool": "record_search",
-            "args": {"args.q": "Iowa"},
+            "args": {"args.surname": "Iowa"},
             "response": {"hits": "iowa-fixture"},
         }), encoding="utf-8")
         server, call_log, tools_by_name = create_mock_server(
             ["ohio", "iowa"], tmp
         )
-        result = _invoke(tools_by_name, "record_search", {"q": "Ohio"})
+        result = _invoke(tools_by_name, "record_search", {"surname": "Ohio"})
         body = _extract_response_dict(result)
         assert body["hits"] == "ohio-fixture"
         assert call_log[0]["matched"]["kind"] == "predicate"
-        assert call_log[0]["expected_args"] == {"args.q": "Ohio"}
+        assert call_log[0]["expected_args"] == {"args.surname": "Ohio"}
 
-        result2 = _invoke(tools_by_name, "record_search", {"q": "Iowa"})
+        result2 = _invoke(tools_by_name, "record_search", {"surname": "Iowa"})
         body2 = _extract_response_dict(result2)
         assert body2["hits"] == "iowa-fixture"
-        assert call_log[1]["expected_args"] == {"args.q": "Iowa"}
+        assert call_log[1]["expected_args"] == {"args.surname": "Iowa"}
 
 
 def test_is_error_fixture_sets_is_error_only_on_its_own_match():
@@ -218,11 +218,11 @@ def test_unmatched_call_returns_fixture_not_found_error():
         tmp = Path(tmp)
         (tmp / "only.json").write_text(json.dumps({
             "tool": "record_search",
-            "args": {"args.q": "Ohio"},
+            "args": {"args.surname": "Ohio"},
             "response": {"hits": "ohio"},
         }), encoding="utf-8")
         server, call_log, tools_by_name = create_mock_server(["only"], tmp)
-        result = _invoke(tools_by_name, "record_search", {"q": "Texas"})
+        result = _invoke(tools_by_name, "record_search", {"surname": "Texas"})
         body = _extract_response_dict(result)
         assert body.get("error") == "fixture_not_found"
         # No fixture matched → matched.kind == "none" and expected_args is null.
@@ -1158,9 +1158,16 @@ def test_live_writer_handler_uses_long_node_timeout(tmp_path, monkeypatch):
     _invoke(
         tools_by_name,
         "research_append",
-        {"projectPath": str(tmp_path), "section": "assertions", "entries": []},
+        {"projectPath": str(tmp_path), "section": "assertions", "entry": {}},
     )
-    assert spy.timeouts == [mock_mcp.NODE_EVAL_TIMEOUT_LONG]
+    # Two node calls now: the unknown-argument guard (#3947) runs first on the
+    # fast DEFAULT budget, then the writer on LONG. Pinning both is stronger than
+    # the old single-element assert — it catches the guard drifting onto LONG,
+    # which would make every refused call cost 60s instead of 30.
+    assert spy.timeouts == [
+        mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT,
+        mock_mcp.NODE_EVAL_TIMEOUT_LONG,
+    ]
 
 
 @pytest.mark.skipif(
@@ -1181,8 +1188,12 @@ def test_person_warnings_runs_with_place_lookups_disabled(tmp_path, monkeypatch)
     _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
     scripts.clear()
     _invoke(tools_by_name, "person_warnings", {"projectPath": str(tmp_path), "personId": "I1"})
-    assert len(scripts) == 1
-    assert "personWarningsTool(input, { placeCoords: async () => null })" in scripts[0]
+    # The unknown-argument guard (#3947) adds a node call ahead of every tool's.
+    # Assert on the TOOL's script rather than the call count, so this keeps
+    # pinning what it was written to pin.
+    tool_scripts = [x for x in scripts if "rejectUnknownArgs" not in x]
+    assert len(tool_scripts) == 1
+    assert "personWarningsTool(input, { placeCoords: async () => null })" in tool_scripts[0]
 
 
 @pytest.mark.skipif(
@@ -1209,7 +1220,7 @@ def test_node_timeout_is_recorded_and_surfaced_as_warning(tmp_path, monkeypatch)
     _invoke(
         tools_by_name,
         "research_append",
-        {"projectPath": str(tmp_path), "section": "assertions", "entries": []},
+        {"projectPath": str(tmp_path), "section": "assertions", "entry": {}},
     )
 
     live = [c for c in call_log if c["tool"].endswith("research_append")]
@@ -2634,3 +2645,107 @@ def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypa
         pytest.skip("no engine build: the node script was never reached")
     assert seen[0]["image_ref"] == "images/007936749_00008.jpg"
     assert "image_ref" not in seen[1]
+
+
+# --- the unknown-argument guard (issue #3947) --------------------------------
+# `server.ts` refuses any argument key that is not a parameter of the tool. The
+# mock calls handlers directly and never goes through `server.ts`, so every unit
+# eval used to run with the guard off: a skill that sent a misspelled filter
+# passed its eval with the key silently dropped, and was refused in production.
+
+
+@pytest.mark.requires_engine_build
+def test_guard_refuses_a_non_parameter_key_on_a_fixture_backed_tool(tmp_path):
+    """The fixture-backed registration site. `q` is not a `record_search`
+    parameter; the handler must not run, and the call must be logged as refused
+    rather than as an unmatched fixture — no fixture could ever match it."""
+    (tmp_path / "only.json").write_text(json.dumps({
+        "tool": "record_search",
+        "args": {"args.surname": "Flynn"},
+        "response": {"hits": "flynn"},
+    }), encoding="utf-8")
+    _server, call_log, tools_by_name = create_mock_server(["only"], tmp_path)
+
+    result = _invoke(tools_by_name, "record_search", {"q": "Flynn"})
+
+    assert result["is_error"] is True
+    body = _extract_response_dict(result)
+    assert "record_search has no parameter `q`" in body["error"]
+    assert call_log[0]["matched"] == {"kind": "unknown_args_refused", "index": None}
+    assert call_log[0]["expected_args"] is None
+    # The handler never ran, so the fixture was never consulted.
+    assert call_log[0]["response_fixture"] is None
+    assert "hits" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_guard_passes_a_real_parameter_and_an_accepted_alias(tmp_path):
+    """The other direction, twice. A declared parameter passes, and so does an
+    `ACCEPTED_ALIASES` entry — `imageArk` on `image_read` — which a naive
+    schema-only check would wrongly refuse."""
+    (tmp_path / "only.json").write_text(json.dumps({
+        "tool": "record_search",
+        "args": {"args.surname": "Flynn"},
+        "response": {"hits": "flynn"},
+    }), encoding="utf-8")
+    _server, call_log, tools_by_name = create_mock_server(["only"], tmp_path)
+
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_search", {"surname": "Flynn"})
+    )
+    assert body["hits"] == "flynn"
+    assert call_log[0]["matched"]["kind"] == "predicate"
+
+    assert mock_mcp._reject_unknown_args("image_read", {"imageArk": "ark:/61903/3:1:X"}) is None
+
+
+@pytest.mark.requires_engine_build
+def test_guard_checks_the_models_args_not_the_injected_projectPath(tmp_path):
+    """The ordering trap, on a LIVE compiled tool.
+
+    `_make_compiled_tool_handler` adds `projectPath` to its own copy of the
+    args. `research_delivered` does not declare `projectPath` (nor do
+    `project_list` or `convert_calendar`), so a guard run AFTER that injection
+    would refuse every call to those three. Checking the model's own args is
+    what keeps this call legal.
+    """
+    _seed_project(tmp_path)
+    _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+
+    _invoke(tools_by_name, "research_delivered", {"summary": "done"})
+
+    assert call_log[-1]["matched"]["kind"] != "unknown_args_refused", (
+        "research_delivered was refused — the guard is reading the post-injection "
+        "copy (input_obj) instead of the model's own args"
+    )
+    # And the guard itself agrees, driven directly: the bare call is legal, the
+    # post-injection shape is not.
+    assert mock_mcp._reject_unknown_args("research_delivered", {"summary": "x"}) is None
+    assert mock_mcp._reject_unknown_args(
+        "research_delivered", {"summary": "x", "projectPath": "/p"}
+    ) is not None
+
+
+@pytest.mark.requires_engine_build
+def test_guard_refuses_on_a_live_compiled_tool_too(tmp_path):
+    """The live registration site is wired independently of the fixture one.
+    Removing the wrapper from either site must fail its own test."""
+    _seed_project(tmp_path)
+    _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+
+    result = _invoke(tools_by_name, "research_delivered", {"summary": "x", "bogusKey": 1})
+
+    assert result["is_error"] is True
+    assert "bogusKey" in _extract_response_dict(result)["error"]
+    assert call_log[-1]["matched"]["kind"] == "unknown_args_refused"
+
+
+def test_guard_fails_open_and_warns_when_the_build_is_missing(monkeypatch, tmp_path):
+    """A broken node install must not abort every suite (review-ready
+    2026-10-30). Failing open is the decision; warning is what keeps it from
+    being silent."""
+    monkeypatch.setattr(mock_mcp, "_UNKNOWN_ARGS_JS", tmp_path / "nope.js")
+    monkeypatch.setattr(mock_mcp, "_warned_no_unknown_args_module", False)
+
+    with pytest.warns(UserWarning, match="rebuild packages/engine/mcp-server"):
+        assert mock_mcp._reject_unknown_args("record_search", {"q": "x"}) is None

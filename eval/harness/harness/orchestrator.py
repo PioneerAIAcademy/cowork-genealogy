@@ -1363,11 +1363,40 @@ def _build_warnings(
     # carries the attempted-call detail the abort reason alone can't.
     attempted = attempted_mcp_calls or []
     covered = _predicate_matched_count(tool_calls)
-    if len(attempted) > covered:
+    # A guard-refused call is uncovered by `_predicate_matched_count`, but NO
+    # fixture can ever cover it: the guard runs before any predicate lookup
+    # (#3947). Tallied separately so the advisory a genealogist reads names the
+    # fix that exists — correct the caller's arguments — rather than sending
+    # them to write a fixture that can never match.
+    refused = [
+        c for c in tool_calls
+        if (c.get("matched") or {}).get("kind") == "unknown_args_refused"
+    ]
+    if refused:
+        warnings.append({
+            "kind": "unknown_args_refused",
+            "advisory": (
+                f"{len(refused)} MCP tool call(s) were refused: an argument key "
+                "the tool does not take. Production refuses these the same way, "
+                "so this is the skill's call to fix, NOT a missing fixture — no "
+                "fixture can match a refused call, because the guard runs before "
+                "any predicate lookup. Refused: "
+                + ", ".join(
+                    sorted({
+                        f"{(c.get('tool') or '').split('__')[-1]}"
+                        f"({', '.join(sorted((c.get('args') or {}).keys()))})"
+                        for c in refused
+                    })
+                )
+            ),
+            "attempted": [c.get("args") for c in refused],
+        })
+    if len(attempted) - len(refused) > covered:
         warnings.append({
             "kind": "uncovered_tool_call",
             "advisory": (
-                f"{len(attempted) - covered} of {len(attempted)} MCP tool "
+                f"{len(attempted) - len(refused) - covered} of "
+                f"{len(attempted) - len(refused)} MCP tool "
                 "call(s) matched no fixture predicate — the skill ran against "
                 "a fixture_not_found or denied/unknown-tool error. Add or fix "
                 "an mcp_fixture whose args match the call."
@@ -1816,7 +1845,10 @@ def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
     }
     response = c.get("response")
     kind = (c.get("matched") or {}).get("kind")
-    if kind in ("live", "none") or _is_mock_enriched(response):
+    # `unknown_args_refused` joins the list because the refusal TEXT is the whole
+    # record of what happened: the handler never ran, so there is no other trace
+    # of which key the guard refused (#3947).
+    if kind in ("live", "none", "unknown_args_refused") or _is_mock_enriched(response):
         entry["response"] = response
     return entry
 
