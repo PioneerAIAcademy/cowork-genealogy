@@ -137,6 +137,11 @@ WIDENED: dict[str, set[str]] = {
     #: Step 4a) with no row naming it; the agent's hook lane makes that write
     #: explicit, so the manifest now says so. A widening cannot newly fail a test.
     "sources": {"init-project"},
+    #: `plans` gains `search-hints` (issue #3153). The agent now sets the status
+    #: of the "review pending hints" plan item it executes, through
+    #: `research_append`'s `plan_items` lane -- the same lane search-records and
+    #: search-images hold. A widening cannot newly fail a test.
+    "plans": {"search-hints"},
 }
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's

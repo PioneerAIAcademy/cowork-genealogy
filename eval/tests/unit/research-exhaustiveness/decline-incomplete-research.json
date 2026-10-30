@@ -14,10 +14,12 @@
   },
   "input": {
     "scenario": "flynn-census-exhausted",
-    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and declining without a write if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>"
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if the criteria are met, and recording the decline if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>"
   },
   "judge_context": [
-    "Should NOT set `q_001.search_stop.stopped_because` to any non-null value",
+    "A decline here WRITES the stop (step mode, section B): every item on the active plan is closed and unsearched sources remain, so `q_001.search_stop.stopped_because` becomes `resources_spent` with `stop_criteria: null`, `status` left `in_progress`, and `not_reached` carrying a `deferred` entry per never-planned source. Writing nothing is the failure now; it used to be the requirement.",
+    "`justification` must open with the verdict — `Overturn risk: low` or `Overturn risk: high — <sources>`. That prefix is what the ladder reads to pick the default, so free prose without it is a miss.",
+    "`log_entry_ids` must list the log entries of EVERY plan of the question, not just the active one: both pl_001 and pl_002 here.",
     "Should name at least one specific unsearched record type that bears on the parentage question (probate records, post-1860 censuses, naturalization papers, or Irish emigration manifests are all reasonable)",
     "Should reference the existing q_002 declaration only as background, not as the basis for declaring q_001 exhaustive — the two questions are scoped differently",
     "Tool Arguments: This is a decline/review response — Claude is not expected to call validate_research_schema."

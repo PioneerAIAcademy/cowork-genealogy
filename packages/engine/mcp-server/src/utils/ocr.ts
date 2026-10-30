@@ -75,27 +75,37 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
 const APP_REFERER = "https://github.com/PioneerAIAcademy/cowork-genealogy";
 const APP_TITLE = "cowork-genealogy";
 
-/** The full-page transcription prompt used by `image_transcribe`. */
-export function buildOcrPrompt(lookingFor?: string): string {
-  const base =
+/**
+ * The full-page transcription prompt used by `image_transcribe`. It must carry
+ * NO caller content: `lookingFor` in this prompt primed the model to write the
+ * hinted names into rows the page does not have (measured 2026-10-29, 5/5
+ * primed vs 0/5 unprimed reads — spec §5.3.1). The FOUND/NOT FOUND decision is
+ * a second, text-only call (`runFoundCheck`) that never sees the image.
+ */
+export function buildOcrPrompt(): string {
+  return (
     "Transcribe every genealogically relevant entry on this record image " +
     "verbatim: names, dates, places, ages, relationships, sponsors/witnesses, " +
     "and any marginal notes. Preserve the original spelling, capitalization, " +
     "and line/row layout. Do not modernize or normalize. Mark anything you " +
-    "cannot read [illegible] — never guess.";
-  const key = lookingFor?.trim();
-  if (key) {
-    return (
-      base +
-      `\n\nAfter the transcription, on a final line, report whether the page ` +
-      `mentions "${key}" by writing exactly FOUND or NOT FOUND. This is a ` +
-      `locate hint only — it must not change or shorten the transcription above.`
-    );
-  }
-  return base;
+    "cannot read [illegible] — never guess."
+  );
 }
 
-/** The FOUND / NOT FOUND marker `buildOcrPrompt`'s locate hint asks for. */
+/** The text-only prompt for the found check (second call — no image). */
+export function buildFoundCheckPrompt(transcription: string, lookingFor: string): string {
+  return (
+    "Below is a verbatim transcription of a historical record page.\n\n---\n" +
+    transcription +
+    "\n---\n\n" +
+    `Does the page mention "${lookingFor}"? Judge tolerantly of OCR spelling ` +
+    "variance (the same name may be transcribed with different letters, e.g. " +
+    '"Almeda" for "Almada"), but do not credit content the transcription does ' +
+    "not carry. Answer on a single final line with exactly FOUND or NOT FOUND."
+  );
+}
+
+/** The FOUND / NOT FOUND marker the found-check prompt asks for. */
 export function parseFound(text: string): "FOUND" | "NOT FOUND" | undefined {
   // The prompt asks for the marker on a FINAL line. Read the last non-empty
   // line and require the marker at its start, so body text like "infant found
@@ -152,7 +162,89 @@ export async function runOcr(req: OcrRequest): Promise<OcrOutcome> {
 
   const dataUrl = `data:${contentType};base64,${Buffer.from(bytes).toString("base64")}`;
 
-  const budgetMs = Math.max(1, Math.min(req.timeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS));
+  const { text, truncated } = await postChat({
+    content: [
+      { type: "text", text: prompt },
+      { type: "image_url", image_url: { url: dataUrl } },
+    ],
+    apiKey,
+    model,
+    maxTokens: req.maxTokens ?? OCR_MAX_TOKENS,
+    budgetMs: Math.max(1, Math.min(req.timeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS)),
+  });
+
+  if (text.length === 0) {
+    // Throw either way — a zero-content read has nothing to return — but name
+    // WHICH failure it was, so the invariant "truncated:true never ships beside
+    // an empty transcription" holds while the caller still learns a cap bound.
+    throw new Error(
+      truncated
+        ? "OpenRouter hit its output-token limit before returning any " +
+            "transcription (the budget was likely spent on reasoning). The page " +
+            "was not read — do not fabricate; a retry at this cap is unlikely to " +
+            "help, so pivot to the indexed record (record_read / record_search)."
+        : "OpenRouter returned an empty transcription. Do not fabricate a read — " +
+            "pivot to the indexed record for this image (record_read / record_search).",
+    );
+  }
+
+  const truncationNotice = truncated
+    ? "This transcription is INCOMPLETE — the OCR hit its output-token limit and " +
+      "stopped partway down the page. The transcription above is what was read; the " +
+      "rest of the page is UNREAD, not blank. Do not treat any target as absent from " +
+      "this partial read."
+    : undefined;
+
+  return { text, truncated, truncationNotice };
+}
+
+// Output cap for the found check. The reply is one word, but the default model
+// is reasoning-capable and reasoning tokens draw on the same budget, so the cap
+// must clear a reasoning preamble, not just the answer.
+export const FOUND_CHECK_MAX_TOKENS = 2000;
+
+/**
+ * The FOUND / NOT FOUND leg: one text-only call over the transcription — the
+ * OCR call never sees `lookingFor` (priming; spec §5.3.1, §6.2). Returns
+ * undefined when the reply carries no parseable marker (including a reply cut
+ * by its token cap); throws on transport/auth failures exactly as `runOcr`
+ * does — the tool catches and omits `found` rather than failing the read.
+ */
+export async function runFoundCheck(req: {
+  transcription: string;
+  /** The expanded `lookingFor` (name variants included), verbatim. */
+  lookingFor: string;
+  apiKey: string;
+  model: string;
+  /** What is left of the OCR leg's budget; clamped like `runOcr`'s. */
+  timeoutMs?: number;
+}): Promise<"FOUND" | "NOT FOUND" | undefined> {
+  const { text } = await postChat({
+    content: [
+      { type: "text", text: buildFoundCheckPrompt(req.transcription, req.lookingFor) },
+    ],
+    apiKey: req.apiKey,
+    model: req.model,
+    maxTokens: FOUND_CHECK_MAX_TOKENS,
+    budgetMs: Math.max(1, Math.min(req.timeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS)),
+  });
+  return parseFound(text);
+}
+
+/**
+ * One user message to OpenRouter chat/completions: the transport retry, the
+ * 429/503 backoff, the status triage and the truncation detection — shared by
+ * the OCR read and the text-only found check. `budgetMs` bounds the whole call,
+ * waits included. May return an empty `text`; the callers own that case.
+ */
+async function postChat(call: {
+  content: unknown[];
+  apiKey: string;
+  model: string;
+  maxTokens: number;
+  budgetMs: number;
+}): Promise<{ text: string; truncated: boolean }> {
+  const { content, apiKey, model, maxTokens, budgetMs } = call;
   const deadline = Date.now() + budgetMs;
   let transportRetries = 0;
   let statusRetries = 0;
@@ -173,19 +265,11 @@ export async function runOcr(req: OcrRequest): Promise<OcrOutcome> {
           body: JSON.stringify({
             model,
             temperature: 0,
-            max_tokens: req.maxTokens ?? OCR_MAX_TOKENS,
-            // Privacy: FamilySearch scans are PII — do not let the provider
-            // retain prompts for training.
+            max_tokens: maxTokens,
+            // Privacy: FamilySearch scans (and their transcriptions) are PII —
+            // do not let the provider retain prompts for training.
             provider: { data_collection: "deny" },
-            messages: [
-              {
-                role: "user",
-                content: [
-                  { type: "text", text: prompt },
-                  { type: "image_url", image_url: { url: dataUrl } },
-                ],
-              },
-            ],
+            messages: [{ role: "user", content }],
           }),
         },
         attempt === 0 ? budgetMs : Math.max(1, deadline - Date.now()),
@@ -268,27 +352,5 @@ export async function runOcr(req: OcrRequest): Promise<OcrOutcome> {
   const truncated =
     marksCap(choice?.finish_reason) || marksCap(choice?.native_finish_reason);
 
-  if (text.length === 0) {
-    // Throw either way — a zero-content read has nothing to return — but name
-    // WHICH failure it was, so the invariant "truncated:true never ships beside
-    // an empty transcription" holds while the caller still learns a cap bound.
-    throw new Error(
-      truncated
-        ? "OpenRouter hit its output-token limit before returning any " +
-            "transcription (the budget was likely spent on reasoning). The page " +
-            "was not read — do not fabricate; a retry at this cap is unlikely to " +
-            "help, so pivot to the indexed record (record_read / record_search)."
-        : "OpenRouter returned an empty transcription. Do not fabricate a read — " +
-            "pivot to the indexed record for this image (record_read / record_search).",
-    );
-  }
-
-  const truncationNotice = truncated
-    ? "This transcription is INCOMPLETE — the OCR hit its output-token limit and " +
-      "stopped partway down the page. The transcription above is what was read; the " +
-      "rest of the page is UNREAD, not blank. Do not treat any target as absent from " +
-      "this partial read."
-    : undefined;
-
-  return { text, truncated, truncationNotice };
+  return { text, truncated };
 }
