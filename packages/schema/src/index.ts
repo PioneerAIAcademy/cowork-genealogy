@@ -22,7 +22,7 @@ import type {
   ConflictStatus, ConflictType, DateCertainty, RecordBasis,
   HypothesisStatus, InformantProximity, InformationQuality,
   LogOutcome, NotReachedKind, PersonEvidenceConfidence, PlanItemStatus, PlanStatus, Priority,
-  ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionStatus, SelectionBasis,
+  ProjectStatus, ProofShortfall, ProofTier, ProofVehicle, QuestionKind, QuestionStatus, SelectionBasis,
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
   StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, ResolutionKind,
@@ -85,6 +85,11 @@ export interface Question {
   question: string
   rationale: string
   selection_basis: SelectionBasis
+  /** Set by question-selection at creation: `enumerative` asks for every member
+   *  of a set of people, which carries research-plan's five-event breadth
+   *  obligation; `targeted` does not. Optional: absent on questions written
+   *  before the field existed. */
+  question_kind?: QuestionKind
   priority: Priority
   status: QuestionStatus
   depends_on: string[]
@@ -624,7 +629,11 @@ export interface SidecarFile {
 // ============================================================
 
 export function getPreferredName(person: GedcomxPerson): string {
-  const preferred = person.names.find((n) => n.preferred) ?? person.names[0]
+  // A record persona can carry no `names` at all (the enslaved people on an
+  // 1850 slave schedule), even though a tree person always has them (#3893).
+  // Untyped sidecar payloads can also carry a non-array there.
+  const names = Array.isArray(person.names) ? person.names : []
+  const preferred = names.find((n) => n.preferred) ?? names[0]
   if (!preferred) return '(unknown)'
   const parts = [preferred.given, preferred.surname].filter(Boolean)
   return parts.length > 0 ? parts.join(' ') : '(unknown)'
