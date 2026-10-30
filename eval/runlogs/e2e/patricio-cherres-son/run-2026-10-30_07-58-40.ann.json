@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "right person/parents/dates, but death place wrongly left as the index's Colombia mis-standardization — the central correction this fixture tests for"
+  },
+  "findings_hash": "dc0b9f2b7c5d42f7d0dd8e22726a272b95251966735f9fc49a0192823675bab5",
+  "blind_bundle_digest": "727df1d29fc06ea435b7723cdb6c36a7a767c47d3a3a2a30c0d1da65d07144d2"
+}
