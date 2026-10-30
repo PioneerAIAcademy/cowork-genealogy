@@ -3,9 +3,15 @@
     "id": "ut_search_records_jurisdiction_hint",
     "skill": "search-records",
     "name": "Follow a returned jurisdictionHints candidate before reverting to the searched jurisdiction",
-    "description": "Jesse Neal's marriage plan item targets South Carolina. The first record_search nils and returns a jurisdictionHints candidate pointing to Yell County, Arkansas (the subject's birth place). The skill must follow that hint — issuing a record_search in Arkansas — before returning to South Carolina variants. Guards the rule that a non-empty jurisdictionHints response must be acted on within the next 1–2 searches.",
     "type": "positive",
-    "tags": ["search", "marriage", "jurisdiction-hints", "jurisdiction-hints-followed", "direct-arm"]
+    "description": "Issue #1642 Finding 1 (mercyokum), the validator this test wires up: a marriage search scoped to the plan item's jurisdiction (Union County, South Carolina) comes back nil with a jurisdictionHints block naming the subject's own Birth-fact place (Yell County, Arkansas) as the top candidate. SKILL.md's Step 4 jurisdictionHints rule requires the next 1-2 record_search calls to set marriagePlace or residencePlace -- or recordSubdivision together with recordCountry -- to that place before reverting. Ground truth: the jimmie-jewel-neal e2e incident (2026-07-30_23-05-46) where the agent ran one Arkansas-scoped search then reverted to nine more South Carolina searches, missing both grandparent findings. Hand-authored -- no committed run captured a real jurisdictionHints payload to model this on.",
+    "tags": [
+      "search",
+      "marriage",
+      "jurisdiction-hints",
+      "jurisdiction-hints-followed",
+      "direct-arm"
+    ]
   },
   "input": {
     "delegation": "Execute plan item pli_001 -- search FamilySearch for Jesse Neal's marriage record.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"marriage\",\n  \"jurisdiction\": \"Union County, South Carolina\",\n  \"date_range\": \"1875-1885\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"Jesse Neal's tree shows a South Carolina residence by 1885 with no marriage record yet located; searching that jurisdiction first is the obvious starting point.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Jesse\",\n      \"surname\": \"Neal\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"1857\",\n    \"place\": \"Yell County, Arkansas\"\n  },\n  \"death\": null\n}",
@@ -27,5 +33,7 @@
     "Do not penalize the skill for also eventually returning to South Carolina after trying Arkansas -- the rule requires trying the hint within the next 1-2 calls, not abandoning the original jurisdiction forever."
   ],
   "judge_reads_files": true,
-  "execution": {"max_turns": 40}
+  "execution": {
+    "max_turns": 40
+  }
 }
