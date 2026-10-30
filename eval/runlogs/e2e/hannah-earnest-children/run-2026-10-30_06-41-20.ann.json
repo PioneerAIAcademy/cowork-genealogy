@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "partial"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "right person/parents/christening, but no birth-date fact recorded at all"
+  },
+  "findings_hash": "9591a6e1b00516369f996bf97471cc1068a56b1eb17e0b1ee50f46545efee145",
+  "blind_bundle_digest": "06d63093c88d7b2c7a081e998c15c4d23b4cdb4a75146694004c548bff7dfe79"
+}

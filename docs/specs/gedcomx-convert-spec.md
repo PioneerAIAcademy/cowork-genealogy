@@ -24,21 +24,28 @@ foreign-key target, so the produced shape is part of an existing contract.
 
 ```typescript
 export function toSimplified(gedcomx: GedcomX): SimplifiedGedcomX;
+export function toSimplifiedRecordRead(gedcomx: GedcomX): {
+  doc: SimplifiedGedcomX;
+  placeIds: Map<SimplifiedFact, RecordReadPlace>; // { placeId: string; original?: string; formal?: string }
+};
 export function toGedcomX(simplified: SimplifiedGedcomX): GedcomX;
 ```
 
-Both functions are pure (no I/O, no side effects). Neither throws on missing
-or malformed optional fields.
+All three are pure (no I/O, no side effects). None throws on missing or
+malformed optional fields. `toSimplifiedRecordRead` is `toSimplified` for a
+record read, with the record-read place rules on (Rule 7).
 
 ---
 
 ## Input types — GedcomX
 
 The functions accept the subset of GedcomX that FamilySearch returns through
-the `person_read`, `cets`, and `record_search` endpoints. (`record_search` runs
-each search entry's `content.gedcomx` through `toSimplified` so downstream tools
-get the faithful record shape instead of the flattened summary.) Fields outside
-this subset are dropped during simplification.
+the `person_read`, `cets`, `record_search` and `record_read` endpoints.
+(`record_search` runs each search entry's `content.gedcomx` through
+`toSimplified` so downstream tools get the faithful record shape instead of the
+flattened summary; `record_read` runs the recapi persona body through
+`toSimplifiedRecordRead`.)
+Fields outside this subset are dropped during simplification.
 
 ```typescript
 export type GedcomX = {
@@ -81,8 +88,24 @@ export type GedcomXFact = {
   type?: string;            // URI, e.g. "http://gedcomx.org/Birth"
   primary?: boolean;
   date?: { original?: string; formal?: string };
-  place?: { original?: string; description?: string };
+  place?: {
+    original?: string;
+    normalized?: { value: string; lang?: string }[];
+    description?: string;   // "#place_1831208" (record read), "#11692585" (search)
+    fields?: GedcomXField[];
+  };
   sources?: GedcomXSourceReference[];
+};
+
+export type GedcomXField = {
+  type?: string;            // URI, e.g. "http://gedcomx.org/Place"
+  values?: {
+    type?: string;          // "http://gedcomx.org/Original" | "http://gedcomx.org/Interpreted"
+    labelId?: string;       // e.g. "EVENT_PLACE", "PR_RES_PLACE_ORIG"
+    text?: string;
+    resource?: string;      // e.g. "https://www.familysearch.org/platform/places/description/1831208"
+    qualifiers?: GedcomXQualifier[];
+  }[];
 };
 
 export type GedcomXRelationship = {
@@ -113,13 +136,21 @@ export type GedcomXQualifier = {
 
 export type GedcomXSourceDescription = {
   id?: string;
+  resourceType?: string;    // URI, e.g. "http://gedcomx.org/DigitalArtifact"
   titles?: { value: string }[];
   citations?: { value: string }[];
   about?: string;
+  coverage?: {
+    spatial?: { description?: string };
+    temporal?: { original?: string; formal?: string };
+    recordType?: string;
+  }[];
 };
 
 export type GedcomXPlaceDescription = {
   id?: string;
+  identifiers?: Record<string, string[]>; // e.g. "http://gedcomx.org/Primary"
+  place?: { resource?: string; resourceId?: string }; // a record read's entry with no id
   names?: { value: string }[];
   latitude?: number;
   longitude?: number;
@@ -384,12 +415,81 @@ equivalent.
 { "original": "Denver, Colorado, USA", "description": "#place1" }  →  place: "Denver, Colorado, USA"
 { "original": "Denver", "normalized": [{ "value": "Denver, Colorado, United States", "lang": "en" }] }
                                                   →  place: "Denver", standard_place: "Denver, Colorado, United States"
+{ "original": "Faial, Santana, Madeira, Portugal",
+  "fields": [{ "type": "http://gedcomx.org/Place", "values": [
+    { "type": "http://gedcomx.org/Original", "labelId": "PR_RES_PLACE_ORIG", "text": "dos Mainhos" },
+    { "type": "http://gedcomx.org/Interpreted", "labelId": "PR_RES_PLACE",
+      "text": "Faial, Santana, Madeira, Portugal",
+      "resource": "https://www.familysearch.org/platform/places/description/1831208",
+      "qualifiers": [{ "name": "http://familysearch.org/types/qualifiers/Preferred", "value": "true" }] } ] }] }
+                                                  →  place: "dos Mainhos", standard_place: "Faial, Santana, Madeira, Portugal"
+                                                     (toSimplifiedRecordRead; placeIds gives this fact
+                                                      { placeId: "1831208", original: "Faial, Santana, Madeira, Portugal" })
 ```
 
-`place` is `place.original` verbatim. `standard_place` is the standardized
-name: `toSimplified` (pure) takes it from `place.normalized` — preferring the
-`lang === "en"` entry, else the first. The `description` reference is dropped;
-richer place data lives in the top-level `places[]` array (Rule 12).
+`place` is the place as the record wrote it: `place.original` verbatim, except
+for the record-read case under **As-written text** below. `standard_place` is
+FamilySearch's own standardized name, read from the response with no lookup
+(pure):
+
+1. `place.normalized` — the `lang === "en"` entry, else the first. Search and
+   tree responses carry it.
+2. Record reads only (`toSimplifiedRecordRead`): else an `Interpreted` value of
+   the place's `http://gedcomx.org/Place` field that has both text and a
+   `resource` that is a place description URL (`…/places/description/<id>`). A
+   record read (the recapi persona endpoint) never sends `normalized`; this
+   value's text is FamilySearch's standard full name, in the record's language
+   as sent ("Kuopio, Kuopio, Suomi"). Among such values take the one marked
+   with the `http://familysearch.org/types/qualifiers/Preferred` qualifier;
+   else the one whose id `place.description` names as `#place_<id>`; else the
+   only one. If the chosen values disagree on the name, name two place ids, or
+   `description` names an id none of them carries, there is no
+   `standard_place`. Nor is there when `place.original`, FamilySearch's own
+   text for the fact, is the text of another candidate than the chosen one:
+   FVFW-Y6P's `place.original` is the text of Tobel (11861493), while
+   `place.description` names Braunau (11861494).
+
+An `Interpreted` value with no place description URL is never used, Preferred
+or not. One with no `resource` often echoes the as-written text ("Yabebyry"),
+and any other reference (`#place_1927095`, `…/authorities/v1/place/1927095`)
+can cite an authorities place id, which read as a representation id is another
+place (1927095 is Finland as an authorities id, Mingary, South Australia as a
+representation id). `toSimplified`
+(search and tree responses) takes no step 2 and reads no `Place` field at all:
+a search response's `Interpreted` text is often the as-written text, and a
+value there would also stop `record_search`'s resolver pass from filling the
+fact. Search responses carry `normalized`, which is the standard there.
+
+**As-written text (record reads only).** Some record reads put the
+standardized text in `place.original` and keep what the record says only in the
+`Original` value of the same `Place` field (`labelId` like `EVENT_PLACE_ORIG`).
+When `place.original` equals an `Interpreted` text of that field, the field
+holds exactly one `Original` text, and the fact keeps a `standard_place`,
+`place` is that `Original` text. A fact that keeps no
+`standard_place` (an id-less value, an ambiguous choice, a non-place phrase)
+keeps `place.original`, so the standardized text is never lost. The code
+extractor decides a census's relationship column from neither: it reads the
+census fact's `place.original`, which `record_read` stages beside the document
+as that persona's `indexFields` `censusPlace` (`record-index-fields.ts`), so the
+as-written text ("Salem, Massachusetts" decides nothing) and the English name
+("…, Scotland, United Kingdom" reads as England and Wales; "Hormigueros, Puerto
+Rico" drops the United States) leave the decision as `main` made it. A staged
+read without it decides from `standard_place ?? place` (`record-extract.ts`).
+
+**Place ids.** `toSimplifiedRecordRead` returns `{ doc, placeIds }`. `placeIds`
+maps each fact whose `standard_place` came from step 2 to
+`{ placeId, original, formal }`: the place id of the chosen value,
+`place.original` (absent when the place has none), which is the fact's `place`
+when it keeps no `standard_place`, and the fact's `date.formal` (absent when
+the date has none), which dates the name. These ride beside the document, never
+on it: a fact has no field for them
+(`TREE_FACT_FIELDS` in `validation/tree-shape.ts` is a closed list).
+`record_read` uses them to name each place in English, or else to give the fact
+what `toSimplified` gives it (below). A fact FamilySearch gave no place id takes
+none from the record's other facts, even those with the same text.
+
+The `description` reference is otherwise dropped; richer place data lives in
+the top-level `places[]` array (Rule 12).
 
 A census or register answer that names no place ("Same House", "Same Place",
 "Do", "Rural", …: `NON_PLACE_PHRASES` in `place-resolver.ts`, whole text
@@ -404,8 +504,8 @@ standardizes as usual.
 `toGedcomX` writes only `{ original: placeString }` and ignores
 `standard_place` on the reverse path.
 
-Free-text places with no `normalized` value are left without a
-`standard_place` by the pure converter. The async wrapper
+Free-text places with no standardized value (neither step above) are left
+without a `standard_place` by the pure converter. The async wrapper
 `toSimplifiedStandardized` fills them by resolving `place` through
 `place_search` (network) — deduping identical strings, resolving ≤8 in
 parallel, best-effort (never throws, leaves the field empty on failure).
@@ -420,11 +520,145 @@ model, so an unset field is the only honest outcome. Tools
 that return facts to the model call `toSimplifiedStandardized` (single doc) or
 run `standardizePlaces` over the flattened facts of a multi-result response
 (`record_search` / `person_search`). The pure `toSimplified` remains for
-callers that want no I/O. Exception — `record_read`'s live path calls the pure
-`toSimplified`, not `toSimplifiedStandardized`: it keeps whatever `standard_place`
-the response's own `normalized` value supplies, and never falls back to the
-resolver. See `docs/record-read-sidecar-scope.md` for the measurement and
-rationale.
+callers that want no I/O. Exception — `record_read`'s live path never calls
+`toSimplifiedStandardized` and never falls back to the resolver. It calls
+`recordReadDocument` (`tools/record-read.ts`): `toSimplifiedRecordRead`, then
+each `placeIds` fact named by its id, then each coverage place named by its id.
+The step-2 text is in the record's language, and the engine compares standard
+places as English text (`factsEquivalent` in `merge-gedcomx.ts`,
+`standardPlaceCountry` in `research-append.ts`), so each fact's
+`standard_place` is replaced by `repIdToStandardPlaceAt(placeId, years, place)`
+(`place-resolver.ts`): the English name of that FamilySearch place at the
+fact's date. A place has one representation per era, and the chosen id's own
+one can be from another ("Olne, Prince-Bishopric of Liège, Holy Roman Empire",
+valid to 1795, for an 1874 death; the 1874 one is "Olne, Liège, Belgium").
+One rule: **the fact is named only when its own text names the chosen place,
+and exactly one name is valid at its date across all representations of that
+place.** Any doubt names nothing:
+
+- The fact's own text is its `place`: the `Original` text where **As-written
+  text** above takes it, else `place.original`. Some part of it must be one of
+  the chosen place's names, in any language, as the place's listing gives them
+  for every representation (`names[]`), compared as `checkFirstPlace` compares
+  names (case, accents, "St"/"Saint" and type words ignored). A part is a
+  comma-separated part without anything from its first "(" or `"` on:
+  QLNH-QVQB's "Vorden (Bronckhorst)" is "Vorden", and ZMX8-MHT2's
+  `La Matriz "El Carmen" de Guano` is "La Matriz". Any part may name a
+  jurisdiction ("Liro, Piaui" names the state of Piauí), but only the first
+  part may name a settlement: a place whose description types it City, Town,
+  Village, Hamlet, Populated Place, Major City, Independent City, Neighborhood
+  or suburb, Locality or Dispersed Settlement. KF9R-VTB's 1847 death, written
+  "Троицкая церковь, Крымки, Чигирин, Киев, Украина", was given the city of
+  Kyiv. Over the matcher corpus this names 872 facts fewer and 3 more (the
+  rename rule below reads the same parts). `research_append` geocodes each fact
+  it leaves unnamed, so end to end what `extraction_append` saves changes only
+  where its geocode differs: on the 40 records whose village text was named
+  the city of Kyiv, 44 assertions go from the city (1 right) to 37 right or
+  coarser and 7 wrong; for 60 of the 872 facts drawn at random, every one keeps
+  a standard, 49 the same one, 9 another right one, 1 goes from wrong to right
+  and 1 from one wrong place to another. Otherwise FamilySearch's
+  choice of place is in doubt: Q2W9-1GVF's 1881 census, written
+  "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", was given the town of
+  Aberayron, its registration district, and SGZQ-Y3L's "Saint Peter,
+  Carmarthenshire, Wales" the town of Carmarthen. "Kuopio, Kuopio" names place
+  1962838, whose 1854 representation is "Kuopion kaupunki", and "Firenze" names
+  Florence. A fact with no place text is named nothing.
+- A fact whose Place field has no `Original` value has no text of its own: its
+  `place.original` is FamilySearch's own `Interpreted` text, which names
+  FamilySearch's choice by construction, so this check cannot catch a wrong
+  choice there. Such facts are still named: all 12 in the 40-record sample are
+  named right (4MB5-YKPZ, 66FT-QDBL, 666R-QTQP, 6BQC-LJJP, 6FZT-K3Y1,
+  6J8F-6678, 6J3W-KF7B, 6VC3-T612, WS89-MGMM, X3HZ-K14S, X7S5-8J2Z and
+  XS6T-95RP, among them the era-correct Florence 1813, Olne 1874 and Caracas
+  1794).
+- The fact's years are its `date.formal` (`gedcomxDateYears`), which
+  FamilySearch sends whatever language or form `date.original` takes ("4
+  sierpnia 1794" is `+1794-08-04`); else `date.original` as `stdDate` reads
+  it. A fact with neither is named nothing. A before or after date is open on
+  that side (`/+1900`, "Bef 1900"; `+1850/`, "Aft 1850"), and an approximate
+  formal date (`A+1874`) spans a year either way, as `Abt` does.
+- A representation is valid at the date when the years fall wholly inside its
+  range; one with no range is valid at every date. A date that crosses a range
+  boundary is valid in no representation, and so is named nothing.
+- The representations are the place's listing (`getPlaceReps`, one call per
+  place, which gives each one's English full name, range and names in every
+  language); the chosen one's description gives its place. Both lookups are
+  cached. The description answers a retired representation id with another
+  representation of its place (1829107 with 439844, "Vorden, Gelderland,
+  Netherlands", valid to 2004), so the listing need not hold the id the record
+  cites. Nothing is named when either lookup fails or a range in the listing
+  cannot be read.
+- Two names valid at once name nothing: Olne in 1830 is "Olne, Liège,
+  Netherlands" (to 1830) and "Olne, Liège, Belgium" (from 1830), and
+  4M3P-3SZM's Christ Church, Middlesex has two representations with no range,
+  "…, British Colonial America" and "…, United States".
+- Nothing is named when the place was renamed and the fact's `place` still
+  gives the chosen representation's name: the valid name's own name (the first
+  part of the full name) differs from the chosen representation's, and a part
+  of `place` is the chosen one's own name, only the first part for a
+  settlement. 6T22-VN4N's 1906 marriage, written "Maceió, Alagoas, Brasil" and
+  given the town's 1815–1819 representation "Alagoas, Alagoas, Brazil", is
+  "Maceió, Alagoas, Brazil": its "Alagoas" is the state. Names are compared as
+  `checkFirstPlace` compares them (case, accents, "St"/"Saint" and type words
+  ignored on both sides, so "Simmern" is "Kreis Simmern"). FamilySearch then
+  matched the record's text to a name the place did not have at the fact's
+  date. A 1980 death written "Bela Vista" was given representation 10979131,
+  Bela Vista 1938–1944, whose place has been Echaporã since 1944; the record
+  more likely means another Bela Vista. A text that gives the place a name from
+  another era than the chosen one's is named: 6293-8K43's 1866 census, written
+  "Киевское воеводство, Польша" and given the Kiev Voivodeship's 1569–1793
+  representation, is "Kiev Governorate, Russian Empire". A new jurisdiction
+  under the same name (Olne in Belgium) is no rename.
+- When the description answers the cited id with another representation (a
+  retired id), the cited one's own name is unknown, so some part of `place`
+  must instead be a name the place had at the fact's date: one of the
+  `names[]`, in any language, of a representation valid then. A 1980 "Bela
+  Vista" citing a retired id the description answers with Echaporã's
+  representation is named nothing; QLNH-QVQB's 1893 "Vorden (Bronckhorst)",
+  citing 1829107, is "Vorden, Gelderland, Netherlands". Over the matcher corpus
+  this holds 74 names as doubt, most of them a town's retired id the
+  description now answers with its region or state ("Speyer, Pfalz, Bavaria"
+  given "Palatinate, Bavaria"). Reading every language for an ordinary rename
+  too would hold 67 more names as doubt (65 right, 2 coarser) and name 18 (17
+  right, 1 coarser), and it caught no wrong name, so only a retired id is read
+  that way.
+
+When nothing is named, or the name contradicts the fact's `place`, the fact
+gets what `toSimplified` gives it: `place.original` and no `standard_place`.
+FamilySearch's own text is never kept. A name contradicts the `place` when it
+names another country (`countryConsistency`, the check `research_append`
+refuses a record on), or another US state, Puerto Rico or Canadian province
+(`divisionContradiction`): the `place`'s last part, after a trailing "United
+States", "Canada" or "British North America", names one by name or postal code
+("Quebec", "Utah Territory", "Canada East", "QC"), and the name's parts after
+its own name name others and not that one; when they name none, its own name
+is read, so a state named for another ("Washington, United States" for
+"Washington, Washington, Pennsylvania") contradicts it. X7N1-CP7N's 1921 census, written
+"St Leonard, St Leonard, Quebec", was given the parish in Madawaska, New
+Brunswick, and V6CR-R26's "Hormigueros, 1, Hormigueros, Puerto Rico" the town
+of Puerto Rico in Hidalgo, Texas. On its own, over the matcher corpus, it
+refuses those and two more shapes, 15 names in all, and no other.
+
+A coverage place is named by its id's own name (`repIdToStandardPlace`),
+whatever the coverage's dates, as on any other read: coverage describes the
+volume the record sits in ("Source descriptions"), which often spans eras, not
+the record's event, and no engine code copies it into an assertion or the
+tree. So one place id can be named one way on a fact and another on a
+coverage. Only a coverage whose `spatial.description` resolves to a place
+description whose id is the coverage's `place_rep_id` is named:
+a `…/places/description/<id>` URL, or a `#…` reference to a `places[]` entry
+that cites one (its `Primary` identifier, else its `place.resource`). Any other
+reference names nothing: an older record cites an authorities place id
+(`#place_1927095`, whose entry's `Primary` identifier is
+`…/authorities/v1/place/1927095`, Finland), and read as a representation id
+that number is another place (Mingary, South Australia). Nor does a `#place_8`
+reference whose entry cites description 9: the `place_rep_id` read from the
+reference is 8. The converter copies no name from a record read's `places[]`
+(its entries are `place_<id>`, never the bare id a coverage carries), so a
+coverage `record_read` does not name has none. A lookup by id names
+the place FamilySearch chose and resolves no place name, so it is not the
+resolver fallback `record_read` stays without. See
+`docs/record-read-sidecar-scope.md` for the measurement and rationale.
 
 ### 7.5 `value` on facts
 
@@ -586,12 +820,19 @@ format as `resource_type` and `coverage`:
 
 - **`coverage[]`** → `coverage` (first entry only) — volume-level provenance on
   `DigitalArtifact` entries: `place_rep_id` (from `spatial.description`, resolvable
-  via `repIdToStandardPlace`; `record_read` resolves it to `standard_place`; none
-  when the description references a place of the document's `places[]` that is
-  identified only by an authority place id, `…/authorities/v1/place/<n>`, since
-  `<n>` is a place id and read as a rep id names another place — in matcher-lab
-  m13's record reads only collection coverages were such references, and the
-  authority id 1927074 read as a rep is Minto, New South Wales, Australia),
+  via `repIdToStandardPlace`; none when the description references a place of
+  the document's `places[]` that is identified only by an authority place id,
+  `…/authorities/v1/place/<n>`, since `<n>` is a place id and read as a rep id
+  names another place — in matcher-lab m13's record reads only collection
+  coverages were such references, and the authority id 1927074 read as a rep is
+  Minto, New South Wales, Australia), `standard_place` (the name of the
+  response's own `places[]` entry whose `id` is that id, when it gives a
+  non-empty one; a coverage with no `place_rep_id` takes none, even beside an
+  entry with no `id` — a search response
+  names the places its record refers to, keyed by the bare id; a record read's
+  entries are keyed `place_<id>` and carry no names, so `record_read` names the
+  id by its own name, whatever the coverage's dates, when `spatial.description`
+  resolves to that place description — "Places on facts"),
   `date_range` (from `temporal.original`, falling back to `temporal.formal`), and `record_type` (URI prefix stripped).
   Coverage describes **the volume the image sits in**, not the event — on 4 of
   9 records with coverage, the coverage place or date range contradicted the
@@ -809,6 +1050,8 @@ New file in a new `src/utils/` directory.
 
 Exports:
 - `toSimplified(gedcomx: GedcomX): SimplifiedGedcomX`
+- `toSimplifiedRecordRead(gedcomx: GedcomX): { doc: SimplifiedGedcomX; placeIds: Map<SimplifiedFact, RecordReadPlace> }`
+- `RecordReadPlace` (type): `{ placeId: string; original?: string; formal?: string }`
 - `toGedcomX(simplified: SimplifiedGedcomX): GedcomX`
 
 Internal helpers (not exported) for repeated logic — URI strip/restore, name

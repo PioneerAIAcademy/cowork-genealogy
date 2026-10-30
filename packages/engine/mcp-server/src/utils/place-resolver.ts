@@ -13,7 +13,7 @@
  * the SimplifiedGedcomX / research.json data formats.
  *
  * This module builds on the low-level FamilySearch places fetchers in
- * `./place-api.ts` (`searchPlace`, `getPlaceById`, `getPlaceRepIds`) — a
+ * `./place-api.ts` (`searchPlace`, `getPlaceById`, `getPlaceReps`) — a
  * dedicated low-level layer that both this resolver and `tools/place-search.ts`
  * import from, so the raw HTTP lives below the tool layer (no util→tool
  * dependency). All of those endpoints are anonymous (no auth), so the
@@ -22,11 +22,12 @@
 import {
   searchPlace,
   getPlaceById,
-  getPlaceRepIds,
+  getPlaceReps,
   getPlaceCandidateNames,
+  type PlaceRep,
 } from "./place-api.js";
 import { stdDate } from "./date-standardize.js";
-import { earliestYear } from "./date-helpers.js";
+import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "./date-helpers.js";
 import { foldPlaceKey, listedOneWordPlace, oneWordPlaceIsWord, oneWordPlaceNeedsCountry } from "./one-word-places.js";
 
 // Element types of the existing fetchers, without needing their (unexported)
@@ -35,9 +36,18 @@ type SearchEntry = Awaited<ReturnType<typeof searchPlace>>[number];
 
 interface RepInfo {
   standardPlace: string;
+  /** The representation the description answered with: another one than the
+   *  id asked for when FamilySearch has retired that id. */
+  placeRepId: string;
+  /** Its place type, as the description gives it ("City", "County"). */
+  type?: string;
   placeId?: string;
   latitude?: number;
   longitude?: number;
+  /** The representation of its jurisdiction, the next place up its chain. */
+  parentRepId?: string;
+  /** When it is valid: FamilySearch's formal range ("+1918/+1992"). */
+  dateRange?: string;
 }
 
 export interface ResolveOpts {
@@ -91,13 +101,15 @@ const standardizeCache = new Map<string, string | null>();
 const nameToRepIdCache = new Map<string, string | null>();
 /** placeRepId -> resolved info (standardPlace, placeId, coords). */
 const repInfoCache = new Map<string, RepInfo | null>();
-/** placeId -> all placeRepIds for that spot over time. */
-const placeIdRepsCache = new Map<string, string[]>();
+/** placeId -> every representation of that spot over time. */
+const placeRepsCache = new Map<string, PlaceRep[]>();
 /** Internal memo of raw search results, so the resolver fns above don't
  *  re-issue the same search. Key: `${name}|${contextName}|${year ?? ""}`
  *  (normalized) — a dated and an undated search of one place are different
  *  queries and must not share an entry. */
 const searchEntriesCache = new Map<string, SearchEntry[]>();
+/** Folded full name -> the search entries whose full name folds to it, in search order. */
+const familySearchPlacesCache = new Map<string, SearchEntry[]>();
 
 /** Test-only: when set, `resolveStandardPlace` answers from this table (keyed
  *  by the place text, normalized) and never reaches the network; a place not in
@@ -116,8 +128,9 @@ export function __clearPlaceResolverCachesForTests(): void {
   standardizeCache.clear();
   nameToRepIdCache.clear();
   repInfoCache.clear();
-  placeIdRepsCache.clear();
+  placeRepsCache.clear();
   searchEntriesCache.clear();
+  familySearchPlacesCache.clear();
 }
 
 // ─── Generic helpers ─────────────────────────────────────────────────────────
@@ -165,6 +178,13 @@ function placeNameKeys(name: string): string[] {
   return [placeNameKey(name), placeNameKey(withoutTypeWords(name))];
 }
 
+/** True when two names are one name as `checkFirstPlace` compares them: case,
+ *  accents, "St"/"Saint" and type words ignored on both sides. */
+function sameName(a: string, b: string): boolean {
+  const keys = placeNameKeys(a);
+  return placeNameKeys(b).some((key) => keys.includes(key));
+}
+
 /** Words that name a jurisdiction's TYPE, not the place: "Stagstrup Sogn" is
  *  Stagstrup, "Co. Cork" is Cork, "Landkreis Soltau" is Soltau. Compared as
  *  `placeNameKey` output, so "Co." arrives as "co". */
@@ -203,10 +223,11 @@ const NON_PLACE_PHRASES = new Set([
   "different place", "other place",
 ]);
 
-/** The place text is a non-place phrase (NON_PLACE_PHRASES), case, spacing and
- *  periods ignored ("R.F.D.", "Do."). Such a place is never standardized. */
+/** The place text is a non-place phrase (NON_PLACE_PHRASES), case, spacing,
+ *  periods and trailing punctuation ignored ("R.F.D.", "Do.", "Same House,").
+ *  Such a place is never standardized. */
 export function isNonPlacePhrase(place: string): boolean {
-  return NON_PLACE_PHRASES.has(normalizeKey(place.replace(/\./g, " ")));
+  return NON_PLACE_PHRASES.has(normalizeKey(place.replace(/\./g, " ").replace(/[\s\p{P}]+$/u, "")));
 }
 
 /** Strip a trailing `(Type)` suffix that `describeCandidates` appends.
@@ -542,17 +563,21 @@ const SEA_NAME = /\b(?:seas?|gulf)\b/i;
  * in today, keyed by `foldPlaceKey`, under that country: Brazil's own name,
  * which the country guard's alias table does not carry, and the historical
  * states matcher-lab m13's list builder counts inside one modern country (stage
- * S4, "historical states count inside their modern countries", `m13/final/fl.py`).
- * Left out of that map: England, Scotland and Wales (the United Kingdom, in
- * `countryOfPlace`); a state it puts in several modern countries (Prussia,
- * Czechoslovakia, the Soviet Union), which keeps its own name; and Burma and
- * German South West Africa, which it puts in the colonies they lay in (India,
- * South Africa), though each is a country today.
+ * S4, "historical states count inside their modern countries", `m13/final/fl.py`),
+ * British Honduras, Belize's colonial name, which FamilySearch dates to 1973,
+ * and British Colonial America, all 24 of whose places FamilySearch puts in
+ * today's United States (Places API, 2026-10-30). Left out of that map:
+ * England, Scotland and Wales (the United Kingdom, in `countryOfPlace`); a
+ * state it puts in several modern countries (Prussia, Czechoslovakia, the
+ * Soviet Union), which keeps its own name; and Burma and German South West
+ * Africa, which it puts in the colonies they lay in (India, South Africa),
+ * though each is a country today.
  */
 const COUNTRY_TODAY: ReadonlyMap<string, string> = new Map(
   Object.entries({
     Australia: ["christmas island"],
     Austria: ["carinthia", "styria"],
+    Belize: ["british honduras"],
     Brazil: ["brasil"],
     Canada: ["british north america", "newfoundland"],
     Chile: ["captaincy general of chile"],
@@ -582,7 +607,9 @@ const COUNTRY_TODAY: ReadonlyMap<string, string> = new Map(
     Switzerland: ["geneva", "three leagues"],
     "Timor-Leste": ["portuguese timor"],
     Ukraine: ["zaporizhian host"],
-    "United States": ["kingdom of hawaii", "new netherland", "republic of texas", "republic of vermont"],
+    "United States": [
+      "british colonial america", "kingdom of hawaii", "new netherland", "republic of texas", "republic of vermont",
+    ],
   }).flatMap(([country, names]) => names.map((name): [string, string] => [name, country])),
 );
 
@@ -594,21 +621,30 @@ const COUNTRY_TODAY: ReadonlyMap<string, string> = new Map(
  * its English name ("México" is Mexico, "USA" the United States); and England,
  * Scotland, Wales and Northern Ireland are the United Kingdom ("Campbeltown,
  * Argyll, Scotland" is a United Kingdom record, as "…, Scotland, United
- * Kingdom" is). Null for a place with no segment, and for one that ends in no
+ * Kingdom" is). Any other last segment is its own name (`countryToday` maps
+ * none). Null for a place with no segment, and for one that ends in no
  * country: the World, a continent, an ocean or a sea.
  */
 export function countryOfPlace(place: string): string | null {
   const last = placeSegments(place).at(-1);
   if (last === undefined) return null;
+  const named = countryToday(last) ?? last;
+  return NOT_COUNTRIES.has(named.toLowerCase()) || SEA_NAME.test(named) ? null : named;
+}
+
+/** The country of today a place's last segment names, by `COUNTRY_TODAY` or the
+ *  alias table (`canonicalCountry`), England, Scotland, Wales and Northern
+ *  Ireland as the United Kingdom; null when neither knows it. */
+function countryToday(last: string): string | null {
   const known = canonicalCountry(last);
-  const named =
+  return (
     COUNTRY_TODAY.get(foldPlaceKey(last)) ??
     (known === null
-      ? last
+      ? null
       : UK_CONSTITUENTS.has(known)
         ? "United Kingdom"
-        : known.split(" ").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "));
-  return NOT_COUNTRIES.has(named.toLowerCase()) || SEA_NAME.test(named) ? null : named;
+        : known.split(" ").map((w) => w[0].toUpperCase() + w.slice(1)).join(" "))
+  );
 }
 
 /**
@@ -648,6 +684,271 @@ export function countryConsistency(place: string, standardPlace: string): "ok" |
   // Historic Irish records: "Ireland" is consistent with "Northern Ireland".
   if (inputCountry === "ireland" && stdCountries.includes("northern ireland")) return "ok";
   return "contradiction";
+}
+
+/**
+ * The standard place's own name, its first segment, is one of the place text's
+ * comma parts, compared as `checkFirstPlace` compares a name (case, accents,
+ * periods, "St", type words and an "X of" prefix aside). "Cincinnati, Hamilton,
+ * Ohio, United States" is named in "412 Vine St, Cincinnati"; "Hawaii, United
+ * States" is not named in "with his daughter". It confirms an answer the
+ * country check cannot judge.
+ */
+export function standardPlaceNamedInText(place: string, standardPlace: string): boolean {
+  const name = placeSegments(standardPlace)[0];
+  if (!name) return false;
+  const keys = new Set(placeNameKeys(name));
+  return placeSegments(place).some((segment) => placeNameKeys(segment).some((k) => keys.has(k)));
+}
+
+/** A standard place as FamilySearch's place search gives it: its full name, and
+ *  every place (id, type and the representation of that name) of that full name. */
+export interface FamilySearchPlace {
+  fullName: string;
+  places: { placeId?: string; placeRepId?: string; type?: string }[];
+}
+
+/**
+ * The standard place FamilySearch's place search finds whose full name is
+ * `name`, case and accents aside, in FamilySearch's own spelling ("santo
+ * antonio, funchal, madeira, portugal" is "Santo António, Funchal, Madeira,
+ * Portugal"): `name` itself when FamilySearch spells it so. One full name can be
+ * several places ("West Bromwich, Staffordshire, England, United Kingdom" is a
+ * town, a registration district and a poor law union). False when the search
+ * finds no such place: `name` is not one of FamilySearch's standard places, as
+ * `place_search` returns them. Null when the search failed, which a writer reads
+ * as no answer and keeps the value as written.
+ */
+export async function familySearchPlace(name: string): Promise<FamilySearchPlace | false | null> {
+  const key = foldPlaceName(name);
+  let entries = familySearchPlacesCache.get(key);
+  if (entries === undefined) {
+    try {
+      entries = (await searchPlace(name)).filter((e) => foldPlaceName(e.fullName) === key);
+    } catch {
+      return null;
+    }
+    familySearchPlacesCache.set(key, entries);
+  }
+  const fullName = entries.find((e) => e.fullName === name)?.fullName ?? entries[0]?.fullName;
+  if (fullName === undefined) return false;
+  return {
+    fullName,
+    places: entries
+      .filter((e) => e.fullName === fullName)
+      .map(({ placeId, placeRepId, type }) => ({ placeId, placeRepId, type })),
+  };
+}
+
+/**
+ * Some part of `placeText` names one of the places `standard` is the full name
+ * of: `record_read`'s own-text check (`textNaming`, as `repIdToStandardPlaceAt`
+ * applies it), here to a standard place a caller supplied. Null when no place's
+ * listing can be read.
+ */
+export async function textNamesPlace(standard: FamilySearchPlace, placeText: string): Promise<boolean | null> {
+  let read = false;
+  for (const { placeId, type } of standard.places) {
+    if (!placeId) continue;
+    const { reps, named } = await textNaming(placeId, type, placeText);
+    if (reps.some(named)) return true;
+    read ||= reps.length > 0;
+  }
+  return read ? false : null;
+}
+
+/** The FamilySearch place (its place id) a standard place names, as
+ *  `place_distance` measures it: the exact full-name match, else the best hit.
+ *  Null when the search fails or finds nothing. */
+async function placeIdOf(name: string): Promise<string | null> {
+  try {
+    return pickExactOrBest(await getSearchEntries(name), name)?.placeId ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Two standard places name one FamilySearch place, however each is spelled. */
+export async function samePlace(a: string, b: string): Promise<boolean> {
+  const [x, y] = await Promise.all([placeIdOf(a), placeIdOf(b)]);
+  return x !== null && x === y;
+}
+
+/** The US states, the District of Columbia and Puerto Rico, and the Canadian
+ *  provinces, by name (diacritics folded), as their postal codes, under the
+ *  one country that holds each. */
+const DIVISIONS_BY_COUNTRY: Record<string, Record<string, string>> = {
+  "United States": {
+    alabama: "AL", alaska: "AK", arizona: "AZ", arkansas: "AR", california: "CA", colorado: "CO",
+    connecticut: "CT", delaware: "DE", florida: "FL", georgia: "GA", hawaii: "HI", idaho: "ID",
+    illinois: "IL", indiana: "IN", iowa: "IA", kansas: "KS", kentucky: "KY", louisiana: "LA", maine: "ME",
+    maryland: "MD", massachusetts: "MA", michigan: "MI", minnesota: "MN", mississippi: "MS", missouri: "MO",
+    montana: "MT", nebraska: "NE", nevada: "NV", "new hampshire": "NH", "new jersey": "NJ", "new mexico": "NM",
+    "new york": "NY", "north carolina": "NC", "north dakota": "ND", ohio: "OH", oklahoma: "OK", oregon: "OR",
+    pennsylvania: "PA", "rhode island": "RI", "south carolina": "SC", "south dakota": "SD", tennessee: "TN",
+    texas: "TX", utah: "UT", vermont: "VT", virginia: "VA", washington: "WA", "west virginia": "WV",
+    wisconsin: "WI", wyoming: "WY", "district of columbia": "DC", "puerto rico": "PR",
+  },
+  Canada: {
+    ontario: "ON", "canada west": "ON", "upper canada": "ON", quebec: "QC", "canada east": "QC",
+    "lower canada": "QC", "nova scotia": "NS", "new brunswick": "NB", "nouveau-brunswick": "NB",
+    manitoba: "MB", "british columbia": "BC", "prince edward island": "PE", saskatchewan: "SK",
+    alberta: "AB", newfoundland: "NL",
+  },
+};
+const DIVISIONS: Record<string, string> = Object.fromEntries(
+  Object.values(DIVISIONS_BY_COUNTRY).flatMap((divisions) => Object.entries(divisions)),
+);
+/** The country that holds each division, by its postal code. */
+const DIVISION_COUNTRY: ReadonlyMap<string, string> = new Map(
+  Object.entries(DIVISIONS_BY_COUNTRY).flatMap(([country, divisions]) =>
+    Object.values(divisions).map((code): [string, string] => [code, country]),
+  ),
+);
+
+/** The US state, Puerto Rico or Canadian province one part of a place names,
+ *  by name ("Utah Territory", "Québec") or postal code ("QC"), else null. */
+function divisionOf(part: string): string | null {
+  const key = foldPlaceName(part).replace(/\.$/, "");
+  const name = key.replace(/ (?:territory|state)$/, "");
+  if (Object.hasOwn(DIVISIONS, name)) return DIVISIONS[name];
+  return DIVISION_COUNTRY.has(key.toUpperCase()) ? key.toUpperCase() : null;
+}
+
+/** The US state, Puerto Rico or Canadian province a place text's last part
+ *  names, after a trailing "United States", "Canada" or "British North
+ *  America", else null. */
+function textDivision(place: string): string | null {
+  const parts = placeSegments(place);
+  const nation = (part: string) =>
+    ["united states", "canada"].includes(canonicalCountry(part) ?? "") || foldPlaceName(part) === "british north america";
+  while (parts.length > 0 && nation(parts[parts.length - 1])) parts.pop();
+  return parts.length > 0 ? divisionOf(parts[parts.length - 1]) : null;
+}
+
+/**
+ * `countryConsistency` one level down, for the United States and Canada: true
+ * when the place text's last part (`textDivision`) names a US state, Puerto Rico
+ * or a Canadian province, and the standard place names one or more of them
+ * among its jurisdictions (every part but its own name), none of them that one.
+ * "St Leonard, St Leonard, Quebec" was given Madawaska, New Brunswick, and
+ * "Hormigueros, 1, Hormigueros, Puerto Rico" the town of Puerto Rico in Hidalgo,
+ * Texas. A standard place that names none among its jurisdictions is judged by
+ * its own name, which is one when the place is a state or province itself:
+ * "Washington, Washington, Pennsylvania" is not "Washington, United States".
+ * One that names none at all is not judged.
+ */
+export function divisionContradiction(place: string, standardPlace: string): boolean {
+  const written = textDivision(place);
+  if (written === null) return false;
+  const [own = null, ...jurisdictions] = placeSegments(standardPlace).map(divisionOf);
+  const named = jurisdictions.some((code) => code !== null) ? jurisdictions : [own];
+  return named.some((code) => code !== null) && !named.includes(written);
+}
+
+/** The place text's last part names the US state, Puerto Rico or Canadian
+ *  province (`textDivision`) the standard place lies in, or its country
+ *  (`countryConsistency`) when a part of the text that is no country names the
+ *  place or one of its jurisdictions, as `checkFirstPlace` compares names:
+ *  "Balto., Md." ends with Maryland, where "Baltimore, Maryland, United States"
+ *  lies, and "La Unión, Guerrero, Mexico" names Guerrero, where "La Unión de
+ *  Isidoro Montes de Oca, Guerrero, Mexico" lies. Lying in the text's country
+ *  is not enough: "Laibach, Krain, Austria" names no part of "Krainberg,
+ *  Villach Land, Carinthia, Austria" but Austria, and "at the home of her
+ *  daughter" no place at all. */
+export function endsWithItsJurisdiction(place: string, standardPlace: string): boolean {
+  const written = textDivision(place);
+  if (written !== null) return placeSegments(standardPlace).some((segment) => divisionOf(segment) === written);
+  if (countryConsistency(place, standardPlace) !== "ok") return false;
+  const parts = placeSegments(place).filter((part) => canonicalCountry(part) === null);
+  return placeSegments(standardPlace).some((segment) => parts.some((part) => sameName(part, segment)));
+}
+
+/**
+ * The countries of today, as FamilySearch names them, that hold lands of an
+ * empire an old record names by a country the alias table carries, as the
+ * empire stood when it ended: the Russian Empire (1917), Austria-Hungary and
+ * the Kingdom of Hungary (1918), and the German Empire with Prussia
+ * ("Preussen"), and with Luxembourg, of the German Confederation to 1866, which
+ * American records often call Germany ("Wiltz, Luxemburg, Germany").
+ * "Helsingfors, Nyland, Russia" is Helsinki, Finland, and "Lemberg, Galizien,
+ * Österreich" Lviv, Ukraine. FamilySearch's own places bear them out
+ * ("Tashkent, Syr-Darya, Russian Empire", "Kars, Russian Empire", "Sarajevo,
+ * Bosnia-Herzegovina, Austria", "Cattaro, Dalmatia", "Muraszombat, Vas,
+ * Hungary", "Memel, East Prussia, Prussia, Germany"); it names Finland Finland
+ * throughout. A country the alias table carries (the United States, Germany,
+ * Switzerland, Poland, Hungary, Italy, Denmark) is not listed:
+ * `countryConsistency` refuses a value there before this list is read, so
+ * listing it would change nothing ("Moscow, Russia" keeps no "Moscow, Latah,
+ * Idaho, United States").
+ */
+const EMPIRE_LANDS: ReadonlyMap<string, ReadonlySet<string>> = new Map(
+  Object.entries({
+    russia: [
+      "Finland", "Estonia", "Latvia", "Lithuania", "Belarus", "Ukraine", "Moldova", "Republic of Georgia", "Armenia",
+      "Azerbaijan", "Kazakhstan", "Kyrgyzstan", "Tajikistan", "Turkmenistan", "Uzbekistan", "Türkiye",
+    ],
+    austria: [
+      "Czechia", "Slovakia", "Slovenia", "Croatia", "Ukraine", "Romania", "Bosnia-Herzegovina", "Serbia", "Montenegro",
+    ],
+    hungary: ["Slovakia", "Romania", "Serbia", "Croatia", "Ukraine", "Slovenia"],
+    germany: ["Lithuania", "Czechia", "Luxembourg"],
+  }).map(([empire, countries]): [string, ReadonlySet<string>] => [empire, new Set(countries)]),
+);
+
+/**
+ * The place text names a country, and FamilySearch puts `standard` in another:
+ * `countryConsistency` for any country, not only those its alias table carries,
+ * judged by the place's own jurisdiction chain ("Thornton, Lancashire, England"
+ * is not "Thornton, Natal, South Africa"). The text's country is its last
+ * part's, when the alias table knows it ("Rakousko" is Austria, "England" the
+ * United Kingdom); else, when its last part is a US state or Canadian province
+ * that `standard` does not name, the one country that holds it
+ * (`DIVISIONS_BY_COUNTRY`: "Worth, Illinois" is not "Wœrth, Bas-Rhin, France",
+ * nor "Fort Smith, Sebastian, Arkansas" "Fort Smith, Fort Smith, Northwest
+ * Territories, Canada"). The place's country is the root of its chain, as
+ * `countryOfPlace` names it. An empire's text also takes a country of today
+ * that holds its lands (`EMPIRE_LANDS`: "Lemberg, Galizien, Österreich" keeps
+ * "Lviv, Lviv, Ukraine", while "Hamburg, Hamburg, Germany" is not "Hamburg,
+ * Amathole, Eastern Cape, South Africa"). A root that `countryToday` maps to a
+ * country of today is judged by that country, whether or not FamilySearch dates
+ * it as ended: "Thornton, Lancashire, England" is not "Thornton, Cape, Cape
+ * Colony" (South Africa today), "Boston, Suffolk, Massachusetts" not "Boston,
+ * Lincolnshire, England" (England to 1801, the United Kingdom today), nor
+ * "Hamburg, Germany" "Hamburg, Berks, Pennsylvania, British Colonial America".
+ * A root FamilySearch dates as ended that it maps to none, a former state whose
+ * lands lie in several of today's countries (Czechoslovakia to 1992, Yugoslavia,
+ * the Soviet Union), is not judged, since its lands may lie in the text's
+ * ("Svitavy, Moravská Třebová, Morava, Rakousko" keeps "Svitavy, Moravská
+ * Třebová, Moravia, Czechoslovakia"). Nor is historic Ireland against Northern
+ * Ireland, a bare "Georgia", the state (lead, 2026-08-27), against a place
+ * FamilySearch puts in the Republic of Georgia ("Tbilisi, Georgia" keeps
+ * "Tbilisi, Republic of Georgia"; "Tbilisi, GA" does not), nor a chain that
+ * cannot be read. The chain is read from FamilySearch only when the answer
+ * turns on the root's dates.
+ */
+export async function countryContradiction(placeText: string, standard: FamilySearchPlace): Promise<boolean> {
+  const segments = placeSegments(standard.fullName);
+  const last = placeSegments(placeText).at(-1) ?? "";
+  const textCountry = canonicalCountry(last);
+  const division = textCountry === null ? textDivision(placeText) : null;
+  const named =
+    textCountry !== null
+      ? countryOfPlace(placeText)
+      : division !== null && !segments.some((s) => divisionOf(s) !== null)
+        ? (DIVISION_COUNTRY.get(division) ?? null)
+        : null;
+  const country = countryOfPlace(standard.fullName);
+  if (named === null || country === null || named === country) return false;
+  if (EMPIRE_LANDS.get(textCountry ?? "")?.has(country)) return false;
+  if (named === "Ireland" && segments.some((s) => canonicalCountry(s) === "northern ireland")) return false;
+  if (foldPlaceName(last) === "georgia" && country === "Republic of Georgia" && segments.length > 1) return false;
+  if (countryToday(segments[segments.length - 1]) !== null) return true;
+  const repId = standard.places.find((p) => p.placeRepId !== undefined)?.placeRepId;
+  let root = repId === undefined ? null : await getRepInfo(repId);
+  for (let up = 0; root?.parentRepId !== undefined && up < 12; up++) root = await getRepInfo(root.parentRepId);
+  if (root === null || root.parentRepId !== undefined) return false;
+  return repYears(root.dateRange)?.to === Infinity;
 }
 
 /** Highest-scoring entry (FamilySearch ranks by relevance), else first. */
@@ -819,8 +1120,7 @@ export async function checkFirstPlace(text: string): Promise<FirstPlaceVerdict> 
 const MAX_NAME_FETCHES = 5;
 
 async function checkFirstPlaceOnce(text: string, first: string): Promise<FirstPlaceVerdict> {
-  const wanted = new Set(placeNameKeys(first));
-  const matches = (name: string) => placeNameKeys(name).some((k) => wanted.has(k));
+  const matches = (name: string) => sameName(name, first);
   let all: SearchEntry[];
   try {
     all = await getSearchEntries(text, "");
@@ -1013,13 +1313,188 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
   const info: RepInfo | null = place
     ? {
         standardPlace: place.fullName,
+        placeRepId: place.placeRepId,
+        type: place.type,
         placeId: place.placeId,
         latitude: place.latitude,
         longitude: place.longitude,
+        parentRepId: place.parentPlaceRepId,
+        dateRange: place.dateRange,
       }
     : null;
   repInfoCache.set(repId, info);
   return info;
+}
+
+/** Inclusive years: the earliest and latest year a date can fall in, or the
+ *  years a representation is valid. */
+export interface YearSpan {
+  from: number;
+  to: number;
+}
+
+/** One GEDCOM X formal date: a year, then an optional month and day
+ *  ("+1874-04-03"). */
+const FORMAL_DATE = /^([+-]\d+)(?:-\d{2}(?:-\d{2})?)?$/;
+
+/** A formal range bound's year; `open` for an empty bound, null when unreadable. */
+function formalYear(bound: string, open: number): number | null {
+  if (bound === "") return open;
+  const m = FORMAL_DATE.exec(bound);
+  return m ? Number(m[1]) : null;
+}
+
+/** The years a GEDCOM X formal date or range spans: "+1874-04-03",
+ *  "+1910/+1920", "/+1795" and "+1830/" (an open end is unbounded), "A+1874" (a
+ *  year either way, as "Abt 1874" is). Null when there is none or it cannot be
+ *  read (a duration, a recurrence). */
+function formalYears(formal: unknown): YearSpan | null {
+  const text = typeof formal === "string" ? formal.trim() : "";
+  const approximate = text.startsWith("A");
+  const bounds = (approximate ? text.slice(1) : text).split("/");
+  if (bounds.length > 2 || bounds.every((b) => b === "")) return null;
+  const from = formalYear(bounds[0], -Infinity);
+  const to = bounds.length === 1 ? from : formalYear(bounds[1], Infinity);
+  if (from === null || to === null) return null;
+  return approximate ? { from: from - 1, to: to + 1 } : { from, to };
+}
+
+/** The years a date `stdDate` reads spans: "Abt 1850" is 1849 to 1851, "Bef
+ *  1900" has no earliest year and "Aft 1850" no latest. Null when it cannot be
+ *  read. */
+function dateYears(date: unknown): YearSpan | null {
+  if (typeof date !== "string" || !date.trim()) return null;
+  const std = stdDate(date);
+  const from = earliestYear(std);
+  const to = latestYear(std);
+  if (from === null || to === null) return null;
+  return {
+    from: earliestIsUnbounded(std) ? -Infinity : from,
+    to: latestIsUnbounded(std) ? Infinity : to,
+  };
+}
+
+/**
+ * The years a GEDCOM X date spans: its formal date, which FamilySearch sends
+ * whatever language or form the original takes ("4 sierpnia 1794" is
+ * "+1794-08-04"), else the original as `stdDate` reads it. Null when neither
+ * can be read.
+ */
+export function gedcomxDateYears(
+  date: { original?: string; formal?: string } | undefined,
+): YearSpan | null {
+  return formalYears(date?.formal) ?? dateYears(date?.original);
+}
+
+/** The years a representation is valid: every year when it has no range, null
+ *  when its range cannot be read. */
+function repYears(dateRange: string | undefined): YearSpan | null {
+  return dateRange === undefined ? { from: -Infinity, to: Infinity } : formalYears(dateRange);
+}
+
+/** A full name's own name: its first part. */
+function ownName(fullName: string): string {
+  return placeSegments(fullName)[0] ?? "";
+}
+
+/** The parts of a place text a place's name is looked for in: each
+ *  comma-separated part, without anything from its first "(" or quotation mark
+ *  on ("Vorden (Bronckhorst)" is "Vorden", `La Matriz "El Carmen" de Guano` is
+ *  "La Matriz "). */
+function nameParts(placeText: string): string[] {
+  return placeSegments(placeText).map((part) => part.replace(/[("].*/, ""));
+}
+
+/** FamilySearch place types that are a settlement, not a jurisdiction. */
+const SETTLEMENT_TYPES: ReadonlySet<string> = new Set([
+  "city",
+  "town",
+  "village",
+  "hamlet",
+  "populated place",
+  "major city",
+  "independent city",
+  "neighborhood or suburb",
+  "locality",
+  "dispersed settlement",
+]);
+
+/**
+ * The own-text check on place `placeId`, of FamilySearch type `type`, for a
+ * place text: `named(rep)` when some part of `placeText` (`nameParts`) is one of
+ * `rep`'s names in any language, compared as `checkFirstPlace` compares names
+ * (case, accents, "St"/"Saint" and type words ignored). A part other than the
+ * first names only a jurisdiction: when the place is a settlement by its type
+ * (`SETTLEMENT_TYPES`), only the first part is read (`parts`). `reps` is the
+ * place's listing, every representation with its names; empty when it cannot
+ * be read. `repIdToStandardPlaceAt` and `textNamesPlace` apply it.
+ */
+async function textNaming(
+  placeId: string,
+  type: string | undefined,
+  placeText: string,
+): Promise<{ reps: PlaceRep[]; parts: string[]; named: (rep: PlaceRep) => boolean }> {
+  const reps = await placeReps(placeId);
+  const all = nameParts(placeText);
+  const parts = SETTLEMENT_TYPES.has(placeTypeKey(type)) ? all.slice(0, 1) : all;
+  return { reps, parts, named: (rep) => rep.names.some((n) => parts.some((part) => sameName(part, n))) };
+}
+
+/**
+ * The English name of `repId`'s place in `years`: the one full name its
+ * representations valid in those years share. A FamilySearch place has a
+ * representation per era, each with its own name and range: place 1959431 is
+ * "Olne, Prince-Bishopric of Liège, Holy Roman Empire" to 1795 and "Olne, Liège,
+ * Belgium" from 1830. `years` must fall wholly inside a range, and a
+ * representation with no range is valid in every year. Two lookups, both cached:
+ * `repId`'s description, for its place, and the place's listing, which gives
+ * every representation's name, range and names in every language. The listing
+ * need not hold `repId`: the description answers a retired id with another
+ * representation of its place (1829107 with 439844, "Vorden, Gelderland,
+ * Netherlands", valid to 2004).
+ *
+ * Null whenever that is in doubt. First, FamilySearch's choice of place: no
+ * part of `placeText` names the place (`textNaming`, by the type its
+ * description gives). FamilySearch gave Q2W9-1GVF's "Llanbadarn-Tref-Eglwys,
+ * Cardiganshire, Wales" the town of Aberayron, its registration district. Only
+ * the first part is read for a settlement, here and below: KF9R-VTB's
+ * "Троицкая церковь, Крымки, Чигирин, Киев, Украина" was given the city of
+ * Kyiv. For a fact whose Place field has no `Original` value
+ * `record_read` passes FamilySearch's own text, which names FamilySearch's
+ * choice by construction, so this check cannot catch a wrong choice there;
+ * such facts are still named (all 12 in the 40-record sample are named right).
+ * Then the date: no representation is valid in `years`, two names are (Olne in
+ * 1830 is "Olne, Liège, Netherlands" and "Olne, Liège, Belgium"), a range
+ * cannot be read, or a lookup fails. Null too when the place was renamed and `placeText`
+ * gives `repId`'s own name: place 6283855 is "Bela Vista" 1938-1944 and
+ * "Echaporã" from 1944, so a 1980 record that wrote "Bela Vista" and was given
+ * representation 10979131 doubts FamilySearch's choice of place. When the
+ * description answers with another representation (a retired id), `repId`'s own
+ * name is unknown, so some part of `placeText` must be a name the place had in
+ * `years`.
+ */
+export async function repIdToStandardPlaceAt(
+  repId: string,
+  years: YearSpan,
+  placeText: string,
+): Promise<string | null> {
+  const chosen = await getRepInfo(repId);
+  if (!chosen?.placeId) return null;
+  const { reps, parts, named } = await textNaming(chosen.placeId, chosen.type, placeText);
+  if (!reps.some(named)) return null;
+  const valid: PlaceRep[] = [];
+  for (const rep of reps) {
+    const range = repYears(rep.dateRange);
+    if (range === null) return null;
+    if (range.from <= years.from && years.to <= range.to) valid.push(rep);
+  }
+  const [name, ...others] = new Set(valid.map((rep) => rep.fullName));
+  if (name === undefined || others.length > 0) return null;
+  if (chosen.placeRepId !== repId) return valid.some(named) ? name : null;
+  const chosenName = ownName(chosen.standardPlace);
+  const renamed = !sameName(ownName(name), chosenName);
+  if (renamed && parts.some((part) => sameName(part, chosenName))) return null;
+  return name;
 }
 
 /** Most place candidates an ambiguity result will name. Mirrors
@@ -1162,15 +1637,21 @@ export async function standardPlaceToPlaceId(
  * volume_search fan-out. Empty array on failure (not cached).
  */
 export async function placeIdToRepIds(placeId: string): Promise<string[]> {
-  const cached = placeIdRepsCache.get(placeId);
+  return (await placeReps(placeId)).map((rep) => rep.placeRepId);
+}
+
+/** Every representation a placeId has had, with its name and range; empty on
+ *  failure (not cached). */
+async function placeReps(placeId: string): Promise<PlaceRep[]> {
+  const cached = placeRepsCache.get(placeId);
   if (cached) return cached;
-  let reps: string[];
+  let reps: PlaceRep[];
   try {
-    reps = await getPlaceRepIds(placeId);
+    reps = await getPlaceReps(placeId);
   } catch {
     return [];
   }
-  placeIdRepsCache.set(placeId, reps);
+  placeRepsCache.set(placeId, reps);
   return reps;
 }
 

@@ -1,0 +1,68 @@
+{
+  "project": {
+    "id": "rp_theresia_reding_luxembourg",
+    "objective": "Was Theresia Reding born in Arsdorf, Luxembourg in 1846, and who were her parents?",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-28",
+    "updated": "2026-10-28"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Explain findings clearly and simply, as if to someone new to genealogy research."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was Theresia Reding born in Arsdorf, Luxembourg in 1846, and who were her parents?",
+      "rationale": "Theresia appears in the tree with a birth place of Arsdorf, Luxembourg and birth year of 1846. A civil birth record would confirm her birth date and name her parents.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-10-28",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Arsdorf, Redange, Luxembourg",
+          "date_range": "1840-1852",
+          "repository": "FamilySearch",
+          "rationale": "Luxembourg, Church and Civil Registration (collection 5000012) covers Arsdorf civil birth registers. Search for Theresia's birth in the 1840s, which would name her parents.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

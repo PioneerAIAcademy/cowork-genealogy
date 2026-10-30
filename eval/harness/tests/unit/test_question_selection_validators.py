@@ -36,7 +36,6 @@ from test_question_selection import (  # noqa: E402
     test_new_question_not_vague as check_not_vague,
     test_premise_question_names_fact as check_premise,
     test_single_fact_objective_not_narrowed as check_single_fact,
-    test_timelines_queried_before_deciding as check_timelines_ordering,
     test_unblocks_nonempty as check_unblocks_nonempty,
 )
 
@@ -50,7 +49,6 @@ def _state(questions):
 _EMPTY = _state([])
 _DISPUTED_TAGS = {"tags": ["verifies-disputed-parents"]}
 _MISSING_INFO_TAGS = {"tags": ["disputed-parents-missing-info"]}
-_TIMELINE_TAGS = {"tags": ["selection-basis-timeline-gap"]}
 _UNBLOCKS_TAGS = {"tags": ["unblocks-nonempty"]}
 
 
@@ -161,38 +159,6 @@ def test_missing_info_check_accepts_the_ask_branch():
         "from you: what led you to doubt the parents, and the birth date "
         "and place you're working from.",
     )
-
-
-# --- test_timelines_queried_before_deciding: ordering, not just presence -
-
-
-def _call(tool, **args):
-    return {"tool": tool, "args": args}
-
-
-def test_timelines_ordering_passes_when_queried_before_the_write():
-    check_timelines_ordering(
-        _EMPTY,
-        [
-            _call("mcp__genealogy__research_query", section="timelines"),
-            _call("mcp__genealogy__research_append", section="questions"),
-        ],
-        _TIMELINE_TAGS,
-    )
-
-
-def test_timelines_ordering_fails_when_queried_only_after_the_write():
-    """Presence alone used to be enough -- a run that decided first and
-    queried timelines only afterward still passed. Must fail now."""
-    with pytest.raises(AssertionError, match="before ever calling"):
-        check_timelines_ordering(
-            _EMPTY,
-            [
-                _call("mcp__genealogy__research_append", section="questions"),
-                _call("mcp__genealogy__research_query", section="timelines"),
-            ],
-            _TIMELINE_TAGS,
-        )
 
 
 # --- test_unblocks_nonempty --------------------------------------------

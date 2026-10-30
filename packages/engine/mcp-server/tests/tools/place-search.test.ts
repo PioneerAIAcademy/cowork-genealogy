@@ -9,10 +9,12 @@ import {
   placeSearchAllTool,
   __clearPlaceSearchCacheForTests,
 } from "../../src/tools/place-search.js";
+import { getPlaceReps } from "../../src/utils/place-api.js";
 import type {
   FSPlaceSearchResponse,
   FSPlaceDescriptionResponse,
 } from "../../src/types/place.js";
+import { __clearPlaceResolverCachesForTests } from "../../src/utils/place-resolver.js";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -28,6 +30,7 @@ const serverError = () => ({
 beforeEach(() => {
   mockFetch.mockReset();
   __clearPlaceSearchCacheForTests();
+  __clearPlaceResolverCachesForTests();
 });
 
 afterEach(() => {
@@ -578,6 +581,76 @@ describe("getPlaceRepIds", () => {
     expect(await getPlaceRepIds("0000")).toEqual([]);
   });
 
+  it("getPlaceReps gives each representation's English name, date range and names from the same listing (Olne, live 2026-10-26)", async () => {
+    const rep = (
+      id: string,
+      fullName: string | undefined,
+      formal: string | undefined,
+      names: { lang?: string; value?: string }[] | undefined,
+      pid = "1959431",
+    ) => ({
+      id,
+      ...(fullName ? { display: { fullName, name: "Olne", type: "Municipality" } } : {}),
+      ...(formal ? { temporalDescription: { formal } } : {}),
+      ...(names ? { names } : {}),
+      place: { resource: `https://api.familysearch.org/platform/places/${pid}`, resourceId: pid },
+    });
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        places: [
+          { id: "1959431", names: [{ lang: "wa", value: "ône" }, { lang: "fr", value: "Olne" }, { lang: "fr", value: "Aulne" }] },
+          rep("12441861", "Olne, Liège, Belgium", "+1830/", [{ lang: "fr", value: "Olne" }]),
+          // Constructed: a second language, and a name with no value.
+          rep("418460", "Olne, Prince-Bishopric of Liège, Holy Roman Empire", "/+1795", [
+            { lang: "fr", value: "Olne" },
+            { lang: "wa" },
+            { lang: "de", value: "Olne-Lüttich" },
+          ]),
+          rep("418460", "Olne, Duplicate", "+1900/", [{ lang: "fr", value: "Duplicate" }]),
+          rep("7", undefined, undefined, undefined),
+          rep("999", "Elsewhere", "+1800/", [{ lang: "en", value: "Elsewhere" }], "9999"),
+        ],
+      }),
+    });
+    expect(await getPlaceReps("1959431")).toEqual([
+      { placeRepId: "12441861", fullName: "Olne, Liège, Belgium", dateRange: "+1830/", names: ["Olne"] },
+      {
+        placeRepId: "418460",
+        fullName: "Olne, Prince-Bishopric of Liège, Holy Roman Empire",
+        dateRange: "/+1795",
+        names: ["Olne", "Olne-Lüttich"],
+      },
+      { placeRepId: "7", names: [] },
+    ]);
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://api.familysearch.org/platform/places/1959431",
+      expect.objectContaining({ headers: expect.objectContaining({ "Accept-Language": "en" }) }),
+    );
+  });
+
+  it("reads past a names list that is not a list, or holds a null entry, so place_search_all's getPlaceRepIds does not throw", async () => {
+    // Constructed: no live listing has these shapes.
+    const listing = {
+      ok: true,
+      json: async () => ({
+        places: [
+          { id: "100", place: { resourceId: "9001" }, names: "Olne" },
+          { id: "101", place: { resourceId: "9001" }, names: [null, { lang: "fr", value: "Olne" }] },
+          { id: "102", place: { resourceId: "9001" }, names: { lang: "fr", value: "Olne" } },
+        ],
+      }),
+    };
+    mockFetch.mockResolvedValueOnce(listing);
+    expect(await getPlaceReps("9001")).toEqual([
+      { placeRepId: "100", names: [] },
+      { placeRepId: "101", names: ["Olne"] },
+      { placeRepId: "102", names: [] },
+    ]);
+    mockFetch.mockResolvedValueOnce(listing);
+    expect(await getPlaceRepIds("9001")).toEqual(["100", "101", "102"]);
+  });
+
   it("retries a server error, then throws once the retries are spent", async () => {
     mockFetch.mockResolvedValue(serverError());
     await expect(getPlaceRepIds("9001")).rejects.toThrow(
@@ -773,8 +846,9 @@ describe("fuzzy fallback", () => {
 
     const result = await placeSearchTool({ placeName: "Klein Kozlau" });
 
-    expect(result).toEqual({ results: [] });
-    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(result.results).toEqual([]);
+    expect("matchType" in result).toBe(false);
+    expect(mockFetch.mock.calls.filter(([url]) => String(url).includes("~"))).toHaveLength(0);
   });
 
   it("returns an unflagged empty response when the fuzzy query also matches nothing", async () => {
@@ -785,8 +859,9 @@ describe("fuzzy fallback", () => {
 
     const result = await placeSearchTool({ placeName: "Blorp" });
 
-    expect(result).toEqual({ results: [] });
-    expect(mockFetch).toHaveBeenCalledTimes(2);
+    expect(result.results).toEqual([]);
+    expect("matchType" in result).toBe(false);
+    expect(mockFetch.mock.calls.filter(([url]) => String(url).includes("Blorp~"))).toHaveLength(1);
   });
 
   it("caps a fuzzy result set before the per-entry fetches", async () => {
@@ -934,7 +1009,119 @@ describe("placeSearchTool", () => {
 
     const result = await placeSearchTool({ placeName: "NonexistentPlace12345" });
 
-    expect(result).toEqual({ results: [] });
+    expect(result.results).toEqual([]);
+  });
+
+  describe("verdict: what the writers store for the query text", () => {
+    const ON_NONE = "on a fact that cites no record and has no standard_place supplied, with no other places";
+    const STORES =
+      `the writers store this standard_place for this place text ${ON_NONE}. A supplied standard_place is ` +
+      "kept instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it";
+    const NONE = `the writers store no standard_place for this place text ${ON_NONE}: `;
+    const ONE_PART =
+      "the engine leaves a one-part place unstandardized unless it can tell which place it is; " +
+      'write its parent jurisdictions into the place text (e.g. "Springfield, Illinois")';
+    const shenandoah = (id: string, fullName: string, type: string): FSPlaceSearchResponse => ({
+      entries: [{ id, score: 90.0, content: { gedcomx: { places: [{ id, display: { name: "Shenandoah", fullName, type } }] } } }],
+    });
+
+    it("names the standard_place the writers store", async () => {
+      routeByUrl([
+        { match: "search?q=name:", json: bristolSearchResponse },
+        { match: "description/300", json: description("300", "Bristol, England, United Kingdom", "8300") },
+        { match: "attributes", ok: false, status: 404 },
+      ]);
+      const result = await placeSearchTool({ placeName: "Bristol, England" });
+      expect(result.verdict).toEqual({ standardPlace: "Bristol, England, United Kingdom", reason: STORES });
+    });
+
+    it("reads a one-part place against contextName as tree_edit reads it against the fact's other places", async () => {
+      const SCHUYLKILL = "Shenandoah, Schuylkill, Pennsylvania, United States";
+      routeByUrl([
+        { match: "search?q=name:%22Shenandoah%2C%20Schuylkill", json: shenandoah("500", SCHUYLKILL, "Borough") },
+        { match: "search?q=name:%22Shenandoah%22", json: shenandoah("600", "Shenandoah, Page, Virginia, United States", "Town") },
+        { match: "description/600", json: description("600", "Shenandoah, Page, Virginia, United States", "8600") },
+        { match: "attributes", ok: false, status: 404 },
+      ]);
+      const sibling = "Shenandoah, Schuylkill, Pennsylvania";
+      const withContext = await placeSearchTool({ placeName: "Shenandoah", contextName: sibling });
+      expect(withContext.verdict).toEqual({
+        standardPlace: SCHUYLKILL,
+        reason:
+          "the writers store this standard_place for this place text on a fact that cites no record and has no " +
+          `standard_place supplied, whose other places include '${sibling}'. A supplied standard_place is kept ` +
+          "instead when it is a FamilySearch standard place, as each result is, and some part of the place text names it",
+      });
+      const bare = await placeSearchTool({ placeName: "Shenandoah" });
+      expect(bare.verdict).toEqual({ standardPlace: null, reason: NONE + ONE_PART });
+    });
+
+    it("is none for a phrase that names no place, which is never looked up", async () => {
+      routeByUrl([{ match: "search?q=name:", json: { entries: [] } }]);
+      const result = await placeSearchTool({ placeName: "Same House" });
+      expect(result.verdict).toEqual({ standardPlace: null, reason: NONE + "'Same House' names no place" });
+      expect(mockFetch.mock.calls.filter(([url]) => String(url).includes("name:%22Same"))).toHaveLength(1);
+    });
+
+    it("is none when the lookup's answer names a different country than the text", async () => {
+      const cameroon: FSPlaceSearchResponse = {
+        entries: [
+          {
+            id: "700",
+            score: 90.0,
+            content: { gedcomx: { places: [{ id: "700", display: { name: "West", fullName: "West, Cameroon", type: "City" } }] } },
+          },
+        ],
+      };
+      routeByUrl([
+        { match: "search?q=name:", json: cameroon },
+        { match: "description/700", json: description("700", "West, Cameroon", "8700") },
+        { match: "attributes", ok: false, status: 404 },
+      ]);
+      const result = await placeSearchTool({ placeName: "West Bromwich, England" });
+      expect(result.verdict).toEqual({
+        standardPlace: null,
+        reason: NONE + "'West, Cameroon' names a different country than the text",
+      });
+    });
+
+    it("names the lookup's answer for a text written as a name, and none a prose text does not confirm", async () => {
+      const hit = (id: string, name: string, fullName: string): FSPlaceSearchResponse => ({
+        entries: [{ id, score: 90.0, content: { gedcomx: { places: [{ id, display: { name, fullName, type: "City" } }] } } }],
+      });
+      routeByUrl([
+        { match: "search?q=name:%22at%20the%20home", json: hit("800", "Of", "Of, Trabzon, Türkiye") },
+        { match: "search?q=name:%22412%20Vine", json: hit("900", "Cincinnati", "Cincinnati, Hamilton, Ohio, United States") },
+        { match: "search?q=name:%22West%20Topsham", json: hit("950", "Topsham", "Topsham, Orange, Vermont, United States") },
+        { match: "description/800", json: description("800", "Of, Trabzon, Türkiye", "8800") },
+        { match: "description/900", json: description("900", "Cincinnati, Hamilton, Ohio, United States", "8900") },
+        { match: "description/950", json: description("950", "Topsham, Orange, Vermont, United States", "8950") },
+        { match: "attributes", ok: false, status: 404 },
+      ]);
+      // A prose text (its first part has no capital) takes the lookup's answer
+      // only when it names it; a text written as a name takes it whatever it names.
+      const phrase = await placeSearchTool({ placeName: "at the home of her daughter, Mrs. John Smith" });
+      expect(phrase.verdict).toEqual({
+        standardPlace: null,
+        reason:
+          NONE +
+          "the engine's place lookup answer 'Of, Trabzon, Türkiye' could not be confirmed, as the text names neither " +
+          "a country nor that place",
+      });
+      const named = await placeSearchTool({ placeName: "412 Vine St, Cincinnati" });
+      expect(named.verdict).toEqual({ standardPlace: "Cincinnati, Hamilton, Ohio, United States", reason: STORES });
+      const unnamed = await placeSearchTool({ placeName: "West Topsham, Orange, Vermont" });
+      expect(unnamed.verdict).toEqual({ standardPlace: "Topsham, Orange, Vermont, United States", reason: STORES });
+    });
+
+    it("is none when nothing is found for a text of several parts", async () => {
+      routeByUrl([{ match: "search?q=name:", json: { entries: [] } }]);
+      const result = await placeSearchTool({ placeName: "Nowhereville, Kansas" });
+      expect(result.verdict).toEqual({
+        standardPlace: null,
+        reason: NONE + "the engine's place lookup found no place for this text, or failed",
+      });
+    });
   });
 });
 

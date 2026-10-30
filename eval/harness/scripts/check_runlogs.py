@@ -8,8 +8,9 @@ docs/plan/eval-runlog-versioning.md §C6:
     Rule 2   the graded run log per touched skill is "active on skill-side
              files" (snapshot matches working tree). That is the run log this
              PR adds (a released v{N}.json it adds, else its newest
-             candidate), or, for a PR that adds none, the latest full-skill
-             run log on disk.
+             candidate), or, for a PR that adds none, the full-skill run log
+             that landed on BASE_SHA last -- which blocks only on a snapshot
+             file the PR changed, and warns on staleness main already had.
     Rule 2b  BLOCKS on a PR that touches eval/harness/judge/prompt.md:
              every suite's latest run log must carry the current
              judge_prompt_hash; satisfy with `make judge-regrade`.
@@ -17,10 +18,13 @@ docs/plan/eval-runlog-versioning.md §C6:
              reports skill-side stale (a regrade cannot satisfy a log
              that owes a paid `make eval-skill` run).
     Rule 2c  the graded run log's `instrument` fingerprint matches the
-             current one: BLOCKS on `validators.suite` / `tools.fixture`,
-             warns on `validators.shared` / `tools.live` / `live_modules`.
+             current one: BLOCKS on `validators.suite`, warns on
+             `tools.fixture` / `validators.shared` / `tools.live` /
+             `live_modules`, and, on a log the PR did not add, on a suite
+             validator main already had (`base_suite_validators`).
              Also graded on every suite the PR's paths could move
-             (`instrument_touched_suites`). Reads the engine build.
+             (`instrument_touched_suites`). Reads the engine build, and the
+             base checkout at `BASE_TREE`.
     Rule 2f  (warn-only fixture arm) a changed shared fixture under
              eval/fixtures/{scenarios,mcp}/ marks every skill whose tests
              reference it, and warns when that skill's run log is now stale
@@ -97,6 +101,7 @@ from harness.versioning import (  # noqa: E402
     DEFAULT_KEEP_CANDIDATES,
     ann_filename_for,
     classify,
+    landed_order,
     latest_full_skill_runlog,
     newest_full_skill_runlog,
     prunable_candidates,
@@ -110,6 +115,7 @@ from harness.instrument import (  # noqa: E402
     load_tool_catalog,
     suite_validator_file,
     validator_harness_imports,
+    validators_fingerprint,
 )
 
 
@@ -595,11 +601,13 @@ def resolve_latest_runlog(
     directory is absent, or ``("no_runlog", None)`` when the directory holds no
     full-skill run log. Shared by the blocking per-skill loop and the warn-only
     fixture loop so both resolve the run log identically; each caller maps the
-    reason to its own error-vs-warning message.
+    reason to its own error-vs-warning message. "Latest" is the one that landed
+    on BASE_SHA last (`landed_order`), so a suite re-run on a long-lived branch
+    is not shadowed by an older-instrument run another PR merged first.
     """
     if not skill_dir.is_dir():
         return "no_dir", None
-    latest = latest_full_skill_runlog(skill_dir)
+    latest = latest_full_skill_runlog(skill_dir, os.environ.get("BASE_SHA"))
     if latest is None:
         return "no_runlog", None
     return "ok", latest
@@ -665,13 +673,33 @@ def cosmetic_skip_labels() -> set[str]:
     return {line.strip() for line in raw.splitlines() if line.strip()}
 
 
+def pr_changed_snapshot_key(key: str, pr_paths: set[str]) -> bool:
+    """Whether this PR changed what snapshot `key` fingerprints. A `#frontmatter`
+    key counts only a frontmatter change (`agent_frontmatter_changed`)."""
+    if key.endswith(AGENT_FRONTMATTER_SUFFIX):
+        rel = key[: -len(AGENT_FRONTMATTER_SUFFIX)]
+        return rel in pr_paths and agent_frontmatter_changed(Path(rel).stem)
+    return key in pr_paths
+
+
 def rule2_active(
-    skill: str, log: dict, filename: str, *, graded: str = GRADED_DEFAULT
+    skill: str,
+    log: dict,
+    filename: str,
+    *,
+    graded: str = GRADED_DEFAULT,
+    pr_paths: set[str] | None = None,
 ) -> int:
     """Rule 2 (blocking): the graded run log's snapshot matches disk.
 
     `graded` says which log that is and why, for the messages: `main()` passes
     the run log this PR adds, or the latest on disk when the PR adds none.
+
+    Blocks only on a file this PR changed (`pr_paths`, the three-dot diff). A log
+    `main` had already left stale -- a change waived with a cosmetic-skip label
+    on the PR that made it -- warns, so no later PR inherits the waiver or owes a
+    re-run for an edit it did not make. With no `pr_paths` every difference
+    blocks.
 
     Cosmetic-skip escape hatch, per skill: when the PR carries the label
     `eval-cosmetic-skip:<skill>` (applied by a senior, passed in by the
@@ -692,6 +720,14 @@ def rule2_active(
     if not diffs:
         return 0
     diff_lines = "\n".join(f"  - {p}: {kind}" for p, kind in sorted(diffs.items()))
+    if pr_paths is not None and not any(pr_changed_snapshot_key(k, pr_paths) for k in diffs):
+        gh_warning(
+            f"skill `{skill}`: `{filename}`, {graded}, differs from the working "
+            f"tree in {len(diffs)} file(s), none of which this PR changed: `main` "
+            f"already carries the change, so rule 2 warns. The skill's next run "
+            f"re-records it.\n" + diff_lines,
+        )
+        return 0
     label = cosmetic_skip_label(skill)
     labels = cosmetic_skip_labels()
     if label in labels:
@@ -871,6 +907,15 @@ def _tool_catalog() -> dict:
     return _tool_catalog_cache
 
 
+def base_suite_validators(skill: str) -> str | None:
+    """`validators.suite` as BASE_SHA has it, from the checkout of BASE_SHA the
+    workflow makes at `BASE_TREE`. None when there is none to read."""
+    base = os.environ.get("BASE_TREE")
+    if not base or not Path(base).is_dir():
+        return None
+    return validators_fingerprint(skill, Path(base) / "eval" / "harness" / "validators")["suite"]
+
+
 def _harness_imports_moved(path: str, validators_dir: Path) -> bool:
     """Whether a touched suite validator's direct harness imports differ between
     the merge base and head. Every validator file seeds `harness_import_closure`,
@@ -921,22 +966,26 @@ def rule2c_instrument(
     *,
     graded: str = GRADED_DEFAULT,
     rule2_blocked: bool = False,
+    compare_base: bool = True,
 ) -> int:
     """Rule 2c: the run log's `instrument` fingerprint matches the current one.
 
-    BLOCKS on the suite-specific halves -- `validators.suite` (`test_<skill>.py`)
-    and `tools.fixture` (the tools this suite serves from its own fixtures):
-    clearing one costs that one suite's run. WARNS on the corpus-wide halves --
-    `validators.shared`, `tools.live`, `live_modules` -- because blocking on them
+    BLOCKS on `validators.suite` (`test_<skill>.py`): clearing it costs that one
+    suite's run. WARNS on everything else: `tools.fixture` (the tools this suite
+    serves from its own fixtures; lead, 2026-10-29), and the corpus-wide
+    `validators.shared`, `tools.live`, `live_modules`, because blocking on them
     would owe a paid re-run of every suite (decided 2026-10-14 on issue #2479).
     A log with no `instrument` (written before the field) warns and passes.
     Downgrades a block to a warning when rule 2 itself blocked this same log in
     this run (`rule2_blocked`), so the one re-run is owed once; a snapshot that is
     merely stale is not enough, since rule 2 does not run on instrument-arm suites.
     Also downgrades when the PR carries `eval-cosmetic-skip:<skill>`, exactly as
-    rule 2 does: a senior judged the change behaviour-neutral (a typo in a tool
-    description, say), and a new push voids the label. Returns 1 on block, 0
-    otherwise.
+    rule 2 does: a senior judged the change behaviour-neutral, and a new push
+    voids the label. And, on a log this PR did not add (`compare_base`), warns
+    rather than blocks on a suite validator `main` already has
+    (`base_suite_validators`): that change was waived or owed on the PR that made
+    it, and every later PR touching a validator would otherwise inherit it.
+    Returns 1 on block, 0 otherwise.
     """
     stored = log.get("instrument")
     head = f"skill `{skill}`: `{filename}`, {graded},"
@@ -963,10 +1012,18 @@ def rule2c_instrument(
 
     blocking = []
     if moved("validators", "suite"):
-        blocking.append(f"validators.suite (`eval/harness/validators/{suite_validator_file(skill)}`)")
-    if moved("tools", "fixture"):
-        blocking.append("tools.fixture (the description/inputSchema of a tool this suite's fixtures serve)")
+        suite = f"validators.suite (`eval/harness/validators/{suite_validator_file(skill)}`)"
+        if compare_base and base_suite_validators(skill) == current["validators"]["suite"]:
+            gh_warning(
+                f"{head} was produced or graded by an instrument that has since changed: "
+                f"{suite}. `main` already has that change, so this PR did not make it "
+                f"and rule 2c warns; the suite's next run re-records it."
+            )
+        else:
+            blocking.append(suite)
     warning = []
+    if moved("tools", "fixture"):
+        warning.append("tools.fixture (the description/inputSchema of a tool this suite's fixtures serve)")
     if moved("validators", "shared"):
         warning.append(
             "validators.shared (`test_universal.py` / `validators_lib.py`, or a harness "
@@ -1620,7 +1677,11 @@ def rule11_for_skill(skill: str, filename: str, head_log: dict) -> int:
         return json.loads(git_show_at_merge_base(reading) or "{}")
 
     try:
-        newest = newest_full_skill_runlog(git_ls_at_merge_base(runlog_dir), read_base)
+        newest = newest_full_skill_runlog(
+            git_ls_at_merge_base(runlog_dir),
+            read_base,
+            landed=landed_order(REPO_ROOT / runlog_dir, _merge_base()),
+        )
         if newest is None:
             return 0
         _, base_log = newest
@@ -2278,8 +2339,8 @@ def main() -> int:
     )
     instrument_touched_skills = instrument_touched_suites(touched_paths, all_suites)
     # A shared MCP fixture's `tool` field feeds `tools.fixture`, so a changed fixture
-    # opens rule 2c on the suites that reference it -- graded on this PR, not left
-    # for the next author to touch them.
+    # opens rule 2c on the suites that reference it -- reported (a warning) on this
+    # PR, not left for the next author to touch them.
     instrument_touched_skills |= fixture_touched_skills
     instrument_touched_skills -= exempt_suiteless
 
@@ -2391,7 +2452,13 @@ def main() -> int:
                 continue
         if target is not None:
             filename, log = target
-            rule2_result = rule2_active(skill, log, filename, graded=graded)
+            # A log this PR adds is its own evidence and must match the tree it
+            # merges into; only a log it did not add is spared main's staleness.
+            own_log = added_name is not None
+            rule2_result = rule2_active(
+                skill, log, filename, graded=graded,
+                pr_paths=None if own_log else set(touched_paths),
+            )
             fails += rule2_result
             fails += rule2b_judge_prompt(
                 skill,
@@ -2401,7 +2468,8 @@ def main() -> int:
                 judge_prompt_edited=judge_prompt_edited,
             )
             fails += rule2c_instrument(
-                skill, log, filename, graded=graded, rule2_blocked=bool(rule2_result)
+                skill, log, filename, graded=graded, rule2_blocked=bool(rule2_result),
+                compare_base=not own_log,
             )
             fails += rule3_completeness(
                 skill, log, filename, skill_dir, graded=graded

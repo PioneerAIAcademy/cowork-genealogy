@@ -1,6 +1,6 @@
 {
   "tool": "person_read",
-  "description": "FamilySearch tree read for Bridget Kerrigan (ZZKR-BR1, synthetic), project SUBJECT of scenario plan-reads-question-person-profile. Registered so that an extra read of the subject succeeds rather than sending the run down the 'profile could not be read' branch; it holds nothing the project tree lacks. The read the test asks for is of her father, ZZKR-TH2 (person-read-kerrigan-proposed-parents).",
+  "description": "FamilySearch tree read for Bridget Kerrigan (ZZKR-BR1, synthetic), the project SUBJECT of scenarios plan-reads-question-person-profile and plan-subject-from-tree. It holds nothing the project tree lacks, so a re-read adds nothing. research-plan must not read a project subject: in plan-subject-from-tree it is loaded so that a forbidden read is served and matched, and the subject-from-tree validator catches it; in plan-reads-question-person-profile it keeps such a read from failing the run.",
   "args": {
     "personId": "ZZKR-BR1"
   },

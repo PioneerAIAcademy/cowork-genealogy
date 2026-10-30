@@ -1,8 +1,17 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+// Offline: a moved link's birth places would otherwise geocode live. Each test
+// that needs coordinates sets them; unset, every place is unresolved.
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
+  return { ...actual, standardPlaceToCoords: vi.fn(async () => null) };
+});
+
+import { standardPlaceToCoords } from "../../src/utils/place-resolver.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
+import { recordMatchScore } from "../../src/utils/match-scores.js";
 
 function baseResearch() {
   return {
@@ -968,5 +977,157 @@ describe("merge_tree_persons: pair and namesake checks", () => {
       links: [link("pe_012", "a_121", T)],
       namesakes: [row("ns_001", T)],
     }));
+  });
+
+  // ─── the link checks a re-pointed link must pass (#2537) ──────────────────
+
+  const ENGLAND = "Horsham, Sussex, England";
+  const TENNESSEE = "Maury, Tennessee, United States";
+  /** T lived in England and was born in 1873; I7 carries one link to record 1,
+   *  a census placing its head in Tennessee and stating a birth in `born`. */
+  const moved = (o: { confidence?: string; extra?: Record<string, unknown>; born?: string } = {}) =>
+    project({
+      persons: [
+        person(T, "John", "Smith", "Male", {
+          facts: [fact("F1", "Birth", "1873", ["S2"]), fact("F2", "Residence", "1900", ["S2"], { place: ENGLAND })],
+        }),
+        person("I7", "John", "Smith"),
+      ],
+      sources: [1, 2],
+      assertions: [
+        assertion("a_011", 1, "head", "residence", "", { place: TENNESSEE }),
+        assertion("a_012", 1, "head", "birth", "", { date: o.born ?? "1873" }),
+      ],
+      links: [link("pe_001", "a_011", "I7", o.confidence ?? "probable", o.extra ?? {})],
+    });
+  const attest = (personId: string) =>
+    recordMatchScore(dir, {
+      record_id: rec(1), record_persona_id: null, record_role: "head", tree_person_id: personId, score: 0.9,
+      matched: true, assertion_id: "a_011", record_source: "record_read", computed: "2026-10-26T00:00:00Z",
+    });
+
+  it("ML1 refuses moving a confident link across a move nothing explains", async () => {
+    const text = await refusedText([[T, "I7"]], moved({ confidence: "confident" }));
+    expect(text).toContain("person_evidence 'pe_001' would move from 'I7' to 'KWCB-111' in this merge");
+    expect(text).toContain("move_bridge");
+    expect(text).toContain("Nothing was written.");
+  });
+
+  it("ML1b merges it once move_bridge names what explains the move", async () => {
+    await merged([[T, "I7"]], moved({ confidence: "confident", extra: { move_bridge: "Passenger list, Liverpool to New Orleans, 1880" } }));
+  });
+
+  it("ML2 refuses moving a scored link with no same_person score for the survivor", async () => {
+    const p = moved({ extra: { match_score: 0.9 } });
+    await write(p);
+    await attest("I7");
+    const r = await mergeTreePersons({ projectPath: dir, merges: [[T, "I7"]] });
+    expect(r.ok).toBe(false);
+    expect(((r as any).errors as string[]).join("\n")).toContain(`treePersonId: '${T}'`);
+  });
+
+  it("ML2s merges it once the survivor's score is recorded", async () => {
+    await write(moved({ extra: { match_score: 0.9 } }));
+    await attest(T);
+    const r = await mergeTreePersons({ projectPath: dir, merges: [[T, "I7"]] });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
+  it("ML3 refuses a confident link whose record contradicts the survivor's birth", async () => {
+    const text = await refusedText([[T, "I7"]], moved({ confidence: "confident", born: "1840", extra: { move_bridge: "x" } }));
+    expect(text).toContain("'speculative'");
+    expect(text).toContain("1840");
+  });
+
+  it("MS26 merges an unscored probable link, the shape every committed merge moved", async () => {
+    await merged([[T, "I7"]], moved());
+    expect((await readResearch()).person_evidence[0].person_id).toBe(T);
+  });
+
+  it("MS27 does not judge a withdrawn link", async () => {
+    await merged([[T, "I7"]], moved({ confidence: "confident", born: "1840", extra: { superseded_by: "pe_009" } }));
+  });
+
+  /** T born near Nueva Italia; record 1 states a birth in La Unión, Guerrero. */
+  const bornElsewhere = (recordPlace: string, recordStandard: string) =>
+    project({
+      persons: [
+        person(T, "Mauro", "Cruz", "Male", {
+          facts: [fact("F1", "Birth", "1910", ["S2"], { place: "Nueva Italia, Michoacán, Mexico", standard_place: "Nueva Italia, Michoacán, México" })],
+        }),
+        person("I7", "Mauro", "Cruz"),
+      ],
+      sources: [1, 2],
+      assertions: [assertion("a_011", 1, "deceased", "birth", "", { date: "1910", place: recordPlace, standard_place: recordStandard })],
+      links: [link("pe_001", "a_011", "I7", "confident")],
+    });
+
+  it("MS28 merges a confident link whose birth place the lookup cannot resolve", async () => {
+    vi.mocked(standardPlaceToCoords).mockResolvedValue(null);
+    await merged([[T, "I7"]], bornElsewhere("La Unión, Guerrero, Mexico", "La Unión, Guerrero, México"));
+  });
+
+  it("ML4 still refuses one whose resolved birth place is far from the survivor's", async () => {
+    vi.mocked(standardPlaceToCoords).mockImplementation(async (name: string) =>
+      name.startsWith("Nueva Italia")
+        ? { latitude: 19.02, longitude: -102.1, type: "City" }
+        : { latitude: 31.7, longitude: -106.4, type: "City" },
+    );
+    const text = await refusedText([[T, "I7"]], bornElsewhere("Ciudad Juárez, Chihuahua, Mexico", "Ciudad Juárez, Chihuahua, México"));
+    expect(text).toContain("'Ciudad Juárez, Chihuahua, Mexico'");
+    vi.mocked(standardPlaceToCoords).mockResolvedValue(null);
+  });
+
+  it("ML5 still refuses one whose birth country differs, lookup or not", async () => {
+    vi.mocked(standardPlaceToCoords).mockResolvedValue(null);
+    const text = await refusedText([[T, "I7"]], bornElsewhere("Madrid, Spain", "Madrid, España"));
+    expect(text).toContain("'speculative'");
+  });
+
+  // ─── a merge cannot bring a rejected pair back ────────────────────────────
+
+  const rejection = (id: string, assertionId: string, personId: string) => ({
+    id, assertion_id: assertionId, person_id: personId, researcher_words: "not him", created: "2026-10-01",
+  });
+  const withRejections = (p: { tree: any; research: any }, ...rows: any[]) => {
+    (p.research as any).rejected_links = rows;
+    return p;
+  };
+
+  it("MR1 refuses moving a live link onto a pair the researcher rejected for the survivor", async () => {
+    const text = await refusedText([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_011", T)));
+    expect(text).toContain(`person_evidence 'pe_001' and rejection 'rj_001' would both stand on (a_011, ${T})`);
+    expect(text).toContain("The link stands today on (a_011, I7)");
+    expect(text).toContain("no justification overrides this");
+  });
+
+  it("MR2 refuses moving a rejection onto a pair the survivor links live", async () => {
+    const p = withRejections(moved(), rejection("rj_001", "a_011", "I7"));
+    p.research.person_evidence = [link("pe_001", "a_011", T)];
+    const text = await refusedText([[T, "I7"]], p);
+    expect(text).toContain(`person_evidence 'pe_001' and rejection 'rj_001' would both stand on (a_011, ${T})`);
+  });
+
+  it("MR3 writes nothing when it refuses", async () => {
+    const p = withRejections(moved(), rejection("rj_001", "a_011", T));
+    await write(p);
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    const r = await mergeTreePersons({ projectPath: dir, merges: [[T, "I7"]] });
+    expect(r.ok).toBe(false);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  it("MR4 merges when the moved link was already retired", async () => {
+    await merged([[T, "I7"]], withRejections(moved({ extra: { superseded_by: "rj_002" } }),
+      rejection("rj_001", "a_011", T), rejection("rj_002", "a_011", "I7")));
+  });
+
+  it("MR5 merges when the rejection names a different assertion", async () => {
+    await merged([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_012", T)));
+  });
+
+  it("MR6 does not blame the merge for a link and rejection that already stood together", async () => {
+    // Pre-dates the rule that a rejection retires its link; both move onto the survivor together.
+    await merged([[T, "I7"]], withRejections(moved(), rejection("rj_001", "a_011", "I7")));
   });
 });

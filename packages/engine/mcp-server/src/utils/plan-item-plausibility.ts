@@ -122,6 +122,39 @@ export function planWindowFlag(question: any, plans: any[]): string | null {
   );
 }
 
+const PLACE_JOINER = /\s+(?:and|or|&)\s+|\s*[;/]\s*/i;
+
+/** The refusal for a plan item whose `jurisdiction` joins two or more places, or
+ *  `undefined`. Unlike the flags below this gates: search-records hands the
+ *  jurisdiction to `record_search` as its one `residencePlace`, so "Alabama and
+ *  Texas, United States" is an item no search can run, not a judgment call.
+ *
+ *  Refused only when the string splits on "and", "or", "&", ";" or "/" into two or
+ *  more parts and EVERY part sits inside, or encloses, a locality this project has
+ *  researched. That is what tells two places apart from one place whose name
+ *  holds a joiner: "Lewis and Clark County, Montana" splits into "Lewis", which no
+ *  locality matches, so it is left alone, as is anything in a project with no
+ *  recorded locality. An elided part ("Smith County and Hill County, Texas") is
+ *  not caught, because filling in its tail would also split "Lewis and Clark". */
+export function compoundJurisdictionError(
+  item: PlanItemLike,
+  localities: LocalityLike[]
+): string | undefined {
+  const jurisdiction = typeof item?.jurisdiction === "string" ? item.jurisdiction : "";
+  const parts = jurisdiction.split(PLACE_JOINER).map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return undefined;
+  const places = (localities ?? [])
+    .map((l) => (typeof l?.place === "string" ? l.place : ""))
+    .filter(Boolean);
+  const known = (part: string) => places.some((p) => isInside(part, p) || isInside(p, part));
+  if (!parts.every(known)) return undefined;
+  return (
+    `jurisdiction '${jurisdiction}' names ${parts.length} places (${parts.join("; ")}). ` +
+    `A plan item searches one place: write one item per place, each with its own ` +
+    `place_search standardPlace.`
+  );
+}
+
 export function planItemFlags(
   item: PlanItemLike,
   localities: LocalityLike[]

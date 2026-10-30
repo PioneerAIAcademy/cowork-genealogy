@@ -73,6 +73,13 @@ function QuestionCard({ question }: { question: Question }): React.JSX.Element {
         </div>
       )}
 
+      {question.question_kind && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>Question Kind</div>
+          <div className={styles.fieldValue}>{question.question_kind}</div>
+        </div>
+      )}
+
       {stopped_because && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Stopped Because</div>

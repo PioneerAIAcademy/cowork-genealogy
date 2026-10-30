@@ -1,0 +1,214 @@
+{
+  "guard": "filtered-nil-no-unfiltered-retry",
+  "description": "A research_log_append fulltext_search op that returned zero hits with a post-search filter (place, recordPlace0-3, recordType, yearFrom, yearTo) set and no unfiltered retry \u2014 a sibling fulltext_search with the same keywords/nlQuery whose filter-key set is a STRICT SUBSET of this op's, in the same batch (research.ops) or already in log[]. Silent for a name-field query, a query with no keywords/nlQuery term, a non-zero-hit op, and an op with no filter. Keyed on zero HITS, never on outcome. Replayed by the writer-tool precondition filteredNilRetryInvariants (research-log-append.ts).",
+  "format": "expect: fire | silent, judged for the op named by `write` in research.ops (the op the preflight has already resolved \u2014 `query` is its sent query, `zeroHit` its resolved zero-hit state). research.ops are the other ops in the same batch; research.log is what earlier calls persisted. `ops[].id` is a test-fixture selector; the ResearchLogAppendOp type carries no id. Every fire case carries a `shape`; a guard needs at least two distinct fire shapes and at least one silent case.",
+  "cases": [
+    {
+      "id": "nil-no-ref-no-retry",
+      "expect": "fire",
+      "shape": "nil-no-staged-ref",
+      "why": "A filtered zero-hit fulltext op (the reachable path: logged with no staged ref, resultsExamined 0) whose keywords were never searched without the place filter.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick",
+              "place": "Schuylkill County, Pennsylvania"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "staged-count-zero-no-retry",
+      "expect": "fire",
+      "shape": "staged-count-zero",
+      "why": "A filtered zero-hit fulltext op whose staged payload recomputed to a count of 0 (defensive branch) with no unfiltered retry.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick",
+              "recordPlace0": "10",
+              "recordType": "probate"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "sibling-in-batch",
+      "expect": "silent",
+      "why": "The unfiltered retry (same keywords, empty filter set, a strict subset of {place}) is in the same batch.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick",
+              "place": "Schuylkill County, Pennsylvania"
+            },
+            "zeroHit": true
+          },
+          {
+            "id": "op_b",
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "sibling-in-log",
+      "expect": "silent",
+      "why": "The unfiltered retry is already in log[] from an earlier call.",
+      "write": "op_a",
+      "research": {
+        "log": [
+          {
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick"
+            }
+          }
+        ],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick",
+              "recordPlace1": "Pennsylvania"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "name-query-exempt",
+      "expect": "silent",
+      "why": "A name-field query has no stable sibling key \u2014 exempt.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "fulltext_search",
+            "query": {
+              "name": "Patrick Flynn",
+              "place": "Schuylkill County, Pennsylvania"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-term-query-exempt",
+      "expect": "silent",
+      "why": "A query with no keywords/nlQuery term \u2014 its unfiltered retry would drop its only field, which fulltext_search's validateInput refuses. Exempt.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "fulltext_search",
+            "query": {
+              "place": "Schuylkill County, Pennsylvania",
+              "recordType": "probate"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "filtered-negative-with-hits",
+      "expect": "silent",
+      "why": "A filtered search that had hits (zeroHit false) but was logged negative \u2014 keyed on hits, not outcome.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick",
+              "place": "Schuylkill County, Pennsylvania"
+            },
+            "zeroHit": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-filter",
+      "expect": "silent",
+      "why": "A zero-hit fulltext op with no post-search filter \u2014 nothing to retry without.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "duplicate-filtered-nil-in-batch",
+      "expect": "fire",
+      "shape": "two-identical-filtered-nils",
+      "why": "Two identical filtered zero-hit ops in one batch: each has the SAME filter set, so neither is a STRICT-subset unfiltered retry of the other (pins `<`, not `<=`). The op is still refused.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick",
+              "place": "Schuylkill County, Pennsylvania"
+            },
+            "zeroHit": true
+          },
+          {
+            "id": "op_b",
+            "tool": "fulltext_search",
+            "query": {
+              "keywords": "+Flynn +Patrick",
+              "place": "Schuylkill County, Pennsylvania"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    }
+  ]
+}
