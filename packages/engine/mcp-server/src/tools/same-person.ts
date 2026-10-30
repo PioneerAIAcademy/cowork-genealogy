@@ -40,6 +40,7 @@ import { recordMatchScore, type RecordedMatchScore } from "../utils/match-scores
 import { Mob } from "../utils/mob.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { arkToBareId } from "../utils/ark.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 
 /** Concurrency cap for FamilySearch's per-pair calls in relatives mode. */
 const PAIR_CONCURRENCY = 5;
@@ -331,6 +332,12 @@ async function samePersonFromProject(
       `same_person: no assertion '${assertionId}' in this project's research.json.`,
     );
   }
+  if (!isLiveAssertion(assertion)) {
+    throw new SamePersonInputError(
+      `same_person: assertion '${assertionId}' was retired by a re-extraction (superseded_by ` +
+        `${assertion.superseded_by}), so it is not evidence to score: score its replacement instead.`,
+    );
+  }
   const recordId = String(assertion.record_id ?? "");
   if (recordId === "") {
     throw new SamePersonInputError(
@@ -524,7 +531,7 @@ function otherRoleAsked(assertion: any, role: unknown): string | undefined {
  *  id is compared as `sameRecord` does, which tolerates the stored spellings. */
 function recordAssertionsOf(research: any, assertion: any): any[] {
   return (Array.isArray(research?.assertions) ? research.assertions : []).filter((a: any) =>
-    sameRecord(a?.record_id, assertion?.record_id),
+    isLiveAssertion(a) && sameRecord(a?.record_id, assertion?.record_id),
   );
 }
 
@@ -863,7 +870,7 @@ async function resolveRecordSide(
 
   // Route 2 — project the record's parties out of its own assertions.
   const own = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
-    (a: any) => sameRecord(a?.record_id, recordId),
+    (a: any) => isLiveAssertion(a) && sameRecord(a?.record_id, recordId),
   );
   const groups = projectRecordPersonas(own, recordId);
   if (groups.length === 0) {

@@ -2837,6 +2837,25 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
     expect(rel.sources).toEqual([{ ref: "S1", quality: 3 }]);
   });
 
+  it("refuses a sourceAssertionId a re-extraction retired, and writes no edge (#3678)", async () => {
+    await writeProject(
+      twoPersons(),
+      research([relationshipAssertion({ superseded_by: "retracted", superseded_reason: "no counterpart" })]),
+    );
+
+    const r = await treeEdit({
+      projectPath: dir,
+      operation: "add_relationship",
+      relationship: { type: "ParentChild", parent: "I1", child: "I2" } as any,
+      sourceAssertionId: "a_001",
+    });
+
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/a_001' was retired by a re-extraction \(superseded_by retracted\)/);
+    expect((await readTree()).relationships).toEqual([]);
+  });
+
   it("indirect evidence resolves a lower ref quality (2), not 3", async () => {
     await writeProject(twoPersons(), research([relationshipAssertion({ record_basis: "inferred" })]));
 
