@@ -431,7 +431,9 @@ describe('redactApiKeys', () => {
     expect(out).not.toContain(key)
     expect(out).toContain('\\"matcherApiKey\\": \\"[REDACTED_API_KEY]\\"')
     expect(out).toContain('https://matcher.example.org')
-    expect(redactApiKeys(`{"matcherApiKey": "${key}"}`)).toBe('{"matcherApiKey": "[REDACTED_API_KEY]"}')
+    expect(redactApiKeys(`{"matcherApiKey": "${key}"}`)).toBe(
+      '{"matcherApiKey": "[REDACTED_API_KEY]"}'
+    )
   })
 })
 
