@@ -23,6 +23,23 @@ describe('ErrorBoundary', () => {
     )
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByText(/Couldn’t display the conflicts section/)).toBeInTheDocument()
+    expect(screen.getByText(/is malformed or incomplete/)).toBeInTheDocument()
+    // The console line names what failed, so a feedback log points at the right file.
+    expect(console.error).toHaveBeenCalledWith(
+      'Viewer failed to render the conflicts section',
+      expect.any(Error),
+      expect.anything()
+    )
+  })
+
+  it('shows the caller’s message in place of the research.json explanation', () => {
+    render(
+      <ErrorBoundary label="this result" message="This result could not be displayed.">
+        <Boom />
+      </ErrorBoundary>
+    )
+    expect(screen.getByText('This result could not be displayed.')).toBeInTheDocument()
+    expect(screen.queryByText(/is malformed or incomplete/)).toBeNull()
   })
 
   it('renders its children when they do not throw', () => {
