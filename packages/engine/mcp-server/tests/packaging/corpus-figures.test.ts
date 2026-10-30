@@ -74,8 +74,26 @@ const SPECS = [
  *  still carry `blocked_context_calls` entries naming it, and those were real
  *  fires when they were recorded — but the arm below counts CURRENT
  *  subagent-only fires, so it tracks the live policy rather than the corpus's
- *  history, and the test at the bottom binds the two. */
-const SUBAGENT_ONLY_TOOLS = new Set(["image_read"]);
+ *  history, and the test at the bottom binds the two.
+ *
+ *  Since 2026-10-29 the policy is `image_read` plus the plugin hook's
+ *  AGENT_ONLY_TOOLS, which context_policy imports rather than copies — so the
+ *  keys are read from the hook here too. */
+const GUARD_HOOK = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "..", "..", "..", "plugin", "hooks", "guard_project_files.py",
+);
+
+/** The keys of the hook's AGENT_ONLY_TOOLS map; throws on a miss rather than
+ *  returning empty, which would shrink the set this file counts silently. */
+function agentOnlyToolKeys(): string[] {
+  const body = readFileSync(GUARD_HOOK, "utf8").match(/^AGENT_ONLY_TOOLS\s*=\s*\{([\s\S]*?)^\}/m)?.[1];
+  const keys = [...(body ?? "").matchAll(/^ {4}"([a-z_]+)":/gm)].map((m) => m[1]);
+  if (keys.length === 0) throw new Error(`AGENT_ONLY_TOOLS not found or empty in ${GUARD_HOOK}`);
+  return keys;
+}
+
+const SUBAGENT_ONLY_TOOLS = new Set(["image_read", ...agentOnlyToolKeys()]);
 
 const git = (...args: string[]) =>
   execFileSync("git", args, { cwd: projectRoot, encoding: "utf8", maxBuffer: 1 << 28 });
@@ -267,13 +285,21 @@ describe("the specs' corpus claims survive main moving", () => {
       join(projectRoot, "eval", "harness", "harness", "context_policy.py"),
       "utf8",
     );
-    const m = policy.match(/SUBAGENT_ONLY_TOOLS\s*=\s*frozenset\(\{([^}]*)\}\)/);
+    const m = policy.match(/_HARNESS_ONLY_SUBAGENT_TOOLS\s*=\s*frozenset\(\{([^}]*)\}\)/);
     expect(
       m,
-      "SUBAGENT_ONLY_TOOLS = frozenset({...}) not found in context_policy.py — it " +
+      "_HARNESS_ONLY_SUBAGENT_TOOLS = frozenset({...}) not found in context_policy.py — it " +
         "moved or changed shape, so this file no longer tracks the policy it mirrors",
     ).not.toBeNull();
-    const policyTools = [...m![1].matchAll(/"([^"]+)"/g)].map((x) => x[1]).sort();
+    expect(
+      policy,
+      "context_policy.py no longer composes SUBAGENT_ONLY_TOOLS from the hook's " +
+        "AGENT_ONLY_TOOLS, so the keys this file reads from the hook are not the policy",
+    ).toMatch(/^SUBAGENT_ONLY_TOOLS\s*=\s*_HARNESS_ONLY_SUBAGENT_TOOLS\s*\|\s*frozenset\(AGENT_ONLY_TOOLS\)/m);
+    const policyTools = [
+      ...[...m![1].matchAll(/"([^"]+)"/g)].map((x) => x[1]),
+      ...agentOnlyToolKeys(),
+    ].sort();
     expect(
       policyTools,
       "the subagent-only tool set here has drifted from context_policy.py; the " +
