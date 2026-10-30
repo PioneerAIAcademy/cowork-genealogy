@@ -1,6 +1,6 @@
 {
   "id": "nicolasa-cedillo-death",
-  "name": "Nicolasa Cedillo — death in May 1943, Santa Lucía, Intibucá, Honduras",
+  "name": "Nicolasa Cedillo — death 12 February 1945, Santa Lucía, Intibucá, Honduras",
   "genre": "record-hint",
   "source_pid": "GJG6-F2L",
   "captured": "2026-10-20",
@@ -14,6 +14,10 @@
     "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
-  "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 15, hint-samples.csv row 464, flags adds_birth/adds_death, confidence 3). Draft transcribed from a 1943 Honduran civil death registration at Santa Lucía, Intibucá; unverified."
+  "difficulty": "hard",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:X7KG-W4V1",
+    "identity": "different"
+  },
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 15, hint-samples.csv row 464, flags adds_birth/adds_death, confidence 3). Resolved 2026-10-28 as OUTCOME 2 (the hint is a false match; the subject's death is a different record) on index evidence; image_basis unset (no register image was read or calibrated). The hinted 1943 civil death registration (ark:/61903/1:1:X7KG-W4V1, Ma Nicolasa Cedillo, registered 22 May 1943, Santa Lucía, spouse Santiago Cedillo, mother indexed as Julia Cedillo in the second index ark:/61903/1:1:X7FM-RFHS, birth 1868) is a different, same-named woman. The subject (GJG6-F2L) actually died 12 Feb 1945 (registered 13 Feb 1945) at Santa Lucía, Intibucá — ark:/61903/1:1:X7FM-YRGN (duplicate index ark:/61903/1:1:X7LQ-QZVH), parents Ventura Cedillo + María Jesús Amaya, birth 1875 — matching the subject's parentage, which is fixed by her 1899 marriage (ark:/61903/1:1:QVRX-VWN1), her daughter's 1904 civil birth (ark:/61903/1:1:X7FS-K2SL) and her confirmation (ark:/61903/1:1:X9CV-TJLX). Her husband Santiago Cedillo died 1918 (ark:/61903/1:1:X7LS-KMLK), consistent with the 1945 record naming no spouse. The register images could not be retrieved (403/timeout); resolution rests on indexed parentage, not image verification. Retrieval tool-assisted (record_read)."
 }
