@@ -1,6 +1,6 @@
 {
   "tool": "record_read",
-  "description": "Full record for Theresia (Birth of Theresia, daughter of Jakob Reding and Maria Schroeder), Luxembourg, Church and Civil Registration (5000012). Mirrors the gedcomx already embedded in record-search-theresia-luxembourg-hit — same persons, same relationships, no new genealogical claims. Stocked so that a thorough agent that reads the record before reporting does not abort the run as an unregistered tool.",
+  "description": "Full record for Theresia (Birth of Theresia, daughter of Jakob Reding and Maria Johanna Fautsch), Luxembourg, Church and Civil Registration (5000012). Mirrors the gedcomx already embedded in record-search-theresia-luxembourg-hit — same persons, same relationships, no new genealogical claims. Stocked so that a thorough agent that reads the record before reporting does not abort the run as an unregistered tool.",
   "args": {
     "recordId": "~6LYM-X1PN"
   },
@@ -22,7 +22,7 @@
             "id": "F1",
             "type": "Birth",
             "date": "17 June 1846",
-            "place": "Arsdorf, Redange, Luxembourg"
+            "place": "Luxemburg"
           }
         ],
         "ark": "ark:/61903/1:1:6LYM-X1PN",
@@ -60,8 +60,8 @@
           {
             "id": "N3",
             "preferred": true,
-            "given": "Maria",
-            "surname": "Schroeder",
+            "given": "Maria Johanna",
+            "surname": "Fautsch",
             "type": "BirthName"
           }
         ],
@@ -99,7 +99,7 @@
     "places": [
       {
         "id": "PL1",
-        "name": "Arsdorf, Redange, Luxembourg"
+        "name": "Luxemburg"
       }
     ]
   }

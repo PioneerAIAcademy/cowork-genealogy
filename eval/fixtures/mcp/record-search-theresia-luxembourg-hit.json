@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "record_search that DROPS surname and anchors on fatherSurname=Reding (or fatherGivenName=Jakob, or motherSurname=Schroeder, etc.) finds Theresia's 1846 Arsdorf civil birth act (ark 6LYM-X1PN), indexed by given name only — no surname on the child. The surname-carrying fixture (record-search-reding-surname-not-found) is ordered FIRST and siphons any query with surname set, so this fixture fires only for the doctrine-correct parent-anchored search. Matched on fatherSurname~Reding: any query with a fatherSurname containing 'Reding' and no surname field reaches this fixture. primaryId P1 matches rank-search-matches-theresia-luxembourg.",
+  "description": "record_search that DROPS surname and anchors on fatherSurname=Reding (or fatherGivenName=Jakob, or motherSurname=Fautsch, etc.) finds Theresia's 1846 civil birth act (ark 6LYM-X1PN), indexed by given name only — no surname on the child. The surname-carrying fixture (record-search-reding-surname-not-found) is ordered FIRST and siphons any query with surname set, so this fixture fires only for the doctrine-correct parent-anchored search. Matched on fatherSurname~Reding: any query with a fatherSurname containing 'Reding' and no surname field reaches this fixture. primaryId P1 matches rank-search-matches-theresia-luxembourg.",
   "args": {
     "fatherSurname": "~Reding"
   },
@@ -26,12 +26,12 @@
         "score": 0.94,
         "sex": "Female",
         "birthDate": "17 June 1846",
-        "birthPlace": "Arsdorf, Redange, Luxembourg",
+        "birthPlace": "Luxemburg",
         "events": [],
         "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:6LYM-X1PN",
         "collectionId": "5000012",
         "collectionTitle": "Luxembourg, Church and Civil Registration",
-        "recordTitle": "Birth of Theresia, daughter of Jakob Reding and Maria Schroeder",
+        "recordTitle": "Birth of Theresia, daughter of Jakob Reding and Maria Johanna Fautsch",
         "treeMatches": [],
         "primaryId": "P1",
         "gedcomx": {
@@ -52,7 +52,7 @@
                   "id": "F1",
                   "type": "Birth",
                   "date": "17 June 1846",
-                  "place": "Arsdorf, Redange, Luxembourg"
+                  "place": "Luxemburg"
                 }
               ]
             },
@@ -77,8 +77,8 @@
                 {
                   "id": "N3",
                   "preferred": true,
-                  "given": "Maria",
-                  "surname": "Schroeder",
+                  "given": "Maria Johanna",
+                  "surname": "Fautsch",
                   "type": "BirthName"
                 }
               ],

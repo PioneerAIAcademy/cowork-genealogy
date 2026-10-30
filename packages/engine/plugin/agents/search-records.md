@@ -1209,7 +1209,6 @@ collection does not exempt a lever from this requirement.
 | Narrow place (state→county→town) | Add smaller levels to place string | Too many hits; subject's town is known |
 | Drop place | Clear all place parameters | Subject migrated unexpectedly |
 | Switch event-place | Move place from `birthPlace` → `residencePlace` → `marriagePlace` → `anyPlace` | Each event occurred in a different place |
-| **Run one place-free search when enumerating a couple's children** | Clear all place parameters; anchor on `recordCountry` + the birth `collectionId`; set both parents' given names and surnames | When the plan item enumerates a couple's children: FamilySearch sometimes indexes a child under the wrong jurisdiction, and any place filter — even broadened — never reaches it. A place-anchored search that returns some children never trips the zero-hit lever. Run this once per enumeration plan item; do not apply it to every birth search. Verify any hit outside the family's expected place against the parents' names before accepting. |
 
 **Boundary changes are a research-plan concern, not a search-records one.** A place's records may be filed under the jurisdiction in force at the event *or* under its present-day jurisdiction — FamilySearch sometimes indexes a collection under the modern country rather than the historical one. Working out that succession (and the right jurisdictions to search, plus any indexing quirks) is `locality-guide`/`research-plan`'s job: they stage the alternatives into the plan, so a plan item may carry a fallback jurisdiction in its `rationale`. Here in search-records the reflex is general: **try the jurisdiction the plan gives you; if a boundary-related nil persists and the plan staged a successor jurisdiction, try it; otherwise bounce back to `research-plan`** rather than guessing per-country rules or looking up place history yourself.
 
@@ -1276,4 +1275,14 @@ A reasonably exhaustive indexed Records search has been performed when:
 - Examined results from each collection that returned matching hits
 - Called `catalog_search` for the place to find filmed or image-only holdings
 - Documented every search attempt including zero-hit searches
+
+### Children-enumeration plan items
+
+When a plan item enumerates a couple's children (its `record_type` is a birth search run across all children, not one specific child's vital record), run **one place-free search** in addition to the place-anchored sequences above:
+
+- Clear all place parameters (`birthPlace`, `residencePlace`, `anyPlace`).
+- Anchor on `recordCountry` + the birth `collectionId`; set both parents' given names and surnames.
+- **Why:** FamilySearch sometimes indexes a child under an unexpected jurisdiction. Any place filter — even broadened — never reaches it. A place-anchored search that returns some children never trips the zero-hit lever, so the missed child stays invisible without this step.
+- Run this **once** per enumeration plan item; do not apply it to every ordinary birth search.
+- Verify any hit outside the family's expected place against the parents' names before accepting.
 

@@ -1,6 +1,6 @@
 {
   "tool": "rank_search_matches",
-  "description": "rank_search_matches re-ranks the staged Luxembourg birth candidate (Theresia, daughter of Jakob Reding and Maria Schroeder, ark 6LYM-X1PN) against subject I1 (Theresia Reding). Ranks #1 with a strong score — given name, birth year (1846), and both parent surnames (Reding / Schroeder) align with the tree. Matched on subjectId; independent of the per-run stagedResultsRef.",
+  "description": "rank_search_matches re-ranks the staged Luxembourg birth candidate (Theresia, daughter of Jakob Reding and Maria Johanna Fautsch, ark 6LYM-X1PN) against subject I1 (Theresia Reding). Ranks #1 with a strong score — given name, birth year (1846), and parent surnames (Reding / Fautsch) align with the tree. Matched on subjectId; independent of the per-run stagedResultsRef.",
   "args": {
     "subjectId": "~"
   },
@@ -16,10 +16,10 @@
         "searchRank": 1,
         "recordId": "ark:/61903/1:1:6LYM-X1PN",
         "primaryId": "P1",
-        "personName": "Theresia (daughter of Jakob Reding and Maria Schroeder)",
+        "personName": "Theresia (daughter of Jakob Reding and Maria Johanna Fautsch)",
         "sex": "Female",
         "birthDate": "17 June 1846",
-        "birthPlace": "Arsdorf, Redange, Luxembourg",
+        "birthPlace": "Luxemburg",
         "collectionTitle": "Luxembourg, Church and Civil Registration",
         "matchScore": 0.93,
         "matchConfidence": 5,

@@ -1,6 +1,6 @@
 {
   "tool": "record_read",
-  "description": "Full record for Zulema de Jesús Silva González (Birth of Zulema de Jesús Silva González), Chile, Civil Registration, 1885-1932 (1410964). Born 12 November 1897 in Pichilemu, Petorca, Aconcagua — a different province from the family's usual Nancagua, Colchagua. Parents: Benjamín Silva Díaz and Clara González Pimienta. Stocked so that a thorough agent that reads the record before logging it does not abort the run as an unregistered tool.",
+  "description": "Full record for Zulema de Jesús Silva González (Birth of Zulema de Jesús Silva González), Chile, Civil Registration, 1880-1933 (1630787). Born 12 November 1897 in Pichilemu, Petorca, Aconcagua — a different province from the family's usual Nancagua, Colchagua. Parents: Benjamín Silva Díaz and Clara González Pimienta. Stocked so that a thorough agent that reads the record before logging it does not abort the run as an unregistered tool.",
   "args": {
     "recordId": "~Q2S2-PCBW"
   },
@@ -30,7 +30,7 @@
         "sources": [
           {
             "id": "S1",
-            "title": "Chile, Civil Registration, 1885-1932"
+            "title": "Chile, Civil Registration, 1880-1933"
           }
         ]
       },
@@ -50,7 +50,7 @@
         "sources": [
           {
             "id": "S1",
-            "title": "Chile, Civil Registration, 1885-1932"
+            "title": "Chile, Civil Registration, 1880-1933"
           }
         ]
       },
@@ -70,7 +70,7 @@
         "sources": [
           {
             "id": "S1",
-            "title": "Chile, Civil Registration, 1885-1932"
+            "title": "Chile, Civil Registration, 1880-1933"
           }
         ]
       }
@@ -92,8 +92,8 @@
     "sources": [
       {
         "id": "S1",
-        "title": "Chile, Civil Registration, 1885-1932",
-        "collectionId": "1410964",
+        "title": "Chile, Civil Registration, 1880-1933",
+        "collectionId": "1630787",
         "ark": "ark:/61903/1:1:Q2S2-PCBW"
       }
     ],
