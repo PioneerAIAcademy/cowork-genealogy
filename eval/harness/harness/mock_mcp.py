@@ -504,49 +504,61 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 # fixture simply gets no hint.
 SURNAME_VARIANT_HINTS_KEY = "surnameVariantHints"
 _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
-_warned_no_surname_hints_module = False
 
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
-_warned_no_unknown_args_module = False
+
+
+#: Compiled modules already warned about, so a missing build says so once per
+#: process rather than once per call. Keyed on the path, so a second module
+#: still gets its own warning.
+_warned_missing_modules: set[Path] = set()
+
+
+def _compiled_module_present(path: Path, consequence: str) -> bool:
+    """Whether the build carries `path`. Warns ONCE per module when it does not,
+    naming what the caller will do instead, and returns False.
+
+    Shared by every compiled-module bridge in this file (CLAUDE.md "Code reuse":
+    two near-duplicates is the signal to consolidate). Each bridge used to carry
+    its own `_warned_no_*_module` global and its own copy of this exists/warn/
+    return-False shape, so a change to the build path — the `--import` store
+    prelude, say — had to be made in every copy.
+
+    `consequence` completes "…; <consequence>", and is what makes the warning
+    actionable: a harness fault must never read as the model behaving.
+    """
+    if path.exists():
+        return True
+    if path not in _warned_missing_modules:
+        _warned_missing_modules.add(path)
+        warnings.warn(
+            f"{path} is missing — rebuild packages/engine/mcp-server; {consequence}",
+            stacklevel=2,
+        )
+    return False
 
 
 def _surname_hints_module_present() -> bool:
-    """Whether the build carries the module. Warns once when it does not: a build
-    older than #3054 serves every nil with no hint, which reads as the model
-    ignoring one."""
-    global _warned_no_surname_hints_module
-    if _SURNAME_HINTS_JS.exists():
-        return True
-    if not _warned_no_surname_hints_module:
-        _warned_no_surname_hints_module = True
-        warnings.warn(
-            f"{_SURNAME_HINTS_JS} is missing — rebuild packages/engine/mcp-server; "
-            "record_search responses will carry no surnameVariantHints",
-            stacklevel=2,
-        )
-    return False
+    """A build older than #3054 serves every nil with no hint, which reads as the
+    model ignoring one."""
+    return _compiled_module_present(
+        _SURNAME_HINTS_JS,
+        "record_search responses will carry no surnameVariantHints",
+    )
 
 
 def _unknown_args_module_present() -> bool:
-    """Whether the build carries the unknown-argument guard. Warns once when it
-    does not, and lets the call through.
+    """Fails OPEN by decision (#3947, review-ready 2026-10-30): one broken node
+    install would otherwise abort every suite. `run_tests.py`'s build-fresh gate
+    already refuses a stale build for real runs, so this path is reached only by
+    a developer running pytest against an unbuilt tree."""
+    return _compiled_module_present(
+        _UNKNOWN_ARGS_JS,
+        "mock tool calls will NOT be checked for non-parameter arguments",
+    )
 
-    Failing open is deliberate (issue #3947, review-ready 2026-10-30): one broken
-    node install would otherwise abort every suite. `run_tests.py`'s build-fresh
-    gate already refuses a stale build for real runs, so the open path is reached
-    only by a developer running pytest against an unbuilt tree.
-    """
-    global _warned_no_unknown_args_module
-    if _UNKNOWN_ARGS_JS.exists():
-        return True
-    if not _warned_no_unknown_args_module:
-        _warned_no_unknown_args_module = True
-        warnings.warn(
-            f"{_UNKNOWN_ARGS_JS} is missing — rebuild packages/engine/mcp-server; "
-            "mock tool calls will NOT be checked for non-parameter arguments",
-            stacklevel=2,
-        )
-    return False
+
+
 
 
 def _reject_unknown_args(tool_name: str, args: Any) -> str | None:

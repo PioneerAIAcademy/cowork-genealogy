@@ -1880,10 +1880,17 @@ def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
     }
     response = c.get("response")
     kind = (c.get("matched") or {}).get("kind")
-    # `unknown_args_refused` joins the list because the refusal TEXT is the whole
-    # record of what happened: the handler never ran, so there is no other trace
-    # of which key the guard refused (#3947).
-    if kind in ("live", "none", "unknown_args_refused") or _is_mock_enriched(response):
+    # ONE rule, not a tuple that grows by an entry per kind: keep the response
+    # unless a fixture on disk already holds it. `predicate` is the only kind
+    # where one does — every other kind carries content composed at RUNTIME and
+    # recoverable nowhere else. `live` is the tool's real answer; `none` is the
+    # fixture_not_found; `unknown_args_refused` is the guard's sentence naming
+    # the key, written after the handler was skipped (#3947); and
+    # `staged_ref_refused` is `_staged_ref_error`'s message, which enumerates the
+    # refs that actually existed in that workspace. That last one was dropped for
+    # as long as the tuple was a list of special cases, which is the argument for
+    # stating the rule instead of extending the list.
+    if kind != "predicate" or _is_mock_enriched(response):
         entry["response"] = response
     return entry
 

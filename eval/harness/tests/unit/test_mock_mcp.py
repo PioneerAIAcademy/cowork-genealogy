@@ -2752,7 +2752,7 @@ def test_guard_fails_open_and_warns_when_the_build_is_missing(monkeypatch, tmp_p
     2026-10-30). Failing open is the decision; warning is what keeps it from
     being silent."""
     monkeypatch.setattr(mock_mcp, "_UNKNOWN_ARGS_JS", tmp_path / "nope.js")
-    monkeypatch.setattr(mock_mcp, "_warned_no_unknown_args_module", False)
+    monkeypatch.setattr(mock_mcp, "_warned_missing_modules", set())
 
     with pytest.warns(UserWarning, match="rebuild packages/engine/mcp-server"):
         assert mock_mcp._reject_unknown_args("record_search", {"q": "x"}) is None

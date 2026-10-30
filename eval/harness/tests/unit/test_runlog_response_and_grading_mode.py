@@ -358,3 +358,39 @@ def test_a_guard_refused_call_keeps_the_response():
     entry = _tool_call_entry(call)
     assert entry["response"] == call["response"]
     assert entry["matched"] == {"kind": "unknown_args_refused", "index": None}
+
+
+def test_a_staged_ref_refusal_keeps_the_response():
+    """`_staged_ref_error` composes its message at runtime — it enumerates the
+    refs that actually existed in that workspace — so no fixture holds it.
+
+    It was dropped for as long as the retention rule was a list of special
+    cases; it is kept now because the rule is "unless a fixture already holds
+    it", and `predicate` is the only kind where one does.
+    """
+    call = {
+        "tool": "mcp__genealogy__record_read",
+        "args": {"resultsRef": "results/nope.json"},
+        "expected_args": None,
+        "matched": {"kind": "staged_ref_refused", "index": None},
+        "response_fixture": None,
+        "response": {"error": "staged_ref_not_found", "tool": "record_read",
+                     "message": "no such ref; the workspace holds results/log_001.json"},
+    }
+    entry = _tool_call_entry(call)
+    assert entry["response"] == call["response"]
+
+
+def test_a_plain_predicate_match_still_drops_the_response():
+    """The other direction, and the reason the rule is not "keep everything":
+    a predicate match's response IS the fixture, byte for byte, already on disk.
+    Keeping it would duplicate every fixture into every run log."""
+    call = {
+        "tool": "mcp__genealogy__record_search",
+        "args": {"surname": "Flynn"},
+        "expected_args": {"args.surname": "Flynn"},
+        "matched": {"kind": "predicate", "index": 0},
+        "response_fixture": "flynn-fixture",
+        "response": {"hits": "flynn"},
+    }
+    assert "response" not in _tool_call_entry(call)
