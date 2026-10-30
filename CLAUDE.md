@@ -333,6 +333,12 @@ path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 (ADR-0005); whether that is a per-session setting is not known. **Do not rely on
 which one it is** — the hook bound under both, which is the part that matters.
 
+A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds one conditional
+sentence to each Cowork researcher message (no project → a research request goes to the
+research skill). It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
+the SDK env, so the hosted planes keep their own text-only fix (`project_note`,
+`DELIVERY_GUIDANCE`). Change the flag in all three places together.
+
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
 plugin agent's instructions or `tools:` list. The hosted path, both harnesses and

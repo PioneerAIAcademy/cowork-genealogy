@@ -1155,6 +1155,7 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.model == "claude-sonnet-4-6"
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
+    assert opts.env["GENEALOGY_HOSTED_PLANE"] == "1", "silences the Cowork-only no_project_route hook"
     assert opts.env["CLAUDE_CONFIG_DIR"] == str(tmp_path) and opts.env["TMPDIR"] == "/tmp"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     [matcher] = opts.hooks["PreToolUse"]

@@ -1271,7 +1271,11 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 ### 5.4 The write-lockdown hook
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
-+ `guard_project_files.py`), and despite this section's name it enforces **four**
++ `guard_project_files.py`) and one `UserPromptSubmit` hook, `no_project_route.py`, which
+is not a guardrail: it adds one conditional sentence to each Cowork researcher message (with
+no project, a request to research a person goes to the research skill) and is silent
+wherever `GENEALOGY_HOSTED_PLANE` is set, which both hosted planes set. It is the first plugin
+hook that adds context rather than deciding a call. The `PreToolUse` hook, despite this section's name it enforces **four**
 rules, not one. Its matcher is
 `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task` — wider
 than the file-write tools, because two rules act on `research_append` itself and
@@ -1442,7 +1446,9 @@ raise** — every failure path falls through to allowing the call. Model it on
 `guard_project_files.py` and extend `tests/packaging/plugin-hooks.test.ts`, which
 runs the real script. Then run **`make hook-smoke`** (§9.1): `plugin-hooks.test.ts`
 proves the script *decides* correctly, and nothing else proves a runtime *binds*
-it — which, because the script must never raise, fails silently.
+it — which, because the script must never raise, fails silently. `hook-smoke`
+probes `PreToolUse` binding only; a `UserPromptSubmit` hook is shown binding by a hosted
+replay whose transcript carries its text.
 
 > A plugin hook binds in Cowork and the hosted path and in **neither harness**.
 > All three of the unit harness, the e2e harness, and the hosted control plane

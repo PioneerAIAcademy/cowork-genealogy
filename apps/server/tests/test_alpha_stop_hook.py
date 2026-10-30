@@ -684,6 +684,21 @@ def test_the_alpha_system_prompt_carries_the_delivery_guidance(tmp_path):
     assert "research_delivered" in opts.system_prompt["append"]
 
 
+def test_the_alpha_system_prompt_is_true_before_a_project_exists(tmp_path):
+    """Issue #3768. On a fresh session the folder holds no research.json; a note saying it
+    did pointed the model at a project that was not there, and first messages were answered
+    from one lookup. The delivery text also names the no-project exclusion, and the env
+    carries the flag that keeps the Cowork-only `no_project_route.py` hook silent here."""
+    opts = real_agent.build_options(tmp_path)
+    append = opts.system_prompt["append"]
+    assert append.startswith("You are the hosted genealogy research agent")
+    assert "contains research.json" not in append
+    assert "Once a project exists there it holds research.json" in append
+    assert "before any project exists" in real_agent.DELIVERY_GUIDANCE
+    assert "no_project" in real_agent.DELIVERY_GUIDANCE
+    assert opts.env[real_agent.HOSTED_PLANE_ENV] == "1"
+
+
 class _Turns:
     """Stands in for the session, borrowing the REAL turn-boundary method.
 
