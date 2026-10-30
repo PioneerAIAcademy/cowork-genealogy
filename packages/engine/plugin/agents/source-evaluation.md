@@ -132,7 +132,7 @@ Three kinds, and the recommendation follows the kind:
 
 Open with the count of **user-actionable** findings — neither backend metadata nor FamilySearch's profile checklist is in that count. Then, per finding:
 
-- Which source, named by its title and citation, not by its internal id
+- Which source, named by its title, its citation and its record link — the source's `url` exactly as `person_read` returned it — never by its internal id
 - What disagrees with what: the indexed value beside the recorded fact
 - The classification and the cue that decided it
 - The recommended action, in the doctrine of step 4 — for (a), go back to what the index was made from and correct it, naming whether that is the original page or (for an index-only collection) the record it derives from; for (b), detach, with the reason
@@ -153,6 +153,7 @@ If any backend metadata came up, one closing sentence of context — not a list,
 SOURCES ON: Patrick Flynn (KWCJ-RN4) — 6 attached, 2 findings
 
 1. 1851 Civil Registration, Sherbrooke — indexing error
+   Link: https://www.familysearch.org/ark:/61903/1:1:QV2J-9K4
    Indexed birth year 1814; the profile records 1816.
    Everything else in the record fits — the household, the
    wife's name, the parish. A single-digit misread in a
@@ -162,6 +163,7 @@ SOURCES ON: Patrick Flynn (KWCJ-RN4) — 6 attached, 2 findings
    with one bad field.
 
 2. 1861 Ontario Death Registration — misattributed
+   Link: https://www.familysearch.org/ark:/61903/1:1:M7XQ-2PL
    Names a Patrick Flynn who died in 1861, but this Patrick
    appears as head of household in 1871 and 1881. The
    registration names parents who are not his. It is also

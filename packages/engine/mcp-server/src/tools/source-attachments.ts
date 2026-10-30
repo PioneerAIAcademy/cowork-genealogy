@@ -159,7 +159,8 @@ export const sourceAttachmentsSchema = {
     "either record personas (1:1:) from record_search results, or document " +
     "images (3:1: / 3:2:) from fulltext_search results — and get back which " +
     "tree person IDs each source is attached to, plus tags indicating what " +
-    "information the source contains. " +
+    "information the source contains. For a source already on a tree person, " +
+    "pass that source's `url`, never an ARK built from its `id`. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object" as const,
@@ -172,7 +173,12 @@ export const sourceAttachmentsSchema = {
           "(e.g. 'ark:/61903/1:1:QK2S-4W7G'). Each may be a record-persona " +
           "ARK (contains '1:1:', the `recordId` from record_search results) " +
           "or a document-image ARK (contains '3:1:' or '3:2:', from " +
-          "fulltext_search results). Full resolver URLs are also accepted.",
+          "fulltext_search results). Full resolver URLs are also accepted. " +
+          "For a source on a tree person (from person_read), pass its `url`. " +
+          "Its `id` is a source-description id, not a record id, so an ARK " +
+          "built from it names a different record or none. `unattached` also " +
+          "covers an ARK that names no record, so confirm a surprising " +
+          "`unattached` with record_read before acting on it.",
       },
     },
     required: ["uris"],

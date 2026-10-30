@@ -1102,3 +1102,138 @@ def test_census_drift_is_not_a_finding(
         "(informant-reported, not a transcription error); do not list it as a "
         "finding of any kind."
     )
+
+
+# --- each finding carries its record link (issue #3955) ---------------------
+#
+# A report that names a source by its internal id invites the reader to build
+# an ARK from that id, and that ARK names a different record or none: the
+# K2ZH-X4G audit's correct detach was reversed exactly that way. The report must
+# carry the source's `url` as `person_read` returned it.
+#
+# Two halves. The floor needs no layout: the source the test declares as its
+# index error is always a finding, so its link must be somewhere in the reply.
+# The per-finding half runs over numbered findings when the reply has them.
+# Each finding must carry an ARK `person_read` returned, so a link built from a
+# source id fails. That the ARK is the finding's OWN source's is deliberately
+# not checked: any returned ARK passes.
+
+_ARK_RE = re.compile(r"ark:/61903/[^\s)\]>\"'|*`,]+")
+_FINDING_HEAD_RE = re.compile(
+    r"^\s*[#*_\s]*(?:finding\s+)?\d{1,2}(?!\d)\s*(?:[.):]|\s[—–-])", re.IGNORECASE
+)
+# Opens a section after the findings. Matched on the line's own text, never a
+# finding's body: an unchecked-source phrase only as a markdown or bold heading,
+# or followed by a colon within a short label ("Could not check: ..."); a
+# checklist code only alone on its line.
+_UNCHECKED_PHRASE = r"(?:could\s+not\s+(?:check|verify)|unverifi|unchecked)"
+_UNCHECKED_LABEL_RE = re.compile(_UNCHECKED_PHRASE + r"[^:\n]{0,60}:", re.IGNORECASE)
+_UNCHECKED_HEAD_RE = re.compile(_UNCHECKED_PHRASE, re.IGNORECASE)
+_AFTER_FINDINGS_RE = re.compile(
+    r"(?:the\s+)?impossible[- ]date|(?:from\s+)?familysearch'?s?\s+(?:own\s+)?"
+    r"(?:profile\s+)?(?:checklist|suggestions)|"
+    r"(?:COHERENCE|CONSISTENCY|VERIFIABILITY|COMPLETENESS)\s*:?\s*$",
+    re.IGNORECASE,
+)
+
+
+def _opens_after_findings(raw: str) -> bool:
+    lead = raw.lstrip()
+    heading = lead.startswith(("#", "**", "__"))
+    text = _unemphasised(lead).lstrip("# ")
+    if _AFTER_FINDINGS_RE.match(text) or _UNCHECKED_LABEL_RE.match(text):
+        return True
+    return heading and bool(_UNCHECKED_HEAD_RE.match(text))
+
+
+def _person_read_sources(tool_calls) -> list[dict]:
+    out = []
+    for c in tool_calls or []:
+        if not (c.get("tool") or "").endswith("person_read"):
+            continue
+        response = c.get("response")
+        if isinstance(response, dict):
+            out.extend(s for s in response.get("sources") or [] if isinstance(s, dict))
+    return out
+
+
+def _arks(text: str) -> set[str]:
+    return {a.rstrip(".:;") for a in _ARK_RE.findall(text or "")}
+
+
+def _ark(text: str) -> str | None:
+    return next(iter(_arks(text)), None)
+
+
+def _words(text: str) -> str:
+    return " ".join(re.findall(r"[a-z0-9]+", text.lower()))
+
+
+def _numbered_findings(reply: str) -> list[str]:
+    """Each numbered finding before the first after-findings section, with its body."""
+    findings: list[str] = []
+    for raw in reply.splitlines():
+        if _opens_after_findings(raw):
+            break
+        line = _unemphasised(raw)
+        if _FINDING_HEAD_RE.match(line):
+            findings.append(line)
+        elif findings:
+            findings[-1] += "\n" + line
+    return findings
+
+
+def _is_unchecked_item(finding: str, arkless: list[dict]) -> bool:
+    """A numbered item reporting a source that has no record to link: its
+    heading says so, or names such a source by id or by its whole title."""
+    head = finding.splitlines()[0]
+    if _UNCHECKED_HEAD_RE.search(head):
+        return True
+    head_words = _words(head)
+    for s in arkless:
+        title = _words((s.get("title") or "").split("(")[0])
+        if (s.get("id") and s["id"] in head) or (title and title in head_words):
+            return True
+    return False
+
+
+def test_findings_carry_record_link(tool_calls, text_response, test, agent_returns=None):
+    """Tag-gated (`finding-links`), issue #3955."""
+    if "finding-links" not in (test.get("tags") or []):
+        pytest.skip("test does not declare finding-links")
+    if test.get("type") != "positive":
+        pytest.skip("negative tests route away and produce no audit")
+    sources = _person_read_sources(tool_calls)
+    allowed = {a for a in (_ark(s.get("url")) for s in sources) if a}
+    assert allowed, "no person_read source carried an ARK url, so this guard checks nothing"
+
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    reply_arks = _arks(reply)
+
+    declared = test.get("index_error_source") or ""
+    floor = [
+        a for s in sources
+        if declared and declared.lower() in (s.get("title") or "").lower()
+        and (a := _ark(s.get("url")))
+    ]
+    assert floor, (
+        f"index_error_source {declared!r} names no person_read source with an ARK url, "
+        "so this guard checks nothing"
+    )
+    assert reply_arks & set(floor), (
+        f"the report does not carry the record link of {declared!r} ({floor[0]}): "
+        "name each finding's source by its url, not its internal id"
+    )
+
+    arkless = [s for s in sources if not _ark(s.get("url"))]
+    unlinked = [
+        f.splitlines()[0].strip()
+        for f in _numbered_findings(reply)
+        if not _is_unchecked_item(f, arkless) and not (_arks(f) & allowed)
+    ]
+    assert not unlinked, (
+        f"a finding carries no record link person_read returned: {unlinked[0][:160]!r}. "
+        "Give the source's url; an ARK built from a source id names another record"
+    )
