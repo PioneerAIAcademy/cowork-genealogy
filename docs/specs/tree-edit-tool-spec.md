@@ -172,6 +172,7 @@ tree_edit({
   subtype?: string,                 // update_relationship
 
   resolveStandardPlace?: boolean,   // default true: auto-resolve standard_place when place is set
+                                    //   or changed; a place sent back unchanged keeps its standard_place
 })
 ```
 
@@ -187,19 +188,26 @@ tree_edit({
   `primary` on every other fact of the **same `type`** on that holder.
   `primary: false` means "add this without a primary" — the key is deleted
   before the write and any existing primary of the type is left alone. Any
-  other spelling (`"false"`, `null`, `0`) is an input error. If
-  `fact.place` is set and `resolveStandardPlace !== false` and no
-  `fact.standard_place` was supplied, resolve it via `resolveStandardPlace` (null
-  when nothing resolves), passing the places of the holder's other facts as
-  context for a bare single-segment place, and no record country (see
-  research-append-tool-spec §3.6, lever B). A `personId` target whose
-  `fact.type` is a couple event (`isCoupleEventFactType`) is refused, naming the
-  Couple route (§7).
+  other spelling (`"false"`, `null`, `0`) is an input error. The fact's
+  `standard_place` is settled by §4.1.1: a supplied one is kept when it is a
+  FamilySearch standard place for the `place`, and with none supplied the
+  engine's answer fills it unless `resolveStandardPlace` is `false`.
+  When there is no answer the field is left unset and a warning is added,
+  unless the place is a non-place phrase such as "Same House"
+  (`isNonPlacePhrase`), which has no standard form to miss. A `personId`
+  target whose `fact.type` is a couple event (`isCoupleEventFactType`) is
+  refused, naming the Couple route (§7).
 - **`update_fact`** `{ personId | relationshipId, factId, fact }` — shallow-merge
   the provided `fact` fields onto the existing fact (id immutable) on the same
   exactly-one-target contract as `add_fact`; the `factId` must live on the named
-  holder. If `place` changed (and not explicitly accompanied by
-  `standard_place`), re-resolve `standard_place`. If `primary: true` set, run the
+  holder. An update that sets `place` or `standard_place` settles the fact's
+  `standard_place` by §4.1.1: a supplied one, alone or beside a new `place`, is
+  judged against the fact's place, and with none supplied the answer fills it.
+  A changed `place` drops the old `standard_place` first, since it was the
+  answer for the old text; with `resolveStandardPlace: false` nothing replaces
+  it, and a warning says so. A `place` sent back unchanged keeps the fact's
+  `standard_place`; it fills one only when the fact has none. That holds beside
+  a corrected `date` too. If `primary: true` set, run the
   same-type swap on that holder. `primary: false` deletes the key on **that fact
   only**, leaving other facts of the type untouched — so a vital type may end
   with no primary at all, which is the point: it is the only way to retire a
@@ -216,8 +224,8 @@ tree_edit({
   an `N` id for each nested name (exactly-one `preferred`), and an `F` id for each
   nested fact (reported as `assignedIds.facts`). Inline facts follow the same rules
   as `add_fact`: a caller-supplied fact `id` is rejected ("add_person facts must not
-  carry ids — the tool assigns them"), and each fact's `standard_place` is resolved
-  from `place` when unset. `person.facts` must be an array, and an inline couple
+  carry ids — the tool assigns them"), and each fact's `standard_place` is settled
+  by §4.1.1. `person.facts` must be an array, and an inline couple
   event is refused as on `add_fact`. Synthesized stubs omit `ark`
   (`simplified-gedcomx-spec.md` §4.6). **Name-shape tolerance:** a caller that
   supplies a singular `name: { given, surname, preferred? }` object where the
@@ -230,7 +238,7 @@ tree_edit({
   corroborate an edge that already says this.** Facts
   supplied on a new **Couple** relationship (e.g. its Marriage) get the same
   treatment as `add_fact`: tool-assigned `F` ids (caller-supplied ids rejected),
-  `standard_place` resolution, `assignedIds.facts`. Facts on a `ParentChild` are an
+  `standard_place` by §4.1.1, `assignedIds.facts`. Facts on a `ParentChild` are an
   input error. Endpoint
   integrity (`parent`/`child` for `ParentChild`, `person1`/`person2` for `Couple`
   reference existing persons — tree persons or FS ids already present) and shape (no
@@ -378,6 +386,169 @@ silently reverted the human's edit. Three details the contract turns on:
 It **warns** when it detaches, naming the fields that changed, because that fact
 then leaves the automatic-update set. 31 of 114 `update_fact` ops in the
 committed e2e corpus set one of those fields.
+
+#### 4.1.1 A fact's `standard_place`
+
+Lead rulings: "have the engine take FamilySearch's standardization from the
+record a tree fact cites" (2026-10-26); the place bar is about 80% right,
+coarser and finer answers counted right, and "If we can raise accuracy and keep
+coverage the same, that's also a win" (2026-10-29); a supplied place must also
+fit the fact's own text, "yes, definitely" (2026-10-29). Implemented in
+`src/utils/place-verdict.ts`, and `research-append.ts`'s Lever B copy, shared
+with `research_append` (`project_create` clears and re-resolves every supplied
+value, project-create-tool-spec "Hand-entered places").
+
+**A supplied `standard_place` is kept** when all of these hold:
+- the fact has a `place`, and it is not a non-place phrase ("Same House",
+  trailing punctuation aside: "Same House," too);
+- the value names no other country than the `place` (`countryConsistency`);
+- FamilySearch's place search finds a place whose full name is the value, case
+  and accents aside: it is a FamilySearch standard place, as `place_search`
+  returns one. The value is kept in FamilySearch's spelling, that place's full
+  name ("Santo Antonio, Funchal, Madeira, Portugal" is kept as "Santo António,
+  Funchal, Madeira, Portugal"), with no warning;
+- that place lies in no other US state, Puerto Rico or Canadian province than
+  the `place` text ends with (`divisionContradiction`, the check `record_read`
+  pairs with its own-text check): a value that names one or more among its
+  jurisdictions must name that one, and one that names none there is judged by
+  its own name, a state or province itself ("Springfield, Hampden,
+  Massachusetts" does not keep "Springfield, Sangamon, Illinois, United
+  States", nor "Washington, Washington, Pennsylvania" "Washington, United
+  States");
+- that place lies in no other country than the `place` text names
+  (`countryContradiction`). The text's country is its last part's when the
+  country alias table knows it. Else, when its last part is a US state or
+  Canadian province the value does not name, it is the one country that holds
+  that state or province, by the division table ("Fort Smith, Sebastian,
+  Arkansas" does not keep "Fort Smith, Fort Smith, Northwest Territories,
+  Canada"). The place's is the root of its FamilySearch jurisdiction chain, read
+  for any country, not only those the alias table carries ("Thornton,
+  Lancashire, England" does not keep "Thornton, Natal, South Africa", nor
+  "Worth, Illinois" "Wœrth, Bas-Rhin, France"). Russia, Austria, Hungary and
+  Germany, which an old record names for an empire whose lands lie in several
+  countries today, also take a country of today that holds the empire's lands
+  as it ended, among those the alias table does not carry (`EMPIRE_LANDS`):
+  Russia's are Finland, Estonia, Latvia, Lithuania, Belarus, Ukraine, Moldova,
+  the Republic of Georgia, Armenia, Azerbaijan, Kazakhstan, Kyrgyzstan,
+  Tajikistan, Turkmenistan, Uzbekistan and Türkiye; Austria's Czechia,
+  Slovakia, Slovenia, Croatia, Ukraine, Romania, Bosnia-Herzegovina, Serbia and
+  Montenegro; Hungary's Slovakia, Romania, Serbia, Croatia, Ukraine and
+  Slovenia; Germany's Lithuania, Czechia and Luxembourg, of the German
+  Confederation to 1866, which American records often call Germany. So
+  "Helsingfors, Nyland, Russia" keeps "Helsinki, Uusimaa, Finland", "Lemberg,
+  Galizien, Österreich" "Lviv, Lviv, Ukraine" and "Wiltz, Luxemburg, Germany"
+  "Wiltz, Wiltz, Luxembourg", while "Hamburg, Hamburg, Germany" does not keep
+  "Hamburg, Amathole, Eastern Cape, South Africa". A country the alias table
+  carries (the United States, Germany, Switzerland, Poland, Hungary, Italy,
+  Denmark) is on no list: `countryConsistency` judges it before this check, so
+  listing it would change nothing. "Breslau, Schlesien, Preussen" keeps no
+  "Wrocław, Lower Silesia, Poland", nor "Moscow, Russia" "Moscow, Latah,
+  Idaho, United States". A root the engine maps to a country of today is
+  judged by that country, whether or not FamilySearch dates it as ended
+  ("Boston, Suffolk, Massachusetts" does not keep "Boston, Lincolnshire,
+  England": England ends in 1801 and is the United Kingdom today; nor
+  "Hamburg, Erie, New York" the free city of Hamburg, Germany today; nor
+  "Thornton, Lancashire, England" "Thornton, Cape, Cape Colony", South Africa
+  today; nor "Hamburg, Germany" "Hamburg, Berks, Pennsylvania, British Colonial
+  America", all of whose places FamilySearch puts in today's United States). A
+  root FamilySearch dates as ended that the engine maps to none, a former
+  state whose lands lie in several of today's countries (Czechoslovakia,
+  Yugoslavia, the Soviet Union), is not judged, since its lands may lie in the
+  text's ("Svitavy, Moravská Třebová, Morava, Rakousko" keeps "Svitavy,
+  Moravská Třebová, Moravia, Czechoslovakia", a state to 1992). Nor is
+  historic Ireland against Northern Ireland, nor a bare "Georgia", which is the
+  state (lead, 2026-08-27), against a place FamilySearch puts in the Republic
+  of Georgia ("Tbilisi, Georgia" keeps "Tbilisi, Republic of Georgia", while
+  "Savannah, Chatham, Georgia" keeps no "Republic of Georgia", nor "Tbilisi,
+  GA", the state's code, "Tbilisi, Republic of Georgia"), nor a chain that
+  cannot be read;
+- some part of the `place` text names that place, as `record_read` checks a
+  fact's own text before it keeps FamilySearch's standard (`textNamesPlace`, the
+  check `repIdToStandardPlaceAt` applies, gedcomx-convert-spec "Places on
+  facts"): a comma part, up to any parenthesis, is one of the place's names in
+  any language (case, accents, "St"/"Saint" and type words aside), and only the
+  first part counts when the place is a settlement (a city, town, village and
+  the like), whose later parts name jurisdictions. One full name can be several
+  places, and naming any of them is enough. The one-word list's entry for the
+  text passes without it ("Ky" keeps "Kentucky, United States"). So "Boston,
+  Suffolk, Massachusetts" does not keep "Springfield, Hampden, Massachusetts,
+  United States", nor "with his daughter" "Hawaii, United States".
+
+A failed search or listing keeps the value as written.
+
+It is judged whatever `resolveStandardPlace` says. Otherwise the engine's answer
+below replaces it, or the fact keeps no `standard_place`, and the response's
+`validation.warnings` says which and why:
+- `standard_place '<supplied>' for '<place>' was replaced by '<answer>', the
+  engine's lookup: <why>.` (or `…, FamilySearch's standardization of the same
+  place on the record it cites: <why>.`);
+- `standard_place '<supplied>' for '<place>' was not kept: <why>, and the engine
+  has none for it: <reason>.`;
+- `standard_place '<supplied>' was not kept: the fact has no place.` (no answer
+  is asked for, nor for a non-place phrase).
+
+An answer that is the supplied value itself, case and accents aside, is stored
+with no warning: nothing was replaced. For the lookup's answer that holds when
+the value was refused only because the text does not name it, and the text
+either confirms the lookup (`unconfirmedByText`, research-append-tool-spec
+§3.6's check on a place taken from a value) or ends with the US
+state, Puerto Rico or Canadian province it lies in
+(`endsWithItsJurisdiction`): "Balto., Md." keeps "Baltimore, Maryland, United
+States", which the lookup gives too, while "at the home of her daughter" keeps
+no "Of, Trabzon, Türkiye" that the lookup gives.
+
+`<why>` names the failed condition. Each warning ends by saying when a supplied
+value is kept.
+
+**The engine's answer** for a fact's `place`, in order:
+
+1. **FamilySearch's standardization on the records the fact cites**, by
+   research_append's Lever B copy (research-append-tool-spec §3.6, step 1), the
+   one way the engine takes it from a record. The records are those of the
+   assertion the fact was minted from (`assertion_id`), and of the assertions
+   behind its `sources` (a ref's research source, that source's assertions)
+   that a person_evidence link, not superseded, ties to a person holding the
+   fact (the person, or a Couple's two partners). Each assertion's record, in
+   the sidecar its log entry names, gives the `standard_place` its persona's own
+   facts of the fact's type carry for the same place text, as Lever B copies
+   one; an assertion's own stored `standard_place` is never read. Two different
+   values are doubt, and doubt is no `standard_place`; nothing is looked up.
+2. **Otherwise the lookup** `resolveStandardPlace(place, { contextPlaces })`, with
+   the places of the holder's other facts as context for a bare single-segment
+   place, and no record country (see research-append-tool-spec §3.6, lever B).
+   Filling a fact with none, its answer stands whatever a `place` text written
+   as a name names (lead, 2026-10-29: "keep it relaxed"): "West Topsham,
+   Orange, Vermont" takes "Topsham, Orange, Vermont, United States". A text
+   written as prose, whose first comma part has no capital letter (`isProse`),
+   takes it only when the text confirms it (`unconfirmedByText`, the check
+   research-append-tool-spec §3.6 makes of a place taken from a value): "her
+   residence, 412 Vine St, Cincinnati" takes "Cincinnati, Hamilton, Ohio,
+   United States", while "with his daughter" takes no "Hawaii, United States"
+   and "at the home of her daughter, Mrs. John Smith" no "Of, Trabzon,
+   Türkiye".
+   Replacing a supplied value, it must fit the `place` text as
+   a supplied value must, except that it may lie in the state or province the
+   text ends with, or in the country it ends with and in a place one of the
+   text's other parts names, in place of being named by it
+   (`endsWithItsJurisdiction`): "Massachusettes,USA" takes no "Usa, Palau", in
+   another country, and "Boght Reformed, Church" no "Church, Hillsdale,
+   Michigan, United States", which only a later part names, while "La Unión,
+   Guerrero, Mexico" takes "La Unión de Isidoro Montes de Oca, Guerrero, Mexico",
+   in Guerrero. Lying in the text's country is not enough: "Laibach, Krain,
+   Austria" takes no "Krainberg, Villach Land, Carinthia, Austria".
+
+A non-place phrase has no answer, and neither does an answer whose country
+contradicts the text's (`countryConsistency`), nor a lookup a prose text does
+not confirm.
+
+**With none supplied** the answer fills the field, unless `resolveStandardPlace`
+is `false`. No answer leaves it unset with `could not resolve standard_place for
+'<place>' (left unset)` (plus `: <the disagreement>` when FamilySearch's values
+disagree, or `: the engine's place lookup answer '<answer>' could not be
+confirmed, …` for prose), or
+`standard_place '<answer>' contradicts place
+'<place>' — the place text names a different country; cleared (left unset)`; a
+non-place phrase stays silent.
 
 ### 4.2 Return value (compact — never the tree)
 
@@ -626,9 +797,13 @@ Sequence (validate-before-persist, tree-only):
   can grant additive writes without granting identity rewrites/removals.
 - **`standard_place` resolution is internal and on by default.** Removes the
   "call `place_search`, copy the first result's `standardPlace`" hand-step
-  (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`) and makes `place`/`standard_place` atomic. Overridable:
-  pass `standard_place` explicitly, or `resolveStandardPlace: false`, to skip the
-  network call.
+  (`tree-edit/SKILL.md` §"Adding a fact to a person" at `d0915210`) and makes `place`/`standard_place` atomic.
+  `resolveStandardPlace: false` skips the lookup for a fact with no supplied
+  value. A supplied `standard_place` is kept when it is a FamilySearch standard
+  place for the fact's place (§4.1.1): an audit of 215 e2e runs found agents'
+  own values name a wrong place 2 times in 619 that have FamilySearch's truth,
+  while the engine's lookup is wrong on 13.5% of fresh multi-word record places,
+  so replacing an agent's real place with the lookup makes things worse.
 - **Competing parentage is surfaced by the writer, not by a new tool.** A
   second biological parent of one sex is refused by the warning gate under a
   `competingParentage` id, so the refusal is the detector: it
@@ -691,7 +866,10 @@ Sequence (validate-before-persist, tree-only):
 | `update_relationship` on a `relationshipId` not in the tree | staleness error; write nothing |
 | `update_relationship` on a Couple | input error — only a ParentChild edge carries a subtype |
 | `update_relationship` retype that would duplicate an edge already on the pair | input error naming that edge; write nothing |
-| `resolveStandardPlace` network call fails | best-effort: set `standard_place: null`, add a warning; never fail the edit on a place-resolution miss |
+| `standard_place` lookup finds nothing, or its network call fails | best-effort: leave `standard_place` unset and add a warning (none for a non-place phrase such as "Same House"); never fail the edit on a place-resolution miss |
+| FamilySearch standardized a fact's place text differently on the record personas it is about | leave `standard_place` unset, look nothing up, and add a warning naming the values (§4.1.1) |
+| A supplied `standard_place` on a fact with no place, naming another country, its place text does not confirm, or not a FamilySearch standard place | write the engine's answer, or none, and add a warning saying which and why (§4.1.1); never fail the edit |
+| `update_fact` changes `place` with `resolveStandardPlace: false` and no `standard_place` | drop the old `standard_place`, with a warning |
 | `projectPath` is a real directory holding **neither** project file | write nothing; `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. A directory holding exactly one of the two files is a *broken* project and stays loud. Applies to `tree_correct` identically. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Resulting tree carries a **call-introduced** validation error | write nothing; return `{ ok: false, errors }`. A pre-existing error rides as a warning |
 | Write introduces an **unjustified genealogical warning** | write nothing; return `{ ok: false, reason: "unjustified_warnings", errors: [message], message: "...", warnings: [{ warningId, issueType, severity, personId, personName, message, facts?, relatedPersonId? }], conflicts_surfaced? }`. Re-call with `warningJustifications: [{ warningId, justification }]` for each warning. A pre-existing warning needs no justification. A stale `warningId` is refused the same way, with `errors` naming it. When the warning is competing biological parentage, `conflicts_surfaced` names it and `message` routes it to `conflict-resolution` instead of a justification (§6). |
@@ -728,11 +906,45 @@ The caller (`tree-edit` skill) still:
   both/neither of `personId`/`relationshipId` rejected; `ParentChild` target
   rejected; stale `relationshipId` rejected. A couple event on a `personId`
   is refused in every spelling the matcher folds, and accepted on the Couple.
+- **A supplied `standard_place` (§4.1.1)** — on `add_fact`, `update_fact`,
+  `add_person` and `add_relationship` facts: a FamilySearch standard place is
+  kept silently, in FamilySearch's spelling, even where the engine's own answer
+  differs, and one whose check failed is kept as written; one on a fact with no
+  place or a non-place phrase (trailing punctuation aside), one naming another
+  country, one in another state, province or country than its place text
+  names, read from FamilySearch's chain ("Springfield, Hampden, Massachusetts"
+  and Springfield, Illinois; "Thornton, Lancashire, England" and Thornton,
+  Natal, South Africa; "Boston, Suffolk, Massachusetts" and Boston,
+  Lincolnshire, England; Hamburg, Hamburg, Germany and Hamburg, Eastern Cape,
+  South Africa; "Thornton, Lancashire, England" and Thornton, Cape Colony;
+  "Hamburg, Germany" and Hamburg, Berks, Pennsylvania, British Colonial
+  America; a former state such as Czechoslovakia is not judged, and Russia,
+  Austria, Hungary or Germany as the text's country takes the lands of its
+  empire: Helsinki, Finland for Helsingfors, Russia, and Wiltz, Luxembourg for
+  "Wiltz, Luxemburg, Germany"),
+  one no part of its place text names ("with his daughter" and
+  "Hawaii, United States"; "Ky" and "W. Va." keep their list answers), and one
+  FamilySearch has no place of are replaced by the engine's answer or dropped,
+  with the reason. A lookup fills a fact with none whatever a place text
+  written as a name names, and a prose text's only when the text confirms it
+  ("with his daughter" takes no "Hawaii, United States"), and one that does
+  not fit the text as a lookup must replaces nothing ("Massachusettes,USA"
+  and "Usa, Palau"), on `tree_correct`'s `update_fact` too; a lookup that gives
+  the refused value itself keeps it when the text ends with its state
+  ("Balto., Md."). `resolveStandardPlace: false`
+  does not change that. The record's value is Lever B's copy: the persona's own
+  facts of the fact's type and place text, of the fact's own assertion or of a
+  cited assertion linked to its holder, never another persona's, another fact
+  type's or another record's, never an assertion's stored value; values that
+  disagree give none. A real record read (`record_read` on a saved recapi body,
+  staged and cited) gives its FamilySearch standard to a tree fact.
 - **update_fact** — field merge by `factId`; a place change re-resolves
-  `standard_place`; id unchanged. Also merges by `relationshipId` + `factId` on a
-  Couple-held fact; a `factId` not on the named holder errors. Retyping a
-  person's fact into a couple event is refused; editing one already there, or
-  retyping a Couple-held fact, is admitted.
+  `standard_place`; a place sent back unchanged keeps the fact's
+  `standard_place` where the lookup would answer another or nothing, beside a
+  corrected date too, and fills a fact with none; id unchanged. Also merges by
+  `relationshipId` + `factId` on a Couple-held fact; a `factId` not on the
+  named holder errors. Retyping a person's fact into a couple event is refused;
+  editing one already there, or retyping a Couple-held fact, is admitted.
 - **add_name / update_name** — `N` id assigned; `preferred: true` clears other
   preferred; exactly one preferred remains.
 - **update_person** — gender/ark set; nothing else changed.

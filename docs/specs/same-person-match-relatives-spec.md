@@ -130,13 +130,15 @@ Algorithm (all of step 1–3 is local/no-network; only step 4 calls FamilySearch
 3. **Collect the surviving pairs** across all three roles into one work list of
    `{ role, target, candidate, preScore }`.
 
-4. **Score each surviving pair via FamilySearch.** For each pair, call the
-   existing single-pair scoring path with the **full** documents and the
-   relatives' ids as the anchors:
-   `scorePair(gedcomx1, target.id, gedcomx2, candidate.id, token)`. Run these
-   with **bounded concurrency** (`mapWithConcurrency`, cap ~5) wrapped in
-   `withRetry` (both in `src/utils/place-resolver.ts`). Reuse one OAuth token
-   for the whole batch (call `getValidToken(principal)` once).
+4. **Score every surviving pair in one `matchPairs` call** (the active
+   matcher, `docs/specs/matcher-shim-spec.md`), with the **full** documents and
+   the relatives' ids as the anchors. FamilySearch's matcher scores each as
+   `scorePair(gedcomx1, target.id, gedcomx2, candidate.id)`, with **bounded
+   concurrency** (cap 5) and `withRetry`. The matcher service takes the whole
+   list in one POST: on the project arm each tree relative is cut from the
+   whole tree (without the record's own facts) around itself, so it brings its
+   own family; on the explicit arm each pair is `record_record`. When nothing
+   pairs, no call is made.
 
 5. **Return** the list (§6).
 
@@ -237,8 +239,7 @@ export interface SamePersonRelativeMatch {
   role: "parent" | "spouse" | "child";
   targetId: string;        // persons[].id in gedcomx1
   candidateId: string;     // persons[].id in gedcomx2
-  score: number;           // float 0-1 from FamilySearch (the real answer)
-  confidence?: number;     // integer 1-5 bucket, omitted on no-match
+  score: number;           // float 0-1 from the active matcher (the real answer)
   preScore: number;        // the local heuristic score (transparency/debugging)
 }
 
@@ -270,7 +271,7 @@ export interface SamePersonRelativesResult {
 | Gender conflict | `preScore = 0` → never paired, never called. |
 | Same person id appears under two roles | Handle each role independently; a `(role, targetId, candidateId)` triple is unique. |
 | Focus person has zero relatives on a side | Empty `matches` (or only the roles that do have relatives). |
-| An FS call for one pair fails after retries | That pair is omitted from `matches` (or carries `score: 0`); one bad pair must not fail the whole batch. Decide one and state it in the impl comment. |
+| The matcher could not score one pair | That pair is omitted from `matches`; one bad pair must not fail the whole batch. A matcher service call that scores no pair throws (`docs/specs/matcher-shim-spec.md`). |
 | `matchRelatives: true` but `gedcomx`/`primaryId` invalid | Same `validateInput` errors as today (the focus ids must still resolve). |
 
 ---
@@ -326,8 +327,8 @@ Claude to verify by hand that the household pairs cohere. Wire the new mode in:
   2. **seed the always-pair merge set** — each high-scoring relative match is a
      `[treePersonId, recordPersonaId]` pair with a ready confidence, so
      `person-evidence` doesn't re-derive it.
-- Keep the existing per-link match-threshold policy: the relative `score` /
-  `confidence` feeds confidence the same way the focus score does (a low
+- Keep the existing per-link match-threshold policy: the relative `score`
+  feeds confidence the same way the focus score does (a low
   relative score caps the link, a qualitative conflict still overrides).
 - Note it's **optional** for non-household single-person matches (default
   `false`) — only reach for `matchRelatives: true` when there's a household to

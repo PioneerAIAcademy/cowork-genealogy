@@ -51,6 +51,9 @@ Several MCP tools call hosted sidecar services rather than public APIs:
   hit `GET /page/{title}` for a specific wiki page. The pre-crawled
   markdown corpus lives on the server, not on each developer's laptop.
 - `place_population` calls the hosted Pop Stats API.
+- `same_person` and ranking (`rank_search_matches`, and `record_search` when it
+  ranks) call the matcher service when `config.json`'s `matcher` is `service`,
+  and FamilySearch's matcher otherwise (`docs/specs/matcher-shim-spec.md`).
 
 The MCP code is HTTP-only for all of these — it does not import or
 depend on any Python code from those services. The base URL for the
@@ -601,6 +604,9 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
 | `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user in the `.mcpb` install dialog (layered over `config.json`, and winning over it) or directly in `config.json`. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent, naming both places to set it. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel(principal)` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
+| `matcher` | `same_person`, `rank_search_matches`, `record_search` when it ranks | Optional | `"familysearch"` (the default) or `"service"`. Read by `getMatcherSettings(principal)` in `src/auth/config.ts`. Any other value throws. No fallback between them. The alpha's control plane, and the beta's tool server, set it from `MATCHER_URL` and `MATCHER_API_KEY`; a developer sets it by hand. |
+| `matcherUrl` | as `matcher` | When `matcher` is `"service"` | Base URL of the matcher service (`POST /v1/score`). Trailing slash stripped. No default. |
+| `matcherApiKey` | as `matcher` | When `matcher` is `"service"` | This caller's bearer key. Never echoed; the run-log and feedback redactors drop its value. |
 
 Each `get*` helper throws an LLM-instruction error when its required
 field is missing — the error message tells Claude what to put in the

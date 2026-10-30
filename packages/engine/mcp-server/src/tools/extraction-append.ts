@@ -872,7 +872,7 @@ async function recordIdsMode(
         continue;
       }
       o.srcId = srcIdOf(written);
-      o.summary = summarizeExtraction(doc, extraction);
+      o.summary = summarizeExtraction(doc, extraction, written.unresolvedPlaces);
       o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
     }
   }
@@ -1427,7 +1427,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
           continue;
         }
         o.srcId = srcIdOf(written);
-        o.summary = summarizeExtraction(extract, extraction);
+        o.summary = summarizeExtraction(extract, extraction, written.unresolvedPlaces);
         o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
       }
     }
