@@ -437,7 +437,7 @@ re-orders by real match quality — **not** FamilySearch's search rank, which is
 unreliable — and annotates **every scored candidate** in `results[]`, returned
 best first. There is one row list: the rows you already know, now carrying
 `matchRank`, `searchRank` (their original FamilySearch position — shows how far
-the ranker missed), `matchScore` (0–1), `matchConfidence` (1–10),
+the ranker missed), `matchScore` (0–1),
 `candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
 carries counts and diagnostics only. The bulk GedcomX stays host-side, and a
 per-result `same_person` loop plus a separate `source_attachments` call are both
