@@ -202,6 +202,11 @@ describe("countryConsistency", () => {
     ["West Bromwich, England", "West Bromwich, Staffordshire, England, United Kingdom", "ok"],
     ["West Bromwich, England", "Bamenda, Mezam, Northwest Region, Cameroon", "contradiction"],
     ["Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States", "unverifiable"],
+    // issue #3976 — needs BOTH `kenya` (input country) and `madagascar` (the
+    // mis-resolution landing) in COUNTRY_ALIASES. Remove either and the verdict
+    // falls back to "unverifiable", so each clause below fails.
+    ["Siaya, Nyanza, Kenya", "Madagascar", "contradiction"],
+    ["Siaya, Nyanza, Kenya", "Siaya, Nyanza, Kenya", "ok"],
   ])("%s vs %s → %s", (place, standard, expected) => {
     expect(countryConsistency(place as string, standard as string)).toBe(expected);
   });

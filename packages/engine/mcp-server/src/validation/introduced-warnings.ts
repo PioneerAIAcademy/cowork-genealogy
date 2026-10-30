@@ -115,6 +115,12 @@ export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
   "earliestChildBirthToBirthMale14",
   "relativesLatestChildBirthToMarriage35",
   "latestChildBirthToMarriage35",
+
+  // Standardisation artefact, not a claim the writer makes: the place text and
+  // its standard_place name different countries, and the pair is usually
+  // FamilySearch-supplied. Gating it would refuse a write that merely carries
+  // the bad pair forward (issue #3976).
+  "hasPlaceStandardOtherCountry",
 ]);
 
 /** Compute warnings for a single person on a tree, returning [] if the

@@ -437,7 +437,7 @@ async function getSearchEntries(
 // are NOT added here to keep this PR to one change. The georgia ambiguity
 // (US state vs country) is settled — the lead ruled 2026-08-27 that Georgia
 // Republic is the country and bare Georgia the state, represent it that way
-// if it is easy and otherwise leave georgia out. Coverage is issue #1907.
+// if it is easy and otherwise leave georgia out. Coverage is issue #3976.
 //
 // Note what this map is NOT for: most `unverifiable` verdicts are place strings
 // whose trailing token is a US state or an English county (pennsylvania 1285,
@@ -477,6 +477,7 @@ const COUNTRY_ALIASES: Record<string, string> = {
   hungary: "hungary",
   switzerland: "switzerland",
   mexico: "mexico",
+  kenya: "kenya",
   // Not genealogy countries — carried because they are where a mis-resolution
   // lands, and the guard can only declare a contradiction against a country it
   // recognises. Dropping either re-opens a catch in
@@ -485,6 +486,7 @@ const COUNTRY_ALIASES: Record<string, string> = {
   // needs it: "south korea" was in an earlier revision with no corpus case and
   // no test, which is an entry that reads as coverage while proving nothing.
   cameroon: "cameroon",
+  madagascar: "madagascar", // where "…, Kenya" mis-resolves (issue #3976)
   "north korea": "north korea",
 
   // Endonyms and other-language forms for the countries above.
