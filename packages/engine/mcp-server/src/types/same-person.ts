@@ -63,6 +63,18 @@ export function isProjectForm(
   return typeof (input as SamePersonProjectInput)?.projectPath === "string";
 }
 
+/** FamilySearch's framing of a matchTwoExamples request, echoed back. */
+export interface FamilySearchEcho {
+  /** Canonical ARK of the focus person in gedcomx1 (parsed from response title). */
+  queryArk: string;
+  /** Canonical ARK of the matched person in gedcomx2 (from response entries[0].id). */
+  candidateArk: string;
+  /** Raw response title (e.g. "Matches for ark:/61903/4:1:KGS8-LY1"). */
+  apiTitle: string;
+  /** ISO timestamp from the API response. */
+  updated: string;
+}
+
 export interface SamePersonResult {
   /** True when the API returned a `confidence` field on the entry. */
   matched: boolean;
