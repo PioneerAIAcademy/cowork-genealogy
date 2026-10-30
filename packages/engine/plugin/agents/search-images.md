@@ -28,6 +28,9 @@ tools:
   - mcp__genealogy__image_search
   - mcp__remote-devices__Genealogy_Research__image_search
   - mcp__Genealogy_Research__image_search
+  - mcp__genealogy__volume_bisect
+  - mcp__remote-devices__Genealogy_Research__volume_bisect
+  - mcp__Genealogy_Research__volume_bisect
   - mcp__genealogy__image_transcribe
   - mcp__remote-devices__Genealogy_Research__image_transcribe
   - mcp__Genealogy_Research__image_transcribe
@@ -143,7 +146,8 @@ transcribed use search-full-text (both are faster than reading pages).
 | MCP tool | Input | Purpose |
 |----------|-------|---------|
 | `volume_search` | `standardPlace`, year range | Find image groups covering a place/period; returns `imageGroupNumber`, `imageCount`, `recordSearchablePercent`, `fulltextSearchable`, `coverages[]` |
-| `image_search` | `imageGroupNumber` (a volume id) | List every image ID inside ONE group |
+| `image_search` | `imageGroupNumber` (a volume id); bare film + `item`, `itemImage` | List every image ID inside ONE group; with `item`, one item of a film and that item's `imageGroupNumber` |
+| `volume_bisect` | `imageGroupNumber` (split name), `targetYear`, `readings`, `projectPath` | Read ONE probe page per call toward a year; returns `bracket`, `reading`, `nextImageId` or `stopped` |
 | `image_transcribe` | `imageId`, `projectPath` | OCR ONE page host-side; returns `staged.resultsRef`, `digest` and `found`, not the text |
 | `sidecar_read` | `projectPath`, `ref` | Read a staged page's text by its `staged.resultsRef` |
 
@@ -200,9 +204,10 @@ the first match:
   land/deed records, loose probate papers as separate item sections). When the
   chosen group's `coverages[]` lists more than the record type you want, say so:
   the target is **one item-section within a mixed film**, not the whole volume.
-  Orient the browse toward that section (read a register/table of contents
-  first; within-film navigation is manual). Don't treat the film as the will
-  book alone, or dismiss the other sections if they bear on the question.
+  Orient the browse toward that section: with an item number, use
+  `image_search`'s `item`; otherwise read a register or table of contents first. Don't
+  treat the film as the will book alone, or dismiss the other sections if they
+  bear on the question.
 
 If `volume_search` returns no volumes, that is normal — the set simply isn't
 digitized for that place/period (data, not a tool error). It's a completed nil
@@ -229,7 +234,11 @@ full list to the caller.
 ### 4. Read pages with `image_transcribe`
 
 Call `image_transcribe({ imageId, projectPath })` — one call per page — adding
-`lookingFor` when you were given a `looking_for`. It OCRs the scan host-side,
+`lookingFor` when you were given a `looking_for`. `lookingFor` names only who
+or what the record is about: the names, the event, the year. Never put a
+navigation target in it ("title page", "year boundary", "name index S
+section", "first entry", "or 1854 start") — any token of it can match and
+report `FOUND` on the wrong page. It OCRs the scan host-side,
 stages the page, and returns `staged.resultsRef`, a `digest` (length and a
 300-character excerpt), `found` when `lookingFor` was given, and an `imageRef`
 a retained source can cite. The page text is not in the response.
@@ -240,10 +249,20 @@ to read: a `FOUND` page, a register or table of contents, or a page whose
 excerpt you cannot place. If `staged` is null the text came back inline as
 `transcription`; use that.
 
-Browsing is manual: read a likely page, triage it, and step forward or back by
-reading the next page (the trailing 5-digit number is page order). For a volume
-with a register or table of contents, read that first to jump to the right
-range.
+**Navigate with `volume_bisect`, never by probing pages yourself.**
+
+- **One year in a split group** (a name like `008230326_001_M964-RDH`): call
+  `volume_bisect({ imageGroupNumber, targetYear, readings: [], projectPath })`,
+  then call it again with each returned `reading` appended to `readings`, until
+  it returns `stopped`. Then `image_transcribe` from the returned `bracket`
+  forward, never before its `lowPosition` (positions index the group's
+  `image_search` list, from 0). Never step through the volume with
+  `image_transcribe` to find where a year starts.
+- **A bare film number from `volume_search`** (it returned the number itself):
+  the film is not split, and `volume_bisect` refuses it. Read its register or
+  table of contents first to jump to the range, then step page by page (the
+  trailing 5-digit number is page order).
+- **A year range** (born 1853–1857): bisect to the first year, read forward.
 
 **The transcription is faithful OCR, not an answer to the question.** It is a
 transcription of every genealogically relevant entry on the page, not only the
@@ -264,9 +283,10 @@ say plainly which parts were unreadable, and move on.
 never report a target as absent, and never state NOT FOUND, on a truncated read.
 `found` is absent there; emit no FOUND/NOT FOUND pointer.
 
-**When a page can't be read** (`image_transcribe` errors — unreachable image, or
-no OpenRouter key): do **not** produce a transcription. Note `NOT READ:
-<imageId>` with the exact error, and move on. If it reported no OpenRouter key,
+**When a page can't be read** (`image_transcribe` errors — unreachable image,
+the image cap, or no OpenRouter key): do **not** produce a transcription. Note
+`NOT READ: <imageId>` followed by the tool's error quoted verbatim, from its
+first word, and move on. If it reported no OpenRouter key,
 say the key must be set in `~/.familysearch-mcp/config.json` (field
 `openRouterApiKey`) — never ask for it to be pasted into the chat, which would
 land it in the session transcript. Do not retry with a browser or a web fetch;
@@ -345,9 +365,12 @@ If the browse executed a plan item, route the status change through
 research_append({
   projectPath, section: "plan_items", op: "update",
   planId: "pl_003", entryId: "pli_012",
-  fields: { status: "completed" }   // or "skipped"
+  fields: { status: "completed" }
 })
 ```
+
+A browse you logged in step 6 — positive, negative or partial — makes the item
+`completed`; `research_append` refuses `skipped` once a browse is logged.
 
 ### 8. Pass found records to extraction
 

@@ -1,7 +1,14 @@
 import type { Principal } from "../auth/principal.js";
 import { getWikiApiUrl } from "../auth/config.js";
 import { describeFetchError, fetchWithRetry } from "../utils/http.js";
-import type { WikiReadInput, WikiPageResult } from "../types/wikiPage.js";
+import { pageText, requireWholeNumber } from "../utils/text-page.js";
+import {
+  WIKI_OFFSET_PROPERTY,
+  WIKI_PAGE_MAX_CHARS,
+  WIKI_PAGING_NOTE,
+  type WikiReadInput,
+  type WikiPageResult,
+} from "../types/wikiPage.js";
 
 const FS_WIKI_BASE = "https://www.familysearch.org/en/wiki";
 
@@ -20,6 +27,8 @@ interface PageApiResponse {
 }
 
 export async function wikiReadTool(input: WikiReadInput, principal: Principal): Promise<WikiPageResult> {
+  // Argument checks first: a bad offset must not cost a request.
+  const offset = input.offset === undefined ? undefined : requireWholeNumber("offset", input.offset, 0);
   const slug = urlToSlug(input.url);
   const baseUrl = await getWikiApiUrl(principal);
   const pageUrl = `${baseUrl}/page/${slug}`;
@@ -47,7 +56,11 @@ export async function wikiReadTool(input: WikiReadInput, principal: Principal): 
   }
 
   const data = (await response.json()) as PageApiResponse;
-  return { url: `${FS_WIKI_BASE}/${slug}`, content: data.content };
+  const url = `${FS_WIKI_BASE}/${slug}`;
+  // A body with no text passes through as it always did: there is nothing to cut.
+  if (typeof data.content !== "string") return { url, content: data.content };
+  const { content, paging } = pageText(data.content, offset, WIKI_PAGE_MAX_CHARS);
+  return { url, content, ...paging };
 }
 
 export const wikiReadSchema = {
@@ -55,7 +68,8 @@ export const wikiReadSchema = {
   description:
     "Read any FamilySearch wiki page from the hosted wiki-query-api server. " +
     "Pass the full FamilySearch wiki URL; the page title is extracted and the corresponding markdown is fetched from the server. " +
-    "Use this for specific wiki pages not covered by the country-specific tools.",
+    "Use this for specific wiki pages not covered by the country-specific tools. " +
+    WIKI_PAGING_NOTE,
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -65,6 +79,7 @@ export const wikiReadSchema = {
           "The full URL of a FamilySearch wiki page " +
           "(e.g. https://www.familysearch.org/en/wiki/Portugal_Genealogy)",
       },
+      offset: WIKI_OFFSET_PROPERTY,
     },
     required: ["url"],
   },

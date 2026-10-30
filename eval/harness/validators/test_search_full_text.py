@@ -262,6 +262,39 @@ def _fts_tool_calls(tool_calls):
     return [tc for tc in (tool_calls or []) if (tc.get("tool") or "").endswith("fulltext_search")]
 
 
+def _logged_fulltext_filters(tool_calls):
+    """(handle, frozenset of present post-search filter keys) for every
+    fulltext_search op the run LOGGED via research_log_append.
+
+    The write-boundary guard `filteredNilRetryInvariants` (research-log-append.ts,
+    issue #3432) enforces the unfiltered retry on exactly these — a filtered nil
+    the agent records as a finding. The filtered-nil check below is that guard's
+    shadow plane, so it judges the same population: an UNLOGGED exploratory probe
+    the agent abandoned (e.g. a bare surname that hit a catch-all nil, then
+    recovered via the name field) is not part of the research record and is not
+    held to the retry."""
+    out = set()
+    for tc in (tool_calls or []):
+        if not (tc.get("tool") or "").endswith("research_log_append"):
+            continue
+        args = tc.get("args") or {}
+        ops = args.get("ops")
+        if isinstance(ops, str):
+            try:
+                ops = json.loads(ops)
+            except ValueError:
+                ops = None
+        for op in (ops if isinstance(ops, list) else [args]):
+            if not isinstance(op, dict) or op.get("tool") != "fulltext_search":
+                continue
+            q = op.get("query")
+            if not isinstance(q, dict):
+                continue
+            handle = q.get("keywords") or q.get("nlQuery") or ""
+            out.add((handle, frozenset(k for k in POST_SEARCH_FILTER_KEYS if k in q)))
+    return out
+
+
 def test_log_query_traces_to_fulltext_search_call(before_state, after_state, tool_calls):
     """A new fulltext_search log entry's query must not record a
     recordPlace/yearFrom/yearTo/recordType/collectionId filter that was
@@ -364,6 +397,7 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
 
+    logged = _logged_fulltext_filters(tool_calls)
     by_handle: dict = {}
     for c in calls:
         args = c["args"]
@@ -380,6 +414,11 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
                 continue
             present_filters = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
             if not present_filters:
+                continue
+            # Shadow of the write-boundary guard (issue #3432): judge only a
+            # filtered nil the agent LOGGED as a finding, not an unlogged probe it
+            # ran and abandoned. See _logged_fulltext_filters.
+            if (handle, frozenset(present_filters)) not in logged:
                 continue
             resp = c.get("response") or {}
             results = resp.get("results")
@@ -474,7 +513,9 @@ def test_fulltext_search_never_scopes_to_collection_id(tool_calls):
 # A record_type with no entry here (including family_bible) gets the
 # structural check only, not asserted clean by a term match it never had.
 RECORD_TYPE_TERMS = {
-    "probate": ("estate", "executor", "executrix", "administrator",
+    # No bare "estate": it is land in "real estate" (American) and in British/
+    # Irish estate records, so it passed the deed/land note this check refuses.
+    "probate": ("executor", "executrix", "administrator",
                 "administratrix", "appraise", "appraisement", "inventory",
                 "bequeath", "testament", "heir", "legatee", "probate"),
     "church": ("baptism", "baptismal", "christen", "confirmation", "burial"),
@@ -543,7 +584,11 @@ def test_plan_item_completion_matches_its_own_record_type(before_state, after_st
             str(e.get(k, "")) + " " + json.dumps(e.get("query") or {}, ensure_ascii=False)
             for e in attributed for k in ("tool", "notes")
         ).lower()
-        if not any(term in haystack for term in terms):
+        # Leading word-boundary only (r"\bterm"), not r"\bterm\b": several terms
+        # are deliberate stems (naturaliz, enumerat, christen) / match plurals
+        # (baptism->"baptisms") a trailing boundary would miss, while the leading
+        # boundary still rejects a substring inside a word ("their" != heir).
+        if not any(re.search(r"\b" + re.escape(term), haystack) for term in terms):
             errors.append(
                 f"{item_id} (record_type={record_type!r}) was marked completed, but none "
                 f"of its attributed log entries mention any of {terms}; attributed tools/"
