@@ -457,59 +457,6 @@ def test_no_gate_stop(before_state, after_state, test):
     bad = check_no_gate_stop(before_state, after_state)
     assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
 
-_DELIVERS_PREFIX = "delivers:"
-
-
-def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_calls, test):
-    """Tag-gated (``delivers:<skill>``, one per deliverable). Issue #2813 item 1.
-
-    ``routes-to:`` asserts the FIRST hand-off and permits only one tag, so on a
-    COMPOUND bounded ask it grades nothing about the second deliverable: a turn
-    that delivers the first and silently drops the second passes it. That is the
-    exact pre-change behaviour this rule exists to remove, which is why a separate
-    assertion is needed rather than a second ``routes-to:``.
-
-    Order-independent among the deliverables, because the body imposes none ("two
-    hand-offs, each to the step that owns it ... ends when the last one is met").
-    What it does forbid is the FIRST hand-off being something off the list, which is
-    how the job path shows up. WHICH step that is depends on the project: with no
-    questions it is ``question-selection``; with a question and no localities entry
-    it is ``locality-guide``; with a localities entry it is ``research-plan``. A
-    scenario whose job-path head is itself a ``delivers:`` target cannot
-    discriminate, so pick one where it is not.
-    """
-    from harness.skill_runner import handoffs
-
-    expected = [t[len(_DELIVERS_PREFIX):] for t in (test.get("tags") or [])
-                if t.startswith(_DELIVERS_PREFIX)]
-    if not expected:
-        pytest.skip("not a delivers: test")
-    assert all(expected), f"empty {_DELIVERS_PREFIX} tag value — name the skill or remove the tag"
-
-    handed = handoffs(skills_invoked, builtin_tool_calls)
-    # Strip the skill under test the way test_routes_to_expected_skill does: it is
-    # recorded first when entered as a slash command (issue #3116), so a raw
-    # handed[0] is "research" and the first-hand-off assertion below would fail on
-    # every real run. A claim audit caught this before a paid run did.
-    # The skill under test is recorded first when entered as a slash command
-    # (issue #3116), so a raw handed[0] is "research" and the assert below would
-    # fail on every real run. Filtering is enough; test_routes_to_expected_skill's
-    # extra slice is redundant beside it.
-    skill_under_test = test.get("skill")
-    delegations = [s for s in handed if s != skill_under_test]
-
-    missing = [e for e in expected if e not in delegations]
-    assert not missing, (
-        "a compound bounded ask must hand off for EVERY deliverable it names. "
-        f"Never handed off: {missing}. Hand-offs seen: {delegations}. Delivering one and "
-        "dropping the rest is the behaviour the one-or-more rule replaced."
-    )
-    assert delegations and delegations[0] in expected, (
-        f"the first hand-off must be one of the deliverables {expected}, got "
-        f"{delegations[0] if delegations else 'none'}. A hand-off off that list is the job "
-        "path, which a bounded request must not enter."
-    )
-
 # ---------------------------------------------------------------------------
 # `negative-status-question` tag (issue #3112)
 # ---------------------------------------------------------------------------
@@ -520,7 +467,7 @@ def test_every_bounded_deliverable_is_handed_off(skills_invoked, builtin_tool_ca
 # the two in step). Plus the tree ids `project_context` hands over (`I1`, `S3`...),
 # the kind every measured miss copied from the projection.
 _PROJECT_ID_PREFIXES = (
-    "rp_", "kh_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
+    "rp_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
     "h_", "t_", "ps_", "ev_", "loc_", "ns_",
 )
 _PROJECT_ID_RE = re.compile(
@@ -840,9 +787,8 @@ _DELEGATION_FOCUS_TAG = "asserts-delegation-focus"
 def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
     """Recorded spawn prompts for ``callee``, read from the hook records.
 
-    Keyed on ``args.subagent_type`` rather than the tool name: the recorded
-    name is ``None`` for an Agent spawn in this harness, so a name-based
-    match finds nothing and the assertion below would pass vacuously.
+    Keyed on ``args.subagent_type`` rather than the tool name: committed logs
+    record ``"Agent"``, and an older CLI named the same tool ``"Task"``.
     """
     prompts = []
     for call in builtin_tool_calls or []:
@@ -850,6 +796,49 @@ def _spawn_prompts(builtin_tool_calls, callee: str) -> list[str]:
         if args.get("subagent_type") == callee:
             prompts.append(args.get("prompt") or "")
     return prompts
+
+
+# tag -> (callee, field, value pattern) lines its spawn prompt must carry.
+_SPAWN_FIELD_TAGS: dict[str, tuple[tuple[str, str, str], ...]] = {
+    "delegates-user-present-no": (("person-evidence", "userPresent", r"no"),),
+    "delegates-wrap-up": (
+        ("research-plan", "planItemIds", r".*pli_\w+"),
+        ("research-exhaustiveness", "wrapUp", r"yes"),
+        ("proof-conclusion", "wrapUp", r"yes"),
+    ),
+}
+
+
+def test_spawn_carries_its_step_mode_fields(test, builtin_tool_calls):
+    """Tag-gated (``delegates-user-present-no``, ``delegates-wrap-up``). The
+    fields research/SKILL.md's spawn rule passes on a "Keep going." or "Wrap it
+    up." turn sit in the spawn prompt, which the judge cannot see, so they are
+    read from the hook records. A field is matched as ``name: value`` on any
+    line, case-insensitively, with optional backticks around either side."""
+    rules = [r for tag in (test.get("tags") or []) for r in _SPAWN_FIELD_TAGS.get(tag, ())]
+    if not rules:
+        pytest.skip("not a spawn-field test")
+    problems = []
+    for callee, field, value in rules:
+        prompts = _spawn_prompts(builtin_tool_calls, callee)
+        if not prompts:
+            problems.append(f"no spawn of '{callee}' to carry {field}")
+            continue
+        # A router writes these fields in whatever markup the turn is in:
+        # `**userPresent:** no`, `"userPresent": "no"` and `planItemIds=pli_001`
+        # are all the field being passed, and the first form was failing. So
+        # backticks, asterisks and quotes are allowed around either side, and
+        # `=` counts as well as `:`. Still rejected, because the field name is
+        # anchored and the value ends on a word boundary: `userPresentation: no`,
+        # `**wrapUp:** no` where `wrapUp: yes` was required, and a value like
+        # `nobody` or `yesterday` that merely starts with the one wanted.
+        pattern = re.compile(
+            rf"(?<![A-Za-z]){re.escape(field)}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?:{value})\b",
+            re.IGNORECASE,
+        )
+        if not any(pattern.search(p) for p in prompts):
+            problems.append(f"'{callee}' spawn lacks {field}: {value}")
+    assert not problems, "; ".join(problems)
 
 
 def test_delegation_names_focus_and_target(test, builtin_tool_calls):
@@ -884,6 +873,94 @@ def test_delegation_names_focus_and_target(test, builtin_tool_calls):
         f"The '{expected}' delegation omits {missing}. research/SKILL.md "
         f"requires the delegation message to name the focus and the target_id. "
         f"Prompts seen: {[p[:160] for p in prompts]}"
+    )
+
+
+def _agent_spawns(builtin_tool_calls) -> list[dict]:
+    """Main-thread ``Agent`` spawns, read from the hook records.
+
+    Keyed on ``args.subagent_type`` rather than the tool name: committed logs
+    record ``"Agent"``, and an older CLI named the same tool ``"Task"``, so a
+    name-based match could miss whole runs and pass vacuously.
+
+    ``agent_id``'s ABSENCE is what marks the main thread: it is present only
+    when the hook fired inside a subagent. Membership, never truthiness, which
+    is the same rule ``harness.skill_runner.spawned_agents`` applies. A
+    general-purpose spawn carries no ``subagent_type`` and is skipped: it spawned
+    no named agent, so there is nothing here to hold to the rule.
+    """
+    return [
+        call for call in builtin_tool_calls or []
+        if (call.get("args") or {}).get("subagent_type")
+        and "agent_id" not in call
+
+    ]
+
+
+def _backgrounded(args: dict) -> bool | None:
+    """``run_in_background`` as the model sent it: True, False, or None if absent.
+
+    The value arrives as a real bool on some paths and as its string spelling on
+    others, so both are read. Anything else is treated as absent rather than
+    guessed at.
+    """
+    if "run_in_background" not in args:
+        return None
+    raw = args["run_in_background"]
+    if isinstance(raw, bool):
+        return raw
+    if isinstance(raw, str):
+        lowered = raw.strip().lower()
+        if lowered in ("true", "1"):
+            return True
+        if lowered in ("false", "0"):
+            return False
+    return None
+
+
+def test_every_agent_spawn_runs_in_the_foreground(test, builtin_tool_calls, skills_invoked):
+    """Decision 27: every ``@plugin:`` spawn carries ``run_in_background: false``.
+
+    A step has to finish inside its own turn. A backgrounded spawn returns
+    immediately and the turn ends with the step still running, so the report the
+    researcher gets describes nothing and the "Continue with ...?" line offers
+    the step after one that never happened.
+
+    Read from the hook records, which hold the model's OWN input before
+    `foreground_rewrite` rewrites it. Asserting after the rewrite would pass on
+    every run whether the router asked for it or not -- the rewrite is a
+    backstop, and this is the check that the prose works without it.
+
+    An absent field fails: the SDK's default is background, so saying nothing is
+    saying background.
+
+    **What the committed corpus says.** Recent `research` logs already carry
+    ``"False"`` on nearly every spawn (v33 47/47, v35 42/42, v36 46/46; two
+    absent in each of v32 and v34), so this is not a check that today's router
+    fails wholesale -- it is one that pins behaviour the prose now requires.
+    Replayed over the older v9 it does fail.
+    """
+    # The rule is the router's. When /research never ran, the main thread spawned
+    # the agent itself (the triggering tests mined in #4027), and nothing told it
+    # to ask for the foreground.
+    if "research" not in (skills_invoked or []):
+        pytest.skip("the router was not entered")
+    spawns = _agent_spawns(builtin_tool_calls)
+    if not spawns:
+        pytest.skip("no Agent spawn in this run")
+    offenders = []
+    for call in spawns:
+        args = call.get("args") or {}
+        if _backgrounded(args) is not False:
+            offenders.append(
+                f"{args.get('subagent_type')}: run_in_background="
+                f"{args.get('run_in_background', '<absent>')!r}"
+            )
+    assert not offenders, (
+        "These spawns did not ask for the foreground: "
+        + "; ".join(offenders)
+        + ". research/SKILL.md requires `run_in_background: false` on every "
+        "spawn (decision 27); an absent field means background."
     )
 
 
@@ -962,8 +1039,9 @@ def test_bounded_transcription_is_delivered_in_place(
     agent, a bounded transcription is the router's own deliverable: it calls
     ``image_transcribe`` with a ``projectPath``, and reads the staged page with
     ``sidecar_read`` on the ``staged.resultsRef`` that call returned, before
-    showing it. No hand-off is a transcription hand-off, so on a single bounded
-    ask (no ``delivers:`` tag) there must be none at all."""
+    showing it. No hand-off is a transcription hand-off, and a compound ask
+    delivers only its first deliverable this turn (step mode, plan section H),
+    so there must be none at all."""
     from harness.skill_runner import handoffs
 
     if "transcribes-in-place" not in test.get("tags", []):
@@ -991,14 +1069,13 @@ def test_bounded_transcription_is_delivered_in_place(
         f"the staged page was never read: no sidecar_read on {sorted(refs)}, so "
         "the reply cannot have shown the transcription"
     )
-    if not any(t.startswith(_DELIVERS_PREFIX) for t in test.get("tags") or []):
-        skill_under_test = test.get("skill")
-        delegations = [
-            s for s in handoffs(skills_invoked, builtin_tool_calls) if s != skill_under_test
-        ]
-        assert not delegations, (
-            f"a single bounded transcription hands off to nothing; got {delegations}"
-        )
+    skill_under_test = test.get("skill")
+    delegations = [
+        s for s in handoffs(skills_invoked, builtin_tool_calls) if s != skill_under_test
+    ]
+    assert not delegations, (
+        f"a bounded transcription hands off to nothing; got {delegations}"
+    )
 
 
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
@@ -1083,3 +1160,39 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
         if not subject.get("names"):
             problems.append("subject block carries no names")
     assert not problems, "; ".join(problems)
+
+
+_HINTS_HANDOFF_TAG = "asserts-hints-handoff"
+_HINTS_PID = re.compile(r"hints on (\S+) before")
+
+
+def test_hints_item_handoff_carries_its_ids(test, builtin_tool_calls, before_state):
+    """Tag-gated: the spawn of ``search-hints`` for a planned ``fs_hints`` item
+    carries the item's ``planItemId``, its plan's ``planId``, and the
+    ``personId`` read out of the item's rationale (issue #3153). Without the
+    item id search-hints writes no status, and the item is routed to it again
+    on every pass. The judge sees no spawn prompt, so this is the only check.
+    """
+    if _HINTS_HANDOFF_TAG not in (test.get("tags") or []):
+        pytest.skip("not a hints-handoff test")
+    research = before_state.get("research_json") or {}
+    held = [
+        (plan["id"], item)
+        for plan in research.get("plans", [])
+        if plan.get("status") == "active"
+        for item in plan.get("items", [])
+        if item.get("record_type") == "fs_hints" and item.get("status") == "planned"
+    ]
+    assert held, "Scenario drift: no planned fs_hints item on an active plan."
+    plan_id, item = held[0]
+    pid = _HINTS_PID.search(item.get("rationale") or "")
+    assert pid, f"Scenario drift: {item['id']}'s rationale names no FamilySearch id."
+    prompts = _spawn_prompts(builtin_tool_calls, "search-hints")
+    assert prompts, "No recorded spawn of 'search-hints' to assert a hand-off on."
+    wanted = {"planItemId": item["id"], "planId": plan_id, "personId": pid.group(1)}
+    missing = [
+        f"{name} {value}"
+        for name, value in wanted.items()
+        if not any(re.search(rf"\b{re.escape(value)}\b", p) for p in prompts)
+    ]
+    assert not missing, f"the search-hints hand-off does not carry {', '.join(missing)}"

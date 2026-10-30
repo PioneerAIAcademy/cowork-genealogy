@@ -8,20 +8,20 @@
     "query": {
       "standardPlace": "Ohio, United States",
       "startYear": 1788,
-      "endYear": 1803
+      "endYear": 1803,
+      "pageSize": 50
     },
     "totalResults": 2,
     "results": [
       {
         "imageGroupNumber": "005112233",
-        "imageGroupPrefix": "005112233",
         "imageCount": 51,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Northwest Territory, United States",
+            "places": ["Northwest Territory, United States"],
             "dateRange": "1788-1799",
             "recordType": "Territorial Land Records"
           }
@@ -29,14 +29,13 @@
       },
       {
         "imageGroupNumber": "005112240",
-        "imageGroupPrefix": "005112240",
         "imageCount": 73,
         "recordSearchablePercent": 12,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Washington County, Ohio, United States",
+            "places": ["Washington County, Ohio, United States"],
             "dateRange": "1799-1803",
             "recordType": "County Tax Records"
           }

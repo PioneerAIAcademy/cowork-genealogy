@@ -390,7 +390,7 @@ probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn ano
 	  uv run python dev/probe_agent_nesting.py
 
 .PHONY: hook-smoke
-hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? Owner routing and the fork deny (issue #1160; 4 short sessions)
+hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? Owner routing, the fork deny and the agent-only deny (issues #1160, #3528; 6 short sessions)
 	# plugin-hooks.test.ts covers the guard script's DECISIONS. This covers its
 	# BINDING -- whether a runtime reads hooks/hooks.json, matches a real tool
 	# call, shells the command and blocks. Nothing else checks that, in any
@@ -411,6 +411,10 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# Re-run 2026-10-22 (Claude Code 2.1.308, SDK 0.2.172): BOUND on both cases. The
 	# fork case runs with CLAUDE_CODE_FORK_SUBAGENT unset, as Cowork does: arm A was
 	# denied with FORK_REASON, and arm B (hooks/ removed) ran a real fork.
+	# The agent-only case (issue #3528) provokes a main-thread convert_calendar,
+	# which reaches the script only through the matcher's AGENT_ONLY_TOOLS
+	# alternative, and requires agent_only_reason's text. First run 2026-10-29
+	# (Claude Code 2.1.308, SDK 0.2.172): BOUND on all three cases.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so issue #1160 stays on the
@@ -510,7 +514,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -526,7 +530,7 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -663,7 +667,7 @@ proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows —
 # in proto-turn, since an empty value would reach compose's `:-60` on the web tier.
 .PHONY: proto-demo
 proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
-	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches,person_quality}"; \
+	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches,person_quality,project_create}"; \
 	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
 	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
@@ -675,7 +679,8 @@ proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884
 # autonomous /research run yields after each sub-skill step; the worker's Stop hook
 # (AUTONOMOUS_MAX_NUDGES > 0) vetoes that yield the way the e2e harness's does, bounded by
 # the harness's cap (max_continue_nudges, 40) and its no-progress check, so the fixture
-# runs to project.status == "completed" in one turn. `AUTONOMOUS_MAX_NUDGES=5 make
+# ran to project.status == "completed" in one turn. Under step mode it cannot:
+# a turn is one step, and the keep-going driver the plan owes is not built yet. `AUTONOMOUS_MAX_NUDGES=5 make
 # proto-demo-auto` lowers the cap; proto-demo itself stays a one-turn run. One message
 # is now a whole run, so the run spans SEVERAL attempts rather than fitting in one. The
 # per-attempt ceiling is the pinned 1800 s -- the 7200 s override of 2026-09-20 was a
@@ -1449,13 +1454,15 @@ e2e-narration-figures: ## Derive the plan's narration figures (R7): make e2e-nar
 	cd eval/harness && uv run python -m e2e.narration_figures_report ../runlogs/e2e
 
 .PHONY: e2e-latency
-e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | SINCE=all|N|YYYY-MM-DD
+e2e-latency: ## Phase-0 latency breakdown of committed e2e runs: make e2e-latency (all) | TEST=<slug> | MD=1 for a Markdown table | BY_SKILL=1 for a per-skill phase breakdown | BY_STEP=1 for per-step wait+spend | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis over committed run JSONs — no live run, no API. Answers
 	# "how much of wall-clock is model generation vs tool execution?" (the
 	# Phase 0 gate). See docs/plan/research-latency-reduction-plan.md.
 	# BY_SKILL needs a run committed after 2026-07-26 (timeline tool-name tagging);
 	# older runs report "no skill-phase data" rather than crashing.
-	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(SINCE),--since $(SINCE),)
+	# BY_STEP reads usage.per_turn, which only a step-mode run has; every other
+	# run reports "no per-step data" rather than a table of zeroes.
+	cd eval/harness && uv run python -m e2e.latency_report $(if $(TEST),--test $(TEST),--all) $(if $(MD),--markdown,) $(if $(BY_SKILL),--by-skill,) $(if $(BY_STEP),--by-step,) $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-cache-window
 e2e-cache-window: ## Corpus cost of a 5-minute prompt-cache TTL over committed e2e runs: make e2e-cache-window | TEST=<slug> | MD=1 for a Markdown table | SINCE=all|N|YYYY-MM-DD

@@ -320,8 +320,11 @@ qualify.
   ties it to '<id>' (<reason>).[ Nothing ties '<pe2>', … either.] Route that
   link to person-evidence, which ties
   it (links another party of this record to a spouse, parent or child of
-  '<id>') or lowers it to 'speculative' naming the namesake.", followed by
-  the arm's own suffix. When `personId` is omitted, a person the lookup would
+  '<id>' already in the tree; one made from this record alone does not count)
+  or lowers it to 'speculative' naming the namesake. When the project holds no
+  such tie yet, person-evidence lowers it now: a party still to extract or a
+  record still to find is not a tie, and the link can be raised once the tie
+  is made.", followed by the arm's own suffix. When `personId` is omitted, a person the lookup would
   otherwise reuse is skipped, and the op takes the next eligible person or
   mints one, with a warning: "persona '<role>' of record '<record>' would
   have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'
@@ -336,6 +339,41 @@ qualify.
   passes them over; with rows on the subject alone, 35 of 260 (7 in fixtures
   whose hint is the subject's own record, 8 a namesake's, 20 unlabelled) and 0
   of 1.
+- **Under a namesake in the tree** (a parent, child or sibling of the same first
+  given name, not known to be of the other sex; research-append-tool-spec §5.9):
+  the gate reads it as it reads a row, through `namesakeVerdicts` with
+  `derivedPairs` and the project's starting tree, passed as one options object
+  to `existingPersonLinkRefusal`, `personaTargetRefusal` and
+  `namedPartyTargetRefusal`. A link stands when tie (a) or (b) holds and the
+  record would not tie the namesake as well, the namesake's siblings read among
+  their relatives, or when the record fits the person and rules every partner
+  out, so the gate re-judges on
+  every copy a `probable` link written before its pair existed, which the link
+  cap never re-judges. An explicit `personId` that fails is refused: "'<id>' has
+  a namesake in the tree ('<Q>', '<id>''s <relation> of the same given name), so
+  a record's facts reach '<id>' only through a link the namesake cap allows.
+  '<pe>' ties assertion '<a>' to '<id>' at '<confidence>', but nothing in source
+  '<src>' tells it apart from that namesake (<reason>).[ Nothing tells '<pe2>',
+  … apart either.] Route that link to person-evidence, which lowers it to
+  'speculative' naming the namesake, or ties it with a record that dates either
+  of them (a date read from this record does not count) or another party of
+  this record linked to a spouse, parent or child of '<id>', counted only while
+  no party of this record is linked to a spouse, parent, child or sibling of
+  the namesake.[ If '<id>' and
+  '<Q>' are one person entered twice (the same parents and the same birth
+  year), hand the merge to tree-edit.]", with no suffix offering a new person
+  while the record may be the namesake's, since the namesake is in the tree
+  already. When `personId` is omitted and the lookup would mint after passing
+  over a pair member, row or no row, the op is refused with the same text and no
+  person is made while the record may be the namesake's (`pairJudgement` does
+  not rule every partner out); a new person would duplicate them. When the record rules
+  every partner out, a new person duplicates no one: the lookup makes one, with
+  its warning, and an explicit copy's refusal offers to omit `personId`. When
+  another person is eligible the lookup reuses them, which makes no one new, and
+  its warning says the person it passed over has a namesake in the tree (MP1 to
+  MP7 in `materialize-facts-namesake.test.ts`). A named party has no persona of
+  its own on the record for the pair tests to compare, so its refusal keeps no
+  suffix whenever the person has a namesake in the tree.
 
 Known let-throughs, none with an executed op in the corpus:
 
@@ -478,7 +516,9 @@ already-duplicated project, and hands the agent a choice with no rule.
   omitted `personId` skips a person whose link from this persona the cap does
   not tie and goes to another eligible person or makes a new one, with a
   warning (§4.3), so a re-run made after
-  the row was recorded can add a person.
+  the row was recorded can add a person. Under a namesake in the tree it makes
+  no one: a re-run that would mint after passing over a pair member is refused
+  (§4.3).
 - **Conflicts surfaced, not resolved — and only for single-valued types.**
   Conflict surfacing is **gated to single-valued / vital fact types**: reuse
   the existing `VITAL_PRIMARY_TYPES` set (`Birth`, `Death`, `Christening`,

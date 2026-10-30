@@ -42,12 +42,21 @@ import {
   readStagedResults,
   resolveStagedRef,
   stagedRefCorrectionWarning,
+  stripQueryPlumbing,
   STAGING_SEARCH_TOOLS,
   STAGING_SUBDIR,
 } from "../utils/results-staging.js";
 import { applyAltNameAutoPair, recordSearchToolSchema } from "./record-search.js";
 import { fulltextSearchToolSchema } from "./fulltext-search.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
+import { opensHandOff } from "../utils/awaiting-hand-offs.js";
+import {
+  collectionKey,
+  EXTERNAL_COLLECTIONS_FILE,
+  loadStoredCollectionUrls,
+  namesCollection,
+  type StoredCollectionUrls,
+} from "../utils/external-collections-store.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
 import { HEAD_ONLY_US_CENSUS_YEARS } from "../data/census-table.js";
 
@@ -1604,6 +1613,235 @@ async function preflightQueryFilterClaims(op: ResearchLogAppendOp, projectPath: 
   );
 }
 
+/**
+ * The post-search filter keys on a `fulltext_search` query (issue #3432). A
+ * zero-hit search that set one of these did not rule the record out — the filter
+ * may be excluding it, so the search must be retried without it. Scoped to the
+ * lead's 2026-10-15 list; `collectionId` is a filter too but deliberately not on
+ * it. `keywords`/`nlQuery` are the search TERMS (not filters), and `name` makes
+ * the whole op exempt (see `filteredNilRetryInvariants`).
+ */
+export const FULLTEXT_FILTER_KEYS = [
+  "place",
+  "recordPlace0",
+  "recordPlace1",
+  "recordPlace2",
+  "recordPlace3",
+  "recordType",
+  "yearFrom",
+  "yearTo",
+] as const;
+
+const hasFilterValue = (v: unknown): boolean => v !== undefined && v !== null && v !== "";
+
+/** The post-search filter keys a fulltext query actually sets. */
+function fulltextFilterKeys(query: unknown): string[] {
+  if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
+  const q = query as Record<string, unknown>;
+  return FULLTEXT_FILTER_KEYS.filter((k) => hasFilterValue(q[k]));
+}
+
+/** A search term normalized for sibling comparison: absent/empty → "". */
+const searchTerm = (v: unknown): string => (hasFilterValue(v) ? String(v) : "");
+
+/**
+ * Refuse a zero-hit `fulltext_search` log op that set a post-search filter and
+ * has no unfiltered retry, i.e. no sibling `fulltext_search` with the SAME
+ * `keywords`/`nlQuery` whose filter-key set is a STRICT SUBSET of this op's,
+ * either in the same batch or already in `log[]`. A zero-hit filtered search does
+ * not rule the record out — the filter may be excluding it (issue #3432, lead
+ * ruling 2026-10-15; research-log-editor-spec.md §8.4).
+ *
+ * Pure and replayable: it reads only `tool`, `query` and `zeroHit` off each entry
+ * and derives filters/terms from `query`, so the guard-case files in
+ * `tests/guard-cases/` replay it directly (registry writer guard). The caller
+ * (`preflightFilteredNilRetry`) resolves `zeroHit` (I/O) and the sent `query`.
+ *
+ * Exempt: a `name`-field query (a name search has no stable sibling key), and a
+ * query with no `keywords`/`nlQuery` term — its unfiltered retry would drop its
+ * only term, which `fulltext_search`'s `validateInput` refuses. Keyed on zero
+ * HITS, never on `outcome`.
+ */
+export function filteredNilRetryInvariants(
+  entry: { tool?: string; query?: unknown; zeroHit?: boolean },
+  research: { log?: unknown[]; ops?: unknown[] },
+): string[] {
+  if (entry?.tool !== "fulltext_search" || entry.zeroHit !== true) return [];
+  const query = entry.query;
+  if (query === null || typeof query !== "object" || Array.isArray(query)) return [];
+  const q = query as Record<string, unknown>;
+  if (hasFilterValue(q.name)) return [];
+  const keywords = searchTerm(q.keywords);
+  const nlQuery = searchTerm(q.nlQuery);
+  if (keywords === "" && nlQuery === "") return [];
+  const filters = fulltextFilterKeys(q);
+  if (filters.length === 0) return [];
+  const filterSet = new Set<string>(filters);
+
+  const candidates: any[] = [
+    ...(Array.isArray(research?.ops) ? research.ops : []).filter((o) => o !== entry),
+    ...(Array.isArray(research?.log) ? research.log : []),
+  ];
+  const hasUnfilteredRetry = candidates.some((c) => {
+    if (c?.tool !== "fulltext_search") return false;
+    const cq = c.query;
+    if (cq === null || typeof cq !== "object" || Array.isArray(cq)) return false;
+    if (searchTerm(cq.keywords) !== keywords || searchTerm(cq.nlQuery) !== nlQuery) return false;
+    const sib = fulltextFilterKeys(cq);
+    // Strict subset: every sibling filter is in this op's set, and it has fewer —
+    // the canonical unfiltered retry (sib = []) and any that relaxes ≥1 filter.
+    return sib.length < filterSet.size && sib.every((k) => filterSet.has(k));
+  });
+  if (hasUnfilteredRetry) return [];
+
+  const named = filters.map((k) => `\`${k}\``).join(", ");
+  const retryArgs = [
+    keywords ? `keywords: ${JSON.stringify(keywords)}` : null,
+    nlQuery ? `nlQuery: ${JSON.stringify(nlQuery)}` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  return [
+    `fulltext_search returned 0 results with the filter ${filters.length === 1 ? "key" : "keys"} ` +
+      `${named} set. A zero-hit filtered search does not rule the record out — the filter may be ` +
+      `excluding it. Re-run the search without those filters: fulltext_search({${retryArgs}}), then ` +
+      `log this filtered search and that unfiltered retry together in one research_log_append batch. ` +
+      `If the unfiltered retry is already logged, include it in this batch or confirm it is in log[].`,
+  ];
+}
+
+/**
+ * Resolve each op's sent query and zero-hit state (I/O), then refuse the first
+ * filtered zero-hit fulltext op with no unfiltered sibling
+ * (`filteredNilRetryInvariants`). Batch-aware: an in-batch unfiltered sibling
+ * clears the op, so it judges every op against the whole resolved batch plus the
+ * committed `log[]`. Returns `{ i, message }` for EVERY firing op (empty when
+ * none), so a batch's refusal names each failing `ops[i]` (§8.4), not just the
+ * first.
+ *
+ * zero-hit = a staged ref whose recomputed count is 0 (defensive — a real
+ * zero-hit `fulltext_search` stages nothing, `stageSearchResults` returns null on
+ * empty results), OR no ref with `resultsExamined` 0 and `resultsAvailable`
+ * 0/absent (the reachable nil path; `resultsAvailable` guards a lossy log of a
+ * search that actually had hits). The sent query is the staged echo when a ref is
+ * present (ground truth, §8.3), else the op's own `query`. Fully tolerant: any
+ * resolution failure (bad ref, unparseable query) leaves the op unjudged here —
+ * `preflightStagedRef`/`applyLogAppendOp` report those.
+ */
+async function preflightFilteredNilRetry(
+  ops: ResearchLogAppendOp[],
+  research: any,
+  projectPath: string,
+): Promise<Array<{ i: number; message: string }>> {
+  const resolved = await Promise.all(
+    ops.map(async (op) => {
+      try {
+        if (op?.tool !== "fulltext_search") return { tool: op?.tool };
+        // An errored search (fixture_not_found, upstream error) that examined 0
+        // is not a filtered nil — the filter never ran, so there is nothing to
+        // retry unfiltered. #3592 (this dropped _014, a fixture_not_found error,
+        // from the row's true positives).
+        if (op?.outcome === "error") return { tool: op.tool };
+        const ref = asNull(op.stagedResultsRef);
+        let query: unknown = coerceObjectArg(op.query, "query");
+        let zeroHit: boolean;
+        if (typeof ref === "string") {
+          const { envelope, returnedCount } = await checkStagedResults({
+            projectPath,
+            stagedResultsRef: ref,
+            expectedTool: "fulltext_search",
+          });
+          zeroHit = returnedCount === 0;
+          const staged = stripQueryPlumbing((envelope.payload as any)?.query);
+          if (staged !== undefined) query = staged;
+        } else {
+          const examined = coerceJsonArg(op.resultsExamined);
+          const available = coerceJsonArg(asNull(op.resultsAvailable));
+          zeroHit =
+            examined === 0 && (available === undefined || available === null || available === 0);
+        }
+        return { tool: op.tool, query, zeroHit };
+      } catch {
+        return { tool: op?.tool };
+      }
+    }),
+  );
+  const firing: Array<{ i: number; message: string }> = [];
+  for (let i = 0; i < resolved.length; i++) {
+    const errors = filteredNilRetryInvariants(resolved[i], { log: research.log, ops: resolved });
+    if (errors.length > 0) firing.push({ i, message: errors[0] });
+  }
+  return firing;
+}
+
+/** The `urlGenerated` an op would log, trimmed, or undefined. */
+function opUrlGenerated(op: ResearchLogAppendOp): string | undefined {
+  let site: unknown;
+  try {
+    site = coerceObjectArg(asNull(op.externalSite), "externalSite");
+  } catch {
+    return undefined;
+  }
+  const url = (site as { urlGenerated?: unknown } | null)?.urlGenerated;
+  return typeof url === "string" ? url.trim() : undefined;
+}
+
+/** Whether an op would list a new hand-off in `awaitingUser`. `captureReceived`
+ *  is coerced as the write coerces it, so a stringified `"false"` counts. */
+function opOpensHandOff(op: ResearchLogAppendOp): boolean {
+  let site: unknown;
+  try {
+    site = coerceObjectArg(asNull(op.externalSite), "externalSite");
+  } catch {
+    return false;
+  }
+  return opensHandOff(op.outcome, coerceJsonArg((site as { captureReceived?: unknown } | null)?.captureReceived));
+}
+
+/** A url already in the log, as the research.json read at the start of the call. */
+function loggedExternalUrls(log: unknown): Set<string> {
+  const urls = new Set<string>();
+  for (const e of Array.isArray(log) ? log : []) {
+    const url = e?.external_site?.url_generated;
+    if (typeof url === "string") urls.add(url.trim());
+  }
+  return urls;
+}
+
+/** An `external_site` url that names a collection must name a stored one, so a
+ *  search never goes to an invented collection id. A url already logged is not
+ *  re-checked unless the op opens a new hand-off: closing a hand-off, or logging a
+ *  capture that came back later, logs its url again, and one built before the list
+ *  existed, or whose collection a re-fetch dropped, must stay closable. */
+async function preflightStoredCollection(
+  op: ResearchLogAppendOp,
+  logged: Set<string>,
+  stored: () => Promise<StoredCollectionUrls>,
+): Promise<void> {
+  const url = opUrlGenerated(op);
+  if (url === undefined || !namesCollection(url)) return;
+  if (logged.has(url) && !opOpensHandOff(op)) return;
+  const ways =
+    "Build a site-wide search with build_external_search_url and no baseUrl, or use a stored " +
+    "collection's url from research_query({section: \"external_collections\", place, recordType}).";
+  const found = await stored();
+  if ("error" in found) {
+    throw new LogAppendError(
+      `externalSite.urlGenerated cannot be checked: ${EXTERNAL_COLLECTIONS_FILE} could not be read ` +
+        `(${found.error}). Re-fetch the place with external_links_search({standardPlace, projectPath}), ` +
+        `or log a site-wide search instead.`,
+    );
+  }
+  if (found.keys.has(collectionKey(url))) return;
+  throw new LogAppendError(
+    found.keys.size === 0
+      ? `externalSite.urlGenerated ${url} names a collection, and nothing is stored in ` +
+          `${EXTERNAL_COLLECTIONS_FILE} yet. Fetch the place with ` +
+          `external_links_search({standardPlace, projectPath}) first, or log a site-wide search instead.`
+      : `externalSite.urlGenerated ${url} names a collection that is not in ${EXTERNAL_COLLECTIONS_FILE}. ${ways}`,
+  );
+}
+
 const QUERY_REQUIRED_MESSAGE =
   "`query` is required. Supply it as an object — search parameters for a " +
   'search entry, or a keyed identifier for a read-style entry (e.g. ' +
@@ -1897,9 +2135,18 @@ async function applyLogAppendOp(
   // so a padded value would pass here and persist with its spaces.
   const urlGenerated =
     typeof externalSite?.urlGenerated === "string" ? externalSite.urlGenerated.trim() : externalSite?.urlGenerated;
-  if (externalSite && urlGenerated != null && !isHttpUrl(String(urlGenerated))) {
+  if (externalSite && urlGenerated != null && (typeof urlGenerated !== "string" || !isHttpUrl(urlGenerated))) {
     throw new LogAppendError(
       `externalSite.urlGenerated ${JSON.stringify(externalSite.urlGenerated)} is not an absolute http(s) URL`,
+    );
+  }
+  // Coerced like `resultsExamined`: a stringified `"false"` is the boolean, and
+  // anything still not a boolean is refused rather than saved, since a string
+  // `"false"` would never list in `awaitingUser` and the hand-off would be lost.
+  const captureReceived = coerceJsonArg(externalSite?.captureReceived);
+  if (externalSite && typeof captureReceived !== "boolean") {
+    throw new LogAppendError(
+      `externalSite.captureReceived must be true or false, got ${JSON.stringify(externalSite.captureReceived)}`,
     );
   }
   if (!OUTCOME_VALUES.has(op.outcome)) {
@@ -1962,7 +2209,7 @@ async function applyLogAppendOp(
       ? {
           site: externalSite.site,
           url_generated: urlGenerated,
-          capture_received: externalSite.captureReceived,
+          capture_received: captureReceived,
           ...(externalSite.captureFilename !== undefined
             ? { capture_filename: asNull(externalSite.captureFilename) }
             : {}),
@@ -2203,6 +2450,12 @@ export async function researchLogAppend(
       };
     };
 
+    // Read at most once per call, and only when an op logs a collection url.
+    const loggedUrls = loggedExternalUrls(research.log);
+    let storedUrls: Promise<StoredCollectionUrls> | undefined;
+    const stored = () => (storedUrls ??= loadStoredCollectionUrls(projectPath));
+    const checkCollection = (op: ResearchLogAppendOp) => preflightStoredCollection(op, loggedUrls, stored);
+
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {
       if (!Array.isArray(input.ops) || input.ops.length === 0) {
@@ -2225,6 +2478,7 @@ export async function researchLogAppend(
           await preflightStagedRef(input.ops[i], projectPath);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
+          await checkCollection(input.ops[i]);
         } catch (e) {
           if (e instanceof LogAppendError) {
             preflightErrors.push(`ops[${i}]: ${e.message}`);
@@ -2241,6 +2495,13 @@ export async function researchLogAppend(
           filesWritten: [],
           validation: { valid: true, warnings: opWarnings },
         };
+      }
+      // Needs the whole resolved batch (an in-batch unfiltered sibling clears an
+      // op), so it runs once over every op after the per-op preflights. Runs only
+      // once there is a new op to write (idempotent re-logs short-circuit above).
+      const nilRetryErrors = await preflightFilteredNilRetry(input.ops, research, projectPath);
+      if (nilRetryErrors.length > 0) {
+        return { ok: false, errors: nilRetryErrors.map(({ i, message }) => `ops[${i}]: ${message}`) };
       }
       const results: ResearchLogAppendOpResult[] = [];
       for (let i = 0; i < input.ops.length; i++) {
@@ -2310,6 +2571,9 @@ export async function researchLogAppend(
     await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
+    const singleNilRetry = await preflightFilteredNilRetry([singleOp], research, projectPath);
+    if (singleNilRetry.length > 0) throw new LogAppendError(singleNilRetry[0].message);
+    await checkCollection(singleOp);
     let result;
     try {
       result = await applyLogAppendOp(research, singleOp, projectPath, sidecarsCreated, opWarnings, stagedConsumed);
@@ -2388,7 +2652,7 @@ export const researchLogAppendSchema = {
         type: "string",
         description:
           "The tool/source that produced this entry, e.g. 'record_search', " +
-          "'fulltext_search', 'external_links_search', 'image_search', 'person_read', or " +
+          "'fulltext_search', 'record_read', 'image_search', 'person_read', or " +
           "'external_site'. Must match the staged file's tool when stagedResultsRef is given; " +
           "may be omitted alongside stagedResultsRef, which records it.",
       },

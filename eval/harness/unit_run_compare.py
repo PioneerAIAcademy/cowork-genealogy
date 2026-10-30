@@ -15,10 +15,16 @@ hash of every file each run depended on (skill or agent body, tests, rubric,
 fixtures). A cost move with no changed file is the run-to-run wobble, and the
 wobble itself is not measured yet: a change smaller than it is luck.
 
-**"Run settings that differ"** names an envelope setting that moved — the
-model, or `tool_search` (`--no-tool-search` loads every tool schema up front,
-which moves cost with no file changed). A log written before `tool_search`
-existed ran with it on, and is read that way.
+**"Run settings that differ"** names an envelope setting that moved —
+`tool_search` (`--no-tool-search` loads every tool schema up front, which moves
+cost with no file changed), or the envelope `model`, which is the harness
+default and NOT what ran. A log written before `tool_search` existed ran with it
+on, and is read that way.
+
+**Lead and helper models** are what actually ran, read per run from
+`main_thread.models` and `subagents[].models` (issue #3870). A move in either is
+a differing setting too. Half the committed logs predate that capture, so a side
+with none reads "unknown", never as a move, and a row prints `--` for it.
 
 Zero API spend — pure formatting over run logs.
 """
@@ -102,6 +108,47 @@ def differing_settings(before: dict[str, Any], after: dict[str, Any]) -> list[st
     return out
 
 
+def _models_in(runs: list[Any], which: str) -> list[str]:
+    """Every model the lead (`main_thread`) or the helpers (`subagents`) ran, sorted."""
+    seen: set[str] = set()
+    for run in runs or []:
+        if not isinstance(run, dict):
+            continue
+        blocks = [run.get("main_thread")] if which == "lead" else list(run.get("subagents") or [])
+        for block in blocks:
+            if isinstance(block, dict):
+                seen.update(m for m in block.get("models") or [] if isinstance(m, str) and m)
+    return sorted(seen)
+
+
+def log_models(log: dict[str, Any], which: str) -> list[str] | None:
+    """The models a whole log's lead or helpers ran; None when it captured none."""
+    runs = [r for t in log.get("tests") or [] if isinstance(t, dict) for r in t.get("runs") or []]
+    return _models_in(runs, which) or None
+
+
+def model_lines(before: dict[str, Any], after: dict[str, Any]) -> tuple[list[str], list[str]]:
+    """(moves to report as differing settings, lines to print as they are)."""
+    moved, notes = [], []
+    for which, label in (("lead", "lead model"), ("helper", "helper model")):
+        b, a = log_models(before, which), log_models(after, which)
+        if b is None or a is None:
+            notes.append(f"{label}: unknown (a log predates per-thread capture)")
+        elif b != a:
+            moved.append(f"{label} {', '.join(b)} -> {', '.join(a)}")
+        else:
+            notes.append(f"{label}: {', '.join(b)}")
+    return moved, notes
+
+
+def _short_models(test: dict[str, Any]) -> str:
+    """`lead/helper` for one test's runs, `claude-` dropped, `--` for a side not captured."""
+    def side(which: str) -> str:
+        models = _models_in(test.get("runs") or [], which)
+        return ",".join(m.removeprefix("claude-") for m in models) or "--"
+    return f"{side('lead')}/{side('helper')}"
+
+
 def _pct(before: float, after: float) -> str:
     return f"{100 * (after - before) / before:+.0f}%" if before else "--"
 
@@ -116,11 +163,13 @@ def compare(before: dict[str, Any], b_name: str, after: dict[str, Any], a_name: 
     skill = after.get("skill") or before.get("skill") or "?"
     out = [
         f"{skill} — {before.get('timestamp', '?')}  vs  {after.get('timestamp', '?')}",
-        f"before: {b_name}  ({before.get('model', '?')})",
-        f"after:  {a_name}  ({after.get('model', '?')})",
+        f"before: {b_name}  (harness default model: {before.get('model', '?')})",
+        f"after:  {a_name}  (harness default model: {after.get('model', '?')})",
     ]
-    settings = differing_settings(before, after)
+    moved, model_notes = model_lines(before, after)
+    settings = differing_settings(before, after) + moved
     out.append("run settings that differ: " + ("; ".join(settings) if settings else "none"))
+    out.extend(model_notes)
     changed = changed_files(before, after)
     if changed is None:
         out.append("changed between them: unknown (a log carries no snapshot)")
@@ -143,7 +192,7 @@ def compare(before: dict[str, Any], b_name: str, after: dict[str, Any], a_name: 
     uneven = [tid for tid in ta if tid in tb and tid not in common]
     out.append(
         f"{'test':<26} {'result':<17} {'cost':<19} {'change':>6}  "
-        f"{'turns':<8} {'seconds':<12} busiest moment"
+        f"{'turns':<8} {'seconds':<12} {'busiest moment':<20} models (lead/helper)"
     )
     sum_b = sum_a = 0.0
     dearer = cheaper = 0
@@ -165,7 +214,8 @@ def compare(before: dict[str, Any], b_name: str, after: dict[str, Any], a_name: 
             f"{_pct(cb, ca) if _is_num(cb) and _is_num(ca) else '--':>6}  "
             f"{_arrow(x.get('num_turns'), y.get('num_turns'), str):<8} "
             f"{_arrow(x.get('wall_clock_ms'), y.get('wall_clock_ms'), lambda v: f'{v / 1000:.0f}'):<12} "
-            f"{_arrow(_peak(tb[tid]), _peak(ta[tid]), lambda v: f'{v:,}')}"
+            f"{_arrow(_peak(tb[tid]), _peak(ta[tid]), lambda v: f'{v:,}'):<20} "
+            f"{_short_models(tb[tid])} -> {_short_models(ta[tid])}"
         )
     only_b = [t for t in tb if t not in ta]
     only_a = [t for t in ta if t not in tb]

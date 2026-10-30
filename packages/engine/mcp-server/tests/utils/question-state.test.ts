@@ -94,6 +94,34 @@ describe("questionStatus — the state ladder", () => {
       expect(questionStatus(d, question()).nextStep).toBe("search-records");
     });
 
+    it("a planned fs_hints item routes to search-hints, naming the item (#3153)", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_h", sequence: 1, status: "planned", record_type: "fs_hints", repository: "FamilySearch" }])],
+      });
+      expect(questionStatus(d, question()).nextStep).toBe("search-hints — pli_h");
+    });
+
+    it("a waiting fs_hints item (in_progress, no log naming it) is skipped; the next item routes (#3153)", () => {
+      const d = doc({
+        plans: [plan([
+          { id: "pli_h", sequence: 1, status: "in_progress", record_type: "fs_hints", repository: "FamilySearch" },
+          { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
+        ])],
+        log: [],
+      });
+      expect(questionStatus(d, question()).nextStep).toBe("search-records");
+    });
+
+    it("a lone waiting fs_hints item never pins nextStep on search-hints (#3153)", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_h", sequence: 1, status: "in_progress", record_type: "fs_hints", repository: "FamilySearch" }])],
+        log: [],
+      });
+      const step = questionStatus(d, question()).nextStep;
+      expect(step).toMatch(/^research-exhaustiveness/);
+      expect(step).not.toMatch(/search-hints/);
+    });
+
     it("searching with only negative entries is not an extraction step", () => {
       const d = doc({
         plans: [
@@ -145,7 +173,12 @@ describe("questionStatus — the state ladder", () => {
       expect(s.nextStep).toMatch(/^research-exhaustiveness/);
     });
 
-    it("an external-site hand-off whose capture has not come back is not extraction", () => {
+    it("a question whose ONLY open item waits on an upload has no search left to name", () => {
+      // `url_generated` is what makes this a hand-off: `externalSiteOf` requires it, so
+      // without one the entry is not an external-site entry at all, the item is never
+      // counted as waiting, and the test passed while pinning the opposite of its name.
+      // With it, pli_1 is skipped by the picker exactly as it is by `hasOpenWork`, which is
+      // the all-items-waiting case beside the sequence-2 test below.
       const d = doc({
         plans: [plan([{ id: "pli_1", sequence: 1, status: "in_progress", repository: "MyHeritage" }])],
         log: [
@@ -154,11 +187,11 @@ describe("questionStatus — the state ladder", () => {
             plan_item_id: "pli_1",
             tool: "external_site",
             outcome: "partial",
-            external_site: { capture_received: false },
+            external_site: { url_generated: "https://myheritage.example/search?q=1", capture_received: false },
           },
         ],
       });
-      expect(questionStatus(d, question()).nextStep).toBe("search-external-sites — pli_1 (MyHeritage)");
+      expect(questionStatus(d, question()).nextStep).toMatch(/^research-exhaustiveness/);
     });
 
     it("a returned external-site capture is extraction", () => {
@@ -753,5 +786,445 @@ describe("questionStatus — competing parent sets route to hypothesis-tracking"
 
   it("without a tree it reports nothing", () => {
     expect(questionStatus(withSubject(), question()).competingParentSets).toEqual([]);
+  });
+});
+
+/**
+ * Section B's "not exhaustive" choice.
+ *
+ * The search stopped on RESOURCES rather than on a finding, so neither
+ * searching on nor concluding is wrong, and only the researcher can say which.
+ * All four conditions have to hold, and each rules out a different wrong
+ * routing — so each gets its own case where exactly that one is missing.
+ */
+describe("questionStatus — the researcher's choice (section B)", () => {
+  const SPENT = {
+    stopped_because: "resources_spent",
+    justification: null,
+    log_entry_ids: ["log_1"],
+    stop_criteria: null,
+    not_reached: [],
+  };
+  const spent = (extra: Record<string, unknown> = {}) =>
+    question({ search_stop: { ...SPENT, ...extra } });
+  /** A plan whose one item is done, and the log entry that did it. */
+  const settled = (itemStatus = "completed") => ({
+    plans: [
+      {
+        id: "pl_1",
+        question_id: Q,
+        status: "active",
+        items: [{ id: "pli_1", status: itemStatus, repository: "FamilySearch" }],
+      },
+    ],
+    log: [{ id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "partial" }],
+  });
+
+  it("fires when all four hold, and defaults to research-plan", () => {
+    const s = questionStatus(doc(settled()), spent());
+    expect(s.nextStep).toBe(
+      "researcher's choice: research-plan or proof-conclusion (default research-plan)",
+    );
+  });
+
+  it("defaults to research-plan when the overturn risk is high — a named source could change the answer", () => {
+    for (const justification of [
+      "Overturn risk: high — the 1880 probate packet is unsearched.",
+      "overturn risk: HIGH",
+      "Overturn risk: lowish? no — high",
+    ]) {
+      const s = questionStatus(doc(settled()), spent({ justification }));
+      expect(s.nextStep, justification).toMatch(/\(default research-plan\)$/);
+    }
+  });
+
+  it("defaults to proof-conclusion when the overturn risk is low", () => {
+    const s = questionStatus(
+      doc(settled()),
+      spent({ justification: "Overturn risk: low — two independent sources agree." }),
+    );
+    expect(s.nextStep).toMatch(/\(default proof-conclusion\)$/);
+  });
+
+  it("a justification with no Overturn risk prefix still defaults to research-plan", () => {
+    // Older stops wrote free prose here. Defaulting those to conclude would end
+    // questions early on a document that never made that judgement.
+    const s = questionStatus(doc(settled()), spent({ justification: "Ran out of budget." }));
+    expect(s.nextStep).toMatch(/\(default research-plan\)$/);
+  });
+
+  it("does not fire on any other stop reason — those are findings, not budgets", () => {
+    for (const reason of ["blocked_by_conflict", "criteria_met", "premise_invalidated"]) {
+      const s = questionStatus(doc(settled()), spent({ stopped_because: reason }));
+      expect(s.nextStep, reason).not.toMatch(/researcher's choice/);
+    }
+  });
+
+  it("does not fire once a proof summary exists — the question is concluded", () => {
+    const d = doc({
+      ...settled(),
+      proof_summaries: [{ id: "ps_1", question_id: Q, tier: "probable" }],
+    });
+    expect(questionStatus(d, spent()).nextStep).not.toMatch(/researcher's choice/);
+  });
+
+  it("does not fire while a plan item is still open — the search has not stopped", () => {
+    for (const status of ["planned", "in_progress"]) {
+      const d = doc(settled(status));
+      expect(questionStatus(d, spent()).nextStep, status).not.toMatch(/researcher's choice/);
+    }
+  });
+
+  it("does not fire when a log entry of the question is not listed in the stop", () => {
+    // The stop was written before that search was weighed, so it does not
+    // describe the state the choice would be made from.
+    const d: any = doc(settled());
+    d.log.push({ id: "log_2", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" });
+    expect(questionStatus(d, spent()).nextStep).not.toMatch(/researcher's choice/);
+  });
+
+  // ── the closing-entry half: why a plain plan_item_id filter is not enough ──
+
+  const HANDOFF_URL = "https://www.ancestry.com/search/?name=Flynn";
+  const handOff = (captureReceived: boolean) => ({
+    id: "log_1",
+    plan_item_id: "pli_1",
+    tool: "external_site",
+    outcome: "partial",
+    external_site: {
+      site: "ancestry",
+      url_generated: HANDOFF_URL,
+      capture_received: captureReceived,
+    },
+  });
+  const upload = (id: string) => ({
+    // The researcher's upload. It carries NO plan_item_id, which is exactly why
+    // filtering the log by plan_item_id alone would never see it.
+    id,
+    plan_item_id: null,
+    tool: "external_site",
+    outcome: "positive",
+    external_site: { site: "ancestry", url_generated: HANDOFF_URL, capture_received: true },
+  });
+  const oneItem = (status: string, log: any[]) => ({
+    plans: [{ id: "pl_1", question_id: Q, status: "active", items: [{ id: "pli_1", status }] }],
+    log,
+  });
+
+  it("an item waiting only on an upload does not keep the choice from firing", () => {
+    // Section I: the researcher is the blocker. Counting it as open would park
+    // the question behind a hand-off nobody inside the project can close.
+    const d = doc(oneItem("in_progress", [handOff(false)]));
+    expect(questionStatus(d, spent()).nextStep).toMatch(/researcher's choice/);
+  });
+
+  it("an upload that closes a hand-off and is NOT listed in the stop blocks the choice", () => {
+    // The entry carries no plan_item_id, so it is matched by URL. Without that
+    // match the upload could never undo a choice the stop predates, and the
+    // question would sit at the choice forever.
+    const d = doc(oneItem("completed", [handOff(true), upload("log_2")]));
+    expect(questionStatus(d, spent()).nextStep).not.toMatch(/researcher's choice/);
+  });
+
+  it("the same upload listed in the stop lets the choice fire", () => {
+    const d = doc(oneItem("completed", [handOff(true), upload("log_2")]));
+    expect(questionStatus(d, spent({ log_entry_ids: ["log_1", "log_2"] })).nextStep).toMatch(
+      /researcher's choice/,
+    );
+  });
+
+  it("an unrelated upload to a different URL is not this question's to account for", () => {
+    const elsewhere = {
+      ...upload("log_2"),
+      external_site: {
+        site: "ancestry",
+        url_generated: "https://example.test/other",
+        capture_received: true,
+      },
+    };
+    const d = doc(oneItem("completed", [handOff(true), elsewhere]));
+    expect(questionStatus(d, spent()).nextStep).toMatch(/researcher's choice/);
+  });
+});
+
+describe("questionStatus — ending on an unsettled conflict (section E, decision 12)", () => {
+  // Once a conflict cannot be settled and nothing is left to search, re-running
+  // conflict-resolution weighs the same evidence forever. `weighed_log_entry_ids`
+  // is what tells "already weighed" from "new evidence to weigh".
+  const plan = (status: string) => ({
+    id: "pl_1", question_id: Q, status: "active",
+    items: [{ id: "pli_1", status }],
+  });
+  const log = [
+    { id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" },
+    { id: "log_2", plan_item_id: "pli_1", tool: "record_search", outcome: "negative" },
+  ];
+  const conflict = (extra: Record<string, unknown> = {}) => ({
+    id: "c_1", status: "unresolved", blocks_question_ids: [Q],
+    independence_analysis: "Both trace to the same informant.",
+    weighed_log_entry_ids: ["log_1", "log_2"],
+    ...extra,
+  });
+  const settled = (extra: Record<string, unknown> = {}) =>
+    doc({ plans: [plan("completed")], log, conflicts: [conflict()], ...extra });
+
+  it("an analysed conflict that has weighed every entry, nothing open, routes to proof-conclusion", () => {
+    const s = questionStatus(settled(), question());
+    expect(s.nextStep).toMatch(/^proof-conclusion — unsettled conflict c_1/);
+  });
+
+  it("once the not_proved conflict summary exists, nothing further is due", () => {
+    const d = settled({
+      proof_summaries: [{ id: "ps_1", question_id: Q, tier: "not_proved", shortfall: "conflict" }],
+    });
+    expect(questionStatus(d, question()).nextStep).toBeNull();
+  });
+
+  it("a summary of another shortfall is not the terminal marker", () => {
+    const d = settled({
+      proof_summaries: [{ id: "ps_1", question_id: Q, tier: "not_proved", shortfall: "gap" }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^proof-conclusion/);
+  });
+
+  it("one log entry the weighed list does not cover sends it back to conflict-resolution", () => {
+    const d = settled({
+      log: [...log, { id: "log_3", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" }],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution — unresolved c_1/);
+  });
+
+  it("a researcher's upload closing a hand-off is evidence the list must cover too", () => {
+    const url = "https://example.org/search?q=x";
+    const d = settled({
+      log: [
+        ...log,
+        { id: "log_3", plan_item_id: "pli_1", tool: "external_site", outcome: "partial",
+          external_site: { site: "ancestry", url_generated: url, capture_received: false } },
+        { id: "log_4", tool: "external_site", outcome: "positive",
+          external_site: { site: "ancestry", url_generated: url, capture_received: true } },
+      ],
+      conflicts: [conflict({ weighed_log_entry_ids: ["log_1", "log_2", "log_3"] })],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+  });
+
+  it("does not fire while a plan item is still open", () => {
+    // With the conflict already analysed this is section E's OTHER arm. Here it
+    // asks for EXTRACTION, not the search: `log_1` is a positive entry no
+    // assertion cites, so the record that may settle the conflict is already in
+    // hand. Re-running the search that found it would find it again.
+    const d = doc({ plans: [plan("planned")], log, conflicts: [conflict()] });
+    const step = questionStatus(d, question()).nextStep;
+    expect(step).not.toMatch(/unsettled conflict/);
+    expect(step).toMatch(/^extraction /);
+  });
+
+  it("routes to the search once nothing is left to extract", () => {
+    const d = doc({
+      plans: [plan("planned")],
+      log: [{ id: "log_2", plan_item_id: "pli_1", tool: "record_search", outcome: "negative" }],
+      conflicts: [conflict({ weighed_log_entry_ids: ["log_2"] })],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("never names a search that is waiting on the researcher's upload", () => {
+    // The rung DECIDED to fire from the set that skips upload-waiting items
+    // (`hasOpenWork`) and then PICKED from one that did not, so it named a
+    // hand-off `awaitingUser` already lists -- a link the router is told never
+    // to raise again, which stalled the question until the upload arrived.
+    const d = doc({
+      plans: [{
+        id: "pl_1", question_id: Q, status: "active",
+        items: [
+          { id: "pli_1", status: "in_progress", sequence: 1, repository: "Ancestry" },
+          { id: "pli_2", status: "planned", sequence: 2, repository: "FamilySearch" },
+        ],
+      }],
+      log: [{
+        id: "log_9", plan_item_id: "pli_1", tool: "external_site", outcome: "partial",
+        external_site: {
+          site: "ancestry", url_generated: "https://example.test/s?q=1",
+          capture_received: false,
+        },
+      }],
+      conflicts: [conflict({ weighed_log_entry_ids: ["log_9"] })],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("a blank independence_analysis is not analysed, for either rung", () => {
+    // `Boolean("   ")` is true. One rung used that and its complement required a
+    // trimmed string, so a whitespace analysis routed to a search from one and
+    // to conflict-resolution from the other.
+    const blank = conflict({ independence_analysis: "   " });
+    const open = doc({ plans: [plan("planned")], log, conflicts: [blank] });
+    expect(questionStatus(open, question()).nextStep).toMatch(/^conflict-resolution/);
+    const closed = doc({ plans: [plan("completed")], log, conflicts: [blank] });
+    expect(questionStatus(closed, question()).nextStep).toMatch(/^conflict-resolution/);
+  });
+
+  it("does not fire on a conflict never analysed, or one with no weighed list", () => {
+    for (const c of [conflict({ independence_analysis: null }), conflict({ weighed_log_entry_ids: undefined })]) {
+      const d = doc({ plans: [plan("completed")], log, conflicts: [c] });
+      expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+    }
+  });
+
+  it("an unanalysed conflict beside an analysed one still goes to conflict-resolution first", () => {
+    const d = settled({
+      conflicts: [conflict(), conflict({ id: "c_2", independence_analysis: "" })],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+  });
+
+  it("the same holds for a question already exhaustive_declared", () => {
+    const s = questionStatus(settled(), question({ status: "exhaustive_declared" }));
+    expect(s.nextStep).toMatch(/^proof-conclusion — unsettled conflict/);
+  });
+});
+
+describe("questionStatus — a conflict that wants new evidence (section E)", () => {
+  const openPlan = (repository = "FamilySearch") => ({
+    id: "pl_1",
+    question_id: Q,
+    status: "active",
+    items: [{ id: "pli_1", status: "planned", sequence: 1, repository }],
+  });
+  const analysed = (extra: Record<string, unknown> = {}) => ({
+    id: "cf_1",
+    status: "unresolved",
+    blocks_question_ids: [Q],
+    independence_analysis: "Both trace to the same compiled abstract.",
+    ...extra,
+  });
+
+  it("routes to the search once every open conflict has been analysed", () => {
+    // Without this the conflict rung fires forever and the items the route PRs
+    // ask research-plan to write never run -- the loop they would introduce.
+    const d = doc({ plans: [openPlan()], log: [], conflicts: [analysed()] });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("names search-external-sites when the decisive item is not FamilySearch", () => {
+    // The plan writes this arm as "the next step is search-records", right for
+    // a FamilySearch item and wrong for an Ancestry one: the router would spawn
+    // the wrong agent. The item is asked, as the dispatch arm already does.
+    const d = doc({ plans: [openPlan("Ancestry")], log: [], conflicts: [analysed()] });
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "search-external-sites — pli_1 (Ancestry)",
+    );
+  });
+
+  it("an unanalysed conflict goes to conflict-resolution first, even beside an analysed one", () => {
+    const d = doc({
+      plans: [openPlan()],
+      log: [],
+      conflicts: [analysed(), analysed({ id: "cf_2", independence_analysis: null })],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe(
+      "conflict-resolution — unresolved cf_1, cf_2",
+    );
+  });
+
+  it("does not fire with no open item — that is the unsettled arm's case", () => {
+    const d = doc({
+      plans: [{ ...openPlan(), items: [{ id: "pli_1", status: "completed", repository: "FamilySearch" }] }],
+      log: [],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).not.toBe("search-records");
+  });
+
+  it("an item waiting only on an upload is not an open item here either", () => {
+    // Section I. Counting it would route forever to a search nobody can run.
+    const d = doc({
+      plans: [{
+        ...openPlan("Ancestry"),
+        items: [{ id: "pli_1", status: "in_progress", repository: "Ancestry" }],
+      }],
+      log: [{
+        id: "log_9",
+        plan_item_id: "pli_1",
+        tool: "external_site",
+        outcome: "partial",
+        external_site: {
+          site: "ancestry",
+          url_generated: "https://example.test/s?q=9",
+          capture_received: false,
+        },
+      }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^conflict-resolution/);
+  });
+
+  it("an uncited entry on a closed item does not hold the search on extraction", () => {
+    // An inconclusive `partial` stays uncited for good, and so does the search
+    // entry behind a record `extraction_append` read. Counting either would
+    // name extraction on every pass and the new item would never run.
+    const d = doc({
+      plans: [
+        { id: "pl_0", question_id: Q, status: "completed",
+          items: [{ id: "pli_0", status: "completed", sequence: 1, repository: "FamilySearch" }] },
+        openPlan(),
+      ],
+      log: [{ id: "log_1", plan_item_id: "pli_0", tool: "record_search", outcome: "partial" }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("a search whose record was extracted does not route to extraction again", () => {
+    // The conflict round's own item, completed by extraction_append, which cites
+    // its read (`log_2`) and leaves the search that found the record uncited.
+    const d = doc({
+      plans: [{
+        id: "pl_1", question_id: Q, status: "active",
+        items: [
+          { id: "pli_1", status: "completed", sequence: 1, repository: "FamilySearch" },
+          { id: "pli_2", status: "planned", sequence: 2, repository: "FamilySearch" },
+        ],
+      }],
+      log: [
+        { id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" },
+        { id: "log_2", tool: "record_read", outcome: "positive" },
+      ],
+      assertions: [{ id: "a_9", log_entry_id: "log_2", extracted_for_question_ids: [Q] }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
+  });
+
+  it("a record found by an item still in progress goes to extraction first", () => {
+    const d = doc({
+      plans: [{ ...openPlan(), items: [{ id: "pli_1", status: "in_progress", sequence: 1, repository: "FamilySearch" }] }],
+      log: [{ id: "log_1", plan_item_id: "pli_1", tool: "record_search", outcome: "positive" }],
+      conflicts: [analysed()],
+    });
+    expect(questionStatus(d, question()).nextStep).toMatch(/^extraction /);
+  });
+});
+
+describe("questionStatus — the dispatch arm skips an item waiting on an upload (section I)", () => {
+  it("names the next search past an upload-waiting item, with no conflict open", () => {
+    const d = doc({
+      plans: [{
+        id: "pl_1", question_id: Q, status: "active",
+        items: [
+          { id: "pli_1", status: "in_progress", sequence: 1, repository: "Ancestry" },
+          { id: "pli_2", status: "planned", sequence: 2, repository: "FamilySearch" },
+        ],
+      }],
+      log: [{
+        id: "log_9", plan_item_id: "pli_1", tool: "external_site", outcome: "partial",
+        external_site: {
+          site: "ancestry", url_generated: "https://example.test/s?q=2",
+          capture_received: false,
+        },
+      }],
+    });
+    expect(questionStatus(d, question()).nextStep).toBe("search-records");
   });
 });

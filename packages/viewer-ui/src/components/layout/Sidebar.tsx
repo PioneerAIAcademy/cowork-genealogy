@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import { treeOnlySources } from '../../lib/tree-sources'
+import { countCollectionRows } from '../../lib/externalCollections'
 import styles from './Sidebar.module.css'
 
 interface SectionItem {
@@ -34,6 +35,7 @@ export default function Sidebar({
   const {
     research,
     gedcomx,
+    collections,
     folderPath,
     activeSection,
     setActiveSection,
@@ -60,13 +62,13 @@ export default function Sidebar({
       label: 'Project Overview',
       countFn: () => (research?.project ? 1 : 0)
     },
-    {
-      key: 'known_holdings',
-      label: 'Known Information',
-      countFn: () => research?.known_holdings?.length ?? 0
-    },
     { key: 'questions', label: 'Questions', countFn: () => research?.questions?.length ?? 0 },
     { key: 'localities', label: 'Localities', countFn: () => research?.localities?.length ?? 0 },
+    {
+      key: 'external_collections',
+      label: 'Collections',
+      countFn: () => countCollectionRows(collections)
+    },
     { key: 'plans', label: 'Plans', countFn: () => research?.plans?.length ?? 0 },
     { key: 'log', label: 'Research Log', countFn: () => research?.log?.length ?? 0 },
     {
@@ -81,6 +83,7 @@ export default function Sidebar({
       label: 'Person Evidence',
       countFn: () => research?.person_evidence?.length ?? 0
     },
+    { key: 'namesakes', label: 'Namesakes', countFn: () => research?.namesakes?.length ?? 0 },
     { key: 'conflicts', label: 'Conflicts', countFn: () => research?.conflicts?.length ?? 0 },
     { key: 'hypotheses', label: 'Hypotheses', countFn: () => research?.hypotheses?.length ?? 0 },
     { key: 'timelines', label: 'Timelines', countFn: () => research?.timelines?.length ?? 0 },

@@ -853,7 +853,7 @@ the `max_cost_usd` note in §6 step 5.
 
    **Agent `model:` pins interact with reasoning effort, and one pin is
    load-bearing.** Effort is per-agent too, since agent `effort:` was verified to
-   bind on 2026-08-25 — but no agent pins one today, so in practice every step runs
+   bind on 2026-08-25 — but only `search-wikipedia` pins one (`effort: low`), so in practice nearly every step runs
    at the session effort and `model:` is the lever that has been used (each
    `packages/engine/plugin/agents/*.md`). So when one agent misbehaves at the
    run's effort level, repinning that agent — its model, its effort, or both —
@@ -880,7 +880,10 @@ the `max_cost_usd` note in §6 step 5.
    worker's `CONTINUE_REASON`
    (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
    two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
-   the copy). Before replying, the hook classifies the agent's closing words
+   the copy). The hosted planes' completion halt is NOT emulated: they end the turn at the
+   PostToolUse of the proof-conclusion call that completes the project
+   (`completion_halt_summary`), so a completed e2e run still pays the closing relay call
+   those planes no longer make, and its cost overstates a hosted one by that call. Before replying, the hook classifies the agent's closing words
    (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) for telemetry only. The
    class is the FORM; the key counted in `usage.hand_back_classes` is the OUTCOME, and
    for a completion claim the two differ — no run log ever carries a
@@ -1035,6 +1038,12 @@ In an autonomous run the harness **denies these tools for the entire run**
   live profile; several issue sentences interpolate values off that profile
   (`{originalDate}`, `{originalPlace}`), so a stripped date or place can be
   returned verbatim
+- `project_create` — given `personId`, reads the person off the live tree and
+  returns their relatives by name. An e2e run always starts in an existing
+  project, which `project_create` refuses, so no legitimate call exists, but a
+  call naming a fresh folder would get past that refusal. Blocked by name, not
+  on `personId`, so the hosted proto worker, which blocks by bare name only,
+  mirrors the same block
 
 The agent must recover everything through **records** (`record_search`,
 `record_read`, `fulltext_search`, `image_search`, `image_read`,
@@ -1131,7 +1140,9 @@ the CLI spills an oversized tool result for the model to read back; a
 `Glob` with no `path` is treated as the project root. Recorded as
 `"blocked_by": "path"` with the resolved `path`. Both entries carry the
 `reason` the agent was shown, which names the MCP route that replaces the
-read: `record_read({recordId, resultsRef})` for a `results/` sidecar,
+read: `record_read({recordId, resultsRef})` for a record or search sidecar
+under `results/` and, in the same fixed message,
+`sidecar_read({projectPath, ref: '<ref>#hits'})` for a `fulltext_search` one,
 `sidecar_read({projectPath, ref})` for a verdict body under `evaluations/` or a
 text upload under `uploads/`, `research_query` for `research.json`,
 `project_context` otherwise. Each flag is recorded in the `usage` block (§8.1) because a run
@@ -1145,10 +1156,11 @@ answer reachable only via the tree will fail and the fixture won't validate.
 ### 6.1.1 Main-thread subagent-only tool block
 
 The same `PreToolUse` hook enforces the per-context tool policy in e2e: no
-member of `SUBAGENT_ONLY_TOOLS` — today just `image_read` — may be called
-on the main thread. It is a Task-spawned subagent's private tool (returning a
-page scan as inline base64); a main-thread call is the router substituting for a
-*failed* spawn and doing the work itself — a shape observed in production.
+member of `SUBAGENT_ONLY_TOOLS` — `image_read` and, since 2026-10-29, the
+tools only agents hold (the plugin hook's `AGENT_ONLY_TOOLS`) — may be called on
+the main thread. `image_read` returns a page scan as inline base64; the rest are
+an agent's step. A main-thread call is the router doing an agent's work itself —
+a shape observed in production.
 
 **`extraction_append` is no longer in this set.** Extraction of a
 FamilySearch-indexed record runs as code called from the main thread, and
@@ -1169,7 +1181,10 @@ supply. So e2e carries no declared-tools exemption: a future skill that
 legitimately declares a guarded tool would be denied here too, and closing
 that needs the predicate widened by hand.
 
-Every member is enforced. The one member, `image_read`, is
+Every member is enforced. Since 2026-10-29 the set is `image_read` plus the
+shipped hook's `AGENT_ONLY_TOOLS` — the tools only agents hold, imported into
+`context_policy` rather than copied — whose deny names the agents to delegate to.
+None is declared by a skill. `image_read` is
 declared by no skill and by no agent at all since
 the `image-reader-opus` agent was retired, and
 since `search-images` moved to `image_transcribe` (via `@plugin:image-reader` from
@@ -1187,17 +1202,19 @@ recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
 because this is a write denied by a different guard.
 
-This is harness-only. The plugin ships a `PreToolUse` hook that binds on the
+The `image_read` arm is harness-only; the `AGENT_ONLY_TOOLS` arm ships in the
+plugin hook too. The plugin ships a `PreToolUse` hook that binds on the
 hosted path — **measured**, by `make hook-smoke` — and binds in Cowork, probed
 live on 2026-07-30 (ADR-0005) for `Write`/`Bash` under a broader matcher. The
 `.*research_append` arm entered the matcher 2026-08-21 and is unmeasured there;
 Cowork is a different loader and has no instrument but a live
 session (`packages/engine/plugin/hooks/hooks.json`; a deny binds even under
 `bypassPermissions`). Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`: the raw
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)`: the raw
 file-write tools, the device bridge's `device_commit_files`, `research_append`
-(since the caller-ownership rules shipped), and `Agent` / `Task`, for the fork deny. It still never sees an
-`extraction_append`-shaped MCP tool call. Porting the tool-level policy there was
+(since the caller-ownership rules shipped), `Agent` / `Task`, for the fork deny,
+and a final alternative naming every `AGENT_ONLY_TOOLS` key. It still never sees an
+`extraction_append`-shaped MCP tool call. Porting the `image_read` policy there was
 **declined by lead ruling 2026-08-17** (ADR-0006) — declined, not pending. That
 decline is scoped to `image_read`: do not re-file *it* without evidence the
 sub-700 KB band is being hit. §6.1.1 covers `extraction_append` too, and ADR-0006
@@ -1239,11 +1256,13 @@ entries in the committed corpus. `research_append` writes a named section, and
 
 **This arm is caller-scoped, not main-thread-scoped**, which is the trap: it is
 easy to describe as "the router doing a delegate's job" because that is the
-`routed` rule, and miss that `owner_denied` has **four**. `out_of_lane` fires
+`routed` rule, and miss that `owner_denied` has **six**. `out_of_lane` fires
 for a **named** subagent reaching outside the lanes `AGENT_WRITABLE_SECTIONS`
 grants it; `declaration` fires on a routed claim, field-scoped rather than
 section-scoped; and `owned_field` fires on a routed field keyed on presence
-rather than on a claim value (`project.status`). All reach this array — the append happens before the rule
+rather than on a claim value (`project.status`); `claim` fires on a conflict's
+analytical product; and `owned_append` fires on a `questions` append from
+anyone but question-selection. All reach this array — the append happens before the rule
 branch — so an entry here does not imply a main-thread caller. Most committed
 entries are `routed`; at least one is `out_of_lane` (6 and 1 of 7 — measured at
 7315364c).
@@ -2030,14 +2049,16 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `judge_output` | `per_finding`, `recall_required`, `recall_total`, `rationale`. Empty when the judge was skipped. |
 | `tool_calls[]` | Every tool call attempted — not just `mcp__`-prefixed. Each entry `{ tool, args, response_summary, thread, result_chars, is_error, agent_id, agent_type }`. Main-stream entries are in chronological order; a **background** subagent's calls are appended after them from its transcript, so the array is **not** chronological across agents. See 8.1.1. |
 | `blocked_tree_reads[]` | Attempts the PreToolUse hook denied, each `{ tool, args, blocked_by }` with `blocked_by` ∈ `tree` / `fixture` / `shell` / `path`; the `shell` and `path` entries (the §6.1 opt-in filesystem denials) also carry `reason`, and `path` entries the resolved `path`. The *structured* record of a denial — read `blocked_by` from here. §6.1. |
-| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` — §6.1.1; `extraction_append` was the other, until indexed-record extraction moved to a main-thread call), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
+| `blocked_context_calls[]` | Calls the per-context policy refused: a `SUBAGENT_ONLY_TOOLS` tool (`image_read` and, since 2026-10-29, the shipped hook's `AGENT_ONLY_TOOLS` — §6.1.1; `extraction_append` was a member until indexed-record extraction moved to a main-thread call), **or** an owned-section `research_append` write (§6.1.2). `blocked_by` is `"context"` for both, so only `tool` discriminates which guard fired; every entry in the committed corpus is the latter. Same entry shape, `blocked_by: "context"`. Separate from `blocked_tree_reads[]` because it is denied by a different guard. §6.1.1, §6.1.2. |
 | `narration[]` | The agent's prose between tool calls, each `{ tool_calls_before, kind, text }` — plus `thread` (`main` / `sub`) on `assistant` entries from `harness_schema_version` 8, since a subagent's own messages stream through the same branch. The nine `harness` / `blocked` append sites have no message in scope and carry no `thread`, so select on `kind == "assistant"` **and** `thread == "main"`, never on the absence of the key. `kind` in `assistant` / `blocked` / `harness`. `tool_calls_before` is a **count, not an index**: N means the entry sits between `tool_calls[N-1]` and `tool_calls[N]`, and 0 means before any tool call. |
 | `usage` | Tokens, cost, duration. See 8.1.2 for the fallback shape. |
-| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). |
+| `usage.per_turn` | **Step mode only** — one row per turn: `{index, step, wall_ms, sent, reply, duration_ms, duration_api_ms, num_turns, total_cost_usd}`. Written by `turn_loop.accumulate_usage`. The top-level quantities keep their whole-run meaning, so every existing reader works unchanged — but not all by summing: `total_cost_usd` and `duration_api_ms` are RUNNING totals the CLI already reports, so the latest turn's value is taken rather than the sum, which would multiply them (decided by the lead, 2026-10-26: a `ResultMessage` now arrives per TURN, and a plain assignment would have recorded only the last one and understated corpus spend quietly). `wall_ms` and `step` come from the turn rather than the `ResultMessage`. A turn that ran no step carries no `step`. Absent on every non-step run; `make e2e-latency BY_STEP=1` prints per-step p50/p90 wait and spend from it, in the order the run reached the steps, and says "no per-step data" rather than zeroes when it is absent. |
+| `usage.wrap_up_after` | **Step mode only** — the step after which the host answered `Wrap it up.` instead of `next_auto_reply`'s choice (`--wrap-up-after`), exercising B2's link-then-conclude path. `null` on every other run. A run with this set is **not** comparable to a step run without it: it ends deliberately early, so its turn count, spend and per-step figures all describe a shorter run. |
+| `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). **A step-mode run is the case this field's caveat cannot see.** The caveat is detected by `result_message_covers_last_query_only`, which counts `system:init` rows; a persistent `ClaudeSDKClient` is one CLI process emitting one init however many turns it serves, so a many-turn step run is never flagged even though a `ResultMessage` arrived per turn. What makes the figures whole-run there is not the flag but `accumulate_usage` summing them at assembly (`usage.per_turn`) — do not remove that on the strength of the flag reading clean. |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
 | `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, all with the same continue text (U17). The weak-signal reading belongs to `silent`, `step` and `false_completion` in `hand_back_classes`, not to this total. |
-| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok` for the three gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. See the Continue-nudge note in §6. |
+| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok` for the three gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. **`step_offer`** is the offer line itself ("Continue with <label>?") — and it is **0 on a `--step-mode` run**, which returns from the Stop hook before any hand-back is classified. It counts a run WITHOUT `--step-mode` that was vetoed at that line. `nudge_report.py` derives the classes it counts from `HAND_BACK_CLASSES`, which a unit test holds equal to what `classify_hand_back` can return, so a class added to the predicate cannot go uncounted. See the Continue-nudge note in §6. |
 | `wall_clock_seconds` | Active time: monotonic minus `counted_sleep_seconds` — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `counted_sleep_seconds` (sleep the heartbeat counted because monotonic did not leave it out, the Windows case), `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |

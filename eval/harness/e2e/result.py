@@ -272,11 +272,12 @@ class E2eResult:
 
     # Calls the per-context policy denied. TWO arms, and only `tool` tells them
     # apart — `blocked_by` is "context" for both:
-    #   - a `SUBAGENT_ONLY_TOOLS` tool on the main thread: today only
-    #     `image_read` (whose base64 would overflow the transport), since #1273
-    #     Item 1. `extraction_append` (the record-extractor's write, #942) was
-    #     the other member until issue #2937 removed it from the set. Neither has
-    #     been observed in the committed corpus.
+    #   - a `SUBAGENT_ONLY_TOOLS` tool on the main thread: `image_read` (whose
+    #     base64 would overflow the transport), since #1273 Item 1, and since
+    #     issue #3528 every tool only agents hold (the shipped hook's
+    #     AGENT_ONLY_TOOLS). `extraction_append` (the record-extractor's write,
+    #     #942) was a member until issue #2937 removed it from the set. No run
+    #     committed before #3528 carries this arm.
     #   - an owned-section `research_append` (#1273): a caller wrote a section it
     #     does not own. NOT main-thread-only — `owner_denied`'s `out_of_lane` rule
     #     fires for a named subagent reaching outside its own sections. Every
@@ -341,6 +342,12 @@ class E2eResult:
     # on a clean tree. Evidence for a reviewer, not a gate: no CI reads either.
     git_sha: str | None = None
     skills_hash: str | None = None
+
+    # The curated Ancestry collections the run's project stored, place -> sorted
+    # `ancestry:<id>` keys (#2995). What build-external-search-url-tool-spec.md
+    # §9.1 checks a generated collection URL against. A key set rather than a
+    # copy of the file: the file is ~0.15-0.3 MB per state.
+    external_collection_keys: dict[str, list[str]] = field(default_factory=dict)
 
     # Schema marker for readers. See HARNESS_SCHEMA_VERSION.
     harness_schema_version: int = HARNESS_SCHEMA_VERSION

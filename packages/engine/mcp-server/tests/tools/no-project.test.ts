@@ -40,6 +40,7 @@ import { treeCorrect } from "../../src/tools/tree-correct.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import { treeForget } from "../../src/tools/tree-forget.js";
 import { projectContext } from "../../src/tools/project-context.js";
+import { treeQuery } from "../../src/tools/tree-query.js";
 import { researchQuery } from "../../src/tools/research-query.js";
 import { sidecarRead } from "../../src/tools/sidecar-read.js";
 import { imageTranscribeMcpTool } from "../../src/tools/image-transcribe.js";
@@ -57,7 +58,7 @@ import {
 /** The five tools that are not writers. Telling someone who asked "where are
  *  we?" in a non-project folder that their work was not saved is both wrong and
  *  alarming, so these carry the read sentence. */
-const READERS = new Set(["research_query", "project_context", "person_warnings", "merge_warnings", "census_children_gap", "sidecar_read", "image_transcribe", "validate_research_schema"]);
+const READERS = new Set(["research_query", "project_context", "tree_query", "person_warnings", "merge_warnings", "census_children_gap", "sidecar_read", "image_transcribe", "validate_research_schema"]);
 
 /** Tools that signal the two loud path states by THROWING rather than
  *  returning `{ ok: false, errors }` — the dispatch arm's catch turns the throw
@@ -151,6 +152,7 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
     call: (projectPath) => treeForget({ projectPath, forget: [{ personId: "I1" }] } as any),
   },
   { tool: "project_context", call: (projectPath) => projectContext({ projectPath } as any) },
+  { tool: "tree_query", call: (projectPath) => treeQuery({ projectPath } as any) },
   {
     tool: "research_query",
     call: (projectPath) => researchQuery({ projectPath, section: "sources" } as any),
@@ -396,7 +398,7 @@ const PROJECT_MODULES = new Set([
  *   without one.
  * - `record_read`: stages the read when inside a project; the read works
  *   without one.
- * - `external_links_search`: stages results optionally.
+ * - `external_links_search`: stores external-collections.json optionally.
  * - `same_person`: reads project context optionally for enrichment.
  * - `rank_search_matches`: reads project context optionally for scoring.
  * - `person_quality`: reads tree optionally for quality scoring.

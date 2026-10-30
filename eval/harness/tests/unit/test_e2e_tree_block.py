@@ -22,7 +22,18 @@ def test_blocked_set_is_exactly_the_three_tree_readers():
         "person_record_matches",
         "person_person_matches",
         "person_quality",
+        "project_create",
     }
+
+
+def test_project_create_is_blocked_by_name():
+    """`project_create` with `personId` reads the live tree (#3384), and an e2e
+    run never needs it (the project exists), so it is blocked whatever its
+    arguments -- a block the name-only proto worker can mirror."""
+    name = "mcp__genealogy__project_create"
+    assert is_blocked_tree_tool(name, {"projectPath": "/tmp/x", "objective": "o", "personId": "LZNY-BRF"})
+    assert is_blocked_tree_tool(name, {"projectPath": "/tmp/x", "objective": "o", "tree": {"persons": []}})
+    assert is_blocked_tree_tool(name)
 
 
 def test_bare_tool_name_strips_mcp_prefix():

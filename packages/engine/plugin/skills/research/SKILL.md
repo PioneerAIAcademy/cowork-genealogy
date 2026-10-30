@@ -29,50 +29,76 @@ allowed-tools:
 
 **If you have no `Agent` tool to spawn the plugin's agents with, say that this research runs only in a Cowork task, and stop.**
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the user watches this as a live feed and it is their only view of a run that no longer stops to ask, so every phase boundary gets its line — always followed by the actual tool call in the same turn. Whatever the narration style, after an agent returns, the relayed return is that step's report and its boundary line; your next preamble introduces only your next call, and names it when it differs from the agent's `next_step`. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the researcher watches this as a live feed, so every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
 You drive the full Genealogical Proof Standard (GPS) workflow on the
 user's research objective. Rather than the user invoking each
 sub-skill in turn, you read `research.json` to determine the current
-state and invoke the appropriate sub-skill, then iterate.
+state and invoke the one sub-skill that step calls for.
 
 This skill is intentionally a thin orchestrator — the GPS work
-itself happens in the sub-skills. Your job is to keep the workflow
-moving.
+itself happens in the sub-skills. Your job is to run one step and
+offer the next.
 
-## Continuous work
+## One step per turn
 
-**Once a request is a job, you work continuously, in one turn, until a
-stop condition in §"When to stop" is met.** That is how every job
-behaves; it is not a mode and no flag turns it on. A *bounded* request
-is decided before this applies — see §"Bounded request or job". Proceed without pausing for clarifying
-questions: use your best judgment for any decision that would normally
-prompt the user (which records to prioritize when several are plausible,
-how to weight conflicting evidence, when to declare exhaustiveness), and
-log the decision and your rationale in the appropriate research.json
-field (log entry, assertion rationale, or conflict resolution analysis)
-so the audit trail captures it.
+**A turn runs one step, then ends.** A step is one agent spawn or `Skill`
+call, plus the tool calls it needs and any repeat of the same step. After it
+returns:
 
-**On a job, you are the only driver.** Do **not** end your turn to
-announce, plan, or ask about a next step. (A bounded request is the
-exception, and the only one: it ends once every deliverable it named is
-produced — see
-§"Bounded request or job".) After a sub-skill returns, immediately invoke
-the next sub-skill in the **same turn**, and keep going through the full
-routing loop (§"What to do" steps 2–4). Trust the compact summaries the
-sub-skills and writer tools return plus the state you already hold in
-context — only re-read `research.json` when you're entering a phase cold
-without the relevant state in context, or when a sub-skill or the user
-changed the file in a way you don't already have. Writing something like
-"Next: research-plan" or "I'll now search records" and then yielding is a
-**failure** — it ends the run before any research happens. Narrate
-briefly, but always follow the narration with the actual tool call or
-sub-skill invocation in the same turn.
+1. report what that step found, in the researcher's terms — the step's own
+   `summary_for_user` is the material, not a paraphrase of your routing;
+2. end with **"Continue with `<label>`?"**, using the exact label below;
+3. end your turn.
 
-The user can type at any time and can halt you at any time. Neither is
-something you stop and wait for. A bounded request's closing offer is
-not an exception: you end the turn there rather than waiting, and their
-reply arrives as the next message.
+Nothing runs after that line. Do not start the next step, and do not promise
+one in prose you then act on.
+
+| Next step | `<label>` |
+|---|---|
+| init-project, question-selection, locality-guide | setting up the project |
+| research-plan | planning the searches |
+| search-records, search-images, search-external-sites, record-structurer | running the searches |
+| person-evidence | linking the records |
+| conflict-resolution | resolving the conflict |
+| hypothesis-tracking | sorting out the competing identities |
+| research-exhaustiveness | checking the search is exhaustive |
+| proof-conclusion | writing the conclusion |
+| the current question, before a different one | wrapping up |
+| tree-survey | surveying the tree |
+| search-hints | checking the record hints |
+| source-evaluation | evaluating the source |
+| gps-mentor | the GPS review |
+
+**Write the label verbatim.** The host reads that line to offer the
+researcher's buttons; an invented label offers none.
+
+**A step that ends on a question only the researcher can answer writes no
+"Continue with …?" line.** Ask the question and end the turn. The same holds
+for a final conclusion, and for a step that found nothing further to do.
+
+**Say what the step will act on in the sentence before the line** — the
+sources still unsearched, or the record that could settle a conflict. The
+label alone does not tell the researcher what they are agreeing to.
+
+**The researcher's replies.** "Continue." runs the offered step. "Keep going."
+runs the offered step and every step after it, one per turn, until something
+has no offer. "Wrap it up." runs §"Wrap it up". "Search more" is only
+meaningful at the choice in §"When a search stops short"; anywhere else, say
+in one line that there is nothing to search more of yet and re-offer.
+
+**On a "Keep going." turn, pass `userPresent: no`** to
+`@plugin:person-evidence`. A wrap-up turn and an autonomous run pass it too.
+`@plugin:search-external-sites` gets `no` only in an autonomous run.
+
+**In Cowork there is no host to reply,** so "keep going." is one turn that
+runs the steps itself: plan at most one extra round, then wrap up.
+
+**Re-reading state.** Trust the compact summaries the sub-skills and writer
+tools return plus the state you hold — re-read `research.json` only when you
+enter a phase cold without the relevant state, or when a sub-skill or the
+researcher changed the file in a way you do not already have.
+
 
 ## Direct user requests name a destination, not a shortcut
 
@@ -109,14 +135,15 @@ destination: take it through "Hint review" below.
 
 **If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
 
-**When a tool gave you the project's `projectUrl`, make it the last line of the reply that ends your turn.**
+**When a tool gave you the project's `projectUrl`, end the reply that ends your turn with it:** after the "Continue with …?" offer, on the same line, when there is one; otherwise as the last line.
 
 ## Bounded request or job
 
 **Decide this first, before any `research_query`.**
 
-**`--autonomous` is always a job**, whatever shape the question takes. The flag
-means drive this to completion, so the list below does not apply to it.
+**`--autonomous` is always a job**, whatever shape the question takes, so the
+list below does not apply to it. It still runs one step per turn: the host
+answers each boundary rather than the researcher, and `userPresent` is `no`.
 
 **Bounded** — the message asks for one or more deliverables, every one of them
 from this list:
@@ -125,9 +152,10 @@ two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
 where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
-Two or more of them in one message is still bounded: deliver each, name each,
-and end the turn when the last one is met, the same way a single one ends it. A message that also asks for
-open-ended research is a job.
+Two or more of them in one message is still bounded: deliver the first this
+turn, name the others, and offer the next, ending on its "Continue with …?" line
+when it is a step in the label table. A message that also asks for open-ended
+research is a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
 
@@ -141,9 +169,11 @@ to the step that owns its deliverable — a plan to `@plugin:research-plan`, a r
 to `@plugin:person-evidence`, a verdict on a hint to `@plugin:search-hints`, where
 the records are for a place and period to `@plugin:locality-guide`, and whether a
 person's children or siblings are complete to `@plugin:search-records`, returning
-candidates rather than a verdict — and to `@plugin:check-warnings` as well when the
-message gives a mother's 1900 or 1910 US census children-born and children-living
-counts. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
+candidates rather than a verdict. Hand that ask to `@plugin:search-records` first
+and never answer it inline from the tree; add `@plugin:check-warnings` after it
+only when the user's message itself states a mother's 1900 or 1910 US census
+children-born and children-living counts — "are any missing?" with no counts is
+`@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
 of two persons already confirmed identical; a "should these be merged?" never goes
 to `@plugin:tree-edit`. A records-request letter you write yourself in this turn,
 with no hand-off. A transcription you deliver yourself: call
@@ -153,8 +183,8 @@ link. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
-must not go. Deliver what was asked, and stop: at least one hand-off per
-deliverable, since one deliverable can need two (a record found goes on through
+must not go. Deliver this turn's deliverable, and stop: at least one hand-off
+for it, since one deliverable can need two (a record found goes on through
 extraction), except a transcription, a records-request letter and a status
 question (answered from `project_context`), which take no hand-off at all.
 
@@ -165,7 +195,8 @@ attached sources and relatives, `source_attachments` for where a source
 is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree.
 
-When a bounded request is met, **end your turn by calling `research_delivered`**.
+When this turn's deliverable is produced — the only one asked for, or the first
+of several — **end your turn by calling `research_delivered`**.
 Say what you produced first: the turn ends where you stop, so anything you were
 going to add afterwards never reaches the researcher. Name what this turn saved
 and where — "Saved to Susan Cornwell: death index, 4 Apr 1892" — and name
@@ -256,28 +287,51 @@ it by name.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay its suggestions and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
    | **No `research.json` at all**, and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
    | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until it is registered |
+   | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints`, handing it the item's `planItemId`, its plan's `planId`, the `personId` you read out of the item's `rationale` ("Review pending FamilySearch hints on <PID> before…"), and `userPresent: no` ONLY on an `--autonomous` run (otherwise omit it; absent means yes). It reviews the subject's pending FamilySearch hints and sets the item's own status — a hint that already answers the question can save a search. A hints item awaiting verdicts is not "next" (`project_context` skips it), so this never holds up the other searches |
    | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records`, handing it the item you just queried as a `plan_item:` JSON block and the subject you hold as a `subject:` block (or `@plugin:search-external-sites` for non-FS sources) |
-   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
+   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
+   | A plan item is listed in `project_context`'s **`exhaustedImageGroups[].planItemIds`** — its film's image cap is spent in this project, and no new agent or session resets it. Call `project_context` again before re-spawning `@plugin:search-images` after it reports a cap refusal | `@plugin:research-plan` to **dispose of that item**, naming the film. Never spawn `@plugin:search-images` for it |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
-   | Evidence conflicts present | `@plugin:conflict-resolution` |
+   | `project_context` reports a **null `nextStep` with a non-empty `openConflictIds`** | Nothing further will help: the research ended on an unsettled conflict. Say so, name the conflict, and end the turn with **no** "Continue with …?" line. The researcher can still start a different question (§"A different question, or a steer") |
+   | Evidence conflicts present | Follow `project_context`'s `nextStep`, which knows whether the conflict wants another weighing pass or the searches that could settle it. When it names conflict-resolution → `@plugin:conflict-resolution`; when it names a search → `@plugin:search-records`, or `@plugin:search-external-sites` when the item's repository is not FamilySearch; when it names proof-conclusion → `@plugin:proof-conclusion`. Never re-run conflict-resolution on evidence it has already weighed |
    | Identity uncertainty across assertions | `@plugin:hypothesis-tracking` |
    | `project_context` reports **`competingParentSets`** for the question (its `nextStep` reads `hypothesis-tracking — competing parent sets`) — the tree gives a person more than one set of parents with no hypothesis per set | `@plugin:hypothesis-tracking`, naming the person and parent ids it lists — one hypothesis per parent couple. Never compare or eliminate the sets yourself |
    | Analyzed evidence now plausibly answers the active question | `@plugin:research-exhaustiveness` (consult the stop criteria *before* draining the rest of the plan; it sends you back to `@plugin:research-plan` if the question — e.g. a completeness "did they have *any other* children?" question — is not yet reasonably exhausted) |
    | All plan items for a question are `completed` or `skipped`, and analysis above is done | `@plugin:research-exhaustiveness` |
-   | `research-exhaustiveness` returned "not yet exhaustive" with gaps to fill | `@plugin:research-plan` (extend the plan) or `@plugin:question-selection` (FAN pivot) |
-   | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` | `@plugin:research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged |
+   | `research-exhaustiveness` declined — `project_context` reports `researcher's choice: research-plan or proof-conclusion (default …)` | **Do not pick.** Report what was left unsearched, name the alternative, and offer the step the default names: low risk → "Continue with `writing the conclusion`?"; high risk → "Continue with `planning the searches`?". The researcher's "Search more" runs `@plugin:research-plan`'s add-new mode from the stop's `deferred` entries |
+   | `research-exhaustiveness` returned "not yet exhaustive" naming gaps it wants planned — a verdict, not the decline above | `@plugin:research-plan` (extend the plan). A FAN pivot is plan items on this question too — never a new question. When it DECLINED instead, the row above owns it: report and offer, do not pick |
+   | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` **or `in_progress`** | `@plugin:research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged. An item waiting only on the researcher's upload is left alone |
    | `research-plan` returned that a jurisdiction it must plan has no `localities` entry | `@plugin:locality-guide` for that jurisdiction, then `@plugin:research-plan` again |
     | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **First check the objective, not the question list.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, invoke `@plugin:question-selection` and do not continue this row — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
-   | All questions are `resolved` and `project.status` is `completed` | Stop |
+    | All questions are `resolved` and `project.status` still `active` | **First check the objective, not the question list.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, name it and end the turn with "Continue with `setting up the project`?" — do not spawn `@plugin:question-selection` in the turn that finds it, and do not continue this row; a "Continue." or "Keep going." in reply to that offer runs `@plugin:question-selection` — a fact with no question is a NEW question, which is the one thing question-selection is still for. A sub-question of a fact already covered is not: that is plan items on the question that covers it (§"A different question, or a steer") — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
+   | All questions are `resolved` and `project.status` is `completed` | Stop — **unless the message carries a new question**, which goes to `@plugin:question-selection` (§"A different question, or a steer") |
+
+   **The search step runs the plan's items together.** Dispatch one search
+   agent per open item of the active plan — **not** one already waiting on an
+   upload, which `project_context` lists under `awaitingUser` and which the
+   rule below says never to raise again — `@plugin:search-records` for
+   FamilySearch, `@plugin:search-external-sites` for other repositories,
+   `@plugin:search-images` for a browse-only volume — as parallel tool calls in
+   one assistant message, **at most 4 per message**, each with
+   `run_in_background: false`. They are one step: do not report between them.
+
+   - An item with `fallback_for` runs **only** after its primary finds nothing.
+     Otherwise skip it with `skip_category: "fallback_not_triggered"`.
+   - **Then, in the same turn,** one `extraction_append({ recordIds })` call for
+     every FamilySearch hit, and one `@plugin:record-structurer` spawn for every
+     other source.
+   - The step's report gives the FamilySearch findings, then each external
+     search: the link, what to look for, and to save the results page as a PDF
+     and upload it. It still ends "Continue with `linking the records`?" — an
+     external errand does not hold the step open.
 
    **Extraction contract — an `assertions` write through `research_append` is refused.** You never compose
    sources, assertions or classifications yourself. Every positive/partial
@@ -322,19 +376,28 @@ it by name.
    that is the orchestrator doing the sub-skill's job by hand, and it is
    exactly what this contract forbids.
 
-   **Every spawn names `projectPath` and the id the agent works on** — a
+   **Every spawn names `projectPath` and the id the agent works on,** and
+   carries `run_in_background: false` — a step must finish inside its own
+   turn, and a backgrounded one does not. A
    `questionId` for `@plugin:research-exhaustiveness`,
    `@plugin:proof-conclusion` and `@plugin:research-plan` (plus, when disposing,
-   a `planItemIds:` line with the `pli_` ids research-exhaustiveness named), the assertion ids for
-   `@plugin:person-evidence`, the conflict or competing assertion ids for
+   a `planItemIds:` line with the `pli_` ids research-exhaustiveness named), the assertion ids plus `userPresent`
+   (`no` on a "Keep going." or "Wrap it up." turn and in an autonomous run,
+   otherwise `yes`) for `@plugin:person-evidence`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
    `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it, and the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`), for `@plugin:search-records`, and the `planItemId` (plus the parish page as
-   `baseUrl` when one is known, `userPresent` (`no` only when you are running autonomously and will not wait for the researcher, otherwise `yes`), and for a returned capture its
+   `baseUrl` when one is known, `userPresent` — `no` in an autonomous run, otherwise `yes` —
+   and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
    `@plugin:search-hints`, and the `planItemId` plus the volume's `standardPlace` (with its
-   years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`. A `@plugin:tree-survey` spawn takes no `projectPath`. The agent runs in fresh context and reads the
+   years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`. In a wrap-up turn
+   (§"Wrap it up") `@plugin:research-exhaustiveness` and
+   `@plugin:proof-conclusion` also take `wrapUp: yes`, and
+   `@plugin:proof-conclusion` takes `newQuestion: yes` when the researcher
+   has a different question waiting. A `@plugin:tree-survey` spawn takes no
+   `projectPath`. The agent runs in fresh context and reads the
    project itself; a delegation missing `projectPath` fails on its first tool
    call.
 
@@ -348,8 +411,7 @@ it by name.
    queried and the subject you already hold, passed verbatim and unread), and judge nothing. Do not
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
-   the routing table has no row for a decline. Relay everything after the
-   agent's final `---` verbatim, or its whole return when it has none.
+   the routing table has no row for a decline. Relay the agent's return as-is.
 
    **Hard rules held in this context** (for any residual inline
    judgment — reading state, weighing routes — never for writing):
@@ -384,8 +446,9 @@ it by name.
    stop gate: it weighs the question against the 7-point stop criteria,
    assessed in order and stopping at the first that fails, and either
    declares the search reasonably
-   exhaustive (→ proof) or routes you back to `@plugin:research-plan` /
-   `@plugin:question-selection` for the gaps. That round-trip is what lets a
+   exhaustive (→ proof) or routes you back to `@plugin:research-plan` for the
+   gaps — never `@plugin:question-selection`, which would open a second question
+   (§"A different question, or a steer"). That round-trip is what lets a
    simple-recall question stop early **without** weakening a
    completeness / negative one ("did they have *any other* children?"):
    finding a single child does not satisfy such a question, so
@@ -396,28 +459,27 @@ it by name.
    conclusion depends on identity-linked — those upstream artifacts are what
    its criteria read.
 
-3. **Iterate — without yielding.** After each sub-skill returns, route
-   to the next step **in the same turn** (see "Continuous work") from
-   the sub-skill's compact return plus the state
-   you already hold — re-read `research.json` only if the sub-skill
-   changed state you don't have in context, or you're routing into a
-   phase cold. After a plan item completes and its evidence is analyzed,
-   re-assess sufficiency — route to `@plugin:research-exhaustiveness` once the
-   evidence plausibly answers the active question — before reflexively
-   executing the next `planned` item. **Before that route to
-   `research-exhaustiveness`, re-run the log-vs-assertion cross-check
-   from Step 1 across the
-   *whole* log, not just the entries from the most recent search.** A
-   run naturally accumulates entries from earlier in the same session —
-   an early re-examination of an already-attached source, a FAN pull —
-   that are easy to consider "settled" once a later, more interesting
-   search captures your attention. They are not settled until each has
-   a linked assertion or an explicit reason it needs none. New evidence may reveal new
-   questions — return to `@plugin:question-selection`. Resolved conflicts may
-   unblock `proof-conclusion`. Do not assume the chain is linear; the
-   same sub-skill may be invoked multiple times across the run. Do not
-   stop after invoking just one sub-skill — that's the start of the
-   loop, not the end.
+3. **Offer the next step.** The step is done; report it and end the turn
+   with its "Continue with …?" line (§"One step per turn"). Work out the
+   next step now, from the sub-skill's compact return plus the state you
+   hold, because that is what the line names.
+
+   Once a plan item completes and its evidence is analyzed, the next step
+   is `@plugin:research-exhaustiveness` as soon as the evidence plausibly
+   answers the active question — not the next `planned` item reflexively.
+   **Before offering `research-exhaustiveness`, re-run the log-vs-assertion
+   cross-check from Step 1 across the *whole* log,** not just the entries
+   from the most recent search. A run accumulates entries from earlier in
+   the session — an early re-examination of an already-attached source, a
+   FAN pull — that are easy to treat as settled once a later search takes
+   attention. They are not settled until each has a linked assertion or an
+   explicit reason it needs none.
+
+   The chain is not linear: the same sub-skill may be offered many times
+   across a project, and a resolved conflict may unblock `proof-conclusion`.
+   New evidence that raises a new question does **not** go back to
+   `@plugin:question-selection` — it becomes plan items on the current
+   question (§"A different question, or a steer").
 
 4. **Don't insert defensive validate passes.** Every writer tool
    (`research_append`, `research_log_append`, `tree_edit`,
@@ -480,20 +542,104 @@ target is implied. It is read-only on the tree and on every section except
 
 | Verdict | Action |
 |---------|--------|
-| `looks_solid` / `consider_addressing` | Surface `narrative_for_user`; continue. |
+| `looks_solid` / `consider_addressing` | Surface `narrative_for_user`, then offer the next step. |
 | `address_first` | Surface `narrative_for_user`. **Do not block, re-open a resolved question, or force a remediation skill.** The user decides whether to act on it. |
 | `refused` | Surface the refusal message; it names the correct target. |
 
 ## Hint review
 
 When the user asks to check, review or validate the FamilySearch hints on a
-person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay
-everything after its final `---` verbatim, and stop: whether to accept a hint is the researcher's decision,
+person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay its
+return as-is, and stop: whether to accept a hint is the researcher's decision,
 which only the user can supply (§"When to stop"). When the researcher answers,
 spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
-verdicts as `{ark, verdict}` per hint, verbatim. Never pass a verdict the
+verdicts as `{ark, verdict}` per hint, verbatim, plus `planItemId` and `planId`
+when the question's active plan holds an `in_progress` `fs_hints` item whose
+`rationale` names that `personId`. Never pass a verdict the
 researcher did not state — a triage recommendation is not one. The accepted
 hints' positive log entries then route to extraction through the table.
+
+## When a search stops short
+
+`research-exhaustiveness` declines when every item on the active plan is
+closed or waiting on an upload and a genuinely unsearched source remains. It
+writes a `resources_spent` stop whose `justification` opens with
+`Overturn risk: low` or `Overturn risk: high`, and `project_context` then
+reports `researcher's choice: research-plan or proof-conclusion (default …)`.
+
+**This is the researcher's call, not yours.** Report what was left
+unsearched, name the alternative in a sentence, and offer the default's step:
+
+- **low** — "…, or we can search more. Continue with `writing the conclusion`?"
+- **high** — "…, or we can wrap it up. Continue with `planning the searches`?"
+
+"Search more" runs `@plugin:research-plan`'s add-new mode, planning from the
+stop's `deferred` entries. "Wrap it up." runs §"Wrap it up".
+
+## Wrap it up
+
+The researcher said "Wrap it up.", or answered the choice that way. Run the
+whole thing in **this one turn**, in order, skipping any step with nothing to
+do:
+
+1. `@plugin:research-plan` to dispose, **naming the open `pli_` ids in a
+   `planItemIds:` line and saying the researcher is wrapping up** — without
+   those ids it runs in Review mode and disposes nothing. It completes every
+   named item whose search ran and skips the rest with
+   `skip_category: "user_declined"`. An item whose latest entry is an upload
+   hand-off still waiting is left alone and **not** named.
+2. `@plugin:person-evidence` for the question's unlinked assertions, with
+   `userPresent: no`.
+3. `@plugin:conflict-resolution` for any unresolved conflict blocking the
+   question.
+4. `@plugin:research-exhaustiveness` with `wrapUp: yes`.
+5. `@plugin:proof-conclusion` with `wrapUp: yes`, and `newQuestion: yes` when
+   a different question is waiting.
+
+It works from any state, including before any search has run — then dispose
+skips the open items, steps 2 and 3 have nothing to do, and the conclusion is
+`not_proved` naming the searches not run.
+
+End the turn by offering what comes next: a waiting question →
+"Continue with `setting up the project`?"; otherwise no "Continue with …?"
+line at all.
+
+## A different question, or a steer
+
+**A follow-up on the current question is a steer, not a new question.** "Did
+you check the 1850 census?" is a plan item: spawn `@plugin:research-plan` in
+its edit or add-new mode, at any boundary. The same holds for work that used
+to open a helper question — a conflict that needs new evidence, a FAN pivot,
+an objective-level sub-question. All three are plan items on the current
+question.
+
+**A genuinely different question.** Check `project_context` first:
+
+- the current question has a proof summary and no open item → spawn
+  `@plugin:question-selection`, which may write it;
+- otherwise → do not spawn anything. Name the current question, say the new
+  one can start once it is wrapped up, and end with
+  **"Continue with `wrapping up`?"**. In Cowork, name the phrase "wrap it up"
+  instead. A typed "continue" to that offer gets a one-line pointer back to it.
+
+`research_append` enforces this, so writing the question anyway fails.
+
+## An upload comes back
+
+The researcher returns a capture for a hand-off, or says they cannot open it.
+Match it to the `awaitingUser` row in `project_context` and spawn
+`@plugin:search-external-sites` with the `planItemId` and the file path or
+results text. That is the turn's step; offer the next one as usual.
+
+**Never re-raise a hand-off `awaitingUser` already lists** — the researcher
+has that link.
+
+## A question between steps
+
+The researcher asks something rather than answering the offer — "why that
+census?", "who is this person again?". Answer it from what you hold, spawn
+**no** agent, and end with the **same** "Continue with …?" line the last turn
+offered. The turn ran no step, so nothing moves.
 
 ## When to stop
 
@@ -515,19 +661,17 @@ Stop when one of:
   need and what you will do with each answer, then stop
 
 Do not stop just because a decision is hard. Make the call, log the
-rationale, and continue; the audit trail captures the choice for later
+rationale, and finish the step; the audit trail captures the choice for later
 review. "Only the user can supply it" means the research cannot proceed
 without them — not that the call is difficult, contested, or slow.
 
-**On a JOB, these four are the *only* stop conditions.** Finishing a
-sub-skill is not one of them — having selected a question, written a
-plan, or run one search, you are mid-loop, not done. Do not end your
-turn to report progress or to say what you'll do next; return to step 2
-of "What to do" and invoke the next sub-skill. (See "Continuous work".)
+**Finishing a step is the ordinary end of a turn** (§"One step per turn"),
+not one of these. These are the conditions under which the project — or this
+line of work — has nothing more to offer, so the turn ends with no
+"Continue with …?" line at all.
 
-**A bounded request has a fifth: its deliverable.** When everything the
-message asked for is produced — one deliverable or several — end the turn as
-§"Bounded request or job" says to.
+**A bounded request ends on its deliverable.** When this turn's deliverable is
+produced, end the turn as §"Bounded request or job" says to.
 
 
 ### Candidates, not verdicts

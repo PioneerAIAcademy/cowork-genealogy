@@ -612,6 +612,7 @@ nil.
 | Any relative-name field given with only given-name or only surname (e.g. `fatherGivenName` but no `fatherSurname`) | the joined value uses whichever half is present — not an error |
 | `archion`/`matricula` with `attributes: {}` | succeeds — a browse site appends nothing, so it is exempt from `no_attributes` (§3.11) |
 | `archion`/`matricula` with no `baseUrl` | succeeds with the site root; `notes` asks for the parish page |
+| MCP tool, `projectPath` is a project, and `baseUrl` names a collection (an Ancestry collection id, a MyHeritage collection page) that `external-collections.json` does not hold, compared by collection key (`ancestry:<id>`) | `{ ok: false, reason: "invalid_base_url" }`, and nothing is logged. The message offers both ways forward: omit `baseUrl` for a site-wide search, or use a stored url from `research_query({section: "external_collections"})`; with nothing stored, it names `external_links_search` first. A `baseUrl` that names no collection is not checked (§9.1) |
 | MCP tool, `projectPath` given, folder holds neither project file | succeeds with the URL and no `logId`; the log tool's no-project sentence rides in `notes` — a standalone search outside a project still gets its link |
 | MCP tool, `projectPath` given, the log write refused (a `planItemId` that is not a `pli_` id, a missing folder, half a project) | `{ ok: false, reason: "log_write_failed", errors }` with the log tool's own errors and **no URL**: a hand-off nobody logged is the failure §6 exists to remove |
 | MCP tool, `planItemId` given without `projectPath` | succeeds; nothing is logged and `notes` says `planItemId` had no effect |
@@ -894,96 +895,71 @@ measurement, the date, and which of the two nonsense-value checks a false
 positive would need to fail.
 
 
-### 9.1 Collection IDs on Case A URLs have no recorded provenance
+### 9.1 Collection IDs on Case A URLs are checked against the stored list
 
 A correctly-built URL can still search the wrong collection. The tool appends
 correctly-named parameters to a caller-supplied `baseUrl` and cannot know that
 collection 9093 is Michigan marriages rather than New York deaths, so nothing
-in the tool, its tests, or CI relates a collection id to what it indexes.
+in the tool relates a collection id to what it indexes.
 
-Measured at 34b9843a4 on 2026-09-25 over the committed e2e corpus, walking
-`log[].external_site.url_generated` in `eval/runlogs/e2e/*/*.final-research.json`:
-**4 of 25 collection-scoped entries** name a collection id that is asserted
-nowhere else in that project's `research.json` outside the log entry which
-emitted the URL. The 25 entries cover 24 distinct (file, collection) pairs and
-21 distinct collection ids across 19 run logs.
+What the project now records is where a collection came from:
+`external_links_search` stores the list FamilySearch curates for a place in
+`external-collections.json` (`external-links-search-tool-spec.md`, "Stored
+list"), and a plan item's `collection_url` must be one of its rows
+(`research_append`). An Ancestry id on a generated URL is **backed** when its
+`ancestry:<id>` key — the same key for `/search/collections/<id>` and
+`?dbid=<id>` — is a stored row for any place in that project. No stored list
+means nothing is backed.
 
-Reproduce from the repository root (both `sys.path` entries are required —
-the validator module imports `validators_lib`, which imports `harness.dates`):
+**Enforced since the lead ruling of 2026-10-23.** Given a `projectPath` that is
+a project, the tool refuses a `baseUrl` naming a collection whose key is not
+stored for any place (§5); `research_append` refuses the same on a plan item's
+`collection_url`, and `research_log_append` on an `external_site` entry's
+`urlGenerated` (decided 2026-10-28: Richard's call, the lead agreeing), except a url already in the log on an
+entry that opens no new hand-off, so a hand-off stays closable. The ruling replaced "measure first" (2026-09-24): ids are now
+traceable from the project files, so the check is an exact lookup.
+
+The eval check `report_collection_scoped_url_with_no_backed_collection_id`
+(`eval/harness/validators/test_search_external_sites.py`) stays **tier 2,
+reporting-only**. It reads
+the run's `external-collections.json` from the after-state, judges only the
+entries the run appended, and gates nothing. Its both-direction cases live in
+`eval/harness/tests/unit/test_search_external_sites_validator.py`.
+
+An e2e run records its stored keys on the result (`external_collection_keys`,
+place to sorted `ancestry:<id>` keys), because the file itself is not
+committed. Measured at 94e6332a7 on 2026-10-12 over the committed e2e corpus:
+**33 collection-scoped Ancestry entries** across 23 run logs, 9 of them in the
+`?dbid=` form; every one predates the stored list, so **none is measurable**
+yet. An earlier prose-scan definition of "backed" counted 4 of 25 at 34b9843a4
+and could not see the `?dbid=` form at all; it is retired.
+
+Reproduce from the repository root over runs that carry the field:
 
 ```
 uv run --project eval/harness python - <<'EOF'
-import sys, json, glob
+import os, sys, json, glob
 sys.path.insert(0, "eval/harness")
 sys.path.insert(0, "eval/harness/validators")
-from test_search_external_sites import _collection_id_is_backed, _COLLECTION_URL
+from test_search_external_sites import ancestry_collection_key
 for p in sorted(glob.glob("eval/runlogs/e2e/*/*.final-research.json")):
-    d = json.load(open(p, encoding="utf-8"))
-    for i, e in enumerate(d.get("log") or []):
-        u = ((e or {}).get("external_site") or {}).get("url_generated")
-        m = _COLLECTION_URL.search(u) if isinstance(u, str) else None
-        if m and _collection_id_is_backed(d, m.group(1), f"log[{i}].") is None:
-            print(p.split("/")[-2], e.get("id"), m.group(1))
+    rp = p.replace(".final-research.json", ".json")
+    result = json.load(open(rp, encoding="utf-8")) if os.path.exists(rp) else {}
+    if "external_collection_keys" not in result:
+        continue
+    stored = {k for keys in result["external_collection_keys"].values() for k in keys}
+    for e in json.load(open(p, encoding="utf-8")).get("log") or []:
+        key = ancestry_collection_key(((e or {}).get("external_site") or {}).get("url_generated"))
+        if key and key not in stored:
+            print(p.split("/")[-2], e.get("id"), key)
 EOF
 ```
 
-**What that figure is, and is not.** It answers *is this collection id recorded
-as a collection elsewhere in the project document*, which is **not** the origin
-question. The origin question is not answerable from committed artifacts at
-all, and two more figures say why. Both were measured at 34b9843a4 on
-2026-09-25 over the same corpus.
-
-**51 of 247 committed external_links_search calls** are `_summary_truncated`
-(measured at 34b9843a4), so a summary can confirm that an id *was* staged but
-never that it was not.
-
-And **0 of 25 collection-scoped entries** (measured at 34b9843a4) carry a
-collection id appearing in an `external_links_search` `response_summary` **from
-the same run** — the only reading that bears on provenance. Two do appear in a
-summary elsewhere in the corpus (`anders-monsen-ancestry` log_051 / 60606 and
-`birkeland-parents-1817` log_012 / 60092), both from a *different* run, which
-says nothing about where their own run got the id.
-
-That `0 of 25` is an absence claim, the class this repo treats as rotting into
-a falsehood rather than merely going stale — a growing corpus can only refute
-it. Its scope is load-bearing and was got wrong once: stated as "appears in any
-`response_summary`" it read corpus-wide and was **false on the day it was
-measured**, because two ids do appear in some other run's summary. Same-run is
-the claim. It is guarded on shape by `corpus-figures.test.ts`, which requires
-the stamp above, but nothing re-derives it, so the first run log that stages an
-id and then uses it in the same run makes the sentence false silently.
-Re-derive it, do not quote it forward.
-
-Two further limits are structural rather than measured: the staged sidecar
-`results/<log_id>.json` is not committed, and
-`eval/harness/validators/conftest.py` exposes no sidecar or project-directory
-fixture — so a staged-sidecar rule is not implementable as an eval validator
-regardless of the count.
-
-Two consequences worth stating rather than rediscovering:
-
-- The count moves with the definition, so the accept-set decision should name
-  the one it rests on. **4** entries record the id nowhere the check accepts —
-  `hannah-earnest-children` 8912, `pedro-chaves-spouse` 1831, `rejnic-burial`
-  7115 and `wardell-parents` 7602 — and that is what the check reports. **6**
-  if you also count the two whose trace says in prose that the id was never
-  curated: `johann-widmer-vitals` log_021 ("not in the curated inline set") and
-  `maria-fuenmayor-parents` log_037 ("No Ancestry-specific curated links
-  returned"). Both of those pass the check, because each is *also* recorded in
-  a locality guide or a plan item — a fact about the document, not about where
-  the id came from. That gap is the whole of what this measurement cannot see.
-- `wardell-parents` 7602 has no backing, though it is elsewhere described as a
-  traced plan item alongside 62303. 62303 does trace, to
-  `plans[0].items[4].rationale`; 7602 occurs exactly twice and both occurrences
-  are inside its own log entry.
-
-The check is `report_collection_scoped_url_with_no_backed_collection_id`
-(`eval/harness/validators/test_search_external_sites.py`) — **tier 2,
-reporting-only**, per the lead ruling of 2026-09-24 ("measure first"). It hands
-the judge an anonymous observation and gates nothing; the production accept-set
-is re-decided on the count above. Nothing in CI executes it against a real run,
-so its both-direction cases live in
-`eval/harness/tests/unit/test_search_external_sites_validator.py`.
+That guard now exists (above), so the script is a regression check: an unbacked
+id in a run recorded after 2026-10-28 is either a write path the guards miss or a
+url the log already held, which the guard lets through so its hand-off can still
+be closed and its capture logged. On
+2026-10-28 one run carried the field, with one collection-scoped entry, backed.
 
 ## 10. Live checks for the eight launch-scope sites and the FindAGrave fix (2026-09-11)
 

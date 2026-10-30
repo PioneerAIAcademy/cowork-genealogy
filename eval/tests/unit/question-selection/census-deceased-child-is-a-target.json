@@ -13,11 +13,11 @@
   },
   "judge_context": [
     "Should call census_children_gap with motherId I1, projectPath, and both census entries (1900: 6 born/5 living; 1910: 8 born/7 living) before writing a question",
-    "The tool reports TWO missing children: one died before the 1900 enumeration (born on or before 1900-06-01), and one living child born between the 1900 and 1910 enumerations. Grade the written question(s) against this, not against one child alone",
+    "The tool reports TWO missing children: one died before the 1900 enumeration (born on or before 1900-06-01), and one living child born between the 1900 and 1910 enumerations. Grade the written question and the reply together against this, not against one child alone",
     "The pre-1900 deceased child is absent from the tree; the five tree children born before 1900 (Mary, John, Anna, Edward, Grace) are the survivors, not proof the family is complete",
     "The post-1900 living child is NOT William Mercer (already in the tree, b. 1906) — it is a child the tree does not yet have",
-    "Naming only the post-1900 living child while missing the pre-1900 deceased child is a FAIL on the gap dimension, not a partial",
+    "Only one question may be open at a time, so the written question may target one of the two children. The reply must still name the other as a remaining research target. A reply that never mentions the pre-1900 deceased child is a FAIL on the gap dimension, not a partial",
     "The deceased child is a research target (born and died before the enumeration), not a tree or data error — do not present it as a person_warnings-style contradiction",
-    "The question's selection_basis should be objective_decomposition (Priority 5 — a missing-child group from census_children_gap), per the skill's priority table"
+    "The question's selection_basis should be objective_decomposition (Priority 3 — a missing-child group from census_children_gap), per the skill's priority table"
   ]
 }

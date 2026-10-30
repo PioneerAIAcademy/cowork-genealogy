@@ -50,6 +50,7 @@ import type {
   TreeSource,
   TreeSourceRef,
 } from "../types/person-read.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/persons";
 const ACCEPT_HEADER = "application/x-fs-v1+json";
@@ -114,9 +115,59 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       "The person_read tool requires a non-empty personId string (e.g., \"KNDX-MKG\").",
     );
   }
+  const { result, resolvedId } = await readPerson(personId.trim(), { projectPath }, principal);
+
+  // Staged AFTER the memories merge, so the staged document is exactly what this
+  // call returns. Best-effort, like record_read: a staging failure never fails
+  // the read.
+  //
+  // The staging keys go FIRST (issue #3384). A well-sourced read is larger than
+  // the client accepts from one tool, and the model then sees only a preview of
+  // the head of the serialized text; `server.ts` keeps this insertion order. With
+  // `staged` last, the one field a caller needed fell outside the preview.
+  if (typeof projectPath === "string" && projectPath.trim() !== "") {
+    return {
+      ...(await stagePersonRead({ projectPath, input, resolvedId, result })),
+      ...result,
+    };
+  }
+  return result;
+}
+
+/** What a memory is, for a caller that classifies it: a `story` carries its own
+ *  words, a `document` is a scan (an image or a PDF). */
+export type MemoryKind = "story" | "document";
+
+/** `readPerson`'s answer: the read exactly as `person_read` returns it, the id
+ *  it resolved to (a merged person's survivor), and each kept memory's kind. */
+export interface PersonReadOutcome {
+  result: PersonReadResult;
+  resolvedId: string;
+  /** Memory id -> kind, for every memory merged into `result.sources`. Never
+   *  part of `person_read`'s response, which carries no memory discriminator
+   *  (lead, 2026-08-21); it exists for `project_create`, which classifies the
+   *  memory sources it writes. */
+  memoryKinds: Record<string, MemoryKind>;
+}
+
+/**
+ * The whole FamilySearch read behind `person_read`: the tree read, the subject
+ * first, the relatives' and the edges' sources, the memories and their
+ * transcription. Everything but staging. Shared so `project_create` reads a
+ * person through the same code rather than calling another tool.
+ *
+ * `opts.deadline` is the read's wall-clock budget; it defaults to
+ * `OCR_PHASE_BUDGET_MS` from now, the budget `person_read` has always used.
+ */
+export async function readPerson(
+  personId: string,
+  opts: { projectPath?: string; deadline?: number },
+  principal: Principal,
+): Promise<PersonReadOutcome> {
+  const { projectPath } = opts;
   // Anchored HERE, before the tree read, so the read and the memories paging
   // are spent inside the same budget the 60s bridge abort measures.
-  const deadline = Date.now() + OCR_PHASE_BUDGET_MS;
+  const deadline = opts.deadline ?? Date.now() + OCR_PHASE_BUDGET_MS;
   const pid = personId.trim();
   const { result, resolvedId } = await fetchAndConvert(principal, pid, 0, deadline);
 
@@ -180,14 +231,15 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
         }))
       : Promise.resolve({ descriptions: [], skipped: [] });
 
+  let memoryKinds: Record<string, MemoryKind> = {};
   if (result.persons.some((p) => p.id === resolvedId && !p.living)) {
-    result.sources = await mergeMemories(
+    ({ sources: result.sources, kinds: memoryKinds } = await mergeMemories(
       resolvedId,
       result.sources,
       principal,
       deadline,
       projectPath,
-    );
+    ));
   }
 
   // MUST be applied BEFORE `keepResolvableSourceRefs`: that function drops every
@@ -221,23 +273,7 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
   }
 
   keepResolvableSourceRefs(result);
-
-  // Staged AFTER the memories merge, so the staged document is exactly what this
-  // call returns. Issue #2944: `project_create` builds the starting tree from
-  // the staged copy (`personReadRef`) instead of the model re-typing it.
-  // Best-effort, like record_read: a staging failure never fails the read.
-  //
-  // The staging keys go FIRST (issue #3384). A well-sourced read is larger than
-  // the client accepts from one tool, and the model then sees only a preview of
-  // the head of the serialized text; `server.ts` keeps this insertion order. With
-  // `staged` last, the one field init-project needs fell outside the preview.
-  if (typeof projectPath === "string" && projectPath.trim() !== "") {
-    return {
-      ...(await stagePersonRead({ projectPath, input, resolvedId, result })),
-      ...result,
-    };
-  }
-  return result;
+  return { result, resolvedId, memoryKinds };
 }
 
 /**
@@ -322,7 +358,7 @@ export async function stagePersonRead(args: {
  * p90 79s figure, which came from run-log timelines measured per SDK message
  * rather than per tool call.
  */
-const OCR_PHASE_BUDGET_MS = 40_000;
+export const OCR_PHASE_BUDGET_MS = 40_000;
 
 /**
  * In-flight transcriptions. A bandwidth ceiling for simultaneous multi-MB
@@ -476,7 +512,7 @@ async function mergeMemories(
   principal: Principal,
   deadline: number,
   projectPath?: string,
-): Promise<TreeSource[]> {
+): Promise<{ sources: TreeSource[]; kinds: Record<string, MemoryKind> }> {
   try {
     // allSettled, NOT all. Both of these go through fetchWithRetry, which
     // retries a transient failure on a JITTERED TIMER under a 10s budget.
@@ -503,12 +539,14 @@ async function mergeMemories(
     // sampled). An id-keyed dedupe could never fire, so it is not written.
     const memorySources = kept.map(toTreeSource);
     await transcribeMemories(kept, memorySources, principal, projectPath, deadline);
-    return [...treeSources, ...memorySources];
+    const kinds: Record<string, MemoryKind> = {};
+    for (const m of kept) kinds[m.id] = isStoryText(m) ? "story" : "document";
+    return { sources: [...treeSources, ...memorySources], kinds };
   } catch (err) {
     process.stderr.write(
       `person_read: memories fetch failed for ${pid}, returning tree sources only: ${String(err)}\n`,
     );
-    return treeSources;
+    return { sources: treeSources, kinds: {} };
   }
 }
 
@@ -599,7 +637,7 @@ function mergeDescriptions(
 
   const have = new Set(sources.map((s) => s.id));
   const shaped = shapeSources(
-    descriptions.map(simplifySourceDescription),
+    descriptions.map((d) => simplifySourceDescription(d)),
     descriptions as FSSourceDescription[],
   );
   // A source attached to BOTH the subject and a relative is the common case for a
@@ -712,10 +750,7 @@ async function fetchAndConvert(
   }
 
   if (res.status === 401) {
-    throw new Error(
-      "FamilySearch rejected the access token (401). The session may have " +
-        "expired or been revoked — call the login tool to re-authenticate.",
-    );
+    throw new Error(await rejectedTokenMessage(principal));
   }
   if (res.status === 403) {
     throw new Error(`Person ${pid} is restricted and cannot be viewed.`);
@@ -832,25 +867,30 @@ function isChildOf(
 }
 
 /** Follow a merged parent's 301 to the surviving id, capped like the subject's
- *  own redirect chain. Returns null rather than throwing on any dead end: the
- *  fan-out is an enrichment and must never cost the caller their subject. */
+ *  own redirect chain, and on the fan-out's clock: with nothing left it yields
+ *  no siblings, as the first parent read does. Returns null rather than
+ *  throwing on any dead end: the fan-out is an enrichment and must never cost
+ *  the caller their subject. */
 async function followMergedParent(
   principal: Principal,
   res: Response,
+  deadline: number,
   followed = 0,
 ): Promise<ParentRead | null> {
   if (followed >= MAX_REDIRECTS) return null;
   const location = res.headers.get("location");
   const newId = location ? extractPersonId(location) : null;
   if (!newId) return null;
+  const left = deadline - Date.now();
+  if (left <= 0) return null;
   const next = await fsFetch(principal, buildUrl(newId, true, false), {
     headers: {
       Accept: ACCEPT_HEADER,
       "Accept-Language": "en",
     },
     redirect: "manual",
-  });
-  if (next.status === 301) return followMergedParent(principal, next, followed + 1);
+  }, Math.min(PARENT_READ_TIMEOUT_MS, left));
+  if (next.status === 301) return followMergedParent(principal, next, deadline, followed + 1);
   if (next.status !== 200) return null;
   return { body: (await next.json()) as FSTreeResponse, resolvedId: newId };
 }
@@ -927,7 +967,7 @@ async function mergeSiblings(
         // 301 = merged, which is routine and not an error. The subject's own
         // read follows it (`fetchAndConvert`); a parent read that treated it as
         // "no siblings" lost every sibling behind a merge, silently.
-        if (res.status === 301) return await followMergedParent(principal, res);
+        if (res.status === 301) return await followMergedParent(principal, res, deadline);
         // Anything else that is not a 200 with a body means "no siblings from
         // this parent" -- including 204, which is a living person with no body
         // at all and would throw on .json().

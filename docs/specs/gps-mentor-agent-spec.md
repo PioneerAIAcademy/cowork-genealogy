@@ -159,11 +159,11 @@ description: >-
   components") goes through proof-conclusion.
 model: claude-sonnet-5
 tools:
-  # These eleven, each under all three server spellings:
+  # These ten, each under all three server spellings:
   #   research_query, project_context, sidecar_read, research_append,
   #   validate_research_schema, place_search, place_distance, collections_search,
-  #   external_links_search, wiki_place_page, wiki_search
-  # The full 33-entry list is NOT repeated here. The authoritative copy is the
+  #   wiki_place_page, wiki_search
+  # The full 30-entry list is NOT repeated here. The authoritative copy is the
   # agent file, packages/engine/plugin/agents/gps-mentor.md — nothing lints
   # spec-to-agent agreement, so a second literal copy goes stale silently (it
   # already has). Spellings and rationale: ADR-0004.
@@ -335,16 +335,22 @@ agent catches what the mechanical check cannot: a plan that was too narrow to be
    exists to catch, since the mechanical check only verifies that planned searches were executed.
 
 2. **FAN coverage.** Is at least one log entry targeting witnesses, neighbors, or associates?
-   If not — and direct-evidence searches are complete — flag as `must_address`. Use
-   `external_links_search` to surface FAN-relevant repositories.
+   If not — and direct-evidence searches are complete — flag as `must_address`. Name
+   FAN-relevant repositories from the stored list (check 4).
 
 3. **Original-vs-derivative (Standard 32).** For each derivative source cited in assertions
    linked to this question, check whether the original exists and is accessible. If yes and
    not yet consulted, flag as `must_address`.
 
-4. **Repository diversity.** If only one repository was used, call `external_links_search` and
-   `wiki_place_page` (`section: "research_tips"`) to identify what others cover this jurisdiction. Flag
-   single-repository research as `consider_addressing`.
+4. **Repository diversity.** If only one repository was used, read the stored curated list
+   (`research_query({ section: "external_collections", place })`) and `wiki_place_page`
+   (`section: "research_tips"`) to identify what others cover this jurisdiction. Flag
+   single-repository research as `consider_addressing`. A place absent from
+   `project_context`'s `externalCollections` was never fetched: report that as a finding with
+   `suggested_skill: "locality-guide"`. The mentor does not hold `external_links_search`,
+   because that tool writes `external-collections.json` and the mentor reviews without writing;
+   `research_query` alone cannot tell "never fetched" from "nothing stored", so the presence
+   check reads `project_context`.
 
 5. **Negative-result documentation (Standard 13).** Are nil searches logged with the same
    rigor as positive ones? Distinguish unsearched (no entry) from searched-but-nil (negative
@@ -982,11 +988,11 @@ specific, not as a box-checking ritual.
 |------|-------------|
 | `project_context` | The opening call of every invocation — project status, open questions, tree persons with the sources they cite, sources with their record ids, locality knowledge. Replaces the orientation the agent used to get by scanning `research.json`. |
 | `research_query` | Every specific state lookup, one section per call (`assertions`, `person_evidence`, `conflicts`, `hypotheses`, `proof_summaries`, `questions`, `plans`, `log`, `timelines`, `evaluations`). Two required habits: run `conflicts` and `hypotheses` **unfiltered** to catch project-wide absences, and check `count` against the 50-item cap before calling a set complete. |
-| `sidecar_read` | A prior verdict body only — `ref` is the `evaluations[]` entry's `file_path` as stored; page with `offset: nextOffset` while `truncated`. It serves `evaluations/` and `uploads/` and refuses every other path (`invalid_ref`), so it is not a route back to `research.json`, the tree, `results/`, or images. Spec: `docs/specs/sidecar-read-tool-spec.md`. An entry already located by id is a `research_query` on its section, paged with `offset` and matched on `id` by the agent. |
+| `sidecar_read` | A prior verdict body only — `ref` is the `evaluations[]` entry's `file_path` as stored; page with `offset: nextOffset` while `truncated`. It serves `evaluations/`, `uploads/`, a staged transcription and one full-text hit under `results/`, and refuses every other path (`invalid_ref`), so it is not a route back to `research.json`, the tree, a record or search sidecar, or images. Spec: `docs/specs/sidecar-read-tool-spec.md`. An entry already located by id is a `research_query` on its section, paged with `offset` and matched on `id` by the agent. |
 | `collections_search` | When flagging a missing record type — quote the specific collection name FamilySearch offers for the jurisdiction. "FamilySearch has 'Pennsylvania Probate Records, 1683–1994'" beats "consider probate." |
 | `wiki_place_page` (`section: "online_records"`) | When auditing topical breadth (pre-exhaustiveness rubric check 1). |
 | `wiki_place_page` (`section: "research_tips"`) | When flagging repository diversity gaps or suggesting strategy improvements. |
-| `external_links_search` | When flagging repository diversity — name the specific third-party sites for the jurisdiction. Also useful for FAN-relevant repositories. |
+| `research_query` (`section: "external_collections"`, `place`, `recordType`) | When flagging repository diversity or FAN gaps — name the specific third-party collections stored for the jurisdiction. |
 | `place_distance` + `place_search` | When an assertion or proof implies travel between two places. Quote the distance and era travel norms in the feedback. |
 | `wiki_search` | Last resort for finding published guidance on a specific record type or strategy question. |
 | `validate_research_schema` | At the start of every invocation — a schema error surfaces as a `must_address` item regardless of focus. |

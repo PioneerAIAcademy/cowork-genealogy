@@ -1,19 +1,26 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
-import { toSimplified } from "../utils/gedcomx-convert.js";
-import { repIdToStandardPlace } from "../utils/place-resolver.js";
+import { toSimplifiedRecordRead, type RecordReadPlace } from "../utils/gedcomx-convert.js";
+import {
+  countryConsistency,
+  divisionContradiction,
+  gedcomxDateYears,
+  repIdToStandardPlace,
+  repIdToStandardPlaceAt,
+} from "../utils/place-resolver.js";
 import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
 import { recordIndexFields } from "../utils/record-index-fields.js";
 import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
-import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
+import type { GedcomX, SimplifiedFact, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import type {
   RecordReadInput,
   RecordReadResult,
   StagedRecordReadElement,
 } from "../types/record-read.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const RECAPI_BASE =
   "https://sg30p0.familysearch.org/service/cds/recapi/records/persona";
@@ -107,7 +114,7 @@ export async function recordReadTool(
   // 1. Build URL: `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`
   // 2. Fetch with Bearer token and BROWSER_USER_AGENT
   // 3. Handle 401, 403, 404, 429, and generic errors
-  // 4. Parse response body as GedcomX and call toSimplified(body)
+  // 4. Parse response body as GedcomX and call recordReadDocument(body)
   // 5. Return the simplified result
 
   const url = `${RECAPI_BASE}/${encodeURIComponent(entityId)}.json`;
@@ -121,10 +128,7 @@ export async function recordReadTool(
   });
 
   if (res.status === 401) {
-    throw new Error(
-      "FamilySearch rejected the access token (401). The session may have " +
-        "expired or been revoked — call the login tool to re-authenticate.",
-    );
+    throw new Error(await rejectedTokenMessage(principal));
   }
   if (res.status === 403) {
     throw new Error(
@@ -147,26 +151,7 @@ export async function recordReadTool(
   }
 
   const body = (await res.json()) as GedcomX;
-  // Use toSimplified, NOT toSimplifiedStandardized. toSimplified keeps whatever
-  // standard_place the record's own `normalized` value supplies and never falls
-  // back to the resolver; toSimplifiedStandardized would additionally resolve any
-  // free-text place NAME the record left un-normalized, and the resolver
-  // mis-places ambiguous names. Ruled to stay this way on a live re-probe
-  // (issue #1908 Phase 2, Option 4, decided 2026-09-12). Do not flip it on the
-  // two cross-country examples that motivated the original rule (observed
-  // 2026-07-08: "Southampton, NY" -> "Southampton, England"; "Rochdale, England"
-  // -> "Rochdale, South Africa") — neither was among the re-probe's 28
-  // observations, but the run surfaced an intra-country mis-resolution that
-  // countryConsistency cannot detect: "Eye Town" -> "Eye, Suffolk", where the
-  // same record's fully-qualified fact reads Northamptonshire. 0 of the 28
-  // carried a `normalized` place at all, so the live path filled no
-  // standard_place for any probed record. Measurement and rationale:
-  // docs/record-read-sidecar-scope.md; re-measure with
-  // dev/probe-record-read-places.ts. Records reached via the search sidecar
-  // already carry the search stage's standardized place.
-  const simplified = toSimplified(body);
-
-  await resolveCoveragePlaces(simplified);
+  const simplified = await recordReadDocument(body);
 
   const imageArk = extractImageArk(simplified, entityId);
   // `imageArk` rides on the RESPONSE only — what gets staged below is the
@@ -303,7 +288,7 @@ export function extractImageArk(
 // Resolve one record's gedcomx from a staged/finalized search sidecar by id,
 // returning it as-is. The staged search result already carries standardized
 // places from the search stage; this path does not re-standardize (and a live
-// record_read does not standardize either — it uses pure toSimplified).
+// record_read never runs the name resolver either — see recordReadDocument).
 async function readFromSidecar(
   recordId: string,
   resultsRef: string,
@@ -355,10 +340,9 @@ async function readFromSidecar(
   // any value already set; it could only retry the few that resolved to null or
   // hit the soft cap, spending FS round-trips on the one path whose purpose is to
   // avoid them. A live record_read (omit resultsRef) does not resolver-standardize
-  // at all: it uses pure toSimplified (see the comment above), keeping only the
-  // record's own normalized places — never resolving an ambiguous place NAME and
-  // mis-placing it (see the toSimplified comment above for the observed
-  // mis-resolutions).
+  // at all: it keeps only the places FamilySearch standardized on the record,
+  // named by their ids — never resolving an ambiguous place NAME and mis-placing
+  // it (see recordReadDocument for the observed mis-resolutions).
   // The staged source DOES carry the page-image ark, as a bare `{ id, url }`
   // with no resource_type (a search response does not set `resourceType`), so
   // extractImageArk must not require that label — see its comment. This is the
@@ -375,11 +359,108 @@ async function readFromSidecar(
   };
 }
 
-async function resolveCoveragePlaces(doc: SimplifiedGedcomX): Promise<void> {
-  for (const sd of doc.sources ?? []) {
-    if (!sd.coverage?.place_rep_id) continue;
-    const name = await repIdToStandardPlace(sd.coverage.place_rep_id);
-    if (name) sd.coverage.standard_place = name;
+/**
+ * record_read's document from a raw recapi persona body: the record-read
+ * conversion, each fact's FamilySearch standard named by its place id, and each
+ * coverage place named by its id. A live read returns and stages exactly this
+ * (the response adds `imageArk` / `viewerUrl`; the staged element adds
+ * `indexFields`), so a caller holding a saved raw body reproduces record_read's
+ * output with it.
+ *
+ * Never toSimplifiedStandardized: that resolves any free-text place NAME the
+ * record left unstandardized, and the resolver mis-places ambiguous names. Ruled
+ * to stay this way on a live re-probe (issue #1908 Phase 2, Option 4, decided
+ * 2026-09-12). Do not flip it on the two cross-country examples that motivated
+ * the original rule (observed 2026-07-08: "Southampton, NY" -> "Southampton,
+ * England"; "Rochdale, England" -> "Rochdale, South Africa") — neither was among
+ * the re-probe's 28 observations, but the run surfaced an intra-country
+ * mis-resolution that countryConsistency cannot detect: "Eye Town" -> "Eye,
+ * Suffolk", where the same record's fully-qualified fact reads
+ * Northamptonshire. Measurement and rationale: docs/record-read-sidecar-scope.md;
+ * re-measure with dev/probe-record-read-places.ts.
+ *
+ * Naming by id is not that: it looks up the place FamilySearch itself chose. A
+ * recapi record never sends `normalized` (0 of the 28); its standard is an
+ * `Interpreted` value of the place's `Place` field (gedcomx-convert-spec.md,
+ * "Places on facts"), whose text is in the record's language ("Piauí, Brasil").
+ * The engine compares standard places as English text (materialize_facts'
+ * factsEquivalent, research_append's standardPlaceCountry), so each is replaced
+ * by repIdToStandardPlaceAt's English name for that place at the fact's date:
+ * the one name every representation of the place valid at that date shares. The
+ * id's own name can belong to another era ("Olne, Prince-Bishopric of Liège,
+ * Holy Roman Empire" for an 1874 death). The date is FamilySearch's formal date
+ * for the fact, which it sends whatever language the date is written in, else
+ * the date as stdDate reads it. Any doubt leaves the fact as toSimplified gives
+ * it — `place.original`, no standard_place: a fact whose own text names none of
+ * the place's names in any language, only its first part naming a settlement
+ * (Q2W9-1GVF's "Llanbadarn-Tref-Eglwys, Cardiganshire, Wales", given the town
+ * of Aberayron), a date neither can read, no such name, two names, a failed
+ * lookup, a place renamed since the name the fact's text gives it ("Bela Vista"
+ * in 1980, when that place was Echaporã), or a name that contradicts the
+ * fact's place text (countryConsistency, which makes research_append refuse the
+ * record; divisionContradiction, a US state, Puerto Rico or Canadian province
+ * other than the one the text ends with). The fact's own text is the Place
+ * field's `Original` value, else `place.original`. A fact whose Place field has
+ * no `Original` value has no text of its own: its `place.original` is
+ * FamilySearch's own `Interpreted` text, which names FamilySearch's choice by
+ * construction, so the text check cannot catch a wrong choice there. Such facts
+ * are still named; all 12 in the 40-record sample are named right. Records
+ * reached via the search sidecar already carry the search stage's standardized
+ * place.
+ *
+ * A coverage place is named by its id's own name, whatever its dates: coverage
+ * describes the volume the record sits in, which often spans eras, not the
+ * record's event, and nothing copies it into an assertion or the tree.
+ */
+export async function recordReadDocument(body: GedcomX): Promise<SimplifiedGedcomX> {
+  const { doc, placeIds } = toSimplifiedRecordRead(body);
+  await nameFactPlaces(placeIds);
+  await resolveCoveragePlaces(doc, body);
+  return doc;
+}
+
+async function nameFactPlaces(placeIds: Map<SimplifiedFact, RecordReadPlace>): Promise<void> {
+  for (const [fact, { placeId, original, formal }] of placeIds) {
+    const years = gedcomxDateYears({ original: fact.date, formal });
+    const name = years === null ? null : await repIdToStandardPlaceAt(placeId, years, fact.place ?? "");
+    const text = fact.place ?? "";
+    if (name && countryConsistency(text, name) !== "contradiction" && !divisionContradiction(text, name)) {
+      fact.standard_place = name;
+    } else {
+      delete fact.standard_place;
+      if (original !== undefined) fact.place = original;
+    }
+  }
+}
+
+/** The place description id a place reference resolves to: a
+ *  `…/places/description/<id>` URL, or a `#…` reference to the `places[]` entry
+ *  that cites one. Undefined for any other: an older record cites an authorities
+ *  place id (`…/authorities/v1/place/1927095`, Finland), and read as a
+ *  representation id that number is another place (Mingary, South Australia). */
+function descriptionId(ref: unknown, body: GedcomX): string | undefined {
+  let url = ref;
+  if (typeof ref === "string" && ref.startsWith("#")) {
+    const id = ref.slice(1);
+    const entry = (Array.isArray(body.places) ? body.places : []).find(
+      (place) => place?.id === id || place?.place?.resourceId === id,
+    );
+    url = entry?.identifiers?.["http://gedcomx.org/Primary"]?.[0] ?? entry?.place?.resource;
+  }
+  return typeof url === "string" ? /\/places\/description\/(\d+)$/.exec(url)?.[1] : undefined;
+}
+
+/** Names each coverage place whose reference resolves to a place description by
+ *  that id's own name (see recordReadDocument). */
+async function resolveCoveragePlaces(doc: SimplifiedGedcomX, body: GedcomX): Promise<void> {
+  // toSimplified keeps every source description, in order.
+  const raw = Array.isArray(body.sourceDescriptions) ? body.sourceDescriptions : [];
+  for (const [i, sd] of (doc.sources ?? []).entries()) {
+    const coverage = sd.coverage;
+    if (!coverage?.place_rep_id) continue;
+    if (descriptionId(raw[i]?.coverage?.[0]?.spatial?.description, body) !== coverage.place_rep_id) continue;
+    const name = await repIdToStandardPlace(coverage.place_rep_id);
+    if (name) coverage.standard_place = name;
   }
 }
 

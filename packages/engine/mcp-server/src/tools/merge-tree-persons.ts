@@ -26,6 +26,7 @@ import {
 import type { MergeResult } from "./merge-shared.js";
 import {
   mergeCarryRefusals,
+  mergeLinkCheckRefusals,
   mergeNamesakeRefusals,
   pidOrStartingPerson,
 } from "./research-append.js";
@@ -99,6 +100,13 @@ export async function mergeTreePersons(
       ...mergeCarryRefusals(before, merges, startingPersonIds),
     ];
     if (refusals.length > 0) return { ok: false, errors: refusals };
+
+    // 5a'. The link checks research_append runs on a re-pointed link (issue
+    //      #2537), on the project after the merge.
+    const linkRefusals = await mergeLinkCheckRefusals(
+      projectPath, before, { research, tree: merged }, merges, startingPersonIds,
+    );
+    if (linkRefusals.length > 0) return { ok: false, errors: linkRefusals };
 
     // 5b. Warning gate: refuse if the merge introduces unjustified warnings.
     //     Pass collapseMap so pre-existing warnings on collapsed persons are
@@ -193,11 +201,13 @@ export const mergeTreePersonsSchema = {
     "tree): the survivor is kept, the collapsed person folds into it " +
     "(names/facts merged, never discarded) and is removed; relationships are " +
     "repointed. Every research.json reference to a collapsed id (subject persons, " +
-    "person_evidence, rejected_links, timelines, known_holdings, proof_summaries, namesakes) is " +
+    "person_evidence, rejected_links, timelines, proof_summaries, namesakes) is " +
     "repointed to the survivor. A merge is refused when a relationship joins the pair, " +
     "when it would fold a FamilySearch or starting-tree person into one made during the " +
     "run, or when it would move a link, or carry a record's data, under a recorded " +
-    "namesake with nothing in that record tying it to the person. " +
+    "namesake with nothing in that record tying it to the person, or when a link it moves " +
+    "would fail a check research_append runs on that link (a contradicted birth, an " +
+    "unexplained move, or a match score not recorded for the survivor). " +
     "Both files are written both-or-neither and NOT returned — you get a compact " +
     "summary including how many research references were updated. On a validation " +
     "failure nothing is written and `{ ok: false, errors }` is returned.",

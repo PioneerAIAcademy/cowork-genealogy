@@ -74,6 +74,7 @@ import json
 import pathlib
 import re
 import shutil
+import types
 import socket
 import stat
 import sys
@@ -95,6 +96,7 @@ from claude_agent_sdk import AssistantMessage, MirrorErrorMessage, ResultMessage
 
 from proto.worker import deny, options, worker
 from proto.worker.session_store import entry_rows
+from proto import turn_message  # noqa: E402
 
 #: Windows chmod only toggles read-only, so a file mode never reads back as 0o600 there.
 POSIX_MODES = sys.platform != "win32"
@@ -111,7 +113,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema"}
+AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema", "where-else-to-search"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -186,6 +188,8 @@ class FakeCursor:
             return (self.conn.claim_epoch,)
         if "RETURNING message" in sql:  # the 1b claim
             return (self.conn.queued_body, self.conn.claimed_at) if self.conn.queued_body is not None else None
+        if "AND completed_at IS NULL) AS queued" in sql:  # HAS_QUEUED_SQL
+            return (self.conn.held_row_waiting,)
         if "AND outcome IS DISTINCT FROM %s) AS active" in sql:  # TURN_ACTIVE_SQL
             return (self.conn.turn_active,)
         if "SELECT sdk_session_id FROM sessions" in sql:
@@ -231,6 +235,9 @@ class FakeConn:
         self.sdk_session_id = sdk_session_id
         self.usage = usage
         self.research: dict | None = None  # the documents row the Stop hook reads
+        # A held row already waiting: `queue_auto_reply` refuses the host's reply
+        # because the researcher's own message is next (re-review 9).
+        self.held_row_waiting = False
         self.tool_call_count = 0
         # turns.zero_progress_attempts (005_resume_guard.sql): bumped by the RETURNING
         # update, and zeroed by the reset the first tool call of an attempt issues.
@@ -287,7 +294,11 @@ def test_a_real_claim_stamps_the_web_tier_s_row_and_inserts_nothing():
     conn = FakeConn()
     claimed = worker.claim(conn, TURN, 3)
     assert claimed == worker.Claim(TURN["message"], 2)
-    [(sql, params)] = conn.executed
+    # The claim, plus section A2's reset of a stale "Keep going" state when the turn is
+    # the researcher's own -- which is not an insert either.
+    [(sql, params)] = [e for e in conn.executed if e[0].startswith("UPDATE turns")]
+    assert not [e for e in conn.executed if e[0].startswith("INSERT")]
+    assert [e[0] for e in conn.executed[1:]] == [worker.RESET_AUTO_REPLY_ON_CLAIM_SQL]
     assert sql.startswith("UPDATE turns SET claimed_at = now(), receive_count = %s")
     assert ("FROM sessions WHERE turns.turn_id = %s AND turns.session_id = %s AND turns.project_id = %s "
             "AND sessions.session_id = turns.session_id AND sessions.project_id = turns.project_id") in sql
@@ -346,8 +357,9 @@ def test_the_claim_unmarks_a_held_row_that_is_running(message):
     still marked held, invisible to TURN_ACTIVE_SQL. test_proto_queue_pg.py runs it."""
     conn = FakeConn()
     worker.claim(conn, {**TURN, "message": message}, 1)
+    claim_sql = next(e[0] for e in conn.executed if e[0].startswith(("UPDATE turns", "INSERT INTO turns")))
     assert ("outcome = CASE WHEN turns.outcome = %s AND turns.completed_at IS NULL THEN NULL "
-            "ELSE turns.outcome END") in conn.executed[-1][0]
+            "ELSE turns.outcome END") in claim_sql
 
 
 def test_claim_takes_the_entries_high_water_mark_on_the_first_claim_only():
@@ -807,7 +819,10 @@ def test_the_hook_denies_the_turns_own_proc_and_logs_it(tmp_path):
 
 
 def test_read_route_chooser():
-    assert deny.read_route("/project/results/x.json", "/project") == "record_read({recordId, resultsRef})"
+    assert deny.read_route("/project/results/x.json", "/project") == (
+        "record_read({recordId, resultsRef}) for a record or search sidecar, or "
+        "sidecar_read({projectPath, ref: '<ref>#hits'}) for a fulltext_search sidecar"
+    )
     assert deny.read_route("/project/evaluations/x.json", "/project") == "sidecar_read({projectPath, ref})"
     assert deny.read_route("/project/uploads/notes.txt", "/project") == "sidecar_read({projectPath, ref})"
     assert deny.read_route("/project/research.json", "/project") == "research_query"
@@ -1021,7 +1036,7 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=6)
 
 
-def test_the_plugin_ships_twenty_nine_agents_and_two_skills():
+def test_the_plugin_ships_thirty_agents_and_two_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
@@ -1029,6 +1044,19 @@ def test_the_plugin_ships_twenty_nine_agents_and_two_skills():
     # A literal in the source, not an expression over the plugin dir (the mutation the
     # review named: both sides of the check shrinking together).
     assert "\nEXPECTED_SKILLS = 2\n" in Path(worker.__file__).read_text(encoding="utf-8")
+
+
+def test_an_agents_effort_reaches_its_bare_name_definition():
+    from proto.worker.plugin_agents import load_agent_definitions
+
+    defs = load_agent_definitions(PLUGIN_DIR)
+    declared = {}
+    for md in sorted((PLUGIN_DIR / "agents").glob("*.md")):
+        head = md.read_text(encoding="utf-8").split("\n---", 1)[0]
+        line = next((x for x in head.splitlines() if x.startswith("effort:")), None)
+        declared[md.stem] = line.split(":", 1)[1].strip() if line else None
+    assert any(declared.values()), "no shipped agent declares effort; this test checks nothing"
+    assert {n: d.effort for n, d in defs.items()} == declared
 
 
 def test_expected_agents_is_the_shipped_set():
@@ -1051,7 +1079,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "twenty-eight agents must not become the expectation"
+    assert agents is None, "twenty-nine agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -1063,7 +1091,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Twenty-nine agents and 2 skills registered: clean. Twenty-eight, or 1: the miss, whatever loaded --
+    # Thirty agents and 2 skills registered: clean. Twenty-nine, or 1: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
     assert worker.registration_problems(_info(AGENTS, 2)) == []
@@ -2072,10 +2100,12 @@ def test_the_claim_takes_the_oldest_held_message_and_only_a_live_one():
     flipping `ORDER BY enqueued_at` to DESC, and widening the outcome predicate. Each
     recreates a failure the branch guards elsewhere -- a completed turn re-enqueued as if
     it were waiting, or the patron's messages answered in the wrong order."""
-    src = " ".join(
-        (PROTO / "worker" / "worker.py").read_text(encoding="utf-8")
-        .split("def take_queued_turn", 1)[1].split("\ndef ", 1)[0].split()
-    )
+    body = (PROTO / "worker" / "worker.py").read_text(encoding="utf-8") \
+        .split("def take_queued_turn", 1)[1].split("\ndef ", 1)[0]
+    # The statement is shared with the web tier's `_claim_held` (section A2), so the
+    # predicates are asserted where it lives, and the worker must still run it.
+    assert "turn_message.CLAIM_HELD_SQL" in body
+    src = " ".join(turn_message.CLAIM_HELD_SQL.split())
     assert "AND outcome = %s" in src, "a claim must only match a HELD row"
     assert "AND completed_at IS NULL" in src, \
         "without this a turn that already RAN can be claimed and re-enqueued"
@@ -5164,7 +5194,8 @@ def test_the_delivery_summary_reaches_a_human():
 
 def test_an_empty_summary_does_not_corrupt_the_stop_reason():
     """`summary` is declared required but NOTHING enforces it: the hook halts before the
-    body, and the server does not validate inputSchema. An argument-free call must still
+    body, and the server refuses unknown argument names but never a call for a missing
+    required key alone. An argument-free call must still
     produce a clean reason rather than a dangling 'Delivered: '."""
     hook = options.make_pretool_hook(
         turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
@@ -6365,3 +6396,506 @@ def test_the_insert_names_wrote_and_binds_one_param_per_placeholder(tmp_path):
     assert cols[-1] == "wrote", "wrote must stay LAST — _tool_call_decisions reads p[6] positionally"
     assert sql.count("%s") == len(params) == len(cols), "a placeholder/param/column mismatch"
 
+
+
+# ── the completion halt end to end (#3542 lead 1) ─────────────────────────────────────
+
+# A proof-conclusion return that completed the project, in the PostToolUse dict shape: the
+# cruz-corona run-log return's blocks, which end on the agent's completing sentence.
+_POSTTOOL_DICT = {
+    "status": "completed", "agentType": "proof-conclusion",
+    "content": json.loads((Path(__file__).parent / "fixtures" / "agent_returns" / "unframed_two_blocks.json")
+                          .read_text(encoding="utf-8"))["content"],
+}
+
+
+class AgentCall:
+    """A main-thread Agent call: the fake client fires the turn's REAL PreToolUse hook, sets
+    the project's status as the agent's own write would, then fires its REAL PostToolUse
+    hook with ``tool_response``."""
+
+    def __init__(self, subagent_type: str, status_after: str, tool_response: Any = None,
+                 during: list | None = None) -> None:
+        self.subagent_type = subagent_type
+        self.during = during or []  # the agent's own tool calls, fired between the two hooks
+        self.status_after = status_after
+        self.tool_response = _POSTTOOL_DICT if tool_response is None else tool_response
+        self.posttool_reply: dict | None = None
+
+
+class AgentCallClient(FakeClient):
+    def __init__(self, messages, info, env, research: dict) -> None:
+        super().__init__(messages, info, env)
+        self.research = research
+
+    async def receive_response(self):
+        for m in self.messages:
+            if isinstance(m, AgentCall):
+                opts = self.env["options"]
+                self.tool_uses += 1
+                tid = f"toolu_{self.tool_uses}"
+                data = {"tool_name": "Agent", "tool_input": {"subagent_type": m.subagent_type}}
+                self.pretool_replies.append(await opts["pretool_hook"](data, tid, None))
+                for inner in m.during:
+                    await self._fire_pretool(inner)
+                self.research["project"]["status"] = m.status_after
+                m.posttool_reply = await opts["posttool_hook"]({**data, "tool_response": m.tool_response}, tid, None)
+                continue
+            if isinstance(m, ToolCall):
+                await self._fire_pretool(m)
+                continue
+            if isinstance(m, StopDispatch):
+                await self._fire_stop()
+                continue
+            yield m
+
+
+def _text_events(conn: FakeConn) -> list[str]:
+    out = []
+    for sql, params in conn.executed:
+        if sql.startswith("INSERT INTO session_events") and params and params[2] == "text":
+            payload = getattr(params[3], "obj", params[3])
+            out.append(payload.get("text"))
+    return out
+
+
+def _run_agent_call(turn_env, monkeypatch, *, status_before: str, call: AgentCall) -> dict:
+    research = {"project": {"status": status_before}}
+    monkeypatch.setattr(worker, "read_research", lambda conn, project_id: research)
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    return asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+
+
+def test_a_completing_proof_conclusion_call_ends_the_turn_completed_on_its_summary(turn_env, monkeypatch):
+    """End to end through the REAL hooks: the posttool-level tests cannot see the worker's
+    closure (`on_completed`), nor the text event written after the receive loop."""
+    call = AgentCall("genealogy-research:proof-conclusion", "completed")
+    summary = _run_agent_call(turn_env, monkeypatch, status_before="active", call=call)
+    from app.agent.continue_policy import summary_for_user
+
+    expected = summary_for_user(_POSTTOOL_DICT)
+    assert call.posttool_reply == {"continue_": False, "stopReason": expected}
+    assert summary["outcome"] == "completed", f"a completion halt recorded {summary['outcome']!r}"
+    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
+                     if sql.startswith("UPDATE turns SET completed_at"))
+    assert params[0] == "completed", "and the row says so too"
+    assert _text_events(turn_env["conn"]) == [expected], "the summary is shown as the turn's text"
+
+
+# With no halt the outcome is the close's own: `completed` where the project is completed by
+# then (the step-mode close label, `completed_already_labelled`), `ok` where it is not.
+@pytest.mark.parametrize(
+    ("label", "status_before", "call", "outcome"),
+    [
+        ("already completed", "completed", AgentCall("proof-conclusion", "completed"), "completed"),
+        ("still open", "active", AgentCall("proof-conclusion", "active"), "ok"),
+        ("another agent", "active", AgentCall("citation", "completed",
+                                              {"agentType": "citation", "content": "x\n---\ny"}), "completed"),
+    ],
+)
+def test_no_completion_halt(turn_env, monkeypatch, label, status_before, call, outcome):
+    summary = _run_agent_call(turn_env, monkeypatch, status_before=status_before, call=call)
+    assert call.posttool_reply == {}, label
+    assert summary["outcome"] == outcome, f"{label}: the close labelled it {summary['outcome']!r}"
+    assert _text_events(turn_env["conn"]) == [], label
+
+
+def test_once_the_store_is_down_the_completion_halt_reads_nothing(turn_env, monkeypatch):
+    """The store-down discipline above, for the completion halt's two reads: a
+    proof-conclusion call after the outage neither reads the status before it nor the
+    project after it, and does not halt on a guess."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "stop_requested",
+                        _outage(worker.psycopg.OperationalError("server closed the connection"), after=0))
+    reads: list[int] = []
+    research = {"project": {"status": "active"}}
+
+    def read(conn, project_id):
+        reads.append(1)
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    call = AgentCall("proof-conclusion", "completed")
+    turn_env["client"] = AgentCallClient(
+        [_init(), ToolCall(), call, _result(num_turns=0)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    with pytest.raises(worker.StoreUnavailable):
+        asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
+    assert reads == [], "the completion halt read the project from a down store"
+    assert call.posttool_reply == {}
+
+
+def test_an_outage_during_the_call_skips_the_read_after_it(turn_env, monkeypatch):
+    """The status before the call was read with the store up; the agent's own tool call
+    then finds it down. The read after the call is skipped, and no halt fires."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "stop_requested",
+                        _outage(worker.psycopg.OperationalError("server closed the connection"), after=1))
+    reads: list[int] = []
+    research = {"project": {"status": "active"}}
+
+    def read(conn, project_id):
+        reads.append(1)
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    call = AgentCall("proof-conclusion", "completed", during=[ToolCall(agent_id="sub-1")])
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=0)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    with pytest.raises(worker.StoreUnavailable):
+        asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
+    assert reads == [1], "read once before the call, and not again from a down store"
+    assert call.posttool_reply == {}
+
+
+def _spend_capped(monkeypatch, spent_after: list[float]) -> None:
+    """The spend clause reads `spent_after` in order: under the cap, then over it."""
+    _mid_run(monkeypatch)
+    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
+    spend = iter(spent_after)
+    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: next(spend, spent_after[-1]))
+
+
+def test_a_completion_does_not_clobber_a_halt_the_agent_met(turn_env, monkeypatch):
+    """One of the agent's own calls meets the spend cap mid-call; when the call returns
+    with the project completed, the turn stays `budget` and shows no summary."""
+    _spend_capped(monkeypatch, [1.0, 40.0])
+    call = AgentCall("proof-conclusion", "completed", during=[ToolCall(agent_id="sub-1")])
+    summary = _run_agent_call(turn_env, monkeypatch, status_before="active", call=call)
+    assert summary["outcome"] == "budget", f"the spend halt was overwritten: {summary['outcome']!r}"
+    assert _text_events(turn_env["conn"]) == []
+
+
+def test_a_halted_proof_conclusion_call_reads_nothing(turn_env, monkeypatch):
+    """Over the cap before the call: the PreToolUse hook halts it, so the status is not
+    read for a call that never reaches PostToolUse. The close reads the project once the
+    receive loop is over (`close_context`); only the reads during the call count here."""
+    _spend_capped(monkeypatch, [40.0])
+    reads: list[str] = []
+    research = {"project": {"status": "active"}}
+    call = AgentCall("proof-conclusion", "active")
+
+    def read(conn, project_id):
+        reads.append("call" if call.posttool_reply is None else "close")
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=1)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert turn_env["client"].pretool_replies[0].get("continue_") is False, "the spend cap halted the call"
+    assert "call" not in reads, "read the status before a call the hook had halted"
+    assert "close" in reads, "the counter saw no read at all, so it proves nothing"
+
+
+def test_a_raising_status_read_lets_the_call_run(turn_env, monkeypatch):
+    """The reads are an optimisation: one that raises is logged, the call runs, and the
+    turn ends as it does today, with no halt."""
+    research = {"project": {"status": "active"}}
+
+    def boom(conn, project_id):
+        raise RuntimeError("documents row unreadable")
+
+    monkeypatch.setattr(worker, "read_research", boom)
+    call = AgentCall("proof-conclusion", "completed")
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert call.posttool_reply == {}
+    assert summary["outcome"] == "ok"
+
+
+
+def test_the_summary_is_dropped_when_the_model_kept_talking(turn_env, monkeypatch):
+    """A halt the runtime did not honour: the model's own message is the turn's last text."""
+    research = {"project": {"status": "active"}}
+    monkeypatch.setattr(worker, "read_research", lambda conn, project_id: research)
+    call = AgentCall("proof-conclusion", "completed")
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _text("my own wrap-up"), _result(num_turns=3)],
+        _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert _text_events(turn_env["conn"]) == ["my own wrap-up"]
+
+
+def test_the_summary_survives_unlabelled_subagent_text(turn_env, monkeypatch):
+    """A subagent's text after the halt whose task is unknown carries no `agent` label;
+    it is not the main thread going on, so the summary stays."""
+    research = {"project": {"status": "active"}}
+    monkeypatch.setattr(worker, "read_research", lambda conn, project_id: research)
+    call = AgentCall("proof-conclusion", "completed")
+    sibling = AssistantMessage(content=[TextBlock(text="a sibling's last words")], model="m",
+                               parent_tool_use_id="toolu_sibling")
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, sibling, _result(num_turns=2)],
+        _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    from app.agent.continue_policy import summary_for_user
+
+    assert _text_events(turn_env["conn"])[-1] == summary_for_user(_POSTTOOL_DICT)
+
+
+def test_a_status_read_that_finds_the_store_down_records_it(turn_env, monkeypatch):
+    """U23 for the halt's own reads: the store found down at the read before the call is
+    recorded, so nothing asks Postgres again and the attempt fails closed."""
+    reads: list[int] = []
+    research = {"project": {"status": "active"}}
+
+    def read(conn, project_id):
+        reads.append(1)
+        raise worker.psycopg.OperationalError("server closed the connection")
+
+    monkeypatch.setattr(worker, "read_research", read)
+    call = AgentCall("proof-conclusion", "completed")
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    with pytest.raises(worker.StoreUnavailable):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert reads == [1], "asked a store already found down"
+    assert call.posttool_reply == {}
+
+
+def test_a_read_after_the_call_that_finds_the_store_down_records_it(turn_env, monkeypatch):
+    """The read after the call: the store answered before it and is down after. Recorded,
+    no halt, and the attempt fails closed."""
+    reads: list[int] = []
+    research = {"project": {"status": "active"}}
+
+    def read(conn, project_id):
+        reads.append(1)
+        if len(reads) > 1:
+            raise worker.psycopg.OperationalError("server closed the connection")
+        return research
+
+    monkeypatch.setattr(worker, "read_research", read)
+    call = AgentCall("proof-conclusion", "completed")
+    turn_env["client"] = AgentCallClient(
+        [_init(), call, _result(num_turns=2)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env, research)
+    with pytest.raises(worker.StoreUnavailable):
+        asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert reads == [1, 1], "read before and after the call, and not again"
+    assert call.posttool_reply == {}
+
+
+def test_an_odd_tool_name_never_raises_out_of_the_wrapper(turn_env, monkeypatch):
+    """The CLI never sends a list here, but a raising PreToolUse fails a call the patron was
+    entitled to make: the wrapper's checks sit inside its try."""
+    hook_input = {"tool_name": ["Agent"], "tool_input": {}}
+
+    class OddClient(FakeClient):
+        async def receive_response(self):
+            reply = await self.env["options"]["pretool_hook"](hook_input, "toolu_odd", None)
+            self.pretool_replies.append(reply)
+            for m in self.messages:
+                yield m
+
+    turn_env["client"] = OddClient([_init(), _result(num_turns=1)], _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
+    assert summary["outcome"] == "ok"
+
+
+# ── A/A2: what the close reads off the project and the turn's last line ───────────
+
+_CONCLUDE = "Continue with writing the conclusion?"
+_RESEARCH = {"questions": [{"id": "q_1", "status": "in_progress", "question": "Who were her parents?"}]}
+
+
+def _turn_done_payload(conn: FakeConn) -> dict:
+    """The turn_done event's payload, as row_to_wire spreads it onto the wire."""
+    for sql, params in conn.executed:
+        if "INSERT INTO session_events" in sql and "'turn_done'" in sql:
+            return dict(params[2].obj)
+    raise AssertionError("no turn_done was written")
+
+
+def test_the_turn_offers_its_reply_options_on_turn_done(turn_env):
+    """The browser shows a button per phrase and nothing else, so the list has to ride
+    the frame that ends the turn."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, [_init(), _text("the report"), _result(text=f"the report\n\n{_CONCLUDE}")])
+    payload = _turn_done_payload(turn_env["conn"])
+    assert payload["options"] == ["Continue.", "Keep going."], payload
+    # Not Wrap it up: Continue already concludes. Not Search more: the question has no
+    # `resources_spent` stop, so this is not the low-risk choice.
+
+
+def test_a_turn_that_makes_no_offer_carries_no_options_key(turn_env):
+    """Left OUT rather than empty, as `reply_follows` is -- a step that ended on a
+    question for the researcher must render no buttons at all."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, [_init(), _text("x"), _result(text="I found three. What was her maiden name?")])
+    assert "options" not in _turn_done_payload(turn_env["conn"])
+
+
+def test_a_turn_the_host_answers_says_so_and_offers_no_buttons(turn_env):
+    """`reply_follows` (plan A2). The frame says a host reply is coming, so a
+    client can keep its composer busy and render no buttons for a turn the
+    researcher is not being asked to answer. It was described in a worker comment
+    and in the workbench spec and emitted nowhere.
+
+    **Nothing reads it yet.** ChatPane clears busy on every `turn_done` and does
+    not look at this field, so emitting it is the contract catching up with its
+    own documentation, not a behaviour change in the browser.
+
+    The two fields have to agree: a host-answered turn carries `reply_follows`
+    and NO `options`, because the choice has already been made. Buttons there
+    would flicker for the moment between this frame and the reply landing, and a
+    researcher quick enough to click one would send a second message into a run
+    already moving."""
+    turn_env["conn"].research = _RESEARCH
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    payload = _turn_done_payload(turn_env["conn"])
+    assert payload.get("reply_follows") is True, payload
+    assert "options" not in payload, payload
+
+
+def test_reply_follows_is_absent_when_the_reply_was_refused(turn_env):
+    """Re-review 9. The field used to be set by the CALLER, from the reply it
+    planned. `queue_auto_reply` refuses when a held row already exists (the
+    researcher typed) or Stop is set, and `complete()`'s lock-timeout path
+    retries with the same `detail` and no reply at all -- so the browser was
+    told a reply was coming when none was. It now comes from what was queued."""
+    turn_env["conn"].research = _RESEARCH
+    turn_env["conn"].held_row_waiting = True
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    payload = _turn_done_payload(turn_env["conn"])
+    assert "reply_follows" not in payload, payload
+
+
+def test_a_turn_nobody_answers_for_carries_no_reply_follows_key(turn_env):
+    """Left OUT rather than false, as `options` is. A frame with neither field is
+    a turn that ended with nothing further coming -- which is what the browser
+    needs to stop being busy."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, [_init(), _text("the report"), _result(text=f"the report\n\n{_CONCLUDE}")])
+    payload = _turn_done_payload(turn_env["conn"])
+    assert "reply_follows" not in payload, payload
+    assert payload["options"] == ["Continue.", "Keep going."], payload
+
+
+def test_search_more_appears_only_at_the_low_risk_choice(turn_env):
+    """A `resources_spent` stop with no proof summary yet: concluding is the default and
+    searching more is the alternative."""
+    turn_env["conn"].research = {"questions": [
+        {"id": "q_1", "status": "in_progress", "question": "Who?",
+         "search_stop": {"stopped_because": "resources_spent",
+                         "justification": "Overturn risk: low. Two sources agree."}}]}
+    _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
+    assert "Search more." in _turn_done_payload(turn_env["conn"])["options"]
+
+
+def test_a_step_turn_that_finished_the_project_closes_completed(turn_env, monkeypatch):
+    """At cap 0 no plane binds the Stop hook, so a step turn has no Stop verdict to
+    report the project finishing. Without this read the browser would render the
+    honest `completed` label on no step turn at all."""
+    turn_env["conn"].research = {"project": {"status": "completed"}}
+    monkeypatch.setattr(worker, "completed_already_labelled", lambda *a: False)
+    summary = _run(turn_env, _good())
+    assert summary["outcome"] == "completed"
+    assert _turn_done_payload(turn_env["conn"])["outcome"] == "completed"
+
+
+def test_a_turn_on_an_already_finished_project_closes_ok(turn_env, monkeypatch):
+    """Only the turn that COMPLETES the project is labelled so. A finished project that
+    took a follow-up question would otherwise read `completed` on every later turn."""
+    turn_env["conn"].research = {"project": {"status": "completed"}}
+    monkeypatch.setattr(worker, "completed_already_labelled", lambda *a: True)
+    assert _run(turn_env, _good())["outcome"] == "ok"
+
+
+def test_the_label_check_asks_for_an_earlier_completed_turn_of_the_project():
+    """The query behind both cases above: another turn, same project, closed `completed`."""
+    sql = worker.COMPLETED_LABELLED_SQL
+    assert "project_id = %s" in sql and "turn_id <> %s" in sql and "outcome = %s" in sql
+
+
+def test_an_unfinished_project_still_closes_ok(turn_env):
+    turn_env["conn"].research = _RESEARCH
+    assert _run(turn_env, _good())["outcome"] == "ok"
+
+
+def test_a_project_with_no_research_json_yet_still_offers_continue_and_keep_going(turn_env):
+    """A brand-new project reads no document and that is not a failure: there is no
+    current question, so Wrap it up does not apply, but the step still has a next one."""
+    turn_env["conn"].research = None
+    _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
+    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going."]
+
+
+def test_a_store_that_has_gone_down_closes_ok_with_no_options(turn_env, monkeypatch):
+    """The read RAISING is the dead store -- distinct from a project that simply has no
+    research.json yet, above. Failing a turn that already finished, and was already
+    paid for, over a read for its BUTTONS would be the worse trade by a wide margin."""
+    def down(*a, **k):
+        raise RuntimeError("the store is gone")
+
+    monkeypatch.setattr(worker, "read_research", down)
+    summary = _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
+    assert summary["outcome"] == "ok"
+    assert "options" not in _turn_done_payload(turn_env["conn"])
+
+
+def test_a_turn_the_host_answered_offers_the_researcher_nothing(turn_env):
+    """Under "Keep going" the choice is already made. Buttons would flicker between
+    this frame and the reply landing, and a researcher quick enough to click one
+    would send a SECOND message into a run already moving."""
+    turn_env["conn"].research = _RESEARCH
+    # The turn's OWN message is what `step_mode` reads, and only "keep going." puts
+    # the turn in `job` mode -- the mode in which a reply is due at all.
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = None
+    state = turn_env
+    state["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
+                                 _info(AGENTS, worker.EXPECTED_SKILLS), state)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    payload = _turn_done_payload(turn_env["conn"])
+    assert "options" not in payload, payload
+    queued = [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql]
+    assert queued, "the host should have queued its reply instead"
+
+
+def test_a_step_turn_the_host_did_not_answer_still_offers_its_options(turn_env):
+    """The other side of the same branch: an ordinary `step` turn is the researcher's
+    to answer, so the buttons are the whole point."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
+    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going."]
+    assert not [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql]
+
+
+def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatch):
+    """On the hosted planes "Keep going" means the HOST answers each boundary, not that
+    the boundary goes away (plan, mode detection). So the gate enforces `step` while the
+    turn itself stays `job` -- the mode `next_auto_reply` keys the reply on, and the one
+    a redelivered attempt must read back from `turns.mode`."""
+    real = worker.load_step_boundary()
+    built: list[dict] = []
+
+    class Recording(real.StepGate):
+        def __init__(self, **kwargs):
+            built.append(kwargs)
+            super().__init__(**kwargs)
+
+    module = types.SimpleNamespace(**{k: getattr(real, k) for k in dir(real) if not k.startswith("__")})
+    module.StepGate = Recording
+    monkeypatch.setattr(worker, "load_step_boundary", lambda: module)
+    recorded: list[tuple] = []
+    monkeypatch.setattr(worker, "record_turn_step", lambda conn, tid, step, mode: recorded.append((step, mode)))
+
+    turn_env["conn"].research = _RESEARCH
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = FakeClient([_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")],
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+
+    assert built and built[0]["mode"] == "step", built
+    gate = real.StepGate(**built[0])
+    assert gate.check("Task", {"subagent_type": "research-plan"}, subagent=False) is None
+    assert recorded == [("research-plan", "job")], recorded
+    assert gate.check("Task", {"subagent_type": "search-records"}, subagent=False)[0] == "deny"

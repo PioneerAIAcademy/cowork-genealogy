@@ -105,6 +105,51 @@ def test_an_ownerless_hand_back_still_makes_no_tool_call():
         check_hand_back([WARNINGS_CALL], "Hand-back: extraction — not extracted.", _ownerless())
 
 
+# --- The project_context guard (init-project, #3384) ------------------------
+
+GUARD_CALL = {"tool": "mcp__genealogy__project_context", "args": {"projectPath": "/w"}, "response": {"ok": True}}
+
+
+def _guarded() -> dict:
+    spec = _spec()
+    spec["tags"] = [*spec["tags"], "project-context-guard"]
+    return spec
+
+
+@pytest.mark.parametrize(
+    "tool",
+    ["mcp__genealogy__project_context", "mcp__remote-devices__Genealogy_Research__project_context"],
+    ids=["harness-spelling", "bridged-spelling"],
+)
+def test_the_guard_tag_admits_one_leading_project_context(tool):
+    check_hand_back([{**GUARD_CALL, "tool": tool}], AGENT_RETURN, _guarded())
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        [GUARD_CALL, GUARD_CALL],
+        [GUARD_CALL, WARNINGS_CALL],
+        [WARNINGS_CALL, GUARD_CALL],
+        [WARNINGS_CALL],
+    ],
+    ids=["two-guards", "guard-then-work", "work-then-guard", "other-tool"],
+)
+def test_the_guard_tag_admits_nothing_else(calls):
+    with pytest.raises(AssertionError, match="makes no tool call"):
+        check_hand_back(calls, AGENT_RETURN, _guarded())
+
+
+def test_without_the_guard_tag_project_context_fails():
+    with pytest.raises(AssertionError, match="makes no tool call"):
+        check_hand_back([GUARD_CALL], AGENT_RETURN, _spec())
+
+
+def test_the_guard_does_not_excuse_a_missing_owner():
+    with pytest.raises(AssertionError, match="never names conflict-resolution"):
+        check_hand_back([GUARD_CALL], "Hand-back: a project exists.", _guarded())
+
+
 def test_skips_without_the_hand_back_tag():
     with pytest.raises(pytest.skip.Exception):
         check_hand_back([WARNINGS_CALL], "", {"type": "positive", "tags": ["direct-arm"]})

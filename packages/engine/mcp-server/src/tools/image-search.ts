@@ -1,77 +1,23 @@
 import type { Principal } from "../auth/principal.js";
-import { BROWSER_USER_AGENT } from "../constants.js";
 import { coerceJsonArg } from "../utils/coerce-json-arg.js";
-import { fsFetch } from "../utils/fs-fetch.js";
-import { describeFetchError } from "../utils/http.js";
+import {
+  GROUP_SERVICE_BASE,
+  fetchApid,
+  fetchGroupMetadata,
+  fsGet,
+  resolveGroupId,
+  timingFor,
+  type Timing,
+} from "../utils/image-group.js";
 import type {
   ImageSearchInput,
   ImageSearchResult,
   ChildrenNamesResponse,
 } from "../types/image-search.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
-const GROUP_SERVICE_BASE =
-  "https://sg30p0.familysearch.org/service/records/rms/group-service";
 const ARTIFACT_BASE =
   "https://sg30p0.familysearch.org/service/records/rms";
-
-const FS_HEADERS: Record<string, string> = {
-  Accept: "application/json",
-  "User-Agent": BROWSER_USER_AGENT,
-  "FS-User-Agent-Chain": "chesworth",
-};
-
-/** Per-request fetch limits: the timeout of each attempt and the retry budget. */
-interface Timing {
-  timeoutMs?: number;
-  budgetMs?: number;
-}
-
-/** The limits a caller's `timeoutMs` has always meant here: both capped at it. */
-function timingFor(timeoutMs: number | undefined): Timing {
-  return timeoutMs === undefined ? {} : { timeoutMs, budgetMs: timeoutMs };
-}
-
-async function fsGet(url: string, principal: Principal, timing: Timing): Promise<Response> {
-  try {
-    return await fsFetch(
-      principal,
-      url,
-      { headers: FS_HEADERS },
-      timing.timeoutMs,
-      // Cap the RETRY budget too, not just the per-request timeout. `fsFetch`
-      // delegates to `fetchWithRetry`, whose default budget is 10s across 3
-      // attempts, so a lowered `timeoutMs` bounded each request while the call
-      // still ran to 10s. Measured 2026-09-30 with a hanging `fetch`:
-      // timeoutMs=6000 alone took 10,001ms over 2 requests; with the budget
-      // capped it takes 6,001ms over 1. `volume_bisect` sizes its three-leg
-      // budget on this leg costing `timeoutMs` (volume-bisect-tool-spec §8).
-      // Undefined leaves the default callers on the default budget.
-      timing.budgetMs === undefined ? undefined : { budgetMs: timing.budgetMs },
-    );
-  } catch (error) {
-    throw new Error(
-      `Could not reach FamilySearch image search API: ${describeFetchError(error)}.`
-    );
-  }
-}
-
-async function fetchApid(
-  imageGroupNumber: string,
-  principal: Principal,
-  timing: Timing,
-): Promise<string> {
-  const response = await fsGet(
-    `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(imageGroupNumber)}/apid`,
-    principal,
-    timing,
-  );
-  if (!response.ok) {
-    throw new Error(
-      `Could not resolve image group number ${imageGroupNumber} to an image group.`
-    );
-  }
-  return (await response.text()).trim();
-}
 
 /** The item a bare film resolved to: its position, images and label. */
 interface ResolvedItem {
@@ -81,18 +27,6 @@ interface ResolvedItem {
   imageGroupNumber: string;
   imageGroupNumberFrom: "name" | "position";
   place: string | null;
-}
-
-async function resolveGroupId(
-  imageGroupNumber: string,
-  principal: Principal,
-  timing: Timing,
-): Promise<string> {
-  if (imageGroupNumber.includes("_")) {
-    const parts = imageGroupNumber.split("_");
-    return parts[parts.length - 1];
-  }
-  return fetchApid(imageGroupNumber, principal, timing);
 }
 
 async function fetchChildren(
@@ -107,9 +41,7 @@ async function fetchChildren(
   );
 
   if (response.status === 401) {
-    throw new Error(
-      "FamilySearch session not accepted; call the login tool to re-authenticate."
-    );
+    throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
   }
   if (response.status === 403) {
     throw new Error("FamilySearch image search API error: 403 Forbidden.");
@@ -182,34 +114,12 @@ async function fetchImageIds(
 
 // ─── Within-item addressing (spec § Within-item addressing) ─────────────────
 
-const ADDRESS_KEYS = new Set(["imageGroupNumber", "item", "itemImage"]);
 /** Cowork's call ceiling is ~60s (volume-bisect-tool-spec.md §8). */
 const ITEM_DEADLINE_MS = 45_000;
 const ITEM_LIST_CONCURRENCY = 6;
 const PER_REQUEST_TIMEOUT_MS = 30_000;
 /** A request started with less than this left would only report a timeout. */
 const MIN_REQUEST_MS = 1_000;
-
-/**
- * Nothing validates input against the schema (server.ts passes arguments
- * straight through), so a misspelled address would otherwise be ignored and
- * the whole film served. A key that is not ours throws when its name looks like
- * an address or its value is a number; across 118 recorded calls the only
- * other key ever sent was `lookingFor`, a string, which still passes.
- */
-function rejectUnknownAddressKeys(input: Record<string, unknown>): void {
-  for (const [key, value] of Object.entries(input)) {
-    if (ADDRESS_KEYS.has(key)) continue;
-    const numeric =
-      typeof value === "number" || (typeof value === "string" && /^\s*\d+\s*$/.test(value));
-    if (/item|image/i.test(key) || numeric) {
-      throw new Error(
-        `image_search has no parameter \`${key}\`; to address one item use \`item\` / \`itemImage\`, ` +
-          "or drop it to list the whole group.",
-      );
-    }
-  }
-}
 
 function readPositiveInteger(name: string, raw: unknown): number | undefined {
   if (raw === undefined || raw === null) return undefined;
@@ -284,9 +194,7 @@ async function resolveItem(
       timing(),
     );
     if (response.status === 401) {
-      throw new Error(
-        "FamilySearch session not accepted; call the login tool to re-authenticate."
-      );
+      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (!response.ok) {
       throw new Error(
@@ -410,16 +318,8 @@ async function itemLabel(
     place: null,
   };
   try {
-    const response = await fsGet(
-      `${GROUP_SERVICE_BASE}/group/${encodeURIComponent(groupId)}`,
-      principal,
-      timing(),
-    );
-    if (!response.ok) return composed;
-    const meta = (await response.json()) as {
-      groupName?: unknown;
-      coverages?: { place?: unknown }[];
-    };
+    const { meta } = await fetchGroupMetadata(groupId, principal, timing());
+    if (!meta) return composed;
     const place = typeof meta.coverages?.[0]?.place === "string" ? meta.coverages[0].place : null;
     const name = meta.groupName;
     if (typeof name === "string" && name.startsWith(`${imageGroupNumber}_`)) {
@@ -443,7 +343,6 @@ export async function imageSearchTool(
   if (!input.imageGroupNumber) {
     throw new Error("image_search requires an imageGroupNumber.");
   }
-  rejectUnknownAddressKeys(input as unknown as Record<string, unknown>);
   const item = readPositiveInteger("item", input.item);
   const itemImage = readPositiveInteger("itemImage", input.itemImage);
   if (itemImage !== undefined && item === undefined) {

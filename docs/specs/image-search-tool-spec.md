@@ -125,14 +125,15 @@ caller checks it against the place in the citation. When place is null the
 item could not be checked: tell the user it was counted by image group and may
 not be the Catalog's item.
 
-**Misspelled parameters are errors, never ignored.** Nothing validates tool
-input against the advertised schema (`server.ts` passes arguments straight
-through), so an unrecognised key would otherwise silently return the whole
-film. Any key other than the three above is an error when its name matches
-`/item|image/i` (`itemNumber`, `item_number`, `imageNumber`, `imageId`) or its
-value is a number or all-digit string (`page: 10`, `frame: "632"`). Other
-keys pass: across 118 recorded `image_search` calls the only extra key ever
-sent was `lookingFor`, a string.
+**Misspelled parameters are errors, never ignored.** `server.ts` refuses
+every key other than the three above (`rejectUnknownArgs`,
+`src/utils/unknown-args.ts`), so an unrecognised key never silently returns
+the whole film. A key whose name matches `/item|image|page|frame/i` and does
+not name the group (`itemNumber`, `item_number`, `imageNumber`, `imageId`,
+`page`, `frame`, but not `image_group_number` or `imageGroup`, a misspelled
+`imageGroupNumber`) gets this tool's own message, pointing to `item` / `itemImage`; any other key,
+`lookingFor` and `maxResults` included, gets the generic one naming the
+nearest parameters.
 
 ---
 
@@ -307,7 +308,7 @@ all other authenticated tools. Do not re-implement token plumbing.
 | `imageGroupNumber` not provided | Throw: `"image_search requires an imageGroupNumber."` |
 | apid lookup (unsplit form) returns non-OK | Throw: `"Could not resolve image group number {imageGroupNumber} to an image group."` |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error |
-| `children/names` returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` |
+| `children/names` returns 401 | Throw: `"FamilySearch session not accepted; call the login tool to re-authenticate."` In hosted mode, the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`) instead, via `rejectedTokenMessage`, since `login` cannot open a sign-in page there. |
 | `children/names` returns 403 | Throw: `"FamilySearch image search API error: 403 Forbidden."` |
 | `children/names` other non-OK | Throw: `"FamilySearch image search API error: {status} {statusText}."` |
 | Network error (either call) | Throw: `"Could not reach FamilySearch image search API: {cause}."` (`{cause}` from `describeFetchError`, `src/utils/http.ts`) |
@@ -338,6 +339,7 @@ No caching. A volume's image set can change as new images are digitized.
 |------|--------|
 | `src/types/image-search.ts` | Rewrite — reduce to `ImageSearchInput` (`{ imageGroupNumber: string }`), `ImageSearchResult` (`{ imageIds: string[] }`), and the `children/names` response type (`Record<string, string>`). Remove the old RMS-search and places-lookup types. |
 | `src/tools/image-search.ts` | Rewrite — resolution logic (split vs. apid), `children/names` fetch, value extraction + sort, schema export. Remove `placeIdToRepIds` (relocated to `place-search.ts` for `volume_search`) and `repIdToPlaceId` (deleted — no consumers). |
+| `src/utils/image-group.ts` | The resolution (split vs. apid) and a group's metadata fetch, shared with `image_transcribe`, which reads its film's coverage place there (`image-transcribe-tool-spec.md` §5.5.1). |
 | `src/tool-schemas.ts` | Keep `imageSearchSchema` in `allToolSchemas` (now the image lister). |
 | `src/index.ts` | Update the `image_search` handler to the new I/O. |
 | `manifest.json` | Keep `{ "name": "image_search" }`. |
@@ -405,7 +407,6 @@ needed for that path.
 - No underscores → it's a bare/unsplit image group number; convert to an
   apid first.
 
-This mirrors how `volume_search` derives `imageGroupPrefix` (substring
-before the first `_`): a value with no `_` is already its own prefix and
-takes the apid path; a 3-segment value carries its natural id in the
-last segment.
+The bare image group number is the substring before the first `_`: a
+value with no `_` is already that number and takes the apid path; a
+3-segment value carries its natural id in the last segment.

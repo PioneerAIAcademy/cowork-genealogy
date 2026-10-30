@@ -116,10 +116,10 @@ after the memories merge, through the shared `stageSearchResults`
   top-level `notes[]` and every source's response-only fields (`notes`, `text`,
   `image_ref`, `artifact_url`). Nothing is stripped on the way in.
 
-It exists so the starting tree is built host-side from the staged copy rather
-than the model re-typing it into `project_create`: init-project passes
-`staged.resultsRef` to `project_create` as `personReadRef`
-(`project-create-tool-spec.md` §4). It is **not a search**: it is in
+A staged read is evidence, not an input: `project_create` reads the person
+itself (`personId`, `project-create-tool-spec.md` §4), and checks a hand-entered
+fact or relationship against the project's staged reads before citing it to the
+FamilySearch Family Tree. It is **not a search**: it is in
 `STAGING_CAPABLE_TOOLS` and not `STAGING_SEARCH_TOOLS`, so no search note fires on
 it, and no shipped flow finalizes it with `research_log_append`. An unconsumed
 file is removed by the 24h TTL prune. Staging is best-effort: a failure never
@@ -201,7 +201,7 @@ Always present. Each source object:
 | `notes` | string[] | no | User-attached notes. Each entry is the text of one note. Also carries the tool's own note when a memory was not transcribed (see below). Omit when empty. |
 | `text` | string | no | A memory's text: a story's own words, or OCR of a scan. Absent for an ordinary tree source, and absent for a memory that was not transcribed. |
 | `image_ref` | string | no | Project-relative path (`images/<key>.jpg`) of a retained memory scan. Present only when `projectPath` was supplied and the save succeeded. |
-| `artifact_url` | string | no | The memory artifact's bytes URL, present on every memory source. This is the value `image_transcribe`/`image_read` accept as `memoryArtifactUrl`. `image_transcribe` also accepts `url`, the human `/memories/<id>` page, resolving it to this value first; `image_read` does not. Response-only — absent from `TREE_SOURCE_FIELDS`, so a caller copying a memory source into `tree.gedcomx.json` must drop it. |
+| `artifact_url` | string | no | The memory artifact's bytes URL, present on every memory source. This is the value `image_transcribe` accepts as `memoryArtifactUrl`, and it also accepts `url`, the human `/memories/<id>` page, resolving it to this value first. `image_read` takes neither: `server.ts`'s unknown-argument guard refuses `memoryArtifactUrl` there. Response-only — absent from `TREE_SOURCE_FIELDS`, so a caller copying a memory source into `tree.gedcomx.json` must drop it. |
 
 #### Memories are merged into `sources[]`
 
@@ -553,7 +553,7 @@ sd.attribution.contributor.resourceId — who attached it
 | 200 | Success | Parse and convert response |
 | 204 | Living person (empty body) | Return `{ persons: [{ id, living: true, ... }], relationships: [], sources: [] }` |
 | 301 | Person merged into another | Read new ID from `Location` header, re-fetch |
-| 401 | Token expired/invalid | Let auth error propagate |
+| 401 | Token expired/invalid | Throw `rejectedTokenMessage`: the login instruction on the desktop, the hosted reconnect instruction in hosted mode |
 | 403 | Restricted person | Throw descriptive error |
 | 404 | Person not found | Throw descriptive error |
 | 410 | Person deleted | Throw descriptive error |

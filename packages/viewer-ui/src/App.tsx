@@ -5,7 +5,6 @@ import { ResearchDataProvider } from './contexts/ResearchDataProvider'
 import Header from './components/layout/Header'
 import Sidebar from './components/layout/Sidebar'
 import ProjectOverview from './components/sections/ProjectOverview'
-import KnownInformationSection from './components/sections/KnownInformationSection'
 import QuestionsSection from './components/sections/QuestionsSection'
 import PlansSection from './components/sections/PlansSection'
 import LocalitiesSection from './components/sections/LocalitiesSection'
@@ -18,20 +17,23 @@ import HypothesesSection from './components/sections/HypothesesSection'
 import TimelinesSection from './components/sections/TimelinesSection'
 import ProofSummariesSection from './components/sections/ProofSummariesSection'
 import EvaluationsSection from './components/sections/EvaluationsSection'
+import NamesakesSection from './components/sections/NamesakesSection'
+import CollectionsSection from './components/sections/CollectionsSection'
 import SidecarPanel from './components/shared/SidecarPanel'
 import ErrorBoundary from './components/ErrorBoundary'
 import styles from './App.module.css'
 
 export const sectionComponents: Record<string, React.ComponentType> = {
   project_overview: ProjectOverview,
-  known_holdings: KnownInformationSection,
   questions: QuestionsSection,
   plans: PlansSection,
   localities: LocalitiesSection,
+  external_collections: CollectionsSection,
   log: ResearchLogSection,
   sources: SourcesSection,
   assertions: AssertionsSection,
   person_evidence: PersonEvidenceSection,
+  namesakes: NamesakesSection,
   conflicts: ConflictsSection,
   hypotheses: HypothesesSection,
   timelines: TimelinesSection,

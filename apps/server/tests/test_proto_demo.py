@@ -331,17 +331,22 @@ def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
     assert f"default {cap.group(1)}" in rule.group(1), \
         f"`make help` says {rule.group(1).strip()!r}, which no longer matches the exported cap"
     assert re.search(r'\$\(MAKE\) proto-demo FIXTURE="\$\(FIXTURE\)" ARGS="[^"]*\$\(ARGS\)"', body), body
-    # 1a moved the DEFAULT: the web service now carries AUTONOMOUS_MAX_NUDGES with a
-    # non-zero interpolation default, so silence no longer means 0 and proto-demo has to
-    # pin its own -- `:-0`, which keeps proto-demo-auto's non-empty export exactly as `-0`
-    # did; the two differ only on an empty value, which `-0` handed to compose's `:-60`.
+    # proto-demo keeps pinning its own 0. It is now the same value the compose default
+    # carries, so the pin is belt-and-braces rather than load-bearing -- but it is what
+    # keeps proto-demo a one-turn run if the default is ever raised again.
     assert _pins_nudges_before_compose_up(_recipe("proto-demo")), \
-        "proto-demo must pin 0 itself to stay a one-turn run, now that the compose default is not 0"
+        "proto-demo pins 0 itself so it stays a one-turn run whatever the compose default is"
     web_default = _env(_service(_load(COMPOSE), "web")).get("AUTONOMOUS_MAX_NUDGES", "")
     assert web_default.startswith("${AUTONOMOUS_MAX_NUDGES:-"), \
         "the web tier carries the cap (1a); proto-demo's pin is only meaningful against it"
-    assert web_default != "${AUTONOMOUS_MAX_NUDGES:-0}", \
-        "a 0 default here would ship the stop-every-step behaviour the plan exists to remove"
+    # **This assertion inverted** (step mode, decision 25). It used to forbid `:-0`,
+    # because a 0 default "would ship the stop-every-step behaviour the plan exists to
+    # remove". Stopping at each step IS the behaviour now: every turn runs one step and
+    # ends with "Continue with X?", so a nudge past that re-opens a turn that ended on
+    # purpose. proto-demo-auto still exports its own 40 to exercise the hook, which is
+    # what the first half of this test checks, so the hook keeps a live test either way.
+    assert web_default == "${AUTONOMOUS_MAX_NUDGES:-0}", \
+        "step mode ships no Stop veto by default; an operator raises it explicitly"
 
 
 def test_proto_kill_pins_a_one_turn_run_unless_the_caller_sets_nudges():

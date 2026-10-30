@@ -15,6 +15,7 @@
   "judge_context": [
     "Should call the FamilySearch wiki with a query about using census records on FamilySearch",
     "The logged entry's notes should open with '# FamilySearch Wiki: ' and the question's core noun phrase (census records), not the whole question",
-    "Summary should only reflect what the wiki actually said — no invented census years, states, or coverage details"
+    "Summary should only reflect what the wiki actually said — no invented census years, states, or coverage details",
+    "The scenario project's research objective (Patrick Flynn's parents) is unrelated to this general how-to request. Do not penalize a summary for not tying the census guidance to that objective."
   ]
 }

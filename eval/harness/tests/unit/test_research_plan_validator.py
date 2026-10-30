@@ -34,8 +34,14 @@ from test_research_plan import (  # noqa: E402
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
     test_research_plan_reads_question_person_profile as check_profile,
+    test_research_plan_plans_subject_from_tree as check_subject,
+    test_research_plan_states_sibling_purchase as check_purchase,
+    _PURCHASE_TAG,
     report_survey_surfaces_already_attached_fan_facts as check,
+    test_written_collection_urls_are_stored_collections as check_coll,
+    report_external_items_missing_a_stored_collection as count_missing,
 )
+import json  # noqa: E402
 
 QUAL = "mcp__genealogy__"
 
@@ -1203,6 +1209,97 @@ def test_profile_shared_given_name_without_surname_does_not_count():
     with pytest.raises(AssertionError, match="before writing"):
         check_profile(state, [_read("ZZOT-TH9"), _write()], _PROFILE_TEST)
 
+# --- subject-from-tree (issue #3384 step 3) -----------------------------------
+
+_SUBJECT_TEST = {"tags": ["subject-from-tree"]}
+_SUBJECT_STATE = {
+    "research_json": {
+        "project": {"subject_person_ids": ["I1"]},
+        "questions": [
+            {"id": "q_001", "status": "open", "question": "When and where was Bridget Kerrigan (I1) baptized?"}
+        ],
+    },
+    "tree_gedcomx_json": _PROFILE_STATE["tree_gedcomx_json"],
+}
+
+
+def test_subject_passes_when_planned_from_the_tree():
+    check_subject(_SUBJECT_STATE, [_write()], _SUBJECT_TEST)
+
+
+def test_subject_passes_on_a_relative_read():
+    """A question naming the subject and her father: reading the father is the
+    #2208 read, and it is allowed beside planning the subject from the tree."""
+    both = {**_SUBJECT_STATE, "research_json": {**_SUBJECT_STATE["research_json"], "questions": [
+        {"id": "q_001", "status": "open",
+         "question": "Was Bridget Kerrigan (I1) the daughter of Thomas Kerrigan (I2)?"}]}}
+    check_subject(both, [_read("ZZKR-TH2"), _write()], _SUBJECT_TEST)
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        lambda: [_read("ZZKR-BR1"), _write()],
+        lambda: [_read("ZZKR-BR1", matched=False), _write()],
+        lambda: [_write(), _read(" ZZKR-BR1 ")],
+        lambda: [_read("ark:/61903/4:1:ZZKR-BR1"), _write()],
+        lambda: [_read("zzkr-br1"), _write()],
+    ],
+    ids=["matched-before-write", "unmatched-before-write", "after-write-padded", "ark-form", "lowercase"],
+)
+def test_subject_fires_on_any_subject_read(calls):
+    with pytest.raises(AssertionError, match="never re-read"):
+        check_subject(_SUBJECT_STATE, calls(), _SUBJECT_TEST)
+
+
+def test_subject_fires_on_no_plan_write():
+    with pytest.raises(AssertionError, match="no research_append wrote plans"):
+        check_subject(_SUBJECT_STATE, [_call("research_append", None, {"ops": [{"section": "log"}]})], _SUBJECT_TEST)
+
+
+def test_subject_fires_when_no_subject_has_an_ark():
+    state = {**_SUBJECT_STATE, "research_json": {**_SUBJECT_STATE["research_json"], "project": {"subject_person_ids": ["I9"]}}}
+    with pytest.raises(AssertionError, match="no project subject with an `ark`"):
+        check_subject(state, [_write()], _SUBJECT_TEST)
+
+
+def test_subject_is_checked_even_when_the_question_does_not_name_her():
+    """Subjects come from `project.subject_person_ids`, never from the question's
+    wording, so a renamed or unnamed subject stays in the check."""
+    state = {**_SUBJECT_STATE, "research_json": {**_SUBJECT_STATE["research_json"], "questions": [
+        {"id": "q_001", "status": "open", "question": "When and where was the subject (I1) baptized?"}]}}
+    with pytest.raises(AssertionError, match="never re-read"):
+        check_subject(state, [_read("ZZKR-BR1"), _write()], _SUBJECT_TEST)
+    check_subject(state, [_write()], _SUBJECT_TEST)
+
+
+def test_subject_skips_untagged():
+    with pytest.raises(pytest.skip.Exception):
+        check_subject(_SUBJECT_STATE, [_read("ZZKR-BR1"), _write()], {"tags": []})
+
+
+def test_subject_fires_on_a_relative_the_question_does_not_name():
+    with pytest.raises(AssertionError, match="never re-read"):
+        check_subject(_SUBJECT_STATE, [_read("ZZKR-TH2"), _write()], _SUBJECT_TEST)
+
+
+def test_profile_does_not_count_a_subject_read_toward_a_relative():
+    """The relative check leaves subjects out: reading the subject never stands in
+    for reading the relative the question is about."""
+    state = {
+        **_PROFILE_STATE,
+        "research_json": {**_PROFILE_STATE["research_json"], "project": {"subject_person_ids": ["I1"]}},
+    }
+    with pytest.raises(AssertionError, match="before writing"):
+        check_profile(state, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+    check_profile(state, [_read("ZZKR-TH2"), _write()], _PROFILE_TEST)
+
+
+def test_profile_fires_when_the_only_named_person_is_a_subject():
+    with pytest.raises(AssertionError, match="names no non-subject tree person"):
+        check_profile(_SUBJECT_STATE, [_read("ZZKR-BR1"), _write()], _PROFILE_TEST)
+
+
 def test_v1_grounds_ark_served_by_person_read():
     served = [_call("person_read", {"sources": [
         {"id": "SD1", "url": "https://familysearch.org/ark:/61903/1:1:JQ4M-2XS"}]})]
@@ -1423,3 +1520,157 @@ def test_death_route_map_entry_without_its_tag_fails_before_the_skip():
     b, a = _plan_states([BAPTISM, BURIAL])
     with pytest.raises(AssertionError, match="no 'pre-register-birth'"):
         check_death_route(b, a, {"id": "ut_research_plan_dth", "tags": ["planning"]})
+
+
+# --- V1 grounds a cited collection id in the stored curated list (#2995) ------
+
+# Five digits: V1 checks 5+ digit runs only, so a 4-digit id would pass for nothing.
+_STORED_FILE = json.dumps({"places": {"Pennsylvania, United States": {"rows": [
+    {"key": "ancestry:7163", "url": "https://www.ancestry.com/search/collections/7163/"},
+    {"key": "ancestry:61749", "url": "https://www.ancestry.com/search/collections/61749/"}]}}})
+
+
+def test_v1_grounds_an_id_from_a_research_query_response():
+    before, after = _states([_item("pli_010", rationale="Ancestry collection 61749 covers 1870.")])
+    served = [_call("research_query", {"ok": True, "section": "external_collections",
+                                       "items": [{"url": "https://www.ancestry.com/search/collections/61749/"}]})]
+    check_v1(before, after, served)
+
+
+def test_v1_grounds_an_id_from_the_starting_stored_list():
+    before, after = _states([_item("pli_010", rationale="Ancestry collection 61749 covers 1870.")])
+    before["files"] = {"external-collections.json": _STORED_FILE}
+    check_v1(before, after, [])
+
+
+def test_v1_still_fires_on_an_id_in_neither():
+    before, after = _states([_item("pli_010", rationale="Ancestry collection 60207 covers 1870.")])
+    before["files"] = {"external-collections.json": _STORED_FILE}
+    with pytest.raises(AssertionError, match="60207"):
+        check_v1(before, after, [])
+
+
+# --- a new external item names a stored collection (#2995) --------------------
+
+STORED_URL = "https://www.ancestry.com/search/collections/7163/"
+
+
+def _ext(item_id, collection_url=None, **over):
+    item = _item(item_id)
+    item["repository"] = "Ancestry"
+    item.update(over)
+    if collection_url is not None:
+        item["collection_url"] = collection_url
+    return item
+
+
+def _coll_states(new_items, stored=_STORED_FILE):
+    before, after = _states(new_items)
+    if stored is not None:
+        after["files"] = {"external-collections.json": stored}
+    return before, after
+
+
+def test_collection_url_passes_on_a_stored_url_in_either_spelling():
+    check_coll(*_coll_states([_item("pli_010"), _ext("pli_011", STORED_URL)]))
+    check_coll(*_coll_states([_ext("pli_011", "https://search.ancestry.com/search/db.aspx?dbid=7163")]))
+
+
+def test_collection_url_fires_on_an_unstored_url():
+    with pytest.raises(AssertionError, match="not a stored"):
+        check_coll(*_coll_states([_ext("pli_011", "https://www.ancestry.com/search/collections/9093/")]))
+
+
+def test_collection_url_fires_when_nothing_is_stored():
+    with pytest.raises(AssertionError, match="not a stored"):
+        check_coll(*_coll_states([_ext("pli_011", STORED_URL)], stored=None))
+
+
+def test_collection_url_skips_when_no_item_writes_one():
+    with pytest.raises(pytest.skip.Exception):
+        check_coll(*_coll_states([_ext("pli_011")]))
+
+
+_TYPED_FILE = json.dumps({"places": {"Pennsylvania, United States": {"rows": [
+    {"key": "ancestry:7163", "url": STORED_URL, "record_types": ["Census"]}]}}})
+
+
+def test_report_counts_an_external_item_missing_a_fitting_collection():
+    with pytest.raises(AssertionError, match=r"1 of 2 .*\['pli_011'\]"):
+        count_missing(*_coll_states([_ext("pli_011"), _ext("pli_012", STORED_URL)], stored=_TYPED_FILE))
+
+
+def test_report_quiet_when_nothing_fits_or_the_item_names_one():
+    count_missing(*_coll_states([_ext("pli_011", record_type="probate")], stored=_TYPED_FILE))
+    count_missing(*_coll_states([_ext("pli_011", jurisdiction="Hordaland, Norway")], stored=_TYPED_FILE))
+    count_missing(*_coll_states([_ext("pli_011", STORED_URL)], stored=_TYPED_FILE))
+    with pytest.raises(pytest.skip.Exception):
+        count_missing(*_coll_states([_ext("pli_011")], stored=None))
+
+
+# --- Patrick's 1875 deed is stated (issue #3957) ---------------------------
+
+_PURCHASE_TEST = {"tags": [_PURCHASE_TAG], "skill": "research-plan", "delegation": "plan q_001"}
+
+
+def _purchase(reply, rationales=(), before_rationales=(), test=_PURCHASE_TEST, relay=""):
+    old = [{"id": f"pli_old{i}", "rationale": r} for i, r in enumerate(before_rationales)]
+    new = [{"id": f"pli_{i}", "rationale": r} for i, r in enumerate(rationales)]
+    try:
+        check_purchase(
+            {"research_json": {"plans": [{"items": old}]}},
+            {"research_json": {"plans": [{"items": old + new}]}},
+            relay,
+            test,
+            [{"subagent_type": "research-plan", "text": reply}] if reply is not None else [],
+        )
+    except pytest.skip.Exception:
+        if _PURCHASE_TAG in test.get("tags", []):
+            pytest.fail("the check skipped a test carrying its own tag")
+        raise
+
+
+def test_purchase_stated_in_the_reply_passes():
+    _purchase("Patrick Sheahan (I2) purchased land in Schuylkill County in 1875 (Deed Book 42, p. 118).")
+
+
+def test_purchase_variants_pass():
+    _purchase("His brother Patrick BOUGHT a lot there in 1875.")
+    _purchase("Survey:\n- Patrick's deed is on file: Deed Book 42, p. 118, from James Kelly.")
+    _purchase("Michael followed Patrick, who was\nestablished there by 1875 (a deed purchase anchors him).")
+
+
+def test_purchase_stated_only_in_a_new_rationale_passes():
+    _purchase("Plan pl_001 written.", rationales=["Patrick held land by 1875 (Deed Book 42)."])
+
+
+def test_residence_alone_fails():
+    with pytest.raises(AssertionError, match="never stated"):
+        _purchase("Patrick Sheahan (I2) lived in Schuylkill County by 1875, seven years before Michael.")
+
+
+def test_patrick_and_purchase_in_different_paragraphs_fails():
+    with pytest.raises(AssertionError):
+        _purchase("Patrick was in Schuylkill County by 1875.\n\nMichael may have purchased land later.")
+
+
+def test_a_rationale_already_in_the_plan_does_not_count():
+    with pytest.raises(AssertionError):
+        _purchase("Plan updated.", before_rationales=["Patrick purchased land in 1875 (Deed Book 42)."])
+
+
+def test_a_silent_agent_fails_whatever_the_relay_says():
+    with pytest.raises(AssertionError):
+        _purchase(None, relay="Patrick purchased land in 1875.")
+
+
+def test_both_sheahan_tests_carry_the_purchase_tag():
+    root = Path(__file__).resolve().parents[3] / "tests" / "unit" / "research-plan"
+    for name in ("first-plan-fan-already-sourced", "first-plan-fan-production-shape"):
+        spec = json.loads((root / f"{name}.json").read_text(encoding="utf-8"))
+        assert _PURCHASE_TAG in spec["test"]["tags"], name
+
+
+def test_purchase_check_skips_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        _purchase("nothing", test={"tags": [], "skill": "research-plan"})

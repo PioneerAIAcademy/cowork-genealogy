@@ -16,7 +16,8 @@ novel; where the system takes an opinionated position, it says so.
         Define the problem, survey what's known
                         │
                         ▼
-             Choose the next question  ◀──── FAN pivot ─────┐
+             Choose the next question                       │
+                        │                   FAN pivot ──────┤
                         │                                   │
                         ▼                                   │
                   Plan the search  ◀──────────────┐         │
@@ -48,8 +49,9 @@ The plan is not a checklist to be drained. As soon as the evidence in hand
 *plausibly* answers the question, the system moves to the exhaustiveness
 test. If that test finds a gap, it returns to planning — the same question,
 with the plan extended to cover what is missing. It goes back to choosing a
-question only for a FAN pivot, when direct evidence on the current question
-is spent and the next move is a question about an associate.
+It does not go back to choosing a question for a FAN pivot: when direct
+evidence on the current question is spent, the pivot to an associate is more
+plan items on that same question, because only one question is open at a time.
 
 You can work through this two ways: step by step, with the system pausing
 for your judgment at each decision, or continuously, where it works the
@@ -75,18 +77,18 @@ because someone else entered it.
 
 ### Choosing the next question
 
-One question at a time, chosen against a stated priority order: an
-unresolved conflict first, then an open hypothesis to test, then a
-high-severity gap in the timeline, then decomposing the objective into its
-parts, then a pedigree gap, then a FAN pivot, then following up new
-evidence. The reason for the choice is recorded, so you can disagree with
-it.
+One question at a time, chosen against a stated priority order: an open
+hypothesis to test, then a part of the objective no question covers yet, then
+a pedigree gap. A conflict, a gap in the timeline, a FAN pivot or new evidence
+is more searching on the question already open, not a new question. When the
+objective holds several independent facts, you choose which comes first. The
+reason for the choice is recorded, so you can disagree with it.
 
 Two rules govern the loop:
 
 - **Finish what's open.** If a planned search is already underway, the
   system recommends completing it rather than opening a new question —
-  unless an unresolved conflict blocks that question.
+  even when an unresolved conflict blocks that question: settling it is a step on the question already open.
 - **Stop when the objective is answered, not when everything is proved.**
   Once each independent part of the objective carries a conclusion at
   *probable* or better, research stops. The system does not invent
@@ -334,15 +336,24 @@ The default when in doubt is to go back and search more — a gap is usually
 unsearched rather than unobtainable.
 
 The result is stored in `search_stop.stopped_because` on the question. Three
-values allow a proof conclusion to follow: `question_answered` (the evidence
-answers the question), `record_exhausted` (all reachable sources are spent),
+values are stop-gate values: `question_answered` (the evidence answers the
+question), `record_exhausted` (all reachable sources are spent),
 `nothing_further_reachable` (accessible evidence supports a conclusion, but
-some sources cannot be reached from here). Two values do not:
-`resources_spent` (budget or time ran out with reachable sources remaining)
-and `blocked_by_conflict` (an unresolved contradiction blocks any tier).
-Either way, `not_reached` lists what could not be reached — nil searches,
-browse-only collections, privacy-sealed records — so the researcher sees
-exactly what was left on the table.
+some sources cannot be reached from here). Two are not: `resources_spent`
+(budget or time ran out with reachable sources remaining) and
+`blocked_by_conflict` (an unresolved contradiction is in the way).
+
+**What the gate actually gates is the two conclusive tiers**, `proved` and
+`disproved` (`CONCLUSIVE_TIERS` in `research-append.ts`). A non-gate stop still
+admits `probable`, `possible` and `not_proved`, and always has — the engine has
+never refused those on a non-gate stop. That matters because step mode's "not
+exhaustive" choice offers the researcher exactly this: stop here and conclude at
+the tier the evidence supports, or search on. If a non-gate stop permitted no
+conclusion at all, that offer could not be made.
+
+Either way, `not_reached` lists what was left — nil searches, browse-only
+collections, privacy-sealed records, and the sources the question never planned
+(`deferred`) — so the researcher sees exactly what is still on the table.
 
 Question type matters. A simple recall question can stop early. A
 completeness question — "did they have *any other* children?" — cannot

@@ -381,7 +381,8 @@ consistent across schema, manifest, and skill.)*
   `XXXX-XXXX-XXXX-X` id treated as `3:1:`, resolver URLs, `/$dist`,
   `dgs:.../dist.jpg`).
 - `imageArk` — the field `record_read` returns a page image under, and the key
-  `research_log_append` logs an image entry by — is read as `ark`, and a query
+  `research_log_append` logs an image entry by — is read as `ark` (not on the
+  schema; `server.ts`'s unknown-argument guard accepts it as an alias), and a query
   string never decides an `ark`'s shape. Both are `foldImageArkInput`'s job, run
   first, before the forms are counted; the rules are `image-read-spec.md`'s
   (Input, and "ark format"), shared unchanged. Among them: when `ark` and
@@ -464,10 +465,25 @@ consistent across schema, manifest, and skill.)*
     an upload is `record-structurer`'s job.
   - A **PDF** goes down the same `image_url` data-URL path as a memory PDF (`application/pdf`)
     — see §5.4 for why that is the PDF reader.
-- `lookingFor` is a search key only. It focuses a FOUND/NOT FOUND pointer (withheld on a truncated read,
-  §6.2); it **never** shortens or slants the full transcription, and any
-  *assertion* in it ("confirm the father is Adam Schreck") is ignored —
-  transcribe what the page says.
+- `lookingFor` is a search key only. It focuses a FOUND/NOT FOUND pointer
+  (withheld on a truncated read, §6.2) decided by a **second, text-only call**
+  over the transcription (§6.1) — the OCR prompt never carries it. It cannot
+  shorten or slant the full transcription, and any *assertion* in it ("confirm
+  the father is Adam Schreck") is ignored — transcribe what the page says.
+  The OCR prompt is name-blind because priming is real and measured
+  (2026-10-29, on the 1869 Ajó census page the finding came from: a hard hand,
+  default model, temperature 0, 5 reads per arm, every read distinct, scored
+  against the page's indexed entries): with the hint in the OCR prompt, 5/5
+  primed reads wrote a hinted name the page's index does not have into a row,
+  3/5 spread the hinted surname beyond its indexed row, and 5/5 returned the
+  target's age as the hint's "~8" — against 0/5, 0/5 and 0/5 for the unprimed
+  arm, whose noise was uncorrelated with the hint. Re-measured on the fixed
+  build the same day, same protocol: 0/5 primed reads carried the hinted name
+  — the primed arm became indistinguishable from the unprimed arm — and
+  `found`, now from the second call, stopped echoing the hint (4/5 NOT FOUND
+  on a page whose transcription cannot verify the hinted household, where the
+  primed OCR prompt had returned FOUND 5/5 resting on rows it had itself
+  invented).
 - `projectPath` is **required on the MCP schema**. The project is
   classified before anything else for every input form, so a folder that is not
   a project gets the no-project answer before any fetch or OCR. The tool
@@ -484,22 +500,24 @@ consistent across schema, manifest, and skill.)*
 When `lookingFor` contains a recognized English given name (formal or
 variant), the tool automatically expands it with historical diminutives
 from the bundled variant table (`config/given-name-variants.json`) before
-building the OCR prompt.
+building the **found-check prompt** (§6.1) — the OCR prompt carries no
+caller content at all (§5.3).
 
 - Input: `lookingFor: "Elizabeth Martin"`
-- VLM sees: `mentions "Elizabeth Martin (also known as Betty, Betsy, Beth, Liz, Lizzy, Eliza, Lisa, Bess, Eliz, Eliz., Elizth.)" by writing exactly FOUND or NOT FOUND`
+- The found check sees: `mentions "Elizabeth Martin (also known as Betty, Betsy, Beth, Liz, Lizzy, Eliza, Lisa, Bess, Eliz, Eliz., Elizth.)"`
 
 All variant forms are included (including scribal abbreviations with
-periods) because the VLM reads natural language, not query syntax.
+periods) because the model reads natural language, not query syntax.
 Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
 When expansion fires, the response includes a `nameExpansion` field
 (reversing the prior §5.3.1 decision — the genealogist needs to know
-what the VLM was primed with before reading a contested hand):
+which name forms the found check credited):
 
 - `original`: the caller's `lookingFor` string
-- `expanded`: the rewritten prompt the VLM actually saw
+- `expanded`: the rewritten `lookingFor` the found check saw (the OCR
+  prompt never sees any form of it)
 - `expansions`: which formal names were expanded and to which variant
   forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
 
@@ -534,9 +552,18 @@ This uses the same underlying name-variant tables as `get_name_variants`, withou
    content part with the `file-parser` plugin (engines `native`, free `cloudflare-ai`,
    paid `mistral-ocr`) is the alternative request shape — not built, because the measured
    path works with no plugin fee.
-5. **Stage** (with `projectPath`): the transcription is retained host-side through the
-   search tools' channel (§5.5) and a `digest` is computed. Best-effort.
-6. **Return** `staged` / `digest` / `found` + light metadata (§5.5) — the text only when
+5. **Found check** (with `lookingFor`, on a complete read only): one more
+   OpenRouter request, **text-only** — the transcription plus the expanded
+   `lookingFor` (§5.3.1), no image — whose reply's final-line marker sets
+   `found` (§6.2). It runs on what is left of the OCR leg's single budget
+   (§5.7) and is best-effort: a failure omits `found`, never fails the read.
+   Skipped on a truncated read. It runs before staging, so the staged element
+   and the `digest` carry its verdict.
+6. **Stage** (with `projectPath`): the transcription is retained host-side through the
+   search tools' channel (§5.5) and a `digest` is computed. Best-effort. For an `imageId`
+   or `ark`, the staged source carries the image group's coverage place (§5.5.1), looked
+   up beside steps 1–4.
+7. **Return** `staged` / `digest` / `found` + light metadata (§5.5) — the text only when
    staging failed. No image block.
 
 There is **no size cap for transport reasons** — the bytes go host→OpenRouter, never back
@@ -576,7 +603,9 @@ Text only, no image block:
                              // ARK: the resolver URL, preserving i=/cc=/groupId= context params.
   truncated?: true           // present when the OCR hit its output-token cap (finish_reason or native_finish_reason marks it — §6.2); transcription is PARTIAL
   truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
-  found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2), AND the model emitted the marker on the final line
+  found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2),
+                             // AND the text-only found check (§6.1) replied with a parseable marker —
+                             // omitted when that second call fails (it is best-effort)
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"; never for a `file` input
   staged: { resultsRef: string; returnedCount: number } | null  // the staging handle (search-result-staging-spec.md); null when staging failed
   stagingError?: string      // why `staged` is null
@@ -599,18 +628,56 @@ Text only, no image block:
 ```
 
 **The staged element** (one per call, `results[0]` of the envelope, snake_case — it is
-persisted project state): `{ id, source: { imageId | ark | memoryArtifactUrl | file },
+persisted project state): `{ id, source: { imageId | ark | memoryArtifactUrl | file, place? },
 content_type, size_bytes, model, transcription, truncated?, found?, image_ref? }`, where
 `image_ref` is the `imageRef` of the scan retained under `images/`, absent whenever no
 scan was retained (the save failed, the content is not an image, such as a PDF, or the
-input was a `file`); the envelope's
-`query` is `source` plus `lookingFor`. `extraction_append`'s documents mode logs it as
+input was a `file`), and `source.place` is the image group's coverage place (§5.5.1),
+absent when it was not looked up or none was found; the envelope's
+`query` is the input `source` (without `place`) plus `lookingFor`. `extraction_append`'s documents mode logs it as
 `image_transcribe` and finalizes it into `results/<log_id>.json` exactly as a search page;
 a ref a caller already finalized with `research_log_append` is cited through that log
 entry rather than logged again. `sidecar_read` reads either form back.
 
 The transcription is the full page (every relevant entry, not just the `lookingFor`
 target), original spelling/language, with `[?]` / `[illegible]` / `[torn]` marks.
+
+#### 5.5.1 The image group's coverage place (`source.place`)
+
+`research_append` takes a page's record country from it (lead, 2026-10-29: image records
+carry their film's country; `research-append-tool-spec.md`, the place levers). Looked up
+only for an `imageId` or `ark` read with `projectPath`, never for a `file` or a memory, by
+`imageGroupPlace` (`src/utils/image-group.ts`, which also holds the group-id resolution and
+metadata fetch `image_search` uses):
+
+1. **The film.** An `imageId` names it (`004884748_02613` is film `004884748`), and so
+   does a DGS distribution URL. An image ARK is asked once: its resolver URL with
+   `Accept: application/json` answers `{ name: "007156564_00250", apid, … }`.
+2. **The group.** `group-service/group/{film}/apid`, then `group-service/group/{apid}`,
+   the metadata `image_search`'s `item` reads its place from.
+3. **The place.** The trailing segments every `coverages[].place` shares: a film of one
+   parish gives the parish, one of several towns in a province the province, and a film
+   whose coverages end in different countries gives none.
+
+Each request has a 10 s timeout and retry budget, and the lookup runs beside the page
+fetch and the OCR. The place is cached per film, and the film per ARK, for the life of
+the process. Cached: an answer (a place, a group with no coverage place, an image name
+that is no image), and a 403 (a restricted group) or a 404 on any of its requests (the
+ARK, `group/{film}/apid`, `group/{apid}`), as no place. Anything else is asked again
+next time: a network failure, any other status (a 401 for a rejected token, a 400, a
+5xx or 429), a body that is not JSON. Any failure stages no `place`, and none is ever an
+error.
+
+**Format, measured live 2026-10-29** on every film and image ARK the e2e corpus
+transcribed: 144 groups (58 films named by imageIds, 86 more reached from ARKs). 142
+answered and 2 were refused (403); every one that answered had a coverage place. The
+place is a FamilySearch standard place with the country **last**: in all 147 of the
+coverages' top-level places (`placeRepIdHierarchy[0]`, resolved by id), it is the last
+segment and never the first ("San Lorenzo, Grant, New Mexico, United States"). 25 groups
+list more than one coverage place, and 3 of them end in different countries (Austria and
+Hungary; Slovakia, Hungary and Czechoslovakia, twice), which is why the place is the
+shared one rather than `coverages[0]`. Of 117 image ARKs, 102 named their image, 11 were
+refused (403) and 4 answered 400.
 
 ### 5.6 Errors (all LLM-actionable, thrown as `Error`)
 
@@ -651,7 +718,7 @@ headers and body together:
 | Leg | Constant | Budget |
 |---|---|---|
 | FS image download (and its fallback-URL retry) | `IMAGE_FETCH_TIMEOUT_MS` (`utils/fs-image-fetch.ts`) | 90s per attempt |
-| OpenRouter OCR | `OCR_TIMEOUT_MS` (`utils/ocr.ts`) | 180s for the whole leg, its retries and waits included (§5.9) |
+| OpenRouter OCR + found check | `OCR_TIMEOUT_MS` (`utils/ocr.ts`) | 180s for the whole leg — both calls (§6.1), their retries and waits included (§5.9); the found check runs on what the OCR read leaves |
 
 Worst case for one `image_transcribe` is therefore 90 + 90 + 180 = **360s**,
 inside the e2e harness's 600s inactivity window — and a timeout returns as a
@@ -709,10 +776,18 @@ because it is what names the probe's `imageId`). The error names
 the group, the count, and the refused image's film-viewer link (`imageViewerUrl`),
 and tells the agent to log the browse as `partial` with `research_log_append` (the
 group, the pages read, what it was looking for), move to other routes, and name the
-unfinished browse in its final summary with that link. The `image_read` and
-`image_transcribe` refusal adds "run `volume_bisect` first, then read the narrowed
-range", so no agent or skill body has to change; `volume_bisect`'s refusal asks
-instead for the bracket reached so far. Re-reading any image already counted
+unfinished browse in its final summary with that link. It says nothing resets the
+cap, neither a new agent nor a new session, in one of two variants. When the count
+was read from the project's log (`persistPath` resolved), the refusal says the images
+"have already been read in this project" and that "the cap is per film, per project:
+every sub-volume of film <group> shares it". When the read carried no project, it says
+"in this server session, because this read named no project" and that a new
+agent does not reset it. The `image_read` and `image_transcribe` refusal adds that
+reads in other films are not affected and that, to find one year's page in another
+browse-only volume, the agent should "run `volume_bisect` first if you hold it, then
+read the narrowed range", so no agent or skill body has to change; it never tells the
+agent to hand back, since every agent is refused on that film. `volume_bisect`'s
+refusal asks instead for the bracket reached so far. Re-reading any image already counted
 never refuses and never advances the count; an image read by two tools counts once.
 
 **Where the count lives.** `src/utils/browse-budget.ts` (`checkImageBrowseCap`
@@ -753,7 +828,8 @@ a second 20 beside the project's. **The cost:** the desktop process outlives one
 project, so a no-path read in one project can be refused for pages an earlier project
 read in the same session (in memory only — a restart clears it). Accepted because the
 alternative under-counts every delegated read; the refusal says "this server session"
-for that case.
+for that case, never "this project", because it can be refusing pages another project
+read.
 
 **Known limitation — header-less http requests share a bucket.** A request with no
 `X-Genealogy-Project-Id` header binds an *unbound* store (no `projectId`, and its
@@ -886,7 +962,7 @@ every attempt is a live OCR call.
   "messages": [{
     "role": "user",
     "content": [
-      { "type": "text", "text": "<faithful-OCR prompt + optional lookingFor>" },
+      { "type": "text", "text": "<faithful-OCR prompt — never carries lookingFor (see below)>" },
       { "type": "image_url", "image_url": { "url": "data:image/jpeg;base64,<...>" } }
     ]
   }],
@@ -919,15 +995,37 @@ every attempt is a live OCR call.
   with `make e2e-transcribe-failures`, which reports reachability, not sizes.
   A cap that binds is **visible** (`truncated`,
   §6.2), never silent.
-- The OCR **prompt is baked into the tool**, not passed by the caller —
-  reuse the `image-reader.md` protocol so behavior is identical to today's
-  subagent. `lookingFor` is appended as the optional pointer directive.
+- The OCR **prompt is baked into the tool**, not passed by the caller, and it
+  carries **no caller content**: a `lookingFor` appended to it primed the read
+  to return the hinted names in rows the page does not have (measurement in
+  §5.3), so the pointer directive moved to a second call.
+- **The found check** (with `lookingFor`, complete reads only) is a second
+  request to the same endpoint: same headers, same `temperature: 0`, and the
+  same `provider: { data_collection: "deny" }` (the transcription is PII).
+  Text-only — one content part carrying the transcription and the expanded
+  `lookingFor` (§5.3.1), no `image_url` — capped at `FOUND_CHECK_MAX_TOKENS`
+  (2000: the reply is one word, but the default model is reasoning-capable and
+  reasoning draws on the same output budget). It reuses the OCR transport
+  (`utils/ocr.ts` `postChat`: the transport retry, the 429/503 backoff, the
+  truncation detection) and runs on what is left of the OCR leg's 180s budget
+  (§5.7). Measured 2026-10-29 (5 calls, default model, a 1,561-char census
+  transcription → a 1,985-char prompt, OpenRouter usage accounting): latency
+  2.1–8.0s (median 2.7s), 713 prompt tokens, 179–651 completion tokens (the
+  reply is two words; the rest is reasoning, which is why the cap is 2000),
+  billed $0.0012–$0.0030 per call. In `search-images` page-browsing terms: the
+  check adds roughly a tenth of the OCR read's p50 latency per page, only on
+  pages read with a `lookingFor`.
 
 ### 6.2 Response
 
-Parse `choices[0].message.content` → `transcription`. Derive `found` by
-looking for the FOUND/NOT FOUND marker the prompt asks the model to emit.
-Guard against empty content (→ error per §5.6).
+Parse `choices[0].message.content` → `transcription`. Guard against empty
+content (→ error per §5.6). Derive `found` from the SECOND, text-only call
+(§6.1): the FOUND/NOT FOUND marker on its reply's final line, read exactly as
+the transcription-tail marker used to be (start-of-line match, so body text
+like "infant found abandoned" cannot spoof it). A reply with no parseable
+marker — including one cut by its own token cap — or a found-check failure of
+any kind omits `found`; never an error, since the transcription is the
+primary payload.
 
 **Output-cap truncation.** Read `choices[0].finish_reason` **and**
 `choices[0].native_finish_reason`. OpenRouter is OpenAI-compatible and returns
@@ -956,9 +1054,10 @@ success and the caller cannot tell a half-read census page from a whole one.
 - The `transcription` stays **verbatim** — the signal rides the sibling
   fields, never spliced into the OCR text (that would re-create the
   prose/OCR blend a truncation notice must never introduce).
-- **Suppress `found` on a truncated read.** The FOUND/NOT FOUND marker rides
-  a final line the model never reached, and a target may sit below the cut,
-  so a half-read page must never surface a clean `NOT FOUND` negative.
+- **Skip the found check on a truncated read.** A target may sit below the
+  cut, so a half-read page must never surface a clean `NOT FOUND` negative —
+  the second call is not made at all, and `found` is absent from the response,
+  the staged element and the digest alike.
 - **Out of scope:** a model that stops early on its own
   (`finish_reason: "stop"` on an unfinished page — no cheap signal, a
   model-quality problem) and a transport cut mid-body (already thrown by
@@ -1323,8 +1422,13 @@ Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
   `Authorization: Bearer <key>`, and `temperature: 0`.
 - **Happy path**: mocked OpenRouter response → `transcription` extracted from
   `choices[0].message.content`; metadata populated (model, `sizeBytes`).
-- **`lookingFor`**: sets `found` from the FOUND/NOT FOUND marker; asserts the
-  full transcription is still returned (never shortened).
+- **`lookingFor`**: the OCR request's prompt carries NO `lookingFor` text and
+  no FOUND directive; a second, text-only request (no `image_url` part)
+  carries the transcription and the expanded key, and `found` comes from its
+  final-line marker; a second-call failure or an unparseable reply omits
+  `found` with the transcription intact; no second call without `lookingFor`
+  or on a truncated read; the staged element and the digest carry `found`
+  (`tests/tools/image-transcribe.test.ts`, `tests/utils/ocr.test.ts`).
 - **No key** → LLM-instruction error, **and `fetch` to OpenRouter is never
   called** (fail closed).
 - **OpenRouter non-2xx** → clean `OpenRouter OCR failed: …`.
@@ -1420,6 +1524,13 @@ passed unedited across the move:*
   `OCR_MAX_TOKENS` and `MAX_OCR_INPUT_BYTES` so
   existing importers keep their paths
 - `docs/specs/volume-bisect-tool-spec.md` — the second producer's contract
+
+*Image-group place (§5.5.1):*
+- `src/utils/image-group.ts` — `imageGroupPlace`, and the group-id resolution and metadata
+  fetch lifted from `image-search.ts`, which imports them
+- `src/tools/image-transcribe.ts` — the lookup beside the fetch, `source.place` on the staged element
+- `src/types/image-transcribe.ts` — `place` on `StagedTranscription.source`
+- `tests/utils/image-group.test.ts`, `tests/tools/image-transcribe.test.ts`
 
 *Image-persistence increment (§8.5):*
 - `src/tools/research-append.ts` — TTL-GC sweep of unreferenced `images/*.jpg` after each write

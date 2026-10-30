@@ -4,7 +4,9 @@
  * recalling them (issue #2995; external-links-search-tool-spec.md, "Stored list").
  *
  * Host-written only: `external_links_search` writes it, `research_query` and
- * `project_context` read it, and the raw-write deny protects it. It is not a
+ * `project_context` read it, `research_append`, `build_external_search_url` and
+ * `research_log_append` refuse a collection it does not hold, and the raw-write
+ * deny protects it. It is not a
  * `research.json` section and is not schema-validated — the rows are API data.
  *
  * Shape (snake_case: a persisted document):
@@ -64,6 +66,24 @@ export function collectionKey(url: string): string {
   if (anc && /ancestry\./i.test(url)) return `ancestry:${anc[1] ?? anc[2]}`;
   if (MYHERITAGE_COLLECTION.test(url)) return url.split(/[?#]/)[0];
   return url;
+}
+
+/** Whether a url names one specific collection (an Ancestry collection id or a
+ *  MyHeritage collection page), as opposed to a site's or an archive's own search. */
+export function namesCollection(url: string): boolean {
+  return (ANCESTRY_ID.test(url) && /ancestry\./i.test(url)) || MYHERITAGE_COLLECTION.test(url);
+}
+
+/** Every stored row's `collectionKey`, across all places: a collection is checked
+ *  against the whole file, so no free-text place has to be matched to a stored one. */
+export function storedCollectionKeys(doc: ExternalCollectionsDoc | null): Set<string> {
+  const keys = new Set<string>();
+  for (const entry of Object.values(doc?.places ?? {})) {
+    for (const row of Array.isArray(entry?.rows) ? entry.rows : []) {
+      if (typeof row?.url === "string") keys.add(collectionKey(row.url));
+    }
+  }
+  return keys;
 }
 
 /** Code-unit order: `localeCompare` would make the stored bytes depend on the host's locale. */
@@ -184,6 +204,20 @@ export async function readExternalCollections(projectPath: string): Promise<Exte
     throw new Error(`${EXTERNAL_COLLECTIONS_FILE} is not an object with a "places" object`);
   }
   return doc;
+}
+
+/** The stored collections by `collectionKey`, or why the file could not be read.
+ *  Shared by the three writers that refuse an unstored collection:
+ *  `research_append` (`collection_url`), `build_external_search_url` (`baseUrl`)
+ *  and `research_log_append` (`externalSite.urlGenerated`). */
+export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: string };
+
+export async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
+  try {
+    return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 /**

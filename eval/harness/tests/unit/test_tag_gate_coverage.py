@@ -40,18 +40,20 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
+    "not-reached-wiki": (
+        "its only test, ut_research_exhaustiveness_019, was deleted by PR #3917: "
+        "it fails 2 of 4 on main because the agent skips the localities read; "
+        "issue #2475 restores it once a writer precondition can join search_stop "
+        "to localities"
+    ),
     "objective-target": (
         "its only test, ut_research_plan_r3d (an xfail), was deleted by PR #3124; "
         "the validator was kept and no test carries the tag yet"
     ),
-    "no-wiki-no-write": (
-        "its only test, ut_search_wikipedia_008, was deleted by PR #3871: the bench "
-        "ran its dispatching lead on Haiku, which refused the request itself; "
-        "issue #3870 restores it"
-    ),
-    "scope-decline": (
-        "in search-wikipedia, its only test was ut_search_wikipedia_008, deleted by "
-        "PR #3871; issue #3870 restores it"
+    "unblocks-nonempty": (
+        "step mode section E retired the gatekeeper questions it graded "
+        "(ut_question_selection_003, _005, _006, _008, _d03); the validator was "
+        "kept and no test carries the tag yet"
     ),
 }
 

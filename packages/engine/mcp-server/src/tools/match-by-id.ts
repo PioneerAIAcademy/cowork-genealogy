@@ -13,6 +13,7 @@ import type {
   MatchConfidence,
   MatchStatus,
 } from "../types/match-by-id.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 
 const API_URL =
   "https://sg30p0.familysearch.org/search/match/resolutions/match/matches";
@@ -97,7 +98,7 @@ async function matchById(
   }
 
   if (!response.ok) {
-    await throwForBadStatus(response, queryArk);
+    await throwForBadStatus(response, queryArk, principal);
   }
 
   let body: MatchApiResponse;
@@ -265,13 +266,14 @@ function simplifyEntry(entry: MatchApiEntry): MatchByIdMatch | null {
 async function throwForBadStatus(
   response: Response,
   queryArk: string,
+  principal: Principal,
 ): Promise<never> {
   const text = await response.text().catch(() => "");
   if (response.status === 401 || response.status === 403) {
-    throw new Error(
+    const desktop =
       `FamilySearch match API rejected the request: ${response.status} ${response.statusText}. ` +
-        `Call the login tool to authenticate.`,
-    );
+      `Call the login tool to authenticate.`;
+    throw new Error(response.status === 401 ? await rejectedTokenMessage(principal, desktop) : desktop);
   }
   if (response.status === 400) {
     throw new Error(`FamilySearch rejected the id "${queryArk}" as a malformed ARK.`);

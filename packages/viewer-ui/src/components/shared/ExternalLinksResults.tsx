@@ -1,15 +1,13 @@
-import { openExternal } from '../../lib/external'
+import { isOpenableUrl, openExternal } from '../../lib/external'
 import { nonEmpty, type ExternalLinkResult } from './SidecarResultCard'
 import styles from './SidecarResultCard.module.css'
-
-const OPENABLE_RE = /^https?:\/\//i
 
 /**
  * An `external_links_search` sidecar: one card listing every staged link. These
  * point at Ancestry, FindMyPast and other sites, so they go through the generic
  * `openExternal` channel, not `openFamilySearch` — and, as with every generic
  * sink, the URL is shown as its own text so the reader can see the destination.
- * Only http(s) URLs are clickable, matching Linkify.
+ * Only https URLs are clickable (`isOpenableUrl`).
  */
 export default function ExternalLinksResults({
   results
@@ -30,7 +28,7 @@ export default function ExternalLinksResults({
               <li key={i} className={styles.treeMatchItem}>
                 <span>{link.label || link.url}</span>
                 {' — '}
-                {OPENABLE_RE.test(link.url) ? (
+                {isOpenableUrl(link.url) ? (
                   <button
                     type="button"
                     className={styles.externalLink}

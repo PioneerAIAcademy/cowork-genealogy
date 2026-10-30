@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { planItemFlags } from "../../src/utils/plan-item-plausibility.js";
+import { compoundJurisdictionError, planItemFlags } from "../../src/utils/plan-item-plausibility.js";
 
 // Phase 3 item 5: "dead ends become next actions", and the next actions have to be
 // usable. In the reported failure 2 of 8, then 1 of 3 suggestions were viable -- the
@@ -120,7 +120,7 @@ describe("planItemFlags — years", () => {
 // feature -- the plan called it built for two weeks while no caller existed.
 
 import { researchAppend } from "../../src/tools/research-append.js";
-import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -133,7 +133,7 @@ function project(research: Record<string, unknown>): string {
     plans: [{ id: "pl_001", question_id: "q_001" }],
     plan_items: [], log: [], sources: [], assertions: [], person_evidence: [],
     conflicts: [], hypotheses: [], timelines: [], proof_summaries: [],
-    evaluations: [], known_holdings: [],
+    evaluations: [],
     localities: [{ id: "lo_001", place: "Schuylkill, Pennsylvania" }],
     ...research
   }), "utf8");
@@ -183,3 +183,115 @@ describe("research_append surfaces the plan-item flags", () => {
   });
 });
 
+// A plan item names one place: search-records hands its jurisdiction to record_search
+// as the one residencePlace. A run of ut_research_plan_wzk wrote "Alabama and Texas,
+// United States", was only warned, and returned the warning as "cosmetic".
+
+const TWO_STATES = [loc("Alabama, United States"), loc("Texas, United States")];
+
+describe("compoundJurisdictionError", () => {
+  for (const jurisdiction of [
+    "Alabama and Texas, United States",
+    "Hill County, Texas and Alabama, United States",
+    "Blount County, Alabama and Smith County, Texas, United States",
+    "Texas and Alabama",
+    "Texas & Alabama",
+    "Alabama or Texas",
+    "Blount County, Alabama; Smith County, Texas",
+    "Alabama / Texas, United States",
+  ]) {
+    it(`refuses ${jurisdiction}, every part of which is a researched locality`, () => {
+      expect(compoundJurisdictionError({ jurisdiction }, TWO_STATES)).toMatch(/names \d places .*one item per place/);
+    });
+  }
+
+  for (const [jurisdiction, localities] of [
+    ["Lewis and Clark County, Montana, United States", [loc("Montana, United States")]],
+    ["Antigua and Barbuda", [loc("Antigua and Barbuda")]],
+    ["East and West Feliciana Parish, Louisiana", [loc("Louisiana, United States")]],
+    ["Alabama and Georgia, United States", TWO_STATES],
+    ["Smith County and Hill County, Texas", TWO_STATES],
+    ["Andalusia, Covington, Alabama, United States", TWO_STATES],
+    ["Alabama and Texas, United States", []],
+  ] as const) {
+    it(`leaves ${jurisdiction} alone (${localities.length} localities)`, () => {
+      expect(compoundJurisdictionError({ jurisdiction }, [...localities])).toBeUndefined();
+    });
+  }
+
+  it("never throws on a malformed item", () => {
+    for (const bad of [{}, { jurisdiction: 7 }, { jurisdiction: null }, null as never]) {
+      expect(compoundJurisdictionError(bad as never, TWO_STATES)).toBeUndefined();
+    }
+  });
+});
+
+describe("research_append refuses a plan item that names two places", () => {
+  const states = { localities: [{ id: "lo_001", place: "Alabama, United States" }, { id: "lo_002", place: "Texas, United States" }] };
+
+  it("refuses the append and writes nothing", async () => {
+    const dir = project(states);
+    const text = await append(dir, { ...ITEM, jurisdiction: "Alabama and Texas, United States" });
+    expect(text).toMatch(/"ok":\s*false/);
+    expect(text).toMatch(/names 2 places \(Alabama; Texas, United States\)/);
+    expect(JSON.parse(readFileSync(join(dir, "research.json"), "utf8")).plans[0].items ?? []).toEqual([]);
+  });
+
+  it("refuses the same item inline on a plans append", async () => {
+    const out = await researchAppend({
+      projectPath: project(states), section: "plans", op: "append",
+      entry: { question_id: "q_001", status: "active", items: [{ ...ITEM, id: "pli_001", jurisdiction: "Texas and Alabama" }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/names 2 places/);
+  });
+
+  it("accepts one item per place", async () => {
+    const dir = project(states);
+    expect(await append(dir, { ...ITEM, jurisdiction: "Alabama, United States" })).toMatch(/"ok":\s*true/);
+    expect(await append(dir, { ...ITEM, sequence: 2, jurisdiction: "Texas, United States" })).toMatch(/"ok":\s*true/);
+  });
+
+  it("does not hold an edit to a compound item written before the rule", async () => {
+    const dir = project({ ...states, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [
+      { ...ITEM, id: "pli_001", jurisdiction: "Alabama and Texas, United States" },
+    ] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { rationale: "Reworded." },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/"ok":\s*true/);
+  });
+
+  it("does not hold an update that re-sends the stored compound jurisdiction", async () => {
+    const dir = project({ ...states, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [
+      { ...ITEM, id: "pli_001", jurisdiction: "Alabama and Texas, United States" },
+    ] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { jurisdiction: "Alabama and Texas, United States", rationale: "Reworded." },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/"ok":\s*true/);
+  });
+
+  it("checks an inline item on a plans update only when its jurisdiction changed", async () => {
+    const stored = { ...ITEM, id: "pli_001", jurisdiction: "Alabama and Texas, United States" };
+    const plans = [{ id: "pl_001", question_id: "q_001", status: "active", items: [stored] }];
+    const update = (items: unknown[]) => researchAppend({
+      projectPath: project({ ...states, plans }), section: "plans", op: "update", entryId: "pl_001",
+      fields: { items },
+    } as never, undefined as never).then(JSON.stringify, (e: Error) => e.message);
+    expect(await update([{ ...stored, rationale: "Reworded." }])).toMatch(/"ok":\s*true/);
+    expect(await update([{ ...stored, jurisdiction: "Texas and Alabama" }])).toMatch(/names 2 places/);
+  });
+
+  it("refuses an update that sets a compound jurisdiction", async () => {
+    const dir = project({ ...states, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [
+      { ...ITEM, id: "pli_001", jurisdiction: "Alabama, United States" },
+    ] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { jurisdiction: "Alabama and Texas, United States" },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/names 2 places/);
+  });
+});
