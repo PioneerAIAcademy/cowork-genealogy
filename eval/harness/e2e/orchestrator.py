@@ -57,6 +57,7 @@ from harness.context_policy import (
     owned_section_denial,
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
+    AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.delegation import foreground_rewrite
@@ -265,11 +266,12 @@ def is_blocked_tree_tool(
 def is_main_thread_subagent_only_tool(input_data: dict[str, Any]) -> bool:
     """Whether this is a main-thread call to a `SUBAGENT_ONLY_TOOLS` member.
 
-    The set has ONE member today: `image_read`, declared by no skill and by no
-    agent since `image-reader-opus` was retired (issue #2013) — the deny is kept
-    regardless, because it is what keeps inline base64 off the main thread. A
-    call on the main thread (no `agent_id`) is the router substituting for a
-    failed spawn and doing the work itself.
+    The set is `image_read`, declared by no skill and by no agent since
+    `image-reader-opus` was retired (issue #2013) — the deny is kept regardless,
+    because it is what keeps inline base64 off the main thread — plus the
+    shipped hook's AGENT_ONLY_TOOLS (issue #3528), the tools only agents hold,
+    which production denies the main thread too. A call on the main thread (no
+    `agent_id`) is the router doing an agent's work itself.
 
     `extraction_append` was the other member (the #942 case) and LEFT the set in
     issue #2937, which routes indexed-record extraction through code called from
@@ -2430,10 +2432,14 @@ async def _run_agent(
                         f"{tool_name} on {protected_file} is disabled — all writes to "
                         "research.json/tree.gedcomx.json must go through the writer tools. "
                         "To CREATE a new project use project_create, which writes both "
-                        "files together; to add to an existing one use research_append, "
-                        "research_log_append, tree_edit or tree_correct. These validate "
+                        "files together (from the main session, invoke "
+                        "`@plugin:init-project`, which calls it); to add to an existing one "
+                        "use research_append or research_log_append, and for the tree "
+                        "tree_edit or tree_correct (from the main session, invoke "
+                        "`@plugin:tree-edit`). These validate "
                         "before persisting. Direct file writes never validate. "
-                        "external-collections.json is written only by external_links_search given a projectPath."
+                        "external-collections.json is written only by external_links_search given a "
+                        "projectPath (from the main session, invoke `@plugin:locality-guide`)."
                     ),
                 },
             }
@@ -2487,9 +2493,9 @@ async def _run_agent(
 
         # The per-context tool policy (harness/context_policy.py): a main-thread
         # call to any SUBAGENT_ONLY_TOOLS member is the router substituting for a
-        # failed subagent spawn. Every member is enforced here — today just
-        # `image_read`, since `extraction_append` (#942) left the set in issue
-        # #2937 — because no remaining member is declared by any skill and
+        # failed subagent spawn. Every member is enforced here — `image_read`
+        # and the shipped hook's AGENT_ONLY_TOOLS (#3528) — because no member is
+        # declared by any skill and
         # `agent_id` presence alone discriminates, which is all e2e can see (its
         # sub-skills run in this same session via the Skill tool with no `agent_id`).
         # We deny the bare tool directly rather than through `subagent_only_violation`,
@@ -2509,12 +2515,17 @@ async def _run_agent(
             # this line alone. For image_read the recovery is `image_transcribe`,
             # which stages the page host-side (#2490; the image-reader agent that
             # wrapped it is retired). The fallback covers a future second guarded tool.
-            recovery = {
-                "image_read": (
+            if bare == "image_read":
+                recovery = (
                     "call `image_transcribe` with projectPath instead and read the "
                     "staged page with `sidecar_read`"
-                ),
-            }.get(bare, "delegate to the owning subagent")
+                )
+            elif bare in AGENT_ONLY_TOOLS:
+                recovery = "delegate to " + ", ".join(
+                    f"`@plugin:{a}`" for a in AGENT_ONLY_TOOLS[bare]
+                )
+            else:
+                recovery = "delegate to the owning subagent"
             narration.append(
                 {
                     "tool_calls_before": len(tool_calls),

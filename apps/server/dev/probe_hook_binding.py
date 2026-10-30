@@ -93,6 +93,16 @@ offers a fork as Cowork's would; arm B, with `hooks/` removed, is therefore also
 the evidence that a fork is reachable at all. Same attribution rule: the verdict
 is the guard's own imported reason text on the `Agent` tool_result.
 
+THE AGENT-ONLY CASE
+
+A third pair provokes a main-thread `convert_calendar` call, a tool only agents
+hold (`AGENT_ONLY_TOOLS`, issue #3528), which the guard denies with
+`agent_only_reason`. It is the cheapest member to provoke: pure computation, no
+network, no project, so arm B gets the tool's own answer back rather than an
+upstream error. It also proves the matcher's widened alternative binds, since
+`convert_calendar` reaches the script through no other arm. First run
+2026-10-29 (Claude Code 2.1.308 / SDK 0.2.172): BOUND.
+
 WHAT A PASS DOES NOT PROVE
 
 The hosted SDK loader is not Cowork's loader. Cowork is reachable only by a human
@@ -100,7 +110,7 @@ running a live session, so issue #1160 stays on the `nothing-checks` register
 whatever this reports. Per `docs/architecture.md` §9.4, no CI job can verify
 binding.
 
-Costs four short sessions. Needs a compiled engine (`make engine-build`) and a
+Costs six short sessions. Needs a compiled engine (`make engine-build`) and a
 key in $ANTHROPIC_API_KEY or eval/.env. Run it with `make hook-smoke`.
 """
 from __future__ import annotations
@@ -129,6 +139,7 @@ ENGINE_BUILD = REPO / "packages" / "engine" / "mcp-server" / "build" / "index.js
 sys.path.insert(0, str(SERVER_DIR))
 
 SECTION = "proof_summaries"
+AGENT_ONLY_TOOL = "convert_calendar"
 
 
 def api_key() -> str:
@@ -170,6 +181,14 @@ def expected_fork_reason() -> str:
     import guard_project_files as guard
 
     return guard.FORK_REASON.format(tool="").lstrip()
+
+
+def expected_agent_only_reason() -> str:
+    """The guard's deny text for a main-thread call to an agent-only tool."""
+    sys.path.insert(0, str(PLUGIN_DIR / "hooks"))
+    import guard_project_files as guard
+
+    return guard.agent_only_reason(AGENT_ONLY_TOOL)
 
 
 def preflight(plugin: Path) -> tuple[bool, str]:
@@ -243,7 +262,23 @@ def preflight(plugin: Path) -> tuple[bool, str]:
         fork_got = None
     if fork_got != "deny":
         return False, f"guard script did not deny a fork (decision={fork_got!r})"
-    return True, "guard script denies both probe payloads when run directly"
+    agent_only = subprocess.run(
+        ["python3", str(script)],
+        input=json.dumps({"tool_name": f"mcp__genealogy__{AGENT_ONLY_TOOL}", "tool_input": {}}),
+        capture_output=True, text=True, encoding="utf-8", timeout=20, check=False,
+    )
+    try:
+        agent_only_got = (
+            json.loads(agent_only.stdout or "{}").get("hookSpecificOutput") or {}
+        ).get("permissionDecision")
+    except json.JSONDecodeError:
+        agent_only_got = None
+    if agent_only_got != "deny":
+        return False, (
+            f"guard script did not deny a main-thread {AGENT_ONLY_TOOL} "
+            f"(decision={agent_only_got!r})"
+        )
+    return True, "guard script denies all three probe payloads when run directly"
 
 
 FORK_QUERY = (
@@ -257,6 +292,24 @@ FORK_QUERY = (
     "PROBE_RESULT: DENIED <the exact refusal text>\n\n"
     "Do not retry. Do not call any other tool. Do not ask for permission. Do not "
     "explain. Do not do anything else."
+)
+
+
+AGENT_ONLY_QUERY = (
+    "Call the `convert_calendar` MCP tool exactly once, then stop. Do not delegate "
+    "it to an agent.\n\n"
+    "The genealogy tool schemas are deferred in this session, so if you do not "
+    "already see `convert_calendar` in your available tools, call `ToolSearch` "
+    "once with the query `+convert_calendar` to load it.\n\n"
+    "Call it with EXACTLY these arguments and no others:\n\n"
+    '  {"date": {"year": 1750, "month": 2, "day": 10}, '
+    '"corrections": {"osNsYear": true}}\n\n'
+    "Then output ONE line and nothing else:\n"
+    "  - if the call returned a result, write:  PROBE_RESULT: ALLOWED\n"
+    "  - if the call was refused, blocked or denied, write:  "
+    "PROBE_RESULT: DENIED <the exact refusal text>\n\n"
+    "Do not retry. Do not call any tool other than the two named above. Do not "
+    "ask for permission. Do not explain. Do not do anything else."
 )
 
 
@@ -318,8 +371,12 @@ async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict
         client = ClaudeSDKClient(options=options)
         await client.connect()
         try:
-            query = FORK_QUERY if case == "fork" else QUERY.format(
-                project=str(project).replace("\\", "/"))
+            if case == "fork":
+                query = FORK_QUERY
+            elif case == "agent_only":
+                query = AGENT_ONLY_QUERY
+            else:
+                query = QUERY.format(project=str(project).replace("\\", "/"))
             await client.query(query)
             async for msg in client.receive_response():
                 if isinstance(msg, (AssistantMessage, UserMessage)):
@@ -361,6 +418,9 @@ async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict
         if target is not None:
             if call["name"] not in target or '"fork"' not in call["input"]:
                 continue
+        elif case == "agent_only":
+            if not call["name"].endswith(AGENT_ONLY_TOOL):
+                continue
         elif not call["name"].endswith("research_append"):
             continue
         called = True
@@ -381,7 +441,8 @@ async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict
     )
 
     if not called:
-        verdict = f"VOID (never called {'a fork' if case == 'fork' else 'research_append'})"
+        what = {"fork": "a fork", "agent_only": AGENT_ONLY_TOOL}.get(case, "research_append")
+        verdict = f"VOID (never called {what})"
     elif denied_by_guard:
         verdict = "DENIED_BY_GUARD"
     else:
@@ -415,7 +476,11 @@ async def main() -> None:
     if not ENGINE_BUILD.exists():
         sys.exit(f"no compiled engine at {ENGINE_BUILD} - run `make engine-build`")
 
-    reasons = {"owner": expected_reason(), "fork": expected_fork_reason()}
+    reasons = {
+        "owner": expected_reason(),
+        "fork": expected_fork_reason(),
+        "agent_only": expected_agent_only_reason(),
+    }
     ok, detail = preflight(PLUGIN_DIR)
     print(f"preflight: {'PASS' if ok else 'FAIL'} - {detail}", flush=True)
     if not ok:
@@ -427,7 +492,7 @@ async def main() -> None:
         )
 
     rows = []
-    for case in ("owner", "fork"):
+    for case in ("owner", "fork", "agent_only"):
         for hooks_present in (True, False):
             label = f"{case}/{'a-hooks-present' if hooks_present else 'b-hooks-removed'}"
             print(f"... running {label}", flush=True)
@@ -456,9 +521,13 @@ async def main() -> None:
     for r in rows:
         print(json.dumps(r, indent=2))
 
-    tool = {"owner": "research_append", "fork": "an Agent call with subagent_type fork"}
+    tool = {
+        "owner": "research_append",
+        "fork": "an Agent call with subagent_type fork",
+        "agent_only": f"a main-thread {AGENT_ONLY_TOOL}",
+    }
     failures = []
-    for case in ("owner", "fork"):
+    for case in ("owner", "fork", "agent_only"):
         arm_a = next((r for r in rows if r["case"] == case and r["hooks_present"]), {})
         arm_b = next((r for r in rows if r["case"] == case and not r["hooks_present"]), {})
         if arm_b.get("verdict") != "NOT_DENIED":
