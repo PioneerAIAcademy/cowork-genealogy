@@ -285,4 +285,14 @@ h3 {
     background: var(--bg-primary);
     color: var(--text-primary);
   }
+
+  /* #print-root is display:none until print media applies, so an entry animation
+     (Card's .body fades in from opacity 0) starts at the moment the page is
+     captured and prints invisible: blank card bodies, found in the first PDF. */
+  #print-root *,
+  #print-root *::before,
+  #print-root *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
