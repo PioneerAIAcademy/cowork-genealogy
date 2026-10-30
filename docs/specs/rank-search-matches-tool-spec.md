@@ -255,7 +255,7 @@ ANNOTATED in place with `matchScore` / `matchRank` / `searchRank` /
 `attachedTo*` and ordered best first, and `ranked` carries metadata only
 (ruled 2026-09-15). Measured on this branch at 50 rows, and pinned by
 `tests/utils/staged-compaction.test.ts` so it cannot go stale silently: the
-rejected drop shape is 36,956 bytes, the shipped one 35,206 — 4.7% smaller.
+rejected drop shape is 35,956 bytes, the shipped one 34,206 — 4.9% smaller.
 
 The saving is STRUCTURAL rather than a leaner row. The drop shape's stub
 reintroduced `collectionTitle` on every scored row, immediately after

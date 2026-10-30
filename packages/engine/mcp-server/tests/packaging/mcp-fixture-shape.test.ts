@@ -1069,16 +1069,6 @@ function projectArmFixtureProblem(args: unknown, response: unknown): string | nu
   const parts: string[] = [];
   if (echoed.length) parts.push(`still echoes the API's ${echoed.join(", ")}`);
   if (unnamed.length) parts.push(`does not name whom it scored (no ${unnamed.join(", ")})`);
-  // `scorePair` defines `matched` as "the API returned a confidence", so the two
-  // always agree: a non-match carries none, a match carries one.
-  const matched = (response as { matched?: unknown }).matched;
-  if (typeof matched === "boolean" && matched !== keys.includes("confidence")) {
-    parts.push(
-      matched
-        ? "is a match with no confidence"
-        : "is not a match yet carries a confidence, which scorePair returns only with a match",
-    );
-  }
   return parts.length ? parts.join("; ") : null;
 }
 
@@ -1096,10 +1086,9 @@ describe("same_person fixtures that call the project arm carry the project resul
       .map((r) => `${r.name}: ${r.problem}`);
     expect(
       bad,
-      "a project-arm answer is { matched, confidence?, score, recordSource, recorded, " +
-        "recordPersona, treePerson } and nothing the API echoes, and `matched` is true " +
-        "exactly when `confidence` is there. The union check above cannot see a fixture " +
-        "in the old shape, because the explicit arm still fits it",
+      "a project-arm answer is { score, recordSource, recorded, recordPersona, " +
+        "treePerson } and nothing the API echoes. The union check above cannot see a " +
+        "fixture in the old shape, because the explicit arm still fits it",
     ).toEqual([]);
   });
 
@@ -1109,14 +1098,14 @@ describe("same_person fixtures that call the project arm carry the project resul
       treePerson: { id: "I1", name: "Patrick Flynn" },
     };
     const projectArgs = { assertionId: "~", treePersonId: "I1" };
-    const core = { matched: true, confidence: 5, score: 0.5, recordSource: "record_read", recorded: true };
+    const core = { score: 0.5, recordSource: "record_read", recorded: true };
     const echo = {
       queryArk: "ark:/61903/1:1:MXHY-TP4", candidateArk: "ark:/61903/4:1:KWCJ-RN4",
       apiTitle: "Matches for ark:/61903/1:1:MXHY-TP4", updated: "2026-05-21T00:00:00Z",
     };
 
     // The three ways the bad thing passes the union check
-    expect(projectArmFixtureProblem(projectArgs, { matched: true, confidence: 5, score: 0.5, ...echo }))
+    expect(projectArmFixtureProblem(projectArgs, { score: 0.5, ...echo }))
       .toMatch(/queryArk, candidateArk, apiTitle, updated/);
     expect(projectArmFixtureProblem(projectArgs, { ...core, ...named, candidateArk: "x" }))
       .toMatch(/still echoes the API's candidateArk/);
@@ -1124,21 +1113,12 @@ describe("same_person fixtures that call the project arm carry the project resul
       .toMatch(/no treePerson/);
     expect(projectArmFixtureProblem(projectArgs, core)).toMatch(/no recordPersona, treePerson/);
 
-    // `matched` and `confidence` agree, as `scorePair` makes them
-    expect(projectArmFixtureProblem(projectArgs, { ...core, ...named, matched: false }))
-      .toMatch(/is not a match yet carries a confidence/);
-    const { confidence: _dropped, ...noConfidence } = core;
-    expect(projectArmFixtureProblem(projectArgs, { ...noConfidence, ...named }))
-      .toMatch(/is a match with no confidence/);
-
     // And what must stay accepted
     expect(projectArmFixtureProblem(projectArgs, { ...core, ...named })).toBeNull();
-    expect(projectArmFixtureProblem(projectArgs, { ...core, ...named, confidence: 4 })).toBeNull();
-    expect(projectArmFixtureProblem(projectArgs, { ...noConfidence, ...named, matched: false })).toBeNull();
     // the explicit arm names `primaryId1` and the like, and still echoes
-    expect(projectArmFixtureProblem({ primaryId1: "I1", primaryId2: "I2" }, { matched: true, score: 0.5, ...echo }))
+    expect(projectArmFixtureProblem({ primaryId1: "I1", primaryId2: "I2" }, { score: 0.5, ...echo }))
       .toBeNull();
-    expect(projectArmFixtureProblem({ "args.primaryId1": "~" }, { matched: true, score: 0.5, ...echo }))
+    expect(projectArmFixtureProblem({ "args.primaryId1": "~" }, { score: 0.5, ...echo }))
       .toBeNull();
     // the relatives result and the failure envelope are other members of the same return
     expect(projectArmFixtureProblem({ ...projectArgs, matchRelatives: true }, { matchRelatives: true, matches: [] }))
@@ -1148,7 +1128,7 @@ describe("same_person fixtures that call the project arm carry the project resul
 
   it("selects a project-arm fixture by the arm, not by an `assertionId` in its predicate", () => {
     const oldShape = {
-      matched: true, confidence: 5, score: 0.5,
+      score: 0.5,
       queryArk: "ark:/61903/1:1:MXHY-TP4", candidateArk: "ark:/61903/4:1:KWCJ-RN4",
       apiTitle: "Matches for ark:/61903/1:1:MXHY-TP4", updated: "2026-05-21T00:00:00Z",
     };

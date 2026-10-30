@@ -75,21 +75,18 @@ export interface FamilySearchEcho {
   updated: string;
 }
 
+/** What `scorePair` returns: FamilySearch's score and its echo. */
+export type FamilySearchMatch = { score: number } & FamilySearchEcho;
+
+/** The explicit arm's answer. The echo fields are present when FamilySearch's
+ *  matcher scored the pair. */
 export interface SamePersonResult {
-  /** True when the API returned a `confidence` field on the entry. */
-  matched: boolean;
-  /** Integer 1-5 bucket. Omitted when the API treats the pair as a non-match. */
-  confidence?: number;
-  /** Float 0-1, fine-grained match score from the API's algorithm. */
+  /** Float 0-1, from the matcher config.json names. */
   score: number;
-  /** Canonical ARK of the focus person in gedcomx1 (parsed from response title). */
-  queryArk: string;
-  /** Canonical ARK of the matched person in gedcomx2 (from response entries[0].id). */
-  candidateArk: string;
-  /** Raw response title (e.g. "Matches for ark:/61903/4:1:KGS8-LY1"). */
-  apiTitle: string;
-  /** ISO timestamp from the API response. */
-  updated: string;
+  queryArk?: string;
+  candidateArk?: string;
+  apiTitle?: string;
+  updated?: string;
   /** Not set by either arm any more: the project arm returns
    *  `SamePersonProjectResult`, which carries it as a required field. Kept
    *  optional so a committed fixture of the older shape still parses. */
@@ -124,20 +121,16 @@ export interface ScoredTreePerson {
  * What the project arm returns for a single pair: the score, and whom it
  * scored.
  *
- * Its own type rather than `SamePersonResult`, because `scorePair` returns that
- * one to `rank_search_matches` too. The echo fields on it (`queryArk`,
- * `candidateArk`, `apiTitle`, `updated`) are the API's framing of the request:
+ * Its own type rather than `SamePersonResult`, the explicit arm's. The echo
+ * fields on that one (`queryArk`, `candidateArk`, `apiTitle`, `updated`) are
+ * FamilySearch's framing of the request:
  * the ARKs are the ones the request carried, minted at random for a person
  * whose ark is not a valid FamilySearch id, so they differ between two calls
  * on the same pair and name no one a reader could look up. `recordPersona` and
  * `treePerson` say who was scored instead.
  */
 export interface SamePersonProjectResult {
-  /** True when the API returned a `confidence` field on the entry. */
-  matched: boolean;
-  /** Integer 1-5 bucket. Omitted when the API treats the pair as a non-match. */
-  confidence?: number;
-  /** Float 0-1, fine-grained match score from the API's algorithm. */
+  /** Float 0-1, from the matcher config.json names. */
   score: number;
   /** How the record side was assembled. */
   recordSource: "record_read" | "projection";
@@ -157,10 +150,8 @@ export interface SamePersonRelativeMatch {
   targetId: string;
   /** persons[].id of the relative in gedcomx2 (the candidate side). */
   candidateId: string;
-  /** Float 0-1 from FamilySearch — the real answer. */
+  /** Float 0-1 from the matcher — the real answer. */
   score: number;
-  /** Integer 1-5 bucket from FamilySearch. Omitted on a no-match. */
-  confidence?: number;
   /** The local heuristic score that selected this pair (transparency/debugging). */
   preScore: number;
 }

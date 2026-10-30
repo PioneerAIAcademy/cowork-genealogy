@@ -276,7 +276,7 @@ describe("matchPairs: FamilySearch's matcher", () => {
   };
 
   it("sends each pair what the call site gives FamilySearch, with its own floors and no model", async () => {
-    scorePairMock.mockResolvedValue({ matched: true, confidence: 4, score: 0.8, ...echo });
+    scorePairMock.mockResolvedValue({ score: 0.8, ...echo });
     const call = await matchPairs([treePair(), recordPair()], LOCAL, FS);
 
     expect(scorePairMock.mock.calls).toEqual([
@@ -296,7 +296,7 @@ describe("matchPairs: FamilySearch's matcher", () => {
   it("with retry, scores again a pair that failed once", async () => {
     scorePairMock
       .mockRejectedValueOnce(new Error("transient"))
-      .mockResolvedValue({ matched: false, score: 0.3, ...echo });
+      .mockResolvedValue({ score: 0.3, ...echo });
     const call = await matchPairs([treePair()], LOCAL, { concurrency: 1, retry: true });
     expect(scorePairMock).toHaveBeenCalledTimes(2);
     expect(call.results[0].score).toBe(0.3);
@@ -304,7 +304,7 @@ describe("matchPairs: FamilySearch's matcher", () => {
 
   it("without retry, keeps the error scorePair threw, the very object", async () => {
     const thrown = new Error("FamilySearch matchTwoExamples API error: 500 Internal.");
-    scorePairMock.mockRejectedValueOnce(thrown).mockResolvedValue({ matched: false, score: 0.3, ...echo });
+    scorePairMock.mockRejectedValueOnce(thrown).mockResolvedValue({ score: 0.3, ...echo });
     const call = await matchPairs([treePair(), recordPair()], LOCAL, { concurrency: 1, retry: false });
     expect(scorePairMock).toHaveBeenCalledTimes(2);
     expect(call.results[0]).toEqual({ score: null, error: thrown });

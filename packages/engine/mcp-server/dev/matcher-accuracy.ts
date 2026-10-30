@@ -54,7 +54,6 @@ import { Mob } from "../src/utils/mob.js";
 import { mapWithConcurrency, withRetry } from "../src/utils/place-resolver.js";
 import { arkToBareId, toArk } from "../src/utils/ark.js";
 import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
-import type { SamePersonResult } from "../src/types/same-person.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(HERE, "..", "..", "..", "..");
@@ -311,7 +310,7 @@ export interface Deps {
     id1: string,
     gedcomx2: SimplifiedGedcomX,
     id2: string,
-  ) => Promise<SamePersonResult>;
+  ) => Promise<{ score: number }>;
   ensureLogin: () => Promise<void>;
   log: (line: string) => void;
 }
@@ -332,8 +331,6 @@ interface PairRow extends ScoredPair {
   identity: Identity;
   personaArk: string;
   personaId: string;
-  matched: boolean;
-  confidence?: number;
 }
 
 export function parseArgs(argv: string[]): { refresh: boolean; csv: string | null } {
@@ -464,8 +461,6 @@ export async function main(
         identity: c.identity,
         personaArk: c.personaArk,
         personaId,
-        matched: result.matched,
-        ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
       };
       return row;
     } catch (e) {
@@ -508,10 +503,10 @@ export async function main(
   }
 
   if (args.csv !== null) {
-    const header = ["slug", "identity", "label", "persona_ark", "persona_id", "score", "matched", "confidence"];
+    const header = ["slug", "identity", "label", "persona_ark", "persona_id", "score"];
     const lines = [header.join(",")].concat(
       pairs.map((p) =>
-        [p.slug, p.identity, p.label, p.personaArk, p.personaId, p.score, p.matched, p.confidence]
+        [p.slug, p.identity, p.label, p.personaArk, p.personaId, p.score]
           .map(csvCell)
           .join(","),
       ),
