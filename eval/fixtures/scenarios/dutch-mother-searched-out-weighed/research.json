@@ -91,7 +91,7 @@
           "sequence": 5,
           "record_type": "population_register",
           "jurisdiction": "Zuid-Holland, Netherlands",
-          "date_range": "1830-1850",
+          "date_range": "1830-1853",
           "repository": "FamilySearch",
           "rationale": "The population register lists the household with each member's name as the household gave it.",
           "fallback_for": null,
@@ -226,11 +226,11 @@
       "query": {
         "surname": "van Noord",
         "residencePlace": "Zuid-Holland, Netherlands",
-        "residenceDate": "1830-1850"
+        "residenceDate": "1830-1853"
       },
       "outcome": "negative",
-      "results_examined": 0,
-      "results_available": 0,
+      "results_examined": 2,
+      "results_available": 2,
       "results_ref": null,
       "external_site": null,
       "notes": "The municipality's bevolkingsregister begins in 1850. It lists the father as a widower with no wife entered, and Cornelis, married that year, at his own address until he departs in 1853 \"naar zee\" (to sea). Neither entry names his mother."
@@ -339,7 +339,7 @@
         "where": "FamilySearch (familysearch.org)",
         "where_within": "Gemeentearchief, Tienjarige tafels 1843-1852"
       },
-      "source_classification": "original",
+      "source_classification": "derivative",
       "repository": "FamilySearch",
       "access_date": "2026-06-10"
     }

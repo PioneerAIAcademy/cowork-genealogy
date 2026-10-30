@@ -2627,6 +2627,49 @@ describe("research_append (Phase 2)", () => {
       expect(msg).not.toMatch(/stop there/);
     });
 
+    // Approval item 1: a stamp counts only while it still covers the conflict's
+    // log, so a search on the other question since sends it back.
+    describe("a cross-question conflict stamped searched out", () => {
+      const crossResearch = () => {
+        const research = searchedOutResearch();
+        research.conflicts.push({
+          ...validConflict(), ...ANALYSIS, id: "c_002", blocks_question_ids: ["q_009"],
+          weighed_log_entry_ids: ["log_009"],
+        });
+        return research;
+      };
+      const probable = () =>
+        researchAppend({
+          projectPath: dir,
+          section: "proof_summaries",
+          op: "append",
+          entry: { ...summaryEntry("probable", "none"), supporting_assertion_ids: ["a_001"] },
+        });
+
+      it("gets the ending while the stamp covers its log", async () => {
+        await writeProject(crossResearch());
+        const r = await probable();
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toMatch(/stop there/);
+        expect(msg).not.toMatch(/what would settle it/);
+      });
+
+      it("gets invoke conflict-resolution once the other question is searched again", async () => {
+        const research = crossResearch();
+        research.log.push(log("log_010", { plan_item_id: "pli_009", performed: "2026-01-05T00:00:00Z" }));
+        await writeProject(research);
+        const r = await probable();
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        const msg = r.errors.join(" ");
+        expect(msg).toMatch(/invoke conflict-resolution/);
+        expect(msg).toMatch(/what would settle it/);
+        expect(msg).not.toMatch(/stop there/);
+      });
+    });
+
     // Item 3: the ending is the ladder's, resolved gate included.
     describe("a resolved question sharing the searched-out conflict", () => {
       const resolvedResearch = () => {

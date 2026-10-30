@@ -622,8 +622,9 @@ export function questionLastSearchedMs(research: any, qid: unknown): number {
 
 /** Section E's ending, read as the ladder reads it: every conflict blocking an
  *  open question was found searched out over every log entry the question
- *  owns, and no plan item is open. Callers pass the pre-call snapshot, where a
- *  question being resolved in the same call is still open. */
+ *  owns, and no plan item is open. The resolve and tier refusals pass the
+ *  pre-call snapshot, where a question being resolved in the same call is still
+ *  open; the stale-summary checks pass the live research. */
 export function unsettledConflictEnding(research: any, question: any): boolean {
   if (question?.status === "resolved" || Boolean(question?.resolved)) return false;
   const qid = question?.id;

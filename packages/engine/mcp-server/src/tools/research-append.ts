@@ -5067,12 +5067,9 @@ function questionResolvedInvariants(
           "researched and found empty, which `not_proved` does close — here the work is " +
           "unfinished rather than finished with nothing. Leave the question open and record the " +
           "attempt at the tier reached (`not_proved` when the conflict blocks identity), then " +
-          conflictNextMove(
-            beforeResearch,
-            entry?.id,
-            [...blocking],
-            "invoke conflict-resolution; resolve it after.",
-          ),
+          (inConflictEnding(beforeResearch, entry?.id, [...blocking])
+            ? CONFLICT_ENDING_MOVE
+            : "invoke conflict-resolution; resolve it after."),
       ];
     }
   }
@@ -5292,6 +5289,7 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
 
   const shared = [...hits.keys()].sort();
   const blocking = [...new Set([...hits.values()].flat())].sort();
+  const ending = inConflictEnding(beforeResearch, entry?.question_id, blocking);
   return [
     `tier '${tier}' is not available while ${blocking.join(", ")} ` +
       `${blocking.length === 1 ? "is" : "are"} unresolved: ` +
@@ -5300,43 +5298,37 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
       "Correlating sources assumes they describe the same person, and that is " +
       "what the open conflict puts in question — so no tier above `not_proved` " +
       "is reachable, and tiering down to `possible` does not repair it. Record " +
-      "the attempt at `not_proved`, naming the conflict and what would settle " +
-      "it, then " +
-      conflictNextMove(
-        beforeResearch,
-        entry?.question_id,
-        blocking,
-        "invoke conflict-resolution. Re-conclude by updating that same summary once the " +
-          "conflict is resolved.",
-      ),
+      (ending
+        ? "the attempt at `not_proved`, naming the conflict, then " + CONFLICT_ENDING_MOVE
+        : "the attempt at `not_proved`, naming the conflict and what would settle it, then " +
+          "invoke conflict-resolution. Re-conclude by updating that same summary once the " +
+          "conflict is resolved."),
   ];
 }
 
-/** What a refusal over unresolved conflicts tells the agent to do next. In
- *  section E's ending, read with the ladder's own predicate, invoking
- *  conflict-resolution again weighs the same evidence again, so the move is
- *  the ending instead; otherwise it is `otherwise`. The ending applies only
- *  when every conflict the refusal names was itself found searched out: a
- *  conflict on a cited source that blocks another question may never have
- *  been weighed. */
-function conflictNextMove(
-  research: any,
-  questionId: unknown,
-  conflictIds: string[],
-  otherwise: string,
-): string {
+const CONFLICT_ENDING_MOVE =
+  "give the summary `shortfall: \"conflict\"` and stop there: conflict-resolution has " +
+  "already weighed every log entry and found nothing left to search, so invoking it " +
+  "again would weigh the same evidence again.";
+
+/** Whether a refusal over unresolved conflicts meets section E's ending, where
+ *  invoking conflict-resolution again weighs the same evidence again. Read with
+ *  the ladder's own predicate, and only when every conflict the refusal names
+ *  was itself found searched out over the log it covers now: a conflict on a
+ *  cited source that blocks another question may never have been weighed, or
+ *  that question may have been searched since. */
+function inConflictEnding(research: any, questionId: unknown, conflictIds: string[]): boolean {
   const question = (Array.isArray(research?.questions) ? research.questions : []).find(
     (q: any) => q?.id === questionId,
   );
   const conflicts = Array.isArray(research?.conflicts) ? research.conflicts : [];
-  const weighed = conflictIds.every((id) =>
-    conflicts.some((c: any) => c?.id === id && Array.isArray(c?.weighed_log_entry_ids)),
-  );
-  return question && weighed && unsettledConflictEnding(research, question)
-    ? "give the summary `shortfall: \"conflict\"` and stop there: conflict-resolution has " +
-        "already weighed every log entry and found nothing left to search, so invoking it " +
-        "again would weigh the same evidence again."
-    : otherwise;
+  const weighed = conflictIds.every((id) => {
+    const c = conflicts.find((x: any) => x?.id === id);
+    if (!Array.isArray(c?.weighed_log_entry_ids)) return false;
+    const stamped = new Set(c.weighed_log_entry_ids);
+    return conflictCoverageLogIds(research, c).every((logId) => stamped.has(logId));
+  });
+  return Boolean(question) && weighed && unsettledConflictEnding(research, question);
 }
 
 /** One conclusion per question — the manifest's own rule, now enforced.
@@ -5385,11 +5377,14 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
  *
  *  Scoped to that case: a one-field update is refused only when a `log[]` entry
  *  attributed to the summary's question (through a plan item of one of its
- *  plans) was performed after the summary's pre-op `updated` stamp. With no
- *  later search, a one-field edit — a tier change with a reworded narrative —
- *  is ordinary and passes. A summary with no `updated` predates the stamp and
- *  is never refused. `log` is not a `research_append` section, so live and
- *  pre-call research carry the same log.
+ *  plans) was performed after the summary's pre-op `updated` stamp. In section
+ *  E's ending the question's owned entries count instead, so the upload that
+ *  closes a hand-off counts too, and an update sending neither field goes to
+ *  `staleEndingRefresh`; both read the live research's questions, plans and
+ *  conflicts. With no later search, a one-field edit — a tier change with a
+ *  reworded narrative — is ordinary and passes. A summary with no `updated`
+ *  predates the stamp and is never refused. `log` is not a `research_append`
+ *  section, so live and pre-call research carry the same log.
  *
  *  Update-only: an append already requires both. Passing a field's current
  *  text again satisfies it — the point is that the caller re-checked it. */
