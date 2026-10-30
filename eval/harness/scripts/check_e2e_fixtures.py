@@ -809,7 +809,7 @@ def check_regraded_unchanged_findings(base: str, head: str) -> list[str]:
                 continue
             if old_by_id[fid] == new_by_id[fid]:
                 warnings.append(
-                    f"annotation '{rel.as_posix()}' finding {fid}: label moved {old!r} → "
+                    f"annotation '{rel}' finding {fid}: label moved {old!r} → "
                     f"{new!r} but the finding is unchanged in expected-findings.json. "
                     "A re-grade forced by a sibling finding's rewording re-derives "
                     "every label — restore the prior label and note unless this "
