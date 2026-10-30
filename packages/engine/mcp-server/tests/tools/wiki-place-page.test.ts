@@ -31,10 +31,16 @@ vi.mock("../../src/auth/config.js", () => ({
   getWikiApiUrl: mockGetWikiApiUrl,
 }));
 
-import { wikiPlacePageTool, wikiPlacePageSchema } from "../../src/tools/wiki-place-page.js";
-import { WIKI_PAGE_SECTIONS } from "../../src/types/wikiPage.js";
+import {
+  __clearResolvedPagesForTests,
+  wikiPlacePageTool,
+  wikiPlacePageSchema,
+} from "../../src/tools/wiki-place-page.js";
+import { WIKI_PAGE_MAX_CHARS, WIKI_PAGE_SECTIONS } from "../../src/types/wikiPage.js";
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
+import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
+import { SHAPES, escapedBody, headingPage, walkParts } from "../helpers/wiki-pages.js";
 
 const API_BASE = "http://localhost:8000";
 
@@ -79,6 +85,8 @@ function searchResponse(titles: string[]) {
 const placeOfType = (type: string) => ({ placeId: "1", placeRepId: "rep-1", name: "x", fullName: "x", type });
 
 beforeEach(() => {
+  // The memo of resolved pages is module state: without this one case's entry is the next one's.
+  __clearResolvedPagesForTests();
   mockGetPlaceCandidateNames.mockReset();
   mockStandardPlaceToPlaceId.mockReset();
   mockStandardPlaceToPlaceId.mockResolvedValue(null); // default: rely on the leaf name
@@ -496,5 +504,433 @@ describe("wikiPlacePageTool — a sub-national home page (issue #2486 item B)", 
     expect(result.url).toBe("https://www.familysearch.org/en/wiki/Pennsylvania,_United_States_Genealogy");
     expect(mockFetch).toHaveBeenCalledTimes(3);
     expect(mockFetch.mock.calls.every((c) => c[1].method === "GET")).toBe(true);
+  });
+});
+
+// ── paging ───────────────────────────────────────────────────────────────────
+
+const PORTUGAL_URL = "https://www.familysearch.org/en/wiki/Portugal_Genealogy";
+const SCHUYLKILL_PLACE = "Schuylkill, Pennsylvania, United States";
+const SCHUYLKILL_SLUG = "Schuylkill_County,_Pennsylvania_Genealogy";
+
+/** Every GET answers with this page; Portugal resolves on its first candidate. */
+function servePortugal(content: string | undefined): void {
+  mockFetch.mockReset();
+  mockFetch.mockImplementation(async () =>
+    content === undefined
+      ? { ok: true, status: 200, json: async () => ({ title: "Portugal_Genealogy", source_url: PORTUGAL_URL }) }
+      : pageResponse("Portugal_Genealogy", content),
+  );
+}
+
+/** A county page, found the long way: the wiki's own search ranks its title, then the page is fetched. */
+function serveSchuylkill(content: string): void {
+  mockGetPlaceById.mockResolvedValue(placeOfType("County"));
+  mockFetch.mockReset();
+  mockFetch.mockImplementation(async (url: string) =>
+    String(url).endsWith("/search")
+      ? searchResponse(["Schuylkill County, Pennsylvania Genealogy"])
+      : pageResponse(SCHUYLKILL_SLUG, content),
+  );
+}
+
+/** "GET /page/Portugal_Genealogy": what a mocked request asked for, without the base URL. */
+const route = (call: any[]): string => `${call[1].method} ${String(call[0]).replace(/^https?:\/\/[^/]+/, "")}`;
+
+/** The Places API reads, across the four stubs that stand for it. */
+const placeLookups = (): number =>
+  mockStandardPlaceToRepId.mock.calls.length +
+  mockGetPlaceById.mock.calls.length +
+  mockStandardPlaceToPlaceId.mock.calls.length +
+  mockGetPlaceCandidateNames.mock.calls.length;
+
+const readPortugal = (offset?: number) =>
+  wikiPlacePageTool({ standardPlace: "Portugal", section: "home", ...(offset === undefined ? {} : { offset }) }, LOCAL);
+const readSchuylkill = (offset?: number) =>
+  wikiPlacePageTool({ standardPlace: SCHUYLKILL_PLACE, section: "home", ...(offset === undefined ? {} : { offset }) }, LOCAL);
+
+describe.each(SHAPES)("wikiPlacePageTool, a page of %s", (_label, make) => {
+  const page = make();
+  beforeEach(() => servePortugal(page));
+
+  it("(a) every part serializes under the CLI spill line, with content inside the cap", async () => {
+    expect(JSON.stringify({ url: PORTUGAL_URL, content: page, standardPlace: "Portugal", placeName: "Portugal" }).length).toBeGreaterThan(CLI_SPILL_CHARS);
+    const parts = await walkParts(readPortugal);
+    expect(parts.length).toBeGreaterThan(1);
+    for (const part of parts) {
+      expect(JSON.stringify(part).length).toBeLessThan(CLI_SPILL_CHARS);
+      expect(escapedBody(part.content)).toBeLessThanOrEqual(WIKI_PAGE_MAX_CHARS);
+    }
+  });
+
+  it("(b) joining content across the nextOffset chain rebuilds the page exactly", async () => {
+    const parts = await walkParts(readPortugal);
+    expect(parts.map((p) => p.content).join("")).toBe(page);
+    let at = 0;
+    for (const part of parts) {
+      expect(part.offset ?? 0).toBe(at);
+      at += part.content.length;
+    }
+  });
+
+  it("(c) the chain ends: the last part says truncated: false and carries no nextOffset", async () => {
+    const parts = await walkParts(readPortugal);
+    const last = parts[parts.length - 1];
+    expect(last.truncated).toBe(false);
+    expect("nextOffset" in last).toBe(false);
+    for (const part of parts.slice(0, -1)) {
+      expect(part.truncated).toBe(true);
+      expect(part.nextOffset).toBe((part.offset ?? 0) + part.content.length);
+    }
+  });
+
+  it("keeps url, standardPlace and placeName on every part", async () => {
+    for (const part of await walkParts(readPortugal)) {
+      expect(part.url).toBe(PORTUGAL_URL);
+      expect(part.standardPlace).toBe("Portugal");
+      expect(part.placeName).toBe("Portugal");
+    }
+  });
+
+  it("fetches the page again for each part", async () => {
+    const parts = await walkParts(readPortugal);
+    expect(mockFetch).toHaveBeenCalledTimes(parts.length);
+  });
+});
+
+describe("wikiPlacePageTool, a page found by its title", () => {
+  it("(1) pages it the same way, and a continuation makes no search and no Places call", async () => {
+    const page = headingPage();
+    serveSchuylkill(page);
+    const parts = [await readSchuylkill()];
+    expect(parts[0].truncated).toBe(true);
+    // Part 1 resolved the place in full: a search, the page, and the Places lookups that
+    // decide whether a ranked title's type word fits.
+    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
+    expect(placeLookups()).toBeGreaterThan(0);
+    const after1 = { requests: mockFetch.mock.calls.length, lookups: placeLookups() };
+
+    while (parts[parts.length - 1].truncated) {
+      parts.push(await readSchuylkill(parts[parts.length - 1].nextOffset));
+    }
+    expect(parts.length).toBeGreaterThan(1);
+    // Every later part is one GET of the page. No search, no Places call.
+    expect(mockFetch.mock.calls.slice(after1.requests).map(route)).toEqual(
+      Array(parts.length - 1).fill(`GET /page/${SCHUYLKILL_SLUG}`),
+    );
+    expect(placeLookups()).toBe(after1.lookups);
+
+    expect(parts.map((p) => p.content).join("")).toBe(page);
+    for (const part of parts) {
+      expect(JSON.stringify(part).length).toBeLessThan(CLI_SPILL_CHARS);
+      expect(part.url).toBe(`https://www.familysearch.org/en/wiki/${SCHUYLKILL_SLUG}`);
+      expect(part.standardPlace).toBe(SCHUYLKILL_PLACE);
+      expect(part.placeName).toBe("Schuylkill County, Pennsylvania");
+    }
+  });
+
+  it("pages a page reached through an alternate name from the places API", async () => {
+    const page = headingPage();
+    mockStandardPlaceToPlaceId.mockResolvedValue("1927089");
+    mockGetPlaceCandidateNames.mockResolvedValue(["Czechia"]);
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async (url: string) =>
+      String(url).endsWith("/page/Czechia_Genealogy") ? pageResponse("Czechia_Genealogy", page) : NOT_FOUND,
+    );
+    const parts = await walkParts((offset) =>
+      wikiPlacePageTool({ standardPlace: "Old Name", section: "home", ...(offset === undefined ? {} : { offset }) }, LOCAL),
+    );
+    expect(parts.length).toBeGreaterThan(1);
+    expect(parts.map((p) => p.content).join("")).toBe(page);
+    // the continuation reuses the resolved name, not the name it was asked for
+    expect(parts.map((p) => p.placeName)).toEqual(parts.map(() => "Czechia"));
+  });
+});
+
+// A call that continues a page (offset above 0) reuses the page an earlier call resolved; a call
+// from the start resolves in full. The memo is the only thing between them, so each case below
+// starts from an empty one (beforeEach) and builds the entry it needs with a real first call.
+describe("wikiPlacePageTool, a continuation reuses the page the first call resolved", () => {
+  const SCHUYLKILL_URL = `https://www.familysearch.org/en/wiki/${SCHUYLKILL_SLUG}`;
+  const clearCalls = (): void => {
+    mockFetch.mockClear();
+    for (const m of [mockStandardPlaceToRepId, mockGetPlaceById, mockStandardPlaceToPlaceId, mockGetPlaceCandidateNames]) {
+      m.mockClear();
+    }
+  };
+  /** What a part that starts at `from` should hold, taken from the page itself. */
+  const slice = (page: string, from: number, part: { content: string }): string =>
+    page.slice(from, from + part.content.length);
+
+  it("(2) still returns the next part when the Places lookup fails by then", async () => {
+    const page = headingPage();
+    serveSchuylkill(page);
+    const first = await readSchuylkill();
+    const at = first.nextOffset as number;
+    // From here the Places API is down. placeTypeOf reads that as "type unknown", which rejects
+    // every ranked title that carries a type word.
+    mockStandardPlaceToRepId.mockRejectedValue(new Error("Places API unreachable"));
+    mockGetPlaceById.mockRejectedValue(new Error("FamilySearch API error: 503"));
+
+    const second = await readSchuylkill(at);
+    expect(second.offset).toBe(at);
+    expect(second.content).toBe(slice(page, at, second));
+    expect(first.content + second.content).toBe(page);
+    expect(second.url).toBe(SCHUYLKILL_URL);
+    expect(second.placeName).toBe("Schuylkill County, Pennsylvania");
+
+    // The same outage with nothing remembered is "no page": this is the failure the memo spares a
+    // continuation, and the reason the case above proves something.
+    __clearResolvedPagesForTests();
+    await expect(readSchuylkill(at)).rejects.toThrow(/No wiki page found/);
+  });
+
+  it("(3) resolves in full when no earlier call left an entry", async () => {
+    const page = headingPage();
+    serveSchuylkill(page);
+    const part = await readSchuylkill(5_000); // the first call this module has seen is a continuation
+    expect(part.offset).toBe(5_000);
+    expect(part.content).toBe(slice(page, 5_000, part));
+    expect(part.url).toBe(SCHUYLKILL_URL);
+    expect(part.placeName).toBe("Schuylkill County, Pennsylvania");
+    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
+    expect(placeLookups()).toBeGreaterThan(0);
+  });
+
+  it("(4) resolves in full again when the remembered page now 404s, and remembers what it finds", async () => {
+    const page = headingPage();
+    serveSchuylkill(page);
+    const first = await readSchuylkill();
+    const at = first.nextOffset as number;
+
+    // The wiki now titles the page differently: the old slug 404s and the search ranks a new one.
+    const RENAMED = "Schuylkill,_Pennsylvania_Genealogy";
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u.endsWith("/search")) return searchResponse(["Schuylkill, Pennsylvania Genealogy"]);
+      return u.endsWith(`/page/${RENAMED}`) ? pageResponse(RENAMED, page) : NOT_FOUND;
+    });
+    const second = await readSchuylkill(at);
+    expect(mockFetch.mock.calls.map(route)).toEqual([
+      `GET /page/${SCHUYLKILL_SLUG}`, // the remembered page: 404
+      "POST /search",
+      `GET /page/${RENAMED}`,
+    ]);
+    expect(second.url).toBe(`https://www.familysearch.org/en/wiki/${RENAMED}`);
+    expect(second.placeName).toBe("Schuylkill, Pennsylvania");
+    expect(second.content).toBe(slice(page, at, second));
+
+    // What the fallback found is now the entry: the next continuation is one GET of it.
+    mockFetch.mockClear();
+    const third = await readSchuylkill(at);
+    expect(mockFetch.mock.calls.map(route)).toEqual([`GET /page/${RENAMED}`]);
+    expect(third.url).toBe(second.url);
+  });
+
+  it("(4) does not keep asking for a remembered page that is gone for good", async () => {
+    serveSchuylkill(headingPage());
+    const at = (await readSchuylkill()).nextOffset as number;
+
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async (url: string) =>
+      String(url).endsWith("/search") ? searchResponse([]) : NOT_FOUND,
+    );
+    await expect(readSchuylkill(at)).rejects.toThrow(/No wiki page found/);
+    expect(mockFetch.mock.calls.map(route)).toEqual([`GET /page/${SCHUYLKILL_SLUG}`, "POST /search"]);
+
+    // The entry went with that 404: the next such call goes straight to the search.
+    mockFetch.mockClear();
+    await expect(readSchuylkill(at)).rejects.toThrow(/No wiki page found/);
+    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search"]);
+  });
+
+  it("(5) does not hand a page to another section of the same place", async () => {
+    serveSchuylkill(headingPage());
+    const at = (await readSchuylkill()).nextOffset as number; // remembers Schuylkill home
+    clearCalls();
+    // A county has a home page and no other section (the wiki has them from state level up), so
+    // the answer for these is "no page" without a request, never the home page remembered above.
+    for (const section of ["getting_started", "online_records", "research_tips"] as const) {
+      await expect(
+        wikiPlacePageTool({ standardPlace: SCHUYLKILL_PLACE, section, offset: at }, LOCAL),
+      ).rejects.toThrow(/No wiki page found for "Schuylkill, Pennsylvania, United States"/);
+    }
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("(5) does not hand a page to another place in the same section", async () => {
+    serveSchuylkill(headingPage());
+    const at = (await readSchuylkill()).nextOffset as number; // remembers Schuylkill home
+    clearCalls();
+    // The wiki ranks nothing for a neighbouring county, so there is no page for it.
+    await expect(
+      wikiPlacePageTool({ standardPlace: "Berks, Pennsylvania, United States", section: "home", offset: at }, LOCAL),
+    ).rejects.toThrow(/No wiki page found for "Berks, Pennsylvania, United States"/);
+    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search"]);
+  });
+
+  it("(5) does not hand a page to a call that reaches another wiki server", async () => {
+    const page = headingPage();
+    serveSchuylkill(page);
+    const at = (await readSchuylkill()).nextOffset as number; // remembers it for API_BASE
+    clearCalls();
+    // The other server (a user's own wiki URL) titles the page differently.
+    const OTHER_BASE = "http://localhost:9000";
+    const OTHER_SLUG = "Schuylkill,_Pennsylvania_Genealogy";
+    mockGetWikiApiUrl.mockResolvedValue(OTHER_BASE);
+    mockFetch.mockImplementation(async (url: string) => {
+      const u = String(url);
+      if (u === `${OTHER_BASE}/search`) return searchResponse(["Schuylkill, Pennsylvania Genealogy"]);
+      return u === `${OTHER_BASE}/page/${OTHER_SLUG}` ? pageResponse(OTHER_SLUG, page) : NOT_FOUND;
+    });
+
+    const part = await readSchuylkill(at);
+    expect(part.url).toBe(`https://www.familysearch.org/en/wiki/${OTHER_SLUG}`);
+    // It resolved at the other server from the start: the first request is the search, not a GET
+    // of the slug remembered for the first server.
+    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search", `GET /page/${OTHER_SLUG}`]);
+  });
+
+  it("(6) resolves in full on a call from the start, with no offset or an offset of 0, even with an entry", async () => {
+    serveSchuylkill(headingPage());
+    await readSchuylkill(); // the entry
+    clearCalls();
+    await readSchuylkill();
+    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
+    clearCalls();
+    await readSchuylkill(0);
+    expect(mockFetch.mock.calls.map(route)).toEqual(["POST /search", `GET /page/${SCHUYLKILL_SLUG}`]);
+    expect(placeLookups()).toBeGreaterThan(0);
+    // and an offset of 1 is a continuation
+    clearCalls();
+    await readSchuylkill(1);
+    expect(mockFetch.mock.calls.map(route)).toEqual([`GET /page/${SCHUYLKILL_SLUG}`]);
+  });
+
+  it("(7) replaces the remembered page with the one a call from the start resolves now", async () => {
+    const page = headingPage();
+    serveSchuylkill(page);
+    await readSchuylkill(); // remembers the County slug
+    // The wiki now ranks another title first.
+    const NEWER = "Schuylkill,_Pennsylvania_Genealogy";
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async (url: string) =>
+      String(url).endsWith("/search")
+        ? searchResponse(["Schuylkill, Pennsylvania Genealogy", "Schuylkill County, Pennsylvania Genealogy"])
+        : pageResponse(String(url).split("/page/")[1], page),
+    );
+    const fresh = await readSchuylkill();
+    expect(fresh.url).toBe(`https://www.familysearch.org/en/wiki/${NEWER}`);
+
+    mockFetch.mockClear();
+    const next = await readSchuylkill(fresh.nextOffset);
+    expect(mockFetch.mock.calls.map(route)).toEqual([`GET /page/${NEWER}`]);
+    expect(next.url).toBe(fresh.url);
+  });
+
+  it("(8) throws a network failure on the continuation GET, and keeps the entry for the next try", async () => {
+    const page = headingPage();
+    serveSchuylkill(page);
+    const at = (await readSchuylkill()).nextOffset as number;
+
+    mockFetch.mockReset();
+    mockFetch.mockRejectedValue(new Error("ECONNREFUSED"));
+    await expect(readSchuylkill(at)).rejects.toThrow(/Could not reach wiki-query-api/);
+    // Only the remembered page was asked for (more than once: fetchWithRetry retries a network
+    // failure). The call did not fall back to a search.
+    expect(new Set(mockFetch.mock.calls.map(route))).toEqual(new Set([`GET /page/${SCHUYLKILL_SLUG}`]));
+
+    mockFetch.mockReset();
+    mockFetch.mockImplementation(async () => pageResponse(SCHUYLKILL_SLUG, page));
+    const part = await readSchuylkill(at);
+    expect(mockFetch.mock.calls.map(route)).toEqual([`GET /page/${SCHUYLKILL_SLUG}`]);
+    expect(part.content).toBe(slice(page, at, part));
+  });
+});
+
+describe("wikiPlacePageTool, a page under the cap", () => {
+  it("(d) returns exactly today's object for a 9,000-character page, with no extra keys", async () => {
+    const head = "# Small page\n";
+    const content = head + "x".repeat(9_000 - head.length);
+    expect(content.length).toBe(9_000);
+    servePortugal(content);
+    const result = await readPortugal();
+    expect(result).toStrictEqual({ url: PORTUGAL_URL, content, standardPlace: "Portugal", placeName: "Portugal" });
+    expect(Object.keys(result).sort()).toEqual(["content", "placeName", "standardPlace", "url"]);
+  });
+
+  it("returns a page whose escaped body is exactly the cap whole, and pages one unit more", async () => {
+    servePortugal("x".repeat(WIKI_PAGE_MAX_CHARS));
+    expect("truncated" in (await readPortugal())).toBe(false);
+    servePortugal("x".repeat(WIKI_PAGE_MAX_CHARS + 1));
+    const parts = await walkParts(readPortugal);
+    expect(parts.map((p) => p.content.length)).toEqual([WIKI_PAGE_MAX_CHARS, 1]);
+  });
+
+  it("adds the paging fields, and only those, when offset is passed on a page that fits", async () => {
+    servePortugal("# Small");
+    expect(await readPortugal(0)).toStrictEqual({
+      url: PORTUGAL_URL,
+      content: "# Small",
+      standardPlace: "Portugal",
+      placeName: "Portugal",
+      totalChars: 7,
+      offset: 0,
+      truncated: false,
+    });
+  });
+
+  it("starts at the offset it is given, and reads one past the end as an empty part", async () => {
+    const page = headingPage();
+    servePortugal(page);
+    const part = await readPortugal(5_000);
+    expect(part.offset).toBe(5_000);
+    expect(part.content).toBe(page.slice(5_000, 5_000 + part.content.length));
+    servePortugal("# Small");
+    expect(await readPortugal(1_000_000)).toMatchObject({ content: "", totalChars: 7, offset: 7, truncated: false });
+  });
+
+  it("passes a body with no text through as it always did", async () => {
+    servePortugal(undefined);
+    expect(await readPortugal()).toStrictEqual({
+      url: PORTUGAL_URL,
+      content: undefined,
+      standardPlace: "Portugal",
+      placeName: "Portugal",
+    });
+  });
+});
+
+describe("wikiPlacePageTool, offset validation", () => {
+  it.each([
+    ["a string", "5", '"5"'],
+    ["a negative number", -1, "-1"],
+    ["a fraction", 1.5, "1.5"],
+    ["NaN", Number.NaN, "NaN"],
+    ["Infinity", Number.POSITIVE_INFINITY, "Infinity"],
+    ["null", null, "null"],
+  ])("(e) rejects an offset of %s with the requireWholeNumber error, before any request or place lookup", async (_label, value, got) => {
+    servePortugal("# Small");
+    await expect(
+      wikiPlacePageTool({ standardPlace: "Portugal", section: "home", offset: value as unknown as number }, LOCAL),
+    ).rejects.toThrow(`offset must be a whole number ≥ 0 (got ${got}). Send it as a number, not a string.`);
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockGetWikiApiUrl).not.toHaveBeenCalled();
+    expect(mockStandardPlaceToPlaceId).not.toHaveBeenCalled();
+  });
+});
+
+describe("wikiPlacePageSchema, paging", () => {
+  it("declares offset as a number and still requires standardPlace and section", () => {
+    expect(wikiPlacePageSchema.inputSchema.properties.offset.type).toBe("number");
+    expect(wikiPlacePageSchema.inputSchema.required).toEqual(["standardPlace", "section"]);
+  });
+
+  it("tells the agent how to continue", () => {
+    expect(wikiPlacePageSchema.description).toContain(
+      "when `truncated` is true, call again with `offset: nextOffset` until it is false",
+    );
+    expect(wikiPlacePageSchema.inputSchema.properties.offset.description).toContain("`nextOffset`");
   });
 });

@@ -37,10 +37,10 @@ what routes the work there. FamilySearch records never come here: they go to
 | `projectPath` | yes | Absolute project path. |
 | `sources` | yes | A list, one entry per source. |
 | `sources[].recordId` | yes | `capture:<descriptive>`, `ancestry:<collection>:<id>`, or an ARK. |
-| `sources[].resultsRef` | one of these two | A `results/` ref holding the `StagedTranscription` that `image_transcribe` saved. The spawner holds only this ref and never the page text. |
+| `sources[].resultsRef` | one of these two | A `results/` ref holding the `StagedTranscription` that `image_transcribe` saved, or one full-text hit of a logged `fulltext_search`, `results/<log_id>.json#<hit id>` (a `ref` from `sidecar_read`'s `#hits`), whose `recordId` is that hit's id. The spawner holds only this ref and never the page text. |
 | `sources[].text` | one of these two | Pasted prose, PDF text or external-site text with no sidecar, wrapped in `<record-data>` tags. |
-| `sources[].imageFilename` | no | `image_transcribe`'s `imageRef`, passed through unchanged. It was on `record-extractor`'s contract, and it moves here rather than being dropped. A fallback only: when the source has a `resultsRef`, `extraction_append` takes the scan from that staged transcription's `image_ref`. |
-| `sources[].documentForm` | no | Set by the spawner when it knows: `page_image` for a `resultsRef` from `image_transcribe`. Otherwise the agent reports what it was handed. |
+| `sources[].imageFilename` | no | `image_transcribe`'s `imageRef`, passed through unchanged. It was on `record-extractor`'s contract, and it moves here rather than being dropped. A fallback only: when the source has a `resultsRef`, `extraction_append` takes the scan from that staged transcription's `image_ref`, and for a full-text hit it writes no `image_filename` at all. |
+| `sources[].documentForm` | no | Set by the spawner when it knows: `page_image` for a `resultsRef` from `image_transcribe` or a full-text hit. Otherwise the agent reports what it was handed. |
 | `sources[].flags` | no | "the <element> is a suspect transcription", "the date is Old Style — <reading>". |
 | `questionIds` | no | Passed through to `extraction_append`. |
 | `absentPersons` | no | The spawner's expected-but-absent persons, keyed by `recordId`. |

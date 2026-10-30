@@ -414,21 +414,24 @@ describe("extraction_append debug holds", () => {
     process.env[AFTER] = "0";
     let t0 = Date.now();
     expect((await appendSource(extractionAppend)).ok).toBe(true);
-    expect(Date.now() - t0).toBeLessThan(1000);
+    // No hold is set, so the bound only guards against a hang; wide for load lag.
+    expect(Date.now() - t0).toBeLessThan(8_000);
 
     process.env[BEFORE] = "not-a-number";
     process.env[AFTER] = "";
     t0 = Date.now();
     expect((await appendSource(extractionAppend)).ok).toBe(true);
-    expect(Date.now() - t0).toBeLessThan(1000);
+    expect(Date.now() - t0).toBeLessThan(8_000);
   });
 
   it("hold only extraction_append, never research_append", async () => {
-    process.env[BEFORE] = "1500";
-    process.env[AFTER] = "1500";
+    process.env[BEFORE] = "10000";
+    process.env[AFTER] = "10000";
     const t0 = Date.now();
     expect((await appendSource(researchAppend)).ok).toBe(true);
-    expect(Date.now() - t0).toBeLessThan(1000);
+    // The bound is what tells "no hold" apart from a held call, so it must stay
+    // under the hold value; 8 s rides out load lag while a held call takes 20 s.
+    expect(Date.now() - t0).toBeLessThan(8_000);
   });
 
   it("a set value actually holds an extraction_append, on both sides of the commit", async () => {
@@ -1018,7 +1021,10 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     plan_item_id: planItemId,
     performed: "2026-01-01T00:00:00Z",
     tool,
-    query: { surname: "Miller" },
+    // Every item() is record_type "census", so the search that found the record
+    // names census — satisfying planItemCompletionRecordTypeInvariants when the
+    // extracted record completes the item.
+    query: { surname: "Miller", recordType: "census" },
     outcome,
     results_examined: 1,
     external_site: null,

@@ -428,7 +428,7 @@ function matches(item: any, rule: FilterRule, values: string[], scope?: Set<stri
 /** The unregistered disagreements a `conflicts` read is asking about: the
  *  question's own assertions under `questionId` (project_context's scope),
  *  otherwise every assertion; narrowed to those naming any of `assertionIds`. */
-function disagreementsInScope(
+export function disagreementsInScope(
   research: any,
   input: ResearchQueryInput,
   assertionIds: string[] | undefined,
