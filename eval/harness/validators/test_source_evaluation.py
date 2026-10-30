@@ -1125,8 +1125,8 @@ _FINDING_HEAD_RE = re.compile(
 )
 _BOLD_NUMBER_RE = re.compile(r"^(\s*)[#\s]*\*\*(\d{1,2})\*\*\s")
 # Opens a section after the findings. Matched on the line's own text, never a
-# finding's body: a heading (markdown or bold), a bare `Could not check:` label,
-# or a checklist code alone on its line.
+# finding's body: a heading (markdown or bold), an unindented `Could not check:`
+# label that is bold or ends at its colon, or a checklist code alone on its line.
 _UNCHECKED_PHRASE = r"(?:could\s+not\s+(?:check|verify)|unverifi\w*|unchecked)"
 _UNCHECKED_LABEL_RE = re.compile(r"could\s+not\s+(?:check|verify)\s*:", re.IGNORECASE)
 _UNCHECKED_HEAD_RE = re.compile(_UNCHECKED_PHRASE, re.IGNORECASE)
@@ -1142,8 +1142,11 @@ def _opens_after_findings(raw: str) -> bool:
     lead = raw.lstrip()
     heading = lead.startswith(("#", "**", "__"))
     text = _unemphasised(lead).lstrip("# ").rstrip()
-    if _CHECKLIST_CODE_RE.match(text) or _UNCHECKED_LABEL_RE.match(text):
+    if _CHECKLIST_CODE_RE.match(text):
         return True
+    label = _UNCHECKED_LABEL_RE.match(text)
+    if label and not raw[:1].isspace():
+        return heading or not text[label.end():].strip()
     if _LATER_BLOCK_RE.match(text):
         return heading or text.endswith(":")
     return heading and bool(_UNCHECKED_HEAD_RE.match(text))
