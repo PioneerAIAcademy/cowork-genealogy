@@ -16,6 +16,7 @@
  */
 
 import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedRelationship } from "../types/gedcomx.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type { PersonWarning } from "../types/person-warnings.js";
@@ -413,7 +414,7 @@ function parentEvidence(
   );
   const cited = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
     (a: any) =>
-      a && sdidOf.has(a.source_id) && linkedToParent.has(a.id) &&
+      isLiveAssertion(a) && sdidOf.has(a.source_id) && linkedToParent.has(a.id) &&
       isRelationshipEstablishing(a.fact_type) && String(a.fact_type).trim().toLowerCase() !== "marriage",
   );
   const covered = new Set(cited.map((a: any) => sdidOf.get(a.source_id)));

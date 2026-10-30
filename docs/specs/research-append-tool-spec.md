@@ -608,6 +608,12 @@ explicit `gedcomx_source_description_id` (detection bypassed). An updates-only b
 that returns `updated_existing` carries no assertions append ops, so §3.4.3 has no
 appends to compare and does not engage.
 
+**Retired assertions are not compared.** An assertion with a non-null
+`superseded_by`, or one this same batch retires (an `assertions` update setting only
+`superseded_by`/`superseded_reason`), is no longer the record's reading, so a fresh
+copy of its fact is not a duplicate. That is what lets `extraction_append`'s
+re-extraction (§11.6.1) land on the same source and log entry.
+
 **The key.** In such a batch, an `assertions` append is refused, op-indexed, when an
 assertion in the **pre-call** document shares its (`source_id`,
 `arkToBareId(record_id)`, `log_entry_id`, person, canonical `fact_type`):
@@ -1212,7 +1218,9 @@ audit's recommendation #5):
 
 | Section / op | Invariant (reject if violated) | Source |
 |--------------|-------------------------------|--------|
-| `assertions`, any op, from an MCP caller | **Assertions are extraction's.** `research_append` as a caller reaches it (`researchAppendFromCaller`, used by the MCP dispatch and the eval mock) refuses every `assertions` op except an `update` whose `fields` are exactly `informant_bias_notes`, the one way to record a re-reading or a doubt on an existing assertion. The whole call is refused, op-indexed in a batch, before anything is read. `extraction_append` calls `researchAppend` directly and never meets the check. Removes the advertised "correct an assertion's place/date/value" path: a disputed reading is a conflict, not an edit. Found by `ut_conflict_resolution_016`, where the skill overwrote a transcribed name with the user's reading in 2 of 3 runs although its body forbade it | genealogist ruling 2026-10-05 (option B); `ownership.json` assertions row |
+| `assertions`, any op, from an MCP caller | **Assertions are extraction's.** `research_append` as a caller reaches it (`researchAppendFromCaller`, used by the MCP dispatch and the eval mock) refuses every `assertions` op except an `update` whose `fields` are exactly `informant_bias_notes`, the one way to record a re-reading or a doubt on an existing assertion. `superseded_by` and `superseded_reason` are not caller-writable either: only `extraction_append`'s re-extraction sets them, through the internal `retireAssertions` option (§11.6.1). The whole call is refused, op-indexed in a batch, before anything is read. `extraction_append` calls `researchAppend` directly and never meets the check. Removes the advertised "correct an assertion's place/date/value" path: a disputed reading is a conflict, not an edit. Found by `ut_conflict_resolution_016`, where the skill overwrote a transcribed name with the user's reading in 2 of 3 runs although its body forbade it | genealogist ruling 2026-10-05 (option B); `ownership.json` assertions row |
+| any op citing an assertion (`person_evidence.assertion_id`; a conflict's `competing_assertion_ids`/`preferred_assertion_id`; a hypothesis's supporting/contradicting ids; a proof summary's `supporting_assertion_ids`, top level or in `claims[]`; a timeline event's `assertion_ids`; a question's `resolution_assertion_ids`) | **A retired assertion is not evidence.** An op that *newly* cites an assertion whose `superseded_by` is non-null is refused, naming it and what superseded it; an id the stored entry already held is not new. A retirement is refused while anything rests on the assertion (§11.6.1), so a stored citation of one does not arise | `retiredAssertionCitations` |
+| `extraction_append` re-extraction (internal `retireAssertions`) | **Nothing may rest on an assertion it retires.** Under the lock, every id must still be live and carry the record's id, and none may be cited by a live `person_evidence` row, a `rejected_links` row, a tree fact's `assertion_id`, a proof summary, a conflict, a hypothesis, a timeline event or a question's `resolution_assertion_ids`; when a relationship claim is among them, no tree relationship may cite the record's `S`. The whole batch is refused, each referrer named | `planRetirement` / `assertionReferrers` |
 | `assertions` append or update, `fact_type: relationship` | **`structured_value.relationship_type` must not contradict what `value` says about the record SUBJECT.** `relationship_type` is the subject's own role and `related_person_role` is the other party's, so a death certificate naming the father is `"child"` on the deceased, not `"parent"`. The legal categories are `parent`, `child`, `spouse` and `sibling` — `sibling` included, which earlier guidance omitted, and the omission is the live defect: 5 sightings across three of the five current record-extraction run logs, every one a sister typed `child`. **Position decides whose role the value names**, and that is why two earlier guards on this field were abandoned: `child of Jim Neal` states the subject's role, while `father named as Casper` and `father: Jan Roelfs` label the other party and are skipped. Comparing relation words without regard to position refused 22 of the 37 it flagged over the e2e run logs, and 27 of 47 over the full population below — re-derivable with `measure_relationship_direction.py --counterfactual`. Unknown spellings fail open, never refused — 63 assertions across 16 spellings over the e2e run logs, 73 across 18 over the full population (`grandparent`, `ParentChild`, `administrator`, `ward`, `grandchild` are the commonest; `stepfather` and `father_in_law` occur nowhere in any of them and are not useful examples). Forward direction only, on the ops being written, so a project holding an assertion written before this rule stays writable | Refuses **21 of 2586 (0.8%)** across the e2e run logs, the unit run logs, the scenario fixtures and the hosted seed — 19 distinct assertions, since a unit log carries an id-less write op beside its persisted copy; **0** in the fixtures and **0** in the seed. All read individually, all true positives. Measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py`. ADR-0011 |
 | `assertions` append or update | **`informant_proximity: "unknown"` implies `information_quality: "indeterminate"`.** If the informant cannot be identified, neither firsthand knowledge nor its absence has been established, so the Layer-2 decision tree terminates at its first question and never reaches the primary/secondary split. **Forward only, and deliberately not a biconditional**: `indeterminate` does NOT imply `unknown` — a NAMED informant whose relationship to the specific fact cannot be established is the tree's "cannot tell" branch at a known proximity, which is the ordinary census shape, and an `iff` reading would refuse it. Fires only for the two in-enum values that claim a determination: a missing `information_quality` is `checkRequired`'s error and an out-of-enum one is `checkEnum`'s, and adding this on top would name the wrong fix — not hypothetical, `mid-research-flynn-bad-enum` a_001 is `unknown` + `tertiary` and `ut_validate_schema_004` pins the validator at exactly ONE error for it. The update arm validates the MERGED entry, which is the case the rule exists for: flipping proximity to `unknown` and leaving a stale `secondary` behind. The update arm checks it only when the op sets `informant_proximity` or `information_quality`, which still catches that flip; an update touching neither, such as a question tie on a legacy pair, is not re-checked | Prose in `record-extractor.md` (since retired), and prose did not hold: the model broke it on **248 of 982** `unknown` assertions across the committed e2e corpus. Mirrored at the document tier in `validator.ts`; six scenario assertions backfilled with it |
 | `conflicts` append (fact) | ≥2 `competing_assertion_ids`; identity ≥1 | `validateResearch` (`"fact conflict requires at least 2 competing_assertion_ids"`) |
@@ -2931,6 +2939,39 @@ edit, not this tool's guess.
 assertion count, the distinct roles assigned, and any notes. The caller never
 sees the record, so reporting the extraction is its job and `results[]` alone
 would say how many entries landed without saying what they say.
+
+### 11.6.1 Re-extraction — correcting a wrong extraction (`reextract: true`)
+
+Once an assertion is written wrong it used to stay: a resend was skipped, and
+`research_append` refuses a caller's assertion edit (§5). `reextract: true`, beside
+`recordIds` or `documents` (refused beside `personId` or `absences`, and refused when
+not a boolean), extracts the record again and retires its old reading in the same
+write (sentinel decided by Richard, 2026-10-27):
+
+1. **Which assertions.** The live assertions whose `record_id` is the requested id
+   itself, never widened to another persona's ARK or a household member. A record
+   extracted only under another id is refused, naming that id. A record nothing
+   extracted is an ordinary first extraction.
+2. **Refused while in use, before any read or log.** If anything rests on one of them
+   (the referrers in the §5 row), the record's outcome is `refused` and its summary
+   names each referrer. A tree edge that rests on this record alone is to be removed
+   first; one that also cites other evidence must not be, and the message says to ask
+   the researcher. A `rejected_links` row cannot be removed, so it blocks for good.
+   Other records in the call go ahead.
+3. **The write.** The resend skip and the household skip do not fire. The record is
+   read, logged and extracted as on a first pass, and §3.4.1 folds the sources op
+   onto the existing source. In the same `research_append` call, each old assertion
+   gets `superseded_by` naming the new assertion for the same person in the record
+   (`record_persona_id`, else `record_role`) and the same canonical fact type, paired
+   in order, or `"retracted"` with a `superseded_reason` when the new reading has no
+   counterpart. A retirement update skips the content normalizers the update arm runs,
+   so an assertion written before a later rule can still be retired. The referrers are
+   checked again under the lock.
+4. **The result.** The outcome carries `retired: [{ id, supersededBy }]`, and its
+   summary counts the retired and retracted. When a retracted relationship claim's
+   source `S` is cited by a tree person's name (a person `materialize_facts` minted as
+   that claim's other party, which carries no assertion id), the call warns, naming
+   the person.
 
 ### 11.7 Document mode — unindexed sources extracted in code
 

@@ -15,6 +15,7 @@ function AssertionCard({ assertion }: { assertion: Assertion }): React.JSX.Eleme
         <>
           <StatusBadge value={assertion.information_quality} />
           <StatusBadge value={assertion.record_basis} />
+          {assertion.superseded_by && <StatusBadge value="superseded" />}
         </>
       }
       summary={`${assertion.informant} (${assertion.informant_proximity.replace(/_/g, ' ')})`}
@@ -71,6 +72,22 @@ function AssertionCard({ assertion }: { assertion: Assertion }): React.JSX.Eleme
                 <span className={styles.structuredVal}>{String(val)}</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {assertion.superseded_by && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>Retired</div>
+          <div className={styles.fieldValue}>
+            {assertion.superseded_by === 'retracted' ? (
+              <>Retracted{assertion.superseded_reason && <>: {assertion.superseded_reason}</>}</>
+            ) : (
+              <>
+                Superseded by <CrossLink id={assertion.superseded_by} />
+                {assertion.superseded_reason && <> ({assertion.superseded_reason})</>}
+              </>
+            )}
           </div>
         </div>
       )}

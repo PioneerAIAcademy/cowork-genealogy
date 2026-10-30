@@ -64,6 +64,7 @@ from app.agent.continue_policy import (
     delivered_stop_reason,
     foreground_rewrite,
     DELIVERY_GUIDANCE,
+    HOSTED_PLANE_ENV,
     DELIVERED_TOOL,
     CONTINUE_REASON,
     env_float,
@@ -989,6 +990,7 @@ def build_worker_options(
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
         # main thread's context and tools, not a plugin agent's `tools:` list.
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        HOSTED_PLANE_ENV: "1",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,
     }

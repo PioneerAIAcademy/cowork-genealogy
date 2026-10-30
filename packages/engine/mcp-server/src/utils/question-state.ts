@@ -34,6 +34,7 @@
 
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
 import { countsForLinkedRung } from "./tree-person.js";
+import { isLiveAssertion } from "./assertion-liveness.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
 
 export type QuestionState =
@@ -214,7 +215,7 @@ export function unregisteredDisagreements(
 ): UnregisteredDisagreement[] {
   const byId = new Map<string, any>();
   for (const a of arr(research?.assertions)) {
-    if (typeof a?.id === "string" && VITAL_EVENT[a?.fact_type]) byId.set(a.id, a);
+    if (isLiveAssertion(a) && typeof a?.id === "string" && VITAL_EVENT[a?.fact_type]) byId.set(a.id, a);
   }
   const groups = new Map<string, any[]>();
   for (const pe of arr(research?.person_evidence)) {
@@ -362,7 +363,7 @@ export function conflictBlocksQuestion(
 export function questionTiedAssertionIds(research: any): Set<string> {
   return new Set(
     arr(research?.assertions)
-      .filter((a) => arr(a?.extracted_for_question_ids).length > 0)
+      .filter((a) => isLiveAssertion(a) && arr(a?.extracted_for_question_ids).length > 0)
       .map((a) => a?.id)
       .filter((id): id is string => typeof id === "string"),
   );
@@ -665,7 +666,7 @@ export function questionStatus(research: any, question: any, tree: any = null): 
   const itemIds = new Set(plans.flatMap((p) => arr(p?.items).map((i) => i?.id)));
   const logs = arr(research?.log).filter((e) => itemIds.has(e?.plan_item_id));
   const assertions = arr(research?.assertions).filter((a) =>
-    arr(a?.extracted_for_question_ids).includes(qid),
+    isLiveAssertion(a) && arr(a?.extracted_for_question_ids).includes(qid),
   );
   const assertionIds = new Set(assertions.map((a) => a?.id));
   const summaries = arr(research?.proof_summaries).filter((s) => s?.question_id === qid);
