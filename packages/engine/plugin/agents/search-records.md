@@ -920,6 +920,15 @@ Quirks affect how queries should be constructed for that collection.
   Halsteinsdatter → Halsteinsdr), the mirror of the vowel-substitution
   rule above for given names.
 
+### Luxembourg, Church and Civil Registration (5000012)
+
+- Civil birth acts index the newborn by **given name only** — no surname; the parents carry the surname.
+- A query with `surname` drops every birth entry with no indexed surname: the record is in the collection, but `surname` hides it.
+- **To find a child's own birth:** immediately execute a call with `givenName: <child>` **and** `fatherSurname: <father>` (or `fatherGivenName`, `motherSurname`, `motherGivenName` — at least one parent anchor is required alongside `givenName`), no `surname`, anchored on `collectionId: 5000012` or `recordCountry: Luxembourg`. Example: `{ givenName: "Theresia", fatherSurname: "Reding", collectionId: "5000012", recordCountry: "Luxembourg" }`. Do not return with a recommendation to re-run — execute the re-anchored call now, in the same invocation.
+- **`givenName` alone is not sufficient** — it returns too many unrelated births; the parent-name anchor is what narrows it to the right family.
+- **A nil under `surname` in this collection says nothing about whether the birth is indexed** — drop `surname` and re-anchor on the parents' names before concluding absence.
+- Marriages and deaths are indexed with a surname; the name-only pattern applies to birth acts only.
+
 
 # Reference: Name search mechanics
 
@@ -1266,4 +1275,14 @@ A reasonably exhaustive indexed Records search has been performed when:
 - Examined results from each collection that returned matching hits
 - Called `catalog_search` for the place to find filmed or image-only holdings
 - Documented every search attempt including zero-hit searches
+
+### Children-enumeration plan items
+
+When a plan item enumerates a couple's children (its `record_type` is a birth search run across all children, not one specific child's vital record), run **one place-free search** in addition to the place-anchored sequences above:
+
+- Clear all place parameters (`birthPlace`, `residencePlace`, `anyPlace`).
+- Anchor on `recordCountry` + the birth `collectionId`; set both parents' given names and surnames.
+- **Why:** FamilySearch sometimes indexes a child under an unexpected jurisdiction. Any place filter — even broadened — never reaches it. A place-anchored search that returns some children never trips the zero-hit lever, so the missed child stays invisible without this step.
+- Run this **once** per enumeration plan item; do not apply it to every ordinary birth search.
+- Verify any hit outside the family's expected place against the parents' names before accepting.
 
