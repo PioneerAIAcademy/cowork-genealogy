@@ -389,6 +389,8 @@ is what tells the researcher where to route the search.
 - **Denominations present:** [list with approximate founding dates]
 - **Record types:** [baptisms, marriages, burials, confirmations]
 - **Where held:** [parish, diocese, FamilySearch microfilm, etc.]
+- **Gaps:** [each denomination or span of years with no surviving or online
+  registers] → [the returned index or repository that bears on it, by name]
 - **Language:** [language of records if not English]
 
 ### Census records
@@ -450,15 +452,18 @@ is what tells the researcher where to route the search.
 ## Repository guide
 
 ### Online repositories
-| Repository | Collections for this place | Access |
-|---|---|---|
-| FamilySearch | [list with record counts] | Free |
-| Ancestry | [list] | Subscription |
-| [Others] | [list] | [Access type] |
+| Repository | Collections for this place | Gap it fills | Access |
+|---|---|---|---|
+| FamilySearch | [list with record counts] | [gap] | Free |
+| Ancestry | [list] | [gap] | Subscription |
+| [Others] | [list] | [gap] | [Access type] |
 
 [List a repository or online index only with a URL a tool result returned —
-never one from memory — and name which gap (a "Records NOT online" entry or a
-pre-filing-period gap) each index helps fill.]
+never one from memory. One row per repository, with the URL a tool result
+gave for that repository. **Gap it fills** names a gap this guide states — a
+denomination, a span of years, a "Records NOT online" entry, a known loss —
+never "subscription", "additional records" or "more coverage". The same
+index goes on that gap's **Gaps** line above.]
 
 **Coverage of this survey:** [state how much of the digitized material the
 volumes above represent. When `volume_search` returned a `nextPageToken`, or
