@@ -10,8 +10,17 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   return { ...actual, resolveStandardPlace: vi.fn(async () => null), standardPlaceToCoords: vi.fn(async () => null) };
 });
 
-import { researchAppend } from "../../src/tools/research-append.js";
+import {
+  researchAppend,
+  derivedNamesakePairs,
+  pairRecordFacts,
+  independentLife,
+  pairJudgement,
+  namesakeVerdicts,
+} from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
+import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
+import { treeEdit } from "../../src/tools/tree-edit.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 
 // The `namesakes` section and the cap a recorded namesake puts on links to the
@@ -1213,6 +1222,633 @@ describe("namesake cap", () => {
       expect((await row()).record_persona_ids).toEqual({ [REC.voter]: "p_555" });
       expect((await update({ notes: "Checked again." })).ok).toBe(true);
       expect((await row()).record_persona_ids).toEqual({ [REC.voter]: "p_555" });
+    });
+  });
+});
+
+// ─── Tree-derived namesake pairs (issue #3681) ─────────────────────────────────
+//
+// A father and son of one first given name, read from the tree with no row.
+
+describe("tree-derived namesake pairs (#3681)", () => {
+  const FA = "KWPP-001"; // John Pratt, the father, born 1820
+  const SO = "KWPP-002"; // John Pratt, his son, born 1850
+  const MO = "KWPP-003"; // Mary Pratt, the mother
+  const MAR = "ark:/61903/1:1:MAR9-001"; // the son's 1871 marriage
+  const OTHER = "ark:/61903/1:1:BAP9-002";
+  const FS_TREE = { id: "S9", title: "FamilySearch Family Tree" };
+
+  const fact = (type: string, date: string, extra: Record<string, unknown> = {}) => ({ id: `${type}-${date}`, type, date, ...extra });
+  const fsDated = (type: string, date: string) => fact(type, date, { sources: [{ ref: "S9" }] });
+
+  function pairTree(): Record<string, any> {
+    return {
+      persons: [
+        person(FA, "John", "Pratt", "Male", { facts: [fsDated("Birth", "1820")] }),
+        person(SO, "John", "Pratt", "Male", { facts: [fsDated("Birth", "1850")] }),
+        person(MO, "Mary", "Pratt", "Female", { facts: [] }),
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: FA, person2: MO },
+        { id: "R2", type: "ParentChild", parent: FA, child: SO },
+        { id: "R3", type: "ParentChild", parent: MO, child: SO },
+      ],
+      sources: [{ id: "S1", title: "Marriage" }, { id: "S2", title: "Baptism" }, FS_TREE],
+    };
+  }
+
+  /** The son's 1871 marriage: the groom, 21, so born about 1850. */
+  function marriageResearch(extra: Record<string, unknown> = {}): Record<string, any> {
+    return research({
+      namesakes: [],
+      sources: [source("src_001", "S1"), source("src_002", "S2")],
+      assertions: [
+        assertion("a_001", "src_001", MAR, "groom", "name", "John Pratt"),
+        assertion("a_002", "src_001", MAR, "groom", "age", "21"),
+        assertion("a_003", "src_001", MAR, "groom", "marriage", "John Pratt and Jane Doe", { date: "12 May 1871" }),
+        assertion("a_010", "src_002", OTHER, "child", "birth", "1820"),
+      ],
+      ...extra,
+    });
+  }
+
+  describe("derivedNamesakePairs", () => {
+    it("pairs a father and son of one first given name, from either side", () => {
+      const t = pairTree();
+      expect(derivedNamesakePairs(t, FA)).toEqual([{ personId: SO, relation: "child", sameBirthYear: false }]);
+      expect(derivedNamesakePairs(t, SO)).toEqual([{ personId: FA, relation: "parent", sameBirthYear: false }]);
+      expect(derivedNamesakePairs(t, MO)).toEqual([]);
+    });
+
+    it("folds accents, and skips initials and placeholder words", () => {
+      const t = pairTree();
+      t.persons[1].names = [{ given: "Jóhn Henry", surname: "Pratt" }];
+      expect(derivedNamesakePairs(t, FA).map((q) => q.personId)).toEqual([SO]);
+      t.persons[1].names = [{ given: "J. Henry", surname: "Pratt" }];
+      expect(derivedNamesakePairs(t, FA)).toEqual([]);
+      t.persons[1].names = [{ given: "Unknown", surname: "Pratt" }];
+      expect(derivedNamesakePairs(t, FA)).toEqual([]);
+    });
+
+    it("pairs siblings through one shared parent, keeps an unknown sex and drops a known other sex", () => {
+      const t = pairTree();
+      t.persons.push(person("KWPP-004", "John", "Pratt", "Unknown"), person("KWPP-005", "John", "Pratt", "female"));
+      t.relationships.push(
+        { id: "R4", type: "ParentChild", parent: MO, child: "KWPP-004" },
+        { id: "R5", type: "ParentChild", parent: MO, child: "KWPP-005" },
+      );
+      expect(derivedNamesakePairs(t, SO)).toEqual([
+        { personId: FA, relation: "parent", sameBirthYear: false },
+        { personId: "KWPP-004", relation: "sibling", sameBirthYear: false },
+      ]);
+    });
+
+    it("reads past an initial to the first given name", () => {
+      const t = pairTree();
+      t.persons[0].names = [{ given: "J. William", surname: "Pratt" }];
+      t.persons[1].names = [{ given: "William", surname: "Pratt" }];
+      expect(derivedNamesakePairs(t, FA).map((q) => q.personId)).toEqual([SO]);
+      t.persons[0].names = [{ given: "J. R.", surname: "Pratt" }];
+      expect(derivedNamesakePairs(t, FA)).toEqual([]);
+    });
+
+    it("marks siblings born the same year, who may be one person entered twice", () => {
+      const t = pairTree();
+      t.persons.push(person("KWPP-004", "John", "Pratt", "Male", { facts: [fsDated("Christening", "3 Mar 1850")] }));
+      t.relationships.push({ id: "R4", type: "ParentChild", parent: FA, child: "KWPP-004" });
+      expect(derivedNamesakePairs(t, SO)).toContainEqual({ personId: "KWPP-004", relation: "sibling", sameBirthYear: true });
+    });
+  });
+
+  it("pairRecordFacts reads the linked persona's role, a birth from a stated age, and the record's year", () => {
+    const r = marriageResearch({ person_evidence: [standing("pe_001", "a_001", SO)] });
+    expect(pairRecordFacts(r, r.assertions[0], SO)).toMatchObject({ role: "groom", year: 1871, birth: 1850, death: null });
+    // A two-party assertion names no persona of its own: the person's one-party links say which.
+    expect(pairRecordFacts(r, r.assertions[2], SO).role).toBe("groom");
+    expect(pairRecordFacts(r, r.assertions[2], FA).role).toBeNull();
+  });
+
+  it("pairRecordFacts reads the linked assertion's own persona, not the person's other one on the record", () => {
+    const census = research({
+      namesakes: [],
+      sources: [source("src_001", "S1")],
+      assertions: [
+        assertion("a_001", "src_001", MAR, "head", "name", "John Pratt", { record_persona_id: "p1" }),
+        assertion("a_002", "src_001", MAR, "head", "age", "50", { record_persona_id: "p1" }),
+        assertion("a_003", "src_001", MAR, "head", "census", "1870", { record_persona_id: "p1", date: "1870" }),
+        assertion("a_004", "src_001", MAR, "son", "name", "John Pratt", { record_persona_id: "p2" }),
+        assertion("a_005", "src_001", MAR, "son", "age", "20", { record_persona_id: "p2" }),
+      ],
+      person_evidence: [standing("pe_001", "a_001", FA), standing("pe_002", "a_002", FA), standing("pe_003", "a_004", FA)],
+    });
+    expect(pairRecordFacts(census, census.assertions[3], FA)).toMatchObject({ role: "son", birth: 1850 });
+  });
+
+  it("pairRecordFacts reads a year from a value's words but not from a house number", () => {
+    const r = research({
+      namesakes: [],
+      sources: [source("src_001", "S1")],
+      assertions: [
+        assertion("a_001", "src_001", MAR, "head", "name", "John Pratt"),
+        assertion("a_002", "src_001", MAR, "head", "residence", "1912 Oak Street, Niles"),
+        assertion("a_003", "src_001", MAR, "head", "birth", "born circa 1850, Niles"),
+      ],
+      person_evidence: [standing("pe_001", "a_001", SO)],
+    });
+    expect(pairRecordFacts(r, r.assertions[0], SO)).toMatchObject({ year: 1850, birth: 1850 });
+  });
+
+  describe("independentLife (rule 3)", () => {
+    const life = (p: any, r: any, t: any, start: any = null) => independentLife(p, MAR, r, t, start);
+
+    it("counts a date the FamilySearch tree's own source carries, and a starting-tree date whatever it cites", () => {
+      const t = pairTree();
+      const r = marriageResearch();
+      expect(life(t.persons[0], r, t)).toEqual({ birth: 1820, death: null });
+      const bare = { ...t.persons[0], facts: [fact("Birth", "1820")] };
+      expect(life(bare, r, t)).toEqual({ birth: null, death: null });
+      expect(life(bare, r, t, { persons: [{ id: FA, facts: [fsDated("Birth", "1820")] }] })).toEqual({ birth: 1820, death: null });
+    });
+
+    it("never counts a date copied from the judged record, by its own assertion first", () => {
+      const t = pairTree();
+      const r = marriageResearch({
+        sources: [source("src_001", "S1"), source("src_002", "S2"), source("src_003", "S3")],
+        assertions: [
+          ...marriageResearch().assertions,
+          assertion("a_030", "src_003", MAR, "groom", "birth", "1820"),
+          assertion("a_031", "src_003", OTHER, "head", "name", "John Pratt"),
+        ],
+      });
+      const withFact = (extra: Record<string, unknown>) => ({ ...t.persons[0], facts: [fact("Birth", "1820", extra)] });
+      expect(life(withFact({ assertion_id: "a_003", sources: [{ ref: "S1" }] }), r, t).birth).toBeNull();
+      expect(life(withFact({ assertion_id: "a_010", sources: [{ ref: "S2" }] }), r, t).birth).toBe(1820);
+      // A source spanning both records: the fact's own assertion says which record it came from.
+      expect(life(withFact({ assertion_id: "a_030", sources: [{ ref: "S3" }] }), r, t).birth).toBeNull();
+      expect(life(withFact({ sources: [{ ref: "S1" }] }), r, t).birth).toBeNull();
+      expect(life(withFact({ sources: [{ ref: "S2" }] }), r, t).birth).toBe(1820);
+      const noted = { ...t, sources: [...t.sources, { id: "S7", title: "A note the agent cited" }] };
+      expect(life(withFact({ sources: [{ ref: "S7" }] }), r, noted).birth).toBeNull();
+    });
+  });
+
+  describe("pairJudgement", () => {
+    const judge = (personId: string, r: any, t: any, start: any = null) =>
+      pairJudgement(personId, r.assertions[0], derivedNamesakePairs(t, personId), r, t, start);
+
+    it("ties the son's marriage by age, and finds it does not fit the father", () => {
+      const t = pairTree();
+      const toSon = marriageResearch({ person_evidence: [standing("pe_001", "a_001", SO)] });
+      expect(judge(SO, toSon, t)).toEqual({ fits: true, ties: [{ partner: FA, relation: "parent", test: "age" }], reasons: [] });
+      const toFather = marriageResearch({ person_evidence: [standing("pe_001", "a_001", FA)] });
+      const j = judge(FA, toFather, t);
+      expect(j.fits).toBe(false);
+      expect(j.ties).toEqual([]);
+      expect(j.reasons[0]).toBe(`The record does not fit '${FA}' (age, family limit).`);
+      expect(j.reasons[1]).toBe(
+        `Nothing rules out '${SO}', '${FA}''s child of the same given name: their dates and the record's fit either of them.`,
+      );
+    });
+
+    it("rules out by lifespan, by adult role, by the same record and by the family limit", () => {
+      const death = (year: string) =>
+        research({
+          namesakes: [],
+          sources: [source("src_001", "S1")],
+          assertions: [
+            assertion("a_001", "src_001", MAR, "deceased", "name", "John Pratt"),
+            assertion("a_002", "src_001", MAR, "deceased", "death", year),
+          ],
+          person_evidence: [standing("pe_001", "a_001", FA)],
+        });
+      const t = pairTree();
+      t.persons[0].facts = [fsDated("Death", "1890")];
+      t.persons[1].facts = [fsDated("Death", "1900")];
+      expect(judge(FA, death("1890"), t).ties).toEqual([{ partner: SO, relation: "child", test: "lifespan" }]);
+
+      const groom = research({
+        namesakes: [],
+        sources: [source("src_001", "S1")],
+        assertions: [
+          assertion("a_001", "src_001", MAR, "groom", "name", "John Pratt"),
+          assertion("a_002", "src_001", MAR, "groom", "marriage", "John Pratt and Ann Lee", { date: "1860" }),
+        ],
+        person_evidence: [standing("pe_001", "a_001", FA)],
+      });
+      expect(judge(FA, groom, pairTree()).ties).toEqual([{ partner: SO, relation: "child", test: "adult role" }]);
+
+      const census = research({
+        namesakes: [],
+        sources: [source("src_001", "S1")],
+        assertions: [
+          assertion("a_001", "src_001", MAR, "head", "name", "John Pratt", { record_persona_id: "p1" }),
+          assertion("a_002", "src_001", MAR, "son", "name", "John Pratt", { record_persona_id: "p2" }),
+          assertion("a_003", "src_001", MAR, "head", "census", "1860", { record_persona_id: "p1", date: "1860" }),
+        ],
+        person_evidence: [standing("pe_001", "a_001", FA), standing("pe_002", "a_002", SO)],
+      });
+      const undated = pairTree();
+      undated.persons[0].facts = [];
+      undated.persons[1].facts = [];
+      expect(judge(FA, census, undated).ties).toEqual([{ partner: SO, relation: "child", test: "same record" }]);
+
+      // The 1841 head, 21, was born about 1820; the son's mother was born in 1825.
+      const head = research({
+        namesakes: [],
+        sources: [source("src_001", "S1")],
+        assertions: [
+          assertion("a_001", "src_001", MAR, "head", "name", "John Pratt"),
+          assertion("a_002", "src_001", MAR, "head", "age", "21"),
+          assertion("a_003", "src_001", MAR, "head", "census", "1841", { date: "1841" }),
+        ],
+        person_evidence: [standing("pe_001", "a_001", FA)],
+      });
+      const mothered = pairTree();
+      mothered.persons[0].facts = [];
+      mothered.persons[1].facts = [];
+      mothered.persons[2].facts = [fsDated("Birth", "1825")];
+      expect(judge(FA, head, mothered).ties).toEqual([{ partner: SO, relation: "child", test: "family limit" }]);
+    });
+
+    it("says what is missing when nothing tells the two apart", () => {
+      const t = pairTree();
+      t.persons[0].facts = [];
+      t.persons[1].facts = [];
+      const r = marriageResearch({ person_evidence: [standing("pe_001", "a_001", SO)] });
+      expect(judge(SO, r, t).reasons).toEqual([
+        `Nothing rules out '${FA}', '${SO}''s parent of the same given name: '${FA}' has no birth or death year from a record other than this one.`,
+      ]);
+    });
+
+    it("lets a record one year before the birth year fit, as a death one year off does, and not two", () => {
+      const baptism = (year: string) =>
+        research({
+          namesakes: [],
+          sources: [source("src_001", "S1")],
+          assertions: [assertion("a_001", "src_001", OTHER, "child", "christening", year, { date: year })],
+          person_evidence: [standing("pe_001", "a_001", SO)],
+        });
+      expect(judge(SO, baptism("1849"), pairTree())).toEqual({
+        fits: true,
+        ties: [{ partner: FA, relation: "parent", test: "age" }],
+        reasons: [],
+      });
+      expect(judge(SO, baptism("1848"), pairTree()).reasons[0]).toBe(`The record does not fit '${SO}' (lifespan).`);
+
+      const burial = (year: string) =>
+        research({
+          namesakes: [],
+          sources: [source("src_001", "S1")],
+          assertions: [assertion("a_001", "src_001", OTHER, "deceased", "burial", year, { date: year })],
+          person_evidence: [standing("pe_001", "a_001", FA)],
+        });
+      const died = pairTree();
+      died.persons[0].facts = [fsDated("Birth", "1820"), fsDated("Death", "1889")];
+      expect(judge(FA, burial("1890"), died).fits).toBe(true);
+      expect(judge(FA, burial("1891"), died).fits).toBe(false);
+    });
+
+    it("does not need the deceased alive at a later event of their own death or estate", () => {
+      // A will proved in 1872 for the father, who died in 1870; the son lived to 1920.
+      const probate = (personId: string, extra: any[] = []) =>
+        research({
+          namesakes: [],
+          sources: [source("src_001", "S1")],
+          assertions: [
+            assertion("a_001", "src_001", MAR, "testator", "name", "John Pratt"),
+            assertion("a_002", "src_001", MAR, "testator", "probate", "1872", { date: "1872" }),
+            ...extra,
+          ],
+          person_evidence: [standing("pe_001", "a_001", personId)],
+        });
+      const t = pairTree();
+      t.persons[0].facts = [fsDated("Birth", "1820"), fsDated("Death", "1870")];
+      t.persons[1].facts = [fsDated("Birth", "1850"), fsDated("Death", "1920")];
+      const died = [assertion("a_003", "src_001", MAR, "testator", "death", "1870", { date: "1870" })];
+      expect(judge(FA, probate(FA, died), t)).toEqual({
+        fits: true,
+        ties: [{ partner: SO, relation: "child", test: "lifespan" }],
+        reasons: [],
+      });
+      // With no death on the record nothing tells them apart, and the probate rules neither out.
+      expect(judge(FA, probate(FA), t).fits).toBe(true);
+      expect(judge(SO, probate(SO), t).ties).toEqual([]);
+    });
+
+    it("reads a party re-extracted without persona ids as the same party, not a second one", () => {
+      const t = pairTree();
+      t.persons[0].facts = [];
+      t.persons[1].facts = [];
+      const r = research({
+        namesakes: [],
+        sources: [source("src_001", "S1")],
+        assertions: [
+          assertion("a_001", "src_001", MAR, "groom", "name", "John Pratt", { record_persona_id: "p1", log_entry_id: "log_001" }),
+          assertion("a_002", "src_001", MAR, "bride", "name", "Jane Doe", { record_persona_id: "p2", log_entry_id: "log_001" }),
+          assertion("a_003", "src_001", MAR, "groom", "name", "John Pratt", { log_entry_id: "log_002" }),
+        ],
+        person_evidence: [standing("pe_001", "a_001", SO), standing("pe_002", "a_003", FA)],
+      });
+      expect(judge(SO, r, t).ties).toEqual([]);
+    });
+
+    it("refuses a record that rules every partner out but does not fit the person either", () => {
+      const t = pairTree();
+      t.persons[0].facts = [fsDated("Birth", "1820"), fsDated("Death", "1890")];
+      const r = research({
+        namesakes: [],
+        sources: [source("src_001", "S1")],
+        assertions: [
+          assertion("a_001", "src_001", MAR, "deceased", "name", "John Pratt"),
+          assertion("a_002", "src_001", MAR, "deceased", "death", "1835", { date: "1835" }),
+        ],
+        person_evidence: [standing("pe_001", "a_001", SO)],
+      });
+      const j = judge(SO, r, t);
+      expect(j.fits).toBe(false);
+      expect(j.ties).toEqual([{ partner: FA, relation: "parent", test: "lifespan" }]);
+      expect(namesakeVerdicts(SO, r, t, { derivedPairs: true })?.verdicts.get("pe_001")?.allowed).toBe(false);
+    });
+  });
+
+  describe("namesakeVerdicts with derivedPairs", () => {
+    it("judges a pair member with no row only when asked to", () => {
+      const r = marriageResearch({ person_evidence: [standing("pe_001", "a_001", SO)] });
+      expect(namesakeVerdicts(SO, r, pairTree())).toBeNull();
+      const v = namesakeVerdicts(SO, r, pairTree(), { derivedPairs: true });
+      expect(v?.rows).toEqual([]);
+      expect(v?.pairs.map((q) => q.personId)).toEqual([FA]);
+      expect(v?.verdicts.get("pe_001")).toMatchObject({
+        allowed: true,
+        ties: [{ kind: "pair", partner: FA, relation: "parent", test: "age" }],
+      });
+    });
+
+    it("refuses a pair member's link the tests cannot tell apart, naming the partner", () => {
+      const r = marriageResearch({ person_evidence: [standing("pe_001", "a_001", FA)] });
+      const verdict = namesakeVerdicts(FA, r, pairTree(), { derivedPairs: true })?.verdicts.get("pe_001");
+      expect(verdict?.allowed).toBe(false);
+      expect(verdict?.reasons[0]).toBe(`The record does not fit '${FA}' (age, family limit).`);
+    });
+
+    it("still asks a row holder for tie (a) or (b): a pair test says nothing about a stranger", () => {
+      const r = marriageResearch({
+        namesakes: [{ ...ROW, person_id: SO, record_ids: [OTHER] }],
+        person_evidence: [standing("pe_001", "a_001", SO)],
+      });
+      const v = namesakeVerdicts(SO, r, pairTree(), { derivedPairs: true });
+      expect(v?.pairs.map((q) => q.personId)).toEqual([FA]);
+      expect(v?.verdicts.get("pe_001")?.allowed).toBe(false);
+    });
+
+    describe("a tie counts only when the record would not tie the partner as well", () => {
+      const CEN = "ark:/61903/1:1:CEN9-003";
+      /** Both Johns undated, so only a tie can tell them apart; the father's sons William and James, and the
+       *  son's wife Ann. */
+      function household(): Record<string, any> {
+        const t = pairTree();
+        t.persons[0].facts = [];
+        t.persons[1].facts = [];
+        t.persons.push(
+          person("KWPP-006", "William", "Pratt", "Male"),
+          person("KWPP-007", "James", "Pratt", "Male"),
+          person("KWPP-008", "Ann", "Pratt", "Female"),
+        );
+        t.relationships.push(
+          { id: "R6", type: "ParentChild", parent: FA, child: "KWPP-006" },
+          { id: "R7", type: "ParentChild", parent: FA, child: "KWPP-007" },
+          { id: "R8", type: "Couple", person1: SO, person2: "KWPP-008" },
+        );
+        return t;
+      }
+      /** An undated census, one name per entry, each linked to its person; the first is the link judged. */
+      const census = (entries: Array<[role: string, name: string, personId: string]>) =>
+        research({
+          namesakes: [],
+          sources: [source("src_001", "S1")],
+          assertions: entries.map(([role, name], i) =>
+            assertion(`a_00${i + 1}`, "src_001", CEN, role, "name", name, { record_persona_id: `p${i + 1}` }),
+          ),
+          person_evidence: entries.map(([, , personId], i) => standing(`pe_00${i + 1}`, `a_00${i + 1}`, personId)),
+        });
+
+      it("refuses the son's entry moved to the father, tied through brothers who are the son's too", () => {
+        const r = census([
+          ["brother_1", "John Pratt", FA],
+          ["head", "William Pratt", "KWPP-006"],
+          ["brother_2", "James Pratt", "KWPP-007"],
+        ]);
+        const asRow = namesakeVerdicts(FA, { ...r, namesakes: [{ ...ROW, person_id: FA }] }, household());
+        expect(asRow?.verdicts.get("pe_001")?.allowed).toBe(true);
+        // A row holder with a namesake in the tree gets the same check.
+        const both = namesakeVerdicts(FA, { ...r, namesakes: [{ ...ROW, person_id: FA }] }, household(), { derivedPairs: true });
+        expect(both?.verdicts.get("pe_001")).toMatchObject({ allowed: false, blockedBy: expect.arrayContaining(["pair"]) });
+        const verdict = namesakeVerdicts(FA, r, household(), { derivedPairs: true })?.verdicts.get("pe_001");
+        expect(verdict?.allowed).toBe(false);
+        expect(verdict?.blockedBy).toContain("pair");
+        expect(verdict?.reasons).toContain(
+          `Its ties cannot tell '${FA}' from '${SO}', '${FA}''s child of the same given name: the record ties '${SO}' ` +
+            `as well (through 'KWPP-006', their sibling; 'KWPP-007', their sibling).`,
+        );
+      });
+
+      it("keeps a tie through the son's own wife, whom the father does not share", () => {
+        const r = census([
+          ["head", "John Pratt", SO],
+          ["wife", "Ann Pratt", "KWPP-008"],
+        ]);
+        expect(namesakeVerdicts(SO, r, household(), { derivedPairs: true })?.verdicts.get("pe_001")).toMatchObject({
+          allowed: true,
+          ties: [{ kind: "a", relative: "KWPP-008", relation: "spouse" }],
+        });
+      });
+
+      it("drops a tie through the mother, whom father and son share, when the roles say nothing", () => {
+        const r = census([
+          ["grantor", "John Pratt", SO],
+          ["witness", "Mary Pratt", MO],
+        ]);
+        const verdict = namesakeVerdicts(SO, r, household(), { derivedPairs: true })?.verdicts.get("pe_001");
+        expect(verdict?.allowed).toBe(false);
+        expect(verdict?.reasons.join(" ")).toContain(`the record ties '${FA}' as well (through '${MO}', their spouse).`);
+      });
+
+      it("takes a 'child of' naming the person along with the entry, so it cannot tie the partner through them", () => {
+        const r = research({
+          namesakes: [],
+          sources: [source("src_001", "S1")],
+          assertions: [
+            assertion("a_001", "src_001", CEN, "father_of_deceased", "name", "John Pratt", { record_persona_id: "p2" }),
+            assertion("a_002", "src_001", CEN, "deceased", "name", "William Pratt", { record_persona_id: "p1" }),
+            assertion("a_003", "src_001", CEN, "deceased", "relationship", "child of John Pratt", {
+              record_persona_id: "p1",
+              structured_value: { relationship_type: "child", related_person_role: "father_of_deceased" },
+            }),
+          ],
+          person_evidence: [
+            standing("pe_001", "a_001", FA),
+            standing("pe_002", "a_002", "KWPP-006"),
+            standing("pe_003", "a_003", "KWPP-006"),
+            standing("pe_004", "a_003", FA),
+          ],
+        });
+        const verdict = namesakeVerdicts(FA, r, household(), { derivedPairs: true })?.verdicts.get("pe_001");
+        expect(verdict?.allowed).toBe(true);
+        expect(verdict?.ties.every((t) => t.kind === "a" && t.relative === "KWPP-006" && t.relation === "child")).toBe(true);
+      });
+
+      it("reads no grandparent's role: his son, the record's father, still ties him", () => {
+        const t = household();
+        t.persons.push(person("KWPP-009", "Mary", "Pratt", "Female"));
+        t.relationships.push({ id: "R9", type: "ParentChild", parent: SO, child: "KWPP-009" });
+        const BAP = "ark:/61903/1:1:BAP9-009";
+        const r = research({
+          namesakes: [{ ...ROW, person_id: FA, record_ids: [OTHER] }],
+          sources: [source("src_001", "S1")],
+          assertions: [
+            assertion("a_001", "src_001", BAP, "paternal_grandfather", "name", "John Pratt", { record_persona_id: "p3" }),
+            assertion("a_002", "src_001", BAP, "father_of_father", "name", "John Pratt", { record_persona_id: "p4" }),
+            assertion("a_003", "src_001", BAP, "father", "name", "John Pratt", { record_persona_id: "p2" }),
+            assertion("a_004", "src_001", BAP, "child", "name", "Mary Pratt", { record_persona_id: "p1" }),
+          ],
+          person_evidence: [
+            standing("pe_001", "a_001", FA),
+            standing("pe_002", "a_002", FA),
+            standing("pe_003", "a_003", SO),
+            standing("pe_004", "a_004", "KWPP-009"),
+          ],
+        });
+        const v = namesakeVerdicts(FA, r, t);
+        expect(v?.verdicts.get("pe_001")?.allowed).toBe(true);
+        expect(v?.verdicts.get("pe_002")?.allowed).toBe(true);
+      });
+
+      it("reads no role for a link naming the person, whose own role the record does not show", () => {
+        const MAR = "ark:/61903/1:1:MAR9-010";
+        const r = research({
+          namesakes: [{ ...ROW, person_id: SO, record_ids: [OTHER] }],
+          sources: [source("src_001", "S1")],
+          assertions: [
+            assertion("a_001", "src_001", MAR, "father_of_groom", "relationship", "John Pratt recorded as father of groom John Pratt", {
+              record_persona_id: "p2",
+              structured_value: { relationship_type: "parent", related_person_role: "groom" },
+            }),
+          ],
+          person_evidence: [standing("pe_001", "a_001", SO), standing("pe_002", "a_001", FA)],
+        });
+        expect(namesakeVerdicts(SO, r, household())?.verdicts.get("pe_001")).toMatchObject({
+          allowed: true,
+          ties: [{ kind: "a", relative: FA, relation: "parent" }],
+        });
+      });
+
+      it("carries the person's own entry with a statement naming them, so a daughter's marriage does not tie her brother", () => {
+        // The bride's "child of John Pratt" names her father, whose own entry on the record is linked to him.
+        const t = household();
+        t.persons.push(person("KWPP-009", "Mary", "Pratt", "Female"));
+        t.relationships.push({ id: "R9", type: "ParentChild", parent: FA, child: "KWPP-009" });
+        const r = research({
+          namesakes: [],
+          sources: [source("src_001", "S1")],
+          assertions: [
+            assertion("a_001", "src_001", CEN, "father_of_bride", "name", "John Pratt", { record_persona_id: "p1" }),
+            assertion("a_002", "src_001", CEN, "bride", "name", "Mary Pratt", { record_persona_id: "p2" }),
+            assertion("a_003", "src_001", CEN, "bride", "relationship", "child of John Pratt", {
+              record_persona_id: "p2",
+              structured_value: { relationship_type: "child", related_person_role: "father_of_bride" },
+            }),
+          ],
+          person_evidence: [standing("pe_001", "a_001", FA), standing("pe_002", "a_002", "KWPP-009"), standing("pe_003", "a_003", FA)],
+        });
+        expect(namesakeVerdicts(FA, r, t, { derivedPairs: true })?.verdicts.get("pe_003")?.allowed).toBe(true);
+      });
+
+      it("lets the roles tell them apart: the mother of the child is no wife of the child's", () => {
+        const r = census([
+          ["child", "John Pratt", SO],
+          ["mother", "Mary Pratt", MO],
+        ]);
+        expect(namesakeVerdicts(SO, r, household(), { derivedPairs: true })?.verdicts.get("pe_001")).toMatchObject({
+          allowed: true,
+          ties: [{ kind: "a", relative: MO, relation: "parent" }],
+        });
+      });
+    });
+  });
+
+  describe("the link cap, end to end", () => {
+    let dir: string;
+    beforeEach(async () => {
+      dir = await mkdtemp(join(tmpdir(), "research-append-namesake-pairs-"));
+    });
+    afterEach(async () => {
+      await rm(dir, { recursive: true, force: true });
+    });
+    async function setup(r: Record<string, any>, t: Record<string, any>) {
+      await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+      await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2));
+    }
+    async function attest(r: Record<string, any>, assertionId: string, personId: string) {
+      const a = (r.assertions as any[]).find((x) => x.id === assertionId);
+      await recordMatchScore(dir, {
+        record_id: a.record_id,
+        record_persona_id: null,
+        record_role: a.record_role,
+        tree_person_id: personId,
+        score: 0.9,
+        matched: true,
+        assertion_id: assertionId,
+        record_source: "record_read",
+        computed: "2026-10-29T00:00:00Z",
+      });
+    }
+    const call = (...ops: unknown[]) => researchAppend({ projectPath: dir, ops } as any);
+    const errs = (r: any) => (r.ok ? "" : (r.errors as string[]).join("\n"));
+
+    it("refuses the son's marriage on the father, and allows it on the son", async () => {
+      const r = marriageResearch();
+      await setup(r, pairTree());
+      await attest(r, "a_001", FA);
+      const refused = await call(link("a_001", FA));
+      expect(refused.ok).toBe(false);
+      const m = errs(refused);
+      expect(m).toContain(`confidence 'probable' is not available on link 'pe_001' to '${FA}'`);
+      expect(m).toContain(`'${FA}' has a namesake in the tree ('${SO}', '${FA}''s child of the same given name)`);
+      expect(m).toContain(`The record does not fit '${FA}' (age, family limit).`);
+      expect(m).toContain("A namesake in the tree caps this link at 'speculative'");
+      expect(m).not.toContain("hand the merge to tree-edit");
+
+      await attest(r, "a_001", SO);
+      expect(errs(await call(link("a_001", SO)))).toBe("");
+    });
+
+    it("offers the merge after the speculative way out when two siblings share a birth year", async () => {
+      const t = pairTree();
+      t.persons.push(person("KWPP-004", "John", "Pratt", "Male", { facts: [fsDated("Birth", "1850")] }));
+      t.relationships.push({ id: "R4", type: "ParentChild", parent: FA, child: "KWPP-004" });
+      const r = marriageResearch();
+      await setup(r, t);
+      await attest(r, "a_001", SO);
+      const m = errs(await call(link("a_001", SO)));
+      expect(m).toContain(`Nothing rules out 'KWPP-004', '${SO}''s sibling of the same given name`);
+      expect(m.indexOf("Write it as 'speculative'")).toBeLessThan(m.indexOf("hand the merge to tree-edit"));
+      expect(m).toContain(`If '${SO}' and 'KWPP-004' are one person entered twice`);
+    });
+
+    it("reads no pairs on a citation or a merge, so the merge it offers stays open", async () => {
+      const t = pairTree();
+      t.persons.push(person("KWPP-004", "John", "Pratt", "Male", { facts: [fsDated("Birth", "1850")] }));
+      t.relationships.push({ id: "R4", type: "ParentChild", parent: FA, child: "KWPP-004" });
+      const r = marriageResearch({ person_evidence: [standing("pe_001", "a_001", SO)] });
+      expect(namesakeVerdicts(SO, r, t, { derivedPairs: true })?.verdicts.get("pe_001")?.allowed).toBe(false);
+      await setup(r, t);
+      const cited = await treeEdit({
+        projectPath: dir,
+        ops: [{ operation: "add_fact", personId: SO, fact: { type: "Occupation", value: "Clerk", sources: [{ ref: "S1" }] } }],
+      } as any);
+      expect(cited.ok, errs(cited)).toBe(true);
+      const merged: any = await mergeTreePersons({ projectPath: dir, merges: [["KWPP-004", SO]] });
+      expect(merged.ok, errs(merged)).toBe(true);
     });
   });
 });

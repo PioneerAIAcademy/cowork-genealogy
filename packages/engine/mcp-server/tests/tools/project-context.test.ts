@@ -226,6 +226,8 @@ describe("project_context", () => {
       projectStatus: "active",
       objective: "Fresh",
       subjectPersonIds: [],
+      narrationGuidance: null,
+      subscriptions: [],
       openQuestions: [],
       questionStatuses: [],
       persons: [],

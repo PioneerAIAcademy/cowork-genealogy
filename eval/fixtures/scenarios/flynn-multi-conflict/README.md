@@ -14,7 +14,7 @@ Patrick Flynn parentage research with two unresolved conflicts active simultaneo
 
 - `conflict-resolution` **prioritization** tests — when two conflicts exist, which should be tackled first?
 - Tests verifying that the skill addresses one conflict at a time rather than producing tangled resolution prose covering both.
-- `question-selection` tests where the next research question must address whichever conflict the skill identifies as most blocking.
+- tests where the next step must address whichever conflict the skill identifies as most blocking. Under step mode that is a step on the open question, not a new question.
 
 ## Two distinct conflict shapes
 

@@ -11,6 +11,8 @@ import {
   readStagedEnvelopeQuery,
   resolveStagedRef,
   readStagedResults,
+  sidecarReader,
+  checkStagedResults,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
 
@@ -506,6 +508,45 @@ describe("results-staging", () => {
 // logs found (11 of 3,636 ref-carrying calls): the init-project k8d pair is
 // verbatim; for the others the differing characters are the real ones and the
 // rest of the UUID is filled in.
+describe("sidecarReader", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "sidecar-reader-"));
+    await mkdir(join(dir, "results"), { recursive: true });
+  });
+  afterEach(async () => rm(dir, { recursive: true, force: true }));
+
+  it("reads each sidecar once per reader, and gives null for one outside the project, missing or not JSON", async () => {
+    await writeFile(join(dir, "results", "log_001.json"), JSON.stringify({ log_id: "log_001", payload: { results: [] } }));
+    await writeFile(join(dir, "results", "log_002.json"), "{ not json");
+    const inner = backingStore();
+    let reads = 0;
+    const counting = new Proxy(inner, {
+      get(target, prop, receiver) {
+        const value = Reflect.get(target, prop, receiver);
+        if (prop !== "readText" || typeof value !== "function") return value;
+        return (...args: unknown[]) => {
+          reads++;
+          return value.apply(target, args);
+        };
+      },
+    });
+    await runWithProjectStore(counting, async () => {
+      const read = sidecarReader(dir);
+      const [a, b] = await Promise.all([read("results/log_001.json"), read("results/log_001.json")]);
+      expect(a).toEqual({ log_id: "log_001", payload: { results: [] } });
+      expect(b).toBe(a);
+      expect(reads).toBe(1);
+      expect(await read("results/log_002.json")).toBeNull();
+      expect(await read("results/log_003.json")).toBeNull();
+      expect(await read("../outside.json")).toBeNull();
+      expect(reads).toBe(3);
+      await sidecarReader(dir)("results/log_001.json");
+      expect(reads).toBe(4);
+    });
+  });
+});
+
 describe("resolveStagedRef", () => {
   let dir: string;
   beforeEach(async () => {
@@ -581,5 +622,24 @@ describe("resolveStagedRef", () => {
     await writeFile(join(dir, STAGING_SUBDIR, `${good}.json`), JSON.stringify({ payload: { results: [{ id: "R1" }] } }));
     expect(await readStagedResults(dir, at("dbef78b1-1e5f-438a-ac1d-9ee233874f9"))).toEqual([{ id: "R1" }]);
     await expect(readStagedResults(dir, at("00000000-0000-4000-8000-000000000000"))).rejects.toThrow("does not exist");
+  });
+
+  // A '#' carries a full-text hit selector, which only sidecar_read reads (issue
+  // #3522). `<uuid>#1` is two edits from `<uuid>`, so without the guard it was
+  // silently read as the whole staged file.
+  it("never corrects a ref carrying a '#' hit selector, and the readers refuse it", async () => {
+    const good = "dbef78b1-1e5f-438a-ac1d-9bee233874f9";
+    await mkdir(join(dir, STAGING_SUBDIR), { recursive: true });
+    await writeFile(
+      join(dir, STAGING_SUBDIR, `${good}.json`),
+      JSON.stringify({ tool: "fulltext_search", payload: { results: [{ id: "R1" }] } }),
+    );
+    for (const withHit of [`${STAGING_SUBDIR}/${good}#1`, `${at(good)}#R1`]) {
+      expect(await resolveStagedRef(dir, withHit)).toEqual({ ref: withHit });
+      await expect(readStagedResults(dir, withHit)).rejects.toThrow(/hit selector.*sidecar_read/);
+      await expect(
+        checkStagedResults({ projectPath: dir, stagedResultsRef: withHit, expectedTool: "fulltext_search" }),
+      ).rejects.toThrow(/hit selector.*sidecar_read/);
+    }
   });
 });

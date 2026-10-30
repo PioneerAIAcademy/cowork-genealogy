@@ -73,9 +73,11 @@ There is **no record-type filter**: the tool lists every collection for the
 place. `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` and
 `recordTypeGroups` — the spellings the sibling tools take — are refused before
 any request, with an error that points to `volume_search`'s `recordTypeGroups`
-and names its valid groups. Nothing validates input against the advertised
-schema, so without the refusal the field would be dropped and the unfiltered
-list would come back looking filtered. Other unknown fields are not checked.
+and names its valid groups. The refusal is the server's unknown-argument guard
+(`rejectUnknownArgs`, `src/utils/unknown-args.ts`), which refuses every key
+that is not a parameter; these five carry this message instead of its generic
+one. Without it the field would be dropped and the unfiltered list would come
+back looking filtered.
 
 Examples:
 

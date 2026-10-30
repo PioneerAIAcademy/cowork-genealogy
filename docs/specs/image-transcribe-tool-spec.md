@@ -381,7 +381,8 @@ consistent across schema, manifest, and skill.)*
   `XXXX-XXXX-XXXX-X` id treated as `3:1:`, resolver URLs, `/$dist`,
   `dgs:.../dist.jpg`).
 - `imageArk` — the field `record_read` returns a page image under, and the key
-  `research_log_append` logs an image entry by — is read as `ark`, and a query
+  `research_log_append` logs an image entry by — is read as `ark` (not on the
+  schema; `server.ts`'s unknown-argument guard accepts it as an alias), and a query
   string never decides an `ark`'s shape. Both are `foldImageArkInput`'s job, run
   first, before the forms are counted; the rules are `image-read-spec.md`'s
   (Input, and "ark format"), shared unchanged. Among them: when `ark` and
@@ -464,10 +465,25 @@ consistent across schema, manifest, and skill.)*
     an upload is `record-structurer`'s job.
   - A **PDF** goes down the same `image_url` data-URL path as a memory PDF (`application/pdf`)
     — see §5.4 for why that is the PDF reader.
-- `lookingFor` is a search key only. It focuses a FOUND/NOT FOUND pointer (withheld on a truncated read,
-  §6.2); it **never** shortens or slants the full transcription, and any
-  *assertion* in it ("confirm the father is Adam Schreck") is ignored —
-  transcribe what the page says.
+- `lookingFor` is a search key only. It focuses a FOUND/NOT FOUND pointer
+  (withheld on a truncated read, §6.2) decided by a **second, text-only call**
+  over the transcription (§6.1) — the OCR prompt never carries it. It cannot
+  shorten or slant the full transcription, and any *assertion* in it ("confirm
+  the father is Adam Schreck") is ignored — transcribe what the page says.
+  The OCR prompt is name-blind because priming is real and measured
+  (2026-10-29, on the 1869 Ajó census page the finding came from: a hard hand,
+  default model, temperature 0, 5 reads per arm, every read distinct, scored
+  against the page's indexed entries): with the hint in the OCR prompt, 5/5
+  primed reads wrote a hinted name the page's index does not have into a row,
+  3/5 spread the hinted surname beyond its indexed row, and 5/5 returned the
+  target's age as the hint's "~8" — against 0/5, 0/5 and 0/5 for the unprimed
+  arm, whose noise was uncorrelated with the hint. Re-measured on the fixed
+  build the same day, same protocol: 0/5 primed reads carried the hinted name
+  — the primed arm became indistinguishable from the unprimed arm — and
+  `found`, now from the second call, stopped echoing the hint (4/5 NOT FOUND
+  on a page whose transcription cannot verify the hinted household, where the
+  primed OCR prompt had returned FOUND 5/5 resting on rows it had itself
+  invented).
 - `projectPath` is **required on the MCP schema**. The project is
   classified before anything else for every input form, so a folder that is not
   a project gets the no-project answer before any fetch or OCR. The tool
@@ -484,22 +500,24 @@ consistent across schema, manifest, and skill.)*
 When `lookingFor` contains a recognized English given name (formal or
 variant), the tool automatically expands it with historical diminutives
 from the bundled variant table (`config/given-name-variants.json`) before
-building the OCR prompt.
+building the **found-check prompt** (§6.1) — the OCR prompt carries no
+caller content at all (§5.3).
 
 - Input: `lookingFor: "Elizabeth Martin"`
-- VLM sees: `mentions "Elizabeth Martin (also known as Betty, Betsy, Beth, Liz, Lizzy, Eliza, Lisa, Bess, Eliz, Eliz., Elizth.)" by writing exactly FOUND or NOT FOUND`
+- The found check sees: `mentions "Elizabeth Martin (also known as Betty, Betsy, Beth, Liz, Lizzy, Eliza, Lisa, Bess, Eliz, Eliz., Elizth.)"`
 
 All variant forms are included (including scribal abbreviations with
-periods) because the VLM reads natural language, not query syntax.
+periods) because the model reads natural language, not query syntax.
 Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
 When expansion fires, the response includes a `nameExpansion` field
 (reversing the prior §5.3.1 decision — the genealogist needs to know
-what the VLM was primed with before reading a contested hand):
+which name forms the found check credited):
 
 - `original`: the caller's `lookingFor` string
-- `expanded`: the rewritten prompt the VLM actually saw
+- `expanded`: the rewritten `lookingFor` the found check saw (the OCR
+  prompt never sees any form of it)
 - `expansions`: which formal names were expanded and to which variant
   forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
 
@@ -534,11 +552,18 @@ This uses the same underlying name-variant tables as `get_name_variants`, withou
    content part with the `file-parser` plugin (engines `native`, free `cloudflare-ai`,
    paid `mistral-ocr`) is the alternative request shape — not built, because the measured
    path works with no plugin fee.
-5. **Stage** (with `projectPath`): the transcription is retained host-side through the
+5. **Found check** (with `lookingFor`, on a complete read only): one more
+   OpenRouter request, **text-only** — the transcription plus the expanded
+   `lookingFor` (§5.3.1), no image — whose reply's final-line marker sets
+   `found` (§6.2). It runs on what is left of the OCR leg's single budget
+   (§5.7) and is best-effort: a failure omits `found`, never fails the read.
+   Skipped on a truncated read. It runs before staging, so the staged element
+   and the `digest` carry its verdict.
+6. **Stage** (with `projectPath`): the transcription is retained host-side through the
    search tools' channel (§5.5) and a `digest` is computed. Best-effort. For an `imageId`
    or `ark`, the staged source carries the image group's coverage place (§5.5.1), looked
    up beside steps 1–4.
-6. **Return** `staged` / `digest` / `found` + light metadata (§5.5) — the text only when
+7. **Return** `staged` / `digest` / `found` + light metadata (§5.5) — the text only when
    staging failed. No image block.
 
 There is **no size cap for transport reasons** — the bytes go host→OpenRouter, never back
@@ -578,7 +603,9 @@ Text only, no image block:
                              // ARK: the resolver URL, preserving i=/cc=/groupId= context params.
   truncated?: true           // present when the OCR hit its output-token cap (finish_reason or native_finish_reason marks it — §6.2); transcription is PARTIAL
   truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
-  found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2), AND the model emitted the marker on the final line
+  found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2),
+                             // AND the text-only found check (§6.1) replied with a parseable marker —
+                             // omitted when that second call fails (it is best-effort)
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"; never for a `file` input
   staged: { resultsRef: string; returnedCount: number } | null  // the staging handle (search-result-staging-spec.md); null when staging failed
   stagingError?: string      // why `staged` is null
@@ -667,10 +694,13 @@ refused (403) and 4 answered 400.
 | Payload over `MAX_OCR_INPUT_BYTES` (any input) | `This <type> is N MiB, over the 14 MiB the OCR request can carry … It was not sent. Ask the user to re-save … or split a multi-page PDF …` (§7) |
 | Bad imageId/ark | reuse `image_read`'s existing messages (§8) |
 | `memoryArtifactUrl` is neither a memory artifact URL nor a Memories page URL | the shared `Unrecognized memoryArtifactUrl.` message, which names **both** accepted forms — a near-miss page URL (`http://`, a singular `/photos/artifact/`, a non-numeric id) lands here, so it must not name only the artifact form. Refused before any request |
-| A Memories page lookup returns non-200, after the 401/403 retry | `FamilySearch Memories lookup failed (<status>) for artifact <id>.` Says to open the page URL in a browser to confirm the memory exists and is visible; if restricted, call `login` and retry; otherwise transcribe by another route |
+| A Memories page lookup answers **401 to the bearer retry** | `rejectedTokenMessage(principal)`, as for an image fetch: the hosted reconnect instruction, or `login` on the desktop |
+| A Memories page lookup returns any other non-200, after the 401/403 retry | `FamilySearch Memories lookup failed (<status>) for artifact <id>.` followed by `MEMORY_LOOKUP_FAILED_GUIDANCE`: open the page URL in a browser to confirm the memory exists and is visible; this tool cannot read a private memory, and reconnecting or logging in again will not change that; otherwise transcribe by another route. It does not send the agent to `login`: the bearer was already tried, and that advice matched the prototype's `REAUTH_HITS` (`apps/server/proto/turn.py`) |
 | A Memories page resolves to no readable artifact | `FamilySearch returned no readable artifact for memory <id>.` Names the likely cause — a story with no attached file, or an audio memory — and directs to `person_read`'s source text instead |
 | No OpenRouter key configured | LLM-instruction error directing the user to set the key in the extension's settings in Claude Desktop or as `openRouterApiKey` in `~/.familysearch-mcp/config.json` (§6.4). The tool never accepts an API key as a parameter. |
-| FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused; `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message. |
+| FS image fetch **401** on a fetch that sent a bearer | `rejectedTokenMessage(principal)`: the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`), or `REJECTED_TOKEN_MESSAGE` (call `login`) on the desktop. A 401 here is a rejected token, not a restricted image: restricted images answer 403, and no committed image fetch has answered 401 — `grep -rhoE "image fetch failed: 40[0-9]" eval/runlogs | sort | uniq -c` gave 403 ×46, 400 ×10, 404 ×2, 401 ×0 (2026-10-27). A memory artifact's fetch sends no bearer, so its 401 takes the non-2xx row below. If the request fell back to the bare resolver URL and that also failed, this primary 401 is reported, not the fallback's status. |
+| FS image fetch **403** | `FamilySearch image fetch failed: 403 {statusText}. ` followed by one of two texts (`{statusText}` and its space are omitted when the response carries none). A page scan gets `RESTRICTED_IMAGE_GUIDANCE`: the image is **most likely** restricted for this account or location, many films are viewable only at a FamilySearch Center or affiliate library, this is not a sign-in problem that reconnecting or logging in again would change, and if other images in the same film open the refusal may be temporary, so try again later. It is hedged because FamilySearch's edge also answers 403 to a blocked or rate-limited request. A memory artifact (by flag or by URL shape) gets `RESTRICTED_MEMORY_GUIDANCE`: its file is not publicly readable and this tool cannot read it. That text names no account, because the artifact is fetched without one; memory 403s are unmeasured. Neither text may carry an anchor the prototype counts as an auth failure (`REAUTH_HITS` in `apps/server/proto/turn.py`). The bare status was read as a sign-in failure in two hosted runs: lucia-skora-parents called `login` on Center-only films and wrote that reason into its proof, and maria-stockburger-son told the researcher to log in. If the request fell back to the bare resolver URL and that also failed, this primary 403 is reported, not the fallback's status. |
+| FS image fetch non-2xx | `FamilySearch image fetch failed: {status} {statusText}` (reused; `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including a memory artifact's 401 and 429 — keeps the bare message. |
 | Response not an image | `Expected an image response but got content-type: {type}` (reused) |
 | OpenRouter non-2xx | `OpenRouter OCR failed: {status} {statusText}` (+ body excerpt if present). A 429 or 503 gets it only once the backoff in §5.9 is spent |
 | OpenRouter unreachable | friendly `Could not reach OpenRouter (...)` (mirror `wiki-search.ts`) |
@@ -691,7 +721,7 @@ headers and body together:
 | Leg | Constant | Budget |
 |---|---|---|
 | FS image download (and its fallback-URL retry) | `IMAGE_FETCH_TIMEOUT_MS` (`utils/fs-image-fetch.ts`) | 90s per attempt |
-| OpenRouter OCR | `OCR_TIMEOUT_MS` (`utils/ocr.ts`) | 180s for the whole leg, its retries and waits included (§5.9) |
+| OpenRouter OCR + found check | `OCR_TIMEOUT_MS` (`utils/ocr.ts`) | 180s for the whole leg — both calls (§6.1), their retries and waits included (§5.9); the found check runs on what the OCR read leaves |
 
 Worst case for one `image_transcribe` is therefore 90 + 90 + 180 = **360s**,
 inside the e2e harness's 600s inactivity window — and a timeout returns as a
@@ -935,7 +965,7 @@ every attempt is a live OCR call.
   "messages": [{
     "role": "user",
     "content": [
-      { "type": "text", "text": "<faithful-OCR prompt + optional lookingFor>" },
+      { "type": "text", "text": "<faithful-OCR prompt — never carries lookingFor (see below)>" },
       { "type": "image_url", "image_url": { "url": "data:image/jpeg;base64,<...>" } }
     ]
   }],
@@ -968,15 +998,37 @@ every attempt is a live OCR call.
   with `make e2e-transcribe-failures`, which reports reachability, not sizes.
   A cap that binds is **visible** (`truncated`,
   §6.2), never silent.
-- The OCR **prompt is baked into the tool**, not passed by the caller —
-  reuse the `image-reader.md` protocol so behavior is identical to today's
-  subagent. `lookingFor` is appended as the optional pointer directive.
+- The OCR **prompt is baked into the tool**, not passed by the caller, and it
+  carries **no caller content**: a `lookingFor` appended to it primed the read
+  to return the hinted names in rows the page does not have (measurement in
+  §5.3), so the pointer directive moved to a second call.
+- **The found check** (with `lookingFor`, complete reads only) is a second
+  request to the same endpoint: same headers, same `temperature: 0`, and the
+  same `provider: { data_collection: "deny" }` (the transcription is PII).
+  Text-only — one content part carrying the transcription and the expanded
+  `lookingFor` (§5.3.1), no `image_url` — capped at `FOUND_CHECK_MAX_TOKENS`
+  (2000: the reply is one word, but the default model is reasoning-capable and
+  reasoning draws on the same output budget). It reuses the OCR transport
+  (`utils/ocr.ts` `postChat`: the transport retry, the 429/503 backoff, the
+  truncation detection) and runs on what is left of the OCR leg's 180s budget
+  (§5.7). Measured 2026-10-29 (5 calls, default model, a 1,561-char census
+  transcription → a 1,985-char prompt, OpenRouter usage accounting): latency
+  2.1–8.0s (median 2.7s), 713 prompt tokens, 179–651 completion tokens (the
+  reply is two words; the rest is reasoning, which is why the cap is 2000),
+  billed $0.0012–$0.0030 per call. In `search-images` page-browsing terms: the
+  check adds roughly a tenth of the OCR read's p50 latency per page, only on
+  pages read with a `lookingFor`.
 
 ### 6.2 Response
 
-Parse `choices[0].message.content` → `transcription`. Derive `found` by
-looking for the FOUND/NOT FOUND marker the prompt asks the model to emit.
-Guard against empty content (→ error per §5.6).
+Parse `choices[0].message.content` → `transcription`. Guard against empty
+content (→ error per §5.6). Derive `found` from the SECOND, text-only call
+(§6.1): the FOUND/NOT FOUND marker on its reply's final line, read exactly as
+the transcription-tail marker used to be (start-of-line match, so body text
+like "infant found abandoned" cannot spoof it). A reply with no parseable
+marker — including one cut by its own token cap — or a found-check failure of
+any kind omits `found`; never an error, since the transcription is the
+primary payload.
 
 **Output-cap truncation.** Read `choices[0].finish_reason` **and**
 `choices[0].native_finish_reason`. OpenRouter is OpenAI-compatible and returns
@@ -1005,9 +1057,10 @@ success and the caller cannot tell a half-read census page from a whole one.
 - The `transcription` stays **verbatim** — the signal rides the sibling
   fields, never spliced into the OCR text (that would re-create the
   prose/OCR blend a truncation notice must never introduce).
-- **Suppress `found` on a truncated read.** The FOUND/NOT FOUND marker rides
-  a final line the model never reached, and a target may sit below the cut,
-  so a half-read page must never surface a clean `NOT FOUND` negative.
+- **Skip the found check on a truncated read.** A target may sit below the
+  cut, so a half-read page must never surface a clean `NOT FOUND` negative —
+  the second call is not made at all, and `found` is absent from the response,
+  the staged element and the digest alike.
 - **Out of scope:** a model that stops early on its own
   (`finish_reason: "stop"` on an unfinished page — no cheap signal, a
   model-quality problem) and a transport cut mid-body (already thrown by
@@ -1372,8 +1425,13 @@ Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
   `Authorization: Bearer <key>`, and `temperature: 0`.
 - **Happy path**: mocked OpenRouter response → `transcription` extracted from
   `choices[0].message.content`; metadata populated (model, `sizeBytes`).
-- **`lookingFor`**: sets `found` from the FOUND/NOT FOUND marker; asserts the
-  full transcription is still returned (never shortened).
+- **`lookingFor`**: the OCR request's prompt carries NO `lookingFor` text and
+  no FOUND directive; a second, text-only request (no `image_url` part)
+  carries the transcription and the expanded key, and `found` comes from its
+  final-line marker; a second-call failure or an unparseable reply omits
+  `found` with the transcription intact; no second call without `lookingFor`
+  or on a truncated read; the staged element and the digest carry `found`
+  (`tests/tools/image-transcribe.test.ts`, `tests/utils/ocr.test.ts`).
 - **No key** → LLM-instruction error, **and `fetch` to OpenRouter is never
   called** (fail closed).
 - **OpenRouter non-2xx** → clean `OpenRouter OCR failed: …`.
