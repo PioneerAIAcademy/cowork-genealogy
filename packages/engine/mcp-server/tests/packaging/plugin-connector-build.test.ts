@@ -96,4 +96,15 @@ describe("connector plugin build", () => {
     expect(result.stderr).toMatch(/refusing to delete it/);
     expect(readFileSync(keep, "utf8")).toBe("keep");
   });
+
+  it("preserves a git checkout that holds a marketplace", () => {
+    const checkout = join(temp, "checkout");
+    mkdirSync(join(checkout, ".claude-plugin"), { recursive: true });
+    mkdirSync(join(checkout, ".git"));
+    writeFileSync(join(checkout, ".claude-plugin", "marketplace.json"), "{}");
+    const result = build(["--connector", "--version", version, "--marketplace", marketplace, "--out", checkout]);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toMatch(/git checkout/);
+    expect(existsSync(join(checkout, ".git"))).toBe(true);
+  });
 });

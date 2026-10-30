@@ -103,6 +103,10 @@ function packageConnector(entries, pluginJson, plugin, { version, marketplace, o
     console.error("--out must not be the repo root, an ancestor of it, or inside packages/engine/plugin");
     process.exit(1);
   }
+  if (existsSync(join(out, ".git"))) {
+    console.error("--out is a git checkout; refusing to delete it");
+    process.exit(1);
+  }
   if (existsSync(out) && readdirSync(out).length && !existsSync(join(out, ".claude-plugin", "marketplace.json"))) {
     console.error("--out is non-empty and has no .claude-plugin/marketplace.json; refusing to delete it");
     process.exit(1);
