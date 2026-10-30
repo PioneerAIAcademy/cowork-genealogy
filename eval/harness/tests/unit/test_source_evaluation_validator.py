@@ -1624,7 +1624,7 @@ def test_a_numbered_unverifiable_memory_needs_no_link():
     """Made-up variant: a memory numbered as an item. Its url carries no ARK."""
     _check_links(
         f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
-        "3. Hole Family Photograph and Funeral Card (uploaded memory) — reviewed\n"
+        "2. Hole Family Photograph and Funeral Card (uploaded memory) — reviewed\n"
         "   Contributor upload; nothing to read.\n"
     )
 
@@ -1764,6 +1764,6 @@ def test_a_memory_item_headed_unverifiable_needs_no_link():
     memory's title, not by the word "Unverifiable"."""
     _check_links(
         f"### 1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
-        "### 3. Hole Family Photograph and Funeral Card (uploaded memory) — Unverifiable\n"
+        "### 2. Hole Family Photograph and Funeral Card (uploaded memory) — Unverifiable\n"
         "   Contributor upload; nothing to read.\n"
     )
