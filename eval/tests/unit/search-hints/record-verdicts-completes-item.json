@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_search_hints_011",
+    "skill": "search-hints",
+    "name": "Record mode with a hints item: each verdict entry names the item, then the item is completed",
+    "type": "positive",
+    "description": "Second spawn for the hints item pli_007, which triage left in_progress. The researcher accepted the 1870 census hint (M70C) and rejected the 1880 census hint (M80C). Record mode logs one person_record_matches entry per verdict, each naming pli_007, positive for M70C and negative for M80C, then sets pli_007 completed. Completing it needs a log entry that names it, which these are. It returns M70C as {ark, logId} and extracts nothing (issue #3153).",
+    "tags": [
+      "record-mode",
+      "two-verdicts",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The researcher has decided on Patrick Flynn's hints for plan item pli_007. Record their verdicts.\n\npersonId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002\nverdicts: [{\"ark\": \"https://familysearch.org/ark:/61903/1:1:M70C\", \"verdict\": \"accept\"}, {\"ark\": \"https://familysearch.org/ark:/61903/1:1:M80C\", \"verdict\": \"reject\"}]\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn-hints-waiting"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-pending",
+    "person-record-matches-flynn",
+    "record-read-flynn-hint-1870-census-m70c",
+    "record-read-flynn-hint-1880-census-m80c",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "Exactly two new log entries: M70C with outcome positive and M80C with outcome negative, both tool person_record_matches and both with plan_item_id pli_007",
+    "The outcomes follow the researcher's verdicts as given, not the agent's own view of the hints",
+    "After the verdicts are logged, the hints item pli_007 is set completed through research_append on plan_items",
+    "The return names the accepted M70C hint's ark and its log id, so extraction can reuse that log entry",
+    "No extraction, no person_evidence link, no tree edit"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

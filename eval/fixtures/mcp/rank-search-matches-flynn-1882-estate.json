@@ -1,0 +1,33 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches ranks the single staged probate candidate against subject I1 (Patrick Flynn, b. ~1845, d. 1908). The lone hit, the estate of a Patrick Flynn b. 1838 who died in 1882, ranks #1 on name and county, unattached, with a birth-year conflict. Feeds ut_search_records_028. Matched on subjectId; independent of the per-run stagedResultsRef.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:L4XK-2PQ",
+        "primaryId": "P1",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1838",
+        "birthPlace": "Ireland",
+        "collectionTitle": "Pennsylvania, Probate Records, 1683-1994",
+        "matchScore": 0.72,
+        "matchConfidence": 3,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "birthYearConflict": true,
+        "birthYearGap": -7
+      }
+    ]
+  }
+}

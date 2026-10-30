@@ -3070,6 +3070,7 @@ describe("Research closed shapes", () => {
           time_period: "born about 1873",
           record_ids: ["ark:/61903/1:1:Q295-JLGZ"],
           log_entry_ids: ["log_001"],
+          record_persona_ids: { "ark:/61903/1:1:Q295-JLGZ": "p_102104218570" },
           notes: "A different John Smith, a clerk, in the 1880 census.",
           created: "2026-01-02",
         },
@@ -3294,6 +3295,9 @@ describe("Research closed shapes", () => {
     { why: "a missing record_ids", plant: (r) => delete r.namesakes[0].record_ids, message: "missing required field 'record_ids'" },
     { why: "a record id that is not a string", plant: (r) => (r.namesakes[0].record_ids = [3]), message: "must be a string" },
     { why: "a malformed created date", plant: (r) => (r.namesakes[0].created = "16 October 2026"), message: "must be an ISO date" },
+    { why: "a record_persona_ids array", plant: (r) => (r.namesakes[0].record_persona_ids = ["p_1"]), message: "record_persona_ids must be an object" },
+    { why: "an empty stamped persona", plant: (r) => (r.namesakes[0].record_persona_ids = { "ark:/61903/1:1:Q295-JLGZ": "" }), message: "must be a non-empty string" },
+    { why: "a stamp for an unlisted record", plant: (r) => (r.namesakes[0].record_persona_ids = { "ark:/61903/1:1:XXXX-YYY": "p_1" }), message: "keys a record not in record_ids" },
   ];
   for (const v of namesakeRejections) {
     it(`rejects a namesakes entry with ${v.why}`, async () => {

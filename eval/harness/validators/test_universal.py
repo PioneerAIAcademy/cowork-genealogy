@@ -45,6 +45,7 @@ from pathlib import Path
 
 import pytest
 
+from harness.context_policy import AGENT_ONLY_TOOLS
 from harness.ownership import (
     RESEARCH_JSON,
     TREE_GEDCOMX_JSON,
@@ -82,7 +83,7 @@ DIFFED_SECTIONS = [
     "project", "questions", "plans", "log", "sources",
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
-    "evaluations", "localities", "rejected_links",
+    "evaluations", "localities", "rejected_links", "namesakes",
 ]
 
 
@@ -1506,6 +1507,10 @@ def test_project_file_changes_route_through_writer_tools(
 def test_no_main_thread_subagent_only_calls(blocked_context_calls):
     """No subagent-only tool was called from the main session.
 
+    Since issue #3528 that includes every tool only agents hold
+    (`context_policy.AGENT_ONLY_TOOLS`, the shipped hook's map): a router that
+    calls one has done an agent's step itself, which production denies too.
+
     `image_read` returns inline base64; in the router's context the bytes
     accumulate and overflow the transport's ~1 MiB per-turn buffer, crashing
     the run. A page is read with `image_transcribe` instead, which OCRs it
@@ -1535,6 +1540,12 @@ def test_no_main_thread_subagent_only_calls(blocked_context_calls):
             "image_read → image_transcribe (staged; read with sidecar_read), so "
             "the base64 never enters the router's context"
         ),
+        # The tools only agents hold (issue #3528): the router did an agent's
+        # step itself instead of delegating it.
+        **{
+            tool: f"{tool} → delegate to " + " or ".join(f"@plugin:{a}" for a in agents)
+            for tool, agents in AGENT_ONLY_TOOLS.items()
+        },
     }
     offending_tools = sorted({c.get("tool", "?") for c in blocked_context_calls})
     fixes = "; ".join(
@@ -1957,11 +1968,13 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
     """No `research_append` op reached a section its caller does not own.
 
-    Four rules, all from the SHIPPED hook: `routed` — a section reserved to an
+    Six rules, all from the SHIPPED hook: `routed` — a section reserved to an
     owning agent, reached by someone else; `out_of_lane` — a known agent reaching
     outside the sections its own skill is a declared caller for; `declaration` —
     a routed claim, field-scoped and keyed on the value; `owned_field` — a routed
-    field keyed on presence alone (`project.status`). This check is rule-agnostic
+    field keyed on presence alone (`project.status`); `claim` — a conflict's
+    analytical product; `owned_append` — a `questions` append from anyone but
+    question-selection. This check is rule-agnostic
     and reports whatever `rule` the predicate returns, so a new arm needs no edit
     here.
 
@@ -2174,7 +2187,7 @@ def test_parent_child_age_plausibility_flagged(before_state, after_state):
 # messages; lay-mode ruling 2026-09-18). `q_NNN` and `ps_NNN` are included
 # although #2493 left them open as navigation aids: this validator only reports.
 _INTERNAL_ID_RE = re.compile(
-    r"\b(?:q|pli|a|ps|log|src|pe|c|h|ev|tl)_\d{3,}\b"
+    r"\b(?:q|pli|a|ps|log|src|pe|c|h|ev|tl|ns)_\d{3,}\b"
     r"|\b(?:research\.json|tree\.gedcomx\.json)\b"
     r"|\b(?:conflicts|hypotheses|assertions|sources|questions|plans|evaluations"
     r"|proof_summaries|person_evidence|timelines|log)\[\]"
