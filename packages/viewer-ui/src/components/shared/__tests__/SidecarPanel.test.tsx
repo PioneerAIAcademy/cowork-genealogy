@@ -234,13 +234,19 @@ describe('SidecarPanel — a result that fails to render', () => {
       payload: { ...patrickFlynnSidecar, payload: undefined } as never,
       lastMtime: 1
     })
-    render(<SidecarPanel />)
+    const { rerender } = render(<SidecarPanel />)
 
     const alert = screen.getByRole('alert')
     expect(alert).toHaveTextContent('Couldn’t display these results')
     expect(alert).toHaveTextContent('results/log_002.json could not be displayed')
     await userEvent.click(screen.getByRole('button', { name: 'Close sidecar' }))
     expect(closeSidecar).toHaveBeenCalled()
+
+    // The agent rewrites the file: same logId, newer mtime clears the fallback.
+    mountWithState({ status: 'loaded', logId: 'log_002', payload: patrickFlynnSidecar, lastMtime: 2 })
+    rerender(<SidecarPanel />)
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByText('Patrick Flynn')).toBeInTheDocument()
   })
 })
 
