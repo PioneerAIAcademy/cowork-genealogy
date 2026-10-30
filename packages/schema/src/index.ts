@@ -223,6 +223,9 @@ export interface RejectedLink {
   person_id: string
   /** Optional: a rejection is never a demand for the right answer. */
   reason?: string | null
+  /** The researcher's own words, verbatim. research_append requires it on append;
+   *  optional here because a row written before the field existed has none. */
+  researcher_words?: string
   created: string
 }
 
@@ -626,7 +629,11 @@ export interface SidecarFile {
 // ============================================================
 
 export function getPreferredName(person: GedcomxPerson): string {
-  const preferred = person.names.find((n) => n.preferred) ?? person.names[0]
+  // A record persona can carry no `names` at all (the enslaved people on an
+  // 1850 slave schedule), even though a tree person always has them (#3893).
+  // Untyped sidecar payloads can also carry a non-array there.
+  const names = Array.isArray(person.names) ? person.names : []
+  const preferred = names.find((n) => n.preferred) ?? names[0]
   if (!preferred) return '(unknown)'
   const parts = [preferred.given, preferred.surname].filter(Boolean)
   return parts.length > 0 ? parts.join(' ') : '(unknown)'

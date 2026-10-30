@@ -742,7 +742,7 @@ export const RESEARCH_SHAPES = {
     "core_identifier_conflict", "move_bridge", "match_score", "created", "superseded_by",
   ]),
   rejected_link_entry: new Set([
-    "id", "assertion_id", "person_id", "reason", "created",
+    "id", "assertion_id", "person_id", "reason", "researcher_words", "created",
   ]),
   conflict: new Set([
     "id", "conflict_type", "description", "disputed_attribute",
@@ -1447,6 +1447,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         addError(report, rp, "reason must be a non-empty string or null");
       }
     }
+    // Optional here so a row written before the field existed still loads;
+    // research_append requires it on every append.
+    if ("researcher_words" in rj) {
+      if (typeof rj.researcher_words !== "string" || rj.researcher_words.trim() === "") {
+        addError(report, rp, "researcher_words must be a non-empty string");
+      }
+    }
     if ("created" in rj) checkIsoDate(rj, "created", rp, report);
   }
 
@@ -1484,6 +1491,11 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("assertion_id" in pe) {
       checkRefExists(pe.assertion_id, ids.assertions, "assertion", pp, report);
+    }
+    // A link a rejection retired names the rejection. Rejected links are read
+    // above, so the id set is complete here.
+    if (typeof pe.superseded_by === "string" && pe.superseded_by.startsWith(ID_PREFIXES.rejected_links)) {
+      checkRefExists(pe.superseded_by, rejectedIds, "rejected link", pp, report);
     }
     checkIsoDate(pe, "created", pp, report);
   }
