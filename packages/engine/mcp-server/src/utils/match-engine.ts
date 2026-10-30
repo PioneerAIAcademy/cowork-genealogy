@@ -1,18 +1,14 @@
-// match-engine — the shared FamilySearch `matchTwoExamples` pair scorer.
-//
-// Lifted verbatim from `same-person.ts` (which now re-imports `scorePair`) so a
-// second consumer — `rank_search_matches` — can score one subject against many
-// candidates in a bounded host-side fan-out without duplicating the anchoring,
-// id-mint, and error-handling logic. `same_person`'s public contract is
-// unchanged: it still exports `samePerson` / `samePersonSchema` and behaves
-// identically.
+// match-engine — FamilySearch's `matchTwoExamples` pair scorer: the
+// FamilySearch backend of `utils/matcher.ts`. Every caller scores through
+// `matchPairs` there, which calls `scorePair` when config.json's `matcher` is
+// FamilySearch's, so the anchoring, id-mint and error handling live once.
 //
 // This is a *closure*: `scorePair` pulls `throwForBadStatus`, `parseArkFromTitle`,
-// the `URL` const, and the `SamePersonApiResponse`/`SamePersonResult` types;
+// the `URL` const, and the `SamePersonApiResponse`/`FamilySearchMatch` types;
 // `buildRawWithAnchor` pulls `toValidFsArk`, `randomFsId`, and the
 // `FS_ID_ALPHABET`/`DEFAULT_ARK_TYPE`/`PERSISTENT_ID` consts.
 //
-// Spec: docs/specs/rank-search-matches-tool-spec.md (Files §).
+// Spec: docs/specs/matcher-shim-spec.md ("FamilySearch's backend").
 
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
@@ -23,8 +19,8 @@ import { isFamilySearchPersonId } from "./fs-id.js";
 import { toArk } from "./ark.js";
 import type { GedcomX, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type {
+  FamilySearchMatch,
   SamePersonApiResponse,
-  SamePersonResult,
 } from "../types/same-person.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 
@@ -35,9 +31,9 @@ const URL =
 
 /**
  * Score one (id1, id2) pair against FamilySearch matchTwoExamples, anchoring
- * each side's full document on the given id. `same_person`'s single-pair path,
- * its relatives-mode pairs, and `rank_search_matches`' fan-out all go through
- * this one function.
+ * each side's full document on the given id. The FamilySearch backend of
+ * `matchPairs` calls it once per pair, so `same_person`'s arms and ranking all
+ * reach FamilySearch through this one function.
  */
 export async function scorePair(
   gedcomx1: SimplifiedGedcomX,
@@ -45,7 +41,7 @@ export async function scorePair(
   gedcomx2: SimplifiedGedcomX,
   id2: string,
   principal: Principal,
-): Promise<SamePersonResult> {
+): Promise<FamilySearchMatch> {
   const raw1 = buildRawWithAnchor(gedcomx1, id1);
   const raw2 = buildRawWithAnchor(gedcomx2, id2);
 
@@ -84,18 +80,13 @@ export async function scorePair(
   }
 
   const entry = body.entries[0];
-  const result: SamePersonResult = {
-    matched: entry.confidence !== undefined,
+  return {
     score: entry.score,
     queryArk: parseArkFromTitle(body.title),
     candidateArk: toArk(entry.id),
     apiTitle: body.title,
     updated: body.updated,
   };
-  if (entry.confidence !== undefined) {
-    result.confidence = entry.confidence;
-  }
-  return result;
 }
 
 // ─── Raw-document assembly + FS-id mint ──────────────────────────────────────

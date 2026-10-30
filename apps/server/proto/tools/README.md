@@ -70,10 +70,10 @@ autocommits exactly as before. The worker sends the pair on every call
 (`options.tool_server_headers`).
 
 `baseConfig` is `~/.familysearch-mcp/config.json`, read once at startup with
-`loadConfig(LOCAL)`, and then `WIKI_API_URL`, `POP_STATS_URL`, `OPENROUTER_API_KEY` and
-`OPENROUTER_MODEL` from the environment over it (`src/hosted-config-env.ts`), and only
+`loadConfig(LOCAL)`, and then the variables `PER_USER_ENV` names from the environment over
+it (`src/hosted-config-env.ts`), and only
 where set, so an absent one leaves the file's value and then the compiled default. In
-compose the file is `./config.json` (`{"hosted": true}`) mounted read-only and the four
+compose the file is `./config.json` (`{"hosted": true}`) mounted read-only and those
 come from the `tools` service's environment: a container receives a secret as
 environment, not as a file in an image. One shared process, so these are per-stack rather
 than per patron — which is what a one-patron prototype wants; per-patron config would have

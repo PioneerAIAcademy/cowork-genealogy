@@ -1019,7 +1019,7 @@
           "anyOf": [
             {
               "type": "string",
-              "pattern": "^pe_"
+              "pattern": "^(pe|rj)_"
             },
             {
               "type": "null"
@@ -1060,6 +1060,11 @@
             }
           ],
           "description": "Optional. A rejection is never a demand for the right answer."
+        },
+        "researcher_words": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The researcher's own message saying the pair is not a match, verbatim. research_append requires it on every append; optional here so a row written before the field existed still validates."
         },
         "created": {
           "type": "string"

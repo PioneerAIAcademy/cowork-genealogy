@@ -70,7 +70,6 @@ export function rankForReview(links: ReviewLink[]): RankedLink[] {
     // signal under the tool's own ignorance.
     if (typeof link?.match_score === "number" && Number.isFinite(link.match_score)) {
       risk += (1 - Math.max(0, Math.min(1, link.match_score))) * 5;
-      if (link.match_score < 0.5) reasons.push(`low match score (${link.match_score})`);
     }
 
     // Already replaced: reviewing it changes nothing, so it goes last however risky
