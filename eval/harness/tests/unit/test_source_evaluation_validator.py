@@ -1734,7 +1734,7 @@ def test_body_lines_do_not_end_the_findings(body):
 def test_an_unindented_closing_label_ends_the_findings(label):
     _check_links(
         f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
-        f"{label}\n3. The 1900 census entry — the image is offline.\n"
+        f"{label}\n2. A family Bible entry — the image is offline.\n"
     )
 
 def test_a_hedged_heading_is_still_a_finding():
