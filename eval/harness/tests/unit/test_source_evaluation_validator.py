@@ -1757,3 +1757,13 @@ def test_a_link_with_a_query_string_names_the_same_record():
     _check_links(
         f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}?lang=en\n"
     )
+
+
+def test_a_memory_item_headed_unverifiable_needs_no_link():
+    """Made-up variant from the plan: the relay's heading shape. Skipped by the
+    memory's title, not by the word "Unverifiable"."""
+    _check_links(
+        f"### 1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+        "### 3. Hole Family Photograph and Funeral Card (uploaded memory) — Unverifiable\n"
+        "   Contributor upload; nothing to read.\n"
+    )
