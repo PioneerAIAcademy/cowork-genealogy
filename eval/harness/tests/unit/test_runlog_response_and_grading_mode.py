@@ -337,3 +337,24 @@ def test_an_aborted_test_still_records_how_it_would_have_been_graded():
     assert entry["outcome"] == "aborted"
     assert entry["grading_mode"] == "invariant"
     assert entry["dimensions_gate_outcome"] is False
+
+
+def test_a_guard_refused_call_keeps_the_response():
+    """The refusal TEXT is the whole record of what happened (#3947).
+
+    The handler never ran, so nothing else on disk says which key was refused:
+    no fixture answered it, and the engine composed the sentence at runtime.
+    Drop `unknown_args_refused` from `_tool_call_entry`'s kind tuple and this
+    goes red — the committed run log would carry the refusal with no reason.
+    """
+    call = {
+        "tool": "mcp__genealogy__record_search",
+        "args": {"q": "Ohio"},
+        "expected_args": None,
+        "matched": {"kind": "unknown_args_refused", "index": None},
+        "response_fixture": None,
+        "response": {"error": "record_search has no parameter `q`; the nearest are `surname`."},
+    }
+    entry = _tool_call_entry(call)
+    assert entry["response"] == call["response"]
+    assert entry["matched"] == {"kind": "unknown_args_refused", "index": None}

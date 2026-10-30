@@ -1135,7 +1135,14 @@ class _NodeEvalSpy:
         self._stdout = stdout
         self._raise = raise_timeout
 
-    def __call__(self, script, input_str=None, timeout=mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT):
+    def __call__(
+        self,
+        script,
+        input_str=None,
+        timeout=mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT,
+        *,
+        store=True,
+    ):
         self.timeouts.append(timeout)
         if self._raise:
             raise subprocess.TimeoutExpired(cmd=["node"], timeout=timeout)
@@ -1180,7 +1187,7 @@ def test_person_warnings_runs_with_place_lookups_disabled(tmp_path, monkeypatch)
     scripts: list[str] = []
     spy = _NodeEvalSpy(stdout='{"warnings": []}')
 
-    def _recording(script, input_str=None, timeout=mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT):
+    def _recording(script, input_str=None, timeout=mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT, *, store=True):
         scripts.append(script)
         return spy(script, input_str, timeout)
 
@@ -2586,7 +2593,7 @@ def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):
     `capture:<basename without extension>`, production's captureIdFor."""
     seen = {}
 
-    def _capture(script, stdin, timeout):
+    def _capture(script, stdin, timeout, *, store=True):
         seen.update(json.loads(stdin))
         raise TimeoutError("stop here")
 
@@ -2611,7 +2618,7 @@ def test_image_transcribe_folds_image_ark_into_ark(tmp_path, monkeypatch, args, 
     staged page is keyed and sourced by it rather than staged with an empty id."""
     seen = {}
 
-    def _capture(script, stdin, timeout):
+    def _capture(script, stdin, timeout, *, store=True):
         seen.update(json.loads(stdin))
         raise TimeoutError("stop here")
 
@@ -2630,7 +2637,7 @@ def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypa
     imageRef stages none."""
     seen = []
 
-    def _capture(script, stdin, timeout):
+    def _capture(script, stdin, timeout, *, store=True):
         seen.append(json.loads(stdin)["element"])
         raise TimeoutError("stop here")
 

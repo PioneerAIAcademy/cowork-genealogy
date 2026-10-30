@@ -2991,3 +2991,100 @@ def test_other_suite_names_counts_plugin_agents(tmp_path):
         other_skill_names=names,
         agents_spawned=["survey-surname"],
     ) is False
+
+
+# --- the unknown-argument refusal advisory (issue #3947) ----------------------
+# A guard-refused call is "uncovered" by `_predicate_matched_count`, but NO
+# fixture can ever cover it — the guard runs before any predicate lookup. Left
+# in the fixture shortfall it would tell the annotating genealogist to write a
+# fixture that cannot match.
+
+
+def _refused(tool="mcp__genealogy__record_search", args=None, error="record_search has no parameter `q`."):
+    return {
+        "tool": tool,
+        "args": args if args is not None else {"q": "x"},
+        "matched": {"kind": "unknown_args_refused", "index": None},
+        "response": {"error": error},
+    }
+
+
+def _matched(tool="mcp__genealogy__record_search", args=None):
+    return {
+        "tool": tool,
+        "args": args if args is not None else {"surname": "Flynn"},
+        "matched": {"kind": "predicate", "index": 0},
+    }
+
+
+def test_a_refused_call_gets_its_own_advisory_not_the_fixture_one():
+    """The whole point: the reader is told to fix the caller's arguments."""
+    refused = _refused()
+    out = _build_warnings([refused], attempted_mcp_calls=[{"tool": refused["tool"], "args": refused["args"]}])
+    kinds = [w["kind"] for w in out]
+    assert "unknown_args_refused" in kinds
+    assert "uncovered_tool_call" not in kinds, (
+        "a refused call was also counted as a missing fixture — the reader is "
+        "being sent to write a fixture that can never match"
+    )
+    advisory = next(w for w in out if w["kind"] == "unknown_args_refused")["advisory"]
+    # The engine's own sentence, naming the refused key — not every key on the call.
+    assert "has no parameter `q`" in advisory
+
+
+def test_the_advisory_names_the_refused_key_not_every_key_on_the_call():
+    refused = _refused(args={"projectPath": "/p", "surname": "Flynn", "q": "x"})
+    out = _build_warnings([refused], attempted_mcp_calls=[{"tool": refused["tool"], "args": refused["args"]}])
+    advisory = next(w for w in out if w["kind"] == "unknown_args_refused")["advisory"]
+    assert "has no parameter `q`" in advisory
+    assert "surname" not in advisory, "a correct key was named as if it were the problem"
+
+
+def test_a_refusal_in_a_suppressed_turn_does_not_cancel_a_real_shortfall():
+    """`attempted_mcp_calls` EXCLUDES post-routing-deny reaction calls;
+    `tool_calls` still holds them. Counting refusals from `tool_calls` and
+    subtracting from `attempted` mixes two populations — one suppressed refusal
+    could cancel a genuine fixture_not_found, and the printed N of M could go
+    negative. The refused set is intersected with `attempted` to stop that."""
+    unmatched = {"tool": "mcp__genealogy__record_search", "args": {"surname": "Ohio"},
+                 "matched": {"kind": "none", "index": None}}
+    suppressed_refusal = _refused(args={"q": "reaction-turn"})
+    out = _build_warnings(
+        [unmatched, suppressed_refusal],
+        # The suppressed call is deliberately NOT in attempted.
+        attempted_mcp_calls=[{"tool": unmatched["tool"], "args": unmatched["args"]}],
+    )
+    kinds = [w["kind"] for w in out]
+    assert "uncovered_tool_call" in kinds, "the real shortfall was cancelled out"
+    assert "unknown_args_refused" not in kinds, "a suppressed-turn refusal was reported"
+    advisory = next(w for w in out if w["kind"] == "uncovered_tool_call")["advisory"]
+    assert advisory.startswith("1 of 1 "), advisory
+
+
+def test_the_shortfall_payload_excludes_refused_calls_too():
+    """Both halves of the warning must agree. A payload still listing the
+    refused call sends the reader to write a fixture for it — the wasted work
+    the separate advisory exists to prevent."""
+    refused = _refused(args={"q": "x"})
+    unmatched = {"tool": "mcp__genealogy__record_search", "args": {"surname": "Ohio"},
+                 "matched": {"kind": "none", "index": None}}
+    attempted = [
+        {"tool": refused["tool"], "args": refused["args"]},
+        {"tool": unmatched["tool"], "args": unmatched["args"]},
+    ]
+    out = _build_warnings([refused, unmatched], attempted_mcp_calls=attempted)
+    shortfall = next(w for w in out if w["kind"] == "uncovered_tool_call")
+    payload_args = [a.get("args") for a in shortfall["attempted"]]
+    assert {"q": "x"} not in payload_args
+    assert shortfall["advisory"].startswith("1 of 1 "), shortfall["advisory"]
+
+
+def test_a_covered_run_with_no_refusals_raises_neither_warning():
+    """The other direction — this must not fire on a healthy run."""
+    out = _build_warnings(
+        [_matched()],
+        attempted_mcp_calls=[{"tool": "mcp__genealogy__record_search", "args": {"surname": "Flynn"}}],
+    )
+    kinds = [w["kind"] for w in out]
+    assert "unknown_args_refused" not in kinds
+    assert "uncovered_tool_call" not in kinds

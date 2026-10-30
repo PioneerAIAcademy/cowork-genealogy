@@ -11,6 +11,7 @@ import json
 import sys
 import tempfile
 import time
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -1368,11 +1369,38 @@ def _build_warnings(
     # (#3947). Tallied separately so the advisory a genealogist reads names the
     # fix that exists — correct the caller's arguments — rather than sending
     # them to write a fixture that can never match.
-    refused = [
-        c for c in tool_calls
-        if (c.get("matched") or {}).get("kind") == "unknown_args_refused"
-    ]
+    # `attempted` (skill_runner's attempted_mcp_calls) EXCLUDES post-routing-deny
+    # reaction calls; `tool_calls` (the raw mock call log) includes them. Counting
+    # refusals from `tool_calls` and subtracting from `attempted` would mix two
+    # populations: one refusal in a suppressed turn could cancel out a genuine
+    # fixture_not_found, and the printed "N of M" could go negative. So the
+    # refused set is taken from `attempted` itself.
+    # Taken from `tool_calls` (the only side carrying `matched`) but INTERSECTED
+    # with `attempted` by (tool, args), so a refusal in a suppressed turn is
+    # counted in neither half. Matching on the pair because `attempted` entries
+    # are `{"tool", "args"}` off the message stream and carry no `matched`.
+    _attempted_keys = Counter(
+        (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
+        for c in attempted
+    )
+    refused = []
+    for c in tool_calls:
+        if (c.get("matched") or {}).get("kind") != "unknown_args_refused":
+            continue
+        key = (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
+        if _attempted_keys.get(key):
+            _attempted_keys[key] -= 1
+            refused.append(c)
     if refused:
+        # Name the key the guard actually refused, not every key on the call.
+        # The engine already composed that sentence and it is on the entry;
+        # printing all three keys of a call with one bad one makes the reader
+        # diff it against the schema by hand.
+        detail = []
+        for c in refused:
+            tool = (c.get("tool") or "").split("__")[-1]
+            err = ((c.get("response") or {}).get("error") or "").strip()
+            detail.append(f"{tool}: {err}" if err else f"{tool}(?)")
         warnings.append({
             "kind": "unknown_args_refused",
             "advisory": (
@@ -1380,28 +1408,35 @@ def _build_warnings(
                 "the tool does not take. Production refuses these the same way, "
                 "so this is the skill's call to fix, NOT a missing fixture — no "
                 "fixture can match a refused call, because the guard runs before "
-                "any predicate lookup. Refused: "
-                + ", ".join(
-                    sorted({
-                        f"{(c.get('tool') or '').split('__')[-1]}"
-                        f"({', '.join(sorted((c.get('args') or {}).keys()))})"
-                        for c in refused
-                    })
-                )
+                "any predicate lookup. " + " | ".join(sorted(set(detail)))
             ),
             "attempted": [c.get("args") for c in refused],
         })
-    if len(attempted) - len(refused) > covered:
+    # Refused calls are excluded from BOTH halves: no fixture can cover one, so
+    # counting them here would send a reviewer to write a fixture that cannot
+    # match — the misdirection the warning above exists to replace.
+    _refused_keys = Counter(
+        (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
+        for c in refused
+    )
+    uncovered_attempted = []
+    for c in attempted:
+        key = (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
+        if _refused_keys.get(key):
+            _refused_keys[key] -= 1
+            continue
+        uncovered_attempted.append(c)
+    if len(uncovered_attempted) > covered:
         warnings.append({
             "kind": "uncovered_tool_call",
             "advisory": (
-                f"{len(attempted) - len(refused) - covered} of "
-                f"{len(attempted) - len(refused)} MCP tool "
+                f"{len(uncovered_attempted) - covered} of "
+                f"{len(uncovered_attempted)} MCP tool "
                 "call(s) matched no fixture predicate — the skill ran against "
                 "a fixture_not_found or denied/unknown-tool error. Add or fix "
                 "an mcp_fixture whose args match the call."
             ),
-            "attempted": attempted,
+            "attempted": uncovered_attempted,
         })
 
     # Tier-2 reporting observations (issue #1749). The function name goes in

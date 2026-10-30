@@ -306,7 +306,11 @@ def pg_store_faults(workspace: Path) -> list[dict[str, str]]:
 
 
 def _run_node_eval(
-    script: str, input_str: str | None = None, timeout: int = NODE_EVAL_TIMEOUT_DEFAULT
+    script: str,
+    input_str: str | None = None,
+    timeout: int = NODE_EVAL_TIMEOUT_DEFAULT,
+    *,
+    store: bool = True,
 ) -> subprocess.CompletedProcess[str]:
     """Run a Node ESM ``--eval`` script and return the completed process.
 
@@ -320,9 +324,18 @@ def _run_node_eval(
     any non-ASCII byte Node writes to stdout (issue #1399 follow-on). Callers
     keep their own try/except and response-shaping, which differ per tool;
     only the subprocess invocation itself is shared.
+
+    ``store=False`` omits the ``--import`` store prelude. A script that touches
+    no project state does not need it, and under ``--store pg`` loading it means
+    building a Postgres pool and an S3 client per invocation
+    (``pg_store_prelude.mjs`` calls ``createPgS3Backend``). Worse, that prelude
+    THROWS when ``HARNESS_PG_RUN`` or the ``PROTO_*`` env is incomplete, which
+    would turn a pure check into a per-call failure. Pure checks pass
+    ``store=False``; anything that reads or writes the workspace must not.
     """
     return subprocess.run(
-        ["node", *_store_import_args(), "--input-type=module", "--eval", script],
+        ["node", *(_store_import_args() if store else []),
+         "--input-type=module", "--eval", script],
         input=input_str,
         capture_output=True,
         text=True,
@@ -571,6 +584,11 @@ def _reject_unknown_args(tool_name: str, args: Any) -> str | None:
             script,
             json.dumps({"tool": tool_name, "args": args}),
             timeout=NODE_EVAL_TIMEOUT_DEFAULT,
+            # `rejectUnknownArgs` reads no project state, so the store prelude is
+            # pure cost here — and under `--store pg` it is a Postgres pool and an
+            # S3 client per argument check, on a prelude that throws when the
+            # PROTO_* env is incomplete.
+            store=False,
         )
         if proc.returncode != 0:
             raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
