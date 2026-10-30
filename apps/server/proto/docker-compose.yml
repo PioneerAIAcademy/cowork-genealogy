@@ -334,7 +334,7 @@ services:
       GENEALOGY_S3_ACCESS_KEY: proto
       GENEALOGY_S3_SECRET_KEY: protoproto
       GENEALOGY_ANCHOR_PATH: /project
-      # The per-user config, the four keys src/hosted-config-env.ts reads from the env:
+      # The per-user config, the keys src/hosted-config-env.ts reads from the env:
       # one shared process, so these are per-STACK here rather than per patron, which is
       # what a one-patron prototype wants. Without the OpenRouter key `image_transcribe`
       # answers with its no-key error. env.sh exports it from eval/.env.
@@ -342,6 +342,8 @@ services:
       OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
       WIKI_API_URL: ${WIKI_API_URL:-}
       POP_STATS_URL: ${POP_STATS_URL:-}
+      MATCHER_URL: ${MATCHER_URL:-}
+      MATCHER_API_KEY: ${MATCHER_API_KEY:-}
     # Project state lives in Postgres/S3, so nothing writes to the rootfs; /tmp is the
     # one rw path.
     read_only: true
