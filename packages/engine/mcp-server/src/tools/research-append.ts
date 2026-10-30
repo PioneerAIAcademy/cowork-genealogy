@@ -165,7 +165,9 @@ const SECTIONS: Record<string, SectionConfig> = {
   sources: { prefix: "src_" },
   assertions: { prefix: "a_" },
   person_evidence: { prefix: "pe_", stampTimestamp: CREATED_DATE },
-  rejected_links: { prefix: "rj_", stampTimestamp: CREATED_DATE },
+  // Immutable but for `reason`: re-pointing a rejection would move it onto a
+  // linked pair without retiring that link, and `researcher_words` is a record.
+  rejected_links: { prefix: "rj_", stampTimestamp: CREATED_DATE, updatableFields: ["reason"] },
   // Phase 2
   questions: { prefix: "q_", stampTimestamp: CREATED_DATE },
   plans: { prefix: "pl_", stampTimestamp: CREATED_DATE },
@@ -4743,6 +4745,60 @@ export function mergeCarryRefusals(
   return out;
 }
 
+/** A merge cannot bring a rejected pair back (lead, 2026-10-20). Refused in both
+ *  directions: (a) a live link the merge moves lands on a pair the researcher
+ *  rejected for the survivor, and (b) a rejection the merge moves lands on a pair
+ *  the survivor links live. Only pairs the merge creates: a link and a rejection
+ *  that already stood together before it are not this merge's doing. Nothing
+ *  overrides it. One line per pair, then the routing; `[]` when nothing is refused. */
+function mergeRejectedPairRefusals(
+  before: { research: any },
+  after: { research: any },
+  survivorOf: ReadonlyMap<string, string>,
+): string[] {
+  const live = (doc: any): any[] =>
+    ((doc?.person_evidence ?? []) as any[]).filter(
+      (e) => e && !e.superseded_by && typeof e.assertion_id === "string" && typeof e.person_id === "string",
+    );
+  const rejections = (doc: any): RejectedLink[] =>
+    Array.isArray(doc?.rejected_links) ? (doc.rejected_links as RejectedLink[]) : [];
+  // By link id: the merge remaps person ids, so a pre-merge pair key never
+  // matches the post-merge one.
+  const alreadyRejected = new Set(
+    live(before.research)
+      .filter((e) => rejectionFor(e.assertion_id, e.person_id, rejections(before.research)))
+      .map((e) => e.id),
+  );
+  const priorPersonOf = new Map<string, string>(live(before.research).map((e) => [e.id, e.person_id]));
+  const movedLinks = new Set(
+    live(before.research).filter((e) => survivorOf.has(e.person_id)).map((e) => e.id),
+  );
+  const movedRejections = new Set(
+    rejections(before.research)
+      .filter((r) => typeof r?.person_id === "string" && survivorOf.has(r.person_id))
+      .map((r) => r.id),
+  );
+  const lines: string[] = [];
+  for (const e of live(after.research)) {
+    const hit = rejectionFor(e.assertion_id, e.person_id, rejections(after.research));
+    if (!hit || !(movedLinks.has(e.id) || movedRejections.has(hit.id))) continue;
+    if (alreadyRejected.has(e.id)) continue;
+    lines.push(
+      `person_evidence '${e.id}' and rejection '${String(hit.id)}' would both stand on ` +
+        `(${e.assertion_id}, ${e.person_id}) after this merge: the researcher rejected that pair, and the ` +
+        `merge would leave a live link on it. The link stands today on ` +
+        `(${e.assertion_id}, ${priorPersonOf.get(e.id) ?? e.person_id}).`,
+    );
+  }
+  if (lines.length === 0) return [];
+  return [
+    ...lines,
+    "Nothing was written, and no justification overrides this. Ask the researcher whether each listed " +
+      "link's record is the person it stands on today. If they say it is not, have person-evidence record " +
+      "their rejection of that pair, which retires the link, then merge again. Otherwise do not merge.",
+  ];
+}
+
 /** Issue #2537: each live link the merge moves onto a survivor must pass the
  *  checks a `research_append` update re-pointing it there would: the
  *  contradiction cap, the move rule and the score gate's fabrication arm. Judged
@@ -4762,6 +4818,10 @@ export async function mergeLinkCheckRefusals(
 ): Promise<string[]> {
   const survivorOf = new Map<string, string>();
   for (const [s, c] of merges) survivorOf.set(c, s);
+  // Before the early return below: a merge that moves only a rejection can
+  // still land it on a pair the survivor links live.
+  const rejectedPairs = mergeRejectedPairRefusals(before, after, survivorOf);
+  if (rejectedPairs.length > 0) return rejectedPairs;
   const moved: Array<{ entry: any; from: string }> = [];
   for (const e of (before.research?.person_evidence ?? []) as any[]) {
     if (!e || e.superseded_by || typeof e.person_id !== "string") continue;
@@ -7084,6 +7144,84 @@ function rewriteLinkedFacts(
   return { mutated, warnings, mutationWarnings, undo };
 }
 
+// ─── #3601: a rejection undoes its link ──────────────────────────────────────
+
+/**
+ * Retire every live link on a pair this call rejected, and remove the tree facts
+ * that link minted.
+ *
+ * A rejection is the researcher saying the record is not this person, so the link
+ * and the facts it put on the person go with it, in the same write. The link's
+ * `superseded_by` names the rejection, so the audit trail says why it ended.
+ *
+ * A fact is "minted by the link" when it sits on the rejected person and carries
+ * the rejected `assertion_id`. One whose `sources[]` also cites a ref other than
+ * that assertion's own source description holds another record's evidence, so it
+ * is kept and named. Names and relationships carry no `assertion_id`, so they are
+ * never removed; the response says the person may still carry them.
+ *
+ * A post-apply pass for the reason `rewriteLinkedFacts` is one: `applyOne` has no
+ * way to report a tree mutation.
+ */
+function retireRejectedLinks(
+  applied: AppliedOp[],
+  research: any,
+  tree: SimplifiedGedcomX,
+): { mutated: boolean; warnings: string[] } {
+  const warnings: string[] = [];
+  let mutated = false;
+  const rejections: any[] = Array.isArray(research?.rejected_links) ? research.rejected_links : [];
+  const links: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
+  const sources: any[] = Array.isArray(research?.sources) ? research.sources : [];
+
+  for (const a of applied) {
+    if (a.section !== "rejected_links" || a.op !== "append" || a.noop) continue;
+    const rj = rejections.find((r) => r && r.id === a.entryId);
+    if (!rj || typeof rj.assertion_id !== "string" || typeof rj.person_id !== "string") continue;
+    const live = links.filter(
+      (pe) => pe && !pe.superseded_by && pe.assertion_id === rj.assertion_id && pe.person_id === rj.person_id,
+    );
+    if (live.length === 0) continue;
+    for (const pe of live) pe.superseded_by = rj.id;
+
+    const assertion = assertions.find((x) => x && x.id === rj.assertion_id);
+    const source = sources.find((s) => s && s.id === assertion?.source_id);
+    const ownRef = source?.gedcomx_source_description_id;
+    const person = (tree?.persons ?? []).find((p) => p && p.id === rj.person_id);
+    const removed: string[] = [];
+    const kept: string[] = [];
+    if (person && Array.isArray(person.facts)) {
+      person.facts = person.facts.filter((f) => {
+        if (!f || f.assertion_id !== rj.assertion_id) return true;
+        const otherEvidence = (f.sources ?? []).some((s) => typeof s?.ref === "string" && s.ref !== ownRef);
+        if (otherEvidence) {
+          kept.push(f.id ?? f.type ?? "(fact)");
+          return true;
+        }
+        removed.push(f.id ?? f.type ?? "(fact)");
+        return false;
+      });
+    }
+    if (removed.length > 0) mutated = true;
+
+    const retired = live.map((pe) => pe.id).join(", ");
+    warnings.push(
+      `${rj.id} retired ${retired} (superseded_by '${rj.id}')` +
+        (removed.length > 0 ? ` and removed ${removed.join(", ")} from ${rj.person_id}` : "") +
+        `. ${rj.person_id} may still carry names or relationships from ${rj.assertion_id}'s record; ` +
+        "check them with person_read and correct with tree_correct.",
+    );
+    if (kept.length > 0) {
+      warnings.push(
+        `${kept.join(", ")} on ${rj.person_id} came from ${rj.assertion_id} but also cites another ` +
+          "record, so it was kept. Check whether that other record still supports it.",
+      );
+    }
+  }
+  return { mutated, warnings };
+}
+
 /**
  * A plan this call CREATED that ends the call with no items, while the same
  * call's `plan_items` ops wrote into a different plan — the misroute that
@@ -8092,6 +8230,19 @@ function applyOne(
   // validation.warnings (via the caller's flatMap over AppliedOp.warnings), never
   // thrown. Distinct from invariantErrors, which reject the write (#1006).
   const opWarnings: string[] = keptCompletedWarning ? [keptCompletedWarning] : [];
+  // Only the researcher rejects a pair (lead, 2026-10-20), and the engine cannot
+  // see who spoke. Their exact words make a rejection written on a hedge, or in a
+  // turn they never spoke in, visible in the viewer and in feedback triage.
+  if (section === "rejected_links" && op.op === "append") {
+    const words = resultEntry.researcher_words;
+    if (typeof words !== "string" || words.trim() === "") {
+      invariantErrors.push(
+        "a rejection needs `researcher_words`: the researcher's own message saying this record " +
+          "is not this person, copied verbatim, not paraphrased. Only the researcher rejects a " +
+          "pair. If they did not clearly say it is not a match, do not reject it; leave it unlinked.",
+      );
+    }
+  }
   // A question may only reach `resolved` once a proof summary for it exists.
   // Same "only when THIS op sets it" discipline as the proof_summaries block
   // below — an unrelated update to an already-resolved question must not
@@ -10309,6 +10460,9 @@ export async function researchAppend(
     // #2472: carry an assertion correction onto the fact materialize_facts
     // minted from it, in this same call's atomic composite persist.
     const rewrite = rewriteLinkedFacts(applied, ops, research, beforeResearch, tree);
+    // #3601: a rejection retires its pair's live link and that link's facts,
+    // in this same all-or-nothing write.
+    const retire = retireRejectedLinks(applied, research, tree);
 
     await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(projectPath));
 
@@ -10317,11 +10471,11 @@ export async function researchAppend(
     // may arrive in any order within the call.
     const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
 
-    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? [])];
+    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.
-    let treeMutated = prep.treeMutated || rewrite.mutated;
+    let treeMutated = prep.treeMutated || rewrite.mutated || retire.mutated;
     let rewriteWarnings = [...rewrite.warnings, ...rewrite.mutationWarnings];
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
@@ -10389,7 +10543,7 @@ export async function researchAppend(
         const retry = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
         if (retry.valid) {
           validation = retry;
-          treeMutated = prep.treeMutated;
+          treeMutated = prep.treeMutated || retire.mutated;
           // The mutation half described a tree change that no longer exists.
           rewriteWarnings = [
             ...rewrite.warnings,
