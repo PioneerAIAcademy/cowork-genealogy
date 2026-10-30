@@ -936,7 +936,7 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `date_certainty` | string | yes | `exact`, `approximate`, `estimated`, or `calculated` |
 | `event_type` | string | yes | `birth`, `baptism`, `marriage`, `death`, `burial`, `residence`, `census`, `military`, `immigration`, `emigration`, `land_transaction`, `probate`, `other` |
 | `place` | string or null | no | Place description |
-| `standard_place` | string or null | no | Standardized place name (the `standardPlace` field from the `place_search` tool) for `place`. Null if unresolvable or `place` is null. |
+| `standard_place` | string or null | no | Standardized place name for `place`: one of FamilySearch's standard places (a `place_search` result), kept from a caller only on the terms research-append spec §5.10 gives, else the engine's answer. Null if unresolvable or `place` is null. |
 | `description` | string | yes | Human-readable event description |
 | `assertion_ids` | string[] | yes | `a_` references backing this event |
 | `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place, between the two `standard_place` names (`place_distance`, or the same haversine computation inside `timeline_build`). Null for the first event, or when either event lacks a resolved `standard_place`. |

@@ -250,6 +250,7 @@ camelCase convenience fields the same way `research_log_append` does.
     sId: string | null,            // the tree S entry the source cites
   },
   resolvedPlaces?: [{ place, standardPlace, source: "sidecar" | "geocoded" }], // §3.6
+  unresolvedPlaces?: string[],     // §3.6 — each place looked up and left with no standard_place
   filesWritten: ["research.json"], // + "tree.gedcomx.json" first, when §3.4 wrote the S
                                    //   entry or §3.1's assertion-update rewrote a fact
   validation: { valid: true, warnings: string[] },
@@ -683,10 +684,42 @@ Two prevention levers for the silent-wrong-geocode theme, applied per `assertion
 append op (deliberately simple), and to an `assertions` update that sets `place` to a
 new place without setting `standard_place`. On that update the existing assertion is
 the base, no sidecar value is copied (geocoding only; its sidecar record still gives
-the record's country, below), a resolved value is written into
-the update's `standard_place`, and when nothing resolves, or the resolved value
+the record's country, below), a resolved value is written into the
+update's `standard_place`, and when nothing resolves, or the resolved value
 contradicts the place's country, the old `standard_place` is cleared (set to `null`)
-with a warning rather than kept for the new place:
+with a warning rather than kept for the new place.
+
+A place-of-event variant's place lifted from `value` before the levers run
+(§3.7) is a **value-derived** place. It is resolved, echoed and warned about
+like any other, with two differences. A lookup naming a different country
+(Lever A) is dropped with a warning, not a refusal: the writer of a document
+cannot supply a `standard_place`, so a refusal would lose every assertion in it.
+A geocoded answer the country check cannot judge is dropped too when the text's
+trailing comma part names a country the alias table knows, since the answer
+then names none it knows: "March, Cambridgeshire, England" drops "March,
+Transvaal, South Africa", a country the table does not carry. Otherwise it is
+kept only when the text is one word, which the resolver's one-word rule (Lever
+B) judges and whose answer need not spell the text, when the answer is the
+one-word list's own entry for the text, which need not spell it either, or when
+the answer's own name, its first segment, is one of the text's comma parts
+(compared ignoring case, accents, periods, type words and an "X of" prefix):
+"Hilperton, Wiltshire" keeps "Hilperton, Wiltshire, England, United Kingdom",
+"Ky" keeps "Kentucky, United States" and "W. Va." "West Virginia, United
+States", while "at the home of her daughter" and "at the home of her daughter,
+Mrs. John Smith" drop "Of, Trabzon, Türkiye". The check is
+`unconfirmedByText` (`src/utils/place-verdict.ts`). It also judges a geocoded
+answer for an assertion's own `place` written as prose, whose first comma part
+has no capital letter (`isProse`): "her residence, Centre Street, Ashland" drops
+"McKay, Green Township, Ashland, Ohio, United States". `tree_edit`,
+`tree_correct` and a caller's timeline event apply it to a lookup standing in
+for a refused supplied value, and to a lookup filling a prose text
+(tree-edit-tool-spec §4.1.1). A dropped answer leaves the place as written, with
+no `standard_place`. The lift holds on an append and on an update that leaves
+`place` alone, such as an `informant_bias_notes` note or `extraction_append`'s
+question tie. On such an update the lifted place and its `standard_place` go
+onto the stored entry, not into the op, so §3.1 does not treat them as a
+correction to carry onto a linked tree fact, and a stored `standard_place: null`
+stays an opt-out, as on an append. The levers:
 
 - **Lever B — sidecar copy first, never re-geocode what the record resolved.**
   When the op carries a `place` but omits `standard_place` (**strictly absent**;
@@ -694,11 +727,13 @@ with a warning rather than kept for the new place:
   and the guard; a non-place phrase such as "Same House" or "Do", tested by
   `isNonPlacePhrase` in `place-resolver.ts`, skips both steps below and stays
   unset with no warning):
-  1. if the op's sidecar-matched record (§3.5) gives the op's own fact a
+  1. if the op's sidecar-matched record (§3.5; for an accepted hint, the record
+     read staged in the same call) gives the op's own fact a
      converter-resolved `standard_place`, it is **copied** — no geocoding call.
      The op's own fact is a fact of its `record_persona_id` (the persona's own,
      or one of a relationship whose `person1` or `person2` it is, as a
-     couple's marriage; a ParentChild relationship's facts are not read) whose
+     couple's marriage; a ParentChild relationship's facts are not read, and an
+     assertion with no `record_persona_id`, or an empty one, reads none) whose
      type is the op's `fact_type` once both are folded as "Boundary shape normalization" folds
      labels ("Baptism" is `christening`, "BirthRegistration" is
      `birth_registration`) and whose `place` equals the op's place string
@@ -706,7 +741,17 @@ with a warning rather than kept for the new place:
      carries the same `standard_place`: one person's name never lands on
      another's fact (a census household where FamilySearch standardized only
      the head's place), and one fact's name never lands on another fact of the
-     same person (one place named for two eras);
+     same person (one place named for two eras). When such facts carry two or
+     more different ones the record disagrees with itself: the field stays
+     unset, with a warning and an `unresolvedPlaces` entry, and nothing is
+     geocoded. An assertion's stored `standard_place`, which may be an engine
+     lookup or an agent's pick, is never read. This copy is the one way the
+     engine takes FamilySearch's standardization from a record (lead,
+     2026-10-26: "have the engine take FamilySearch's standardization from the
+     record a tree fact cites"): `tree_edit` and `tree_correct` read it for a
+     fact citing a record (tree-edit-tool-spec §4.1.1), and §5.10 for a caller's
+     timeline event (`sidecarStandardPlaces` and `RecordStandards`,
+     `research-append.ts`);
   2. otherwise (and unless `resolveStandardPlace: false`), the tool geocodes via
      the shared `resolveStandardPlace` — best-effort, a miss leaves the field
      unset with a warning, never fails the op. The op's record context goes with
@@ -798,9 +843,21 @@ with a warning rather than kept for the new place:
      Temple" to France. `dev/build-one-word-places.ts` rebuilds the list from
      matcher-lab's `m13/one_word_places_final.json`.
 
-  Every value the tool resolved is echoed in the success response's
+  Every value the tool resolved and kept is echoed in the success response's
   `resolvedPlaces: [{ place, standardPlace, source: "sidecar" | "geocoded" }]`
-  so the caller can sanity-check geocoding without re-reading files.
+  so the caller can sanity-check geocoding without re-reading files; `sidecar`
+  marks a value step 1 took from the op's record. Every place
+  it looked up and left with no `standard_place` (a miss, or an answer dropped
+  by Lever A or the value-derived check above) is listed in
+  `unresolvedPlaces: string[]`, as well as warned about, and never in
+  `resolvedPlaces`. A place on an assertion whose `informant_bias_notes` carry
+  the `[suspicious text` marker is never looked up, by sidecar copy or
+  geocoding: it stays as written, with no `standard_place`, and is neither
+  warned about nor echoed. A refusal of its supplied `standard_place` (Lever A),
+  and the warning that clears its old one when an update corrects its place,
+  show it as `[withheld: suspicious text]`: the record's text can carry an
+  instruction, and `extraction_append`'s summary relays these echoes verbatim
+  (§11.7).
 - **Lever A — country-contradiction guard.** On the op's final
   `place`/`standard_place` pair (supplied or resolved): when the place TEXT's
   trailing comma-token names a recognized country (a small alias table:
@@ -808,13 +865,16 @@ with a warning rather than kept for the new place:
   standard place's segments plainly lack it, the op is **rejected** with an
   actionable error (re-resolve, supply the correct value, or opt out with
   `standard_place: null`) — e.g. "West Bromwich, England" resolving to a
-  standard_place ending in "Cameroon". UK constituents are consistent with
+  standard_place ending in "Cameroon". A value-derived place's lookup, and one on
+  an update, is dropped with a warning instead. UK constituents are consistent with
   "United Kingdom" (but not with a *different* constituent), and "Ireland" with
   "Northern Ireland" (historic records).
 
   The guard **declines to judge** — no rejection, and a **geocoded** value
-  instead gets a verify-this warning (supplied and sidecar-copied values stay
-  silent, since the echo is their audit surface) — in either of two cases:
+  instead gets a verify-this warning, unless it is value-derived or its place
+  is prose and the text does not confirm it (the check above), when it is
+  dropped (supplied and sidecar-copied values stay silent, since the echo is
+  their audit surface) — in either of two cases:
 
   1. the place text names no country (a trailing US state or English county);
   2. the *standard place* names no country the alias table recognizes. A
@@ -879,7 +939,20 @@ splintering into inconsistent labels, over a form the model added:
   the event type (`birthplace` → `birth`, `deathplace` → `death`), **and** the
   tool lifts the place value into the machine-readable `place` field when neither
   `place` nor `standard_place` is already set (the human `value` of a place-claim
-  *is* the place string, e.g. `"Ireland"`). This keeps a birthplace-claim and a
+  *is* the place string, e.g. `"Ireland"`). The lift comes before §3.6's lookups,
+  on an append and on an update that does not set `standard_place`, so the
+  lifted place is standardized, as a value-derived place. The `[?]` a
+  doubted reading ends its `value` with stays in the `value` and is not lifted:
+  "Hilperton, Wiltshire [?]" gets the place "Hilperton, Wiltshire", and a `value`
+  that is only `[?]` lifts nothing. A date is never lifted: a `value` equal to
+  the assertion's `date` (a document's variant given only a date carries it in
+  `value` too, so `{ type: "deathplace", date: "Sunday, March" }` stays a date)
+  or one the date standardizer reads ("26 Jan 1958") stays in `value`. An assertion
+  with `record_basis: "absent"` is never lifted: its `value` says what the record
+  lacks ("Mary Schreiber, his wife, is not named among the survivors"), not where
+  anything happened. Nor is one whose `informant_bias_notes` carry the
+  `[suspicious text` marker: its text stays in `value`, which a tree event fact
+  never takes, so it is never carried onto the tree as a place. This keeps a birthplace-claim and a
   birth-date claim independently classifiable as two `birth` assertions — the
   census case where a stated birthplace is `direct` while the computed birth year
   is `indirect` — distinguished by field population (`place` set = the
@@ -1820,6 +1893,33 @@ the pair is `derivedNamesakePairs`, the tests `pairJudgement`.
   entry tied to his son through the deceased daughter, to whom the run also
   linked her husband's name, a wrong link holding a right one. Seeing pairs
   alone, every tie counting, it refuses only the Elsa copy.
+
+### 5.10 A caller's timeline event `standard_place` is judged
+
+On a `timelines` append or update reached as an MCP caller
+(`researchAppendFromCaller`), each event's supplied `standard_place` is judged as
+`tree_edit` judges a fact's (tree-edit-tool-spec §4.1.1). It is kept when the
+event has a `place` that is not a non-place phrase and the value fits that
+place's text (`fitsText`): it names no other country than it, FamilySearch's
+place search finds a place of that full name, that place lies in no other US
+state, Puerto Rico, Canadian province or country than the text names, and some
+part of the place text names it (or the value is the one-word list's entry for
+the text). It is kept in FamilySearch's spelling, with no warning and its
+distances unchanged; a failed lookup keeps it as written. Otherwise the
+engine's answer replaces it, or it becomes `null`, with a warning naming the
+event (`events[<k>]: standard_place '<supplied>' … was replaced by …` or `… was
+not kept …`); an answer that is the value itself replaces nothing. The answer
+is the `standard_place` the record of each of the event's `assertion_ids` gives
+that assertion's own fact for the event's place text (§3.6, Lever B step 1's
+copy, from the sidecar the assertion's log entry names), else
+`resolveStandardPlace(place)` when it fits the place text as a lookup must
+(tree-edit-tool-spec §4.1.1); none when those records give two or more, for a
+non-place phrase, or for an answer naming another country. When the value is replaced by another place, or
+by none, `distance_from_previous_km` becomes `null` on that event and the next,
+since both were measured from the old value; a replacement FamilySearch finds to
+be the same place (`samePlace`: one place id, as `place_distance` reads each name)
+keeps them. `timeline_build` writes through `researchAppend` directly, from the
+project's own standard places, and is not judged.
 
 ## 6. Decisions recorded
 
@@ -3090,7 +3190,26 @@ classification warnings, every `[suspicious text …]` marker a document
 carried, and a household head whose surname differs from the principal's. That
 last is a lead for hypothesis-tracking, never a relationship. It is not every assertion and not bare counts. The
 agent returns it verbatim, and the caller relays it and decides what comes
-next without a follow-up read.
+next without a follow-up read. On both paths a summary also ends with one line
+naming, once each, the places §3.6 could not standardize when the source was
+written (`Places kept as written, with no standard place found: …`). The rest
+of the summary is read from the extraction, which cannot tell a lookup that
+missed from one never made, and the summary is all the caller relays, so
+without this line a place miss would never reach the researcher.
+Text from an assertion flagged with the `[suspicious text` marker is withheld
+from every line, printed as `[withheld: suspicious text]`: a flagged fact
+prints only that, without its type, which a document writes freely; the event
+in the first line; a person's name, and that name wherever any line would print
+it, one filter run over every line: a fact or the calendar line ("son of …"),
+the first line, a note and the places line, where an unflagged place names a
+flagged person ("home of his son …"); the `Suspicious text:` line, which names
+the role of each flagged passage and nothing of its text; the different-surname
+lead (which is not written when either the head's or the principal's name is
+flagged) and the note on a census whose jurisdiction the relationship-column
+table lacks (which withholds the place of a flagged census fact). A flagged
+place is never looked up (§3.6), so the places line never names it. The
+summary is relayed character for character into the caller's context, where
+such text would read as an instruction.
 
 ### 11.8 Person mode — a person's attached records, extracted and linked
 
