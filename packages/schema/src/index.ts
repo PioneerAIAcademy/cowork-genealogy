@@ -223,6 +223,9 @@ export interface RejectedLink {
   person_id: string
   /** Optional: a rejection is never a demand for the right answer. */
   reason?: string | null
+  /** The researcher's own words, verbatim. research_append requires it on append;
+   *  optional here because a row written before the field existed has none. */
+  researcher_words?: string
   created: string
 }
 
