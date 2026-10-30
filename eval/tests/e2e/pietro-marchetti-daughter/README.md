@@ -35,7 +35,11 @@ Aquilini. The drafted finding stands.
 
 Retrieval was tool-assisted via `record_read` / `record_search` against live
 FamilySearch; the identity judgement is the genealogist's. **Index text only —
-no record images were read or calibrated.**
+no record images were read or calibrated.** The target death-registration page
+carries only two indexed entries — Giuseppa Marchetti and Elisa Luciani — so the
+two-comparator calibration that Step 1a of `docs/e2e-testing-guide.md` requires
+cannot be completed, and an image reading of that page could not be treated as
+licensed evidence.
 
 What decided it:
 
