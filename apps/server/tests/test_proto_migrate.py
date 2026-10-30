@@ -39,6 +39,8 @@ PINNED = {
     # Phase 2. Renumbered FOUR times on main merges -- 008, 010, 012, 013 -- each taken
     # while this sat on the branch. Same file at its fifth name; the digest is the
     # file's, so it does not change with the number.
+    "016_users_beta.sql": "4c85ef7d3c17416db1d9313fb9aaf16d3cc37168a9f9c3bf93fefcba709bee3a",
+    "017_connector_auth.sql": "d4fe1eadadce03860523c8d6f8ca870a98c96e6e777e67a6c14df28cf833a419",
 }
 
 
