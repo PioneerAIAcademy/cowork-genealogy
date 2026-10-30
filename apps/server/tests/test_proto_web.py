@@ -84,9 +84,9 @@ USER_B = User("usr_b", "b@example.org")
 
 class FakeStore:
     """Re-implements the store in Python. The owner DECISION is the route's (``_session``
-    compares ``owner_id``), so these tests exercise the real rule; only the lists
-    and ``create_session`` filter by owner here, mirroring the SQL that
-    ``test_proto_auth.py`` runs against a scripted connection."""
+    compares ``owner_id``), so these tests exercise the real rule. The lists and
+    ``create_session`` filter by owner here; only ``list_sessions`` mirrors the SQL
+    that ``test_proto_auth.py`` runs against a scripted connection."""
 
     def __init__(self) -> None:
         self.users: dict[str, User] = {USER_A.id: USER_A, USER_B.id: USER_B}
@@ -1521,6 +1521,24 @@ async def test_list_projects_returns_only_the_callers_projects_with_research_lab
         assert (await c.get("/api/projects")).json() == [{"id": "proj_b", "label": None, "updated_at": None}]
 
 
+@pytest.mark.parametrize(("research", "label"), [
+    ({"project": {"title": 42, "objective": "Fallback"}}, "Fallback"),
+    ({"project": "x"}, None),
+    ("x", None),
+    ({"project": {"objective": 42}}, None),
+])
+@pytest.mark.parametrize("path", ["/api/projects", "/api/projects/proj_a/state"])
+async def test_project_labels_only_use_non_empty_strings(research, label, path):
+    store, queue = FakeStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    store.docs["proj_a"] = {"research.json": (1, research)}
+    async with make_client(store, queue) as c:
+        r = await c.get(path)
+    assert r.status_code == 200
+    body = r.json()[0] if path == "/api/projects" else r.json()
+    assert body["label"] == label
+
+
 async def test_project_state_etag_changes_for_research_and_tree_versions():
     store, queue = FakeStore(), FakeQueue()
     store.owners["proj_a"] = USER_A.id
@@ -1559,6 +1577,53 @@ async def test_project_state_matches_weak_multiple_and_wildcard_etags(condition)
     assert r.status_code == 304 and r.content == b"" and r.headers["etag"] == '"r0-t0"'
 
 
+async def test_project_state_matches_the_second_if_none_match_line():
+    store, queue = FakeStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    async with make_client(store, queue) as c:
+        r = await c.get("/api/projects/proj_a/state", headers=[
+            ("If-None-Match", '"other"'), ("If-None-Match", 'W/"r0-t0"'),
+        ])
+    assert r.status_code == 304 and r.content == b"" and r.headers["etag"] == '"r0-t0"'
+
+
+async def test_project_state_304_does_not_load_documents():
+    class CountingStore(FakeStore):
+        documents_calls = 0
+
+        async def documents(self, project_id):
+            self.documents_calls += 1
+            return await super().documents(project_id)
+
+    store, queue = CountingStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    store.docs["proj_a"] = {"research.json": (3, {"project": {"title": "Private"}})}
+    async with make_client(store, queue) as c:
+        current = await c.get("/api/projects/proj_a/state")
+        assert current.status_code == 200 and store.documents_calls == 1
+        r = await c.get("/api/projects/proj_a/state", headers={"If-None-Match": current.headers["etag"]})
+    assert r.status_code == 304 and r.content == b""
+    assert store.documents_calls == 1
+
+
+async def test_project_state_200_uses_the_loaded_document_versions():
+    research = {"project": {"title": "Updated"}}
+
+    class UpdatingStore(FakeStore):
+        async def document_versions(self, project_id):
+            versions = await super().document_versions(project_id)
+            self.docs[project_id]["research.json"] = (4, research)
+            return versions
+
+    store, queue = UpdatingStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    store.docs["proj_a"] = {"research.json": (3, {})}
+    async with make_client(store, queue) as c:
+        r = await c.get("/api/projects/proj_a/state", headers={"If-None-Match": '"r2-t0"'})
+    assert r.status_code == 200 and r.headers["etag"] == '"r4-t0"'
+    assert r.json()["version"] == "r4-t0" and r.json()["research"] == research
+
+
 async def test_second_user_with_the_owners_current_etag_gets_404():
     store, queue = FakeStore(), FakeQueue()
     store.owners["proj_a"] = USER_A.id
@@ -1585,7 +1650,7 @@ async def test_second_user_gets_404_before_project_filename_or_log_id_validation
 
 
 def _assert_project_cache_headers(response):
-    assert response.headers["cache-control"] == "private, no-cache"
+    assert response.headers["cache-control"] == "private, no-store"
     assert "cookie" in {value.strip().lower() for value in response.headers["vary"].split(",")}
 
 
@@ -1628,20 +1693,49 @@ async def test_project_blob_successes_have_cache_headers_and_sessions_stay_uncha
     assert calls == [(row.project_id, "q_001"), (row.project_id, "images/a.jpg")] * 2
 
 
-async def test_project_cache_headers_preserve_existing_vary_and_match_only_the_project_prefix():
+@pytest.mark.parametrize(("lines", "expected"), [
+    (["Accept-Encoding"], "Accept-Encoding, Cookie"),
+    (["Accept-Encoding", "Accept-Language"], "Accept-Encoding, Accept-Language, Cookie"),
+    (["Accept-Encoding, cOoKiE", "Accept-Language, Cookie"], "Accept-Encoding, cOoKiE, Accept-Language"),
+])
+async def test_project_cache_headers_preserve_existing_vary_and_match_only_the_project_prefix(lines, expected):
     application = create_app(FakeStore(), FakeQueue())
 
     @application.get("/api/projects/{project_id}/vary")
     @application.get("/api/projects-extra")
     async def varying():
-        return app.Response(headers={"Vary": "Accept-Encoding"})
+        response = app.Response()
+        for line in lines:
+            response.headers.append("Vary", line)
+        return response
 
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t") as c:
         r = await c.get("/api/projects/proj_a/vary")
         _assert_project_cache_headers(r)
-        assert r.headers["vary"] == "Accept-Encoding, Cookie"
+        assert r.headers.get_list("vary") == [expected]
         r = await c.get("/api/projects-extra")
-    assert "cache-control" not in r.headers and r.headers["vary"] == "Accept-Encoding"
+    assert "cache-control" not in r.headers and r.headers.get_list("vary") == lines
+
+
+@pytest.mark.parametrize(("path", "user", "condition", "status"), [
+    ("/api/projects", USER_A.id, "", 200),
+    ("/api/projects/proj_a/state", USER_A.id, "", 200),
+    ("/api/projects/proj_a/state", USER_A.id, '"r0-t0"', 304),
+    ("/api/projects/proj_a/state", None, "", 401),
+    ("/api/projects/proj_missing/state", USER_A.id, "", 404),
+    ("/api/projects/proj_a/image", USER_A.id, "", 400),
+])
+async def test_project_cache_headers_under_root_path(path, user, condition, status):
+    store, queue = FakeStore(), FakeQueue()
+    store.owners["proj_a"] = USER_A.id
+    application = create_app(store, queue)
+    cookies = {auth.COOKIE_NAME: auth.session_cookie_value(user)} if user else None
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=application, root_path="/app"), base_url="http://t", cookies=cookies,
+    ) as c:
+        r = await c.get(f"/app{path}", headers={"If-None-Match": condition})
+    assert r.status_code == status
+    _assert_project_cache_headers(r)
 
 
 _BODIES = {"/api/sessions/{session_id}/messages": {"text": "Find Thomas Flynn"},

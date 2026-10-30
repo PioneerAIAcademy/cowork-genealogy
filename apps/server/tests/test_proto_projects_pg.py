@@ -33,6 +33,7 @@ def test_list_projects_filters_owners_and_derives_labels_times_and_order(pg_dsn)
         sql(pg_dsn, "INSERT INTO users (id, email) VALUES (%s, %s)", (owner, owner + "@example.test"))
     # Seed backwards so insertion order cannot satisfy the ordering contract.
     for pid, owner in (
+        ("proj_j", "usr_a"), ("proj_i", "usr_a"),
         ("proj_h", "usr_a"), ("proj_g", "usr_a"), ("proj_f", "usr_a"), ("proj_e", "usr_a"),
         ("proj_d", "usr_a"), ("proj_c", "usr_a"), ("proj_b", "usr_a"), ("proj_a", "usr_a"),
         ("proj_foreign", "usr_b"), ("proj_null", None),
@@ -49,6 +50,8 @@ def test_list_projects_filters_owners_and_derives_labels_times_and_order(pg_dsn)
         ("proj_d", "tree.gedcomx.json", {"persons": []}, t0),
         ("proj_e", "research.json", {"project": {}}, t0),
         ("proj_f", "research.json", {"project": {"title": "", "objective": ""}}, t0),
+        ("proj_i", "research.json", {"project": {"title": 42, "objective": "Fallback"}}, t0),
+        ("proj_j", "research.json", {"project": "x"}, t0),
         ("proj_foreign", "research.json", {"project": {"title": "Foreign"}}, t3),
         ("proj_null", "research.json", {"project": {"title": "Unclaimed"}}, t3),
     ):
@@ -63,6 +66,8 @@ def test_list_projects_filters_owners_and_derives_labels_times_and_order(pg_dsn)
         {"id": "proj_d", "label": None, "updated_at": t0},
         {"id": "proj_e", "label": None, "updated_at": t0},
         {"id": "proj_f", "label": None, "updated_at": t0},
+        {"id": "proj_i", "label": "Fallback", "updated_at": t0},
+        {"id": "proj_j", "label": None, "updated_at": t0},
         {"id": "proj_g", "label": None, "updated_at": None},
         {"id": "proj_h", "label": None, "updated_at": None},
     ]
@@ -79,3 +84,24 @@ def test_project_owner_returns_none_for_missing_and_null_owner_projects(pg_dsn):
     assert asyncio.run(store.project_owner("proj_owned")) == "usr_owner"
     assert asyncio.run(store.project_owner("proj_unowned")) is None
     assert asyncio.run(store.project_owner("proj_missing")) is None
+
+
+def test_documents_and_document_versions_follow_real_row_updates(pg_dsn):
+    sql(pg_dsn, "INSERT INTO projects (project_id) VALUES ('proj_documents')")
+    docs = {
+        "research.json": (3, {"project": {"title": "Original"}}),
+        "tree.gedcomx.json": (1, {"persons": []}),
+    }
+    for name, (version, doc) in docs.items():
+        sql(pg_dsn, "INSERT INTO documents (project_id, name, version, doc) VALUES (%s, %s, %s, %s)",
+            ("proj_documents", name, version, Jsonb(doc)))
+    store = PgStore(pg_dsn)
+    assert asyncio.run(store.documents("proj_documents")) == docs
+    assert asyncio.run(store.document_versions("proj_documents")) == {name: v for name, (v, _) in docs.items()}
+
+    updated = {"project": {"title": "Updated"}}
+    sql(pg_dsn, "UPDATE documents SET version = version + 1, doc = %s WHERE project_id = %s AND name = %s",
+        (Jsonb(updated), "proj_documents", "research.json"))
+    docs["research.json"] = (4, updated)
+    assert asyncio.run(store.documents("proj_documents")) == docs
+    assert asyncio.run(store.document_versions("proj_documents")) == {name: v for name, (v, _) in docs.items()}

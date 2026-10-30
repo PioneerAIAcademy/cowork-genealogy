@@ -17,8 +17,10 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   GET  /api/projects/{id}/sidecar/{log_id}     search-result body
   GET  /api/projects/{id}/image?filename=      persisted source page scan
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
-  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions route needs the cookie)
-  GET  .../sidecar/{log_id} -> 404;  .../image, .../logs, .../files -> 501
+  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
+  GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
+  GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
+  GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
   POST /api/sessions/{id}/interrupt                Stop: raise the flag        -> 202
   GET  /api/feedback/context?sessionId=         the files and transcript size a report would carry
   POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
@@ -108,6 +110,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from starlette.datastructures import MutableHeaders
+from starlette.routing import get_route_path
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 HERE = Path(__file__).resolve().parent
@@ -444,9 +447,17 @@ def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, n
 
 
 def project_label(research: Any) -> str | None:
-    """The research title, then objective; empty strings count as absent."""
-    project = (research or {}).get("project") or {}
-    return project.get("title") or project.get("objective") or None
+    """The research title, then objective; only non-empty strings count."""
+    if not isinstance(research, dict):
+        return None
+    project = research.get("project")
+    if not isinstance(project, dict):
+        return None
+    title = project.get("title")
+    if isinstance(title, str) and title:
+        return title
+    objective = project.get("objective")
+    return objective if isinstance(objective, str) and objective else None
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
@@ -863,8 +874,10 @@ class PgStore:
         async with await self._connect() as conn:
             cur = await conn.execute(
                 "SELECT p.project_id AS id, "
-                "COALESCE(NULLIF(r.doc->'project'->>'title', ''), "
-                "NULLIF(r.doc->'project'->>'objective', '')) AS label, "
+                "COALESCE(CASE WHEN jsonb_typeof(r.doc->'project'->'title') = 'string' "
+                "THEN NULLIF(r.doc->'project'->>'title', '') END, "
+                "CASE WHEN jsonb_typeof(r.doc->'project'->'objective') = 'string' "
+                "THEN NULLIF(r.doc->'project'->>'objective', '') END) AS label, "
                 "(SELECT max(d.updated_at) FROM documents d WHERE d.project_id = p.project_id) AS updated_at "
                 "FROM projects p LEFT JOIN documents r ON r.project_id = p.project_id AND r.name = 'research.json' "
                 "WHERE p.owner_id = %s ORDER BY updated_at DESC NULLS LAST, p.project_id",
@@ -1574,7 +1587,7 @@ def create_app(
             self.app = app
 
         async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-            path = scope.get("path", "")
+            path = get_route_path(scope) if scope["type"] == "http" else ""
             if scope["type"] != "http" or not (path == "/api/projects" or path.startswith("/api/projects/")):
                 await self.app(scope, receive, send)
                 return
@@ -1582,8 +1595,16 @@ def create_app(
             async def send_headers(message: Message) -> None:
                 if message["type"] == "http.response.start":
                     headers = MutableHeaders(scope=message)
-                    headers["Cache-Control"] = "private, no-cache"
-                    headers.add_vary_header("Cookie")
+                    headers["Cache-Control"] = "private, no-store"
+                    vary = []
+                    for line in headers.getlist("Vary"):
+                        for value in line.split(","):
+                            value = value.strip()
+                            if value and (value.lower() != "cookie" or not any(v.lower() == "cookie" for v in vary)):
+                                vary.append(value)
+                    if not any(value.lower() == "cookie" for value in vary):
+                        vary.append("Cookie")
+                    headers["Vary"] = ", ".join(vary)
                 await send(message)
 
             await self.app(scope, receive, send_headers)
@@ -1600,7 +1621,7 @@ def create_app(
         return startup is None or startup.get("allowlist", "ok") == "ok"
 
     async def current_user(request: Request) -> User:
-        """The signed-in patron, or 401/403. On every /api/sessions route."""
+        """The signed-in patron, or 401/403. On every /api/sessions and /api/projects route."""
         data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
         if data is None:
             raise HTTPException(status_code=401, detail="Not signed in")
@@ -1787,14 +1808,18 @@ def create_app(
     async def project_state(project_id: str, request: Request, user: User = Depends(current_user)) -> Response:
         """{label, research, gedcomx, sidecars: [], version: rN-tN}, or an empty 304; both with ETag."""
         await _project(request, project_id, user)
-        docs = await _store(request).documents(project_id)
+        store = _store(request)
+        versions = await store.document_versions(project_id)
+        etag = f'"r{versions.get("research.json", 0)}-t{versions.get("tree.gedcomx.json", 0)}"'
+        condition = ",".join(request.headers.getlist("if-none-match"))
+        matches = [value.strip().removeprefix("W/") for value in condition.split(",")]
+        if etag in matches or "*" in matches:
+            return Response(status_code=304, headers={"ETag": etag})
+        docs = await store.documents(project_id)
         rv, research = docs.get("research.json", (0, None))
         tv, gedcomx = docs.get("tree.gedcomx.json", (0, None))
         tag = f"r{rv}-t{tv}"
         etag = f'"{tag}"'
-        matches = [value.strip().removeprefix("W/") for value in request.headers.get("If-None-Match", "").split(",")]
-        if etag in matches or "*" in matches:
-            return Response(status_code=304, headers={"ETag": etag})
         return JSONResponse({
             "label": project_label(research),
             "research": research,
@@ -1924,7 +1949,7 @@ def create_app(
         # so a slow round trip freezes every live SSE stream. The feedback route
         # below already does this; these three did not.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn()) as conn:
+            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
                 return fetch_sidecar(conn, blobs, project_id, log_id)
 
         blob = await asyncio.to_thread(_read)
@@ -1974,7 +1999,7 @@ def create_app(
 
         # Off the event loop, for the reason given on the sidecar route above.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn()) as conn:
+            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
                 return fetch_blob(conn, blobs, project_id, filename)
 
         blob = await asyncio.to_thread(_read)
