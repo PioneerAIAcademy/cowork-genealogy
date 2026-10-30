@@ -12,7 +12,7 @@
     "delegation": "Browse FamilySearch image group 007936749 and log the browse.\n\nimageGroupNumber: 007936749\nlooking_for: the Flynn family\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["image-search-schuylkill-probate", "image-transcribe-schuylkill-probate-flynn-will", "image-transcribe-any"],
+  "mcp_fixtures": ["image-search-schuylkill-probate", "image-transcribe-schuylkill-probate-flynn-will", "image-transcribe-any", "volume-search-any"],
   "execution": {
     "max_wall_clock_seconds": 600
   },
