@@ -119,6 +119,13 @@ repo's identifier-casing rule):
   },
   sectionCounts: { [section: string]: number | null },  // entries per research_query section — §2.6
   unregisteredDisagreementCount: number,         // what research_query's conflicts adds — §2.6
+  uploads?: [{                           // the user's uploads, newest first; absent when none — §2.7
+    name: string,
+    uploaded: string,                    // ISO, from the store's mtime
+    hasText: boolean,                    // uploads/<name>.txt exists
+  }],
+  projectUrl?: string,                   // viewer page; only with webPublicUrl and a store id — §2.7
+  uploadUrl?: string,                    // upload page; only when uploadsEnabled too — §2.7
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
