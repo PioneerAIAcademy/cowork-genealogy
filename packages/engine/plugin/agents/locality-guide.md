@@ -460,7 +460,8 @@ is what tells the researcher where to route the search.
 
 [List a repository or online index only with a URL a tool result returned —
 never one from memory. One row per repository, with the URL a tool result
-gave for that repository. **Gap it fills** names a gap this guide states — a
+gave for that repository; never join two repositories in one row or name
+("X / Y", "X (Y)") unless a tool result says one runs the other. **Gap it fills** names a gap this guide states — a
 denomination, a span of years, a "Records NOT online" entry, a known loss —
 never "subscription", "additional records" or "more coverage". The same
 index goes on that gap's **Gaps** line above.]
