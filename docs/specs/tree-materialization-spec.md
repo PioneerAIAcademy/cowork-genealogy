@@ -343,8 +343,10 @@ record says which party it is about: the score file
 `record_role` the call compared, which is the call's `recordRole`, else the
 assertion's own role. An assertion whose recorded score for the target names a
 role other than the one the op writes (the persona's `recordRole`, or the named
-party's `relatedRole`; compared case- and spelling-folded) does not qualify for
-that target. No score, or one with no role, changes nothing. The tool reads the
+party's `relatedRole`; compared trimmed and case-folded) does not qualify for
+that target, and the refusal names it: "the link of '<a>' to '<id>' does not
+count: its same_person score compared a different party of this record". It does
+not suggest re-scoring: a new score replaces the old one whatever role it names. No score, or one with no role, changes nothing. The tool reads the
 score files of the records the call's ops touch. Measured by the `scored` line
 of `dev/replay-materialize-link.ts`, which rebuilds each run's score files from
 its `same_person` calls: 0 of the corpus's persona and named-party ops change

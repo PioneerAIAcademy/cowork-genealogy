@@ -417,6 +417,11 @@ describe("materialize_facts", () => {
       await scoredAs("a_031", "I3", "groom");
       const out = await copyWife("I3");
       expect(out.ok).toBe(false);
+      if (!out.ok) {
+        expect(out.errors[0]).toMatch(/same_person score/);
+        expect(out.errors[0]).toContain("the link of 'a_031' to 'I3' does not count");
+        expect(out.errors[0]).not.toMatch(/same_person\(/);
+      }
       expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
       expect((await copyWife("I5")).ok).toBe(true);
     });
@@ -642,6 +647,11 @@ describe("materialize_facts", () => {
       await scoredAs("a_021", "I3", "groom");
       const out = await brideOnto("I3");
       expect(out.ok).toBe(false);
+      if (!out.ok) {
+        expect(out.errors[0]).toMatch(/same_person score/);
+        expect(out.errors[0]).toContain("the link of 'a_021' to 'I3' does not count");
+        expect(out.errors[0]).not.toMatch(/same_person\(/);
+      }
       expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
     });
 

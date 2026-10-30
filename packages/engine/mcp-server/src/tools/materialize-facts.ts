@@ -135,6 +135,15 @@ function scoredAsOtherParty(
   return normNamePart(scored) !== normNamePart(String(role ?? ""));
 }
 
+/** The refusal's note on assertions a score excluded: their link exists, so
+ *  the generic "write that link" advice cannot clear it. Re-scoring is not
+ *  offered: a new score replaces the old one whatever role it names. */
+const scoredOutNote = (ids: readonly string[], personId: string): string =>
+  ids.length === 0
+    ? ""
+    : ` (the link of ${ids.map((id) => `'${id}'`).join(", ")} to '${personId}' does not count: ` +
+      "its same_person score compared a different party of this record)";
+
 /** Read the score files of every record `ops` touch: a persona op's `recordId`,
  *  a named-party op's assertion's `record_id`. */
 async function readScoresFor(projectPath: string, research: any, ops: readonly any[]): Promise<RecordedScores> {
@@ -1085,12 +1094,10 @@ function personaQualifying(
   recordRole: unknown,
   personId: string,
   scores?: RecordedScores,
-): { qualifying: Set<string>; heldBy?: string } {
-  const own = new Set(
-    [...ownPersonaAssertionIds(research, recordId, recordRole)].filter(
-      (id) => !scoredAsOtherParty(scores, recordId, id, personId, recordRole),
-    ),
-  );
+): { qualifying: Set<string>; heldBy?: string; scoredOut: string[] } {
+  const candidates = [...ownPersonaAssertionIds(research, recordId, recordRole)];
+  const scoredOut = candidates.filter((id) => scoredAsOtherParty(scores, recordId, id, personId, recordRole));
+  const own = new Set(candidates.filter((id) => !scoredOut.includes(id)));
   const to = strongLinkTargets(research);
   for (const id of onePartyAssertionIds(research, recordId, (role) => role !== recordRole)) {
     const targets = to.get(id);
@@ -1099,10 +1106,11 @@ function personaQualifying(
       return {
         qualifying: new Set([...own].filter((ownId) => (to.get(ownId)?.size ?? 0) < 2)),
         heldBy: String(holder?.record_role ?? ""),
+        scoredOut,
       };
     }
   }
-  return { qualifying: own };
+  return { qualifying: own, scoredOut };
 }
 
 /** Whether the persona arm writes anything onto a person from this assertion:
@@ -1182,11 +1190,9 @@ export function namedPartyTargetRefusal(
 
   const named = onePartyAssertionIds(research, recordId, (role) => roleOf(role) === wanted);
   const namedTo = [...new Set(links.filter((e) => strong(e) && named.has(e.assertion_id)).map((e) => String(e.person_id)))];
-  const qualifying = new Set(
-    [...(namedTo.length > 0 ? named : [String(assertion.id), ...named])].filter(
-      (id) => !scoredAsOtherParty(scores, recordId, id, personId, relatedRole),
-    ),
-  );
+  const candidates = [...(namedTo.length > 0 ? named : [String(assertion.id), ...named])];
+  const scoredOut = candidates.filter((id) => scoredAsOtherParty(scores, recordId, id, personId, relatedRole));
+  const qualifying = new Set(candidates.filter((id) => !scoredOut.includes(id)));
   const what =
     namedTo.length > 0
       ? `one of the '${relatedRole}' persona's own assertions on record '${recordId}' (they are ` +
@@ -1210,7 +1216,8 @@ export function namedPartyTargetRefusal(
   };
   const party: RecordParty = writesFacts ? namedParty : { ...namedParty, names: [...namedParty.names, opName] };
   const refusal = existingPersonLinkRefusal(
-    tree, research, personId, String(recordId), qualifying, what, startingPersonIds, party, namesakeTree,
+    tree, research, personId, String(recordId), qualifying, what + scoredOutNote(scoredOut, personId), startingPersonIds,
+    party, namesakeTree,
   );
   return refusal === null ? null : `${refusal} If this party is someone else, omit personId to mint a new person.`;
 }
@@ -1325,20 +1332,21 @@ export function personaTargetRefusal(
     (a: any) => a && a.record_id === op.recordId && a.record_role === op.recordRole,
   );
   if (!persona.some(writesPersonLevel)) return null;
-  const { qualifying, heldBy } = personaQualifying(research, op.recordId, op.recordRole, personId, scores);
+  const { qualifying, heldBy, scoredOut } = personaQualifying(research, op.recordId, op.recordRole, personId, scores);
   const refusal = existingPersonLinkRefusal(
     tree,
     research,
     personId,
     String(op.recordId),
     qualifying,
-    heldBy === undefined
+    (heldBy === undefined
       ? `one of record '${op.recordId}' role '${op.recordRole}''s own assertions (not one that names a ` +
           "second person too, such as a marriage, relationship or parentage, a parent or a spouse, " +
           "whose link may be about that person)"
       : `one of record '${op.recordId}' role '${op.recordRole}''s own assertions linked to them alone ` +
           `(an assertion of role '${heldBy}' on that record is linked to them alone, so they are that ` +
-          "persona, and a link of this one's that also reaches someone else does not count)",
+          "persona, and a link of this one's that also reaches someone else does not count)") +
+      scoredOutNote(scoredOut, personId),
     startingPersonIds,
     personaParty(research, op.recordId, op.recordRole),
     namesakeTree,
