@@ -366,11 +366,15 @@ only narrow what the session already holds — the session's tool set is always 
 superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 shipped hook already does it: it routes `research_append` by caller identity
-(`owner_denied`, `AGENT_WRITABLE_SECTIONS`) — don't re-derive that. The one arm
-that stayed harness-only is the tool-level one, which denies `image_read` when
-`agent_id` is absent (`eval/harness/harness/context_policy.py`); porting it was
+(`owner_denied`, `AGENT_WRITABLE_SECTIONS`) — don't re-derive that. It also
+denies the main thread every tool only agents hold (`AGENT_ONLY_TOOLS`), naming
+the agents to delegate to; a tool only agents hold goes on that map or on
+`MAIN_THREAD_OK` with its reason, **by hand, never derived** (lead, 2026-10-20),
+and `plugin-hooks.test.ts` fails until it does. Grant a new tool to an agent and
+you owe that line, plus the `hooks.json` matcher if it is denied. The one arm
+still harness-only is `image_read`, which no agent holds; porting it was
 **declined by lead ruling 2026-08-17**, so it is not pending work. ADR-0006
-records why.
+records both.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and

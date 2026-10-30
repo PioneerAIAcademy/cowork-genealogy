@@ -2477,7 +2477,9 @@ const normalizedRole = (role: unknown): string =>
 /** What a record party's role makes it to a party in role `subject`: the tree
  *  relation (parent or spouse only) and the gender the role states, or null when
  *  the roles name no such relation. `father_of_groom` is the parent of a groom
- *  only; the other parent named beside a father or mother is the spouse. */
+ *  only; the other parent named beside a father or mother is the spouse, and so
+ *  is a `mother_of_<x>` beside a `father_of_<x>`, the same `<x>` only, never a
+ *  `mother_of_bride` beside a `father_of_groom` (chesworthrm, 2026-10-29). */
 export function coPartyRelation(
   subject: string,
   co: string,
@@ -2485,7 +2487,11 @@ export function coPartyRelation(
   const m = PARENT_ROLE.exec(co);
   if (m) {
     const gender = m[1] === "father" ? "male" : m[1] === "mother" ? "female" : null;
-    if (PARENT_ROLE.test(subject)) return m[2] === undefined ? { relation: "spouse", gender } : null;
+    const s = PARENT_ROLE.exec(subject);
+    if (s) {
+      if (m[2] === undefined) return { relation: "spouse", gender };
+      return m[2] === s[2] && co !== subject ? { relation: "spouse", gender } : null;
+    }
     if (m[2] !== undefined && m[2] !== subject && !(CIRCULAR_CHILD_LIKE.has(m[2]) && CIRCULAR_CHILD_LIKE.has(subject))) {
       return null;
     }
@@ -2862,6 +2868,7 @@ function capPartyKeyer(assertions: Iterable<any>): (a: any) => string {
 }
 
 type NamesakeRelation = "parent" | "spouse" | "child";
+type TieRelation = NamesakeRelation | "sibling";
 
 function relativesById(tree: any, personId: string): Map<string, { relation: NamesakeRelation; person: any }> {
   const byRole = gatherRelatives(tree ?? {}, personId);
@@ -2870,6 +2877,29 @@ function relativesById(tree: any, personId: string): Map<string, { relation: Nam
     for (const p of byRole[relation]) {
       if (typeof p.id === "string" && !out.has(p.id)) out.set(p.id, { relation, person: p });
     }
+  }
+  return out;
+}
+
+/** `relativesById`, and with `withSiblings` the persons who share a parent with
+ *  `personId` too. */
+function tieRelativesById(
+  tree: any,
+  personId: string,
+  withSiblings: boolean,
+): Map<string, { relation: TieRelation; person: any }> {
+  const out: Map<string, { relation: TieRelation; person: any }> = relativesById(tree, personId);
+  if (!withSiblings) return out;
+  const parents = new Set<string>();
+  for (const r of (tree?.relationships ?? []) as any[]) {
+    if (r?.type === "ParentChild" && r.child === personId && typeof r.parent === "string") parents.add(r.parent);
+  }
+  const persons = new Map<string, any>();
+  for (const p of (tree?.persons ?? []) as any[]) if (p && typeof p.id === "string") persons.set(p.id, p);
+  for (const r of (tree?.relationships ?? []) as any[]) {
+    if (r?.type !== "ParentChild" || !parents.has(r.parent) || r.child === personId || out.has(r.child)) continue;
+    const p = persons.get(r.child);
+    if (p) out.set(r.child, { relation: "sibling", person: p });
   }
   return out;
 }
@@ -3010,9 +3040,373 @@ function capFields(a: any): Array<{ field: CapField; value: string }> {
   return [{ field: "street address", value }];
 }
 
+// ─── Tree-derived namesake pairs (issue #3681) ──────────────────────────────
+//
+// A father and son, or two siblings, of one first given name are each other's
+// namesakes before any search records a row: a record naming either could be the
+// other's. The pair is read from the tree, and a link to a member stands only
+// when its record rules every other member out and still fits the linked person
+// (age, lifespan, adult role, same record, family limit), on dates that come
+// from somewhere other than that record. Specified in
+// docs/specs/research-append-tool-spec.md, "Tree-derived namesake pairs".
+
+export type PairRelation = "parent" | "child" | "sibling";
+export type PairTest = "age" | "lifespan" | "adult role" | "same record" | "family limit";
+
+export interface NamesakePartner {
+  personId: string;
+  relation: PairRelation;
+  /** Siblings with one birth year, who may be one person entered twice. */
+  sameBirthYear: boolean;
+}
+
+/** The first given word of each of a person's names: accents folded, placeholder
+ *  words dropped, initials skipped. */
+function firstGivenWords(person: any): Set<string> {
+  const out = new Set<string>();
+  for (const n of (Array.isArray(person?.names) ? person.names : []) as any[]) {
+    const first = ownGivenWords(n?.given)
+      .map((w) => w.normalize("NFD").replace(/\p{M}/gu, ""))
+      .find((w) => w.length > 1);
+    if (first) out.add(first);
+  }
+  return out;
+}
+
+function knownSex(person: any): "male" | "female" | null {
+  const g = String(person?.gender ?? "").toLowerCase();
+  return g === "male" || g === "female" ? g : null;
+}
+
+const LIFE_BIRTH_FACTS: ReadonlySet<string> = new Set(["birth", "christening", "baptism"]);
+const LIFE_DEATH_FACTS: ReadonlySet<string> = new Set(["death", "burial"]);
+
+/** The earliest birth-type year among a person's facts, whatever they cite. */
+function anyBirthYear(person: any): number | null {
+  let out: number | null = null;
+  for (const f of (Array.isArray(person?.facts) ? person.facts : []) as any[]) {
+    if (!LIFE_BIRTH_FACTS.has(String(f?.type ?? "").toLowerCase())) continue;
+    const y = yearOf(f?.standard_date) ?? yearOf(f?.date);
+    if (y !== null && (out === null || y < out)) out = y;
+  }
+  return out;
+}
+
+/** The persons `personId` forms a namesake pair with: a parent, a child or a
+ *  sibling (one shared parent) who shares a first given name with them and is
+ *  not known to be of the other sex. */
+export function derivedNamesakePairs(tree: any, personId: string): NamesakePartner[] {
+  const persons = new Map<string, any>();
+  for (const p of (tree?.persons ?? []) as any[]) if (p && typeof p.id === "string") persons.set(p.id, p);
+  const me = persons.get(personId);
+  const mine = firstGivenWords(me);
+  if (!me || mine.size === 0) return [];
+  const parentsOf = new Map<string, Set<string>>();
+  for (const r of (tree?.relationships ?? []) as any[]) {
+    if (r?.type !== "ParentChild" || typeof r.parent !== "string" || typeof r.child !== "string") continue;
+    const set = parentsOf.get(r.child);
+    if (set) set.add(r.parent);
+    else parentsOf.set(r.child, new Set([r.parent]));
+  }
+  const myParents = parentsOf.get(personId) ?? new Set<string>();
+  const related = new Map<string, PairRelation>();
+  for (const p of myParents) related.set(p, "parent");
+  for (const [child, ps] of parentsOf) {
+    if (child === personId || related.has(child)) continue;
+    if (ps.has(personId)) related.set(child, "child");
+    else if ([...ps].some((p) => myParents.has(p))) related.set(child, "sibling");
+  }
+  const mySex = knownSex(me);
+  const myBirth = anyBirthYear(me);
+  const out: NamesakePartner[] = [];
+  for (const [id, relation] of related) {
+    const q = persons.get(id);
+    if (!q || ![...firstGivenWords(q)].some((g) => mine.has(g))) continue;
+    const qSex = knownSex(q);
+    if (mySex !== null && qSex !== null && mySex !== qSex) continue;
+    const sameBirthYear = relation === "sibling" && myBirth !== null && myBirth === anyBirthYear(q);
+    out.push({ personId: id, relation, sameBirthYear });
+  }
+  return out.sort((x, y) => x.personId.localeCompare(y.personId));
+}
+
+const PAIR_EVENT_TYPES: ReadonlySet<string> = new Set([
+  "marriage", "death", "burial", "christening", "baptism", "census", "residence", "census_residence",
+  "immigration", "probate", "naturalization", "birth_registration", "death_registration",
+  "marriage_intention", "event",
+]);
+const PAIR_BIRTH_TYPES: ReadonlySet<string> = new Set(["birth", "birth_date", "christening", "baptism"]);
+/** Facts that show a persona dead by the record's date: their death, burial or estate. */
+const PAIR_POSTHUMOUS_TYPES: ReadonlySet<string> = new Set([
+  "death", "burial", "cremation", "death_registration", "probate", "obituary",
+]);
+/** A house number before a street name, which a value's year must not be read from. */
+const PAIR_HOUSE_NUMBER =
+  /\b\d{3,5}\s+(?:[NSEW]\.?\s+)?(?:(?:\d+(?:st|nd|rd|th)|[A-Z][\p{L}'.-]*)\s+){1,3}(?:St|Street|Ave|Avenue|Rd|Road|Ln|Lane|Blvd|Boulevard|Dr|Drive|Pl|Place|Ct|Court|Way|Ter|Terrace|Pike|Hwy|Highway|Alley|Row)\b\.?/gu;
+/** Roles that need someone 15 or older at the record's date. */
+const PAIR_ADULT_ROLE =
+  /^(groom|bride|head_of_household|head|wife|husband|spouse|father|mother|father_of_.*|mother_of_.*|witness.*|godparent.*|godfather|godmother|informant|grantor|grantee|testator|executor|parent.*|sponsor.*)$/;
+const PAIR_AGE_TOLERANCE = 10;
+const PAIR_ADULT_AGE = 15;
+const PAIR_PARENT_GAP = 15;
+/** The lifespan test's one year either side: a death or burial one year off the
+ *  tree's falls across a year boundary, so "differs" reads "more than one year
+ *  apart", and a record one year before the birth year does not rule its
+ *  persona out (chesworthrm, 2026-10-29). The age test keeps its 10. */
+const PAIR_LIFESPAN_TOLERANCE = 1;
+
+export interface PairRecordFacts {
+  /** The role of the persona the person is linked to, lower case; null when no
+   *  one-party link of theirs names a persona on the record. */
+  role: string | null;
+  persona: string | null;
+  /** The record's own year. */
+  year: number | null;
+  birth: number | null;
+  death: number | null;
+  /** The record shows its persona dead: a death, burial or estate of theirs. */
+  dead: boolean;
+}
+
+/** The assertions of `assertion`'s record, matched on the bare record id, and the
+ *  cap's party key over them (`recordPartyKeyer`), which joins a party whose
+ *  re-extraction carries no persona ids. */
+function pairRecordParties(research: any, assertion: any) {
+  const record = arkToBareId(String(assertion?.record_id ?? ""));
+  const same = ((research?.assertions ?? []) as any[]).filter(
+    (a) => a && arkToBareId(String(a.record_id ?? "")) === record,
+  );
+  return { record, same, partyOf: recordPartyKeyer(same) };
+}
+
+/** What the linked record says about the persona `personId` is linked to: its
+ *  role, its birth year (stated, or the record's year less a stated age), its
+ *  death or burial year, and the record's own year (its latest event, else its
+ *  latest birth, else the source's date). The persona is the linked assertion's
+ *  own; a two-party assertion speaks for two people, so for one the persona is
+ *  the one `personId`'s one-party links on the record name most, else none. */
+export function pairRecordFacts(research: any, assertion: any, personId: string): PairRecordFacts {
+  const { same, partyOf } = pairRecordParties(research, assertion);
+  const ownParty = !!assertion && !isTwoParty(assertion.fact_type);
+  let persona: string | null = ownParty ? partyOf(assertion) : null;
+  if (!ownParty) {
+    const byId = new Map<string, any>(same.map((a) => [a.id, a]));
+    const counts = new Map<string, number>();
+    for (const e of (research?.person_evidence ?? []) as any[]) {
+      if (!e || e.superseded_by || e.person_id !== personId) continue;
+      const a = byId.get(e.assertion_id);
+      const party = a && !isTwoParty(a.fact_type) ? partyOf(a) : null;
+      if (party !== null) counts.set(party, (counts.get(party) ?? 0) + 1);
+    }
+    persona = [...counts].sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0]))[0]?.[0] ?? null;
+  }
+  const mine = persona === null ? [] : same.filter((a) => partyOf(a) === persona);
+  const role = mine.find((a) => !isTwoParty(a.fact_type))?.record_role;
+  const type = (a: any) => String(a?.fact_type ?? "").toLowerCase();
+  const yearIn = (a: any) => yearOf(a?.date) ?? yearOf(String(a?.value ?? "").replace(PAIR_HOUSE_NUMBER, " "));
+  const latest = (pick: (a: any) => boolean): number | null => {
+    let out: number | null = null;
+    for (const a of same) {
+      if (!pick(a)) continue;
+      const y = yearIn(a);
+      if (y !== null && (out === null || y > out)) out = y;
+    }
+    return out;
+  };
+  let year = latest((a) => PAIR_EVENT_TYPES.has(type(a))) ?? latest((a) => PAIR_BIRTH_TYPES.has(type(a)));
+  if (year === null) {
+    const src = ((research?.sources ?? []) as any[]).find((s) => s?.id === assertion?.source_id);
+    year = yearOf(src?.citation_detail?.when_created);
+  }
+  let birth: number | null = null;
+  for (const a of mine) {
+    if (PAIR_BIRTH_TYPES.has(type(a)) && (birth = yearIn(a)) !== null) break;
+  }
+  if (birth === null && year !== null) {
+    for (const a of mine) {
+      if (type(a) !== "age") continue;
+      const n = Number(a.structured_value?.age ?? String(a.value ?? "").match(/\d+/)?.[0]);
+      if (Number.isFinite(n) && n < 120) {
+        birth = year - n;
+        break;
+      }
+    }
+  }
+  let death: number | null = null;
+  for (const a of mine) {
+    if (LIFE_DEATH_FACTS.has(type(a)) && (death = yearIn(a)) !== null) break;
+  }
+  const dead = mine.some((a) => PAIR_POSTHUMOUS_TYPES.has(type(a)));
+  return { role: typeof role === "string" ? role.toLowerCase() : null, persona, year, birth, death, dead };
+}
+
+export interface PairLife {
+  birth: number | null;
+  death: number | null;
+}
+
+/** A person's birth and death years from the facts that do not come from record
+ *  `recordId` (rule 3 of #3681). A fact counts when the starting tree carries one
+ *  of its type and year on the same person, whatever either cites; else when its
+ *  own assertion is another record's; else, with no assertion of its own, when a
+ *  ref reaches a research source citing another record, or is the FamilySearch
+ *  tree's own source, which no research source registers. A date copied from
+ *  `recordId` never counts, even through a source spanning several record ids. */
+export function independentLife(
+  person: any,
+  recordId: string,
+  research: any,
+  tree: any,
+  startingTree: any,
+): PairLife {
+  const judged = arkToBareId(String(recordId ?? ""));
+  const start = ((startingTree?.persons ?? []) as any[]).find((p) => p?.id === person?.id);
+  const started = new Set(
+    ((start?.facts ?? []) as any[]).map(
+      (f) => `${String(f?.type ?? "").toLowerCase()}:${yearOf(f?.standard_date) ?? yearOf(f?.date)}`,
+    ),
+  );
+  const assertionById = new Map<string, any>();
+  for (const a of (research?.assertions ?? []) as any[]) if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  const descriptions = new Map<string, any>();
+  for (const s of (tree?.sources ?? []) as any[]) if (s && typeof s.id === "string") descriptions.set(s.id, s);
+  const counts = (f: any, type: string, y: number): boolean => {
+    if (started.has(`${type}:${y}`)) return true;
+    const own = typeof f?.assertion_id === "string" ? assertionById.get(f.assertion_id) : undefined;
+    if (own) return arkToBareId(String(own.record_id ?? "")) !== judged;
+    for (const ref of sourceRefsOf(f)) {
+      const { sourceIds, recordIds } = refsReach([ref], research);
+      if (sourceIds.size === 0) {
+        if (isTreeAsSource(descriptions.get(ref.startsWith("#") ? ref.slice(1) : ref))) return true;
+      } else if ([...recordIds].some((r) => arkToBareId(r) !== judged)) {
+        return true;
+      }
+    }
+    return false;
+  };
+  const life: PairLife = { birth: null, death: null };
+  for (const f of (Array.isArray(person?.facts) ? person.facts : []) as any[]) {
+    const type = String(f?.type ?? "").toLowerCase();
+    const isBirth = LIFE_BIRTH_FACTS.has(type);
+    if (!isBirth && !LIFE_DEATH_FACTS.has(type)) continue;
+    const y = yearOf(f?.standard_date) ?? yearOf(f?.date);
+    if (y === null || !counts(f, type, y)) continue;
+    const key = isBirth ? "birth" : "death";
+    if (life[key] === null || y < life[key]!) life[key] = y;
+  }
+  return life;
+}
+
+/** The tests by which a person of life `life` cannot be the record's persona. */
+function pairRuledOutBy(life: PairLife, rf: PairRecordFacts): PairTest[] {
+  if (rf.role === null) return [];
+  const out: PairTest[] = [];
+  if (rf.birth !== null && life.birth !== null && Math.abs(rf.birth - life.birth) > PAIR_AGE_TOLERANCE) out.push("age");
+  // A parent named on a child's record may be dead by then, and so is the persona
+  // of a record showing their own death or estate; anyone else must be alive.
+  const alive = !rf.dead && (!/(_of_|^father$|^mother$|grand)/.test(rf.role) || rf.role === "head_of_household");
+  if (
+    (rf.death !== null && life.death !== null && Math.abs(rf.death - life.death) > PAIR_LIFESPAN_TOLERANCE) ||
+    (rf.year !== null && life.birth !== null && rf.year < life.birth - PAIR_LIFESPAN_TOLERANCE) ||
+    (alive && rf.year !== null && life.death !== null && rf.year > life.death + PAIR_LIFESPAN_TOLERANCE)
+  ) {
+    out.push("lifespan");
+  }
+  if (PAIR_ADULT_ROLE.test(rf.role) && rf.year !== null && life.birth !== null && rf.year - life.birth < PAIR_ADULT_AGE) {
+    out.push("adult role");
+  }
+  return out;
+}
+
+export interface PairJudgement {
+  /** The record does not rule the linked person out. */
+  fits: boolean;
+  /** One tie per partner the record rules out, by the first test that does. */
+  ties: Array<{ partner: string; relation: PairRelation; test: PairTest }>;
+  reasons: string[];
+}
+
+/** The five tests of #3681 for one link of `personId` on `assertion`'s record:
+ *  whether the record still fits them and rules out each partner. */
+export function pairJudgement(
+  personId: string,
+  assertion: any,
+  partners: readonly NamesakePartner[],
+  research: any,
+  tree: any,
+  startingTree: any,
+): PairJudgement {
+  const rf = pairRecordFacts(research, assertion, personId);
+  const recordId = String(assertion?.record_id ?? "");
+  const persons = new Map<string, any>();
+  for (const p of (tree?.persons ?? []) as any[]) if (p && typeof p.id === "string") persons.set(p.id, p);
+  const lifeOf = (id: string) => independentLife(persons.get(id), recordId, research, tree, startingTree);
+  // A person's birth year bounded by their parents' and children's, 15 years each way.
+  const familyRuledOut = (id: string): boolean => {
+    if (rf.role === null) return false;
+    let latest: number | null = null;
+    let earliest: number | null = null;
+    for (const r of (tree?.relationships ?? []) as any[]) {
+      if (r?.type !== "ParentChild") continue;
+      if (r.parent === id) {
+        const b = lifeOf(r.child).birth;
+        if (b !== null && (latest === null || b - PAIR_PARENT_GAP < latest)) latest = b - PAIR_PARENT_GAP;
+      }
+      if (r.child === id) {
+        const b = lifeOf(r.parent).birth;
+        if (b !== null && (earliest === null || b + PAIR_PARENT_GAP > earliest)) earliest = b + PAIR_PARENT_GAP;
+      }
+    }
+    return (
+      (rf.birth !== null && latest !== null && rf.birth > latest + PAIR_AGE_TOLERANCE) ||
+      (rf.birth !== null && earliest !== null && rf.birth < earliest - PAIR_AGE_TOLERANCE) ||
+      (rf.year !== null && earliest !== null && rf.year < earliest) ||
+      (rf.year !== null && earliest !== null && PAIR_ADULT_ROLE.test(rf.role) && rf.year - earliest < PAIR_ADULT_AGE)
+    );
+  };
+  const { record, partyOf } = pairRecordParties(research, assertion);
+  const assertionById = new Map<string, any>();
+  for (const a of (research?.assertions ?? []) as any[]) if (a && typeof a.id === "string") assertionById.set(a.id, a);
+  const onAnotherPersona = (id: string): boolean =>
+    ((research?.person_evidence ?? []) as any[]).some((e) => {
+      if (!e || e.superseded_by || e.person_id !== id) return false;
+      const a = assertionById.get(e.assertion_id);
+      return !!a && arkToBareId(String(a.record_id ?? "")) === record && !isTwoParty(a.fact_type) && partyOf(a) !== rf.persona;
+    });
+
+  const reasons: string[] = [];
+  if (rf.role === null) {
+    reasons.push(`No one-party assertion of this record is linked to '${personId}', so it names no persona to compare.`);
+  }
+  const ownOut = [...pairRuledOutBy(lifeOf(personId), rf), ...(familyRuledOut(personId) ? ["family limit" as const] : [])];
+  if (ownOut.length > 0) reasons.push(`The record does not fit '${personId}' (${ownOut.join(", ")}).`);
+  const ties: PairJudgement["ties"] = [];
+  for (const q of partners) {
+    const tests: PairTest[] = [...pairRuledOutBy(lifeOf(q.personId), rf)];
+    if (onAnotherPersona(q.personId)) tests.push("same record");
+    if (familyRuledOut(q.personId)) tests.push("family limit");
+    if (tests.length > 0) {
+      ties.push({ partner: q.personId, relation: q.relation, test: tests[0] });
+      continue;
+    }
+    const life = lifeOf(q.personId);
+    const lacks =
+      rf.role === null
+        ? "no persona to compare"
+        : life.birth === null && life.death === null
+          ? `'${q.personId}' has no birth or death year from a record other than this one`
+          : rf.birth === null && rf.death === null && rf.year === null
+            ? "the record gives its persona no date or age"
+            : "their dates and the record's fit either of them";
+    reasons.push(`Nothing rules out '${q.personId}', '${personId}''s ${q.relation} of the same given name: ${lacks}.`);
+  }
+  return { fits: rf.role !== null && ownOut.length === 0, ties, reasons };
+}
+
 export type NamesakeTie =
-  | { kind: "a"; link: string; relative: string; relation: NamesakeRelation; crossRecord: boolean }
-  | { kind: "b"; voucher: string; field: CapField; value: string };
+  | { kind: "a"; link: string; relative: string; relation: TieRelation; crossRecord: boolean }
+  | { kind: "b"; voucher: string; field: CapField; value: string }
+  | { kind: "pair"; partner: string; relation: PairRelation; test: PairTest };
 
 export interface NamesakeVerdict {
   allowed: boolean;
@@ -3024,27 +3418,37 @@ export interface NamesakeVerdict {
   /** Why nothing ties the link, one clause each; empty when it is allowed. */
   reasons: string[];
   /** The rules that voided a tie the link would otherwise have had: the role
-   *  check, the co-resident exclusion, or grounding. Empty when allowed. */
+   *  check, the co-resident exclusion, grounding, or a namesake in the tree the
+   *  record would tie as well. Empty when allowed. */
   blockedBy: NamesakeBlock[];
 }
 
-export type NamesakeBlock = "role" | "co-resident" | "grounding";
+export type NamesakeBlock = "role" | "co-resident" | "grounding" | "pair";
 
 export interface NamesakeVerdicts {
   /** The person's namesake rows. */
   rows: any[];
+  /** The person's namesakes in the tree; empty unless `derivedPairs` was asked. */
+  pairs: NamesakePartner[];
   /** Keyed on person_evidence id: every live probable or confident link to the
    *  person whose assertion is not absent basis. */
   verdicts: Map<string, NamesakeVerdict>;
 }
 
 /** The cap's verdict on every live probable or confident link to `personId`,
- *  or null when no namesake of theirs is recorded.
+ *  or null when no namesake of theirs is recorded (and, with `derivedPairs`, none
+ *  is in the tree).
  *
  *  Tie (a) reads relatives from `tree` and links from `research`. Tie (b) takes
  *  its voucher from the links whose pairing is in `voucherPairs` (default: every
  *  judged link). A link whose assertion is absent basis is neither judged nor a
- *  tie. */
+ *  tie. With `derivedPairs`, a person with no row but a namesake in the tree
+ *  (`derivedNamesakePairs`) is judged too. A pair member's tie (a) or (b), row or
+ *  no row, counts only when the record would not tie a partner as well, reading
+ *  the partner's siblings among the partner's relatives, and with no row a link
+ *  also stands when `pairJudgement` rules every partner out. A row
+ *  holder still needs tie (a) or (b), since the pair tests say nothing about a
+ *  stranger. */
 export function namesakeVerdicts(
   personId: string,
   research: any,
@@ -3054,12 +3458,21 @@ export function namesakeVerdicts(
     voucherPairs?: ReadonlySet<string>;
     /** Judge only these links; every strong link still counts as a voucher. */
     only?: ReadonlySet<string>;
+    /** Judge namesakes in the tree as well as rows (#3681). */
+    derivedPairs?: boolean;
+    /** The project's starting tree, for the pair tests' dates. */
+    startingTree?: any;
+    /** Tie (a) also reads the person's siblings: how a partner's ties are read. */
+    siblingRelatives?: boolean;
+    /** Judge by ties (a) and (b) alone, row or no row: the partner check's own call. */
+    tiesOnly?: boolean;
   } = {},
 ): NamesakeVerdicts | null {
   const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []).filter(
     (r: any) => r && r.person_id === personId,
   );
-  if (rows.length === 0) return null;
+  const pairs = opts.derivedPairs ? derivedNamesakePairs(tree, personId) : [];
+  if (rows.length === 0 && pairs.length === 0 && !opts.tiesOnly) return null;
 
   const assertionById = new Map<string, any>();
   const bySource = new Map<unknown, any[]>();
@@ -3086,7 +3499,7 @@ export function namesakeVerdicts(
       assertionById.has(e.assertion_id) &&
       !absent(assertionById.get(e.assertion_id)),
   );
-  const relatives = relativesById(tree, personId);
+  const relatives = tieRelativesById(tree, personId, opts.siblingRelatives === true);
   const voucherPairs = opts.voucherPairs ?? new Set(judged.map(pairingKey));
   const fieldKeys = (a: any) => new Set(capFields(a).map((f) => `${f.field}\u0000${f.value}`));
   const linkFields = new Map<string, Set<string>>(
@@ -3116,9 +3529,52 @@ export function namesakeVerdicts(
     return null;
   };
   /** Why the record says the co-party is not Q's `relation` to P, or null. A
-   *  two-party assertion linked to the party it names is not checked. */
-  const roleProblem = (al: any, l: any, source: unknown, speaking: ReadonlySet<string>, relation: NamesakeRelation): string | null => {
-    if (isTwoParty(al.fact_type) && !ownPartyLinkedTo(al, l, source, assertionById, liveLinks, capKeys)) return null;
+   *  two-party assertion linked to the party it names stands for that party, so
+   *  only the role it names is read. `own` are the parties P's own one-party
+   *  assertions show P to be; the roles are read only from those, not from the
+   *  party a link naming P falls back to. */
+  const roleProblem = (
+    al: any,
+    l: any,
+    source: unknown,
+    speaking: ReadonlySet<string>,
+    own: ReadonlySet<string>,
+    relation: TieRelation,
+  ): string | null => {
+    // Stating nothing, the roles still say what the two parties are to each
+    // other, read as circular corroboration reads them (chesworthrm, 2026-10-29).
+    // A numbered head heads one household of several on the page, so, as in the
+    // household check, only a plain head's roles are read.
+    const numberedHead = (role: unknown) => {
+      const r = String(role ?? "").toLowerCase().trim();
+      return /_\d+$/.test(r) && HOUSEHOLD_HEADS.has(r.replace(/_\d+$/, ""));
+    };
+    // Only the principal's own family is read: the principal, a spouse or head,
+    // and a parent of the principal (a bare father or mother, or a father_of_<x>
+    // whose <x> is no parent itself); a grandparent's role reads wrongly there.
+    const familyRole = (r: string): boolean => {
+      if (CIRCULAR_CHILD_LIKE.has(r) || CIRCULAR_SPOUSAL.has(r) || HOUSEHOLD_HEADS.has(r)) return true;
+      const p = PARENT_ROLE.exec(r);
+      return p !== null && (p[2] === undefined || !(PARENT_ROLE.test(p[2]) || /grand/.test(p[2])));
+    };
+    const rolesSay = (role: unknown): string | null => {
+      const theirs = normalizedRole(role);
+      for (const sp of own) {
+        if (numberedHead(partyRole.get(sp)) || numberedHead(role)) continue;
+        const mine = normalizedRole(partyRole.get(sp));
+        if (!familyRole(mine) || !familyRole(theirs)) continue;
+        const back = coPartyRelation(theirs, mine)?.relation ?? null;
+        const implied = coPartyRelation(mine, theirs)?.relation ?? (back === "parent" ? "child" : back);
+        if (implied !== null && implied !== relation) {
+          return `the record's roles ('${mine}' beside '${theirs}') make that party the ${implied} of '${personId}''s party`;
+        }
+      }
+      return null;
+    };
+    if (isTwoParty(al.fact_type) && !ownPartyLinkedTo(al, l, source, assertionById, liveLinks, capKeys)) {
+      const named = al.structured_value?.related_person_role;
+      return typeof named === "string" && named.trim() !== "" ? rolesSay(named) : null;
+    }
     const party = capParty(al);
     const listed = HOUSEHOLD_RELATION.get(String(al.record_role ?? "").toLowerCase().replace(/_\d+$/, ""));
     for (const sp of speaking) {
@@ -3137,10 +3593,10 @@ export function namesakeVerdicts(
         else if (capParty(st) === sp && related === partyRole.get(party)) stated.add(INVERSE_RELATION.get(type) ?? type);
       }
     }
-    if (stated.size > 0 && !stated.has(relation)) {
-      return `the record states that party is '${[...stated].sort()[0]}' of '${personId}''s party`;
+    if (stated.size > 0) {
+      return stated.has(relation) ? null : `the record states that party is '${[...stated].sort()[0]}' of '${personId}''s party`;
     }
-    return null;
+    return rolesSay(al.record_role);
   };
 
   interface Pending {
@@ -3150,9 +3606,32 @@ export function namesakeVerdicts(
     reasons: string[];
     fields: Array<{ field: CapField; value: string; vouchers: string[]; excluded: string[]; sameCall: boolean; sameNamed: string | null }>;
     blocked: Set<NamesakeBlock>;
+    pair: PairJudgement | null;
+    /** The record parties the link speaks for. */
+    speaking: Set<string>;
+  }
+  // With `only`, the links judged and every link that could vouch for one of
+  // them, by an occupation or street address anywhere on its source; the rest
+  // cannot change their verdicts, so the partner check's own call stays small.
+  let needed: Set<string> | null = null;
+  if (opts.only) {
+    needed = new Set(judged.filter((e) => opts.only!.has(e.id)).map((e) => String(e.id)));
+    const queue = judged.filter((e) => needed!.has(String(e.id)));
+    for (let e = queue.pop(); e; e = queue.pop()) {
+      const keys = new Set(
+        (bySource.get(capSource(assertionById.get(e.assertion_id))) ?? []).flatMap((b: any) => [...fieldKeys(b)]),
+      );
+      if (keys.size === 0) continue;
+      for (const m of judged) {
+        if (needed.has(String(m.id)) || ![...linkFields.get(m.id)!].some((k) => keys.has(k))) continue;
+        needed.add(String(m.id));
+        queue.push(m);
+      }
+    }
   }
   const pending: Pending[] = [];
   for (const e of judged) {
+    if (needed && !needed.has(String(e.id))) continue;
     const a = assertionById.get(e.assertion_id);
     const source = capSource(a);
     // The record parties this link speaks for: its own, unless its assertion
@@ -3191,7 +3670,7 @@ export function namesakeVerdicts(
         reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' was created from this source alone.`);
       } else {
         const named = givenNameProblem(rel.person, tree);
-        const role = named ? null : roleProblem(al, l, source, speaking, rel.relation);
+        const role = named ? null : roleProblem(al, l, source, speaking, speakers, rel.relation);
         if (named) {
           reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' ${named}.`);
         } else if (role) {
@@ -3241,17 +3720,72 @@ export function namesakeVerdicts(
       }
       fields.push({ field: k.field, value: k.value, vouchers, excluded, sameCall, sameNamed: shown });
     }
-    pending.push({ e, source, tieA: ties, reasons, fields, blocked });
+    // The pair tests say nothing about a stranger, so a row holder is not judged by them.
+    const pair =
+      pairs.length > 0 && rows.length === 0 ? pairJudgement(personId, a, pairs, research, tree, opts.startingTree) : null;
+    pending.push({ e, source, tieA: ties, reasons, fields, blocked, pair, speaking });
   }
+  /** A link of a person with no row that the pair tests tie: the record fits
+   *  them and rules out every partner. */
+  const pairStands = (j: Pending): boolean => j.pair !== null && j.pair.fits && j.pair.ties.length === pairs.length;
+
+  // A pair member's tie counts only when the record would not tie a partner as
+  // well, row or no row: the link judged as the partner's, by ties (a) and (b),
+  // with the partner's siblings among their relatives (chesworthrm, 2026-10-29).
+  // The person's assertions on the source that name a second person go with it,
+  // and so do their own entries of the parties the link speaks for: a "child of"
+  // naming the person names the persona judged, and the father's own entry beside
+  // his daughter's "child of" him is that persona, so either left behind would tie
+  // the partner through the person.
+  const sharedWith = new Map<string, { partner: NamesakePartner; ties: NamesakeTie[] }>();
+  if (pairs.length > 0) {
+    for (const j of pending) {
+      if (j.tieA.length === 0 && !j.fields.some((f) => f.vouchers.length > 0)) continue;
+      const carried = new Set<string>([String(j.e.id)]);
+      for (const x of live) {
+        const ax = assertionById.get(x.assertion_id);
+        if (
+          x.person_id === personId &&
+          ax &&
+          capSource(ax) === j.source &&
+          (isTwoParty(ax.fact_type) || j.speaking.has(capParty(ax)))
+        ) {
+          carried.add(String(x.id));
+        }
+      }
+      for (const q of pairs) {
+        const moved = {
+          ...research,
+          person_evidence: live.map((x) => (carried.has(String(x.id)) ? { ...x, person_id: q.personId } : x)),
+        };
+        const v = namesakeVerdicts(q.personId, moved, tree, {
+          startingPersonIds: opts.startingPersonIds,
+          voucherPairs: opts.voucherPairs,
+          only: new Set([j.e.id]),
+          siblingRelatives: true,
+          tiesOnly: true,
+        });
+        const theirs = v?.verdicts.get(j.e.id);
+        if (theirs?.allowed) {
+          sharedWith.set(String(j.e.id), { partner: q, ties: theirs.ties });
+          break;
+        }
+      }
+    }
+  }
+  const tiesCount = (j: Pending): boolean => !sharedWith.has(String(j.e.id));
 
   // Grounding: a voucher counts only when it is itself allowed, so the allowed
   // set grows from the links tie (a) holds, through grounded vouchers, until
   // nothing changes.
-  const allowedIds = new Set(pending.filter((j) => j.tieA.length > 0).map((j) => String(j.e.id)));
+  const allowedIds = new Set(
+    pending.filter((j) => (j.tieA.length > 0 && tiesCount(j)) || pairStands(j)).map((j) => String(j.e.id)),
+  );
   for (let grew = true; grew; ) {
     grew = false;
     for (const j of pending) {
-      if (allowedIds.has(String(j.e.id)) || !j.fields.some((f) => f.vouchers.some((v) => allowedIds.has(v)))) continue;
+      if (allowedIds.has(String(j.e.id)) || !tiesCount(j)) continue;
+      if (!j.fields.some((f) => f.vouchers.some((v) => allowedIds.has(v)))) continue;
       allowedIds.add(String(j.e.id));
       grew = true;
     }
@@ -3260,11 +3794,12 @@ export function namesakeVerdicts(
   const verdicts = new Map<string, NamesakeVerdict>();
   for (const j of pending) {
     if (opts.only && !opts.only.has(j.e.id)) continue;
-    const ties: NamesakeTie[] = [...j.tieA];
+    const counted = tiesCount(j);
+    const ties: NamesakeTie[] = counted ? [...j.tieA] : [];
     const reasons = [...j.reasons];
     for (const f of j.fields) {
       const grounded = f.vouchers.filter((v) => allowedIds.has(v));
-      for (const v of grounded) ties.push({ kind: "b", voucher: v, field: f.field, value: f.value });
+      if (counted) for (const v of grounded) ties.push({ kind: "b", voucher: v, field: f.field, value: f.value });
       if (grounded.length > 0) continue;
       const head =
         `The ${f.field} '${f.value}' on this source matches no record linked to '${personId}' at ` +
@@ -3279,6 +3814,20 @@ export function namesakeVerdicts(
         reasons.push(head + (f.sameCall ? " (a link cannot vouch in the call that writes it)." : "."));
       }
     }
+    const shared = sharedWith.get(String(j.e.id));
+    if (shared) {
+      const q = shared.partner;
+      const through = shared.ties.map((t) =>
+        t.kind === "a" ? `'${t.relative}', their ${t.relation}` : t.kind === "b" ? `the ${t.field} on '${t.voucher}'` : "",
+      );
+      reasons.push(
+        `Its ties cannot tell '${personId}' from '${q.personId}', '${personId}''s ${q.relation} of the same given ` +
+          `name: the record ties '${q.personId}' as well (through ${[...new Set(through)].join("; ")}).`,
+      );
+      j.blocked.add("pair");
+    }
+    if (pairStands(j)) for (const t of j.pair!.ties) ties.push({ kind: "pair", ...t });
+    if (j.pair) reasons.unshift(...j.pair.reasons);
     const allowed = ties.length > 0;
     verdicts.set(j.e.id, {
       allowed,
@@ -3288,7 +3837,7 @@ export function namesakeVerdicts(
       blockedBy: allowed ? [] : [...j.blocked].sort(),
     });
   }
-  return { rows, verdicts };
+  return { rows, pairs, verdicts };
 }
 
 /** The reason clauses of a refused verdict, without the refusal's routing. */
@@ -3305,13 +3854,45 @@ function namesakeRowsText(rows: any[], addedInCall: ReadonlySet<string>): string
   return parts.join("; ");
 }
 
+/** The namesakes in the tree, as a refusal names them. */
+export function namesakePairsText(personId: string, pairs: readonly NamesakePartner[]): string {
+  return pairs.map((q) => `'${q.personId}', '${personId}''s ${q.relation} of the same given name`).join("; ");
+}
+
+/** The merge route a refusal offers when a pair may be one person entered twice
+ *  (chesworthrm, 2026-10-29: after the speculative way out; a merge is tree-edit's). */
+export function namesakeMergeRoute(personId: string, pairs: readonly NamesakePartner[]): string {
+  const twins = pairs.filter((q) => q.sameBirthYear).map((q) => `'${q.personId}'`);
+  if (twins.length === 0) return "";
+  return (
+    ` If '${personId}' and ${twins.join(" or ")} are one person entered twice (the same parents and the ` +
+    `same birth year), hand the merge to tree-edit.`
+  );
+}
+
 function namesakeRefusal(
   entry: any,
   rows: any[],
   verdict: NamesakeVerdict,
   addedInCall: ReadonlySet<string>,
+  pairs: readonly NamesakePartner[] = [],
 ): string {
   const p = entry.person_id;
+  if (rows.length === 0) {
+    return (
+      `confidence '${entry.confidence}' is not available on link '${entry.id}' to '${p}': '${p}' has a ` +
+      `namesake in the tree (${namesakePairsText(p, pairs)}), and nothing in source '${verdict.source}' tells ` +
+      `assertion '${entry.assertion_id}' apart from them. ${namesakeReasonText(verdict)} A namesake in the ` +
+      `tree caps this link at 'speculative' whatever the match score. Write it as 'speculative' naming the ` +
+      `namesake in the rationale; or, if the record belongs to '${p}', first link what tells them apart: a ` +
+      `record that dates '${p}' or the namesake (a date read from this record does not count), another party ` +
+      `of this source linked to a spouse, parent or child of '${p}' (counted only while no party of this ` +
+      `source is linked to a spouse, parent, child or sibling of the namesake), or, in an earlier call, a record with the ` +
+      `same street address or occupation that is itself tied to '${p}'.` +
+      namesakeMergeRoute(p, pairs)
+    );
+  }
+  const alsoPaired = pairs.length > 0 ? ` '${p}' also has a namesake in the tree (${namesakePairsText(p, pairs)}).` : "";
   return (
     `confidence '${entry.confidence}' is not available on link '${entry.id}' to '${p}': namesake(s) of ` +
     `'${p}' are recorded (${namesakeRowsText(rows, addedInCall)}), and nothing in source ` +
@@ -3320,7 +3901,8 @@ function namesakeRefusal(
     `'speculative' naming the namesake in the rationale; or, if the record belongs to '${p}', first link ` +
     `what ties it: another party of this source to a spouse, parent or child of '${p}' (in this call or ` +
     `earlier), or, in an earlier call, a record with the same street address or occupation that is itself ` +
-    `tied to '${p}'.`
+    `tied to '${p}'.` +
+    alsoPaired
   );
 }
 
@@ -3332,30 +3914,40 @@ export function namesakeTieInvariants(
   research: any,
   tree?: any,
   startingPersonIds?: ReadonlySet<string>,
+  startingTree?: any,
 ): string[] {
   if (!entry || typeof entry.person_id !== "string") return [];
-  const v = namesakeVerdicts(entry.person_id, research, tree, { startingPersonIds });
+  const v = namesakeVerdicts(entry.person_id, research, tree, { startingPersonIds, derivedPairs: true, startingTree });
   const verdict = v?.verdicts.get(entry.id);
   if (!v || !verdict || verdict.allowed) return [];
-  return [namesakeRefusal(entry, v.rows, verdict, new Set())];
+  return [namesakeRefusal(entry, v.rows, verdict, new Set(), v.pairs)];
 }
 
 /** The links one research_append call ASSERTS to a person with a namesake row
- *  after the call, each with the cap's verdict: a link live and probable or
- *  confident after the call whose pairing was not before, or whose confidence
- *  is above that pairing's strongest live link before the call (an append, a
- *  re-point, an un-supersede, a raise). Only those links are judged. Vouchers are the
- *  pairings live and probable or better both before and after the call, so a
- *  link cannot vouch in the call that writes it. Links the call did not assert
- *  are not returned. */
+ *  or a namesake in the tree after the call, each with the cap's verdict: a link
+ *  live and probable or confident after the call whose pairing was not before,
+ *  or whose confidence is above that pairing's strongest live link before the
+ *  call (an append, a re-point, an un-supersede, a raise). Only those links are
+ *  judged. Vouchers are the pairings live and probable or better both before and
+ *  after the call, so a link cannot vouch in the call that writes it. Links the
+ *  call did not assert are not returned. */
 export function assertedNamesakeVerdicts(
   before: { research: any },
   after: { research: any; tree: any },
   startingPersonIds?: ReadonlySet<string>,
-): Array<{ entry: any; rows: any[]; verdict: NamesakeVerdict }> {
+  opts: { startingTree?: any } = {},
+): Array<{ entry: any; rows: any[]; pairs: NamesakePartner[]; verdict: NamesakeVerdict }> {
   const rows = Array.isArray(after.research?.namesakes) ? after.research.namesakes : [];
-  if (rows.length === 0) return [];
-  const holders = new Set(rows.map((r: any) => r?.person_id).filter((p: unknown) => typeof p === "string"));
+  const rowHolders = new Set(rows.map((r: any) => r?.person_id).filter((p: unknown) => typeof p === "string"));
+  const paired = new Map<string, boolean>();
+  const holders = {
+    has(p: string): boolean {
+      if (rowHolders.has(p)) return true;
+      let v = paired.get(p);
+      if (v === undefined) paired.set(p, (v = derivedNamesakePairs(after.tree, p).length > 0));
+      return v;
+    },
+  };
   // The strongest live entry of each pairing before the call, so a weaker
   // duplicate of a standing link never makes it read as raised.
   const strongBefore = new Map<string, any>();
@@ -3366,10 +3958,11 @@ export function assertedNamesakeVerdicts(
   }
   const assertedBy = new Map<string, Set<string>>();
   for (const e of (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]) {
-    if (!isLiveStrong(e)) continue;
-    if (!holders.has(e.person_id) || typeof e.id !== "string") continue;
+    if (!isLiveStrong(e) || typeof e.id !== "string") continue;
     const prev = strongBefore.get(pairingKey(e));
     if (prev && CONFIDENCE_RANK[e.confidence] <= CONFIDENCE_RANK[prev.confidence]) continue;
+    // Only now, for a link this call asserts, are the person's pairs read from the tree.
+    if (!holders.has(e.person_id)) continue;
     const ids = assertedBy.get(e.person_id);
     if (ids) ids.add(e.id);
     else assertedBy.set(e.person_id, new Set([e.id]));
@@ -3379,11 +3972,17 @@ export function assertedNamesakeVerdicts(
   const entryById = new Map<string, any>();
   for (const e of (after.research.person_evidence ?? []) as any[]) if (e && typeof e.id === "string") entryById.set(e.id, e);
 
-  const out: Array<{ entry: any; rows: any[]; verdict: NamesakeVerdict }> = [];
+  const out: Array<{ entry: any; rows: any[]; pairs: NamesakePartner[]; verdict: NamesakeVerdict }> = [];
   for (const p of [...assertedBy.keys()].sort()) {
-    const v = namesakeVerdicts(p, after.research, after.tree, { startingPersonIds, voucherPairs, only: assertedBy.get(p) });
+    const v = namesakeVerdicts(p, after.research, after.tree, {
+      startingPersonIds,
+      voucherPairs,
+      only: assertedBy.get(p),
+      derivedPairs: true,
+      startingTree: opts.startingTree,
+    });
     if (!v) continue;
-    for (const [id, verdict] of v.verdicts) out.push({ entry: entryById.get(id), rows: v.rows, verdict });
+    for (const [id, verdict] of v.verdicts) out.push({ entry: entryById.get(id), rows: v.rows, pairs: v.pairs, verdict });
   }
   return out;
 }
@@ -3761,6 +4360,7 @@ export function namesakeCallCheck(
   after: { research: any; tree: any },
   applied: ReadonlyArray<{ section: string; entryId: string }>,
   startingPersonIds?: ReadonlySet<string>,
+  startingTree?: any,
 ): Array<{ index: number | null; message: string }> {
   const rowIdsBefore = new Set(
     (Array.isArray(before.research?.namesakes) ? before.research.namesakes : []).map((r: any) => r?.id),
@@ -3771,7 +4371,7 @@ export function namesakeCallCheck(
       .filter((id: unknown) => !rowIdsBefore.has(id)),
   );
   const findings: Array<{ index: number | null; message: string }> = [];
-  for (const { entry, rows, verdict } of assertedNamesakeVerdicts(before, after, startingPersonIds)) {
+  for (const { entry, rows, pairs, verdict } of assertedNamesakeVerdicts(before, after, startingPersonIds, { startingTree })) {
     if (verdict.allowed) continue;
     let index: number | null = null;
     for (let i = applied.length - 1; i >= 0; i--) {
@@ -3780,7 +4380,7 @@ export function namesakeCallCheck(
         break;
       }
     }
-    findings.push({ index, message: namesakeRefusal(entry, rows, verdict, addedInCall) });
+    findings.push({ index, message: namesakeRefusal(entry, rows, verdict, addedInCall, pairs) });
   }
   return findings;
 }
@@ -10258,7 +10858,7 @@ function namesakeMessages(
   startingTree: SimplifiedGedcomX | null,
 ): string[] {
   return [
-    ...namesakeCallCheck(before, after, applied, startingPersonIds),
+    ...namesakeCallCheck(before, after, applied, startingPersonIds, startingTree),
     ...circularCorroborationCallCheck(before, after, applied, startingTree),
   ].map((f) =>
     f.index === null ? f.message : fmt(applied[f.index].opIndex, f.message),
