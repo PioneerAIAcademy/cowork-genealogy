@@ -60,9 +60,9 @@ This dimension grades the **decision**; `Stop criteria coverage` grades the **co
 
 Did the skill resist the temptation to declare exhaustive prematurely? An honest "not yet" is a passing outcome — inflated exhaustiveness to make the project look done is a failure.
 
-- **pass:** When record types known to exist for the jurisdiction/period haven't been searched, the skill declines without writing a stop-gate `stopped_because` value and lists the gaps. When the user wants to stop early for resource reasons, the skill sets `stopped_because: "resources_spent"` with the honest justification, not a workaround that sets a stop-gate value.
+- **pass:** When record types known to exist for the jurisdiction/period haven't been searched, the skill declines and lists the gaps, never writing a stop-gate `stopped_because` value. A decline after every item on the active plan is closed writes `stopped_because: "resources_spent"` with `stop_criteria: null`, leaves `status` as it was, and names the gaps in the justification; a Step 0 refusal (an item still open) writes nothing. When the user wants to stop early for resource reasons, the skill sets `resources_spent` with the honest justification, not a workaround that sets a stop-gate value.
 - **partial:** The skill identifies the gaps but the wording leans optimistic ("substantially exhaustive," "good enough"), or sets a stop-gate value when one criterion is weak but not failed.
-- **fail:** Sets a stop-gate `stopped_because` value with known gaps, or buries the gaps in justification text while setting a non-null `stopped_because`.
+- **fail:** Sets a stop-gate `stopped_because` value (`question_answered`, `record_exhausted`, `nothing_further_reachable`) with known gaps, or buries the gaps in justification text while setting one.
 
 ## Stop criteria coverage
 

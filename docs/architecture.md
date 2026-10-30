@@ -891,16 +891,17 @@ There **is** an orchestrator, and it is a skill:
    tree-encoding gate and re-invokes `proof-conclusion`; it never writes the
    status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
-   or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
+   or a genuine logged blocker. These describe the *job*, not the turn.
 
-   **Step mode inverts this** (decision 25, `docs/plan/research-step-mode.md`).
-   On the FS prototype a turn runs ONE step, reports it, and ends with
-   "Continue with &lt;label&gt;?" — so finishing a sub-skill is exactly where the
-   turn stops, and the stop conditions above describe the *job*, not the turn.
-   The boundary is enforced by `packages/engine/plugin/hooks/step_boundary.py`,
-   loaded as a library by the prototype worker and both eval harnesses. Cowork
-   and the hosted alpha get no such hook and keep the loop described here, so
-   both readings are live at once and which one applies depends on the plane.
+   **A turn runs ONE step** (step mode, decision 25,
+   `docs/plan/research-step-mode.md`): it reports the step and ends with
+   "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
+   stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
+   enforces that boundary on the FS prototype always, and in the eval harnesses
+   only where a test opts in through `execution.step_mode`, which no test sets
+   today. Cowork and the hosted alpha follow the router's own text with no
+   such hook, and in Cowork a "keep going" runs the remaining steps in one turn,
+   since no host is there to reply.
 
 **Two contracts the orchestrator enforces on itself**, both load-bearing for
 §§5–6: it never extracts records inline (every positive/partial log entry routes
@@ -1271,11 +1272,12 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 ### 5.4 The write-lockdown hook
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
-+ `guard_project_files.py`), and despite this section's name it enforces **four**
++ `guard_project_files.py`), and despite this section's name it enforces **five**
 rules, not one. Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task` — wider
-than the file-write tools, because two rules act on `research_append` itself and
-one on the delegation tools:
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)` — wider
+than the file-write tools, because two rules act on `research_append` itself, one
+on the delegation tools, and one on the tools only agents hold, which the final
+`.*(…)` alternative names one by one:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
    `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
@@ -1303,6 +1305,11 @@ one on the delegation tools:
 4. **No fork subagents.** Denies `Agent` / `Task` with `subagent_type: "fork"`
    (`DELEGATION_TOOLS`). Every path we test sets `CLAUDE_CODE_FORK_SUBAGENT=0`; this
    deny is what reaches Cowork.
+5. **No agent's step on the main thread.** Denies a call with no `agent_id` to a
+   tool on `AGENT_ONLY_TOOLS` — held by agents, declared by no skill — and names
+   every agent that holds it. `MAIN_THREAD_OK` lists the few such tools the main
+   thread still needs, each with its reason; both lists are hand-kept (lead,
+   2026-10-20) and `plugin-hooks.test.ts` fails when a tool is on neither.
 
 Rule 2 is why this layer matters more than any allow-list: **caller identity is
 the one thing no `tools:` list can express.** The deny message names the
@@ -1373,11 +1380,15 @@ enforcing-vs-shadow status.
 
 > **Direction.** Discriminating by *caller* is a hook's job, and **the
 > section-ownership half has landed in the shipped hook** — rules 2 and 3 above.
-> Do not re-derive that design, and do not describe it as pending. The
-> *tool*-level arm stays harness-only: `eval/harness/harness/context_policy.py`
-> denies `image_read` when `agent_id` is absent, and **porting it into the
-> shipped hook was declined by lead ruling on 2026-08-17 — declined, not
-> pending.** The live Cowork run that the port used to wait on happened
+> Do not re-derive that design, and do not describe it as pending. A
+> *tool*-level arm shipped too (2026-10-29): the hook denies the main thread
+> every tool only agents hold (`AGENT_ONLY_TOOLS`, hand-kept beside
+> `MAIN_THREAD_OK`, lead 2026-10-20), naming the agents to delegate to, and both
+> harnesses import that map into `context_policy.SUBAGENT_ONLY_TOOLS`. The
+> `image_read` arm is the one that stays harness-only:
+> `eval/harness/harness/context_policy.py` denies it when `agent_id` is absent,
+> and **porting it into the shipped hook was declined by lead ruling on
+> 2026-08-17 — declined, not pending.** The live Cowork run that the port used to wait on happened
 > (2026-08-15): the router **does** hold `image_read`, and a plugin-hook `deny`
 > **is** honoured there. The ruling was that the reachable crash — an image just
 > under the 700 KB cap, base64-encoding past the envelope limit — does not
@@ -1400,6 +1411,12 @@ enforcing-vs-shadow status.
   and give an agent that gains `research_append` an `AGENT_WRITABLE_SECTIONS`
   lane in `hooks/guard_project_files.py`. `ownership-manifest.test.ts` and
   `plugin-hooks.test.ts` fail until both are done.
+- **A tool no skill declares needs a main-thread decision.** Add the agent to its
+  `AGENT_ONLY_TOOLS` entry in `hooks/guard_project_files.py`; for a tool new to
+  agents, put it there and in `hooks.json`'s matcher (the main thread is denied
+  it), or in `MAIN_THREAD_OK` with the main-thread call that needs it. Never
+  derive the list (lead, 2026-10-20). `plugin-hooks.test.ts` fails until it is
+  done.
 - `tests/packaging/agent-tool-names.test.ts` checks the spelling and cannot see
   the body. **No CI job checks that the tool actually binds at runtime** (§9.4);
   `make agent-smoke` verifies name resolution only, and `make
