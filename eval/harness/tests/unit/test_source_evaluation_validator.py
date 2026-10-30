@@ -1667,8 +1667,8 @@ def test_finding_links_skips_untagged_and_negative_tests():
 
 
 def test_finding_links_on_every_committed_x6b_return():
-    """Real replies: each fails as committed (no report linked yet) and passes
-    once every finding gets its `Link:` line."""
+    """Real replies: one committed without links fails, and passes once every
+    finding gets its `Link:` line; one committed with links passes as is."""
     logs = sorted(
         p for p in glob.glob(str(_REPO / "eval/runlogs/unit/source-evaluation/v*.json"))
         if not p.endswith(".ann.json")
@@ -1685,9 +1685,12 @@ def test_finding_links_on_every_committed_x6b_return():
                 "", "source-evaluation", _LINK_TEST,
             )
             assert len(_findings(reply)) >= 2, f"{Path(path).name}: findings did not parse"
-            with pytest.raises(AssertionError):
+            if _VALIDATOR._arks(reply):
                 _check_links(reply)
-            _check_links(_with_links(reply, _ALL_LINKS))
+            else:
+                with pytest.raises(AssertionError):
+                    _check_links(reply)
+                _check_links(_with_links(reply, _ALL_LINKS))
             checked += 1
     assert checked >= 3, f"replayed only {checked} x6b returns"
 
