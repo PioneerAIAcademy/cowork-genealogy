@@ -567,6 +567,10 @@ the engine uses its compiled-in defaults, which name one developer's tailnet
 host. Changing one reaches existing sessions on their next connect — no need to
 recreate a project.
 
+`MATCHER_URL` belongs in `[env]` and `MATCHER_API_KEY` in `fly secrets set`. With
+both set, hosted sessions score with the matcher service; otherwise with
+FamilySearch's matcher. A change reaches existing sessions on their next connect.
+
 The agent runs on **E2B**, not in this container. The `genealogy-agent` image is
 a separate artifact built from its own Dockerfile, but `make deploy` builds and
 pushes it too, so a deploy ships both (`apps/server/sandbox/README.md`).

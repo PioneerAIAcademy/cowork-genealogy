@@ -6,8 +6,6 @@
     "recordRole": "head_of_household"
   },
   "response": {
-    "matched": true,
-    "confidence": 8,
     "score": 0.84,
     "recordSource": "projection",
     "recorded": true,

@@ -18,6 +18,7 @@ import {
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { readBuildInfo } from "../utils/build-info.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
@@ -250,7 +251,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   // first-seen order) + assertion count.
   const bySource = new Map<string, { recordIds: string[]; count: number }>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
-    if (!a || typeof a !== "object" || typeof a.source_id !== "string") continue;
+    if (!isLiveAssertion(a) || typeof a.source_id !== "string") continue;
     let bucket = bySource.get(a.source_id);
     if (!bucket) {
       bucket = { recordIds: [], count: 0 };

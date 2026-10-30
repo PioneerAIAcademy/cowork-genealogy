@@ -264,14 +264,14 @@ const ABSOLUTE_TOTAL = /\b\d{1,3}(?:,\d{3})+\b/g;
  */
 const EXEMPT = new Map<number, { reason: string; scope?: readonly string[] }>([
   [
-    36956,
+    35956,
     {
       reason: "payload size of the REJECTED drop shape at 50 rows, computed live by tests/utils/staged-compaction.test.ts, which pins it to +/-1% — not a qualifier probe figure. The test recomputes it from the fixture, so this exemption grants a pass to a number another check can still fail.",
       scope: ["docs/specs/rank-search-matches-tool-spec.md"],
     },
   ],
   [
-    35206,
+    34206,
     {
       reason: "payload size of the SHIPPED annotate-in-place shape at 50 rows, same test, same +/-1% pin",
       scope: ["docs/specs/rank-search-matches-tool-spec.md"],

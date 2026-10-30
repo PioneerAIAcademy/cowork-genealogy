@@ -184,6 +184,8 @@ def hosted_config(
     openrouter_api_key: str | None,
     wiki_api_url: str | None = None,
     pop_stats_url: str | None = None,
+    matcher_url: str | None = None,
+    matcher_api_key: str | None = None,
 ) -> dict:
     """The ~/.familysearch-mcp/config.json body for a hosted sandbox.
 
@@ -206,7 +208,13 @@ def hosted_config(
     the control plane reaches sandboxes provisioned under the old value — the
     same reasoning as `agent_secrets.write_secrets` and the Anthropic key.
     Sandboxes here are persistent, so a create-time-only write would leave every
-    existing session on the compiled-in default forever."""
+    existing session on the compiled-in default forever.
+
+    `matcher` is always written: "service", with `matcherUrl` and
+    `matcherApiKey`, when both settings are set, and "familysearch" otherwise.
+    Unlike the overrides above it cannot be omitted, because an omitted key keeps
+    what the sandbox holds, and a sandbox once switched to the service would
+    never switch back."""
     config: dict = {"hosted": True}
     if openrouter_api_key:
         config["openRouterApiKey"] = openrouter_api_key
@@ -214,7 +222,24 @@ def hosted_config(
         config["wikiApiUrl"] = wiki_api_url
     if pop_stats_url:
         config["popStatsUrl"] = pop_stats_url
+    if matcher_url and matcher_api_key:
+        config["matcher"] = "service"
+        config["matcherUrl"] = matcher_url
+        config["matcherApiKey"] = matcher_api_key
+    else:
+        config["matcher"] = "familysearch"
     return config
+
+
+def hosted_config_for(settings) -> dict:
+    """`hosted_config` with every operator setting it takes, read off `Settings`."""
+    return hosted_config(
+        settings.openrouter_api_key,
+        settings.wiki_api_url,
+        settings.pop_stats_url,
+        settings.matcher_url,
+        settings.matcher_api_key,
+    )
 
 
 async def write_config(sandbox, config: dict) -> None:

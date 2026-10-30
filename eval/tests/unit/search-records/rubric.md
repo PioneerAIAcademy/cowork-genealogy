@@ -110,7 +110,7 @@ Did the skill construct appropriate search parameters from the plan item? Name v
 Did the skill obtain a real match signal against the research subject, and then
 reason on top of it? When `record_search` is given a `subjectId` it ranks the
 staged pool host-side and returns a `ranked` block — `matches[]` carrying
-`matchRank`, `searchRank`, `matchScore`, `matchConfidence`, `candidateFactCount`,
+`matchRank`, `searchRank`, `matchScore`, `candidateFactCount`,
 and `attachedToSubject` / `attachedToOther`. The ranking is a **review surface,
 not a verdict**; this dimension grades whether the skill treated it as one.
 
