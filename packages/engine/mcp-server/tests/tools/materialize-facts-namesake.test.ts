@@ -495,3 +495,187 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
     });
   });
 });
+
+// ─── Tree-derived namesake pairs (issue #3681) ─────────────────────────────────
+//
+// The copy gate sees a namesake in the tree as it sees a row: a father and son of
+// one first given name, and a record that fits only one of them.
+
+describe("materialize_facts under a namesake in the tree (#3681)", () => {
+  const PF = "KWPF-001"; // John Pratt, the father, born 1820
+  const PS = "KWPF-002"; // John Pratt, his son, born 1850
+  const MAR = "REC-PMAR"; // the son's 1871 marriage; the groom is 21
+
+  const PAIR_ASSERTIONS = [
+    assertion("a_101", "src_008", MAR, "groom", "name", "John Pratt"),
+    assertion("a_102", "src_008", MAR, "groom", "age", "21"),
+    assertion("a_103", "src_008", MAR, "groom", "marriage", "John Pratt married Jane Doe", { date: "1871" }),
+    assertion("a_104", "src_008", MAR, "groom", "residence", "Niles"),
+  ];
+
+  function pairResearch(links: any[]) {
+    return {
+      ...research(links, { row: false }),
+      sources: [source("src_008", "S8")],
+      assertions: PAIR_ASSERTIONS,
+    };
+  }
+
+  /** The father and son; `dated` cites their births to the FamilySearch tree's own source. */
+  function pairTree(opts: { dated?: boolean; fatherFacts?: any[] } = {}) {
+    const born = (year: string) => ({
+      id: `B${year}`,
+      type: "Birth",
+      date: year,
+      ...(opts.dated === false ? {} : { sources: [{ ref: "S9" }] }),
+    });
+    return {
+      persons: [
+        person(PF, "John", "Pratt", "Male", { facts: [born("1820"), ...(opts.fatherFacts ?? [])] }),
+        person(PS, "John", "Pratt", "Male", { facts: [born("1850")] }),
+      ],
+      relationships: [{ id: "R1", type: "ParentChild", parent: PF, child: PS }],
+      sources: [{ id: "S8", title: "Marriage" }, { id: "S9", title: "FamilySearch Family Tree" }],
+    };
+  }
+
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "materialize-namesake-pairs-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  async function setup(r: any, t: any, startingTree?: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2), "utf-8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2), "utf-8");
+    if (startingTree) await writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(startingTree, null, 2), "utf-8");
+  }
+  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+
+  it("MP1 refuses the son's marriage onto the father, naming the son and offering no new person", async () => {
+    await setup(pairResearch([link("pe_1", "a_101", PF)]), pairTree());
+    const r = await materializeFacts({ projectPath: dir, personId: PF, recordId: MAR, recordRole: "groom" });
+    expect(r.ok).toBe(false);
+    const m = JSON.stringify(r);
+    expect(m).toContain(`'${PF}' has a namesake in the tree ('${PS}', '${PF}''s child of the same given name)`);
+    expect(m).toContain("lowers it to 'speculative' naming the namesake");
+    expect(m).not.toContain("omit personId");
+  });
+
+  it("MP2 copies the son's marriage onto the son, whom the record's age tells apart", async () => {
+    await setup(pairResearch([link("pe_1", "a_101", PS)]), pairTree());
+    const r = await materializeFacts({ projectPath: dir, personId: PS, recordId: MAR, recordRole: "groom" });
+    expect(r.ok).toBe(true);
+  });
+
+  it("MP3 refuses, and mints no one, when the lookup would pass over a pair member", async () => {
+    // The father was given the groom's residence before the son was in the tree.
+    const copied = { id: "F9", type: "Residence", value: "Niles", assertion_id: "a_104", sources: [{ ref: "S8" }] };
+    await setup(pairResearch([link("pe_1", "a_101", PF)]), pairTree({ fatherFacts: [copied] }));
+    const r = await materializeFacts({ projectPath: dir, recordId: MAR, recordRole: "groom" });
+    expect(r.ok).toBe(false);
+    expect(JSON.stringify(r)).toContain(`'${PF}' has a namesake in the tree`);
+    expect((await readTree()).persons.map((p: any) => p.id)).toEqual([PF, PS]);
+  });
+
+  it("MP4 reads an unsourced starting-tree date on an explicit copy", async () => {
+    const undated = pairTree({ dated: false });
+    await setup(pairResearch([link("pe_1", "a_101", PS)]), undated);
+    const without = await materializeFacts({ projectPath: dir, personId: PS, recordId: MAR, recordRole: "groom" });
+    expect(without.ok).toBe(false);
+    expect(JSON.stringify(without)).toContain(`'${PF}' has no birth or death year from a record other than this one`);
+
+    await setup(pairResearch([link("pe_1", "a_101", PS)]), undated, undated);
+    const withStart = await materializeFacts({ projectPath: dir, personId: PS, recordId: MAR, recordRole: "groom" });
+    expect(withStart.ok).toBe(true);
+  });
+
+  it("MP5 names the merge route on a copy onto one of two brothers born the same year, explicit or looked up", async () => {
+    const PS2 = "KWPF-003"; // a second John, born 1850 to the same father
+    const withBrother = (t: any) => ({
+      ...t,
+      persons: [...t.persons, person(PS2, "John", "Pratt", "Male", { facts: [{ id: "B1850b", type: "Birth", date: "1850", sources: [{ ref: "S9" }] }] })],
+      relationships: [...t.relationships, { id: "R2", type: "ParentChild", parent: PF, child: PS2 }],
+    });
+    const route = `If '${PS}' and '${PS2}' are one person entered twice (the same parents and the same birth year), hand the merge to tree-edit.`;
+
+    await setup(pairResearch([link("pe_1", "a_101", PS)]), withBrother(pairTree()));
+    const explicit = await materializeFacts({ projectPath: dir, personId: PS, recordId: MAR, recordRole: "groom" });
+    expect(explicit.ok).toBe(false);
+    expect(JSON.stringify(explicit)).toContain(route);
+
+    const copied = { id: "F9", type: "Residence", value: "Niles", assertion_id: "a_104", sources: [{ ref: "S8" }] };
+    const t = withBrother(pairTree());
+    t.persons[1] = { ...t.persons[1], facts: [...t.persons[1].facts, copied] };
+    await setup(pairResearch([link("pe_1", "a_101", PS)]), t);
+    const lookedUp = await materializeFacts({ projectPath: dir, recordId: MAR, recordRole: "groom" });
+    expect(lookedUp.ok).toBe(false);
+    expect(JSON.stringify(lookedUp)).toContain(route);
+  });
+
+  it("MP6 reuses the eligible person the lookup finds past a pair member, and says the namesake is in the tree", async () => {
+    // The father's 1845 marriage, the groom 25: it fits the father, not the son, who was also given its residence.
+    const SON = "I1";
+    const DAD = "I2";
+    const FMAR = "REC-FMAR";
+    const born = (year: string) => ({ id: `B${year}`, type: "Birth", date: year, sources: [{ ref: "S9" }] });
+    const residence = (id: string) => ({ id, type: "Residence", value: "Niles", assertion_id: "a_114", sources: [{ ref: "S8" }] });
+    const t = {
+      persons: [
+        person(SON, "John", "Pratt", "Male", { facts: [born("1850"), residence("F1")] }),
+        person(DAD, "John", "Pratt", "Male", { facts: [born("1820"), residence("F2")] }),
+      ],
+      relationships: [{ id: "R1", type: "ParentChild", parent: DAD, child: SON }],
+      sources: [{ id: "S8", title: "Marriage" }, { id: "S9", title: "FamilySearch Family Tree" }],
+    };
+    const r = {
+      ...pairResearch([link("pe_1", "a_111", SON), link("pe_2", "a_111", DAD)]),
+      assertions: [
+        assertion("a_111", "src_008", FMAR, "groom", "name", "John Pratt"),
+        assertion("a_112", "src_008", FMAR, "groom", "age", "25"),
+        assertion("a_113", "src_008", FMAR, "groom", "marriage", "John Pratt married Mary Doe", { date: "1845" }),
+        assertion("a_114", "src_008", FMAR, "groom", "residence", "Niles"),
+      ],
+    };
+    // Both are in the starting tree, so neither reads as made from this record.
+    await setup(r, t, t);
+    const reused = await materializeFacts({ projectPath: dir, recordId: FMAR, recordRole: "groom" });
+    expect(reused.ok, JSON.stringify(reused)).toBe(true);
+    expect(JSON.stringify(reused)).toContain(
+      `would have reused '${SON}', but '${SON}' has a namesake in the tree and its link 'pe_1' from this record ` +
+        `is not tied; '${DAD}' was used instead.`,
+    );
+
+    await setup({ ...r, namesakes: [{ ...ROW, person_id: SON }] }, t, t);
+    const both = await materializeFacts({ projectPath: dir, recordId: FMAR, recordRole: "groom" });
+    expect(both.ok, JSON.stringify(both)).toBe(true);
+    expect(JSON.stringify(both)).toContain(`but '${SON}' has a recorded namesake and a namesake in the tree and its link 'pe_1'`);
+  });
+
+  it("MP7 makes a new person when the record fits neither pair member, since it duplicates no one", async () => {
+    // A groom of 70 in 1871, born about 1801: not the father, born 1820, and not the son.
+    const OLD = "REC-OMAR";
+    const copied = { id: "F9", type: "Residence", value: "Niles", assertion_id: "a_124", sources: [{ ref: "S8" }] };
+    await setup(
+      {
+        ...pairResearch([link("pe_1", "a_121", PF)]),
+        assertions: [
+          assertion("a_121", "src_008", OLD, "groom", "name", "John Pratt"),
+          assertion("a_122", "src_008", OLD, "groom", "age", "70"),
+          assertion("a_123", "src_008", OLD, "groom", "marriage", "John Pratt married Ann Moss", { date: "1871" }),
+          assertion("a_124", "src_008", OLD, "groom", "residence", "Niles"),
+        ],
+      },
+      pairTree({ fatherFacts: [copied] }),
+    );
+    const explicit = await materializeFacts({ projectPath: dir, personId: PF, recordId: OLD, recordRole: "groom" });
+    expect(explicit.ok).toBe(false);
+    expect(JSON.stringify(explicit)).toContain("omit personId");
+    const r = await materializeFacts({ projectPath: dir, recordId: OLD, recordRole: "groom" });
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r).toMatchObject({ created: true });
+    expect(JSON.stringify(r)).toContain(`would have reused '${PF}', but '${PF}' has a namesake in the tree`);
+    expect((await readTree()).persons.map((p: any) => p.id)).toHaveLength(3);
+  });
+});

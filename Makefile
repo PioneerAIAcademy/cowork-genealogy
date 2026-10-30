@@ -390,7 +390,7 @@ probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn ano
 	  uv run python dev/probe_agent_nesting.py
 
 .PHONY: hook-smoke
-hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? Owner routing and the fork deny (issue #1160; 4 short sessions)
+hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? Owner routing, the fork deny and the agent-only deny (issues #1160, #3528; 6 short sessions)
 	# plugin-hooks.test.ts covers the guard script's DECISIONS. This covers its
 	# BINDING -- whether a runtime reads hooks/hooks.json, matches a real tool
 	# call, shells the command and blocks. Nothing else checks that, in any
@@ -411,6 +411,10 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# Re-run 2026-10-22 (Claude Code 2.1.308, SDK 0.2.172): BOUND on both cases. The
 	# fork case runs with CLAUDE_CODE_FORK_SUBAGENT unset, as Cowork does: arm A was
 	# denied with FORK_REASON, and arm B (hooks/ removed) ran a real fork.
+	# The agent-only case (issue #3528) provokes a main-thread convert_calendar,
+	# which reaches the script only through the matcher's AGENT_ONLY_TOOLS
+	# alternative, and requires agent_only_reason's text. First run 2026-10-29
+	# (Claude Code 2.1.308, SDK 0.2.172): BOUND on all three cases.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so issue #1160 stays on the
