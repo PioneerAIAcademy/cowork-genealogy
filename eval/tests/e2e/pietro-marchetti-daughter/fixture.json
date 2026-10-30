@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 18, hint-samples.csv row 525, flags adds_daughter, confidence 3). Draft transcribed from a 1913 Rieti civil death registration; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 18, hint-samples.csv row 525, flags adds_daughter, confidence 3). Resolved 2026-10-30: true match (identity same) — Giuseppa Marchetti (b. 1884 Maglianello, d. 15 Jun 1913 Rieti) is a daughter of Pietro Marchetti (G9WN-C79) and Maria Aquilini. Index text only; no record images read. Giuseppa's 1884 birth act was not located and her father's surname is absent from her death index; it is supplied indirectly by Domenica's 1902 marriage (anchoring the couple to the tree) and the sibling cluster around the same mother.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:Q2HC-CWMB",
+    "identity": "same"
+  }
 }

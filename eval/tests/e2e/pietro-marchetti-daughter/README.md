@@ -28,17 +28,45 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 18, `hint-samples.csv` row 525,
-flags `adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Italy, Rieti, Civil Registration (State Archive), 1840-1945". It is the 1913 death registration of Giuseppa Marchetti, who died at Rieti on 15 June 1913 and was born in 1884 at Maglianello. It names her father only as "Pietro", with no surname, and her mother as Maria Aquilini. Retrieval was tool-assisted (`dev/try-record-read.ts`).
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Giuseppa as his daughter, plus a `required` finding that the report documents
-the rejection.
+**Resolved: the hint is a true match (identity: same).** Giuseppa Marchetti,
+born 1884 at Maglianello (a frazione of Rieti) and died at Rieti on 15 June
+1913, is a daughter of the tree couple Pietro Marchetti (`G9WN-C79`) and Maria
+Aquilini. The drafted finding stands.
 
-A strong candidate. Both parents' given names and the mother's maiden surname match exactly, and the city matches: Maglianello is a frazione of Rieti. A daughter born in 1884 fits a couple married in 1876 whose first child came in 1878. The tree's own sources are the couple's deaths (1923 and 1929) and Domenica's 1902 marriage. None is a 1913 death or names a Giuseppa, so this is not a re-index of anything already attached.
+Retrieval was tool-assisted via `record_read` / `record_search` against live
+FamilySearch; the identity judgement is the genealogist's. **Index text only —
+no record images were read or calibrated.**
 
-The gap is that the index gives the father no surname. "Pietro" with a wife named Maria Aquilini is a narrow pair, but Rieti is a city, and a second Pietro married to a second Maria Aquilini cannot be excluded from the index. The discriminating check is Giuseppa's 1884 birth registration at Rieti, which the death entry's birth year points to. If it names the father as Pietro Marchetti, son of Francesco, the match is settled. A different paternal grandfather, or no birth registration in Rieti at all, would point to another family.
+What decided it:
+
+- Giuseppa's 1913 civil death registration (`ark:/61903/1:1:Q2HC-CWMP`, "Italy,
+  Rieti, Civil Registration (State Archive), 1840-1945") indexes her father
+  only as **"Pietro" with no surname** and her mother as **Maria Aquilini**.
+- Domenica Marchetti's 1902 Rieti marriage (`ark:/61903/1:1:6K5Z-ZBH9`, same
+  collection) names her parents in full as **Pietro Marchetti and Maria
+  Aquilini**. Domenica is the known tree daughter (b. 1878), so this anchors
+  the indexed "Pietro Marchetti × Maria Aquilini" couple to the tree couple —
+  it is the same 1902 marriage already attached to the tree.
+- A collection search for children of Pietro Marchetti and Maria Aquilini
+  returns a coherent sibling cluster naming that exact parent pair — Carmine
+  (`ark:/61903/1:1:X366-7Q8F`), Giovanna (1885), Celestino (1893/1894).
+  Giuseppa's mother "Maria Aquilini" (a distinctive maiden surname) sits inside
+  that same cluster. These siblings are corroboration only and are **not** added
+  as findings.
+- Pietro's own parentage (son of Francesco Marchetti) comes from his 1923 death
+  already attached to the tree, not from any record read here.
+
+What was not found, and what stays weak: Giuseppa's **1884 birth act was not
+located** in the FamilySearch index (searched the Rieti civil-registration
+collection for Giuseppa b. 1882–1886, and Italy-wide birth searches with father
+Pietro + mother Aquilini; neither returned a 1884 birth registration). Her
+**father's surname is absent** from her death index; it is supplied indirectly,
+by the sibling cluster around the same mother and by Domenica's marriage, not by
+a record that states "Pietro Marchetti" as Giuseppa's father directly.
+
+Left open, not adjudicated: Carmine's indexed birth year of **1874**
+(age-derived from his 1911 marriage) predates the couple's **1876** marriage
+date recorded in the tree — and the tree's 1876 marriage fact carries no
+attached source. No marriage record or Carmine birth act was found to reconcile
+the two. This tension is noted, not resolved; it does not bear on Giuseppa's
+parentage.
