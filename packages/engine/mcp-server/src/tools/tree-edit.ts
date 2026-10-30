@@ -636,13 +636,15 @@ async function applyOperation(
             "whole fact (tree_correct remove) instead of nulling its ref.",
         );
       }
-      if (input.fact.place !== undefined || input.fact.standard_place !== undefined) {
+      // A place is looked up when it changed, or to fill a fact that has no
+      // standard_place. One sent back unchanged keeps the standard_place it has,
+      // whatever else the op corrects: a corrected date rarely moves the place,
+      // and a lookup risks dropping a good value.
+      const placeChanged = existing.place !== placeBefore;
+      const looksUp = input.fact.place !== undefined && (placeChanged || typeof existing.standard_place !== "string");
+      if (looksUp || input.fact.standard_place !== undefined) {
         // A corrected place's old standard_place was the answer for the old text.
-        if (
-          input.fact.standard_place === undefined &&
-          existing.place !== placeBefore &&
-          typeof existing.standard_place === "string"
-        ) {
+        if (input.fact.standard_place === undefined && placeChanged && typeof existing.standard_place === "string") {
           if (!wantResolve) {
             warnings.push(
               `standard_place '${existing.standard_place}' was dropped with the old place: ` +

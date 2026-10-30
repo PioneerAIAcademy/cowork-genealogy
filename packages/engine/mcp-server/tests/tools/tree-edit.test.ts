@@ -981,6 +981,71 @@ describe("tree_edit", () => {
       expect(placeWarnings(looked)).toEqual(["could not resolve standard_place for 'Pottsville, Pennsylvania' (left unset)"]);
     });
 
+    // The stub's lookup answers ENGINE for SCHUYLKILL and nothing for HILPERTON.
+    describe("tree_correct update_fact: a place sent back unchanged", () => {
+      const HILPERTON = "Hilperton, Wiltshire, England";
+      const HILPERTON_FS = "Hilperton, Wiltshire, England, United Kingdom";
+      const withResidences = async (...facts: Array<{ id: string; place: string; standard_place?: string }>) => {
+        const tree = onePersonSourced();
+        for (const f of facts) (tree.persons[0].facts as any[]).push({ type: "Residence", date: "1850", ...f, sources: [{ ref: "S1" }] });
+        await writeProject(tree);
+      };
+      const update = (factId: string, fact: Record<string, unknown>) =>
+        treeCorrect({ projectPath: dir, operation: "update_fact", personId: "I1", factId, fact });
+      const factById = async (id: string) => (await readTree()).persons[0].facts.find((f: any) => f.id === id);
+
+      it("keeps the fact's standard_place where the lookup finds nothing, and warns of nothing", async () => {
+        await withResidences({ id: "F2", place: HILPERTON, standard_place: HILPERTON_FS });
+        const r = await update("F2", { place: HILPERTON, primary: true });
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!r.ok) return;
+        expect(await factById("F2")).toMatchObject({ place: HILPERTON, standard_place: HILPERTON_FS, primary: true });
+        expect(placeWarnings(r)).toEqual([]);
+        expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+      });
+
+      it("keeps the fact's standard_place where the lookup answers another", async () => {
+        await withResidences({ id: "F2", place: SCHUYLKILL, standard_place: FS });
+        const r = await update("F2", { place: SCHUYLKILL, primary: true });
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!r.ok) return;
+        expect(await factById("F2")).toMatchObject({ place: SCHUYLKILL, standard_place: FS, primary: true });
+        expect(placeWarnings(r)).toEqual([]);
+        expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+      });
+
+      it("keeps it beside a corrected date, whether the lookup would answer another or nothing", async () => {
+        await withResidences(
+          { id: "F2", place: SCHUYLKILL, standard_place: FS },
+          { id: "F3", place: HILPERTON, standard_place: HILPERTON_FS },
+        );
+        const hit = await update("F2", { date: "1851", place: SCHUYLKILL });
+        const miss = await update("F3", { date: "1852", place: HILPERTON });
+        for (const r of [hit, miss]) expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!hit.ok || !miss.ok) return;
+        expect(await factById("F2")).toMatchObject({ date: "1851", standard_place: FS });
+        expect(await factById("F3")).toMatchObject({ date: "1852", standard_place: HILPERTON_FS });
+        expect(placeWarnings(miss)).toEqual([]);
+        expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
+      });
+
+      it("fills a fact that has no standard_place, while one beside it keeps its own", async () => {
+        await withResidences({ id: "F2", place: SCHUYLKILL }, { id: "F3", place: SCHUYLKILL, standard_place: FS });
+        const r = await treeCorrect({
+          projectPath: dir,
+          ops: [
+            { operation: "update_fact", personId: "I1", factId: "F2", fact: { place: SCHUYLKILL } },
+            { operation: "update_fact", personId: "I1", factId: "F3", fact: { place: SCHUYLKILL } },
+          ],
+        });
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+        if (!r.ok) return;
+        expect((await factById("F2")).standard_place).toBe(ENGINE);
+        expect((await factById("F3")).standard_place).toBe(FS);
+        expect(vi.mocked(resolveStandardPlace)).toHaveBeenCalledTimes(1);
+      });
+    });
+
     it("on add_person and add_relationship inline facts too, a Couple's read through either partner's link", async () => {
       const { tree, research } = project(
         [{ ...assertion("a_001", "src_001", "AAAA-111", "p1", SCHUYLKILL), fact_type: "marriage" }],

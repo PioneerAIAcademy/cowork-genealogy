@@ -204,7 +204,9 @@ tree_edit({
   judged against the fact's place, and with none supplied the answer fills it.
   A changed `place` drops the old `standard_place` first, since it was the
   answer for the old text; with `resolveStandardPlace: false` nothing replaces
-  it, and a warning says so. If `primary: true` set, run the
+  it, and a warning says so. A `place` sent back unchanged keeps the fact's
+  `standard_place`; it fills one only when the fact has none. That holds beside
+  a corrected `date` too. If `primary: true` set, run the
   same-type swap on that holder. `primary: false` deletes the key on **that fact
   only**, leaving other facts of the type untouched — so a vital type may end
   with no primary at all, which is the point: it is the only way to retire a
@@ -936,10 +938,12 @@ The caller (`tree-edit` skill) still:
   disagree give none. A real record read (`record_read` on a saved recapi body,
   staged and cited) gives its FamilySearch standard to a tree fact.
 - **update_fact** — field merge by `factId`; a place change re-resolves
-  `standard_place`; id unchanged. Also merges by `relationshipId` + `factId` on a
-  Couple-held fact; a `factId` not on the named holder errors. Retyping a
-  person's fact into a couple event is refused; editing one already there, or
-  retyping a Couple-held fact, is admitted.
+  `standard_place`; a place sent back unchanged keeps the fact's
+  `standard_place` where the lookup would answer another or nothing, beside a
+  corrected date too, and fills a fact with none; id unchanged. Also merges by
+  `relationshipId` + `factId` on a Couple-held fact; a `factId` not on the
+  named holder errors. Retyping a person's fact into a couple event is refused;
+  editing one already there, or retyping a Couple-held fact, is admitted.
 - **add_name / update_name** — `N` id assigned; `preferred: true` clears other
   preferred; exactly one preferred remains.
 - **update_person** — gender/ark set; nothing else changed.
