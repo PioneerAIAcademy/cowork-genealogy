@@ -7,6 +7,7 @@ import { readStagedResults } from "../utils/results-staging.js";
 import { relationshipCategory } from "../utils/relationship-category.js";
 import { sourceAttachmentsTool } from "./source-attachments.js";
 import { getDayRange } from "../utils/date-helpers.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { stdDate } from "../utils/date-standardize.js";
 import { MODIFIERS, MONTHS, normalizeAccents } from "../utils/date-constants.js";
 import { gatherRelatives, hasRealGivenName, isRealGivenName } from "../utils/relatives.js";
@@ -553,7 +554,7 @@ function liveLinkedAssertions(research: any, subjectId: string): any[] {
   const all = Array.isArray(research?.assertions) ? research.assertions : [];
   return all.filter(
     (a: any) =>
-      linkedIds.has(a?.id) && a?.record_basis !== "absent",
+      isLiveAssertion(a) && linkedIds.has(a?.id) && a?.record_basis !== "absent",
   );
 }
 

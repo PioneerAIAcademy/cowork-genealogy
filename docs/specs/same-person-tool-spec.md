@@ -68,7 +68,7 @@ about 37 links per call. Identity was being asserted and never scored. The arm i
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `projectPath` | string | yes | The research project directory. Its presence selects this arm. |
-| `assertionId` | string | yes | The assertion the `person_evidence` link will cite. Resolves the record, the party and the retrieval route in one hop. |
+| `assertionId` | string | yes | The assertion the `person_evidence` link will cite. Resolves the record, the party and the retrieval route in one hop. Refused when a re-extraction retired it (non-null `superseded_by`, `research-schema-spec.md` §5.6): score its replacement. A retired assertion of the same record is not read as a party. |
 | `treePersonId` | string | yes | The candidate person's id in `tree.gedcomx.json`. |
 | `recordRole` | string | no | Score a **different** party of the same record than the assertion's own `record_role` — the second party of a relationship or marriage assertion, which gets its own link. Resolved as "Party selection" below describes. |
 | `recordPersonaId` | string | no | Name the record persona directly when the assertion does not carry it and the party is otherwise ambiguous. A persona the record does not hold is refused. |
