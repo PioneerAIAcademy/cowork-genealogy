@@ -18,7 +18,9 @@ import {
   runProjectCreate,
   type ProjectCreateDeps,
 } from "../../src/tools/project-create.js";
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
+import { runWithProjectStore } from "../../src/store/project-store.js";
+import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 
 /** The hand-built path never reads FamilySearch; `LOCAL` is the principal it is
  *  given, as the stdio dispatcher binds it. */
@@ -810,6 +812,30 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     expect(result.relatives.length + result.omitted.relatives).toBe(68);
     // Whole entries only: every one kept is complete.
     expect(result.relatives.every((r: any) => r.id && r.name && r.relationship)).toBe(true);
+  });
+
+  it("returns projectUrl from the store's project id inside the 2,000 characters, and none without the setting", async () => {
+    const read = structuredClone(FAMILY);
+    for (let i = 0; i < 63; i++) {
+      const id = `KID${String(i).padStart(2, "0")}-AAA`;
+      read.persons.push({ id, ark: `ark:/61903/4:1:${id}`, gender: "Male", living: false, names: [{ preferred: true, given: `Child Number ${i}`, surname: "Flynn" }] });
+      read.relationships.push({ type: "ParentChild", parent: "LZNY-BRF", child: id, subtype: "Biological" });
+    }
+    const createIn = (projectId: string, config: Record<string, unknown>) =>
+      runWithProjectStore(new ScopedFsStore(dir, projectId), () =>
+        runProjectCreate(
+          { projectPath: SCOPED_ANCHOR, objective: "x", personId: "LZNY-BRF" },
+          { readPerson: async () => ({ result: structuredClone(read), resolvedId: "LZNY-BRF", memoryKinds: {} }) },
+          bearerPrincipal("tok", config),
+        ),
+      ) as Promise<any>;
+    const linked = await createIn("p-linked", { webPublicUrl: "https://beta.example" });
+    expect(linked.ok).toBe(true);
+    expect(linked.projectUrl).toBe("https://beta.example/#/p/p-linked");
+    expect(JSON.stringify(linked).length).toBeLessThanOrEqual(2000);
+    const bare = await createIn("p-bare", {});
+    expect(bare.ok).toBe(true);
+    expect("projectUrl" in bare).toBe(false);
   });
 
   it.each([

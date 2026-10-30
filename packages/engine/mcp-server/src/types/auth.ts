@@ -40,4 +40,13 @@ export interface AppConfig {
   popStatsUrl?: string;
   openRouterApiKey?: string;
   openRouterModel?: string;
+  /** The web tier's public origin. Set, `project_create` and `project_context`
+   *  return `projectUrl` (`<origin>/#/p/<id>`) for a store that knows its
+   *  project id (src/utils/project-links.ts). */
+  webPublicUrl?: string;
+  /** On, `project_context` also returns `uploadUrl` (`<projectUrl>/upload`). */
+  uploadsEnabled?: boolean;
+  /** The beta's transcription switch. Unset means run as today. Its reader is
+   *  issue #3996. */
+  transcriptionEnabled?: boolean;
 }

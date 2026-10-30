@@ -24,6 +24,9 @@ import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 import { collectSourceRefs } from "../utils/tree-person.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
 import { exhaustedImageGroups } from "../utils/browse-budget.js";
+import { projectLinks } from "../utils/project-links.js";
+import { getProjectStore } from "../store/project-store.js";
+import type { Principal } from "../auth/principal.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -107,6 +110,35 @@ async function exhaustedGroupsWithPlanItems(
   return groups.map((g) => ({ ...g, planItemIds: byGroup.get(g.imageGroup) ?? [] }));
 }
 
+/** One file the user uploaded to the project through the web tier. */
+export interface ProjectContextUpload {
+  name: string;
+  /** ISO time the store recorded for the upload. */
+  uploaded: string;
+  /** Whether the upload's text layer (`uploads/<name>.txt`) exists. */
+  hasText: boolean;
+}
+
+/** The project's uploads, newest first, ties by name. An entry `X.txt` whose `X` is
+ *  also an entry is X's text layer, not an upload; a lone `notes.txt` is an upload.
+ *  The web tier writes the text layer under this name (issue #3987, beside
+ *  `upload_key()` in apps/server/proto/web/project_blobs.py). Never throws: a
+ *  listing failure must not fail the whole projection. */
+async function projectUploads(projectPath: string): Promise<ProjectContextUpload[]> {
+  let entries;
+  try {
+    entries = await getProjectStore().list(projectPath, "uploads");
+  } catch {
+    return [];
+  }
+  const names = new Set(entries.map((e) => e.name));
+  const isTextLayer = (name: string) => name.endsWith(".txt") && names.has(name.slice(0, -".txt".length));
+  return entries
+    .filter((e) => !isTextLayer(e.name))
+    .sort((a, b) => b.mtimeMs - a.mtimeMs || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+    .map((e) => ({ name: e.name, uploaded: new Date(e.mtimeMs).toISOString(), hasText: names.has(`${e.name}.txt`) }));
+}
+
 export interface ProjectContextCollectionCounts {
   total: number;
   byRecordType: Record<string, number>;
@@ -180,6 +212,12 @@ export type ProjectContextResult =
        *  `conflicts` section reports beside its items — so `conflicts: 0` alone
        *  does not mean that query would come back empty. */
       unregisteredDisagreementCount: number;
+      /** The files the user uploaded through the web tier. Absent when there are none. */
+      uploads?: ProjectContextUpload[];
+      /** The project's viewer page, when the server knows its public URL. */
+      projectUrl?: string;
+      /** The project's upload page, when uploads are on. */
+      uploadUrl?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -202,7 +240,7 @@ export function preferredDisplayName(person: any): string | null {
   return parts.length > 0 ? parts.join(" ") : null;
 }
 
-export async function projectContext(input: ProjectContextInput): Promise<ProjectContextResult> {
+export async function projectContext(input: ProjectContextInput, principal: Principal): Promise<ProjectContextResult> {
   // Primary surface for "which build is this?" — 8 skills call project_context,
   // 0 call auth_status — so it rides on every return branch, no-project included.
   const buildId = readBuildInfo().version;
@@ -343,6 +381,8 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   ).length;
   const externalCollections = await externalCollectionCounts(input.projectPath);
   const exhausted = await exhaustedGroupsWithPlanItems(input.projectPath, research);
+  const uploads = await projectUploads(input.projectPath);
+  const links = await projectLinks(principal);
 
   return {
     ok: true,
@@ -370,6 +410,8 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     ...(externalCollections ? { externalCollections } : {}),
     sectionCounts,
     unregisteredDisagreementCount,
+    ...(uploads.length > 0 ? { uploads } : {}),
+    ...links,
   };
 }
 
@@ -484,7 +526,10 @@ export const projectContextSchema = {
     "whether a record persona is already in the tree, which sources cover a " +
     "record); the writer tools handle every mechanical lookup themselves. Also " +
     "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
-    "a problem. Writes nothing.",
+    "a problem. uploads [{name, uploaded, hasText}] (absent when none) lists the files the " +
+    "user uploaded, newest first; hasText says a text layer exists. projectUrl, when present, " +
+    "is the project's page in the web app, and uploadUrl the page where the user uploads a " +
+    "file; give the user uploadUrl when they want to add a document. Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {

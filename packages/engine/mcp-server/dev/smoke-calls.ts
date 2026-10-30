@@ -218,8 +218,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       subjectPersonIds: ["P1"],
       tree: SEED_TREE,
     }),
+    // WEB_PUBLIC_URL is unset in the smoke, so no link.
     expect: (res) => ({
-      ok: !res.isError && res.body?.ok === true,
+      ok: !res.isError && res.body?.ok === true && !("projectUrl" in res.body),
       detail: res.body?.ok === true ? `wrote ${res.body.filesWritten.join(", ")}` : brief(res, 300),
     }),
   },
@@ -233,7 +234,11 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     tool: "project_context",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath }),
-    expect: noError,
+    // WEB_PUBLIC_URL is unset in the smoke, so no link.
+    expect: (res) => ({
+      ok: !res.isError && !("projectUrl" in (res.body ?? {})) && !("uploadUrl" in (res.body ?? {})),
+      detail: brief(res, 300),
+    }),
   },
   {
     tool: "tree_query",

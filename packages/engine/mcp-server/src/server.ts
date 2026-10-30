@@ -827,7 +827,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "project_context") {
       try {
         const args = request.params.arguments as unknown as ProjectContextInput;
-        const result = await projectContext(args);
+        const result = await projectContext(args, principal);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -846,7 +846,7 @@ export function createServer(principal: Principal): Server {
     }
     if (request.params.name === "project_list") {
       try {
-        const result = await projectList();
+        const result = await projectList(principal);
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

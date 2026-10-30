@@ -151,7 +151,7 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
     tool: "tree_forget",
     call: (projectPath) => treeForget({ projectPath, forget: [{ personId: "I1" }] } as any),
   },
-  { tool: "project_context", call: (projectPath) => projectContext({ projectPath } as any) },
+  { tool: "project_context", call: (projectPath) => projectContext({ projectPath } as any, LOCAL) },
   { tool: "tree_query", call: (projectPath) => treeQuery({ projectPath } as any) },
   {
     tool: "research_query",

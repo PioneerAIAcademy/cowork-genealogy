@@ -1742,7 +1742,10 @@ _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search
 #: handler script below is built from a Python f-string, no typechecker catches
 #: the mismatch. A tool missing from this set calls with one argument and its
 #: `principal` arrives `undefined`.
-_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset()
+_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"project_context", "project_list"})
+
+#: Compiled tools that take no input, so the principal is their only argument.
+_COMPILED_TOOLS_WITHOUT_INPUT: frozenset[str] = frozenset({"project_list"})
 
 #: Extra JS arguments appended after `input` (and LOCAL) for a compiled tool.
 #: `person_warnings` gets a place resolver that resolves nothing, so its
@@ -2239,6 +2242,8 @@ def _make_compiled_tool_handler(
                 f" import {{ LOCAL }} from '{principal_url}';" if takes_principal else ""
             )
             call_args = "input, LOCAL" if takes_principal else "input"
+            if tool_name in _COMPILED_TOOLS_WITHOUT_INPUT:
+                call_args = "LOCAL"
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 

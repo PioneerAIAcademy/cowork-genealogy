@@ -5,19 +5,42 @@ import { configFromEnv, PER_USER_ENV } from "../../src/hosted-config-env.js";
 // absent or empty variable decides whether a container silently loses a per-user value.
 
 describe("configFromEnv", () => {
-  it("layers the four set variables over the base", () => {
+  it("layers the set variables over the base", () => {
     const config = configFromEnv({
       WIKI_API_URL: "http://wiki:8000",
       POP_STATS_URL: "http://pop:9000",
       OPENROUTER_API_KEY: "or-key",
       OPENROUTER_MODEL: "a/model",
+      WEB_PUBLIC_URL: "https://beta.example",
+      UPLOADS_ENABLED: "true",
+      TRANSCRIPTION_ENABLED: "false",
     });
     expect(config).toEqual({
       wikiApiUrl: "http://wiki:8000",
       popStatsUrl: "http://pop:9000",
       openRouterApiKey: "or-key",
       openRouterModel: "a/model",
+      webPublicUrl: "https://beta.example",
+      uploadsEnabled: true,
+      transcriptionEnabled: false,
     });
+  });
+
+  it("reads a switch trimmed and in any case", () => {
+    const config = configFromEnv({ UPLOADS_ENABLED: " TRUE ", TRANSCRIPTION_ENABLED: "False" });
+    expect(config.uploadsEnabled).toBe(true);
+    expect(config.transcriptionEnabled).toBe(false);
+  });
+
+  it("leaves a switch unset when its variable is empty, over the base's value", () => {
+    const config = configFromEnv({ UPLOADS_ENABLED: "", TRANSCRIPTION_ENABLED: "  " }, { uploadsEnabled: true });
+    expect(config.uploadsEnabled).toBe(true);
+    expect("transcriptionEnabled" in config).toBe(false);
+  });
+
+  it.each(["off", "1", "yes", "on", "0"])("refuses a switch set to %j rather than guessing", (raw) => {
+    expect(() => configFromEnv({ TRANSCRIPTION_ENABLED: raw })).toThrow(/TRANSCRIPTION_ENABLED must be true or false/);
+    expect(() => configFromEnv({ UPLOADS_ENABLED: raw })).toThrow(/UPLOADS_ENABLED must be true or false/);
   });
 
   it("leaves the base's value where a variable is absent or empty, and never adds an empty key", () => {
@@ -46,9 +69,12 @@ describe("configFromEnv", () => {
       "POP_STATS_URL",
       "OPENROUTER_API_KEY",
       "OPENROUTER_MODEL",
+      "WEB_PUBLIC_URL",
+      "UPLOADS_ENABLED",
+      "TRANSCRIPTION_ENABLED",
     ]);
     const keys = Object.keys(
-      configFromEnv(Object.fromEntries(PER_USER_ENV.map((name) => [name, "set"]))),
+      configFromEnv(Object.fromEntries(PER_USER_ENV.map((name) => [name, name.endsWith("_ENABLED") ? "true" : "set"]))),
     );
     expect(keys).toHaveLength(PER_USER_ENV.length);
   });
