@@ -549,7 +549,7 @@ const SCENARIOS = join(dirname(fileURLToPath(import.meta.url)), "..", "..", ".."
 interface FulltextEnvelope {
   log_id: string;
   tool: string;
-  payload: { results: Array<{ id: string; textDocument?: string }> };
+  payload: { results: Array<{ id: string; title?: string; recordDate?: string; recordPlace?: string; textDocument?: string }> };
 }
 
 /** A committed, real fulltext_search sidecar. */
@@ -564,6 +564,13 @@ describe("sidecar_read: one full-text hit", () => {
   const hits = g9gj.payload.results;
   const transcript = (i: number) => hits[i].textDocument as string;
   const hitRef = (i: number) => `results/log_003.json#${arkToBareId(hits[i].id)}`;
+  // Hit 5's row, verbatim: literals, so a field the tool dropped cannot match an
+  // `undefined` read off the fixture.
+  const HIT_5_RECORD = {
+    title: "Boston, Suffolk, Massachusetts, United States Birth 1895",
+    recordDate: "1895",
+    recordPlace: "Boston, Suffolk, Massachusetts, United States",
+  };
 
   let dir: string;
   beforeEach(async () => {
@@ -584,8 +591,28 @@ describe("sidecar_read: one full-text hit", () => {
       if (!r.ok) return;
       expect(r.content).toBe(transcript(4));
       expect(r.truncated).toBe(false);
-      expect(r).toMatchObject({ hitId: id, hitIndex: 5, logId: "log_003" });
+      expect(r).toMatchObject({ hitId: id, hitIndex: 5, logId: "log_003", ...HIT_5_RECORD });
     }
+  });
+
+  it("carries the hit's title, recordDate and recordPlace, and leaves out the ones its row lacks", async () => {
+    const five = await sidecarRead({ projectPath: dir, ref: hitRef(4) });
+    expect(five).toMatchObject({ ok: true, ...HIT_5_RECORD });
+
+    const one = await sidecarRead({ projectPath: dir, ref: hitRef(0) });
+    expect(one).toMatchObject({
+      ok: true,
+      title: "Washington, New York, United States Land",
+      recordPlace: "Washington, New York, United States",
+    });
+    expect(one).not.toHaveProperty("recordDate");
+
+    const flynn = fulltextFixture("flynn-record-matching", "log_004.json");
+    await getProjectStore().writeJson(dir, "results/log_004.json", flynn);
+    const placeOnly = await sidecarRead({ projectPath: dir, ref: `results/log_004.json#${arkToBareId(flynn.payload.results[0].id)}` });
+    expect(placeOnly).toMatchObject({ ok: true, recordPlace: "Schuylkill, Pennsylvania, United States" });
+    expect(placeOnly).not.toHaveProperty("title");
+    expect(placeOnly).not.toHaveProperty("recordDate");
   });
 
   it("reads a hit from a staged full-text result too, with no logId yet", async () => {
@@ -594,7 +621,7 @@ describe("sidecar_read: one full-text hit", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.content).toBe(transcript(1));
-    expect(r).toMatchObject({ hitId: hits[1].id, hitIndex: 2, logId: null });
+    expect(r).toMatchObject({ hitId: hits[1].id, hitIndex: 2, logId: null, title: "Washington, New York, United States Mortgage" });
   });
 
   it("lists the hits with #hits, one JSON line each, and no transcript text", async () => {
@@ -608,6 +635,7 @@ describe("sidecar_read: one full-text hit", () => {
       expect(row).not.toHaveProperty("textDocument");
     });
     for (let i = 0; i < hits.length; i++) expect(r.content).not.toContain(transcript(i).slice(0, 80));
+    for (const k of ["hitId", "hitIndex", "logId", "title", "recordDate", "recordPlace"]) expect(r).not.toHaveProperty(k);
   });
 
   it("refuses a bare full-text ref, naming the hit count and both ways in", async () => {
@@ -624,6 +652,7 @@ describe("sidecar_read: one full-text hit", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.results.map((x) => (x.ok ? x.content : x.reason))).toEqual([transcript(0), transcript(7)]);
+    expect(r.results[1]).toMatchObject({ title: "Chicago, Cook, Illinois, United States Local History 1881", recordDate: "1881" });
   });
 
   it("pages within one hit's transcript", async () => {
@@ -635,6 +664,7 @@ describe("sidecar_read: one full-text hit", () => {
     expect(second.ok).toBe(true);
     if (!second.ok) return;
     expect(second.content).toBe(transcript(longest).slice(first.nextOffset, first.nextOffset + second.content.length));
+    expect(second).toMatchObject({ hitIndex: 13, title: "Missouri, United States Newspaper 1975", recordDate: "1975" });
   });
 
   it("answers an unknown hit, an empty selector and a missing file", async () => {

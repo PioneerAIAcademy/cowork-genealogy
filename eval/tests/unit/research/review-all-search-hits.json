@@ -1,0 +1,49 @@
+{
+  "test": {
+    "id": "ut_research_hva",
+    "skill": "research",
+    "name": "A review of all hits of a search spawns evaluate-search-results for each of its eleven hits",
+    "type": "positive",
+    "description": "Issue #3522, research/SKILL.md \"Search-hit review\", the all-hits form. log_017 holds eleven hits, every one with a transcript, and none is extracted in this scenario (g9gj without src_006). The router reads results/log_017.json#hits and spawns one @plugin:evaluate-search-results per hit, at most 5 per message, so eleven spawns across more than one message of the same turn, with no report between the batches. evaluate-search-results is stubbed with one canned Match, not yet extracted, and no hitRef line (see ut_research_hv3), so the offer reads \"Continue with extracting the 11 Matches?\". test_search_hit_review_spawns_one_agent_per_hit asserts the eleven distinct hitRefs, projectPath, target and the offer's count from the hook records. The width of 5 is not asserted: no run record says which message a spawn came from.",
+    "tags": [
+      "routing",
+      "bounded-request",
+      "step-mode",
+      "routes-to:evaluate-search-results",
+      "reviews-search-hits",
+      "reviews-hits:log_017:all"
+    ]
+  },
+  "input": {
+    "user_message": "/research Evaluate all hits of log_017 for Iram Hyde.",
+    "scenario": "g9gj-fulltext-hits-unextracted"
+  },
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 1200,
+    "stub_skills": [
+      {
+        "skill": "evaluate-search-results",
+        "response": "verdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\n\nThis record names Iram Hyde, and its place and period fit what his tree holds, so it is labelled a Match. It holds a detail his tree does not have yet."
+      },
+      "record-structurer",
+      "search-full-text",
+      "question-selection",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "person-evidence",
+      "conflict-resolution",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test of research/SKILL.md's \"Search-hit review\". The spawns are asserted deterministically from the hook records (test_routes_to_expected_skill, test_search_hit_review_spawns_one_agent_per_hit): eleven evaluate-search-results spawns, one per hit of log_017, each naming projectPath, its own hitRef and a target, and a last line \"Continue with extracting the 11 Matches?\". You cannot see the spawns. Do not grade them.",
+    "evaluate-search-results is STUBBED with one canned return for every hit: a Match, not yet extracted, with the same two-sentence summary. Every hit therefore comes back a Match in identical words. That is the stub, not a defect of the router, and nothing is written to the project.",
+    "The spawns go out in batches of at most 5 per message, all in this one turn. A batch is not a step: reporting between batches, or stopping after the first batch with an offer, is the failure.",
+    "The router judges nothing from the hit list itself and extracts nothing in this turn: it relays each verdict and offers the extraction.",
+    "PROJECT_LIST FIRST IS REQUIRED. When no projectPath is named, the router's first call is project_list with no arguments, to find the project. Its folder answer is the live tool's real answer, not an error."
+  ]
+}

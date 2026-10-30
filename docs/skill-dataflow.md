@@ -11,9 +11,9 @@ persisted state comes from [`specs/schemas/ownership.json`](specs/schemas/owners
 This file maps the two onto each other so you can see a whole run at once; where it
 disagrees with either, they win.
 
-There are 2 skills and 30 agents. Besides the `research` orchestrator itself, its routing
-table names 14 of them, and 2 more are spawned from elsewhere in its body (`gps-mentor`,
-`search-hints`). The other 15 have no routing row: one skill,
+There are 2 skills and 31 agents. Besides the `research` orchestrator itself, its routing
+table names 14 of them, and 3 more are spawned from elsewhere in its body (`gps-mentor`,
+`search-hints`, `evaluate-search-results`). The other 15 have no routing row: one skill,
 `forget-and-rederive`, and 14 agents reached on request or by auto-delegation from their
 own `description` — see [Reachable only by asking](#reachable-only-by-asking).
 
@@ -62,6 +62,7 @@ flowchart TD
     SR -.->|"named, never routed"| SF
     SR -.->|"3+ FamilySearch nils · named, never routed"| SE
     HI["search-hints · agent<br/>hint review, on request · log[]"]
+    SF -.->|"its hits, on request"| ESR["evaluate-search-results · agent<br/>search-hit review, one per hit · hit_verdicts[]"]
 
     SR ==> XA
     SR ==> IT["image_transcribe · tool<br/>one page scan → staged ref"]
@@ -70,6 +71,7 @@ flowchart TD
     IT -->|"staged.resultsRef"| RS
     SE --> RS
     HI --> XA
+    ESR -->|"on yes: the Matches"| RS
     XA["extraction_append · tool<br/>recordIds: FamilySearch records<br/>sources[] + assertions[] · classified in code"]
     RS["record-structurer · agent<br/>any other source → structured documents"] --> XA
 
@@ -99,7 +101,7 @@ flowchart TD
     end
 
     classDef unrouted stroke-dasharray: 5 5
-    class SF,HI,ASK,U1,U2,U3,U4 unrouted
+    class SF,HI,ESR,ASK,U1,U2,U3,U4 unrouted
 ```
 
 Solid arrow: the orchestrator routes here on `research.json` state, spawning the target
@@ -130,6 +132,7 @@ ends the turn with `research_delivered` (research/SKILL.md, "Bounded request or 
 | 6c | **`search-images`** (agent) | A plan item targets a browse-only FamilySearch record set, or indexed and full-text search are exhausted — unless `project_context`'s `exhaustedImageGroups` lists the item, which goes to `research-plan` to dispose of instead. The routing row names it without the `@plugin:` prefix — see [Stated twice](#stated-twice-differently) | Browsing a volume page by page — the OCR happens host-side and the page is staged, so neither the scan nor its text enters its context until it reads a page. Finds one year in a split group with `volume_bisect`, and a cited item with `image_search`'s `item` route | `volume_search`, `image_search`, `volume_bisect`, `image_transcribe`, `sidecar_read`; `research.json` by whole-file `Read` | `log[]` — `research_log_append`, **no sidecar**; `plans[].items[].status` — `research_append`. Hands each found image's `staged.resultsRef` to `record-structurer` in its return |
 | 6d | **`search-full-text`** (agent) | **No routing row names it.** Reached by auto-delegation from its `description`, or a direct request. Its own step 1 picks the next `planned` full-text item | Lucene-style search over FamilySearch's AI-transcribed images — the only lane that reaches a person named anywhere in an unindexed document: as witness, bondsman, appraiser or neighbour, and as the principal of a paragraph-style record no name index covers | `fulltext_search`, `get_name_variants`, `source_attachments`, `wiki_search`, `wiki_read`; `research.json` by whole-file `Read` | `log[]` + sidecar — `research_log_append`; `plans[].items[].status` — `research_append`. Names each promising hit's `results/<log_id>.json#<hit id>` ref for `record-structurer` in its return, with `image_transcribe` only for a transcript too garbled to extract |
 | 6e | **`search-hints`** (agent) | Spawned as `@plugin:search-hints`, twice (triage, then the researcher's verdicts; the orchestrator stops between). On a user's request to review a person's FamilySearch hints, **and** on an unexecuted `record_type: "fs_hints"` plan item — research-plan emits one at `sequence` 1 on an identity or parentage question whose person has an `ark` (issue #3153), and the unexecuted-item routing row sends it here with its `planItemId`/`planId`/`personId`; the verdicts turn passes them again while that item is `in_progress` | Triage of each pending hint — `accept`, `reject` or `not enough information to judge`, FamilySearch's confidence disclosed, the image read before any reject; and the log of each verdict the researcher stated | `person_record_matches` (`status: ["pending"]`), `research_query`, `record_read`, `image_transcribe`, `sidecar_read`, `person_read`; `tree.gedcomx.json` by `Read` | `plans[].items[].status` of its hints item — `research_append` (completed, or skipped/`inaccessible` when hints can't be read, the person has no FamilySearch id, or no researcher is present); `log[]` — `research_log_append`, one entry per decided hint (and one `negative` entry on no hints), no sidecar. Triage writes only the item's status, and nothing when no item was handed over. Accepted hints' positive entries then route to extraction |
+| 6f | **`evaluate-search-results`** (agent) | Spawned as `@plugin:evaluate-search-results`, once per hit and at most 5 per message, when the user asks to evaluate hits of a full-text search ("hits 1, 4 and 7 of log_012", "all hits of log_012"), or answers "Continue." to `evaluating the search hits`. The orchestrator reads only `project_context` (for the target's tree person id) and that search's `results/<log_id>.json#hits` list, paged, and judges nothing from it, relays each verdict, and ends the turn "Continue with extracting the N Matches?" for the Matches not already extracted; on yes the next turn opens with `record-structurer` | One verdict per hit against the target person (the first subject unless the spawn names one): `match`, `possible_match` or `not_a_match`, and whether the hit holds a birth, marriage, death or relationship the target lacks | `project_context`; `sidecar_read` on its one hit; `tree_query` on the target and its one-hop family, every fact type | One `hit_verdicts` row — `research_append`; a second verdict on the same hit and person updates the first. Nothing else: a Match is extracted by `record-structurer` on the next turn, never by this agent |
 | 7 | **`extraction_append`** (tool) | **Any** `log[]` entry with a positive or partial outcome and no assertion referencing it — even one, even late in a run. The orchestrator forbids extracting inline; it, or `search-records`, calls the tool with `recordIds` for FamilySearch records | Every assertion in each record, with its roles and three-layer GPS classification decided in code (`src/utils/record-extract.ts`) — **first and final**; no downstream refinement pass exists. Also takes `absences` for negative evidence | Each record, read live by `record_read` host-side, or an earlier uncited read's sidecar | One `record_read` `log[]` entry per record read live; `sources` + `assertions`, and the mirroring tree `S` source description; a re-found record's assertions gain the caller's question ids. `plans[].items[].status` `in_progress` → `completed` once a record a plan item's `record_search` found, or a hit its `fulltext_search` found, is extracted, in code. `person_evidence` only in `personId` mode, and only unchecked attachment links (`speculative`, no score, the fixed rationale); identity decisions stay person-evidence's |
 | 7 | **`record-structurer`** (agent) | Spawned once per batch of sources that are not FamilySearch indexed records — an image transcription, a full-text hit, PDF text, pasted or external-site text | Reading each source and sending one structured document per source in one `extraction_append({ documents })`; roles and classifications are decided in code (`src/utils/structured-document.ts`) | `sidecar_read`, the delegated text. Never reads `research.json` or the tree | `sources` + `assertions`, through `extraction_append` only |
 | 8 | **`person-evidence`** (agent) | Spawned as `@plugin:person-evidence` with the assertion ids. Assertions not yet linked to persons. Always the agent — writing a `pe_` link inline is how a same-named stranger's record gets attached to the subject | The identity decision — which tree person each persona is — scored with `same_person` first; and the household skeleton the link requires | `project_context`, `research_query`; `record_read`; `merge_warnings`, `person_warnings`, `person_quality`; `place_search`, `place_distance`, `wiki_read`; `tree.gedcomx.json` walked directly | `person_evidence` — `research_append`; tree `persons` and their sourced facts — `materialize_facts`; tree `relationships` (a household record's ParentChild and Couple edges only) — `tree_edit`. While a namesake of the person is recorded in `namesakes`, `research_append` caps a link it writes at `speculative` unless something in its record ties it to that person (search-records records each same-named person its searches rule out, and hands the links its row leaves untied to person-evidence) |
@@ -225,6 +228,7 @@ the absorbed person's id in every section that holds person ids.
 | | `timelines` | `timeline` | `timeline_build`, by tool identity, for a person's own timeline only | `research_append`, `merge_tree_persons`, `timeline_build` | unit |
 | | `proof_summaries` | `proof-conclusion` | — | `research_append`, `merge_tree_persons` | unit + hook — the hook denies the section unless the caller is the proof-conclusion **agent** |
 | | `evaluations` | `gps-mentor` | — | `research_append` | hook — the section is routed to the gps-mentor **agent** (issue #3191), so the main-thread write is denied too; the per-agent lanes already kept every other agent off it |
+| | `hit_verdicts` | `evaluate-search-results` | `merge_tree_persons`, by tool identity, re-keys `target_person_id` onto the merge survivor, folding a collapsed person's row into the survivor's on the same hit when the two agree and refusing the merge when they differ | `research_append`, `merge_tree_persons` | unit + hook + tool — the hook denies the section to every caller but the evaluate-search-results **agent**; `research_append` refuses a hit its `fulltext_search` log entry did not return, `new_vital_info: true` on a `not_a_match` or on a hit already extracted, and an update that re-points a row, and folds a second verdict on one hit and person into the first |
 | | `localities` | `locality-guide` | — | `research_append` | unit |
 | | `warning_justifications` | none — appended by the warning gate as a side effect of a justified tree write | — | `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` | **nothing** |
 | `tree.gedcomx.json` | `persons` | none by design — co-equal writers | `init-project`, `person-evidence`, `tree-edit`, `proof-conclusion`, `forget-and-rederive` | `project_create`, `tree_edit`, `tree_correct`, `materialize_facts`, `merge_tree_persons`, `tree_forget`, plus `research_append`/`extraction_append` for the assertion-backlink fact rewrite only (authorized by tool identity, not by adding a caller — `tree-materialization-spec.md` §4.4) | unit |
@@ -237,14 +241,16 @@ Three consequences worth holding onto:
   production paths hold every tool the server advertises. The three surfaces that
   actually bind are the writer tool's own preconditions, an agent's `tools:`,
   and the `PreToolUse` hook.
-- **Only one skill holds `research_query`** — `research` — and eleven
-  of the thirty agents, `search-records` among them. Everything else that needs project state does a whole-file
+- **Only one skill holds `research_query`** — `research` — and twelve
+  of the 31 agents, `search-records` among them. Everything else that needs project state does a whole-file
   `Read`, which is the thing the orchestrator forbids for itself because `research.json`
   reaches 100+ assertions by late run.
 - **The hook is the only plane that discriminates by caller**, in
   `packages/engine/plugin/hooks/guard_project_files.py`. On `research_append` it carries
-  six maps: `OWNED_SECTIONS` gives `proof_summaries` to proof-conclusion and
-  `person_evidence` and `rejected_links` to person-evidence; `OWNED_DECLARATIONS` gives a non-null
+  six maps: `OWNED_SECTIONS` gives `proof_summaries` to proof-conclusion,
+  `person_evidence` and `rejected_links` to person-evidence, `namesakes` to
+  search-records, `evaluations` to gps-mentor and `hit_verdicts` to
+  evaluate-search-results; `OWNED_DECLARATIONS` gives a non-null
   `search_stop.stopped_because` to research-exhaustiveness; `OWNED_FIELDS` gives
   `project.status` to proof-conclusion; `OWNED_CLAIMS` gives a conflict's resolve and
   analysis fields to conflict-resolution; `OWNED_APPENDS` gives creating a question to

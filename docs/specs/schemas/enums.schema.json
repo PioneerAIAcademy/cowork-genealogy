@@ -335,6 +335,14 @@
         "unreachable"
       ]
     },
+    "hit_verdict": {
+      "description": "A hit_verdicts row's verdict: whether a full-text search hit is about the row's target person (hit_verdicts section).",
+      "enum": [
+        "match",
+        "possible_match",
+        "not_a_match"
+      ]
+    },
     "iso_date": {
       "description": "ISO 8601 date (YYYY-MM-DD).",
       "type": "string",

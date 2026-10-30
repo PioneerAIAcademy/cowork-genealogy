@@ -265,7 +265,7 @@ Every top-level `research.json` section:
 | `conflicts`, `hypotheses`, `questions` | research notes (§4.4) |
 | `proof_summaries` | proof notes (§7) |
 | `timelines` | left out — re-derivable from the exported facts |
-| `log`, `plans`, `evaluations` | left out — process records, not conclusions |
+| `log`, `plans`, `evaluations`, `hit_verdicts` | left out — process records, not conclusions |
 | `localities` | left out — about a place, not a person |
 | `rejected_links`, `namesakes`, `warning_justifications` | left out — the tool's own bookkeeping |
 | `researcher_profile` | left out — narration settings |

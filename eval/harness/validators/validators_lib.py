@@ -43,6 +43,24 @@ def bare_tool_name(tool: str) -> str:
     return tool.split("__")[-1] if "__" in tool else tool
 
 
+_ARK_ID_RE = re.compile(r"ark:/61903/[0-9]:[0-9]:([A-Za-z0-9.-]+)")
+_TYPE_PREFIXED_ID_RE = re.compile(r"[0-9]:[0-9]:([A-Za-z0-9.-]+)")
+
+
+def bare_ark_id(value: Any) -> str:
+    """The id after the last `:` of a FamilySearch ARK, in its `ark:/`,
+    resolver-URL or bare type-prefixed (`3:1:<id>`) spelling; any other string
+    stripped and unchanged, and a non-string empty. Mirrors `arkToBareId`
+    (packages/engine/mcp-server/src/utils/ark.ts): its `ARK_CORE_RE` searched
+    anywhere, else its anchored `BARE_PREFIXED_RE`, with the id class
+    `[A-Za-z0-9.-]`, so a validator accepts either spelling of an id exactly
+    where the tool does. The pinned cases in
+    tests/unit/test_validators_lib.py are the TS function's outputs."""
+    text = value.strip() if isinstance(value, str) else ""
+    match = _ARK_ID_RE.search(text) or _TYPE_PREFIXED_ID_RE.fullmatch(text)
+    return match.group(1) if match else text
+
+
 def assert_no_section_deletions(
     before: dict[str, Any],
     after: dict[str, Any],

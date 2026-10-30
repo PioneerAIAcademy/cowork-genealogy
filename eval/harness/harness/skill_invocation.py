@@ -1343,6 +1343,12 @@ DEDICATED_AGENT_NAMES = frozenset(
         # it on the `log` row only because `build_external_search_url` could log
         # if handed a `projectPath`, which its body never passes.
         "where-else-to-search",
+        # A new agent (issue #3522), the person-evidence shape, section-scoped:
+        # the hook routes the whole `hit_verdicts` section to it, so every
+        # legitimate verdict on a full-text hit arrives from it, one spawn per
+        # hit. It writes nothing else; a Match is extracted by record-structurer
+        # on the next turn.
+        "evaluate-search-results",
         # Same shape as search-images and citation (issue #2120): a
         # cost-motivated conversion, no hook route. It writes `log` entries via
         # `research_log_append` and updates `plan_items` status via

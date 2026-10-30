@@ -66,7 +66,7 @@ from harness.ts_validator import validate_parsed
 # Python.
 #
 # It was called REQUIRED_SECTIONS and was neither: it omitted `evaluations`,
-# which the schema does require, and now carries two sections the schema makes
+# which the schema does require, and now carries sections the schema makes
 # optional. What it actually is is the diff set, so that is its name.
 #
 # Every top-level property EXCEPT `researcher_profile`, which is an object rather
@@ -83,6 +83,7 @@ DIFFED_SECTIONS = [
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
     "evaluations", "localities", "rejected_links", "namesakes",
+    "hit_verdicts",
 ]
 
 

@@ -31,6 +31,7 @@ import {
   pidOrStartingPerson,
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
+import { arkToBareId } from "../utils/ark.js";
 
 export interface MergeTreePersonsInput {
   projectPath: string;
@@ -79,6 +80,8 @@ export async function mergeTreePersons(
     // errors this merge introduces, not pre-existing drift (#1572). The
     // pre-merge `tree` is the before-tree; `merged` is the after-tree.
     const beforeResearch = structuredClone(research);
+    const hitVerdicts = foldHitVerdictCollisions(research, collapseMap);
+    if (hitVerdicts.refusals.length > 0) return { ok: false, errors: hitVerdicts.refusals };
     const researchRefsUpdated = remapResearchPersonIds(research, collapseMap);
 
     // 5. Validate the would-be project (remapped research + merged tree) before
@@ -136,7 +139,7 @@ export async function mergeTreePersons(
       researchRefsUpdated,
       validation: {
         valid: true,
-        warnings: [...treeSanitized.warnings, ...formatIssues(validation.warnings)],
+        warnings: [...treeSanitized.warnings, ...hitVerdicts.folded, ...formatIssues(validation.warnings)],
       },
     };
   } catch (e) {
@@ -170,6 +173,67 @@ export function joinedPairRefusals(tree: SimplifiedGedcomX, merges: Array<[strin
   ];
 }
 
+/** One row per (log_id, hit_id, target_person_id): a collapsed person's verdict
+ *  on a hit its survivor also has a verdict on would become a second row for
+ *  that key. When both give the same verdict and new_vital_info, the collapsed
+ *  person's row is removed from `research`, before the remap, and the survivor's
+ *  row, id and rationale stand; `folded` names each. When they differ, nothing
+ *  is removed and `refusals` names both rows. `hit_id` compares by bare id, as
+ *  research_append's fold does. */
+export function foldHitVerdictCollisions(
+  research: any,
+  collapseMap: ReadonlyMap<string, string>,
+): { refusals: string[]; folded: string[] } {
+  const rows: any[] = Array.isArray(research?.hit_verdicts) ? research.hit_verdicts : [];
+  const isRow = (r: any) => r !== null && typeof r === "object" && !Array.isArray(r);
+  const key = (r: any, personId: unknown) =>
+    `${String(r.log_id)}\u0000${arkToBareId(String(r.hit_id))}\u0000${String(personId)}`;
+  const byOwnKey = new Map<string, any>();
+  for (const r of rows) {
+    if (!isRow(r)) continue;
+    const k = key(r, r.target_person_id);
+    if (!byOwnKey.has(k)) byOwnKey.set(k, r);
+  }
+  const lines: string[] = [];
+  const folded: string[] = [];
+  const drop = new Set<any>();
+  for (const r of rows) {
+    if (!isRow(r)) continue;
+    const survivor = collapseMap.get(r.target_person_id);
+    if (survivor === undefined) continue;
+    const kept = byOwnKey.get(key(r, survivor));
+    if (!kept) continue;
+    if (kept.verdict === r.verdict && kept.new_vital_info === r.new_vital_info) {
+      drop.add(r);
+      folded.push(
+        `hit verdict '${r.id}' on '${r.target_person_id}' folded into '${kept.id}' on '${survivor}': both judge hit ` +
+          `'${kept.hit_id}' of ${kept.log_id} ${kept.verdict} with new_vital_info ${kept.new_vital_info}, so ` +
+          `'${kept.id}' and its rationale stand.`,
+      );
+      continue;
+    }
+    lines.push(
+      `hit verdicts '${kept.id}' on '${survivor}' (${kept.verdict}, new_vital_info ${kept.new_vital_info}) and ` +
+        `'${r.id}' on '${r.target_person_id}' (${r.verdict}, new_vital_info ${r.new_vital_info}) judge hit ` +
+        `'${kept.hit_id}' of ${kept.log_id} differently: this merge would make them two rows for one hit and person.`,
+    );
+  }
+  if (lines.length > 0) {
+    return {
+      refusals: [
+        ...lines,
+        "Nothing was written. A merge leaves one verdict per hit and person, so it folds the two rows only when " +
+          "they give the same verdict and new_vital_info. Bring each listed pair into agreement, then merge again: " +
+          "have evaluate-search-results re-judge the hit against one row's person, and its research_append updates " +
+          "that row's verdict.",
+      ],
+      folded: [],
+    };
+  }
+  if (drop.size > 0) research.hit_verdicts = rows.filter((r) => !drop.has(r));
+  return { refusals: [], folded };
+}
+
 /** A pair that would fold a FamilySearch or starting-tree person into one made
  *  during the run. The survivor keeps its id, and that id is what tells every
  *  later check the person was not made from one record. */
@@ -201,13 +265,15 @@ export const mergeTreePersonsSchema = {
     "tree): the survivor is kept, the collapsed person folds into it " +
     "(names/facts merged, never discarded) and is removed; relationships are " +
     "repointed. Every research.json reference to a collapsed id (subject persons, " +
-    "person_evidence, rejected_links, timelines, proof_summaries, namesakes) is " +
+    "person_evidence, rejected_links, timelines, proof_summaries, namesakes, hit_verdicts) is " +
     "repointed to the survivor. A merge is refused when a relationship joins the pair, " +
     "when it would fold a FamilySearch or starting-tree person into one made during the " +
     "run, or when it would move a link, or carry a record's data, under a recorded " +
     "namesake with nothing in that record tying it to the person, or when a link it moves " +
     "would fail a check research_append runs on that link (a contradicted birth, an " +
-    "unexplained move, or a match score not recorded for the survivor). " +
+    "unexplained move, or a match score not recorded for the survivor), or when the pair " +
+    "hold different verdicts on one full-text search hit (the same verdicts fold into the " +
+    "survivor's row). " +
     "Both files are written both-or-neither and NOT returned — you get a compact " +
     "summary including how many research references were updated. On a validation " +
     "failure nothing is written and `{ ok: false, errors }` is returned.",

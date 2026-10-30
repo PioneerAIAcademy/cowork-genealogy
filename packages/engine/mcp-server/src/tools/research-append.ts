@@ -71,7 +71,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId } from "../utils/ark.js";
-import { PERSONA_BEARING_PRODUCERS, isAcceptedHint } from "../utils/results-staging.js";
+import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
 // Re-exported for back-compat: tests and any other importer that reaches this
@@ -127,7 +127,8 @@ interface SectionConfig {
   /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
   nested?: { parent: string; param: "planId"; field: string };
   /** List sections only: the fields an `update` op may set. Absent, every field
-   *  but `id` is updatable. `namesakes` uses it so a row is never re-pointed. */
+   *  but `id` is updatable. `namesakes` and `hit_verdicts` use it so a row is
+   *  never re-pointed. */
   updatableFields?: string[];
   /** Singleton object section (e.g. `project`): `op:"update"` shallow-merges
    *  `fields` (restricted to `allowedFields`) onto the object in place — no
@@ -194,6 +195,13 @@ const SECTIONS: Record<string, SectionConfig> = {
     prefix: "ns_",
     stampTimestamp: CREATED_DATE,
     updatableFields: ["name", "place", "time_period", "record_ids", "log_entry_ids", "notes"],
+  },
+  // A verdict is never retired: log_id, hit_id and target_person_id name what
+  // it judged, so an update may change only the judgement.
+  hit_verdicts: {
+    prefix: "hv_",
+    stampTimestamp: CREATED_DATE,
+    updatableFields: ["verdict", "new_vital_info", "rationale"],
   },
   // Singleton metadata (one object, not a list): update-only field writes.
   // proof-conclusion sets `project.status: "completed"` here at the end of a
@@ -743,6 +751,33 @@ export function timelineCensus1890Invariants(entry: any): string[] {
     }
   }
   return errs;
+}
+
+/** The two write-time preconditions on a merged `hit_verdicts` row (spec §5):
+ *  `new_vital_info: true` is refused beside `not_a_match`, and on a hit some
+ *  assertion already cites by its bare id. Record-level, like
+ *  extraction_append's resend skip: an extracted hit is never extracted again,
+ *  so it has nothing new left to extract. Refuses a write only; a row written
+ *  `true` keeps it after its hit is extracted. */
+function hitVerdictInvariants(entry: any, research: any): string[] {
+  if (entry?.new_vital_info !== true) return [];
+  if (entry.verdict === "not_a_match") {
+    return [
+      `new_vital_info is true on a not_a_match verdict ('${entry.id}'): a hit that is not the ` +
+        "target holds no fact the target lacks. Set new_vital_info to false.",
+    ];
+  }
+  const bare = typeof entry.hit_id === "string" ? arkToBareId(entry.hit_id) : "";
+  if (bare === "") return [];
+  const citing = (Array.isArray(research?.assertions) ? research.assertions : []).find(
+    (a: any) => typeof a?.record_id === "string" && arkToBareId(a.record_id) === bare,
+  );
+  if (!citing) return [];
+  return [
+    `new_vital_info is true on '${entry.id}', but hit '${entry.hit_id}' is already extracted ` +
+      `(assertion '${citing.id}' cites it), so it has no new vital information left to extract. ` +
+      "Set new_vital_info to false.",
+  ];
 }
 
 function conflictInvariants(entry: any): string[] {
@@ -7565,6 +7600,18 @@ function applyOne(
       invariantErrors.push(...uncertainPreferenceInvariants(resultEntry, research));
     }
   }
+  // Either side, as declarationStatusInvariants: an update setting only the
+  // verdict can break the pair as surely as one setting the flag.
+  if (section === "hit_verdicts") {
+    const hvFields = op.fields ?? {};
+    if (
+      op.op === "append" ||
+      Object.prototype.hasOwnProperty.call(hvFields, "verdict") ||
+      Object.prototype.hasOwnProperty.call(hvFields, "new_vital_info")
+    ) {
+      invariantErrors.push(...hitVerdictInvariants(resultEntry, research));
+    }
+  }
   // US 1890 census backstop: on append, or an update that (re)sets `gaps`.
   // Scoped that way so an unrelated edit to a timeline written before this
   // rule existed is not refused.
@@ -8526,6 +8573,101 @@ function sidecarResultsReader(projectPath: string): (ref: string) => Promise<any
   };
 }
 
+/** The keys a `hit_verdicts` append carries that name what it judged. A fold
+ *  drops them, with the id and the stamp, so the update carries only the
+ *  judgement. */
+const HIT_VERDICT_IDENTITY = ["id", "log_id", "hit_id", "target_person_id", "created"];
+
+/** The judgement an append carries. A fold refuses one that leaves any of them
+ *  out, as a fresh append is refused, so an update never pairs a new verdict
+ *  with the old row's flag or rationale. */
+const HIT_VERDICT_JUDGEMENT = ["verdict", "new_vital_info", "rationale"];
+
+/** §3.10: each `hit_verdicts` append names a hit of a logged full-text search.
+ *  Refuses one whose log entry is not a `fulltext_search` with retained results,
+ *  or whose hit is not in them; rewrites `hit_id` to the stored form; and folds
+ *  an append for a (log_id, hit_id, target_person_id) that already has a row
+ *  into an update of it, so parallel evaluations of one hit leave one row; a
+ *  fold that leaves out part of the judgement is refused instead.
+ *  Pushes refusals onto `errors` and returns the fold warnings. */
+async function prepareHitVerdicts(
+  ops: ResearchAppendOp[],
+  research: any,
+  logById: ReadonlyMap<string, any>,
+  readSidecarResults: (ref: string) => Promise<any[] | null>,
+  fmt: (i: number, msg: string) => string,
+  errors: string[],
+): Promise<string[]> {
+  const warnings: string[] = [];
+  const stored: any[] = Array.isArray(research.hit_verdicts) ? research.hit_verdicts : [];
+  const key = (logId: unknown, hitId: unknown, personId: unknown) =>
+    `${String(logId)}\u0000${arkToBareId(String(hitId))}\u0000${String(personId)}`;
+  const appendedHere = new Map<string, number>();
+  for (let i = 0; i < ops.length; i++) {
+    const op = ops[i];
+    if (op.section !== "hit_verdicts" || op.op !== "append") continue;
+    const entry = op.entry as any;
+    // An entry carrying an id is left to applyOne's refusal: a fold would drop it.
+    if (!entry || typeof entry !== "object" || Array.isArray(entry) || (entry.id !== undefined && entry.id !== null)) continue;
+    const { log_id: logId, hit_id: hitId } = entry;
+    if (typeof logId !== "string" || typeof hitId !== "string" || hitId === "") continue;
+    const logEntry = logById.get(logId);
+    if (!logEntry) {
+      errors.push(fmt(i, `log_id '${logId}' names no log entry: a verdict judges a hit of a logged fulltext_search.`));
+      continue;
+    }
+    if (logEntry.tool !== "fulltext_search" || typeof logEntry.results_ref !== "string") {
+      errors.push(
+        fmt(
+          i,
+          `log_id '${logId}' is ${logEntry.tool !== "fulltext_search" ? `a ${logEntry.tool} entry` : "a fulltext_search that retained no results (results_ref is null)"}: ` +
+            "a verdict judges a hit of a logged fulltext_search whose results are retained.",
+        ),
+      );
+      continue;
+    }
+    const results = await readSidecarResults(logEntry.results_ref);
+    if (!results) {
+      errors.push(fmt(i, `${logId}'s results (${logEntry.results_ref}) cannot be read, so hit '${hitId}' cannot be checked.`));
+      continue;
+    }
+    const found = findFulltextHit(results, hitId);
+    if (!found) {
+      errors.push(fmt(i, `${logId}'s results hold no hit '${hitId}' (${results.length} hits): judge a hit that search returned.`));
+      continue;
+    }
+    entry.hit_id = found.row.id;
+    const k = key(logId, entry.hit_id, entry.target_person_id);
+    if (appendedHere.has(k)) {
+      errors.push(
+        fmt(
+          i,
+          `ops[${appendedHere.get(k)}] already judges hit '${entry.hit_id}' against '${entry.target_person_id}' in this call: send one verdict per hit and person.`,
+        ),
+      );
+      continue;
+    }
+    appendedHere.set(k, i);
+    const existing = stored.find(
+      (r: any) => r && typeof r === "object" && key(r.log_id, r.hit_id, r.target_person_id) === k,
+    );
+    if (!existing || typeof existing.id !== "string") continue;
+    const missing = HIT_VERDICT_JUDGEMENT.filter((f) => entry[f] === undefined);
+    if (missing.length > 0) {
+      for (const f of missing) errors.push(fmt(i, `missing required field '${f}'`));
+      continue;
+    }
+    const fields: Record<string, unknown> = { ...entry };
+    for (const f of HIT_VERDICT_IDENTITY) delete fields[f];
+    ops[i] = { section: "hit_verdicts", op: "update", entryId: existing.id, fields };
+    warnings.push(
+      `hit '${entry.hit_id}' of ${logId} already has a verdict on '${entry.target_person_id}' ` +
+        `(${existing.id}); this append updated it.`,
+    );
+  }
+  return warnings;
+}
+
 /** Pre-processes a batch before commit: §3.4.1 source-reuse auto-detection
  *  (including updates-only batches), §3.4.2 verdict sidecar, §3.4.3 re-extraction
  *  guard, sourceDescription → tree S entry, auto-stamp source_id, D2 persona
@@ -9120,6 +9262,9 @@ async function prepareOps(
       );
     }
   }
+
+  // ── hit_verdicts: the hit is in its search, stored once per person (§3.10) ──
+  warnings.push(...(await prepareHitVerdicts(ops, research, logById, readSidecarResults, fmt, errors)));
 
   // ── Derive transcription_truncated at the write boundary (#2457) ──
   // The truncation of an image read is known to image_transcribe, not to
@@ -10294,6 +10439,7 @@ export const RESEARCH_APPEND_SECTIONS = [
   "evaluations",
   "localities",
   "namesakes",
+  "hit_verdicts",
   "project",
   "researcher_profile",
 ] as const;

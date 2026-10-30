@@ -9,7 +9,8 @@
 
 ```
 sidecar_read({ projectPath, ref, offset?, maxChars? })
-  -> { ok: true, ref, totalChars, offset, content, truncated, nextOffset?, hitId?, hitIndex?, logId? }
+  -> { ok: true, ref, totalChars, offset, content, truncated, nextOffset?,
+       hitId?, hitIndex?, logId?, title?, recordDate?, recordPlace? }
    | { ok: false, reason: "no_project" | "invalid_ref" | "not_found" | "not_text", errors: string[] }
 
 sidecar_read({ projectPath, refs, maxChars? })
@@ -104,13 +105,18 @@ response to mirror.
   hitId?: string,       // the hit's `id` as the sidecar stores it
   hitIndex?: number,    // its 1-based position in the sidecar's `payload.results` — the viewer's card order
   logId?: string | null, // the finalized sidecar's `log_id`; null for a staged handle
+  // also on a hit read, each only when the hit's row carries it as a string (§7.1):
+  title?: string,       // the row's `title`, verbatim
+  recordDate?: string,  // the row's `recordDate`, verbatim
+  recordPlace?: string, // the row's `recordPlace`, verbatim
 }
 ```
 
 An `offset` at or past `totalChars` returns `content: ""`, `truncated: false`
 and no `nextOffset` — a legitimate empty page, not an error. On a hit read the
-text measured and paged is that hit's `textDocument`; a `#hits` read carries
-none of the three hit fields, and its text is the hit list (§7.1).
+text measured and paged is that hit's `textDocument`, and the six hit fields
+ride on every page of it; a `#hits` read carries none of them, and its text is
+the hit list (§7.1).
 
 ## 3. Ref rules
 
@@ -209,9 +215,11 @@ So the page is built in three steps:
 
 `truncated = offset + page.length < totalChars`; `nextOffset = offset +
 page.length` when truncated. The envelope's other fields add a few dozen
-characters, so the whole serialized result stays under ~41,000 and is never
-spillable. A caller pages by passing `nextOffset` back as `offset` until
-`truncated` is false.
+characters, or a few hundred on a hit read, whose `title` and `recordPlace` can
+each list several places (881 measured, the most on any committed full-text
+sidecar: `results/log_017.json#3Q9M-CSK3-ZSDZ` in the g9gj scenario), so the
+whole serialized result stays under ~41,000 and is never spillable. A caller
+pages by passing `nextOffset` back as `offset` until `truncated` is false.
 
 `offset` is a UTF-16 code-unit index, the same unit `content.length` and
 `totalChars` are measured in, so `offset + content.length` is always the right
@@ -343,6 +351,13 @@ machine transcript, and the hosted path has no `Read` to reach it.
   by §4, plus `hitId`, `hitIndex` and `logId` (§2.1). A whole sidecar's
   transcripts run far past one page, and a caller judging or extracting one hit
   needs that hit's text only; several hits are several refs in one `refs` call.
+- **A hit read carries its row's `title`, `recordDate` and `recordPlace`**,
+  each verbatim and only when the row holds it as a string, so a caller
+  judging one hit needs no `#hits` read beside it. The transcript alone
+  can lack them: hit 9 of the g9gj scenario's `log_017` (`3Q9M-CSK3-ZSLR`)
+  never names Jackson, which only its `recordPlace` gives. These are the same
+  three `#hits` lists, where an absent one is null; on a hit read an absent one
+  is left out.
 - **`#hits` lists the hits**, one JSON line each, with no transcript text:
   `{hitIndex, hitId, title, recordDate, recordPlace, hasTranscript, ref}`.
   `title`, `recordDate` and `recordPlace` are null when the hit has none;
@@ -475,12 +490,19 @@ One full-text hit (§7.1), on the committed real sidecar
 `eval/fixtures/scenarios/g9gj-proof-update-after-later-search/results/log_003.json`,
 whose 20 hits each carry a distinct transcript, so a wrong position or a wrong
 id can never read back the right text: hit 5 by full ARK, bare id and resolver
-URL returns its `textDocument` with `hitIndex: 5` and `logId: "log_003"`; a hit
-read from a staged copy carries `logId: null`; `#hits` gives 20 JSON lines with
-ids, positions and refs and no transcript text; a bare ref is `invalid_ref`
-naming 20 hits and `#hits`; two hit refs inside `refs`; a second page of one
-transcript by `offset: nextOffset`; an unknown hit is `not_found` naming 20, an
-empty selector `invalid_ref`, a missing file `not_found`; on
+URL returns its `textDocument` with `hitIndex: 5`, `logId: "log_003"` and its
+row's `title`, `recordDate` and `recordPlace` (asserted as literals, so a
+dropped field cannot match an `undefined` read off the fixture); hit 1, whose
+row has no `recordDate`, carries `title` and `recordPlace` and no `recordDate`
+key, and the flynn hit below carries `recordPlace` alone; a hit read from a
+staged copy carries `logId: null` and its `title`; `#hits` gives 20 JSON lines
+with ids, positions and refs and no transcript text, and carries none of the
+six hit fields on the result; a bare ref is `invalid_ref` naming 20 hits and
+`#hits`; two hit refs inside `refs`, the second with its `title` and
+`recordDate`; a second page of one transcript by `offset: nextOffset`, still
+carrying the hit's `hitIndex`, `title` and `recordDate`; an unknown hit is
+`not_found` naming 20, an empty selector `invalid_ref`, a missing file
+`not_found`; on
 `eval/fixtures/scenarios/research-competing-parent-sets-no-hypotheses/results/log_020.json`
 a hit with no transcript is `not_found` and `#hits` lists all five with
 `hasTranscript: false`; a hit stored under a resolver-URL id

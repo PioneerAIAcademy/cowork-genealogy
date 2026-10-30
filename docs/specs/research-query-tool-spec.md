@@ -47,6 +47,7 @@ research_query({
   section: "questions" | "plans" | "log" | "sources" | "assertions"
          | "person_evidence" | "rejected_links" | "conflicts" | "hypotheses" | "timelines"
          | "proof_summaries" | "evaluations" | "localities" | "namesakes"
+         | "hit_verdicts"
          | "external_collections",   // reads external-collections.json, not research.json — §2.4
   orderBy?: "review",            // person_evidence only — §2.5
   // well-known filters — only some apply to a given section; see §2.1.
@@ -104,6 +105,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | | `focus` | `focus` | exact |
 | `localities` | *(none)* | — | — |
 | `namesakes` | `personId` | `person_id` | exact |
+| `hit_verdicts` | `personId` | `target_person_id` | exact |
 | `external_collections` | `place` | `place` | the place or any enclosing jurisdiction |
 | | `recordType` | `record_types` | case-insensitive substring of any |
 
@@ -427,7 +429,7 @@ so that rule would be accepted and match nothing, ever.
 | A list repeats an id | collapses silently: one `countById` key, each item once |
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |
-| An **optional** section (one the schema does not list as `required` — today `localities`, `namesakes` and `rejected_links`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. A project carries `namesakes` only once a namesake is recorded. |
+| An **optional** section (one the schema does not list as `required` — today `localities`, `namesakes`, `rejected_links` and `hit_verdicts`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. A project carries `namesakes` only once a namesake is recorded, and `hit_verdicts` only once a search hit is evaluated. |
 | A **required** section is missing, or any section is present but not an array, or `research.json` parses to something that is not an object (`null`, an array, a string, a number) | `{ ok: false, errors }` |
 | `log` × `questionId`, `plans` missing or not an array | `{ ok: false, errors }` — `plans` is a required section, so its absence is a corrupt document, never a `count: 0` |
 | `log` × `questionId`, an entry with `plan_item_id: null` | never matches (the walk could not reach it either) |

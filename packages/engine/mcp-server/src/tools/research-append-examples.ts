@@ -259,6 +259,17 @@ const EXAMPLES: Record<string, string> = {
   "notes": "A different John Smith, a clerk, in the 1880 census of San Francisco",
   "created": "2026-10-16"
 }`,
+
+  // `hit_id` as the search returned it; the tool stores the sidecar's form.
+  hit_verdicts: `{
+  "log_id": "log_005",
+  "hit_id": "ark:/61903/3:1:3Q9M-CSK3-ZSLR",
+  "target_person_id": "I1",
+  "verdict": "match",
+  "new_vital_info": true,
+  "rationale": "The register names Patrick, son of Michael Flynn and Mary Doyle, baptised 12 May 1850 at Pottsville: name, parents and place fit the target, and the tree has no christening for him.",
+  "created": "2026-10-29"
+}`,
 };
 
 /** `project` is a singleton: update-only field writes, no `entry`. */

@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_evaluate_search_results_d9r",
+    "skill": "evaluate-search-results",
+    "name": "An Iram Hyde, gentleman of Dublin, swearing to an 1814 deed is Not a Match",
+    "type": "positive",
+    "description": "log_008 hit 6 (3Q9M-CSH3-QSQ3-K) is an Irish deed memorial of 1814-15 sworn by 'Iram Hyde of the City of Dublin Gentn' as a subscribing witness. Gold (PLAN §4, to be confirmed by a genealogist before the paid run): Not a Match, because it is the same name in another country, an adult gentleman of Dublin when Iram, born about 1797 in New Hampshire, was about seventeen, and nothing ties the two. The delegation names no target, so the agent takes the project's subject, I1.",
+    "tags": [
+      "hit-verdict",
+      "expect-not-a-match",
+      "no-new-vital",
+      "not-extracted",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Evaluate this full-text search hit.\n\nprojectPath: <workspace>\nhitRef: results/log_008.json#3Q9M-CSH3-QSQ3-K",
+    "scenario": "g9gj-proof-update-after-later-search"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: the delegation is relayed verbatim to evaluate-search-results and no router is staged. project_context, sidecar_read, tree_query and research_append run live against the scenario. The delegation names no target, so the agent judges the hit against the project's subject, I1 Iram F. Hyde.",
+    "Gold: Not a Match, no new vital information, not already extracted. The hit is an Irish deed memorial (Fermanagh and Tyrone, 1814-15) in which 'Iram Hyde of the City of Dublin Gentn' swears that he witnessed a deed. Iram F. Hyde was born about 1797 in New Hampshire and lived in Jackson, New York; an Irish gentleman witnessing deeds in Dublin in 1814 is a different man of the same name.",
+    "A Not a Match carries no new vital information, so the flag is false.",
+    "The verdict, the flag, the single hit_verdicts row, the one read of the hit, the tree_query call and the contract lines are checked by validators. Grade whether the rationale names the facts that decide them, and the plain summary after the `---`."
+  ]
+}

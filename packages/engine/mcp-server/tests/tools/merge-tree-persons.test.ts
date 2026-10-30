@@ -95,6 +95,7 @@ describe("merge_tree_persons", () => {
       timelines: 1,
       proof_summaries: 0,
       namesakes: 0,
+      hit_verdicts: 0,
     });
     expect(result.newRelatives).toEqual([]);
 
@@ -775,6 +776,75 @@ describe("merge_tree_persons: pair and namesake checks", () => {
     }));
     expect((await readResearch()).namesakes[0].person_id).toBe(T);
     expect(r.researchRefsUpdated.namesakes).toBe(1);
+  });
+
+  it("MS6h re-keys a hit verdict's target onto the survivor", async () => {
+    const p = project({ persons: [person(T, "John", "Smith"), person("I13", "John", "Smith")] });
+    Object.assign(p.research, {
+      log: [{
+        id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "fulltext_search",
+        query: { text: "John Smith" }, outcome: "positive", results_examined: 1, results_ref: null,
+        results_available: 1, notes: null, external_site: null,
+      }],
+      hit_verdicts: [{
+        id: "hv_001", log_id: "log_001", hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR", target_person_id: "I13",
+        verdict: "match", new_vital_info: false, rationale: "Names John Smith.", created: "2026-01-02",
+      }],
+    });
+    const r = await merged([[T, "I13"]], p);
+    expect((await readResearch()).hit_verdicts[0].target_person_id).toBe(T);
+    expect(r.researchRefsUpdated.hit_verdicts).toBe(1);
+  });
+
+  const HIT = "ark:/61903/3:1:3Q9M-CSK3-ZSLR";
+  const verdictRow = (id: string, personId: string, extra: Record<string, unknown> = {}) => ({
+    id, log_id: "log_001", hit_id: HIT, target_person_id: personId,
+    verdict: "match", new_vital_info: false, rationale: `Judged against ${personId}.`, created: "2026-01-02", ...extra,
+  });
+  const withVerdicts = (rows: any[]) => {
+    const p = project({ persons: [person(T, "John", "Smith"), person("I13", "John", "Smith")] });
+    Object.assign(p.research, {
+      log: ["log_001", "log_002"].map((id) => ({
+        id, plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "fulltext_search",
+        query: { text: "John Smith" }, outcome: "positive", results_examined: 1, results_ref: null,
+        results_available: 1, notes: null, external_site: null,
+      })),
+      hit_verdicts: rows,
+    });
+    return p;
+  };
+
+  it.each([
+    ["the survivor's row first", [verdictRow("hv_001", T), verdictRow("hv_002", "I13", { hit_id: `https://www.familysearch.org/${HIT}` })], "hv_001", "hv_002"],
+    ["the folded person's row first", [verdictRow("hv_001", "I13"), verdictRow("hv_002", T)], "hv_002", "hv_001"],
+  ])("MS6ha folds the folded person's agreeing verdict into the survivor's row, %s", async (_order, rows, kept, gone) => {
+    const r = await merged([[T, "I13"]], withVerdicts([...rows, verdictRow("hv_003", "I13", { log_id: "log_002" })]));
+    const stored = (await readResearch()).hit_verdicts;
+    expect(stored.map((h: any) => [h.id, h.target_person_id])).toEqual([[kept, T], ["hv_003", T]]);
+    expect(stored[0]).toEqual(rows.find((h: any) => h.id === kept));
+    expect(r.researchRefsUpdated.hit_verdicts).toBe(1);
+    expect(r.validation.warnings.join("\n")).toContain(
+      `hit verdict '${gone}' on 'I13' folded into '${kept}' on '${T}': both judge hit '${HIT}' of log_001 match with new_vital_info false`,
+    );
+  });
+
+  it.each([
+    ["the verdict", { verdict: "not_a_match" }, "(match, new_vital_info false)", "(not_a_match, new_vital_info false)"],
+    ["new_vital_info", { new_vital_info: true }, "(match, new_vital_info false)", "(match, new_vital_info true)"],
+  ])("MF6h refuses a merge whose two verdicts on one hit differ in %s, writing nothing", async (_what, differs, survivorSays, foldedSays) => {
+    const m = await refusedText([[T, "I13"]], withVerdicts([verdictRow("hv_001", T), verdictRow("hv_002", "I13", differs)]));
+    expect(m).toContain(
+      `hit verdicts 'hv_001' on '${T}' ${survivorSays} and 'hv_002' on 'I13' ${foldedSays} judge hit '${HIT}' of log_001 differently`,
+    );
+    expect(m).toContain("Bring each listed pair into agreement, then merge again");
+    expect(m).toContain("its research_append updates that row's verdict");
+  });
+
+  it("MS6hp leaves a duplicate the folded person already held to the validator, as old", async () => {
+    const r = await merged([[T, "I13"]], withVerdicts([verdictRow("hv_001", "I13"), verdictRow("hv_002", "I13", { verdict: "not_a_match" })]));
+    expect((await readResearch()).hit_verdicts.map((h: any) => h.target_person_id)).toEqual([T, T]);
+    expect(r.researchRefsUpdated.hit_verdicts).toBe(2);
+    expect(r.validation.warnings.join("\n")).toContain("this project has 1 pre-existing schema error(s) not caused by this call");
   });
 
   it("MS7 does not judge a row holder outside the pair, though a merged relative now reaches his record", async () => {

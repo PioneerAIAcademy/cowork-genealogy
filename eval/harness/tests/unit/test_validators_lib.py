@@ -18,6 +18,7 @@ from validators_lib import (  # noqa: E402
     assert_log_append_only,
     assert_no_section_deletions,
     assert_only_writes_to_sections,
+    bare_ark_id,
     check_no_gate_stop,
     new_log_entries,
     new_section_entries,
@@ -301,3 +302,40 @@ def test_missing_research_json_returns_empty_so_callers_must_skip_first():
     `validator_runner` records a bare pass as evidence the invariant held."""
     assert check_no_gate_stop({"research_json": None}, _state(_q())) == []
     assert check_no_gate_stop(_state(_q()), {"research_json": None}) == []
+
+
+# --- bare_ark_id: the reduction arkToBareId (mcp-server/src/utils/ark.ts) applies ---
+
+
+@pytest.mark.parametrize(
+    "value, bare",
+    [
+        ("ark:/61903/4:1:KGS8-LY1", "KGS8-LY1"),
+        ("https://familysearch.org/ark:/61903/1:1:QPRC-WPBZ", "QPRC-WPBZ"),
+        ("https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSK3-ZSLR?cc=1916", "3Q9M-CSK3-ZSLR"),
+        ("3:1:3Q9M-CSK3-ZSLR", "3Q9M-CSK3-ZSLR"),
+        ("  1:1:QPRC-WPBZ\n", "QPRC-WPBZ"),
+        ("ark:/61903/1:1:AB.CD", "AB.CD"),
+        ("3:1:AB.CD", "AB.CD"),
+        ("ark:/61903/1:1:AB_CD", "AB"),
+        ("KGS8-LY1", "KGS8-LY1"),
+        (" 3Q9M-CSK3-ZSLR ", "3Q9M-CSK3-ZSLR"),
+        ("x3:1:ABC", "x3:1:ABC"),
+        ("3:1:AB CD", "3:1:AB CD"),
+        ("3:1:", "3:1:"),
+        ("log_017", "log_017"),
+        ("", ""),
+    ],
+    ids=[
+        "tree-ark", "resolver-url", "url-with-query", "type-prefixed", "type-prefixed-padded",
+        "dotted-ark", "dotted-type-prefixed", "underscore-ends-the-id", "already-bare", "bare-padded",
+        "prefix-not-at-start", "prefixed-with-a-space", "prefix-with-no-id", "not-an-ark", "empty",
+    ],
+)
+def test_bare_ark_id_matches_ark_to_bare_id(value, bare):
+    assert bare_ark_id(value) == bare
+
+
+@pytest.mark.parametrize("value", [None, 17, ["3:1:ABC"]])
+def test_bare_ark_id_of_a_non_string_is_empty(value):
+    assert bare_ark_id(value) == ""

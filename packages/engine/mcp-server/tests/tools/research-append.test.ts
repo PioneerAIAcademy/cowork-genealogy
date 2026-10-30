@@ -11949,6 +11949,20 @@ describe("research_append — worked examples are themselves valid", () => {
         notes: null,
         external_site: null,
       },
+      // The full-text search whose hit the hit_verdicts example judges.
+      {
+        id: "log_005",
+        plan_item_id: null,
+        performed: "2026-07-18",
+        tool: "fulltext_search",
+        query: "Patrick Flynn Pottsville",
+        outcome: "positive",
+        results_examined: 1,
+        results_ref: "results/log_005.json",
+        results_available: 1,
+        notes: null,
+        external_site: null,
+      },
     ];
     r.sources = [validSource("src_001"), { ...validSource("src_004") }];
     // The person_evidence example now carries a real match_score (#1731 step 3),
@@ -12046,6 +12060,18 @@ describe("research_append — worked examples are themselves valid", () => {
     },
   };
 
+  /** Staged full-text hits for log_005 — the hit_verdicts example names one,
+   *  and research_append refuses a hit its search did not return. */
+  const fulltextSidecar = {
+    log_id: "log_005",
+    tool: "fulltext_search",
+    retrieved: "2026-07-18T14:00:00Z",
+    returned_count: 1,
+    payload: {
+      results: [{ id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR", title: "Pottsville baptisms", textDocument: "Patrick Flynn bapt." }],
+    },
+  };
+
   // Derived from the registry, so an example added for a new section is
   // round-tripped without anyone remembering to list it here.
   const SECTIONS_WITH_EXAMPLES = Object.keys(__testing.EXAMPLES);
@@ -12069,6 +12095,7 @@ describe("research_append — worked examples are themselves valid", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });
     await writeFile(join(dir, "results", "log_004.json"), JSON.stringify(sidecar, null, 2));
+    await writeFile(join(dir, "results", "log_005.json"), JSON.stringify(fulltextSidecar, null, 2));
     await attestEveryAssertion(dir);
 
     const entry = JSON.parse(__testing.EXAMPLES[section]);

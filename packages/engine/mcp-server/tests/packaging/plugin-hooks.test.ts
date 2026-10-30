@@ -898,6 +898,67 @@ describe("the guard script's decisions", () => {
     })).toEqual({});
   });
 
+  // ── caller-routed sections: research_append + hit_verdicts (issue #3522) ──
+  //
+  // Section-scoped like namesakes. The router spawns one evaluate-search-results
+  // agent per full-text hit; the main thread that ran the search, and the
+  // search-full-text agent that returned the hit list, must not label the hits.
+  const HV_OWNER = "genealogy-research:evaluate-search-results";
+  const HV_ENTRY = {
+    log_id: "log_017",
+    hit_id: "3Q9M-CSK3-ZSLR",
+    target_person_id: "I1",
+    verdict: "match",
+    new_vital_info: true,
+    rationale: "Names Iram Hyde in Jackson with his wife Mary and a daughter Christina.",
+  };
+
+  it.each([
+    ["append, no agent_id (main thread)", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, {}],
+    ["update in place, no agent_id", { section: "hit_verdicts", op: "update", entryId: "hv_001", fields: { verdict: "possible_match" } }, {}],
+    ["agent_type present but agent_id absent", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { agent_type: HV_OWNER }],
+    ["a general-purpose stand-in", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { agent_id: "a1", agent_type: "general-purpose" }],
+    ["the search-full-text agent", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { agent_id: "a1", agent_type: "genealogy-research:search-full-text" }],
+    ["the gps-mentor agent", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { agent_id: "a1", agent_type: GM_OWNER }],
+    ["batched with a legitimate plan_items update", { ops: [
+      { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_009", fields: { status: "completed" } },
+      { section: "hit_verdicts", op: "append", entry: HV_ENTRY },
+    ] }, {}],
+    ["stringified ops", { ops: JSON.stringify([{ section: "hit_verdicts", op: "append", entry: HV_ENTRY }]) }, {}],
+  ])("denies research_append on hit_verdicts — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:evaluate-search-results");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["namespaced agent_type, as production reports it", HV_OWNER, { section: "hit_verdicts", op: "append", entry: HV_ENTRY }],
+    ["bare agent_type", "evaluate-search-results", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }],
+    ["an update of its own row", HV_OWNER, { section: "hit_verdicts", op: "update", entryId: "hv_001", fields: { verdict: "possible_match", new_vital_info: false } }],
+    ["the ops form", HV_OWNER, { ops: [{ section: "hit_verdicts", op: "append", entry: HV_ENTRY }] }],
+  ])("permits the evaluate-search-results agent — %s", (_label, agent_type, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, agent_id: "agent-1", agent_type });
+    expect(out).toEqual({});
+  });
+
+  it.each([
+    ["a source for the Match it labelled", { section: "sources", op: "append", entry: {} }, "sources"],
+    ["the search's plan item status", { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_009", fields: { status: "completed" } }, "plan_items"],
+    ["a hypothesis", { section: "hypotheses", op: "append", entry: {} }, "hypotheses"],
+    [
+      "its verdict batched with a source",
+      { ops: [{ section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { section: "sources", op: "append", entry: {} }] },
+      "sources",
+    ],
+  ])("denies the evaluate-search-results agent a section outside its own lane — %s", (_label, tool_input, section) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, agent_id: "agent-1", agent_type: HV_OWNER });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(`research.json's \`${section}\``);
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("you may write `hit_verdicts` and nothing else");
+  });
+
   // ── claim-routed: conflicts (issue #1852) ──
   //
   // CLAIM-scoped over several fields, not section-scoped: six skills open a
