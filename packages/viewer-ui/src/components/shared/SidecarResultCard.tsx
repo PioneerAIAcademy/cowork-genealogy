@@ -167,7 +167,10 @@ function RecordSearchBody({
 }): React.JSX.Element {
   const persons = result.gedcomx?.persons ?? []
   const relationships = result.gedcomx?.relationships ?? []
-  const ordered = orderPersons(persons, result.primaryId, relationships)
+  // `primaryId` is optional in the engine, and this component already reads
+  // '' as "no primary" (see PersonRow's `primaryId !== ''`).
+  const primaryId = result.primaryId ?? ''
+  const ordered = orderPersons(persons, primaryId, relationships)
 
   return (
     <div className={styles.body}>
@@ -178,7 +181,7 @@ function RecordSearchBody({
             <PersonRow
               key={p.id}
               person={p}
-              primaryId={result.primaryId}
+              primaryId={primaryId}
               primaryRelationships={relationships}
               focusPersonaId={focusPersonaId}
             />
@@ -190,47 +193,65 @@ function RecordSearchBody({
         <div className={styles.treeMatches}>
           <div className={styles.sectionLabel}>Tree matches</div>
           <ul className={styles.treeMatchList}>
-            {result.treeMatches.map((tm) => (
-              <li key={tm.personId} className={styles.treeMatchItem}>
-                <span>{tm.personName}</span>
-                {tm.treeId && (
-                  <>
-                    {' — tree '}
-                    <code className={styles.treeId}>{tm.treeId}</code>
-                  </>
-                )}
-                {/* Gated on RESOLVABILITY, not truthiness — matching PersonCard. A value
-                    the policy refuses renders a button that opens nothing, which
-                    PersonCard's own test calls worse than no button (#2049 review). */}
-                {tm.ark && resolveFamilySearchTarget(tm.ark) && (
-                  <>
-                    {' · '}
-                    <button
-                      type="button"
-                      className={styles.externalLink}
-                      onClick={() => openFamilySearch(tm.ark)}
-                    >
-                      View →
-                    </button>
-                  </>
-                )}
-              </li>
-            ))}
+            {result.treeMatches.map((tm, i) => {
+              // Sidecar payloads are untyped at runtime (research-schema-spec
+              // §5.4.1) and reach this component through a cast, so a row
+              // without a PID is possible. Skip it rather than render an empty
+              // chip under `key={undefined}`, which collides across rows.
+              if (!tm.treePersonId) return null
+              return (
+                <li key={`${tm.treePersonId}-${i}`} className={styles.treeMatchItem}>
+                  <code className={styles.treeId}>{tm.treePersonId}</code>
+                  {typeof tm.stars === 'number' && (
+                    <>
+                      {' · '}
+                      <span className={styles.treeStars}>
+                        {tm.stars}/5<span className={styles.srOnly}> match confidence</span>
+                      </span>
+                    </>
+                  )}
+                  {/* Gated on RESOLVABILITY, not truthiness — matching PersonCard. A value
+                      the policy refuses renders a button that opens nothing, which
+                      PersonCard's own test calls worse than no button (#2049 review). */}
+                  {resolveFamilySearchTarget(tm.treePersonId) && (
+                    <>
+                      {' · '}
+                      <button
+                        type="button"
+                        className={styles.externalLink}
+                        aria-label={`View ${tm.treePersonId} in FamilySearch`}
+                        onClick={() => openFamilySearch(tm.treePersonId)}
+                      >
+                        View →
+                      </button>
+                    </>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </div>
       )}
 
-      {result.arkUrl && resolveFamilySearchTarget(result.arkUrl) && (
-        <div className={styles.footerLink}>
-          <button
-            type="button"
-            className={styles.externalLink}
-            onClick={() => openFamilySearch(result.arkUrl)}
-          >
-            Open in FamilySearch →
-          </button>
-        </div>
-      )}
+      {/* `arkUrl` is the record_read adapter's synthesized field and what the
+          mock agent and sample seeds emit; a real `record_search` sidecar
+          carries `recordArk` instead, so without the fallback the footer link
+          never rendered for real data. */}
+      {(() => {
+        const footerArk = result.arkUrl ?? result.recordArk
+        if (!footerArk || !resolveFamilySearchTarget(footerArk)) return null
+        return (
+          <div className={styles.footerLink}>
+            <button
+              type="button"
+              className={styles.externalLink}
+              onClick={() => openFamilySearch(footerArk)}
+            >
+              Open in FamilySearch →
+            </button>
+          </div>
+        )
+      })()}
     </div>
   )
 }

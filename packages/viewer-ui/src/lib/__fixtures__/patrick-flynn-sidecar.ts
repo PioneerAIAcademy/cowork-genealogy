@@ -14,7 +14,6 @@ export const patrickFlynnSidecar: SidecarFile = {
     results: [
       {
         primaryId: 'P1',
-        personId: 'KW7C-X9P',
         personName: 'Patrick Flynn',
         score: 0.94,
         arkUrl: 'https://www.familysearch.org/ark:/61903/1:1:MXYZ',
@@ -65,18 +64,8 @@ export const patrickFlynnSidecar: SidecarFile = {
           ]
         },
         treeMatches: [
-          {
-            personId: 'KW7C-X9P',
-            personName: 'Patrick Flynn (Schuylkill County)',
-            treeId: 'KW7C-X9P',
-            ark: 'https://www.familysearch.org/tree/person/KW7C-X9P'
-          },
-          {
-            personId: 'LZ5J-2RT',
-            personName: 'Patrick J. Flynn',
-            treeId: 'LZ5J-2RT',
-            ark: 'https://www.familysearch.org/tree/person/LZ5J-2RT'
-          }
+          { treePersonId: 'KW7C-X9P', stars: 5 },
+          { treePersonId: 'LZ5J-2RT', stars: 3 }
         ]
       }
     ]

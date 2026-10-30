@@ -1,0 +1,342 @@
+{
+  "run_log": "v1_2026-10-28_17-38-18.json",
+  "annotator": "adeyinkaadedayo1024@mail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_images_d6",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d6",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d6",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d6",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d6",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d6",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d1",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_d5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Two problems. The reply never says 008116090 is a mixed film with the will book as one item-section among several (it lists \"Wills/Estate Records/Loose Probate Papers\" and drops Land and Property Deeds). And it asserts a \"digitization fault where the same scan was repeated 22 times\" from identical OCR on six sampled pages — an inference stated as fact. Its pointer to the existing ARK in src_006 is correct; I checked the scenario."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Right film (008116090, not the tax film 007512883). The log notes do list all three coverages, but neither the log nor the reply says the will book is one item-section among several bound on the roll, and the reply drops the deeds. The judge context makes that recognition the pass bar, so partial."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The log entry is wrong. It records resultsExamined 15 of 15 and outcome positive, but only 4 pages were read, and its own notes say \"Pages not yet read individually — triage follows\" — it was written before any page was read and never updated. A later exhaustiveness audit would wrongly believe all 15 images were examined."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

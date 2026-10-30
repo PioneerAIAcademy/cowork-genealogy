@@ -9,6 +9,7 @@ import {
   receivedKeys,
 } from "../utils/fs-image-fetch.js";
 import { imageViewerUrl } from "../utils/ark.js";
+import { imageGroupPlace } from "../utils/image-group.js";
 import {
   saveSourceImage,
   recordImageReadCap,
@@ -17,8 +18,8 @@ import {
 import { expandLookingFor } from "../utils/name-variants.js";
 import {
   runOcr,
+  runFoundCheck,
   buildOcrPrompt,
-  parseFound,
   OCR_TIMEOUT_MS,
   OCR_MAX_TOKENS,
   MAX_OCR_INPUT_BYTES,
@@ -149,6 +150,8 @@ export async function imageTranscribeTool(
   let resolvedMemoryUrl = "";
   let apiKey: string;
   let model: string;
+  // The staged page's place: its FamilySearch image group's coverage place.
+  let groupPlace: Promise<string | null> = Promise.resolve(null);
 
   if (input.file !== undefined) {
     // An uploaded image or PDF already inside the project folder (issue #2048).
@@ -201,8 +204,8 @@ export async function imageTranscribeTool(
     // the host check, unchanged.
     //
     // This resolution lives HERE, not in resolveFsImageInput, on purpose.
-    // `ImageReadInput extends FsImageInput`, so image_read already accepts
-    // memoryArtifactUrl without advertising it — lifting the resolve into the
+    // `ImageReadInput extends FsImageInput`, so a direct image_read call can
+    // carry memoryArtifactUrl (server.ts refuses it over MCP) — lifting the resolve into the
     // shared resolver would quietly give image_read page-URL support, against
     // the image_transcribe-only ruling (lead, 2026-09-29; placement confirmed
     // 2026-09-30). image_read would also mostly pay the lookup and then refuse
@@ -232,6 +235,12 @@ export async function imageTranscribeTool(
     apiKey = await getOpenRouterApiKey(principal);
     model = await getOpenRouterModel(principal);
 
+    // Looked up beside the page fetch and the OCR, for the staged element only.
+    // It never throws: any failure leaves the page without a place.
+    if (input.projectPath && (input.imageId !== undefined || input.ark !== undefined)) {
+      groupPlace = imageGroupPlace({ imageId: input.imageId, ark: input.ark }, principal);
+    }
+
     const fetched = await fetchFsImageBytes(
       resolved.url,
       resolved.fallbackUrl,
@@ -245,12 +254,19 @@ export async function imageTranscribeTool(
   }
 
   // Expand recognized given names in lookingFor with historical diminutives
-  // (issue #607). The VLM reads this as natural language, so all forms
-  // (including scribal abbreviations with periods) are included.
+  // (issue #607). The model reads this as natural language, so all forms
+  // (including scribal abbreviations with periods) are included. It feeds ONLY
+  // the text-only found check below — never the OCR prompt, where a hinted name
+  // primes the read to return it in rows the page does not have (issue #3718).
   const lookingForExpansion = input.lookingFor
     ? expandLookingFor(input.lookingFor)
     : null;
   const expandedLookingFor = lookingForExpansion?.expanded ?? input.lookingFor;
+
+  // One budget spans the OCR read AND the found check: the second call runs on
+  // what the first leaves, so lookingFor never widens this leg's worst case.
+  const ocrBudgetMs = Math.max(1, Math.min(opts.ocrTimeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS));
+  const ocrStartedAt = Date.now();
 
   // The transport, the size refusal, the single transport retry, the status
   // triage and the truncation detection all live in utils/ocr.ts (issue #2183)
@@ -259,10 +275,10 @@ export async function imageTranscribeTool(
     bytes,
     contentType,
     sizeBytes,
-    prompt: buildOcrPrompt(expandedLookingFor),
+    prompt: buildOcrPrompt(),
     apiKey,
     model,
-    timeoutMs: opts.ocrTimeoutMs,
+    timeoutMs: ocrBudgetMs,
     maxTokens: OCR_MAX_TOKENS,
   });
   const transcription = ocr.text;
@@ -310,11 +326,27 @@ export async function imageTranscribeTool(
     if (imageRef) recordImageReadCap(input.projectPath, imageRef, truncated);
   }
 
-  // Suppress found on a truncated read: the FOUND/NOT FOUND marker rides a final
-  // line the model never reached, and a target may sit below the cut — a
-  // half-read page must never yield a clean NOT FOUND negative (#1974).
+  // `found` comes from a SECOND, text-only call over the transcription — the
+  // OCR prompt carries no lookingFor (issue #3718). Skipped on a truncated
+  // read: a target may sit below the cut, so a half-read page must never yield
+  // a clean NOT FOUND negative (#1974). Best-effort — any failure omits `found`
+  // (the transcription is the primary payload) — and it runs BEFORE staging so
+  // the staged element and the digest carry it.
   const key = input.lookingFor?.trim();
-  const found = key && !truncated ? parseFound(transcription) : undefined;
+  let found: "FOUND" | "NOT FOUND" | undefined;
+  if (key && !truncated) {
+    try {
+      found = await runFoundCheck({
+        transcription,
+        lookingFor: expandedLookingFor ?? key,
+        apiKey,
+        model,
+        timeoutMs: Math.max(1, ocrBudgetMs - (Date.now() - ocrStartedAt)),
+      });
+    } catch {
+      found = undefined;
+    }
+  }
 
   // Stage the transcription (issue #2489, merged into #2048): the same channel
   // the search tools use, as a ONE-element results[] so finalize's invariants
@@ -326,14 +358,16 @@ export async function imageTranscribeTool(
   let digest: ImageTranscribeResult["digest"];
   if (input.projectPath) {
     const id = input.file !== undefined ? captureIdFor(input.file) : label;
+    const given = {
+      ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
+      ...(input.ark !== undefined ? { ark: input.ark } : {}),
+      ...(input.memoryArtifactUrl !== undefined ? { memoryArtifactUrl: input.memoryArtifactUrl } : {}),
+      ...(input.file !== undefined ? { file: input.file } : {}),
+    };
+    const place = await groupPlace;
     const element: StagedTranscription = {
       id,
-      source: {
-        ...(input.imageId !== undefined ? { imageId: input.imageId } : {}),
-        ...(input.ark !== undefined ? { ark: input.ark } : {}),
-        ...(input.memoryArtifactUrl !== undefined ? { memoryArtifactUrl: input.memoryArtifactUrl } : {}),
-        ...(input.file !== undefined ? { file: input.file } : {}),
-      },
+      source: { ...given, ...(place ? { place } : {}) },
       content_type: contentType,
       size_bytes: sizeBytes,
       model,
@@ -347,7 +381,7 @@ export async function imageTranscribeTool(
         projectPath: input.projectPath,
         tool: "image_transcribe",
         response: {
-          query: { ...element.source, ...(input.lookingFor ? { lookingFor: input.lookingFor } : {}) },
+          query: { ...given, ...(input.lookingFor ? { lookingFor: input.lookingFor } : {}) },
           results: [element],
         },
       });

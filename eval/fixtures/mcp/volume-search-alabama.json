@@ -8,20 +8,20 @@
     "query": {
       "standardPlace": "Alabama, United States",
       "startYear": 1798,
-      "endYear": 1820
+      "endYear": 1820,
+      "pageSize": 50
     },
     "totalResults": 2,
     "results": [
       {
         "imageGroupNumber": "004512889",
-        "imageGroupPrefix": "004512889",
         "imageCount": 214,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Alabama, United States",
+            "places": ["Alabama, United States"],
             "dateRange": "1808-1819",
             "recordType": "Territorial court and land records"
           }
@@ -29,14 +29,13 @@
       },
       {
         "imageGroupNumber": "004512890",
-        "imageGroupPrefix": "004512890",
         "imageCount": 96,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Washington, Alabama, United States",
+            "places": ["Washington, Alabama, United States"],
             "dateRange": "1803-1820",
             "recordType": "County deed and probate records"
           }

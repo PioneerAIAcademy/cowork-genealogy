@@ -21,6 +21,14 @@ vi.mock("../../src/utils/fs-image-fetch.js", async (importOriginal) => {
   return { ...actual, fetchFsImageBytes: fetchFsImageBytesMock };
 });
 
+// The image-group place lookup asks FamilySearch over the stubbed fetch; it is
+// stubbed itself so it never takes an OpenRouter response. No place by default.
+const imageGroupPlaceMock = vi.hoisted(() => vi.fn());
+vi.mock("../../src/utils/image-group.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/image-group.js")>();
+  return { ...actual, imageGroupPlace: imageGroupPlaceMock };
+});
+
 import {
   imageTranscribeTool,
   imageTranscribeMcpTool,
@@ -123,6 +131,8 @@ beforeEach(() => {
     contentType: "image/jpeg",
     sizeBytes: 3,
   });
+  imageGroupPlaceMock.mockReset();
+  imageGroupPlaceMock.mockResolvedValue(null);
 });
 
 afterEach(() => {
@@ -275,19 +285,40 @@ describe("imageTranscribeTool — ark URL query-param forwarding", () => {
   });
 });
 
-describe("imageTranscribeTool — lookingFor", () => {
-  it("sets found=FOUND from the marker and keeps the full transcription", async () => {
-    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family\nFOUND");
+describe("imageTranscribeTool — lookingFor (second text-only call, issue #3718)", () => {
+  it("keeps lookingFor OUT of the OCR prompt and derives found from a second, text-only call", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family"); // the OCR read
+    mockOpenRouterOk("FOUND"); // the found check
     const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
     }, LOCAL);
     expect(result.found).toBe("FOUND");
-    expect(result.transcription).toContain("Schreck family");
+    expect(result.transcription).toBe("Row 1: Anna\nRow 2: Schreck family");
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    // First call: the OCR read — image attached, NO caller content in the
+    // prompt (a hinted name primes the read to return it in rows the page does
+    // not have — measured 5/5 primed vs 0/5 unprimed, spec §5.3.1).
+    const ocrBody = JSON.parse((mockFetch.mock.calls[0] as [string, RequestInit])[1].body as string);
+    const ocrParts = ocrBody.messages[0].content as Array<{ type: string; text?: string }>;
+    expect(ocrParts.some((p) => p.type === "image_url")).toBe(true);
+    expect(ocrParts[0].text).not.toContain("Schreck");
+    expect(ocrParts[0].text).not.toContain("FOUND");
+    // Second call: text-only — the key and the transcription, no image part.
+    const checkBody = JSON.parse((mockFetch.mock.calls[1] as [string, RequestInit])[1].body as string);
+    const checkParts = checkBody.messages[0].content as Array<{ type: string; text?: string }>;
+    expect(checkParts.some((p) => p.type === "image_url")).toBe(false);
+    expect(checkParts[0].text).toContain('"Schreck"');
+    expect(checkParts[0].text).toContain("Row 2: Schreck family");
+    expect(checkBody.model).toBe(MODEL);
+    expect(checkBody.temperature).toBe(0);
+    expect(checkBody.provider).toEqual({ data_collection: "deny" });
   });
 
-  it("sets found=NOT FOUND when the marker says so", async () => {
-    mockOpenRouterOk("Row 1: Anna\nRow 2: Weber\nNOT FOUND");
+  it("sets found=NOT FOUND from the second call's marker", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Weber");
+    mockOpenRouterOk("NOT FOUND");
     const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
@@ -295,13 +326,52 @@ describe("imageTranscribeTool — lookingFor", () => {
     expect(result.found).toBe("NOT FOUND");
   });
 
-  it("does not spoof found from body text — only the final-line marker counts", async () => {
+  it("runs the found check on what is left of the caller's budget, never a fresh one", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 429,
+      statusText: "Too Many Requests",
+      headers: new Headers({ "retry-after": "6" }),
+      json: async () => ({}),
+      text: async () => "",
+    });
+    mockOpenRouterOk("FOUND");
+    const result = await transcribe(
+      { imageId: "004884748_02613", lookingFor: "Schreck" },
+      LOCAL,
+      { ocrTimeoutMs: 5_000 },
+    );
+    expect(result.found).toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  }, 15_000);
+
+  it("does not spoof found from the check reply's body text — only its final-line marker counts", async () => {
     mockOpenRouterOk("Entry: infant found abandoned, no surname given.");
+    mockOpenRouterOk("An infant was found abandoned, but the page names no Schreck anywhere.");
     const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
     }, LOCAL);
     expect(result.found).toBeUndefined();
+  });
+
+  it("omits found — transcription intact — when the second call fails", async () => {
+    mockOpenRouterOk("Row 1: Anna\nRow 2: Schreck family");
+    mockOpenRouterStatus(500, "upstream error");
+    const result = await transcribe({
+      imageId: "004884748_02613",
+      lookingFor: "Schreck",
+    }, LOCAL);
+    expect(result.found).toBeUndefined();
+    expect(result.transcription).toBe("Row 1: Anna\nRow 2: Schreck family");
+  });
+
+  it("makes no second call when lookingFor is absent", async () => {
+    mockOpenRouterOk("Row 1: Anna");
+    const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
+    expect(result.found).toBeUndefined();
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -324,14 +394,16 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     expect(result.truncationNotice).toBeUndefined();
   });
 
-  it("suppresses found on a truncated read — a half-read page is never a clean NOT FOUND", async () => {
-    mockOpenRouterOk("Row 1: Weber\nRow 2: Braun\nNOT FOUND", "length");
+  it("skips the found check on a truncated read — a half-read page is never a clean NOT FOUND", async () => {
+    mockOpenRouterOk("Row 1: Weber\nRow 2: Braun", "length");
     const result = await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Schreck",
     }, LOCAL);
     expect(result.truncated).toBe(true);
     expect(result.found).toBeUndefined();
+    // The second call is not merely ignored — it is never made.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it("sends an explicit max_tokens so the cap is ours and reproducible", async () => {
@@ -384,16 +456,29 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     expect(result.found).toBeUndefined();
   });
 
-  it("suppresses a would-be FOUND on a truncated read, not only NOT FOUND (@yinkid28)", async () => {
-    // The NOT-FOUND suppression is the harm case, but FOUND must be suppressed
-    // too: on a half-read page even a positive marker is untrustworthy.
-    mockOpenRouterOk("Row 1: Schreck family\nFOUND", "length");
-    const result = await transcribe({
-      imageId: "004884748_02613",
-      lookingFor: "Schreck",
-    }, LOCAL);
-    expect(result.truncated).toBe(true);
-    expect(result.found).toBeUndefined();
+  it("withholds found from the staged element and the digest too on a truncated read (@yinkid28)", async () => {
+    // The NOT-FOUND suppression is the harm case, but the withhold must reach
+    // every surface a caller triages on — the staged element and the digest,
+    // not only the top-level field.
+    mockOpenRouterOk("Row 1: Schreck family", "length");
+    const dir = await mkdtemp(join(tmpdir(), "imgt-trunc-found-"));
+    try {
+      const result = await transcribe({
+        imageId: "004884748_02613",
+        lookingFor: "Schreck",
+        projectPath: dir,
+      }, LOCAL);
+      expect(result.truncated).toBe(true);
+      expect(result.found).toBeUndefined();
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(result.digest).not.toHaveProperty("found");
+      expect(result.digest?.truncated).toBe(true);
+      const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+      expect(envelope.payload.results[0]).not.toHaveProperty("found");
+      expect(envelope.payload.results[0].truncated).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it("throws an empty-cap-aware error when a cap binds with no content, never shipping truncated beside empty text (spec §5.6/§6.2)", async () => {
@@ -500,9 +585,11 @@ describe("imageTranscribeTool — records the truncation cap at the call site (#
       const r1 = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
       expect(r1.truncated).toBe(true);
       expect(sourceImageCapState(dir, r1.imageRef!)).toBe(true);
-      // Read 2: same image, narrower lookingFor, comes back uncapped — being add-only
-      // it records nothing, so it cannot clear read 1's partial.
+      // Read 2: same image, uncapped this time (the provider is not
+      // deterministic) — being add-only it records nothing, so it cannot clear
+      // read 1's partial. The lookingFor adds the text-only found check.
       mockOpenRouterOk("Anna");
+      mockOpenRouterOk("FOUND");
       const r2 = await transcribe({ imageId: "004884748_02613", lookingFor: "Anna", projectPath: dir }, LOCAL);
       expect(r2.truncated).toBeUndefined();
       expect(sourceImageCapState(dir, r2.imageRef!)).toBe(true); // sticky — still partial
@@ -980,39 +1067,48 @@ describe("imageTranscribeTool — hard image cap (#3010, spec §5.8)", () => {
 });
 
 describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607)", () => {
-  it("expands a recognized given name in the OCR prompt", async () => {
-    mockOpenRouterOk("Betty Martin, christened 1 November 1812\nFOUND");
+  it("expands a recognized given name in the found-check prompt, never the OCR prompt", async () => {
+    mockOpenRouterOk("Betty Martin, christened 1 November 1812");
+    mockOpenRouterOk("FOUND");
 
     await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Elizabeth Martin",
     }, LOCAL);
 
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-    const prompt: string = body.messages[0].content[0].text;
-    // The prompt should include variant forms
-    expect(prompt).toContain("also known as");
-    expect(prompt).toContain("Betty");
-    expect(prompt).toContain("Bess");
+    // The OCR prompt carries no caller content at all (issue #3718).
+    const ocrBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+    const ocrPrompt: string = ocrBody.messages[0].content[0].text;
+    expect(ocrPrompt).not.toContain("also known as");
+    expect(ocrPrompt).not.toContain("Elizabeth");
+    expect(ocrPrompt).not.toContain("Betty");
+    // The found check gets the variant forms.
+    const checkBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+    const checkPrompt: string = checkBody.messages[0].content[0].text;
+    expect(checkPrompt).toContain("also known as");
+    expect(checkPrompt).toContain("Betty");
+    expect(checkPrompt).toContain("Bess");
   });
 
   it("does not expand when lookingFor has no recognized given name", async () => {
-    mockOpenRouterOk("Patrick Flynn, witness\nFOUND");
+    mockOpenRouterOk("Patrick Flynn, witness");
+    mockOpenRouterOk("FOUND");
 
     await transcribe({
       imageId: "004884748_02613",
       lookingFor: "Patrick Flynn",
     }, LOCAL);
 
-    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-    const prompt: string = body.messages[0].content[0].text;
-    // No expansion — bare name only
-    expect(prompt).not.toContain("also known as");
-    expect(prompt).toContain('"Patrick Flynn"');
+    const checkBody = JSON.parse(mockFetch.mock.calls[1][1].body);
+    const checkPrompt: string = checkBody.messages[0].content[0].text;
+    // No expansion — bare name only, in the found check.
+    expect(checkPrompt).not.toContain("also known as");
+    expect(checkPrompt).toContain('"Patrick Flynn"');
   });
 
-  it("FOUND/NOT FOUND parsing still works with expanded prompt", async () => {
-    mockOpenRouterOk("Betty Martin, christened 1812\nFOUND");
+  it("FOUND/NOT FOUND parsing still works on an expanded found check", async () => {
+    mockOpenRouterOk("Betty Martin, christened 1812");
+    mockOpenRouterOk("FOUND");
 
     const result = await transcribe({
       imageId: "004884748_02613",
@@ -1034,7 +1130,8 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   });
 
   it("includes nameExpansion in response when expansion fires", async () => {
-    mockOpenRouterOk("Betty Martin, christened 1 November 1812\nFOUND");
+    mockOpenRouterOk("Betty Martin, christened 1 November 1812");
+    mockOpenRouterOk("FOUND");
 
     const result = await transcribe({
       imageId: "004884748_02613",
@@ -1048,7 +1145,8 @@ describe("imageTranscribeTool — given-name expansion in lookingFor (issue #607
   });
 
   it("omits nameExpansion when no recognized given name", async () => {
-    mockOpenRouterOk("Patrick Flynn, witness\nFOUND");
+    mockOpenRouterOk("Patrick Flynn, witness");
+    mockOpenRouterOk("FOUND");
 
     const result = await transcribe({
       imageId: "004884748_02613",
@@ -1321,7 +1419,8 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
 
   it("stages the transcription and returns a non-null staged.resultsRef with a one-element results[]", async () => {
     await writeFile(join(dir, "uploads", "obit.jpg"), JPEG);
-    mockOpenRouterOk("Obituary text\nFOUND");
+    mockOpenRouterOk("Obituary text");
+    mockOpenRouterOk("FOUND"); // the text-only found check (issue #3718)
     const result = await transcribe(
       { file: "uploads/obit.jpg", projectPath: dir, lookingFor: "Mays" },
       LOCAL,
@@ -1337,13 +1436,15 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     expect(envelope.returned_count).toBe(1);
     expect(envelope.payload.query).toEqual({ file: "uploads/obit.jpg", lookingFor: "Mays" });
     expect(envelope.payload.results).toHaveLength(1);
+    // The staged element and the digest carry the second call's verdict — the
+    // transcription itself no longer ends in a FOUND/NOT FOUND line.
     expect(envelope.payload.results[0]).toMatchObject({
       id: "capture:obit",
       source: { file: "uploads/obit.jpg" },
       content_type: "image/jpeg",
       size_bytes: JPEG.length,
       model: MODEL,
-      transcription: "Obituary text\nFOUND",
+      transcription: "Obituary text",
       found: "FOUND",
     });
     // A `file` input is never copied under images/, so there is no scan to cite.
@@ -1351,8 +1452,8 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
 
     expect(result.digest).toEqual({
       id: "capture:obit",
-      chars: "Obituary text\nFOUND".length,
-      excerpt: "Obituary text\nFOUND",
+      chars: "Obituary text".length,
+      excerpt: "Obituary text",
       found: "FOUND",
     });
   });
@@ -1387,6 +1488,92 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     const result = await transcribe({ imageId: "004884748_02613" }, LOCAL);
     expect(result.staged).toBeUndefined();
     expect(result.digest).toBeUndefined();
+    expect(imageGroupPlaceMock, "no staged page, so no place to look up").not.toHaveBeenCalled();
+  });
+
+  it("saves a FamilySearch page's image-group place on the staged source, and keeps it out of the query", async () => {
+    imageGroupPlaceMock.mockResolvedValue("Trumbull, Ohio, United States");
+    mockOpenRouterOk("Deed of sale");
+    mockOpenRouterOk("NOT FOUND"); // the found check for lookingFor
+    const result = await transcribe({ imageId: "004884748_02613", projectPath: dir, lookingFor: "Mays" }, LOCAL);
+    expect(imageGroupPlaceMock).toHaveBeenCalledWith({ imageId: "004884748_02613", ark: undefined }, LOCAL);
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].source).toEqual({
+      imageId: "004884748_02613",
+      place: "Trumbull, Ohio, United States",
+    });
+    expect(envelope.payload.query).toEqual({ imageId: "004884748_02613", lookingFor: "Mays" });
+  });
+
+  it("looks up an ark's image-group place by the ark it read", async () => {
+    imageGroupPlaceMock.mockResolvedValue("Trumbull, Ohio, United States");
+    mockOpenRouterOk("Deed of sale");
+    const result = await transcribe(
+      { imageArk: "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WJ-M3P?i=4&cc=1", projectPath: dir },
+      LOCAL,
+    );
+    expect(imageGroupPlaceMock).toHaveBeenCalledWith(
+      { imageId: undefined, ark: "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WJ-M3P?i=4&cc=1" },
+      LOCAL,
+    );
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].source.place).toBe("Trumbull, Ohio, United States");
+  });
+
+  it("looks the place up beside the page fetch and the OCR, waiting for it only to stage the page", async () => {
+    // The lookup settles when the OCR request goes out, or after a second.
+    let settledBy: string | undefined;
+    let release: (by: string) => void = () => {};
+    imageGroupPlaceMock.mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          const timer = setTimeout(() => release("the timer"), 1_000);
+          release = (by) => {
+            clearTimeout(timer);
+            settledBy ??= by;
+            resolve("Trumbull, Ohio, United States");
+          };
+        }),
+    );
+    mockFetch.mockImplementationOnce(async () => {
+      release("the OCR request");
+      return {
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => ({ choices: [{ message: { content: "Deed of sale" }, finish_reason: "stop" }] }),
+        text: async () => "",
+      };
+    });
+    const result = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect(settledBy).toBe("the OCR request");
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].source.place).toBe("Trumbull, Ohio, United States");
+  });
+
+  it("stages no place when the lookup finds none", async () => {
+    mockOpenRouterOk("Deed of sale");
+    const result = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
+    expect(imageGroupPlaceMock).toHaveBeenCalledTimes(1);
+    const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].source).toEqual({ imageId: "004884748_02613" });
+  });
+
+  it("looks up no place for an uploaded file or a memory", async () => {
+    imageGroupPlaceMock.mockResolvedValue("Trumbull, Ohio, United States");
+    await writeFile(join(dir, "uploads", "scan.jpg"), JPEG);
+    mockOpenRouterOk("an upload");
+    const upload = await transcribe({ file: "uploads/scan.jpg", projectPath: dir }, LOCAL);
+    mockOpenRouterOk("a memory");
+    const memory = await transcribe(
+      { memoryArtifactUrl: "https://sg30p0.familysearch.org/ark:/61903/3:1:ABCD/v2/12345/dist.jpg?ctx=x", projectPath: dir },
+      LOCAL,
+    );
+    expect(imageGroupPlaceMock).not.toHaveBeenCalled();
+    for (const r of [upload, memory]) {
+      const envelope = JSON.parse(await readFile(join(dir, r.staged!.resultsRef), "utf8"));
+      expect(envelope.payload.results[0].source).not.toHaveProperty("place");
+    }
   });
 
   it("a staging failure is non-fatal: the text still returns, with staged: null and the reason", async () => {
@@ -1415,8 +1602,9 @@ describe("imageTranscribeMcpTool — returns a ref, not the page (#2490)", () =>
   });
 
   it("drops the inline transcription once staged; the staged file keeps it", async () => {
-    const page = "Johann Schreck\nFOUND";
+    const page = "Johann Schreck";
     mockOpenRouterOk(page);
+    mockOpenRouterOk("FOUND"); // the text-only found check
     const r = await imageTranscribeMcpTool(
       { imageId: "004884748_02613", projectPath: dir, lookingFor: "Schreck" },
       LOCAL,

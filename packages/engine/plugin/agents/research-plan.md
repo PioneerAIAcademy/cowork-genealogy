@@ -142,7 +142,7 @@ subject triggers** (Step 3 pre-work) and **write the plan**:
 | `project_context`, `research_query`, `external_links_search` | FS-curated third-party collections, stored per place (Step 2(b)) |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
-| `person_read` | The question person's FamilySearch profile — relatives, facts and attached sources the project tree lacks. Never a relative's profile: the parents it proposes are leads to plan searches for |
+| `person_read` | The question person's FamilySearch profile — relatives, facts and attached sources the project tree lacks. Never a project subject's (plan them from the project tree), and never a relative's profile: the parents it proposes are leads to plan searches for |
 | `wiki_read` | One FamilySearch wiki record-type page by constructed URL, for the Step 3 pre-work triggers only |
 | `research_append` | Write `plans` / `plan_items` (assigns ids, validates, enforces the one-active-plan invariant) |
 
@@ -175,18 +175,16 @@ the target question** before you pick the mode.)
 timeline at setup, and a `gaps` entry at `severity: "high"` on the current
 question's subject is a search to plan: the records that would fill that span.
 Plan it as an item like any other, with its own record type and jurisdiction.
-Until the router's priority 3 is rewritten, question-selection still turns the
-same gap into a question, so the same ground may be searched twice in that
-window; plan it anyway, because an unplanned high gap is the one nobody
-searches.
 
 **Verify the starting point (BCG Standard 11).** Before planning,
 check whether starting-point facts are documented or merely assumed.
 Flag unsupported assumptions (e.g., "widow = mother of all children")
 and add plan items to verify them before relying on them.
 
-**Read the question person's FamilySearch profile first.** For each
-person the question is about whose tree entry has an `ark`, call
+**Read the question person's FamilySearch profile first, unless they are a
+project subject.** Plan a person in `project_context`'s `subjectPersonIds` from the
+project tree, and never call `person_read` for them. For every other person the
+question's text names whose tree entry has an `ark`, call
 `person_read({ personId, projectPath })` with the id after the ark's last `:`, before
 writing any plan item. Whatever it holds that the project tree lacks —
 parents, spouses, facts, attached sources — is a lead: state it in the
@@ -547,6 +545,8 @@ table and contextual factors checklist.
 
 ### 4. Sequence the plan items
 
+**On an identity or parentage question whose person has an `ark` in `tree.gedcomx.json`, make the first item a review of that person's pending FamilySearch hints.** Emit one plan item at `sequence: 1` with `record_type: "fs_hints"`, `repository: "FamilySearch"`, and the `rationale` "Review pending FamilySearch hints on <PID> before searching — an attached hint may already answer the question.", where <PID> is the id at the end of that `ark` (e.g. `ZZKR-TH2`). Emit none when the person has no `ark`, and none on any other question.
+
 Order items for efficient discovery (BCG Standard 15):
 
 1. **Highest probability first** — indexed sources where the subject
@@ -779,15 +779,16 @@ re-issue it first. Then present the plan:
   like "...and start executing it," "...and continue with exhaustive
   research," or "...don't stop to check in with me" — hand execution back to
   your caller as already authorized instead of asking: search-records for
-  FamilySearch items, search-external-sites for others, naming the plan item
+  FamilySearch items, search-external-sites for others, search-hints for the
+  `fs_hints` hints-review item, naming the plan item
   and never the result you expect. You execute nothing yourself.
   If only some items can execute right now (e.g. one
   repository or tool is unavailable but another isn't), hand back those and
   report the block on the rest — don't let an item that's blocked for any
   reason hold up items that aren't.
 - Otherwise, suggest next step: "Would you like me to start executing this
-  plan?" (`search-records` / `search-external-sites`, depending on
-  the repositories)
+  plan?" (`search-records` / `search-external-sites` / `search-hints`, depending on
+  the item)
 - **A plan item that ends at an external archive the researcher must open
   themselves** (Archion, Matricula, a paid site): give the link — the parish or
   collection page, never just the site name — what the record would settle,
@@ -817,8 +818,8 @@ Ancestry (fallback), land records (fallback).
 | Situation | Action |
 |-----------|--------|
 | No `localities` entry exists for the jurisdiction you need to plan | Stop and return to the orchestrator noting the jurisdiction needs a locality survey — do **not** invoke `locality-guide` yourself. The orchestrator runs it, then re-invokes you |
-| Question is too vague to plan for | Return to `question-selection` to refine it |
-| All plan items exhausted, question unresolved | Set plan to `completed` (Termination, Step 6); exhaustiveness must be evaluated against the GPS stop criteria before this question is answered — a direct user runs `research-exhaustiveness`; an orchestrator routes there by the call its own routing row names. If exhaustiveness returns "not yet exhaustive," follow its recommendation — plan the gaps here as a new plan (Add-new mode), or hand back naming `question-selection` for a FAN pivot |
+| Question is too vague to plan for | Stop and ask the researcher to restate the question — a second question cannot be opened while this one is |
+| All plan items exhausted, question unresolved | Set plan to `completed` (Termination, Step 6); exhaustiveness must be evaluated against the GPS stop criteria before this question is answered — a direct user runs `research-exhaustiveness`; an orchestrator routes there by the call its own routing row names. If exhaustiveness returns "not yet exhaustive," follow its recommendation — plan the gaps here as a new plan (Add-new mode); a FAN pivot is items here too, on the subject's associates, neighbours or witnesses |
 | User says "start searching" | Hand back naming `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
 | The invoking message already authorizes continuing (e.g. "...and start executing," "...and continue with exhaustive research") | Hand execution back as authorized, in this same return — do not ask "would you like me to start?" first |
 
@@ -859,8 +860,8 @@ the caller, in this order:
 - when a baptism may not exist (Step 3), the `pli_` id of the item for the
   subject's own death or burial entry; if the plan has none, append it before
   you return
-- for a review, the next item and why; when nothing was written, the one-line
-  reason
+- for a review, the next item and why, then what follows it and why; when
+  nothing was written, the one-line reason
 - the hand-back: search-records for FamilySearch items, search-external-sites
   for the others, or the destination a routing case names, and whether the
   delegation already authorized execution

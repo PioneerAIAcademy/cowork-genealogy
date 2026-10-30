@@ -304,6 +304,10 @@ OWNED_FIELDS = _guard.OWNED_FIELDS
 #: status)`, routed on a conflict's analytical product. Same discipline.
 OWNED_CLAIMS = _guard.OWNED_CLAIMS
 
+#: The op-scoped map: `section -> owning agent`, routed on `op: "append"` only.
+#: Same discipline.
+OWNED_APPENDS = _guard.OWNED_APPENDS
+
 #: The shipped hook's own ownership predicate, re-exported rather than
 #: reimplemented. `e2e/orchestrator.py` carried a second copy of the rule until
 #: 2026-08-23 — it imported the map above and the reason text below, so the two
@@ -319,54 +323,17 @@ def owned_section_denial(denied: tuple[str, str, str]) -> dict[str, Any]:
     Takes `owner_denied`'s `(section, rule, caller)` triple directly, so there is
     no second shape to keep in step.
 
-    Built from the SHIPPED hook's own reason strings and maps, the same
-    import-don't-copy discipline `protected_file_denial` below follows, so the
-    harness denies with the text the agent meets in Cowork.
-
-    **Branch on `rule`, never on the shape of the first element.** A
-    `declaration` or `owned_field` denial carries a dotted `section.field` that
-    is a key in neither owner map, so an unconditional lookup raises `KeyError`
-    on exactly the arms this function was extended to serve. The `else` arm
-    indexes `AGENT_WRITABLE_SECTIONS[caller]`, and `caller` is `""` on the main
-    thread, so a new rule tag left to fall through there raises rather than
-    denying.
+    The text is the SHIPPED hook's own `deny_reason`, not a copy of its
+    rule-to-reason switch, so the harness denies with the text the agent meets
+    in Cowork and a new rule tag is added in one place.
 
     It cannot reuse `subagent_only_denial`: that one says the TOOL is reserved
     for a subagent, which is true of `image_read` and flatly false of
     `research_append` — the general writer, called from the main thread
-    constantly for plans, questions, conflicts and the log. An agent told
+    constantly for plans, conflicts and the log. An agent told
     otherwise stops writing all of them. Only the section is routed.
     """
-    section, rule, caller = denied
-
-    if rule == "routed":
-        reason = _guard.OWNER_REASON.format(
-            section=section, agent=_guard.OWNED_SECTIONS[section]
-        )
-    elif rule == "declaration":
-        owned_section, _, field = section.partition(".")
-        reason = _guard.DECLARATION_REASON.format(
-            section=owned_section,
-            field=field,
-            agent=_guard.OWNED_DECLARATIONS[(owned_section, field)],
-        )
-    elif rule == "owned_field":
-        owned_section, _, field = section.partition(".")
-        reason = _guard.OWNED_FIELD_REASON.format(
-            section=owned_section,
-            field=field,
-            agent=_guard.OWNED_FIELDS[(owned_section, field)],
-        )
-    elif rule == "claim":
-        owner, claim_fields, _status = _guard.OWNED_CLAIMS[section]
-        reason = _guard.CLAIM_REASON.format(
-            section=section,
-            fields=", ".join(f"`{f}`" for f in claim_fields),
-            agent=owner,
-        )
-    else:
-        allowed = ", ".join(f"`{s}`" for s in sorted(_guard.AGENT_WRITABLE_SECTIONS[caller]))
-        reason = _guard.OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
+    reason = _guard.deny_reason(denied)
 
     return {
         "hookSpecificOutput": {

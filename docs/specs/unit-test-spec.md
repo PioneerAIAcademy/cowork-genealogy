@@ -586,7 +586,7 @@ The machine-readable schema lives at [`docs/specs/schemas/unit-test.schema.json`
 | `name` | string | yes | Short human-readable name shown in the test list view |
 | `type` | string | yes | `"positive"` or `"negative"`. Determines which other fields are present |
 | `description` | string | yes | 1-2 sentences explaining what this test verifies and why it matters |
-| `tags` | string[] | yes | Tags for filtering and grouping, and validator gates: a tag-gated validator runs only on tests that carry its tag, so a tag is a grading input, not a label. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`). **Some tags are not freeform — they GATE a validator** and change what is asserted. `routes-to:<skill>` (the first hand-off), `delivers:<skill>` (one per deliverable on a compound bounded ask) and `ends-with-delivery` (the turn must end by calling `research_delivered`) are examples, not the list: `attached-first` gates one too, and several of the record-type tags above do double duty. Grep the skill's validator file for `tags` before assuming a tag is inert. A gating tag is an explicit opt-in, never inferred from a neighbour: `ends-with-delivery` is deliberately separate from `bounded-request` because `ut_research_023` is bounded in shape yet enters with `--autonomous`, where running the job is correct and delivering is the failure. Adding a gating tag to a test is a behavioural change, and `tags` is **not** cosmetic to the snapshot: it selects validators and changes outcome computation, so editing one stales the run log |
+| `tags` | string[] | yes | Tags for filtering and grouping, and validator gates: a tag-gated validator runs only on tests that carry its tag, so a tag is a grading input, not a label. May be empty. The UI uses these for filtering the test list. Useful tag dimensions: record type (`census`, `vital-record`, `probate`), time period (`1850`, `1860`), GPS concept (`informant-weighting`, `independence`, `negative-evidence`), test pattern (`near-miss`, `multi-person`, `stateless`). **Some tags are not freeform — they GATE a validator** and change what is asserted. `routes-to:<skill>` (the first hand-off) and `ends-with-delivery` (the turn must end by calling `research_delivered`) are examples, not the list: `attached-first` gates one too, and several of the record-type tags above do double duty. Grep the skill's validator file for `tags` before assuming a tag is inert. A gating tag is an explicit opt-in, never inferred from a neighbour: `ends-with-delivery` is deliberately separate from `bounded-request` because `ut_research_023` is bounded in shape yet enters with `--autonomous`, where running the job is correct and delivering is the failure. Adding a gating tag to a test is a behavioural change, and `tags` is **not** cosmetic to the snapshot: it selects validators and changes outcome computation, so editing one stales the run log |
 | `holdout` | boolean | no | `false` (default) or `true`. Holds this test out of the set `/improve-skill` forms edits from, so a fix can be judged against cases it was not written from. The harness runs holdout tests like any other; the flag governs only the improver — `gate-skill` **no longer reads it** (see the note below this table). Mark ~2-3 of a skill's tests holdout (diverse, representative ones — not the easy ones), and keep them stable across iterations. See `docs/skill-lifecycle.md` |
 | `expected_outcome` | string | no | **Retired (lead, 2026-10-06): add no new `"xfail"`.** `check_runlogs.py` rule 10 blocks any PR that touches a skill still carrying one, so the committed markers go when their skill is next edited, and rule 6 no longer suppresses a marked failure. That PR makes the test pass. If its fix belongs to another open issue, delete the test file instead (keep its scenario and MCP fixtures) and add "restore `<test id>` from git (deleted in PR #N) and make it pass 3 of 3" to that issue's done-when, naming any validator the deletion leaves with no test (lead, 2026-10-06). `"pass"` (default) or `"xfail"`; `run_tests.py` alone still reads a marked failure as suppressed in its exit code. |
 | `xfail_reason` | string | conditional | Required when `expected_outcome` is `"xfail"`. Brief explanation, ideally with an issue link and a removal condition (e.g., "blocked on <issue link>; remove when fixed") |
@@ -757,7 +757,8 @@ On a direct test the harness:
 - runs the main thread on the harness default model, never on the agent's
   `model:`. The agent runs as a subagent on its own `model:` and `effort:` (§11);
 - sends the main thread a harness-owned dispatcher prompt whose only instruction
-  is to relay `delegation` verbatim into `Agent{subagent_type: "<skill>"}`. The
+  is to relay `delegation` verbatim into `Agent{subagent_type: "<skill>"}`, after
+  replacing each `<workspace>` with the run's folder (forward slashes). The
   agent's name is the test's `skill`; a direct test whose skill has no
   same-named agent file is refused rather than silently spawning nothing;
 - decides the positive-test outcome on `agents_spawned` instead of
@@ -874,9 +875,10 @@ and one instructs the agent outright to *'verify all seven criteria now pass and
 issue the search_stop'*. Write the delegation as that caller writes
 one: the arguments the routing skill specifies (`questionId`, `projectPath`, and
 the like), plus whatever framing the twin is testing the agent's resistance to.
-A `<workspace>` placeholder in a path argument is fine — the live writer tools
-override `projectPath` with the run's workspace, and substituting it would break
-the verbatim assertion on both sides.
+Write a path argument as `<workspace>`. The harness replaces it with the run's
+folder in both the prompt the dispatcher relays and the delegation the verbatim
+assertion compares against; the judge still reads the raw text. Left literal, the
+placeholder read to a Haiku agent as "no project".
 
 **Read a twin against its routed original over several runs, never one, and
 never write a live rate into the test file.** Measuring the first five twins

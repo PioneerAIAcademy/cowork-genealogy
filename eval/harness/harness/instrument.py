@@ -16,8 +16,8 @@ a run log that its instrument moved since it was written (issue #2479, PR 3):
   serve; ``live`` is the remaining ``LIVE_TOOLS``, which every suite advertises.
 - ``live_modules`` -- the compiled entry module of each live tool a run called.
 
-The suite-specific halves (``validators.suite``, ``tools.fixture``) block;
-``validators.shared``, ``tools.live`` and ``live_modules`` warn, because a
+``validators.suite`` blocks. ``tools.fixture`` warns (lead, 2026-10-29), and
+so do ``validators.shared``, ``tools.live`` and ``live_modules``, because a
 blocking corpus-wide input would owe a paid re-run of every suite (decided
 2026-10-14 on issue #2479; see eval/CLAUDE.md, rule 2c).
 
@@ -55,6 +55,10 @@ LIVE_TOOLS: set[str] = {
     "tree_correct",
     "materialize_facts",
     "merge_warnings",
+    # A writer like tree_edit, with no network path. Live since 2026-10-25 (issue
+    # #3363): its refusals read the workspace's own documents, so no fixture can
+    # stand in for them, and before then no unit test could call it at all.
+    "merge_tree_persons",
     # Reads tree.gedcomx.json from the workspace. The compiled-tool handler
     # computes every tag from the workspace tree, so a live handler is more
     # faithful than a canned answer. Its one networked check
@@ -73,6 +77,7 @@ LIVE_TOOLS: set[str] = {
     # because allowed_tools' callee-fixture check exempts LIVE_TOOLS members.
     "person_quality",
     "project_context",
+    "tree_query",
     # The bounded-delivery signal. Live rather than fixture-backed because the
     # tool IS inert by contract -- no network, no auth, no project write; it
     # returns a fixed acknowledgement (`research-delivered.ts`) -- so running the
@@ -155,9 +160,11 @@ LIVE_MODULES: dict[str, str] = {
     "tree_correct": "tools/tree-correct.js",
     "materialize_facts": "tools/materialize-facts.js",
     "merge_warnings": "tools/merge-warnings.js",
+    "merge_tree_persons": "tools/merge-tree-persons.js",
     "person_warnings": "tools/person-warnings.js",
     "person_quality": "tools/person-quality.js",
     "project_context": "tools/project-context.js",
+    "tree_query": "tools/tree-query.js",
     "research_delivered": "tools/research-delivered.js",
     "research_query": "tools/research-query.js",
     "sidecar_read": "tools/sidecar-read.js",

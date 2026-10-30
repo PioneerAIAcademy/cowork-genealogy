@@ -22,6 +22,7 @@
     "Should recognize that pli_006 (probate search for Thomas Flynn 1870-1890) is still in_progress and that the in-flight plan should be completed before introducing new questions",
     "The correct outcome writes no new question while pli_006 is in_progress; there is no override. Naming a follow-up question the researcher could pursue once pli_006 completes is fine; writing one is a fail.",
     "Should reference the specific plan item (`pli_006`) by ID — not just 'the probate search' — so the recommendation is anchored in research.json state",
-    "GRADING NOTE — Question specificity: when the skill correctly defers adding a new question (no new question added), this dimension is N/A and should be scored null. Do NOT penalize the specificity of any hypothetical future questions mentioned in passing — those are illustrations, not the actual selection."
+    "GRADING NOTE — Question specificity: when the skill correctly defers adding a new question (no new question added), this dimension is N/A and should be scored null. Do NOT penalize the specificity of any hypothetical future questions mentioned in passing — those are illustrations, not the actual selection.",
+    "**`research_append` REFUSES a new question here** (step mode, section E): `q_001` is still `in_progress` and its active plan has an open item (`pli_006`). The exemption needs a proof summary AND nothing open; the summary alone is not enough. So writing a question is not a judgement call the agent can get right — the call fails. Report that the question is still open, name what is outstanding, and route the work there instead."
   ]
 }

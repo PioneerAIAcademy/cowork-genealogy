@@ -15,7 +15,7 @@ const EXEMPT = new Set([
   "store/fs-project-store.ts",
   "auth/config.ts",
   "auth/tokenManager.ts",
-  "utils/name-variants.ts",
+  "utils/bundled-data.ts",
   "utils/build-info.ts",
 ]);
 
