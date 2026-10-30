@@ -70,13 +70,15 @@ def test_passes_when_a_later_spawn_carries_it():
     ids=["paraphrased-as-a-no", "hedge-dropped", "tail-dropped", "year-changed", "dash-changed", "no-words"],
 )
 def test_fails_when_the_message_is_not_carried_verbatim(prompt):
-    with pytest.raises(AssertionError, match="verbatim"):
+    with pytest.raises(BaseException, match="verbatim") as excinfo:
         check(TEST, [_spawn("person-evidence", prompt)])
+    assert excinfo.typename == "AssertionError", excinfo.typename
 
 
 def test_fails_when_only_another_agent_carries_it():
-    with pytest.raises(AssertionError, match="no person-evidence spawn"):
+    with pytest.raises(BaseException, match="no person-evidence spawn") as excinfo:
         check(TEST, [_spawn("tree-edit", _prompt(WORDS))])
+    assert excinfo.typename == "AssertionError", excinfo.typename
 
 
 def test_skips_an_untagged_test():
