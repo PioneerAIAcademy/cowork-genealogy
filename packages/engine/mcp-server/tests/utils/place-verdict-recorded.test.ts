@@ -71,9 +71,9 @@ describe("a supplied standard_place must lie in the state, province and country 
     ["Whitehorse, Dewey, South Dakota", "Whitehorse, Yukon, Canada", "Whitehorse, Dewey, South Dakota, United States"],
     ["Hay River, Dunn, Wisconsin", "Hay River, Fort Smith, Northwest Territories, Canada", "Hay River, Dunn, Wisconsin, United States"],
     ["Placentia, Orange, California", "Placentia, Newfoundland and Labrador, Canada", "Placentia, Orange, California, United States"],
-    // Against the United States, a root FamilySearch ends is judged by the
-    // country of today it lies in: England, Wales and Scotland end in 1801 (the
-    // United Kingdom), Hamburg in 1871 (Germany), British Honduras in 1973 (Belize).
+    // A root FamilySearch ends is judged by the country of today it lies in, the
+    // United States' text as any other: England, Wales and Scotland end in 1801
+    // (the United Kingdom), Hamburg in 1871 (Germany), British Honduras in 1973 (Belize).
     ["Boston, Suffolk, Massachusetts", "Boston, Lincolnshire, England", "Boston, Suffolk, Massachusetts, United States"],
     ["Lancaster, Lancaster, Pennsylvania", "Lancaster, Lancashire, England", "Lancaster, Lancaster, Pennsylvania, United States"],
     ["Plymouth, Plymouth, Massachusetts", "Plymouth, Devon, England", "Plymouth, Plymouth, Massachusetts, United States"],
@@ -101,6 +101,13 @@ describe("a supplied standard_place must lie in the state, province and country 
     ],
     ["Grünau, Schlesien, Germany", "Grünau, Karasburg East, Karas, Namibia", "Grunau, Striegau, Silesia, Prussia, Germany"],
     ["Mariental, Braunschweig, Germany", "Mariental, Mariental Urban, Hardap, Namibia", "Mariental, Helmstedt, Brunswick, Germany"],
+    // So is a text's of another country: the Cape Colony, Natal and the South
+    // African Republic are South Africa's, British Colonial America the United States'.
+    ["Hamburg, Germany", "Hamburg, Berks, Pennsylvania, British Colonial America", "Hamburg, Germany"],
+    ["Heidelberg, Baden, Germany", "Heidelberg, Heidelberg, South African Republic", "Heidelberg, Baden, Germany"],
+    ["Heidelberg, Baden, Germany", "Heidelberg, Swellendam, Cape Colony", "Heidelberg, Baden, Germany"],
+    ["Hermannsburg, Hannover, Germany", "Hermannsburg, Umvoti, Umvoti, Natal", "Hermannsburg, Celle, Hanover, Prussia, Germany"],
+    ["Thornton, Lancashire, England", "Thornton, Cape, Cape Colony", "Thornton, Lancashire, England"],
   ])("refuses %j's %j as in another country, and takes the lookup", async (place, supplied, lookup) => {
     expect(await keptSupplied(place, supplied)).toEqual({ why: "it lies in a different country than the place" });
     expect(await judged(place, supplied)).toEqual({
@@ -176,6 +183,15 @@ describe("a supplied standard_place must lie in the state, province and country 
     expect(await countryContradiction(place, found)).toBe(false);
     // The value lies in another country than one whose empire held none of it.
     expect(await countryContradiction("Uppsala, Sweden", found)).toBe(true);
+  });
+
+  it.each([
+    // Luxembourg, which American records often call Germany, is one of its lands.
+    ["Wiltz, Luxemburg, Germany", "Wiltz, Wiltz, Luxembourg"],
+    ["Diekirch, Luxemburg, Germany", "Diekirch, Diekirch, Luxembourg"],
+    ["Echternach, Luxemburg, Germany", "Echternach, Echternach, Luxembourg"],
+  ])("keeps %j's %j, a land Germany's text takes", async (place, supplied) => {
+    expect(await keptSupplied(place, supplied)).toEqual({ kept: supplied });
   });
 
   it("reads no country from a state or province the value names itself", async () => {
@@ -347,9 +363,9 @@ describe("a US state or Canadian province names the one country that holds it", 
   });
 });
 
-describe("placeAnswer: a lookup fills a fact with none whatever its text names, as on main", () => {
+describe("placeAnswer: a lookup fills a text written as a name whatever it names, and prose only when it names it", () => {
   it.each([
-    // Texts of the e2e final trees, each filled right on main.
+    // Texts of the e2e final trees, each filled right by the lookup.
     ["West Topsham, Orange, Vermont", "Topsham, Orange, Vermont, United States"],
     ["Precinct 2, Hill, Texas", "Justice Precinct 2, Hill, Texas, United States"],
     ["Bystré 30, Polička, Čechy, Rakousko", "Bistrau, Polička, Bohemia"],
@@ -358,5 +374,18 @@ describe("placeAnswer: a lookup fills a fact with none whatever its text names, 
     ["<Simmesport, Avoyelles, Louisiana>", "Simmesport, Avoyelles, Louisiana, United States"],
   ])("fills %j with %j", async (place, lookup) => {
     expect(await placeAnswer(place, [], () => resolveStandardPlace(place))).toEqual({ standardPlace: lookup, from: "lookup" });
+  });
+
+  it("fills no lookup a prose text does not name", async () => {
+    // A text of the unit record-structurer runs, an obituary from Schuylkill
+    // County, Pennsylvania; the lookup's answer is a village in Ohio.
+    const place = "her residence, Centre Street, Ashland";
+    expect(await placeAnswer(place, [], () => resolveStandardPlace(place))).toEqual({
+      standardPlace: null,
+      why: "unconfirmed",
+      reason:
+        "the engine's place lookup answer 'McKay, Green Township, Ashland, Ohio, United States' could not be " +
+        "confirmed, as the text names neither a country nor that place",
+    });
   });
 });

@@ -16,7 +16,8 @@
  * 1. FamilySearch's own standardization of the same text on the records the
  *    fact cites (`RecordStandards`, research_append's Lever B copy). Two
  *    different values are doubt, and doubt is no standard_place;
- * 2. otherwise the writer's own lookup, as `main` fills it.
+ * 2. otherwise the writer's own lookup, whatever the text names, unless the
+ *    text is prose (`isProse`) and does not confirm it (`unconfirmedByText`).
  * A non-place phrase ("Same House") has none, and an answer naming a different
  * country than the text is dropped. A lookup that replaces a supplied value
  * must fit the text as the value had to.
@@ -41,10 +42,23 @@ export function placeTextKey(place: string): string {
 }
 
 /**
+ * A place text written as prose, not as a name: its first comma part, the
+ * place's own name, has lowercase letters and no capital ("with his
+ * daughter", "at the home of her daughter, Mrs. John Smith", "her residence,
+ * Centre Street, Ashland"). A text in a script with no capitals, or of digits
+ * alone, is not.
+ */
+export function isProse(place: string): boolean {
+  const name = placeSegments(place)[0] ?? "";
+  return /\p{Ll}/u.test(name) && !/\p{Lu}/u.test(name);
+}
+
+/**
  * Why the place text does not confirm `standardPlace`, or null when it does:
- * research_append's check on a place taken from a fact's value, and the one a
+ * research_append's check on a place taken from a fact's value, the one a
  * lookup standing in for a refused value must pass to store that value
- * silently (`judgeSupplied`), which keeps a phrase that names no place ("at
+ * silently (`judgeSupplied`), and the one a lookup filling a prose text
+ * (`isProse`) must pass, which keeps a phrase that names no place ("at
  * the home of her daughter") from taking one. Only a pair the country check
  * cannot judge is in question. When the text's last comma part names a
  * country the check knows, the standard place names none it knows. Otherwise
@@ -75,7 +89,7 @@ export type PlaceAnswer =
   | { standardPlace: string; from: "record" | "lookup" }
   | {
       standardPlace: null;
-      why: "not_a_place" | "records_disagree" | "not_found" | "other_country";
+      why: "not_a_place" | "records_disagree" | "not_found" | "other_country" | "unconfirmed";
       /** The answer dropped for naming another country. */
       dropped?: string;
       reason: string;
@@ -118,6 +132,10 @@ export async function placeAnswer(
       dropped: answer,
       reason: `'${answer}' names a different country than the text`,
     };
+  }
+  const unconfirmed = fromRecords.length === 0 && isProse(place) ? unconfirmedByText(place, answer) : null;
+  if (unconfirmed !== null) {
+    return { standardPlace: null, why: "unconfirmed", reason: `the engine's place lookup answer '${answer}' ${unconfirmed}` };
   }
   return { standardPlace: answer, from: fromRecords.length === 1 ? "record" : "lookup" };
 }

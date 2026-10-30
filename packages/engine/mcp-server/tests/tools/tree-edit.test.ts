@@ -1028,16 +1028,20 @@ describe("tree_edit", () => {
 
     // A phrase that names no place keeps no supplied value, which no part of it
     // names (textNamesPlace), and takes no lookup in its stead. With none
-    // supplied it takes the lookup's answer, as on main: the fill does not judge
-    // the lookup by the text.
+    // supplied, a text written as prose (its first part has no capital) takes
+    // the lookup's answer only when the text confirms it (unconfirmedByText);
+    // a text written as a name takes it whatever it names.
     describe("a phrase that names no place", () => {
       const HAWAII = "Hawaii, United States";
       const OF = "Of, Trabzon, Türkiye";
+      const CINCINNATI = "Cincinnati, Hamilton, Ohio, United States";
       const phrases: Record<string, string> = {
         "with his daughter": HAWAII,
         "at the home of her daughter": OF,
         "at the home of her daughter, Mrs. John Smith": OF,
-        "412 Vine St, Cincinnati": "Cincinnati, Hamilton, Ohio, United States",
+        "412 Vine St, Cincinnati": CINCINNATI,
+        "her residence, 412 Vine St, Cincinnati": CINCINNATI,
+        "West Topsham, Orange, Vermont": "Topsham, Orange, Vermont, United States",
         Ky: "Kentucky, United States",
         "W. Va.": "West Virginia, United States",
       };
@@ -1052,20 +1056,29 @@ describe("tree_edit", () => {
         vi.mocked(resolveStandardPlace).mockImplementation(async (text: string) => (text === SCHUYLKILL ? ENGINE : null));
       });
 
-      it("fills the lookup's answer with none supplied, as main does, whatever the text names", async () => {
+      it("fills no lookup a prose text does not confirm, with none supplied, and says why", async () => {
         await writeProject(onePersonSourced());
         for (const place of ["with his daughter", "at the home of her daughter", "at the home of her daughter, Mrs. John Smith"]) {
           const r = await addResidence(place);
           expect(r.ok, JSON.stringify(r)).toBe(true);
           if (!r.ok) return;
-          expect((await added(r)).standard_place, place).toBe(phrases[place]);
-          expect(placeWarnings(r)).toEqual([]);
+          expect(await added(r), place).not.toHaveProperty("standard_place");
+          expect(placeWarnings(r)).toEqual([
+            `could not resolve standard_place for '${place}' (left unset): the engine's place lookup answer ` +
+              `'${phrases[place]}' could not be confirmed, as the text names neither a country nor that place`,
+          ]);
         }
       });
 
-      it("still fills a place whose text names the answer, a one-word place, and a one-word list answer", async () => {
+      it("still fills a name the answer is not named in, prose that names the answer, a one-word place, and a list answer", async () => {
         await writeProject(onePersonSourced());
-        for (const place of ["412 Vine St, Cincinnati", "Ky", "W. Va."]) {
+        for (const place of [
+          "412 Vine St, Cincinnati",
+          "her residence, 412 Vine St, Cincinnati",
+          "West Topsham, Orange, Vermont",
+          "Ky",
+          "W. Va.",
+        ]) {
           const r = await addResidence(place);
           expect(r.ok, JSON.stringify(r)).toBe(true);
           if (!r.ok) return;
@@ -1105,7 +1118,7 @@ describe("tree_edit", () => {
         expect(placeWarnings(r)).toEqual([]);
       });
 
-      it("tree_correct update_fact: a place corrected to such a phrase drops the old standard_place for its lookup's", async () => {
+      it("tree_correct update_fact: a place corrected to such a phrase drops the old standard_place and fills none", async () => {
         const tree = onePersonSourced();
         (tree.persons[0].facts as any[]).push({ id: "F2", type: "Residence", place: SCHUYLKILL, standard_place: ENGINE, sources: [{ ref: "S1" }] });
         await writeProject(tree);
@@ -1118,7 +1131,11 @@ describe("tree_edit", () => {
         });
         expect(r.ok, JSON.stringify(r)).toBe(true);
         if (!r.ok) return;
-        expect((await readTree()).persons[0].facts.find((f: any) => f.id === "F2").standard_place).toBe(HAWAII);
+        expect((await readTree()).persons[0].facts.find((f: any) => f.id === "F2")).not.toHaveProperty("standard_place");
+        expect(placeWarnings(r)).toEqual([
+          "could not resolve standard_place for 'with his daughter' (left unset): the engine's place lookup answer " +
+            `'${HAWAII}' could not be confirmed, as the text names neither a country nor that place`,
+        ]);
       });
     });
 

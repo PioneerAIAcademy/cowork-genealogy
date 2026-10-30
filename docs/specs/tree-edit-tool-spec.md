@@ -430,22 +430,29 @@ value, project-create-tool-spec "Hand-entered places").
   Tajikistan, Turkmenistan, Uzbekistan and Türkiye; Austria's Czechia,
   Slovakia, Slovenia, Croatia, Ukraine, Romania, Bosnia-Herzegovina, Serbia and
   Montenegro; Hungary's Slovakia, Romania, Serbia, Croatia, Ukraine and
-  Slovenia; Germany's Lithuania and Czechia. So "Helsingfors, Nyland, Russia"
-  keeps "Helsinki, Uusimaa, Finland" and "Lemberg, Galizien, Österreich" "Lviv,
-  Lviv, Ukraine", while "Hamburg, Hamburg, Germany" does not keep "Hamburg,
-  Amathole, Eastern Cape, South Africa". A country the alias table carries
-  (Poland, Hungary, Italy, Denmark) is judged by `countryConsistency` before
-  this check: "Breslau, Schlesien, Preussen" keeps no "Wrocław, Lower Silesia,
-  Poland", as on `main`. A
-  root FamilySearch dates as ended, a former state, is not judged, since its
-  lands lie in today's countries, perhaps the text's ("Svitavy, Moravská
-  Třebová, Morava, Rakousko" keeps "Svitavy, Moravská Třebová, Moravia,
-  Czechoslovakia", a state to 1992), except against the United States or Canada
-  when the engine maps the root to a country of today, by which it is then
-  judged ("Boston, Suffolk, Massachusetts" does not keep "Boston, Lincolnshire,
-  England": England ends in 1801 and is the United Kingdom today; nor "Hamburg,
-  Erie, New York" the free city of Hamburg, Germany today). A root it maps to
-  none (British Colonial America, Czechoslovakia) is still not judged. Nor is
+  Slovenia; Germany's Lithuania, Czechia and Luxembourg, of the German
+  Confederation to 1866, which American records often call Germany. So
+  "Helsingfors, Nyland, Russia" keeps "Helsinki, Uusimaa, Finland", "Lemberg,
+  Galizien, Österreich" "Lviv, Lviv, Ukraine" and "Wiltz, Luxemburg, Germany"
+  "Wiltz, Wiltz, Luxembourg", while "Hamburg, Hamburg, Germany" does not keep
+  "Hamburg, Amathole, Eastern Cape, South Africa". A country the alias table
+  carries (the United States, Germany, Switzerland, Poland, Hungary, Italy,
+  Denmark) is on no list: `countryConsistency` judges it before this check, so
+  listing it would change nothing. "Breslau, Schlesien, Preussen" keeps no
+  "Wrocław, Lower Silesia, Poland", nor "Moscow, Russia" "Moscow, Latah,
+  Idaho, United States". A root the engine maps to a country of today is
+  judged by that country, whether or not FamilySearch dates it as ended
+  ("Boston, Suffolk, Massachusetts" does not keep "Boston, Lincolnshire,
+  England": England ends in 1801 and is the United Kingdom today; nor
+  "Hamburg, Erie, New York" the free city of Hamburg, Germany today; nor
+  "Thornton, Lancashire, England" "Thornton, Cape, Cape Colony", South Africa
+  today; nor "Hamburg, Germany" "Hamburg, Berks, Pennsylvania, British Colonial
+  America", all of whose places FamilySearch puts in today's United States). A
+  root FamilySearch dates as ended that the engine maps to none, a former
+  state whose lands lie in several of today's countries (Czechoslovakia,
+  Yugoslavia, the Soviet Union), is not judged, since its lands may lie in the
+  text's ("Svitavy, Moravská Třebová, Morava, Rakousko" keeps "Svitavy,
+  Moravská Třebová, Moravia, Czechoslovakia", a state to 1992). Nor is
   historic Ireland against Northern Ireland, nor a bare "Georgia", which is the
   state (lead, 2026-08-27), against a place FamilySearch puts in the Republic
   of Georgia ("Tbilisi, Georgia" keeps "Tbilisi, Republic of Georgia", while
@@ -506,10 +513,16 @@ value is kept.
 2. **Otherwise the lookup** `resolveStandardPlace(place, { contextPlaces })`, with
    the places of the holder's other facts as context for a bare single-segment
    place, and no record country (see research-append-tool-spec §3.6, lever B).
-   Filling a fact with none, its answer stands whatever the `place` text names,
-   as on `main` (lead, 2026-10-29): "West Topsham, Orange, Vermont" takes
-   "Topsham, Orange, Vermont, United States", and "at the home of her daughter,
-   Mrs. John Smith" the "Of, Trabzon, Türkiye" the lookup finds in it.
+   Filling a fact with none, its answer stands whatever a `place` text written
+   as a name names (lead, 2026-10-29: "keep it relaxed"): "West Topsham,
+   Orange, Vermont" takes "Topsham, Orange, Vermont, United States". A text
+   written as prose, whose first comma part has no capital letter (`isProse`),
+   takes it only when the text confirms it (`unconfirmedByText`, the check
+   research-append-tool-spec §3.6 makes of a place taken from a value): "her
+   residence, 412 Vine St, Cincinnati" takes "Cincinnati, Hamilton, Ohio,
+   United States", while "with his daughter" takes no "Hawaii, United States"
+   and "at the home of her daughter, Mrs. John Smith" no "Of, Trabzon,
+   Türkiye".
    Replacing a supplied value, it must fit the `place` text as
    a supplied value must, except that it may lie in the state or province the
    text ends with, or in the country it ends with and in a place one of the
@@ -522,12 +535,14 @@ value is kept.
    Austria" takes no "Krainberg, Villach Land, Carinthia, Austria".
 
 A non-place phrase has no answer, and neither does an answer whose country
-contradicts the text's (`countryConsistency`).
+contradicts the text's (`countryConsistency`), nor a lookup a prose text does
+not confirm.
 
 **With none supplied** the answer fills the field, unless `resolveStandardPlace`
 is `false`. No answer leaves it unset with `could not resolve standard_place for
 '<place>' (left unset)` (plus `: <the disagreement>` when FamilySearch's values
-disagree), or
+disagree, or `: the engine's place lookup answer '<answer>' could not be
+confirmed, …` for prose), or
 `standard_place '<answer>' contradicts place
 '<place>' — the place text names a different country; cleared (left unset)`; a
 non-place phrase stays silent.
@@ -898,15 +913,19 @@ The caller (`tree-edit` skill) still:
   and Springfield, Illinois; "Thornton, Lancashire, England" and Thornton,
   Natal, South Africa; "Boston, Suffolk, Massachusetts" and Boston,
   Lincolnshire, England; Hamburg, Hamburg, Germany and Hamburg, Eastern Cape,
-  South Africa; a former state such as Czechoslovakia is not judged, and
-  Russia, Austria, Hungary or Germany as the text's country takes the lands of
-  its empire: Helsinki, Finland for Helsingfors, Russia),
+  South Africa; "Thornton, Lancashire, England" and Thornton, Cape Colony;
+  "Hamburg, Germany" and Hamburg, Berks, Pennsylvania, British Colonial
+  America; a former state such as Czechoslovakia is not judged, and Russia,
+  Austria, Hungary or Germany as the text's country takes the lands of its
+  empire: Helsinki, Finland for Helsingfors, Russia, and Wiltz, Luxembourg for
+  "Wiltz, Luxemburg, Germany"),
   one no part of its place text names ("with his daughter" and
   "Hawaii, United States"; "Ky" and "W. Va." keep their list answers), and one
   FamilySearch has no place of are replaced by the engine's answer or dropped,
-  with the reason. A lookup fills a fact with none whatever its place text
-  names, as on `main`, and one that does not fit the text as a lookup must
-  replaces nothing ("Massachusettes,USA"
+  with the reason. A lookup fills a fact with none whatever a place text
+  written as a name names, and a prose text's only when the text confirms it
+  ("with his daughter" takes no "Hawaii, United States"), and one that does
+  not fit the text as a lookup must replaces nothing ("Massachusettes,USA"
   and "Usa, Palau"), on `tree_correct`'s `update_fact` too; a lookup that gives
   the refused value itself keeps it when the text ends with its state
   ("Balto., Md."). `resolveStandardPlace: false`

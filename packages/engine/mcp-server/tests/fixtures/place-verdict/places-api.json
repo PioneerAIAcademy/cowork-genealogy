@@ -6599,6 +6599,151 @@
     "dateRange": "+1918/+1991",
     "score": 90
    }
+  ],
+  "Diekirch, Diekirch, Luxembourg||": [
+   {
+    "placeId": "5060363",
+    "placeRepId": "2242939",
+    "name": "Diekirch",
+    "fullName": "Diekirch, Diekirch, Luxembourg",
+    "type": "Municipality",
+    "score": 100
+   },
+   {
+    "placeId": "9513098",
+    "placeRepId": "10965749",
+    "name": "Diekirch",
+    "fullName": "Diekirch, Luxembourg",
+    "type": "District",
+    "dateRange": "/+2015",
+    "score": 92
+   },
+   {
+    "placeId": "10351820",
+    "placeRepId": "11964691",
+    "name": "Diekirch",
+    "fullName": "Diekirch, Diekirch, Diekirch, Luxembourg",
+    "type": "Town",
+    "score": 90
+   }
+  ],
+  "Echternach, Echternach, Luxembourg||": [
+   {
+    "placeId": "1948709",
+    "placeRepId": "5953488",
+    "name": "Echternach",
+    "fullName": "Echternach, Echternach, Luxembourg",
+    "type": "Municipality",
+    "score": 100
+   },
+   {
+    "placeId": "10350192",
+    "placeRepId": "11962485",
+    "name": "Echternach",
+    "fullName": "Echternach, Echternach, Echternach, Luxembourg",
+    "type": "Town",
+    "score": 90
+   }
+  ],
+  "Hamburg, Berks, Pennsylvania, British Colonial America||": [
+   {
+    "placeId": "1082492",
+    "placeRepId": "4974204",
+    "name": "Hamburg",
+    "fullName": "Hamburg, Berks, Pennsylvania, British Colonial America",
+    "type": "Populated Place",
+    "score": 100
+   }
+  ],
+  "Heidelberg, Heidelberg, South African Republic||": [
+   {
+    "placeId": "4121221",
+    "placeRepId": "10926508",
+    "name": "Heidelberg",
+    "fullName": "Heidelberg, Heidelberg, Transvaal, South Africa",
+    "type": "Town",
+    "dateRange": "+1910/+1994",
+    "score": 99
+   },
+   {
+    "placeId": "4121221",
+    "placeRepId": "13632547",
+    "name": "Heidelberg",
+    "fullName": "Heidelberg, Heidelberg, South African Republic",
+    "type": "Town",
+    "dateRange": "+1862/+1910",
+    "score": 99
+   }
+  ],
+  "Heidelberg, Swellendam, Cape Colony||": [
+   {
+    "placeId": "10283670",
+    "placeRepId": "11924182",
+    "name": "Heidelberg",
+    "fullName": "Heidelberg, Swellendam, Cape Colony",
+    "type": "Town",
+    "dateRange": "+1855/+1910",
+    "score": 100
+   }
+  ],
+  "Hermannsburg, Umvoti, Umvoti, Natal||": [
+   {
+    "placeId": "10625564",
+    "placeRepId": "12453174",
+    "name": "Hermannsburg",
+    "fullName": "Hermannsburg, Umvoti, Umvoti, Natal",
+    "type": "Village",
+    "dateRange": "+1854/+1910",
+    "score": 100
+   }
+  ],
+  "Thornton, Cape, Cape Colony||": [
+   {
+    "placeId": "5101812",
+    "placeRepId": "2247951",
+    "name": "Thornton",
+    "fullName": "Thornton, Cape, Cape Colony",
+    "type": "Hamlet",
+    "dateRange": "/+1910",
+    "score": 96
+   },
+   {
+    "placeId": "5101812",
+    "placeRepId": "7349971",
+    "name": "Thornton",
+    "fullName": "Thornton, Cape, Cape Province, South Africa",
+    "type": "Neighborhood or suburb",
+    "dateRange": "+1910/+1994",
+    "score": 94
+   }
+  ],
+  "Wiltz, Wiltz, Luxembourg||": [
+   {
+    "placeId": "1948699",
+    "placeRepId": "5953498",
+    "name": "Wiltz",
+    "fullName": "Wiltz, Wiltz, Luxembourg",
+    "type": "Municipality",
+    "score": 100
+   },
+   {
+    "placeId": "10350505",
+    "placeRepId": "11962827",
+    "name": "Wiltz",
+    "fullName": "Wiltz, Wiltz, Wiltz, Luxembourg",
+    "type": "Town",
+    "score": 90
+   }
+  ],
+  "her residence, Centre Street, Ashland||": [
+   {
+    "placeId": "986487",
+    "placeRepId": "4824597",
+    "name": "McKay",
+    "fullName": "McKay, Green Township, Ashland, Ohio, United States",
+    "type": "Hamlet",
+    "score": 69
+   }
   ]
  },
  "description": {
@@ -8189,6 +8334,61 @@
    "type": "Town",
    "dateRange": "+1994/+2011",
    "parentPlaceRepId": "3055792"
+  },
+  "223": {
+   "placeId": "1927075",
+   "placeRepId": "223",
+   "name": "Luxembourg",
+   "fullName": "Luxembourg",
+   "type": "Country"
+  },
+  "440738": {
+   "placeId": "1937349",
+   "placeRepId": "440738",
+   "name": "Wiltz",
+   "fullName": "Wiltz, Luxembourg",
+   "type": "Canton",
+   "parentPlaceRepId": "223"
+  },
+  "440745": {
+   "placeId": "1937357",
+   "placeRepId": "440745",
+   "name": "Echternach",
+   "fullName": "Echternach, Luxembourg",
+   "type": "Canton",
+   "parentPlaceRepId": "223"
+  },
+  "440746": {
+   "placeId": "1937358",
+   "placeRepId": "440746",
+   "name": "Diekirch",
+   "fullName": "Diekirch, Luxembourg",
+   "type": "Canton",
+   "parentPlaceRepId": "223"
+  },
+  "2242939": {
+   "placeId": "5060363",
+   "placeRepId": "2242939",
+   "name": "Diekirch",
+   "fullName": "Diekirch, Diekirch, Luxembourg",
+   "type": "Municipality",
+   "parentPlaceRepId": "440746"
+  },
+  "5953488": {
+   "placeId": "1948709",
+   "placeRepId": "5953488",
+   "name": "Echternach",
+   "fullName": "Echternach, Echternach, Luxembourg",
+   "type": "Municipality",
+   "parentPlaceRepId": "440745"
+  },
+  "5953498": {
+   "placeId": "1948699",
+   "placeRepId": "5953498",
+   "name": "Wiltz",
+   "fullName": "Wiltz, Wiltz, Luxembourg",
+   "type": "Municipality",
+   "parentPlaceRepId": "440738"
   }
  },
  "reps": {
@@ -10713,6 +10913,33 @@
     "names": [
      "Oberamt Heidelberg",
      "Heidelberg"
+    ]
+   }
+  ],
+  "1948699": [
+   {
+    "placeRepId": "5953498",
+    "fullName": "Wiltz, Wiltz, Luxembourg",
+    "names": [
+     "Wiltz"
+    ]
+   }
+  ],
+  "1948709": [
+   {
+    "placeRepId": "5953488",
+    "fullName": "Echternach, Echternach, Luxembourg",
+    "names": [
+     "Echternach"
+    ]
+   }
+  ],
+  "5060363": [
+   {
+    "placeRepId": "2242939",
+    "fullName": "Diekirch, Diekirch, Luxembourg",
+    "names": [
+     "Diekirch"
     ]
    }
   ]

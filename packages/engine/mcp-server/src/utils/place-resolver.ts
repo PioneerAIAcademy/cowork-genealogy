@@ -564,12 +564,14 @@ const SEA_NAME = /\b(?:seas?|gulf)\b/i;
  * which the country guard's alias table does not carry, and the historical
  * states matcher-lab m13's list builder counts inside one modern country (stage
  * S4, "historical states count inside their modern countries", `m13/final/fl.py`),
- * and British Honduras, Belize's colonial name, which FamilySearch dates to 1973.
- * Left out of that map: England, Scotland and Wales (the United Kingdom, in
- * `countryOfPlace`); a state it puts in several modern countries (Prussia,
- * Czechoslovakia, the Soviet Union), which keeps its own name; and Burma and
- * German South West Africa, which it puts in the colonies they lay in (India,
- * South Africa), though each is a country today.
+ * British Honduras, Belize's colonial name, which FamilySearch dates to 1973,
+ * and British Colonial America, all 24 of whose places FamilySearch puts in
+ * today's United States (Places API, 2026-10-30). Left out of that map:
+ * England, Scotland and Wales (the United Kingdom, in `countryOfPlace`); a
+ * state it puts in several modern countries (Prussia, Czechoslovakia, the
+ * Soviet Union), which keeps its own name; and Burma and German South West
+ * Africa, which it puts in the colonies they lay in (India, South Africa),
+ * though each is a country today.
  */
 const COUNTRY_TODAY: ReadonlyMap<string, string> = new Map(
   Object.entries({
@@ -605,7 +607,9 @@ const COUNTRY_TODAY: ReadonlyMap<string, string> = new Map(
     Switzerland: ["geneva", "three leagues"],
     "Timor-Leste": ["portuguese timor"],
     Ukraine: ["zaporizhian host"],
-    "United States": ["kingdom of hawaii", "new netherland", "republic of texas", "republic of vermont"],
+    "United States": [
+      "british colonial america", "kingdom of hawaii", "new netherland", "republic of texas", "republic of vermont",
+    ],
   }).flatMap(([country, names]) => names.map((name): [string, string] => [name, country])),
 );
 
@@ -865,15 +869,18 @@ export function endsWithItsJurisdiction(place: string, standardPlace: string): b
  * empire an old record names by a country the alias table carries, as the
  * empire stood when it ended: the Russian Empire (1917), Austria-Hungary and
  * the Kingdom of Hungary (1918), and the German Empire with Prussia
- * ("Preussen"). "Helsingfors, Nyland, Russia" is Helsinki, Finland, and
- * "Lemberg, Galizien, Österreich" Lviv, Ukraine. FamilySearch's own places
- * bear them out ("Tashkent, Syr-Darya, Russian Empire", "Kars, Russian Empire",
- * "Sarajevo, Bosnia-Herzegovina, Austria", "Cattaro, Dalmatia", "Muraszombat,
- * Vas, Hungary", "Memel, East Prussia, Prussia, Germany"); it names Finland
- * Finland throughout. A land the empire had lost before it ended is not one:
- * Alaska (1867), Further Austria (1805), Neuchâtel (1816). Nor is a country the
- * alias table carries (Poland, Hungary, Italy, Denmark), which
- * `countryConsistency` judges first.
+ * ("Preussen"), and with Luxembourg, of the German Confederation to 1866, which
+ * American records often call Germany ("Wiltz, Luxemburg, Germany").
+ * "Helsingfors, Nyland, Russia" is Helsinki, Finland, and "Lemberg, Galizien,
+ * Österreich" Lviv, Ukraine. FamilySearch's own places bear them out
+ * ("Tashkent, Syr-Darya, Russian Empire", "Kars, Russian Empire", "Sarajevo,
+ * Bosnia-Herzegovina, Austria", "Cattaro, Dalmatia", "Muraszombat, Vas,
+ * Hungary", "Memel, East Prussia, Prussia, Germany"); it names Finland Finland
+ * throughout. A country the alias table carries (the United States, Germany,
+ * Switzerland, Poland, Hungary, Italy, Denmark) is not listed:
+ * `countryConsistency` refuses a value there before this list is read, so
+ * listing it would change nothing ("Moscow, Russia" keeps no "Moscow, Latah,
+ * Idaho, United States").
  */
 const EMPIRE_LANDS: ReadonlyMap<string, ReadonlySet<string>> = new Map(
   Object.entries({
@@ -885,7 +892,7 @@ const EMPIRE_LANDS: ReadonlyMap<string, ReadonlySet<string>> = new Map(
       "Czechia", "Slovakia", "Slovenia", "Croatia", "Ukraine", "Romania", "Bosnia-Herzegovina", "Serbia", "Montenegro",
     ],
     hungary: ["Slovakia", "Romania", "Serbia", "Croatia", "Ukraine", "Slovenia"],
-    germany: ["Lithuania", "Czechia"],
+    germany: ["Lithuania", "Czechia", "Luxembourg"],
   }).map(([empire, countries]): [string, ReadonlySet<string>] => [empire, new Set(countries)]),
 );
 
@@ -903,20 +910,22 @@ const EMPIRE_LANDS: ReadonlyMap<string, ReadonlySet<string>> = new Map(
  * `countryOfPlace` names it. An empire's text also takes a country of today
  * that holds its lands (`EMPIRE_LANDS`: "Lemberg, Galizien, Österreich" keeps
  * "Lviv, Lviv, Ukraine", while "Hamburg, Hamburg, Germany" is not "Hamburg,
- * Amathole, Eastern Cape, South Africa"). A root FamilySearch dates as ended, a
- * former state (Bohemia to 1918, Czechoslovakia to 1992), is not judged, since
- * its lands lie in today's countries, perhaps the text's ("Svitavy, Moravská
- * Třebová, Morava, Rakousko" keeps "Svitavy, Moravská Třebová, Moravia,
- * Czechoslovakia"), unless the text's country is the United States or Canada
- * and `countryToday` maps the root to a country of today, by which it is
- * judged: "Boston, Suffolk, Massachusetts" is not "Boston, Lincolnshire,
- * England" (England to 1801, the United Kingdom today). A root it does not map
- * (British Colonial America, Czechoslovakia) is still not judged. Nor is
- * historic Ireland against Northern Ireland, a bare "Georgia", the state (lead,
- * 2026-08-27), against a place FamilySearch puts in the Republic of Georgia
- * ("Tbilisi, Georgia" keeps "Tbilisi, Republic of Georgia"; "Tbilisi, GA" does
- * not), nor a chain that cannot be read. The chain is read from FamilySearch
- * only when the answer turns on the root's dates.
+ * Amathole, Eastern Cape, South Africa"). A root that `countryToday` maps to a
+ * country of today is judged by that country, whether or not FamilySearch dates
+ * it as ended: "Thornton, Lancashire, England" is not "Thornton, Cape, Cape
+ * Colony" (South Africa today), "Boston, Suffolk, Massachusetts" not "Boston,
+ * Lincolnshire, England" (England to 1801, the United Kingdom today), nor
+ * "Hamburg, Germany" "Hamburg, Berks, Pennsylvania, British Colonial America".
+ * A root FamilySearch dates as ended that it maps to none, a former state whose
+ * lands lie in several of today's countries (Czechoslovakia to 1992, Yugoslavia,
+ * the Soviet Union), is not judged, since its lands may lie in the text's
+ * ("Svitavy, Moravská Třebová, Morava, Rakousko" keeps "Svitavy, Moravská
+ * Třebová, Moravia, Czechoslovakia"). Nor is historic Ireland against Northern
+ * Ireland, a bare "Georgia", the state (lead, 2026-08-27), against a place
+ * FamilySearch puts in the Republic of Georgia ("Tbilisi, Georgia" keeps
+ * "Tbilisi, Republic of Georgia"; "Tbilisi, GA" does not), nor a chain that
+ * cannot be read. The chain is read from FamilySearch only when the answer
+ * turns on the root's dates.
  */
 export async function countryContradiction(placeText: string, standard: FamilySearchPlace): Promise<boolean> {
   const segments = placeSegments(standard.fullName);
@@ -934,7 +943,7 @@ export async function countryContradiction(placeText: string, standard: FamilySe
   if (EMPIRE_LANDS.get(textCountry ?? "")?.has(country)) return false;
   if (named === "Ireland" && segments.some((s) => canonicalCountry(s) === "northern ireland")) return false;
   if (foldPlaceName(last) === "georgia" && country === "Republic of Georgia" && segments.length > 1) return false;
-  if ((named === "United States" || named === "Canada") && countryToday(segments[segments.length - 1]) !== null) return true;
+  if (countryToday(segments[segments.length - 1]) !== null) return true;
   const repId = standard.places.find((p) => p.placeRepId !== undefined)?.placeRepId;
   let root = repId === undefined ? null : await getRepInfo(repId);
   for (let up = 0; root?.parentRepId !== undefined && up < 12; up++) root = await getRepInfo(root.parentRepId);

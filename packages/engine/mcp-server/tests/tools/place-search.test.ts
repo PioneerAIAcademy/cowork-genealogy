@@ -1085,23 +1085,33 @@ describe("placeSearchTool", () => {
       });
     });
 
-    it("names the lookup's answer whether or not the text names it, as the writers fill it", async () => {
+    it("names the lookup's answer for a text written as a name, and none a prose text does not confirm", async () => {
       const hit = (id: string, name: string, fullName: string): FSPlaceSearchResponse => ({
         entries: [{ id, score: 90.0, content: { gedcomx: { places: [{ id, display: { name, fullName, type: "City" } }] } } }],
       });
       routeByUrl([
         { match: "search?q=name:%22at%20the%20home", json: hit("800", "Of", "Of, Trabzon, Türkiye") },
         { match: "search?q=name:%22412%20Vine", json: hit("900", "Cincinnati", "Cincinnati, Hamilton, Ohio, United States") },
+        { match: "search?q=name:%22West%20Topsham", json: hit("950", "Topsham", "Topsham, Orange, Vermont, United States") },
         { match: "description/800", json: description("800", "Of, Trabzon, Türkiye", "8800") },
         { match: "description/900", json: description("900", "Cincinnati, Hamilton, Ohio, United States", "8900") },
+        { match: "description/950", json: description("950", "Topsham, Orange, Vermont, United States", "8950") },
         { match: "attributes", ok: false, status: 404 },
       ]);
-      // The fill does not judge the lookup by the text, as on main: a phrase
-      // takes whatever the lookup finds in it.
+      // A prose text (its first part has no capital) takes the lookup's answer
+      // only when it names it; a text written as a name takes it whatever it names.
       const phrase = await placeSearchTool({ placeName: "at the home of her daughter, Mrs. John Smith" });
-      expect(phrase.verdict).toEqual({ standardPlace: "Of, Trabzon, Türkiye", reason: STORES });
+      expect(phrase.verdict).toEqual({
+        standardPlace: null,
+        reason:
+          NONE +
+          "the engine's place lookup answer 'Of, Trabzon, Türkiye' could not be confirmed, as the text names neither " +
+          "a country nor that place",
+      });
       const named = await placeSearchTool({ placeName: "412 Vine St, Cincinnati" });
       expect(named.verdict).toEqual({ standardPlace: "Cincinnati, Hamilton, Ohio, United States", reason: STORES });
+      const unnamed = await placeSearchTool({ placeName: "West Topsham, Orange, Vermont" });
+      expect(unnamed.verdict).toEqual({ standardPlace: "Topsham, Orange, Vermont, United States", reason: STORES });
     });
 
     it("is none when nothing is found for a text of several parts", async () => {

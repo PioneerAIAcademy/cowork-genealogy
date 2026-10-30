@@ -707,11 +707,14 @@ the answer's own name, its first segment, is one of the text's comma parts
 "Ky" keeps "Kentucky, United States" and "W. Va." "West Virginia, United
 States", while "at the home of her daughter" and "at the home of her daughter,
 Mrs. John Smith" drop "Of, Trabzon, Türkiye". The check is
-`unconfirmedByText` (`src/utils/place-verdict.ts`); `tree_edit`, `tree_correct`
-and a caller's timeline event apply it to a lookup standing in for a refused
-supplied value, never to a lookup filling a fact with none (tree-edit-tool-spec
-§4.1.1). A dropped answer leaves the place as written, with no
-`standard_place`. The lift holds on an append and on an update that leaves
+`unconfirmedByText` (`src/utils/place-verdict.ts`). It also judges a geocoded
+answer for an assertion's own `place` written as prose, whose first comma part
+has no capital letter (`isProse`): "her residence, Centre Street, Ashland" drops
+"McKay, Green Township, Ashland, Ohio, United States". `tree_edit`,
+`tree_correct` and a caller's timeline event apply it to a lookup standing in
+for a refused supplied value, and to a lookup filling a prose text
+(tree-edit-tool-spec §4.1.1). A dropped answer leaves the place as written, with
+no `standard_place`. The lift holds on an append and on an update that leaves
 `place` alone, such as an `informant_bias_notes` note or `extraction_append`'s
 question tie. On such an update the lifted place and its `standard_place` go
 onto the stored entry, not into the op, so §3.1 does not treat them as a
@@ -868,8 +871,10 @@ stays an opt-out, as on an append. The levers:
   "Northern Ireland" (historic records).
 
   The guard **declines to judge** — no rejection, and a **geocoded** value
-  instead gets a verify-this warning (supplied and sidecar-copied values stay
-  silent, since the echo is their audit surface) — in either of two cases:
+  instead gets a verify-this warning, unless it is value-derived or its place
+  is prose and the text does not confirm it (the check above), when it is
+  dropped (supplied and sidecar-copied values stay silent, since the echo is
+  their audit surface) — in either of two cases:
 
   1. the place text names no country (a trailing US state or English county);
   2. the *standard place* names no country the alias table recognizes. A

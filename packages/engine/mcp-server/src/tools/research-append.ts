@@ -64,7 +64,7 @@ import {
   samePlace,
   type PlaceCoords,
 } from "../utils/place-resolver.js";
-import { judgeSupplied, placeAnswer, unconfirmedByText } from "../utils/place-verdict.js";
+import { isProse, judgeSupplied, placeAnswer, unconfirmedByText } from "../utils/place-verdict.js";
 import { isSuspiciousText, TRAILING_DOUBT, WITHHELD_SUSPICIOUS } from "../utils/record-extract.js";
 import { birthThresholdMiles, lookupWithin } from "../utils/place-coords.js";
 import { haversineDistance } from "./distance.js";
@@ -9545,10 +9545,11 @@ async function prepareOps(
   /** Place levers (b) then (a) on one assertion's fields, in place. A
    *  standard_place contradicting the place's country is an error, unless
    *  `dropContradiction` or the place is `valueDerived` (lifted from `value`),
-   *  when the lookup is dropped instead. A value-derived place keeps a geocoded
-   *  answer only when its text confirms it (`unconfirmedByText`, which passes a
-   *  one-word text and a one-word list answer). A dropped lookup is warned
-   *  about and listed in unresolvedPlaces, never in resolvedPlaces. A place on an assertion flagged
+   *  when the lookup is dropped instead. A value-derived place, or one written
+   *  as prose (`isProse`), keeps a geocoded answer only when its text confirms
+   *  it (`unconfirmedByText`, which passes a one-word text and a one-word list
+   *  answer). A dropped lookup is warned about and listed in unresolvedPlaces,
+   *  never in resolvedPlaces. A place on an assertion flagged
    *  as suspicious text is never looked up, and a refusal shows it as
    *  WITHHELD_SUSPICIOUS. `matchedRecord` is an append's sidecar-matched record
    *  (D2), whose standard_place is copied. `countryRecord` is the sidecar record
@@ -9639,7 +9640,7 @@ async function prepareOps(
       return;
     }
     if (verdict === "unverifiable" && filled === "geocoded") {
-      const unconfirmed = valueDerived ? unconfirmedByText(entry.place, sp) : null;
+      const unconfirmed = valueDerived || isProse(entry.place) ? unconfirmedByText(entry.place, sp) : null;
       if (unconfirmed) {
         delete entry.standard_place;
         unresolved(`: the lookup's answer '${sp}' ${unconfirmed}`);

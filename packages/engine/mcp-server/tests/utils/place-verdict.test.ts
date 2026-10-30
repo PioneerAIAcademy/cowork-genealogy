@@ -9,7 +9,7 @@ vi.mock("../../src/utils/place-api.js", () => ({
   getPlaceCandidateNames: vi.fn(),
 }));
 
-import { judgeSupplied, keptSupplied, placeAnswer, unconfirmedByText } from "../../src/utils/place-verdict.js";
+import { isProse, judgeSupplied, keptSupplied, placeAnswer, unconfirmedByText } from "../../src/utils/place-verdict.js";
 import { searchPlace, getPlaceReps } from "../../src/utils/place-api.js";
 import { __clearPlaceResolverCachesForTests } from "../../src/utils/place-resolver.js";
 
@@ -24,6 +24,7 @@ const RECORDED: Record<string, { placeId: string; type: string; names: string[] 
   "Gmunden, Upper Austria, Austria": { placeId: "1958376", type: "District", names: ["Gmunden"] },
   "Cincinnati, Hamilton, Ohio, United States": { placeId: "1011175", type: "City", names: ["Cincinnati"] },
   "Funchal, Madeira, Portugal": { placeId: "6283660", type: "City", names: ["Funchal"] },
+  "Trowbridge, Wiltshire, England, United Kingdom": { placeId: "6136019", type: "Town", names: ["Trowbridge"] },
 };
 const search = vi.mocked(searchPlace);
 const listing = vi.mocked(getPlaceReps);
@@ -142,8 +143,33 @@ describe("keptSupplied: what a writer keeps of a supplied standard_place", () =>
   });
 });
 
+describe("isProse: a place text written as prose, not as a name", () => {
+  it.each([
+    "with his daughter",
+    "at the home of her daughter, Mrs. John Smith",
+    "her residence, Centre Street, Ashland",
+    "of,,Norway",
+    "412 vine st, cincinnati",
+  ])("%j is prose: its first part has no capital", (place) => {
+    expect(isProse(place)).toBe(true);
+  });
+
+  it.each([
+    "West Topsham, Orange, Vermont",
+    "of Vsetin, Czechoslovakia",
+    "Of,,,Ny",
+    ", , Suðurland, Iceland",
+    "Самара, Самарская, Россия",
+    "東京, 日本",
+    "5, Brooklyn, Kings, New York",
+    "",
+  ])("%j is not", (place) => {
+    expect(isProse(place)).toBe(false);
+  });
+});
+
 describe("placeAnswer: the engine's own answer", () => {
-  it("keeps a lookup the text does not name, as main fills it, and drops one naming another country", async () => {
+  it("keeps a lookup a text written as a name does not name, and drops one naming another country", async () => {
     // A text of the e2e final trees: West Topsham is a village of Topsham.
     expect(await placeAnswer("West Topsham, Orange, Vermont", [], async () => "Topsham, Orange, Vermont, United States")).toEqual({
       standardPlace: "Topsham, Orange, Vermont, United States",
@@ -166,6 +192,27 @@ describe("placeAnswer: the engine's own answer", () => {
       standardPlace: "Hawaii, United States",
       from: "record",
     });
+  });
+
+  it.each([
+    ["with his daughter", "Hawaii, United States"],
+    ["at the home of her daughter", "Of, Trabzon, Türkiye"],
+    ["at the home of her daughter, Mrs. John Smith", "Of, Trabzon, Türkiye"],
+  ])("drops the lookup for prose %j, which does not confirm %j", async (place, lookup) => {
+    expect(await placeAnswer(place, [], async () => lookup)).toEqual({
+      standardPlace: null,
+      why: "unconfirmed",
+      reason: `the engine's place lookup answer '${lookup}' could not be confirmed, as the text names neither a country nor that place`,
+    });
+  });
+
+  it.each([
+    // Its own name is one of the text's parts.
+    ["her residence, 412 Vine St, Cincinnati", "Cincinnati, Hamilton, Ohio, United States"],
+    // The country check judges the pair.
+    ["of,,Norway", "Norway"],
+  ])("keeps the lookup for prose %j, which confirms %j", async (place, lookup) => {
+    expect(await placeAnswer(place, [], async () => lookup)).toEqual({ standardPlace: lookup, from: "lookup" });
   });
 });
 
@@ -203,6 +250,19 @@ describe("judgeSupplied", () => {
       unnamed: true,
     });
     expect(await judgeSupplied("412 Vine St, Cincinnati", CINCINNATI, lookup(CINCINNATI))).toEqual({ standardPlace: CINCINNATI });
+  });
+
+  it("keeps no refused value the lookup gives too when a text written as a name neither confirms it nor ends with its state", async () => {
+    // Trowbridge neighbours Paxcroft: the text names it by its county alone.
+    const TROWBRIDGE = "Trowbridge, Wiltshire, England, United Kingdom";
+    expect(await judgeSupplied("Paxcroft, Wiltshire", TROWBRIDGE, lookup(TROWBRIDGE))).toEqual({
+      standardPlace: null,
+      warning:
+        `standard_place '${TROWBRIDGE}' for 'Paxcroft, Wiltshire' was not kept: no part of the place text names that ` +
+        `place, and the engine has none for it: the engine's place lookup answer '${TROWBRIDGE}' could not be ` +
+        "confirmed, as the text names neither a country nor that place. A supplied standard_place is kept when it is " +
+        "a FamilySearch standard place (a place_search result) for the fact's own place.",
+    });
   });
 
   it("keeps no value in another state, though the lookup gives it too", async () => {

@@ -518,7 +518,8 @@ async function applyOperation(
   // standard_place the records it cites give the same text on facts of its own
   // type (`RecordStandards`, for `people`, the persons holding it), else the
   // resolver's, with the places of the holder's other facts (`siblings`) as
-  // context for a bare place. Never fails the edit.
+  // context for a bare place, unless the text is prose and does not confirm it.
+  // Never fails the edit.
   const settlePlace = async (
     fact: SimplifiedFact,
     supplied: boolean,
@@ -549,7 +550,7 @@ async function applyOperation(
     delete fact.standard_place;
     if (filled.why === "not_found") {
       warnings.push(`could not resolve standard_place for '${place}' (left unset)`);
-    } else if (filled.why === "records_disagree") {
+    } else if (filled.why === "records_disagree" || filled.why === "unconfirmed") {
       warnings.push(`could not resolve standard_place for '${place}' (left unset): ${filled.reason}`);
     } else if (filled.why === "other_country") {
       warnings.push(

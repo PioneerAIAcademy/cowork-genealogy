@@ -184,10 +184,14 @@ the lookup is `resolveStandardPlace(placeName, { contextPlaces: [contextName] })
   the reason naming a non-place phrase ("Same House", never looked up), a
   lookup that found nothing or failed (for a one-part text, telling the caller
   to write its parent jurisdictions into the place text, e.g. "Springfield,
-  Illinois"), or an answer naming a different country than the text. An answer
-  the text does not name is still the one the writers store, as on `main`:
-  "Phila., Pa." gives "Philadelphia, Pennsylvania, United States", and "at the
-  home of her daughter, Mrs. John Smith" "Of, Trabzon, Türkiye".
+  Illinois"), an answer naming a different country than the text, or an answer
+  a prose text does not confirm. An answer a text written as a name does not
+  name is still the one the writers store: "Phila., Pa." gives "Philadelphia,
+  Pennsylvania, United States". A text written as prose, whose first comma part
+  has no capital letter, gives the lookup's answer only when the text confirms
+  it (tree-edit-tool-spec §4.1.1): "at the home of her daughter, Mrs. John
+  Smith" gives none, the reason naming the "Of, Trabzon, Türkiye" the lookup
+  found.
 
 A fact that cites a record takes FamilySearch's own standardization of the text
 on that record first, so the verdict is what a writer fills only when the record

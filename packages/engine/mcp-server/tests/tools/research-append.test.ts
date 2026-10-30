@@ -1551,6 +1551,39 @@ describe("research_append (Phase 1)", () => {
       expect(p).not.toHaveProperty("standard_place");
     });
 
+    it("on an append whose own place is prose, not lifted from value, whose lookup the text does not name, which is dropped", async () => {
+      await writeProject();
+      const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "death", place: PROSE };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.validation.warnings).toContain(
+        `could not resolve standard_place for '${PROSE}' (left unset): the lookup's answer ` +
+          "'Of, Trabzon, Türkiye' could not be confirmed, as the text names neither a country nor that place",
+      );
+      expect(r.unresolvedPlaces).toEqual([PROSE]);
+      expect(r.resolvedPlaces).toBeUndefined();
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p).toMatchObject({ fact_type: "death", value: "1850", place: PROSE });
+      expect(p).not.toHaveProperty("standard_place");
+    });
+
+    it("on an append whose own place is written as a name, whose lookup is kept with a warning though the text does not name it", async () => {
+      await writeProject();
+      // A text of the e2e final trees: West Topsham is a village of Topsham.
+      const PLACE = "West Topsham, Orange, Vermont";
+      const TOPSHAM = "Topsham, Orange, Vermont, United States";
+      vi.mocked(resolveStandardPlace).mockImplementationOnce(async () => TOPSHAM);
+      const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "residence", place: PLACE };
+      const r = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      expect(r.resolvedPlaces).toEqual([{ place: PLACE, standardPlace: TOPSHAM, source: "geocoded" }]);
+      expect(r.unresolvedPlaces).toBeUndefined();
+      const p = (await readResearch()).assertions.find((x: any) => x.id === singleOk(r).entryId);
+      expect(p).toMatchObject({ place: PLACE, standard_place: TOPSHAM });
+    });
+
     it("on an append of a one-word text, whose lookup the resolver's one-word rule judges, which is kept though the text does not name it", async () => {
       await writeProject();
       const r = await appendVariant("birthplace", "Ky");
