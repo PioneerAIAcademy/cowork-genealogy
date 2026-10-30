@@ -98,8 +98,10 @@ describe("keptSupplied: what a writer keeps of a supplied standard_place", () =>
   it("keeps it as written when FamilySearch's search, or the place's listing, failed", async () => {
     search.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
     expect(await keptSupplied("Funchal, Madeira", "Funchal, Madeira, Portugal")).toEqual({ kept: "Funchal, Madeira, Portugal" });
+    // A town is named by the text's first part only, so a read listing would refuse this coarser value.
     listing.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
-    expect(await keptSupplied("with his daughter", "Hawaii, United States")).toEqual({ kept: "Hawaii, United States" });
+    const LAAKIRCHEN = "Laakirchen, Gmunden, Upper Austria, Austria";
+    expect(await keptSupplied("Stötten (Nötten), Laakirchen, Gmunden", LAAKIRCHEN)).toEqual({ kept: LAAKIRCHEN });
   });
 
   it("keeps none FamilySearch has no place of", async () => {
@@ -188,10 +190,9 @@ describe("placeAnswer: the engine's own answer", () => {
       standardPlace: "West Virginia, United States",
       from: "lookup",
     });
-    expect(await placeAnswer("with his daughter", ["Hawaii, United States"], async () => null)).toEqual({
-      standardPlace: "Hawaii, United States",
-      from: "record",
-    });
+    // The record's own standardization of its prose, the town the record is from, is kept though the text names no place.
+    const SHENANDOAH = "Shenandoah, Schuylkill, Pennsylvania, United States";
+    expect(await placeAnswer("at his home", [SHENANDOAH], async () => null)).toEqual({ standardPlace: SHENANDOAH, from: "record" });
   });
 
   it.each([
