@@ -1193,13 +1193,14 @@ def test_unsettled_conflict_stays_open_and_weighed(after_state, test):
     ladder to proof-conclusion."""
     if _UNSETTLED_TAG not in (test.get("tags") or []):
         pytest.skip(f"not a {_UNSETTLED_TAG} test")
-    conflict = next((c for c in after_state.get("conflicts") or [] if c.get("id") == "c_001"), None)
+    after = after_state.get("research_json") or {}
+    conflict = next((c for c in after.get("conflicts") or [] if c.get("id") == "c_001"), None)
     assert conflict is not None, "c_001 is gone from conflicts[]"
     assert conflict.get("status") == "unresolved", (
         f"c_001 is {conflict.get('status')!r}: no record left to search can settle it"
     )
     assert conflict.get("preferred_assertion_id") is None, "c_001 names a preferred assertion"
-    missing = sorted(_question_log_ids(after_state, "q_001") - set(conflict.get("weighed_log_entry_ids") or []))
+    missing = sorted(_question_log_ids(after, "q_001") - set(conflict.get("weighed_log_entry_ids") or []))
     assert not missing, (
         f"c_001's weighed_log_entry_ids misses {missing}: the pass did not declare "
         "nothing left to search on its analysis write, and the ladder sends q_001 "
