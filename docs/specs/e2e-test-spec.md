@@ -613,9 +613,9 @@ record is a velación rather than the marriage, yet the persona is her, so
 genuine but the index cannot carry the identification, so `unresolved`.
 
 **`make matcher-accuracy` scores only `same`/`different` pairs**, through
-the exported `scorePair` in `packages/engine/mcp-server/src/utils/match-engine.ts`
-— the path `same_person` uses, so there is no second scoring path to
-drift. It lists `unresolved` and `null` fixtures as skipped, with a
+`matchPairs` in `packages/engine/mcp-server/src/utils/matcher.ts` — the call
+`same_person` and ranking make, so there is no second scoring path to
+drift. It measures whichever matcher `~/.familysearch-mcp/config.json` names. It lists `unresolved` and `null` fixtures as skipped, with a
 count. The record documents it fetches go in the gitignored cache
 `dev/.matcher-cache/` under `packages/engine/mcp-server/`; FamilySearch
 record payloads are never committed. It needs a FamilySearch login, so no

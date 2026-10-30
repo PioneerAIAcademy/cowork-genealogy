@@ -1069,16 +1069,6 @@ function projectArmFixtureProblem(args: unknown, response: unknown): string | nu
   const parts: string[] = [];
   if (echoed.length) parts.push(`still echoes the API's ${echoed.join(", ")}`);
   if (unnamed.length) parts.push(`does not name whom it scored (no ${unnamed.join(", ")})`);
-  // `scorePair` defines `matched` as "the API returned a confidence", so the two
-  // always agree: a non-match carries none, a match carries one.
-  const matched = (response as { matched?: unknown }).matched;
-  if (typeof matched === "boolean" && matched !== keys.includes("confidence")) {
-    parts.push(
-      matched
-        ? "is a match with no confidence"
-        : "is not a match yet carries a confidence, which scorePair returns only with a match",
-    );
-  }
   return parts.length ? parts.join("; ") : null;
 }
 
@@ -1096,10 +1086,9 @@ describe("same_person fixtures that call the project arm carry the project resul
       .map((r) => `${r.name}: ${r.problem}`);
     expect(
       bad,
-      "a project-arm answer is { matched, confidence?, score, recordSource, recorded, " +
-        "recordPersona, treePerson } and nothing the API echoes, and `matched` is true " +
-        "exactly when `confidence` is there. The union check above cannot see a fixture " +
-        "in the old shape, because the explicit arm still fits it",
+      "a project-arm answer is { score, recordSource, recorded, recordPersona, " +
+        "treePerson } and nothing the API echoes. The union check above cannot see a " +
+        "fixture in the old shape, because the explicit arm still fits it",
     ).toEqual([]);
   });
 
@@ -1109,14 +1098,14 @@ describe("same_person fixtures that call the project arm carry the project resul
       treePerson: { id: "I1", name: "Patrick Flynn" },
     };
     const projectArgs = { assertionId: "~", treePersonId: "I1" };
-    const core = { matched: true, confidence: 5, score: 0.5, recordSource: "record_read", recorded: true };
+    const core = { score: 0.5, recordSource: "record_read", recorded: true };
     const echo = {
       queryArk: "ark:/61903/1:1:MXHY-TP4", candidateArk: "ark:/61903/4:1:KWCJ-RN4",
       apiTitle: "Matches for ark:/61903/1:1:MXHY-TP4", updated: "2026-05-21T00:00:00Z",
     };
 
     // The three ways the bad thing passes the union check
-    expect(projectArmFixtureProblem(projectArgs, { matched: true, confidence: 5, score: 0.5, ...echo }))
+    expect(projectArmFixtureProblem(projectArgs, { score: 0.5, ...echo }))
       .toMatch(/queryArk, candidateArk, apiTitle, updated/);
     expect(projectArmFixtureProblem(projectArgs, { ...core, ...named, candidateArk: "x" }))
       .toMatch(/still echoes the API's candidateArk/);
@@ -1124,21 +1113,12 @@ describe("same_person fixtures that call the project arm carry the project resul
       .toMatch(/no treePerson/);
     expect(projectArmFixtureProblem(projectArgs, core)).toMatch(/no recordPersona, treePerson/);
 
-    // `matched` and `confidence` agree, as `scorePair` makes them
-    expect(projectArmFixtureProblem(projectArgs, { ...core, ...named, matched: false }))
-      .toMatch(/is not a match yet carries a confidence/);
-    const { confidence: _dropped, ...noConfidence } = core;
-    expect(projectArmFixtureProblem(projectArgs, { ...noConfidence, ...named }))
-      .toMatch(/is a match with no confidence/);
-
     // And what must stay accepted
     expect(projectArmFixtureProblem(projectArgs, { ...core, ...named })).toBeNull();
-    expect(projectArmFixtureProblem(projectArgs, { ...core, ...named, confidence: 4 })).toBeNull();
-    expect(projectArmFixtureProblem(projectArgs, { ...noConfidence, ...named, matched: false })).toBeNull();
     // the explicit arm names `primaryId1` and the like, and still echoes
-    expect(projectArmFixtureProblem({ primaryId1: "I1", primaryId2: "I2" }, { matched: true, score: 0.5, ...echo }))
+    expect(projectArmFixtureProblem({ primaryId1: "I1", primaryId2: "I2" }, { score: 0.5, ...echo }))
       .toBeNull();
-    expect(projectArmFixtureProblem({ "args.primaryId1": "~" }, { matched: true, score: 0.5, ...echo }))
+    expect(projectArmFixtureProblem({ "args.primaryId1": "~" }, { score: 0.5, ...echo }))
       .toBeNull();
     // the relatives result and the failure envelope are other members of the same return
     expect(projectArmFixtureProblem({ ...projectArgs, matchRelatives: true }, { matchRelatives: true, matches: [] }))
@@ -1148,7 +1128,7 @@ describe("same_person fixtures that call the project arm carry the project resul
 
   it("selects a project-arm fixture by the arm, not by an `assertionId` in its predicate", () => {
     const oldShape = {
-      matched: true, confidence: 5, score: 0.5,
+      score: 0.5,
       queryArk: "ark:/61903/1:1:MXHY-TP4", candidateArk: "ark:/61903/4:1:KWCJ-RN4",
       apiTitle: "Matches for ark:/61903/1:1:MXHY-TP4", updated: "2026-05-21T00:00:00Z",
     };
@@ -1171,5 +1151,83 @@ describe("same_person fixtures that call the project arm carry the project resul
     expect(servesProjectArm(undefined)).toBe(false);
     expect(servesProjectArm(null)).toBe(false);
     expect(servesProjectArm(["assertionId"])).toBe(false);
+  });
+});
+
+// ─── no fixture serves a field the matcher shim removed ─────────────────────
+//
+// The shape check above reads top-level keys, so it fails a top-level `matched`
+// on a same_person answer but cannot see one inside a row. The shim removed
+// three that live in rows: `matchConfidence` from ranking stubs and
+// record_search rows, and `confidence` and `matched` from same_person's
+// relatives triples. A fixture is served verbatim, so one that still carries
+// them teaches the eval a field neither matcher returns.
+
+const RETIRED_MATCHER_FIELDS: Record<string, readonly string[]> = {
+  rank_search_matches: ["matchConfidence"],
+  record_search: ["matchConfidence"],
+  same_person: ["matched", "confidence"],
+};
+
+/** Every path below the top level at which a response carries a field its tool
+ *  lost to the matcher shim. Top-level keys are the shape check's. */
+function retiredMatcherFields(tool: unknown, response: unknown): string[] {
+  const retired = typeof tool === "string" ? RETIRED_MATCHER_FIELDS[tool] : undefined;
+  if (!retired) return [];
+  const found: string[] = [];
+  const walk = (node: unknown, path: string, nested: boolean): void => {
+    if (Array.isArray(node)) {
+      node.forEach((item, i) => walk(item, `${path}[${i}]`, nested));
+    } else if (typeof node === "object" && node !== null) {
+      for (const [key, value] of Object.entries(node)) {
+        if (nested && retired.includes(key)) found.push(`${path}.${key}`);
+        walk(value, `${path}.${key}`, true);
+      }
+    }
+  };
+  walk(response, "response", false);
+  return found;
+}
+
+describe("no fixture serves a field the matcher shim removed", () => {
+  it("has fixtures of each tool to check: a zero-length scan proves nothing", () => {
+    for (const tool of Object.keys(RETIRED_MATCHER_FIELDS)) {
+      expect(fixtures.some((f) => f.tool === tool), tool).toBe(true);
+    }
+  });
+
+  it("finds none in a ranking stub, a record_search row or a relatives triple", () => {
+    const bad = fixtures.flatMap((f) =>
+      retiredMatcherFields(f.tool, f.response).map((path) => `${f.name}: ${path}`),
+    );
+    expect(bad, "neither matcher returns these fields; delete them from the fixtures").toEqual([]);
+  });
+
+  it("rejects each one at any depth, and accepts what the tools still return", () => {
+    expect(retiredMatcherFields("rank_search_matches", { matches: [{ matchScore: 0.9, matchConfidence: 5 }] }))
+      .toEqual(["response.matches[0].matchConfidence"]);
+    expect(retiredMatcherFields("record_search", { results: [{ recordId: "r", matchConfidence: 5 }] }))
+      .toEqual(["response.results[0].matchConfidence"]);
+    expect(retiredMatcherFields("record_search", { ranked: { matches: [{ matchConfidence: 5 }] } }))
+      .toEqual(["response.ranked.matches[0].matchConfidence"]);
+    expect(
+      retiredMatcherFields("same_person", {
+        matchRelatives: true,
+        matches: [{ role: "child", score: 0.9, confidence: 4, matched: true }],
+      }),
+    ).toEqual(["response.matches[0].confidence", "response.matches[0].matched"]);
+
+    // FamilySearch's own search confidence on a record_search row is not the matcher's
+    expect(retiredMatcherFields("record_search", { results: [{ recordId: "r", score: 1.2, confidence: 4, matchScore: 0.9 }] }))
+      .toEqual([]);
+    expect(retiredMatcherFields("rank_search_matches", { matches: [{ matchScore: null, relativeTerms: {} }] }))
+      .toEqual([]);
+    expect(retiredMatcherFields("same_person", { matchRelatives: true, matches: [{ score: 0.9, preScore: 0.5 }] }))
+      .toEqual([]);
+    // a top-level key is the shape check's to fail; another tool's confidence is its own
+    expect(retiredMatcherFields("same_person", { score: 0.9, matched: true })).toEqual([]);
+    expect(retiredMatcherFields("person_record_matches", { matches: [{ confidence: 3 }] })).toEqual([]);
+    expect(retiredMatcherFields("rank_search_matches", null)).toEqual([]);
+    expect(retiredMatcherFields(undefined, { matches: [{ matchConfidence: 5 }] })).toEqual([]);
   });
 });

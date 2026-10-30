@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the 1850 census head of household Thomas Flynn's own name assertion (a_001, no recordRole), scored against the tree's Thomas Flynn (I2). The same pair same-person-flynn-1850-head answers through a child's relationship assertion, so the same answer. For ut_person_evidence_021, where checking whether the head is already in the tree is in lane.",
+  "args": {
+    "assertionId": "a_001",
+    "treePersonId": "I2"
+  },
+  "response": {
+    "score": 0.84,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "Thomas Flynn",
+      "role": "head_of_household"
+    },
+    "treePerson": {
+      "id": "I2",
+      "name": "Thomas Flynn"
+    }
+  }
+}
