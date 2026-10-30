@@ -1124,9 +1124,9 @@ _FINDING_HEAD_RE = re.compile(
     r"^(\s*)[#*_\s]*(?:finding\s+)?(\d{1,2})(?!\d)\s*(?:[.):]|\s[\u2014\u2013-])", re.IGNORECASE
 )
 _BOLD_NUMBER_RE = re.compile(r"^(\s*)[#\s]*\*\*(\d{1,2})\*\*\s")
-# Opens a section after the findings. Matched on the line's own text, never a
-# finding's body: a heading (markdown or bold), an unindented `Could not check:`
-# label that is bold or ends at its colon, or a checklist code alone on its line.
+# Opens a section after the findings: a heading (markdown or bold), a
+# `Could not check:` label, or a checklist code alone on its line. A line
+# indented deeper than the findings is their body and never opens one.
 _UNCHECKED_PHRASE = r"(?:could\s+not\s+(?:check|verify)|unverifi\w*|unchecked)"
 _UNCHECKED_LABEL_RE = re.compile(r"could\s+not\s+(?:check|verify)\s*:", re.IGNORECASE)
 _UNCHECKED_HEAD_RE = re.compile(_UNCHECKED_PHRASE, re.IGNORECASE)
@@ -1138,15 +1138,14 @@ _LATER_BLOCK_RE = re.compile(
 _CHECKLIST_CODE_RE = re.compile(r"(?:COHERENCE|CONSISTENCY|VERIFIABILITY|COMPLETENESS)\s*:?\s*$")
 
 
-def _opens_after_findings(raw: str) -> bool:
+def _opens_after_findings(raw: str, body_indent: int | None = None) -> bool:
     lead = raw.lstrip()
+    if body_indent is not None and len(raw) - len(lead) > body_indent:
+        return False
     heading = lead.startswith(("#", "**", "__"))
     text = _unemphasised(lead).lstrip("# ").rstrip()
-    if _CHECKLIST_CODE_RE.match(text):
+    if _CHECKLIST_CODE_RE.match(text) or _UNCHECKED_LABEL_RE.match(text):
         return True
-    label = _UNCHECKED_LABEL_RE.match(text)
-    if label and not raw[:1].isspace():
-        return heading or not text[label.end():].strip()
     if _LATER_BLOCK_RE.match(text):
         return heading or text.endswith(":")
     return heading and bool(_UNCHECKED_HEAD_RE.match(text))
@@ -1188,7 +1187,7 @@ def _numbered_findings(reply: str) -> list[str]:
     findings: list[str] = []
     first_indent = 0
     for raw in reply.splitlines():
-        if _opens_after_findings(raw):
+        if _opens_after_findings(raw, first_indent if findings else None):
             break
         head = _finding_head(raw)
         if head and head[1] == len(findings) + 1 and (not findings or head[0] <= first_indent):

@@ -1681,7 +1681,8 @@ def test_finding_links_on_every_committed_x6b_return():
             if entry.get("test_id") != "ut_source_evaluation_x6b":
                 continue
             reply = subject_reply_text(
-                (entry["runs"][-1].get("output") or {}).get("agent_returns"),
+                next((r["output"]["agent_returns"] for r in reversed(entry["runs"])
+                      if (r.get("output") or {}).get("agent_returns")), None),
                 "", "source-evaluation", _LINK_TEST,
             )
             assert len(_findings(reply)) >= 2, f"{Path(path).name}: findings did not parse"
@@ -1717,7 +1718,8 @@ def test_a_second_finding_after_a_sub_list_is_still_checked():
 @pytest.mark.parametrize("body", [
     "   Could not verify the year: the certificate is offline.",
     "   Could not verify: the certificate is offline.",
-    "Could not verify: the certificate is offline.",
+    "   **Could not verify:** the year.",
+    "   ### Could not check",
     "   The impossible-date check flagged nothing here.",
     "   Unverified: the informant.",
 ])
@@ -1730,12 +1732,35 @@ def test_body_lines_do_not_end_the_findings(body):
 
 
 
-@pytest.mark.parametrize("label", ["Could not check:", "**Could not verify:** the census entry."])
-def test_an_unindented_closing_label_ends_the_findings(label):
+@pytest.mark.parametrize("label", [
+    "Could not check:",
+    "Could not check: these were offline.",
+    "**Could not verify:** the census entry.",
+    "*Could not verify:* the census entry.",
+])
+def test_a_closing_label_at_the_findings_indent_ends_them(label):
     _check_links(
         f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
         f"{label}\n2. A family Bible entry — the image is offline.\n"
     )
+
+
+def test_a_closing_label_ends_indented_findings():
+    _check_links(
+        f"  1. Minnesota Death Index — indexing error\n     Link: {_DEATH}\n\n"
+        "  Could not check:\n  2. A family Bible entry — the image is offline.\n"
+    )
+
+
+def test_a_label_at_column_0_ends_column_0_findings():
+    """Known limit: where finding bodies start at column 0, a body label looks
+    the same as a closing one, so it ends the findings."""
+    _check_links(
+        f"**Finding 1:** Minnesota Death Index — indexing error\nLink: {_DEATH}\n"
+        "Could not verify: the certificate is offline.\n\n"
+        "**Finding 2:** Minnesota State Census, 1885 — misattributed\n"
+    )
+
 
 def test_a_hedged_heading_is_still_a_finding():
     with pytest.raises(AssertionError, match="birth unverified"):
