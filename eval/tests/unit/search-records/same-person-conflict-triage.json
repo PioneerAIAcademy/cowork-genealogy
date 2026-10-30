@@ -36,7 +36,7 @@
     "catalog-search-empty-keywords"
   ],
   "judge_context": [
-    "After record_search (with projectPath) stages results, the skill should pass subjectId to record_search and triage from the inline `ranked` block it returns. the inline `ranked` block returns the Patrick Flynn record at matchRank 1 with a high match score (0.85, matchConfidence 5).",
+    "After record_search (with projectPath) stages results, the skill should pass subjectId to record_search and triage from the inline `ranked` block it returns. the inline `ranked` block returns the Patrick Flynn record at matchRank 1 with a high match score (0.85).",
     "The high match score must NOT auto-accept this as a confirmed match. The underlying record lists Patrick Flynn as HEAD of household in 1850 (recordTitle 'Patrick Flynn — Head of Household, 1850') when he was born ~1845 — a 5-year-old cannot be head of household. The skill must apply its Step-4 logical cross-check (role vs. age) and flag this impossible household role as a qualitative conflict.",
     "The result should be categorized as needs-review or flagged-conflict with explicit reasoning citing the impossible head-of-household role: e.g., 'match score is 0.85 but the record lists a 5-year-old as head of household — likely a transcription or attribution error; flagged for human review'. Reason, not score, is the arbiter.",
     "This tests that the skill treats the inline ranking's match score as one input to triage reasoning, not as the final word — the ranked list is a review surface for the existing role/age cross-checks, not an accept/reject classifier.",

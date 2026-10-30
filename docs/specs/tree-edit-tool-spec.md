@@ -281,7 +281,8 @@ tree_edit({
     the caller hand-walking `assertion.source_id → research source → tree
     S-entry` and supplying a literal `relationship.sources`, pass
     `sourceAssertionId` naming the research.json assertion this edge comes
-    from; the tool resolves the ref itself via the same resolver
+    from (refused when a re-extraction retired it — a non-null `superseded_by`,
+    `research-schema-spec.md` §5.6); the tool resolves the ref itself via the same resolver
     `materialize_facts` uses (`utils/source-ref-resolver.ts`), including the
     direct/indirect quality distinction (§7.1). The accepted `fact_type`s are
     the shared `RELATIONSHIP_ESTABLISHING_TYPES` — `relationship`, `marriage`,
