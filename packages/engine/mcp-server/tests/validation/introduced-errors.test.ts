@@ -78,6 +78,13 @@ describe("validateIntroduced", () => {
     expect(
       result.warnings.some((w) => /pre-existing schema error/.test(w.message)),
     ).toBe(true);
+    // The pointer says these are among the validator's own errors, so an agent
+    // that just reported them does not count them twice (#3870).
+    expect(
+      result.warnings.some((w) =>
+        /they are among the errors validate_research_schema lists, not new ones/.test(w.message),
+      ),
+    ).toBe(true);
   });
 
   it("blocks on drift the call itself introduces", async () => {
