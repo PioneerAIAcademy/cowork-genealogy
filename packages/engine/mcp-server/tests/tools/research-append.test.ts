@@ -2051,7 +2051,7 @@ describe("research_append (Phase 2)", () => {
     it("a resolved question the conflict also blocks does not take the unsettled-conflict arm", async () => {
       const research = weighedResearch();
       research.conflicts[0].blocks_question_ids = ["q_001", "q_009"];
-      const q9 = research.questions.find((x: any) => x.id === "q_009");
+      const q9 = research.questions.find((x: any) => x.id === "q_009")!;
       q9.status = "resolved";
       await writeProject(research);
       expect((await update(SEARCHED_OUT)).ok).toBe(true);
