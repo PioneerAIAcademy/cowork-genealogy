@@ -65,7 +65,7 @@ DB_DML = "genealogy_dml"
 # The tables H:225 grants to the DML role; the test pins them against sql/*.sql.
 DML_TABLES = ("projects", "documents", "blobs", "staging", "sessions", "turns", "session_events",
               "session_seq", "session_activity", "session_entries", "tool_calls", "users",
-              "allowed_emails", "familysearch_tokens")
+              "allowed_emails", "familysearch_tokens", "connector_tokens", "authorization_codes", "signin_states")
 
 BUDGET_NAME = PREFIX
 BUDGET_MARGIN_USD = 15.0

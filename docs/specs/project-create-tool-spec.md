@@ -232,7 +232,19 @@ here and left for validation to refuse at its own index. A resolved value is
 reported in `placesFilled`. A caller-supplied value that the resolver replaced or
 could not confirm, or that sat on a fact with no `place`, is named in
 `validation.warnings`; one that did not resolve — no match, a failed lookup, or
-the budget running out — is left unset, never kept.
+the budget running out — is left unset, never kept. The writers' rule for a
+supplied value (tree-edit-tool-spec §4.1.1) does not apply here: no production
+caller supplies one (`init-project` never passes `tree`).
+
+**A place left unstandardized is reported, never silent.** Once the fill has
+run, every fact in the tree that still has a `place` and no `standard_place` —
+a read place the retry could not fill, or a hand-entered one that did not
+resolve — is listed in `unresolvedPlaces: string[]`, once each in the spelling
+first met and keyed as `placesFilled` is, and named in one
+`validation.warnings` line, `Places kept as written, with no standard place
+found: …`. A non-place phrase such as "Same House" (`isNonPlacePhrase`) has no
+standard form to miss and is left out. Both are absent when every place was
+standardized.
 
 **The result, with `personId`,** is a summary, never the tree, held under
 `SUMMARY_MAX_CHARS` (2,000 serialized characters): `subject` (`id`,

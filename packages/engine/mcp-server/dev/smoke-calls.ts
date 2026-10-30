@@ -25,7 +25,7 @@ export type SmokeMode = "no-bearer" | "bearer";
 
 /** The three auth tools the transport smoke never calls, each with its reason. */
 export const EXCLUDED_TOOLS: Readonly<Record<string, string>> = {
-  login: "every HTTP request is a bearer principal, so isHostedMode is true: answers HOSTED_REAUTH_INSTRUCTION without touching tokens.json",
+  login: "every HTTP request is a bearer principal, so isHostedMode is true: answers HOSTED_LOGIN_UNAVAILABLE without touching tokens.json",
   logout: "a bearer principal has no token file: answers HOSTED_SESSION_MANAGED_MESSAGE without touching tokens.json",
   auth_status: "answers {loggedIn: token.length > 0} from the bearer alone, but is excluded with the other auth tools",
 };
