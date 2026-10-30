@@ -5,6 +5,7 @@
 // duplicating the token/UA/content-type plumbing.
 
 import type { Principal } from "../auth/principal.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithTimeout } from "./http.js";
 import { fsFetchWithTimeout } from "./fs-fetch.js";
@@ -367,6 +368,24 @@ async function attemptFsImageFetch(
   };
 }
 
+/** Appended to a page-scan 403. Hedged, and it does not claim the session
+ *  works: a 403 does not test the session, and FamilySearch's edge also answers
+ *  403 to a blocked or rate-limited request (catalog-search.ts), which a later
+ *  retry clears. */
+export const RESTRICTED_IMAGE_GUIDANCE =
+  "This image is most likely restricted for this account or location. Many " +
+  "FamilySearch films can be viewed only at a FamilySearch Center or affiliate " +
+  "library. This is not a sign-in problem, and reconnecting or logging in again " +
+  "will not change it. If other images in the same film open, the refusal may " +
+  "be temporary: try this one again later.";
+
+/** Appended to a memory-artifact 403. The artifact is fetched with no account
+ *  (see fetchFsImageBytes), so the text cannot say whose access is missing; no
+ *  restricted memory has been sampled (memories.ts). */
+export const RESTRICTED_MEMORY_GUIDANCE =
+  "This memory's file is not publicly readable, and this tool cannot read it. " +
+  "Reconnecting or logging in again will not change that.";
+
 /**
  * Fetch the raw bytes of a FamilySearch distribution image, authenticated.
  * Reuses getValidToken(principal) + BROWSER_USER_AGENT. Throws on non-2xx or a
@@ -400,8 +419,15 @@ export async function fetchFsImageBytes(
   let attempt = await attemptFsImageFetch(url, authedPrincipal, memoryShape, opts.timeoutMs);
   let resolvedUrl = url;
   if (!attempt.ok && fallbackUrl) {
-    attempt = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape, opts.timeoutMs);
-    resolvedUrl = fallbackUrl;
+    const fallback = await attemptFsImageFetch(fallbackUrl, authedPrincipal, memoryShape, opts.timeoutMs);
+    // A primary 401/403 says what is wrong — a rejected token, a restricted
+    // image — and a failing fallback must not replace it with a 404 or an HTML
+    // page whose guidance sends the agent back to record_read.
+    const primaryRefused = attempt.status === 401 || attempt.status === 403;
+    if (fallback.ok || !primaryRefused) {
+      attempt = fallback;
+      resolvedUrl = fallbackUrl;
+    }
   }
 
   if (!attempt.ok || !attempt.bytes || attempt.contentType === undefined) {
@@ -411,6 +437,12 @@ export async function fetchFsImageBytes(
           `but got content-type: ${attempt.nonImageContentType}`
       );
     }
+    // A 401 on a fetch that sent a bearer is a rejected token: restricted images
+    // answer 403, and the committed runlogs hold no image 401 at all (#3905). A
+    // memory artifact sends no bearer, so its 401 is not one the user can fix.
+    if (attempt.status === 401 && authedPrincipal !== null) {
+      throw new Error(await rejectedTokenMessage(principal));
+    }
     // On a 400/404 for a URL carrying a 3:1:/3:2: document-image ARK, name the
     // likely cause. The agent's most common mistake is constructing an image
     // ARK from a record ARK by changing the type prefix — the resulting id is
@@ -418,9 +450,9 @@ export async function fetchFsImageBytes(
     //
     // Deliberately only those two statuses, not the whole 4xx range: they are
     // the ones that mean the identifier itself is wrong. The rest mean the ARK
-    // is real and the caller cannot have it right now — 401/403 is a
-    // rights-restricted image, 429 a rate limit — and re-fetching from
-    // record_read returns the same ARK, so the guidance sends the agent in a
+    // is real and the caller cannot have it right now — 403 is a
+    // rights-restricted image (its own branch below), 429 a rate limit — and
+    // re-fetching from record_read returns the same ARK, so the guidance sends the agent in a
     // circle. 403 outnumbers 400 among ark failures in the committed runlogs —
     // creszentia-haas-birth's are restricted images, and issue #2392 carved
     // that cause out explicitly. Re-derive with `make e2e-transcribe-failures
@@ -448,6 +480,19 @@ export async function fetchFsImageBytes(
     // ARK_PATTERN, so arkToImageUrl resolves its embedded 3:1: ark), and the
     // guidance would then name two tools that can never return it.
     const isMemory = memoryShape || isMemoryArtifactUrl(resolvedUrl);
+
+    // A 403 is a restricted image, not a sign-in problem, and the bare status
+    // was read as one: lucia-skora-parents' agent called login on Center-only
+    // films and wrote the wrong reason into its proof, and
+    // maria-stockburger-son's told the researcher to log in. Neither text may
+    // match REAUTH_HITS or REAUTH_ENTRY (apps/server/proto/turn.py), which the
+    // prototype counts as auth failures; turn.py's broader REAUTH reads only
+    // place_search results in its kill check, so it is not a constraint here.
+    if (attempt.status === 403) {
+      throw new Error(
+        `${failed}. ${isMemory ? RESTRICTED_MEMORY_GUIDANCE : RESTRICTED_IMAGE_GUIDANCE}`
+      );
+    }
 
     if (!isMemory && (attempt.status === 400 || attempt.status === 404)) {
       const ark = findDocumentImageArk(resolvedUrl);
