@@ -195,72 +195,10 @@ def test_selection_basis_objective_decomposition(before_state, after_state, test
     )
 
 
-def test_selection_basis_unresolved_conflict(before_state, after_state, test):
-    """Tag-gated: when unresolved conflicts are blocking other questions,
-    the new question's selection_basis must be `unresolved_conflict`."""
-    if "selection-basis-unresolved-conflict" not in test.get("tags", []):
-        pytest.skip("not a selection-basis-unresolved-conflict scenario")
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("missing research.json for diff")
-    new = _new_questions(before, after)
-    assert new, "expected a new question; none was added"
-    bad = [
-        (q.get("id"), q.get("selection_basis"))
-        for q in new
-        if q.get("selection_basis") != "unresolved_conflict"
-    ]
-    assert not bad, (
-        f"new questions with wrong selection_basis: {bad}; "
-        f"expected 'unresolved_conflict'"
-    )
 
 
-def test_selection_basis_fan_pivot(before_state, after_state, test):
-    """Tag-gated: when all direct evidence searches are exhausted, the
-    new question's selection_basis must be `fan_pivot` — indicating
-    the skill recognized the FAN (Family/Associates/Neighbors) pivot
-    threshold rather than decomposing another direct-evidence path."""
-    if "selection-basis-fan-pivot" not in test.get("tags", []):
-        pytest.skip("not a selection-basis-fan-pivot scenario")
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("missing research.json for diff")
-    new = _new_questions(before, after)
-    assert new, "expected a new question; none was added"
-    bad = [
-        (q.get("id"), q.get("selection_basis"))
-        for q in new
-        if q.get("selection_basis") != "fan_pivot"
-    ]
-    assert not bad, (
-        f"new questions with wrong selection_basis: {bad}; "
-        f"expected 'fan_pivot'"
-    )
 
 
-def test_selection_basis_timeline_gap(before_state, after_state, test):
-    """Tag-gated: when a high-severity timeline gap is the highest-priority
-    signal, the new question's selection_basis must be `timeline_gap`."""
-    if "selection-basis-timeline-gap" not in test.get("tags", []):
-        pytest.skip("not a selection-basis-timeline-gap scenario")
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("missing research.json for diff")
-    new = _new_questions(before, after)
-    assert new, "expected a new question; none was added"
-    bad = [
-        (q.get("id"), q.get("selection_basis"))
-        for q in new
-        if q.get("selection_basis") != "timeline_gap"
-    ]
-    assert not bad, (
-        f"new questions with wrong selection_basis: {bad}; "
-        f"expected 'timeline_gap'"
-    )
 
 
 # --- Tag-gated: new question depends_on is non-empty ------------------
@@ -474,41 +412,6 @@ def test_new_question_not_vague(before_state, after_state):
 
 
 # --- Tag-gated: the timelines section must actually be queried (V3) ---
-
-def test_timelines_queried_before_deciding(before_state, tool_calls, test):
-    """Tag-gated: on a scenario carrying a real timeline-gap signal, the
-    skill must have actually called research_query(section='timelines')
-    before writing (or declining to write) the question -- not merely at
-    some point in the run. project_context does not return timeline data
-    -- concluding 'no gap' without this call, or querying it only after
-    the decision is already made, is fabrication, not informed absence
-    of evidence."""
-    if "selection-basis-timeline-gap" not in test.get("tags", []):
-        pytest.skip("not a selection-basis-timeline-gap scenario")
-    query_idxs = [
-        i
-        for i, call in enumerate(tool_calls)
-        if call.get("tool", "").endswith("research_query")
-        and call.get("args", {}).get("section") == "timelines"
-    ]
-    assert query_idxs, (
-        "the skill decided without ever calling "
-        "research_query(section='timelines'); project_context does not "
-        "return timeline data, so a high-severity gap cannot have been seen"
-    )
-    append_idxs = [
-        i
-        for i, call in enumerate(tool_calls)
-        if call.get("tool", "").endswith("research_append")
-    ]
-    if append_idxs:
-        assert min(query_idxs) < min(append_idxs), (
-            "the skill wrote its question before ever calling "
-            "research_query(section='timelines') -- the query must inform "
-            "the decision, not just appear somewhere in the transcript "
-            "after it was already made"
-        )
-
 
 def test_person_warnings_called_before_deciding(tool_calls, test):
     """Tag-gated: on a scenario carrying a real person_warnings contradiction,

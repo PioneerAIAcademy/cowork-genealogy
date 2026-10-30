@@ -1,0 +1,366 @@
+{
+  "run_log": "v3.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly reviewed all three pending hints and gave sound, evidence-based recommendations. It stated each FamilySearch confidence score, correctly evaluated the 1870 and 1880 census records, and acknowledged the birthplace conflict on the 1908 death certificate. The death certificate was correctly identified as extracted as src_004 but not linked to any person. However, the closing instruction to spawn search-hints again with verdicts is inappropriate for triage mode, which requires recommendations only and no project changes. The partial score is justified by this workflow error."
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly recommended accepting the 1870 and 1880 census hints based on the evidence. It checked the 1880 census image and correctly resolved the indexed surname discrepancy, identifying the handwritten name as Patrick Flynn rather than Glynn. It also correctly identified the death certificate as already linked through pe_005, requiring no new recommendation. However, the closing instruction to run search-hints again with verdicts is inappropriate for triage mode, which should provide recommendations without requesting follow-up verdicts or making project changes. The genealogical reasoning and hint decisions are sound, but the workflow instruction warrants a partial correctness score."
+    },
+    {
+      "test_id": "ut_search_hints_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Hint scope",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Recommendation soundness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict recording",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_hints_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly evaluated all three pending hints, stated their FamilySearch confidence scores, and supported its census recommendations with relevant evidence. It correctly checked the 1880 census image to resolve the Glynn versus Flynn indexing discrepancy and identified the death certificate as already linked through pe_005, without making a new recommendation. However, the closing instruction to spawn search-hints again with verdicts is inappropriate for triage mode. Triage should provide recommendations and leave the final decision to the researcher, without requesting another run or implying that project updates will follow. The recommendations are sound, but this workflow error justifies a partial correctness score."
+    }
+  ]
+}
