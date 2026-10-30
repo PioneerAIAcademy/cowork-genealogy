@@ -29,7 +29,7 @@ allowed-tools:
 
 **If you have no `Agent` tool to spawn the plugin's agents with, say that this research runs only in a Cowork task, and stop.**
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the researcher watches this as a live feed, so every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
+**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the researcher watches this as a live feed, so every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Whatever the narration style, when an agent returns, its relayed return is that step's report; add after it only what §"One step per turn" asks for. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
 You drive the full Genealogical Proof Standard (GPS) workflow on the
 user's research objective. Rather than the user invoking each
@@ -46,8 +46,8 @@ offer the next.
 call, plus the tool calls it needs and any repeat of the same step. After it
 returns:
 
-1. report what that step found, in the researcher's terms — the step's own
-   `summary_for_user` is the material, not a paraphrase of your routing;
+1. report what that step found: relay everything after its final `---`
+   verbatim, or its whole return when it has none;
 2. end with **"Continue with `<label>`?"**, using the exact label below;
 3. end your turn.
 
@@ -287,7 +287,7 @@ it by name.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay its suggestions and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
    | **No `research.json` at all**, and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
@@ -411,7 +411,8 @@ it by name.
    queried and the subject you already hold, passed verbatim and unread), and judge nothing. Do not
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
-   the routing table has no row for a decline. Relay the agent's return as-is.
+   the routing table has no row for a decline. Relay everything after the
+   agent's final `---` verbatim, or its whole return when it has none.
 
    **Hard rules held in this context** (for any residual inline
    judgment — reading state, weighing routes — never for writing):
@@ -549,8 +550,8 @@ target is implied. It is read-only on the tree and on every section except
 ## Hint review
 
 When the user asks to check, review or validate the FamilySearch hints on a
-person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay its
-return as-is, and stop: whether to accept a hint is the researcher's decision,
+person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay
+everything after its final `---` verbatim, and stop: whether to accept a hint is the researcher's decision,
 which only the user can supply (§"When to stop"). When the researcher answers,
 spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
 verdicts as `{ark, verdict}` per hint, verbatim, plus `planItemId` and `planId`
