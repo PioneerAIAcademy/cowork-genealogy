@@ -139,6 +139,11 @@ Example: adding a "list providers" feature.
    - Create `packages/engine/plugin/skills/list-providers/SKILL.md`
    - In the SKILL.md, instruct Claude to call the new tool when the
      user asks what providers are available
+   - If only agents grant the tool (no skill's `allowed-tools` does), decide
+     whether the main thread may call it: add it to `AGENT_ONLY_TOOLS` in
+     `packages/engine/plugin/hooks/guard_project_files.py` with its agents and to
+     `hooks.json`'s matcher, or to `MAIN_THREAD_OK` with the call that needs it.
+     `tests/packaging/plugin-hooks.test.ts` fails until you do.
 
 3. **Rebuild both artifacts.**
    ```bash
