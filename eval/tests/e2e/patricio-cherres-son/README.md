@@ -57,13 +57,17 @@ the index's mother and age but not the month (index: 5 Mar 1908; page: 5 May
 the register's own chronological order between entries 54 and 63 while 5
 March would not.
 
-The same page's index also lists a second, unrelated death entry naming a
-father "Patricio Cherres" but a different mother, Victoria Gavilanes (María
-Victoria Cherres) — Cherres-married-to-a-Gavilanes is not unique on this
-page. This is resolved simply: Julio César's own entry names the mother as
-Nicolaza/Nicolasa Gavilanes, matching the subject's actual wife, not
-Victoria, so the specific name match — not just the surname — is what
-discriminates between the two.
+The same page also holds entry 61 (13 May 1908): "Maria Victoria, hija
+lejitima de Patricio Cherres y Nicolasa Gavilanes," died at seven months,
+also from Caspino — Julio César's own sister, buried four days before him,
+not a different family. The index (ark:/61903/1:1:8HQ2-1DW2) mis-records
+her mother as "Victoria Gavilanes," an indexing error that copied the
+child's own given name into the mother field rather than naming a second
+wife. She matches tree person I3 (María Victoria Cherres Gavilanes,
+christened 5 Oct 1907); a death at seven months fits an October 1907 birth.
+Two children of the same couple, from the same hamlet, buried within four
+days of each other on the same register page strengthens the
+identification rather than threatening it.
 
 Father's and mother's names both match (the usual b/v spelling drift:
 Gavianes/Gavilanes/Gabilanes), and the age at death (2 years) is consistent
@@ -76,6 +80,11 @@ and the live tree now show the same family (same wife and four children)
 under father PID `L563-PYG`, almost certainly a tree merge of duplicate
 profiles. This doesn't affect the research conclusion.
 
-A strong candidate. Both parents' names match, "Gavianes" is within the spread the family's own entries show (Gavilanes, Gabilanes), and the parish is the one where the wife was christened and the eldest daughter baptised. The tree's own citations already call the subject plain "Patricio Cherres" on Manuela's baptism. The mother would have been about 41 in 1906, after a daughter in 1901, so the dates fit. None of the tree's sources is a burial entry or names a Julio, so this is not a re-index of anything already attached.
-
-The gap is the couple's generation. Cherres is a narrow surname in Guanujo, and a son named Patricio who also married a Gavilanes woman would produce an identical index line; the tree shows no son at all, so it cannot rule one out. The discriminating check is a baptism of Julio César around 1906 in Guanujo or Guaranda: one naming the same parents with the maternal grandparents of the 1865 christening settles it, and a mother of a different age or lineage makes this a younger couple.
+The couple's-generation gap that would have left this borderline — a son
+named Patricio who also married a Gavilanes woman could produce an
+identical index line — is closed by the primary record, not left open:
+entry 63 itself names the mother as Nicolaza/Nicolasa Gavilanes, the
+subject's actual wife, and entry 61's María Victoria (the couple's already
+-documented 1907-christened daughter) appears on the same page four days
+apart, placing both entries squarely within this specific couple's family
+rather than a hypothetical namesake generation.
