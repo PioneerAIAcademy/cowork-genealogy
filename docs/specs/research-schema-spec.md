@@ -300,7 +300,7 @@ described under "Who actually writes a row" below.
 | `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images, search-hints (`items[].status`); `extraction_append` (`items[].status`, `in_progress` → `completed` only, by tool identity) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it (search-hints sets the status of its `fs_hints` review item) |
 | `log` | search-records, search-full-text, search-external-sites, search-images, search-hints (one entry per researcher verdict on a hint), survey-surname; `extraction_append` (its own `record_read` entry per record it reads live; an earlier uncited read is cited instead) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
 | `sources` | `extraction_append` (by tool identity), citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
-| `assertions` | `extraction_append` (by tool identity) | timeline, conflict-resolution, proof-conclusion, question-selection | Classifications are set in code at extraction and not refined afterward; `research_append` refuses every assertions write except an update setting only `informant_bias_notes`. Never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
+| `assertions` | `extraction_append` (by tool identity) | timeline, conflict-resolution, proof-conclusion, question-selection | Classifications are set in code at extraction and not refined afterward; `research_append` refuses every assertions write except an update setting only `informant_bias_notes`. A wrong extraction is corrected only by `extraction_append`'s re-extraction, which retires the old assertions with `superseded_by` (§5.6). Never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
 | `person_evidence` | person-evidence; `extraction_append` (attachment links, by tool identity) | all downstream | Mutable (confidence, rationale); never delete, use superseded_by. An attachment link (`speculative`, no `match_score`, `ATTACHMENT_LINK_RATIONALE`) is only ever superseded |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
@@ -327,8 +327,8 @@ mechanism at all** — so do not reach for one generically. There are exactly th
 | Mechanism | Where it exists | How |
 |---|---|---|
 | A `superseded` status value | `plans` **only** — it is the one status enum that defines one (see the enum table above) | Set `status: "superseded"` on the old plan |
-| A `superseded_by` pointer | `person_evidence`, `evaluations` | Point the old entry's `superseded_by` at the new entry's id |
-| None | `questions`, `conflicts`, `hypotheses`, `sources`, `assertions`, `localities`, `proof_summaries`, `namesakes` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
+| A `superseded_by` pointer | `person_evidence`, `evaluations`, `assertions` | Point the old entry's `superseded_by` at the new entry's id. An assertion with no replacement takes the literal `"retracted"` and a `superseded_reason`; only `extraction_append`'s re-extraction retires one (§5.6) |
+| None | `questions`, `conflicts`, `hypotheses`, `sources`, `localities`, `proof_summaries`, `namesakes` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
 
 Writing a status value the section's enum does not define is rejected by
 `validate_research_schema`, so an instruction to "supersede with status" on a section in
@@ -769,8 +769,12 @@ The rule is enforced in the forward direction only. `record_role: "absent"` pair
 | `record_basis` | `record_basis` | yes | `stated`, `inferred`, or `absent` — what the record mechanically did with this value, NOT the GPS direct/indirect/negative evidence judgment (see "What `record_basis` is not" below). **`absent` constrains two sibling fields:** it requires `record_role: "absent"` (a different field with the same value — the PERSON was not in the record) and `informant_proximity: "researcher"`. See "Negative evidence" below |
 | `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion — the assertion→search half of the provenance chain (sources carry the same field). Null for assertions created outside the search workflow (e.g., from manual record analysis). |
 | `extracted_for_question_ids` | string[] | yes | Question IDs this assertion bears on (may be empty; many assertions are extracted opportunistically) |
+| `superseded_by` | string or null | no | Set only by `extraction_append({ reextract: true })`. **Any non-null value means the assertion is retired**: it is history, not evidence. Either the `a_` id of the assertion that replaced it, or the literal `"retracted"` when the re-extraction wrote no counterpart (an invented relationship, say). Absent or null means live |
+| `superseded_reason` | string or null | no | Why the assertion was retired. Required, non-empty, when `superseded_by` is `"retracted"` |
 
 **`structured_value`** — Optional machine-readable form of `value` that enables programmatic comparison (timeline construction, conflict detection) without parsing prose. The freeform `value` stays for human readability. See Section 5.6.1 for recommended shapes by fact_type.
+
+**Retiring an assertion (re-extraction).** An assertion is never edited and never deleted. When a record was extracted wrongly, `extraction_append` is called again for it with `reextract: true`. That writes fresh assertions under the same source and, in the same write, retires every live assertion of that record id: each points `superseded_by` at its counterpart in the new reading, matched on the person in the record (`record_persona_id`, else `record_role`) and the fact type, or is `"retracted"` with a `superseded_reason` when the new reading has none (decided, Richard, 2026-10-27). A household sibling's assertions are never touched: the retirement reaches only the id the call names. The re-extraction is refused, naming each one, while anything still rests on an old assertion: a live `person_evidence` link, a `rejected_links` row, a tree fact's `assertion_id`, a proof summary (top level or a claim), a conflict, a hypothesis, a timeline event, a question's `resolution_assertion_ids`, or a tree relationship whose sources cite the record when a relationship claim is among them. A rejection is permanent, so a record carrying one cannot be re-extracted: voiding a researcher's ruling silently is worse than a record that needs a researcher. Once retired, an assertion is skipped by every derivation (`isLiveAssertion`), left out of `research_query` unless `includeSuperseded` is set, and refused as a citation by every writer: `research_append`, `tree_edit add_relationship`, `materialize_facts`' named-party arm, and `same_person`.
 
 ### 5.6.1 `structured_value` Shapes
 
@@ -1261,7 +1265,8 @@ sources
 assertions
   ├─ source_id ──────────────────────────────────► sources[].id
   ├─ log_entry_id ───────────────────────────────► log[].id
-  └─ extracted_for_question_ids ─────────────────► questions[].id
+  ├─ extracted_for_question_ids ─────────────────► questions[].id
+  └─ superseded_by ──────────────────────────────► assertions[].id, or "retracted"
 
 person_evidence
   ├─ assertion_id ───────────────────────────────► assertions[].id

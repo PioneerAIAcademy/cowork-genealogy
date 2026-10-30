@@ -34,6 +34,7 @@ const REPO_ROOT = join(HERE, "..", "..", "..", "..", "..");
 const PLUGIN_DIR = join(REPO_ROOT, "packages", "engine", "plugin");
 const HOOKS_JSON = join(PLUGIN_DIR, "hooks", "hooks.json");
 const GUARD = join(PLUGIN_DIR, "hooks", "guard_project_files.py");
+const NO_PROJECT_ROUTE = join(PLUGIN_DIR, "hooks", "no_project_route.py");
 
 type HookEntry = { type: string; command?: string };
 type Matcher = { matcher?: string; hooks: HookEntry[] };
@@ -279,7 +280,7 @@ describe("plugin hooks are packaged and wired", () => {
   });
 
   it("names a command that exists in the plugin", () => {
-    for (const matcher of loadHooks().PreToolUse) {
+    for (const matcher of Object.values(loadHooks()).flat()) {
       for (const hook of matcher.hooks) {
         expect(hook.type).toBe("command");
         // ${CLAUDE_PLUGIN_ROOT} is the only portable way to reference a
@@ -1389,6 +1390,47 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("`questions`");
   });
 
+});
+
+
+/** Run the no-project route hook the way the runtime does, with a chosen env. */
+function runNoProjectRoute(input: string, env: Record<string, string> = {}): any {
+  if (!PYTHON) throw new Error(`No Python 3 found (tried: ${describePythonCandidates()}).`);
+  const [cmd, ...pre] = PYTHON;
+  const base = { ...process.env };
+  delete base.GENEALOGY_HOSTED_PLANE;
+  return JSON.parse(
+    execFileSync(cmd, [...pre, NO_PROJECT_ROUTE], { input, encoding: "utf-8", env: { ...base, ...env } }),
+  );
+}
+
+describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
+  it("is registered under UserPromptSubmit", () => {
+    const commands = (loadHooks().UserPromptSubmit ?? []).flatMap((m) => m.hooks.map((h) => h.command ?? ""));
+    expect(commands.some((c) => c.includes("/hooks/no_project_route.py"))).toBe(true);
+  });
+
+  it("adds the routing sentence to a researcher's message", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Research PID L8PL-3W8. What children did he have?" }));
+    expect(out.hookSpecificOutput.hookEventName).toBe("UserPromptSubmit");
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/no project.*research skill/s);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/In that case, if the message names more than one goal/);
+  });
+
+  it("stays silent on a subagent hand-back", () => {
+    expect(runNoProjectRoute(JSON.stringify({ prompt: '<agent-message from="a1">done</agent-message>' }))).toEqual({});
+  });
+
+  it("stays silent on the hosted planes", () => {
+    const payload = JSON.stringify({ prompt: "Research PID L8PL-3W8." });
+    expect(runNoProjectRoute(payload, { GENEALOGY_HOSTED_PLANE: "1" })).toEqual({});
+  });
+
+  it("never raises on bad input", () => {
+    expect(runNoProjectRoute("not json")).toEqual({});
+    expect(runNoProjectRoute(JSON.stringify({ prompt: 42 }))).toEqual({});
+    expect(runNoProjectRoute(JSON.stringify([1, 2]))).toEqual({});
+  });
 });
 
 describe("the main thread is denied the tools only agents hold", () => {

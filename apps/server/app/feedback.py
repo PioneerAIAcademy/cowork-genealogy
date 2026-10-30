@@ -58,6 +58,14 @@ _API_KEY_PATTERNS_STR = [
     re.compile(r"sk-or-[A-Za-z0-9_-]{20,}"),
     re.compile(r"sk-[A-Za-z0-9_-]{40,}"),
 ]
+# A key no value pattern can tell from other text (the matcher key is 64 hex
+# characters) is found by its JSON field, escaped or not; the field name stays.
+_API_KEY_FIELD_PATTERNS = [
+    re.compile(rb'(\\*"matcherApiKey\\*"\s*:\s*\\*")[^"\\]+'),
+]
+_API_KEY_FIELD_PATTERNS_STR = [
+    re.compile(r'(\\*"matcherApiKey\\*"\s*:\s*\\*")[^"\\]+'),
+]
 _REDACTED_KEY = b"[REDACTED_API_KEY]"
 _REDACTED_KEY_STR = "[REDACTED_API_KEY]"
 
@@ -66,12 +74,16 @@ def _redact_api_keys(data: bytes) -> bytes:
     out = data
     for pattern in _API_KEY_PATTERNS:
         out = pattern.sub(_REDACTED_KEY, out)
+    for pattern in _API_KEY_FIELD_PATTERNS:
+        out = pattern.sub(lambda m: m.group(1) + _REDACTED_KEY, out)
     return out
 
 
 def _redact_api_keys_str(text: str) -> str:
     for pattern in _API_KEY_PATTERNS_STR:
         text = pattern.sub(_REDACTED_KEY_STR, text)
+    for pattern in _API_KEY_FIELD_PATTERNS_STR:
+        text = pattern.sub(lambda m: m.group(1) + _REDACTED_KEY_STR, text)
     return text
 
 

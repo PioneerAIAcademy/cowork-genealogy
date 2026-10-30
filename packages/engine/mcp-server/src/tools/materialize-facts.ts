@@ -83,6 +83,7 @@ import {
 } from "../utils/source-ref-resolver.js";
 import { recordBasisOf } from "../utils/record-basis.js";
 import { placeTextKey } from "../utils/place-verdict.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 
 import {
   ASSERTION_FACT_ATTRS,
@@ -270,7 +271,7 @@ function applyMaterializeOp(
 
   // The persona: every assertion matching recordId + recordRole.
   const assertions = (Array.isArray(research.assertions) ? research.assertions : []).filter(
-    (a: any) => a && a.record_id === recordId && a.record_role === recordRole,
+    (a: any) => isLiveAssertion(a) && a.record_id === recordId && a.record_role === recordRole,
   );
   if (assertions.length === 0) {
     throw new MaterializeFactsError(
@@ -522,6 +523,12 @@ function applyNamedPartyOp(
       `assertionId '${assertionId}' not found in research.json assertions`,
     );
   }
+  if (!isLiveAssertion(assertion)) {
+    throw new MaterializeFactsError(
+      `assertion '${assertionId}' was retired by a re-extraction (superseded_by ${assertion.superseded_by}), ` +
+        "so it is not evidence: mint from its replacement, or not at all where it was retracted.",
+    );
+  }
 
   if (!isRelationshipEstablishing(assertion.fact_type)) {
     throw new MaterializeFactsError(
@@ -553,7 +560,7 @@ function applyNamedPartyOp(
   }
   const recordId = assertion.record_id;
   const siblings = (Array.isArray(research.assertions) ? research.assertions : []).filter(
-    (a: any) => a && a.record_id === recordId && normNamePart(String(a.record_role ?? "")) === wanted,
+    (a: any) => isLiveAssertion(a) && a.record_id === recordId && normNamePart(String(a.record_role ?? "")) === wanted,
   );
   // Refuse ONLY when the persona arm could actually MINT this party, which
   // means the persona carries a non-negative NAME assertion: the arm refuses to
@@ -1062,7 +1069,7 @@ export function personaParty(research: any, recordId: unknown, recordRole: unkno
   const names = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[])
     .filter(
       (a) =>
-        a &&
+        isLiveAssertion(a) &&
         a.record_id === recordId &&
         roleOf(a.record_role) === wanted &&
         recordBasisOf(a) !== "absent" &&
@@ -1081,7 +1088,7 @@ function onePartyAssertionIds(
 ): Set<string> {
   const ids = new Set<string>();
   for (const a of (Array.isArray(research?.assertions) ? research.assertions : []) as any[]) {
-    if (a && a.record_id === recordId && typeof a.id === "string" && sameRole(a.record_role) && !isTwoParty(a.fact_type)) {
+    if (isLiveAssertion(a) && a.record_id === recordId && typeof a.id === "string" && sameRole(a.record_role) && !isTwoParty(a.fact_type)) {
       ids.add(a.id);
     }
   }
@@ -1228,7 +1235,7 @@ export function namedPartyTargetRefusal(
     namedRole !== undefined &&
     roleOf(namedRole) === wanted &&
     ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).some(
-      (a) => a && a.record_id === recordId && roleOf(a.record_role) === wanted && writesPersonLevel(a),
+      (a) => isLiveAssertion(a) && a.record_id === recordId && roleOf(a.record_role) === wanted && writesPersonLevel(a),
     );
   const opName = {
     given: typeof name?.given === "string" ? name.given : undefined,
@@ -1371,7 +1378,7 @@ export function personaTargetRefusal(
   const personId = str(op.personId);
   if (personId === undefined) return null;
   const persona = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
-    (a: any) => a && a.record_id === op.recordId && a.record_role === op.recordRole,
+    (a: any) => isLiveAssertion(a) && a.record_id === op.recordId && a.record_role === op.recordRole,
   );
   if (!persona.some(writesPersonLevel)) return null;
   const { qualifying, heldBy } = personaQualifying(research, op.recordId, op.recordRole, personId);
@@ -1823,7 +1830,7 @@ export const materializeFactsSchema = {
 function doubtedPlaces(research: any, recordId: unknown): Set<string> {
   const byText = new Map<string, Set<string>>();
   for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-    if (a?.record_id !== recordId || typeof a.place !== "string" || str(a.standard_place) === undefined) continue;
+    if (!isLiveAssertion(a) || a.record_id !== recordId || typeof a.place !== "string" || str(a.standard_place) === undefined) continue;
     const key = placeTextKey(a.place);
     byText.set(key, (byText.get(key) ?? new Set<string>()).add(a.standard_place));
   }

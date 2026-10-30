@@ -4,6 +4,8 @@ Grading dimensions for validate-schema unit tests. Evaluated by the LLM judge al
 
 Inside a project the agent ends with one `research_log_append` call logging its report; that entry appears in the file changes summary, and its shape is checked by validators, not by you. With **no project** the call, if made, answers `ok: false`, `reason: "no_project"`: that is correct behavior, not a failed tool call or a wrong argument. Do not mark Tool Arguments or any other dimension down for it, and `(no file changes)` is the correct outcome on those tests.
 
+**Grading note (every dimension, base dimensions included):** On an error-path test whose scenario breaks `research.json` or `tree.gedcomx.json` on purpose, the agent must leave that file broken. Any of the deterministic validators that check those files themselves (`test_research_json_validates_schema`, `test_project_files_pass_full_validation`, `test_id_references_resolve`) that fails on such a test fails by design: it confirms the fixture's error, not anything the agent did. The log entry's `outcome: "positive"` is the value the agent is told to set; it records that the check ran and produced a report, not that the files are valid. Do not mark any dimension down for either.
+
 validate-schema is a guardrail skill: it calls the `validate_research_schema` MCP tool, then **reports** the result. On errors it must surface each one, explain what it means, and suggest a fix — without ever editing a file. On a clean project it confirms validity and stops. These dimensions grade how well it does that; they do not re-grade whether the validator itself is correct (that is the tool's own test suite).
 
 ## Tool-response interpretation & error explanation
