@@ -43,7 +43,11 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     // eslint-disable-next-line no-console
-    console.error('Viewer section failed to render', error, info.componentStack)
+    console.error(
+      `Viewer failed to render ${this.props.label ?? 'a section'}`,
+      error,
+      info.componentStack
+    )
   }
 
   render(): ReactNode {

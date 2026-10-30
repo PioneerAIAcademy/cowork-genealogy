@@ -623,7 +623,8 @@ export interface SidecarFile {
 export function getPreferredName(person: GedcomxPerson): string {
   // A record persona can carry no `names` at all (the enslaved people on an
   // 1850 slave schedule), even though a tree person always has them (#3893).
-  const names = person.names ?? []
+  // Untyped sidecar payloads can also carry a non-array there.
+  const names = Array.isArray(person.names) ? person.names : []
   const preferred = names.find((n) => n.preferred) ?? names[0]
   if (!preferred) return '(unknown)'
   const parts = [preferred.given, preferred.surname].filter(Boolean)

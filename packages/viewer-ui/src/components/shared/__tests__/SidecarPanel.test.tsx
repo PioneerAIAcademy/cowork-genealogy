@@ -205,6 +205,43 @@ describe('SidecarPanel — a result that fails to render', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Close sidecar' }))
     expect(closeSidecar).toHaveBeenCalled()
   })
+
+  it('clears the failed card when the same log is re-read after a write', () => {
+    const good = patrickFlynnSidecar.payload.results![0]
+    const loaded = (results: (typeof good)[], lastMtime: number): SidecarState => ({
+      status: 'loaded',
+      logId: 'log_002',
+      payload: { ...patrickFlynnSidecar, payload: { results } },
+      lastMtime
+    })
+    mountWithState(loaded([{ ...good, recordId: THROW_ID }], 1))
+    const { rerender } = render(<SidecarPanel />)
+    // A lone result: no mention of "other results" that don't exist.
+    expect(screen.getByRole('alert')).toHaveTextContent('The Close button still works.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('other results')
+
+    // Same logId, newer mtime — what the provider sets when the file changes.
+    mountWithState(loaded([good], 2))
+    rerender(<SidecarPanel />)
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByText('Patrick Flynn')).toBeInTheDocument()
+  })
+
+  it('contains a payload that breaks the drawer body, keeping Close working', async () => {
+    const { closeSidecar } = mountWithState({
+      status: 'loaded',
+      logId: 'log_002',
+      payload: { ...patrickFlynnSidecar, payload: undefined } as never,
+      lastMtime: 1
+    })
+    render(<SidecarPanel />)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Couldn’t display these results')
+    expect(alert).toHaveTextContent('results/log_002.json could not be displayed')
+    await userEvent.click(screen.getByRole('button', { name: 'Close sidecar' }))
+    expect(closeSidecar).toHaveBeenCalled()
+  })
 })
 
 describe('SidecarPanel — dismiss affordances', () => {

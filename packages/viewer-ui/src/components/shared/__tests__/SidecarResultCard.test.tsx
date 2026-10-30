@@ -628,6 +628,19 @@ describe('SidecarResultCard — record_read', () => {
     expect(screen.getByText('Thomas Flynn')).toBeInTheDocument()
     expect(screen.getByText('(unknown)')).toBeInTheDocument()
   })
+
+  it('renders a persona whose names is not an array as (unknown)', () => {
+    const persons = [...(result.gedcomx?.persons ?? []), { id: 'p_9', names: {} }] as never
+    render(
+      <SidecarResultCard
+        result={{ ...result, gedcomx: { ...result.gedcomx, persons } }}
+        tool="record_read"
+        defaultExpanded={true}
+      />
+    )
+    expect(screen.getByText('Thomas Flynn')).toBeInTheDocument()
+    expect(screen.getByText('(unknown)')).toBeInTheDocument()
+  })
 })
 
 describe('SidecarResultCard — unrouted tool', () => {
