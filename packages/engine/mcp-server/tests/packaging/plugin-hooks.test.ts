@@ -1414,7 +1414,7 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     const out = runNoProjectRoute(JSON.stringify({ prompt: "Research PID L8PL-3W8. What children did he have?" }));
     expect(out.hookSpecificOutput.hookEventName).toBe("UserPromptSubmit");
     expect(out.hookSpecificOutput.additionalContext).toMatch(/no project.*research skill/s);
-    expect(out.hookSpecificOutput.additionalContext).toMatch(/more than one goal/);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/In that case, if the message names more than one goal/);
   });
 
   it("stays silent on a subagent hand-back", () => {

@@ -98,18 +98,14 @@ DELIVERED_REASON = (
 # All three exclusions in the text are load-bearing. Calling it when the OBJECTIVE is finished
 # would report `delivered` where `completed` is true and the run ends on its own. Calling
 # it instead of asking would swallow a question nobody answers: an ask waits, a delivery
-# does not. Calling it before any project exists let a "Research PID X. <question>" first
-# message be answered from a lookup and delivered as a "single lookup", with no project and
-# no research (issue #3768: 11 of 15 local replays on `main` created no project and 6 of 15
-# ended on `research_delivered`, 2026-10-30). That is also why the carrier is a separate tool rather than AskUserQuestion --
-# one tool carrying both speech acts leaves the hook with no discriminator.
-# Set in the SDK env by both hosted planes (`real_agent._sdk_env`, the prototype worker's
-# options). The plugin's `no_project_route.py` hook reads it and stays silent, so its
-# routing text reaches Cowork only and the hosted planes keep the text-only fix ruled for
-# them (issue #3768, 2026-10-27). Hook subprocesses inherit the CLI's env.
-HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
-
-
+# does not. That is also why the carrier is a separate tool rather than AskUserQuestion --
+# one tool carrying both speech acts leaves the hook with no discriminator. Calling it while
+# no project exists let a "Research PID X. <question>" first message be answered from a
+# lookup and delivered as a "single lookup", with no project and no research (issue #3768:
+# 11 of 15 local replays on `main` created no project and 6 of 15 ended on
+# `research_delivered`, 2026-10-30). It is keyed on the project, not the message: a turn-1
+# "start a project on X and just give me a plan" creates the project first and still
+# delivers.
 DELIVERY_GUIDANCE = (
     "When this message asked for one or more bounded things and you have produced one — "
     "the only one asked for, or the first of several — WRITE YOUR "
@@ -119,12 +115,21 @@ DELIVERY_GUIDANCE = (
     "asked you to stop after, a single record or lookup, or a status question such as "
     "\"where are we?\". Do not call it when the project's research objective itself is "
     "finished -- that run ends on its own -- do not call it in place of asking the "
-    "researcher a question, which waits for their answer, and do not call it on a message "
-    "that arrives before any project exists (`project_context` returned `no_project`): a "
-    "request to research a person is a research job, not a single lookup. If you do not "
+    "researcher a question, which waits for their answer, and do not call it while no "
+    "project exists yet (`project_context` returned `no_project` and nothing has created "
+    "one since): a request to research a person is a research job, not a single lookup. "
+    "If you do not "
     "already hold "
     "its schema, search for it by name."
 )
+
+
+# Set in the SDK env by both hosted planes (`real_agent._sdk_env`, the prototype worker's
+# options). The plugin's `no_project_route.py` hook defines the same name and stays silent
+# when it is set, so its routing text reaches Cowork only and the hosted planes keep the
+# text-only fix ruled for them (issue #3768, 2026-10-27). Hook subprocesses inherit the
+# CLI's env. `test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if the two differ.
+HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
 
 
 # Delegation tools whose `run_in_background` both planes override to False.

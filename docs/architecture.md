@@ -1465,7 +1465,8 @@ runs the real script. Then run **`make hook-smoke`** (§9.1): `plugin-hooks.test
 proves the script *decides* correctly, and nothing else proves a runtime *binds*
 it — which, because the script must never raise, fails silently. `hook-smoke`
 probes `PreToolUse` binding only; a `UserPromptSubmit` hook is shown binding by a hosted
-replay whose transcript carries its text.
+replay with `GENEALOGY_HOSTED_PLANE` unset whose transcript carries its text. Whether its
+`additionalContext` reaches the model in Cowork is unmeasured.
 
 > A plugin hook binds in Cowork and the hosted path and in **neither harness**.
 > All three of the unit harness, the e2e harness, and the hosted control plane

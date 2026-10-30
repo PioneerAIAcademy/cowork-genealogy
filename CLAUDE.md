@@ -337,7 +337,9 @@ A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds one con
 sentence to each Cowork researcher message (no project → a research request goes to the
 research skill). It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
 the SDK env, so the hosted planes keep their own text-only fix (`project_note`,
-`DELIVERY_GUIDANCE`). Change the flag in all three places together.
+`DELIVERY_GUIDANCE`). The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
+`no_project_route.HOSTED_PLANE_ENV`; change both together, and
+`test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ.
 
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
@@ -362,7 +364,7 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 
 **After changing anything under `hooks/`, run `make hook-smoke`.**
 `plugin-hooks.test.ts` proves the script *decides* correctly; only `hook-smoke`
-proves a runtime *binds* it, and since the script must never raise, a hook that
+proves a runtime *binds* a `PreToolUse` hook (it probes no other event), and since the script must never raise, a hook that
 stopped binding looks exactly like one with no opinion. It is live, billed, and
 run by no CI job. It covers the **hosted** loader only — Cowork's stays on the
 `nothing-checks` register (`docs/specs/e2e-test-spec.md` §6.1.1).

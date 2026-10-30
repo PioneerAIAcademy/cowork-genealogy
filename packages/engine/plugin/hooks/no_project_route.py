@@ -7,6 +7,8 @@ main thread from one `person_read` or one search, with no project and no researc
 that main thread before `/research` loads: the hosted planes append their own system-prompt
 text, and Cowork's session options are not ours to set. A plugin `UserPromptSubmit` hook
 fires on every Cowork message with its text (ADR-0005, item 2), so it carries the sentence.
+That probe measured the hook firing, not its `additionalContext` reaching the model in
+Cowork, which is unmeasured.
 
 **Cowork only.** Both hosted planes set `GENEALOGY_HOSTED_PLANE` in the SDK env, and the
 hook is silent there: the hosted fix ruled for them is text only (a truthful `project_note`
@@ -36,8 +38,8 @@ HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
 CONTEXT = (
     "If project_context reports no project in this folder, a request to research a person "
     "is a research job: hand it to the research skill, which starts the project, rather "
-    "than answering it from a single lookup. If the message names more than one goal, you "
-    "may summarise what the tree says and ask which to pursue first."
+    "than answering it from a single lookup. In that case, if the message names more than "
+    "one goal, you may summarise what the tree says and ask which to pursue first."
 )
 
 

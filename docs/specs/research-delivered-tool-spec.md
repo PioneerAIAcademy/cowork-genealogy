@@ -122,10 +122,11 @@ It carries three exclusions, all load-bearing:
   outcome is `completed`; reporting `delivered` there would mislabel a finished project.
 - **Not in place of asking the researcher a question.** An ask waits for an answer; a
   delivery waits for nothing.
-- **Not on a message that arrives before any project exists.** A "Research PID X.
-  <question>" first message read as "a single record or lookup": the main thread answered
-  it from one `person_read` and delivered, with no project and no research. A request to
-  research a person is a research job.
+- **Not while no project exists yet.** A "Research PID X. <question>" first message read
+  as "a single record or lookup": the main thread answered it from one `person_read` and
+  delivered, with no project and no research. A request to research a person is a research
+  job. The exclusion is keyed on the project, not the message: a turn that starts a project
+  and then gives just a plan creates the project first and still delivers.
 
 ## Ending the turn when a project completes
 

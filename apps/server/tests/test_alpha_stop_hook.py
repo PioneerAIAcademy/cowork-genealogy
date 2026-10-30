@@ -694,9 +694,25 @@ def test_the_alpha_system_prompt_is_true_before_a_project_exists(tmp_path):
     assert append.startswith("You are the hosted genealogy research agent")
     assert "contains research.json" not in append
     assert "Once a project exists there it holds research.json" in append
-    assert "before any project exists" in real_agent.DELIVERY_GUIDANCE
+    assert "while no project exists yet" in real_agent.DELIVERY_GUIDANCE
+    assert "nothing has created one since" in real_agent.DELIVERY_GUIDANCE
     assert "no_project" in real_agent.DELIVERY_GUIDANCE
     assert opts.env[real_agent.HOSTED_PLANE_ENV] == "1"
+
+
+def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():
+    """The server and the plugin hook each define `GENEALOGY_HOSTED_PLANE`. A rename on one
+    side alone leaves every server test green while the hook speaks on both hosted planes,
+    so this loads the hook from the repo and checks its behaviour under the server's name."""
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[3] / "packages/engine/plugin/hooks/no_project_route.py"
+    spec = importlib.util.spec_from_file_location("_no_project_route", path)
+    hook = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hook)
+    payload = {"prompt": "Research PID L8PL-3W8."}
+    assert hook.decision(payload, {real_agent.HOSTED_PLANE_ENV: "1"}) == {}
+    assert hook.decision(payload, {}) != {}
 
 
 class _Turns:
