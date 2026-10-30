@@ -657,6 +657,9 @@ def pr_added_runlog(skill_dir: Path, added: list[str]) -> str | None:
 GRADED_ADDED = "the run log this PR adds"
 GRADED_FALLBACK = "the latest full-skill run log on disk (this PR adds none)"
 GRADED_DEFAULT = "the latest full-skill run log"
+GRADED_REGRADE_GROWN = (
+    "a run log this PR regraded, whose review_sample gained tests"
+)
 
 COSMETIC_SKIP_LABEL_PREFIX = "eval-cosmetic-skip:"
 
@@ -1493,6 +1496,68 @@ def rule6_regrade_outcomes(skill: str, path: str) -> int:
         )
         fails += 1
     return fails
+
+
+def rule3_regrade_sample_growth(skill: str, path: str) -> int:
+    """Rule 3, regrade arm (blocking): a MODIFIED run log whose `review_sample`
+    GREW owes an annotation for the tests it gained.
+
+    Rule 3 proper runs only on a TOUCHED skill, and `eval/CLAUDE.md` states a
+    modified run log "marks nothing touched" — true while a modification meant a
+    prune or a rehash. `make judge-regrade` broke that twice over. Rule 6 gained
+    its own regrade arm when a re-sampled verdict went red; this is the same
+    shape one field across: a regrade refreshes `review_sample` from the fresh
+    grades, so a test it moves into `is_mandatory` gains a slot, and rule 3
+    iterates the STORED sample. Without this arm the regrade PR merges green and
+    the NEXT, unrelated PR on that skill inherits the block — the debt lands on
+    whoever did not create it.
+
+    **Gated on growth, not on the file changing.** Running rule 3 over every
+    modified log would block a prune of a log written before sampling shipped:
+    those carry no `review_sample` and owe every dimension of every test, which
+    no prune can satisfy. Growth is the condition that isolates what the regrade
+    itself added.
+
+    Mirrors rule 6's regrade arm on the read: an unreadable base warns rather
+    than failing closed (a shallow clone would otherwise block every prune), and
+    absent-at-base means the PR added it, where rule 3 proper already applies.
+    """
+    try:
+        base_text = git_show_at_merge_base(path)
+    except BaseUnreadable as e:
+        gh_warning(
+            f"rule 3: could not read `{path}` at the merge base ({e}); its "
+            "review_sample was NOT compared, so a regrade that grew it is "
+            "unchecked here."
+        )
+        return 0
+    if base_text is None:
+        # Added by this PR; rule 3 proper owns added logs.
+        return 0
+    try:
+        base_log = json.loads(base_text)
+        head_log = json.loads((REPO_ROOT / path).read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
+        gh_warning(
+            f"rule 3: could not parse `{path}` at the merge base or at head "
+            f"({e}); its review_sample was NOT compared."
+        )
+        return 0
+
+    def sampled(log: dict) -> set[str]:
+        sample = log.get("review_sample") or {}
+        return set(sample.get("tests") or [])
+
+    gained = sampled(head_log) - sampled(base_log)
+    if not gained:
+        return 0
+    return rule3_completeness(
+        skill,
+        head_log,
+        Path(path).name,
+        REPO_ROOT / Path(path).parent,
+        graded=GRADED_REGRADE_GROWN,
+    )
 
 
 def rule6_outcomes(skill: str, log: dict, filename: str) -> int:
@@ -2709,8 +2774,10 @@ def main() -> int:
             fails += rule6_outcomes(skill, added_log, added)
 
     # Rule 6, regrade arm: a MODIFIED log that newly reds a test.
+    # Rule 3, regrade arm: one whose review_sample grew owes those annotations.
     for skill, path in modified_runlogs():
         fails += rule6_regrade_outcomes(skill, path)
+        fails += rule3_regrade_sample_growth(skill, path)
 
     # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
     # referencing skills' run logs stale, but only warns — never fails. See

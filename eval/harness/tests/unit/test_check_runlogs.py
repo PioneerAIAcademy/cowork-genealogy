@@ -4297,3 +4297,118 @@ def test_rule6_regrade_announces_an_unparseable_log(monkeypatch, tmp_path, capsy
     out = capsys.readouterr().out
     assert rc == 0
     assert "::warning" in out and "NOT compared" in out
+
+
+# --- rule 3, regrade arm (issue #3576 round 3) --------------------------------
+# A regrade refreshes `review_sample` from the fresh grades, so a test it moves
+# into `is_mandatory` gains a slot. Rule 3 proper runs only on a TOUCHED skill,
+# and a modified run log touches nothing — so without this arm the regrade PR
+# merges green and the next unrelated PR on that skill inherits the block.
+
+def _rule3_regrade(monkeypatch, tmp_path, base_sample, head_sample, *, ann=None,
+                   base_present=True):
+    """Write a head log + optional annotation, stub the merge-base read, run the arm.
+
+    `*_sample` are the `review_sample.tests` lists (None omits the key entirely,
+    which is what every log written before sampling shipped looks like).
+    """
+    rel = "eval/runlogs/unit/demo/v1_2026-10-09_00-00-00.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    def log_for(sample):
+        doc = {
+            "tests": [
+                {
+                    "test_id": t,
+                    "outcome": "partial",
+                    "outcome_summary": {
+                        "per_run_outcomes": ["partial"],
+                        "aggregated_dimensions": [
+                            {"source": "base", "name": "Correctness", "score": 2}
+                        ],
+                        "review_dimensions": [
+                            {"source": "base", "name": "Correctness", "score": 2}
+                        ],
+                    },
+                }
+                for t in (head_sample or [])
+            ]
+        }
+        if sample is not None:
+            doc["review_sample"] = {"tests": list(sample), "cursor": [], "seed": 1}
+        return doc
+
+    path.write_text(json.dumps(log_for(head_sample)), encoding="utf-8")
+    if ann is not None:
+        (path.parent / "v1_2026-10-09_00-00-00.ann.json").write_text(
+            json.dumps(ann), encoding="utf-8"
+        )
+    base = None if not base_present else json.dumps(log_for(base_sample))
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: base)
+    return check_runlogs.rule3_regrade_sample_growth("demo", rel)
+
+
+def test_rule3_regrade_blocks_a_grown_sample_with_no_annotation(
+    monkeypatch, tmp_path, capsys
+):
+    """The case this arm exists for: the regrade added a test, nobody graded it."""
+    rc = _rule3_regrade(monkeypatch, tmp_path, ["ut_a"], ["ut_a", "ut_b"])
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule3_regrade_passes_when_the_sample_did_not_grow(
+    monkeypatch, tmp_path, capsys
+):
+    """The other direction. A prune or a rehash rewrites the file without
+    touching `review_sample`, and must not be asked for annotations."""
+    rc = _rule3_regrade(monkeypatch, tmp_path, ["ut_a", "ut_b"], ["ut_a", "ut_b"])
+    assert rc == 0
+    assert "::error" not in capsys.readouterr().out
+
+
+def test_rule3_regrade_ignores_a_log_with_no_review_sample(
+    monkeypatch, tmp_path, capsys
+):
+    """A log written before sampling shipped carries no `review_sample` and owes
+    every dimension of every test — which no prune can satisfy. Gating on GROWTH
+    rather than on the file changing is what keeps this arm off it."""
+    rc = _rule3_regrade(monkeypatch, tmp_path, None, None)
+    assert rc == 0
+    assert "::error" not in capsys.readouterr().out
+
+
+def test_rule3_regrade_skips_a_log_absent_at_the_merge_base(
+    monkeypatch, tmp_path, capsys
+):
+    """Absent at the base means this PR ADDED it, where rule 3 proper applies.
+    Grading it here would double-report the same debt."""
+    rc = _rule3_regrade(
+        monkeypatch, tmp_path, None, ["ut_a"], base_present=False
+    )
+    assert rc == 0
+    assert "::error" not in capsys.readouterr().out
+
+
+def test_rule3_regrade_warns_rather_than_blocking_on_an_unreadable_base(
+    monkeypatch, tmp_path, capsys
+):
+    """Failing closed would block every prune on a shallow clone. Warn, so an
+    unread base is never mistaken for 'compared them, nothing grew'."""
+    rel = "eval/runlogs/unit/demo/v1_2026-10-09_00-00-00.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"tests": []}), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+
+    def boom(_p):
+        raise check_runlogs.BaseUnreadable("no merge base")
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", boom)
+    rc = check_runlogs.rule3_regrade_sample_growth("demo", rel)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning" in out
+    assert "NOT compared" in out
