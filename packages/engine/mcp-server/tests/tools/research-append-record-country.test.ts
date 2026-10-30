@@ -135,6 +135,46 @@ async function standardized(record: { tool: string; result: unknown; recordId: s
   return saved.assertions.at(-1).standard_place ?? null;
 }
 
+/** The standard_place an informant_bias_notes update gives a stored place
+ *  variant whose place is still in its `value`, in `record`. */
+async function liftedOnUpdate(record: { tool: string; result: unknown; recordId: string }, value: string) {
+  const stored = {
+    id: "a_001",
+    source_id: "src_001",
+    record_id: record.recordId,
+    record_role: "principal",
+    fact_type: "birthplace",
+    value,
+    information_quality: "primary",
+    informant: "self",
+    informant_proximity: "self",
+    record_basis: "stated",
+    log_entry_id: "log_001",
+    extracted_for_question_ids: [],
+  };
+  await writeFile(join(dir, "research.json"), JSON.stringify({ ...research(record.tool), assertions: [stored] }));
+  await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree));
+  await mkdir(join(dir, "results"), { recursive: true });
+  await writeFile(
+    join(dir, "results", "log_001.json"),
+    JSON.stringify({
+      log_id: "log_001",
+      tool: record.tool,
+      retrieved: "2026-01-01T00:00:00Z",
+      returned_count: 1,
+      payload: { results: [record.result] },
+    }),
+  );
+  const r = await researchAppend({
+    projectPath: dir,
+    ops: [{ section: "assertions", op: "update", entryId: "a_001", fields: { informant_bias_notes: "faint" } }],
+  });
+  expect(r.ok, JSON.stringify(r)).toBe(true);
+  const saved = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  expect(saved.assertions[0].place).toBe(value);
+  return saved.assertions[0].standard_place ?? null;
+}
+
 const hit = (fullName: string, score: number, placeId: string) =>
   ({ name: fullName.split(",")[0], fullName, type: "City", score, placeId, placeRepId: `r${placeId}` }) as any;
 
@@ -165,6 +205,11 @@ describe("research_append: the record country of an image record", () => {
       "Lidečko, Vsetín, Zlín, Czechia",
     );
     expect(await standardized(page("Zwittau, Mährisch Trübau, Moravia, Austria"), "Lideczko")).toBeNull();
+  });
+
+  it("gives a place lifted from a stored variant's value on an update the stored assertion's record country", async () => {
+    expect(await liftedOnUpdate(page("Bullock, Alabama, United States"), "Texas")).toBe("Texas, United States");
+    expect(await liftedOnUpdate(page("Saltillo, Coahuila, Mexico"), "Texas")).toBeNull();
   });
 
   it("withholds an entry withheld in British records from a Scottish, World or sea one, and gives it elsewhere", async () => {

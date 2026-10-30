@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SidecarPanel from '../SidecarPanel'
@@ -19,6 +19,24 @@ vi.mock('../../../contexts/ResearchDataContext', async () => {
 })
 
 import { useResearchData } from '../../../contexts/ResearchDataContext'
+
+// The real card, except a result whose recordId is THROW_ID throws on render —
+// the stand-in for any future payload the card cannot handle. Named exports
+// (ROUTED_TOOLS) pass through, so every other test here uses the real card.
+const THROW_ID = vi.hoisted(() => '__throw__')
+vi.mock('../SidecarResultCard', async () => {
+  const actual = await vi.importActual<typeof import('../SidecarResultCard')>('../SidecarResultCard')
+  const RealCard = actual.default
+  return {
+    ...actual,
+    default: (props: Parameters<typeof RealCard>[0]) => {
+      if ((props.result as { recordId?: string }).recordId === THROW_ID) {
+        throw new Error('card render exploded')
+      }
+      return <RealCard {...props} />
+    }
+  }
+})
 
 function mountWithState(
   sidecar: SidecarState,
@@ -150,6 +168,85 @@ describe('SidecarPanel — status branches', () => {
     // Both stars asserted: without these, dropping the stars expression is green.
     expect(screen.getByText('5/5')).toBeInTheDocument()
     expect(screen.getByText('3/5')).toBeInTheDocument()
+  })
+})
+
+// #3893: a result card that throws used to unmount the whole viewer, because the
+// drawer sat outside every ErrorBoundary.
+describe('SidecarPanel — a result that fails to render', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+  afterEach(() => vi.restoreAllMocks())
+
+  it('contains the failure to its card and leaves the drawer closable', async () => {
+    const good = patrickFlynnSidecar.payload.results![0]
+    const { closeSidecar } = mountWithState({
+      status: 'loaded',
+      logId: 'log_002',
+      payload: {
+        ...patrickFlynnSidecar,
+        log_id: 'log_002',
+        returned_count: 2,
+        payload: { results: [{ ...good, recordId: THROW_ID }, good] }
+      },
+      lastMtime: 1
+    })
+    render(<SidecarPanel />)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Couldn’t display this result')
+    expect(alert).toHaveTextContent('results/log_002.json could not be displayed')
+    // The good result next to it still renders (collapsed: only the first expands).
+    expect(screen.getByText('New York State Census, 1865')).toBeInTheDocument()
+    // The drawer header and its Close button survive and still work.
+    expect(screen.getByText('Record Search Results')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Close sidecar' }))
+    expect(closeSidecar).toHaveBeenCalled()
+  })
+
+  it('clears the failed card when the same log is re-read after a write', () => {
+    const good = patrickFlynnSidecar.payload.results![0]
+    const loaded = (results: (typeof good)[], lastMtime: number): SidecarState => ({
+      status: 'loaded',
+      logId: 'log_002',
+      payload: { ...patrickFlynnSidecar, payload: { results } },
+      lastMtime
+    })
+    mountWithState(loaded([{ ...good, recordId: THROW_ID }], 1))
+    const { rerender } = render(<SidecarPanel />)
+    // A lone result: no mention of "other results" that don't exist.
+    expect(screen.getByRole('alert')).toHaveTextContent('The Close button still works.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('other results')
+
+    // Same logId, newer mtime — what the provider sets when the file changes.
+    mountWithState(loaded([good], 2))
+    rerender(<SidecarPanel />)
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByText('Patrick Flynn')).toBeInTheDocument()
+  })
+
+  it('contains a payload that breaks the drawer body, keeping Close working', async () => {
+    const { closeSidecar } = mountWithState({
+      status: 'loaded',
+      logId: 'log_002',
+      payload: { ...patrickFlynnSidecar, payload: undefined } as never,
+      lastMtime: 1
+    })
+    const { rerender } = render(<SidecarPanel />)
+
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Couldn’t display these results')
+    expect(alert).toHaveTextContent('results/log_002.json could not be displayed')
+    await userEvent.click(screen.getByRole('button', { name: 'Close sidecar' }))
+    expect(closeSidecar).toHaveBeenCalled()
+
+    // The agent rewrites the file: same logId, newer mtime clears the fallback.
+    mountWithState({ status: 'loaded', logId: 'log_002', payload: patrickFlynnSidecar, lastMtime: 2 })
+    rerender(<SidecarPanel />)
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByText('Patrick Flynn')).toBeInTheDocument()
   })
 })
 
