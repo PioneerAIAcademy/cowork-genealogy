@@ -2,6 +2,7 @@
 // Example) and docs/specs/simplified-gedcomx-spec.md Section 8
 
 import type { ResearchData, GedcomxData } from '../schema'
+import type { ExternalCollectionsData } from '../externalCollections'
 
 export const patrickFlynnResearch: ResearchData = {
   project: {
@@ -546,7 +547,50 @@ export const patrickFlynnResearch: ResearchData = {
       timestamp: '2026-03-02T14:20:00Z',
       superseded_by: null
     }
+  ],
+  localities: [
+    {
+      id: 'loc_001',
+      place: 'Schuylkill, Pennsylvania, United States',
+      time_period: '1840-1910',
+      jurisdictions: [{ name: 'Schuylkill County Courthouse' }],
+      pages_read: [{ section: 'home', found: true }],
+      source: 'locality-guide',
+      created: '2026-05-02'
+    }
+  ],
+  namesakes: [
+    {
+      id: 'ns_001',
+      person_id: 'I1',
+      name: 'Patrick Flynn',
+      place: 'Luzerne, Pennsylvania, United States',
+      time_period: '1850-1900',
+      record_ids: ['MXYZ-123'],
+      notes: 'Born 1852 in Luzerne County; a different man from the subject.',
+      created: '2026-05-03'
+    }
   ]
+}
+
+export const patrickFlynnCollections: ExternalCollectionsData = {
+  places: {
+    'Schuylkill, Pennsylvania, United States': {
+      rows: [
+        {
+          key: 'ext_001',
+          url: 'https://www.ancestry.com/search/collections/1234/',
+          link_text: 'Pennsylvania, Church and Town Records, 1708-1985',
+          record_types: ['Church Records'],
+          place: 'Schuylkill, Pennsylvania, United States',
+          cost: 'Paid',
+          content_type: 'Index and images',
+          start_year: '1708',
+          end_year: '1985'
+        }
+      ]
+    }
+  }
 }
 
 export const patrickFlynnGedcomx: GedcomxData = {

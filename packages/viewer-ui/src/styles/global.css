@@ -4,8 +4,10 @@
    Palette: Warm paper, ink text, amber/gold accents
    ═══════════════════════════════════════════════════════ */
 
-/* Light theme (default) */
-:root {
+/* Light theme (default). #print-root declares the same values itself, so a
+   printout is light even when <html> carries the dark theme. */
+:root,
+#print-root {
   /* Typography */
   --font-display: 'Cormorant', 'Georgia', 'Times New Roman', serif;
   --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -254,4 +256,33 @@ h3 {
   font-size: 1.15rem;
   letter-spacing: -0.01em;
   color: var(--text-primary);
+}
+
+/* ── Print (components/print/PrintView.tsx) ─────────── */
+
+#print-root {
+  display: none;
+}
+
+/* Only while PrintView is mounted: a plain Ctrl+P leaves :has unmatched and
+   prints the screen as before. Hiding every other body child also hides the web
+   app's chat pane, which lives inside #root. The !important on the background
+   beats apps/web/src/styles.css, whose body rule loads later. */
+@media print {
+  html:has(> body > #print-root),
+  body:has(> #print-root) {
+    height: auto;
+    overflow: visible;
+    background: #fff !important;
+  }
+
+  body:has(> #print-root) > :not(#print-root) {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+  }
 }
