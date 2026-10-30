@@ -63,8 +63,9 @@ also from Caspino — Julio César's own sister, buried four days before him,
 not a different family. The index (ark:/61903/1:1:8HQ2-1DW2) mis-records
 her mother as "Victoria Gavilanes," an indexing error that copied the
 child's own given name into the mother field rather than naming a second
-wife. She matches tree person I3 (María Victoria Cherres Gavilanes,
-christened 5 Oct 1907); a death at seven months fits an October 1907 birth.
+wife. Her baptism on 5 Oct 1907 at Guaranda names the same parents
+(ark:/61903/1:1:D4KR-P1PZ); a death at seven months fits an October 1907
+birth.
 Two children of the same couple, from the same hamlet, buried within four
 days of each other on the same register page strengthens the
 identification rather than threatening it.
@@ -84,7 +85,7 @@ The couple's-generation gap that would have left this borderline — a son
 named Patricio who also married a Gavilanes woman could produce an
 identical index line — is closed by the primary record, not left open:
 entry 63 itself names the mother as Nicolaza/Nicolasa Gavilanes, the
-subject's actual wife, and entry 61's María Victoria (the couple's already
--documented 1907-christened daughter) appears on the same page four days
-apart, placing both entries squarely within this specific couple's family
-rather than a hypothetical namesake generation.
+subject's actual wife, and entry 61's María Victoria, baptized 5 Oct 1907
+as the couple's daughter (ark:/61903/1:1:D4KR-P1PZ), appears on the same
+page four days apart, placing both entries squarely within this specific
+couple's family rather than a hypothetical namesake generation.
