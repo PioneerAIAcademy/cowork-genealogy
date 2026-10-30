@@ -302,11 +302,29 @@ def test_research_plan_new_plan_for_q_001(before_state, after_state, test):
 
 # --- Tag-gated: new plan items have status=planned, fallback_for=null
 
+def _enumerative_skip(item: dict, question: dict | None) -> bool:
+    """The one non-`planned` status a new item may carry: on an `enumerative`
+    question (#1830 item 1, the lead's 2026-08-31 ruling on #1917), each of
+    the five event types the plan does not cover is written as a `skipped`
+    item stating why — a category and a reason, both non-empty, for one of
+    the five events (`_covered_events`)."""
+    return (
+        (question or {}).get("question_kind") == "enumerative"
+        and item.get("status") == "skipped"
+        and bool(str(item.get("skip_category") or "").strip())
+        and bool(str(item.get("skip_reason") or "").strip())
+        and bool(_covered_events(item))
+    )
+
+
 def test_new_plan_items_planned_status(before_state, after_state, test):
     """Tag-gated: new plan items default to status='planned' (not
     in_progress) and fallback_for=null unless an explicit fallback chain
     is being set up. Items created mid-execution would have status set
-    by the search-* skills via log entries — never by research-plan."""
+    by the search-* skills via log entries — never by research-plan.
+    The one exception is `_enumerative_skip`; on a targeted or unlabelled
+    question a `skipped` item at creation still fails, which is what stops
+    the enumerative obligation over-firing."""
     if "new-plan-items-planned-status" not in test.get("tags", []):
         pytest.skip("not a new-plan-items-planned-status scenario")
     before = before_state.get("research_json")
@@ -321,13 +339,16 @@ def test_new_plan_items_planned_status(before_state, after_state, test):
             if item.get("id"):
                 before_item_ids.add(item["id"])
 
+    questions = {q.get("id"): q for q in after.get("questions", []) or []}
+
     errors: list[str] = []
     for plan in after.get("plans", []) or []:
+        question = questions.get(plan.get("question_id"))
         for item in plan.get("items", []) or []:
             if item.get("id") in before_item_ids:
                 continue  # pre-existing item, not our responsibility
             status = item.get("status")
-            if status != "planned":
+            if status != "planned" and not _enumerative_skip(item, question):
                 errors.append(
                     f"new plan item {item.get('id')} has status='{status}'; "
                     f"expected 'planned'"
@@ -454,6 +475,188 @@ def test_objective_target_leads_the_plan(before_state, after_state, test):
             f"fallback_for {fallback_of}, a {_INDIRECT_JURISDICTION.title()} "
             f"item — the requested record must not be gated behind an "
             f"indirect source"
+        )
+
+
+# --- Tag-gated: a pension item reaches past the question's window -----------
+
+# Issue #1830 item A, scenario `rowe-window-is-not-a-ceiling`. The question asks
+# about 1850-1865; the record that answers it is a widow's pension file, which
+# cannot predate Josiah Rowe's 1879 death. The fixture never dates the file, so
+# 1879 is a fixture choice, stated in its README. The general rule stays in
+# principle 10; this certifies the one fixture.
+_PENSION_REACH_BY_TEST_ID = {
+    "ut_research_plan_wnc": 1879,
+}
+# `record_type` only, not the rationale. Over the 12 scratch plans a rationale
+# match adds no pension item a `record_type` match misses, and admits a
+# cemetery item dated 1848-1880 whose rationale mentions the pension -- so a
+# plan whose every military item stopped at 1865 would pass on it, the same
+# hole as any-item-reaches-past (mechanism 3 on the issue).
+_PENSION_RECORD_TYPE_RE = re.compile(r"military|pension", re.IGNORECASE)
+# A decade ("1870s") reaches its last year. An open-ended word opens a range
+# only as its last word: "1862-1865 (after enlistment)" and "1862-1865 (present
+# with regiment)" stop at 1865.
+_DATE_RANGE_YEAR_RE = re.compile(r"\b(1\d{3}|20\d{2})(s?)\b")
+_OPEN_ENDED_RE = re.compile(
+    r"[-–—]\s*$|\b(?:present|onwards?|forward|later|after)\s*$|\+\s*$", re.IGNORECASE
+)
+
+
+def _date_range_reaches(date_range: object, threshold: int) -> bool:
+    text = str(date_range or "").strip()
+    years = [int(y) + (9 if decade else 0) for y, decade in _DATE_RANGE_YEAR_RE.findall(text)]
+    if not years:
+        return False
+    if max(years) >= threshold:
+        return True
+    return bool(_OPEN_ENDED_RE.search(text))
+
+
+def test_pension_item_reaches_past_window(before_state, after_state, test):
+    """Tag-gated: at least one new military/pension plan item has a
+    `date_range` reaching the fixture's pension-file year.
+
+    At least one, not every: a compiled-service-record item dated to the
+    service years is legitimate alongside a pension item. Only military and
+    pension items are scoped, so a late probate or cemetery item cannot carry
+    a plan whose pension search stops at the window."""
+    tags = test.get("tags") or []
+    test_id = test.get("id")
+    assert test_id not in _PENSION_REACH_BY_TEST_ID or "pension-reaches-past-window" in tags, (
+        f"{test_id} has a _PENSION_REACH_BY_TEST_ID entry but no "
+        "'pension-reaches-past-window' tag - restore the tag or delete the entry"
+    )
+    if "pension-reaches-past-window" not in tags:
+        pytest.skip("not a pension-reaches-past-window test")
+    threshold = _PENSION_REACH_BY_TEST_ID.get(test_id)
+    assert threshold, (
+        f"{test_id} carries 'pension-reaches-past-window' but has no entry in "
+        "_PENSION_REACH_BY_TEST_ID"
+    )
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    items = [i for p in _new_plans(before, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    pension_items = [
+        i for i in items if _PENSION_RECORD_TYPE_RE.search(str(i.get("record_type") or ""))
+    ]
+    assert any(_date_range_reaches(i.get("date_range"), threshold) for i in pension_items), (
+        f"no military/pension item's date_range reaches {threshold}, the "
+        f"pension file's earliest date; the window bounds the question, not "
+        f"the records that answer it. Military/pension items: "
+        + (
+            "; ".join(
+                f"{i.get('id')} {i.get('record_type')} {i.get('date_range')!r}"
+                for i in pension_items
+            )
+            or "none"
+        )
+    )
+
+
+# --- Tag-gated: an enumerative question's plan accounts for five events ------
+
+# Issue #1830 item 1, the lead's 2026-08-31 ruling on #1917: an enumerative
+# question's plan covers birth, marriage, death, census and probate, and says in
+# writing why any is absent. "In writing" is a `skipped` item with a category
+# and a reason (`_enumerative_skip`). `record_type` alone cannot separate the
+# three vital events — the five enumerative corpus plans file birth, marriage and
+# death alike as `vital_record` — so a vital-type item counts for the one event
+# its record_type names, else the first event its rationale names. Only the
+# first: in 8 of the 9 pre-edit `ut_research_plan_enm` runs a marriage or
+# cemetery item's rationale mentioned children "born", and no item searched for
+# a birth. Death is not matched on a probate rationale that merely says the
+# subject died.
+_VITAL_RECORD_TYPES = re.compile(
+    r"vital|church(?![ _-]?member)|parish|civil(?![ _-]?war)|birth|marriage|death|cemetery|burial",
+    re.IGNORECASE,
+)
+_CENSUS_RE = re.compile(r"\bcensus", re.IGNORECASE)
+_PROBATE_RECORD_TYPE_RE = re.compile(r"probate|(?<!real[_ ])estate|\bwills?\b", re.IGNORECASE)
+_PROBATE_TEXT_RE = re.compile(r"\bprobate|\bestates?\b|\bwills\b|\btestament", re.IGNORECASE)
+_FIVE_EVENTS = {
+    "birth": re.compile(r"\b(?:births?|born|baptisms?|baptized|baptised|christenings?|christened)\b", re.IGNORECASE),
+    "marriage": re.compile(r"\b(?:marriages?|married|marry|banns|wedding)\b", re.IGNORECASE),
+    "death": re.compile(r"\b(?:deaths?|died|burials?|buried|obituary|obituaries)\b", re.IGNORECASE),
+}
+_EVENT_IN_RECORD_TYPE = {
+    "birth": re.compile(r"birth|baptis|christen", re.IGNORECASE),
+    "marriage": re.compile(r"marri|wedding", re.IGNORECASE),
+    "death": re.compile(r"death|burial|cemetery|obit", re.IGNORECASE),
+}
+
+
+def _vital_events(record_type: str, rationale: str) -> set[str]:
+    named = {name for name, pattern in _EVENT_IN_RECORD_TYPE.items() if pattern.search(record_type)}
+    if named:
+        return named
+    hits = [(m.start(), name) for name, pattern in _FIVE_EVENTS.items() if (m := pattern.search(rationale))]
+    return {min(hits)[1]} if hits else set()
+
+
+def _covered_events(item: dict) -> set[str]:
+    """The one event an item searches, or skips. A `skipped` item counts for the
+    event its `skip_reason` names before its rationale's, and one filed under a
+    `record_type` that names no event counts for the first of the five its
+    `skip_reason` names: the agent is told to write the reason, not which type
+    to file the skip under."""
+    record_type = str(item.get("record_type") or "")
+    if _CENSUS_RE.search(record_type):
+        return {"census"}
+    if _PROBATE_RECORD_TYPE_RE.search(record_type):
+        return {"probate"}
+    if _VITAL_RECORD_TYPES.search(record_type):
+        if item.get("status") == "skipped":
+            events = _vital_events(record_type, str(item.get("skip_reason") or ""))
+            if events:
+                return events
+        return _vital_events(record_type, str(item.get("rationale") or ""))
+    if item.get("status") != "skipped":
+        return set()
+    reason = str(item.get("skip_reason") or "")
+    patterns = {**_FIVE_EVENTS, "census": _CENSUS_RE, "probate": _PROBATE_TEXT_RE}
+    hits = [(m.start(), name) for name, pattern in patterns.items() if (m := pattern.search(reason))]
+    return {min(hits)[1]} if hits else set()
+
+
+def test_enumerative_plan_accounts_for_five_events(before_state, after_state, test):
+    """Tag-gated: for an enumerative question, each of birth, marriage, death,
+    census and probate is either covered by a new plan item or written as a
+    `skipped` item with a category and a reason."""
+    if "enumerative-five-events" not in (test.get("tags") or []):
+        pytest.skip("not an enumerative-five-events test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    plans = _new_plans(before, after)
+    assert plans, "no new plan was written"
+    questions = {q.get("id"): q for q in after.get("questions") or []}
+
+    for plan in plans:
+        question = questions.get(plan.get("question_id"))
+        assert (question or {}).get("question_kind") == "enumerative", (
+            f"{plan.get('id')} plans {plan.get('question_id')}, which is not "
+            f"enumerative — the fixture is wrong, not the plan"
+        )
+        accounted: set[str] = set()
+        for item in plan.get("items") or []:
+            if item.get("status") == "skipped" and not _enumerative_skip(item, question):
+                continue  # a skip with no written reason accounts for nothing
+            accounted |= _covered_events(item)
+        missing = [e for e in ("birth", "marriage", "death", "census", "probate") if e not in accounted]
+        assert not missing, (
+            f"{plan.get('id')} (enumerative question {plan.get('question_id')}) "
+            f"neither covers nor gives a written reason for: {', '.join(missing)}. "
+            f"Items: "
+            + "; ".join(
+                f"{i.get('id')} {i.get('status')} {i.get('record_type')}"
+                for i in plan.get("items") or []
+            )
         )
 # ===========================================================================
 # Deterministic checks over newly written plans (issue #1866, research-plan
