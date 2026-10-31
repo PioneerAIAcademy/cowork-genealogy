@@ -12,8 +12,12 @@
  * tool carrying both would leave the hook with no way to tell them apart.
  *
  * Everywhere else there is no such hook, and the tool must return something harmless
- * and truthful rather than erroring or claiming an effect it did not have -- so the
- * reply says plainly that the signal was recorded and the run continues.
+ * and truthful rather than erroring or claiming an effect it did not have. The reply
+ * says the signal was recorded and tells the model to stop: it used to add "otherwise
+ * it carries on", and the model read that literally and kept working past its own
+ * delivery (ut_research_c1k: a research-plan spawn and a second `research_delivered`
+ * after the first). Telling it to stop claims no effect; it is the instruction the
+ * router's bounded close already gives.
  *
  * Which environments those are, checked rather than assumed: the e2e harness binds the
  * REAL engine server and grants `mcp__genealogy` as a server-prefix wildcard, so the
@@ -42,10 +46,10 @@ export function researchDelivered(
   return {
     acknowledged: true,
     summary,
-    // Truthful in BOTH environments: where the hook binds, the turn has already ended
-    // and nobody reads this; where it does not, the run genuinely does carry on.
+    // Where the hook binds, the turn has already ended and nobody reads this; where it
+    // does not, this is the only thing that tells the model its turn is over.
     note:
-      "Signal received. Where this run is managed, the turn ends here; otherwise it carries on.",
+      "Signal received. This turn's deliverable is done: make no further tool calls and end your turn; the researcher chooses the next step.",
   };
 }
 

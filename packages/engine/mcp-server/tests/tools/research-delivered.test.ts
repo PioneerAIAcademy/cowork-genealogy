@@ -8,13 +8,14 @@ describe("research_delivered", () => {
     expect(r.summary).toBe("the plan you asked for");
   });
 
-  it("writes nothing and says so truthfully for BOTH environments", () => {
+  it("writes nothing, claims no stop it did not cause, and tells the model to stop", () => {
     // Where the hosted PreToolUse hook binds, the turn has already ended and nobody
-    // reads this. Where it does not (Cowork, the e2e harness), the run genuinely
-    // carries on -- so the note must not claim the turn stopped. The UNIT harness is
-    // neither: it does not advertise this tool at all.
+    // reads this. Where it does not (Cowork, both harnesses), nothing ends the turn but
+    // the model itself, so the note must not claim the turn stopped -- and must not say
+    // the run "carries on" either, which the model read as leave to keep working.
     const r = researchDelivered({ summary: "x" });
-    expect(r.note).toMatch(/otherwise it carries on/);
+    expect(r.note).toMatch(/make no further tool calls and end your turn/);
+    expect(r.note).not.toMatch(/carries on/);
     expect(r.note).not.toMatch(/the turn has ended\b/);
   });
 

@@ -39,7 +39,7 @@ tools on purpose.
 {
   "acknowledged": true,
   "summary": "<the summary, trimmed>",
-  "note": "Delivery recorded. Where this run is managed, the turn ends here; otherwise it carries on."
+  "note": "Signal received. This turn's deliverable is done: make no further tool calls and end your turn; the researcher chooses the next step."
 }
 ```
 
