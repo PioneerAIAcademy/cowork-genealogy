@@ -11,6 +11,11 @@
 --                         completed attempt counts at the CLI's own figure, and an attempt
 --                         killed before its result keeps the estimate.
 --
--- Expand-only: one column, default 0, no backfill. A turn written before this reads 0,
+-- Expand-only: one column, default 0, no backfill, and one index. A turn written before this reads 0,
 -- which is what the cap counted for it then.
 ALTER TABLE turns ADD COLUMN IF NOT EXISTS spend_correction_usd double precision NOT NULL DEFAULT 0;
+
+-- The cap sums the corrections once per tool call (the PreToolUse halt check), reaching
+-- turns through sessions.sdk_session_id, which had no index: without this, every tool
+-- call scans sessions, as 007 found for session_entries.
+CREATE INDEX IF NOT EXISTS sessions_sdk_session_idx ON sessions (sdk_session_id);

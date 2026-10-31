@@ -877,13 +877,14 @@ def test_017_is_idempotent_and_keyed_by_hash():
     assert "CREATE INDEX IF NOT EXISTS connector_tokens_user_idx ON connector_tokens (user_id)" in statements
 
 
-def test_018_adds_one_idempotent_spend_correction_column_that_reads_zero():
+def test_018_adds_an_idempotent_spend_correction_column_that_reads_zero_and_its_join_index():
     """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
     018 must be a no-op the second time. The column is summed into the spend cap, so a
     turn written before it must read 0 -- what the cap counted for it then -- not NULL."""
     assert _statements(SQL_DIR / "018_spend_correction.sql") == [
-        "ALTER TABLE turns ADD COLUMN IF NOT EXISTS spend_correction_usd double precision NOT NULL DEFAULT 0"
-    ]
+        "ALTER TABLE turns ADD COLUMN IF NOT EXISTS spend_correction_usd double precision NOT NULL DEFAULT 0",
+        "CREATE INDEX IF NOT EXISTS sessions_sdk_session_idx ON sessions (sdk_session_id)",
+    ], "the cap's per-tool-call join reaches turns through sessions.sdk_session_id: it needs the index"
 
 
 # U9: a shipped file runs once and is never edited, so a later file may only add. Read off the

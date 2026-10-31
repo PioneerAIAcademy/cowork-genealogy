@@ -41,7 +41,7 @@ PINNED = {
     # file's, so it does not change with the number.
     "016_users_beta.sql": "4c85ef7d3c17416db1d9313fb9aaf16d3cc37168a9f9c3bf93fefcba709bee3a",
     "017_connector_auth.sql": "d4fe1eadadce03860523c8d6f8ca870a98c96e6e777e67a6c14df28cf833a419",
-    "018_spend_correction.sql": "7ce9ad8fffcf2ed0cc79d6e54c4e5b9df1b601d35436aef17939f26699ba241d",
+    "018_spend_correction.sql": "acc2cd40dbab36d17d6a0aa1a12f95a241bdaf0b945b2576bee34e8aa083e754",
 }
 
 
