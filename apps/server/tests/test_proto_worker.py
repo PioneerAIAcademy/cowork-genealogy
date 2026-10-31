@@ -890,6 +890,42 @@ def test_a_delegation_not_explicitly_foreground_is_rewritten(tmp_path, tool_inpu
     assert out["hookSpecificOutput"]["updatedInput"] == {**tool_input, "run_in_background": False}
 
 
+@pytest.mark.parametrize("tool_name", ["Agent", "Task"])
+@pytest.mark.parametrize("tool_input", [
+    {"prompt": "p"},
+    {"subagent_type": "", "prompt": "p"},
+    {"subagent_type": None, "prompt": "p"},
+    {"subagent_type": "general-purpose", "prompt": "p"},
+    {"subagent_type": " general-purpose ", "prompt": "p", "run_in_background": False},
+    {"subagent_type": "genealogy-research:general-purpose", "prompt": "p"},
+], ids=["no name", "empty", "null", "named", "padded, foreground", "prefixed"])
+def test_a_general_purpose_delegation_is_denied_and_logged(tmp_path, tool_name, tool_input):
+    """U14: a general-purpose agent holds none of a plugin agent's limits, and a gateway 400
+    on an agent's model has ended in one silently (plan P3h)."""
+    rows: list[dict] = []
+    logged: list[dict] = []
+    hook = options.make_pretool_hook(turn_id="t", session_id="s", cwd=str(tmp_path),
+                                     config_root=str(tmp_path / "cfg"), record=rows.append,
+                                     log=lambda **f: logged.append(f))
+    out = _call(hook, {"tool_name": tool_name, "tool_input": tool_input, "tool_use_id": "tu-1"})
+    spec = out["hookSpecificOutput"]
+    assert spec["permissionDecision"] == "deny"
+    assert spec["permissionDecisionReason"] == options.STAND_IN_DENY_REASON.format(tool=tool_name)
+    assert "updatedInput" not in spec, "a denied call is not foregrounded"
+    assert rows[-1]["decision"] == "deny"
+    assert [f["ev"] for f in logged] == ["deny"] and logged[0]["reason"] == spec["permissionDecisionReason"]
+
+
+@pytest.mark.parametrize("subagent_type", [
+    "record-extractor", "genealogy-research:record-extractor", "general-purpose-ish", "x",
+])
+def test_a_named_delegation_is_not_a_stand_in(tmp_path, subagent_type):
+    hook = _hook([], str(tmp_path), str(tmp_path / "cfg"))
+    tool_input = {"subagent_type": subagent_type, "prompt": "p", "run_in_background": False}
+    assert _call(hook, {"tool_name": "Agent", "tool_input": tool_input}) == {}
+    assert not options.is_stand_in_delegation("Read", {"subagent_type": "general-purpose"})
+
+
 def test_an_explicitly_foreground_delegation_passes_untouched(tmp_path):
     rows: list[dict] = []
     hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
@@ -1280,11 +1316,44 @@ def test_every_shipped_agent_model_has_a_gateway_id():
     from proto.worker.plugin_agents import load_agent_definitions
 
     shipped = load_agent_definitions(SERVER.parents[1] / "packages" / "engine" / "plugin")
-    models = {a.model for a in shipped.values() if a.model}
-    assert models, "the plugin declares agent models"
-    unmapped = sorted(m for m in models
-                      if m not in options.GATEWAY_AGENT_MODELS and not m.startswith(("us.", "global.")))
+    assert any(a.model for a in shipped.values()), "the plugin declares agent models"
+    unmapped = options.unmapped_gateway_models(shipped)
     assert not unmapped, f"add a Bedrock id to GATEWAY_AGENT_MODELS for {unmapped}"
+
+
+def test_unmapped_gateway_models_names_only_what_a_gateway_would_receive_bare():
+    agent = lambda model: SimpleNamespace(model=model)  # noqa: E731
+    agents = {"mapped": agent("claude-sonnet-4-6"), "bedrock": agent("us.anthropic.claude-sonnet-4-6"),
+              "global": agent("global.anthropic.x"), "inherit": agent(None), "odd": agent(7),
+              "bare": agent("claude-opus-9"), "alias": agent("sonnet")}
+    assert options.unmapped_gateway_models(agents) == ["alias: sonnet", "bare: claude-opus-9"]
+
+
+def test_prepare_on_the_gateway_refuses_turns_when_an_agent_model_has_no_gateway_id(monkeypatch, tmp_path):
+    """U14: an unmapped id reaches the gateway, which answers 400, and the main thread then
+    does the agent's work without its limits (plan P3h; handoff F4). Refused at start, loudly."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "ensure_cwd", lambda cwd: None)
+    agent = lambda model: SimpleNamespace(model=model)  # noqa: E731
+    monkeypatch.setattr(worker, "load_plugin_agents",
+                        lambda plugin_dir: ({"a": agent("claude-sonnet-4-6"), "b": agent("claude-opus-9")}, None))
+    monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    for name in ("_AGENTS", "_AGENTS_ERROR", "_PLUGIN_DIR", "_BLOCKED", "_AUTONOMOUS_MAX_NUDGES"):
+        monkeypatch.setattr(worker, name, getattr(worker, name))  # prepare() rebinds them; restored on teardown
+    monkeypatch.setenv("MODEL_PROVIDER", "gateway")
+    monkeypatch.setenv("GATEWAY_BASE_URL", "http://gw.example/bedrock")
+    worker.prepare()
+    assert worker._AGENTS is None and "b: claude-opus-9" in worker._AGENTS_ERROR
+    assert {"ev": "prepare", "step": "agent_models", "error": worker._AGENTS_ERROR} in logged
+    with pytest.raises(RuntimeError, match="no gateway id"):
+        worker.require_agents()
+    assert worker._PLUGIN_DIR == str(PLUGIN_DIR), "no gateway copy is made for a refused set"
+    # The Anthropic API takes bare ids, so the same set starts there.
+    monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
+    worker.prepare()
+    assert worker._AGENTS is not None and worker._AGENTS_ERROR is None
 
 
 def _bedrock_or_inherit(model: str | None) -> bool:

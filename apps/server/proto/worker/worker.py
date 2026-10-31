@@ -239,6 +239,7 @@ from proto.worker.options import (  # noqa: E402
     project_completed,
     ProviderError,
     tool_server_url,
+    unmapped_gateway_models,
     wants_status_before,
 )
 from proto import grants  # noqa: E402
@@ -1844,6 +1845,11 @@ def prepare() -> None:
         gateway = model_provider(os.environ) == "gateway"
     except ProviderError:
         gateway = False  # refused at start by require_start_config
+    if gateway and _AGENTS is not None and (unmapped := unmapped_gateway_models(_AGENTS)):
+        # Refused, not shipped: the gateway answers an unmapped id 400, and the main thread
+        # then does the agent's work without its limits (U14; handoff F4).
+        _AGENTS, _AGENTS_ERROR = None, f"agent models with no gateway id: {unmapped}"
+        log(ev="prepare", step="agent_models", error=_AGENTS_ERROR)
     if gateway and _AGENTS_ERROR is None:
         try:
             # One worker per instance, so an earlier start's copy is stale.
