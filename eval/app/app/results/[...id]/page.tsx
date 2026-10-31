@@ -112,6 +112,20 @@ type ScoreOrNull = 1 | 2 | 3 | null;
 /** Shared tooltip reminder of the score scale, shown on both the read-only
  * LLM badge and the editable "You" picker. Kept in one place so the two
  * tooltips can't drift. */
+/** What a red match badge says, by `matched.kind`.
+ *
+ *  A map rather than a ternary chain because the chain's fallthrough was wrong:
+ *  `staged_ref_refused` landed on 'no fixture', telling an annotator to write a
+ *  fixture for a call no fixture governs — the same misdirection
+ *  `unknown_args_refused` was added to stop. Both are refusals the mock makes
+ *  BEFORE any predicate lookup, so no fixture can cover either. The `??`
+ *  default keeps an unknown future kind legible instead of blank. */
+const MATCH_LABELS: Record<string, string> = {
+  unknown_args_refused: 'unknown args refused',
+  staged_ref_refused: 'staged ref refused',
+  none: 'fixture_not_found',
+};
+
 const SCORE_SCALE_HINT = <div>1 = fail · 2 = partial · 3 = pass</div>;
 
 function ScorePicker({
@@ -880,7 +894,7 @@ const TracePane = memo(function TracePane({
                         </>
                       ) : (
                         <Badge size="xs" color="red" variant="light">
-                          {matched.kind === 'none' ? 'fixture_not_found' : 'no fixture'}
+                          {(matched.kind ? MATCH_LABELS[matched.kind] : undefined) ?? 'no fixture'}
                         </Badge>
                       )}
                     </Group>

@@ -442,7 +442,16 @@ export interface RunLogToolCall {
    */
   expected_args: Record<string, unknown> | null;
   matched: {
-    kind: 'predicate' | 'queue' | 'queue_reused' | 'none';
+    // The five kinds `mock_mcp.py` emits, and the five both run-log schema
+    // mirrors allow. `queue` / `queue_reused` were here and are gone: no mock
+    // path emits either, and a run log carrying one fails the schema write —
+    // so the type documented a state the system cannot produce.
+    kind:
+      | 'predicate'
+      | 'none'
+      | 'live'
+      | 'staged_ref_refused'
+      | 'unknown_args_refused';
     index: number | null;
   };
   response_fixture: string | null;

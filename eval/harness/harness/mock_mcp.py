@@ -306,7 +306,11 @@ def pg_store_faults(workspace: Path) -> list[dict[str, str]]:
 
 
 def _run_node_eval(
-    script: str, input_str: str | None = None, timeout: int = NODE_EVAL_TIMEOUT_DEFAULT
+    script: str,
+    input_str: str | None = None,
+    timeout: int = NODE_EVAL_TIMEOUT_DEFAULT,
+    *,
+    store: bool = True,
 ) -> subprocess.CompletedProcess[str]:
     """Run a Node ESM ``--eval`` script and return the completed process.
 
@@ -320,9 +324,18 @@ def _run_node_eval(
     any non-ASCII byte Node writes to stdout (issue #1399 follow-on). Callers
     keep their own try/except and response-shaping, which differ per tool;
     only the subprocess invocation itself is shared.
+
+    ``store=False`` omits the ``--import`` store prelude. A script that touches
+    no project state does not need it, and under ``--store pg`` loading it means
+    building a Postgres pool and an S3 client per invocation
+    (``pg_store_prelude.mjs`` calls ``createPgS3Backend``). Worse, that prelude
+    THROWS when ``HARNESS_PG_RUN`` or the ``PROTO_*`` env is incomplete, which
+    would turn a pure check into a per-call failure. Pure checks pass
+    ``store=False``; anything that reads or writes the workspace must not.
     """
     return subprocess.run(
-        ["node", *_store_import_args(), "--input-type=module", "--eval", script],
+        ["node", *(_store_import_args() if store else []),
+         "--input-type=module", "--eval", script],
         input=input_str,
         capture_output=True,
         text=True,
@@ -491,24 +504,155 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 # fixture simply gets no hint.
 SURNAME_VARIANT_HINTS_KEY = "surnameVariantHints"
 _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
-_warned_no_surname_hints_module = False
+
+_UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
 
 
-def _surname_hints_module_present() -> bool:
-    """Whether the build carries the module. Warns once when it does not: a build
-    older than #3054 serves every nil with no hint, which reads as the model
-    ignoring one."""
-    global _warned_no_surname_hints_module
-    if _SURNAME_HINTS_JS.exists():
+#: Compiled modules already warned about, so a missing build says so once per
+#: process rather than once per call. Keyed on the path, so a second module
+#: still gets its own warning.
+_warned_missing_modules: set[Path] = set()
+
+
+def _compiled_module_present(path: Path, consequence: str) -> bool:
+    """Whether the build carries `path`. Warns ONCE per module when it does not,
+    naming what the caller will do instead, and returns False.
+
+    Shared by every compiled-module bridge in this file (CLAUDE.md "Code reuse":
+    two near-duplicates is the signal to consolidate). Each bridge used to carry
+    its own `_warned_no_*_module` global and its own copy of this exists/warn/
+    return-False shape, so a change to the build path — the `--import` store
+    prelude, say — had to be made in every copy.
+
+    `consequence` completes "…; <consequence>", and is what makes the warning
+    actionable: a harness fault must never read as the model behaving.
+    """
+    if path.exists():
         return True
-    if not _warned_no_surname_hints_module:
-        _warned_no_surname_hints_module = True
+    if path not in _warned_missing_modules:
+        _warned_missing_modules.add(path)
         warnings.warn(
-            f"{_SURNAME_HINTS_JS} is missing — rebuild packages/engine/mcp-server; "
-            "record_search responses will carry no surnameVariantHints",
+            f"{path} is missing — rebuild packages/engine/mcp-server; {consequence}",
             stacklevel=2,
         )
     return False
+
+
+def _surname_hints_module_present() -> bool:
+    """A build older than #3054 serves every nil with no hint, which reads as the
+    model ignoring one."""
+    return _compiled_module_present(
+        _SURNAME_HINTS_JS,
+        "record_search responses will carry no surnameVariantHints",
+    )
+
+
+def _unknown_args_module_present() -> bool:
+    """Fails OPEN by decision (#3947, review-ready 2026-10-30): one broken node
+    install would otherwise abort every suite. `run_tests.py`'s build-fresh gate
+    already refuses a stale build for real runs, so this path is reached only by
+    a developer running pytest against an unbuilt tree."""
+    return _compiled_module_present(
+        _UNKNOWN_ARGS_JS,
+        "mock tool calls will NOT be checked for non-parameter arguments",
+    )
+
+
+
+
+
+def _reject_unknown_args(tool_name: str, args: Any) -> str | None:
+    """production's refusal for `args` keys that are not parameters of
+    `tool_name`, or None when every key is one.
+
+    Calls the COMPILED `rejectUnknownArgs` (`build/utils/unknown-args.js`), the
+    same function `server.ts` runs at dispatch. The key check is never
+    re-implemented in Python and `ACCEPTED_ALIASES` is never copied here — the
+    lead's 2026-10-29 ruling bars both, because a second implementation is a
+    second thing to drift.
+
+    One node call per MCP call (~0.23 s, measured 2026-10-30). A Python
+    pre-filter on key membership would cut that, and is the re-implementation
+    the ruling bars.
+
+    Node failure fails OPEN with a warning, for the reason in
+    `_unknown_args_module_present`.
+    """
+    if not _unknown_args_module_present():
+        return None
+    script = (
+        f"import {{ rejectUnknownArgs }} from '{_node_module_url(_UNKNOWN_ARGS_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify("
+        " { refusal: rejectUnknownArgs(input.tool, input.args) ?? null }));"
+    )
+    try:
+        # DEFAULT, not LONG: `rejectUnknownArgs` is a pure function over two
+        # arguments — no network, no file I/O, no store. LONG (60s) exists for
+        # writers that may wait on a real backend; using it here would make a
+        # hung node cost 60s on EVERY call rather than 30.
+        proc = _run_node_eval(
+            script,
+            json.dumps({"tool": tool_name, "args": args}),
+            timeout=NODE_EVAL_TIMEOUT_DEFAULT,
+            # `rejectUnknownArgs` reads no project state, so the store prelude is
+            # pure cost here — and under `--store pg` it is a Postgres pool and an
+            # S3 client per argument check, on a prelude that throws when the
+            # PROTO_* env is incomplete.
+            store=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return json.loads(proc.stdout).get("refusal")
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as e:
+        warnings.warn(
+            f"unknown-argument guard failed for {tool_name} ({e}); the call was "
+            "NOT checked. A harness fault must not read as the model behaving.",
+            stacklevel=2,
+        )
+        return None
+
+
+def _guard_unknown_args(tool_name: str, handler, call_log: list[dict[str, Any]]):
+    """Wrap `handler` so a non-parameter argument is refused before it runs.
+
+    WHY AT REGISTRATION, NOT INSIDE THE HANDLER. `tools_by_name[name].handler(...)`
+    is what the pytest suite calls directly, so a check placed inside a fixture
+    handler leaves that whole path unguarded — and the harness's own tests are
+    exactly where a stray key is most likely to be written.
+
+    WHY THE MODEL'S OWN `args`, NEVER THE POST-INJECTION COPY. The compiled-tool
+    handlers add `projectPath` themselves (`_make_compiled_tool_handler` does
+    `input_obj = dict(args)` and injects into the copy). `research_delivered`,
+    `project_list` and `convert_calendar` do not declare `projectPath`, so a
+    check run after that injection would refuse every call to those three.
+
+    On a refusal the handler does NOT run, and the envelope is the one
+    `server.ts` returns for the same refusal.
+    """
+
+    async def guarded(args, _name=tool_name, _handler=handler, _log=call_log):
+        refusal = _reject_unknown_args(_name, args)
+        if refusal is None:
+            return await _handler(args)
+        response = {"error": refusal}
+        _log.append(
+            {
+                "tool": f"mcp__genealogy__{_name}",
+                "args": dict(args) if isinstance(args, dict) else args,
+                "expected_args": None,
+                "matched": {"kind": "unknown_args_refused", "index": None},
+                "response_fixture": None,
+                "response": response,
+            }
+        )
+        return {
+            "content": [{"type": "text", "text": json.dumps(response)}],
+            "is_error": True,
+        }
+
+    return guarded
 
 
 def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> dict[str, Any] | None:
@@ -1639,7 +1783,9 @@ def create_mock_server(
         description = tool_descriptions.get(
             tool_name, f"Mock {tool_name} — fixture-backed."
         )
-        decorated = tool(tool_name, description, input_schema)(handler)
+        decorated = tool(tool_name, description, input_schema)(
+            _guard_unknown_args(tool_name, handler, call_log)
+        )
         tools.append(decorated)
 
     # --- Live tools ---------------------------------------------------------
@@ -1671,7 +1817,9 @@ def create_mock_server(
             (build_catalog.get(live_tool_name) or {}).get("inputSchema")
             or _PERMISSIVE_SCHEMA
         )
-        decorated = tool(live_tool_name, description, input_schema)(live_handler)
+        decorated = tool(live_tool_name, description, input_schema)(
+            _guard_unknown_args(live_tool_name, live_handler, call_log)
+        )
         tools.append(decorated)
 
     # person_quality: one handler whether or not the test declared fixtures — it
@@ -1687,7 +1835,7 @@ def create_mock_server(
             "person_quality",
             tool_descriptions.get("person_quality", "person_quality — resolves then scores."),
             (build_catalog.get("person_quality") or {}).get("inputSchema") or _PERMISSIVE_SCHEMA,
-        )(pq_handler)
+        )(_guard_unknown_args("person_quality", pq_handler, call_log))
     )
 
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
