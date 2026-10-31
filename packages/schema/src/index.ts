@@ -98,6 +98,7 @@ export interface Question {
   resolved: string | null
   resolution_assertion_ids: string[]
   search_stop: SearchStop
+  date_window?: string
 }
 
 export interface PlanItem {

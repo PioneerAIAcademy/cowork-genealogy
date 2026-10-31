@@ -1,0 +1,246 @@
+{
+  "run_log": "v41_2026-10-31_20-43-02.json",
+  "annotator": "taiwoadedotunxx1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s59",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rx4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rx4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rx4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s7e",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s7e",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_s7e",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Kept at 2, but not for the judge's reason. The judge context says asking the researcher for the record's identifier, or offering to search for the record, counts as following the new lead. The reply does both (it asks for the ARK and offers to search the Kentucky deaths collection), so that part is met and is not a completeness gap. It also doesn't go straight to wrap-up. What it leaves out is the step the context says is expected: ruling out or flagging the hypothesis the record contradicts (h_002). Since that is missing, 2."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 1,
+      "comment": "The judge missed the test's central point. h_002 identifies the census Robert Eastham (b. ~1822, in the Burton household 1850 and 1860) as the man who married Margaret Rucker in Boyd County on 25 January 1870 (src_004). The researcher reports that this Robert died in Pulaski County in 1861. A man who died in 1861 cannot marry in 1870, so the record contradicts h_002. The reply instead says the death record \"advance[s] that theory meaningfully\" and calls the parents' names \"consistent with what Robert himself swore on his 1870 marriage papers\". It presents a contradiction as corroboration, which the judge context names as the failure. h_002 is neither ruled out nor flagged. The judge's own point, that the reply over-states what Robert \"swore\", is minor next to this."
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Kept at 2, with the reasoning corrected. The judge's first point is wrong. The reply's \"Thomas Flynn (I2) as his father… No mother is currently encoded in the tree\" matches the tree exactly: one father, three ParentChild links from I2 to Patrick, Mary and James, and no mother. The \"nine sources, 13 assertions, 6 person-evidence links\" are also exact. The second point is a real but minor error. q_002 is \"Where was Patrick Flynn in the 1850 census?\", yet the reply suggests \"If the evidence gathered for q_002 concerns Patrick's mother, the proof-conclusion pass for q_002 should surface and encode her\". The router couldn't see q_002's text (project_context lists only unresolved questions), and it hedged with \"If\", but it still gave the researcher a misleading idea of what q_002 is about when one research_query would have checked. The hand-offs themselves (proof-conclusion for q_001, then q_002) are correct, so 2.\n\n"
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Kept at 2. The reply has two real factual errors. It says \"Three sourced records … have been extracted\", but the project holds 9 sources with 13 assertions (the judge's \"four\" is also wrong). And it describes q_002 as \"likely about a sibling or collateral line\", when q_002 is \"Where was Patrick Flynn in the 1850 census?\". The router couldn't see q_002's text, since project_context lists only unresolved questions, and it hedged with \"likely\", but it still told the researcher something untrue. The judge's third point, about \"flagged as concluded while blocked\", is not an error: it restates project_context's own nextStep (\"concluded while blocked: re-conclude ps_001\"). The objective, the persons and the next step (re-conclude ps_001) are correct, so 2.\n\n"
+    }
+  ]
+}
