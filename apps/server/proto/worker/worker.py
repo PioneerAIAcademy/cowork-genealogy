@@ -62,7 +62,8 @@ since ``num_turns == 0`` means the discarded pass billed no model turn.
 
 The resume GUARD (PR #2870 item 0a) is what happens when that re-query does not help.
 A redelivered attempt whose figures still show no work -- ``attempt_did_work``:
-``num_turns == 0``, or no ``tool_calls`` row recorded this pass -- is a resume FAILURE,
+``num_turns == 0``, or no ``tool_calls`` row recorded this pass once an earlier attempt
+of the turn had recorded one -- is a resume FAILURE,
 not a completion. D17 used to complete such a turn "as it stands", which records a
 half-finished run as finished: PR #2695's acceptance run did exactly that on 2026-09-20,
 in 10 ms, with ``project.status`` still ``active``. Now the attempt bumps
@@ -2426,20 +2427,28 @@ def turn_max_nudges(message: Any, fallback: int) -> int:
     return n if n >= 0 else fallback
 
 
-def attempt_did_work(result: Any, tool_calls: int) -> bool:
-    """Whether THIS attempt moved the turn forward (0a). Both signals must be positive.
+def attempt_did_work(result: Any, tool_calls: int, turn_tool_calls: int) -> bool:
+    """Whether THIS attempt moved the turn forward (0a).
 
     The plan states the negation: a redelivered attempt did no work when
     ``num_turns == 0``, *or* it added no ``tool_calls`` rows. The first is the D17
     synthetic result -- the CLI answered its own meta prompt about the orphaned agents and
     returned, so the interrupted work was never redone. The second is the attempt that
     billed model turns and wrote nothing: every change to the project goes through a
-    writer TOOL, so a pass with no tool call changed nothing, and under continuous work
-    that is a stall rather than a short answer.
+    writer TOOL, so a pass with no tool call left the interrupted work undone.
+
+    The second arm needs interrupted work, so it applies only once some attempt of the turn
+    recorded a tool call (``turn_tool_calls``, every attempt's rows). A turn killed before
+    its first tool call -- a status question killed inside its start-of-turn compaction --
+    interrupted nothing, and its redelivery's text reply is the answer, as it would be on a
+    first delivery; without this it is re-run and closed ``no_progress`` with the patron
+    shown the answer twice (U24, 2026-10-31).
 
     A caller applies this on a REDELIVERY only. On a first delivery a short, tool-free
     answer is an ordinary turn and completes as it stands."""
-    return int(getattr(result, "num_turns", 0) or 0) > 0 and tool_calls > 0
+    if int(getattr(result, "num_turns", 0) or 0) <= 0:
+        return False
+    return tool_calls > 0 or turn_tool_calls == 0
 
 
 # -- the grant (U3) --------------------------------------------------------------
@@ -3149,7 +3158,8 @@ async def _run_turn(
             if (not stopped_here
                     and not transcript_lost
                     and receive_count > 1
-                    and not attempt_did_work(result, counters["tool_calls"])):
+                    and not attempt_did_work(result, counters["tool_calls"],
+                                             count_tool_calls(conn, turn_id))):
                 zero_progress = bump_zero_progress(conn, turn_id, turn["claim_epoch"])
                 log(ev="zero_progress_attempt", turn_id=turn_id, session_id=session_id,
                     receive_count=receive_count, attempts=zero_progress, cap=ZERO_PROGRESS_CAP,

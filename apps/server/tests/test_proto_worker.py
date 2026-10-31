@@ -2034,20 +2034,27 @@ def test_the_first_delivery_of_a_resumed_turn_is_never_re_queried(turn_env, monk
 # receive_count > 1 attempt. `test_the_named_fallback_*` below is that test.
 
 
-@pytest.mark.parametrize("num_turns, tool_calls, expected", [
-    (6, 1, True),
-    (6, 0, False),
-    (0, 1, False),
-    (0, 0, False),
-    (None, 0, False),
-    (1, 40, True),
-], ids=["worked", "billed-turns-touched-nothing", "no-turn-but-a-call", "dead", "unknown", "busy"])
-def test_attempt_did_work_needs_both_signals(num_turns, tool_calls, expected):
+@pytest.mark.parametrize("num_turns, tool_calls, turn_tool_calls, expected", [
+    (6, 1, 4, True),
+    (6, 0, 3, False),
+    (0, 1, 4, False),
+    (0, 0, 3, False),
+    (None, 0, 3, False),
+    (1, 40, 43, True),
+    (2, 0, 0, True),
+    (0, 0, 0, False),
+    (None, 0, 0, False),
+], ids=["worked", "billed-turns-touched-nothing", "no-turn-but-a-call", "dead", "unknown", "busy",
+        "text-reply-nothing-interrupted", "synthetic-nothing-interrupted", "unknown-nothing-interrupted"])
+def test_attempt_did_work_needs_both_signals_once_work_was_interrupted(num_turns, tool_calls, turn_tool_calls, expected):
     """The plan states the negation -- an attempt did no work when ``num_turns == 0``, OR
-    it added no tool_calls rows -- so work is the conjunction. The middle row is the one
+    it added no tool_calls rows -- so work is the conjunction. The second row is the one
     a `num_turns == 0` test alone would miss: a pass that billed model turns and changed
-    nothing, because every change to the project goes through a writer TOOL."""
-    assert worker.attempt_did_work(SimpleNamespace(num_turns=num_turns), tool_calls) is expected
+    nothing, because every change to the project goes through a writer TOOL. The tool-call
+    half needs work to have been interrupted: when no attempt of the turn ever recorded a
+    tool call, a model reply is the answer (the last three rows), and only a zero-turn
+    result still counts as no work."""
+    assert worker.attempt_did_work(SimpleNamespace(num_turns=num_turns), tool_calls, turn_tool_calls) is expected
 
 
 def test_the_named_fallback_a_synthetic_zero_turn_redelivery_is_a_failure_not_a_completion(
@@ -2075,10 +2082,28 @@ def test_the_named_fallback_a_synthetic_zero_turn_redelivery_is_a_failure_not_a_
 def test_a_redelivery_that_billed_model_turns_but_recorded_no_tool_call_counts_too(turn_env):
     """The second arm of attempt_did_work, through run_turn: the model talked and touched
     nothing. resume_produced_no_turn never fires here (num_turns > 0), so this attempt is
-    caught only by the tool-call half."""
+    caught only by the tool-call half. The killed attempt had recorded calls, so there
+    was work to redo."""
+    turn_env["conn"].tool_call_count = 3
     with pytest.raises(worker.ResumeFailure, match="tool_calls=0"):
         _run_passes(turn_env, [[_init(), _text("thinking about it"), _result(num_turns=9)]], receive_count=2)
     assert not _turn_done_written(turn_env["conn"])
+
+
+def test_a_text_reply_on_the_redelivery_of_a_turn_that_never_called_a_tool_is_the_answer(turn_env, monkeypatch):
+    """U24, 2026-10-31 (compose, gateway, n=1): a status question killed 8 s in, inside its
+    start-of-turn compaction, recorded no tool call on any attempt. Its redelivery answered
+    in text; the tool-call half read that as no work, re-ran it, showed the patron the
+    answer twice and closed the turn ``no_progress``. Nothing was interrupted, so the
+    reply completes the turn as it would on a first delivery."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    turn_env["conn"].tool_call_count = 0
+    summary = _run_passes(turn_env, [[_init(), _text("Two sentences of status."), _result(num_turns=2)]],
+                          receive_count=2)
+    assert summary["outcome"] == worker.OK_OUTCOME
+    assert _turn_done_written(turn_env["conn"])
+    assert not [f for f in logged if f.get("ev") == "zero_progress_attempt"]
 
 
 def test_the_cap_closes_the_turn_itself_with_a_visible_outcome_instead_of_raising(turn_env, monkeypatch):
