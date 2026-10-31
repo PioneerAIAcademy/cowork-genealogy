@@ -1,0 +1,58 @@
+{
+  "source": "git show 06160c27ac:eval/runlogs/unit/research/v32.json (PR #3727 head; never merged to main)",
+  "trimmed_to": "tool, agent_id and the name args of each call: what handoffs() and the project_context check read",
+  "tests": [
+    {
+      "test_id": "ut_research_004",
+      "scenario": "mid-research-flynn",
+      "runs": [
+        {
+          "run_index": 0,
+          "output": {
+            "skills_invoked": [
+              "research"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research"
+                }
+              }
+            ],
+            "tool_calls": []
+          }
+        }
+      ]
+    },
+    {
+      "test_id": "ut_research_001",
+      "scenario": "mid-research-flynn",
+      "runs": [
+        {
+          "run_index": 0,
+          "output": {
+            "skills_invoked": [
+              "research"
+            ],
+            "builtin_tool_calls": [
+              {
+                "tool": "Skill",
+                "args": {
+                  "skill": "research"
+                }
+              },
+              {
+                "tool": "Agent",
+                "args": {
+                  "subagent_type": "init-project"
+                }
+              }
+            ],
+            "tool_calls": []
+          }
+        }
+      ]
+    }
+  ]
+}
