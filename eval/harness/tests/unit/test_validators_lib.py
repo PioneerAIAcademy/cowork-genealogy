@@ -339,3 +339,43 @@ def test_bare_ark_id_matches_ark_to_bare_id(value, bare):
 @pytest.mark.parametrize("value", [None, 17, ["3:1:ABC"]])
 def test_bare_ark_id_of_a_non_string_is_empty(value):
     assert bare_ark_id(value) == ""
+
+
+# --- continue_offers: what the unsettled-conflict validators read as an offer ---
+
+from validators_lib import continue_offers  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Continue with planning the searches?",
+        "Continue with resolving the conflict?",
+        "Continue with writing the conclusion?",
+        "**Continue with planning the searches?**",
+        "`Continue with research-plan?`",
+        "Continue with research-plan?",
+        "Continue with planning the searches for the marriage act?",
+        "continue with question-selection?",
+        "- Continue with planning the searches?",
+        "Continue with planning the searches?",
+        "Continue with planning the searches？",
+        "Continue with  conflict-resolution ?",
+    ],
+)
+def test_continue_offers_catches_an_offer(line):
+    assert continue_offers(f"Weighed c_001.\n{line}\n\nSomething plain.") != []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "No record left to search can settle this.",
+        "Wrap it up, or continue with a different question?",
+        "You can continue with a different question.",
+        "",
+        None,
+    ],
+)
+def test_continue_offers_ignores_prose(text):
+    assert continue_offers(text) == []

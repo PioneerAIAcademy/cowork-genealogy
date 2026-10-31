@@ -65,6 +65,10 @@ research_query({
   // pagination (NOT a filter): skip the first `offset` matches, then return up
   // to 50. Applies to every section; absent ⇒ 0. See §2.2.
   offset?: number,
+  // assertions only (NOT a filter): true also returns assertions a re-extraction
+  // retired (non-null `superseded_by`, research-schema-spec.md §5.6). Absent ⇒
+  // they are left out, since they are not evidence. Not a boolean ⇒ refused.
+  includeSuperseded?: boolean,
 })
 ```
 

@@ -169,7 +169,8 @@ bounded says **whether to continue past it**. Hand a bounded request straight
 to the step that owns its deliverable — a plan to `@plugin:research-plan`, a record to
 `@plugin:search-records`, a review of the sources attached to a person to
 `@plugin:source-evaluation`, whether two people are the same or should be merged
-to `@plugin:person-evidence`, a verdict on a hint to `@plugin:search-hints`, a
+to `@plugin:person-evidence` (a researcher who doubts or denies that a record is this
+person goes there with their message copied verbatim), a verdict on a hint to `@plugin:search-hints`, a
 verdict on full-text search hits through §"Search-hit review", where
 the records are for a place and period to `@plugin:locality-guide`, and whether a
 person's children or siblings are complete to `@plugin:search-records`, returning

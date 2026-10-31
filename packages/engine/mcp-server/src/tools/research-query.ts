@@ -33,6 +33,7 @@ import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
 import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 
 const MAX_ITEMS = 50;
 
@@ -129,6 +130,8 @@ export interface ResearchQueryInput {
   /** Pagination, not a filter: skip the first `offset` matches, then return up
    *  to MAX_ITEMS. Applies to every section; absent ⇒ 0 (the whole first page). */
   offset?: number;
+  /** assertions only: also return the ones a re-extraction retired (#3678). */
+  includeSuperseded?: boolean;
 }
 
 export type ResearchQueryResult =
@@ -503,6 +506,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       );
     }
 
+    if (input.includeSuperseded !== undefined && typeof input.includeSuperseded !== "boolean") {
+      throw new ResearchQueryError("includeSuperseded must be true or false.");
+    }
+
     const allowed = SECTION_FILTERS[section];
     const activeFilters: { key: FilterKey; rule: FilterRule; values: string[] }[] = [];
     let listFilter: { key: FilterKey; rule: FilterRule; values: string[] } | undefined;
@@ -625,7 +632,9 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       assertionsFor.set(value, ids);
     }
 
-    const filtered = arr.filter((item) =>
+    // A retired assertion is history, not evidence: shown only on request.
+    const showRetired = section !== "assertions" || input.includeSuperseded === true;
+    const filtered = arr.filter((item) => (showRetired || isLiveAssertion(item)) &&
       activeFilters.every(({ rule, values }) =>
         matches(item, rule, values, rule.mode === "question-conflict" ? assertionsFor.get(values[0]) : planItemsFor.get(values[0])),
       ),
@@ -821,6 +830,12 @@ export const researchQuerySchema = {
           "skips that many, then returns up to 50. Default 0. When `truncated` is " +
           "true, fetch items 51+ by setting offset to 50, then 100, and so on. " +
           "Must be a non-negative whole number.",
+      },
+      includeSuperseded: {
+        type: "boolean",
+        description:
+          "assertions only (not a filter): true also returns assertions a re-extraction retired " +
+          "(non-null `superseded_by`). Omitted, they are left out: they are not evidence.",
       },
     },
     required: ["projectPath", "section"],

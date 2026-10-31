@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from typing import Any
 
 import pytest
@@ -762,3 +763,31 @@ def existing_plan_changes(before: dict, after: dict) -> list[str]:
             )
         errors.extend(plan_errors)
     return errors
+
+
+_OFFER_LINE_RE = re.compile(r"^\W*continue\s+with\s+\S.*\?\s*$", re.IGNORECASE)
+
+
+def continue_offers(text: str | None) -> list[str]:
+    """Every line of `text` that offers a step.
+
+    A line offers one when it starts "Continue with ...?" whatever it names, or
+    when the step boundary's own `offered_step` reads an offer in it. The first
+    catches an offer the host would not turn into a button ("Continue with
+    research-plan?", "Continue with planning the searches for the marriage
+    act?"), which is still the loop these tests forbid. A line that only
+    mentions continuing ("or continue with a different question?") is prose.
+    Every line, not only the last one the host parses: an agent's own return
+    ends on its `summary_for_user` paragraphs, so an offer the router relays
+    sits above them. NFKC folds a full-width "？" and a no-break space, and
+    emphasis is stripped, so neither hides an offer.
+    """
+    from harness.skill_runner import load_step_boundary
+
+    offered_step = load_step_boundary().offered_step
+    found = []
+    for line in str(text or "").splitlines():
+        plain = re.sub(r"[*_`]", "", unicodedata.normalize("NFKC", line)).strip()
+        if plain and (_OFFER_LINE_RE.match(plain) or offered_step(plain)):
+            found.append(plain)
+    return found
