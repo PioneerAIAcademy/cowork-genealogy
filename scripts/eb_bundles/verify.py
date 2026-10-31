@@ -47,8 +47,10 @@ REQUIRED = {
                               "web/blobstore.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py", "config/familysearch.json",
                               "web-dist/index.html",
                               # Missing, nginx falls back to 8 KB header lines and a patron's
-                              # .familysearch.org cookies can 400 every request (U28).
-                              ".platform/nginx/conf.d/01-web-headers.conf"),
+                              # .familysearch.org cookies can 400 every request, or to a 1 MB body
+                              # and every upload over it answers 413 (U28).
+                              ".platform/nginx/conf.d/01-web-headers.conf",
+                              ".platform/nginx/conf.d/01-web-uploads.conf"),
     "worker": COMMON_REQUIRED + ("requirements.txt", "app/__init__.py", "app/agent/__init__.py",
                                  "app/agent/real_agent.py", "proto/enqueue.py", "proto/grants.py",
                                    "proto/turn_message.py", "proto/migrate.py",
