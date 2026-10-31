@@ -1317,10 +1317,10 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-    assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
+    assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
-    on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
-    assert on.env["ENABLE_TOOL_SEARCH"] == "true"
+    off = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "false"})
+    assert off.env["ENABLE_TOOL_SEARCH"] == "false", "the switch back, for agentgateway < 1.6 (TAP's Fargate stack)"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
         _options(worker_env={**GATEWAY_ENV, "GATEWAY_BASE_URL": " "})
 
