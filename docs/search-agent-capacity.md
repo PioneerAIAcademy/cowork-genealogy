@@ -167,7 +167,8 @@ Two triggers on the worker queue, as deployed in FS112 (`scale-probe`, fs-eng/se
   scales in only after a whole 5-minute window in which nothing was in flight anywhere on
   the tier.
 - **Why that keeps a turn safe without protection.** Scale-in does not look at what an
-  instance holds. With 12 messages and an idle queue it removed the oldest instance. What
+  instance holds. In the first run, once its 12 messages had drained, it removed the oldest
+  instance. What
   protects a running turn is that the in-trigger cannot fire while one runs. Measured: one
   2,700 s message ran alone on one of three instances for 43 minutes with no scale-in.
   Scale-in began 7 minutes after it finished, and the instance that had held it was kept
@@ -180,12 +181,14 @@ Two triggers on the worker queue, as deployed in FS112 (`scale-probe`, fs-eng/se
   judges the previous period, so it lags. It added the third instance 2 minutes after the
   backlog had drained. U26's 1,800 s cap bounds the tail: once the last turn starts, the
   fleet holds at most ~1,800 s plus one window and a cooldown, about 40 minutes, against
-  the 36,300 s a turn may run today (inferred from the probe's 7 minutes after finish).
+  the ~10 h a message may stay in flight today (`VisibilityTimeout` 36,300 s; inferred from
+  the probe's 7 minutes after finish).
   `MaxSize` (below) bounds the peak it holds.
 - **Phantoms only over-provision, and they hold the fleet up.** NV also counts a message a
   deploy or crash left invisible, until `VisibilityTimeout` passes: 36,300 s now, just
   above 1,800 s after U26. It also counts a 500'd message, for `ErrorVisibilityTimeout`
-  (300 s). Each blocks scale-in as a real turn would: ~10 h before U26, ~32 min after.
+  (300 s). Each blocks scale-in as a real turn would: a deploy or crash phantom ~10 h
+  before U26 and ~32 min after, a 500'd one 300 s.
   Whether sqsd reads ahead beyond `HttpConnections` is undocumented, and one message on the
   rehearsal host would tell. Later, a busy-slot fraction the worker publishes, from its
   turn-user pool rather than `_INFLIGHT`, which counts attempts, removes the phantoms.
