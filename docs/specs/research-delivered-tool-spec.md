@@ -128,6 +128,13 @@ It carries three exclusions, all load-bearing:
   job. The exclusion is keyed on the project, not the message: a turn that starts a project
   and then gives just a plan creates the project first and still delivers.
 
+The tool's own description says the same thing in step mode's terms: call it once this
+turn's deliverable is produced, the only one asked for or the first of several, after naming
+the others and ending on the next one's "Continue with …?" offer, which is not a question to
+the researcher. It used to say "once every one is produced", which contradicted step mode on a
+compound bounded ask: the model either held the call back because the second deliverable was
+not yet produced, or produced both in one turn so that it could call it.
+
 ## Ending the turn when a project completes
 
 `research_delivered` is the agent's own end-of-turn signal. A completing project has a

@@ -39,6 +39,16 @@ describe("research_delivered", () => {
     expect(d).toContain("objective");
     // NOT /ask|question/: both match elsewhere in the description, so that assertion
     // cannot fail. Pin the clause itself.
-    expect(d).toContain("do not use it to ask");
+    expect(d).toContain("do not use it in place of a question only the researcher can answer");
+  });
+
+  it("the description follows step mode: one deliverable per turn, the offer is not a question", () => {
+    // "once every one is produced" contradicted step mode on a compound bounded ask: the
+    // model held the call back until the second deliverable existed, or produced both in
+    // one turn to earn it (ut_research_c1k failed both ways).
+    const d = researchDeliveredSchema.description.toLowerCase();
+    expect(d).toContain("the only one asked for, or the first of several");
+    expect(d).toContain("that offer is not a question");
+    expect(d).not.toContain("every one is produced");
   });
 });
