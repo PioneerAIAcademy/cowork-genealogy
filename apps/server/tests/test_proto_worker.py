@@ -173,6 +173,12 @@ class FakeCursor:
             return (self.conn.research,)
         if "SELECT count(*) FROM tool_calls" in sql:
             return (self.conn.tool_call_count,)
+        if sql == worker.COMPACTIONS_SQL:  # 018: (sum of preTokens, count)
+            return self.conn.compactions
+        if sql == worker.SPEND_CORRECTIONS_SQL:
+            return (self.conn.spend_correction,)
+        if "SELECT COALESCE(max(seq), 0) FROM session_entries" == sql:
+            return (self.conn.high_water,)
         if "RETURNING zero_progress_attempts" in sql:
             self.conn.zero_progress_attempts += 1
             return (self.conn.zero_progress_attempts,)
@@ -249,6 +255,11 @@ class FakeConn:
         # answer no row: a newer claim holds the turn.
         self.claim_epoch = claim_epoch
         self.superseded = False
+        # 018: COMPACTIONS_SQL's (preTokens sum, count), the session's summed
+        # turns.spend_correction_usd, and session_entries' top seq.
+        self.compactions: tuple = (0, 0)
+        self.spend_correction = 0.0
+        self.high_water = 0
 
     def mint_epoch(self) -> None:
         """CLAIM_TURN_SQL's CASE: an open row's claim bumps the epoch, a closed one keeps it."""
@@ -3233,6 +3244,55 @@ def test_session_spend_usd_prices_the_rows_and_is_zero_without_a_session():
     empty = FakeConn()
     assert worker.session_spend_usd(empty, "") == 0.0, "no SDK session, no query"
     assert empty.executed == [], "the short-circuit must come before the query"
+
+
+def test_the_session_spend_counts_compactions_the_transcript_lacks_and_each_attempts_correction():
+    """U24, 2026-10-31 (compose, gateway, n=1): 5 of 5 compaction summary calls were absent
+    from session_entries, $0.42 of a $2.27 session, so the cap never saw them. Each
+    compact_boundary is now priced as a cache read of its preTokens plus
+    COMPACTION_OUTPUT_TOKENS of output, and finished attempts add their correction (018)."""
+    conn = FakeConn(usage=(1_000_000, 0, 0, 0))
+    conn.compactions = (2_000_000, 2)
+    conn.spend_correction = 0.25
+    rates = worker.PRICE_PER_MTOK
+    estimate = 2 * rates["cache_read"] + 2 * worker.COMPACTION_OUTPUT_TOKENS * rates["output"] / 1e6
+    assert worker.session_spend_usd(conn, "sdk-1") == pytest.approx(rates["input"] + estimate + 0.25)
+    sqls = [s for s, _ in conn.executed]
+    assert worker.COMPACTIONS_SQL in sqls and worker.SPEND_CORRECTIONS_SQL in sqls
+    assert worker.compactions_usd(0, 0) == 0.0, "no compaction, nothing added"
+
+
+def test_a_finished_attempts_correction_makes_it_count_at_the_clis_own_figure():
+    """The correction is the ResultMessage cost minus what session_spend_usd already counts
+    for the attempt -- its transcript and its compaction estimates -- so, added back, the
+    attempt counts at exactly the CLI's figure: the 018 gateway check, where
+    turns.cost_usd $0.272142 matched the gateway's two calls, compaction included."""
+    conn = FakeConn(usage=(1472, 35, 102_057, 3967))
+    conn.compactions = (102_175, 1)
+    correction = worker.attempt_spend_correction(conn, "sdk-1", 40, 0.272142)
+    counted = worker.price_usd((1472, 35, 102_057, 3967)) + worker.compactions_usd(102_175, 1)
+    assert correction == pytest.approx(0.272142 - counted)
+    assert counted + correction == pytest.approx(0.272142)
+    attempt_sql, params = next((s, p) for s, p in conn.executed if "sum((u->>'input_tokens')" in s)
+    assert params == ("sdk-1", 40) and "seq > %s" in attempt_sql, "bounded by the attempt's own mark"
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, None) is None, "no CLI figure, no correction"
+    assert worker.attempt_spend_correction(conn, "", 40, 1.0) is None
+
+
+def test_a_billed_attempt_writes_its_correction_fenced_before_the_zero_progress_raise(turn_env):
+    """An attempt that is billed and then failed still cost money, so its correction is
+    written before ResumeFailure, and only under its own claim epoch (U6)."""
+    turn_env["conn"].tool_call_count = 3
+    turn_env["conn"].high_water = 70
+    with pytest.raises(worker.ResumeFailure):
+        _run_passes(turn_env, [[_init(), _text("thinking"), _result(num_turns=4, cost=0.31)]], receive_count=2)
+    writes = [(s, p) for s, p in turn_env["conn"].executed if "SET spend_correction_usd" in s]
+    assert len(writes) == 1
+    sql, (correction, turn_id, epoch) = writes[0]
+    assert sql.endswith("WHERE turn_id = %s AND claim_epoch = %s"), "a superseded attempt must write nothing"
+    assert correction == pytest.approx(0.31 - worker.price_usd(turn_env["conn"].usage))
+    assert turn_id == TURN["turn_id"]
+    assert epoch == TURN["claim_epoch"], "fenced by the attempt's own claim"
 
 
 def test_a_message_typed_mid_turn_ends_the_turn_at_the_next_tool_call(turn_env, monkeypatch):

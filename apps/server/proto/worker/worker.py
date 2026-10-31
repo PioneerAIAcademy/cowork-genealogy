@@ -738,6 +738,34 @@ SESSION_USAGE_SQL = TURN_USAGE_SQL.replace(
 )
 assert "entries_seq_before" not in SESSION_USAGE_SQL, "the session cap must not be turn-bounded"
 
+# One attempt's share of the same sum: the entries appended after the attempt's own
+# high-water mark (`session_entries_high_water`, read before the CLI connects).
+ATTEMPT_USAGE_SQL = TURN_USAGE_SQL.replace(
+    "COALESCE((SELECT entries_seq_before FROM turns WHERE turn_id = %s), 0)", "%s"
+)
+assert "entries_seq_before" not in ATTEMPT_USAGE_SQL, "an attempt is bounded by its own mark"
+
+# A compaction's summary call is not in the transcript, so the sums above never see it
+# (U24, 2026-10-31: 5 of 5 missing on the gateway, $0.42 of a $2.27 session). Each one
+# leaves a compact_boundary entry whose preTokens is the context it summarised; the cap
+# prices that as a cache read plus COMPACTION_OUTPUT_TOKENS of summary, the top of the
+# 2,478-3,970 measured. An attempt that returns a ResultMessage replaces these estimates
+# with the CLI's own figure through turns.spend_correction_usd (018).
+COMPACTION_OUTPUT_TOKENS = 4000
+COMPACTIONS_SQL = (
+    "SELECT COALESCE(sum((entry->'compactMetadata'->>'preTokens')::bigint), 0), count(*) "
+    "FROM session_entries WHERE session_id = %s AND seq > %s "
+    "AND entry->>'type' = 'system' AND entry->>'subtype' = 'compact_boundary'"
+)
+SPEND_CORRECTIONS_SQL = (
+    "SELECT COALESCE(sum(t.spend_correction_usd), 0) FROM turns t "
+    "JOIN sessions s ON s.session_id = t.session_id WHERE s.sdk_session_id = %s"
+)
+ADD_SPEND_CORRECTION_SQL = (
+    "UPDATE turns SET spend_correction_usd = spend_correction_usd + %s "
+    "WHERE turn_id = %s AND claim_epoch = %s"
+)
+
 
 def price_usd(tokens: tuple) -> float:
     """Tokens (input, cache_write, cache_read, output) priced at PRICE_PER_MTOK.
@@ -750,14 +778,63 @@ def price_usd(tokens: tuple) -> float:
     return shared_price_usd(tuple(int(t or 0) for t in tokens))
 
 
+def compactions_usd(pre_tokens: Any, count: Any) -> float:
+    """The estimate for ``count`` compactions that summarised ``pre_tokens`` in all."""
+    n = int(count or 0)
+    return price_usd((0, 0, int(pre_tokens or 0), COMPACTION_OUTPUT_TOKENS * n)) if n else 0.0
+
+
+def _compactions_after(cur: Any, sdk_session_id: str, seq_after: int) -> float:
+    cur.execute(COMPACTIONS_SQL, (sdk_session_id, seq_after))
+    row = cur.fetchone()
+    return compactions_usd(*(row or (0, 0)))
+
+
 def session_spend_usd(conn: psycopg.Connection, sdk_session_id: str) -> float:
-    """What this SITTING has spent so far (1e), priced live off session_entries."""
+    """What this SITTING has spent so far (1e), priced live off session_entries: the
+    transcript, an estimate per compaction (whose summary call the transcript lacks), and
+    each finished attempt's correction to the CLI's own figure (018)."""
     if not sdk_session_id:
         return 0.0
     with conn.cursor() as cur:
         cur.execute(SESSION_USAGE_SQL, (sdk_session_id,))
         row = cur.fetchone()
-    return price_usd(tuple(row) if row else (0, 0, 0, 0))
+        spent = price_usd(tuple(row) if row else (0, 0, 0, 0))
+        spent += _compactions_after(cur, sdk_session_id, 0)
+        cur.execute(SPEND_CORRECTIONS_SQL, (sdk_session_id,))
+        row = cur.fetchone()
+    return spent + float((row or (0,))[0] or 0)
+
+
+def session_entries_high_water(conn: psycopg.Connection) -> int:
+    """``session_entries``' current top seq: an attempt's entries are the ones above it."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT COALESCE(max(seq), 0) FROM session_entries")
+        row = cur.fetchone()
+    return int((row or (0,))[0] or 0)
+
+
+def attempt_spend_correction(conn: psycopg.Connection, sdk_session_id: str, seq_before: int,
+                             total_cost_usd: Any) -> float | None:
+    """What to add to the cap's count so this finished attempt counts at the CLI's figure:
+    its ResultMessage cost, minus its transcript and compaction estimates as
+    session_spend_usd prices them. None when the CLI reported no cost."""
+    if total_cost_usd is None or not sdk_session_id:
+        return None
+    with conn.cursor() as cur:
+        cur.execute(ATTEMPT_USAGE_SQL, (sdk_session_id, seq_before))
+        row = cur.fetchone()
+        counted = price_usd(tuple(row) if row else (0, 0, 0, 0))
+        counted += _compactions_after(cur, sdk_session_id, seq_before)
+    return float(total_cost_usd) - counted
+
+
+def add_spend_correction(conn: psycopg.Connection, turn_id: str, epoch: int, correction: float) -> bool:
+    """Add ``correction`` to the turn's ``spend_correction_usd``, only while ``epoch``
+    holds the claim (U6). False when superseded: nothing written."""
+    with conn.cursor() as cur:
+        cur.execute(ADD_SPEND_CORRECTION_SQL, (correction, turn_id, epoch))
+        return cur.rowcount != 0
 
 
 # 1b's held-message shape, asked under the queue lock: a reply is queued only when
@@ -3000,6 +3077,11 @@ async def _run_turn(
         )
         if slot is not None:
             turn_users.chown_tree(config_dir, slot)  # after mcp.json is written into it
+        try:
+            attempt_seq_before: int | None = session_entries_high_water(conn)
+        except Exception as exc:  # noqa: BLE001 - a spend figure never fails a turn
+            attempt_seq_before = None
+            log(ev="spend_correction_failed", turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
         client = ClaudeSDKClient(options=options)
         await client.connect()
         try:
@@ -3086,6 +3168,19 @@ async def _run_turn(
                 log(ev="resume_synthetic_result", turn_id=turn_id, session_id=session_id,
                     receive_count=receive_count, query=index + 1,
                     result=str(result.result or "")[:200])
+
+            # 018: before any raise below, so an attempt that is billed and then failed --
+            # zero progress, a lost grant lock -- still counts at the CLI's figure.
+            if attempt_seq_before is not None:
+                try:
+                    correction = attempt_spend_correction(conn, sdk_session_id, attempt_seq_before,
+                                                          getattr(result, "total_cost_usd", None))
+                    if correction is not None:
+                        written = add_spend_correction(conn, turn_id, turn["claim_epoch"], correction)
+                        log(ev="spend_correction", turn_id=turn_id, receive_count=receive_count,
+                            correction_usd=round(correction, 4), written=written)
+                except Exception as exc:  # noqa: BLE001 - a spend figure never fails a turn
+                    log(ev="spend_correction_failed", turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
 
             # U3: halted because the grant lock was lost. Not a completion -- raise, so the
             # turn stays open and the redelivery bears the current grant under a new lock.
