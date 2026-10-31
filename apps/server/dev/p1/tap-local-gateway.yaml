@@ -1,0 +1,96 @@
+# A local copy of TAP's EKS /bedrock route, for the dev/p1 gateway probes and gateway
+# compose runs. Copied from fs-eng/tap-gateway master a4ffe0bac (2026-10-30):
+#   - the route:     gitops/gateway-config/base/routes.yaml     `bedrock`
+#   - the backend:   gitops/gateway-config/base/backends.yaml   `bedrock`
+#   - the span tags: gitops/gateway-config/base/policies.yaml   `tap-tracing`
+# It drifts from TAP's master. Before a measurement, diff those three against this file
+# and record the commit you checked.
+#
+# What it leaves out on purpose:
+#   - auth: no apiKeyAuthentication, so any bearer is accepted and tap.consumer and
+#     tap.user come out empty;
+#   - the collector: spans go to a local Jaeger over OTLP/HTTP, not TAP's OTel collector
+#     and Langfuse, so what Langfuse stores is not measured here;
+#   - tap.product is the constant "platform", the value TAP's expression gives /bedrock;
+#   - tracing is configured as `config.tracing`, which v1.6.0 accepts with a deprecation
+#     warning; TAP sets the same fields through a frontend tracing policy.
+#
+# agentgateway substitutes environment variables anywhere in this file, comments
+# included, and refuses to start on an unset one: never write a dollar sign here.
+#
+# Run it from the repo root, with Bedrock credentials in the environment from an AWS
+# profile that may invoke the us.anthropic.* profiles (aws configure export-credentials
+# --profile <profile> --format env). Jaeger's UI and query API are on :16686:
+#
+#   docker network create tapgw
+#   docker run -d --name jaeger --network tapgw -p 16686:16686 jaegertracing/all-in-one:1.62.0
+#   docker run -d --name tapgw --network tapgw -p 3939:3939 \
+#     -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_SESSION_TOKEN -e AWS_REGION=us-east-1 \
+#     -v ./apps/server/dev/p1/tap-local-gateway.yaml:/config.yaml \
+#     cr.agentgateway.dev/agentgateway:v1.6.0 -f /config.yaml
+#
+# The route root is then http://127.0.0.1:3939/bedrock (the probes' --base). For the
+# compose worker (MODEL_PROVIDER=gateway), connect both containers to the compose
+# network (`docker network connect <project>_default tapgw`, and the same for jaeger)
+# and set GATEWAY_BASE_URL=http://tapgw:3939/bedrock.
+config:
+  tracing:
+    otlpEndpoint: "http://jaeger:4318/v1/traces"
+    otlpProtocol: http
+    randomSampling: 'request.path.startsWith("/healthcheck") ? 0.0 : 1.0'
+    fields:
+      add:
+        span.name: '"gateway." + proxy.route.name'
+        tap.product: '"platform"'
+        gen_ai.system: llm.provider
+        gen_ai.prompt: llm.prompt
+        gen_ai.completion: llm.completion
+        gen_ai.tool_calls: llm.toolCalls
+        gen_ai.usage.prompt_tokens: llm.providerInputTokens
+        gen_ai.usage.input_tokens: llm.providerInputTokens
+        gen_ai.usage.completion_tokens: llm.outputTokens
+        gen_ai.usage.output_tokens: llm.outputTokens
+        gen_ai.usage.total_tokens: (llm.providerInputTokens || 0) + (llm.outputTokens || 0)
+        gen_ai.request.model: llm.requestModel
+        gen_ai.response.model: llm.responseModel
+        http.status_code: response.code
+        tap.consumer: apiKey.consumer
+        tap.user: 'has(jwt.sub) ? jwt.sub : apiKey.consumer'
+        langfuse.user.id: 'has(jwt.email) ? jwt.email : (has(jwt.sub) ? jwt.sub : apiKey.consumer)'
+        tap.team: 'has(jwt.iss) && (jwt.iss == "tap-foundry-api" || jwt.iss == "tap-foundry-dispatcher" || jwt.iss == "tap-foundry-dev-api" || jwt.iss == "tap-foundry-dev-dispatcher") ? "tap" : (has(apiKey.team) ? apiKey.team : "")'
+        tap.run_id: 'has(jwt.run_id) ? jwt.run_id : request.headers["x-tap-run-id"]'
+        langfuse.session.id: 'has(jwt.run_id) ? jwt.run_id : request.headers["x-tap-run-id"]'
+        anthropic.beta: 'request.headers.join()["anthropic-beta"]'
+binds:
+  - port: 3939
+    listeners:
+      - protocol: HTTP
+        name: tap-local
+        hostname: '*'
+        routes:
+          - name: bedrock
+            hostnames: []
+            matches:
+              - path:
+                  pathPrefix: /bedrock
+            backends:
+              - ai:
+                  name: bedrock
+                  provider:
+                    bedrock:
+                      region: us-east-1
+            policies:
+              requestHeaderModifier:
+                remove: [x-forwarded-for, x-forwarded-port, x-forwarded-proto, x-foundry-token]
+              ai:
+                routes:
+                  /v1/messages: messages
+                  /v1/messages/count_tokens: anthropicTokenCount
+                  /v1/chat/completions: completions
+                modelAliases:
+                  claude-opus-5: us.anthropic.claude-opus-5
+                  claude-sonnet-5: us.anthropic.claude-sonnet-5
+                  claude-haiku-4-5-20251001: us.anthropic.claude-haiku-4-5-20251001-v1:0
+                  claude-opus-5-5: us.anthropic.claude-opus-5-5
+                  claude-sonnet-5-5: us.anthropic.claude-sonnet-5-5
+                  claude-haiku-5-5: us.anthropic.claude-haiku-5-5
