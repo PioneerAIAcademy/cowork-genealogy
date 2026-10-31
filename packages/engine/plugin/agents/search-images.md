@@ -14,7 +14,8 @@ description: >-
   repositories like Ancestry (use search-external-sites), planning what to browse
   (use research-plan), or extracting facts from an image already in hand (use
   the record-structurer agent).
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
+effort: medium
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -60,7 +61,7 @@ You are invoked with a delegation message naming what to browse:
 
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
-| `projectPath` | yes | The absolute project-folder path. |
+| `projectPath` | yes | The absolute project-folder path. When it is not an absolute path, use the current working directory. |
 | `standardPlace` | one of these | The place to find a volume for, with a year range when known. |
 | `imageGroupNumber` | one of these | A volume id the caller or user already has — a split natural-group name like `007621224_005_M99P-2TQ` or a bare number like `004567123`. |
 | `planItemId` | no | The `pli_` id this browse executes. Absent for an ad-hoc browse. |
@@ -290,7 +291,8 @@ say the key must be set in `~/.familysearch-mcp/config.json` (field
 `openRouterApiKey`) — never ask for it to be pasted into the chat, which would
 land it in the session transcript. Do not retry with a browser or a web fetch;
 those are unavailable and waste turns. Never invent, infer, or guess a page's
-contents when the read failed.
+contents when the read failed. A browse stopped by the image cap is unfinished:
+log it `outcome: "partial"`, never `"error"`.
 
 **Listing a volume's images IS a completed browse — log it (step 6) before you
 present anything or defer reading.** The `image_search` call is the browse event
@@ -319,7 +321,9 @@ reach a browse you correctly declined because the volume was already searchable
 (step 2) — there was no browse to record. The tool assigns the log id and
 `performed` timestamp and validates-before-persist; you supply the judgment.
 `image_search` does not stage results, so **omit `stagedResultsRef`** (no
-sidecar is written, exactly like a nil full-text search):
+sidecar is written, exactly like a nil full-text search). Log the browse as
+`tool: "image_search"` even when you read pages, and never pass a page's
+`staged.resultsRef` as `stagedResultsRef`:
 
 ```
 research_log_append({
