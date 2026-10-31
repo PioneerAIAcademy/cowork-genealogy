@@ -344,7 +344,9 @@ class Store(Protocol):
     ) -> SessionRow: ...
     async def list_sessions(self, owner: str) -> list[SessionRow]: ...
     async def get_session(self, session_id: str) -> SessionRow | None: ...
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None: ...
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None: ...
     async def delete_session(self, session_id: str) -> bool: ...
     async def document_versions(self, project_id: str) -> dict[str, int]: ...
     async def documents(
@@ -823,12 +825,16 @@ class PgStore:
             row = await cur.fetchone()
         return self._row(row) if row else None
 
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None:
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None:
+        # title_if_default names the session only while it still has the default title, in this one
+        # UPDATE, so an agent's title never overwrites a name the user chose.
         async with await self._connect() as conn:
             cur = await conn.execute(
-                "UPDATE sessions SET title = COALESCE(%s, title), model = COALESCE(%s, model), "
-                "updated_at = now() WHERE session_id = %s RETURNING session_id",
-                (title, model, session_id),
+                "UPDATE sessions SET title = COALESCE(%s, CASE WHEN title = %s THEN %s END, title), "
+                "model = COALESCE(%s, model), updated_at = now() WHERE session_id = %s RETURNING session_id",
+                (title, DEFAULT_TITLE, title_if_default, model, session_id),
             )
             hit = await cur.fetchone()
         return await self.get_session(session_id) if hit else None
@@ -1340,6 +1346,7 @@ class CreateSessionBody(BaseModel):
 
 class PatchSessionBody(BaseModel):
     title: str | None = None
+    title_if_default: str | None = None
     model: str | None = None
 
 
@@ -1915,7 +1922,7 @@ def create_app(
         # Check, then act: an existing project's owner only ever moves from NULL to a
         # user, and a NULL owner has already failed the check.
         await _session(request, session_id, user)
-        row = await _store(request).patch_session(session_id, body.title, body.model)
+        row = await _store(request).patch_session(session_id, body.title, body.model, body.title_if_default)
         if row is None:
             raise HTTPException(status_code=404, detail="Session not found")
         return session_out(row)

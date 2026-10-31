@@ -154,10 +154,14 @@ class FakeStore:
     async def get_session(self, session_id: str) -> SessionRow | None:
         return self.sessions.get(session_id)
 
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None:
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None:
         row = self.sessions.get(session_id)
         if row is None:
             return None
+        if title is None and row.title == DEFAULT_TITLE:
+            title = title_if_default
         row = SessionRow(row.session_id, row.project_id, title or row.title, model or row.model, row.created_at,
                          T0 + timedelta(minutes=1), row.owner_id)
         self.sessions[session_id] = row
@@ -433,6 +437,17 @@ async def test_session_crud_speaks_the_spa_shape():
         assert (await c.get("/api/sessions/nope")).status_code == 404
         assert (await c.delete(f"/api/sessions/{sid}")).json() == {"ok": True}
         assert (await c.get(f"/api/sessions/{sid}")).status_code == 404
+
+
+async def test_title_if_default_names_only_a_default_session():
+    store, queue = FakeStore(), FakeQueue()
+    async with make_client(store, queue) as c:
+        sid = (await c.post("/api/sessions", json={})).json()["id"]
+        r = await c.patch(f"/api/sessions/{sid}", json={"title_if_default": "Agent title"})
+        assert r.json()["title"] == "Agent title"
+        await c.patch(f"/api/sessions/{sid}", json={"title": "My family"})
+        r = await c.patch(f"/api/sessions/{sid}", json={"title_if_default": "Later agent title"})
+        assert r.json()["title"] == "My family"
 
 
 async def test_state_reads_documents_and_the_unserved_routes_say_so():
