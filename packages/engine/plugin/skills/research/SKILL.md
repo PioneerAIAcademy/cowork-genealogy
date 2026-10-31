@@ -150,9 +150,8 @@ answers each boundary rather than the researcher, and `userPresent` is `no`.
 **Bounded** — the message asks for one or more deliverables, every one of them
 from this list:
 finding a record; reviewing the sources already attached to a person; whether
-two people are the same, or should be merged; a verdict on a hint; a verdict
-on full-text search hits; a transcription; where the records are for a place
-and period; a research plan;
+two people are the same, or should be merged; a verdict on a hint; a
+transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
 where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
 Two or more of them in one message is still bounded: deliver the first this
@@ -170,8 +169,7 @@ to the step that owns its deliverable — a plan to `@plugin:research-plan`, a r
 `@plugin:search-records`, a review of the sources attached to a person to
 `@plugin:source-evaluation`, whether two people are the same or should be merged
 to `@plugin:person-evidence` (a researcher who doubts or denies that a record is this
-person goes there with their message copied verbatim), a verdict on a hint to `@plugin:search-hints`, a
-verdict on full-text search hits through §"Search-hit review", where
+person goes there with their message copied verbatim), a verdict on a hint to `@plugin:search-hints`, where
 the records are for a place and period to `@plugin:locality-guide`, and whether a
 person's children or siblings are complete to `@plugin:search-records`, returning
 candidates rather than a verdict. Hand that ask to `@plugin:search-records` first

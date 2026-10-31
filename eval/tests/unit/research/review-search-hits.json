@@ -24,7 +24,7 @@
     "stub_skills": [
       {
         "skill": "evaluate-search-results",
-        "response": "verdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\n\nThis record names Iram Hyde, and its place and period fit what his tree holds, so it is labelled a Match. It holds a detail his tree does not have yet."
+        "response": "verdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\n\nThe evaluator labelled this hit a Match. It holds a detail the tree does not have yet."
       },
       "record-structurer",
       "search-full-text",
@@ -41,7 +41,7 @@
   },
   "judge_context": [
     "This is a ROUTING test of research/SKILL.md's \"Search-hit review\". The spawns are asserted deterministically from the hook records (test_routes_to_expected_skill, test_search_hit_review_spawns_one_agent_per_hit): one evaluate-search-results spawn per named hit, each naming projectPath, its own hitRef and a target, and a last line \"Continue with extracting the 3 Matches?\". You cannot see the spawns. Do not grade them.",
-    "evaluate-search-results is STUBBED with one canned return for every hit: a Match, not yet extracted, with the same two-sentence summary. Every hit therefore comes back a Match in identical words. That is the stub, not a defect of the router, and nothing is written to the project.",
+    "evaluate-search-results is STUBBED with one canned return for every hit: a Match, not yet extracted, with the same two-sentence summary. Every hit therefore comes back a Match in identical words. That is the stub, not a defect of the router, and nothing is written to the project. The stub gives that Match even to a hit whose title plainly cannot be Iram Hyde: hit 7 of log_008 is a 1664 English will. Relaying that Match is correct and is NOT a factual error; do not grade whether a relayed verdict is plausible.",
     "The router judges nothing from the hit list itself and extracts nothing in this turn: it relays each verdict and offers the extraction. Saying from a hit's title whether it is Iram Hyde, or extracting a hit in this turn, is the failure.",
     "PROJECT_LIST FIRST IS REQUIRED. When no projectPath is named, the router's first call is project_list with no arguments, to find the project. Its folder answer is the live tool's real answer, not an error."
   ]
