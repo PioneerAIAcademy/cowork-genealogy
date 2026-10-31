@@ -223,9 +223,10 @@ MAIN_THREAD_OK = {
         "agent that owns the section; a tool-level deny would name sixteen"
     ),
     "tree_query": (
-        "research/SKILL.md reads a tree person's facts itself to answer a status "
-        "question (ut_research_s59 and ut_research_utf call it on the main "
-        "thread); evaluate-search-results became its only holder in issue #3522"
+        "the research router reads a tree person's facts on the main thread "
+        "(ut_research_s59 does in research's v40 run log); a deny would send an "
+        "ordinary tree read to an agent. evaluate-search-results became its only "
+        "agent holder in issue #3522"
     ),
 }
 

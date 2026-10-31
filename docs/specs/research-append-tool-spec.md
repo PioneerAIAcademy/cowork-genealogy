@@ -103,7 +103,8 @@ research_append({
   section:
     | "sources" | "assertions" | "person_evidence"
     | "questions" | "plans" | "plan_items"
-    | "conflicts" | "hypotheses" | "timelines" | "rejected_links"
+    | "conflicts" | "hypotheses" | "timelines"
+    | "rejected_links" // update limited to its reason, §3.1
     | "proof_summaries" | "evaluations" | "localities"
     | "namesakes"   // namesakes: update limited to its updatableFields, §3.1
     | "hit_verdicts" // hit checked against its search and folded, §3.10; update limited, §3.1

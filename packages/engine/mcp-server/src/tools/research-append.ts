@@ -137,8 +137,8 @@ interface SectionConfig {
   /** Nested section: entries live in `<parent>[<param>].<field>` (plan_items). */
   nested?: { parent: string; param: "planId"; field: string };
   /** List sections only: the fields an `update` op may set. Absent, every field
-   *  but `id` is updatable. `namesakes` and `hit_verdicts` use it so a row is
-   *  never re-pointed. */
+   *  but `id` is updatable. `namesakes`, `rejected_links` and `hit_verdicts`
+   *  use it so a row is never re-pointed. */
   updatableFields?: string[];
   /** Singleton object section (e.g. `project`): `op:"update"` shallow-merges
    *  `fields` (restricted to `allowedFields`) onto the object in place — no
