@@ -1,0 +1,56 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for Kolonica, Slovakia — 2 Greek Catholic church vital-record (matrika) hits. Measured/constructed from FamilySearch catalog entries 711474 ('Cirkevná matrika, 1783–1895') and 1162429 ('Cirkevná matrika, 1758–1896') for the Snina District area. Predicate matches ~Kolonica.",
+  "args": {
+    "standardPlace": "~Kolonica"
+  },
+  "response": {
+    "totalHits": 2,
+    "returned": 2,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 4,
+    "hits": [
+      {
+        "id": "koha:711474",
+        "title": "Cirkevná matrika, 1783–1895",
+        "creator": "Greek Catholic Church, Snina District",
+        "repositoryCalls": ["Granite Mountain Record Vault", "FamilySearch Library"],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:711474",
+        "hydrated": true,
+        "notes": ["Greek Catholic church vital records (births, marriages, deaths) for parishes in the Snina District area including Kolonica, northeastern Slovakia (formerly Upper Hungary). Records in Latin and Church Slavonic."],
+        "authors": [],
+        "subjects": ["Slovakia, Snina, Kolonica - Church records - 1783-1895"],
+        "filmNotes": [
+          {
+            "filmNumber": "711474",
+            "imageGroupNumber": "4191272",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Microfilm of original records at Štátny archív v Prešove (State Archive in Prešov)"
+          }
+        ],
+        "availableOnline": false
+      },
+      {
+        "id": "koha:1162429",
+        "title": "Cirkevná matrika, 1758–1896",
+        "creator": "Greek Catholic Church, Snina District",
+        "repositoryCalls": ["Granite Mountain Record Vault", "FamilySearch Library"],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:1162429",
+        "hydrated": true,
+        "notes": ["Overlapping Greek Catholic church vital records for the Snina District area including Kolonica, northeastern Slovakia. Earliest records date from 1758. Records in Latin and Church Slavonic."],
+        "authors": [],
+        "subjects": ["Slovakia, Snina, Kolonica - Church records - 1758-1896"],
+        "filmNotes": [
+          {
+            "filmNumber": "1162429",
+            "imageGroupNumber": "4241830",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Microfilm of original records at Štátny archív v Prešove (State Archive in Prešov)"
+          }
+        ],
+        "availableOnline": false
+      }
+    ]
+  }
+}
