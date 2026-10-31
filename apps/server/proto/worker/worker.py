@@ -761,6 +761,16 @@ SPEND_CORRECTIONS_SQL = (
     "SELECT COALESCE(sum(t.spend_correction_usd), 0) FROM turns t "
     "JOIN sessions s ON s.session_id = t.session_id WHERE s.sdk_session_id = %s"
 )
+# The CLI documents that a resumed session's total_cost_usd "continues from the total its
+# transcript saved" -- a `cost-state` entry -- so an attempt's figure would then include
+# every earlier one. In the worker's SDK mode it writes none (0 stored, and a later turn's
+# cost_usd matched its own tokens alone, 2026-10-31, n=1); should one appear, the attempt
+# subtracts the total it started from rather than count earlier turns twice.
+STARTING_COST_SQL = (
+    "SELECT (entry->>'totalCostUSD')::double precision FROM session_entries "
+    "WHERE session_id = %s AND seq <= %s AND entry->>'type' = 'cost-state' "
+    "ORDER BY seq DESC LIMIT 1"
+)
 ADD_SPEND_CORRECTION_SQL = (
     "UPDATE turns SET spend_correction_usd = spend_correction_usd + %s "
     "WHERE turn_id = %s AND claim_epoch = %s"
@@ -817,16 +827,20 @@ def session_entries_high_water(conn: psycopg.Connection) -> int:
 def attempt_spend_correction(conn: psycopg.Connection, sdk_session_id: str, seq_before: int,
                              total_cost_usd: Any) -> float | None:
     """What to add to the cap's count so this finished attempt counts at the CLI's figure:
-    its ResultMessage cost, minus its transcript and compaction estimates as
-    session_spend_usd prices them. None when the CLI reported no cost."""
+    its ResultMessage cost, less any total the CLI restored from a ``cost-state`` entry,
+    minus its transcript and compaction estimates as session_spend_usd prices them. None
+    when the CLI reported no cost."""
     if total_cost_usd is None or not sdk_session_id:
         return None
     with conn.cursor() as cur:
+        cur.execute(STARTING_COST_SQL, (sdk_session_id, seq_before))
+        row = cur.fetchone()
+        starting = float((row or (0,))[0] or 0)
         cur.execute(ATTEMPT_USAGE_SQL, (sdk_session_id, seq_before))
         row = cur.fetchone()
         counted = price_usd(tuple(row) if row else (0, 0, 0, 0))
         counted += _compactions_after(cur, sdk_session_id, seq_before)
-    return float(total_cost_usd) - counted
+    return float(total_cost_usd) - starting - counted
 
 
 def add_spend_correction(conn: psycopg.Connection, turn_id: str, epoch: int, correction: float) -> bool:

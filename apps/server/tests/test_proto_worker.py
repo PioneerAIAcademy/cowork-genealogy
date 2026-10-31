@@ -177,6 +177,8 @@ class FakeCursor:
             return self.conn.compactions
         if sql == worker.SPEND_CORRECTIONS_SQL:
             return (self.conn.spend_correction,)
+        if sql == worker.STARTING_COST_SQL:
+            return None if self.conn.starting_cost is None else (self.conn.starting_cost,)
         if "SELECT COALESCE(max(seq), 0) FROM session_entries" == sql:
             return (self.conn.high_water,)
         if "RETURNING zero_progress_attempts" in sql:
@@ -260,6 +262,7 @@ class FakeConn:
         self.compactions: tuple = (0, 0)
         self.spend_correction = 0.0
         self.high_water = 0
+        self.starting_cost: float | None = None  # a stored cost-state total, if any
 
     def mint_epoch(self) -> None:
         """CLAIM_TURN_SQL's CASE: an open row's claim bumps the epoch, a closed one keeps it."""
@@ -3277,6 +3280,20 @@ def test_a_finished_attempts_correction_makes_it_count_at_the_clis_own_figure():
     assert params == ("sdk-1", 40) and "seq > %s" in attempt_sql, "bounded by the attempt's own mark"
     assert worker.attempt_spend_correction(conn, "sdk-1", 40, None) is None, "no CLI figure, no correction"
     assert worker.attempt_spend_correction(conn, "", 40, 1.0) is None
+
+
+def test_a_restored_cost_state_total_is_not_counted_twice():
+    """The CLI documents that a resumed session's total_cost_usd continues from the total
+    a `cost-state` transcript entry saved. The worker's SDK mode writes none today (0
+    stored, 2026-10-31), but if one appears the attempt's figure carries every earlier
+    turn, so the correction subtracts the total the attempt started from."""
+    conn = FakeConn(usage=(0, 0, 0, 0))
+    conn.starting_cost = 2.0
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, 2.3) == pytest.approx(0.3)
+    _, params = next((s, p) for s, p in conn.executed if s == worker.STARTING_COST_SQL)
+    assert params == ("sdk-1", 40), "the latest saved total at or before the attempt's mark"
+    conn.starting_cost = None
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, 2.3) == pytest.approx(2.3), "none saved, nothing subtracted"
 
 
 def test_a_billed_attempt_writes_its_correction_fenced_before_the_zero_progress_raise(turn_env):

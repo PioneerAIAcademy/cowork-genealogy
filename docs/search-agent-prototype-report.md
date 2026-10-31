@@ -237,7 +237,7 @@ tool calls and answers a new message 410. The period is F17's. Our own decisions
 ## Where the evidence is
 
 - **The plan:** every run, session id, probe and R1–R14. Where stale, this report follows the
-  code: ceiling 1,800 s, Anthropic API default, gateway tool search off.
+  code: ceiling 1,800 s, Anthropic API default, gateway tool search on (since PR #4094).
 - **Code:** `apps/server/proto/`, driven by the `proto-*` Make targets, `proto-up` first; billed
   runs need `ANTHROPIC_API_KEY` and `make e2e-login`. Re-run the four probes in handoff step 10
   on any SDK or CLI change.
