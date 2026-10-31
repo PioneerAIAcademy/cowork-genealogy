@@ -348,6 +348,31 @@ def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_
     )
 
 
+def test_relays_the_agents_tail_verbatim(text_response, test):
+    """The router prints a stubbed agent's tail -- everything after its final
+    ``---`` -- verbatim, compared under the e2e relay-fidelity normalization
+    (issue #3862).
+
+    Tag-gated on ``relays-agent-tail``; the agent is the ``routes-to:`` callee.
+    The tail is read from the test's own canned response, never from
+    ``agent_returns``: there it is wrapped in harness scaffolding the router is
+    told never to print.
+    """
+    from harness.skill_runner import normalize, tail_after_final_rule
+    from harness.skill_stubs import parse_stub_skills
+
+    if "relays-agent-tail" not in (test.get("tags") or []):
+        pytest.skip("not a relay-fidelity test")
+    agent = _expected_skill(test)
+    assert agent, "relays-agent-tail needs a routes-to:<agent> tag naming the relayed agent"
+    tail = tail_after_final_rule(parse_stub_skills(test.get("execution")).get(agent) or "")
+    assert tail, f"relays-agent-tail needs a stubbed {agent} response with a `---` tail"
+    assert normalize(tail) in normalize(text_response or ""), (
+        f"the router did not relay {agent}'s summary verbatim; expected, after "
+        f"normalization:\n{tail}"
+    )
+
+
 # The search steps a bounded request must not reach when the answer is already
 # attached. MCP side and delegation side are listed separately because the rule
 # is defeated by either: an inline `record_search` and a hand-off to
