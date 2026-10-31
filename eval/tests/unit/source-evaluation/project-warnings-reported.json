@@ -15,6 +15,9 @@
     "delegation": "Go through the sources attached to Christian P. Hole (KD96-TV2) and tell me whether they are right.\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-after-death-residence"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "person-read-hole-attached-sources",
     "record-read-hole-1900-census",

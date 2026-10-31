@@ -135,7 +135,7 @@ Open with the count of **user-actionable** findings — neither backend metadata
 - Which source: its `title` quoted exactly as `person_read` returned it, never paraphrased; its citation; and its record link, the source's `url` exactly as returned — never its internal id
 - What disagrees with what: the indexed value beside the recorded fact
 - The classification and the cue that decided it
-- The recommended action, in the doctrine of step 4 — for (a), go back to what the index was made from and correct it, naming whether that is the original page or (for an index-only collection) the record it derives from; for (b), detach it from the person's Sources list, with the reason
+- The recommended action, in the doctrine of step 4 — for (a), go back to what the index was made from and correct it, naming whether that is the original page or (for an index-only collection) the record it derives from; for an ambiguous finding, that re-read and nothing after it — no "if … detach" clause; for (b), detach it from the person's Sources list, with the reason
 
 **If the sweep turns up two sources disagreeing with each other** — not with the profile — characterise it and hand it on: name both sources, both values, what kind of record each is, and what would settle it. **Pick no winner and recommend no detach.** Weighing two sources against each other is the conflict workflow's job, and the user takes it there. This is the one finding that carries a route instead of a remedy. Ordinary variance between two records of the kind step 4 describes is not a disagreement worth reporting here either.
 

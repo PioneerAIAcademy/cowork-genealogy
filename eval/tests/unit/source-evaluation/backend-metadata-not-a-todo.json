@@ -18,6 +18,9 @@
     "delegation": "Evaluate the sources on Christian P. Hole (KD96-TV2) and list everything you find wrong, worst first.\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-quality"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "person-read-hole-attached-sources",
     "record-read-hole-1900-census",
