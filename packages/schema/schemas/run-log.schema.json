@@ -60,6 +60,11 @@
       "pattern": "^([a-f0-9]{64})?$",
       "description": "SHA-256 of eval/harness/judge/prompt.md after normalization. Empty when the judge prompt file is missing. Not part of the snapshot — the judge prompt is project-global, tracked separately so judge edits don't clobber every skill on activate."
     },
+    "judge_render_hash": {
+      "type": "string",
+      "pattern": "^([a-f0-9]{64})?$",
+      "description": "SHA-256 of the normalized AST of the code that RENDERS the judge's input: the call graph reached from orchestrator._run_judge, judge.grade, judge._create_message_with_retry, judge.render_prompt_parts and judge._grading_tool_for_rubric — everything that decides the bytes sent to the judge, followed across harness modules through calls AND through functions handed to another function as a value (a live-args strategy passed as a parameter is render code), plus the module-level constants those functions read and the whole of harness/scenario_brief.py. A bare name load reaching a class does not count: a type annotation is one. Derived by an AST walk at hash time (harness/judge_render.py, judge_render_hash), never a hand-written list. judge_prompt_hash covers the prompt TEMPLATE; this covers the code that fills its slots, which a template-only hash cannot see. Optional — absent on logs written before the field, which rule 2b treats as a warning rather than a block."
+    },
     "instrument": {
       "type": "object",
       "description": "What produced and graded this run log, beside `snapshot` (which covers the skill-side files). Read by check_runlogs rule 2c (issue #2479 PR 3). Optional: absent in run logs written before the field, and when the tool catalog could not be read. Hashes are computed by `eval/harness/harness/instrument.py`.",
