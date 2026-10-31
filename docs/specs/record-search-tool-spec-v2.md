@@ -392,6 +392,12 @@ list is ordered **best first**. `ranked` carries metadata only (plus
 relative — see `rank-search-matches-tool-spec.md` § `subjectTooThin`); it has
 no row list of its own. There is one set of rows, never two.
 
+When `projectPath` and `subjectId` are both supplied, the staged payload also
+carries `subjectTooThin`: the subject's thinness when the search ran, saved
+only when it can be computed. It is never in the inline response.
+`extraction_append`'s thin-subject gate reads it (`research-append-tool-spec.md`
+§11.6).
+
 `searchRank` is what keeps that re-ordering **auditable rather than lossy**.
 Sorting by match score discards FamilySearch's own ordering, so without the
 original position recorded on each row it would be unrecoverable from the

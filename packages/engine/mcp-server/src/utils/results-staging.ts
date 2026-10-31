@@ -842,6 +842,10 @@ export interface ResultsEnvelope {
   /** The finalized sidecar's `log_id`; null for a staged file. */
   logId: string | null;
   results: unknown[];
+  /** The payload's echoed `query`, as the search tool staged it. */
+  query: unknown;
+  /** `record_search`'s saved thinness of the searched subject, when it staged one. */
+  subjectTooThin: unknown;
 }
 
 /** Why `readResultsEnvelope` could not read a ref. */
@@ -888,7 +892,11 @@ export async function readResultsEnvelope(projectPath: string, ref: string): Pro
     }
     throw e;
   }
-  let envelope: { tool?: unknown; log_id?: unknown; payload?: { results?: unknown } };
+  let envelope: {
+    tool?: unknown;
+    log_id?: unknown;
+    payload?: { results?: unknown; query?: unknown; subjectTooThin?: unknown };
+  };
   try {
     envelope = JSON.parse(text);
   } catch {
@@ -903,7 +911,34 @@ export async function readResultsEnvelope(projectPath: string, ref: string): Pro
     tool: typeof envelope.tool === "string" ? envelope.tool : null,
     logId: !underStaging && typeof envelope.log_id === "string" ? envelope.log_id : null,
     results,
+    query: envelope.payload?.query,
+    subjectTooThin: envelope.payload?.subjectTooThin,
   };
+}
+
+/**
+ * The `subjectId` a ranked `record_search` was called with, read off its staged
+ * or finalized sidecar's echoed query, together with the sidecar's results.
+ * `stripQueryPlumbing` keeps `subjectId` out of the log entry's `query`, but the
+ * payload is persisted verbatim, so the sidecar still names the tree person the
+ * search was for. Undefined on any fault: a reader of this is a gate that fails
+ * open.
+ */
+export async function readSidecarSearch(
+  projectPath: string,
+  ref: string,
+): Promise<{ results: unknown[]; subjectId: string | undefined; subjectTooThin: boolean | undefined } | undefined> {
+  try {
+    const { results, query, subjectTooThin } = await readResultsEnvelope(projectPath, ref);
+    const sid = (query as { subjectId?: unknown } | undefined)?.subjectId;
+    return {
+      results,
+      subjectId: typeof sid === "string" && sid.trim() !== "" ? sid : undefined,
+      subjectTooThin: typeof subjectTooThin === "boolean" ? subjectTooThin : undefined,
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 /** A full-text hit row, as `fulltext_search` stages it. */

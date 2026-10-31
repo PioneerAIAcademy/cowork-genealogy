@@ -1361,6 +1361,249 @@ describe("extraction_append: closes the plan item and claims re-found records", 
   });
 });
 
+// ─── recordIds: the thin-subject gate (issue #2213 d29) ─────────────────────
+
+describe("extraction_append: a thin subject's search hit is refused", () => {
+  const FIX = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "record-extract");
+  const element = (n: string) => JSON.parse(readFileSync(join(FIX, `${n}.json`), "utf8")).element;
+  let dir: string;
+
+  const person = (id: string, birth: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    gender: "Male",
+    names: [{ id: `${id}-N1`, given: "William", surname: "Brown" }],
+    facts: [{ id: `${id}-F1`, type: "Birth", date: birth, place: "Virginia" }],
+    ...extra,
+  });
+  const writeTree = (persons: any[], relationships: any[] = [], sources: any[] = []) =>
+    writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons, relationships, sources }), "utf8");
+  /** A logged record_search and its finalized sidecar, which keeps the echoed
+   *  query verbatim — `subjectId` included — as record_search stages it. */
+  const search = async (logId: string, rows: string[], subjectId?: string, raw?: string, frozen?: boolean) => {
+    await mkdir(join(dir, "results"), { recursive: true });
+    const query = { surname: "Brown", ...(subjectId ? { subjectId } : {}) };
+    const flag = frozen === undefined ? {} : { subjectTooThin: frozen };
+    await writeFile(
+      join(dir, "results", `${logId}.json`),
+      raw ?? JSON.stringify({ tool: "record_search", retrieved: "2026-01-01T00:00:00Z", returned_count: rows.length, payload: { query, ...flag, results: rows.map((recordId) => ({ recordId })) } }),
+      "utf8",
+    );
+    return {
+      id: logId,
+      plan_item_id: null,
+      performed: "2026-01-01T00:00:00Z",
+      tool: "record_search",
+      query: { surname: "Brown" },
+      outcome: "positive",
+      results_examined: rows.length,
+      external_site: null,
+      results_ref: `results/${logId}.json`,
+    };
+  };
+  const seed = (log: any[]) =>
+    writeFile(join(dir, "research.json"), JSON.stringify({ ...baseResearch(), sources: [], assertions: [], log }), "utf8");
+  const research = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+  const readerFor = (els: any[]) => ({
+    readRecord: async ({ recordId, projectPath }: { recordId: string; projectPath?: string }) => {
+      const el = els.find((e) => arkToBareId(e.recordId) === arkToBareId(recordId));
+      if (!el) throw new Error(`404 for ${recordId}`);
+      const staged = await stageSearchResults({ projectPath: projectPath!, tool: "record_read", response: { query: { recordId }, results: [el] } });
+      return { ...el.gedcomx, staged };
+    },
+  });
+  const run = (recordIds: string[], els: any[]) =>
+    runExtractionAppend({ projectPath: dir, recordIds }, readerFor(els) as any, LOCAL);
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "extraction-thin-test-"));
+    await writeTree([person("I1", "1872")]);
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("refuses a record found only by a thin subject's search, and writes nothing", async () => {
+    const death = element("death");
+    await seed([await search("log_001", [death.recordId], "I1")]);
+    const before = await readFile(join(dir, "research.json"), "utf8");
+    const r = await run([death.recordId], [death]);
+    expect(r.ok).toBe(false);
+    expect(r.records[0].status).toBe("refused");
+    expect(r.records[0].summary).toMatch(/William Brown \(I1\).*cannot be told from a namesake/);
+    expect(await readFile(join(dir, "research.json"), "utf8")).toBe(before);
+  });
+
+  it("extracts it once the subject has a date narrower than a year", async () => {
+    const death = element("death");
+    await writeTree([person("I1", "12 Mar 1872")]);
+    await seed([await search("log_001", [death.recordId], "I1")]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+  });
+
+  it("extracts it once the subject has a named parent", async () => {
+    const death = element("death");
+    await writeTree(
+      [person("I1", "1872"), { id: "I2", gender: "Male", names: [{ id: "I2-N1", given: "Thomas", surname: "Brown" }], facts: [] }],
+      [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }],
+    );
+    await seed([await search("log_001", [death.recordId], "I1")]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+  });
+
+  it("does not let a search for another, anchored person lift the gate", async () => {
+    const death = element("death");
+    await writeTree([person("I1", "1872"), person("I3", "4 Jul 1850")]);
+    await seed([await search("log_001", [death.recordId], "I1"), await search("log_002", [death.recordId], "I3")]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
+  });
+
+  it("extracts a record only an anchored person's search found", async () => {
+    const death = element("death");
+    await writeTree([person("I1", "1872"), person("I3", "4 Jul 1850")]);
+    await seed([await search("log_002", [death.recordId], "I3")]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+  });
+
+  it("refuses a record a thin subject's search found and has not logged yet, and does not read it", async () => {
+    const death = element("death");
+    await seed([]);
+    await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: { surname: "Brown", subjectId: "I1" }, results: [{ recordId: death.recordId }] },
+    });
+    const reads: string[] = [];
+    const reader = readerFor([death]);
+    const r = await runExtractionAppend(
+      { projectPath: dir, recordIds: [death.recordId] },
+      { readRecord: async (i: any, pr: any) => (reads.push(i.recordId), reader.readRecord(i)) } as any,
+      LOCAL,
+    );
+    expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
+    expect(reads).toEqual([]);
+  });
+
+  it("keeps refusing after the tree gains a date, when the search saved the subject as thin", async () => {
+    const death = element("death");
+    await seed([await search("log_001", [death.recordId], "I1", undefined, true)]);
+    await writeTree([person("I1", "Mar 1872")]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
+    expect(r.records[0].summary).toMatch(/never from this one; once the project records it, search again/);
+  });
+
+  it("extracts once a later search for the same person saved them as not thin", async () => {
+    const death = element("death");
+    await writeTree([person("I1", "Mar 1872")]);
+    await seed([
+      await search("log_001", [death.recordId], "I1", undefined, true),
+      await search("log_002", [death.recordId], "I1", undefined, false),
+    ]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+  });
+
+  it("does not let a not-thin search for another person lift a saved thin search", async () => {
+    const death = element("death");
+    await writeTree([person("I1", "1872"), person("I3", "4 Jul 1850")]);
+    await seed([
+      await search("log_001", [death.recordId], "I1", undefined, true),
+      await search("log_002", [death.recordId], "I3", undefined, false),
+    ]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
+  });
+
+  it("extracts a record no logged search found", async () => {
+    const death = element("death");
+    await seed([await search("log_001", ["ZZZZ-ZZZ"], "I1")]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+  });
+
+  it("refuses only the thin record in a batch, and extracts the other", async () => {
+    const death = element("death");
+    const marriage = element("marriage");
+    await seed([await search("log_001", [death.recordId], "I1")]);
+    const r = await run([death.recordId, marriage.recordId], [death, marriage]);
+    expect(r.ok).toBe(true);
+    expect(r.records.map((o) => o.status)).toEqual(["refused", "extracted"]);
+    expect((await research()).sources).toHaveLength(1);
+  });
+
+  it("fails open on a sidecar with no subjectId, an unreadable one, or an unknown subject", async () => {
+    const death = element("death");
+    await seed([
+      await search("log_001", [death.recordId]),
+      await search("log_002", [death.recordId], "I1", "{not json"),
+      await search("log_003", [death.recordId], "I9"),
+    ]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+  });
+
+  it("does not let a search re-run without subjectId lift the gate", async () => {
+    const death = element("death");
+    await seed([await search("log_001", [death.recordId], "I1"), await search("log_002", [death.recordId])]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status).toBe("refused");
+  });
+
+  it("extracts a record the researcher accepted as a hint, even when a thin subject's search found it", async () => {
+    const death = element("death");
+    await seed([
+      await search("log_001", [death.recordId], "I1"),
+      {
+        id: "log_002",
+        plan_item_id: null,
+        performed: "2026-01-01T00:00:00Z",
+        tool: "person_record_matches",
+        query: { id: "LZNY-BRF", recordId: death.recordId },
+        outcome: "positive",
+        results_examined: 1,
+        external_site: null,
+        results_ref: null,
+      },
+    ]);
+    const r = await run([death.recordId], [death]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+  });
+
+  it("extracts a household record the researcher accepted as a hint on another persona", async () => {
+    const census = element("census-1880-with-relationship-column");
+    const [head, other] = census.gedcomx.persons.map((p: any) => arkToBareId(p.ark));
+    await seed([
+      await search("log_001", [head], "I1"),
+      {
+        id: "log_002",
+        plan_item_id: null,
+        performed: "2026-01-01T00:00:00Z",
+        tool: "person_record_matches",
+        query: { id: "LZNY-BRF", recordId: `ark:/61903/1:1:${other}` },
+        outcome: "positive",
+        results_examined: 1,
+        external_site: null,
+        results_ref: null,
+      },
+    ]);
+    const r = await run([census.recordId], [census]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+  });
+
+  it("refuses a record requested by its record id when the search listed a co-resident persona", async () => {
+    const census = element("census-1880-with-relationship-column");
+    const persona = arkToBareId(census.gedcomx.persons[0].ark);
+    expect(persona).not.toBe(arkToBareId(census.recordId));
+    await seed([await search("log_001", [persona], "I1")]);
+    const r = await run([census.recordId], [census]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
+  });
+});
+
 // ─── personId: the baseline step (issue #3516 PR C) ─────────────────────────
 
 import { ATTACHMENT_LINK_RATIONALE, isAttachmentLink } from "../../src/utils/tree-person.js";
@@ -1412,6 +1655,28 @@ describe("extraction_append: personId extracts and links a person's attachments"
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
+  });
+
+  it("extracts an attached record even when a thin subject's search found it", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "results", "log_001.json"),
+      JSON.stringify({ tool: "record_search", payload: { query: { subjectId: "I1" }, results: [{ recordId: "ark:/61903/1:1:MZGS-1B7" }] } }),
+      "utf8",
+    );
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({
+        ...baseResearch(),
+        sources: [],
+        assertions: [],
+        log: [{ id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_search", query: {}, outcome: "positive", results_examined: 1, external_site: null, results_ref: "results/log_001.json" }],
+      }),
+      "utf8",
+    );
+    const r = await run("I1");
+    expect(r.extracted, JSON.stringify(r)).toBe(1);
   });
 
   it("extracts the attached record and links the attached persona's assertions as unverified", async () => {

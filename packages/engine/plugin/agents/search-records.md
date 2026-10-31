@@ -450,6 +450,9 @@ highest. A row the ranker could not score keeps its search position, has no
 **The ranked list is a review surface, not an auto-accept.** Match score orders the
 candidates; you still confirm the top ones:
 
+- **`ranked.subjectTooThin: true` → every hit is `needs-review — possible namesake`.**
+  Name the anchor that would settle identity: a precise date, or a named spouse,
+  parent or child.
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
   cannot be Head of Household), age/birth year vs. the expected range, place
   consistency. Flag any impossibility as `needs-review` regardless of score —
@@ -701,7 +704,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 **Distinguish index entries from original records.** Most search results are index entries — derivative sources that are pointers to originals, not the records themselves. Four things an index does to a record, each a reason the original still has to be examined: a transcription error from misread handwriting; partial indexing that omits fields the original carries; names or dates standardized differently than the original wrote them; and context that only the full document shows — marginal notes, adjacent entries, the structure of the page.
 
-**Run extraction only when the delegation itself says to extract** ("…and extract them"), and only for records that clear `needs-review`. Otherwise name the promising records in your return as ready for extraction and stop: the caller confirms, and you do not extract on your own. When it does say so, extraction is one call: `extraction_append({ projectPath, recordIds, questionIds })`, with each promising result's `recordId` field (never `arkId`, `ark`, `id` or `url`). It reads each record live, logs it and extracts it in code, so do not `record_read` first. Relay its summary verbatim.
+**Run extraction only when the delegation itself says to extract** ("…and extract them"), and only for records that clear `needs-review`. Otherwise name the promising records in your return as ready for extraction and stop: the caller confirms, and you do not extract on your own. When it does say so, extraction is one call: `extraction_append({ projectPath, recordIds, questionIds })`, with each promising result's `recordId` field (never `arkId`, `ark`, `id` or `url`). It reads each record live, logs it and extracts it in code, so do not `record_read` first. Relay its summary verbatim. A record it refuses as a thin subject's is `needs-review — possible namesake`; report it with the anchor that would settle it.
 
 1. If a record ID is available, put it in `recordIds`.
 2. If the full record is unavailable but an image exists, record the image URL in the log. Name `image_transcribe` (which stages the page), then `record-structurer` with its `staged.resultsRef`, in the caller-facing lines as the route; you call neither.
