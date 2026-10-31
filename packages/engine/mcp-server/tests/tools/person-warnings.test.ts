@@ -5131,3 +5131,165 @@ describe("hasEventInOtherCountry", () => {
     ).toBeUndefined();
   });
 });
+
+// ────────────────────────────────────────────────────────────────────
+// hasPlaceStandardOtherCountry — project rule (not a FamilySearch Java port)
+// A fact whose own place text names a country its standard_place contradicts.
+// Driven through calculateWarnings (via finalWarnings), per spec § "How to add
+// a new warning": the drift lint cannot see the wiring, only a test can.
+// ────────────────────────────────────────────────────────────────────
+
+describe("hasPlaceStandardOtherCountry", () => {
+  const findWarning = (tree: SimplifiedGedcomX, id = "I1") =>
+    finalWarnings(new Mob(tree, id)).find(
+      (x) => x.issueType === "hasPlaceStandardOtherCountry",
+    );
+
+  it("fires on I2 F5's exact pair: place Kenya, standard_place Madagascar", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "Zablon", surname: "Yambo" }],
+          facts: [
+            {
+              id: "F5",
+              type: "Death",
+              date: "1983",
+              standard_date: "1983",
+              place: "Siaya, Nyanza, Kenya",
+              standard_place: "Madagascar",
+            },
+          ],
+        },
+      ],
+    };
+    const w = findWarning(tree);
+    expect(w).toBeDefined();
+    expect(w!.severity).toBe("implausible");
+    expect(w!.message).toContain("Siaya, Nyanza, Kenya");
+    expect(w!.message).toContain("Madagascar");
+    expect(w!.facts).toEqual([{ id: "F5", type: "Death", date: "1983" }]);
+  });
+
+  it("fires on the reverse case where the text is the wrong half (Merionethshire, England -> Wales)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "Owen", surname: "Jones" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Birth",
+              date: "1850",
+              standard_date: "1850",
+              place: "Merionethshire, England",
+              standard_place: "Dolgellau, Merionethshire, Wales, United Kingdom",
+            },
+          ],
+        },
+      ],
+    };
+    expect(findWarning(tree)).toBeDefined();
+  });
+
+  it("fires on a contradicted Couple-relationship fact", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        { id: "I1", gender: "Female", names: [{ id: "N1", given: "A", surname: "B" }] },
+        { id: "I2", gender: "Male", names: [{ id: "N2", given: "C", surname: "D" }] },
+      ],
+      relationships: [
+        {
+          id: "R1",
+          type: "Couple",
+          person1: "I1",
+          person2: "I2",
+          facts: [
+            {
+              id: "F3",
+              type: "Marriage",
+              date: "1870",
+              standard_date: "1870",
+              place: "Nairobi, Kenya",
+              standard_place: "Madagascar",
+            },
+          ],
+        },
+      ],
+    };
+    expect(findWarning(tree)).toBeDefined();
+  });
+
+  it("is silent on a consistent Kenya -> Kenya pair", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "Zablon", surname: "Yambo" }],
+          facts: [
+            {
+              id: "F5",
+              type: "Death",
+              date: "1983",
+              standard_date: "1983",
+              place: "Siaya, Nyanza, Kenya",
+              standard_place: "Siaya, Nyanza, Kenya",
+            },
+          ],
+        },
+      ],
+    };
+    expect(findWarning(tree)).toBeUndefined();
+  });
+
+  it("is silent when the place text names no recognised country (Smith, Mississippi)", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Residence",
+              date: "1900",
+              standard_date: "1900",
+              place: "Smith, Mississippi",
+              standard_place: "Antananarivo, Madagascar",
+            },
+          ],
+        },
+      ],
+    };
+    expect(findWarning(tree)).toBeUndefined();
+  });
+
+  it("is silent and does not throw when a fact has standard_place but no place", () => {
+    const tree: SimplifiedGedcomX = {
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Smith" }],
+          facts: [
+            {
+              id: "F1",
+              type: "Death",
+              date: "1983",
+              standard_date: "1983",
+              standard_place: "Madagascar",
+            },
+          ],
+        },
+      ],
+    };
+    expect(() => finalWarnings(new Mob(tree, "I1"))).not.toThrow();
+    expect(findWarning(tree)).toBeUndefined();
+  });
+});

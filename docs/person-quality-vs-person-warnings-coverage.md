@@ -1,6 +1,6 @@
 # FamilySearch quality issues vs. `person_warnings` — coverage table
 
-**Measured 2026-09-26 against `main` at `d4ee13393`; #2727's changes to `person_warnings` (the D6 facts, the burial pairing) move no row. Updated for PR #2994, which adds four checks and corrects the rows that counted a merge-only check. The tag tally moved to 82 (54 self-checks, 28 mirrors) after `hasEventInOtherCountry`, the female lower age bound at childbirth, PR #2994's four checks and `hasBirthFarFromParentsResidence` shipped; the rows themselves were not re-measured, apart from the ones PR #2994 changes.** Step 2 of issue #2225: every
+**Measured 2026-09-26 against `main` at `d4ee13393`; #2727's changes to `person_warnings` (the D6 facts, the burial pairing) move no row. Updated for PR #2994, which adds four checks and corrects the rows that counted a merge-only check. The tag tally moved to 82 (54 self-checks, 28 mirrors) after `hasEventInOtherCountry`, the female lower age bound at childbirth, PR #2994's four checks and `hasBirthFarFromParentsResidence` shipped; the rows themselves were not re-measured, apart from the ones PR #2994 changes. Issue #3976 later added `hasPlaceStandardOtherCountry`, moving the tally to 83 (55 self-checks, 28 mirrors).** Step 2 of issue #2225: every
 FamilySearch quality `issueType` set against the `person_warnings` tag catalogue, so
 the uncovered set is counted rather than asserted. Step 3 was to add checks only for what
 this table leaves uncovered; PR #2994 added four (§ Step 3), and the rows below include them. The tally is under "The count" below.
@@ -17,10 +17,10 @@ this table leaves uncovered; PR #2994 added four (§ Step 3), and the rows below
   in [`person-quality-tool-spec.md`](specs/person-quality-tool-spec.md) § Missing-template
   fallback), and the API may add types. Those are not counted, and a live profile can
   surface one through the fallback sentence.
-- **`person_warnings` side:** the 82 tags in the § Tag Catalogue of
-  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 54 self-checks
+- **`person_warnings` side:** the 83 tags in the § Tag Catalogue of
+  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 55 self-checks
   plus 28 relative mirrors. `person-warnings-spec-drift.test.ts` holds that catalogue
-  and `ALL_WARNING_TAGS` in exact agreement, so 82 is the shipped count. Not every tag
+  and `ALL_WARNING_TAGS` in exact agreement, so 83 is the shipped count. Not every tag
   fires in `person_warnings`: the catalogue marks the ones that fire only in merge mode
   (`merge_warnings`), and a verdict below counts only what `person_warnings` runs.
 - **No live profiles were read.** Every verdict comes from the template text and the

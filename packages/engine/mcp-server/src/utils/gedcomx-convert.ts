@@ -974,6 +974,13 @@ export async function standardizePlaces(
           // 1.3% of distinct corpus pairs, 0.4% of occurrences, and the ones on
           // record predate the phrase-quote fix), so this is a guard against a
           // class of failure rather than a fix for a live one.
+          //
+          // This checks only resolver-filled values. A standard_place
+          // FamilySearch supplies (pickNormalizedPlace) is deliberately left
+          // unchecked and carried through: person_warnings'
+          // hasPlaceStandardOtherCountry tag reports that pair to the user
+          // instead. Stripping it here would delete the pair the warning
+          // surfaces and hide FamilySearch's own error (issue #3976).
           if (
             f.place &&
             countryConsistency(f.place, standard) === "contradiction"

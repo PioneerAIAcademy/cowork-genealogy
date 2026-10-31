@@ -288,6 +288,7 @@ const DELAYED_BURIAL_DAYS = 365;
 
 // Project rule — NOT a FamilySearch Java MobWarnings port.
 const HAS_EVENT_IN_OTHER_COUNTRY = "hasEventInOtherCountry";
+const HAS_PLACE_STANDARD_OTHER_COUNTRY = "hasPlaceStandardOtherCountry";
 const HAS_BIRTH_FAR_FROM_PARENTS_RESIDENCE = "hasBirthFarFromParentsResidence";
 
 // Fact types excluded from the "event in other country" check: migration-like,
@@ -3460,6 +3461,55 @@ function checkHasEventInOtherCountry(mob: Mob): PersonWarning | null {
   };
 }
 
+// ─── Project rule: a fact's place text names a country its standard_place contradicts ──
+
+/**
+ * Project rule (not a FamilySearch Java port).
+ *
+ * Returns the first fact whose `place` text names a country its own
+ * `standard_place` contradicts — a mis-standardisation on a single fact, as
+ * distinct from `hasEventInOtherCountry`, which compares one fact against the
+ * birth/death anchors. Scans person facts first, then the anchor's
+ * Couple-relationship facts (the order findEventInOtherCountry steps 3-4 use).
+ * Skips any fact missing either `place` or `standard_place`: both are optional,
+ * and `countryConsistency` is a self-check that needs both halves present.
+ */
+function findPlaceStandardOtherCountry(mob: Mob): SimplifiedFact | null {
+  for (const f of mob.getPerson().facts ?? []) {
+    if (!f.place || !f.standard_place) continue;
+    if (countryConsistency(f.place, f.standard_place) === "contradiction") return f;
+  }
+  for (const rel of mob.tree.relationships ?? []) {
+    if (rel.type !== "Couple") continue;
+    if (rel.person1 !== mob.anchorId && rel.person2 !== mob.anchorId) continue;
+    for (const f of rel.facts ?? []) {
+      if (!f.place || !f.standard_place) continue;
+      if (countryConsistency(f.place, f.standard_place) === "contradiction") return f;
+    }
+  }
+  return null;
+}
+
+function checkHasPlaceStandardOtherCountry(mob: Mob): PersonWarning | null {
+  const fact = findPlaceStandardOtherCountry(mob);
+  if (!fact) return null;
+
+  const facts: WarningFact[] = fact.id
+    ? [{ id: fact.id, type: fact.type ?? "", date: fact.date ?? fact.standard_date ?? null }]
+    : [];
+
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_PLACE_STANDARD_OTHER_COUNTRY,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts,
+    message:
+      `The place is written as "${fact.place}" but standardized to "${fact.standard_place}", a different country. One of them is wrong, usually the standardized place; check it on FamilySearch.`,
+  };
+}
+
 // ─── Merge-mode predicates, checks, and the non-final bucket ─────────────────
 // Ported from warnings.java's calculateNonFinalWarnings (:572) plus the
 // target-vs-candidate-separate checks in calculateWarnings (:143/:159/:181/
@@ -3554,6 +3604,7 @@ export const ALL_WARNING_TAGS = [
   RELATIVES_HAS_CHILD_DEATH_AFTER_PARENT_BIRTH_200,
   MALE_RELATIVES_HAS_DIFF_SURNAME,
   HAS_EVENT_IN_OTHER_COUNTRY,
+  HAS_PLACE_STANDARD_OTHER_COUNTRY,
   HAS_BIRTH_FAR_FROM_PARENTS_RESIDENCE,
   HAS_SAME_CENSUS,
   HAS_EVENTS_OUTSIDE_LIFESPAN_FAR,
@@ -4300,6 +4351,10 @@ export function calculateWarnings(
   // Project rule: event in a country inconsistent with birth and death.
   const eventInOtherCountry = checkHasEventInOtherCountry(mergedMob);
   if (eventInOtherCountry) warnings.push(eventInOtherCountry);
+
+  // Project rule: a fact's place text names a country its standard_place contradicts.
+  const placeStandardOtherCountry = checkHasPlaceStandardOtherCountry(mergedMob);
+  if (placeStandardOtherCountry) warnings.push(placeStandardOtherCountry);
 
   return warnings;
 }
