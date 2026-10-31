@@ -208,19 +208,28 @@ def session_model_for(
     return cli_model
 
 
-def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
-    """True when no gating validator failed.
+def gating_validator_failures(validator_results, *, intentionally_invalid: bool) -> list[str]:
+    """Names of the gating validators that failed, in order.
 
     Tier-2 (reporting_only) results are observations, never gates — they are
     skipped here. When the test's scenario is intentionally invalid, the
-    file-validity validators are expected to fail and are also ignored; every
-    other gating validator still counts.
+    file-validity validators are expected to fail and are also skipped; every
+    other gating validator still counts. The judge is shown this same list, so
+    it is never told about a failure the gate has ruled expected (#3870).
     """
-    return all(
-        r.passed
+    return [
+        r.name
         for r in validator_results
-        if not r.reporting_only  # tier-2 never gates (issue #1749)
+        if not r.passed
+        and not r.reporting_only  # tier-2 never gates (issue #1749)
         and not (intentionally_invalid and r.name in FILE_VALIDITY_VALIDATORS)
+    ]
+
+
+def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
+    """True when no gating validator failed (`gating_validator_failures`)."""
+    return not gating_validator_failures(
+        validator_results, intentionally_invalid=intentionally_invalid
     )
 
 
@@ -817,11 +826,10 @@ async def _execute_single_run(
     )
 
     # --- Split gating vs reporting validator results (issue #1749) --------
-    # Gating failures (tier 1, test_*): pass r.name — existing behavior.
-    validator_failures = [
-        r.name for r in validator_results
-        if not r.passed and not r.reporting_only
-    ]
+    # Gating failures (tier 1, test_*): pass r.name — the list the gate reads.
+    validator_failures = gating_validator_failures(
+        validator_results, intentionally_invalid=spec.intentionally_invalid
+    )
     # Reporting observations (tier 2, report_*): pass r.error (the
     # observation text), NOT r.name (which is a verdict). The function name
     # goes only to the run log for traceability, never the judge.

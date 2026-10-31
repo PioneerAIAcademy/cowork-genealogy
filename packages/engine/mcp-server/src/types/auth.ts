@@ -40,4 +40,10 @@ export interface AppConfig {
   popStatsUrl?: string;
   openRouterApiKey?: string;
   openRouterModel?: string;
+  /** Which matcher scores `same_person` and ranking: `"familysearch"` (the default) or `"service"`. */
+  matcher?: "familysearch" | "service";
+  /** The matcher service's base URL; required when `matcher` is `"service"`. */
+  matcherUrl?: string;
+  /** This caller's bearer key for the matcher service; required when `matcher` is `"service"`. */
+  matcherApiKey?: string;
 }

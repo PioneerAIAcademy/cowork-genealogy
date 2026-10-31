@@ -207,6 +207,9 @@ export interface Assertion {
   log_entry_id?: string | null
   record_persona_id?: string | null
   extracted_for_question_ids: string[]
+  /** Non-null means retired by a re-extraction: the replacing `a_` id, or "retracted". */
+  superseded_by?: string | null
+  superseded_reason?: string | null
 }
 
 /**
@@ -223,6 +226,9 @@ export interface RejectedLink {
   person_id: string
   /** Optional: a rejection is never a demand for the right answer. */
   reason?: string | null
+  /** The researcher's own words, verbatim. research_append requires it on append;
+   *  optional here because a row written before the field existed has none. */
+  researcher_words?: string
   created: string
 }
 

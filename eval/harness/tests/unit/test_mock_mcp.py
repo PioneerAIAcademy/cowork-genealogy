@@ -1447,6 +1447,9 @@ def test_same_person_attests_on_the_project_relative_arm(tmp_path):
     )
     assert entry["score"] == fixture["response"]["score"]   # the fixture's own number
     assert entry["record_source"] == "record_read"   # persona id present
+    assert entry["scorer"] == "familysearch"   # the fixtures were recorded against it
+    assert entry["model"] is None
+    assert "matched" not in entry and "confidence" not in entry
     assert call_log[-1]["attested"] is True
 
 
@@ -1604,7 +1607,7 @@ def _synthetic_fixture(tmp_path, recorded_persona, recorded_tree_person):
                 "description": "a `~` fixture for the overlay tests",
                 "args": {"assertionId": "~", "treePersonId": "~"},
                 "response": {
-                    "matched": True, "confidence": 4, "score": 0.7,
+                    "score": 0.7,
                     "recordSource": "record_read", "recorded": True,
                     "recordPersona": recorded_persona, "treePerson": recorded_tree_person,
                 },
@@ -1888,7 +1891,7 @@ def test_same_person_does_not_overlay_the_two_document_arm(tmp_path):
     fixtures_dir = tmp_path / "explicit"
     fixtures_dir.mkdir()
     response = {
-        "matched": True, "score": 0.9,
+        "score": 0.9,
         "queryArk": "ark:/61903/4:1:KGS8-LY1", "candidateArk": "ark:/61903/4:1:KCWM-J9H",
         "apiTitle": "Matches for ark:/61903/4:1:KGS8-LY1", "updated": "2026-05-15T01:58:23.913Z",
     }

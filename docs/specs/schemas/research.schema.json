@@ -929,9 +929,54 @@
             "type": "string",
             "pattern": "^q_"
           }
+        },
+        "superseded_by": {
+          "$comment": "Set only by extraction_append's re-extraction. Non-null means retired: the `a_` id of the assertion that replaced it, or the literal \"retracted\" when the re-extraction wrote no counterpart.",
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^a_"
+            },
+            {
+              "const": "retracted"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "superseded_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "allOf": [
+        {
+          "$comment": "A retraction has no replacement to point at, so it says why.",
+          "if": {
+            "required": [
+              "superseded_by"
+            ],
+            "properties": {
+              "superseded_by": {
+                "const": "retracted"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "superseded_reason"
+            ],
+            "properties": {
+              "superseded_reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
         {
           "$comment": "TWO DIFFERENT FIELDS SHARE THE VALUE 'absent' HERE — read the field name on every line below. `record_basis: \"absent\"` says the record lacked the value; `record_role: \"absent\"` says the person held no role in it because they were not there. This rule couples them: negative evidence is the researcher's own conclusion that a person expected in a record is missing from it, so `record_role` is the literal 'absent' and `informant_proximity` is 'researcher' — no record informant reported an absence, whatever the record type. Forward direction only: the converse (`record_role: \"absent\"` implies `record_basis: \"absent\"`) is an unexercised branch and is left to research_append's own precondition. `informant` is not constrained; it is free text. The `required` below is load-bearing: without it an assertion missing `record_basis` matches the `if` vacuously and collects a spurious second error. (This field was renamed 2026-09-18 — see the retired-identifier registry in enums.schema.json; the coupling PR #2601 landed is unchanged in meaning.)",
           "if": {
@@ -1019,7 +1064,7 @@
           "anyOf": [
             {
               "type": "string",
-              "pattern": "^pe_"
+              "pattern": "^(pe|rj)_"
             },
             {
               "type": "null"
@@ -1060,6 +1105,11 @@
             }
           ],
           "description": "Optional. A rejection is never a demand for the right answer."
+        },
+        "researcher_words": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The researcher's own message saying the pair is not a match, verbatim. research_append requires it on every append; optional here so a row written before the field existed still validates."
         },
         "created": {
           "type": "string"
@@ -1116,7 +1166,7 @@
         "weighed_log_entry_ids": {
           "type": "array",
           "items": { "type": "string", "pattern": "^log_" },
-          "description": "The question's log entries conflict-resolution has weighed, written on every analysis. Mirrors search_stop.log_entry_ids. Lets the ladder tell new evidence to weigh from evidence already weighed, which the documents otherwise cannot say."
+          "description": "Present only on an unresolved conflict whose last analysis found nothing left to search: conflict-resolution declares it on that write and research_append fills it with every log entry of every question the conflict blocks. Refused when no question the conflict blocks has a log entry. Cleared by an analysis write (one carrying independence_analysis) that does not declare it and by a settle. Mirrors search_stop.log_entry_ids. Lets the ladder tell new evidence to weigh from evidence already weighed, which the documents otherwise cannot say."
         },
         "weighing_analysis": {
           "type": [
