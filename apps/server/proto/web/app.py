@@ -1363,6 +1363,24 @@ class DevLoginBody(BaseModel):
     email: str | None = None
 
 
+def _relative_self_location(location: str, host: str | None, base_path: str = "") -> str:
+    """U28: a redirect to this tier's own host, made root-relative and put under the prefix.
+    Behind the edge this tier sees http from its load balancer and a path with the prefix
+    stripped, so an absolute URL Starlette builds from the request (its trailing-slash 307)
+    leaves the prefix and drops https. A path already under the prefix (the callback's
+    PUBLIC_URL target) keeps it once. Any other host, or a host:port that differs from the
+    request's, is left alone."""
+    if not host:
+        return location
+    parts = urlparse(location)
+    if parts.scheme not in ("http", "https") or parts.netloc.lower() != host.lower():
+        return location
+    path = parts.path or "/"
+    if base_path and path != base_path and not path.startswith(f"{base_path}/"):
+        path = f"{base_path}{path}"
+    return path + (f"?{parts.query}" if parts.query else "")
+
+
 def _env_float(name: str, default: float) -> float:
     """POLL_S / SSE_PING_S, defensively. A bare ``float()`` raises on ``"1s"`` or a
     stray space, and both are read while the app is being CONSTRUCTED -- so a typo in one
@@ -1671,6 +1689,30 @@ def create_app(
             await self.app(scope, receive, send)
 
     app.add_middleware(PrefixMismatchWarning)
+
+    class RelativeSelfRedirects:
+        """U28: see ``_relative_self_location``."""
+
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            if scope["type"] != "http":
+                await self.app(scope, receive, send)
+                return
+            host = next((v.decode("latin-1") for k, v in scope.get("headers") or () if k == b"host"), None)
+
+            async def send_relative(message: Message) -> None:
+                if message["type"] == "http.response.start" and 300 <= message["status"] < 400:
+                    headers = MutableHeaders(scope=message)
+                    location = headers.get("location")
+                    if location is not None:
+                        headers["location"] = _relative_self_location(location, host, app.state.base_path)
+                await send(message)
+
+            await self.app(scope, receive, send_relative)
+
+    app.add_middleware(RelativeSelfRedirects)
 
     def _store(request: Request) -> Store:
         return request.app.state.store
