@@ -45,7 +45,10 @@ COMMON_REQUIRED = ("Procfile", "BUILD-INFO.json", "certs/rds-global-bundle.pem")
 REQUIRED = {
     "web": COMMON_REQUIRED + ("requirements.txt", "web/app.py", "web/auth.py", "web/spa.py", "web/feedback.py",
                               "web/blobstore.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py", "config/familysearch.json",
-                              "web-dist/index.html"),
+                              "web-dist/index.html",
+                              # Missing, nginx falls back to 8 KB header lines and a patron's
+                              # .familysearch.org cookies can 400 every request (U28).
+                              ".platform/nginx/conf.d/01-web-headers.conf"),
     "worker": COMMON_REQUIRED + ("requirements.txt", "app/__init__.py", "app/agent/__init__.py",
                                  "app/agent/real_agent.py", "proto/enqueue.py", "proto/grants.py",
                                    "proto/turn_message.py", "proto/migrate.py",
