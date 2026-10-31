@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
+import { usePrintMode } from '../../contexts/PrintModeContext'
 import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
@@ -18,7 +19,8 @@ function truncate(text: string, max: number): string {
 
 function Transcription({ text }: { text: string }): React.JSX.Element {
   const [expanded, setExpanded] = useState(false)
-  const isLong = text.length > TRANSCRIPTION_PREVIEW_CHARS
+  const print = usePrintMode()
+  const isLong = !print && text.length > TRANSCRIPTION_PREVIEW_CHARS
   const displayed = expanded || !isLong ? text : text.slice(0, TRANSCRIPTION_PREVIEW_CHARS) + '…'
   return (
     <>
@@ -98,6 +100,7 @@ function TreeSourceCard({ source }: { source: GedcomxSource }): React.JSX.Elemen
 
 function SourceCard({ source }: { source: Source }): React.JSX.Element {
   const { citation_detail: detail } = source
+  const print = usePrintMode()
 
   const handleLinkClick = (url: string): void => {
     openExternal(url)
@@ -203,7 +206,9 @@ function SourceCard({ source }: { source: Source }): React.JSX.Element {
         </div>
       )}
 
-      {source.image_filename && (
+      {/* Not printed: the web transport has no getSourceImage, and Electron loads
+          the scan after print() has already fired. */}
+      {source.image_filename && !print && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Page scan</div>
           <SourceImage filename={source.image_filename} />

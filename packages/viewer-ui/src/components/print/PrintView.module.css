@@ -1,0 +1,12 @@
+.printView {
+  padding: var(--spacing-lg);
+}
+
+.title {
+  font-family: var(--font-display);
+  margin: 0 0 var(--spacing-lg);
+}
+
+.section + .section {
+  margin-top: var(--spacing-xl);
+}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import FeedbackDialog from '../shared/FeedbackDialog'
+import PrintView from '../print/PrintView'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import { exportGedcom, gedcomFileName } from '../../lib/gedcom-export'
 import styles from './Header.module.css'
@@ -7,6 +8,7 @@ import styles from './Header.module.css'
 export default function Header(): React.JSX.Element {
   const [showFeedback, setShowFeedback] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
+  const [printing, setPrinting] = useState(false)
   const { research, gedcomx } = useResearchData()
 
   // A Blob + <a download> saves the file in both apps without a transport round
@@ -52,12 +54,21 @@ export default function Header(): React.JSX.Element {
           >
             Export GEDCOM
           </button>
+          <button
+            className={styles.exportBtn}
+            onClick={() => setPrinting(true)}
+            disabled={!research || printing}
+            title="Print every section of the project"
+          >
+            Print
+          </button>
           <button className={styles.feedbackBtn} onClick={() => setShowFeedback(true)}>
             Send Feedback
           </button>
         </div>
       </header>
       {showFeedback && <FeedbackDialog onClose={() => setShowFeedback(false)} />}
+      {printing && <PrintView onDone={() => setPrinting(false)} />}
     </>
   )
 }

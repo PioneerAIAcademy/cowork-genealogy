@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Card from '../Card'
+import { PrintModeContext } from '../../../contexts/PrintModeContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
 
 vi.mock('../../../contexts/ResearchDataContext', async () => {
@@ -57,5 +58,43 @@ describe('Card', () => {
     fireEvent.mouseUp(header, { clientX: 220, clientY: 12 })
     fireEvent.click(header, { clientX: 220, clientY: 12 })
     expect(screen.queryByText('body content')).not.toBeInTheDocument()
+  })
+})
+
+describe('Card in print mode', () => {
+  function renderWith(print: boolean) {
+    vi.mocked(useResearchData).mockReturnValue({
+      ...buildMockContext({ research: null, gedcomx: null }),
+      devMode: true
+    })
+    return render(
+      <PrintModeContext.Provider value={print}>
+        <Card id="print-card" title="Print title" footer={<span>footer content</span>} rawData={{ marker: 'raw-json-marker' }}>
+          <p>body content</p>
+        </Card>
+      </PrintModeContext.Provider>
+    )
+  }
+
+  it('shows the body and footer without a click, and no chevron', () => {
+    renderWith(true)
+    expect(screen.getByText('body content')).toBeInTheDocument()
+    expect(screen.getByText('footer content')).toBeInTheDocument()
+    expect(screen.queryByText(/^[▾▸]$/)).toBeNull()
+  })
+
+  it('never shows the developer JSON panel, even in developer mode', async () => {
+    renderWith(true)
+    await userEvent.click(screen.getByText('Print title'))
+    expect(screen.getByText('body content')).toBeInTheDocument()
+    expect(screen.queryByText(/raw-json-marker/)).toBeNull()
+  })
+
+  it('off print mode, developer mode still shows the JSON panel once expanded', async () => {
+    renderWith(false)
+    expect(screen.queryByText('body content')).toBeNull()
+    await userEvent.click(screen.getByText('Print title'))
+    expect(screen.getByText('body content')).toBeInTheDocument()
+    expect(screen.getByText(/raw-json-marker/)).toBeInTheDocument()
   })
 })
