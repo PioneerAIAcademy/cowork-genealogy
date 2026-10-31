@@ -18,6 +18,9 @@
     "delegation": "Evaluate the sources attached to Christian P. Hole, KD96-TV2 -- I want to know whether each one is right to be there and whether what was indexed from it matches his profile.\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-quality"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "person-read-hole-attached-sources",
     "record-read-hole-1900-census",
