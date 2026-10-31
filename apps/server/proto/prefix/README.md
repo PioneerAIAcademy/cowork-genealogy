@@ -13,9 +13,9 @@ and points web's `PUBLIC_URL` at the prefix.
 `check.mjs` drives the real SPA in Chromium: it loads the prefix with and without its
 trailing slash, asks for two API paths with a trailing slash and fails unless each
 redirect stays under the prefix on the edge's origin, signs in through dev-login, opens a
-session, sends one message, waits for the reply, then holds the stream idle for 70 s. It fails on any same-origin request
-outside the prefix, any response >= 400, a stream that dropped or reconnected during the
-hold, or a `wb_session` cookie not scoped to the prefix.
+session, sends one message, waits for the reply, then holds the stream idle for 70 s. It
+fails on any same-origin request outside the prefix, any response >= 400, a stream that
+dropped or reconnected during the hold, or a `wb_session` cookie not scoped to the prefix.
 
 The recipe recreates the edge once web is healthy, because nginx resolves `web` only at
 start, and removes it when the check ends.

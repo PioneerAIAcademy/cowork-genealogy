@@ -298,7 +298,7 @@ def test_tools_nginx_holds_a_full_tool_call(directive):
 def test_web_nginx_takes_a_full_upload_and_the_cookie_jar():
     from proto.web.project_blobs import UPLOAD_MAX_BYTES
     body = _nginx_bytes(WEB_NGINX / "01-web-uploads.conf", "client_max_body_size")
-    assert body is not None and body > UPLOAD_MAX_BYTES, body
+    assert body is not None and body >= UPLOAD_MAX_BYTES + 64 * 1024, body
     line = _nginx_bytes(WEB_NGINX / "01-web-headers.conf", "large_client_header_buffers")
     assert line is not None and line >= 16 * 1024, line
 
