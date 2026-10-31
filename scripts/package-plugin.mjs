@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Packages the Cowork plugin at releases/genealogy-plugin.zip.
+// Packages the Cowork plugin at releases/genealogy-plugin.zip, or with
+// --connector, a versioned marketplace layout and connector zip.
 //
 // Cross-platform (Node) replacement for the former package-plugin.sh, so it
 // runs natively wherever Node does -- no bash, and no `zip` binary (Git Bash
@@ -7,9 +8,10 @@
 // writer (zlib deflate + a hand-built ZIP container), so there is nothing for
 // a Windows genealogist to install beyond Node itself.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, sep } from "node:path";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseArgs } from "node:util";
 import { deflateRawSync } from "node:zlib";
 import { resolvePython } from "./python-interpreter.mjs";
 import { buildVersion, gitStamp } from "./build-stamp.mjs";
@@ -24,6 +26,8 @@ const OUT = join(RELEASES, "genealogy-plugin.zip");
 // load. Asserted by tests/packaging/plugin-hooks.test.ts.
 const INCLUDE = [".claude-plugin", "agents", "skills", "hooks"];
 
+const options = parseOptions();
+
 // Gate: validate skill + agent frontmatter (description <=1024 chars, no angle
 // brackets, valid name) BEFORE building a zip Cowork would reject at install
 // time. Same check the CI gate runs (.github/workflows/check-runlogs.yml).
@@ -31,29 +35,117 @@ const INCLUDE = [".claude-plugin", "agents", "skills", "hooks"];
 // enforces it.
 validateFrontmatter();
 
-console.log("Packaging Cowork plugin...");
-const files = INCLUDE.flatMap((d) => walk(join(PLUGIN, d)));
-const entries = files.map((abs) => ({
-  name: relative(PLUGIN, abs).split(sep).join("/"),
-  data: readFileSync(abs),
-  mtime: statSync(abs).mtime,
-}));
-// Stamp the zipped plugin.json (in memory — the tracked file stays at its base
-// version) with the same build id shape the .mcpb carries, so a tester's two
-// installed artifacts can be told apart by build (#2126). The engine cannot
-// compare the two at runtime (host vs VM); the stamp is for humans and the
-// agent to quote.
+console.log(options.connector ? "Packaging connector plugin..." : "Packaging Cowork plugin...");
+const entries = pluginEntries();
 const pluginJson = entries.find((e) => e.name === ".claude-plugin/plugin.json");
 if (!pluginJson) throw new Error(".claude-plugin/plugin.json not found in the plugin tree");
 const plugin = JSON.parse(pluginJson.data.toString("utf8"));
-plugin.version = buildVersion(plugin.version, gitStamp(ROOT));
-pluginJson.data = Buffer.from(JSON.stringify(plugin, null, 2) + "\n", "utf8");
-console.log(`Stamped plugin.json version: ${plugin.version}`);
-mkdirSync(RELEASES, { recursive: true });
-writeFileSync(OUT, buildZip(entries));
-console.log(`Done. Created ${OUT} (${entries.length} files)`);
+if (options.connector) {
+  packageConnector(entries, pluginJson, plugin, options);
+} else {
+  // Stamp the zipped plugin.json (in memory — the tracked file stays at its base
+  // version) with the same build id shape the .mcpb carries, so a tester's two
+  // installed artifacts can be told apart by build (#2126). The engine cannot
+  // compare the two at runtime (host vs VM); the stamp is for humans and the
+  // agent to quote.
+  plugin.version = buildVersion(plugin.version, gitStamp(ROOT));
+  pluginJson.data = Buffer.from(JSON.stringify(plugin, null, 2) + "\n", "utf8");
+  console.log(`Stamped plugin.json version: ${plugin.version}`);
+  mkdirSync(RELEASES, { recursive: true });
+  writeFileSync(OUT, buildZip(entries));
+  console.log(`Done. Created ${OUT} (${entries.length} files)`);
+}
 
 // ---- helpers --------------------------------------------------------------
+
+function parseOptions() {
+  try {
+    const { values } = parseArgs({
+      strict: true,
+      options: {
+        connector: { type: "boolean" },
+        version: { type: "string" },
+        marketplace: { type: "string" },
+        out: { type: "string" },
+      },
+    });
+    if (!values.connector && [values.version, values.marketplace, values.out].some((v) => v !== undefined)) {
+      throw new Error("--version, --marketplace and --out require --connector");
+    }
+    if (values.connector) {
+      if (!values.version || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(values.version)) {
+        throw new Error("--connector requires --version x.y.z (numeric semver, no leading zeros)");
+      }
+      if (!values.marketplace || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(values.marketplace)) {
+        throw new Error("--connector requires a kebab-case --marketplace name");
+      }
+      if (values.out === "") throw new Error("--out must not be empty");
+    }
+    return values;
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+}
+
+function pluginEntries() {
+  const files = INCLUDE.flatMap((d) => walk(join(PLUGIN, d)));
+  return files.map((abs) => ({
+    name: relative(PLUGIN, abs).split(sep).join("/"),
+    data: readFileSync(abs),
+    mtime: statSync(abs).mtime,
+  }));
+}
+
+function packageConnector(entries, pluginJson, plugin, { version, marketplace, out }) {
+  out = out === undefined ? join(RELEASES, "plugin-marketplace") : resolve(out);
+  if (isWithin(out, ROOT) || isWithin(PLUGIN, out)) {
+    console.error("--out must not be the repo root, an ancestor of it, or inside packages/engine/plugin");
+    process.exit(1);
+  }
+  if (existsSync(join(out, ".git"))) {
+    console.error("--out is a git checkout; refusing to delete it");
+    process.exit(1);
+  }
+  if (existsSync(out) && readdirSync(out).length && !existsSync(join(out, ".claude-plugin", "marketplace.json"))) {
+    console.error("--out is non-empty and has no .claude-plugin/marketplace.json; refusing to delete it");
+    process.exit(1);
+  }
+  if (!plugin.author) {
+    console.error(".claude-plugin/plugin.json must have an author for the marketplace owner");
+    process.exit(1);
+  }
+  plugin.version = version;
+  pluginJson.data = Buffer.from(JSON.stringify(plugin, null, 2) + "\n", "utf8");
+  rmSync(out, { recursive: true, force: true });
+  for (const { name, data } of entries) {
+    const dest = join(out, "plugins", "genealogy-research", name);
+    mkdirSync(dirname(dest), { recursive: true });
+    writeFileSync(dest, data);
+  }
+  const manifest = {
+    name: marketplace,
+    // The one plugin's own description; `claude plugin validate` warns on a marketplace without one.
+    description: plugin.description,
+    owner: plugin.author,
+    plugins: [{
+      name: "genealogy-research",
+      source: "./plugins/genealogy-research",
+      description: plugin.description,
+      version,
+    }],
+  };
+  mkdirSync(join(out, ".claude-plugin"), { recursive: true });
+  writeFileSync(join(out, ".claude-plugin", "marketplace.json"), JSON.stringify(manifest, null, 2) + "\n");
+  const zip = join(dirname(out), "genealogy-plugin-connector.zip");
+  writeFileSync(zip, buildZip(entries));
+  console.log(`Done. Created ${out} and ${zip} (${entries.length} files)`);
+}
+
+function isWithin(parent, child) {
+  const path = relative(parent, child);
+  return path === "" || (path !== ".." && !path.startsWith(`..${sep}`) && !isAbsolute(path));
+}
 
 function walk(dir) {
   const out = [];

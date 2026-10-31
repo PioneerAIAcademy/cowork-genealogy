@@ -1681,6 +1681,10 @@ mcpb: ## Build the .mcpb desktop extension
 plugin: ## Build the Cowork plugin .zip
 	node scripts/package-plugin.mjs
 
+.PHONY: plugin-connector
+plugin-connector: ## Build the plugin's connector release into releases/plugin-marketplace/ and releases/genealogy-plugin-connector.zip: make plugin-connector VERSION=x.y.z MARKETPLACE=<name>
+	node scripts/package-plugin.mjs --connector --version '$(VERSION)' --marketplace '$(MARKETPLACE)'
+
 .PHONY: cowork-install
 cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-path (Windows: eval\CoworkInstall.bat)
 	# One target because installing only one of the two is the most common way
