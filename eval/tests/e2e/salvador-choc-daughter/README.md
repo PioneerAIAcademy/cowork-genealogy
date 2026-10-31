@@ -30,7 +30,9 @@ match strength.
 
 **Resolved 2026-10-31 (issue #3636): the hint is a true match.** The hint
 persona Antonia Choc (`ark:/61903/1:1:XS7R-WRSY`) is a daughter of the tree's
-Salvador Choc and his wife Petrona Ba (`fixture.json` `hint.identity: "same"`).
+Salvador Choc and a wife recorded as Petrona Choc (`fixture.json`
+`hint.identity: "same"`). The register does not say whether she is the tree's
+Petrona Ba or Petrona Xol.
 She was born 15 August 1877 and baptised 29 October 1877 at San Pedro Carchá,
 Alta Verapaz, Guatemala. Antonia is not in the tree.
 
@@ -58,22 +60,29 @@ other entries on the same page against the index:
 
 Both matched, so the reading is licensed for child, parents and date.
 
-**Why it is the same couple.** The parish is the right one. The mother's name,
-Petrona Choc, is how the subject's 9 August 1871 marriage entries and his son
-Victoriano's 1888 birth registration index his wife Petrona Ba, so it is the
-same woman under her married surname. An 1877 birth falls between the 1871
-marriage and the 1888 son. None of the tree's 48 attached records is this baptism or names an Antonia,
-so the hint is not a re-index of an attached source.
+**Why it is Salvador's daughter.** The parish is the right one. Petrona Choc
+is a married-surname form, and it fits either of the tree's wives of Salvador
+in the 1870s. The 9 August 1871 marriage entries and Victoriano's 1888 birth
+registration index his wife Petrona Ba as Petrona Choc. Petrona Xol
+(`MGDD-Z43`, christened 1842) bore him Candelaria (christened 1870) and Dominga
+(christened 13 December 1875), and could be recorded the same way. The tree's
+Petrona Ba (`GG1G-697`) carries a 14 July 1867 christening, which would make
+her 10 in 1877, so that profile is likely conflated with a younger Petrona Baa.
+None of the tree's 48 attached records is this baptism or names an Antonia, so
+the hint is not a re-index of an attached source.
 
-The name is common in San Pedro Carchá, so names alone do not settle it. What
-settles it is the image: it confirms the dates and the parents' names as
-indexed, and it places Antonia in the couple's childbearing years in their own
-parish.
+The name is common in San Pedro Carchá, so names alone do not settle it. The
+image confirms the dates and the parents' names as indexed. It does not name
+the mother's birth surname, so the fixture does not decide which wife is
+Antonia's mother. The godparents (Manuel Tiul, Mª Santos) were not compared
+with those on Dominga's 1875 baptism or the couple's other baptisms; that
+comparison is what could settle it.
 
 **Findings.** `f1` (required): the agent should add Antonia Choc, born 15
 August 1877 and baptised 29 October 1877 at San Pedro Carchá, as a daughter of
-Salvador Choc and Petrona Ba (recorded as Petrona Choc). There is no avoid
-guard.
+Salvador Choc, with her mother recorded as Petrona Choc. Linking the mother to
+either Petrona Ba or Petrona Xol is not required, and neither is wrong on this
+evidence. There is no avoid guard.
 
 **Retrieval.** The hint record and the page image, including the calibration
 entries, were read by hand on familysearch.org. The identity judgement is the
