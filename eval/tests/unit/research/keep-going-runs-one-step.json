@@ -74,6 +74,7 @@
   "judge_context": [
     "This is a ROUTING test. The hand-off and its `userPresent: no` field are asserted deterministically from the hook records (test_routes_to_expected_skill, test_spawn_carries_its_step_mode_fields). You cannot see them; do not grade them.",
     "\"Keep going.\" runs ONE step: the next one `project_context` names. It is not a request to run the whole research, and not a bounded request.",
-    "The run ends at the router's first hand-off by design (execution.stop_at_stub). The transcript ends at that hand-off, with no closing summary. Do not mark a summary as missing. Grade only the router's state derivation and its honesty about what it delegated."
+    "The run ends at the router's first hand-off by design (execution.stop_at_stub). The transcript ends at that hand-off, with no closing summary. Do not mark a summary as missing. Grade only the router's state derivation and its honesty about what it delegated.",
+    "Because the run stops at the hand-off, person-evidence never runs: no research.json or tree.gedcomx.json change is expected, and none is missing. A reply that announces the step being handed off (\"Linking the 13 unlinked assertions … now\") describes the delegation, not completed work; do not grade it as a false claim of persisted links."
   ]
 }
