@@ -24,7 +24,7 @@ export class WsResearchTransport implements ResearchTransport {
   ) {}
 
   async getProjectState(): Promise<ProjectStateSnapshot> {
-    const res = await fetch(`/api/sessions/${this.sessionId}/state`, { credentials: 'include' })
+    const res = await fetch(`api/sessions/${this.sessionId}/state`, { credentials: 'include' })
     if (!res.ok) return { research: null, gedcomx: null, collections: null, label: null, notice: null }
     const s = await res.json()
     return {
@@ -72,7 +72,7 @@ export class WsResearchTransport implements ResearchTransport {
 
   async readSidecar(logId: string): Promise<SidecarRead | null> {
     const res = await fetch(
-      `/api/sessions/${this.sessionId}/sidecar/${encodeURIComponent(logId)}`,
+      `api/sessions/${this.sessionId}/sidecar/${encodeURIComponent(logId)}`,
       { credentials: 'include' }
     )
     if (res.status === 404) return null
@@ -93,7 +93,7 @@ export class WsResearchTransport implements ResearchTransport {
   }
 
   async submitFeedback(payload: FeedbackPayload): Promise<FeedbackResult> {
-    const res = await fetch(`/api/feedback`, {
+    const res = await fetch(`api/feedback`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
@@ -104,7 +104,7 @@ export class WsResearchTransport implements ResearchTransport {
   }
 
   async getFeedbackContext(): Promise<FeedbackContext> {
-    const res = await fetch(`/api/feedback/context?sessionId=${this.sessionId}`, {
+    const res = await fetch(`api/feedback/context?sessionId=${this.sessionId}`, {
       credentials: 'include'
     })
     // Do NOT resolve empty here: the dialog cannot tell that apart from "the folder
@@ -116,7 +116,7 @@ export class WsResearchTransport implements ResearchTransport {
 
   async getSourceImage(filename: string): Promise<string | null> {
     const res = await fetch(
-      `/api/sessions/${this.sessionId}/image?filename=${encodeURIComponent(filename)}`,
+      `api/sessions/${this.sessionId}/image?filename=${encodeURIComponent(filename)}`,
       { credentials: 'include' }
     )
     if (res.status === 404) return null

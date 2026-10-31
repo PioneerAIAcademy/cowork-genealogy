@@ -29,7 +29,14 @@ import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   competingParentSets,
   conflictBlocksCompletion,
+  conflictCoverageLogIds,
+  datetimeMs,
+  endsOnConflict,
+  isAnalysed,
+  questionLastSearchedMs,
+  questionOwnedLogEntries,
   questionTiedAssertionIds,
+  unsettledConflictEnding,
   whyConflictBlocksCompletion,
 } from "../utils/question-state.js";
 import {
@@ -5060,8 +5067,11 @@ function questionResolvedInvariants(
           "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
           "sources behind it have never been correlated. This is not the same as a question " +
           "researched and found empty, which `not_proved` does close — here the work is " +
-          "unfinished rather than finished with nothing. Leave the question open, record the " +
-          "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+          "unfinished rather than finished with nothing. Leave the question open and record the " +
+          "attempt at the tier reached (`not_proved` when the conflict blocks identity), then " +
+          (inConflictEnding(beforeResearch, entry?.id, [...blocking])
+            ? CONFLICT_ENDING_MOVE
+            : "invoke conflict-resolution; resolve it after."),
       ];
     }
   }
@@ -5281,6 +5291,7 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
 
   const shared = [...hits.keys()].sort();
   const blocking = [...new Set([...hits.values()].flat())].sort();
+  const ending = inConflictEnding(beforeResearch, entry?.question_id, blocking);
   return [
     `tier '${tier}' is not available while ${blocking.join(", ")} ` +
       `${blocking.length === 1 ? "is" : "are"} unresolved: ` +
@@ -5289,10 +5300,37 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
       "Correlating sources assumes they describe the same person, and that is " +
       "what the open conflict puts in question — so no tier above `not_proved` " +
       "is reachable, and tiering down to `possible` does not repair it. Record " +
-      "the attempt at `not_proved`, naming the conflict and what would settle " +
-      "it, then invoke conflict-resolution. Re-conclude by updating that same " +
-      "summary once the conflict is resolved.",
+      (ending
+        ? "the attempt at `not_proved`, naming the conflict, then " + CONFLICT_ENDING_MOVE
+        : "the attempt at `not_proved`, naming the conflict and what would settle it, then " +
+          "invoke conflict-resolution. Re-conclude by updating that same summary once the " +
+          "conflict is resolved."),
   ];
+}
+
+const CONFLICT_ENDING_MOVE =
+  "give the summary `shortfall: \"conflict\"` and stop there: conflict-resolution has " +
+  "already weighed every log entry and found nothing left to search, so invoking it " +
+  "again would weigh the same evidence again.";
+
+/** Whether a refusal over unresolved conflicts meets section E's ending, where
+ *  invoking conflict-resolution again weighs the same evidence again. Read with
+ *  the ladder's own predicate, and only when every conflict the refusal names
+ *  was itself found searched out over the log it covers now: a conflict on a
+ *  cited source that blocks another question may never have been weighed, or
+ *  that question may have been searched since. */
+function inConflictEnding(research: any, questionId: unknown, conflictIds: string[]): boolean {
+  const question = (Array.isArray(research?.questions) ? research.questions : []).find(
+    (q: any) => q?.id === questionId,
+  );
+  const conflicts = Array.isArray(research?.conflicts) ? research.conflicts : [];
+  const weighed = conflictIds.every((id) => {
+    const c = conflicts.find((x: any) => x?.id === id);
+    if (!Array.isArray(c?.weighed_log_entry_ids)) return false;
+    const stamped = new Set(c.weighed_log_entry_ids);
+    return conflictCoverageLogIds(research, c).every((logId) => stamped.has(logId));
+  });
+  return Boolean(question) && weighed && unsettledConflictEnding(research, question);
 }
 
 /** One conclusion per question — the manifest's own rule, now enforced.
@@ -5341,11 +5379,14 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
  *
  *  Scoped to that case: a one-field update is refused only when a `log[]` entry
  *  attributed to the summary's question (through a plan item of one of its
- *  plans) was performed after the summary's pre-op `updated` stamp. With no
- *  later search, a one-field edit — a tier change with a reworded narrative —
- *  is ordinary and passes. A summary with no `updated` predates the stamp and
- *  is never refused. `log` is not a `research_append` section, so live and
- *  pre-call research carry the same log.
+ *  plans) was performed after the summary's pre-op `updated` stamp. In section
+ *  E's ending the question's owned entries count instead, so the upload that
+ *  closes a hand-off counts too, and an update sending neither field goes to
+ *  `staleEndingRefresh`; both read the live research's questions, plans and
+ *  conflicts. With no later search, a one-field edit — a tier change with a
+ *  reworded narrative — is ordinary and passes. A summary with no `updated`
+ *  predates the stamp and is never refused. `log` is not a `research_append`
+ *  section, so live and pre-call research carry the same log.
  *
  *  Update-only: an append already requires both. Passing a field's current
  *  text again satisfies it — the point is that the caller re-checked it. */
@@ -5360,11 +5401,17 @@ function narrativeAndSearchSummaryTogether(
   const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
   const narrative = has("narrative_markdown");
   const summary = has("exhaustive_search_summary");
-  if (narrative === summary) return [];
+  if (narrative && summary) return [];
   const since = typeof priorUpdated === "string" ? datetimeMs(priorUpdated) : NaN;
   if (Number.isNaN(since)) return [];
   const qid = entry?.question_id;
   if (typeof qid !== "string" || qid === "") return [];
+  if (!narrative && !summary) return staleEndingRefresh(op, qid, priorUpdated, research);
+  // In section E's ending the ladder counts an upload as a search, so the
+  // rule does too: a refresh that ends the research must cover it.
+  const question = (Array.isArray(research?.questions) ? research.questions : []).find(
+    (q: any) => q?.id === qid,
+  );
   const itemIds = new Set<string>();
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (plan?.question_id !== qid) continue;
@@ -5372,14 +5419,14 @@ function narrativeAndSearchSummaryTogether(
       if (typeof item?.id === "string") itemIds.add(item.id);
     }
   }
-  const later = (Array.isArray(research?.log) ? research.log : [])
-    .filter(
-      (e: any) =>
-        e &&
-        itemIds.has(e.plan_item_id) &&
-        typeof e.performed === "string" &&
-        datetimeMs(e.performed) > since,
-    )
+  const entries =
+    question && unsettledConflictEnding(research, question)
+      ? questionOwnedLogEntries(research, qid)
+      : (Array.isArray(research?.log) ? research.log : []).filter(
+          (e: any) => e && itemIds.has(e.plan_item_id),
+        );
+  const later = entries
+    .filter((e: any) => e && typeof e.performed === "string" && datetimeMs(e.performed) > since)
     .map((e: any) => e.id ?? "(no id)");
   if (later.length === 0) return [];
   const [set, missing] = narrative
@@ -5397,12 +5444,27 @@ function narrativeAndSearchSummaryTogether(
   ];
 }
 
-/** Epoch ms of an `iso_datetime`, accepting the dash-separated time form the
- *  schema allows (`2026-05-01T10-15-00Z`); NaN when it does not parse. */
-function datetimeMs(value: string): number {
-  const m = /^(\d{4}-\d{2}-\d{2}T\d{2})[:-](\d{2})[:-](\d{2})(?:[.-](\d+))?(.*)$/.exec(value);
-  if (!m) return Date.parse(value);
-  return Date.parse(`${m[1]}:${m[2]}:${m[3]}${m[4] ? "." + m[4] : ""}${m[5]}`);
+/** Section E: an update that sends neither text field leaves `updated` where it
+ *  was (`restampOn`), so in the ending a summary older than the question's
+ *  latest search would stay older on every pass and the ladder would send the
+ *  question back to proof-conclusion forever. There, the refresh must rewrite
+ *  the text. "Older" is the ladder's own test (`endsOnConflict`), so an upload
+ *  counts as a search; outside the ending a field-only update is ordinary. */
+function staleEndingRefresh(op: any, qid: string, priorUpdated: unknown, research: any): string[] {
+  const question = (Array.isArray(research?.questions) ? research.questions : []).find(
+    (q: any) => q?.id === qid,
+  );
+  if (!question || !unsettledConflictEnding(research, question)) return [];
+  const lastSearched = questionLastSearchedMs(research, qid);
+  if (endsOnConflict({ shortfall: "conflict", updated: priorUpdated }, lastSearched)) return [];
+  return [
+    `proof_summaries update of ${op.entryId ?? "(no entryId)"} sends neither ` +
+      "`narrative_markdown` nor `exhaustive_search_summary`, but question " +
+      `${qid} has been searched since this summary was last written, and it is ending on an ` +
+      "unsettled conflict. The summary ends the research only once it is rewritten over that " +
+      "evidence: read the newer log entries, rewrite both fields, and pass both in this update " +
+      "with `shortfall: \"conflict\"`.",
+  ];
 }
 
 /** A `proof_summaries` write when the persons this proof bears on — its
@@ -7810,6 +7872,48 @@ function validateRelationshipDirection(entry: Record<string, unknown>): void {
   ]);
 }
 
+/** Section E. `weighed_log_entry_ids` marks the analysis that found nothing
+ *  left to search, and holds the coverage set the ladder compares with the
+ *  question's log to tell new evidence from evidence already weighed. Whether a
+ *  decisive record is still unsearched cannot be read from the documents, so
+ *  conflict-resolution declares it by sending the field; the value is computed
+ *  here, from the helper the ladder reads, because by hand the set misses the
+ *  uploads matched to their hand-offs by URL. An analysis that does not declare
+ *  it clears it, as does settling the conflict: either way a stale finding
+ *  would end the research on evidence that has moved. */
+function stampWeighedLogEntryIds(entry: any, op: ResearchAppendOp, research: any): void {
+  const written: Record<string, unknown> = (op.op === "append" ? op.entry : op.fields) ?? {};
+  const declared = Object.prototype.hasOwnProperty.call(written, "weighed_log_entry_ids");
+  const analysed = isAnalysed(written);
+  if (declared && !analysed) {
+    throw new ResearchAppendError(
+      "`weighed_log_entry_ids` declares that the analysis in this write found nothing left " +
+        "to search, so it is accepted only in a write that also carries a non-blank " +
+        "`independence_analysis` (and `weighing_analysis`). Re-send it with the analysis, " +
+        "or drop it.",
+    );
+  }
+  if (entry?.status !== "unresolved") {
+    delete entry.weighed_log_entry_ids;
+    return;
+  }
+  if (!analysed) return;
+  if (!declared) {
+    delete entry.weighed_log_entry_ids;
+    return;
+  }
+  const covered = conflictCoverageLogIds(research, entry);
+  if (covered.length === 0) {
+    throw new ResearchAppendError(
+      "`weighed_log_entry_ids` declares that nothing is left to search, but this conflict " +
+        "covers no log entry: it blocks no question, or no question it blocks has a log entry " +
+        "yet, so there is no search to declare it over. Drop the field and name the record that " +
+        "would settle the conflict.",
+    );
+  }
+  entry.weighed_log_entry_ids = covered;
+}
+
 function applyOne(
   research: any,
   op: ResearchAppendOp,
@@ -8270,6 +8374,7 @@ function applyOne(
   } else {
     throw new ResearchAppendError(`unknown op '${op.op}' (expected 'append' or 'update')`);
   }
+  if (section === "conflicts") stampWeighedLogEntryIds(resultEntry, op, research);
 
   // Section invariants the project validator does not already enforce.
   const invariantErrors: string[] = [];

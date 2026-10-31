@@ -1,0 +1,29 @@
+# U28: the web tier behind a path-prefix edge (prefix/nginx.conf), the shape the
+# FamilySearch edge gives it under an Alias or a Service Group binding. Layered on the
+# base file by `make proto-prefix-check`:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prefix.yml up -d --build
+#   docker compose -f docker-compose.yml -f docker-compose.prefix.yml up -d --force-recreate edge
+#
+# The SPA is then at http://127.0.0.1:8090/service/search/agent-tools/web/. web keeps its
+# 8085 publish, but PUBLIC_URL now carries the prefix, so its cookies are scoped to it:
+# run `make proto-up` again before using the stack unprefixed. Dev-login stays on (http).
+# nginx resolves web once, at start: recreate the edge whenever web is recreated. The check
+# removes it when done; `make proto-down` removes it as an orphan.
+services:
+  web:
+    environment:
+      PUBLIC_URL: http://127.0.0.1:8090/service/search/agent-tools/web
+
+  edge:
+    image: nginx:1.27-alpine
+    container_name: proto-edge
+    restart: unless-stopped
+    # Loopback only, for the same reason as web's publish: dev-login signs anyone in.
+    ports:
+      - "127.0.0.1:8090:8090"
+    volumes:
+      - ./prefix/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      web:
+        condition: service_healthy
