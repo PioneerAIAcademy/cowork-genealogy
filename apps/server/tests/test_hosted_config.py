@@ -20,7 +20,9 @@ import json
 
 import pytest
 
-from app.fs_oauth import CONFIG_PATH, hosted_config, merge_config, read_config
+from types import SimpleNamespace
+
+from app.fs_oauth import CONFIG_PATH, hosted_config, hosted_config_for, merge_config, read_config
 
 
 class FakeSandbox:
@@ -44,7 +46,7 @@ class FakeSandbox:
 
 
 def test_marks_the_sandbox_hosted_with_no_overrides_configured():
-    assert hosted_config(None) == {"hosted": True}
+    assert hosted_config(None) == {"hosted": True, "matcher": "familysearch"}
 
 
 def test_omits_each_override_when_unset_rather_than_writing_the_key_empty():
@@ -76,6 +78,7 @@ def test_threads_both_service_urls_under_the_keys_the_engine_reads():
         "hosted": True,
         "wikiApiUrl": "https://wiki.example.org",
         "popStatsUrl": "https://pop.example.org",
+        "matcher": "familysearch",
     }
 
 
@@ -91,7 +94,7 @@ def test_empty_string_is_treated_as_unset():
     This is the case that actually bites: `popStatsUrl: ""` survives the
     engine's `??` and silently becomes the base URL.
     """
-    assert hosted_config(None, wiki_api_url="", pop_stats_url="") == {"hosted": True}
+    assert hosted_config(None, wiki_api_url="", pop_stats_url="") == {"hosted": True, "matcher": "familysearch"}
 
 
 # ── merge_config: the control plane is not the only writer ────────────────
@@ -123,6 +126,7 @@ async def test_a_connect_refresh_keeps_keys_it_does_not_own():
         "openRouterApiKey": "sk-or-set-from-inside-the-vm",
         "openRouterModel": "some/other-model",
         "wikiApiUrl": "https://wiki.example.org",
+        "matcher": "familysearch",
     }
 
 
@@ -168,7 +172,7 @@ async def test_an_unset_override_does_not_erase_the_sandbox_value():
 async def test_a_fresh_sandbox_has_no_config_to_merge_with():
     sandbox = FakeSandbox()
     await merge_config(sandbox, hosted_config(None, pop_stats_url="https://pop.example.org"))
-    assert sandbox.config() == {"hosted": True, "popStatsUrl": "https://pop.example.org"}
+    assert sandbox.config() == {"hosted": True, "popStatsUrl": "https://pop.example.org", "matcher": "familysearch"}
 
 
 @pytest.mark.parametrize(
@@ -188,4 +192,66 @@ async def test_an_unreadable_config_never_blocks_provisioning(body):
     assert await read_config(sandbox) == {}
 
     await merge_config(sandbox, hosted_config(None))
-    assert sandbox.config() == {"hosted": True}
+    assert sandbox.config() == {"hosted": True, "matcher": "familysearch"}
+
+
+# ── the matcher: FamilySearch's, or the matcher service ───────────────────
+
+MATCHER_KEY = "feedfacecafebeef0123456789abcdef0123456789abcdef0123456789abcdef"
+
+
+def test_both_matcher_settings_turn_the_service_on():
+    config = hosted_config(
+        None, matcher_url="https://matcher.example.org", matcher_api_key=MATCHER_KEY,
+    )
+    assert config["matcher"] == "service"
+    assert config["matcherUrl"] == "https://matcher.example.org"
+    assert config["matcherApiKey"] == MATCHER_KEY
+
+
+@pytest.mark.parametrize(
+    ("url", "key"),
+    [("https://matcher.example.org", None), (None, MATCHER_KEY),
+     ("https://matcher.example.org", ""), ("", MATCHER_KEY), (None, None)],
+    ids=["url-only", "key-only", "empty-key", "empty-url", "neither"],
+)
+def test_the_service_needs_both_settings(url, key):
+    """One half of the pair names a service the engine could not call."""
+    config = hosted_config(None, matcher_url=url, matcher_api_key=key)
+    assert config["matcher"] == "familysearch"
+    assert "matcherUrl" not in config
+    assert "matcherApiKey" not in config
+
+
+def test_hosted_config_for_threads_every_operator_setting():
+    settings = SimpleNamespace(
+        openrouter_api_key="sk-or-key",
+        wiki_api_url="https://wiki.example.org",
+        pop_stats_url="https://pop.example.org",
+        matcher_url="https://matcher.example.org",
+        matcher_api_key=MATCHER_KEY,
+    )
+    assert hosted_config_for(settings) == {
+        "hosted": True,
+        "openRouterApiKey": "sk-or-key",
+        "wikiApiUrl": "https://wiki.example.org",
+        "popStatsUrl": "https://pop.example.org",
+        "matcher": "service",
+        "matcherUrl": "https://matcher.example.org",
+        "matcherApiKey": MATCHER_KEY,
+    }
+
+
+@pytest.mark.asyncio
+async def test_unsetting_the_service_switches_a_sandbox_back_to_familysearch():
+    """Sandboxes persist and an omitted key keeps what the file holds, so the
+    document must name the matcher every time for the switch to go both ways."""
+    sandbox = FakeSandbox()
+    await merge_config(sandbox, hosted_config(
+        None, matcher_url="https://matcher.example.org", matcher_api_key=MATCHER_KEY,
+    ))
+    assert sandbox.config()["matcher"] == "service"
+
+    await merge_config(sandbox, hosted_config(None))
+
+    assert sandbox.config()["matcher"] == "familysearch"

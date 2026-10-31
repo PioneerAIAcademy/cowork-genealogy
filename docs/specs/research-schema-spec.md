@@ -106,6 +106,7 @@ flagged. (One row below is the exception, and says so.)
 | `project_status` | `active`, `paused`, `completed` | project |
 | `priority` | `high`, `medium`, `low` | questions |
 | `selection_basis` | `timeline_gap`, `unresolved_conflict`, `fan_pivot`, `hypothesis_test`, `objective_decomposition`, `new_evidence`, `record_found_incidentally`, `user_directed` | questions |
+| `question_kind` | `enumerative`, `targeted` | questions |
 | `informant_proximity` | `self`, `witness`, `household_member`, `family_not_present`, `researcher`, `official_duty`, `unknown` | assertions |
 | `date_certainty` | `exact`, `approximate`, `estimated`, `calculated`, `before`, `after`, `between` | assertions |
 | `date_certainty_timeline` | `exact`, `approximate`, `estimated`, `calculated` | timeline events (subset of date_certainty — directional qualifiers like before/after don't apply to timeline positioning) |
@@ -299,7 +300,7 @@ described under "Who actually writes a row" below.
 | `plans` | research-plan; search-records, search-external-sites, search-full-text, search-images, search-hints (`items[].status`); `extraction_append` (`items[].status`, `in_progress` → `completed` only, by tool identity) | log, question-selection | Mutable; old plans set to `superseded`, never deleted. research-plan owns plan and item structure; the search skills update only an item's `status` after executing it (search-hints sets the status of its `fs_hints` review item) |
 | `log` | search-records, search-full-text, search-external-sites, search-images, search-hints (one entry per researcher verdict on a hint), survey-surname; `extraction_append` (its own `record_read` entry per record it reads live; an earlier uncited read is cited instead) | question-selection, all | **Append-only; entries never modified or deleted.** No single skill owns the section — `research_log_append` owns entry structure and id allocation, and takes no `section` argument |
 | `sources` | `extraction_append` (by tool identity), citation | all | Mutable (citation can be refined); never delete. citation refines and never creates — see §8 "Source ownership" |
-| `assertions` | `extraction_append` (by tool identity) | timeline, conflict-resolution, proof-conclusion, question-selection | Classifications are set in code at extraction and not refined afterward; `research_append` refuses every assertions write except an update setting only `informant_bias_notes`. Never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
+| `assertions` | `extraction_append` (by tool identity) | timeline, conflict-resolution, proof-conclusion, question-selection | Classifications are set in code at extraction and not refined afterward; `research_append` refuses every assertions write except an update setting only `informant_bias_notes`. A wrong extraction is corrected only by `extraction_append`'s re-extraction, which retires the old assertions with `superseded_by` (§5.6). Never delete. convert-dates was listed here and never could write: its only tool is `convert_calendar` and it holds no writer tool |
 | `person_evidence` | person-evidence; `extraction_append` (attachment links, by tool identity) | all downstream | Mutable (confidence, rationale); never delete, use superseded_by. An attachment link (`speculative`, no `match_score`, `ATTACHMENT_LINK_RATIONALE`) is only ever superseded |
 | `conflicts` | conflict-resolution | question-selection, proof-conclusion | Mutable (status, analysis, preferred_assertion_id) |
 | `hypotheses` | the hypothesis-tracking agent | question-selection, proof-conclusion | Mutable (status, assertion lists, ruled_out fields) |
@@ -309,7 +310,7 @@ described under "Who actually writes a row" below.
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 | `warning_justifications` | (none — writer-tool only) | none: no tool returns it (`research_query` excludes it, `project_context` omits it) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
 | `namesakes` | search-records (sole writer: the plugin hook routes the section to it); `research_append` stamps `record_persona_ids` | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate), `tree_edit` and `tree_correct` (the citation check) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` or `record_persona_ids` (Section 5.15). Optional section — absent until a namesake is recorded |
-| `rejected_links` | person-evidence | any caller via `research_query` | Mutable (`reason` may be filled in later); never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
+| `rejected_links` | person-evidence | any caller via `research_query` | Immutable except `reason`, which may be filled in later; `research_append` refuses an update that sets any other field (Section 5.14). Never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
 `plans[].items[]` rather than a top-level property of this file. It carries the
@@ -326,8 +327,8 @@ mechanism at all** — so do not reach for one generically. There are exactly th
 | Mechanism | Where it exists | How |
 |---|---|---|
 | A `superseded` status value | `plans` **only** — it is the one status enum that defines one (see the enum table above) | Set `status: "superseded"` on the old plan |
-| A `superseded_by` pointer | `person_evidence`, `evaluations` | Point the old entry's `superseded_by` at the new entry's id |
-| None | `questions`, `conflicts`, `hypotheses`, `sources`, `assertions`, `localities`, `proof_summaries`, `namesakes` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
+| A `superseded_by` pointer | `person_evidence`, `evaluations`, `assertions` | Point the old entry's `superseded_by` at the new entry's id. An assertion with no replacement takes the literal `"retracted"` and a `superseded_reason`; only `extraction_append`'s re-extraction retires one (§5.6) |
+| None | `questions`, `conflicts`, `hypotheses`, `sources`, `localities`, `proof_summaries`, `namesakes` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
 
 Writing a status value the section's enum does not define is rejected by
 `validate_research_schema`, so an instruction to "supersede with status" on a section in
@@ -561,6 +562,7 @@ Array of question objects.
 | `question` | string | yes | The specific research question |
 | `rationale` | string | yes | Why this question matters to the objective |
 | `selection_basis` | `selection_basis` | yes | Why this question was chosen |
+| `question_kind` | `question_kind` | no | `enumerative` when the question asks for every member of a set of people ("Who were the children of X?"), which carries `research-plan`'s breadth obligation (birth, marriage, death, census and probate, or a `skipped` item saying why one is absent); `targeted` otherwise, where a narrow plan stays legitimate. Set by `question-selection` at creation. Absent on questions written before the field existed |
 | `priority` | `priority` | yes | Question priority |
 | `status` | `question_status` | yes | Current status |
 | `depends_on` | string[] | yes | Question IDs this question depends on (may be empty; each ID must reference an existing question) |
@@ -767,8 +769,12 @@ The rule is enforced in the forward direction only. `record_role: "absent"` pair
 | `record_basis` | `record_basis` | yes | `stated`, `inferred`, or `absent` — what the record mechanically did with this value, NOT the GPS direct/indirect/negative evidence judgment (see "What `record_basis` is not" below). **`absent` constrains two sibling fields:** it requires `record_role: "absent"` (a different field with the same value — the PERSON was not in the record) and `informant_proximity: "researcher"`. See "Negative evidence" below |
 | `log_entry_id` | string or null | no | `log_` reference to the search that produced this assertion — the assertion→search half of the provenance chain (sources carry the same field). Null for assertions created outside the search workflow (e.g., from manual record analysis). |
 | `extracted_for_question_ids` | string[] | yes | Question IDs this assertion bears on (may be empty; many assertions are extracted opportunistically) |
+| `superseded_by` | string or null | no | Set only by `extraction_append({ reextract: true })`. **Any non-null value means the assertion is retired**: it is history, not evidence. Either the `a_` id of the assertion that replaced it, or the literal `"retracted"` when the re-extraction wrote no counterpart (an invented relationship, say). Absent or null means live |
+| `superseded_reason` | string or null | no | Why the assertion was retired. Required, non-empty, when `superseded_by` is `"retracted"` |
 
 **`structured_value`** — Optional machine-readable form of `value` that enables programmatic comparison (timeline construction, conflict detection) without parsing prose. The freeform `value` stays for human readability. See Section 5.6.1 for recommended shapes by fact_type.
+
+**Retiring an assertion (re-extraction).** An assertion is never edited and never deleted. When a record was extracted wrongly, `extraction_append` is called again for it with `reextract: true`. That writes fresh assertions under the same source and, in the same write, retires every live assertion of that record id: each points `superseded_by` at its counterpart in the new reading, matched on the person in the record (`record_persona_id`, else `record_role`) and the fact type, or is `"retracted"` with a `superseded_reason` when the new reading has none (decided, Richard, 2026-10-27). A household sibling's assertions are never touched: the retirement reaches only the id the call names. The re-extraction is refused, naming each one, while anything still rests on an old assertion: a live `person_evidence` link, a `rejected_links` row, a tree fact's `assertion_id`, a proof summary (top level or a claim), a conflict, a hypothesis, a timeline event, a question's `resolution_assertion_ids`, or a tree relationship whose sources cite the record when a relationship claim is among them. A rejection is permanent, so a record carrying one cannot be re-extracted: voiding a researcher's ruling silently is worse than a record that needs a researcher. Once retired, an assertion is skipped by every derivation (`isLiveAssertion`), left out of `research_query` unless `includeSuperseded` is set, and refused as a citation by every writer: `research_append`, `tree_edit add_relationship`, `materialize_facts`' named-party arm, and `same_person`.
 
 ### 5.6.1 `structured_value` Shapes
 
@@ -840,7 +846,7 @@ Array of person-evidence link objects. **This section bridges assertions (attach
 | `move_bridge` | string or null | no | What explains a move outside the person's attested residence cluster: the sentence quoted from the destination's `{Jurisdiction}_Emigration_and_Immigration` page that names arrivals from the person's prior country, or the record id that documents the move. Null or absent means nothing bridges it. When the linked record's residence lies in a different country from every Residence fact the tree attests for the person, a `confident` link without it is refused by `research_append`; `probable` is unaffected |
 | `match_score` | number or null | no | Match score (0.0-1.0) from the `same_person` tool for this `(assertion_id, person_id)` pairing. `research_append` REFUSES an append that leaves this null where a record persona is reachable, so null is no longer a free default: it is correct where nothing can be scored (an image-, external-site- or PDF-sourced assertion, a full-text hit, a search that retained no sidecar) and it is REQUIRED where the tree person was minted out of the very record being cited, since scoring a persona against a person created from it only confirms itself |
 | `created` | string | yes | ISO 8601 date |
-| `superseded_by` | string or null | no | `pe_` ID if this linking was revised |
+| `superseded_by` | string or null | no | `pe_` ID if this linking was revised, or the `rj_` ID of the rejection that retired it (Section 5.14). An `rj_` value must name an existing `rejected_links` entry |
 
 **Cardinality:** One assertion can have multiple person_evidence entries linking it to different persons. This is the expected pattern for assertions that imply relationships — e.g., a_004 ("Listed in household of Thomas Flynn, position consistent with child") is evidence for both I1 (Patrick, the child) and I2 (Thomas, the head). Create one `pe_` entry per person the assertion bears on. The `person-evidence` skill writes all links; extraction (`extraction_append`) does not create provisional links.
 
@@ -862,7 +868,7 @@ Array of conflict objects. Conflicts are both fact-level (three different birthp
 | `competing_assertion_ids` | string[] | yes | `a_` references. At least 2 for `fact` conflicts (two assertions disagree). At least 1 for `identity` conflicts (a single assertion whose person linkage is uncertain). |
 | `independence_analysis` | string or null | no | Analysis of whether the competing sources are independent |
 | `weighing_analysis` | string or null | no | Application of the preponderance hierarchy |
-| `weighed_log_entry_ids` | string[] | no | `log_` references: the question's log entries conflict-resolution has weighed, written on every analysis. Mirrors `search_stop.log_entry_ids`. Absent on conflicts analysed before the field existed |
+| `weighed_log_entry_ids` | string[] | no | `log_` references, present only on an `unresolved` conflict whose last analysis found nothing left to search. conflict-resolution declares that by sending the field on the analysis write (any value); `research_append` replaces the value with the coverage set the ladder reads (`conflictCoverageLogIds`: every log entry of every question the conflict blocks, closing uploads matched to their hand-offs by URL included). It is refused on a write with no non-blank `independence_analysis` and when no question the conflict blocks has a log entry, and cleared by an analysis write (one carrying `independence_analysis`) that does not send it and by a write that settles the conflict. Mirrors `search_stop.log_entry_ids`. Absent on conflicts analysed before the field existed |
 | `preferred_assertion_id` | string or null | no | `a_` reference to the favored assertion. Required, and one of `competing_assertion_ids`, when `resolution_kind` is `competitor` |
 | `resolution_rationale` | string or null | no | Why the conflict was settled as it was. When `resolution_kind` is `synthesis` it cites at least two distinct `src_`/`a_` ids — the records the value is built from |
 | `resolution_kind` | `resolution_kind` or null | no | How a `resolved` conflict was settled: `competitor` (one competing assertion wins, named in `preferred_assertion_id`), `tree` (the tree's existing conclusion stands against the competing records), or `synthesis` (no single assertion wins; the value is built from several). Required on a resolve by `research_append` (research-append-tool-spec.md §5); absent on conflicts resolved before it existed |
@@ -934,7 +940,7 @@ Array of timeline objects. Timelines are keyed by a unique ID with a human-reada
 | `date_certainty` | string | yes | `exact`, `approximate`, `estimated`, or `calculated` |
 | `event_type` | string | yes | `birth`, `baptism`, `marriage`, `death`, `burial`, `residence`, `census`, `military`, `immigration`, `emigration`, `land_transaction`, `probate`, `other` |
 | `place` | string or null | no | Place description |
-| `standard_place` | string or null | no | Standardized place name (the `standardPlace` field from the `place_search` tool) for `place`. Null if unresolvable or `place` is null. |
+| `standard_place` | string or null | no | Standardized place name for `place`: one of FamilySearch's standard places (a `place_search` result), kept from a caller only on the terms research-append spec §5.10 gives, else the engine's answer. Null if unresolvable or `place` is null. |
 | `description` | string | yes | Human-readable event description |
 | `assertion_ids` | string[] | yes | `a_` references backing this event |
 | `distance_from_previous_km` | number or null | no | Great-circle distance in km from the previous event's place, between the two `standard_place` names (`place_distance`, or the same haversine computation inside `timeline_build`). Null for the first event, or when either event lacks a resolved `standard_place`. |
@@ -1112,6 +1118,47 @@ is not him" indistinguishable from "we have not checked."
 re-opens the same pair and spends the search again. Deleting is also how a
 disagreement gets erased rather than answered.
 
+**Only the researcher creates a rejection** (lead, 2026-10-20). A rejection is the
+researcher's statement that a record is not this person. The person-evidence agent
+writes one only when the researcher clearly says the pair is not a match; when they
+are unsure, it neither links nor rejects. In an autonomous or "Keep going" turn a
+weak match is simply left unlinked. The engine cannot see who spoke, so each row
+carries the researcher's exact words in `researcher_words`: a hedge read as a no,
+or a rejection written in a turn the researcher never spoke in, is then visible in
+feedback triage. That makes a slip visible, not impossible.
+
+`researcher_words` is its own field, not `reason` made required and verbatim:
+`reason` is optional on purpose (below) and mutable, so it cannot hold a record.
+`research_append` requires `researcher_words` on every append; the JSON Schema
+leaves it optional, because a whole-document validation would otherwise fail every
+write to a project that already holds a row written before the field existed.
+
+**The researcher speaks to the `research` orchestrator, not to person-evidence**
+(Richard, 2026-10-27). The hedge-to-no misread happens in the relay, so when
+`research` delegates a "not him" it passes the researcher's message verbatim, and
+person-evidence copies those words into `researcher_words` rather than the
+delegation's paraphrase of them.
+
+**A rejection undoes the link.** When `research_append` appends a rejection for a
+pair with a live `person_evidence` link, the same write sets that link's
+`superseded_by` to the rejection's `rj_` id and removes the tree facts on that
+person carrying the link's `assertion_id`. A fact whose `sources[]` also cites a
+ref other than the assertion's own source description holds another record's
+evidence; it is kept and named in the response. Names and relationships carry no
+`assertion_id`, so they are never removed, and the response says the person may
+still carry them. The write is all-or-nothing with the rest of the call. The full
+contract is in `research-append-tool-spec.md`.
+
+**A merge cannot bring a rejected pair back.** `merge_tree_persons` refuses a
+merge that would leave a live link on a rejected pair, whether it moves the link
+or the rejection onto the survivor, and no justification overrides it
+(`merge-gedcomx-spec.md`, step 5a).
+
+**Immutable except `reason`.** An update that re-pointed a rejection could move it
+onto a linked pair without retiring that link, and one that rewrote
+`researcher_words` would erase the record of what was said. There is no way to
+retract a rejection: a researcher who changes their mind starts a new project.
+
 **Optional section** (not in `required`): absent on projects that predate it.
 
 | Field | Type | Required | Description |
@@ -1120,6 +1167,7 @@ disagreement gets erased rather than answered.
 | `assertion_id` | string | yes | `^a_[0-9]+$` — the assertion proposing the link |
 | `person_id` | string | yes | The tree person the assertion was proposed against |
 | `reason` | string or null | no | Why it was rejected. Optional on purpose: **a rejection is never a demand for the right answer.** Requiring a reason would push a researcher who simply knows it is wrong into inventing a justification, and a fabricated reason is worse than none |
+| `researcher_words` | string | no in the schema; required by `research_append` on append | The researcher's own message saying the pair is not a match, verbatim — never a paraphrase. Non-empty |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
 
 ### 5.15 `namesakes`
@@ -1217,12 +1265,13 @@ sources
 assertions
   ├─ source_id ──────────────────────────────────► sources[].id
   ├─ log_entry_id ───────────────────────────────► log[].id
-  └─ extracted_for_question_ids ─────────────────► questions[].id
+  ├─ extracted_for_question_ids ─────────────────► questions[].id
+  └─ superseded_by ──────────────────────────────► assertions[].id, or "retracted"
 
 person_evidence
   ├─ assertion_id ───────────────────────────────► assertions[].id
   ├─ person_id ──────────────────────────────────► tree.gedcomx.json persons[].id
-  └─ superseded_by ──────────────────────────────► person_evidence[].id
+  └─ superseded_by ──────────────────────────────► person_evidence[].id or rejected_links[].id
 
 conflicts
   ├─ competing_assertion_ids ────────────────────► assertions[].id

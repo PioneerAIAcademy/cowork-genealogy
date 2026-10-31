@@ -228,6 +228,7 @@ from proto.worker.options import (  # noqa: E402
     cli_env_blanks,
     gateway_plugin_copy,
     plugin_copy_missing,
+    hook_denied_tool_use_ids,
     hook_path,
     make_posttool_hook,
     status_before_call,
@@ -239,6 +240,7 @@ from proto.worker.options import (  # noqa: E402
     project_completed,
     ProviderError,
     tool_server_url,
+    unmapped_gateway_models,
     wants_status_before,
 )
 from proto import grants  # noqa: E402
@@ -1563,6 +1565,22 @@ def count_tool_calls(conn: psycopg.Connection, turn_id: str) -> int:
     return int(row[0]) if row and row[0] is not None else 0
 
 
+def mark_hook_denied(conn: psycopg.Connection, turn_id: str, tool_use_id: str) -> str | None:
+    """Turn an ``allow`` row into a ``deny`` once the call's result shows another
+    ``PreToolUse`` hook stopped it; its ``wrote`` goes too, since the write never ran.
+    Returns the tool name, or None when no ``allow`` row matched (this worker's own deny
+    is already recorded)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE tool_calls SET decision = 'deny', wrote = NULL "
+            "WHERE turn_id = %s AND tool_use_id = %s AND decision = 'allow' RETURNING tool_name",
+            (turn_id, tool_use_id),
+        )
+        row = cur.fetchone()
+    conn.commit()
+    return row[0] if row else None
+
+
 def finish_tool_call(conn: psycopg.Connection, turn_id: str, tool_use_id: str) -> None:
     """Stamp the call's row with its wall time (Postgres clock, PreToolUse insert to
     PostToolUse update); the first stamp wins, so a redelivery's repeated id cannot
@@ -1844,6 +1862,11 @@ def prepare() -> None:
         gateway = model_provider(os.environ) == "gateway"
     except ProviderError:
         gateway = False  # refused at start by require_start_config
+    if gateway and _AGENTS is not None and (unmapped := unmapped_gateway_models(_AGENTS)):
+        # Refused, not shipped: the gateway answers an unmapped id 400, and the main thread
+        # then does the agent's work without its limits (U14; handoff F4).
+        _AGENTS, _AGENTS_ERROR = None, f"agent models with no gateway id: {unmapped}"
+        log(ev="prepare", step="agent_models", error=_AGENTS_ERROR)
     if gateway and _AGENTS_ERROR is None:
         try:
             # One worker per instance, so an earlier start's copy is stale.
@@ -3015,6 +3038,11 @@ async def _run_turn(
                         if event.get("kind") == "text" and not getattr(msg, "parent_tool_use_id", None):
                             terminal.pop("completion_summary", None)
                         write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
+                    for denied_id in hook_denied_tool_use_ids(msg):
+                        denied_tool = mark_hook_denied(conn, turn_id, denied_id)
+                        if denied_tool is not None:
+                            log(ev="deny", turn_id=turn_id, tool_name=denied_tool,
+                                tool_use_id=denied_id, reason="another PreToolUse hook")
                     if isinstance(msg, ResultMessage):
                         pass_result = msg
                     if terminal["reason"] == SUPERSEDED:

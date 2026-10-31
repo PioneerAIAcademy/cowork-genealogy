@@ -1,0 +1,1497 @@
+{
+  "id" : "r_176388631086",
+  "lang" : "fr",
+  "attribution" : {
+    "modified" : 1697726265154,
+    "created" : 1697726265154
+  },
+  "links" : {
+    "next" : {
+      "href" : "https://www.familysearch.org/ark:/61903/1:2:H9BP-G4TW?seek=next"
+    },
+    "prev" : {
+      "href" : "https://www.familysearch.org/ark:/61903/1:2:H9BP-G4TW?seek=prev"
+    },
+    "self" : {
+      "href" : "https://www.familysearch.org/ark:/61903/1:2:H9BP-G4TW"
+    }
+  },
+  "description" : "#sd_p_296982812861",
+  "persons" : [ {
+    "id" : "p_296982812853",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "extracted" : true,
+    "principal" : true,
+    "gender" : {
+      "type" : "http://gedcomx.org/Female",
+      "fields" : [ {
+        "id" : "7034a175-1df9-4f2c-8b63-ac9524c83129",
+        "attribution" : {
+          "modified" : 1697726265154,
+          "created" : 1697726265154
+        },
+        "type" : "http://gedcomx.org/Gender",
+        "values" : [ {
+          "id" : "5bec450f-94cb-44cd-ba4d-ea023d1493aa",
+          "type" : "http://gedcomx.org/Original",
+          "labelId" : "PR_SEX_CODE_ORIG",
+          "text" : "F",
+          "resource" : "http://gedcomx.org/Female"
+        }, {
+          "id" : "5bec450f-94cb-44cd-ba4d-ea023d1493aa",
+          "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+          "attribution" : {
+            "contributor" : {
+              "resource" : "http://familysearch.org/treatments/sls/Gender?version=1.0.3"
+            },
+            "modified" : 1709677827599,
+            "created" : 1709677827599
+          },
+          "type" : "http://gedcomx.org/Interpreted",
+          "labelId" : "PR_SEX_CODE",
+          "text" : "Féminin",
+          "resource" : "http://gedcomx.org/Female",
+          "qualifiers" : [ {
+            "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=&fieldScorerVersion=1.0.0",
+            "name" : "StdQualifier"
+          } ]
+        } ]
+      } ]
+    },
+    "sources" : [ {
+      "description" : "#sd_da1",
+      "descriptionId" : "sd_da1"
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/1:1:6J8F-6673" ]
+    },
+    "names" : [ {
+      "id" : "dcd866d9-1f8b-46e7-937d-bc8a40abad66",
+      "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://gedcomx.org/BirthName",
+      "preferred" : false,
+      "nameForms" : [ {
+        "fullText" : "Marie Catherine Sabattier",
+        "parts" : [ {
+          "id" : "a49bcc94-11df-426a-a650-58c9b4b73801",
+          "type" : "http://gedcomx.org/Surname",
+          "value" : "Sabattier",
+          "fields" : [ {
+            "id" : "82f4a6ce-40a5-4a4b-824c-d759238f2fa5",
+            "attribution" : {
+              "modified" : 1697726265154,
+              "created" : 1697726265154
+            },
+            "type" : "http://gedcomx.org/Surname",
+            "values" : [ {
+              "id" : "0c705fa0-472a-40b6-993b-4352bb3be384",
+              "type" : "http://gedcomx.org/Original",
+              "labelId" : "PR_NAME_SURN_ORIG",
+              "text" : "Sabattier"
+            }, {
+              "id" : "0c705fa0-472a-40b6-993b-4352bb3be384",
+              "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+              "attribution" : {
+                "contributor" : {
+                  "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+                }
+              },
+              "type" : "http://gedcomx.org/Interpreted",
+              "labelId" : "PR_NAME_SURN",
+              "text" : "Sabattier",
+              "qualifiers" : [ {
+                "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+                "name" : "StdQualifier"
+              } ]
+            } ]
+          } ]
+        }, {
+          "id" : "5cea7f53-6a06-4f78-b365-17448ec252c8",
+          "type" : "http://gedcomx.org/Given",
+          "value" : "Marie Catherine",
+          "fields" : [ {
+            "id" : "59bad9f6-548a-42fc-b001-ba6e01ee79e6",
+            "attribution" : {
+              "modified" : 1697726265154,
+              "created" : 1697726265154
+            },
+            "type" : "http://gedcomx.org/Given",
+            "values" : [ {
+              "id" : "09c0d904-8cfe-4625-818b-5bb16487b470",
+              "type" : "http://gedcomx.org/Original",
+              "labelId" : "PR_NAME_GN_ORIG",
+              "text" : "Marie Catherine"
+            }, {
+              "id" : "09c0d904-8cfe-4625-818b-5bb16487b470",
+              "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+              "attribution" : {
+                "contributor" : {
+                  "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+                }
+              },
+              "type" : "http://gedcomx.org/Interpreted",
+              "labelId" : "PR_NAME_GN",
+              "text" : "Marie Catherine",
+              "qualifiers" : [ {
+                "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+                "name" : "StdQualifier"
+              } ]
+            } ]
+          } ]
+        } ],
+        "fields" : [ {
+          "id" : "3bc81c29-5246-41b6-b4b2-4a35968b7444",
+          "attribution" : {
+            "contributor" : {
+              "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+            }
+          },
+          "type" : "http://gedcomx.org/Name",
+          "values" : [ {
+            "id" : "acf76602-cfc6-4dd3-ae51-fb96672d6002",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+              }
+            },
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "PR_NAME_ORIG",
+            "text" : "Marie Catherine Sabattier"
+          }, {
+            "id" : "acf76602-cfc6-4dd3-ae51-fb96672d6002",
+            "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+              }
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "PR_NAME",
+            "text" : "Marie Catherine Sabattier",
+            "qualifiers" : [ {
+              "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+              "name" : "StdQualifier"
+            } ]
+          } ]
+        } ]
+      } ]
+    } ],
+    "facts" : [ {
+      "id" : "74c87636-1d16-4cc5-a77e-18e81f9c3bf9",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://gedcomx.org/Birth",
+      "date" : {
+        "id" : "e333691e-13cf-4995-83f1-7040713db77b",
+        "original" : "1803",
+        "formal" : "+1803",
+        "fields" : [ {
+          "id" : "17c0f1f8-d750-4096-978f-c925f67641b8",
+          "attribution" : {
+            "modified" : 1697726265154,
+            "created" : 1697726265154
+          },
+          "type" : "http://familysearch.org/types/fields/YearEst",
+          "values" : [ {
+            "id" : "d2a84faa-e1fd-4f01-890e-ac0183b815b5",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://treatment/EstBirthYearTreatment/ver/2"
+              },
+              "modified" : 1665618087607,
+              "created" : 1665618087607
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "PR_BIR_YEAR_EST",
+            "text" : "1803",
+            "resource" : "+1803"
+          } ]
+        } ]
+      },
+      "altDates" : [ {
+        "id" : "a81ef24e-1ccc-4c83-bf22-2ae8b35666fb",
+        "original" : "1803",
+        "formal" : "+1803",
+        "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=86&fieldScorerVersion=1.0.0",
+        "fields" : [ {
+          "id" : "301c0489-7f69-4bde-96a3-23fb2f74932a",
+          "type" : "http://familysearch.org/types/fields/YearEst",
+          "values" : [ {
+            "id" : "c10d5cba-1f19-4304-8e0e-d6ea78aa87ea",
+            "lang" : "fr",
+            "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=86&fieldScorerVersion=1.0.0",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/EstimatedBirthYear?version=1.3.1"
+              },
+              "modified" : 1709677827599,
+              "created" : 1709677827599
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "PR_BIR_YEAR_EST",
+            "text" : "1803",
+            "resource" : "+1803",
+            "qualifiers" : [ {
+              "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=DG:YE,CD&fieldScorerVersion=1.0.0",
+              "name" : "StdQualifier"
+            } ]
+          } ]
+        } ]
+      } ]
+    }, {
+      "id" : "0b5298b1-6a0b-4d68-8710-f103ac052f49",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://familysearch.org/types/facts/DeathRegistration",
+      "date" : {
+        "id" : "3909102a-5a75-4078-8e06-fec9177d7168",
+        "original" : "3 Apr 1874",
+        "formal" : "+1874-04-03",
+        "fields" : [ {
+          "id" : "d3c6f8b7-d907-4d8d-89e4-146f2039687f",
+          "attribution" : {
+            "contributor" : {
+              "resource" : "http://familysearch.org/treatments/sls/Date?version=1.3.1"
+            },
+            "modified" : 1665618087483,
+            "created" : 1665618087483
+          },
+          "type" : "http://gedcomx.org/Date",
+          "values" : [ {
+            "id" : "4edd823b-1e92-4e4c-9a81-48a6df4b2911",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://treatment/StandardsDateTreatment/ver/2"
+              },
+              "modified" : 1665618087483,
+              "created" : 1665618087483
+            },
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "EVENT_DATE_ORIG",
+            "text" : "3 Avr 1874"
+          }, {
+            "id" : "4edd823b-1e92-4e4c-9a81-48a6df4b2911",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://treatment/StandardsDateTreatment/ver/2"
+              },
+              "modified" : 1665618087483,
+              "created" : 1665618087483
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "EVENT_DATE",
+            "text" : "3 Apr 1874",
+            "resource" : "+1874-04-03",
+            "qualifiers" : [ {
+              "value" : "true",
+              "name" : "http://familysearch.org/types/qualifiers/Preferred"
+            } ]
+          }, {
+            "id" : "4edd823b-1e92-4e4c-9a81-48a6df4b2911",
+            "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/Date?version=1.3.1"
+              },
+              "modified" : 1665618087483,
+              "created" : 1665618087483
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "EVENT_DATE",
+            "text" : "3 avril 1874",
+            "resource" : "+1874-04-03",
+            "qualifiers" : [ {
+              "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=&fieldScorerVersion=1.0.0",
+              "name" : "StdQualifier"
+            } ]
+          } ]
+        }, {
+          "id" : "cecaf108-5d16-4552-974a-774da5ed31a4",
+          "attribution" : {
+            "modified" : 1697726265154,
+            "created" : 1697726265154
+          },
+          "type" : "http://gedcomx.org/Year",
+          "values" : [ {
+            "id" : "14c0f77e-3c83-47e8-9610-e1b18b396143",
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "EVENT_YEAR_ORIG",
+            "text" : "1874"
+          } ]
+        }, {
+          "id" : "237f1681-2b39-4e58-bedf-bb0e20d6933a",
+          "attribution" : {
+            "modified" : 1697726265154,
+            "created" : 1697726265154
+          },
+          "type" : "http://gedcomx.org/Day",
+          "values" : [ {
+            "id" : "18123a76-5e66-47ee-bd90-402776739a71",
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "EVENT_DAY_ORIG",
+            "text" : "3"
+          } ]
+        }, {
+          "id" : "b2543ec6-4e7b-47e2-873e-4c270b2fa41e",
+          "attribution" : {
+            "modified" : 1697726265154,
+            "created" : 1697726265154
+          },
+          "type" : "http://gedcomx.org/Month",
+          "values" : [ {
+            "id" : "9d530bc7-8aca-4253-b2db-9867017e6372",
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "EVENT_MONTH_ORIG",
+            "text" : "Avr"
+          } ]
+        } ]
+      },
+      "place" : {
+        "id" : "7305b612-4a49-474e-a638-2136ba4f8264",
+        "original" : "Olne, Liège, Belgique",
+        "confidence" : "http://confidence/94",
+        "description" : "#place_418460",
+        "fields" : [ {
+          "id" : "8e902ead-f604-41ca-8e26-e4ce71995cf0",
+          "attribution" : {
+            "modified" : 1697726265154,
+            "created" : 1697726265154
+          },
+          "type" : "http://gedcomx.org/Place",
+          "values" : [ {
+            "id" : "3724df1d-b975-4358-834f-63838cde3ca6",
+            "confidence" : "http://confidence/94",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://treatment/LocalityTreatment/ver/1"
+              },
+              "modified" : 1665618087627,
+              "created" : 1665618087627
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "EVENT_PLACE",
+            "text" : "Olne, Liège, Belgique",
+            "resource" : "https://www.familysearch.org/platform/places/description/418460"
+          } ]
+        } ]
+      },
+      "primary" : true,
+      "fields" : [ {
+        "id" : "0944e8b1-894a-450d-ae61-5576008b2f64",
+        "attribution" : {
+          "modified" : 1697726265154,
+          "created" : 1697726265154
+        },
+        "type" : "http://familysearch.org/types/fields/EventType",
+        "values" : [ {
+          "id" : "b8780df2-794c-4980-aef5-2d8e5a43fc3f",
+          "type" : "http://gedcomx.org/Original",
+          "labelId" : "EVENT_TYPE_ORIG",
+          "text" : "Death",
+          "resource" : "http://familysearch.org/types/facts/DeathRegistration"
+        }, {
+          "id" : "b8780df2-794c-4980-aef5-2d8e5a43fc3f",
+          "type" : "http://gedcomx.org/Interpreted",
+          "labelId" : "EVENT_TYPE",
+          "text" : "Death Registration",
+          "resource" : "http://familysearch.org/types/facts/DeathRegistration"
+        } ]
+      } ]
+    }, {
+      "id" : "33b4d487-7ae6-4898-a434-b936bbda56dd",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://gedcomx.org/Death",
+      "date" : {
+        "id" : "500cf81c-69c0-45c4-8012-0e1f5627bb2e",
+        "original" : "1854",
+        "formal" : "+1854",
+        "fields" : [ {
+          "id" : "177cf4e0-a600-463e-ba9c-e8353cbfaa48",
+          "attribution" : {
+            "contributor" : {
+              "resource" : "http://familysearch.org/treatments/sls/Date?version=1.3.1"
+            },
+            "modified" : 1665618087486,
+            "created" : 1665618087486
+          },
+          "type" : "http://gedcomx.org/Date",
+          "values" : [ {
+            "id" : "8552d53c-92c9-4433-be25-719e06a4b283",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://treatment/StandardsDateTreatment/ver/2"
+              },
+              "modified" : 1665618087486,
+              "created" : 1665618087486
+            },
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "PR_DEA_DATE_ORIG",
+            "text" : "1854"
+          }, {
+            "id" : "8552d53c-92c9-4433-be25-719e06a4b283",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://treatment/StandardsDateTreatment/ver/2"
+              },
+              "modified" : 1665618087486,
+              "created" : 1665618087486
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "PR_DEA_DATE",
+            "text" : "1854",
+            "resource" : "+1854",
+            "qualifiers" : [ {
+              "value" : "true",
+              "name" : "http://familysearch.org/types/qualifiers/Preferred"
+            } ]
+          }, {
+            "id" : "8552d53c-92c9-4433-be25-719e06a4b283",
+            "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/Date?version=1.3.1"
+              },
+              "modified" : 1665618087486,
+              "created" : 1665618087486
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "PR_DEA_DATE",
+            "text" : "1854",
+            "resource" : "+1854",
+            "qualifiers" : [ {
+              "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=&fieldScorerVersion=1.0.0",
+              "name" : "StdQualifier"
+            } ]
+          } ]
+        }, {
+          "id" : "57b85b25-7127-470d-9874-e20da8603884",
+          "attribution" : {
+            "modified" : 1697726265154,
+            "created" : 1697726265154
+          },
+          "type" : "http://gedcomx.org/Year",
+          "values" : [ {
+            "id" : "daf14944-7ffd-47ec-8801-1cc18879440b",
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "PR_DEA_YEAR_ORIG",
+            "text" : "1854"
+          } ]
+        } ]
+      }
+    } ],
+    "fields" : [ {
+      "id" : "3a4d4135-25e4-4c82-9317-32bdca8007be",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://familysearch.org/types/fields/SortKey",
+      "values" : [ {
+        "id" : "9de8cb58-d41b-4f36-a508-982450c00665",
+        "type" : "http://gedcomx.org/Interpreted",
+        "labelId" : "FS_SORT_KEY",
+        "text" : "0000000005589704_00481_00000_0000176388631086_000"
+      } ]
+    }, {
+      "id" : "b53d231f-1a5d-444c-8f8c-f994b63b8d35",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://gedcomx.org/Age",
+      "values" : [ {
+        "id" : "db57bb0d-cc50-44ab-90e4-97e3447f1b45",
+        "type" : "http://gedcomx.org/Original",
+        "labelId" : "PR_AGE_ORIG",
+        "text" : "51"
+      }, {
+        "id" : "db57bb0d-cc50-44ab-90e4-97e3447f1b45",
+        "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+        "attribution" : {
+          "contributor" : {
+            "resource" : "http://familysearch.org/treatments/sls/Age?version=1.3.3"
+          },
+          "modified" : 1709677827599,
+          "created" : 1709677827599
+        },
+        "type" : "http://gedcomx.org/Interpreted",
+        "labelId" : "PR_AGE",
+        "text" : "51 years",
+        "resource" : "P51Y",
+        "qualifiers" : [ {
+          "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=AG:PY&fieldScorerVersion=1.0.0",
+          "name" : "StdQualifier"
+        } ]
+      } ],
+      "qualifiers" : [ {
+        "value" : "151807f7-13eb-47cc-b4ce-2b3a06b0599f",
+        "name" : "AgeIdentifier"
+      } ]
+    } ],
+    "display" : {
+      "name" : "Marie Catherine Sabattier",
+      "gender" : "Female",
+      "birthDate" : "1803",
+      "deathDate" : "1854"
+    }
+  }, {
+    "id" : "p_296982812856",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "extracted" : true,
+    "principal" : false,
+    "gender" : {
+      "type" : "http://gedcomx.org/Male",
+      "fields" : [ {
+        "id" : "4f06fc8b-2abb-450a-befb-d61c6975a589",
+        "attribution" : {
+          "modified" : 1697726265154,
+          "created" : 1697726265154
+        },
+        "type" : "http://gedcomx.org/Gender",
+        "values" : [ {
+          "id" : "d47de85f-6ce6-4f1d-93fa-b97c89cbcf04",
+          "attribution" : {
+            "contributor" : {
+              "resource" : "http://treatment/CvGenderTreatment/ver/1"
+            },
+            "modified" : 1665618087583,
+            "created" : 1665618087583
+          },
+          "type" : "http://gedcomx.org/Interpreted",
+          "labelId" : "PR_FTHR_SEX_CODE",
+          "text" : "Male",
+          "resource" : "http://gedcomx.org/Male"
+        } ]
+      } ]
+    },
+    "sources" : [ {
+      "description" : "#sd_da1",
+      "descriptionId" : "sd_da1"
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/1:1:6J8F-667W" ]
+    },
+    "names" : [ {
+      "id" : "165ddb32-d2a9-44f4-b7e1-bf8bbe572f93",
+      "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://gedcomx.org/BirthName",
+      "preferred" : false,
+      "nameForms" : [ {
+        "fullText" : "Pierre Sabattier",
+        "parts" : [ {
+          "id" : "cf74aaf1-8914-4561-b0c3-d72495d55186",
+          "type" : "http://gedcomx.org/Surname",
+          "value" : "Sabattier",
+          "fields" : [ {
+            "id" : "3e6e0e2d-b930-4825-9bb3-cfb140ed063c",
+            "attribution" : {
+              "modified" : 1697726265154,
+              "created" : 1697726265154
+            },
+            "type" : "http://gedcomx.org/Surname",
+            "values" : [ {
+              "id" : "cadccbe1-c84e-4f46-a821-9d1f60532f37",
+              "type" : "http://gedcomx.org/Original",
+              "labelId" : "PR_FTHR_NAME_SURN_ORIG",
+              "text" : "Sabattier"
+            }, {
+              "id" : "cadccbe1-c84e-4f46-a821-9d1f60532f37",
+              "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+              "attribution" : {
+                "contributor" : {
+                  "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+                }
+              },
+              "type" : "http://gedcomx.org/Interpreted",
+              "labelId" : "PR_FTHR_NAME_SURN",
+              "text" : "Sabattier",
+              "qualifiers" : [ {
+                "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+                "name" : "StdQualifier"
+              } ]
+            } ]
+          } ]
+        }, {
+          "id" : "81741c5f-da23-4565-ad78-17a9060a773e",
+          "type" : "http://gedcomx.org/Given",
+          "value" : "Pierre",
+          "fields" : [ {
+            "id" : "49c0bcc2-ab69-4f7c-95f5-c6eac6db35bf",
+            "attribution" : {
+              "modified" : 1697726265154,
+              "created" : 1697726265154
+            },
+            "type" : "http://gedcomx.org/Given",
+            "values" : [ {
+              "id" : "f632952c-6c2e-4c90-9187-448ba4c69b71",
+              "type" : "http://gedcomx.org/Original",
+              "labelId" : "PR_FTHR_NAME_GN_ORIG",
+              "text" : "Pierre"
+            }, {
+              "id" : "f632952c-6c2e-4c90-9187-448ba4c69b71",
+              "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+              "attribution" : {
+                "contributor" : {
+                  "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+                }
+              },
+              "type" : "http://gedcomx.org/Interpreted",
+              "labelId" : "PR_FTHR_NAME_GN",
+              "text" : "Pierre",
+              "qualifiers" : [ {
+                "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+                "name" : "StdQualifier"
+              } ]
+            } ]
+          } ]
+        } ],
+        "fields" : [ {
+          "id" : "7e25b19a-4113-479e-b0d4-98eba057de69",
+          "attribution" : {
+            "contributor" : {
+              "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+            }
+          },
+          "type" : "http://gedcomx.org/Name",
+          "values" : [ {
+            "id" : "7a66e6ae-8547-4fd5-96fc-498afa19a705",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+              }
+            },
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "PR_FTHR_NAME_ORIG",
+            "text" : "Pierre Sabattier"
+          }, {
+            "id" : "7a66e6ae-8547-4fd5-96fc-498afa19a705",
+            "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+              }
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "PR_FTHR_NAME",
+            "text" : "Pierre Sabattier",
+            "qualifiers" : [ {
+              "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+              "name" : "StdQualifier"
+            } ]
+          } ]
+        } ]
+      } ]
+    } ],
+    "fields" : [ {
+      "id" : "a2b083cd-9bef-40bb-a3c3-7496ceb16641",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://familysearch.org/types/fields/SortKey",
+      "values" : [ {
+        "id" : "873f1063-cd1e-492c-ae0f-07134b9760a7",
+        "type" : "http://gedcomx.org/Interpreted",
+        "labelId" : "FS_SORT_KEY",
+        "text" : "0000000005589704_00481_00000_0000176388631086_001"
+      } ]
+    } ],
+    "display" : {
+      "name" : "Pierre Sabattier",
+      "gender" : "Male"
+    }
+  }, {
+    "id" : "p_296982812861",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "extracted" : true,
+    "principal" : false,
+    "gender" : {
+      "type" : "http://gedcomx.org/Female",
+      "fields" : [ {
+        "id" : "1ceaca77-dd18-49a8-be6b-8b07b78f805b",
+        "attribution" : {
+          "modified" : 1697726265154,
+          "created" : 1697726265154
+        },
+        "type" : "http://gedcomx.org/Gender",
+        "values" : [ {
+          "id" : "9ee8789c-ba23-44aa-970e-6053319b126b",
+          "attribution" : {
+            "contributor" : {
+              "resource" : "http://treatment/CvGenderTreatment/ver/1"
+            },
+            "modified" : 1665618087583,
+            "created" : 1665618087583
+          },
+          "type" : "http://gedcomx.org/Interpreted",
+          "labelId" : "PR_MTHR_SEX_CODE",
+          "text" : "Female",
+          "resource" : "http://gedcomx.org/Female"
+        } ]
+      } ]
+    },
+    "sources" : [ {
+      "description" : "#sd_da1",
+      "descriptionId" : "sd_da1"
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/1:1:6J8F-6678" ]
+    },
+    "names" : [ {
+      "id" : "142ff8dc-2539-41a9-8e2e-caeb5de70308",
+      "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://gedcomx.org/BirthName",
+      "preferred" : false,
+      "nameForms" : [ {
+        "fullText" : "Catherine Perée",
+        "parts" : [ {
+          "id" : "202317db-917e-41d5-88bf-f5c40a5b851a",
+          "type" : "http://gedcomx.org/Surname",
+          "value" : "Perée",
+          "fields" : [ {
+            "id" : "822085a9-e5dc-4556-9974-62d0b4f3106a",
+            "attribution" : {
+              "modified" : 1697726265154,
+              "created" : 1697726265154
+            },
+            "type" : "http://gedcomx.org/Surname",
+            "values" : [ {
+              "id" : "0f9b9060-65fb-4d99-b6be-26a66d5c79b6",
+              "type" : "http://gedcomx.org/Original",
+              "labelId" : "PR_MTHR_NAME_SURN_ORIG",
+              "text" : "Perée"
+            }, {
+              "id" : "0f9b9060-65fb-4d99-b6be-26a66d5c79b6",
+              "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+              "attribution" : {
+                "contributor" : {
+                  "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+                }
+              },
+              "type" : "http://gedcomx.org/Interpreted",
+              "labelId" : "PR_MTHR_NAME_SURN",
+              "text" : "Perée",
+              "qualifiers" : [ {
+                "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+                "name" : "StdQualifier"
+              } ]
+            } ]
+          } ]
+        }, {
+          "id" : "d3c9f18e-b8ff-462d-ae73-08a3292c952c",
+          "type" : "http://gedcomx.org/Given",
+          "value" : "Catherine",
+          "fields" : [ {
+            "id" : "3f139713-dd1e-497f-8721-ea80fdaa73f9",
+            "attribution" : {
+              "modified" : 1697726265154,
+              "created" : 1697726265154
+            },
+            "type" : "http://gedcomx.org/Given",
+            "values" : [ {
+              "id" : "c41c80b6-69d8-4d3e-9723-cb7437f8c3ee",
+              "type" : "http://gedcomx.org/Original",
+              "labelId" : "PR_MTHR_NAME_GN_ORIG",
+              "text" : "Catherine"
+            }, {
+              "id" : "c41c80b6-69d8-4d3e-9723-cb7437f8c3ee",
+              "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+              "attribution" : {
+                "contributor" : {
+                  "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+                }
+              },
+              "type" : "http://gedcomx.org/Interpreted",
+              "labelId" : "PR_MTHR_NAME_GN",
+              "text" : "Catherine",
+              "qualifiers" : [ {
+                "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+                "name" : "StdQualifier"
+              } ]
+            } ]
+          } ]
+        } ],
+        "fields" : [ {
+          "id" : "80b9e0fa-c928-4867-befd-30dcf7056c38",
+          "attribution" : {
+            "contributor" : {
+              "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+            }
+          },
+          "type" : "http://gedcomx.org/Name",
+          "values" : [ {
+            "id" : "34894afd-845d-4e3d-9586-2146651368a3",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+              }
+            },
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "PR_MTHR_NAME_ORIG",
+            "text" : "Catherine Perée"
+          }, {
+            "id" : "34894afd-845d-4e3d-9586-2146651368a3",
+            "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+              }
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "PR_MTHR_NAME",
+            "text" : "Catherine Perée",
+            "qualifiers" : [ {
+              "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+              "name" : "StdQualifier"
+            } ]
+          } ]
+        } ]
+      } ]
+    } ],
+    "fields" : [ {
+      "id" : "5fa60ea4-85c3-4f94-829d-8789a6084358",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://familysearch.org/types/fields/SortKey",
+      "values" : [ {
+        "id" : "077ca984-a020-44c5-8c79-82b749cf053e",
+        "type" : "http://gedcomx.org/Interpreted",
+        "labelId" : "FS_SORT_KEY",
+        "text" : "0000000005589704_00481_00000_0000176388631086_002"
+      } ]
+    } ],
+    "display" : {
+      "name" : "Catherine Perée",
+      "gender" : "Female"
+    }
+  }, {
+    "id" : "p_296982812863",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "extracted" : true,
+    "principal" : false,
+    "sources" : [ {
+      "description" : "#sd_da1",
+      "descriptionId" : "sd_da1"
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/1:1:6J8F-6676" ]
+    },
+    "names" : [ {
+      "id" : "020aadb2-2920-44b9-b650-96016b22db09",
+      "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://gedcomx.org/BirthName",
+      "preferred" : false,
+      "nameForms" : [ {
+        "fullText" : "Henri Joseph Moxhet",
+        "parts" : [ {
+          "id" : "4cfc0180-8fc2-418e-8e64-a0d0cdbe4e2c",
+          "type" : "http://gedcomx.org/Surname",
+          "value" : "Moxhet",
+          "fields" : [ {
+            "id" : "9f1fbf5f-e415-4979-a654-0daada94f644",
+            "attribution" : {
+              "modified" : 1697726265154,
+              "created" : 1697726265154
+            },
+            "type" : "http://gedcomx.org/Surname",
+            "values" : [ {
+              "id" : "4d124268-7a3f-44ed-8028-892a5a2a65c5",
+              "type" : "http://gedcomx.org/Original",
+              "labelId" : "SP_NAME_SURN_ORIG",
+              "text" : "Moxhet"
+            }, {
+              "id" : "4d124268-7a3f-44ed-8028-892a5a2a65c5",
+              "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+              "attribution" : {
+                "contributor" : {
+                  "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+                }
+              },
+              "type" : "http://gedcomx.org/Interpreted",
+              "labelId" : "SP_NAME_SURN",
+              "text" : "Moxhet",
+              "qualifiers" : [ {
+                "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+                "name" : "StdQualifier"
+              } ]
+            } ]
+          } ]
+        }, {
+          "id" : "fb2d299a-d423-4aa7-92c6-ab7daf683a4f",
+          "type" : "http://gedcomx.org/Given",
+          "value" : "Henri Joseph",
+          "fields" : [ {
+            "id" : "1148ef5d-6dda-4838-92d6-8a165b63e704",
+            "attribution" : {
+              "modified" : 1697726265154,
+              "created" : 1697726265154
+            },
+            "type" : "http://gedcomx.org/Given",
+            "values" : [ {
+              "id" : "976dd593-b354-405b-a798-aeb484c2788d",
+              "type" : "http://gedcomx.org/Original",
+              "labelId" : "SP_NAME_GN_ORIG",
+              "text" : "Henri Joseph"
+            }, {
+              "id" : "976dd593-b354-405b-a798-aeb484c2788d",
+              "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+              "attribution" : {
+                "contributor" : {
+                  "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+                }
+              },
+              "type" : "http://gedcomx.org/Interpreted",
+              "labelId" : "SP_NAME_GN",
+              "text" : "Henri Joseph",
+              "qualifiers" : [ {
+                "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+                "name" : "StdQualifier"
+              } ]
+            } ]
+          } ]
+        } ],
+        "fields" : [ {
+          "id" : "1049285d-64c4-4360-b9ca-8e4a93e3ae76",
+          "attribution" : {
+            "contributor" : {
+              "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+            }
+          },
+          "type" : "http://gedcomx.org/Name",
+          "values" : [ {
+            "id" : "29b44614-e4c2-4cd2-b701-cb23844e5690",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+              }
+            },
+            "type" : "http://gedcomx.org/Original",
+            "labelId" : "SP_NAME_ORIG",
+            "text" : "Henri Joseph Moxhet"
+          }, {
+            "id" : "29b44614-e4c2-4cd2-b701-cb23844e5690",
+            "confidence" : "http://familysearch.org/types/confidenceLevels?fieldValueScore=100&fieldScorerVersion=1.0.0",
+            "attribution" : {
+              "contributor" : {
+                "resource" : "http://familysearch.org/treatments/sls/NameTreatment?version=1.3.0"
+              }
+            },
+            "type" : "http://gedcomx.org/Interpreted",
+            "labelId" : "SP_NAME",
+            "text" : "Henri Joseph Moxhet",
+            "qualifiers" : [ {
+              "value" : "http://familysearch.org/types/proof?fieldScoringAnnotations=NG:FL&fieldScorerVersion=1.0.0",
+              "name" : "StdQualifier"
+            } ]
+          } ]
+        } ]
+      } ]
+    } ],
+    "fields" : [ {
+      "id" : "c96f9075-a9ce-4f6c-85a1-d02b4d6e9392",
+      "attribution" : {
+        "modified" : 1697726265154,
+        "created" : 1697726265154
+      },
+      "type" : "http://familysearch.org/types/fields/SortKey",
+      "values" : [ {
+        "id" : "3b014f98-418b-4a88-ae84-c38233387b1e",
+        "type" : "http://gedcomx.org/Interpreted",
+        "labelId" : "FS_SORT_KEY",
+        "text" : "0000000005589704_00481_00000_0000176388631086_003"
+      } ]
+    } ],
+    "display" : {
+      "name" : "Henri Joseph Moxhet"
+    }
+  } ],
+  "relationships" : [ {
+    "id" : "b1f464e6-ff36-4d82-a0ac-e729639b4a68",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://gedcomx.org/Couple",
+    "person1" : {
+      "resource" : "#p_296982812856",
+      "resourceId" : "p_296982812856"
+    },
+    "person2" : {
+      "resource" : "#p_296982812861",
+      "resourceId" : "p_296982812861"
+    }
+  }, {
+    "id" : "26d1289c-67d1-4035-87f7-69052ef41887",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://gedcomx.org/ParentChild",
+    "person1" : {
+      "resource" : "#p_296982812861",
+      "resourceId" : "p_296982812861"
+    },
+    "person2" : {
+      "resource" : "#p_296982812853",
+      "resourceId" : "p_296982812853"
+    }
+  }, {
+    "id" : "b4941204-03d1-4a03-8566-1930ce07ced4",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://gedcomx.org/Couple",
+    "person1" : {
+      "resource" : "#p_296982812853",
+      "resourceId" : "p_296982812853"
+    },
+    "person2" : {
+      "resource" : "#p_296982812863",
+      "resourceId" : "p_296982812863"
+    }
+  }, {
+    "id" : "d10b1eb0-6e73-4236-9c53-ac07927fd947",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://gedcomx.org/ParentChild",
+    "person1" : {
+      "resource" : "#p_296982812856",
+      "resourceId" : "p_296982812856"
+    },
+    "person2" : {
+      "resource" : "#p_296982812853",
+      "resourceId" : "p_296982812853"
+    }
+  } ],
+  "sourceDescriptions" : [ {
+    "id" : "src_r_176388631086",
+    "mediaType" : "image/jpeg",
+    "about" : "https://www.familysearch.org/ark:/61903/1:2:H9BP-G4TW",
+    "componentOf" : {
+      "description" : "#sd_c_4439347",
+      "descriptionId" : "sd_c_4439347"
+    },
+    "resourceType" : "http://gedcomx.org/Record",
+    "created" : 1697726265154,
+    "modified" : 1709947619323,
+    "coverage" : [ {
+      "spatial" : {
+        "original" : "Olne, Liège, Belgique",
+        "description" : "https://www.familysearch.org/platform/places/description/418460"
+      },
+      "temporal" : {
+        "original" : "3 Apr 1874",
+        "formal" : "+1874-04-03"
+      },
+      "recordType" : "http://gedcomx.org/Death"
+    } ],
+    "citations" : [ {
+      "value" : "\"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6J8F-6673 : Sat Mar 09 01:26:59 UTC 2024), Entry for Marie Catherine Sabattier and Pierre Sabattier, 3 Apr 1874."
+    } ],
+    "sources" : [ {
+      "description" : "#sd_da1",
+      "descriptionId" : "sd_da1"
+    } ],
+    "titles" : [ {
+      "lang" : "fr",
+      "value" : "Entrée de Marie Catherine Sabattier, \"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\""
+    } ],
+    "rights" : [ "http://familysearch.org/records/recordPermissions/CdsPrmAnyone" ],
+    "identifiers" : {
+      "http://gedcomx.org/Primary" : [ "https://www.familysearch.org/platform/externalId/easy/15001125969956" ],
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/1:2:H9BP-G4TW" ]
+    },
+    "descriptor" : {
+      "resource" : "https://www.familysearch.org/service/cds/recapi/collections/4439347?arkName=1:2:H9BP-G4TW"
+    }
+  }, {
+    "id" : "sd_c_4439347",
+    "about" : "https://www.familysearch.org/service/cds/recapi/collections/4439347",
+    "resourceType" : "http://gedcomx.org/Collection",
+    "created" : 1656537828126,
+    "modified" : 1767338936683,
+    "coverage" : [ {
+      "spatial" : {
+        "original" : "Liège, Belgium",
+        "description" : "https://www.familysearch.org/platform/places/description/2069"
+      },
+      "temporal" : {
+        "original" : "1590/1947",
+        "formal" : "+1590/+1947"
+      },
+      "recordType" : "http://gedcomx.org/Vital"
+    } ],
+    "titles" : [ {
+      "lang" : "fr",
+      "value" : "Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947"
+    }, {
+      "lang" : "en",
+      "value" : "Belgium, Liège, Church and Civil Registration, 1590-1947"
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Primary" : [ "https://www.familysearch.org/service/cds/recapi/collections/4439347" ]
+    }
+  }, {
+    "id" : "sd_da1",
+    "mediaType" : "image/jpeg",
+    "about" : "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9SN-6RZ9",
+    "componentOf" : {
+      "description" : "#sd_c_4439347",
+      "descriptionId" : "sd_c_4439347"
+    },
+    "resourceType" : "http://gedcomx.org/DigitalArtifact",
+    "coverage" : [ {
+      "spatial" : {
+        "original" : "title:Belgium, Liège, Olne",
+        "description" : "https://www.familysearch.org/platform/places/description/418460"
+      },
+      "temporal" : {
+        "original" : "1871-1882",
+        "formal" : "+1871-01-01T00:00:00Z/+1882-12-31T23:59:59Z"
+      },
+      "recordType" : "http://gedcomx.org/Marriage"
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9SN-6RZ9" ]
+    },
+    "descriptor" : {
+      "resource" : "https://www.familysearch.org/service/cds/recapi/collections/4439347?arkName=3:1:3QSQ-G9SN-6RZ9"
+    }
+  }, {
+    "id" : "sd_p_296982812861",
+    "about" : "https://www.familysearch.org/ark:/61903/1:1:6J8F-6678",
+    "componentOf" : {
+      "description" : "#src_r_176388631086",
+      "descriptionId" : "src_r_176388631086"
+    },
+    "resourceType" : "http://gedcomx.org/Person",
+    "citations" : [ {
+      "value" : "\"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6J8F-6678 : Sat Mar 09 01:26:59 UTC 2024), Catherine Perée in entry for Marie Catherine Sabattier, 3 Apr 1874."
+    } ],
+    "titles" : [ {
+      "lang" : "fr",
+      "value" : "Catherine Perée, \"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\""
+    } ],
+    "descriptions" : [ {
+      "lang" : "fr",
+      "value" : "Catherine Perée, \"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\""
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/1:1:6J8F-6678" ]
+    }
+  }, {
+    "id" : "sd_p_296982812853",
+    "about" : "https://www.familysearch.org/ark:/61903/1:1:6J8F-6673",
+    "componentOf" : {
+      "description" : "#src_r_176388631086",
+      "descriptionId" : "src_r_176388631086"
+    },
+    "resourceType" : "http://gedcomx.org/Person",
+    "citations" : [ {
+      "value" : "\"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6J8F-6673 : Sat Mar 09 01:26:59 UTC 2024), Marie Catherine Sabattier, 3 Apr 1874."
+    } ],
+    "titles" : [ {
+      "lang" : "fr",
+      "value" : "Marie Catherine Sabattier, \"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\""
+    } ],
+    "descriptions" : [ {
+      "lang" : "fr",
+      "value" : "Marie Catherine Sabattier, \"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\""
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/1:1:6J8F-6673" ]
+    }
+  }, {
+    "id" : "sd_p_296982812863",
+    "about" : "https://www.familysearch.org/ark:/61903/1:1:6J8F-6676",
+    "componentOf" : {
+      "description" : "#src_r_176388631086",
+      "descriptionId" : "src_r_176388631086"
+    },
+    "resourceType" : "http://gedcomx.org/Person",
+    "citations" : [ {
+      "value" : "\"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6J8F-6676 : Sat Mar 09 01:26:59 UTC 2024), Henri Joseph Moxhet in entry for Marie Catherine Sabattier, 3 Apr 1874."
+    } ],
+    "titles" : [ {
+      "lang" : "fr",
+      "value" : "Henri Joseph Moxhet, \"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\""
+    } ],
+    "descriptions" : [ {
+      "lang" : "fr",
+      "value" : "Henri Joseph Moxhet, \"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\""
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/1:1:6J8F-6676" ]
+    }
+  }, {
+    "id" : "sd_p_296982812856",
+    "about" : "https://www.familysearch.org/ark:/61903/1:1:6J8F-667W",
+    "componentOf" : {
+      "description" : "#src_r_176388631086",
+      "descriptionId" : "src_r_176388631086"
+    },
+    "resourceType" : "http://gedcomx.org/Person",
+    "citations" : [ {
+      "value" : "\"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6J8F-667W : Sat Mar 09 01:26:59 UTC 2024), Pierre Sabattier in entry for Marie Catherine Sabattier, 3 Apr 1874."
+    } ],
+    "titles" : [ {
+      "lang" : "fr",
+      "value" : "Pierre Sabattier, \"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\""
+    } ],
+    "descriptions" : [ {
+      "lang" : "fr",
+      "value" : "Pierre Sabattier, \"Belgique, Liège, Registres Paroissiaux et Etat-Civil, 1590-1947\""
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Persistent" : [ "https://www.familysearch.org/ark:/61903/1:1:6J8F-667W" ]
+    }
+  }, {
+    "id" : "sd_auto_M9V9-MF8",
+    "resourceType" : "http://familysearch.org/types/collection/auto",
+    "coverage" : [ {
+      "spatial" : {
+        "description" : "https://www.familysearch.org/platform/places/description/10922185"
+      },
+      "temporal" : {
+        "formal" : "+1600-01-01T00:00:00Z/+1952-12-31T23:59:59Z"
+      }
+    } ],
+    "titles" : [ {
+      "value" : "Holy Roman Empire, Liège, Marriages, from 1600 to 1952"
+    } ],
+    "identifiers" : {
+      "http://gedcomx.org/Primary" : [ "http://group-service.rms.records.service.prod.us-east-1.prod.fslocal.org/group/M9V9-MF8" ]
+    }
+  } ],
+  "places" : [ {
+    "id" : "place_418460",
+    "identifiers" : {
+      "http://gedcomx.org/Primary" : [ "https://www.familysearch.org/platform/places/description/418460" ]
+    }
+  } ],
+  "fields" : [ {
+    "id" : "fd043a80-bfa3-4ec2-a639-350c8b7d24b8",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/SortKey",
+    "values" : [ {
+      "id" : "93080871-63ab-4d3b-b395-ac381652ef70",
+      "attribution" : {
+        "contributor" : {
+          "resource" : "http://treatment/SortKeyTreatment/ver/1"
+        },
+        "modified" : 1665618087636,
+        "created" : 1665618087636
+      },
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_SORT_KEY",
+      "text" : "0000000005589704_00481_00000_0000176388631086"
+    } ]
+  }, {
+    "id" : "91610711-5ac7-4287-9aa8-34e5437f6481",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/TravelerTitle",
+    "values" : [ {
+      "id" : "5578c102-52e1-42ec-a44f-99f4b2a29b15",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_TRAVELER_TITLE",
+      "text" : "Belgium, Liège, Civil Registration and Church Records, pt. 1, 1590-1947 - Vendor DataPrep"
+    } ]
+  }, {
+    "id" : "c19b833a-e505-4fdd-bf8e-681b9d069b66",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/FsUnsupported",
+    "values" : [ {
+      "id" : "a2c550da-aa0c-4694-bce2-11a6dc5e41ed",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_UNSUPPORTED",
+      "text" : "{\"FS_IMAGE_APID\":\"TH-1942-29293-22801-27\",\"FS_IMAGE_NBR\":\"00481\",\"FS_UNIQUE_ID\":\"15001125969956\"}"
+    } ]
+  }, {
+    "id" : "7c8d3754-1996-4dec-b46b-4b7ad68207cd",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/PpqId",
+    "values" : [ {
+      "id" : "2a07fb64-079c-4f87-bc05-f345962cd34e",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_PPQ_ID",
+      "text" : "21-1310"
+    } ]
+  }, {
+    "id" : "68d19b4f-8651-4f1c-9172-93a168174ec5",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/PublicationStatus",
+    "values" : [ {
+      "id" : "59e57036-1718-4df7-91cd-f6ab3be092f9",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_PUB_STATUS",
+      "text" : "Production"
+    } ]
+  }, {
+    "id" : "9d377675-dad6-4022-b87d-507502a9513a",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/UserModified",
+    "values" : [ {
+      "id" : "c3611f33-f244-416a-bfe8-1fa389f294a8",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_USER_MODIFIED",
+      "text" : "false"
+    } ]
+  }, {
+    "id" : "04e61bf5-b8e2-4645-be07-3785fa9378be",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/RecordNbr",
+    "values" : [ {
+      "id" : "e7eab595-fcac-4b22-97e5-037339ae1116",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_RECORD_NBR",
+      "text" : "0"
+    } ]
+  }, {
+    "id" : "945a4183-7b23-482e-86ad-fb60ff678eb5",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/FsModelVer",
+    "values" : [ {
+      "id" : "8963bdb9-d863-4ff7-89a0-cb32d22075f5",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_MODEL_VER",
+      "text" : "1"
+    } ]
+  }, {
+    "id" : "59a533f0-4e4e-4108-9209-ff53ff97e6b4",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/RecordGroup",
+    "values" : [ {
+      "id" : "4cc8e7db-3fa7-46c8-9c94-6618fb59120b",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_RECORD_GROUP",
+      "text" : "21-1310; 2022-09-16T09:22:41-0600; jbunting; 9741; TB; work.tmp_4439347_belgium_pt1_21_1310_idx_jrb_09_16_2022; Belgium, Liège, Civil Registration and Church Records, pt. 1, 1590-1947 - Vendor DataPrep"
+    } ]
+  }, {
+    "id" : "63c18b60-ac81-4f39-8698-479f015f4732",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/CdsBatchId",
+    "values" : [ {
+      "id" : "65f3d7ef-ece9-47f1-a3be-5aa8f6a8096a",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_CDS_BATCH_ID",
+      "text" : "70530"
+    } ]
+  }, {
+    "id" : "b19b51c9-352b-4ca7-8b3f-7d9ae1040297",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/ExtData",
+    "values" : [ {
+      "id" : "1e09102e-7fee-4725-9b95-56e2c0eb55d8",
+      "type" : "http://gedcomx.org/Original",
+      "labelId" : "EXT_DATA_ORIG",
+      "text" : "{\"FS_COLLECTION_ID\":\"4439347\",\"IMAGE_ARK\":\"https://familysearch.org/ark:/61903/3:1:3QSQ-G9SN-6RZ9\"}"
+    } ]
+  }, {
+    "id" : "d769bd08-15b3-49e8-8dc9-9617f723ccc8",
+    "attribution" : {
+      "modified" : 1697726265154,
+      "created" : 1697726265154
+    },
+    "type" : "http://familysearch.org/types/fields/RecordVersion",
+    "values" : [ {
+      "id" : "44d6a6ed-ae8b-42eb-b20e-5f32cbc71e62",
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_RECORD_VERSION",
+      "text" : "1"
+    } ]
+  }, {
+    "type" : "http://familysearch.org/types/fields/SystemOfRecord",
+    "values" : [ {
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_SYSTEM_OF_RECORD",
+      "text" : "SLS"
+    } ]
+  }, {
+    "type" : "http://familysearch.org/types/fields/DigitalFilmNbr",
+    "values" : [ {
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_DIGITAL_FILM_NBR",
+      "text" : "005589704"
+    } ]
+  }, {
+    "type" : "http://familysearch.org/types/fields/ImageNbr",
+    "values" : [ {
+      "type" : "http://gedcomx.org/Interpreted",
+      "labelId" : "FS_IMAGE_NBR",
+      "text" : "481"
+    } ]
+  } ]
+}
