@@ -19,6 +19,8 @@
 // sections, the phase-3 sections, and the `project` singleton).
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
+import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
+import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
@@ -27,7 +29,14 @@ import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
   competingParentSets,
   conflictBlocksCompletion,
+  conflictCoverageLogIds,
+  datetimeMs,
+  endsOnConflict,
+  isAnalysed,
+  questionLastSearchedMs,
+  questionOwnedLogEntries,
   questionTiedAssertionIds,
+  unsettledConflictEnding,
   whyConflictBlocksCompletion,
 } from "../utils/question-state.js";
 import {
@@ -878,7 +887,7 @@ function resolutionKindInvariants(entry: any, op: { op: string; fields?: Record<
  *  own, and tied to the same person. Reads live `research`. */
 function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   if (entry.preferred_assertion_id == null) return [];
-  const assertions: any[] = research.assertions ?? [];
+  const assertions: any[] = (research.assertions ?? []).filter(isLiveAssertion);
   const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
   const preferred = byId.get(entry.preferred_assertion_id);
   if (!preferred || !hasUncertainReading(preferred)) return [];
@@ -1384,7 +1393,7 @@ function isRelational(a: any): boolean {
  *  whole record). The contradiction gate, its two-party arm and the move gate
  *  all key parties through here so they cannot drift apart. */
 function recordParties(assertions: Iterable<any>, recordId: string) {
-  const onRecord = [...assertions].filter((a) => a && recordIdOf(a) === recordId);
+  const onRecord = [...assertions].filter((a) => isLiveAssertion(a) && recordIdOf(a) === recordId);
   return { onRecord, partyKey: recordPartyKeyer(onRecord) };
 }
 
@@ -1624,7 +1633,7 @@ interface ContradictionScope {
 function resolvableAssertions(research: any, batchAssertions?: Map<string, any>): Map<string, any> {
   const assertionById = new Map<string, any>();
   for (const a of (research?.assertions ?? []) as any[]) {
-    if (a && typeof a.id === "string") assertionById.set(a.id, a);
+    if (isLiveAssertion(a) && typeof a.id === "string") assertionById.set(a.id, a);
   }
   if (batchAssertions) for (const [id, a] of batchAssertions) assertionById.set(id, { ...a, id });
   return assertionById;
@@ -2527,7 +2536,7 @@ export function sameEntryOf(
 ): { records: Set<string>; sources: Set<string>; descriptions: Set<string> } | null {
   if (typeof seed?.record_id !== "string" || seed.record_id === "") return null;
   const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(
-    (a) => a && typeof a.record_id === "string" && a.record_id !== "",
+    (a) => isLiveAssertion(a) && typeof a.record_id === "string" && a.record_id !== "",
   );
   const descriptionOf = new Map<string, string>();
   for (const s of (Array.isArray(research?.sources) ? research.sources : []) as any[]) {
@@ -2657,7 +2666,7 @@ export function circularCorroborationVerdict(entry: any, research: any, tree: an
   const personId = entry.person_id;
   const subject = ((Array.isArray(baseline.persons) ? baseline.persons : []) as any[]).find((p) => p?.id === personId);
   if (!subject) return null;
-  const assertions = (Array.isArray(research?.assertions) ? research.assertions : []) as any[];
+  const assertions = ((Array.isArray(research?.assertions) ? research.assertions : []) as any[]).filter(isLiveAssertion);
   const linked = assertions.find((a) => a?.id === entry.assertion_id);
   // A two-party assertion (a relationship or a marriage) names the person it is
   // linked to, not its own party, so its role says nothing about who that person
@@ -3176,7 +3185,7 @@ export interface PairRecordFacts {
 function pairRecordParties(research: any, assertion: any) {
   const record = arkToBareId(String(assertion?.record_id ?? ""));
   const same = ((research?.assertions ?? []) as any[]).filter(
-    (a) => a && arkToBareId(String(a.record_id ?? "")) === record,
+    (a) => isLiveAssertion(a) && arkToBareId(String(a.record_id ?? "")) === record,
   );
   return { record, same, partyOf: recordPartyKeyer(same) };
 }
@@ -3479,7 +3488,7 @@ export function namesakeVerdicts(
   const assertionById = new Map<string, any>();
   const bySource = new Map<unknown, any[]>();
   for (const a of (Array.isArray(research?.assertions) ? research.assertions : []) as any[]) {
-    if (!a || typeof a.id !== "string") continue;
+    if (!isLiveAssertion(a) || typeof a.id !== "string") continue;
     assertionById.set(a.id, a);
     const s = capSource(a);
     const list = bySource.get(s);
@@ -4098,7 +4107,7 @@ export function namesakeRowListings(
     ),
   ].sort();
   const voucherPairs = vouchingPairs(before, after);
-  const assertions = (Array.isArray(after.research?.assertions) ? after.research.assertions : []) as any[];
+  const assertions = ((Array.isArray(after.research?.assertions) ? after.research.assertions : []) as any[]).filter(isLiveAssertion);
   const assertionById = new Map<string, any>(
     assertions.filter((a) => a && typeof a.id === "string").map((a) => [a.id, a]),
   );
@@ -5058,8 +5067,11 @@ function questionResolvedInvariants(
           "unresolved: that conflict disputes evidence the conclusion relies on, so the " +
           "sources behind it have never been correlated. This is not the same as a question " +
           "researched and found empty, which `not_proved` does close — here the work is " +
-          "unfinished rather than finished with nothing. Leave the question open, record the " +
-          "attempt at `not_proved`, and invoke conflict-resolution; resolve it after.",
+          "unfinished rather than finished with nothing. Leave the question open and record the " +
+          "attempt at the tier reached (`not_proved` when the conflict blocks identity), then " +
+          (inConflictEnding(beforeResearch, entry?.id, [...blocking])
+            ? CONFLICT_ENDING_MOVE
+            : "invoke conflict-resolution; resolve it after."),
       ];
     }
   }
@@ -5085,7 +5097,7 @@ function questionResolvedInvariants(
 function disputedSourceIds(research: any): Map<string, string[]> {
   const assertionSource = new Map<string, string>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
-    if (a?.id && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
+    if (a?.id && isLiveAssertion(a) && typeof a.source_id === "string") assertionSource.set(a.id, a.source_id);
   }
   const bySource = new Map<string, string[]>();
   for (const c of Array.isArray(research?.conflicts) ? research.conflicts : []) {
@@ -5279,6 +5291,7 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
 
   const shared = [...hits.keys()].sort();
   const blocking = [...new Set([...hits.values()].flat())].sort();
+  const ending = inConflictEnding(beforeResearch, entry?.question_id, blocking);
   return [
     `tier '${tier}' is not available while ${blocking.join(", ")} ` +
       `${blocking.length === 1 ? "is" : "are"} unresolved: ` +
@@ -5287,10 +5300,37 @@ function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
       "Correlating sources assumes they describe the same person, and that is " +
       "what the open conflict puts in question — so no tier above `not_proved` " +
       "is reachable, and tiering down to `possible` does not repair it. Record " +
-      "the attempt at `not_proved`, naming the conflict and what would settle " +
-      "it, then invoke conflict-resolution. Re-conclude by updating that same " +
-      "summary once the conflict is resolved.",
+      (ending
+        ? "the attempt at `not_proved`, naming the conflict, then " + CONFLICT_ENDING_MOVE
+        : "the attempt at `not_proved`, naming the conflict and what would settle it, then " +
+          "invoke conflict-resolution. Re-conclude by updating that same summary once the " +
+          "conflict is resolved."),
   ];
+}
+
+const CONFLICT_ENDING_MOVE =
+  "give the summary `shortfall: \"conflict\"` and stop there: conflict-resolution has " +
+  "already weighed every log entry and found nothing left to search, so invoking it " +
+  "again would weigh the same evidence again.";
+
+/** Whether a refusal over unresolved conflicts meets section E's ending, where
+ *  invoking conflict-resolution again weighs the same evidence again. Read with
+ *  the ladder's own predicate, and only when every conflict the refusal names
+ *  was itself found searched out over the log it covers now: a conflict on a
+ *  cited source that blocks another question may never have been weighed, or
+ *  that question may have been searched since. */
+function inConflictEnding(research: any, questionId: unknown, conflictIds: string[]): boolean {
+  const question = (Array.isArray(research?.questions) ? research.questions : []).find(
+    (q: any) => q?.id === questionId,
+  );
+  const conflicts = Array.isArray(research?.conflicts) ? research.conflicts : [];
+  const weighed = conflictIds.every((id) => {
+    const c = conflicts.find((x: any) => x?.id === id);
+    if (!Array.isArray(c?.weighed_log_entry_ids)) return false;
+    const stamped = new Set(c.weighed_log_entry_ids);
+    return conflictCoverageLogIds(research, c).every((logId) => stamped.has(logId));
+  });
+  return Boolean(question) && weighed && unsettledConflictEnding(research, question);
 }
 
 /** One conclusion per question — the manifest's own rule, now enforced.
@@ -5339,11 +5379,14 @@ function oneSummaryPerQuestion(entry: any, research: any, appendedId: string | u
  *
  *  Scoped to that case: a one-field update is refused only when a `log[]` entry
  *  attributed to the summary's question (through a plan item of one of its
- *  plans) was performed after the summary's pre-op `updated` stamp. With no
- *  later search, a one-field edit — a tier change with a reworded narrative —
- *  is ordinary and passes. A summary with no `updated` predates the stamp and
- *  is never refused. `log` is not a `research_append` section, so live and
- *  pre-call research carry the same log.
+ *  plans) was performed after the summary's pre-op `updated` stamp. In section
+ *  E's ending the question's owned entries count instead, so the upload that
+ *  closes a hand-off counts too, and an update sending neither field goes to
+ *  `staleEndingRefresh`; both read the live research's questions, plans and
+ *  conflicts. With no later search, a one-field edit — a tier change with a
+ *  reworded narrative — is ordinary and passes. A summary with no `updated`
+ *  predates the stamp and is never refused. `log` is not a `research_append`
+ *  section, so live and pre-call research carry the same log.
  *
  *  Update-only: an append already requires both. Passing a field's current
  *  text again satisfies it — the point is that the caller re-checked it. */
@@ -5358,11 +5401,17 @@ function narrativeAndSearchSummaryTogether(
   const has = (k: string) => Object.prototype.hasOwnProperty.call(fields, k);
   const narrative = has("narrative_markdown");
   const summary = has("exhaustive_search_summary");
-  if (narrative === summary) return [];
+  if (narrative && summary) return [];
   const since = typeof priorUpdated === "string" ? datetimeMs(priorUpdated) : NaN;
   if (Number.isNaN(since)) return [];
   const qid = entry?.question_id;
   if (typeof qid !== "string" || qid === "") return [];
+  if (!narrative && !summary) return staleEndingRefresh(op, qid, priorUpdated, research);
+  // In section E's ending the ladder counts an upload as a search, so the
+  // rule does too: a refresh that ends the research must cover it.
+  const question = (Array.isArray(research?.questions) ? research.questions : []).find(
+    (q: any) => q?.id === qid,
+  );
   const itemIds = new Set<string>();
   for (const plan of Array.isArray(research?.plans) ? research.plans : []) {
     if (plan?.question_id !== qid) continue;
@@ -5370,14 +5419,14 @@ function narrativeAndSearchSummaryTogether(
       if (typeof item?.id === "string") itemIds.add(item.id);
     }
   }
-  const later = (Array.isArray(research?.log) ? research.log : [])
-    .filter(
-      (e: any) =>
-        e &&
-        itemIds.has(e.plan_item_id) &&
-        typeof e.performed === "string" &&
-        datetimeMs(e.performed) > since,
-    )
+  const entries =
+    question && unsettledConflictEnding(research, question)
+      ? questionOwnedLogEntries(research, qid)
+      : (Array.isArray(research?.log) ? research.log : []).filter(
+          (e: any) => e && itemIds.has(e.plan_item_id),
+        );
+  const later = entries
+    .filter((e: any) => e && typeof e.performed === "string" && datetimeMs(e.performed) > since)
     .map((e: any) => e.id ?? "(no id)");
   if (later.length === 0) return [];
   const [set, missing] = narrative
@@ -5395,12 +5444,27 @@ function narrativeAndSearchSummaryTogether(
   ];
 }
 
-/** Epoch ms of an `iso_datetime`, accepting the dash-separated time form the
- *  schema allows (`2026-05-01T10-15-00Z`); NaN when it does not parse. */
-function datetimeMs(value: string): number {
-  const m = /^(\d{4}-\d{2}-\d{2}T\d{2})[:-](\d{2})[:-](\d{2})(?:[.-](\d+))?(.*)$/.exec(value);
-  if (!m) return Date.parse(value);
-  return Date.parse(`${m[1]}:${m[2]}:${m[3]}${m[4] ? "." + m[4] : ""}${m[5]}`);
+/** Section E: an update that sends neither text field leaves `updated` where it
+ *  was (`restampOn`), so in the ending a summary older than the question's
+ *  latest search would stay older on every pass and the ladder would send the
+ *  question back to proof-conclusion forever. There, the refresh must rewrite
+ *  the text. "Older" is the ladder's own test (`endsOnConflict`), so an upload
+ *  counts as a search; outside the ending a field-only update is ordinary. */
+function staleEndingRefresh(op: any, qid: string, priorUpdated: unknown, research: any): string[] {
+  const question = (Array.isArray(research?.questions) ? research.questions : []).find(
+    (q: any) => q?.id === qid,
+  );
+  if (!question || !unsettledConflictEnding(research, question)) return [];
+  const lastSearched = questionLastSearchedMs(research, qid);
+  if (endsOnConflict({ shortfall: "conflict", updated: priorUpdated }, lastSearched)) return [];
+  return [
+    `proof_summaries update of ${op.entryId ?? "(no entryId)"} sends neither ` +
+      "`narrative_markdown` nor `exhaustive_search_summary`, but question " +
+      `${qid} has been searched since this summary was last written, and it is ending on an ` +
+      "unsettled conflict. The summary ends the research only once it is rewritten over that " +
+      "evidence: read the newer log entries, rewrite both fields, and pass both in this update " +
+      "with `shortfall: \"conflict\"`.",
+  ];
 }
 
 /** A `proof_summaries` write when the persons this proof bears on — its
@@ -7808,6 +7872,48 @@ function validateRelationshipDirection(entry: Record<string, unknown>): void {
   ]);
 }
 
+/** Section E. `weighed_log_entry_ids` marks the analysis that found nothing
+ *  left to search, and holds the coverage set the ladder compares with the
+ *  question's log to tell new evidence from evidence already weighed. Whether a
+ *  decisive record is still unsearched cannot be read from the documents, so
+ *  conflict-resolution declares it by sending the field; the value is computed
+ *  here, from the helper the ladder reads, because by hand the set misses the
+ *  uploads matched to their hand-offs by URL. An analysis that does not declare
+ *  it clears it, as does settling the conflict: either way a stale finding
+ *  would end the research on evidence that has moved. */
+function stampWeighedLogEntryIds(entry: any, op: ResearchAppendOp, research: any): void {
+  const written: Record<string, unknown> = (op.op === "append" ? op.entry : op.fields) ?? {};
+  const declared = Object.prototype.hasOwnProperty.call(written, "weighed_log_entry_ids");
+  const analysed = isAnalysed(written);
+  if (declared && !analysed) {
+    throw new ResearchAppendError(
+      "`weighed_log_entry_ids` declares that the analysis in this write found nothing left " +
+        "to search, so it is accepted only in a write that also carries a non-blank " +
+        "`independence_analysis` (and `weighing_analysis`). Re-send it with the analysis, " +
+        "or drop it.",
+    );
+  }
+  if (entry?.status !== "unresolved") {
+    delete entry.weighed_log_entry_ids;
+    return;
+  }
+  if (!analysed) return;
+  if (!declared) {
+    delete entry.weighed_log_entry_ids;
+    return;
+  }
+  const covered = conflictCoverageLogIds(research, entry);
+  if (covered.length === 0) {
+    throw new ResearchAppendError(
+      "`weighed_log_entry_ids` declares that nothing is left to search, but this conflict " +
+        "covers no log entry: it blocks no question, or no question it blocks has a log entry " +
+        "yet, so there is no search to declare it over. Drop the field and name the record that " +
+        "would settle the conflict.",
+    );
+  }
+  entry.weighed_log_entry_ids = covered;
+}
+
 function applyOne(
   research: any,
   op: ResearchAppendOp,
@@ -8219,10 +8325,14 @@ function applyOne(
       else if (priorStamp === undefined) delete existing[updateStamp.field];
       else existing[updateStamp.field] = priorStamp;
     }
-    normalizeDateFields(existing);
-    normalizeAccessDate(existing);
-    canonicalizeAssertionLabels(existing);
-    validateNegativeEvidenceRole(existing);
+    // Retiring an assertion says nothing about its content, and one written
+    // before a later rule must still be retirable (#3678).
+    if (!(section === "assertions" && isRetirementFields(op.fields))) {
+      normalizeDateFields(existing);
+      normalizeAccessDate(existing);
+      canonicalizeAssertionLabels(existing);
+      validateNegativeEvidenceRole(existing);
+    }
     // The update arm validates the MERGED entry, so an op that sets only one of
     // the pair is checked against the value already on disk — which is the case
     // the rule exists for: flipping `informant_proximity` to "unknown" while
@@ -8264,6 +8374,7 @@ function applyOne(
   } else {
     throw new ResearchAppendError(`unknown op '${op.op}' (expected 'append' or 'update')`);
   }
+  if (section === "conflicts") stampWeighedLogEntryIds(resultEntry, op, research);
 
   // Section invariants the project validator does not already enforce.
   const invariantErrors: string[] = [];
@@ -9037,6 +9148,131 @@ function normalizeRepository(v: unknown): string {
   return typeof v === "string" ? v.trim().toLowerCase() : "";
 }
 
+/** The assertion ids an entry of `section` cites as evidence. */
+function assertionIdsCited(section: unknown, e: any): string[] {
+  if (!e || typeof e !== "object") return [];
+  const list = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
+  const one = (v: unknown) => (typeof v === "string" ? [v] : []);
+  switch (section) {
+    case "person_evidence":
+      return one(e.assertion_id);
+    case "conflicts":
+      return [...list(e.competing_assertion_ids), ...one(e.preferred_assertion_id)];
+    case "hypotheses":
+      return [...list(e.supporting_assertion_ids), ...list(e.contradicting_assertion_ids)];
+    case "proof_summaries":
+      return [
+        ...list(e.supporting_assertion_ids),
+        ...(Array.isArray(e.claims) ? e.claims.flatMap((c: any) => list(c?.supporting_assertion_ids)) : []),
+      ];
+    case "timelines":
+      return Array.isArray(e.events) ? e.events.flatMap((ev: any) => list(ev?.assertion_ids)) : [];
+    case "questions":
+      return list(e.resolution_assertion_ids);
+    default:
+      return [];
+  }
+}
+
+/** #3678: refuse an op that newly cites a retired assertion as evidence. A cited id
+ *  the stored entry already held is not new. */
+function retiredAssertionCitations(
+  ops: ResearchAppendOp[],
+  research: any,
+  fmt: (i: number, msg: string) => string,
+): string[] {
+  const retired = new Map<string, unknown>();
+  for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
+    if (typeof a?.id === "string" && !isLiveAssertion(a)) retired.set(a.id, a.superseded_by);
+  }
+  if (retired.size === 0) return [];
+  const out: string[] = [];
+  ops.forEach((op, i) => {
+    const stored =
+      op.op === "update" && Array.isArray(research?.[op.section as string])
+        ? research[op.section as string].find((x: any) => x?.id === op.entryId)
+        : undefined;
+    const had = new Set(assertionIdsCited(op.section, stored));
+    const cited = assertionIdsCited(op.section, op.op === "append" ? op.entry : op.fields);
+    const bad = [...new Set(cited.filter((id) => retired.has(id) && !had.has(id)))];
+    if (bad.length === 0) return;
+    out.push(
+      fmt(
+        i,
+        `cites ${bad.map((id) => `${id} (superseded_by ${retired.get(id)})`).join(", ")}: a re-extraction retired ` +
+          `${bad.length === 1 ? "it" : "them"}, so ${bad.length === 1 ? "it is" : "they are"} not evidence. Cite the ` +
+          "replacement, or nothing where it was retracted.",
+      ),
+    );
+  });
+  return out;
+}
+
+/** An assertions update that only retires the entry: `superseded_by` set non-null,
+ *  plus at most `superseded_reason`. */
+function isRetirementFields(fields: unknown): boolean {
+  if (!fields || typeof fields !== "object") return false;
+  const f = fields as Record<string, unknown>;
+  const keys = Object.keys(f).filter((k) => k !== "id");
+  return f.superseded_by != null && keys.every((k) => k === "superseded_by" || k === "superseded_reason");
+}
+
+/**
+ * `extraction_append`'s re-extraction (#3678): the update ops that retire a
+ * record's old assertions against this batch's new ones, or the refusals.
+ *
+ * Run on the document as read under the lock, so ids chosen from an earlier read
+ * are checked again: each must still be live and on the record, and nothing may
+ * rest on any of them (`assertionReferrers`). Old and new are paired by the person
+ * in the record (`record_persona_id`, else `record_role`) and the canonical fact
+ * type, in order; an old assertion with no counterpart is "retracted" with the
+ * reason.
+ */
+function planRetirement(
+  research: any,
+  tree: any,
+  ops: ResearchAppendOp[],
+  retire: RetireAssertions,
+): { errors: string[]; updates: ResearchAppendOp[]; retracted: Set<string> } {
+  const byId = new Map<string, any>(
+    (Array.isArray(research?.assertions) ? research.assertions : []).filter((a: any) => typeof a?.id === "string").map((a: any) => [a.id, a]),
+  );
+  const errors: string[] = [];
+  const bare = arkToBareId(retire.recordId);
+  for (const id of retire.ids) {
+    const a = byId.get(id);
+    if (!a) errors.push(`${id} is not an assertion in research.json.`);
+    else if (!isLiveAssertion(a)) errors.push(`${id} is already retired (superseded_by ${a.superseded_by}).`);
+    else if (typeof a.record_id !== "string" || arkToBareId(a.record_id) !== bare) {
+      errors.push(`${id} is an assertion of ${a.record_id}, not of ${retire.recordId}.`);
+    }
+  }
+  if (errors.length === 0) errors.push(...assertionReferrers(research, tree, new Set(retire.ids)));
+  if (errors.length > 0) return { errors, updates: [], retracted: new Set() };
+
+  const key = (a: any) =>
+    `${typeof a.record_persona_id === "string" && a.record_persona_id !== "" ? `persona:${a.record_persona_id}` : `role:${a.record_role}`}\u0000${canonicalFactKey(a.fact_type)}`;
+  const fresh = new Map<string, string[]>();
+  for (const [id, entry] of predictedAssertions(research, ops)) {
+    fresh.set(key(entry), [...(fresh.get(key(entry)) ?? []), id]);
+  }
+  const updates: ResearchAppendOp[] = [];
+  const retracted = new Set<string>();
+  for (const id of retire.ids) {
+    const next = fresh.get(key(byId.get(id)))?.shift();
+    if (next === undefined) retracted.add(id);
+    updates.push({
+      section: "assertions",
+      op: "update",
+      entryId: id,
+      fields: next !== undefined
+        ? { superseded_by: next }
+        : { superseded_by: RETRACTED, superseded_reason: `re-extraction of ${retire.recordId} on ${today()} wrote no counterpart` },
+    });
+  }
+  return { errors: [], updates, retracted };
+}
+
 /** §3.4.3 re-extraction key: which extracted fact an assertion is, for the
  *  guard below. `undefined` = not comparable (exempt or malformed). The key is
  *  (source, record, log entry, person in the record, canonical fact type):
@@ -9091,8 +9327,16 @@ function reextractionCollisions(
   research: any,
   fmt: (i: number, msg: string) => string,
 ): string[] {
+  // A retired assertion, or one this batch retires (#3678), is no longer the
+  // record's reading, so a fresh copy of its fact is not a duplicate.
+  const retiring = new Set(
+    ops
+      .filter((op) => op.section === "assertions" && op.op === "update" && isRetirementFields(op.fields))
+      .map((op) => op.entryId),
+  );
   const existing = new Map<string, string[]>();
   for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
+    if (!isLiveAssertion(a) || retiring.has(a.id)) continue;
     const k = reextractionKey(a);
     if (k === undefined || typeof a.id !== "string") continue;
     existing.set(k, [...(existing.get(k) ?? []), a.id]);
@@ -10169,6 +10413,7 @@ async function prepareOps(
   if (sourceReuse?.action === "updated_existing") {
     errors.push(...reextractionCollisions(ops, research, fmt));
   }
+  errors.push(...retiredAssertionCitations(ops, research, fmt));
 
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
@@ -10223,6 +10468,15 @@ export interface ResearchAppendOptions {
    *  is the caller's own, so it is judged (`judgeTimelinePlaces`). A tool builds
    *  its timeline from the project's own standard places. */
   judgeSuppliedPlaces?: boolean;
+  /** extraction_append's re-extraction (#3678): retire these assertions of
+   *  `recordId` against the batch's appends, in the same write (`planRetirement`).
+   *  Never set by a tool caller. */
+  retireAssertions?: RetireAssertions;
+}
+
+export interface RetireAssertions {
+  recordId: string;
+  ids: readonly string[];
 }
 
 /**
@@ -10570,9 +10824,26 @@ export async function researchAppend(
       );
     }
 
+    let retracted = new Set<string>();
+    if (options.retireAssertions) {
+      const plan = planRetirement(research, tree, ops, options.retireAssertions);
+      if (plan.errors.length > 0) {
+        return fail(boundErrors(plan.errors.map((e) => `re-extraction of ${options.retireAssertions!.recordId} refused: ${e}`)));
+      }
+      ops.push(...plan.updates);
+      retracted = plan.retracted;
+    }
+
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const readSidecar = sidecarReader(projectPath);
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options, readSidecar);
+    const minted = personsNamedFromRetracted(research, tree, retracted);
+    if (minted.length > 0) {
+      prep.warnings.push(
+        `the retracted relationship claim (${[...retracted].join(", ")}) is the source of a name on ` +
+          `${minted.join(", ")}: check whether that person rests on it alone.`,
+      );
+    }
 
     const storedCollectionUrls = opsSetCollectionUrl(ops)
       ? await loadStoredCollectionUrls(projectPath)

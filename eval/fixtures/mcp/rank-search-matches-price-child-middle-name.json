@@ -22,7 +22,6 @@
         "birthPlace": "Wisconsin",
         "collectionTitle": "United States Census, 1880",
         "matchScore": 0.9108,
-        "matchConfidence": 5,
         "attachedToSubject": false,
         "attachedToOther": false
       },
@@ -37,7 +36,6 @@
         "birthPlace": "New York",
         "collectionTitle": "United States Census, 1880",
         "matchScore": 0.2416,
-        "matchConfidence": 2,
         "attachedToSubject": false,
         "attachedToOther": true
       }

@@ -560,7 +560,8 @@ def test_parity_constants(name):
 
 
 def test_parity_patterns():
-    for name in ("_API_KEY_PATTERNS", "_API_KEY_PATTERNS_STR"):
+    for name in ("_API_KEY_PATTERNS", "_API_KEY_PATTERNS_STR", "_API_KEY_FIELD_PATTERNS",
+                 "_API_KEY_FIELD_PATTERNS_STR"):
         assert [p.pattern for p in getattr(proto, name)] == [p.pattern for p in getattr(alpha, name)]
     for name in ("_EMBEDDED_YEAR_RE", "_STALE_TMP_RE"):
         assert getattr(proto, name).pattern == getattr(alpha, name).pattern
@@ -641,7 +642,8 @@ def test_parity_filter_transcript(cap, allow_subdirs):
 
 
 def test_parity_redact_api_keys():
-    text = f"a {API_KEY} b sk-or-{'o' * 25} c sk-{'z' * 45} d sk-short"
+    text = (f"a {API_KEY} b sk-or-{'o' * 25} c sk-{'z' * 45} d sk-short "
+            '{\\"matcherUrl\\": \\"https://m.example\\", \\"matcherApiKey\\": \\"' + "f" * 64 + '\\"}')
     assert proto._redact_api_keys(text.encode()) == alpha._redact_api_keys(text.encode())
     assert proto._redact_api_keys_str(text) == alpha._redact_api_keys_str(text)
 

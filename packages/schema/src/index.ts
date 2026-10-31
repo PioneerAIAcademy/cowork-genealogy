@@ -208,6 +208,9 @@ export interface Assertion {
   log_entry_id?: string | null
   record_persona_id?: string | null
   extracted_for_question_ids: string[]
+  /** Non-null means retired by a re-extraction: the replacing `a_` id, or "retracted". */
+  superseded_by?: string | null
+  superseded_reason?: string | null
 }
 
 /**

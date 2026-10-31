@@ -2,14 +2,19 @@
 
 ## Overview
 
-An MCP tool that asks FamilySearch's `matchTwoExamples` API whether two
-record extractions describe the same real-world person. The caller passes
+An MCP tool that asks the active matcher whether two record extractions
+describe the same real-world person. config.json's `matcher` picks it:
+FamilySearch's `matchTwoExamples` API (the default) or the matcher service; both
+are reached through `matchPairs`, and `docs/specs/matcher-shim-spec.md` specifies
+the two backends, their errors and the no-fallback rule. This spec describes the
+tool and FamilySearch's backend. The caller passes
 two **simplified-GedcomX documents** (exactly as the LLM received them
 from prior tool calls) plus two **person ids** identifying which person
 in each document is the focus of the comparison. The tool inflates the
 GedcomX, adds a `sourceDescription` anchor pointing at each focus
 person, POSTs to FamilySearch, and returns a small match result to the
-LLM.
+LLM. Under the matcher service the documents go to `POST /v1/score` instead,
+as the shim spec describes.
 
 Requires authentication (OAuth tokens obtained via the `login` tool).
 Uses the website-service endpoint at
@@ -68,7 +73,7 @@ about 37 links per call. Identity was being asserted and never scored. The arm i
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `projectPath` | string | yes | The research project directory. Its presence selects this arm. |
-| `assertionId` | string | yes | The assertion the `person_evidence` link will cite. Resolves the record, the party and the retrieval route in one hop. |
+| `assertionId` | string | yes | The assertion the `person_evidence` link will cite. Resolves the record, the party and the retrieval route in one hop. Refused when a re-extraction retired it (non-null `superseded_by`, `research-schema-spec.md` §5.6): score its replacement. A retired assertion of the same record is not read as a party. |
 | `treePersonId` | string | yes | The candidate person's id in `tree.gedcomx.json`. |
 | `recordRole` | string | no | Score a **different** party of the same record than the assertion's own `record_role` — the second party of a relationship or marriage assertion, which gets its own link. Resolved as "Party selection" below describes. |
 | `recordPersonaId` | string | no | Name the record persona directly when the assertion does not carry it and the party is otherwise ambiguous. A persona the record does not hold is refused. |
@@ -398,7 +403,7 @@ not become two files.
 ```json
 { "record_id": "ark:/61903/1:1:MARR-8T3",
   "scores": { "<assertion_id>|<tree_person_id>": { "record_persona_id": …, "record_role": …,
-              "tree_person_id": …, "score": 0.87, "confidence": 5, "matched": true,
+              "tree_person_id": …, "score": 0.87, "scorer": "familysearch", "model": null,
               "assertion_id": "a_005", "record_source": "record_read", "computed": "…",
               "party_resolved": true } } }
 ```
@@ -515,9 +520,7 @@ It says what was scored and whom.
 
 | Field | Type | Always present? | Description |
 |-------|------|-----------------|-------------|
-| `matched` | boolean | yes | `true` when the API returned a `confidence` field on the entry. `false` indicates the API treated the comparison as "no real match" (confidence omitted, near-zero score). |
-| `confidence` | number | only when `matched: true` | Integer 1–5. The API's coarse-bucket confidence rating. Higher is better. |
-| `score` | number | yes | Float 0–1. Fine-grained match score from the API's algorithm. |
+| `score` | number | yes | Float 0–1, from the active matcher. |
 | `recordSource` | `"record_read"` or `"projection"` | yes | Which route assembled the record side. |
 | `recorded` | boolean | yes | `true` when the score was written to the attestation. |
 | `recordPersona` | `{ id, name, role }` | yes | The record persona that was scored. `id` is the fetched `persons[].id` on route 1 and the projected group's persona id on route 2, and `null` when the record names none. `name` is the record's name for it, `""` when it gives none. `role` is the `record_role` the record's assertions give that persona, `null` when no assertion names it. |
@@ -533,8 +536,6 @@ specifies.
 
 ```json
 {
-  "matched": true,
-  "confidence": 5,
   "score": 0.97,
   "recordSource": "record_read",
   "recorded": true,
@@ -547,20 +548,18 @@ specifies.
 
 | Field | Type | Always present? | Description |
 |-------|------|-----------------|-------------|
-| `matched` | boolean | yes | `true` when the API returned a `confidence` field on the entry. `false` indicates the API treated the comparison as "no real match" (confidence omitted, near-zero score). |
-| `confidence` | number | only when `matched: true` | Integer 1–5. The API's coarse-bucket confidence rating. Higher is better. |
-| `score` | number | yes | Float 0–1. Fine-grained match score from the API's algorithm. Near-1 means strong match; near-0 means no signal. |
-| `queryArk` | string | yes | The persistent ARK of the focus person in `gedcomx1`, in canonical form (e.g. `"ark:/61903/4:1:KGS8-LY1"`). Parsed out of the API response's `title` field — see parsing rule below. Will contain a `MMMM-MMM` placeholder if the focus person in `gedcomx1` had no `ark`. |
-| `candidateArk` | string | yes | The persistent ARK of the matched person in `gedcomx2`, in canonical form. Derived from `entries[0].id` in the API response (a resolver URL), normalized to `ark:/61903/...`. Will contain `MMMM-MMM` placeholder if the focus person in `gedcomx2` had no `ark`. |
-| `apiTitle` | string | yes | The raw `title` field from the API response, e.g. `"Matches for ark:/61903/4:1:KGS8-LY1"`. Surfaced so the LLM can confirm which persona was treated as the query. |
-| `updated` | string | yes | ISO timestamp from the API response. Useful for debugging. |
+| `score` | number | yes | Float 0–1, from the active matcher. Near-1 means strong match; near-0 means no signal. |
+| `queryArk` | string | FamilySearch's matcher only | The persistent ARK of the focus person in `gedcomx1`, in canonical form (e.g. `"ark:/61903/4:1:KGS8-LY1"`). Parsed out of the API response's `title` field — see parsing rule below. Will contain a `MMMM-MMM` placeholder if the focus person in `gedcomx1` had no `ark`. |
+| `candidateArk` | string | FamilySearch's matcher only | The persistent ARK of the matched person in `gedcomx2`, in canonical form. Derived from `entries[0].id` in the API response (a resolver URL), normalized to `ark:/61903/...`. Will contain `MMMM-MMM` placeholder if the focus person in `gedcomx2` had no `ark`. |
+| `apiTitle` | string | FamilySearch's matcher only | The raw `title` field from the API response, e.g. `"Matches for ark:/61903/4:1:KGS8-LY1"`. Surfaced so the LLM can confirm which persona was treated as the query. |
+| `updated` | string | FamilySearch's matcher only | ISO timestamp from the API response. Useful for debugging. |
+
+Under the matcher service, arm B returns `{ "score": … }` alone.
 
 #### Example output (arm B)
 
 ```json
 {
-  "matched": true,
-  "confidence": 5,
   "score": 0.99983513,
   "queryArk": "ark:/61903/4:1:KGS8-LY1",
   "candidateArk": "ark:/61903/4:1:KCWM-J9H",
@@ -573,7 +572,6 @@ specifies.
 
 ```json
 {
-  "matched": false,
   "score": 2.4603711e-8,
   "queryArk": "ark:/61903/4:1:KGS8-LY1",
   "candidateArk": "ark:/61903/4:1:NONMATCH",
@@ -582,7 +580,7 @@ specifies.
 }
 ```
 
-Note: `confidence` is omitted. The score is essentially zero. `matched: false`.
+The score is essentially zero.
 
 ---
 
@@ -603,6 +601,7 @@ do next), thrown as `Error` objects.
 | `gedcomx1.persons` or `gedcomx2.persons` is missing or empty | **Runtime check** inside `validateInput()` — the JSON schema for `type: "object"` won't catch a missing nested array. Throws: `"same_person: <side> has no persons[] array."` |
 | API returns 200 but `entries[]` is empty | Defensive sentinel — should never happen (the API always returns ≥1 entry; see Evidence Trail). Throws: `"matchTwoExamples API returned no entries[]; this is unexpected per FS behavior."` |
 | `fetch()` itself fails (network) | `"Could not reach FamilySearch matchTwoExamples API: ${describeFetchError(error)}."` |
+| The matcher service could not score the pair, rejected the key, refused or failed the call, or was unreachable | The service's own errors (`pair errors`, `401`, a non-200, `Could not reach the matcher service: …`), as `docs/specs/matcher-shim-spec.md` lists them. Never a FamilySearch re-score. |
 
 ---
 
@@ -731,8 +730,6 @@ input: { gedcomx1, primaryId1, gedcomx2, primaryId2 }
   │     see Evidence Trail. This is insurance, not expected.)
   │
   ├─ 7. Parse the response. Map to output shape:
-  │     - matched = (entries[0]?.confidence !== undefined)
-  │     - confidence = entries[0]?.confidence  (omitted on no-match)
   │     - score = entries[0]?.score
   │     - candidateArk = entries[0]?.id    (already a full https://...URL)
   │     - queryArk = parseArkFromTitle(title)  (see parseArk rule below)
@@ -800,13 +797,12 @@ export interface SamePersonInput {
 }
 
 export interface SamePersonResult {
-  matched: boolean;
-  confidence?: number;
   score: number;
-  queryArk: string;
-  candidateArk: string;
-  apiTitle: string;
-  updated: string;
+  // FamilySearch's matcher only:
+  queryArk?: string;
+  candidateArk?: string;
+  apiTitle?: string;
+  updated?: string;
 }
 
 // Raw upstream response shape — internal use only.
@@ -888,8 +884,6 @@ export async function samePerson(
 
   const entry = body.entries[0];
   return {
-    matched: entry.confidence !== undefined,
-    ...(entry.confidence !== undefined && { confidence: entry.confidence }),
     score: entry.score,
     queryArk: parseArkFromTitle(body.title),
     candidateArk: entry.id,
@@ -940,8 +934,8 @@ Matches the kebab-case source file naming (`tools/same-person.ts`).
 
 Vitest with mocked `fetch`. Cases to cover:
 
-- Happy path → matched=true with confidence + score + ARKs
-- No-match (entries[0] has no `confidence`) → matched=false
+- Happy path → score + ARKs, and no `matched` or `confidence`
+- No-match (entries[0] has no `confidence`) → the score alone
 - 401 → re-login error
 - 403 with Imperva body → WAF error
 - 400 with JSON detail → quote the detail
@@ -987,9 +981,7 @@ export const samePersonSchema = {
     "Each gedcomx may contain multiple persons (focus + parents); the primaryId " +
     "tells the tool which one is the focus.\n" +
     "\n" +
-    "Returns a match decision with confidence (integer 1–5, omitted on " +
-    "no-match) and score (float 0–1). Returns `matched: false` when the API " +
-    "doesn't recognize a real match (confidence omitted, score near zero).",
+    "Returns `score` (float 0-1).",
   inputSchema: {
     type: "object" as const,
     properties: {
@@ -1060,7 +1052,7 @@ exercised by `tests/tools/same-person.test.ts`.
 | `minConfidence` query param | A no-op for N ∈ {0, 2, 5, 6, 10, 20} — every response identical. The API normalizes to `minConfidence=0` (visible in `links.self.href`). Not exposed as a tool parameter. |
 | Symmetry | The algorithm is symmetric (same score either direction). Response framing follows input order: `entries[0]` is the query (referenced by `title`), `entries[1]` is the candidate (referenced by `entries[].id`). |
 | Parent context | For strong-signal matches (name + date + place all match), `confidence` and `score` are identical with or without parent context. Parents likely matter more for ambiguous cases. |
-| Non-match response | `confidence` is omitted; `score` is ~1e-8. The API still returns `results: 1` with placeholder behavior for the candidate `id`. Drives the `matched: boolean` derivation. |
+| Non-match response | `confidence` is omitted; `score` is ~1e-8. The API still returns `results: 1` with placeholder behavior for the candidate `id`. |
 | ARKs required for real ids | `identifiers["...Persistent"]` must be present on persons for the API response to carry real ARKs — without it the response has `MMMM-MMM` placeholders. |
 | sourceDescription round-trip | `sourceDescriptions[].about: "#primaryPerson"` survives the simplifier round-trip (mapped through `sources[].url` in the simplified shape). |
 
@@ -1083,7 +1075,7 @@ exercised by `tests/tools/same-person.test.ts`.
 - **Source description added by this tool, not by the simplifier.** Dallan: *"The source description, it's okay to throw that away [from the simplifier], but the ID should not be thrown away."* The tool appends `{ id: "match-anchor", about: "#<primaryId>" }` to each side's GedcomX after `toGedcomX()` (id chosen to avoid collisions — see review-round edits).
 - **Identifiers/ARKs are preserved by the simplifier** as of commit `e44a6dd` (`ark` field on `SimplifiedPerson`). The tool doesn't post-process this — `toGedcomX()` puts the persona id back into `identifiers["...Persistent"]` automatically, reduced to the bare 8-character id the matchTwoExamples API wants.
 - **Confirmed `minConfidence` is a no-op upstream**; not exposed as a tool parameter.
-- **Confirmed non-match response shape** (`confidence` field omitted, near-zero score) — drives the `matched: boolean` derivation.
+- **Confirmed non-match response shape** (`confidence` field omitted, near-zero score).
 - **Tool's internal post-processing** is now ~4 lines per side: pass the simplified GedcomX through `toGedcomX()`, append one sourceDescription. No restructuring, no person assembly.
 
 ### Review-round edits (Pascal/Dallan review, 2026-05-17)
