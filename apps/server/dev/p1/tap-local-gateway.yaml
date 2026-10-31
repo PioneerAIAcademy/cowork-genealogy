@@ -2,13 +2,16 @@
 # compose runs. Copied from fs-eng/tap-gateway master a4ffe0bac (2026-10-30):
 #   - the route:     gitops/gateway-config/base/routes.yaml     `bedrock`
 #   - the backend:   gitops/gateway-config/base/backends.yaml   `bedrock`
-#   - the span tags: gitops/gateway-config/base/policies.yaml   `tap-tracing`
+#   - the span tags: gitops/gateway-config/base/policies.yaml   `tap-tracing` (content,
+#     usage, model and status fields)
 # It drifts from TAP's master. Before a measurement, diff those three against this file
 # and record the commit you checked.
 #
 # What it leaves out on purpose:
-#   - auth: no apiKeyAuthentication, so any bearer is accepted and tap.consumer and
-#     tap.user come out empty;
+#   - auth: no apiKeyAuthentication, so any bearer is accepted;
+#   - tap-tracing's caller-attribution fields (who made the call, which run): they
+#     only label a span, the probes do not read them, and they describe TAP's
+#     internal identity scheme, which is not ours to publish;
 #   - the collector: spans go to a local Jaeger over OTLP/HTTP, not TAP's OTel collector
 #     and Langfuse, so what Langfuse stores is not measured here;
 #   - tap.product is the constant "platform", the value TAP's expression gives /bedrock;
@@ -54,12 +57,6 @@ config:
         gen_ai.request.model: llm.requestModel
         gen_ai.response.model: llm.responseModel
         http.status_code: response.code
-        tap.consumer: apiKey.consumer
-        tap.user: 'has(jwt.sub) ? jwt.sub : apiKey.consumer'
-        langfuse.user.id: 'has(jwt.email) ? jwt.email : (has(jwt.sub) ? jwt.sub : apiKey.consumer)'
-        tap.team: 'has(jwt.iss) && (jwt.iss == "tap-foundry-api" || jwt.iss == "tap-foundry-dispatcher" || jwt.iss == "tap-foundry-dev-api" || jwt.iss == "tap-foundry-dev-dispatcher") ? "tap" : (has(apiKey.team) ? apiKey.team : "")'
-        tap.run_id: 'has(jwt.run_id) ? jwt.run_id : request.headers["x-tap-run-id"]'
-        langfuse.session.id: 'has(jwt.run_id) ? jwt.run_id : request.headers["x-tap-run-id"]'
         anthropic.beta: 'request.headers.join()["anthropic-beta"]'
 binds:
   - port: 3939
@@ -81,7 +78,7 @@ binds:
                       region: us-east-1
             policies:
               requestHeaderModifier:
-                remove: [x-forwarded-for, x-forwarded-port, x-forwarded-proto, x-foundry-token]
+                remove: [x-forwarded-for, x-forwarded-port, x-forwarded-proto]
               ai:
                 routes:
                   /v1/messages: messages
