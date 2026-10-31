@@ -197,14 +197,6 @@
     {
       "test_id": "ut_research_025",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_025",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -241,6 +233,14 @@
       "llm_score": null,
       "corrected_score": null,
       "comment": null
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Kept at 2. The reply has two real factual errors. It says \"Three sourced records … have been extracted\", but the project holds 9 sources with 13 assertions (the judge's \"four\" is also wrong). And it describes q_002 as \"likely about a sibling or collateral line\", when q_002 is \"Where was Patrick Flynn in the 1850 census?\". The router couldn't see q_002's text, since project_context lists only unresolved questions, and it hedged with \"likely\", but it still told the researcher something untrue. The judge's third point, about \"flagged as concluded while blocked\", is not an error: it restates project_context's own nextStep (\"concluded while blocked: re-conclude ps_001\"). The objective, the persons and the next step (re-conclude ps_001) are correct, so 2.\n\n"
     }
   ]
 }
