@@ -47,7 +47,8 @@ call, plus the tool calls it needs and any repeat of the same step. After it
 returns:
 
 1. report what that step found: relay everything after its final `---`
-   verbatim, or its whole return when it has none;
+   verbatim, or its whole return when it has none or is from gps-mentor or
+   research-exhaustiveness;
 2. end with **"Continue with `<label>`?"**, using the exact label below;
 3. end your turn.
 
@@ -288,7 +289,7 @@ it by name.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
    | **No `research.json` at all**, and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
@@ -413,7 +414,8 @@ it by name.
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
    the routing table has no row for a decline. Relay everything after the
-   agent's final `---` verbatim, or its whole return when it has none.
+   agent's final `---` verbatim, or its whole return when it has none or is
+   from gps-mentor or research-exhaustiveness.
 
    **Hard rules held in this context** (for any residual inline
    judgment — reading state, weighing routes — never for writing):
@@ -552,7 +554,8 @@ target is implied. It is read-only on the tree and on every section except
 
 When the user asks to check, review or validate the FamilySearch hints on a
 person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay
-everything after its final `---` verbatim, and stop: whether to accept a hint is the researcher's decision,
+everything after its final `---` verbatim, or its whole return when it has
+none, and stop: whether to accept a hint is the researcher's decision,
 which only the user can supply (§"When to stop"). When the researcher answers,
 spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
 verdicts as `{ark, verdict}` per hint, verbatim, plus `planItemId` and `planId`
