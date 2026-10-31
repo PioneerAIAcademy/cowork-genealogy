@@ -1,25 +1,25 @@
 {
-  "run_log": "v38_2026-10-29_10-32-41.json",
-  "annotator": "Francisbucci2@gmail.com",
+  "run_log": "v40_2026-10-30_10-32-13.json",
+  "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_004",
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
     },
     {
-      "test_id": "ut_research_004",
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_004",
+      "test_id": "ut_research_024",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,7 +27,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_018",
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_026",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -35,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_018",
+      "test_id": "ut_research_026",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -43,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_018",
+      "test_id": "ut_research_026",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -51,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_016",
+      "test_id": "ut_research_h7w",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -59,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_016",
+      "test_id": "ut_research_h7w",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_016",
+      "test_id": "ut_research_h7w",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -75,7 +83,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
+      "test_id": "ut_research_hnp",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_hnp",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_hnp",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -83,23 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_019",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_015",
+      "test_id": "ut_research_h22",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -107,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_015",
+      "test_id": "ut_research_h22",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -115,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_015",
+      "test_id": "ut_research_h22",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -123,52 +131,44 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_pe7",
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_pe7",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_pe7",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Agree. It routed the contradiction correctly but gave no forward step to research the new lead from the 1861 record."
+      "comment": "The AI correctly routed to hypothesis-tracking for the unregistered sibling premise, but phrased “their parents were reported as Massachusetts-born” without making clear that claim is contingent on the unproven sibling link"
     },
     {
-      "test_id": "ut_research_gm4",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_gm4",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Agree. It routed the contradiction correctly but gave no forward step to research the new lead from the 1861 record."
+      "comment": "The AI got the routing right and called the right next step twice, but it wrote internal codes like “ps_001” and “q_001” in its reply to the user, which the user should never see."
     },
     {
-      "test_id": "ut_research_gm4",
+      "test_id": "ut_research_001",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
+      "dimension_name": "Completeness",
+      "llm_score": 1,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The AI did both hand-offs the project asked for; the judge missed them because it only looked at one kind of tool call and not the other."
     }
   ]
 }
