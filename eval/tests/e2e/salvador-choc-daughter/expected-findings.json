@@ -3,19 +3,20 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Salvador Choc and Petrona Choc had a daughter, Antonia, born in August 1877 and baptised at San Pedro Carchá, Alta Verapaz, Guatemala, in 1877; the baptism entry names her parents as Salvador Choc and Petrona Choc and her godparents as Manuel Tiul and María Santos.",
+      "description": "Salvador Choc and Petrona Choc (the tree's Petrona Ba) had a daughter, Antonia, born 15 August 1877 and baptised 29 October 1877 at San Pedro Carchá, Alta Verapaz, Guatemala; the baptism entry names her parents as Salvador Choc and Petrona Choc and her godparents as Manuel Tiul and María Santos.",
       "details": {
         "subject_person": "Salvador Choc (MGDD-CB5)",
         "relation": "child",
         "target_person": {
           "name": "Antonia Choc",
-          "birth": "August 1877, San Pedro Carchá, Alta Verapaz, Guatemala",
-          "christening": "1877, San Pedro Carchá, Alta Verapaz, Guatemala"
+          "birth": "15 August 1877, San Pedro Carchá, Alta Verapaz, Guatemala",
+          "christening": "29 October 1877, San Pedro Carchá, Alta Verapaz, Guatemala"
         },
-        "mother": "Petrona Choc"
+        "mother": "Petrona Choc (the tree's Petrona Ba)"
       },
       "supporting_sources": [
-        "Guatemala, Catholic Church Records, 1581-2023 — baptism of Antonia, San Pedro Carchá baptism register June 1877–August 1878, parents Salvador Choc and Petrona Choc, godparents Manuel Tiul and María Santos"
+        "Guatemala, Catholic Church Records, 1581-2023 — baptism of Antonia Choc, San Pedro Carchá baptism register June 1877–August 1878, parents Salvador Choc and Petrona Choc, godparents Manuel Tiul and María Santos (ark:/61903/1:1:XS7R-WRSY); the index keys the birth year as 1581, an OCR slip for 1877",
+        "San Pedro Carchá baptism register, 1877, page image (ark:/61903/3:1:3QHJ-M745-8H2G), read directly: Antonia, daughter of Salvador Choc and Petrona Choc, born 15 August 1877, baptised 29 October 1877, godparents Manuel Tiul and María Santos"
       ],
       "required": true
     }

@@ -15,5 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 13, hint-samples.csv row 424, flags adds_daughter, confidence 3). The CSV's tree PID 9CB3-PVT now resolves to MGDD-CB5. Draft transcribed from an 1877 Catholic baptism entry at San Pedro Carchá, Alta Verapaz; unverified."
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 13, hint-samples.csv row 424, flags adds_daughter, confidence 3). The CSV's tree PID 9CB3-PVT now resolves to MGDD-CB5. Resolved 2026-10-31 (issue #3636): true match — Antonia, born 15 August 1877 and baptised 29 October 1877 at San Pedro Carchá, is a daughter of Salvador Choc and Petrona Choc (Petrona Ba), confirmed from the baptism image.",
+  "image_basis": true,
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:XS7R-WRSY",
+    "identity": "same"
+  }
 }

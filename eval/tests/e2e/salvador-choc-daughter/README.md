@@ -28,17 +28,53 @@ match strength.
 
 ## Notes for reviewers
 
-**DRAFT PENDING ADJUDICATION.** This fixture comes from a hint batch
-(`filtered-list-samples-4.csv` row 13, `hint-samples.csv` row 424,
-flags `adds_daughter`, confidence 3) in which roughly half the hint records are
-**false matches**, and the authors do not know which.
-`expected-findings.json` was transcribed from the hint record — "Guatemala, Catholic Church Records, 1581-2023", a baptism entry in the San Pedro Carchá register for June 1877–August 1878, for Antonia, daughter of Salvador Choc and Petrona Choc, godparents Manuel Tiul and María Santos. The index's dates are damaged. It keys the birth as "15 de agosto de **1581**", an obvious slip for 1877. It gives the christening as 29 October 1877 on the person and 29 August 1877 on the record. Retrieval was tool-assisted (`dev/try-record-read.ts`).
-The genealogist + developer teams must decide (a) true match — keep the
-findings; (b) different answer — edit `expected-findings.json`; or (c) no
-findable answer — replace the findings with a `"polarity": "avoid"` guard
-naming Antonia as his daughter, plus a `required` finding that the report documents
-the rejection.
+**Resolved 2026-10-31 (issue #3636): the hint is a true match.** The hint
+persona Antonia Choc (`ark:/61903/1:1:XS7R-WRSY`) is a daughter of the tree's
+Salvador Choc and his wife Petrona Ba (`fixture.json` `hint.identity: "same"`).
+She was born 15 August 1877 and baptised 29 October 1877 at San Pedro Carchá,
+Alta Verapaz, Guatemala. Antonia is not in the tree.
 
-A weak-to-middling candidate on names alone. The parish is right. The mother's name, Petrona Choc, is how the subject's 1871 marriage entries and his son Victoriano's 1888 registration index his wife Petrona Ba. An 1877 birth falls between the 1871 marriage and the 1888 son. None of the tree's sources is an 1877 baptism or names an Antonia, so this is not a re-index of anything already attached.
+**What the index says.** "Guatemala, Catholic Church Records, 1581-2023"
+indexes a baptism in the San Pedro Carchá register for June 1877–August 1878:
+Antonia, daughter of Salvador Choc and Petrona Choc, godparents Manuel Tiul and
+María Santos. The index's dates are damaged. It keys the birth as 15 August
+**1581**, a computer OCR error for 1877. It also
+gives two christening dates, 29 October 1877 on the person and 29 August 1877
+on the record.
 
-The gap is the name itself. Salvador Choc is about as common a Q'eqchi' name as San Pedro Carchá has. This tree already shows the strain: three wives, two of them Petronas, a Dominga born to Petrona Xol in 1875 while the Petrona Ba marriage stood, and a daughter born in 1838. The index alone cannot tell this Salvador from another of the same name married to another Petrona Choc. The discriminating check is the baptism image. Read the mother's full name, including whether the priest wrote "Ba" or "Choc". Read anything recorded about the parents. Then compare the godparents with those on the couple's other children's baptisms in the same register. Matching godparents or the "Ba" surname tie Antonia to this couple; a different maternal surname makes her another family's.
+**What the register says.** The genealogist read the baptism image by hand on
+familysearch.org (page image `ark:/61903/3:1:3QHJ-M745-8H2G`). The entry gives Antonia,
+daughter of Salvador Choc and Petrona Choc, born 15 August 1877 and baptised 29
+October 1877 at San Pedro Carchá, with godparents Manuel Tiul and María Santos.
+The image settles both dates: the birth year is 1877, not 1581, and the
+baptism is 29 October. Because the image settled the call, `image_basis` is
+`true`.
+
+**Calibration.** Before reading Antonia's entry, the genealogist checked two
+other entries on the same page against the index:
+
+- Mª Santos Cual, daughter of Domingo Cual and Albina Cual
+- Catalina Quim, daughter of Santiago Quim and Mª Santos Caes
+
+Both matched, so the reading is licensed for child, parents and date.
+
+**Why it is the same couple.** The parish is the right one. The mother's name,
+Petrona Choc, is how the subject's 9 August 1871 marriage entries and his son
+Victoriano's 1888 birth registration index his wife Petrona Ba, so it is the
+same woman under her married surname. An 1877 birth falls between the 1871
+marriage and the 1888 son. None of the tree's 48 attached records is this baptism or names an Antonia,
+so the hint is not a re-index of an attached source.
+
+The name is common in San Pedro Carchá, so names alone do not settle it. What
+settles it is the image: it confirms the dates and the parents' names as
+indexed, and it places Antonia in the couple's childbearing years in their own
+parish.
+
+**Findings.** `f1` (required): the agent should add Antonia Choc, born 15
+August 1877 and baptised 29 October 1877 at San Pedro Carchá, as a daughter of
+Salvador Choc and Petrona Ba (recorded as Petrona Choc). There is no avoid
+guard.
+
+**Retrieval.** The hint record and the page image, including the calibration
+entries, were read by hand on familysearch.org. The identity judgement is the
+genealogist's.
