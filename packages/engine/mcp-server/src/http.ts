@@ -47,6 +47,7 @@ import { readPgS3Env } from "./store/pg-s3-env.js";
 import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
 import { configFromEnv } from "./hosted-config-env.js";
+import type { AppConfig } from "./types/auth.js";
 import { debugHoldStartupLine } from "./debug-holds.js";
 
 const { values } = parseArgs({
@@ -75,6 +76,20 @@ if (storeEnv.invalid.length > 0) {
   );
   process.exit(2);
 }
+// The one LOCAL read in this entrypoint: the process-wide config file
+// (~/.familysearch-mcp/config.json — sidecar URLs, OpenRouter key, hosted
+// flag). Every tool call binds a per-request bearer instead (http-server.ts).
+//
+// The environment overlays it (hosted-config-env.ts): a container receives the
+// OpenRouter key as environment, so without the overlay `image_transcribe` has no key
+// here. Read before the backend is built, so a bad value refuses start-up as above.
+let baseConfig: AppConfig;
+try {
+  baseConfig = configFromEnv(process.env, await loadConfig(LOCAL));
+} catch (e) {
+  process.stderr.write(`http: environment set to an invalid value: ${e instanceof Error ? e.message : String(e)}\n`);
+  process.exit(2);
+}
 const s3Options = storeEnv.backendOptions.s3;
 process.stderr.write(
   `s3 credentials: ${s3Options.accessKeyId ? "static keys" : "SDK default chain"}; ` +
@@ -101,14 +116,6 @@ setProjectStore(
   unboundProjectStore("build/http.js binds a project store per request; nothing may run outside one"),
 );
 
-// The one LOCAL read in this entrypoint: the process-wide config file
-// (~/.familysearch-mcp/config.json — sidecar URLs, OpenRouter key, hosted
-// flag). Every tool call binds a per-request bearer instead (http-server.ts).
-//
-// The environment overlays it (hosted-config-env.ts): a container receives the
-// OpenRouter key as environment, so without the overlay `image_transcribe` has no key
-// here.
-const baseConfig = configFromEnv(process.env, await loadConfig(LOCAL));
 const server = await startHttpServer({
   host: values.host as string,
   port,

@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a public beta, February to July 2027
 
-**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). W3's viewer data is implemented in the web tier. The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
+**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). W3's viewer data is implemented in the web tier. E2's settings, links and uploads list are implemented in the tool server; its connector `project_list` is not. The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
 
 ## What this is
 
@@ -197,7 +197,7 @@ The bounce is not an access control. Until launch day, admission reads an allowl
   - each listed project carries its `projectUrl`.
 - **`project_create` and `project_context`** return a `projectUrl`, the project's viewer link. `project_context` also lists uploads (name, time, and whether a text layer was stored), and returns an `uploadUrl` when the tools tier's uploads setting is on.
 - **Settings.** The web tier's public URL, the uploads setting and E5's switch reach the server through `src/hosted-config-env.ts` into its base config, and compose's tools service passes each one. No getter reads `process.env`. A link is left out when its setting is unset.
-- **Where:** `src/http-server.ts`, `src/server.ts` (the three tools' dispatch arms pass the principal), `src/store/pg-s3-project-store.ts`, `src/hosted-config-env.ts`, `src/types/auth.ts`, the three tools and their specs, and `dev/smoke-calls.ts`. In the unit harness, `_COMPILED_TOOLS_WITH_PRINCIPAL` in `eval/harness/harness/mock_mcp.py` gains the three tools, and the direct `projectCreate` call in `eval/harness/tests/unit/test_init_project_provenance_validators.py` passes one.
+- **Where:** `src/http-server.ts`, `src/server.ts` (the three tools' dispatch arms pass the principal), `src/store/pg-s3-project-store.ts`, `src/hosted-config-env.ts`, `src/types/auth.ts`, the three tools and their specs, and `dev/smoke-calls.ts`. In the unit harness, `_COMPILED_TOOLS_WITH_PRINCIPAL` in `eval/harness/harness/mock_mcp.py` gains `project_context` and `project_list`; `project_create` has its own handler, which already passes `LOCAL`, as does the `runProjectCreate` call in `eval/harness/tests/unit/test_init_project_provenance_validators.py`.
 - **Done when:**
   - the packaging tests and the smoke pass, and `project_list` → `person_read` → `project_create` builds a project that the caller owns and that the next `project_list` returns;
   - through the connector client, a user who owns two projects gets both plus one fresh `/proj_` path, another user's project is never listed, and each listed project carries `projectUrl` with the public-URL setting set and none without it.
