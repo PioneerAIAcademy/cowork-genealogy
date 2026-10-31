@@ -52,7 +52,7 @@ hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
 queue URL, the shim's shape; required -- unset or empty refuses to start),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (0 -- see ``max_nudges``),
+POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``), AUTONOMOUS_MAX_NUDGES (0 -- see ``max_nudges``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
@@ -179,6 +179,9 @@ READY_SQL = (
 STARTUP_BUDGET_S = 5.0
 STARTUP_BACKOFF_FIRST_S = 1.0
 STARTUP_BACKOFF_MAX_S = 30.0
+# The edge's alias path cuts a stream silent for ~45 s (handoff F11), so the ping stays
+# well under it whatever SSE_PING_S says.
+SSE_PING_MAX_S = 15.0
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -1603,7 +1606,15 @@ def create_app(
     # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
     app.state.startup = None
     app.state.poll_s = poll_s if poll_s is not None else _env_float("POLL_S", 1.0)
-    app.state.ping_s = ping_s if ping_s is not None else _env_float("SSE_PING_S", 15.0)
+    if ping_s is None:
+        ping_s = _env_float("SSE_PING_S", SSE_PING_MAX_S)
+        if ping_s > SSE_PING_MAX_S:
+            log.warning("SSE_PING_S=%s is above the %ss cap; using %s", ping_s, SSE_PING_MAX_S, SSE_PING_MAX_S)
+    app.state.ping_s = min(ping_s, SSE_PING_MAX_S)
+    # U28: PUBLIC_URL's path, the prefix the edge strips. Raises on a bad PUBLIC_URL, so a
+    # tier that would scope its cookies wrongly never constructs.
+    app.state.base_path = auth.base_path()
+    prefix_mismatch_logged = False
     app.state.stream_max_polls = stream_max_polls
 
     class ProjectCacheHeaders:
@@ -1637,6 +1648,29 @@ def create_app(
             await self.app(scope, receive, send_headers)
 
     app.add_middleware(ProjectCacheHeaders)
+
+    class PrefixMismatchWarning:
+        """One warning per process, the first time the edge's ``X-Orig-Base`` disagrees with
+        PUBLIC_URL's path: a PUBLIC_URL missing its prefix scopes the session cookie to the
+        whole shared host. The header only warns; it is forgeable off the edge."""
+
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            nonlocal prefix_mismatch_logged
+            if scope["type"] in ("http", "websocket") and not prefix_mismatch_logged:
+                for name, value in scope.get("headers") or ():
+                    if name == b"x-orig-base":
+                        seen = value.decode("latin-1").strip().rstrip("/")
+                        if seen != app.state.base_path:
+                            prefix_mismatch_logged = True
+                            log.warning("ev=prefix_mismatch x_orig_base=%r base_path=%r",
+                                        seen[:200], app.state.base_path)
+                        break
+            await self.app(scope, receive, send)
+
+    app.add_middleware(PrefixMismatchWarning)
 
     def _store(request: Request) -> Store:
         return request.app.state.store
@@ -1697,6 +1731,7 @@ def create_app(
             "queue": type(state.queue).__name__,
             "poll_s": state.poll_s,
             "ping_s": state.ping_s,
+            "base_path": state.base_path,
         }
         checks: dict[str, Any] = {}
         try:
@@ -1742,7 +1777,7 @@ def create_app(
         data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
         if data is not None:
             await _store(request).revoke_sessions(data["uid"])
-        response.delete_cookie(auth.COOKIE_NAME, path="/", samesite="lax", secure=auth.is_https())
+        response.delete_cookie(auth.COOKIE_NAME, path=auth.cookie_path(), samesite="lax", secure=auth.is_https())
         return {"ok": True}
 
     @app.get("/auth/familysearch/login")
@@ -1823,7 +1858,7 @@ def create_app(
         resp.set_cookie(
             auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
         )
-        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path="/")
+        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp
 
     # -- projects -----------------------------------------------------------------
@@ -2323,7 +2358,7 @@ def create_app(
         return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
-    spa.mount_spa(app, tier_root=PROTO_DIR)
+    spa.mount_spa(app, tier_root=PROTO_DIR, base_path=app.state.base_path)
     return app
 
 
