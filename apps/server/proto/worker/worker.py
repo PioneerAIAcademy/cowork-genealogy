@@ -228,6 +228,7 @@ from proto.worker.options import (  # noqa: E402
     cli_env_blanks,
     gateway_plugin_copy,
     plugin_copy_missing,
+    hook_denied_tool_use_ids,
     hook_path,
     make_posttool_hook,
     status_before_call,
@@ -1562,6 +1563,22 @@ def count_tool_calls(conn: psycopg.Connection, turn_id: str) -> int:
         cur.execute("SELECT count(*) FROM tool_calls WHERE turn_id = %s", (turn_id,))
         row = cur.fetchone()
     return int(row[0]) if row and row[0] is not None else 0
+
+
+def mark_hook_denied(conn: psycopg.Connection, turn_id: str, tool_use_id: str) -> str | None:
+    """Turn an ``allow`` row into a ``deny`` once the call's result shows another
+    ``PreToolUse`` hook stopped it; its ``wrote`` goes too, since the write never ran.
+    Returns the tool name, or None when no ``allow`` row matched (this worker's own deny
+    is already recorded)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "UPDATE tool_calls SET decision = 'deny', wrote = NULL "
+            "WHERE turn_id = %s AND tool_use_id = %s AND decision = 'allow' RETURNING tool_name",
+            (turn_id, tool_use_id),
+        )
+        row = cur.fetchone()
+    conn.commit()
+    return row[0] if row else None
 
 
 def finish_tool_call(conn: psycopg.Connection, turn_id: str, tool_use_id: str) -> None:
@@ -3021,6 +3038,11 @@ async def _run_turn(
                         if event.get("kind") == "text" and not getattr(msg, "parent_tool_use_id", None):
                             terminal.pop("completion_summary", None)
                         write_event(conn, session_id, event, TRANSIENT_KINDS, counters)
+                    for denied_id in hook_denied_tool_use_ids(msg):
+                        denied_tool = mark_hook_denied(conn, turn_id, denied_id)
+                        if denied_tool is not None:
+                            log(ev="deny", turn_id=turn_id, tool_name=denied_tool,
+                                tool_use_id=denied_id, reason="another PreToolUse hook")
                     if isinstance(msg, ResultMessage):
                         pass_result = msg
                     if terminal["reason"] == SUPERSEDED:

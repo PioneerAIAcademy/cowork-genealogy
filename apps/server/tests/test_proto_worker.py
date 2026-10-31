@@ -926,6 +926,30 @@ def test_a_named_delegation_is_not_a_stand_in(tmp_path, subagent_type):
     assert not options.is_stand_in_delegation("Read", {"subagent_type": "general-purpose"})
 
 
+def _tool_result(tool_use_id, content, is_error=True):
+    return SimpleNamespace(tool_use_id=tool_use_id, content=content, is_error=is_error)
+
+
+def test_hook_denied_ids_are_read_off_the_results_a_pretool_hook_wrote():
+    """Live shapes (compose, 2026-10-31): the plugin hook's deny of a main-thread
+    place_search and this worker's deny of a general-purpose Agent call."""
+    message = SimpleNamespace(content=[
+        _tool_result("t1", "PreToolUse:mcp__genealogy__place_search hook error: Calling place_search "
+                      "from the main session is disabled \u2014 only agents hold it"),
+        _tool_result("t2", [{"type": "text", "text": "PreToolUse:Agent hook error: Agent as a "
+                                                "\"general-purpose\" agent is disabled here"}]),
+        _tool_result("t3", "Error: record_search failed: 502"),
+        _tool_result("t4", "PreToolUse:Read hook error: denied", is_error=False),
+        _tool_result("t5", "the tool said PreToolUse:Read hook error: x"),
+        _tool_result("t6", "PreToolUse:Read\nhook error: x"),
+        _tool_result(None, "PreToolUse:Read hook error: x"),
+        SimpleNamespace(id="t7", name="Read", input={}),
+    ])
+    assert options.hook_denied_tool_use_ids(message) == ["t1", "t2"]
+    assert options.hook_denied_tool_use_ids(SimpleNamespace(content="text")) == []
+    assert options.hook_denied_tool_use_ids(object()) == []
+
+
 def test_an_explicitly_foreground_delegation_passes_untouched(tmp_path):
     rows: list[dict] = []
     hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))

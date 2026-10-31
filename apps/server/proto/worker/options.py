@@ -152,6 +152,27 @@ def is_stand_in_delegation(tool_name: str, tool_input: Any) -> bool:
     return name in ("", STAND_IN_AGENT)
 
 
+def hook_denied_tool_use_ids(message: Any) -> list[str]:
+    """The ``tool_use_id`` of each call in ``message``'s results that a ``PreToolUse`` hook
+    stopped: an ``is_error`` result whose text the CLI wrote as ``PreToolUse:<tool> hook
+    error: <reason>`` (CLI 2.1.x; the plugin hook's denies and this worker's alike, live on
+    compose 2026-10-31). No post-call hook fires for such a call, so its result is the
+    worker's only sign that the plugin hook denied what this worker's hook allowed."""
+    content = getattr(message, "content", None)
+    if not isinstance(content, list):
+        return []
+    ids: list[str] = []
+    for block in content:
+        if getattr(block, "is_error", None) is not True or not getattr(block, "tool_use_id", None):
+            continue
+        body = getattr(block, "content", None)
+        if isinstance(body, list):
+            body = "".join(str(part.get("text") or "") for part in body if isinstance(part, dict))
+        if isinstance(body, str) and body.startswith("PreToolUse:") and " hook error: " in body:
+            ids.append(block.tool_use_id)
+    return ids
+
+
 def is_blocked_call(tool_name: str, blocked: frozenset[str]) -> bool:
     """Whether the tree-read block denies this call: an MCP tool named in ``blocked``."""
     return tool_name.startswith("mcp__") and bare_tool_name(tool_name) in blocked
