@@ -3,18 +3,35 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Rozália Görög and János Tarjányi had a daughter Veronika Tarjányi, baptised in 1871 at Kiskunfélegyháza; the baptism indexes the mother as Rozália Bona.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that Rozália Görög (L7KC-KQT, born about 1860) and János Tarjányi had a daughter Veronika baptised in 1871 at Kiskunfélegyháza. The hint record (ark:/61903/1:1:XZ1Y-W4K) indexes the mother of that 1871 Veronika Tarjányi as 'Rozalia Bona' — a different surname — and Rozália Görög, born about 1860, would have been approximately eleven years old in 1871, making it impossible for her to be this child's mother. The 1871 baptism belongs to a different Tarjányi household in the same town. Pass = the final tree.gedcomx.json contains no 1871 Veronika Tarjányi added as a child of Rozália Görög, and no source entry for ark:/61903/1:1:XZ1Y-W4K attached to her.",
       "details": {
         "subject_person": "Rozália Görög (L7KC-KQT)",
         "relation": "child",
-        "target_person": {
-          "name": "Veronika Tarjányi",
-          "baptism": "1871, Kiskunfélegyháza, Pest-Pilis-Solt-Kiskun, Hungary"
-        },
-        "father": "János Tarjányi"
+        "wrong_candidate": {
+          "name": "the 1871 Kiskunfélegyháza baptism in hint record ark:/61903/1:1:XZ1Y-W4K",
+          "note": "The 1871 record names the mother as Rozalia Bona, not Görög; and the subject born about 1860 would be about eleven in 1871 — the couple's own children begin in 1884, and their daughter born January 1897 is already documented in the tree"
+        }
       },
       "supporting_sources": [
-        "Hungary, Catholic Church Records, 1636-1895 — baptism of Veronika Tarjanyi, Kiskunfélegyháza, 1871, daughter of Janos Tarjanyi and Rozalia Bona"
+        "Hungary, Catholic Church Records, 1636-1895 — baptism of Veronika Tarjanyi, Kiskunfélegyháza, 1871, daughter of Janos Tarjanyi and Rozalia Bona (ark:/61903/1:1:XZ1Y-W4K) — the disproving record: mother's surname is Bona, not Görög"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having examined the FamilySearch hint record for a daughter Veronika Tarjányi baptised 1871 at Kiskunfélegyháza, the agent should document a negative conclusion: the 1871 record concerns a different Tarjányi household (mother Rozalia Bona), and no Catholic record in Hungary, Catholic Church Records, 1636-1895 for Kiskunfélegyháza establishes a daughter of Rozália Görög and János Tarjányi born before 1884. The couple's daughter Veronika (born January 1897, PID PQ6N-SP8) is already in the tree and is the only Veronika in this family.",
+      "details": {
+        "subject_person": "Rozália Görög (L7KC-KQT)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: 1871 Veronika Tarjányi is not a child of Rozália Görög",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of any Catholic record in Hungary, Catholic Church Records, 1636-1895 for Kiskunfélegyháza establishing a child of Rozália Görög and János Tarjányi born before 1884"
       ],
       "required": true
     }
