@@ -12,7 +12,7 @@
     "delegation": "Browse FamilySearch image group 007936749 and log the browse.\n\nimageGroupNumber: 007936749\nlooking_for: the Flynn family\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
-  "mcp_fixtures": ["image-search-schuylkill-probate", "image-transcribe-schuylkill-probate-flynn-will", "image-transcribe-any"],
+  "mcp_fixtures": ["image-search-schuylkill-probate", "image-transcribe-schuylkill-probate-flynn-will", "image-transcribe-any", "volume-search-any"],
   "execution": {
     "max_wall_clock_seconds": 600
   },
@@ -20,6 +20,7 @@
     "The user supplied the imageGroupNumber directly. Calling image_search without volume_search is CORRECT here, not a gap — judges must not score partial for skipping volume_search when the group is already known.",
     "HARNESS NOTE: the agent reads pages itself with image_transcribe — it must NOT call image_read (it has no such tool: image_read returns the page inline and a volume browse overflows the transport). The mock serves real transcriptions: an imageId ending 00008 returns Thomas Flynn's 1889 will, and any other page returns an unrelated Schuylkill will via the image-transcribe-any catch-all. Reading pages is therefore IN SCOPE, and reaching the will on 00008 is a pass. But judges MUST NOT score partial or fail because the agent did not read every image in the volume, or because it stopped after listing and logging — selecting the volume, listing its images, and logging the browse is a complete browse on its own.",
     "image_search returns the whole volume in one call — the skill must not retry it with offset/limit/imageId parameters.",
-    "Should append a research_log_append entry recording the browse of image group 007936749."
+    "Should append a research_log_append entry recording the browse of image group 007936749.",
+    "The scenario's source src_006 cites this will as \"Schuylkill County will of Thomas Flynn, 1881\" while the page is dated 1889. An agent that reports that mismatch is reporting the project faithfully; judges must not score it as an unsupported claim."
   ]
 }

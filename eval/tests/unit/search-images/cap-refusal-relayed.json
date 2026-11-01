@@ -16,7 +16,8 @@
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [
-    "image-transcribe-cap-reached"
+    "image-transcribe-cap-reached",
+    "volume-search-any"
   ],
   "execution": {
     "max_wall_clock_seconds": 300
