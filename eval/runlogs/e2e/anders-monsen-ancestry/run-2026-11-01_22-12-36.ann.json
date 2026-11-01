@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 3,
+  "notes": {
+    "f1": "Clean match — exact date, place, and persons; corroborated by independent 1801 census."
+  },
+  "findings_hash": "bbedf735a335074de029068986ec084ff7cf9b5d997effee5c728690fec8618a",
+  "blind_bundle_digest": "f39151a2c232234fc5373e37c864d2bde29dfde5cc9eb63f9ea851feaed50eda"
+}
