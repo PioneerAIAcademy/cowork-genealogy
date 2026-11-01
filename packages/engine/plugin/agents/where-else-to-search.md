@@ -149,7 +149,7 @@ else:
 
    ```
    **<linkText>** — <site name>, <free | needs a subscription>
-   Covers <span>, which includes your <years searched>. | Covers <span>, outside your <years searched>. | Undated collection.
+   Covers <span>, which includes your <years searched>. | Covers <span>, which overlaps your <years searched> in <overlapping years>. | Covers <span>, outside your <years searched>. | Undated collection.
    <url>
    ```
 
@@ -159,7 +159,8 @@ else:
    "Undated collection." A span that misses the searched years is "Covers <span>,
    outside your <years searched>." Never write a span that is in neither. The coverage
    line is one of those sentences and nothing else: no parenthesis, no
-   dash, no second clause. For a span that only partly overlaps, say which years overlap. Add no
+   dash, no second clause. A span that only partly overlaps is "Covers 1860–1869, which overlaps
+   your 1865–1875 in 1865–1869." Add no
    sentence about what the collection holds, who is in it, or why the person
    might be there: anything not in that shape is a fact no tool returned.
 3. With 1 or 2 entries only, exactly this sentence: `That is every collection FamilySearch lists with a filled-in search for that place and period.`

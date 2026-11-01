@@ -203,6 +203,9 @@ def test_span_accepts_years_the_title_names_on_an_undated_row():
     t = where_test()
     check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Undated collection.")), None, t)
     check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1880, which includes your 1870.")), None, t)
+    check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1880, which overlaps your 1875–1885 in 1875–1880.")), None, t)
+    with pytest.raises(AssertionError):  # the improvised form: a parenthesis
+        check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1880, which partly overlaps your 1875–1885 (1875–1880).")), None, t)
     with pytest.raises(AssertionError):  # a span in neither the fields nor the title
         check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1890.")), None, t)
 
