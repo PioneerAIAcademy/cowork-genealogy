@@ -22,8 +22,6 @@ from e2e.detector_before_after_report import (
     _lane_check_new,
     _lane_check_old,
     _lane_check_stamped,
-    _same_person_provenance_new,
-    _same_person_provenance_old,
     format_divergences,
 )
 
@@ -176,56 +174,6 @@ def test_format_divergences_on_an_empty_list():
     out = format_divergences("lane-check", [])
     assert "no divergence" in out
     assert "lane-check" in out
-
-
-# --- same-person-provenance (issue #1429) ------------------------------------
-
-
-def test_same_person_provenance_replica_never_drifts_from_live_across_the_corpus():
-    """With the ONE intended difference neutralised, `_same_person_provenance_old`
-    must equal the live detector on EVERY committed run.
-
-    A hand-written "old" that quietly differs in a second way makes the whole
-    before/after diff meaningless — the report would attribute someone else's
-    change to this one. Neutralising here means giving every assertion a
-    non-null `record_persona_id`, which makes every link reachable and so
-    disables the narrowing without touching any other arm. Mirrors
-    `test_lane_check_replica_never_drifts_from_live_across_the_corpus`, which
-    exists because that replica fell behind the live detector twice.
-    """
-    runlogs = sorted((REPO_ROOT / "eval" / "runlogs" / "e2e").glob("*/run-*.json"))
-    assert runlogs, "no committed e2e runlogs to check the replica against"
-    checked = 0
-    for path in runlogs:
-        if "final-" in path.name or ".ann." in path.name:
-            continue
-        tree_path = path.with_name(path.stem + ".final-tree.gedcomx.json")
-        research_path = path.with_name(path.stem + ".final-research.json")
-        if not tree_path.is_file() or not research_path.is_file():
-            continue
-        starting_tree = _fixture_starting_tree(path.parent.name)
-        if starting_tree is None:
-            continue
-        tree = json.loads(tree_path.read_text(encoding="utf-8"))
-        research = json.loads(research_path.read_text(encoding="utf-8"))
-        tool_calls = json.loads(path.read_text(encoding="utf-8")).get("tool_calls") or []
-        neutralised = {
-            **research,
-            "assertions": [
-                {**a, "record_persona_id": a.get("record_persona_id") or "p_neutralised"}
-                for a in (research.get("assertions") or [])
-                if isinstance(a, dict)
-            ],
-        }
-        old = _same_person_provenance_old(tool_calls, research, tree, starting_tree)
-        new = _same_person_provenance_new(tool_calls, neutralised, tree, starting_tree)
-        assert old == new, (
-            f"same-person-provenance replica drift on {path.parent.name}/{path.name}: "
-            f"old={len(old)} != new={len(new)} -- with the narrowing neutralised they "
-            "must agree; the replica dropped a live arm"
-        )
-        checked += 1
-    assert checked > 100, f"only {checked} runs exercised the replica; expected the corpus"
 
 
 def test_every_registered_detector_has_a_main_branch():
