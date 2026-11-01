@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_evaluate_search_results_m2q",
+    "skill": "evaluate-search-results",
+    "name": "A garbled 1820 Jackson marriage of 'Fran Hyde' to Mary is a Possible Match, already extracted, so nothing new",
+    "type": "positive",
+    "description": "log_017 hit 6 (3Q9M-CSK3-ZSH4) is the church's marriage list headed 1820, which reads 'Fran Hyde To Mary ... Jackson'. Gold (PLAN §4, to be confirmed by a genealogist before the paid run): Possible Match, because the place, the period and a bride named Mary fit but the groom's given name is garbled, which a transcription error may explain. The hit is already extracted in this scenario (a_019), so new_vital_info is false.",
+    "tags": [
+      "hit-verdict",
+      "expect-possible-match",
+      "no-new-vital",
+      "already-extracted",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Evaluate this full-text search hit against the tree person.\n\nprojectPath: <workspace>\nhitRef: results/log_017.json#3Q9M-CSK3-ZSH4\ntarget: I1",
+    "scenario": "g9gj-proof-update-after-later-search"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: the delegation is relayed verbatim to evaluate-search-results and no router is staged. project_context, sidecar_read, tree_query and research_append run live against the scenario.",
+    "Gold: Possible Match, no new vital information, already extracted. The transcript is a scrambled marriage list with 'DATE 19 1820' and the line 'Fran Hyde To Mary Albert Jackson'. Jackson, the period and a bride named Mary fit Iram, whose wife is Mary Robertson; 'Fran' for 'Iram' and the bride's surname are what a garbled transcription leaves uncertain. A Match would need one more tie than the name and the place.",
+    "The project already holds this hit: assertion a_019 cites it, and project_context lists it under source src_006's record ids. So the flag is false and the return says alreadyExtracted: true. research_append refuses new_vital_info true on an extracted hit; one refusal followed by a corrected resend is the documented path, not a fault.",
+    "The verdict, the flag, the single hit_verdicts row, the one read of the hit, the tree_query call and the contract lines are checked by validators. Grade whether the rationale names the facts that decide them, and the plain summary after the `---`."
+  ]
+}

@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-10-30_21-44-18.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Match is right: the parents \"Mary Robertson & Hiram Hy[de]\" fit Iram and his wife, and the flag is false because the page is already extracted."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read the hit and the tree, wrote one verdict row, and returned the contract lines and a summary."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One read of this hit, tree_query on I1, I2 and I3 with no fact filter, and one hit_verdicts append with the right ids."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names the deciding facts: the wife's full name, Hiram as a spelling of Iram, and Jackson."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "False, and it says why: the page is already extracted."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Right content, but it runs to three sentences and says \"I1's wife\", an identifier.\n\nThe judge's own note on this dimension counts only two sentences, but the summary has three. The third begins \"Because this image was already extracted…\". That's why it gets a 2."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Not a Match is right: an 1815 Dublin gentleman cannot be a man born about 1797 in New Hampshire who lived in New York and Indiana."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read the hit and the tree, wrote one verdict row, and returned the contract lines and a summary."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One read of this hit, tree_query on I1, I2 and I3 with no fact filter, and one hit_verdicts append with the right ids."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names the point that rules him out: Dublin, Ireland in 1815 against an American life."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "False because it is a Not a Match, as the rule requires."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One plain sentence giving the record, the place and date, and why it is a different man."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Possible Match is right, and the flag is false because the page is already extracted."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read the hit and the tree, wrote one verdict row, and returned the contract lines and a summary."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One read of this hit, tree_query on I1, I2 and I3 with no fact filter, and one hit_verdicts append with the right ids."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Says what fits (Hyde, Jackson) and what is garbled (Fran, Albert), and why that stops short of a Match."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "False, and it says why: the hit is already extracted."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read the hit and the tree, wrote one verdict row, and returned the contract lines and a summary."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One read of this hit, tree_query on I1, I2 and I3 with no fact filter, and one hit_verdicts append with the right ids."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "True because the baptized child is not among Iram's children in the tree, and it says so, though without the child's name."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Possible Match and new info are both right: Hyde, Mary and Jackson fit, \"Fran\" and \"Albert\" are garbled, and the tree has no marriage date or place."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Read the hit and the tree, wrote one verdict row, and returned the contract lines and a summary."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One read of this hit, tree_query on I1, I2 and I3 with no fact filter, and one hit_verdicts append with the right ids."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Says what fits (Hyde, Mary, Jackson) and what is garbled (Fran, Albert), which is what a Possible Match needs."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "True because the hit dates and places a marriage the couple lacks, and it says so."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Right content, but three sentences where the rubric allows two.\n\nThe judge counted two sentences, but there are three:\n\n\"This is a page from a Washington County, New York church marriage register…\"\n\"The surname Hyde and the place Jackson…\"\n\"The hit was already extracted into the project.\""
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Right content, but three sentences where the rubric allows two.\n\nThe judge counted two sentences, but there are three:\n\n\"This is a machine-read 1820 marriage list from Jackson…\"\n\"An entry reads 'Fran Hyde To Mary Albert Jackson 20,'…\"\n\"Because the tree has no marriage date or place…\""
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Match and new info are both right. Comparing the baptized child with Margaret, the only child in the tree, is the agent's rule for a new child, so the reasoning is not wrong. It could have named the child (Chanty)."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Names the deciding facts: the wife's full name Mary Robertson, Hiram as a spelling of Iram, and Jackson. The point about the child belongs to the new-info flag and follows the rule."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One plain sentence giving the record, date, place, why it is Iram, and what is new.\n\n"
+    }
+  ]
+}

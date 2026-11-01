@@ -54,6 +54,7 @@ export const RESEARCH_QUERY_SECTIONS = [
   // A researcher's rejections are project state worth reading: an agent that
   // cannot see them cannot explain why a link is refused.
   "rejected_links",
+  "hit_verdicts",
   "external_collections",
 ] as const;
 
@@ -85,6 +86,8 @@ export const RESEARCH_QUERY_OPTIONAL_SECTIONS: ReadonlySet<string> = new Set([
   // A project that has rejected nothing has no array at all, which is the common
   // case -- asking must give an empty result, not an error.
   "rejected_links",
+  // A project has the key only once a search hit is evaluated.
+  "hit_verdicts",
 ]);
 
 /** Array sections deliberately NOT served, and why.
@@ -308,6 +311,9 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
   localities: {},
   namesakes: {
     personId: { field: "person_id", mode: "exact" },
+  },
+  hit_verdicts: {
+    personId: { field: "target_person_id", mode: "exact" },
   },
   external_collections: {
     place: { field: "place", mode: "place-or-enclosing" },
@@ -720,7 +726,8 @@ export const researchQuerySchema = {
     "status), `timelines` (personId — matches person_ids), `proof_summaries` " +
     "(questionId, assertionId — matches supporting_assertion_ids), `evaluations` " +
     "(targetId, focus), `localities` (no filters), `namesakes` (personId — the tree person a " +
-    "recorded namesake is not), `external_collections` (place — also " +
+    "recorded namesake is not), `hit_verdicts` (personId — the verdict's target person), " +
+    "`external_collections` (place — also " +
     "its enclosing places, recordType). Note for `evaluations`: there is no filter for " +
     "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
     "`superseded_by` is null yourself.\n" +
@@ -776,7 +783,7 @@ export const researchQuerySchema = {
         items: { type: "string" },
         description:
           "person_evidence: matches person_id. timelines: matches person_ids (contains). " +
-          "namesakes: matches person_id.",
+          "namesakes: matches person_id. hit_verdicts: matches target_person_id.",
       },
       assertionId: {
         type: ["string", "array"],

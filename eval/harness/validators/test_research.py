@@ -19,7 +19,7 @@ import json
 
 import pytest
 
-from validators_lib import bare_tool_name
+from validators_lib import bare_ark_id, bare_tool_name
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import check_no_gate_stop
 from validators_lib import existing_plan_changes, new_plan_ids
@@ -443,7 +443,7 @@ def test_no_gate_stop(before_state, after_state, test):
 # the kind every measured miss copied from the projection.
 _PROJECT_ID_PREFIXES = (
     "rp_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
-    "h_", "t_", "ps_", "ev_", "loc_", "ns_",
+    "h_", "t_", "ps_", "ev_", "loc_", "ns_", "hv_",
 )
 _PROJECT_ID_RE = re.compile(
     r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
@@ -1201,3 +1201,143 @@ def test_hints_item_handoff_carries_its_ids(test, builtin_tool_calls, before_sta
         if not any(re.search(rf"\b{re.escape(value)}\b", p) for p in prompts)
     ]
     assert not missing, f"the search-hints hand-off does not carry {', '.join(missing)}"
+
+
+# ── Search-hit review (issue #3522) ─────────────────────────────────────
+
+# `reviews-hits:<log_id>:<hitIndex,...|all>` names the hits the message asks for;
+# `extracts-hit:<hitRef>` names a Match the yes-path extracts. Data tags, like
+# `routes-to:`; each validator is gated on a literal tag beside them.
+_REVIEWS_HITS_PREFIX = "reviews-hits:"
+_EXTRACTS_HIT_PREFIX = "extracts-hit:"
+_HIT_REF_RE = re.compile(r"results/(?P<log>log_\d+)\.json#(?P<hit>[A-Za-z0-9:/_-]+)")
+_COUNT_WORDS = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+}
+_EXTRACT_COUNT_RE = re.compile(
+    r"extracting\s+(?:the\s+)?(?:(?P<count>\d+|" + "|".join(_COUNT_WORDS) + r")\s+)?"
+    r"match(?P<plural>es)?\b",
+    re.IGNORECASE,
+)
+
+
+def _field_values(prompt: str, field: str) -> list[str]:
+    """Every value written for ``field`` in a spawn prompt, in any markup the
+    router uses: ``field: v``, ``**field:** v``, ``"field": "v"``, ``field=v``,
+    and in prose, where a value can end a sentence or a parenthesis
+    (``target: I1.``, ``(target: I1)``), so trailing ``.`` and ``)`` are dropped."""
+    pattern = re.compile(
+        rf"(?<![A-Za-z]){re.escape(field)}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?P<v>[^\s`*\"',;}}\]]+)"
+    )
+    values = (m.group("v").rstrip(".)") for m in pattern.finditer(prompt))
+    return [v for v in values if v]
+
+
+def _data_tag_values(test: dict, prefix: str) -> list[str]:
+    return [t[len(prefix):] for t in (test.get("tags") or []) if t.startswith(prefix)]
+
+
+def _requested_hit_refs(test: dict, before_state: dict) -> list[tuple[str, str]]:
+    """(log_id, bare hit id) for each hit the message asks for, from the sidecar
+    the scenario holds, skipping a hit with no transcript as the router does."""
+    found = _data_tag_values(test, _REVIEWS_HITS_PREFIX)
+    assert len(found) == 1, f"a hit-review test names its hits in one {_REVIEWS_HITS_PREFIX} tag; got {found}"
+    log_id, _, which = found[0].partition(":")
+    raw = ((before_state or {}).get("files") or {}).get(f"results/{log_id}.json")
+    assert raw, f"Scenario drift: no results/{log_id}.json to list the hits from."
+    rows = json.loads(raw)["payload"]["results"]
+    indices = range(1, len(rows) + 1) if which == "all" else [int(i) for i in which.split(",")]
+    assert all(1 <= i <= len(rows) for i in indices), (
+        f"Scenario drift: results/{log_id}.json holds {len(rows)} hits; the test asks for {which}."
+    )
+    return [
+        (log_id, bare_ark_id(rows[i - 1]["id"]))
+        for i in indices
+        if isinstance(rows[i - 1].get("textDocument"), str) and rows[i - 1]["textDocument"]
+    ]
+
+
+def test_search_hit_review_spawns_one_agent_per_hit(test, builtin_tool_calls, before_state, text_response):
+    """Tag-gated (``reviews-search-hits``). research/SKILL.md's "Search-hit review":
+    one ``evaluate-search-results`` spawn per requested hit, each naming
+    ``projectPath``, its own ``hitRef`` and a tree person as ``target``, and a
+    last line that offers ``extracting the N Matches`` with N the spawn count.
+
+    The test's stub returns a Match, not yet extracted, for every spawn, so every
+    spawn is a Match to offer. The spawn prompts are read from the hook records,
+    which the judge cannot see. A hitRef is compared by its log and bare hit id,
+    so either spelling of the id passes. The 5-per-message width is not checked:
+    no run record says which message a spawn came from.
+    """
+    from harness.skill_runner import load_step_boundary, spawn_prompts
+
+    if "reviews-search-hits" not in (test.get("tags") or []):
+        pytest.skip("not a search-hit review test")
+    expected = _requested_hit_refs(test, before_state)
+    assert expected, "Scenario drift: none of the requested hits carries a transcript."
+    tree = (before_state or {}).get("tree_gedcomx_json") or {}
+    person_ids = {p.get("id") for p in tree.get("persons", [])} - {None}
+    prompts = spawn_prompts(builtin_tool_calls, "evaluate-search-results")
+    assert prompts, "No recorded spawn of 'evaluate-search-results' to assert the review on."
+
+    problems = []
+    spawned: list[tuple[str, str]] = []
+    for n, prompt in enumerate(prompts, 1):
+        refs = {
+            (m.group("log"), bare_ark_id(m.group("hit")))
+            for m in _HIT_REF_RE.finditer(prompt)
+            if m.group("hit") != "hits"
+        }
+        if len(refs) != 1:
+            problems.append(f"spawn {n} names {len(refs)} hit refs {sorted(refs)}; one agent judges one hit")
+        spawned.extend(refs)
+        if not _field_values(prompt, "projectPath"):
+            problems.append(f"spawn {n} names no projectPath")
+        targets = _field_values(prompt, "target")
+        if not any(t in person_ids for t in targets):
+            problems.append(f"spawn {n} names no tree person as target (got {targets})")
+    duplicates = sorted({r for r in spawned if spawned.count(r) > 1})
+    if duplicates:
+        problems.append(f"hits spawned more than once: {duplicates}")
+    missing = sorted(set(expected) - set(spawned))
+    extra = sorted(set(spawned) - set(expected))
+    if missing or extra:
+        problems.append(f"spawned hits differ from the {len(expected)} asked for: missing {missing}, not asked for {extra}")
+    if len(prompts) != len(expected):
+        problems.append(f"{len(prompts)} spawns for {len(expected)} hits")
+
+    boundary = load_step_boundary()
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    if boundary.offered_step(text_response) != "extract-matches":
+        problems.append(f"the last line does not offer extracting the Matches: {lines[-1:]}")
+    else:
+        found = _EXTRACT_COUNT_RE.search(lines[-1])
+        word = (found.group("count") or "").lower() if found else ""
+        count = int(word) if word.isdigit() else _COUNT_WORDS.get(word)
+        if count is None and found and not found.group("plural"):
+            count = 1
+        if count != len(prompts):
+            problems.append(f"the offer counts {count} Matches for {len(prompts)} returned: {lines[-1]!r}")
+    assert not problems, "; ".join(problems)
+
+
+def test_search_hit_review_yes_extracts_the_matches(test, builtin_tool_calls):
+    """Tag-gated (``extracts-reviewed-matches``). The yes to a search-hit
+    review's offer is one ``record-structurer`` spawn with one source per Match:
+    ``recordId`` the hit's id, in either spelling, and ``resultsRef`` the hitRef,
+    verbatim (research/SKILL.md, "Search-hit review")."""
+    from harness.skill_runner import spawn_prompts
+
+    if "extracts-reviewed-matches" not in (test.get("tags") or []):
+        pytest.skip("not a search-hit extraction test")
+    wanted = _data_tag_values(test, _EXTRACTS_HIT_PREFIX)
+    assert wanted, f"an extracts-reviewed-matches test names each Match in an {_EXTRACTS_HIT_PREFIX} tag"
+    prompts = spawn_prompts(builtin_tool_calls, "record-structurer")
+    assert len(prompts) == 1, f"record-structurer was spawned {len(prompts)} time(s); the yes is one spawn for every Match"
+    prompt = prompts[0]
+    record_ids = sorted({bare_ark_id(v) for v in _field_values(prompt, "recordId")})
+    results_refs = sorted(set(_field_values(prompt, "resultsRef")))
+    want_ids = sorted({bare_ark_id(ref.partition("#")[2]) for ref in wanted})
+    assert record_ids == want_ids, f"the sources' recordIds {record_ids} are not the Matches' hit ids {want_ids}"
+    assert results_refs == sorted(wanted), f"the sources' resultsRefs {results_refs} are not the hitRefs {sorted(wanted)}"

@@ -70,6 +70,10 @@ _SOLO = (
     # Its own group: a one-shot ask that needs no project and writes nothing,
     # the shape section K describes.
     "where-else-to-search",
+    # Its own group: the per-hit verdicts fan out as repeats of one step, and a
+    # turn that ran search-full-text cannot also judge its hits (label, then
+    # offer: lead ruling #2 on #3522).
+    "evaluate-search-results",
 )
 for _solo in _SOLO:
     GROUPS[_solo] = (_solo,)
@@ -131,6 +135,11 @@ STEP_LABELS: dict[str, str] = {
     "search-wikipedia": "searching Wikipedia",
     "validate-schema": "validating the project files",
     "where-else-to-search": "listing other sites to search",
+    "evaluate-search-results": "evaluating the search hits",
+    # Not a group: the record-structurer step that follows a search-hit review.
+    # The router writes the count ("extracting the 3 Matches"); `offered_step`
+    # reads any count from 1 back to this key.
+    "extract-matches": "extracting the Matches",
 }
 
 _DENY_REASON = (
@@ -254,10 +263,16 @@ def deny_reason(candidate: str, mode: str = "step", steps: list[str] | None = No
     way. Once proof-conclusion has run the wrap-up is done, and a refusal names the
     step the model was reaching for, as any other turn's does -- offering "wrapping
     up" there would re-run a wrap-up on a question already concluded.
+
+    A record-structurer stopped in a turn a search-hit review opened names the
+    extraction that review offers, not "running the searches".
     """
     name = bare_name(candidate)
-    done = "proof-conclusion" in [bare_name(s) for s in (steps or [])]
+    taken = [s for s in (bare_name(s) for s in (steps or [])) if s and s != ROUTER]
+    done = "proof-conclusion" in taken
     key = "wrap-up" if mode == "wrapup" and not done else (home_group(name) or name)
+    if mode != "wrapup" and name == "record-structurer" and taken[:1] == ["evaluate-search-results"]:
+        key = "extract-matches"
     return _DENY_REASON.format(label=STEP_LABELS.get(key, "the next step"))
 
 
@@ -418,6 +433,14 @@ def _is_low_risk_choice(question, research: dict) -> bool:
 # `offered_step(deny_reason(x))` and `offer_key(x)` agree for every step.
 _OFFER_RE = re.compile(r"continue\s+with\s+(?P<label>.+?)\s*\?", re.IGNORECASE)
 _LABEL_TO_KEY = {label.casefold(): key for key, label in STEP_LABELS.items()}
+# The one label that carries a count: "extracting the 3 Matches", "the Match".
+# A count of 0 is not an offer. No other label drops a count.
+_EXTRACT_RE = re.compile(
+    r"extracting\s+(?:the\s+)?"
+    r"(?:(?P<count>[1-9]\d*|one|two|three|four|five|six|seven|eight|nine|ten)\s+)?"
+    r"match(?:es)?",
+    re.IGNORECASE,
+)
 
 
 def offer_key(step) -> str:
@@ -440,7 +463,10 @@ def offered_step(text: str | None) -> str | None:
     match = _OFFER_RE.search(lines[-1])
     if match is None:
         return None
-    return _LABEL_TO_KEY.get(match.group("label").strip().strip("*_`").casefold())
+    label = match.group("label").strip().strip("*_`")
+    if _EXTRACT_RE.fullmatch(label):
+        return "extract-matches"
+    return _LABEL_TO_KEY.get(label.casefold())
 
 
 def reply_options(offered_step, research: dict | None = None) -> list[str]:

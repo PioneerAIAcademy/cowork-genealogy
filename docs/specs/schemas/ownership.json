@@ -5,7 +5,7 @@
     "unit": "eval/harness/validators/test_universal.py — two checks. test_ownership_table diffs before/after project state against the calling skill's SKILL.md frontmatter name and cannot see an agent caller. test_no_out_of_lane_section_writes (issue #2022) records the shipped hook's own owner_denied verdict from skill_runner's PreToolUse hook, so since 2026-09-02 this plane DOES see the agent caller, and denies rather than merely detecting. Both run only inside a paid per-skill eval run.",
     "e2e": "eval/harness/e2e — whole-run detectors. Eval-only; never reaches production.",
     "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment, and the only one that is caller-agnostic — it constrains the WRITE, never who made it. Claimed by the questions row since 2026-08-23 (two exhaustiveness preconditions in research_append). Nothing reads this manifest at runtime: a row claiming this plane is a pointer to a hand-written check, kept in step by review.",
-    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25), conflicts (CLAIM-scoped over several fields on the analytical product, 2026-09-29), rejected_links (section-scoped, 2026-09-30), namesakes (section-scoped, 2026-10-25) and evaluations (section-scoped, 2026-10-26, issue #3191). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
+    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25), conflicts (CLAIM-scoped over several fields on the analytical product, 2026-09-29), rejected_links (section-scoped, 2026-09-30), namesakes (section-scoped, 2026-10-25), evaluations (section-scoped, 2026-10-26, issue #3191) and hit_verdicts (section-scoped, 2026-10-29, issue #3522). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "hookRouting": {
     "$comment": "What the plugin PreToolUse hook routes by section, read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py so the actual-writer reach rule has one source. `tool` is the one writer tool guard_project_files.py's owner_denied gates (plugin-hooks.test.ts pins it against the script); `treeRowsVia` maps each tree.gedcomx.json row that tool writes to the research.json section whose op writes it.",
@@ -615,6 +615,34 @@
       "override": "none",
       "hookCallers": [
         "agent:search-records"
+      ]
+    },
+    {
+      "artifact": "research.json",
+      "section": "hit_verdicts",
+      "owner": "agent:evaluate-search-results",
+      "callers": [
+        "agent:evaluate-search-results"
+      ],
+      "writerTools": [
+        "research_append",
+        "merge_tree_persons"
+      ],
+      "toolAuthorized": [
+        "merge_tree_persons"
+      ],
+      "enforceableAt": [
+        "unit",
+        "hook",
+        "tool"
+      ],
+      "notes": "evaluate-search-results records one row per full-text search hit it judges against a target tree person (issue #3522, PR 2). The lead ruled that verdicts live in their own research_append section with an ownership row (2026-10-18), and the router spawns one agent per hit, so the whole section is routed to it and the main thread and every other agent are denied. TOOL plane: research_append refuses a `log_id` that is not a `fulltext_search` entry with a `results_ref` and a `hit_id` that is not a row of that search's sidecar, rewrites `hit_id` to the sidecar's stored form, folds a second append for the same (`log_id`, `hit_id`, `target_person_id`) into an update of the first, refuses an update that re-points a row (`updatableFields`), and refuses `new_vital_info: true` on a `not_a_match` verdict or on a hit some assertion already extracts. merge_tree_persons re-keys `target_person_id` onto the merge survivor through the person-id walker, by tool identity; the hook never sees it. Where the collapsed person and its survivor each have a row on one hit, it removes the collapsed person's row when the two agree on `verdict` and `new_vital_info`, and refuses the merge when they differ. UNIT plane: the agent owns `eval/tests/unit/evaluate-search-results/`, so `writer_sets` resolves it as that suite's subject.",
+      "requires": "One row per (`log_id`, `hit_id`, `target_person_id`), never retired: a re-evaluation updates `verdict`, `new_vital_info` and `rationale` in place and never re-points the row. `new_vital_info` is as of the evaluation, and false on a Not a Match and on a hit already extracted.",
+      "failure": "A verdict written by the thread that ran the search skips the per-hit comparison against the target's tree, and a row on the wrong hit or person shows the researcher a Match on a record that is not the target's.",
+      "remedy": "Evaluate search hits through evaluate-search-results.",
+      "override": "none",
+      "hookCallers": [
+        "agent:evaluate-search-results"
       ]
     },
     {

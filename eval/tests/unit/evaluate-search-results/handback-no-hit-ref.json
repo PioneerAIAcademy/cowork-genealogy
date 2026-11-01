@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_evaluate_search_results_n6t",
+    "skill": "evaluate-search-results",
+    "name": "A whole search with no single hit ref is handed back with no tool call",
+    "type": "negative",
+    "description": "The delegation asks for every hit of log_017 and carries no hitRef. This agent judges one hit per spawn; listing a search's hits and spawning one agent per hit is the research router's \"Search-hit review\". The agent's routing gate answers `Hand-back: no hit ref` with no tool call. A DIRECT negative graded on its invariant: test_hand_back_names_its_owner (test_universal.py) and test_hand_back_writes_nothing, both gated on hand-back.",
+    "tags": [
+      "hand-back",
+      "no-hit-ref",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Evaluate all the hits of the full-text search log_017 and tell me which of them are Iram Hyde.\n\nprojectPath: <workspace>\ntarget: I1",
+    "scenario": "g9gj-fulltext-hits-unextracted"
+  },
+  "mcp_fixtures": [],
+  "negative": {
+    "correct_skill": [],
+    "grade_on_invariant": true,
+    "explanation": "A whole search is not one hit. The agent body hands back `Hand-back: no hit ref — …` with no tool call, a line that names no owner, so correct_skill is empty and test_hand_back_names_its_owner asks only for the `Hand-back:` line. Fanning the search out is the research router's job, through its \"Search-hit review\" section. The scenario holds eleven unextracted log_017 hits, so an agent that evaluated them instead would write rows and fail test_hand_back_writes_nothing."
+  },
+  "execution": {
+    "max_wall_clock_seconds": 120
+  },
+  "judge_context": [
+    "The correct reply is one line, `Hand-back: no hit ref — <the request in one clause>`, and no tool call. Listing the hits, reading any of them, or recording any verdict is a fail.",
+    "Brevity is correct. Do not expect a verdict or a summary of the search."
+  ]
+}

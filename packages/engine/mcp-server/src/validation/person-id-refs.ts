@@ -15,7 +15,8 @@ export type PersonIdRefField =
   | "subject_person_ids"
   | "timelines"
   | "proof_summaries"
-  | "namesakes";
+  | "namesakes"
+  | "hit_verdicts";
 
 /** The research.json fields that hold tree person-id references. */
 export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
@@ -25,6 +26,7 @@ export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
   "timelines",
   "proof_summaries",
   "namesakes",
+  "hit_verdicts",
 ];
 
 export interface PersonIdRef {
@@ -43,7 +45,7 @@ export interface PersonIdRef {
 /**
  * Yield every tree-person-id reference in `research`, in the same order the
  * validator's cross-file check has always emitted them (person_evidence,
- * subject_person_ids, timelines, proof_summaries, namesakes).
+ * subject_person_ids, timelines, proof_summaries, namesakes, hit_verdicts).
  * Each ref carries the
  * validator's exact error path/message and an in-place setter for the remap.
  *
@@ -191,6 +193,25 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
       message: `person_id '${pid}' not found in tree.gedcomx.json persons`,
       set: (newId) => {
         ns.person_id = newId;
+      },
+    };
+  }
+
+  // hit_verdicts[].target_person_id — the person a verdict judged the hit
+  // against. An update cannot re-point it, so a merge re-keys it here.
+  const hitVerdicts = Array.isArray(research.hit_verdicts) ? research.hit_verdicts : [];
+  for (let i = 0; i < hitVerdicts.length; i++) {
+    const hv = hitVerdicts[i];
+    if (!isObject(hv)) continue;
+    const pid = hv.target_person_id;
+    if (!pid) continue;
+    yield {
+      pid,
+      field: "hit_verdicts",
+      path: `research.json/hit_verdicts[${i}]`,
+      message: `target_person_id '${pid}' not found in tree.gedcomx.json persons`,
+      set: (newId) => {
+        hv.target_person_id = newId;
       },
     };
   }

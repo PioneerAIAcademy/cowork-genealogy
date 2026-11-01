@@ -15,7 +15,7 @@ A genealogy research project consists of two files:
 
 `research.json` references `tree.gedcomx.json` at two points:
 
-1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, and `namesakes.person_id` reference person IDs in `tree.gedcomx.json`.
+1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, `namesakes.person_id`, and `hit_verdicts.target_person_id` reference person IDs in `tree.gedcomx.json`.
 2. **Source description IDs** — `sources.gedcomx_source_description_id` references source description IDs in `tree.gedcomx.json`.
 
 At upload time, resolved person identities flow into `tree.gedcomx.json` while the assertion-to-record-role linkages stay in `research.json` as the audit trail.
@@ -44,7 +44,8 @@ A project often starts with a question about a person who does not yet exist in 
   "localities": [ ],
   "warning_justifications": [ ],
   "namesakes": [ ],
-  "rejected_links": [ ]
+  "rejected_links": [ ],
+  "hit_verdicts": [ ]
 }
 ```
 
@@ -68,6 +69,8 @@ entirely:
   namesake is recorded (Section 5.15).
 - `rejected_links` — written by the `person-evidence` agent; absent on projects
   that predate it (Section 5.14).
+- `hit_verdicts` — written by the `evaluate-search-results` agent alone; absent
+  until a search hit is evaluated (Section 5.16).
 
 **No other top-level key is permitted.** Every object in this file is
 closed: the JSON Schema sets `additionalProperties: false` on the document
@@ -124,6 +127,7 @@ flagged. (One row below is the exception, and says so.)
 | `stopped_because_gate` | `question_answered`, `record_exhausted`, `nothing_further_reachable` | Strict subset of `stopped_because`; the gate condition in `search_stop.allOf` that permits `status: "exhaustive_declared"`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum (ADR-0008 policy: no inline enums in `research.schema.json`) |
 | `stopped_because_non_gate` | `resources_spent`, `blocked_by_conflict` | The two non-gate values of `stopped_because` that keep status `in_progress`. Complement of `stopped_because_gate` within `stopped_because`; the non-gate `if` condition in `search_stop.allOf` that sets `stop_criteria: null`. Not directly written by skills — expressed as a separate `$def` so the JSON Schema conditional can `$ref` it rather than use an inline enum |
 | `not_reached_kind` | `nil_search`, `browse_only`, `over_transport_cap`, `paywalled`, `handed_to_user`, `privacy_sealed`, `skipped_plan_item`, `wiki_named_untouched`, `deferred` | questions' `search_stop.not_reached[].kind` (Section 5.2). What kind of source could not be reached — built only from things the agent already produces. Added 2026-10-07 |
+| `hit_verdict` | `match`, `possible_match`, `not_a_match` | hit_verdicts (Section 5.16) — whether a full-text search hit is about the row's target person |
 
 **Where these live in the machine-readable schemas.** All of them are defined in
 `enums.schema.json` and `$ref`'d from `research.schema.json` — none is declared
@@ -201,7 +205,9 @@ The following are **open enums** — recommended values that skills should prefe
 ## 3. ID Conventions
 
 All IDs are strings with a prefix indicating the section. IDs are immutable
-once created and never reused. **The prefixes are enforced, not advisory** —
+once created and never reused, except an hv_ id: merge_tree_persons removes a
+collapsed person's agreeing hit_verdicts row, and nothing references an hv_ id.
+**The prefixes are enforced, not advisory** —
 every id field and every field that references one is validated against its
 prefix, so an assertion id of `assert_001` or a `plan_item_id` holding a `q_`
 value is rejected at write time.
@@ -232,6 +238,7 @@ but `validate_research_schema` reports it, and the agent cannot repair it:
 | `loc_` | localities | `loc_001` |
 | `ns_` | namesakes | `ns_001` |
 | `rj_` | rejected_links | `rj_001` |
+| `hv_` | hit_verdicts | `hv_001` |
 
 The digits after the prefix are a convention, not a constraint — `q_flynn-1850`
 is as valid as `q_002` — with one exception: an `ev_` id must be the prefix
@@ -245,7 +252,7 @@ Two distinct formats appear in this file, and the distinction is enforced.
 
 | Format | Fields | Shape |
 |--------|--------|-------|
-| **Date** | `project.created`, `project.updated`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated`, `namesakes[].created` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
+| **Date** | `project.created`, `project.updated`, `questions[].created`, `questions[].resolved`, `plans[].created`, `sources[].access_date`, `person_evidence[].created`, `localities[].created`, `localities[].updated`, `namesakes[].created`, `hit_verdicts[].created` | `YYYY-MM-DD` exactly — `2026-05-01`. No time part, no month- or year-only form. Enforced by both validators |
 | **Timestamp** | `log[].performed`, `timelines[].generated`, `evaluations[].timestamp`, `proof_summaries[].updated` | ISO 8601 date-time **with an explicit timezone** — `2026-05-01T10:15:00Z` or `2026-05-01T10:15:00+01:00` |
 
 Write the colon form with a `Z` or a numeric offset and both validators accept
@@ -311,6 +318,7 @@ described under "Who actually writes a row" below.
 | `warning_justifications` | (none — writer-tool only) | none: no tool returns it (`research_query` excludes it, `project_context` omits it) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
 | `namesakes` | search-records (sole writer: the plugin hook routes the section to it); `research_append` stamps `record_persona_ids` | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate), `tree_edit` and `tree_correct` (the citation check) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` or `record_persona_ids` (Section 5.15). Optional section — absent until a namesake is recorded |
 | `rejected_links` | person-evidence | any caller via `research_query` | Immutable except `reason`, which may be filled in later; `research_append` refuses an update that sets any other field (Section 5.14). Never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
+| `hit_verdicts` | the evaluate-search-results agent (sole writer: the plugin hook routes the section to it); `research_append` rewrites `hit_id` to the stored form and folds a repeat append into an update | any caller via `research_query`; `merge_tree_persons` | Mutable (`verdict`, `new_vital_info`, `rationale`); never deleted, except that `merge_tree_persons` removes a collapsed person's row that agrees with its survivor's on the same hit. A row is never retired, and `research_append` refuses an update that sets any other field (Section 5.16). Optional section — absent until a hit is evaluated |
 
 `research_append` also accepts a `plan_items` pseudo-section, which addresses
 `plans[].items[]` rather than a top-level property of this file. It carries the
@@ -328,7 +336,7 @@ mechanism at all** — so do not reach for one generically. There are exactly th
 |---|---|---|
 | A `superseded` status value | `plans` **only** — it is the one status enum that defines one (see the enum table above) | Set `status: "superseded"` on the old plan |
 | A `superseded_by` pointer | `person_evidence`, `evaluations`, `assertions` | Point the old entry's `superseded_by` at the new entry's id. An assertion with no replacement takes the literal `"retracted"` and a `superseded_reason`; only `extraction_append`'s re-extraction retires one (§5.6) |
-| None | `questions`, `conflicts`, `hypotheses`, `sources`, `localities`, `proof_summaries`, `namesakes` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
+| None | `questions`, `conflicts`, `hypotheses`, `sources`, `localities`, `proof_summaries`, `namesakes`, `hit_verdicts` | Update the entry in place. `conflicts` and `hypotheses` reach a terminal state through their own status values (`resolved`/`moot`, `ruled_out`); the rest simply stay current |
 
 Writing a status value the section's enum does not define is rejected by
 `validate_research_schema`, so an instruction to "supersede with status" on a section in
@@ -1240,6 +1248,68 @@ links the cap refuses is recorded with a warning listing them (§5.6 there), and
 (`tree-materialization-spec.md` §4.3), nor do `tree_edit` and `tree_correct` cite
 one onto their facts and names (`tree-edit-tool-spec.md` §4.5).
 
+### 5.16 `hit_verdicts`
+
+Array of verdicts on full-text search hits. A row records whether one hit of a
+logged `fulltext_search` is about one tree person, and whether it holds a vital
+fact that person lacks. **Optional section** (not in `required`): absent until a
+hit is evaluated. The `evaluate-search-results` agent writes it, one
+`research_append` call per hit; the plugin hook routes the whole section to that
+agent (lead, 2026-10-18: verdicts live in their own section, written through
+`research_append`).
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | yes | `hv_` prefix |
+| `log_id` | string | yes | The `fulltext_search` log entry whose retained results (`results_ref`) hold the hit. `research_append` refuses any other log entry |
+| `hit_id` | string | yes | The hit's id. `research_append` refuses a hit not in that search's results and stores the id in the sidecar's form, whichever spelling the caller sent |
+| `target_person_id` | string | yes | GedcomX person ID of the tree person the hit was judged against |
+| `verdict` | string (`hit_verdict`) | yes | `match`, `possible_match` or `not_a_match` |
+| `new_vital_info` | boolean | yes | The hit dates or places a birth, death or marriage the target lacks, or names a spouse, parent or child the target's relationships do not. As of the evaluation (below) |
+| `rationale` | string | yes | The facts that decided the verdict and the flag. Non-blank |
+| `created` | string | yes | Tool-stamped ISO 8601 date |
+
+**One row per hit and person.** An append for a (`log_id`, `hit_id`,
+`target_person_id`) that already has a row updates that row instead
+(`research-append-tool-spec.md` §3.10), so parallel evaluations of one hit leave
+one row; such an append must carry `verdict`, `new_vital_info` and `rationale`,
+like any append. The same hit judged against another person is a second row.
+`hit_id` is compared by bare id. The validator reports a second row on one key
+(`hit verdict 'hv_002' judges the same hit of log_001 against the same person as
+'hv_001'`), which only a hand edit can make; through `validateIntroduced` it
+blocks only the write that introduces it, so a duplicate already on disk rides
+an unrelated write as a pre-existing error.
+
+**A row is never retired, and no update re-points it.** It has no status and no
+`superseded_by`, and `research_append` lets an update set only `verdict`,
+`new_vital_info` and `rationale` (the section's `updatableFields`). The one
+removal is a merge's: when `merge_tree_persons` collapses a person who has a
+verdict on a hit its survivor also has one on, the collapsed person's row is
+removed if the two give the same `verdict` and `new_vital_info` (the survivor's
+row stands, with its id and rationale), and the merge is refused, naming both
+rows, if they differ (`merge-gedcomx-spec.md` §5b.2 step 3).
+
+**`new_vital_info` is as of the evaluation; a later extraction does not clear
+it.** `research_append` refuses `true` beside `not_a_match`, since a hit that is
+not the target holds no fact the target lacks, and refuses `true` on a hit already
+extracted. Both are write-time preconditions: they refuse a write, and are not true
+of every stored row. A row written `true` stays `true` after its hit is extracted.
+A reader treats a hit as not new once some `research.assertions[].record_id` has
+the same bare id as the row's `hit_id` (the part after the last `:` of either ARK
+form, a URL or `ark:/…`), the test the write-time precondition uses.
+
+**What a row does not carry.** No `target_record_id`: a hit is judged against a
+tree person, and judging one against a historical record is deferred. No fact
+list: the rationale names the facts. No hit index: the sidecar gives it from
+`hit_id`.
+
+**`target_person_id` is walked like every other tree reference.**
+`iteratePersonIdRefs` yields it, so the validator reports a row keyed on a person
+not in the tree, `merge_tree_persons` re-keys a row onto the merge survivor
+(counted in `researchRefsUpdated.hit_verdicts`; a row folded into the
+survivor's, above, is not), and `tree_forget` is refused when
+it would orphan a row (`tree-forget-tool-spec.md` §4).
+
 ---
 
 ## 6. Cross-Reference Map
@@ -1306,6 +1376,10 @@ namesakes
 rejected_links
   ├─ assertion_id ───────────────────────────────► assertions[].id
   └─ person_id ──────────────────────────────────► tree.gedcomx.json persons[].id
+hit_verdicts
+  ├─ log_id ─────────────────────────────────────► log[].id (a fulltext_search entry)
+  ├─ hit_id ─────────────────────────────────────► that entry's sidecar payload.results[].id
+  └─ target_person_id ───────────────────────────► tree.gedcomx.json persons[].id
 ```
 
 ---
@@ -2175,10 +2249,11 @@ Research objective: Identify the parents of Patrick Flynn, born ~1845 in Pennsyl
   `gps-mentor` critiqued proof summary ps_001 and returned
   `consider_addressing`. The mentor's actual reasoning lives in the file named
   by `file_path`, not in `research.json`. See Section 5.12.
-- **`researcher_profile`, `localities`, `warning_justifications` and
-  `namesakes` are absent.** All four are optional (Section 1); a project that
-  has done no locality research, has justified no warning and has recorded no namesake legitimately
-  has none of them. The other twelve keys are all present. On a younger
+- **`researcher_profile`, `localities`, `warning_justifications`,
+  `namesakes`, `rejected_links` and `hit_verdicts` are absent.** All six are
+  optional (Section 1); a project that has done no locality research, has
+  justified no warning, has recorded no namesake, has rejected no link and has
+  evaluated no search hit legitimately has none of them. The other twelve keys are all present. On a younger
   project several of them would be present but empty, which is required;
   omitting them is not.
 - **The tree above and this file are consistent by design.** `subject_person_ids`

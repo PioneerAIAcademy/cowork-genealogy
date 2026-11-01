@@ -1,0 +1,48 @@
+{
+  "test": {
+    "id": "ut_research_hv3",
+    "skill": "research",
+    "name": "A search-hit review spawns one evaluate-search-results per named hit and offers the Matches",
+    "type": "positive",
+    "description": "Issue #3522, research/SKILL.md \"Search-hit review\". The user names three hits of the full-text search log_008. The router reads results/log_008.json#hits, spawns one @plugin:evaluate-search-results per named hit with projectPath, the row's ref as hitRef and a target, relays each verdict, and ends \"Continue with extracting the 3 Matches?\". evaluate-search-results is stubbed with one canned return for every spawn: verdict match, alreadyExtracted false, and no hitRef line, because one text answers every spawn and a hitRef line would name the wrong hit; the router pairs each return with its spawn. So the offer's count is the spawn count. Hits 2, 4 and 7, not hit 1: hit 1 (3QSQ-G9WC-F61H) is already extracted as src_005, so a canned alreadyExtracted false would contradict project_context. Asserted from the hook records by test_search_hit_review_spawns_one_agent_per_hit (reviews-search-hits, reviews-hits:log_008:2,4,7), which the judge cannot see.",
+    "tags": [
+      "routing",
+      "bounded-request",
+      "step-mode",
+      "routes-to:evaluate-search-results",
+      "reviews-search-hits",
+      "reviews-hits:log_008:2,4,7"
+    ]
+  },
+  "input": {
+    "user_message": "/research Evaluate hits 2, 4 and 7 of log_008 for Iram Hyde.",
+    "scenario": "g9gj-fulltext-hits-unextracted"
+  },
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 900,
+    "stub_skills": [
+      {
+        "skill": "evaluate-search-results",
+        "response": "verdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\n\nThe evaluator labelled this hit a Match. It holds a detail the tree does not have yet."
+      },
+      "record-structurer",
+      "search-full-text",
+      "question-selection",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "person-evidence",
+      "conflict-resolution",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test of research/SKILL.md's \"Search-hit review\". The spawns are asserted deterministically from the hook records (test_routes_to_expected_skill, test_search_hit_review_spawns_one_agent_per_hit): one evaluate-search-results spawn per named hit, each naming projectPath, its own hitRef and a target, and a last line \"Continue with extracting the 3 Matches?\". You cannot see the spawns. Do not grade them.",
+    "evaluate-search-results is STUBBED with one canned return for every hit: a Match, not yet extracted, with the same two-sentence summary. Every hit therefore comes back a Match in identical words. That is the stub, not a defect of the router, and nothing is written to the project. The stub gives that Match even to a hit whose title plainly cannot be Iram Hyde: hit 7 of log_008 is a 1664 English will. Relaying that Match is correct and is NOT a factual error; do not grade whether a relayed verdict is plausible.",
+    "The router judges nothing from the hit list itself and extracts nothing in this turn: it relays each verdict and offers the extraction. Saying from a hit's title whether it is Iram Hyde, or extracting a hit in this turn, is the failure.",
+    "PROJECT_LIST FIRST IS REQUIRED. When no projectPath is named, the router's first call is project_list with no arguments, to find the project. Its folder answer is the live tool's real answer, not an error."
+  ]
+}

@@ -222,6 +222,12 @@ MAIN_THREAD_OK = {
         "routed per section by owner_denied below, whose reason names the one "
         "agent that owns the section; a tool-level deny would name sixteen"
     ),
+    "tree_query": (
+        "the research router reads a tree person's facts on the main thread "
+        "(ut_research_s59 does in research's v40 run log); a deny would send an "
+        "ordinary tree read to an agent. evaluate-search-results became its only "
+        "agent holder in issue #3522"
+    ),
 }
 
 # A path never contains a newline, and is never longer than the platform allows.
@@ -274,6 +280,12 @@ OWNED_SECTIONS = {
     # recording its own mentor verdict, which makes the second opinion
     # self-issued. The per-agent lanes already kept every other agent off it.
     "evaluations": "gps-mentor",
+    # hit_verdicts, 2026-10-29 (issue #3522, lead ruling 2026-10-18). One agent
+    # per full-text hit judges it against the target's tree facts, so the main
+    # thread that ran the search cannot label its own hits from the list.
+    # merge_tree_persons re-keys `target_person_id` by tool identity and never
+    # reaches this hook.
+    "hit_verdicts": "evaluate-search-results",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -419,6 +431,10 @@ AGENT_WRITABLE_SECTIONS = {
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
     # for agents outside the listed sections).
     "search-full-text": frozenset({"plan_items"}),
+    # evaluate-search-results appends one verdict per hit to `hit_verdicts`, the
+    # section routed to it above, and writes nothing else in research.json. A
+    # Match is extracted by record-structurer on the next turn, never here.
+    "evaluate-search-results": frozenset({"hit_verdicts"}),
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),

@@ -3075,6 +3075,18 @@ describe("Research closed shapes", () => {
           created: "2026-01-02",
         },
       ],
+      hit_verdicts: [
+        {
+          id: "hv_001",
+          log_id: "log_001",
+          hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR",
+          target_person_id: "I1",
+          verdict: "match",
+          new_vital_info: true,
+          rationale: "Names John Smith, son of Robert, christened 1850; the tree has no christening.",
+          created: "2026-01-02",
+        },
+      ],
     };
   }
 
@@ -3280,6 +3292,7 @@ describe("Research closed shapes", () => {
     { site: "evaluations", plant: (r) => (r.evaluations[0].zz_extra = true) },
     { site: "localities", plant: (r) => (r.localities[0].zz_extra = true) },
     { site: "namesakes entries", plant: (r) => (r.namesakes[0].zz_extra = true) },
+    { site: "hit_verdicts entries", plant: (r) => (r.hit_verdicts[0].zz_extra = true) },
   ];
 
   // namesakes: required fields are never null, though the shared nullable set
@@ -3308,6 +3321,72 @@ describe("Research closed shapes", () => {
       expect(result.errors.some((e) => e.path.includes("namesakes") && e.message.includes(v.message)), JSON.stringify(result.errors)).toBe(true);
     });
   }
+
+  const hitVerdictRejections: Array<{ why: string; plant: (r: any) => void; message: string }> = [
+    { why: "a verdict outside the enum", plant: (r) => (r.hit_verdicts[0].verdict = "maybe"), message: "'maybe' is not a valid hit_verdict" },
+    { why: "a wrong id prefix", plant: (r) => (r.hit_verdicts[0].id = "hit_001"), message: "should start with 'hv_'" },
+    { why: "an unknown log id", plant: (r) => (r.hit_verdicts[0].log_id = "log_999"), message: "references log entry 'log_999'" },
+    { why: "a log_id that is not a log id", plant: (r) => (r.hit_verdicts[0].log_id = "q_001"), message: "should start with 'log_'" },
+    { why: "a string new_vital_info", plant: (r) => (r.hit_verdicts[0].new_vital_info = "true"), message: "'new_vital_info' must be true or false" },
+    { why: "a null new_vital_info", plant: (r) => (r.hit_verdicts[0].new_vital_info = null), message: "required field 'new_vital_info' is null" },
+    { why: "a blank rationale", plant: (r) => (r.hit_verdicts[0].rationale = "  "), message: "'rationale' must be a non-empty string" },
+    { why: "an empty hit_id", plant: (r) => (r.hit_verdicts[0].hit_id = ""), message: "'hit_id' must be a non-empty string" },
+    { why: "a missing target_person_id", plant: (r) => delete r.hit_verdicts[0].target_person_id, message: "missing required field 'target_person_id'" },
+    { why: "a target not in the tree", plant: (r) => (r.hit_verdicts[0].target_person_id = "I99"), message: "target_person_id 'I99' not found in tree.gedcomx.json persons" },
+    { why: "a malformed created date", plant: (r) => (r.hit_verdicts[0].created = "29 October 2026"), message: "must be an ISO date" },
+    { why: "a section that is not an array", plant: (r) => (r.hit_verdicts = { id: "hv_001" }), message: "hit_verdicts must be an array" },
+  ];
+  for (const v of hitVerdictRejections) {
+    it(`rejects a hit_verdicts entry with ${v.why}`, async () => {
+      const research = maximalResearch();
+      v.plant(research);
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("hit_verdicts") && e.message.includes(v.message)), JSON.stringify(result.errors)).toBe(true);
+    });
+  }
+
+  it("accepts each hit_verdict value and a false flag", async () => {
+    for (const verdict of ["match", "possible_match", "not_a_match"]) {
+      const research = maximalResearch();
+      Object.assign(research.hit_verdicts[0], { verdict, new_vital_info: false });
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors, verdict).toEqual([]);
+    }
+  });
+
+  it("accepts a padded rationale and any hit_id spelling: the sidecar check is research_append's", async () => {
+    for (const hitId of ["3Q9M-CSK3-ZSLR", "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSK3-ZSLR"]) {
+      const research = maximalResearch();
+      Object.assign(research.hit_verdicts[0], { hit_id: hitId, rationale: "  Names John Smith.  " });
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors, hitId).toEqual([]);
+    }
+  });
+
+  it("rejects a second row on one hit and person, the hit compared by bare id", async () => {
+    for (const hitId of ["ark:/61903/3:1:3Q9M-CSK3-ZSLR", "3Q9M-CSK3-ZSLR", "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSK3-ZSLR"]) {
+      const research = maximalResearch();
+      research.hit_verdicts.push({ ...research.hit_verdicts[0], id: "hv_002", hit_id: hitId, verdict: "not_a_match", new_vital_info: false });
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors.map((e) => `${e.path}: ${e.message}`), hitId).toEqual([
+        "research.json/hit_verdicts[1]: hit verdict 'hv_002' judges the same hit of log_001 against the same person as " +
+          "'hv_001' — one row per (log_id, hit_id, target_person_id); an append for a judged hit updates its row",
+      ]);
+    }
+  });
+
+  it("accepts one hit judged against two persons, two hits against one, and one hit id in two searches", async () => {
+    const research = maximalResearch();
+    const first = research.hit_verdicts[0];
+    research.hit_verdicts.push(
+      { ...first, id: "hv_002", target_person_id: "I2", verdict: "not_a_match", new_vital_info: false },
+      { ...first, id: "hv_003", hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSH4" },
+      { ...first, id: "hv_004", log_id: "log_002" },
+    );
+    const result = await validateParsed(research, maximalTree);
+    expect(result.errors).toEqual([]);
+  });
 
   it("accepts a namesakes entry with only its required fields and null optional ones", async () => {
     const research = maximalResearch();
@@ -3620,6 +3699,7 @@ describe("Research closed shapes", () => {
       locality: schema.$defs.locality,
       warning_justification: schema.$defs.warning_justification,
       namesake: schema.$defs.namesake,
+      hit_verdict_entry: schema.$defs.hit_verdict_entry,
     };
 
     expect(Object.keys(defFor).sort()).toEqual(Object.keys(RESEARCH_SHAPES).sort());
@@ -3671,6 +3751,7 @@ describe("ID_PREFIXES mirrors research.schema.json id patterns", () => {
     evaluations: "evaluation_entry",
     localities: "locality",
     namesakes: "namesake",
+    hit_verdicts: "hit_verdict_entry",
   };
 
   /** Every `$def` in research.schema.json whose `id` carries a `pattern`. */
@@ -3752,7 +3833,7 @@ describe("a malformed element is reported, never thrown", () => {
   const ARRAYS = [
     "questions", "plans", "log", "sources", "assertions", "person_evidence",
     "conflicts", "hypotheses", "timelines", "proof_summaries", "evaluations",
-    "localities", "namesakes", "warning_justifications",
+    "localities", "namesakes", "warning_justifications", "hit_verdicts",
   ];
 
   for (const section of ARRAYS) {
@@ -4517,7 +4598,7 @@ describe("entry ids are unique within their section", () => {
     assertions: "assertion", person_evidence: "person_evidence",
     rejected_links: "rejected_links", conflicts: "conflict", hypotheses: "hypothesis",
     timelines: "timeline", proof_summaries: "proof summary", evaluations: "evaluation",
-    localities: "locality", namesakes: "namesake",
+    localities: "locality", namesakes: "namesake", hit_verdicts: "hit verdict",
   };
   const sections = Object.keys(ID_PREFIXES).filter((s) => s !== "project" && s !== "plan_items");
 

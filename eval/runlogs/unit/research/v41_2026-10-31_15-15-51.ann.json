@@ -1,0 +1,174 @@
+{
+  "run_log": "v41_2026-10-31_15-15-51.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It took the yes as accepting the offer and went straight to record-structurer for hit 9. It didn't judge the hit again, re-run the review or offer the step a second time. The run ends at the stubbed hand-off by design, so a missing closing summary isn't a fault."
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments, then project_context with the right project path. Both are correct, and no call missed the fixture."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The status report is right: question 1 needs its conclusion redone and question 2 has no proof summary. But it states Patrick was \"born about 1845 in Pennsylvania\" and reasons from that (\"Because he was Pennsylvania-born…\"). The project's own conflict c_001 is resolved in favour of Ireland (two censuses taken at the time beat the 1908 death certificate's second-hand informant), and the tree's birth fact says Ireland. The judge's claim that I1 shows a Pennsylvania birth is wrong. Marked down to 2 because the factual error recasts the researcher's question, though the routing is unaffected."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The skill's rule for a new question while the current one is unfinished is: spawn nothing, name what is open, and end with \"Continue with wrapping up?\". It did exactly that. It also explained why the Irish-origins question has to wait and said it can open once the current two are closed."
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments, then project_context with the folder project_list returned. Both are correct, and no call missed the fixture."
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Checked the run: the router made one project_context call, spawned research-plan once and wrote no text of its own. That is a clean hand-off, so this isn't one of the 4 corpus runs where the router did real work before routing, and the judge's original 1 names no real defect. \"Invoked research-plan twice\" is a misreading: the hook record shows one spawn. An empty reply is correct for a router that hands off, so N/A stands."
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Same check: one spawn of research-plan, no output of its own, and nothing written to the project. The judge wanted \"a clear decline with explicit routing instruction to the user\", but a router hands off silently and is not meant to explain itself. The routing validator decides this test, so N/A stands."
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call with the right project path, matched live with no fixture miss. That is the right call to read the project state before routing."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All 11 verdicts are relayed exactly as the stub returned them (Match, new vital info yes, not extracted). The test's notes say relaying the canned Match is correct. The one description it adds (\"religious record and cemetery entries from Washington County and surrounding New York locations\") matches the hits' record type (\"Religious Record, Cemetery\") and places in log_017. It judged nothing from the hit list itself."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "All 11 hits were evaluated, and it ends with \"Continue with extracting the 11 Matches?\". But it reported between batches (\"Hits 1–5 all came back as Match… Now spawning evaluators for hits 6–10\", then the same after 6–10). The test's notes say \"A batch is not a step: reporting between batches… is the failure.\" The judge listed \"reported results after each batch\" as a strength, which is backwards. It also gives the closing summary twice in a row."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments first (required, since no project was named), project_context on the right folder, sidecar_read on results/log_017.json#hits, and research_delivered with an accurate one-line summary. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_hv3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three verdicts (hits 2, 4 and 7) are relayed exactly as the stub returned them: Match, new info, not extracted. The record titles it shows match log_008's hit list. It doesn't say from any title whether the hit is Iram Hyde. Hit 7 is a 1664 English will, and relaying its Match without comment is what the test's notes ask for."
+    },
+    {
+      "test_id": "ut_research_hv3",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three named hits were evaluated, reported in a table, and the reply ends with \"Continue with extracting the 3 Matches?\". It extracted nothing in this turn, which is correct."
+    },
+    {
+      "test_id": "ut_research_hv3",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments first (required, since no project was named), project_context on the right folder, sidecar_read for log_008's hit list, and research_delivered with an accurate summary. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Every detail it repeats matches log_002's notes: Josiah Barnes, 37, farmer, Billerica, Middlesex County, and Lydia 34, Charles H. 12, Mary A. 9, Henry 4. It lists the others only as \"household members\" and assigns no roles (wife, son), so it decides no household relationships. It correctly treats the capture as already received."
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It found the waiting capture, handed it to record-structurer without extracting anything itself, didn't ask for the capture again, and ended with the next step's offer (\"Continue with linking the records?\")."
+    },
+    {
+      "test_id": "ut_research_rs5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments, project_context on the right folder, and research_query on the log for q_001. All correct, no fixture misses."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 1,
+      "comment": "h_002 rests on Robert Eastham Jr.'s 1870 marriage bond (married Margaret Rucker, Boyd County, 25 Jan 1870), and the reply itself cites \"Robert's sworn 1870 marriage bond\". The reported 1861 death makes that impossible for the same man. Yet the reply calls the record \"consistent in every detail\" and says the death \"explains why he disappears after the 1860 census\", which is false, since the project has him marrying in 1870. That presents a contradicting record as corroboration and keeps h_002 alive, which the test's notes name as the failure. The judge missed it."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge marked it down for not planning to research James and Elizabeth Eastham. The test's notes say asking the researcher for the record's identifier \"is a legitimate first step and counts as following the lead\". The failure they describe is a plan that goes straight to wrap-up on the current question, and the reply doesn't do that. It asks for the ARK and says the parents' names would then be used to search further. The hypothesis it missed is graded under Correctness, not here."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments, project_context on the right folder, and research_query on hypotheses. All correct, no fixture misses."
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The hand-off is right and the narration is honest, but the reply shows internal ids to the user: \"log_017's hit 9\", \"record 3Q9M-CSK3-ZSLR\" and the agent name \"record-structurer\". The test's notes say the narration must be \"free of internal ids shown to the user\". The judge counted the ids as a plus (\"accurately references the log entry and hit identifier\"), which is the opposite of what the test asks. Marked down one point because nothing in the reply is wrong."
+    }
+  ]
+}

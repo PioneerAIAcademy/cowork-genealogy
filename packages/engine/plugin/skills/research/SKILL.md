@@ -67,6 +67,8 @@ one in prose you then act on.
 | the current question, before a different one | wrapping up |
 | tree-survey | surveying the tree |
 | search-hints | checking the record hints |
+| evaluate-search-results | evaluating the search hits |
+| record-structurer, on the Matches of a search-hit review (N = their count; "the Match" for one) | extracting the N Matches |
 | source-evaluation | evaluating the source |
 | gps-mentor | the GPS review |
 
@@ -392,7 +394,8 @@ it by name.
    and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
-   `@plugin:search-hints`, and the `planItemId` plus the volume's `standardPlace` (with its
+   `@plugin:search-hints`, the `hitRef` and `target` for
+   `@plugin:evaluate-search-results`, and the `planItemId` plus the volume's `standardPlace` (with its
    years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`. In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion` also take `wrapUp: yes`, and
@@ -409,7 +412,8 @@ it by name.
    **Three rules the caller holds, because on this route the agent's own
    body never loads here.** Do not pre-judge the agent's gate — read nothing
    beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already
-   queried and the subject you already hold, passed verbatim and unread), and judge nothing. Do not
+   queried and the subject you already hold, passed verbatim and unread), and judge nothing. For
+   `@plugin:evaluate-search-results`, read also the `#hits` list its refs come from. Do not
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
    the routing table has no row for a decline. Relay the agent's return as-is.
@@ -560,6 +564,35 @@ when the question's active plan holds an `in_progress` `fs_hints` item whose
 researcher did not state — a triage recommendation is not one. The accepted
 hints' positive log entries then route to extraction through the table.
 
+## Search-hit review
+
+When the user asks to evaluate hits of a full-text search log entry ("hits 1,
+4 and 7 of log_012", "all hits of log_012"), or answers "Continue." to
+`evaluating the search hits` (all hits of the full-text log entry the previous
+turn made):
+
+1. `project_context({ projectPath })`.
+2. `sidecar_read({ projectPath, ref: "results/log_012.json#hits" })`. While
+   `truncated` is true, call again with `offset: nextOffset`.
+3. Take the named `hitIndex` rows, or all of them, skipping `hasTranscript: false`.
+4. Spawn one `@plugin:evaluate-search-results` per row with `projectPath`,
+   `hitRef` (the row's `ref`, verbatim) and `target` (a tree person id: the
+   `persons` row from `project_context` for the person the user names, else
+   `subjectPersonIds[0]`), **at most 5 per message**, until every row has one.
+   Together they are one step: no report between them.
+5. Judge nothing from the list.
+6. When all have returned, relay each verdict.
+7. N is the Matches not already extracted; a Possible Match is not offered.
+   N ≥ 1: end "Continue with `extracting the N Matches`?" ("the Match" for
+   one). N = 0: no "Continue with …?" line.
+8. `research_delivered`.
+
+When the researcher answers "Continue." to that offer, in a later turn, spawn
+`@plugin:record-structurer` once with `projectPath`, `questionIds` and `sources`
+holding
+`{ recordId: <the hit id after '#'>, resultsRef: <the hitRef, verbatim> }` for
+each of those Matches, taken from the returns you hold.
+
 ## When a search stops short
 
 `research-exhaustiveness` declines when every item on the active plan is
@@ -692,6 +725,9 @@ a verdict:
 A single plausible candidate is still a candidate. The researcher decides
 whether it is their person; your job is to show them what you found and
 what it rests on.
+
+This does not apply to §"Search-hit review", which relays the agent's verdicts
+and offers to extract the Matches.
 
 ## What this skill does not do
 

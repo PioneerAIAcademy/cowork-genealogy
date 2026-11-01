@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_evaluate_search_results_w4k",
+    "skill": "evaluate-search-results",
+    "name": "A deed naming Iram Hyde of Jackson and Mary his wife is a Match with nothing new",
+    "type": "positive",
+    "description": "log_008 hit 4 (3QS7-99WC-KLYK) is the deed of 31 Dec 1829 'Between Iram Hyde of the town of Jackson in the County of Washington ... and Mary his wife', a hit no assertion cites. Gold (PLAN §4, to be confirmed by a genealogist before the paid run): Match, because the name, the town his censuses put him in and a wife named Mary all fit; no new vital information, because Mary is already on his Couple and the deed dates no marriage. Checked by the tag-gated validators in test_evaluate_search_results.py.",
+    "tags": [
+      "hit-verdict",
+      "expect-match",
+      "no-new-vital",
+      "not-extracted",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Evaluate this full-text search hit against the tree person.\n\nprojectPath: <workspace>\nhitRef: results/log_008.json#3QS7-99WC-KLYK\ntarget: I1",
+    "scenario": "g9gj-proof-update-after-later-search"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: the delegation is relayed verbatim to evaluate-search-results and no router is staged. project_context, sidecar_read, tree_query and research_append run live against the scenario.",
+    "Gold: Match, no new vital information, not already extracted. The deed reads 'Between Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife', dated 31 December 1829. The tree places Iram in Jackson from 1850 and his Couple is with Mary Robertson, who carries no Marriage fact.",
+    "Nothing is new: the wife the deed names is already on his Couple, an undated 'Mary his wife' dates no marriage, and a residence is not a vital fact.",
+    "The verdict, the flag, the single hit_verdicts row, the one read of the hit, the tree_query call and the contract lines are checked by validators. Grade whether the rationale names the facts that decide them, and the plain summary after the `---`."
+  ]
+}

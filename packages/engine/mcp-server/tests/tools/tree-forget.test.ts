@@ -1180,6 +1180,37 @@ describe("tree_forget", () => {
     expect(await exists(RESTORE_FILE)).toBe(false);
   });
 
+  it("refuses to forget a person a hit verdict judged a hit against", async () => {
+    const research = {
+      ...minimalResearch,
+      log: [
+        {
+          id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "fulltext_search",
+          query: { text: "Michael Ryan" }, outcome: "positive", results_examined: 1, results_ref: null,
+          results_available: 1, notes: null, external_site: null,
+        },
+      ],
+      hit_verdicts: [
+        {
+          id: "hv_001", log_id: "log_001", hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR", target_person_id: "I2",
+          verdict: "match", new_vital_info: false, rationale: "Names Michael Ryan.", created: "2026-01-02",
+        },
+      ],
+    };
+    await writeProject(family(), research);
+    const before = await readTree();
+
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "parents-of", personId: "I1" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join("\n")).toContain("target_person_id 'I2' not found in tree.gedcomx.json persons");
+    expect(await readTree()).toEqual(before);
+    expect(await exists(RESTORE_FILE)).toBe(false);
+  });
+
   // ─── plan-phase gate (#1357) ────────────────────────────────────────────────
 
   const researchWithPlan = {

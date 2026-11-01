@@ -109,6 +109,7 @@ const CLOSED_ENUMS = {
   locality_page_outcome: new Set(["unreachable"]),
   registration_event: new Set(["birth", "marriage", "death"]),
   registration_level: new Set(["town", "parish", "county", "state", "national"]),
+  hit_verdict: new Set(["match", "possible_match", "not_a_match"]),
 };
 
 // Weakest-to-strongest, matching the eval harness's own _TIER_RANK. Used to
@@ -268,6 +269,7 @@ export const ID_PREFIXES: Record<string, string> = {
   evaluations: "ev_",
   localities: "loc_",
   namesakes: "ns_",
+  hit_verdicts: "hv_",
 };
 
 /**
@@ -683,7 +685,7 @@ export const RESEARCH_SHAPES = {
     "project", "researcher_profile", "questions", "plans",
     "log", "sources", "assertions", "person_evidence", "rejected_links", "conflicts",
     "hypotheses", "timelines", "proof_summaries", "evaluations",
-    "localities", "warning_justifications", "namesakes",
+    "localities", "warning_justifications", "namesakes", "hit_verdicts",
   ]),
   project: new Set([
     "id", "title", "objective", "subject_person_ids", "status",
@@ -797,6 +799,10 @@ export const RESEARCH_SHAPES = {
   namesake: new Set([
     "id", "person_id", "name", "place", "time_period", "record_ids",
     "log_entry_ids", "record_persona_ids", "notes", "created",
+  ]),
+  hit_verdict_entry: new Set([
+    "id", "log_id", "hit_id", "target_person_id", "verdict", "new_vital_info",
+    "rationale", "created",
   ]),
 };
 
@@ -1932,8 +1938,82 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   validateEvaluations(data, ids, path, report);
   validateLocalities(data, path, report);
   validateNamesakes(data, ids, path, report);
+  validateHitVerdicts(data, ids, path, report);
 
   return ids;
+}
+
+/**
+ * hit_verdicts (optional): one row per full-text search hit and target person.
+ * What a row may say about its hit (the search it names, the extracted-hit
+ * refusals) is research_append's to check, since it reads the sidecar; this is
+ * the row's own shape, its log reference, and the one-row-per-key rule (hit_id
+ * by bare id), which a hand edit can break.
+ */
+function validateHitVerdicts(data: any, ids: ResearchIds, path: string, report: ValidationReport): void {
+  const rows = data.hit_verdicts;
+  if (rows === undefined) return;
+  if (!Array.isArray(rows)) {
+    addError(report, `${path}/hit_verdicts`, "hit_verdicts must be an array");
+    return;
+  }
+  const seen = new Set<any>();
+  const byKey = new Map<string, unknown>();
+  for (let i = 0; i < rows.length; i++) {
+    const hv = rows[i];
+    const hp = `${path}/hit_verdicts[${i}]`;
+    if (!isObjectEntry(hv, hp, report)) continue;
+    checkRequired(
+      hv,
+      ["id", "log_id", "hit_id", "target_person_id", "verdict", "new_vital_info", "rationale", "created"],
+      hp,
+      report,
+      new Set(),
+    );
+    checkAllowedKeys(hv, RESEARCH_SHAPES.hit_verdict_entry, "hit_verdicts entries", hp, report);
+    if ("id" in hv && hv.id !== null) {
+      checkIdPrefix(hv.id, ID_PREFIXES.hit_verdicts, hp, report);
+      addUniqueId(seen, hv.id, "hit verdict", hp, report);
+    }
+    if ("log_id" in hv && hv.log_id !== null) {
+      checkIdPrefix(hv.log_id, ID_PREFIXES.log, hp, report);
+      checkRefExists(hv.log_id, ids.log, "log entry", hp, report);
+    }
+    for (const field of ["hit_id", "target_person_id"]) {
+      if (field in hv && hv[field] !== null && (typeof hv[field] !== "string" || hv[field] === "")) {
+        addError(report, hp, `'${field}' must be a non-empty string`);
+      }
+    }
+    // The schema's `pattern: "\\S"`: blank is refused, not just empty.
+    if ("rationale" in hv && hv.rationale !== null && (typeof hv.rationale !== "string" || hv.rationale.trim() === "")) {
+      addError(report, hp, "'rationale' must be a non-empty string");
+    }
+    if ("verdict" in hv && hv.verdict !== null) checkEnum(hv.verdict, "hit_verdict", hp, report);
+    if ("new_vital_info" in hv && hv.new_vital_info !== null && typeof hv.new_vital_info !== "boolean") {
+      addError(report, hp, `'new_vital_info' must be true or false (got ${JSON.stringify(hv.new_vital_info)})`);
+    }
+    checkIsoDate(hv, "created", hp, report);
+    // No person in the message: a merge re-keying a standing pair onto its
+    // survivor leaves it unchanged, so validateIntroduced still reads it as old.
+    if (
+      typeof hv.log_id === "string" &&
+      typeof hv.hit_id === "string" && hv.hit_id !== "" &&
+      typeof hv.target_person_id === "string" && hv.target_person_id !== ""
+    ) {
+      const k = `${hv.log_id}\u0000${arkToBareId(hv.hit_id)}\u0000${hv.target_person_id}`;
+      const first = byKey.get(k);
+      if (first === undefined) {
+        byKey.set(k, hv.id);
+      } else {
+        addError(
+          report,
+          hp,
+          `hit verdict '${hv.id}' judges the same hit of ${hv.log_id} against the same person as '${first}' — ` +
+            "one row per (log_id, hit_id, target_person_id); an append for a judged hit updates its row",
+        );
+      }
+    }
+  }
 }
 
 /**

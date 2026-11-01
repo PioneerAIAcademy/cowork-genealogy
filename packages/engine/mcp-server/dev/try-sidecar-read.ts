@@ -3,6 +3,10 @@
 //   npx tsx dev/try-sidecar-read.ts <projectPath> <ref> [offset] [maxChars]
 // e.g. npx tsx dev/try-sidecar-read.ts /path/to/project evaluations/proof-critique-ps_001-2026-09-14.json
 //      npx tsx dev/try-sidecar-read.ts /path/to/project "uploads/Grandma's notes.txt" 40000
+//      npx tsx dev/try-sidecar-read.ts /path/to/project "results/log_003.json#hits"
+//      npx tsx dev/try-sidecar-read.ts /path/to/project "results/log_003.json#3QS7-L9QB-P98V"
+// A hit read prints hitId, hitIndex and logId, and the hit's title, recordDate and
+// recordPlace when its row has them, above the transcript.
 import { sidecarRead, type SidecarReadInput } from "../src/tools/sidecar-read.js";
 
 const [projectPath, ref, offsetArg, maxCharsArg] = process.argv.slice(2);
