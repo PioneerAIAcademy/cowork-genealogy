@@ -17,7 +17,9 @@
 // the store and the check use comes from the caller's `bindStore` and
 // `authorize` — this module imports no backend, so the unit test supplies
 // doubles and never loads `pg`/`@aws-sdk`. Readiness is injected the same way:
-// `/healthz` maps the caller's `checkReady` report to 200 or 503.
+// `/healthz` maps the caller's `checkReady` report to 200 or 503. `/livez`
+// touches no store, so a load balancer whose check gates a deploy (Blueprint's
+// `elb_options.health_check`) can pass before the database exists.
 import http, { type IncomingHttpHeaders, type RequestListener } from "node:http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { bearerPrincipal, type Principal } from "./auth/principal.js";
@@ -34,6 +36,7 @@ import {
 
 export const MCP_PATH = "/mcp";
 export const HEALTHZ_PATH = "/healthz";
+export const LIVEZ_PATH = "/livez";
 
 /** How long `/healthz` waits on `checkReady` before answering 503 itself: the
  *  backend's own 1.5 s probe deadline (READY_TIMEOUT_MS) plus 500 ms, so a
@@ -325,6 +328,10 @@ async function route(
     await handleHealthz(res, options);
     return;
   }
+  if (pathname === LIVEZ_PATH && req.method === "GET") {
+    sendJson(res, 200, { ok: true, tools: allToolSchemas.length });
+    return;
+  }
   if (pathname !== MCP_PATH) {
     sendJson(res, 404, { error: "Not found" });
     return;
@@ -340,7 +347,7 @@ async function route(
   await handleMcpPost(req, res, options);
 }
 
-/** The node:http request listener: `/healthz`, `/mcp` (POST only), 404 elsewhere. */
+/** The node:http request listener: `/healthz`, `/livez`, `/mcp` (POST only), 404 elsewhere. */
 export function createToolServer(options: ToolServerOptions): RequestListener {
   return (req, res) => {
     route(req, res, options).catch((error: unknown) => {

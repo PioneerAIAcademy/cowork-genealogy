@@ -165,10 +165,10 @@ async def test_second_sign_in_resets_granted_at_and_keeps_refresh_token_when_omi
 
 @pytest.mark.parametrize("next_route, expected", [
     ("#/s/proj_1", "http://spa.test/#/s/proj_1"),
-    ("https://evil.example/", "http://spa.test"),
-    ("//evil.example", "http://spa.test"),
-    ("#/../../x?y", "http://spa.test"),
-    (None, "http://spa.test"),
+    ("https://evil.example/", "http://spa.test/"),
+    ("//evil.example", "http://spa.test/"),
+    ("#/../../x?y", "http://spa.test/"),
+    (None, "http://spa.test/"),
 ])
 def test_next_redirect_accepts_only_safe_hash_routes(fs_on, next_route, expected):
     assert auth.redirect_target(next_route) == expected
@@ -190,6 +190,97 @@ async def test_familysearch_login_redirects_with_pkce_and_sets_the_state_cookie(
 async def test_familysearch_login_is_501_when_not_configured():
     async with _client(FakeStore()) as c:
         assert (await c.get("/auth/familysearch/login")).status_code == 501
+
+
+# ── U28: a path prefix on PUBLIC_URL ────────────────────────────────────────────
+
+PREFIX = "/service/search/agent-tools/web"
+
+
+@pytest.fixture
+def prefixed(fs_on):
+    fs_on.setenv("PUBLIC_URL", f"http://edge.test{PREFIX}/")
+    fs_on.delenv("WEB_ORIGIN")
+    return fs_on
+
+
+def _cookie_paths(r: httpx.Response) -> dict[str, str]:
+    """Set-Cookie name -> its Path attribute."""
+    out = {}
+    for line in r.headers.get_list("set-cookie"):
+        name = line.split("=", 1)[0]
+        attrs = {k.strip().lower(): v for k, _, v in (a.partition("=") for a in line.split(";")[1:])}
+        out[name] = attrs.get("path")
+    return out
+
+
+def test_base_path_and_cookie_path_follow_public_url(monkeypatch):
+    assert (auth.base_path(), auth.cookie_path()) == ("", "/")
+    monkeypatch.setenv("PUBLIC_URL", f"https://edge.test{PREFIX}/")
+    assert (auth.base_path(), auth.cookie_path()) == (PREFIX, PREFIX)
+    assert auth.cookie_kwargs()["path"] == PREFIX
+
+
+@pytest.mark.parametrize("url", [
+    "http://127.0.0.1:8085/?x=1",
+    f"http://edge.test{PREFIX}?x=1",
+    f"https://edge.test{PREFIX}#frag",
+    "http://edge.test/a b",
+    "http://edge.test/a<b",
+    'http://edge.test/a"b',
+])
+def test_a_bad_public_url_path_refuses_at_any_scheme(monkeypatch, url):
+    monkeypatch.setenv("PUBLIC_URL", url)
+    with pytest.raises(RuntimeError, match="Refusing to start: PUBLIC_URL"):
+        auth.preflight()
+    with pytest.raises(RuntimeError, match="Refusing to start: PUBLIC_URL"):
+        create_app(FakeStore(), FakeQueue())
+
+
+@pytest.mark.parametrize("next_route, expected", [
+    ("#/s/proj_1", f"http://edge.test{PREFIX}/#/s/proj_1"),
+    (None, f"http://edge.test{PREFIX}/"),
+    ("//evil.example", f"http://edge.test{PREFIX}/"),
+])
+def test_redirect_target_keeps_the_prefix_and_its_trailing_slash(prefixed, next_route, expected):
+    assert auth.redirect_target(next_route) == expected
+
+
+async def test_familysearch_login_under_a_prefix_carries_it_in_redirect_uri_and_cookie_path(prefixed):
+    assert auth.redirect_uri() == f"http://edge.test{PREFIX}/callback"
+    async with _client(FakeStore()) as c:
+        r = await c.get("/auth/familysearch/login")
+    assert parse_qs(urlparse(r.headers["location"]).query)["redirect_uri"] == [f"http://edge.test{PREFIX}/callback"]
+    assert _cookie_paths(r) == {auth.FS_OAUTH_COOKIE: PREFIX}
+
+
+@pytest.mark.parametrize("next_route, location", [("#/s/proj_1", f"{PREFIX}/#/s/proj_1"), (None, f"{PREFIX}/")])
+async def test_callback_under_a_prefix_lands_and_scopes_both_cookies_to_it(prefixed, next_route, location):
+    _fake_fs(prefixed)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    r = await _callback(store, next_route=next_route)
+    assert r.status_code in (302, 307), r.text
+    assert r.headers["location"] == f"http://edge.test{location}"
+    assert _cookie_paths(r) == {auth.COOKIE_NAME: PREFIX, auth.FS_OAUTH_COOKIE: PREFIX}
+    deleted = [ln for ln in r.headers.get_list("set-cookie") if ln.startswith(f"{auth.FS_OAUTH_COOKIE}=")]
+    assert len(deleted) == 1 and "Max-Age=0" in deleted[0], "the state cookie is deleted at the path it was set"
+
+
+async def test_dev_login_and_logout_scope_the_cookie_to_the_prefix(monkeypatch):
+    monkeypatch.setenv("PUBLIC_URL", f"http://edge.test{PREFIX}")
+    async with _client(FakeStore()) as c:
+        login = await c.post("/auth/dev-login", json={})
+        assert login.status_code == 200 and _cookie_paths(login) == {auth.COOKIE_NAME: PREFIX}
+        out = await c.post("/auth/logout")
+    assert _cookie_paths(out) == {auth.COOKIE_NAME: PREFIX}
+    assert "Max-Age=0" in out.headers["set-cookie"]
+
+
+async def test_cookies_stay_at_the_root_without_a_prefix(fs_on):
+    async with _client(FakeStore()) as c:
+        assert _cookie_paths(await c.get("/auth/familysearch/login")) == {auth.FS_OAUTH_COOKIE: "/"}
+        assert _cookie_paths(await c.post("/auth/logout")) == {auth.COOKIE_NAME: "/"}
 
 
 # ── sessions: cookie, logout, allowlist, dev-login ──────────────────────────────
