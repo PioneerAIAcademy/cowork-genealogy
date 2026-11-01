@@ -34,11 +34,21 @@ minute of wall-clock time.
    parallel batch. Each call is Case A, with the row's `url` as `baseUrl`
    (`build-external-search-url-tool-spec.md` §3.2).
 5. **Return.** A two-line caller header, then `---`, then `summary_for_user`:
-   an opening sentence, then each entry in a fixed three-line shape (bold
+   a fixed opening sentence, then each entry in a fixed three-line shape (bold
    `linkText` with the site and free/subscription; the span and how it covers
-   the search, or "Undated collection."; the link in full), then one closing
-   sentence. Up to 3 curated rows on unsupported hosts are listed separately,
-   described as opening the collection with no prefilled search.
+   the search, or "Undated collection."; the link in full), a fixed "that is
+   every collection" sentence when there are 1 or 2 entries, then a fixed
+   closing sentence. Up to 3 curated rows on unsupported hosts are listed
+   separately, one `<linkText>: <url>` line each, under a fixed header.
+
+   The opening and closing are given verbatim, not described, because a
+   described sentence invited an added one (2026-11-01): across the practice
+   and committed runs, Haiku 5.5 low added a sentence to the opening or closing
+   in 10 of 13 replies to `ut_where_else_to_search_002` and 4 of 7 to `_003`,
+   Sonnet 4.6 in 1 of 9 and 0 of 9, and the judge passed most of them. The
+   added sentences were facts or advice no tool returned ("FamilySearch lists no
+   MyHeritage collection for Alabama marriages in this period", from a capped
+   200-of-249 list).
 
    The shape is fixed because free prose failed grounding. On the first scratch
    run (2026-10-26) the "plain paragraph per entry" form produced lines no tool
@@ -101,10 +111,15 @@ appear more than once, with different collections.
     requires every holder of a writer tool to be named).
 - **No `**Narration:**` line.** Narration is a `research.json` read, and there
   is no project.
-- **Model `claude-sonnet-4-6`**, the pin most agents carry. `claude-haiku-4-5` was
-  tried on scratch runs (2026-10-26) and rejected: it altered a curated `baseUrl`
-  (a trailing `/`), gave undated rows a span read from their title, and was not
-  reliably faster (80 s and 154 s on the same test). Neither model meets one
+- **Model `claude-sonnet-5-5`, effort `low`** (2026-11-01, the cost-latency
+  sweep). Haiku 5.5 was measured at `low` and `medium` and rejected: with the
+  fixed opening and closing in place, a committed run on `medium` still failed
+  `_001` and `_002` in 4 of 8 tries on validator-caught defects (a curated
+  `baseUrl` with its trailing `/` dropped, a Findmypast URL from memory, a
+  missing closing, an added MyHeritage sentence). `claude-haiku-4-5` had been tried (2026-10-26)
+  and rejected: it altered a curated `baseUrl` (a trailing `/`), gave undated
+  rows a span read from their title, and was not reliably faster (80 s and 154 s
+  on the same test). Neither model meets one
   minute: the time is model generation, not tool round-trips, so the batch form
   of `build_external_search_url` below would not close it.
 - **Batch `build_external_search_url` is out of scope.** A new tool parameter is
@@ -129,8 +144,9 @@ appear more than once, with different collections.
   including the lines above `---`. Production prints only what follows the
   final `---`.
   `test_every_suggested_link_reaches_the_user` closes the gap for links:
-  every built link must appear after the separator. Nothing closes it for any
-  other content.
+  every built link must appear after the separator.
+  `test_user_block_is_the_fixed_shape_and_nothing_more` closes it for the
+  rest: below the separator there is only the fixed shape.
 - **Whether a curated Case A link still searches.** Curated URLs carry
   collection paths with no recorded provenance
   (`build-external-search-url-tool-spec.md` §9.1). The builder appends
@@ -141,12 +157,17 @@ appear more than once, with different collections.
 - Unit suite: `make eval-skill SKILL=where-else-to-search`. It has five
   positives on live-captured `external-links-search-wets-*` fixtures and three
   direct-arm hand-backs graded on invariant.
-- Validators: `eval/harness/validators/test_where_else_to_search.py` checks
-  four things:
+- Validators: `eval/harness/validators/test_where_else_to_search.py` checks:
   - every link is one a tool returned;
   - every built link reaches the user;
   - no tool outside the three, and no `projectPath`;
-  - at most 8 links, and nothing built when there are zero rows.
+  - at most 8 links, and nothing built when there are zero rows;
+  - every build starts from a curated row;
+  - each entry is three lines and states a span a tool returned for its row;
+  - below the `---`, only the fixed shape: the verbatim opening, the entries,
+    the 1-or-2 sentence when it applies, the Also-listed rows, the verbatim
+    closing; with no entry, only the zero-results sentence for the searched
+    place.
 
   `eval/harness/tests/unit/test_where_else_to_search_validators.py` proves
   each one fires on a planted defect and passes a legitimate variant.
