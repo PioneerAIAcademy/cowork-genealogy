@@ -21,10 +21,12 @@ minute per session, not per run. Settled means after a call ends. Unless marked
 - **The throttle counts the `max_tokens` reservation.** Bedrock reserves input +
   `max_tokens` when a call starts; the CLI sends 32,000. In our test account throttling
   began near twice the TPM quota in reserved tokens (below).
-- **Scaling metric:** slot utilisation, `(Visible + NotVisible) / (instances ×
-  HttpConnections)`, with scale-in protection that the worker sets on itself. There is a
-  two-alarm fallback if Blueprint can express only one SQS metric per policy. Visible
-  depth alone cannot scale in.
+- **Scaling metric:** two Blueprint triggers, out on Visible > 0 and in on in-flight
+  (NotVisible) < 1, each over one 300 s period. Deployed in FS112 it kept a 43-minute turn
+  safe with no scale-in protection (2026-10-31, n=1), because it scales in only when
+  nothing is in flight. The cost: the fleet stays at its peak while any turn runs. Target
+  tracking on slot utilisation is the alternative, and it needs worker-set scale-in
+  protection. Visible depth alone cannot scale in.
 - **Packing:** memory allows ~10 turns on a t3.large and ~21 on a t3.xlarge. Propose
   `HttpConnections` 4 and 8 respectively. 8 on a t3.xlarge is measured: 0.89 cores
   average, under its 1.6-core credit baseline, with no surplus credits charged (U18,
@@ -156,43 +158,73 @@ signal to scale out, and useless for scaling in, because it reads 0 both when th
 idle and when it is full. Held messages live only in Postgres (`queued` turns), never in
 SQS, which is right: they cannot run until their session's turn ends.
 
-**Primary, on stock Beanstalk, once U6 lifts the 1/1 instance limit:**
+**Primary, on Blueprint's `Simple Scaling v1_0`, once U6 lifts the 1/1 instance limit.**
+Two triggers on the worker queue, as deployed in FS112 (`scale-probe`, fs-eng/search-agent-tools
+#142, #143 and #145, 2026-10-31, n=1 per run; the handoff's F14 row has the timings):
 
-- **Target tracking on slot utilisation:** `(FILL(V,0) + FILL(NV,0)) / (HttpConnections ×
+- **Out:** V Maximum > 0 over one 300 s period adds one instance; cooldown 300 s.
+- **In:** NV Maximum < 1 over one 300 s period removes one instance; cooldown 300 s. It
+  scales in only after a whole 5-minute window in which nothing was in flight anywhere on
+  the tier.
+- **Why that keeps a turn safe without protection.** Scale-in does not look at what an
+  instance holds. In the first run, once its 12 messages had drained, it removed the oldest
+  instance. What
+  protects a running turn is that the in-trigger cannot fire while one runs. Measured: one
+  2,700 s message ran alone on one of three instances for 43 minutes with no scale-in.
+  Scale-in began 7 minutes after it finished, and the instance that had held it was kept
+  both times. So this proposal needs no `SetInstanceProtection` and no `custom_permissions`
+  policy. That holds only because the trigger reads the fleet-wide in-flight count, and
+  only at zero.
+- **The cost.** The fleet does not shrink while any turn runs anywhere. In the probe it sat
+  at 2–3 instances for those 43 minutes, 3 for the last 32, with 1 busy. Under steady
+  traffic it shrinks only in a quiet window: inferred, not measured. And the out-alarm
+  judges the previous period, so it lags. It added the third instance 2 minutes after the
+  backlog had drained. U26's 1,800 s cap bounds the tail: once the last turn starts, the
+  fleet holds at most ~1,800 s plus one window and a cooldown, about 40 minutes, against
+  the ~10 h a message may stay in flight today (`VisibilityTimeout` 36,300 s; inferred from
+  the probe's 7 minutes after finish).
+  `MaxSize` (below) bounds the peak it holds.
+- **Phantoms only over-provision, and they hold the fleet up.** NV also counts a message a
+  deploy or crash left invisible, until `VisibilityTimeout` passes: 36,300 s now, just
+  above 1,800 s after U26. It also counts a 500'd message, for `ErrorVisibilityTimeout`
+  (300 s). Each blocks scale-in as a real turn would: a deploy or crash phantom ~10 h
+  before U26 and ~32 min after, a 500'd one 300 s.
+  Whether sqsd reads ahead beyond `HttpConnections` is undocumented, and one message on the
+  rehearsal host would tell. Later, a busy-slot fraction the worker publishes, from its
+  turn-user pool rather than `_INFLIGHT`, which counts attempts, removes the phantoms.
+
+**Alternative: target tracking on slot utilisation, which brings protection back.**
+
+- **The metric:** `(FILL(V,0) + FILL(NV,0)) / (HttpConnections ×
   MAX(GroupInServiceInstances, 1))`, Maximum per minute. Target 0.75 (provisional),
-  instance warmup 180 s.
-- **Where it lives:** `.ebextensions` `Resources` (`AWS::AutoScaling::ScalingPolicy` on
-  `AWSEBAutoScalingGroup`, with the queue from `AWSEBWorkerQueue`), because
-  `aws:autoscaling:trigger` cannot name an SQS metric. It needs `GroupInServiceInstances`
-  collection, and Beanstalk's default trigger pushed out of range.
-- **Scale-in protection, set by the worker on itself.** Scaling in mid-turn costs the run:
-  a SIGTERM answer, a ≥ 300 s redelivery, a resume and a context re-write. And if
-  termination stops sqsd before the worker, as every deploy does, the message waits out
-  `VisibilityTimeout` instead. So the worker turns protection off after ~120 s with no
-  turn, turns it back on before it claims one, and answers 503 while its instance is
-  `Terminating`. The 503 path already exists for SHUTDOWN. This needs
-  `autoscaling:SetInstanceProtection` on its own group and `NewInstancesProtectedFromScaleIn`.
-- **Phantoms only over-provision.** NV also counts a message a deploy or crash left
-  invisible, until `VisibilityTimeout` passes: 36,300 s now, just above 1,800 s after U26.
-  It also counts a 500'd message, for `ErrorVisibilityTimeout` (300 s). Whether sqsd reads
-  ahead beyond `HttpConnections` is undocumented, and one message on the rehearsal host
-  would tell. Later, a busy-slot fraction the worker publishes, from its turn-user pool
-  rather than `_INFLIGHT`, which counts attempts, removes the phantoms.
-
-**Fallback, if Blueprint's `Simple Scaling v1_0` takes one SQS metric per policy:**
-
-- **Out:** V ≥ 1 (Maximum, 60 s) for 2 of 2 points; +50% (at least 1); cooldown 240 s.
-- **In:** NV ≤ 0 for 15 of 15 points; back to the minimum; cooldown 900 s. So it scales in
-  only when the whole tier is idle. Before U26 a deploy phantom blocks this for ~10 h, and
-  after U26 for ~32 min.
-- The same worker-set protection.
+  instance warmup 180 s. It sizes the fleet to the work, so it shrinks while turns run.
+- **Where it would live:** not Blueprint's triggers, which take only fixed EC2, Classic ELB
+  and SQS metrics, with no custom metric or metric math (handoff F14). It would need
+  `.ebextensions` `Resources` (`AWS::AutoScaling::ScalingPolicy` on `AWSEBAutoScalingGroup`,
+  with the queue from `AWSEBWorkerQueue`), `GroupInServiceInstances` collection, and
+  Beanstalk's default trigger pushed out of range. Whether Blueprint allows that is not
+  asked.
+- **It needs scale-in protection, set by the worker on itself.** It scales in on a ratio,
+  not on zero, so it would pick an instance mid-turn. That costs the run a SIGTERM answer, a
+  ≥ 300 s redelivery, a resume and a context re-write. And if termination stops sqsd before
+  the worker, as every deploy does, the message waits out `VisibilityTimeout` instead. So
+  the worker would turn protection off after ~120 s with no turn, turn it back on before it
+  claims one, and answer 503 while its instance is `Terminating`. The 503 path already
+  exists for SHUTDOWN. This needs `autoscaling:SetInstanceProtection` on its own group and
+  `NewInstancesProtectedFromScaleIn`, through a `custom_permissions` `IAM Inline Policy
+  v1_0`, which `check` refuses until the policy is approved (draft PR
+  fs-eng/search-agent-tools#131, 2026-10-24).
+- **Worth it only if** holding the fleet at its peak through every running turn costs more
+  than that approval and the worker code. Nothing measured says so yet. The load run (§5)
+  would.
 
 **Quota is admission, not scaling.** Adding workers adds no model capacity. Past the
 quota it adds 429s, which the CLI retries inside the turn. Bound `MaxSize` ≤ 0.8 × TPM
 quota / (per-session settled mean, ~40k, × `HttpConnections`), about 15 instances at 6M
 and 8 slots, and alert on `InvocationThrottles`
 rather than scaling on it. Alerts, not scaling: V ≥ 1 for 5 minutes at `MaxSize`, the
-DLQ, and protected but idle instances.
+DLQ, and an instance count above the minimum with NV at 0 for 15 minutes (a stuck
+in-trigger).
 
 ## 3. Packing
 
@@ -345,9 +377,10 @@ non-throttling steps may run, with APT's agreement.
 - No longer asked, answered by TAP's EKS config (2026-10-14): no route carries a rate-limit
   or retry policy, and the trace records usage but not `max_tokens`. Whether agentgateway
   retries a 429 by default the load run measures.
-- F14, Blueprint: can `Simple Scaling v1_0` carry two policies on different SQS
-  metrics, name a custom metric, or take a metric-math target? Can the worker role call
-  `SetInstanceProtection` on its own group? Which T3 credit mode applies?
+- F14, Blueprint: answered from the provisioner and FS112 (2026-10-24 and 2026-10-31).
+  Two triggers on different SQS metrics work deployed; no custom or metric-math metric; T3
+  is `unlimited`. `SetInstanceProtection` is asked only if target tracking (§2's
+  alternative) is chosen, as a `custom_permissions` policy approval.
 
 [burndown]: https://docs.aws.amazon.com/bedrock/latest/userguide/quotas-token-burndown.html
 [metrics]: https://docs.aws.amazon.com/bedrock/latest/userguide/monitoring-runtime-metrics.html

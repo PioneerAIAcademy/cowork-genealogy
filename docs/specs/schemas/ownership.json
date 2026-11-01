@@ -442,7 +442,7 @@
         "unit",
         "hook"
       ],
-      "requires": "Only conflict-resolution opens, analyses, or settles a conflict. `weighed_log_entry_ids` is claim-routed with the analysis fields: it is what moves a question from conflict-resolution to ending on an unsettled conflict, so a main-thread write of it could end the research with no weighing.",
+      "requires": "Only conflict-resolution opens, analyses, or settles a conflict. `weighed_log_entry_ids` is declared by conflict-resolution on an unresolved conflict's analysis write when nothing is left to search, filled by `research_append` with every log entry of every question the conflict blocks, and claim-routed with the analysis fields: it is what moves a question from conflict-resolution to ending on an unsettled conflict, so a main-thread write of it could end the research with no weighing.",
       "failure": "An unresolved blocking conflict is what stops a project completing. A skill that marks one resolved without adjudicating it removes the block and the project completes over contradictory evidence.",
       "remedy": "Adjudicate through conflict-resolution, which writes the analysis alongside the status.",
       "override": "none",

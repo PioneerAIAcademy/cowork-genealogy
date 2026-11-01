@@ -613,9 +613,11 @@ describe("tool server over Streamable HTTP", () => {
 
     const missing = await fetch(`${base}/nope`);
     expect(missing.status).toBe(404);
+    const livePost = await fetch(`${base}/livez`, { method: "POST" });
+    expect(livePost.status).toBe(404);
   });
 
-  it("5b. with checkReady, /healthz answers 200 or 503 from the report, and 503 (never 500) on a probe that rejects or never settles", async () => {
+  it("5b. with checkReady, /healthz answers 200 or 503 from the report, and 503 (never 500) on a probe that rejects or never settles; /livez is 200 throughout and never probes", async () => {
     let probe: () => Promise<ReadyReport> = async () => ({ ok: true, checks: {} });
     const ready = await startHttpServer({
       host: "127.0.0.1",
@@ -665,9 +667,25 @@ describe("tool server over Streamable HTTP", () => {
       expect(rejected.status).toBe(503);
       expect(rejected.body).toEqual({ ok: false, tools: allToolSchemas.length });
 
+      // /livez never consults checkReady: 200 while the probe rejects, and while it hangs below.
+      let probed = 0;
+      const failingProbe = probe;
+      probe = () => {
+        probed += 1;
+        return failingProbe();
+      };
+      const live = await fetch(`${url}/livez`);
+      expect(live.status).toBe(200);
+      expect(await live.json()).toEqual({ ok: true, tools: allToolSchemas.length });
+      expect(probed).toBe(0);
+
       probe = () => new Promise<ReadyReport>(() => {});
       const t0 = Date.now();
-      const [hung, other] = await Promise.all([healthz(), fetch(`${url}/nope`)]);
+      const [hung, other, liveWhileHung] = await Promise.all([
+        healthz(),
+        fetch(`${url}/nope`),
+        fetch(`${url}/livez`),
+      ]);
       // Answered at all is the property: a probe the deadline did not cut never answers
       // and hits the 10 s test timeout. Under a parallel suite the event loop lags close
       // to 3 s past the 2 s deadline, so the bound sits between the two.
@@ -676,6 +694,7 @@ describe("tool server over Streamable HTTP", () => {
       expect(hung.body).toEqual({ ok: false, tools: allToolSchemas.length });
       // The other routes are not held behind the probe.
       expect(other.status).toBe(404);
+      expect(liveWhileHung.status).toBe(200);
     } finally {
       ready.closeAllConnections();
       await new Promise<void>((resolve) => ready.close(() => resolve()));

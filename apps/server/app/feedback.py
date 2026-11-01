@@ -127,7 +127,9 @@ def _is_stale_copy(name: str) -> bool:
 
 
 async def _walk_project(
-    sandbox, stale_skipped: list[str] | None = None
+    sandbox,
+    stale_skipped: list[str] | None = None,
+    unread_media: list[str] | None = None,
 ) -> list[tuple[str, bytes]]:
     """(relativePath, bytes) for every file under PROJECT_DIR, recursively.
 
@@ -138,6 +140,10 @@ async def _walk_project(
     could not reproduce anything touching the rest of the project (uploads,
     CLAUDE.md, images). DirEntry carries no size, so the read is what tells us
     how big a file is — fine for a project folder, which is small by design.
+
+    Passing `unread_media` leaves media files unread and collects their paths
+    there instead: a reporter who unticked "Include media files" would otherwise
+    pay for reading every image only for _select_files to drop it.
     """
     out: list[tuple[str, bytes]] = []
 
@@ -152,6 +158,9 @@ async def _walk_project(
             rel = f"{prefix}{entry.name}"
             if entry.is_dir:
                 await walk(entry.path, f"{rel}/")
+                continue
+            if unread_media is not None and _ext(entry.name) in _MEDIA_EXTS:
+                unread_media.append(rel)
                 continue
             raw = await sandbox.read_file(entry.path)
             if raw is None or len(raw) > _INDIVIDUAL_FILE_CAP_BYTES:
@@ -918,10 +927,15 @@ async def submit_feedback(
     }
 
     stale_skipped: list[str] = []
+    unread_media: list[str] = []
     redacted_files, redacted_living = _redact_living(
-        await _walk_project(sandbox, stale_skipped)
+        await _walk_project(
+            sandbox, stale_skipped, None if body.includeMedia else unread_media
+        )
     )
     project_files, dropped = _select_files(redacted_files, body.includeMedia)
+    # Same entries _select_files would have named had the walk read them.
+    dropped = dropped + unread_media
     # Named alongside every other drop reason, so a triager reproducing against
     # the bundle can tell a stale copy was removed rather than never existed.
     dropped = dropped + [f"{rel} (stale copy)" for rel in stale_skipped]

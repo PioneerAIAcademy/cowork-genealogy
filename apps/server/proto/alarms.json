@@ -146,7 +146,7 @@
     {
       "name": "no_progress",
       "page": false,
-      "description": "A turn closed no_progress. HELD, never paging (U24 question 3): today it mixes a stalled agent, a resume that failed twice, a lost tool surface and normal bounded requests.",
+      "description": "A turn closed no_progress. Not paging (Richard, 2026-10-31). At the shipped nudge cap of 0 it means a redelivered attempt did no work ZERO_PROGRESS_CAP times running: no model turn, or no tool call after an earlier attempt of the turn had made one. A killed turn that never called a tool, a question or a status reply, no longer lands here (PR #4094). With the cap above 0 it is also a turn the Stop hook vetoed that stopped again without a tool call.",
       "kind": "log",
       "metric": "NoProgress",
       "namespace": "Genealogy/SearchAgent",
@@ -162,7 +162,7 @@
       "threshold": 1,
       "comparison": "GreaterThanOrEqualToThreshold",
       "treat_missing": "notBreaching",
-      "trip": "Ask for a reply with no tools, now or when nudged: the agent stops, the Stop hook nudges it, it stops again without a tool call, and the turn closes no_progress (U19, 2026-10-13, $0.17). A redelivered attempt that does no work ZERO_PROGRESS_CAP times also closes no_progress.",
+      "trip": "With AUTONOMOUS_MAX_NUDGES above 0, ask for a reply with no tools: the agent stops, the Stop hook nudges it, it stops again without a tool call, and the turn closes no_progress (U19, 2026-10-13, $0.17). At the shipped cap of 0 the Stop hook is off, and the alarm needs a redelivery that does no work ZERO_PROGRESS_CAP times running: a zero-turn result, or a killed tool-using turn whose redelivery answers without a tool. Forcing the second on the gateway did not trip it: the redelivery re-posts the message and the model called its tool again (2026-10-31, n=1).",
       "samples": {
         "match": [
           "Oct 07 15:09:22 ip-10-0-1-23 web[10213]: {\"ev\":\"turn\",\"turn_id\":\"7f6d2c1e-0000-4000-8000-000000000001\",\"session_id\":\"sess_0123456789\",\"receive_count\":3,\"seq\":12,\"outcome\":\"no_progress\",\"status\":200}"

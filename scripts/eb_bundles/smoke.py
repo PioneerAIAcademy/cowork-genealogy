@@ -357,12 +357,15 @@ def tools_tier(zip_path: Path, platform: str, keep: bool, extra: dict[str, str])
         docker("exec", "-d", "-u", "node", name, "/run-app.sh")
         ca_check(c, name, env)
         port = int(env.get("PORT", "0"))
-        res = probe(name, ["node", "--input-type=module", "-e"], NODE_PROBE, port, ["/healthz"])
+        res = probe(name, ["node", "--input-type=module", "-e"], NODE_PROBE, port, ["/healthz", "/livez"])
         if c.check("error" not in res, f"web: command answers on :{port}", res.get("error", "")):
             h = res["/healthz"]
             body = _json(h["body"]) or {}
             c.check(h["status"] == 503 and body.get("tools") == tool_count,
                     f"/healthz is 503 with tools={tool_count} (no Postgres/S3)", (h["status"], h["body"][:300]))
+            live = res["/livez"]
+            c.check(live["status"] == 200 and (_json(live["body"]) or {}).get("tools") == tool_count,
+                    f"/livez is 200 with tools={tool_count} (no Postgres/S3)", (live["status"], live["body"][:300]))
         else:
             print(app_log(name))
         imports = ("await import('./smoke/dev/smoke-calls.js');"

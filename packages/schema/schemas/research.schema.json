@@ -1166,7 +1166,7 @@
         "weighed_log_entry_ids": {
           "type": "array",
           "items": { "type": "string", "pattern": "^log_" },
-          "description": "The question's log entries conflict-resolution has weighed, written on every analysis. Mirrors search_stop.log_entry_ids. Lets the ladder tell new evidence to weigh from evidence already weighed, which the documents otherwise cannot say."
+          "description": "Present only on an unresolved conflict whose last analysis found nothing left to search: conflict-resolution declares it on that write and research_append fills it with every log entry of every question the conflict blocks. Refused when no question the conflict blocks has a log entry. Cleared by an analysis write (one carrying independence_analysis) that does not declare it and by a settle. Mirrors search_stop.log_entry_ids. Lets the ladder tell new evidence to weigh from evidence already weighed, which the documents otherwise cannot say."
         },
         "weighing_analysis": {
           "type": [
