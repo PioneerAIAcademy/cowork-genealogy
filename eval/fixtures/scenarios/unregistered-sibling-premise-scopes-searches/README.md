@@ -21,4 +21,4 @@ The feedback bundle carries no research.json (issue #3531), so this state is bui
 
 ## Used by
 
-No test. `ut_research_9k4` (`eval/tests/unit/research/unregistered-sibling-premise-scopes-searches.json`) was deleted until issue #3737 restores it.
+`ut_research_9k4`
