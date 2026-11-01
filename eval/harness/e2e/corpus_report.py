@@ -86,7 +86,7 @@ from harness.skill_invocation import check_guardrail_compliance
 
 # Where a run's committed seed tree lives, for `--recompute`. A run whose fixture
 # has no readable `starting-tree.gedcomx.json` is named in a skip list and left
-# out of both counts (mirrors `guardrail_shadow_report.replay_provenance`): with
+# out of both counts (mirrors `guardrail_shadow_report.replay_post_hoc`): with
 # no baseline every tree fact reads as new and the recompute would manufacture
 # exactly the violations it measures.
 E2E_FIXTURES = REPO_ROOT / "eval" / "tests" / "e2e"
@@ -344,7 +344,7 @@ def recompute_tally(paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES) ->
     absent on every run written before the detector (they read `not_checked` and
     contribute zero). Issue #1484 (a).
 
-    Skip discipline follows `replay_provenance`: a run whose seed tree is
+    Skip discipline follows `guardrail_shadow_report.replay_post_hoc`: a run whose seed tree is
     unreadable — or which is missing a required sidecar — is NAMED in `skipped`
     and excluded from the recomputed count, never counted as zero (it still shows
     in the stored column — see `RecomputeTally`). `william-ferber-ancestry`
