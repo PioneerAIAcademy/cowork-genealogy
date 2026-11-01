@@ -38,6 +38,7 @@ PROTO = REPO / "apps" / "server" / "proto"
 LAYOUT_PY = REPO / "scripts" / "eb_bundles" / "layout.py"
 WORKER_HOOK = PROTO / "eb-worker" / ".platform" / "hooks" / "predeploy" / "100_worker-layout.sh"
 TOOLS_NGINX = PROTO / "eb-tools" / ".platform" / "nginx" / "conf.d" / "01-tools-timeouts.conf"
+WEB_NGINX = PROTO / "eb-web" / ".platform" / "nginx" / "conf.d"
 
 
 def _load_layout():
@@ -134,6 +135,17 @@ def _nginx_seconds(path: Path, directive: str) -> int | None:
     body = "\n".join(line.split("#", 1)[0] for line in path.read_text(encoding="utf-8").splitlines())
     match = re.search(rf"^\s*{directive}\s+(\d+)(s|m|h|d)?\s*;", body, re.MULTILINE)
     return None if match is None else int(match.group(1)) * NGINX_UNIT_S[match.group(2) or ""]
+
+
+NGINX_UNIT_BYTES = {"": 1, "k": 1024, "m": 1024 ** 2, "g": 1024 ** 3}
+
+
+def _nginx_bytes(path: Path, directive: str) -> int | None:
+    body = "\n".join(line.split("#", 1)[0] for line in path.read_text(encoding="utf-8").splitlines())
+    match = re.search(rf"^\s*{directive}\s+((?:\d+\s+)?)(\d+)([kKmMgG]?)\s*;", body, re.MULTILINE)
+    if match is None:
+        return None
+    return int(match.group(2)) * NGINX_UNIT_BYTES[match.group(3).lower()]
 
 
 @pytest.mark.parametrize("tier", layout.TIERS)
@@ -281,6 +293,14 @@ def test_health_check_path(tier):
 def test_tools_nginx_holds_a_full_tool_call(directive):
     seconds = _nginx_seconds(TOOLS_NGINX, directive)
     assert seconds is not None and seconds >= TOOLS_MIN_TIMEOUT_S, (directive, seconds)
+
+
+def test_web_nginx_takes_a_full_upload_and_the_cookie_jar():
+    from proto.web.project_blobs import UPLOAD_MAX_BYTES
+    body = _nginx_bytes(WEB_NGINX / "01-web-uploads.conf", "client_max_body_size")
+    assert body is not None and body >= UPLOAD_MAX_BYTES + 64 * 1024, body
+    line = _nginx_bytes(WEB_NGINX / "01-web-headers.conf", "large_client_header_buffers")
+    assert line is not None and line >= 16 * 1024, line
 
 
 def test_tools_alb_idle_timeout_is_alone_in_its_file():
