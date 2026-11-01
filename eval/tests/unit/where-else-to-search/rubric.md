@@ -16,7 +16,9 @@ Did the agent pick the right curated rows, and only curated rows?
 
 Is each reason drawn from what the tools returned? This dimension needs a genealogist's annotation.
 
-- **pass:** Each reason gives the row's `linkText`, its years (the row's `startYear`-`endYear` or years its `linkText` names; "Undated collection." when neither has any) and how they cover the searched years, and whether the site is free or needs a subscription, as `access` reported it. Nothing else is asserted about the site, the place or the record set. With fewer than 3 suggestions, the reply says that is all FamilySearch lists for that place and period.
+The counts line above the `---` ("8 entries, 3 'also on file' rows") is the agent's own tally of what it built and listed: "also on file" is its name for the unbuildable rows it lists without a filled-in search. The closing sentence ("Open a link and bring back anything found to keep researching.") is required. Neither is a claim about tool output.
+
+- **pass:** Each reason gives the row's `linkText`, its years (the row's `startYear`-`endYear` or years its `linkText` names; "Undated collection." when neither has any) and how they cover the searched years ("outside your <years>" when they miss them), and whether the site is free or needs a subscription, as `access` reported it. Nothing else is asserted about the site, the place or the record set. With fewer than 3 suggestions, the reply says that is all FamilySearch lists for that place and period.
 - **partial:** A reason omits the years or the access, or calls a dated row's coverage wrong (e.g. says it covers a year outside its span).
 - **fail:** A reason states a fact about a site, place or collection that no tool returned, or a generic line ("Ancestry has many records") stands in for the grounded one.
 
@@ -32,6 +34,6 @@ Is every link one a tool returned, and does the user get it?
 
 Is the user-facing block readable by a beginner?
 
-- **pass:** Below the `---`, one opening sentence, then each suggestion in the fixed three-line shape (bold `linkText` with the site and free/subscription; its years and how they cover the search, or "Undated collection."; the link), then one closing sentence. No ids, file names, tool names or field names. Above it, only the place searched, the years used and the counts.
+- **pass:** Below the `---`, the fixed opening sentence, then each suggestion in the fixed three-line shape (bold `linkText` with the site and free/subscription; its years and how they cover the search, or "Undated collection."; the link), the fixed "that is every collection" sentence when there are 1 or 2, any "Also listed" rows, then the fixed closing sentence — each verbatim from the agent body; a comma is not a defect, an added sentence is (`test_user_block_is_the_fixed_shape_and_nothing_more` fails it). No ids, file names, tool names or field names. Above it, only the place searched, the years used and the counts.
 - **partial:** The block names a tool or field, or a suggestion carries extra sentences beyond the fixed shape (score any fact in them under Grounding).
 - **fail:** There is no `---` block, or the agent created a project, read `research.json`, or called a writer.
