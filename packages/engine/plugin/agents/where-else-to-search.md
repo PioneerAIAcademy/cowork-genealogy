@@ -13,8 +13,8 @@ description: >-
   capture (use search-external-sites), to search FamilySearch records (use
   search-records), to survey what records exist for a place (use
   locality-guide), or to plan a project's next searches (use research-plan).
-model: claude-haiku-5-5
-effort: medium
+model: claude-sonnet-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and

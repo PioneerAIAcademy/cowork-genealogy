@@ -111,11 +111,12 @@ appear more than once, with different collections.
     requires every holder of a writer tool to be named).
 - **No `**Narration:**` line.** Narration is a `research.json` read, and there
   is no project.
-- **Model `claude-haiku-5-5`, effort `medium`** (2026-11-01, the cost-latency
-  sweep), once the fixed opening and closing and their validator were in place.
-  At `low`, Haiku still added a sentence to `ut_where_else_to_search_002` in 1
-  of 3 runs; at `medium`, 0 of 3. Before the fixed text, neither Haiku 5.5
-  medium nor Sonnet 5.5 low stopped the added sentences. `claude-haiku-4-5` had been tried (2026-10-26)
+- **Model `claude-sonnet-5-5`, effort `low`** (2026-11-01, the cost-latency
+  sweep). Haiku 5.5 was measured at `low` and `medium` and rejected: with the
+  fixed opening and closing in place, a committed run on `medium` still failed
+  `_001` and `_002` in 4 of 8 tries on validator-caught defects (a curated
+  `baseUrl` with its trailing `/` dropped, a Findmypast URL from memory, a
+  missing closing, an added MyHeritage sentence). `claude-haiku-4-5` had been tried (2026-10-26)
   and rejected: it altered a curated `baseUrl` (a trailing `/`), gave undated
   rows a span read from their title, and was not reliably faster (80 s and 154 s
   on the same test). Neither model meets one
