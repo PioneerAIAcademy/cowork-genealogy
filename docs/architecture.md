@@ -1258,21 +1258,13 @@ extractor past its prose lane and it fabricated a match score. The analysis:
 
 Full rationale and error contract: `research-append-tool-spec.md` §11.
 
-> **Open — but the open question has moved.** The same reasoning is wanted for
-> identity scoring: a run should not be able to attach a persona from a new
-> record to an existing tree person without a `same_person` attestation. Three
-> candidate discriminators failed adversarial review, and a **fourth now ships,
-> in shadow** — the live pre-write provenance check in
-> `guardrail-enforcement-spec.md` **§4**'s last row and **§8**, which fires in the
-> e2e harness's `pretool_hook`, records into `guardrail_shadow_violations`, and
-> lets the write through, with an opt-in per-run `deny`. So the deliverable is no
-> longer *deriving* a discriminator; it is **graduating this one to a deny**,
-> which is gated on a replay number that must be re-measured rather than read off
-> a page (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`) *and* on the satisfying
-> call shape being one agents actually produce — they produced it in 3 of 103
-> corpus runs. **Read
-> [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before proposing a
-> fifth**, and satisfy its six named constraints, including **satisfiability**.
+> **Identity scoring is enforced at the same boundary.** `research_append`
+> refuses a `person_evidence` link to a reachable record persona unless
+> `same_person` scored that pairing, and refuses a score on a person minted from
+> the record the link cites (`guardrail-enforcement-spec.md` §4). The e2e
+> harness hook that measured it before it graduated was retired at harness v9.
+> **Read [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before changing
+> the rule**, and satisfy its six named constraints, including **satisfiability**.
 
 ### 5.4 The write-lockdown hook
 

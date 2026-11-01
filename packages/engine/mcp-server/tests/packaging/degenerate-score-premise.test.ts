@@ -109,16 +109,6 @@ export function premiseHits(text: string, relPath: string): Hit[] {
 const ALLOWLIST: Array<{ relPath: string; phrase: string; reason: string }> = [
   {
     relPath: "docs/specs/guardrail-enforcement-spec.md",
-    phrase: "I2 are local stubs with no FamilySearch ARK, so any score would be degenerate",
-    reason: "quotes a failed run's stated reason as the evidence the claim was acted on",
-  },
-  {
-    relPath: "docs/specs/guardrail-enforcement-spec.md",
-    phrase: "The same skill also says a locally-minted stub returns a degenerate score",
-    reason: "dates the stale guidance and records that it was superseded",
-  },
-  {
-    relPath: "docs/specs/guardrail-enforcement-spec.md",
     phrase: "that a locally-minted stub returns a degenerate score — was **refuted by probing the live API**",
     reason: "labels the claim refuted by live probing",
   },

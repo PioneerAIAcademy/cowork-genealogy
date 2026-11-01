@@ -161,10 +161,11 @@ recorded before the change keep the agent's name; the harness keeps it in
 ## The `same_person` write-boundary gate: six constraints any design must satisfy
 
 Three discriminators failed adversarial review (the tables above record each).
-A fourth now runs in **shadow** — the live pre-write provenance check in
-`docs/specs/guardrail-enforcement-spec.md` §4 and §8. So the open question is
-**graduating that check to a deny**, not deriving a fifth. Any design, including
-a graduation, must satisfy all six:
+A fourth graduated on the writer side on 2026-09-24: `research_append` refuses
+an unscored link to a reachable record persona
+(`docs/specs/guardrail-enforcement-spec.md` §4), and the e2e shadow hook that
+measured it was retired at harness v9. Any change to the rule must satisfy all
+six:
 
 1. **Provenance.** Distinguish create-refs from enrich-refs at
    `materialize_facts` time, and gate there too — the tree write is where the
