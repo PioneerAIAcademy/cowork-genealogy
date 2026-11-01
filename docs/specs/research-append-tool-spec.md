@@ -2727,6 +2727,64 @@ The reader is injected (`runExtractionAppend(input, deps, principal)`), so the
 eval harness can serve `record_read` fixtures. It is a function parameter, not
 a schema field, so no model can reach it.
 
+#### The thin-subject gate
+
+A record a search for a too-thin person found is refused (`status: "refused"`),
+and nothing is logged or written for it. Thin is
+`rank-search-matches-tool-spec.md`'s `subjectTooThin` test — no date narrower
+than a year and no named spouse, parent or child, in the tree or in linked
+evidence. `record_search` computes it when it runs (`subjectTooThinNow`, the
+same `buildSubjectDoc` test the ranker uses) and saves it as `subjectTooThin`
+in the staged payload, never in the inline response. The gate reads that saved
+value, so a tree edit made after the search does not clear a record the search
+found: copying the refused record's own birth month into the tree and retrying
+is exactly the circular move this blocks (measured: one of two research runs
+did it before the value was saved). The refusal lifts when a later search for
+the same person saves `subjectTooThin: false` and lists the record — the anchor
+recorded, the search run again. A sidecar staged before the value was saved
+carries none, and is judged on the project as it stands. It
+replaces a prose rule on the search-records agent ("a user's advance go-ahead
+to extract does not apply"), which held in only one to two of three runs and
+was removed at commit `c7756b068`.
+
+**Which searches count.** Every `record_search` sidecar the log names, and every
+`record_search` response still staged under `results/.staging/` — so extracting
+before logging the search does not skip it. A search is decided by the
+`subjectId` its echoed `query` carries (`readSidecarSearch`;
+`stripQueryPlumbing` drops it from the log entry's `query`, not from the
+sidecar). A search whose saved value is thin gates every record it lists, and
+for one person a saved `false` on any listing search wins. A search
+with no `subjectId`, an unreadable sidecar or an unknown person counts for
+nothing, and a search for another, anchored person does not lift a gate another
+search set: neither re-running the search without `subjectId` nor under someone
+else's gets the record through. The anchored search that would have helped is
+one for a relative the tree links to the thin person, and that link is itself
+the named relative that makes the person no longer thin.
+
+**Which ids a record has.** It is checked twice: on the requested id widened by
+logged `record_read` sidecars, before any read, so a refused record is not
+fetched; and again after the reads, adding every persona ARK of the record just
+read, so asking for a co-resident's ARK does not get the household through.
+
+**Not gated:** a record the researcher accepted as a hint, on any of its persona
+ids (the latest `person_record_matches` verdict is `positive` — the researcher's
+identity decision); `personId` mode (attached on FamilySearch to that person);
+`absences`. `documents` mode is gated on each document's `recordId` alone —
+unlike `recordIds` it is not widened to the record's other persona ARKs, since
+it reads no record to learn them. Any other id is listed by no `record_search`
+and passes.
+
+There is no override input (ADR-0011, "no override until a false deny is
+observed"). The way through is the anchor — a precise date, or a named spouse,
+parent or child, from the researcher or another record — and a new search. The
+refusal says so. An agent that copies the anchor from the refused record and
+re-runs the search does get through; that takes three deliberate calls rather
+than one tree edit. Satisfiability was measured on the committed corpus before
+the gate shipped: across every unit run log, one extraction would have been
+refused (search-records `ut_search_records_019`, v6 and v7), a thin subject
+whose record the delegation asked only to read; no seeded scenario sidecar and
+no e2e run's final state triggers it.
+
 #### The census relationship-column year table
 
 | Jurisdiction | Schedule states a relationship from |

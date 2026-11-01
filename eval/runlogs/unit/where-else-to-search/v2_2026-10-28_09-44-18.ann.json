@@ -1,0 +1,254 @@
+{
+  "run_log": "v2_2026-10-28_09-44-18.json",
+  "annotator": "83524248+taiwo-stack@users.noreply.github.com",
+  "corrections": [
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree with 2, score 3. Checked the return: no Quaker, Lutheran or Dutch Reformed rows appear in it. Order follows the rule: 1870 Federal Census first (names the searched record type), then six dated rows that overlap 1870, then the single undated row (HSP Congregational Records) last. The judge's ordering complaint describes rows the agent did not select.\n\n"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Disagree with 2, score 3. Checked the return: no Quaker, Lutheran or Dutch Reformed rows appear in it. Order follows the rule: 1870 Federal Census first (names the searched record type), then six dated rows that overlap 1870, then the single undated row (HSP Congregational Records) last. The judge's ordering complaint describes rows the agent did not select.\n"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Disagree with 2, score 3. \"3 also on file\" counts the three unbuildable rows the tool returned and the return lists them. The closing sentence (\"open a link, and bring back anything found to keep researching\") is required verbatim by the agent's return contract (item 4), not an ungrounded claim about a site or record set. Every entry's reason is linkText, span and access only.\n"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Disagree with 2, score 3. The header lines (place and years; entries and also-on-file counts) are exactly what the return contract specifies, and the closing sentence is mandated by it. Each entry follows the fixed three-line shape, with no ids, tool or field names."
+    }
+  ]
+}

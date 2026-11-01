@@ -109,6 +109,29 @@ describe("extraction_append: documents", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
+  it("refuses a FamilySearch record sent as a document when a thin subject's search found it", async () => {
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({ persons: [{ id: "I1", names: [{ id: "N1", given: "Patrick", surname: "Flynn" }], facts: [{ id: "F1", type: "Birth", date: "1845" }] }], relationships: [], sources: [] }),
+      "utf8",
+    );
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "results", "log_001.json"),
+      JSON.stringify({ tool: "record_search", payload: { query: { subjectId: "I1" }, results: [{ recordId: "ark:/61903/1:1:MXHY-TP4" }] } }),
+      "utf8",
+    );
+    const r0 = research();
+    (r0.log as any[]).push({ id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z", tool: "record_search", query: {}, outcome: "positive", results_examined: 1, external_site: null, results_ref: "results/log_001.json" });
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
+    const r = await run([
+      { recordId: "https://familysearch.org/ark:/61903/1:1:MXHY-TP4", document: marriage },
+      { recordId: "obit-harold-whitaker", document: obituary },
+    ]);
+    expect(r.records.map((o) => o.status), JSON.stringify(r)).toEqual(["refused", "extracted"]);
+    expect(await assertionsFor("https://familysearch.org/ark:/61903/1:1:MXHY-TP4")).toEqual([]);
+  });
+
   describe("refusal, writing nothing", () => {
     it("refuses a smuggled classification field", () => {
       const bad = structuredClone(obituary) as any;

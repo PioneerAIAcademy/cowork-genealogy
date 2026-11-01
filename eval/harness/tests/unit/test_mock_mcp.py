@@ -722,6 +722,28 @@ def test_staged_record_search_payload_carries_the_echoed_query(tmp_path):
     assert envelope["payload"]["query"] == args
 
 
+@pytest.mark.requires_engine_build
+@pytest.mark.parametrize("birth, thin", [("1872", True), ("12 Mar 1872", False)])
+def test_staged_record_search_saves_the_subjects_thinness(tmp_path, birth, thin):
+    """record_search saves `subjectTooThin` into the staged payload (not the inline
+    response); extraction_append's thin-subject gate reads it, so the mock must
+    write it too or an eval tests the gate without it."""
+    (tmp_path / "tree.gedcomx.json").write_text(json.dumps({"persons": [{
+        "id": "I1", "names": [{"given": "William", "surname": "Brown"}],
+        "facts": [{"type": "Birth", "date": birth, "place": "Virginia"}],
+    }], "relationships": [], "sources": []}), encoding="utf-8")
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-brown-1900-thin-subject", "rank-search-matches-brown-1900-thin-subject"],
+        FIXTURES_DIR, workspace=tmp_path,
+    )
+    args = {"surname": "Brown", "givenName": "William", "subjectId": "I1", "projectPath": str(tmp_path)}
+    body = _extract_response_dict(_invoke(tools_by_name, "record_search", args))
+    assert body.get("staged"), "test assumes staging succeeded — check the build"
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["payload"]["subjectTooThin"] is thin
+    assert "subjectTooThin" not in body
+
+
 def test_echo_query_keeps_every_sent_argument_including_null():
     """echoQuery drops only `undefined`; a JSON null reaches it as null and is kept."""
     args = {"a": None, "b": 0, "c": "", "d": False, "e": "x"}

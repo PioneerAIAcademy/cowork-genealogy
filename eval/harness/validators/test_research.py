@@ -19,7 +19,7 @@ import json
 
 import pytest
 
-from validators_lib import bare_tool_name
+from validators_lib import assert_nothing_extracted, bare_tool_name
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import check_no_gate_stop
 from validators_lib import existing_plan_changes, new_plan_ids
@@ -1165,6 +1165,19 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
         if not subject.get("names"):
             problems.append("subject block carries no names")
     assert not problems, "; ".join(problems)
+
+
+def test_thin_subject_hit_not_extracted(before_state, after_state, builtin_tool_calls, test):
+    """Tag-gated (subject-too-thin): issue #2213 d29, the orchestrator path. A
+    pending positive log entry whose only hit belongs to a subject too thin to
+    tell from a namesake is routed to extraction and refused in code; the user's
+    advance permission to extract does not get it written another way.
+    """
+    if "subject-too-thin" not in test.get("tags", []):
+        pytest.skip("not a subject-too-thin scenario")
+    assert_nothing_extracted(
+        before_state, after_state, builtin_tool_calls, "the subject is too thin to tell from a namesake",
+    )
 
 
 _HINTS_HANDOFF_TAG = "asserts-hints-handoff"
