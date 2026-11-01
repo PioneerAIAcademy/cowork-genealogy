@@ -90,7 +90,8 @@ TOOL_SUFFIX = "image_transcribe"
 # Buckets, fixed rather than re-derived per run, and mapped to distinct owners:
 # `unreachable`/`timeout` are the service or the machine's reach to it (the
 # subject of #1594); `unrecognized_ark` and `upstream_error` are the call being
-# wrong or the upstream refusing it, NOT reachability; `truncated` reached the
+# wrong or the upstream refusing it, NOT reachability; `image_cap` is the
+# project's per-film browse cap refusing the read before any fetch; `truncated` reached the
 # service and returned content that stopped at the output-token cap; `unclassified`
 # is the safety net.
 SUCCESS = "success"
@@ -98,6 +99,9 @@ UNREACHABLE = "unreachable"
 TIMEOUT = "timeout"
 UNRECOGNIZED_ARK = "unrecognized_ark"
 UPSTREAM_ERROR = "upstream_error"
+# The engine's 20-distinct-images-per-film cap (`browse-budget.ts`). A refusal
+# the agent can act on — stop reading that film — not an upstream fault.
+IMAGE_CAP = "image_cap"
 # A capped read WITH content (#2457 item 3). `image_transcribe` returns the
 # partial transcription verbatim beside `truncated: true` — non-empty, no
 # `"error":` key — so it read as a clean `success` and the truncation rate was
@@ -198,6 +202,8 @@ def classify(response_summary: str) -> str:
         return TIMEOUT
     if "unrecognized ark" in s:
         return UNRECOGNIZED_ARK
+    if "image cap reached" in s:
+        return IMAGE_CAP
     # The envelope shape (`"error":`), not a bare `"error"` substring.
     # Unescaping above is what makes the loose form dangerous: a genuine
     # transcription that QUOTES the word — `the clerk wrote "error" in the

@@ -29,6 +29,7 @@ from e2e.advisory_report import (
     SRC_NO_ASSERT_MARKER,
     agent_label,
     classify_run,
+    format_report,
     scan,
 )
 from e2e.runlog_selection import REPO_ROOT
@@ -197,15 +198,71 @@ def test_logpersist_not_observable_when_validation_truncated_away(tmp_path, as_t
     assert _states(rows, "log-without-persistence") == Counter({NOT_OBSERVABLE: 1})
 
 
-def test_logpersist_acted_via_extraction_append_ops(tmp_path):
-    fired = {"ok": True, "validation": {"valid": False, "warnings": [_LOG_WARN]}}
-    calls = [
-        _log_resp(fired, as_text_block=False),
-        {"tool": "mcp__genealogy__extraction_append",
-         "args": {"ops": [{"section": "sources"}, {"section": "assertions"}]}},
-    ]
+def _extraction(records, *, as_text_block=True, raw=None):
+    """An `extraction_append` call as production sends it: args name records,
+    never sections, and the response says what each record did."""
+    summary = raw if raw is not None else _doc_envelope({"ok": True, "records": records}, as_text_block=as_text_block)
+    return {"tool": "mcp__genealogy__extraction_append",
+            "args": {"projectPath": "/p", "recordIds": ["ark:/61903/1:1:AAAA-BBB"]},
+            "response_summary": summary}
+
+
+_EXTRACTED = {"recordId": "ark:/61903/1:1:AAAA-BBB", "status": "extracted", "srcId": "src_001"}
+_FIRED_LOG = {"ok": True, "validation": {"valid": False, "warnings": [_LOG_WARN]}}
+
+
+@pytest.mark.parametrize("as_text_block", [False, True])
+def test_logpersist_acted_when_extraction_append_extracts_a_record(tmp_path, as_text_block):
+    calls = [_log_resp(_FIRED_LOG, as_text_block=False), _extraction([_EXTRACTED], as_text_block=as_text_block)]
     rows = scan([_write_run(tmp_path, calls)]).rows
     assert _states(rows, "log-without-persistence") == Counter({ACTED: 1})
+
+
+def test_logpersist_acted_when_the_records_list_was_shortened_in_the_capture(tmp_path):
+    shortened = {"_summary_truncated": True, "_full_length": 4, "_first_n": [_EXTRACTED]}
+    calls = [_log_resp(_FIRED_LOG, as_text_block=False), _extraction(shortened, as_text_block=False)]
+    rows = scan([_write_run(tmp_path, calls)]).rows
+    assert _states(rows, "log-without-persistence") == Counter({ACTED: 1})
+
+
+def test_logpersist_acted_when_the_extraction_capture_is_cut_mid_document(tmp_path):
+    raw = _doc_envelope({"ok": True, "records": [_EXTRACTED | {"summary": "x" * 50}]}, as_text_block=True)
+    calls = [_log_resp(_FIRED_LOG, as_text_block=False), _extraction(None, raw=raw[: raw.index("xxxx")] + "...")]
+    rows = scan([_write_run(tmp_path, calls)]).rows
+    assert _states(rows, "log-without-persistence") == Counter({ACTED: 1})
+
+
+@pytest.mark.parametrize(
+    "records",
+    [
+        [],
+        [{"recordId": "ark:/61903/1:1:AAAA-BBB", "status": "already_extracted"}],
+        [{"recordId": "ark:/61903/1:1:AAAA-BBB", "status": "read_failed"}],
+    ],
+    ids=["nothing-attached", "already-extracted", "read-failed"],
+)
+def test_logpersist_ignored_when_extraction_append_writes_nothing(tmp_path, records):
+    calls = [_log_resp(_FIRED_LOG, as_text_block=False), _extraction(records)]
+    rows = scan([_write_run(tmp_path, calls)]).rows
+    assert _states(rows, "log-without-persistence") == Counter({IGNORED: 1})
+
+
+def test_logpersist_ignored_call_saved_later_is_named_in_the_aside(tmp_path):
+    calls = [
+        _log_resp(_FIRED_LOG, as_text_block=False),
+        _log_resp(_FIRED_LOG, as_text_block=False),
+        _extraction([_EXTRACTED]),
+    ]
+    scanned = scan([_write_run(tmp_path, calls)])
+    rows = [r for r in scanned.rows if r.field == "log-without-persistence"]
+    assert [(r.state, r.persisted_later) for r in rows] == [(IGNORED, True), (ACTED, False)]
+    assert "of the 1 ignored, 1 were followed by a save later in the run" in format_report(scanned)
+
+
+def test_logpersist_ignored_call_never_saved_is_not_credited(tmp_path):
+    calls = [_log_resp(_FIRED_LOG, as_text_block=False), _log_resp(_FIRED_LOG, as_text_block=False)]
+    rows = [r for r in scan([_write_run(tmp_path, calls)]).rows if r.field == "log-without-persistence"]
+    assert [(r.state, r.persisted_later) for r in rows] == [(IGNORED, False), (IGNORED, False)]
 
 
 # --- sources-without-assertions: the producer-verified marker, 0 in corpus ---
