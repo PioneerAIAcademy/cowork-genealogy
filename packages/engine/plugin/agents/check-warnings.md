@@ -422,6 +422,7 @@ treating as established.
 
 #### Event in another country
 - `hasEventInOtherCountry` -- an event other than a migration or a residence (on the person or on a couple relationship) is in a country that contradicts both the birth and the death country, when those two agree. Usually a record attached to the wrong person, or a mis-standardised place.
+- `hasPlaceStandardOtherCountry` -- a fact's `place` text names a country its own `standard_place` contradicts (on the person, then on a couple relationship). Usually a mis-standardised place, and usually the standardized value rather than the event is wrong -- correct it on FamilySearch.
 
 #### Birthplace far from the parents' residence
 - `hasBirthFarFromParentsResidence` -- the birthplace (Birth, else Christening, else Baptism) is farther from a parent's residence dated within 20 years of the birth than the era allows: 25 mi before 1850, 250 mi 1850-1949, 500 mi from 1950. Usually a record of a different person attached, or a mis-standardised place. Skipped when the place lookup fails, so its absence proves nothing.

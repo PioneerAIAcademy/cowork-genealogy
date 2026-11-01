@@ -307,7 +307,7 @@ in which the anchor participates (as parent, spouse, or child); and 28 of
 the 54 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
-The full catalogue of the **82 tags** the tool emits in `issueType` is
+The full catalogue of the **83 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
 checked against, and the drift lint
 (`tests/packaging/person-warnings-spec-drift.test.ts`) fails if it and
@@ -541,7 +541,7 @@ tool.
 
 ### Tag Catalogue
 
-The full set of **82** tags the tool emits in `issueType`. Each row is
+The full set of **83** tags the tool emits in `issueType`. Each row is
 `Tag`, `Severity`, `Rule` (the condition that fires it), and `Cause`
 (what it usually indicates). `scoreType` is `COHERENCE` for every tag.
 The bidirectional drift lint
@@ -772,6 +772,7 @@ mode, marked below, so `person_warnings` can emit 18 of them.
 | Tag | Severity | Rule | Cause |
 |-----|----------|------|-------|
 | `hasEventInOtherCountry` | implausible | A non-migration, non-residence event (on the person or on a Couple relationship) is in a country that bidirectionally contradicts every birth and death anchor country, when those anchors agree | A record attached to the wrong person, or a mis-standardised place |
+| `hasPlaceStandardOtherCountry` | implausible | A fact (on the person, then on a Couple relationship) has a `place` text whose country `countryConsistency` finds its own `standard_place` contradicts; the first such fact is reported | A mis-standardised place, usually FamilySearch-supplied — the standardized value, not the event, is wrong |
 | `hasBirthFarFromParentsResidence` | implausible | person_warnings only (never `calculateWarnings`): the anchor's birthplace (a placed Birth, else Christening, else Baptism) is farther from a parent's residence dated within 20 years of the birth than the era's limit — 25 mi before 1850, 250 mi 1850–1949, 500 mi from 1950 | A record of a different person attached, or a mis-standardised place |
 
 ### Birthplace far from the parents' residence
@@ -1017,7 +1018,7 @@ fixture trees; there are no `extractYear`/`extractEarliestYear`/
 `extractLatestYear` tests, because those helpers do not exist (date
 handling is tested where it lives, under `src/utils/`).
 
-**Per-tag coverage is partial.** Roughly half of the 82 tags are named
+**Per-tag coverage is partial.** Roughly half of the 83 tags are named
 in that test file; the rest are covered indirectly or not at all. The
 drift lint proves a tag is *documented and emitted*, never that its
 catalogue entry reads correctly — so a reviewer verifying a
@@ -1068,7 +1069,7 @@ and need not be added to that reference.
    `tests/tools/person-warnings-birth-residence.test.ts`).
 6. Add the tag's row to § Tag Catalogue in this spec.
 7. Bump the three hardcoded tag-count assertions in
-   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(82)` guards)
+   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(83)` guards)
    to the new total.
 8. **Run the drift lint** (`make engine-test`, or the
    `tests/packaging/person-warnings-spec-drift.test.ts` suite directly).

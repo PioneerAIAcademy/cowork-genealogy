@@ -638,3 +638,45 @@ describe("competingParentage", () => {
     expect(surface(both, [...both, pc("R3", "I2")])).toEqual([]);
   });
 });
+
+describe("introducedWarnings — hasPlaceStandardOtherCountry is gate-exempt (issue #3976)", () => {
+  // A fact with place "Siaya, Nyanza, Kenya" standardized to "Madagascar":
+  // countryConsistency finds the pair contradictory, firing the warning. The
+  // tag is a standardisation artefact (usually FamilySearch-supplied), so a
+  // write carrying it forward must not be refused.
+  const facts = [
+    {
+      id: "I1-f1",
+      type: "Death",
+      date: "1983",
+      standard_date: "1983",
+      place: "Siaya, Nyanza, Kenya",
+      standard_place: "Madagascar",
+    },
+  ];
+
+  it("is NOT refused when a write introduces it (exemption applied)", () => {
+    const before = tree([person("I1", "Zablon", "Yambo")]);
+    const after = tree([person("I1", "Zablon", "Yambo", facts)]);
+
+    const result = introducedWarnings(before, after, ["I1"]);
+
+    expect(
+      result.allIntroduced.some((w) => w.issueType === "hasPlaceStandardOtherCountry"),
+    ).toBe(false);
+    expect(result.unjustified).toHaveLength(0);
+  });
+
+  it("WOULD be introduced without the exemption (proves the exemption is load-bearing)", () => {
+    const before = tree([person("I1", "Zablon", "Yambo")]);
+    const after = tree([person("I1", "Zablon", "Yambo", facts)]);
+
+    // applyExemptions = false bypasses GATE_EXEMPT_TYPES: the same warning now
+    // appears, so removing the tag from the exempt set would refuse this write.
+    const result = introducedWarnings(before, after, ["I1"], undefined, undefined, false);
+
+    expect(
+      result.allIntroduced.some((w) => w.issueType === "hasPlaceStandardOtherCountry"),
+    ).toBe(true);
+  });
+});
