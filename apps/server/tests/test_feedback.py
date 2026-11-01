@@ -1411,6 +1411,46 @@ def test_review_stale_copies_are_named_in_feedback_md_not_dropped_silently(monke
         client.delete(f"/api/sessions/{sid}")
 
 
+def test_unticked_media_are_named_in_feedback_md_though_never_read(monkeypatch):
+    from app.sandbox.local import LocalSandbox
+
+    captured = _capture_upload(monkeypatch)
+    reads: list[str] = []
+    real_read = LocalSandbox.read_file
+
+    async def counting_read(self, path):
+        reads.append(path)
+        return await real_read(self, path)
+
+    monkeypatch.setattr(LocalSandbox, "read_file", counting_read)
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "tester@example.com"})
+        proj = client.post("/api/sessions", json={"sample": True}).json()
+        sid = proj["id"]
+
+        root = app.state.provider._root(proj["sandbox_id"])  # LocalProvider
+        project_dir = root / PROJECT_DIR.lstrip("/")
+        (project_dir / "uploads").mkdir(parents=True, exist_ok=True)
+        (project_dir / "uploads" / "scan.jpg").write_bytes(b"\xff\xd8 not really a jpeg")
+
+        r = client.post(
+            "/api/feedback",
+            json={"sessionId": sid, "email": "t@example.com", "userPrompt": "x",
+                  "agentDid": "y", "agentShouldHave": "z", "workedAsExpected": False,
+                  "includeMedia": False},
+        )
+        assert r.status_code == 200
+
+        zf = zipfile.ZipFile(io.BytesIO(base64.b64decode(captured["envelope"]["zipBase64"])))
+        assert "uploads/scan.jpg" not in set(zf.namelist())
+        md = zf.read("FEEDBACK.md").decode("utf-8")
+        assert "`uploads/scan.jpg`" in md
+        assert not any(p.endswith("uploads/scan.jpg") for p in reads)
+
+        client.delete(f"/api/sessions/{sid}")
+
+
 # --------------------------------------------------------------------------
 # Parity guard. The rule is duplicated across two languages by design (neither
 # app may import the other, nor eval code), linked only by "mirrors" comments.
@@ -1467,6 +1507,36 @@ def test_select_files_keeps_research_json_when_it_is_the_largest():
     kept_rels = [r for r, _ in kept]
     assert "research.json" in kept_rels
     assert any(r.startswith("results/") for r in dropped)
+
+
+class _CountingSandbox(_FakeSandbox):
+    def __init__(self, files):
+        super().__init__(files)
+        self.reads: list[str] = []
+
+    async def read_file(self, path):
+        self.reads.append(path)
+        return await super().read_file(path)
+
+
+def test_walk_leaves_media_unread_when_asked_and_names_them():
+    files = {
+        f"{PROJECT_DIR}/research.json": b"{}",
+        f"{PROJECT_DIR}/uploads/scan.PNG": b"x" * 10,
+        f"{PROJECT_DIR}/uploads/notes.md": b"n",
+    }
+    sbx = _CountingSandbox(files)
+    unread: list[str] = []
+    walked = asyncio.run(fb._walk_project(sbx, None, unread))
+    assert unread == ["uploads/scan.PNG"]
+    assert sorted(rel for rel, _ in walked) == ["research.json", "uploads/notes.md"]
+    assert f"{PROJECT_DIR}/uploads/scan.PNG" not in sbx.reads
+
+
+def test_walk_reads_media_by_default():
+    files = {f"{PROJECT_DIR}/scan.png": b"x"}
+    walked = asyncio.run(fb._walk_project(_FakeSandbox(files)))
+    assert [rel for rel, _ in walked] == ["scan.png"]
 
 
 def test_select_files_evicts_media_before_results_before_other():

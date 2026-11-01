@@ -2297,8 +2297,8 @@ function scoredPersonaOf(
  *  provenance counts as reachable, so an assertion written with no `log_entry_id`
  *  cannot shed the requirement by omission.
  *
- *  Kept in step with `_persona_reachable` in `eval/harness/harness/
- *  skill_invocation.py`, which is the same predicate on the eval side. */
+ *  Kept in step with `_persona_reachable` in `eval/harness/validators/
+ *  test_person_evidence.py`, which is the same predicate on the eval side. */
 export function personaReachable(entry: any, research: any): boolean {
   const assertions: any[] = research.assertions ?? [];
   const assertion = assertions.find((a: any) => a?.id === entry.assertion_id);
