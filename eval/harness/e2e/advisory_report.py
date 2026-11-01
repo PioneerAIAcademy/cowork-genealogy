@@ -38,9 +38,10 @@ A call is sorted into exactly one of:
 
 not-observable + never-held + fired = every emitter call, and fired = acted +
 ignored. The report prints that accounting split by `agent_type`, with run and
-call denominators. Two asides sit alongside it: for `nilSearchNeedsLog`, how many
+call denominators. Three asides sit alongside it: for `nilSearchNeedsLog`, how many
 "ignored" calls were in fact logged later in the run (a batched log after the
-next search, not neglect); and for `unloggedSearches`, the producer's "and N more"
+next search, not neglect); for `log-without-persistence`, how many "ignored" calls
+were followed by a save later in the run; and for `unloggedSearches`, the producer's "and N more"
 tail — refs it summarised rather than listed, which acted/ignored cannot check
 (the note always lists at least one ref, so the call's own verdict stands).
 
@@ -100,8 +101,12 @@ VALIDATION_SHIP_DATE = date(2026, 8, 11)
 # `external_links_search` only until it stopped staging (2026-10): see
 # `_stopped_emitting`.
 SEARCH_TOOLS = frozenset({"record_search", "fulltext_search", "external_links_search"})
-# The two writer tools whose `ops[].section` lands sources / assertions.
+# The two writer tools that land sources / assertions: `research_append` names
+# the section in its args, `extraction_append` writes both for each record it
+# extracts and names none.
 SECTION_WRITERS = frozenset({"research_append", "extraction_append"})
+EXTRACTION_APPEND = "extraction_append"
+_EXTRACTED_STATUS_RE = re.compile(r'status\\*"\s*:\s*\\*"extracted\\*"')
 LOG_APPEND = "research_log_append"
 
 # Producer-verified marker substrings (NOT corpus-derived — sources-without-
@@ -170,13 +175,35 @@ def agent_label(call: dict) -> str:
     return call.get("agent_type") or "<main>"
 
 
+def _extracted_a_record(call: dict) -> bool:
+    """Whether an `extraction_append` response reports a record `extracted` —
+    the one per-record status that wrote a source and its assertions. Decoded
+    when the summary parses; on a truncated summary, the raw text, since each
+    record's `status` sits before its long `summary`."""
+    raw = call.get("response_summary") or ""
+    doc = unwrap(raw)
+    if isinstance(doc, dict):
+        records = doc.get("records")
+        # A long list is recorded as `{_summary_truncated, _full_length, _first_n}`.
+        if isinstance(records, dict):
+            records = records.get("_first_n")
+        return isinstance(records, list) and any(
+            isinstance(r, dict) and r.get("status") == "extracted" for r in records
+        )
+    return bool(_EXTRACTED_STATUS_RE.search(raw))
+
+
 def writes_sections(call: dict) -> set[str]:
     """The `{sources, assertions}` subset a `research_append` / `extraction_append`
-    call persists — reading BOTH the flat `section` and every `ops[].section`,
-    since the batched shape is the dominant one. Empty for an error call, a
+    call persists. For `research_append`, read from BOTH the flat `section` and
+    every `ops[].section`, since the batched shape is the dominant one. For
+    `extraction_append`, both sections when the response reports a record
+    extracted: its args name records, not sections. Empty for an error call, a
     different tool, or a non-sources/assertions section."""
     if _is_error(call) or _bare(call) not in SECTION_WRITERS:
         return set()
+    if _bare(call) == EXTRACTION_APPEND:
+        return {"sources", "assertions"} if _extracted_a_record(call) else set()
     args = _as_dict(call.get("args"))
     out: set[str] = set()
     ops = args.get("ops")
@@ -441,6 +468,7 @@ class CallRow(NamedTuple):
     # row and the sha-ladder tests constructing rows unaffected):
     logged_later: bool = False   # a nil IGNORED call whose nil was logged later anyway
     summarised_more: int = 0     # an unloggedSearches note's unchecked "and N more" tail
+    persisted_later: bool = False  # a log-without-persistence IGNORED call followed by a save
 
 
 def _capture_observable(call: dict, spec: FieldSpec) -> bool:
@@ -486,6 +514,10 @@ def classify_run(doc: dict, path: Path, probe: _GitProbe) -> list[CallRow]:
                 k = fired_at[i]
                 if rows[k].state == IGNORED:
                     rows[k] = rows[k]._replace(logged_later=True)
+        if spec.key == "log-without-persistence":
+            for i, k in fired_at.items():
+                if rows[k].state == IGNORED and any(writes_sections(c) for c in calls[i + 1:]):
+                    rows[k] = rows[k]._replace(persisted_later=True)
     return rows
 
 
@@ -574,6 +606,14 @@ def _field_block(field: str, rows: list[CallRow]) -> list[str]:
         if ignored:
             lines.append(f"      of the {ignored} ignored, {later} were logged later in the run "
                          "(batched after the next search), not never")
+    # log-without-persistence: the same cutoff, the next log append, reads a
+    # search-then-extract session as neglect; say how many saved later anyway.
+    if field == "log-without-persistence":
+        later = sum(1 for r in mine if r.state == IGNORED and r.persisted_later)
+        ignored = by_state.get(IGNORED, 0)
+        if ignored:
+            lines.append(f"      of the {ignored} ignored, {later} were followed by a save later "
+                         "in the run (after more searches were logged), not never")
     # unloggedSearches: the producer's "and N more" tail — refs it summarised
     # rather than listed, counted separately (issue #3199) since acted/ignored
     # above is decided on the listed refs only.

@@ -48,7 +48,6 @@ FROZEN_OWES_CASE_FILE = frozenset(
         ("find_conclusions_without_tree_encoding", "TREE_ENCODING_KIND"),
         ("find_tree_facts_disagreeing_with_assertions", "TREE_FACT_ASSERTION_KIND"),
         ("find_protected_writes_by_unnamed_delegate", None),
-        ("find_person_evidence_missing_same_person", "PERSON_EVIDENCE_DENY_KIND"),
         ("find_effects_without_invocation", None),
     }
 )
