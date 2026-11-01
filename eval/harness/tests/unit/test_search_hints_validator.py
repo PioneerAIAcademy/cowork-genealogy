@@ -484,3 +484,63 @@ def test_router_fails_logging_the_hints_itself():
 def test_router_fails_never_spawning():
     with pytest.raises(AssertionError, match="handed off 0 time"):
         check_router_stops([], [], [], STOPS)
+
+
+# --- the router relays the agent's tail verbatim (research suite, issue #3862) --
+
+import json  # noqa: E402
+
+from test_research import (  # noqa: E402
+    test_relays_the_agents_tail_verbatim as check_relays_tail,
+)
+
+_HINT_REVIEW = json.loads(
+    (Path(__file__).resolve().parents[3] / "tests" / "unit" / "research" / "route-hint-review.json")
+    .read_text(encoding="utf-8")
+)
+RELAYS = {"tags": _HINT_REVIEW["test"]["tags"], "execution": _HINT_REVIEW["execution"]}
+
+# ut_research_zfp's reply in research v34_2026-10-26_10-10-00.json: the router
+# rewrote the triage in its own words and dropped the agent's summary.
+_V34_REPLY = (
+    "Starting with hint review on Patrick Flynn (LZNY-BRF) as requested — spawning the hints agent now.\n\n"
+    "Here's what FamilySearch has pending for Patrick Flynn (LZNY-BRF):\n\n---\n\n"
+    "**Hint 1 — 1870 US Federal Census** (FamilySearch confidence: 3 of 5)\n`ark:/61903/1:1:M70C`\n"
+    "Patrick Flynn, age 25, born Ireland, appearing in **Thomas Flynn's household**, Schuylkill County, Pennsylvania.\n"
+    "→ **Triage recommendation: Accept** — fits age, birthplace, and surname.\n\n---\n\n"
+    "**Your call:** Do you want to accept, reject, or hold on either or both of the two census hints?"
+)
+
+_TAIL_PARAGRAPH = (
+    "Three records FamilySearch suggests for Patrick were looked at. The 1870 census, which FamilySearch "
+    "rates a moderate match, shows him at 25 in his father Thomas's household, and is recommended. The 1880 "
+    "census, a weaker match on FamilySearch's scale, was indexed under the wrong surname, but the page itself "
+    "reads Flynn and fits him, so it is recommended too. His 1908 death certificate is already part of this research."
+)
+_TAIL_LAST = "You decide which of these suggestions to accept."
+
+
+def test_relay_fails_the_v34_reply_that_rewrote_the_triage():
+    with pytest.raises(AssertionError, match="did not relay search-hints"):
+        check_relays_tail(_V34_REPLY, RELAYS)
+
+
+def test_relay_passes_a_verbatim_tail_reflowed_with_curly_quotes():
+    reflowed = _TAIL_PARAGRAPH.replace("'", "’").replace(". ", ".\n")
+    reply = f"Checking the hints now.\n\n{reflowed}\n\n**{_TAIL_LAST}**\n\nNext I'll wait for your verdicts."
+    check_relays_tail(reply, RELAYS)
+
+
+def test_relay_fails_keeping_only_the_last_sentence():
+    with pytest.raises(AssertionError, match="did not relay search-hints"):
+        check_relays_tail(f"{_V34_REPLY}\n\n{_TAIL_LAST}", RELAYS)
+
+
+def test_relay_skips_a_test_without_the_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_relays_tail("", {**RELAYS, "tags": ["routing", "routes-to:search-hints"]})
+
+
+def test_relay_refuses_a_tag_with_no_routes_to_callee():
+    with pytest.raises(AssertionError, match="needs a routes-to"):
+        check_relays_tail(_V34_REPLY, {**RELAYS, "tags": ["relays-agent-tail"]})
