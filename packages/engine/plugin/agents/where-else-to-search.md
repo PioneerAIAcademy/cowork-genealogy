@@ -162,8 +162,8 @@ label, heading or field name**:
    sentence about what the collection holds, who is in it, or why the person
    might be there: anything not in that shape is a fact no tool returned.
 3. If there are "also on file" rows: one line, "Also listed, without a filled-in
-   search:", then each `linkText` and its `url` exactly as returned, `http://`
-   included.
+   search:", then each `linkText` and its `url` copied character for character:
+   an `https` link stays `https` and an `http` link stays `http`.
 4. One sentence: open a link, and bring back anything found to keep researching.
 
 The caller prints everything after that `---` verbatim and nothing above it. No
