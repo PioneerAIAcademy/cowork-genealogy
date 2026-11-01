@@ -8,6 +8,7 @@ import { researchQuery } from "../../src/tools/research-query.js";
 import { runWithProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { projectContext } from "../../src/tools/project-context.js";
 import { ON_PG, backingStore, fileStoreOnly } from "../helpers/store-backend.js";
+import { LOCAL } from "../../src/auth/principal.js";
 
 // The stored list (external-collections.json) through the real file store, on a
 // real temp project. Only the network and the place resolver are mocked.
@@ -349,7 +350,7 @@ describe("project_context counts the stored lists", () => {
   it("reports per-place counts by record type, never rows", async () => {
     mockFetch.mockResolvedValueOnce(response([...paRows, ...schuylkillOnly]));
     await externalLinksSearchTool({ standardPlace: SCHUYLKILL, projectPath: project });
-    const ctx = await projectContext({ projectPath: project });
+    const ctx = await projectContext({ projectPath: project }, LOCAL);
     expect(ctx.ok && ctx.externalCollections).toEqual({
       [PA]: { total: 3, byRecordType: { Death: 1, Guides: 1, Probate: 1, Societies: 1, Wills: 1 } },
       [SCHUYLKILL]: { total: 2, byRecordType: { "Church Records": 1, Death: 1 } },
@@ -358,10 +359,10 @@ describe("project_context counts the stored lists", () => {
 
   it("omits the field when nothing is stored, and never fails on an unreadable file", async () => {
     fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
-    const none = await projectContext({ projectPath: project });
+    const none = await projectContext({ projectPath: project }, LOCAL);
     expect(none.ok && "externalCollections" in none).toBe(false);
     await writeFile(join(project, "external-collections.json"), "{not json");
-    const bad = await projectContext({ projectPath: project });
+    const bad = await projectContext({ projectPath: project }, LOCAL);
     expect(bad.ok).toBe(true);
     expect(bad.ok && "externalCollections" in bad).toBe(false);
   });
@@ -473,7 +474,7 @@ describe("stored-list edges", () => {
         [PA]: { rows: [row("a", PA, { record_types: ["Wills", "Census"] })] },
       },
     }));
-    const ctx = await projectContext({ projectPath: project });
+    const ctx = await projectContext({ projectPath: project }, LOCAL);
     const ec = ctx.ok ? ctx.externalCollections! : {};
     expect(Object.keys(ec)).toEqual([PA, VENANGO]);
     expect(Object.keys(ec[PA].byRecordType)).toEqual(["Census", "Wills"]);

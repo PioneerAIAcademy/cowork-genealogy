@@ -119,6 +119,13 @@ repo's identifier-casing rule):
   },
   sectionCounts: { [section: string]: number | null },  // entries per research_query section — §2.6
   unregisteredDisagreementCount: number,         // what research_query's conflicts adds — §2.6
+  uploads?: [{                           // the user's uploads, newest first; absent when none — §2.7
+    name: string,
+    uploaded: string,                    // ISO, from the store's mtime
+    hasText: boolean,                    // uploads/<name>.txt exists
+  }],
+  projectUrl?: string,                   // viewer page; only with webPublicUrl and a store id — §2.7
+  uploadUrl?: string,                    // upload page; only when uploadsEnabled too — §2.7
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -537,6 +544,39 @@ the October 2026 e2e corpus 98 of 98 of those reads came back empty; in two
 hosted sessions of 2026-10-05/06, 12 of 21 did. The reads were issued in
 parallel, so the counts save tokens and calls more than wall-clock time.
 
+### 2.7 `uploads`, `projectUrl`, `uploadUrl` — the self-hosted beta's web tier
+
+```typescript
+uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
+projectUrl?: string   // `${webPublicUrl}/#/p/${projectId}`
+uploadUrl?: string    // `${projectUrl}/upload`
+```
+
+`uploads` lists the store's `uploads/` entries, newest first, ties by name. An
+entry `X.txt` whose `X` is also an entry is X's **text layer**, not an upload: it
+sets X's `hasText` and is not listed. A `notes.txt` with no `notes` beside it is
+an upload. A dotfile is not an upload. `<name>` is the full basename with its extension (`census.pdf` →
+`census.pdf.txt`), the name `upload_key()` gives an upload
+(`apps/server/proto/web/project_blobs.py`); the web tier's text-layer writer
+must use that name. `uploads` is **omitted** when there are none, so
+every desktop and harness response is unchanged, and when the listing fails.
+
+The links come from `projectLinks(principal)` (`src/utils/project-links.ts`):
+`projectUrl` only when the per-user config has `webPublicUrl` (trailing slashes
+stripped) **and** the bound store has a `projectId`; `uploadUrl` only when
+`uploadsEnabled` is also `true`. The id is the store's, never derived from
+`projectPath`: on the hosted path every project arrives under the same anchor
+path, `/project`. The file store has no id, so the desktop gets no link. On the
+hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
+`UPLOADS_ENABLED` (`src/hosted-config-env.ts`); a switch other than
+`true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no
+`#`, `?`, credentials, backslash, space or control character, refuses start-up
+with exit 2. The tool takes the principal as its last parameter because the
+links read the per-user config.
+
+What nothing checks: that the web tier writes the text layer under the name
+this side reads. Each side is tested against its own fixture.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** One fixed shape, no field
@@ -642,6 +682,14 @@ untouched.
   a capture on a different URL closes nothing; an earlier capture does not
   close a later hand-off; a `positive` entry with `capture_received: false`
   never lists; a non-`external_site` entry never lists.
+- **uploads and links** — `X` and `X.txt` list once with `hasText: true`, a lone
+  `notes.txt` lists as an upload; newest first, ties by name (seeded with `fs`,
+  so `make engine-test-pg` runs it on Postgres/S3); no uploads → key absent.
+  With a project-id store: both links with both settings, no `uploadUrl` while
+  uploads are off or unset, neither link without `webPublicUrl` or without a
+  store id; a failing listing omits `uploads` and still answers.
+  `tests/http/http-server.test.ts` 2d drives both links, with both settings on,
+  through `startHttpServer`'s `baseConfig`.
 - **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan
   items of its `image_search` entries, across sub-volumes of the film, and not those
   of a `fulltext_search` entry on it; 19 images plus a re-read does not list; a torn

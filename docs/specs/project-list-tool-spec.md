@@ -27,7 +27,10 @@ project_list({})
 ```
 
 No parameters. Read-only: writes nothing, on any backend. The mode comes from the
-active `ProjectStore`'s `listProjects()`.
+active `ProjectStore`'s `listProjects()`. The function takes the call's principal as its last
+parameter, for the entries' `projectUrl`; no entry carries one yet, because filling
+it needs a map from each listed `projectPath` to its store's project id, which
+no store keeps yet.
 
 ### 2.1 Return value
 
