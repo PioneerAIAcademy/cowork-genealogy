@@ -2450,24 +2450,15 @@ answered — is where an unsettled question waits. `/fill-ready` § "Above the j
 pools" owns the split, and `/make-decisions` drains the `needs-decision` queue
 daily; `/find-big-wins` reads it as evidence but never removes the label.
 
-Two are stated **where they bind**, because each one will stop a change you might
+One is stated **where it binds**, because it will stop a change you might
 otherwise make:
 
-- **The `same_person` write boundary** (§5.3). The direction is settled and a
-  fourth discriminator ships in shadow; what is open is its graduation to a deny.
-  **Read [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before
-  proposing a fifth** — three failed adversarial review and the ledger names the
-  six constraints a candidate has to satisfy.
 - **Whether a compliance detector follows the router's paraphrase or the owning
-  skill's contract.** The owning skill wins, and the §8 `same_person` provenance
-  check is the worked case: it now narrows on whether a **record persona is
-  reachable** — image-, external-site-, PDF- and full-text-sourced links and
-  sidecar-less searches are exempt and counted, `record_read`-sourced links stay
-  flagged — rather than on the null `record_persona_id` the older reading
-  exempted on. What stays open is that these detectors remain uncalibrated, which
-  is why §9.4 says not to quote a violation rate.
+  skill's contract.** The owning skill wins. What stays open is that these
+  detectors remain uncalibrated, which is why §9.4 says not to quote a violation
+  rate.
 
-Before adding a third, check it is not already refuted — ADR-0009 is a ledger of
+Before adding another, check it is not already refuted — ADR-0009 is a ledger of
 questions that only look open.
 
 ---
