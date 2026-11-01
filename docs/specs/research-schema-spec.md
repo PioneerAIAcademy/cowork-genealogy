@@ -205,7 +205,9 @@ The following are **open enums** — recommended values that skills should prefe
 ## 3. ID Conventions
 
 All IDs are strings with a prefix indicating the section. IDs are immutable
-once created and never reused. **The prefixes are enforced, not advisory** —
+once created and never reused, except an hv_ id: merge_tree_persons removes a
+collapsed person's agreeing hit_verdicts row, and nothing references an hv_ id.
+**The prefixes are enforced, not advisory** —
 every id field and every field that references one is validated against its
 prefix, so an assertion id of `assert_001` or a `plan_item_id` holding a `q_`
 value is rejected at write time.
