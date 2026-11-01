@@ -390,7 +390,7 @@ probe-agent-nesting: $(ENGINE_BUILD) ## Live probe: can a plugin agent spawn ano
 	  uv run python dev/probe_agent_nesting.py
 
 .PHONY: hook-smoke
-hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? Owner routing and the fork deny (issue #1160; 4 short sessions)
+hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook actually BIND in the hosted SDK loader? Owner routing, the fork deny and the agent-only deny (issues #1160, #3528; 6 short sessions)
 	# plugin-hooks.test.ts covers the guard script's DECISIONS. This covers its
 	# BINDING -- whether a runtime reads hooks/hooks.json, matches a real tool
 	# call, shells the command and blocks. Nothing else checks that, in any
@@ -411,6 +411,10 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# Re-run 2026-10-22 (Claude Code 2.1.308, SDK 0.2.172): BOUND on both cases. The
 	# fork case runs with CLAUDE_CODE_FORK_SUBAGENT unset, as Cowork does: arm A was
 	# denied with FORK_REASON, and arm B (hooks/ removed) ran a real fork.
+	# The agent-only case (issue #3528) provokes a main-thread convert_calendar,
+	# which reaches the script only through the matcher's AGENT_ONLY_TOOLS
+	# alternative, and requires agent_only_reason's text. First run 2026-10-29
+	# (Claude Code 2.1.308, SDK 0.2.172): BOUND on all three cases.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so issue #1160 stays on the
@@ -482,7 +486,7 @@ proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq
 
 .PHONY: proto-down
 proto-down: ## D3 prototype: stop the stack and drop its volumes (the next up's migrate one-shot re-applies the schema)
-	$(PROTO_COMPOSE) down -v
+	$(PROTO_COMPOSE) down -v --remove-orphans
 
 # U9: proto/migrate.py, the schema's one applier, from the host venv against the compose
 # postgres -- what the stack's `migrate` one-shot runs at every up. ARGS=--status reports
@@ -510,7 +514,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -526,7 +530,7 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -551,6 +555,25 @@ proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tie
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/turn.py $(ARGS)
+
+# U28: the SPA and web tier under a path prefix, behind an nginx edge that strips it the way
+# the FamilySearch edge does (apps/server/proto/prefix/README.md). Billed, one one-line turn;
+# exits 2 before it without a model key or the dev patron's grant (`make proto-grant`). It
+# recreates web with the prefixed PUBLIC_URL, so the unprefixed check needs a fresh proto-up.
+# The edge is recreated after web (nginx resolves web once, at start) and removed at the end.
+.PHONY: proto-prefix-check
+proto-prefix-check: $(ENGINE_DEPS) ## U28: sign-in, a turn and a 60 s idle stream through a path-prefix edge on 127.0.0.1:8090 (needs proto-grant; billed, one short turn)
+	pnpm --filter cowork-genealogy-eval-app exec playwright install chromium
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
+	  . apps/server/proto/env.sh && \
+	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-prefix-check: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
+	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --build && \
+	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --wait postgres minio elasticmq worker shim web tools && \
+	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --wait --force-recreate edge && \
+	  (cd apps/server && uv run python -c 'import sys; from proto import turn; p = turn.require_grant("$(PROTO_PG_DSN)", turn.DEV_LOGIN_EMAIL); p and print(p, file=sys.stderr); sys.exit(2 if p else 0)') && \
+	  node apps/server/proto/prefix/check.mjs; \
+	  rc=$$?; $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml rm -sf edge; \
+	  echo "proto-prefix-check: web now runs with the prefixed PUBLIC_URL; run \`make proto-up\` before the unprefixed check (BASE=http://127.0.0.1:8085 node apps/server/proto/prefix/check.mjs) or proto-turn"; exit $$rc
 
 # D14 kill-resume on a real turn: the worker container is killed as the turn's first
 # place_search call starts, started again, and the shim's redelivery resumes the SDK

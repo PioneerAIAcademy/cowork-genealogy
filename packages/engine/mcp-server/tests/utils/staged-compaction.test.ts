@@ -180,13 +180,20 @@ describe("annotateResultsWithRanking", () => {
     // survives on searchRank, which is what makes the re-order auditable.
     const out = annotateResultsWithRanking(
       resp(rankedWith([
-        { recordId: rowB.recordId, matchRank: 1, searchRank: 2, matchScore: 0.9, matchConfidence: 9 },
+        { recordId: rowB.recordId, matchRank: 1, searchRank: 2, matchScore: 0.9 },
         { recordId: rowA.recordId, matchRank: 2, searchRank: 1, matchScore: 0.2 },
       ])),
     );
     expect(out.results.map((r) => r.recordId)).toEqual([rowB.recordId, rowA.recordId]);
-    expect(out.results[0]).toMatchObject({ matchRank: 1, searchRank: 2, matchScore: 0.9, matchConfidence: 9 });
+    expect(out.results[0]).toMatchObject({ matchRank: 1, searchRank: 2, matchScore: 0.9 });
     expect(out.results[1]).toMatchObject({ matchRank: 2, searchRank: 1, matchScore: 0.2 });
+  });
+
+  it("copies no star rating onto a row, even from a stub that carries one", () => {
+    const out = annotateResultsWithRanking(
+      resp(rankedWith([{ recordId: rowB.recordId, matchRank: 1, searchRank: 2, matchScore: 0.9, matchConfidence: 9 }])),
+    );
+    expect(out.results.find((r) => r.recordId === rowB.recordId)).not.toHaveProperty("matchConfidence");
   });
 
   it("copies the birth-year conflict flag and gap onto the annotated row", () => {
@@ -285,7 +292,6 @@ describe("#1212 payload", () => {
       ...rest,
       collectionTitle: "Pennsylvania Deaths and Burials, 1720-1999",
       matchScore: 0.9,
-      matchConfidence: 7,
       candidateFactCount: 4,
     };
   };
@@ -296,7 +302,6 @@ describe("#1212 payload", () => {
     matchRank: i + 1,
     searchRank: i + 1,
     matchScore: 0.9,
-    matchConfidence: 7,
     candidateFactCount: 4,
   });
 
@@ -323,7 +328,7 @@ describe("#1212 payload", () => {
     }).length;
 
     // Measured on this branch at 50 rows, not quoted from the issue:
-    //   before 36,956   after 35,206   delta -1,750 (-4.7%)
+    //   before 35,956   after 34,206   delta -1,750 (-4.9%)
     //
     // The saving is STRUCTURAL: the drop shape's stub re-introduced
     // `collectionTitle` on every scored row after compaction had just hoisted it
@@ -333,25 +338,25 @@ describe("#1212 payload", () => {
     // priced a saving the real shape never had (review: about +2.7% against
     // production's shape, i.e. the drop shape was BIGGER).
     //
-    // Floor is 3%, under the measured 4.7%, so a field-width edit does not red
+    // Floor is 3%, under the measured 4.9%, so a field-width edit does not red
     // this while a regression that reintroduces duplication does.
     expect(after).toBeLessThan(before);
     expect((before - after) / before).toBeGreaterThan(0.03);
 
     // The ABSOLUTE figures, pinned because the rank spec quotes them by name.
     // The ratio assertions above cannot hold them: widening a field moves both
-    // sides together and leaves the delta at 4.7%, so the spec's "36,956 /
-    // 35,206" would rot with the suite green — which is exactly how the -4.6%
+    // sides together and leaves the delta at 4.9%, so the spec's "35,956 /
+    // 34,206" would rot with the suite green — which is exactly how the -4.6%
     // this replaced survived the pivot to Option B. Band is +/-1%, wide enough
     // that reflowing a fixture string does not red it and narrow enough that a
     // real shape change does.
     //
     // If these fail, the fixture moved: re-measure, then update BOTH this block
     // and docs/specs/rank-search-matches-tool-spec.md, which cites the pair.
-    expect(before).toBeGreaterThan(36956 * 0.99);
-    expect(before).toBeLessThan(36956 * 1.01);
-    expect(after).toBeGreaterThan(35206 * 0.99);
-    expect(after).toBeLessThan(35206 * 1.01);
+    expect(before).toBeGreaterThan(35956 * 0.99);
+    expect(before).toBeLessThan(35956 * 1.01);
+    expect(after).toBeGreaterThan(34206 * 0.99);
+    expect(after).toBeLessThan(34206 * 1.01);
   });
 
   it("the ranking annotation is a small fraction of the row it rides on", () => {

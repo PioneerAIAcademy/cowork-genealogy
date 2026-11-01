@@ -12,9 +12,15 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   GET  /api/sessions/{id}/events?after=N       one-shot poll read (JSON)
   GET  /api/sessions/{id}/events/stream        text/event-stream; Last-Event-ID resume
   GET/POST /api/sessions, GET/PATCH/DELETE /api/sessions/{id}, POST .../resume, GET .../state
+  GET  /api/projects                         the patron's projects
+  GET  /api/projects/{id}/state               viewer state; ETag revalidation
+  GET  /api/projects/{id}/sidecar/{log_id}     search-result body
+  GET  /api/projects/{id}/image?filename=      persisted source page scan
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
-  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions route needs the cookie)
-  GET  .../sidecar/{log_id} -> 404;  .../image, .../logs, .../files -> 501
+  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
+  GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
+  GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
+  GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
   POST /api/sessions/{id}/interrupt                Stop: raise the flag        -> 202
   GET  /api/feedback/context?sessionId=         the files and transcript size a report would carry
   POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
@@ -46,7 +52,7 @@ hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
 queue URL, the shim's shape; required -- unset or empty refuses to start),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (0 -- see ``max_nudges``),
+POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``), AUTONOMOUS_MAX_NUDGES (0 -- see ``max_nudges``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
@@ -103,6 +109,9 @@ from fastapi import Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
+from starlette.datastructures import MutableHeaders
+from starlette.routing import get_route_path
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
@@ -170,6 +179,9 @@ READY_SQL = (
 STARTUP_BUDGET_S = 5.0
 STARTUP_BACKOFF_FIRST_S = 1.0
 STARTUP_BACKOFF_MAX_S = 30.0
+# The edge's alias path cuts a stream silent for ~45 s (handoff F11), so the ping stays
+# well under it whatever SSE_PING_S says.
+SSE_PING_MAX_S = 15.0
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -327,6 +339,9 @@ class Turn:
 
 
 class Store(Protocol):
+    async def list_projects(self, owner_id: str) -> list[dict[str, Any]]: ...
+    async def project_owner(self, project_id: str) -> str | None: ...
+    async def project_versions(self, project_id: str) -> tuple[str | None, dict[str, int]]: ...
     async def create_session(
         self, title: str, model: str, project_id: str | None, owner: str, may_create_or_claim: bool
     ) -> SessionRow: ...
@@ -335,7 +350,9 @@ class Store(Protocol):
     async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None: ...
     async def delete_session(self, session_id: str) -> bool: ...
     async def document_versions(self, project_id: str) -> dict[str, int]: ...
-    async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]: ...
+    async def documents(
+        self, project_id: str, names: tuple[str, ...] | None = None
+    ) -> dict[str, tuple[int, Any]]: ...
     async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]: ...
     async def fail_turn(self, turn_id: str, reason: str) -> None: ...
     async def put_back_held(self, turn_id: str) -> bool: ...
@@ -375,9 +392,9 @@ class Queue(Protocol):
 def _pg_dsn() -> str:
     """The web tier's Postgres DSN, resolved as the lifespan resolves it (``PgStore``).
 
-    The three blob routes below open their own SYNCHRONOUS connection -- `fetch_sidecar`,
-    `fetch_blob` and `put_blob` are sync, and `app.state.store` is an async pool -- so
-    they cannot borrow the store's. They referenced a bare `PG_DSN` that this module has
+    `_sidecar`, `_image` and the upload route below open their own SYNCHRONOUS connection --
+    `fetch_sidecar`, `fetch_blob` and `put_blob` are sync, and `app.state.store` is async --
+    so they cannot borrow the store's. They referenced a bare `PG_DSN` that this module has
     never defined, which made all three raise `NameError` and answer 500 on every call
     that got past validation. Nothing caught it: the route tests stub the client, and
     `make harness-lint`'s F821 pass covered `eval/harness` but not `apps/server`.
@@ -433,6 +450,24 @@ def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, n
     return turn_message.queue_body(
         turn_id, session.session_id, session.project_id, text, enqueued_at, nudges
     )
+
+
+def project_label(research: Any) -> str | None:
+    """The research title, then objective; only non-empty strings count."""
+    if not isinstance(research, dict):
+        return None
+    project = research.get("project")
+    if not isinstance(project, dict):
+        return None
+    title = project.get("title")
+    if isinstance(title, str) and title:
+        return title
+    objective = project.get("objective")
+    return objective if isinstance(objective, str) and objective else None
+
+
+def _version_tag(research_version: int, tree_version: int) -> str:
+    return f"r{research_version}-t{tree_version}"
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
@@ -845,14 +880,52 @@ class PgStore:
                     )
         return True
 
+    async def list_projects(self, owner_id: str) -> list[dict[str, Any]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT p.project_id AS id, r.doc->'project' AS project, "
+                "(SELECT max(d.updated_at) FROM documents d WHERE d.project_id = p.project_id) AS updated_at "
+                "FROM projects p LEFT JOIN documents r ON r.project_id = p.project_id AND r.name = 'research.json' "
+                "WHERE p.owner_id = %s ORDER BY updated_at DESC NULLS LAST, p.project_id",
+                (owner_id,),
+            )
+            return [{"id": r["id"], "label": project_label({"project": r["project"]}), "updated_at": r["updated_at"]}
+                    for r in await cur.fetchall()]
+
+    async def project_owner(self, project_id: str) -> str | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute(grants.OWNER_SQL, (project_id,))
+            row = await cur.fetchone()
+            return row["owner_id"] if row else None
+
+    async def project_versions(self, project_id: str) -> tuple[str | None, dict[str, int]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT p.owner_id, d.name, d.version FROM projects p "
+                "LEFT JOIN documents d ON d.project_id = p.project_id "
+                "AND d.name IN ('research.json', 'tree.gedcomx.json') WHERE p.project_id = %s",
+                (project_id,),
+            )
+            rows = await cur.fetchall()
+            if not rows:
+                return None, {}
+            return rows[0]["owner_id"], {r["name"]: r["version"] for r in rows if r["name"] is not None}
+
     async def document_versions(self, project_id: str) -> dict[str, int]:
         async with await self._connect() as conn:
             cur = await conn.execute("SELECT name, version FROM documents WHERE project_id = %s", (project_id,))
             return {r["name"]: r["version"] for r in await cur.fetchall()}
 
-    async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]:
+    async def documents(
+        self, project_id: str, names: tuple[str, ...] | None = None
+    ) -> dict[str, tuple[int, Any]]:
+        query = "SELECT name, version, doc FROM documents WHERE project_id = %s"
+        params: tuple[Any, ...] = (project_id,)
+        if names is not None:
+            query += " AND name = ANY(%s)"
+            params += (list(names),)
         async with await self._connect() as conn:
-            cur = await conn.execute("SELECT name, version, doc FROM documents WHERE project_id = %s", (project_id,))
+            cur = await conn.execute(query, params)
             return {r["name"]: (r["version"], r["doc"]) for r in await cur.fetchall()}
 
     # -- U20 feedback reads ------------------------------------------------------------
@@ -1290,6 +1363,24 @@ class DevLoginBody(BaseModel):
     email: str | None = None
 
 
+def _relative_self_location(location: str, host: str | None, base_path: str = "") -> str:
+    """U28: a redirect to this tier's own host, made root-relative and put under the prefix.
+    Behind the edge this tier sees http from its load balancer and a path with the prefix
+    stripped, so an absolute URL Starlette builds from the request (its trailing-slash 307)
+    leaves the prefix and drops https. A path already under the prefix (the callback's
+    PUBLIC_URL target) keeps it once. Any other host, or a host:port that differs from the
+    request's, is left alone."""
+    if not host:
+        return location
+    parts = urlparse(location)
+    if parts.scheme not in ("http", "https") or parts.netloc.lower() != host.lower():
+        return location
+    path = parts.path or "/"
+    if base_path and path != base_path and not path.startswith(f"{base_path}/"):
+        path = f"{base_path}{path}"
+    return path + (f"?{parts.query}" if parts.query else "")
+
+
 def _env_float(name: str, default: float) -> float:
     """POLL_S / SSE_PING_S, defensively. A bare ``float()`` raises on ``"1s"`` or a
     stray space, and both are read while the app is being CONSTRUCTED -- so a typo in one
@@ -1533,8 +1624,95 @@ def create_app(
     # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
     app.state.startup = None
     app.state.poll_s = poll_s if poll_s is not None else _env_float("POLL_S", 1.0)
-    app.state.ping_s = ping_s if ping_s is not None else _env_float("SSE_PING_S", 15.0)
+    if ping_s is None:
+        ping_s = _env_float("SSE_PING_S", SSE_PING_MAX_S)
+        if ping_s > SSE_PING_MAX_S:
+            log.warning("SSE_PING_S=%s is above the %ss cap; using %s", ping_s, SSE_PING_MAX_S, SSE_PING_MAX_S)
+    app.state.ping_s = min(ping_s, SSE_PING_MAX_S)
+    # U28: PUBLIC_URL's path, the prefix the edge strips. Raises on a bad PUBLIC_URL, so a
+    # tier that would scope its cookies wrongly never constructs.
+    app.state.base_path = auth.base_path()
+    prefix_mismatch_logged = False
     app.state.stream_max_polls = stream_max_polls
+
+    class ProjectCacheHeaders:
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            if scope["type"] != "http":
+                await self.app(scope, receive, send)
+                return
+            path = get_route_path(scope)
+            if not (path == "/api/projects" or path.startswith("/api/projects/")):
+                await self.app(scope, receive, send)
+                return
+
+            async def send_headers(message: Message) -> None:
+                if message["type"] == "http.response.start":
+                    headers = MutableHeaders(scope=message)
+                    headers["Cache-Control"] = "private, no-store"
+                    vary = []
+                    for line in headers.getlist("Vary"):
+                        for value in line.split(","):
+                            value = value.strip()
+                            if value and (value.lower() != "cookie" or not any(v.lower() == "cookie" for v in vary)):
+                                vary.append(value)
+                    if not any(value.lower() == "cookie" for value in vary):
+                        vary.append("Cookie")
+                    headers["Vary"] = ", ".join(vary)
+                await send(message)
+
+            await self.app(scope, receive, send_headers)
+
+    app.add_middleware(ProjectCacheHeaders)
+
+    class PrefixMismatchWarning:
+        """One warning per process, the first time the edge's ``X-Orig-Base`` disagrees with
+        PUBLIC_URL's path: a PUBLIC_URL missing its prefix scopes the session cookie to the
+        whole shared host. The header only warns; it is forgeable off the edge."""
+
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            nonlocal prefix_mismatch_logged
+            if scope["type"] in ("http", "websocket") and not prefix_mismatch_logged:
+                for name, value in scope.get("headers") or ():
+                    if name == b"x-orig-base":
+                        seen = value.decode("latin-1").strip().rstrip("/")
+                        if seen != app.state.base_path:
+                            prefix_mismatch_logged = True
+                            log.warning("ev=prefix_mismatch x_orig_base=%r base_path=%r",
+                                        seen[:200], app.state.base_path)
+                        break
+            await self.app(scope, receive, send)
+
+    app.add_middleware(PrefixMismatchWarning)
+
+    class RelativeSelfRedirects:
+        """U28: see ``_relative_self_location``."""
+
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            if scope["type"] != "http":
+                await self.app(scope, receive, send)
+                return
+            host = next((v.decode("latin-1") for k, v in scope.get("headers") or () if k == b"host"), None)
+
+            async def send_relative(message: Message) -> None:
+                if message["type"] == "http.response.start" and 300 <= message["status"] < 400:
+                    headers = MutableHeaders(scope=message)
+                    location = headers.get("location")
+                    if location is not None:
+                        headers["location"] = _relative_self_location(location, host, app.state.base_path)
+                await send(message)
+
+            await self.app(scope, receive, send_relative)
+
+    app.add_middleware(RelativeSelfRedirects)
 
     def _store(request: Request) -> Store:
         return request.app.state.store
@@ -1546,7 +1724,7 @@ def create_app(
         return startup is None or startup.get("allowlist", "ok") == "ok"
 
     async def current_user(request: Request) -> User:
-        """The signed-in patron, or 401/403. On every /api/sessions route."""
+        """The signed-in patron, or 401/403. On every /api/sessions and /api/projects route."""
         data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
         if data is None:
             raise HTTPException(status_code=401, detail="Not signed in")
@@ -1572,6 +1750,14 @@ def create_app(
             raise HTTPException(status_code=404, detail="Session not found")
         return row
 
+    def _check_project_owner(owner: str | None, user: User) -> None:
+        """Missing, foreign and NULL-owner projects all answer the same 404."""
+        if owner is None or owner != user.id:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+    async def _project(request: Request, project_id: str, user: User) -> None:
+        _check_project_owner(await _store(request).project_owner(project_id), user)
+
     # -- health ---------------------------------------------------------------------
 
     @app.get("/api/health")
@@ -1587,6 +1773,7 @@ def create_app(
             "queue": type(state.queue).__name__,
             "poll_s": state.poll_s,
             "ping_s": state.ping_s,
+            "base_path": state.base_path,
         }
         checks: dict[str, Any] = {}
         try:
@@ -1632,7 +1819,7 @@ def create_app(
         data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
         if data is not None:
             await _store(request).revoke_sessions(data["uid"])
-        response.delete_cookie(auth.COOKIE_NAME, path="/", samesite="lax", secure=auth.is_https())
+        response.delete_cookie(auth.COOKIE_NAME, path=auth.cookie_path(), samesite="lax", secure=auth.is_https())
         return {"ok": True}
 
     @app.get("/auth/familysearch/login")
@@ -1713,8 +1900,57 @@ def create_app(
         resp.set_cookie(
             auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
         )
-        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path="/")
+        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp
+
+    # -- projects -----------------------------------------------------------------
+
+    @app.get("/api/projects")
+    async def list_projects(request: Request, user: User = Depends(current_user)) -> list[dict[str, Any]]:
+        """[{id: str, label: str | None, updated_at: ISO-8601 str | None}]."""
+        return await _store(request).list_projects(user.id)
+
+    @app.get("/api/projects/{project_id}/state")
+    async def project_state(project_id: str, request: Request, user: User = Depends(current_user)) -> Response:
+        """{label, research, gedcomx, sidecars: [], version: rN-tN}, or an empty 304; both with ETag."""
+        store = _store(request)
+        owner, versions = await store.project_versions(project_id)
+        _check_project_owner(owner, user)
+        tag = _version_tag(versions.get("research.json", 0), versions.get("tree.gedcomx.json", 0))
+        etag = f'"{tag}"'
+        condition = ",".join(request.headers.getlist("if-none-match"))
+        matches = [value.strip().removeprefix("W/") for value in condition.split(",")]
+        if etag in matches or "*" in matches:
+            return Response(status_code=304, headers={"ETag": etag})
+        docs = await store.documents(project_id, ("research.json", "tree.gedcomx.json"))
+        rv, research = docs.get("research.json", (0, None))
+        tv, gedcomx = docs.get("tree.gedcomx.json", (0, None))
+        tag = _version_tag(rv, tv)
+        etag = f'"{tag}"'
+        return JSONResponse({
+            "label": project_label(research),
+            "research": research,
+            "gedcomx": gedcomx,
+            "sidecars": [],
+            "version": tag,
+        }, headers={"ETag": etag})
+
+    @app.get("/api/projects/{project_id}/sidecar/{log_id}")
+    async def project_sidecar(
+        project_id: str, log_id: str, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        """{raw: str, mtime: float} for a search-result sidecar."""
+        await _project(request, project_id, user)
+        return await _sidecar(request, project_id, log_id)
+
+    @app.get("/api/projects/{project_id}/image")
+    async def project_image(
+        project_id: str, request: Request, filename: str | None = None,
+        user: User = Depends(current_user),
+    ) -> Response:
+        """The source page scan's bytes, with Content-Type: image/jpeg."""
+        await _project(request, project_id, user)
+        return await _image(request, project_id, filename)
 
     # -- sessions -----------------------------------------------------------------
 
@@ -1795,6 +2031,9 @@ def create_app(
         session_id: str, log_id: str, request: Request, user: User = Depends(current_user)
     ) -> dict:
         row = await _session(request, session_id, user)
+        return await _sidecar(request, row.project_id, log_id)
+
+    async def _sidecar(request: Request, project_id: str, log_id: str) -> dict:
         try:
             sidecar_key(log_id)
         except ValueError:
@@ -1817,8 +2056,8 @@ def create_app(
         # so a slow round trip freezes every live SSE stream. The feedback route
         # below already does this; these three did not.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn()) as conn:
-                return fetch_sidecar(conn, blobs, row.project_id, log_id)
+            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
+                return fetch_sidecar(conn, blobs, project_id, log_id)
 
         blob = await asyncio.to_thread(_read)
         payload = sidecar_payload(blob)
@@ -1854,6 +2093,9 @@ def create_app(
         # runs, so a foreign session learned the route exists and what it takes. The
         # ownership suite caught it.
         row = await _session(request, session_id, user)
+        return await _image(request, row.project_id, filename)
+
+    async def _image(request: Request, project_id: str, filename: str | None) -> Response:
         if not filename or ".." in filename or not IMAGE_REF_RE.match(filename):
             raise HTTPException(status_code=400, detail="not an image reference")
         blobs = request.app.state.blobs
@@ -1864,8 +2106,8 @@ def create_app(
 
         # Off the event loop, for the reason given on the sidecar route above.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn()) as conn:
-                return fetch_blob(conn, blobs, row.project_id, filename)
+            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
+                return fetch_blob(conn, blobs, project_id, filename)
 
         blob = await asyncio.to_thread(_read)
         if blob is None:
@@ -1943,7 +2185,7 @@ def create_app(
         # Off the event loop, for the reason given on the sidecar route above: this one
         # also does an S3 PUT, so it is the longest of the three.
         def _write() -> int:
-            with psycopg.connect(_pg_dsn()) as conn:
+            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
                 n = put_blob(conn, blobs, row.project_id, key, body, content_type=content_type)
                 conn.commit()
                 return n
@@ -2158,7 +2400,7 @@ def create_app(
         return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
-    spa.mount_spa(app, tier_root=PROTO_DIR)
+    spa.mount_spa(app, tier_root=PROTO_DIR, base_path=app.state.base_path)
     return app
 
 

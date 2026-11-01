@@ -973,7 +973,7 @@ export function runBaseline(snapshot: string, threshold = DEFAULT_THRESHOLD): Ba
       if (!sp.result) continue;
       const score = Number(sp.result.score);
       if (Number.isFinite(score)) scores.push(score);
-      if (sp.result.matched === false || !(score >= threshold)) {
+      if (!(score >= threshold)) {
         add({ copy_key: copy, ark: toArk(sp.ark), kind: "misattributed", signal: "same_person_low", score });
       }
     }

@@ -1,0 +1,53 @@
+{
+  "test": {
+    "id": "ut_research_wu1",
+    "skill": "research",
+    "name": "Wrap it up runs the whole wrap-up in ONE turn, before any evidence",
+    "type": "positive",
+    "description": "Plan section B2: the wrap-up is offered at any boundary, including before a single search has run. `flynn-census-nil` is that state -- one question, one open plan item, zero assertions. The turn runs dispose, then (nothing to link, nothing to settle) exhaustiveness and the conclusion, and ends. The failure this catches is the router treating 'Wrap it up.' as an ordinary step and running one piece of it per turn, which would leave the question open after the researcher asked to stop.",
+    "tags": [
+      "routing",
+      "step-mode",
+      "wrap-up",
+      "delegates-wrap-up"
+    ]
+  },
+  "input": {
+    "user_message": "/research Wrap it up.",
+    "scenario": "flynn-census-nil"
+  },
+  "execution": {
+    "max_turns": 24,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      },
+      {
+        "skill": "conflict-resolution",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table."
+      }
+    ]
+  },
+  "judge_reads_files": true,
+  "judge_context": [
+    "A wrap-up is ONE turn that runs its steps in order, not one step per turn. Ending after dispose with \"Continue with …?\" is the failure this test exists for: the researcher asked to stop, and offering them the next piece of the wrap-up hands the same decision back.",
+    "The order is dispose (research-plan), then person-evidence, then conflict-resolution, then research-exhaustiveness, then proof-conclusion. Steps with nothing to do are SKIPPED, and skipping them is correct here: there are no assertions to link and no conflict.",
+    "The dispose delegation's `pli_` ids and the `wrapUp: yes` on research-exhaustiveness and proof-conclusion are asserted deterministically from the spawn prompts (test_spawn_carries_its_step_mode_fields). You cannot see them; do not grade them.",
+    "The turn ends with NO \"Continue with …?\" line: nothing is waiting. Do not charge the reply for saying what was concluded.",
+    "Every callee is STUBBED and reports it changed no project state, so describing the wrap-up as done is expected and is not a fabricated claim about the files."
+  ]
+}
