@@ -50,6 +50,8 @@ Both are Emruthwill's, and their checklists live on the PRs.
 
 ## PR C — the baseline step and timeline_build
 
+Merged (C1 and C2); this checklist records what it built. Its "person-, name- and fact-level refs only" items are superseded by decision 11 as amended on 2026-10-30.
+
 Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. Land it after PR B. It shares the score gate, the reused-hint code, ADR-0009's same_person constraint and the guardrail row with issue #3552, so whichever lands second rebases.
 
 ### The shared module
@@ -257,6 +259,8 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
 ## PR D — the plugin side
 
 Paid: the timeline, research, question-selection and person-evidence suites, each with a genealogist annotation. Lands after PR A, whose allow-list the acceptance run's leak check reads.
+
+**Not yet checklisted here: the 2026-10-30 additions.** Household linking (decision 17), relationship-level extraction with `selectSubjectPersona` moved into the engine and the widened leak check (decision 11), and the thomas-hanrahan-marriage replay are listed in issue #3516's stage list. The relationship-level work is engine side and may be its own free-tier PR. Whoever builds them adds their checklist items here.
 
 ### `agents/timeline.md`
 
