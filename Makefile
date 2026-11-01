@@ -486,7 +486,7 @@ proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq
 
 .PHONY: proto-down
 proto-down: ## D3 prototype: stop the stack and drop its volumes (the next up's migrate one-shot re-applies the schema)
-	$(PROTO_COMPOSE) down -v
+	$(PROTO_COMPOSE) down -v --remove-orphans
 
 # U9: proto/migrate.py, the schema's one applier, from the host venv against the compose
 # postgres -- what the stack's `migrate` one-shot runs at every up. ARGS=--status reports
@@ -555,6 +555,25 @@ proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tie
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/turn.py $(ARGS)
+
+# U28: the SPA and web tier under a path prefix, behind an nginx edge that strips it the way
+# the FamilySearch edge does (apps/server/proto/prefix/README.md). Billed, one one-line turn;
+# exits 2 before it without a model key or the dev patron's grant (`make proto-grant`). It
+# recreates web with the prefixed PUBLIC_URL, so the unprefixed check needs a fresh proto-up.
+# The edge is recreated after web (nginx resolves web once, at start) and removed at the end.
+.PHONY: proto-prefix-check
+proto-prefix-check: $(ENGINE_DEPS) ## U28: sign-in, a turn and a 60 s idle stream through a path-prefix edge on 127.0.0.1:8090 (needs proto-grant; billed, one short turn)
+	pnpm --filter cowork-genealogy-eval-app exec playwright install chromium
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
+	  . apps/server/proto/env.sh && \
+	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-prefix-check: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
+	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --build && \
+	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --wait postgres minio elasticmq worker shim web tools && \
+	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --wait --force-recreate edge && \
+	  (cd apps/server && uv run python -c 'import sys; from proto import turn; p = turn.require_grant("$(PROTO_PG_DSN)", turn.DEV_LOGIN_EMAIL); p and print(p, file=sys.stderr); sys.exit(2 if p else 0)') && \
+	  node apps/server/proto/prefix/check.mjs; \
+	  rc=$$?; $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml rm -sf edge; \
+	  echo "proto-prefix-check: web now runs with the prefixed PUBLIC_URL; run \`make proto-up\` before the unprefixed check (BASE=http://127.0.0.1:8085 node apps/server/proto/prefix/check.mjs) or proto-turn"; exit $$rc
 
 # D14 kill-resume on a real turn: the worker container is killed as the turn's first
 # place_search call starts, started again, and the shim's redelivery resumes the SDK

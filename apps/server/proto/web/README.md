@@ -66,6 +66,12 @@ U2 in `docs/plan/familysearch-handoff.md`.
   space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL`, or with
   FamilySearch sign-in on at any scheme, the tier refuses to start with a default or empty
   secret.
+- **Path prefix (U28)**: `PUBLIC_URL` may carry a path, the prefix an edge strips before
+  the origin (`https://<host>/service/search/agent-tools/<name>`). The routes stay at `/…`;
+  the path scopes both cookies, the OAuth `redirect_uri` (`<PUBLIC_URL>/callback`), the
+  callback's landing (`<prefix>/`) and the SPA's `<base href>`. A path outside unreserved
+  segments, or any query or fragment, refuses to start. The first request whose
+  `X-Orig-Base` differs logs `ev=prefix_mismatch`; `/api/health` reports `base_path`.
 
 **Grants (U3).** Every turn's FamilySearch calls run on its project owner's grant, which
 the worker reads from `familysearch_tokens` at the start of each attempt while it holds that
@@ -198,7 +204,7 @@ turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and sta
 `turn_active` until the seeder closes it through `worker.complete()` itself.
 
 Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required), `POLL_S` (1),
-`SSE_PING_S` (15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
+`SSE_PING_S` (15, capped at 15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
 `GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
 `QUEUE_URL` host's region). The start line names the mode, never a key:

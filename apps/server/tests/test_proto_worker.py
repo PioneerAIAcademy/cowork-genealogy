@@ -173,6 +173,14 @@ class FakeCursor:
             return (self.conn.research,)
         if "SELECT count(*) FROM tool_calls" in sql:
             return (self.conn.tool_call_count,)
+        if sql == worker.COMPACTIONS_SQL:  # 018: (sum of preTokens, count)
+            return self.conn.compactions
+        if sql == worker.SPEND_CORRECTIONS_SQL:
+            return (self.conn.spend_correction,)
+        if sql == worker.STARTING_COST_SQL:
+            return None if self.conn.starting_cost is None else (self.conn.starting_cost,)
+        if "SELECT COALESCE(max(seq), 0) FROM session_entries" == sql:
+            return (self.conn.high_water,)
         if "RETURNING zero_progress_attempts" in sql:
             self.conn.zero_progress_attempts += 1
             return (self.conn.zero_progress_attempts,)
@@ -249,6 +257,12 @@ class FakeConn:
         # answer no row: a newer claim holds the turn.
         self.claim_epoch = claim_epoch
         self.superseded = False
+        # 018: COMPACTIONS_SQL's (preTokens sum, count), the session's summed
+        # turns.spend_correction_usd, and session_entries' top seq.
+        self.compactions: tuple = (0, 0)
+        self.spend_correction = 0.0
+        self.high_water = 0
+        self.starting_cost: float | None = None  # a stored cost-state total, if any
 
     def mint_epoch(self) -> None:
         """CLAIM_TURN_SQL's CASE: an open row's claim bumps the epoch, a closed one keeps it."""
@@ -745,7 +759,8 @@ def _host_kw(tmp_path):
     ("Read", {"file_path": "/proc/1/environ"}),
     ("Read", {"file_path": "/dev/fd/3"}),
     ("Read", {"file_path": "/dev/stdin"}),
-    ("Read", {"file_path": "{up}proc/self/environ"}),
+    pytest.param("Read", {"file_path": "{up}proc/self/environ"}, marks=pytest.mark.skipif(
+        sys.platform == "win32", reason="a relative climb to / lands on a drive root, not /proc")),
     ("Grep", {"pattern": "ANTHROPIC", "path": "/proc/self"}),
     ("Grep", {"pattern": "x", "path": "/"}),
     ("Glob", {"pattern": "/proc/*/environ"}),
@@ -887,6 +902,66 @@ def test_a_delegation_not_explicitly_foreground_is_rewritten(tmp_path, tool_inpu
     hook = _hook(rows, str(tmp_path), str(tmp_path / "cfg"))
     out = _call(hook, {"tool_name": "Agent", "tool_input": tool_input})
     assert out["hookSpecificOutput"]["updatedInput"] == {**tool_input, "run_in_background": False}
+
+
+@pytest.mark.parametrize("tool_name", ["Agent", "Task"])
+@pytest.mark.parametrize("tool_input", [
+    {"prompt": "p"},
+    {"subagent_type": "", "prompt": "p"},
+    {"subagent_type": None, "prompt": "p"},
+    {"subagent_type": "general-purpose", "prompt": "p"},
+    {"subagent_type": " general-purpose ", "prompt": "p", "run_in_background": False},
+    {"subagent_type": "genealogy-research:general-purpose", "prompt": "p"},
+], ids=["no name", "empty", "null", "named", "padded, foreground", "prefixed"])
+def test_a_general_purpose_delegation_is_denied_and_logged(tmp_path, tool_name, tool_input):
+    """U14: a general-purpose agent holds none of a plugin agent's limits, and a gateway 400
+    on an agent's model has ended in one silently (plan P3h)."""
+    rows: list[dict] = []
+    logged: list[dict] = []
+    hook = options.make_pretool_hook(turn_id="t", session_id="s", cwd=str(tmp_path),
+                                     config_root=str(tmp_path / "cfg"), record=rows.append,
+                                     log=lambda **f: logged.append(f))
+    out = _call(hook, {"tool_name": tool_name, "tool_input": tool_input, "tool_use_id": "tu-1"})
+    spec = out["hookSpecificOutput"]
+    assert spec["permissionDecision"] == "deny"
+    assert spec["permissionDecisionReason"] == options.STAND_IN_DENY_REASON.format(tool=tool_name)
+    assert "updatedInput" not in spec, "a denied call is not foregrounded"
+    assert rows[-1]["decision"] == "deny"
+    assert [f["ev"] for f in logged] == ["deny"] and logged[0]["reason"] == spec["permissionDecisionReason"]
+
+
+@pytest.mark.parametrize("subagent_type", [
+    "record-extractor", "genealogy-research:record-extractor", "general-purpose-ish", "x",
+])
+def test_a_named_delegation_is_not_a_stand_in(tmp_path, subagent_type):
+    hook = _hook([], str(tmp_path), str(tmp_path / "cfg"))
+    tool_input = {"subagent_type": subagent_type, "prompt": "p", "run_in_background": False}
+    assert _call(hook, {"tool_name": "Agent", "tool_input": tool_input}) == {}
+    assert not options.is_stand_in_delegation("Read", {"subagent_type": "general-purpose"})
+
+
+def _tool_result(tool_use_id, content, is_error=True):
+    return SimpleNamespace(tool_use_id=tool_use_id, content=content, is_error=is_error)
+
+
+def test_hook_denied_ids_are_read_off_the_results_a_pretool_hook_wrote():
+    """Live shapes (compose, 2026-10-31): the plugin hook's deny of a main-thread
+    place_search and this worker's deny of a general-purpose Agent call."""
+    message = SimpleNamespace(content=[
+        _tool_result("t1", "PreToolUse:mcp__genealogy__place_search hook error: Calling place_search "
+                      "from the main session is disabled \u2014 only agents hold it"),
+        _tool_result("t2", [{"type": "text", "text": "PreToolUse:Agent hook error: Agent as a "
+                                                "\"general-purpose\" agent is disabled here"}]),
+        _tool_result("t3", "Error: record_search failed: 502"),
+        _tool_result("t4", "PreToolUse:Read hook error: denied", is_error=False),
+        _tool_result("t5", "the tool said PreToolUse:Read hook error: x"),
+        _tool_result("t6", "PreToolUse:Read\nhook error: x"),
+        _tool_result(None, "PreToolUse:Read hook error: x"),
+        SimpleNamespace(id="t7", name="Read", input={}),
+    ])
+    assert options.hook_denied_tool_use_ids(message) == ["t1", "t2"]
+    assert options.hook_denied_tool_use_ids(SimpleNamespace(content="text")) == []
+    assert options.hook_denied_tool_use_ids(object()) == []
 
 
 def test_an_explicitly_foreground_delegation_passes_untouched(tmp_path):
@@ -1155,6 +1230,7 @@ def test_options_pin_the_prototype_set(tmp_path):
     assert opts.model == "claude-sonnet-4-6"
     assert opts.env["ANTHROPIC_API_KEY"] == "sk-test" and opts.env["ENABLE_TOOL_SEARCH"] == "true"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0", "no fork subagents (CLI 2.1.302 default)"
+    assert opts.env["GENEALOGY_HOSTED_PLANE"] == "1", "silences the Cowork-only no_project_route hook"
     assert opts.env["CLAUDE_CONFIG_DIR"] == str(tmp_path) and opts.env["TMPDIR"] == "/tmp"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     [matcher] = opts.hooks["PreToolUse"]
@@ -1244,10 +1320,10 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-    assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
+    assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
-    on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
-    assert on.env["ENABLE_TOOL_SEARCH"] == "true"
+    off = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "false"})
+    assert off.env["ENABLE_TOOL_SEARCH"] == "false", "the switch back, for agentgateway < 1.6 (TAP's Fargate stack)"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
         _options(worker_env={**GATEWAY_ENV, "GATEWAY_BASE_URL": " "})
 
@@ -1278,11 +1354,44 @@ def test_every_shipped_agent_model_has_a_gateway_id():
     from proto.worker.plugin_agents import load_agent_definitions
 
     shipped = load_agent_definitions(SERVER.parents[1] / "packages" / "engine" / "plugin")
-    models = {a.model for a in shipped.values() if a.model}
-    assert models, "the plugin declares agent models"
-    unmapped = sorted(m for m in models
-                      if m not in options.GATEWAY_AGENT_MODELS and not m.startswith(("us.", "global.")))
+    assert any(a.model for a in shipped.values()), "the plugin declares agent models"
+    unmapped = options.unmapped_gateway_models(shipped)
     assert not unmapped, f"add a Bedrock id to GATEWAY_AGENT_MODELS for {unmapped}"
+
+
+def test_unmapped_gateway_models_names_only_what_a_gateway_would_receive_bare():
+    agent = lambda model: SimpleNamespace(model=model)  # noqa: E731
+    agents = {"mapped": agent("claude-sonnet-4-6"), "bedrock": agent("us.anthropic.claude-sonnet-4-6"),
+              "global": agent("global.anthropic.x"), "inherit": agent(None), "odd": agent(7),
+              "bare": agent("claude-opus-9"), "alias": agent("sonnet")}
+    assert options.unmapped_gateway_models(agents) == ["alias: sonnet", "bare: claude-opus-9"]
+
+
+def test_prepare_on_the_gateway_refuses_turns_when_an_agent_model_has_no_gateway_id(monkeypatch, tmp_path):
+    """U14: an unmapped id reaches the gateway, which answers 400, and the main thread then
+    does the agent's work without its limits (plan P3h; handoff F4). Refused at start, loudly."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    monkeypatch.setattr(worker, "ensure_cwd", lambda cwd: None)
+    agent = lambda model: SimpleNamespace(model=model)  # noqa: E731
+    monkeypatch.setattr(worker, "load_plugin_agents",
+                        lambda plugin_dir: ({"a": agent("claude-sonnet-4-6"), "b": agent("claude-opus-9")}, None))
+    monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
+    for name in ("_AGENTS", "_AGENTS_ERROR", "_PLUGIN_DIR", "_BLOCKED", "_AUTONOMOUS_MAX_NUDGES"):
+        monkeypatch.setattr(worker, name, getattr(worker, name))  # prepare() rebinds them; restored on teardown
+    monkeypatch.setenv("MODEL_PROVIDER", "gateway")
+    monkeypatch.setenv("GATEWAY_BASE_URL", "http://gw.example/bedrock")
+    worker.prepare()
+    assert worker._AGENTS is None and "b: claude-opus-9" in worker._AGENTS_ERROR
+    assert {"ev": "prepare", "step": "agent_models", "error": worker._AGENTS_ERROR} in logged
+    with pytest.raises(RuntimeError, match="no gateway id"):
+        worker.require_agents()
+    assert worker._PLUGIN_DIR == str(PLUGIN_DIR), "no gateway copy is made for a refused set"
+    # The Anthropic API takes bare ids, so the same set starts there.
+    monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
+    worker.prepare()
+    assert worker._AGENTS is not None and worker._AGENTS_ERROR is None
 
 
 def _bedrock_or_inherit(model: str | None) -> bool:
@@ -1939,20 +2048,27 @@ def test_the_first_delivery_of_a_resumed_turn_is_never_re_queried(turn_env, monk
 # receive_count > 1 attempt. `test_the_named_fallback_*` below is that test.
 
 
-@pytest.mark.parametrize("num_turns, tool_calls, expected", [
-    (6, 1, True),
-    (6, 0, False),
-    (0, 1, False),
-    (0, 0, False),
-    (None, 0, False),
-    (1, 40, True),
-], ids=["worked", "billed-turns-touched-nothing", "no-turn-but-a-call", "dead", "unknown", "busy"])
-def test_attempt_did_work_needs_both_signals(num_turns, tool_calls, expected):
+@pytest.mark.parametrize("num_turns, tool_calls, turn_tool_calls, expected", [
+    (6, 1, 4, True),
+    (6, 0, 3, False),
+    (0, 1, 4, False),
+    (0, 0, 3, False),
+    (None, 0, 3, False),
+    (1, 40, 43, True),
+    (2, 0, 0, True),
+    (0, 0, 0, False),
+    (None, 0, 0, False),
+], ids=["worked", "billed-turns-touched-nothing", "no-turn-but-a-call", "dead", "unknown", "busy",
+        "text-reply-nothing-interrupted", "synthetic-nothing-interrupted", "unknown-nothing-interrupted"])
+def test_attempt_did_work_needs_both_signals_once_work_was_interrupted(num_turns, tool_calls, turn_tool_calls, expected):
     """The plan states the negation -- an attempt did no work when ``num_turns == 0``, OR
-    it added no tool_calls rows -- so work is the conjunction. The middle row is the one
+    it added no tool_calls rows -- so work is the conjunction. The second row is the one
     a `num_turns == 0` test alone would miss: a pass that billed model turns and changed
-    nothing, because every change to the project goes through a writer TOOL."""
-    assert worker.attempt_did_work(SimpleNamespace(num_turns=num_turns), tool_calls) is expected
+    nothing, because every change to the project goes through a writer TOOL. The tool-call
+    half needs work to have been interrupted: when no attempt of the turn ever recorded a
+    tool call, a model reply is the answer (the last three rows), and only a zero-turn
+    result still counts as no work."""
+    assert worker.attempt_did_work(SimpleNamespace(num_turns=num_turns), tool_calls, turn_tool_calls) is expected
 
 
 def test_the_named_fallback_a_synthetic_zero_turn_redelivery_is_a_failure_not_a_completion(
@@ -1980,10 +2096,28 @@ def test_the_named_fallback_a_synthetic_zero_turn_redelivery_is_a_failure_not_a_
 def test_a_redelivery_that_billed_model_turns_but_recorded_no_tool_call_counts_too(turn_env):
     """The second arm of attempt_did_work, through run_turn: the model talked and touched
     nothing. resume_produced_no_turn never fires here (num_turns > 0), so this attempt is
-    caught only by the tool-call half."""
+    caught only by the tool-call half. The killed attempt had recorded calls, so there
+    was work to redo."""
+    turn_env["conn"].tool_call_count = 3
     with pytest.raises(worker.ResumeFailure, match="tool_calls=0"):
         _run_passes(turn_env, [[_init(), _text("thinking about it"), _result(num_turns=9)]], receive_count=2)
     assert not _turn_done_written(turn_env["conn"])
+
+
+def test_a_text_reply_on_the_redelivery_of_a_turn_that_never_called_a_tool_is_the_answer(turn_env, monkeypatch):
+    """U24, 2026-10-31 (compose, gateway, n=1): a status question killed 8 s in, inside its
+    start-of-turn compaction, recorded no tool call on any attempt. Its redelivery answered
+    in text; the tool-call half read that as no work, re-ran it, showed the patron the
+    answer twice and closed the turn ``no_progress``. Nothing was interrupted, so the
+    reply completes the turn as it would on a first delivery."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    turn_env["conn"].tool_call_count = 0
+    summary = _run_passes(turn_env, [[_init(), _text("Two sentences of status."), _result(num_turns=2)]],
+                          receive_count=2)
+    assert summary["outcome"] == worker.OK_OUTCOME
+    assert _turn_done_written(turn_env["conn"])
+    assert not [f for f in logged if f.get("ev") == "zero_progress_attempt"]
 
 
 def test_the_cap_closes_the_turn_itself_with_a_visible_outcome_instead_of_raising(turn_env, monkeypatch):
@@ -2613,6 +2747,13 @@ def _start_env(monkeypatch):
     monkeypatch.setenv("WORKER_TURN_USERS", "none")
     monkeypatch.setenv("MODEL_PROVIDER", "anthropic")
     monkeypatch.setenv("TOOL_SERVER_URL", "http://tools:8787/mcp")
+    if sys.platform == "win32":
+        # Both run before the start configuration these tests read, and both are
+        # POSIX-only: a python3 beside sys.executable, and os.geteuid / pwd. Stubbed to
+        # what the Linux image yields with WORKER_TURN_USERS=none; Linux runs the real
+        # ones (#4043).
+        monkeypatch.setattr(worker, "require_hook_python", lambda: f"{sys.executable} 3.12")
+        monkeypatch.setattr(worker, "setup_turn_users", lambda exe: worker.turn_users.DISABLED)
 
 
 def _stop_at_prepare(monkeypatch):
@@ -3106,6 +3247,69 @@ def test_session_spend_usd_prices_the_rows_and_is_zero_without_a_session():
     empty = FakeConn()
     assert worker.session_spend_usd(empty, "") == 0.0, "no SDK session, no query"
     assert empty.executed == [], "the short-circuit must come before the query"
+
+
+def test_the_session_spend_counts_compactions_the_transcript_lacks_and_each_attempts_correction():
+    """U24, 2026-10-31 (compose, gateway, n=1): 5 of 5 compaction summary calls were absent
+    from session_entries, $0.42 of a $2.27 session, so the cap never saw them. Each
+    compact_boundary is now priced as a cache read of its preTokens plus
+    COMPACTION_OUTPUT_TOKENS of output, and finished attempts add their correction (018)."""
+    conn = FakeConn(usage=(1_000_000, 0, 0, 0))
+    conn.compactions = (2_000_000, 2)
+    conn.spend_correction = 0.25
+    rates = worker.PRICE_PER_MTOK
+    estimate = 2 * rates["cache_read"] + 2 * worker.COMPACTION_OUTPUT_TOKENS * rates["output"] / 1e6
+    assert worker.session_spend_usd(conn, "sdk-1") == pytest.approx(rates["input"] + estimate + 0.25)
+    sqls = [s for s, _ in conn.executed]
+    assert worker.COMPACTIONS_SQL in sqls and worker.SPEND_CORRECTIONS_SQL in sqls
+    assert worker.compactions_usd(0, 0) == 0.0, "no compaction, nothing added"
+
+
+def test_a_finished_attempts_correction_makes_it_count_at_the_clis_own_figure():
+    """The correction is the ResultMessage cost minus what session_spend_usd already counts
+    for the attempt -- its transcript and its compaction estimates -- so, added back, the
+    attempt counts at exactly the CLI's figure: the 018 gateway check, where
+    turns.cost_usd $0.272142 matched the gateway's two calls, compaction included."""
+    conn = FakeConn(usage=(1472, 35, 102_057, 3967))
+    conn.compactions = (102_175, 1)
+    correction = worker.attempt_spend_correction(conn, "sdk-1", 40, 0.272142)
+    counted = worker.price_usd((1472, 35, 102_057, 3967)) + worker.compactions_usd(102_175, 1)
+    assert correction == pytest.approx(0.272142 - counted)
+    assert counted + correction == pytest.approx(0.272142)
+    attempt_sql, params = next((s, p) for s, p in conn.executed if "sum((u->>'input_tokens')" in s)
+    assert params == ("sdk-1", 40) and "seq > %s" in attempt_sql, "bounded by the attempt's own mark"
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, None) is None, "no CLI figure, no correction"
+    assert worker.attempt_spend_correction(conn, "", 40, 1.0) is None
+
+
+def test_a_restored_cost_state_total_is_not_counted_twice():
+    """The CLI documents that a resumed session's total_cost_usd continues from the total
+    a `cost-state` transcript entry saved. The worker's SDK mode writes none today (0
+    stored, 2026-10-31), but if one appears the attempt's figure carries every earlier
+    turn, so the correction subtracts the total the attempt started from."""
+    conn = FakeConn(usage=(0, 0, 0, 0))
+    conn.starting_cost = 2.0
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, 2.3) == pytest.approx(0.3)
+    _, params = next((s, p) for s, p in conn.executed if s == worker.STARTING_COST_SQL)
+    assert params == ("sdk-1", 40), "the latest saved total at or before the attempt's mark"
+    conn.starting_cost = None
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, 2.3) == pytest.approx(2.3), "none saved, nothing subtracted"
+
+
+def test_a_billed_attempt_writes_its_correction_fenced_before_the_zero_progress_raise(turn_env):
+    """An attempt that is billed and then failed still cost money, so its correction is
+    written before ResumeFailure, and only under its own claim epoch (U6)."""
+    turn_env["conn"].tool_call_count = 3
+    turn_env["conn"].high_water = 70
+    with pytest.raises(worker.ResumeFailure):
+        _run_passes(turn_env, [[_init(), _text("thinking"), _result(num_turns=4, cost=0.31)]], receive_count=2)
+    writes = [(s, p) for s, p in turn_env["conn"].executed if "SET spend_correction_usd" in s]
+    assert len(writes) == 1
+    sql, (correction, turn_id, epoch) = writes[0]
+    assert sql.endswith("WHERE turn_id = %s AND claim_epoch = %s"), "a superseded attempt must write nothing"
+    assert correction == pytest.approx(0.31 - worker.price_usd(turn_env["conn"].usage))
+    assert turn_id == TURN["turn_id"]
+    assert epoch == TURN["claim_epoch"], "fenced by the attempt's own claim"
 
 
 def test_a_message_typed_mid_turn_ends_the_turn_at_the_next_tool_call(turn_env, monkeypatch):
