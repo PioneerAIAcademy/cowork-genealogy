@@ -107,6 +107,7 @@ from harness.versioning import (  # noqa: E402
     prunable_candidates,
 )
 from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
+from harness.judge_render import judge_render_hash  # noqa: E402
 from harness.gate_tags import validator_gate_tags  # noqa: E402
 from harness.instrument import (  # noqa: E402
     CatalogUnavailable,
@@ -656,6 +657,9 @@ def pr_added_runlog(skill_dir: Path, added: list[str]) -> str | None:
 GRADED_ADDED = "the run log this PR adds"
 GRADED_FALLBACK = "the latest full-skill run log on disk (this PR adds none)"
 GRADED_DEFAULT = "the latest full-skill run log"
+GRADED_REGRADE_GROWN = (
+    "a run log this PR regraded, whose review_sample gained tests"
+)
 
 COSMETIC_SKIP_LABEL_PREFIX = "eval-cosmetic-skip:"
 
@@ -797,6 +801,93 @@ def rule2_fixture_touched(
         f"Warn-only for now — see eval/CLAUDE.md § \"GitHub Action rules\".\n"
         + diff_lines,
     )
+
+
+# The files whose edits can move `judge_render_hash`. This is only the TRIGGER
+# for looking: the decision below is made by RECOMPUTING the hash, so an edit to
+# a function in one of these outside the render graph passes. Blocking on
+# "file touched" would red every PR that edits orchestrator.py for any reason.
+JUDGE_RENDER_TRIGGER_PATHS = (
+    "eval/harness/harness/judge.py",
+    "eval/harness/harness/orchestrator.py",
+    "eval/harness/harness/scenario_brief.py",
+    "eval/harness/harness/rubric.py",
+    "eval/harness/harness/skill_runner.py",
+    "eval/harness/harness/judge_render.py",
+)
+
+
+def rule2b_judge_render(
+    skill: str,
+    log: dict,
+    filename: str,
+    *,
+    graded: str = GRADED_DEFAULT,
+    judge_render_touched: bool = False,
+) -> int:
+    """Rule 2b, render half: `judge_render_hash` matches the current render code.
+
+    `judge_prompt_hash` covers the prompt TEMPLATE. A slot is filled as a value
+    rather than edited in the template, so changing the code that computes one
+    moved no fingerprint and left every committed log ACTIVE while the judge saw
+    different text (lead ruling 2026-10-18).
+
+    Blocks on a PR that touches a file in `JUDGE_RENDER_TRIGGER_PATHS` **and**
+    whose recomputed hash differs; `make judge-regrade` satisfies it, as for the
+    prompt. A log with no `judge_render_hash` at all predates the field and
+    warns rather than blocks, as rule 2c does for an absent instrument.
+
+    Returns 1 on block, 0 otherwise.
+    """
+    expected = log.get("judge_render_hash") or ""
+    if not expected:
+        if judge_render_touched:
+            # Only suggest the regrade when it would actually be taken: a
+            # skill-side-stale log is REFUSED by `collect_regradeable_logs`,
+            # so naming the command there sends the reader at a no-op.
+            snap = log.get("snapshot") or {}
+            remedy = (
+                "it owes a paid `make eval-skill` run first (rule 2), which "
+                "stamps one"
+                if len(diff_snapshot_vs_disk(snap, REPO_ROOT)) > 0
+                else "`make judge-regrade` stamps one"
+            )
+            gh_warning(
+                f"skill `{skill}`: `{filename}`, {graded}, carries no "
+                f"`judge_render_hash`, so this PR's change to the judge's render "
+                f"code cannot be checked against it. {remedy}.",
+            )
+        return 0
+    # Computed only past the absent-field path: today no committed log carries
+    # the field, so hashing first made every call pay a ~5,700-line parse and
+    # discard it. (`judge_render_hash` is memoized too.)
+    actual = judge_render_hash()
+    if expected == actual:
+        return 0
+    snap = log.get("snapshot") or {}
+    header = (
+        f"skill `{skill}`: `{filename}`, {graded}, was scored by older judge "
+        f"render code (hash {expected[:12]}…). Current render hash is "
+        f"{actual[:12]}…."
+    )
+    if len(diff_snapshot_vs_disk(snap, REPO_ROOT)) > 0:
+        gh_warning(
+            f"{header} Rule 2 already reports this log as skill-side stale, so "
+            f"this warns rather than blocks — a `make judge-regrade` cannot "
+            f"satisfy a log that owes a paid `make eval-skill` run.",
+        )
+        return 0
+    if not judge_render_touched:
+        gh_warning(
+            f"{header} This PR did not touch the render code, so the mismatch "
+            f"is a mixed-era corpus rather than this PR's doing.",
+        )
+        return 0
+    gh_error(
+        f"{header} Satisfy by running `make judge-regrade` and committing the "
+        f"refreshed run log in this PR.",
+    )
+    return 1
 
 
 def rule2b_judge_prompt(
@@ -1312,6 +1403,163 @@ def rule4_unique_test_ids(tests_root: Path) -> int:
 # and matches neither "fail" nor "pass" -- the exact exit-0-having-done-nothing
 # shape CLAUDE.md names.
 _RUN_OUTCOMES = frozenset({"pass", "partial", "fail", "aborted"})
+def modified_runlogs() -> list[tuple[str, str]]:
+    """(skill, repo-relative path) for every committed run log this PR MODIFIED.
+
+    Added logs are `pr_added_runlogs`; this is the other half. Renames are off
+    (`--no-renames`) for the reason rule 7 states: git pairs a prune's
+    delete+add as a rename, which would hide both sides.
+    """
+    base, head = os.environ.get("BASE_SHA"), os.environ.get("HEAD_SHA")
+    if not base or not head:
+        return []
+    try:
+        out = subprocess.run(
+            ["git", "diff", "--no-renames", "--diff-filter=M", "--name-only",
+             f"{base}...{head}"],
+            capture_output=True, text=True, encoding="utf-8", cwd=REPO_ROOT, check=True,
+        ).stdout
+    except subprocess.CalledProcessError:
+        return []
+    found = []
+    for path in sorted(out.split()):
+        m = RUNLOG_PATH_RE.match(path)
+        if m and not path.endswith(".ann.json"):
+            found.append((m.group(1), path))
+    return found
+
+
+def rule6_regrade_outcomes(skill: str, path: str) -> int:
+    """Rule 6, regrade arm (blocking): a run log this PR MODIFIED must not turn
+    a test red that was not red at the merge base.
+
+    Rule 6 proper grades only run logs a PR **adds**, and that is deliberate:
+    `prune_runlogs.py` rewrites committed logs when it rehashes or prunes, and
+    `eval/CLAUDE.md` states a modified log "marks nothing touched". A prune does
+    not move an outcome, so that stayed true — until `make judge-regrade` began
+    rewriting grades in place. A regrade re-samples the judge, and a re-sampled
+    verdict can go red: measured on issue #3576, two tests moved to `fail`
+    across 28 regraded suites while this gate reported "graded 0 added run
+    log(s)" and passed.
+
+    So the predicate is the outcome MOVING, not the file changing: a prune or a
+    rehash passes untouched, and only a modification that newly reds a test
+    blocks. "Zero reds, not zero new reds" still governs an ADDED log (rule 6
+    proper); here the PR did not author the run, so it is answerable for what it
+    changed.
+    """
+    # A read this arm could not make is announced, never swallowed. Failing
+    # closed is wrong here -- an unreadable base (a shallow clone, an unset
+    # BASE_SHA) would block every PR that prunes a log -- but a silent `return
+    # 0` is indistinguishable from "compared them, nothing moved", which is the
+    # state this rule exists to stop being invisible.
+    try:
+        base_text = git_show_at_merge_base(path)
+    except BaseUnreadable as e:
+        gh_warning(
+            f"rule 6: could not read `{path}` at the merge base ({e}); "
+            "its outcomes were NOT compared."
+        )
+        return 0
+    if base_text is None:
+        # Absent at the merge base: this PR added it, and rule 6 proper owns
+        # added logs. Not a skipped read.
+        return 0
+    try:
+        base_log = json.loads(base_text)
+        head_log = json.loads((REPO_ROOT / path).read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
+        gh_warning(
+            f"rule 6: could not parse `{path}` at the merge base or at head "
+            f"({e}); its outcomes were NOT compared."
+        )
+        return 0
+    was = {
+        t.get("test_id"): t.get("outcome")
+        for t in (base_log.get("tests") or [])
+    }
+    fails = 0
+    for test in head_log.get("tests") or []:
+        test_id = test.get("test_id", "<no id>")
+        now = test.get("outcome")
+        if now not in ("fail", "aborted"):
+            continue
+        before = was.get(test_id)
+        if before in ("fail", "aborted"):
+            continue
+        gh_error(
+            f"skill `{skill}`: `{Path(path).name}` is MODIFIED by this PR and "
+            f"test `{test_id}` moved `{before}` -> `{now}`. A regrade re-samples "
+            f"the judge, so a verdict can go red without the skill changing; "
+            f"zero reds still governs. Resolve the red (re-run the suite, or fix "
+            f"the skill) before merging.",
+        )
+        fails += 1
+    return fails
+
+
+def rule3_regrade_sample_growth(skill: str, path: str) -> int:
+    """Rule 3, regrade arm (blocking): a MODIFIED run log whose `review_sample`
+    GREW owes an annotation for the tests it gained.
+
+    Rule 3 proper runs only on a TOUCHED skill, and `eval/CLAUDE.md` states a
+    modified run log "marks nothing touched" — true while a modification meant a
+    prune or a rehash. `make judge-regrade` broke that twice over. Rule 6 gained
+    its own regrade arm when a re-sampled verdict went red; this is the same
+    shape one field across: a regrade refreshes `review_sample` from the fresh
+    grades, so a test it moves into `is_mandatory` gains a slot, and rule 3
+    iterates the STORED sample. Without this arm the regrade PR merges green and
+    the NEXT, unrelated PR on that skill inherits the block — the debt lands on
+    whoever did not create it.
+
+    **Gated on growth, not on the file changing.** Running rule 3 over every
+    modified log would block a prune of a log written before sampling shipped:
+    those carry no `review_sample` and owe every dimension of every test, which
+    no prune can satisfy. Growth is the condition that isolates what the regrade
+    itself added.
+
+    Mirrors rule 6's regrade arm on the read: an unreadable base warns rather
+    than failing closed (a shallow clone would otherwise block every prune), and
+    absent-at-base means the PR added it, where rule 3 proper already applies.
+    """
+    try:
+        base_text = git_show_at_merge_base(path)
+    except BaseUnreadable as e:
+        gh_warning(
+            f"rule 3: could not read `{path}` at the merge base ({e}); its "
+            "review_sample was NOT compared, so a regrade that grew it is "
+            "unchecked here."
+        )
+        return 0
+    if base_text is None:
+        # Added by this PR; rule 3 proper owns added logs.
+        return 0
+    try:
+        base_log = json.loads(base_text)
+        head_log = json.loads((REPO_ROOT / path).read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError) as e:
+        gh_warning(
+            f"rule 3: could not parse `{path}` at the merge base or at head "
+            f"({e}); its review_sample was NOT compared."
+        )
+        return 0
+
+    def sampled(log: dict) -> set[str]:
+        sample = log.get("review_sample") or {}
+        return set(sample.get("tests") or [])
+
+    gained = sampled(head_log) - sampled(base_log)
+    if not gained:
+        return 0
+    return rule3_completeness(
+        skill,
+        head_log,
+        Path(path).name,
+        REPO_ROOT / Path(path).parent,
+        graded=GRADED_REGRADE_GROWN,
+    )
+
+
 def rule6_outcomes(skill: str, log: dict, filename: str) -> int:
     """Rule 6 (blocking): no test in this run log resolves to
     `fail` or `aborted`.
@@ -2330,6 +2578,18 @@ def main() -> int:
             }
         judge_prompt_touched_skills -= exempt_suiteless
 
+    # The render half of rule 2b, built the same way: a change to the code that
+    # renders the judge's input reaches every suite, so every suite's latest log
+    # faces the render arm. The arm recomputes, so a suite whose render hash did
+    # not actually move passes.
+    judge_render_touched_skills: set[str] = set()
+    if any(path in touched_paths for path in JUDGE_RENDER_TRIGGER_PATHS):
+        if RUNLOGS_DIR.is_dir():
+            judge_render_touched_skills = {
+                p.name for p in RUNLOGS_DIR.iterdir() if p.is_dir()
+            }
+        judge_render_touched_skills -= exempt_suiteless
+
     # Instrument arm (issue #2479 PR 3): suites whose fingerprint this PR's paths
     # could move. Kept apart from `touched_skills`, like the judge-prompt set, so
     # it feeds only rule 2c; the rule recomputes, so a suite whose own fingerprint
@@ -2404,6 +2664,7 @@ def main() -> int:
     # On every other PR a hash mismatch stays warn-only. Flag resolved once so
     # the main loop and the secondary suite loop below see the same value.
     judge_prompt_edited = "eval/harness/judge/prompt.md" in touched_paths
+    judge_render_touched = any(p in touched_paths for p in JUDGE_RENDER_TRIGGER_PATHS)
 
     for skill in sorted(touched_skills):
         fails += rule10_no_xfail_markers(skill, TESTS_UNIT_DIR / skill)
@@ -2467,6 +2728,13 @@ def main() -> int:
                 graded=graded,
                 judge_prompt_edited=judge_prompt_edited,
             )
+            fails += rule2b_judge_render(
+                skill,
+                log,
+                filename,
+                graded=graded,
+                judge_render_touched=judge_render_touched,
+            )
             fails += rule2c_instrument(
                 skill, log, filename, graded=graded, rule2_blocked=bool(rule2_result),
                 compare_base=not own_log,
@@ -2505,6 +2773,12 @@ def main() -> int:
             graded_tests += len(added_log.get("tests") or [])
             fails += rule6_outcomes(skill, added_log, added)
 
+    # Rule 6, regrade arm: a MODIFIED log that newly reds a test.
+    # Rule 3, regrade arm: one whose review_sample grew owes those annotations.
+    for skill, path in modified_runlogs():
+        fails += rule6_regrade_outcomes(skill, path)
+        fails += rule3_regrade_sample_growth(skill, path)
+
     # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
     # referencing skills' run logs stale, but only warns — never fails. See
     # rule2_fixture_touched for why blocking is deferred.
@@ -2534,7 +2808,7 @@ def main() -> int:
     # Skills already in `touched_skills` ran rule 2b in the main loop above with
     # the same `judge_prompt_edited=True` flag; skip them here to avoid a
     # duplicate annotation (the main loop's `graded` value is the honest one).
-    for skill in sorted(judge_prompt_touched_skills - touched_skills):
+    for skill in sorted((judge_prompt_touched_skills | judge_render_touched_skills) - touched_skills):
         skill_dir = RUNLOGS_DIR / skill
         status, latest = resolve_latest_runlog(skill_dir)
         if status in ("no_dir", "no_runlog"):
@@ -2543,9 +2817,14 @@ def main() -> int:
             # touches it directly; otherwise silence is correct here.
             continue
         filename, log = latest
-        fails += rule2b_judge_prompt(
-            skill, log, filename, judge_prompt_edited=True
-        )
+        if skill in judge_prompt_touched_skills:
+            fails += rule2b_judge_prompt(
+                skill, log, filename, judge_prompt_edited=True
+            )
+        if skill in judge_render_touched_skills:
+            fails += rule2b_judge_render(
+                skill, log, filename, judge_render_touched=True
+            )
 
     # Instrument arm: rule 2c on every suite the PR's paths could move that the
     # main loop did not already grade. A suite with no committed full-skill log has

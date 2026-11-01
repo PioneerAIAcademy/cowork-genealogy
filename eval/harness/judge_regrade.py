@@ -49,6 +49,7 @@ from typing import Any
 
 from harness import judge, loader, rubric, snapshot, validator_runner
 from harness.auth import resolve_auth
+from harness.judge_render import judge_render_hash
 from harness.judge import (
     DEFAULT_JUDGE_MODEL,
     JUDGE_PROMPT_PATH,
@@ -69,10 +70,14 @@ from harness.scenario_brief import (
     load_scenario_brief,
     readme_fallback_warning,
 )
+from harness.review_sample import is_gradeable, is_mandatory
 from harness.warning_kinds import validate_warning_kinds
 from harness.workspace import build_workspace, snapshot_files
-from harness.outcomes import aggregate_per_run_outcome
-from harness.runlog import _replace_with_retry, validate_run_log
+from harness.runlog import (
+    _replace_with_retry,
+    refresh_test_entry_outcome,
+    validate_run_log,
+)
 from harness.versioning import latest_full_skill_runlog
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -104,6 +109,9 @@ class RegradeResult:
     runs_regraded: int = 0
     tests_scored_moved: list[str] = field(default_factory=list)
     tests_outcome_moved: list[tuple[str, str, str]] = field(default_factory=list)  # (test_id, old, new)
+    # Tests the regrade moved into `is_mandatory` that the stored sample did
+    # not list, so the operator sees the annotation debt the regrade created.
+    review_sample_added: list[str] = field(default_factory=list)
     fallback_scenarios: set[str] = field(default_factory=set)
     error: str | None = None
 
@@ -141,14 +149,21 @@ def collect_regradeable_logs(
     the snapshot without moving the prompt hash; it never certifies anything.
 
     A log is **regradeable** iff:
-      1. its `judge_prompt_hash` != the current judge prompt's hash, AND
+      1. its `judge_prompt_hash` != the current judge prompt's hash, OR its
+         `judge_render_hash` differs from the current render hash or is absent
+         entirely (a log written before the field), AND
       2. its snapshot is active against the working tree (no skill-side drift).
 
-    A log that fails (1) is skipped (prompt is already current).
+    The render half is why a log with no `judge_render_hash` is eligible: the
+    first regrade after that field shipped is what stamps it, and rule 2b only
+    warns until a log carries one.
+
+    A log that fails (1) is skipped (both fingerprints are already current).
     A log that fails (2) is RETURNED with `reason_refused` set — the caller
     reports it rather than silently regrading against stale inputs.
     """
     current_hash = judge.judge_prompt_hash()
+    current_render = judge_render_hash()
     out: list[RegradeTarget] = []
     for skill_dir in sorted(root.iterdir()):
         if not skill_dir.is_dir():
@@ -167,8 +182,9 @@ def collect_regradeable_logs(
             out.append(RegradeTarget(skill=skill, path=path, log=log))
             continue
         stored_hash = log.get("judge_prompt_hash") or ""
-        if stored_hash == current_hash:
-            # Not stale on prompt — nothing to regrade.
+        stored_render = log.get("judge_render_hash") or ""
+        if stored_hash == current_hash and stored_render == current_render:
+            # Neither the prompt nor the render code moved — nothing to regrade.
             continue
         if _skill_side_stale(log):
             out.append(
@@ -714,19 +730,26 @@ def regrade_run_log(
             run_entry["outcome"] = new_outcome
             result.runs_regraded += 1
 
-        # Reuse the project's canonical aggregator rather than inventing a
+        # Reuse the project's canonical rebuild rather than inventing a
         # ranking; keeps the regrade's per-test outcome identical to a fresh
-        # suite's (modal with tiebreak-down semantics).
+        # suite's (modal with tiebreak-down semantics) and refreshes
+        # everything else derived from the runs in the same write. Updating
+        # `outcome` alone left `per_run_outcomes`, `flaky` and the dimension
+        # summaries reporting the grading the regrade had just replaced, and
+        # `skill_gate` reads `aggregated_dimensions`.
         if new_outcomes:
-            aggregated = aggregate_per_run_outcome(new_outcomes)
-            if aggregated != old_outcome:
+            aggregated = refresh_test_entry_outcome(test_entry)
+            if aggregated is not None and aggregated != old_outcome:
                 result.tests_outcome_moved.append(
                     (test_id, old_outcome or "", aggregated)
                 )
-                test_entry["outcome"] = aggregated
 
-    # Stamp envelope.
+    result.review_sample_added.extend(_refresh_review_sample(log))
+
+    # Stamp envelope. Both fingerprints: a regrade is what clears rule 2b, and
+    # rule 2b has a prompt half and a render half.
     log["judge_prompt_hash"] = judge.judge_prompt_hash()
+    log["judge_render_hash"] = judge_render_hash()
     log["judge_model"] = DEFAULT_JUDGE_MODEL
     # Validate before writing — a schema violation introduced by the regrade
     # (e.g. a judge dimension shape the model emitted that the writer doesn't
@@ -742,6 +765,117 @@ def regrade_run_log(
     tmp.write_text(json.dumps(log, indent=2) + "\n", encoding="utf-8")
     _replace_with_retry(tmp, path)
     return result
+
+
+# ---- Re-aggregate (no model call) -----------------------------------------
+
+
+def _consequential(entry: dict[str, Any]) -> tuple[Any, ...]:
+    """The part of a test entry a reader acts on, for change detection.
+
+    Scores, not rationales: `skill_gate` builds its comparison map from
+    `aggregated_dimensions[].score` and never looks at the prose beside it.
+    """
+    summary = entry.get("outcome_summary") or {}
+    return (
+        entry.get("outcome"),
+        entry.get("flaky"),
+        tuple(summary.get("per_run_outcomes") or []),
+        tuple(
+            (d.get("source", ""), d.get("name", ""), d.get("score"))
+            for d in summary.get("aggregated_dimensions") or []
+        ),
+        tuple(
+            (d.get("source", ""), d.get("name", ""), d.get("score"))
+            for d in summary.get("review_dimensions") or []
+        ),
+    )
+
+
+def _refresh_review_sample(log: dict[str, Any]) -> list[str]:
+    """Add every newly-mandatory test to `review_sample`; return what was added.
+
+    `review_sample` is derived from the runs, exactly as `outcome` and the
+    dimension summaries are, so a pass that refreshes those and not this one
+    shrinks the annotation debt it just created: rule 3 iterates the STORED
+    sample, so a test a regrade has just scored a 2 on is gradeable, mandatory,
+    and owed by nobody.
+
+    **Union, never re-select.** The three rotation slots and the random one are
+    drawn against a `seed` and a `cursor` this function does not own, and
+    dropping a test a human has already annotated would strand those
+    corrections. Only `tests` is touched.
+
+    **A log with no `review_sample` does not gain one.** Every such log predates
+    sampling, and rule 3 already demands every dimension of every test from it;
+    synthesizing a sample would narrow that to the mandatory few.
+    """
+    sample = log.get("review_sample")
+    if sample is None:
+        return []
+    mandatory = {
+        t["test_id"]
+        for t in log.get("tests") or []
+        if t.get("test_id") and is_gradeable(t) and is_mandatory(t)
+    }
+    before = set(sample.get("tests") or [])
+    added = sorted(mandatory - before)
+    if added:
+        sample["tests"] = sorted(before | mandatory)
+    return added
+
+
+def reaggregate_log(path: Path) -> tuple[list[str], list[str]]:
+    """Rebuild every test entry's derived fields from the grades already stored.
+
+    Zero model calls, zero cost: `runs[].judge.dimensions` and `runs[].outcome`
+    are read, never re-judged. This repairs logs written by a regrade that
+    refreshed `outcome` alone and left `per_run_outcomes`, `flaky` and the
+    dimension summaries describing the grading it had replaced.
+
+    The envelope is deliberately untouched. Stamping `judge_render_hash` here
+    would certify a suite as graded by the current render code when nothing
+    re-graded it — exactly the false ACTIVE this fingerprint exists to prevent,
+    and it would silently un-refuse a suite rule 2 is holding stale.
+
+    Returns `(changed_test_ids, review_sample_added)`. Both empty means the
+    file was already consistent and nothing is written. The two are separate
+    because a log can need one repair and not the other, and reporting a
+    sample-only write as "0 tests re-aggregated" told the operator nothing had
+    happened while a committed artifact changed under them.
+    """
+    log = json.loads(path.read_text(encoding="utf-8"))
+    changed: list[str] = []
+    for test_entry in log.get("tests") or []:
+        snapshot = copy.deepcopy(test_entry)
+        before = _consequential(test_entry)
+        if refresh_test_entry_outcome(test_entry) is None:
+            continue
+        if _consequential(test_entry) == before:
+            # Only the representative rationale moved. `aggregate_dimensions`
+            # picks the first dim carrying the modal score, so the prose
+            # follows run order and drifts whenever an earlier regrade left a
+            # summary behind — on suites this pass never graded, and years of
+            # them. Nothing reads it: `skill_gate` takes `score` alone, and
+            # `review_sample` reads the runs. Rewriting it anyway would churn
+            # thousands of lines across suites nothing re-judged and bury the
+            # repair that matters, so the stored entry stands.
+            test_entry.clear()
+            test_entry.update(snapshot)
+            continue
+        changed.append(str(test_entry.get("test_id")))
+    # Same derived-from-runs repair as the entries above, and the reason this
+    # path can fix a log an earlier regrade left short without paying for a
+    # re-judge. Runs even when no entry moved: a log whose summaries are
+    # already consistent can still carry a sample that is not.
+    sample_added = _refresh_review_sample(log)
+    if not changed and not sample_added:
+        return [], []
+    validate_run_log(log)
+    tmp = path.parent / (path.name + ".tmp")
+    tmp.write_text(json.dumps(log, indent=2) + "\n", encoding="utf-8")
+    _replace_with_retry(tmp, path)
+    return changed, sample_added
 
 
 # ---- Dry-run (no model call) ----------------------------------------------
@@ -895,6 +1029,15 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Render + hash every judge prompt; no model call. Used by make harness-test.",
     )
+    parser.add_argument(
+        "--reaggregate",
+        action="store_true",
+        help=(
+            "Rebuild each committed log's derived fields from the grades already "
+            "stored. No model call, no cost, and the envelope fingerprints are "
+            "left alone, so a refused suite stays refused."
+        ),
+    )
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument(
         "--runlogs-root",
@@ -923,6 +1066,27 @@ def main(argv: list[str] | None = None) -> int:
     force_readme = args.slot == "readme"
     only_scenarios = set(args.scenario) if args.scenario else None
 
+    if args.reaggregate:
+        if scratch_root is not None:
+            parser.error("--reaggregate does not take --runlogs-root")
+        targets = collect_regradeable_logs(only_skill=args.skill, scratch=True)
+        touched = 0
+        for target in targets:
+            changed, sample_added = reaggregate_log(target.path)
+            if changed or sample_added:
+                touched += 1
+                parts = []
+                if changed:
+                    parts.append(f"{len(changed)} test(s) re-aggregated")
+                if sample_added:
+                    parts.append(
+                        "review_sample += " + ", ".join(sample_added)
+                    )
+                print(f"  {target.skill}: {'; '.join(parts)}")
+        if touched == 0:
+            print("Every committed run log's summary already matches its runs.")
+        return 0
+
     if scratch_root is not None:
         return _main_scratch(
             scratch_root,
@@ -942,7 +1106,7 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
         else:
-            print("All committed run logs are already on the current judge prompt.")
+            print("All committed run logs are already on the current judge prompt and render code.")
         return 0
 
     refused = [t for t in targets if t.reason_refused is not None]
