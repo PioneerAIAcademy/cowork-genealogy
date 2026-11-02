@@ -39,6 +39,7 @@ CREDENTIAL_PATTERN_SPECS = [
     ("FS-ACCESS-TOKEN", "field", r'(\\*")(accessToken|access_token)(\\*"\s*:\s*\\*")(?!\[REDACTED)([^"\\]+)'),
     ("FS-REFRESH-TOKEN", "field", r'(\\*")(refreshToken|refresh_token)(\\*"\s*:\s*\\*")(?!\[REDACTED)([^"\\]+)'),
     ("OPENROUTER-KEY", "field", r'(\\*")(openRouterApiKey|openrouter_api_key)(\\*"\s*:\s*\\*")(?!\[REDACTED)([^"\\]+)'),
+    ("MATCHER-KEY", "field", r'(\\*")(matcherApiKey|matcher_api_key)(\\*"\s*:\s*\\*")(?!\[REDACTED)([^"\\]+)'),
 ]
 
 _COMPILED = [(label, kind, re.compile(pat)) for label, kind, pat in CREDENTIAL_PATTERN_SPECS]

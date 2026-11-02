@@ -36,6 +36,10 @@ const API_KEY_PATTERNS: RegExp[] = [
   /sk-or-[A-Za-z0-9_-]{20,}/g, // OpenRouter
   /sk-[A-Za-z0-9_-]{40,}/g // generic sk-* (OpenAI-style)
 ]
+// A key no value pattern can tell from other text (the matcher key is 64 hex
+// characters) is found by its JSON field, escaped or not; the field name stays.
+// Mirrors apps/server/app/feedback.py's `_API_KEY_FIELD_PATTERNS`.
+const API_KEY_FIELD_PATTERNS: RegExp[] = [/(\\*"matcherApiKey\\*"\s*:\s*\\*")[^"\\]+/g]
 const REDACTED_KEY = '[REDACTED_API_KEY]'
 
 // Living-person redaction. Mirrors apps/server/app/feedback.py
@@ -707,6 +711,10 @@ export function redactApiKeys(serialized: string): string {
   for (const pattern of API_KEY_PATTERNS) {
     pattern.lastIndex = 0
     out = out.replace(pattern, REDACTED_KEY)
+  }
+  for (const pattern of API_KEY_FIELD_PATTERNS) {
+    pattern.lastIndex = 0
+    out = out.replace(pattern, (_match, field: string) => field + REDACTED_KEY)
   }
   return out
 }

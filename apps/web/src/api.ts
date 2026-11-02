@@ -64,24 +64,24 @@ async function req<T>(path: string, opts: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
-  authConfig: () => req<AuthConfig>('/auth/config'),
-  me: () => req<AuthUser>('/auth/me'),
+  authConfig: () => req<AuthConfig>('auth/config'),
+  me: () => req<AuthUser>('auth/me'),
   devLogin: (email: string) =>
-    req<AuthUser>('/auth/dev-login', { method: 'POST', body: JSON.stringify({ email }) }),
-  logout: () => req<{ ok: true }>('/auth/logout', { method: 'POST' }),
+    req<AuthUser>('auth/dev-login', { method: 'POST', body: JSON.stringify({ email }) }),
+  logout: () => req<{ ok: true }>('auth/logout', { method: 'POST' }),
 
-  listSessions: () => req<SessionSummary[]>('/api/sessions'),
+  listSessions: () => req<SessionSummary[]>('api/sessions'),
   createSession: (body: { title?: string; model?: string; sample?: boolean; project_id?: string }) =>
-    req<SessionSummary>('/api/sessions', { method: 'POST', body: JSON.stringify(body) }),
+    req<SessionSummary>('api/sessions', { method: 'POST', body: JSON.stringify(body) }),
   // The prototype backend only: a new session on a retired session's project.
   continueSession: (id: string) =>
-    req<SessionSummary>(`/api/sessions/${id}/continue`, { method: 'POST' }),
+    req<SessionSummary>(`api/sessions/${id}/continue`, { method: 'POST' }),
   resumeSession: (id: string) =>
-    req<SessionSummary>(`/api/sessions/${id}/resume`, { method: 'POST' }),
+    req<SessionSummary>(`api/sessions/${id}/resume`, { method: 'POST' }),
   patchSession: (id: string, body: { title?: string; model?: string }) =>
-    req<SessionSummary>(`/api/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-  deleteSession: (id: string) => req<{ ok: true }>(`/api/sessions/${id}`, { method: 'DELETE' }),
-  sessionLogs: (id: string) => req<{ ws: string; agent: string }>(`/api/sessions/${id}/logs`),
+    req<SessionSummary>(`api/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteSession: (id: string) => req<{ ok: true }>(`api/sessions/${id}`, { method: 'DELETE' }),
+  sessionLogs: (id: string) => req<{ ws: string; agent: string }>(`api/sessions/${id}/logs`),
 
   // Make the session live + get the direct connection to its in-sandbox WS server.
   // `familysearch` reports the user's FamilySearch grant AFTER a refresh+reinject
@@ -96,7 +96,7 @@ export const api = {
       familysearch?: 'ok' | 'expired' | 'none'
       readOnly?: boolean
       message?: string
-    }>(`/api/sessions/${sessionId}/connect?readOnly=true`, { method: 'POST' }),
+    }>(`api/sessions/${sessionId}/connect?readOnly=true`, { method: 'POST' }),
 
   // Upload a document/image into <project>/uploads/ so the agent can read it.
   // Not routed through req(): multipart needs the browser to set Content-Type
@@ -107,7 +107,7 @@ export const api = {
   ): Promise<{ path: string; sizeBytes: number }> => {
     const form = new FormData()
     form.append('file', file)
-    const res = await fetch(`/api/sessions/${sessionId}/files`, {
+    const res = await fetch(`api/sessions/${sessionId}/files`, {
       method: 'POST',
       credentials: 'include',
       body: form

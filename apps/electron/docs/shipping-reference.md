@@ -660,7 +660,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14         # arm64 hardware
+          - os: macos-15         # arm64 hardware
             target: mac
           - os: windows-latest
             target: win
@@ -768,7 +768,7 @@ GitHub Actions billing applies multipliers for non-Linux runners against private
 |---|---|---|---|
 | ubuntu-latest | ~5 min | 1× | 5 |
 | windows-latest | ~10 min | 2× | 20 |
-| macos-14 (arm64) | ~12 min (slower runners + notarization wait) | 10× | 120 |
+| macos-15 (arm64) | ~12 min (slower runners + notarization wait) | 10× | 120 |
 | **Total per release** | — | — | **~145 minutes** |
 
 The Free plan includes 2,000 minutes/month for private repos, so you'd get ~13 releases/month before paying. **Public repos: all of this is free, unlimited.** Make the repo public.

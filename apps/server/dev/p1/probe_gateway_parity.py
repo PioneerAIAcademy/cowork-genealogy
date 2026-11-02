@@ -4,7 +4,8 @@
 Plan: "P3. Bedrock feature parity" in ``docs/plan/search-agent-prototype.md``, P3c–P3l.
 Each check is one direct ``/v1/messages`` request (or a short series) against ``--base``,
 the gateway's route root, e.g. ``http://127.0.0.1:3939/bedrock`` for a local
-agentgateway carrying tap-agentgateway's ``/bedrock`` route. Nothing here starts the
+agentgateway carrying tap-agentgateway's ``/bedrock`` route (``tap-local-gateway.yaml``
+here is TAP's EKS route, with how to run it). Nothing here starts the
 CLI; ``passthrough_proxy.py --upstream http://host:port`` records what the CLI itself
 sends.
 

@@ -34,6 +34,7 @@ import {
   type IntroducedCitation,
 } from "./research-append.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import {
   introducedWarnings,
   staleJustifications,
@@ -814,6 +815,13 @@ async function applyOperation(
         if (!assertion) {
           throw new TreeEditError(
             `add_relationship: sourceAssertionId '${input.sourceAssertionId}' not found in research.json assertions`,
+          );
+        }
+        if (!isLiveAssertion(assertion)) {
+          throw new TreeEditError(
+            `add_relationship: sourceAssertionId '${input.sourceAssertionId}' was retired by a re-extraction ` +
+              `(superseded_by ${assertion.superseded_by}), so it is not evidence for an edge: cite its ` +
+              "replacement, or add no edge where it was retracted",
           );
         }
         // `marriage` counts as relationship-establishing: a marriage register is

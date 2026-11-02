@@ -828,6 +828,11 @@ A bride in a marriage register is **record-derived**, so she travelled through
 an exemption whose own justification did not cover her, and landed with no
 provenance. This arm closes that.
 
+Both arms read only live assertions (`isLiveAssertion`): an assertion a
+re-extraction retired (`research-schema-spec.md` §5.6) is no persona to mint
+from, and an `assertionId` naming one is refused, so a party is minted from the
+replacement or not at all.
+
 ```
 materialize_facts({ projectPath, assertionId, relatedRole,
                     name: { given, surname }, gender?, nameType?, personId? })

@@ -486,7 +486,7 @@ proto-up-core: ## Prototype stack without the web tier: postgres/minio/elasticmq
 
 .PHONY: proto-down
 proto-down: ## D3 prototype: stop the stack and drop its volumes (the next up's migrate one-shot re-applies the schema)
-	$(PROTO_COMPOSE) down -v
+	$(PROTO_COMPOSE) down -v --remove-orphans
 
 # U9: proto/migrate.py, the schema's one applier, from the host venv against the compose
 # postgres -- what the stack's `migrate` one-shot runs at every up. ARGS=--status reports
@@ -555,6 +555,25 @@ proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tie
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/turn.py $(ARGS)
+
+# U28: the SPA and web tier under a path prefix, behind an nginx edge that strips it the way
+# the FamilySearch edge does (apps/server/proto/prefix/README.md). Billed, one one-line turn;
+# exits 2 before it without a model key or the dev patron's grant (`make proto-grant`). It
+# recreates web with the prefixed PUBLIC_URL, so the unprefixed check needs a fresh proto-up.
+# The edge is recreated after web (nginx resolves web once, at start) and removed at the end.
+.PHONY: proto-prefix-check
+proto-prefix-check: $(ENGINE_DEPS) ## U28: sign-in, a turn and a 60 s idle stream through a path-prefix edge on 127.0.0.1:8090 (needs proto-grant; billed, one short turn)
+	pnpm --filter cowork-genealogy-eval-app exec playwright install chromium
+	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
+	  . apps/server/proto/env.sh && \
+	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-prefix-check: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
+	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --build && \
+	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --wait postgres minio elasticmq worker shim web tools && \
+	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --wait --force-recreate edge && \
+	  (cd apps/server && uv run python -c 'import sys; from proto import turn; p = turn.require_grant("$(PROTO_PG_DSN)", turn.DEV_LOGIN_EMAIL); p and print(p, file=sys.stderr); sys.exit(2 if p else 0)') && \
+	  node apps/server/proto/prefix/check.mjs; \
+	  rc=$$?; $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml rm -sf edge; \
+	  echo "proto-prefix-check: web now runs with the prefixed PUBLIC_URL; run \`make proto-up\` before the unprefixed check (BASE=http://127.0.0.1:8085 node apps/server/proto/prefix/check.mjs) or proto-turn"; exit $$rc
 
 # D14 kill-resume on a real turn: the worker container is killed as the turn's first
 # place_search call starts, started again, and the shim's redelivery resumes the SDK
@@ -1113,7 +1132,6 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#   EFFORT_LEVEL       low|medium|high|xhigh|max   (default high, matches Cowork)
 	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
 	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
-	#   PERSON_EVIDENCE_GUARD  shadow|deny              (default shadow; issue #1231)
 	#   DENY_SHELL         1                             (default off; P2 — deny Bash/PowerShell)
 	#   DENY_PROJECT_READS 1                             (default off; P2 — deny Read/Grep/Glob of the project folder)
 	#   CONTEXT_1M         1                             (default off; ask for the 1M context window)
@@ -1127,13 +1145,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# (check subagents[].runaway_thinking; if it is empty, read
 	# subagent_capture_status before reading that as 'no runaway').
 	# e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
-	# PERSON_EVIDENCE_GUARD=deny blocks a person_evidence link for an unscored
-	# new person instead of only recording it. For gathering recovery evidence on
-	# ONE fixture: it fires in ~80% of runs that link a person, and a deny-mode
-	# run's `compliance` is not comparable to a shadow run's (the blocked write
-	# never lands, so the post-run check passes vacuously).
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
 
 .PHONY: e2e-single-ask
 e2e-single-ask: $(ENGINE_BUILD) ## Run the single-ask e2e panel — one ordinary turn per fixture, graded on which unit ran and what was saved (live, billed): make e2e-single-ask [TEST=<slug>]
@@ -1332,10 +1345,8 @@ e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc +
 	# WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
 	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
-	# what runs stored: the seven post-hoc families (the §8 person_evidence
-	# provenance check from tool_calls + each fixture's committed seed tree, and the
-	# six §7/§7.5 checks from each run's committed final-research / final-tree
-	# sidecars) and the §11 unnamed-delegate check (issue #980) from tool_calls,
+	# what runs stored: the six §7/§7.5 post-hoc families from each run's committed
+	# final-research / final-tree sidecars, and the §11 unnamed-delegate check (issue #980) from tool_calls,
 	# which is the only half that reflects a later detector change such as the
 	# namespaced-agent_type tolerance. The §11 count always prints its attribution
 	# denominator — how many runs carry any caller attribution to fire on at all.
@@ -1438,7 +1449,7 @@ e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (is
 	  $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-detector-diff
-e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm|same-person-provenance|direct-spawn-credit | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm|direct-spawn-credit | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API. Reusable across detector corrections: runs a locally-
 	# defined pre-fix replica and the real, current implementation over every
 	# applicable committed run, and reports every run where the two disagree.

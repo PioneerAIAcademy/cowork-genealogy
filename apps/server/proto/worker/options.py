@@ -37,6 +37,7 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 ``Write``/``Edit`` on the project files (the hosted ``direct_project_file_write``),
+a delegation that would start a general-purpose agent (U14),
 denies a ``Read``/``Grep``/``Glob`` under the anchor and any read or write under ``/proc``
 or ``/dev``, the turn's own process (``deny.py``), and records EVERY
 call as a ``tool_calls`` row with its decision -- so criterion 3 is a query, not a claim.
@@ -64,6 +65,7 @@ from app.agent.continue_policy import (
     delivered_stop_reason,
     foreground_rewrite,
     DELIVERY_GUIDANCE,
+    HOSTED_PLANE_ENV,
     DELIVERED_TOOL,
     CONTINUE_REASON,
     env_float,
@@ -109,6 +111,7 @@ GATEWAY_AGENT_MODELS = {
     "claude-haiku-5-5": "us.anthropic.claude-haiku-5-5",
     "claude-sonnet-5-5": "us.anthropic.claude-sonnet-5-5",
 }
+BEDROCK_ID_PREFIXES = ("us.", "global.")
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 # The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
 # raised so one oversized JSON line cannot end a turn.
@@ -125,6 +128,49 @@ BLOCKED_DENY_REASON = (
     "{tool} is denied on this run: the fixture's answer sits in the live FamilySearch tree "
     "and this run must find it in records (the e2e harness's tree-read block, BLOCKED_TOOLS)."
 )
+
+
+# What the runtime starts for a spawn naming no agent, or naming this one: an agent with
+# none of a plugin agent's instructions or `tools:` limits. A gateway 400 on an agent's
+# model has ended in one silently (plan P3h), so the worker refuses it (U14).
+STAND_IN_AGENT = "general-purpose"
+
+STAND_IN_DENY_REASON = (
+    '{tool} as a "general-purpose" agent is disabled here: it runs the step without the '
+    "plugin agent's instructions and tool limits. Delegate to the named plugin agent the "
+    "step calls for (its name is the subagent_type), or do the step yourself."
+)
+
+
+def is_stand_in_delegation(tool_name: str, tool_input: Any) -> bool:
+    """An ``Agent``/``Task`` call that would start a general-purpose agent: no
+    ``subagent_type``, or ``general-purpose`` under any prefix."""
+    if tool_name not in DELEGATION_TOOLS:
+        return False
+    raw = tool_input.get("subagent_type") if isinstance(tool_input, dict) else None
+    name = raw.strip().rsplit(":", 1)[-1] if isinstance(raw, str) else ""
+    return name in ("", STAND_IN_AGENT)
+
+
+def hook_denied_tool_use_ids(message: Any) -> list[str]:
+    """The ``tool_use_id`` of each call in ``message``'s results that a ``PreToolUse`` hook
+    stopped: an ``is_error`` result whose text the CLI wrote as ``PreToolUse:<tool> hook
+    error: <reason>`` (CLI 2.1.x; the plugin hook's denies and this worker's alike, live on
+    compose 2026-10-31). No post-call hook fires for such a call, so its result is the
+    worker's only sign that the plugin hook denied what this worker's hook allowed."""
+    content = getattr(message, "content", None)
+    if not isinstance(content, list):
+        return []
+    ids: list[str] = []
+    for block in content:
+        if getattr(block, "is_error", None) is not True or not getattr(block, "tool_use_id", None):
+            continue
+        body = getattr(block, "content", None)
+        if isinstance(body, list):
+            body = "".join(str(part.get("text") or "") for part in body if isinstance(part, dict))
+        if isinstance(body, str) and body.startswith("PreToolUse:") and " hook error: " in body:
+            ids.append(block.tool_use_id)
+    return ids
 
 
 def is_blocked_call(tool_name: str, blocked: frozenset[str]) -> bool:
@@ -240,12 +286,25 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         "ANTHROPIC_API_KEY": "",
         "ANTHROPIC_MODEL": GATEWAY_MODEL,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
-        # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-        # its second turn (plan P3f). TAP's Fargate stack pins 1.5.0; its EKS stack
-        # (tap-gateway) runs 1.6.0: tool search passes on a local copy of its route
-        # (2026-10-24) and is unverified on the deployed gateway (handoff U14).
-        "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
+        # On by default (Richard, 2026-10-31): TAP's EKS gateway runs agentgateway
+        # 1.6.0, and tool search held through kills, resumes, compactions and Sonnet 5
+        # subagents on a local copy of its route (handoff U14; unverified on the
+        # deployed gateway until F1). Off costs ~12-14% a run. agentgateway < 1.6
+        # cannot parse tool_reference (plan P3f): set GATEWAY_TOOL_SEARCH=false for
+        # TAP's Fargate stack, which pins 1.5.0.
+        "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "true").strip().lower(),
     }
+
+
+def unmapped_gateway_models(agents: Mapping[str, Any]) -> list[str]:
+    """``"<agent>: <model>"`` for each agent whose model a gateway would receive unmapped:
+    not in ``GATEWAY_AGENT_MODELS`` and not already a Bedrock id. Empty = OK (U14). An
+    agent with no model inherits the main thread's, which is mapped."""
+    return sorted(
+        f"{name}: {model}" for name, agent in agents.items()
+        if isinstance(model := getattr(agent, "model", None), str)
+        and model not in GATEWAY_AGENT_MODELS and not model.startswith(BEDROCK_ID_PREFIXES)
+    )
 
 
 def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
@@ -665,6 +724,8 @@ def make_pretool_hook(
                 decision, reason = "deny", step_verdict[1]
             elif protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
+            elif is_stand_in_delegation(tool_name, tool_input):
+                decision, reason = "deny", STAND_IN_DENY_REASON.format(tool=tool_name)
             elif is_blocked_call(tool_name, blocked):
                 decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
             else:
@@ -989,6 +1050,7 @@ def build_worker_options(
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
         # main thread's context and tools, not a plugin agent's `tools:` list.
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        HOSTED_PLANE_ENV: "1",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,
     }

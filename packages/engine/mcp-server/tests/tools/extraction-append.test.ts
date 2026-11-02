@@ -347,7 +347,8 @@ describe("extraction_append: only the three call shapes", () => {
       record_role: "principal",
       tree_person_id: "I1",
       score: 0.9,
-      matched: true,
+      scorer: "familysearch",
+      model: null,
       assertion_id: "a_001",
       record_source: "record_read",
       computed: "2026-09-24T00:00:00Z",
@@ -827,6 +828,17 @@ describe("extraction_append: recordIds and absences", () => {
     expect(r.records[0].status).toBe("already_extracted");
     expect(r.records[0].srcId).toBe(before.sources[0].id);
     expect(r.records[0].summary).toMatch(/already extracted as src_\d+/);
+    expect(await research()).toEqual(before);
+  });
+
+  it("refuses to re-extract a household member covered only by widening, naming the id it was extracted under (#3678)", async () => {
+    const { a, b } = household();
+    await runExtractionAppend({ projectPath: dir, recordIds: [a.recordId] }, readerFor([a]) as any, LOCAL);
+    const before = await research();
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [b.recordId], reextract: true } as any, readerFor([b]) as any, LOCAL);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
+    expect(r.records[0].summary).toMatch(/extracted under .*not under this id/);
+    expect(r.records[0].summary).toContain(arkToBareId(a.recordId));
     expect(await research()).toEqual(before);
   });
 
@@ -1419,6 +1431,26 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect([...linkedPersonas]).toEqual(["p_260900945"]);
     expect(r.summary).toMatch(/linked as unverified attachments/);
     expect(r.summary).toMatch(/separate request/);
+  });
+
+  it("after a re-extraction, links only the live reading and refuses nothing (#3678)", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    const rdr = reader([CENSUS()]);
+    const first = await runExtractionAppend({ projectPath: dir, recordIds: [url("MZGS-1B7")] } as any, rdr as any, LOCAL);
+    expect(first.records[0].status, JSON.stringify(first)).toBe("extracted");
+    const again = await runExtractionAppend({ projectPath: dir, recordIds: [url("MZGS-1B7")], reextract: true } as any, rdr as any, LOCAL);
+    expect(again.records[0].status, JSON.stringify(again)).toBe("extracted");
+    const retired = new Set(
+      (await research()).assertions.filter((a: any) => a.superseded_by != null).map((a: any) => a.id),
+    );
+    expect(retired.size).toBeGreaterThan(0);
+
+    const r = await run("I1", rdr);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.errors ?? []).toEqual([]);
+    const links = (await research()).person_evidence;
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.some((pe: any) => retired.has(pe.assertion_id))).toBe(false);
   });
 
   it("the whole-batch link asks for the first failure only: it reads nothing but ok and is retried op by op", async () => {

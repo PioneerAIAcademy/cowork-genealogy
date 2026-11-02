@@ -39,7 +39,7 @@ tools on purpose.
 {
   "acknowledged": true,
   "summary": "<the summary, trimmed>",
-  "note": "Delivery recorded. Where this run is managed, the turn ends here; otherwise it carries on."
+  "note": "Signal received. This turn's deliverable is done: make no further tool calls and end your turn; the researcher chooses the next step."
 }
 ```
 
@@ -78,8 +78,9 @@ tools on purpose.
 - **Cowork and the e2e harness.** No such hook binds, and the tool IS advertised (the
   e2e orchestrator binds the real engine server and grants `mcp__genealogy` as a
   server-prefix wildcard). So it must not error and must not claim an effect it did not
-  have: it returns the acknowledgement above and the run genuinely carries on. That inert
-  behaviour is the intended one for these environments, not an oversight.
+  have: it returns the acknowledgement above, which tells the model to make no further tool
+  calls and end its turn. The tool itself still writes nothing and ends nothing; that note is
+  the only stop these environments have.
 - **The unit harness.** Advertised, and inert. That harness binds a mock server which
   registers only fixture-backed tools plus `LIVE_TOOLS` (`eval/harness/harness/mock_mcp.py`);
   this tool is a `LIVE_TOOL` there, so the real implementation runs and the call is
@@ -116,12 +117,24 @@ without the call, the hosted arm never halts, and the nudge arm pushes it on int
 research. The cost of naming it in the body is one inert call per bounded turn in Cowork;
 the cost of not naming it was the conflict. One skill body names it, not every skill.
 
-It carries two exclusions, both load-bearing:
+It carries three exclusions, all load-bearing:
 
 - **Not when the research objective itself is finished.** That run ends on its own and its
   outcome is `completed`; reporting `delivered` there would mislabel a finished project.
 - **Not in place of asking the researcher a question.** An ask waits for an answer; a
   delivery waits for nothing.
+- **Not while no project exists yet.** A "Research PID X. <question>" first message read
+  as "a single record or lookup": the main thread answered it from one `person_read` and
+  delivered, with no project and no research. A request to research a person is a research
+  job. The exclusion is keyed on the project, not the message: a turn that starts a project
+  and then gives just a plan creates the project first and still delivers.
+
+The tool's own description says the same thing in step mode's terms: call it once this
+turn's deliverable is produced, the only one asked for or the first of several, after naming
+the others and ending on the next one's "Continue with …?" offer, which is not a question to
+the researcher. It used to say "once every one is produced", which contradicted step mode on a
+compound bounded ask: the model either held the call back because the second deliverable was
+not yet produced, or produced both in one turn so that it could call it.
 
 ## Ending the turn when a project completes
 

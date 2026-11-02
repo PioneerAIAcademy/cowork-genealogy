@@ -38,6 +38,7 @@ import {
 } from "../data/census-table.js";
 import { haversineDistance } from "./distance.js";
 import { getPersonName } from "./person-warnings.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import {
   researchAppend,
   timelineCensus1890Invariants,
@@ -316,7 +317,7 @@ export async function planTimeline(
   );
   const assertionsById = new Map<string, any>();
   for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-    if (a && typeof a.id === "string") assertionsById.set(a.id, a);
+    if (isLiveAssertion(a) && typeof a.id === "string") assertionsById.set(a.id, a);
   }
   const linksByAssertion = new Map<string, any[]>();
   for (const pe of links) {
@@ -788,7 +789,7 @@ function marriageGap(
 ): GapOut | null {
   // An undated linked marriage can precede any child.
   if (undatedMarriage) return null;
-  const all: any[] = Array.isArray(research.assertions) ? research.assertions : [];
+  const all: any[] = (Array.isArray(research.assertions) ? research.assertions : []).filter(isLiveAssertion);
   // The person's own role(s) in each linked record.
   const rolesByRecord = new Map<string, Set<string>>();
   for (const id of linksByAssertion.keys()) {
