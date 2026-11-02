@@ -10,6 +10,10 @@ fires on every Cowork message with its text (ADR-0005, item 2), so it carries th
 That probe measured the hook firing, not its `additionalContext` reaching the model in
 Cowork, which is unmeasured.
 
+It carries a second sentence, unconditional: name a source, collection, book or citation
+only if a tool result returned it (issue #4011, widened by the lead from issue #4125). The
+hosted planes append the same text; both harnesses add it from here.
+
 **Cowork only.** Both hosted planes set `GENEALOGY_HOSTED_PLANE` in the SDK env, and the
 hook is silent there: the hosted fix ruled for them is text only (a truthful `project_note`
 and a `DELIVERY_GUIDANCE` exclusion), with nothing routing the main thread.

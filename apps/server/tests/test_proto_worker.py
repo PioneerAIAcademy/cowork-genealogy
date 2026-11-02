@@ -5248,8 +5248,8 @@ def test_the_delivery_instruction_rides_the_same_turn_prompt(tmp_path):
 
 
 def test_the_sources_instruction_rides_the_same_turn_prompt(tmp_path):
-    """Issue #4011: the worker names a FamilySearch collection only from a
-    collections_search result, the same text the alpha and the Cowork hook carry."""
+    """Issue #4011: the worker names a source, collection, book or citation only from a
+    tool result, the same text the alpha and the Cowork hook carry."""
     opts = _options(config_dir=str(tmp_path))
     assert options.SOURCES_GUIDANCE in opts.system_prompt["append"]
     assert opts.system_prompt["append"].startswith("You are the hosted genealogy research agent")
