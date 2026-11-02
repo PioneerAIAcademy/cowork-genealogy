@@ -260,6 +260,16 @@ describe("questionStatus — the state ladder", () => {
       );
     });
 
+    it("a planned fs_hints item takes the search-hints lane", () => {
+      const s = questionStatus(
+        evidence([{ id: "pli_1", sequence: 1, status: "planned", record_type: "fs_hints", repository: "FamilySearch" }]),
+        question(),
+      );
+      expect(s.nextStep).toBe(
+        "search-hints — pli_1, or research-plan — dispose of pli_1 if the evidence already answers the question",
+      );
+    });
+
     it("a non-FamilySearch next item takes the external lane", () => {
       const s = questionStatus(evidence([{ id: "pli_1", sequence: 1, status: "planned", repository: "MyHeritage" }]), question());
       expect(s.nextStep).toBe(

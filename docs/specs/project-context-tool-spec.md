@@ -314,9 +314,9 @@ item on its active plan is `planned`. With planned items it reports
 evidence already answers the question` (the external lane keeps its own form,
 `search-external-sites — <id> (<repo>)`): the search comes first so a still-needed
 item is not skipped by default. `in_progress` items do not change it. Over the
-corpus on 2026-10-21 (every scenario, unit-test state and e2e final state, 431
-question entries) this moves 11 entries off `research-exhaustiveness`: 2 scenarios
-and 9 e2e final states. An uncited entry does not move it back to extraction: agents log an
+corpus on 2026-11-02 (every scenario, unit-test state and e2e final state, 484
+question entries) this moves 13 entries off `research-exhaustiveness`: 3 scenarios
+and 10 e2e final states. An uncited entry does not move it back to extraction: agents log an
 inconclusive search as `partial` and a link list as `positive`, and those entries
 stay uncited. Over the corpus on 2026-10-16 (every scenario plus every e2e final
 state, 421 question entries), holding the question on extraction would have moved
