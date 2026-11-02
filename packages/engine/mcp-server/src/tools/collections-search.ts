@@ -22,12 +22,26 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 // failure at the default, with no second attempt behind them.
 const COLLECTIONS_TIMEOUT_MS = 60_000;
 
-// Module-level cache for the full collections response
+// Module-level cache for the full collections response: one slot. By default it
+// is keyed on the token, so a second patron's call replaces the first's. With
+// `shared` (GENEALOGY_SHARED_COLLECTIONS_CACHE, self-hosted beta E4) any caller's
+// cached success is served to every caller: the catalog is titles and counts with
+// no patron data. Only a success is stored, and no in-flight fetch is shared, so
+// one patron's failed fetch never reaches another's call.
 let cache: {
   token: string;
   data: FSCollectionsResponse;
   fetchedAt: number;
 } | null = null;
+let shared = false;
+
+/**
+ * Set by the hosted entrypoint from the process environment. Unset — the
+ * `.mcpb`, the harnesses — the cache stays per token.
+ */
+export function configureCollectionsCache(options: { shared?: boolean }): void {
+  shared = options.shared === true;
+}
 
 /**
  * Extract the FSCollectionData from a GEDCOMX-wrapped entry.
@@ -93,7 +107,8 @@ export function standardPlaceToCollectionsQuery(value: string): string {
 }
 
 /**
- * Fetch all collections from FamilySearch (cached for 1 hour per token).
+ * Fetch all collections from FamilySearch (cached for 1 hour, per token unless
+ * the cache is shared).
  */
 export async function fetchAllCollections(
   token: string,
@@ -101,7 +116,7 @@ export async function fetchAllCollections(
 ): Promise<FSCollectionsResponse> {
   if (
     cache &&
-    cache.token === token &&
+    (shared || cache.token === token) &&
     Date.now() - cache.fetchedAt < CACHE_TTL_MS
   ) {
     return cache.data;
