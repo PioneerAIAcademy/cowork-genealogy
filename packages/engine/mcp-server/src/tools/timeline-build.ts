@@ -25,6 +25,7 @@ import {
 import { lookupWithin } from "../utils/place-coords.js";
 import { resolveStandardPlace, standardPlaceToCoords, type PlaceCoords } from "../utils/place-resolver.js";
 import { normalizeFactType } from "../utils/record-extract.js";
+import { placeTextKey } from "../utils/place-verdict.js";
 import { relationshipCategory } from "../utils/relationship-category.js";
 import { isIdentityConflict } from "../utils/question-state.js";
 import {
@@ -37,6 +38,7 @@ import {
 } from "../data/census-table.js";
 import { haversineDistance } from "./distance.js";
 import { getPersonName } from "./person-warnings.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import {
   researchAppend,
   timelineCensus1890Invariants,
@@ -315,7 +317,7 @@ export async function planTimeline(
   );
   const assertionsById = new Map<string, any>();
   for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-    if (a && typeof a.id === "string") assertionsById.set(a.id, a);
+    if (isLiveAssertion(a) && typeof a.id === "string") assertionsById.set(a.id, a);
   }
   const linksByAssertion = new Map<string, any[]>();
   for (const pe of links) {
@@ -393,12 +395,19 @@ export async function planTimeline(
   }
   if (events.size === 0) return null;
 
-  // Places: copied from the assertions, else resolved from their place text;
-  // coordinates for every standard place. One deadline covers both legs.
+  // Places: copied from the assertions, the standard place from one whose place
+  // is the event's (any, when none has a place), else resolved from the place
+  // text; coordinates for every standard place. One deadline covers both legs.
   for (const e of events.values()) {
-    e.place = e.assertions.find((a) => typeof a.place === "string" && a.place.trim())?.place ?? null;
+    const place = e.assertions.find((a) => typeof a.place === "string" && a.place.trim())?.place ?? null;
+    e.place = place;
     e.standardPlace =
-      e.assertions.find((a) => typeof a.standard_place === "string" && a.standard_place.trim())?.standard_place ?? null;
+      e.assertions.find(
+        (a) =>
+          typeof a.standard_place === "string" &&
+          a.standard_place.trim() &&
+          (place === null || (typeof a.place === "string" && placeTextKey(a.place) === placeTextKey(place))),
+      )?.standard_place ?? null;
   }
   const known = [...new Set([...events.values()].map((e) => e.standardPlace).filter((p): p is string => !!p))];
   const rawToResolve = [
@@ -780,7 +789,7 @@ function marriageGap(
 ): GapOut | null {
   // An undated linked marriage can precede any child.
   if (undatedMarriage) return null;
-  const all: any[] = Array.isArray(research.assertions) ? research.assertions : [];
+  const all: any[] = (Array.isArray(research.assertions) ? research.assertions : []).filter(isLiveAssertion);
   // The person's own role(s) in each linked record.
   const rolesByRecord = new Map<string, Set<string>>();
   for (const id of linksByAssertion.keys()) {

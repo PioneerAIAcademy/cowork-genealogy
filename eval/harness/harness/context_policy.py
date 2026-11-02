@@ -35,16 +35,16 @@ One scope limit (plan §4.1):
   members that no skill declared; issue #2937 changed that. `research` and
   `search-records` declare `extraction_append` in their own `allowed-tools` and
   call it from the main thread as their ordinary route, and `extraction_append` accordingly left
-  `SUBAGENT_ONLY_TOOLS` (see the set's own comment for what that retires). The
-  one remaining member, `image_read`, is still declared by no skill and no agent
-  — pages are read with `image_transcribe`, and the image-reader agents are
-  retired (issue #2013, #2490) — so for that member
-  `agent_id` presence alone still decides. Pinned by
+  `SUBAGENT_ONLY_TOOLS` (see the set's own comment for what that retires).
+  `image_read` is still declared by no skill and no agent — pages are read with
+  `image_transcribe`, and the image-reader agents are retired (issue #2013,
+  #2490) — and the hook's AGENT_ONLY_TOOLS are declared by no skill by
+  definition, so for every member `agent_id` presence alone still decides. Pinned by
   `tests/unit/test_context_policy.py`.
 
-e2e enforcement covers **every member of `SUBAGENT_ONLY_TOOLS`** — today just
-`image_read` (#1273), since `extraction_append` (#942) left the set in issue
-#2937. Because no skill declares the remaining member, `agent_id`
+e2e enforcement covers **every member of `SUBAGENT_ONLY_TOOLS`** — `image_read`
+(#1273) and, since issue #3528, the shipped hook's AGENT_ONLY_TOOLS, the tools
+only agents hold. Because no skill declares any member, `agent_id`
 presence alone discriminates a legitimate subagent call from a router
 substitution, which is all e2e can see — its sub-skills run in the same session
 via the `Skill` tool with no `agent_id` to attribute them. The e2e block is
@@ -97,9 +97,15 @@ from typing import Any
 # The declared-tools exemption below is NO LONGER unreachable: `research` and
 # `search-records` declare `extraction_append`, which is exactly the case condition 3 describes.
 #
-# Keep this a plain set, not a policy engine — one entry certainly does not
-# justify machinery. Matched on the bare name, so it is transport-agnostic.
-SUBAGENT_ONLY_TOOLS = frozenset({"image_read"})
+# The rest of the set is the shipped hook's AGENT_ONLY_TOOLS (issue #3528): the
+# tools only agents hold, which the plugin hook denies the main thread in
+# Cowork and the hosted path. Imported rather than copied, so a production deny
+# is a harness deny ("Denies production genuinely has stay too", CLAUDE.md).
+# `SUBAGENT_ONLY_TOOLS` is therefore assigned below, once the hook is loaded.
+#
+# Keep this a plain set, not a policy engine. Matched on the bare name, so it is
+# transport-agnostic.
+_HARNESS_ONLY_SUBAGENT_TOOLS = frozenset({"image_read"})
 
 
 def bare_tool_name(tool_name: str) -> str:
@@ -145,9 +151,9 @@ def subagent_only_violation(
     3. The skill did **not** declare the tool in its own `allowed-tools`
        (`declared_tools`, from `allowed_tools.declared_skill_tools`). A skill
        that claimed the tool for itself may call it directly; a skill that
-       holds it only through the agent-union may not. No skill declares either
-       guarded tool today — pages are read with `image_transcribe` — so this
-       exemption is currently unreachable, and `agent_id` presence alone decides (see
+       holds it only through the agent-union may not. No skill declares a
+       guarded tool today — AGENT_ONLY_TOOLS is by definition declared by none —
+       so this exemption is currently unreachable, and `agent_id` presence alone decides (see
        `e2e/orchestrator.py` and e2e-test-spec §6.1.1).
 
     `declared_tools=None` means "unknown", and is treated as **declaring
@@ -201,9 +207,14 @@ def subagent_only_denial(bare: str) -> dict[str, Any]:
     Deliberately returns no `stopReason`: a denied call is a recoverable
     mistake, not a fatal one. The run continues so the router can pivot —
     matching how the e2e tree-read block behaves. The reason text is the
-    model's only feedback here, so it names the fix per tool (`_DENIAL_REASONS`).
+    model's only feedback here, so it names the fix per tool: the shipped
+    hook's own text for an agent-only tool, so the harness denies with what the
+    agent meets in Cowork, and `_DENIAL_REASONS` for the harness-only rest.
     """
-    reason = _DENIAL_REASONS.get(bare, _DENIAL_REASON_FALLBACK.format(bare=bare))
+    if bare in _guard.AGENT_ONLY_TOOLS:
+        reason = _guard.agent_only_reason(bare)
+    else:
+        reason = _DENIAL_REASONS.get(bare, _DENIAL_REASON_FALLBACK.format(bare=bare))
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
@@ -263,6 +274,15 @@ def _load_guard():
 
 
 _guard = _load_guard()
+
+#: Tool -> the agents that hold it, for the tools only agents hold. The shipped
+#: hook's map, not a copy.
+AGENT_ONLY_TOOLS = _guard.AGENT_ONLY_TOOLS
+
+#: Tools the main thread may not call: the harness-only `image_read` deny plus
+#: the shipped hook's AGENT_ONLY_TOOLS. Same import-don't-copy discipline as
+#: OWNED_SECTIONS below.
+SUBAGENT_ONLY_TOOLS = _HARNESS_ONLY_SUBAGENT_TOOLS | frozenset(AGENT_ONLY_TOOLS)
 
 
 #: research.json sections the shipped hook routes to a named agent, mapped to

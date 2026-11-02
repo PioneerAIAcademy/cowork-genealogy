@@ -119,7 +119,7 @@ async def test_each_turn_reports_its_own_cost_not_the_session_total(tmp_path, mo
     monkeypatch.setattr(real_agent, "_post_turn_cost", capture)
     monkeypatch.setattr(real_agent, "_sandbox_build", lambda: "abc123+dirty")
     agent = real_agent.RealAgent(tmp_path)
-    agent._hook_counter = counter = {"tool_calls": 0, "delivered": False, "continuations": 0}
+    agent._hook_counter = counter = {"delivered": False, "continuations": 0}
 
     def two_overridden_stops():
         counter["continuations"] += 2
@@ -177,26 +177,15 @@ class _Matcher:
         self.kw = kw
 
 
-def test_the_stop_hook_counts_the_stops_it_overrides_per_turn(tmp_path, monkeypatch):
+def test_continuations_stay_zero_now_that_no_stop_hook_overrides_a_stop(tmp_path):
+    """The Stop hook that counted overridden stops was deleted (step mode phase 2), so the
+    alpha reports 0 for every turn; the column stays for the rows written before."""
     (tmp_path / "research.json").write_text('{"project": {"status": "active"}}', encoding="utf-8")
-    monkeypatch.setattr(real_agent, "AUTONOMOUS_MAX_NUDGES", 60)
     agent = real_agent.RealAgent(tmp_path)
     hooks = real_agent._build_hooks(_Matcher, tmp_path, agent)
-    stop = hooks["Stop"][0].kw["hooks"][0]
+    assert "Stop" not in hooks
     count_tool = hooks["PreToolUse"][0].kw["hooks"][0]
-    call = lambda hook: asyncio.run(hook({"tool_name": "Read", "tool_input": {}}, "t", None))  # noqa: E731
-
-    assert call(stop)["decision"] == "block"
-    call(count_tool)
-    assert call(stop)["decision"] == "block"
-    assert agent._hook_counter["continuations"] == 2
-
-    (tmp_path / "research.json").write_text('{"project": {"status": "completed"}}', encoding="utf-8")
-    call(count_tool)
-    assert call(stop) == {}
-    assert agent._hook_counter["continuations"] == 2, "an allowed stop was counted"
-
-    agent._begin_turn_hook_state()
+    asyncio.run(count_tool({"tool_name": "Read", "tool_input": {}}, "t", None))
     assert agent._hook_counter["continuations"] == 0
 
 

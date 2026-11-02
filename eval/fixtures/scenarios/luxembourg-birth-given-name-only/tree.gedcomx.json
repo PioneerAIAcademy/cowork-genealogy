@@ -1,0 +1,75 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Theresia",
+          "surname": "Reding",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1846",
+          "place": "Arsdorf, Redange, Luxembourg"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Jakob",
+          "surname": "Reding",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Maria Johanna",
+          "surname": "Fautsch",
+          "type": "BirthName"
+        }
+      ],
+      "facts": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "CR1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1"
+    },
+    {
+      "id": "CR2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1"
+    },
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I3"
+    }
+  ],
+  "sources": []
+}

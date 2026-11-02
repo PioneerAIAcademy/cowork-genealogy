@@ -1,0 +1,68 @@
+{
+  "project": {
+    "id": "rp_silva_gonzalez_children_chile",
+    "objective": "What children were born to Benjamín Silva Díaz and Clara González Pimienta in Chile, 1890–1910?",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-28",
+    "updated": "2026-10-28"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Explain findings clearly and simply, as if to someone new to genealogy research."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What children were born to Benjamín Silva Díaz and Clara González Pimienta in Chile, 1890–1910?",
+      "rationale": "The couple Benjamín Silva Díaz (I1) and Clara González Pimienta (I2) lived in Nancagua, Colchagua, Chile around 1890. Chile civil registration records would identify their children born in that period.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-10-28",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-28",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Nancagua, Colchagua, Chile",
+          "date_range": "1890-1910",
+          "repository": "FamilySearch",
+          "rationale": "Enumerate all children of Benjamín Silva Díaz and Clara González Pimienta in FamilySearch Chile civil registration (collection 1630787, Chile, Civil Registration, 1880-1933). The couple lived in Nancagua; search their birth registrations there.",
+          "fallback_for": null,
+          "status": "in_progress"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

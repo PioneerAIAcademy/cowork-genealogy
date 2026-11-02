@@ -47,6 +47,7 @@ import { extractionAppend, EXTRACTION_SECTIONS, PLAN_COMPLETION_SECTIONS } from 
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 const EXTRACTION_LANE = { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" } as any;
 
@@ -347,7 +348,8 @@ describe("extraction_append: only the three call shapes", () => {
       record_role: "principal",
       tree_person_id: "I1",
       score: 0.9,
-      matched: true,
+      scorer: "familysearch",
+      model: null,
       assertion_id: "a_001",
       record_source: "record_read",
       computed: "2026-09-24T00:00:00Z",
@@ -610,6 +612,53 @@ describe("extraction_append: recordIds and absences", () => {
     expect(r.records[1].summary).toMatch(/William Miller \(deceased\)/);
   });
 
+  it("names in the summary the places the write gave no standard form", async () => {
+    const death = element("death");
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death]) as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.records[0].summary.split("\n")).toContain(
+      "Places kept as written, with no standard place found: Jackson Co., O.; Jackson, Ohio, United States; Scioto T.P., Jackson, Ohio.",
+    );
+  });
+
+  // The engine's answer for a place on a record (lead, 2026-10-26): each
+  // assertion carries its own fact's standard_place, and one whose fact has none
+  // takes another fact's (a Burial with the death's text), another record's or a
+  // stored assertion's value from nowhere.
+  it("standardizes each assertion by its own fact's FamilySearch value, never by another fact's or record's", async () => {
+    const seeded = await research();
+    seeded.assertions = [
+      {
+        ...validAssertion("a_001"), record_id: "ark:/61903/1:1:OTHR-111", fact_type: "death",
+        place: "Jackson, Ohio, United States", standard_place: "Jackson, Jackson, Ohio, United States",
+      },
+    ];
+    await writeFile(join(dir, "research.json"), JSON.stringify(seeded), "utf8");
+    const death = element("death");
+    const facts = death.gedcomx.persons[0].facts;
+    facts.find((f: any) => f.type === "Birth").standard_place = "Jackson, Ohio, United States";
+    facts.find((f: any) => f.type === "Residence").standard_place = "Scioto, Jackson, Ohio, United States";
+    facts.push(
+      { type: "Residence", place: "Scioto T.P., Jackson, Ohio", standard_place: "Jackson, Ohio, United States" },
+      { type: "Burial", date: "1879", place: "Jackson, Ohio, United States", standard_place: "Jackson, Jackson, Ohio, United States" },
+    );
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId] }, readerFor([death]) as any, LOCAL);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const after = (await research()).assertions.filter((a: any) => a.record_id !== "ark:/61903/1:1:OTHR-111");
+    const placed = after.filter((a: any) => a.place).map((a: any) => [a.fact_type, a.place, a.standard_place]);
+    expect(placed).toEqual([
+      ["birth", "Jackson Co., O.", "Jackson, Ohio, United States"],
+      ["death", "Jackson, Ohio, United States", undefined],
+      ["residence", "Scioto T.P., Jackson, Ohio", "Scioto, Jackson, Ohio, United States"],
+      ["residence", "Scioto T.P., Jackson, Ohio", "Jackson, Ohio, United States"],
+      ["burial", "Jackson, Ohio, United States", "Jackson, Jackson, Ohio, United States"],
+    ]);
+    expect(r.records[0].summary.split("\n")).toContain(
+      "Places kept as written, with no standard place found: Jackson, Ohio, United States.",
+    );
+    expect(r.records[0].warnings).toContain("could not resolve standard_place for 'Jackson, Ohio, United States' (left unset)");
+  });
+
   // ─── an accepted hint's log entry is the record's own (issue #3157) ───────────
 
   const hintEntry = (id: string, recordId: string, outcome = "positive") => ({
@@ -625,7 +674,7 @@ describe("extraction_append: recordIds and absences", () => {
   });
   const seedLog = async (log: any[]) => {
     const r = await research();
-    await writeFile(join(dir, "research.json"), JSON.stringify({ ...r, log }), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify({ ...r, log }), "utf8");
   };
 
   it("cites an accepted hint's log entry and writes no second record_read entry", async () => {
@@ -780,6 +829,17 @@ describe("extraction_append: recordIds and absences", () => {
     expect(r.records[0].status).toBe("already_extracted");
     expect(r.records[0].srcId).toBe(before.sources[0].id);
     expect(r.records[0].summary).toMatch(/already extracted as src_\d+/);
+    expect(await research()).toEqual(before);
+  });
+
+  it("refuses to re-extract a household member covered only by widening, naming the id it was extracted under (#3678)", async () => {
+    const { a, b } = household();
+    await runExtractionAppend({ projectPath: dir, recordIds: [a.recordId] }, readerFor([a]) as any, LOCAL);
+    const before = await research();
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [b.recordId], reextract: true } as any, readerFor([b]) as any, LOCAL);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("refused");
+    expect(r.records[0].summary).toMatch(/extracted under .*not under this id/);
+    expect(r.records[0].summary).toContain(arkToBareId(a.recordId));
     expect(await research()).toEqual(before);
   });
 
@@ -1152,7 +1212,7 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     await seed({ questions: [question("q_001"), question("q_002")] });
     await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId], questionIds: ["q_001"] }, readerFor([death]) as any, LOCAL);
     const before = await research();
-    await writeFile(
+    await writeProjectFile(
       join(dir, "research.json"),
       JSON.stringify({
         ...before,
@@ -1206,7 +1266,7 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     // whose role is not the literal "absent".
     const legacy = before.assertions[0];
     legacy.record_basis = "absent";
-    await writeFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
     const r = await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_002"] }, readerFor([marriage]) as any, LOCAL);
     expect(r.records[0].summary).toMatch(/tied to q_002/);
     expect(r.records[0].warnings?.some((w) => w.startsWith(`${legacy.id} was not tied`))).toBe(true);
@@ -1225,7 +1285,7 @@ describe("extraction_append: closes the plan item and claims re-found records", 
       a.informant_proximity = "unknown";
       a.information_quality = "primary";
     }
-    await writeFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
     const r = await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_002"] }, readerFor([marriage]) as any, LOCAL);
     expect(r.records[0].summary).toMatch(/tied to q_002/);
     expect(r.records[0].warnings ?? []).toEqual([]);
@@ -1374,6 +1434,26 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(r.summary).toMatch(/separate request/);
   });
 
+  it("after a re-extraction, links only the live reading and refuses nothing (#3678)", async () => {
+    await writeTree([person("I1", { person: ["S1"] })], [S1]);
+    const rdr = reader([CENSUS()]);
+    const first = await runExtractionAppend({ projectPath: dir, recordIds: [url("MZGS-1B7")] } as any, rdr as any, LOCAL);
+    expect(first.records[0].status, JSON.stringify(first)).toBe("extracted");
+    const again = await runExtractionAppend({ projectPath: dir, recordIds: [url("MZGS-1B7")], reextract: true } as any, rdr as any, LOCAL);
+    expect(again.records[0].status, JSON.stringify(again)).toBe("extracted");
+    const retired = new Set(
+      (await research()).assertions.filter((a: any) => a.superseded_by != null).map((a: any) => a.id),
+    );
+    expect(retired.size).toBeGreaterThan(0);
+
+    const r = await run("I1", rdr);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.errors ?? []).toEqual([]);
+    const links = (await research()).person_evidence;
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.some((pe: any) => retired.has(pe.assertion_id))).toBe(false);
+  });
+
   it("the whole-batch link asks for the first failure only: it reads nothing but ok and is retried op by op", async () => {
     await writeTree([person("I1", { person: ["S1"] })], [S1]);
     vi.mocked(researchAppend).mockClear();
@@ -1460,7 +1540,7 @@ describe("extraction_append: personId extracts and links a person's attachments"
     const r0 = await research();
     const johns = r0.assertions.filter((a: any) => a.record_persona_id === "p_260900945");
     r0.person_evidence = [{ id: "pe_001", assertion_id: johns[0].id, person_id: "I7", confidence: "probable", rationale: "someone decided", created: "2026-01-01", match_score: null }];
-    await writeFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
     const r = await run("I1");
     expect(r.linked).toBe(0);
     expect(r.alreadyLinked).toBe(1);
@@ -1473,7 +1553,7 @@ describe("extraction_append: personId extracts and links a person's attachments"
     const r0 = await research();
     const johns = r0.assertions.filter((a: any) => a.record_persona_id === "p_260900945");
     r0.rejected_links = [{ id: "rj_001", assertion_id: johns[0].id, person_id: "I1", created: "2026-01-01" }];
-    await writeFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
     const r = await run("I1");
     expect(r.rejectedSkipped).toBe(1);
     expect(r.linked).toBe(johns.length - 1);

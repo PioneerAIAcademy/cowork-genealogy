@@ -256,7 +256,9 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 "sql/001_schema.sql": (b"", f),
                 "config/familysearch.json": (b"{}", f),
                 "web-dist/index.html": (b"<html>", f),
-                "web-dist/assets/index-abc.js": (b"const s=new EventSource(u);", f)}
+                "web-dist/assets/index-abc.js": (b"const s=new EventSource(u);", f),
+                ".platform/nginx/conf.d/01-web-headers.conf": (b"large_client_header_buffers 4 32k;\n", f),
+                ".platform/nginx/conf.d/01-web-uploads.conf": (b"client_max_body_size 26m;\n", f)}
     if tier == "worker":
         return {**common,
                 "Procfile": (b"web: python proto/worker/worker.py\n", f),
@@ -320,8 +322,6 @@ LEGITIMATE = {
         "node_modules/somepkg/README.md": b""}),
     "a dirty build stamp": ("tools", {"build/build-info.json": json.dumps(
         {"version": "0.1.0+2026-10-02.abc12345.dirty"}).encode()}),
-    "the web tier's nudge cap": ("web", {".ebextensions/01-web.config": _config(
-        {"PORT": "8000", "PGSSLROOTCERT": CA, "AUTONOMOUS_MAX_NUDGES": "60"})}),
     "the worker's slot users": ("worker", {".ebextensions/02-worker.config": _config(
         {"PORT": "8000", "PGSSLROOTCERT": CA, "WORKER_TURN_USERS": "genealogy-turn-0 genealogy-turn-1"})}),
 }
@@ -413,6 +413,10 @@ REJECTED = {
     "no predeploy hook": ("worker", lambda: _drop("worker", ".platform/hooks/predeploy/100_worker-layout.sh"),
                           "missing .platform/hooks/predeploy/"),
     "no migrate.py in web": ("web", lambda: _drop("web", "migrate.py"), "missing migrate.py"),
+    "no header-buffer file in web": ("web", lambda: _drop("web", ".platform/nginx/conf.d/01-web-headers.conf"),
+                                     "missing .platform/nginx/conf.d/01-web-headers.conf"),
+    "no upload-size file in web": ("web", lambda: _drop("web", ".platform/nginx/conf.d/01-web-uploads.conf"),
+                                   "missing .platform/nginx/conf.d/01-web-uploads.conf"),
     "no migrate.py in worker": ("worker", lambda: _drop("worker", "proto/migrate.py"), "missing proto/migrate.py"),
     "the WebSocket SPA": ("web", lambda: _add("web", **{"web-dist/assets/index-abc.js": b"x=new WebSocket(u)"}),
                           "opens a WebSocket"),
@@ -443,6 +447,10 @@ REJECTED = {
     "the nudge cap in the worker template": ("worker", lambda: _add("worker", **{
         ".ebextensions/02-worker.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
                                                    "AUTONOMOUS_MAX_NUDGES": "60"})}),
+        "sets AUTONOMOUS_MAX_NUDGES"),
+    "the nudge cap in the web template": ("web", lambda: _add("web", **{
+        ".ebextensions/01-web.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
+                                                "AUTONOMOUS_MAX_NUDGES": "60"})}),
         "sets AUTONOMOUS_MAX_NUDGES"),
     "no slot users in the worker template": ("worker", lambda: _add("worker", **{
         ".ebextensions/02-worker.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,

@@ -5,7 +5,7 @@
     "name": "Verify birth fact matches resolved conflict — no-op edit",
     "type": "positive",
     "description": "Patrick Flynn's birth fact F1 in tree.gedcomx.json already shows `place: \"Ireland\"`, matching the resolved birthplace conflict c_001. Tests the edit-minimality dimension: a tree-edit invocation that finds the data is already correct should make NO changes rather than 'updating' to the same value (which would touch the file and trigger spurious diffs).",
-    "tags": ["tree-edit", "no-op-edit", "edit-minimality", "F1", "tree-edit-noop", "direct-arm"]
+    "tags": ["tree-edit", "no-op-edit", "edit-minimality", "F1", "tree-edit-noop", "reads-tree", "direct-arm"]
   },
   "input": {
     "delegation": "confirm this fact is in the tree — Patrick Flynn's birth fact (F1) should show ~1845 in Ireland, matching the resolved birthplace conflict c_001. Check the tree and tell me whether F1 already reflects this, or whether an edit is needed.\n\nprojectPath: <workspace>",
@@ -14,6 +14,7 @@
   "judge_context": [
     "Should confirm that F1 already shows `place: \"Ireland\"` and `date: \"~1845\"`, matching the conflict resolution c_001 (which preferred a_002/a_009 over a_012)",
     "Should NOT modify other persons (Thomas Flynn I2) or other facts (F2 death fact) — edit-minimality requires touching only the requested target",
-    "Should explicitly tell the user the file is unchanged rather than silently completing — the user needs to know whether their request triggered an edit"
+    "Should explicitly tell the user the file is unchanged rather than silently completing — the user needs to know whether their request triggered an edit",
+    "The agent reads tree.gedcomx.json with the built-in Read tool, which is not listed among the MCP tool calls; a validator checks that read. An empty MCP tool-call list must not reduce Correctness or Completeness."
   ]
 }

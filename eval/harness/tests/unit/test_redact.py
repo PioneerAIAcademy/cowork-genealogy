@@ -77,4 +77,27 @@ def test_never_raises_on_non_str():
 
 def test_specs_present():
     labels = {label for label, _kind, _pat in CREDENTIAL_PATTERN_SPECS}
-    assert {"OPENROUTER-KEY", "ANTHROPIC-KEY", "FS-ACCESS-TOKEN", "FS-REFRESH-TOKEN"} <= labels
+    assert {"OPENROUTER-KEY", "ANTHROPIC-KEY", "FS-ACCESS-TOKEN", "FS-REFRESH-TOKEN", "MATCHER-KEY"} <= labels
+
+
+# A matcher service key is 64 hex characters, so no value pattern can tell it
+# from any other hex string; only its JSON key can. FAKE.
+FAKE_MATCHER_KEY = "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0"
+
+
+def test_redacts_a_matcher_key_unescaped_and_escaped():
+    for s in (
+        '{"matcher": "service", "matcherApiKey": "%s"}' % FAKE_MATCHER_KEY,
+        r'summary: \"matcherApiKey\": \"%s\"' % FAKE_MATCHER_KEY,
+    ):
+        assert scan_for_credentials(s) == ["MATCHER-KEY"]
+        r = redact_secrets(s)
+        assert FAKE_MATCHER_KEY not in r
+        assert "[REDACTED-MATCHER-KEY]" in r
+        assert scan_for_credentials(r) == []
+
+
+def test_does_not_flag_the_matcher_url_or_a_redacted_key():
+    assert scan_for_credentials('"matcherUrl": "http://127.0.0.1:8765"') == []
+    assert scan_for_credentials('"matcherApiKey": "[REDACTED-MATCHER-KEY]"') == []
+    assert redact_secrets('"matcherUrl": "http://127.0.0.1:8765"') == '"matcherUrl": "http://127.0.0.1:8765"'

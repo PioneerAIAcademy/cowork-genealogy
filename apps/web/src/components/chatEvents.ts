@@ -114,9 +114,10 @@ export const TURN_OUTCOME_LABELS: Record<string, string> = {
   signin_required: 'FamilySearch needs you to sign in again. Sign in, then send a message to carry on.'
 }
 
-// 1e: `budget` covers two different caps, and they need different advice. The nudge cap
-// ends a turn but not the sitting, so another message carries on where it left off. The
-// SPEND cap ends the sitting: the only way on is a new session on the same project, and a
+// 1e: `budget` covered two different caps, which need different advice. The nudge cap
+// (deleted in step mode phase 2; rows written before still carry it) ended a turn but not
+// the sitting, so another message carries on where it left off. The SPEND cap ends the
+// sitting: the only way on is a new session on the same project, and a
 // run that stops at $35 looking finished is worse than no cap at all.
 /** Shown while the agent compacts its context.
  *

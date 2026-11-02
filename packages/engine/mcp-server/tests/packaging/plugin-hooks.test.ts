@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { resolvePython, describePythonCandidates } from "../../../../../scripts/python-interpreter.mjs";
 import { extractList, frontmatterBlock, parseFrontmatter } from "./frontmatter.js";
 import {
-  HOOK_ROUTED_TOOL,
+  HOOK_ROUTED_TOOLS,
   TREE_ROW_VIA,
   agentWritableSections,
   researchAppendReaches,
@@ -34,6 +34,7 @@ const REPO_ROOT = join(HERE, "..", "..", "..", "..", "..");
 const PLUGIN_DIR = join(REPO_ROOT, "packages", "engine", "plugin");
 const HOOKS_JSON = join(PLUGIN_DIR, "hooks", "hooks.json");
 const GUARD = join(PLUGIN_DIR, "hooks", "guard_project_files.py");
+const NO_PROJECT_ROUTE = join(PLUGIN_DIR, "hooks", "no_project_route.py");
 
 type HookEntry = { type: string; command?: string };
 type Matcher = { matcher?: string; hooks: HookEntry[] };
@@ -76,11 +77,13 @@ function guardToolNames(): {
     deviceWriteTools: tuple("DEVICE_WRITE_TOOLS"),
     delegationTools: tuple("DELEGATION_TOOLS"),
     ownedSections: ownedSections(src),
-    // The caller-routed sections live in a dict, not a tuple, and the tool they
-    // gate is always `research_append` — so what the matcher must cover is that
-    // one name, conditional on the dict being non-empty. Read rather than
-    // assumed, so emptying OWNED_SECTIONS correctly relaxes the requirement.
-    ownerRoutedTools: ownedSections(src).length > 0 ? ["research_append"] : [],
+    // The caller-routed sections live in a dict, not a tuple; the tools that
+    // gate them are the manifest's hook-routed set (`research_append` and
+    // `evaluation_append`, issue #1491) — so what the matcher must cover is
+    // those names, conditional on the dict being non-empty. Read from the
+    // manifest rather than assumed, so emptying OWNED_SECTIONS correctly relaxes
+    // the requirement and adding a routed tool widens it.
+    ownerRoutedTools: ownedSections(src).length > 0 ? [...HOOK_ROUTED_TOOLS] : [],
   };
 }
 
@@ -216,6 +219,59 @@ function runGuard(payload: unknown): any {
   return JSON.parse(execGuard(JSON.stringify(payload)));
 }
 
+/**
+ * The guard's AGENT_ONLY_TOOLS (tool -> owning agents) and MAIN_THREAD_OK keys,
+ * read by loading the script rather than by regex: the dict values are tuples
+ * and strings that carry their own parentheses.
+ */
+function guardAgentOnlyTables(): { agentOnly: Record<string, string[]>; mainThreadOk: string[] } {
+  if (!PYTHON) throw new Error(`No Python 3 found (tried: ${describePythonCandidates()}).`);
+  const [cmd, ...pre] = PYTHON;
+  const code =
+    "import json, runpy, sys; g = runpy.run_path(sys.argv[1]); " +
+    "print(json.dumps({'agentOnly': g['AGENT_ONLY_TOOLS'], 'mainThreadOk': sorted(g['MAIN_THREAD_OK'])}))";
+  return JSON.parse(execFileSync(cmd, [...pre, "-c", code, GUARD], { encoding: "utf-8" }));
+}
+
+/** Every MCP tool name the server advertises, from the `.mcpb` manifest. */
+function manifestToolNames(): string[] {
+  const manifest = JSON.parse(
+    readFileSync(join(REPO_ROOT, "packages", "engine", "mcp-server", "manifest.json"), "utf-8"),
+  ) as { tools: { name: string }[] };
+  return manifest.tools.map((t) => t.name);
+}
+
+/**
+ * Which plugin files grant each MCP tool: agents through `tools:`, skills through
+ * `allowed-tools:`. An agent with no `tools:` key inherits every tool.
+ */
+function toolHolders(): { agents: Map<string, string[]>; skillDeclared: Set<string> } {
+  const all = manifestToolNames();
+  const agents = new Map<string, string[]>();
+  const agentsDir = join(PLUGIN_DIR, "agents");
+  for (const f of readdirSync(agentsDir).filter((f) => f.endsWith(".md")).sort()) {
+    const text = readFileSync(join(agentsDir, f), "utf-8");
+    const block = frontmatterBlock(text);
+    const inherits = block !== null && !("tools" in parseFrontmatter(block));
+    const held = inherits
+      ? all
+      : extractList(text, "tools").flatMap((e) => grantedTools(e, all));
+    for (const tool of new Set(held.filter((t) => all.includes(t)))) {
+      agents.set(tool, [...(agents.get(tool) ?? []), f.slice(0, -3)]);
+    }
+  }
+  const skillDeclared = new Set<string>();
+  const skillsDir = join(PLUGIN_DIR, "skills");
+  for (const d of readdirSync(skillsDir, { withFileTypes: true })) {
+    const skillMd = join(skillsDir, d.name, "SKILL.md");
+    if (!d.isDirectory() || !existsSync(skillMd)) continue;
+    for (const e of extractList(readFileSync(skillMd, "utf-8"), "allowed-tools")) {
+      for (const t of grantedTools(e, all)) skillDeclared.add(t);
+    }
+  }
+  return { agents, skillDeclared };
+}
+
 describe("plugin hooks are packaged and wired", () => {
   it("ships the hooks directory in the zip", () => {
     // Without "hooks" in INCLUDE the directory is silently absent from the
@@ -226,7 +282,7 @@ describe("plugin hooks are packaged and wired", () => {
   });
 
   it("names a command that exists in the plugin", () => {
-    for (const matcher of loadHooks().PreToolUse) {
+    for (const matcher of Object.values(loadHooks()).flat()) {
       for (const hook of matcher.hooks) {
         expect(hook.type).toBe("command");
         // ${CLAUDE_PLUGIN_ROOT} is the only portable way to reference a
@@ -409,40 +465,49 @@ describe("plugin hooks are packaged and wired", () => {
     ).toEqual([]);
   });
 
-  it("routes by section the one tool the manifest's hookRouting names", () => {
+  it("routes by section exactly the tools the manifest's hookRouting names", () => {
     // `hookRouting.tool` is what the actual-writer guard and the corpus report
-    // treat as the section-routed writer. It must be the tool owner_denied
-    // actually gates, or both read the lanes against the wrong tool.
+    // treat as the section-routed writers. They must be the tools owner_denied
+    // actually gates, or both read the lanes against the wrong tool. The gate is
+    // a `not in (...)` membership test since issue #1491 added a second tool;
+    // the single-tool `!=` form is still parsed so this does not break if it
+    // narrows back to one.
     const src = readFileSync(GUARD, "utf-8");
-    const gated = [...src.matchAll(/_basename\([^)]*\)\)\s*!=\s*["']([a-z_]+)["']/g)].map((m) => m[1]);
+    const inTuple = src.match(/_basename\([^)]*\)\)\s*not in\s*\(([^)]*)\)/);
+    const single = src.match(/_basename\([^)]*\)\)\s*!=\s*["']([a-z_]+)["']/);
+    const gated = inTuple
+      ? [...inTuple[1].matchAll(/["']([a-z_]+)["']/g)].map((m) => m[1])
+      : single
+        ? [single[1]]
+        : [];
     expect(gated.length, "owner_denied's tool gate was not found in the guard script").toBeGreaterThan(0);
-    expect([...new Set(gated)]).toEqual([HOOK_ROUTED_TOOL]);
+    expect(new Set(gated)).toEqual(new Set(HOOK_ROUTED_TOOLS));
   });
 
-  it("gives every agent granted research_append a lane", () => {
-    // Without a lane the hook confines an agent's `research_append` to no
-    // section, so which rows it reaches is not decidable from the shipped files
-    // and the ownership manifest cannot be checked against it.
+  it("gives every agent granted a hook-routed tool a lane", () => {
+    // Without a lane the hook confines an agent's hook-routed write (`research_append`,
+    // or `evaluation_append` scoped to `evaluations`) to no section, so which rows
+    // it reaches is not decidable from the shipped files and the ownership manifest
+    // cannot be checked against it.
     const lanes = agentWritableSections();
     const agentsDir = join(PLUGIN_DIR, "agents");
-    // An agent with no `tools:` key inherits every tool, research_append
+    // An agent with no `tools:` key inherits every tool, the hook-routed ones
     // included — the same reading ownership-manifest.test.ts gives it.
     const holdsRoutedTool = (text: string): boolean => {
       const block = frontmatterBlock(text);
       if (block === null) return false; // reported by ownership-manifest.test.ts
       if (!("tools" in parseFrontmatter(block))) return true;
-      return extractList(text, "tools")
-        .flatMap((e) => grantedTools(e, [HOOK_ROUTED_TOOL]))
-        .includes(HOOK_ROUTED_TOOL);
+      const granted = extractList(text, "tools").flatMap((e) => grantedTools(e, [...HOOK_ROUTED_TOOLS]));
+      return HOOK_ROUTED_TOOLS.some((t) => granted.includes(t));
     };
     const holders = readdirSync(agentsDir)
       .filter((f) => f.endsWith(".md"))
       .filter((f) => holdsRoutedTool(readFileSync(join(agentsDir, f), "utf-8")))
       .map((f) => f.slice(0, -3));
-    expect(holders.length, "no agent holds research_append — the scan read nothing").toBeGreaterThan(0);
+    expect(holders.length, "no agent holds a hook-routed tool — the scan read nothing").toBeGreaterThan(0);
     expect(
       holders.filter((a) => !lanes.has(a)).sort(),
-      "these agents hold research_append and have no AGENT_WRITABLE_SECTIONS lane " +
+      "these agents hold a hook-routed tool and have no AGENT_WRITABLE_SECTIONS lane " +
         "in guard_project_files.py — give each one the sections it writes",
     ).toEqual([]);
   });
@@ -488,7 +553,9 @@ describe("plugin hooks are packaged and wired", () => {
         expect(matches(spelling), `matcher does not cover ${spelling}`).toBe(true);
       }
     }
-    for (const tool of ownerRoutedTools) {
+    const agentOnlyTools = Object.keys(guardAgentOnlyTables().agentOnly);
+    expect(agentOnlyTools.length).toBeGreaterThan(0);
+    for (const tool of [...ownerRoutedTools, ...agentOnlyTools]) {
       // An MCP tool, so all THREE server spellings — the same rule agent
       // frontmatter follows, and for the same reason: the server's name is
       // chosen by whoever registers it and the plugin cannot control that.
@@ -499,6 +566,44 @@ describe("plugin hooks are packaged and wired", () => {
       ]) {
         expect(matches(spelling), `matcher does not cover ${spelling}`).toBe(true);
       }
+    }
+  });
+
+  it("names, on exactly one list, every tool only agents hold, with its real owners", () => {
+    // AGENT_ONLY_TOOLS is hand-kept, not derived (lead, 2026-10-20): a person
+    // decides whether the main thread may call a tool only agents hold. This is
+    // what makes the decision unavoidable — a tool granted to an agent and to no
+    // skill must be denied (AGENT_ONLY_TOOLS) or allowed with a reason
+    // (MAIN_THREAD_OK), and the deny must name every agent that can take the step.
+    const { agentOnly, mainThreadOk } = guardAgentOnlyTables();
+    const { agents, skillDeclared } = toolHolders();
+    const heldOnlyByAgents = [...agents.keys()].filter((t) => !skillDeclared.has(t)).sort();
+    // A scan that read no frontmatter would make every assertion below vacuous.
+    expect(heldOnlyByAgents.length, "no tool is held only by agents — the scan read nothing").toBeGreaterThan(20);
+
+    const listed = new Set([...Object.keys(agentOnly), ...mainThreadOk]);
+    expect(
+      heldOnlyByAgents.filter((t) => !listed.has(t)),
+      "these tools are held only by agents and are on neither AGENT_ONLY_TOOLS nor " +
+        "MAIN_THREAD_OK in hooks/guard_project_files.py. Add each to one: to the deny " +
+        "map with its owning agents (and to hooks.json's matcher), or to MAIN_THREAD_OK " +
+        "with the legitimate main-thread call that keeps it there.",
+    ).toEqual([]);
+    expect(
+      [...listed].filter((t) => !heldOnlyByAgents.includes(t)).sort(),
+      "these tools are listed but are no longer held only by agents — a skill now " +
+        "declares them, or no agent holds them. Remove them from the guard's lists.",
+    ).toEqual([]);
+    expect(
+      mainThreadOk.filter((t) => t in agentOnly),
+      "a tool is both denied and allowed on the main thread",
+    ).toEqual([]);
+    for (const [tool, owners] of Object.entries(agentOnly)) {
+      expect(
+        [...owners].sort(),
+        `AGENT_ONLY_TOOLS["${tool}"] does not name the agents whose tools: grant it, ` +
+          "so the deny would send the model to the wrong agent or miss one",
+      ).toEqual(agents.get(tool) ?? []);
     }
   });
 });
@@ -667,8 +772,9 @@ describe("the guard script's decisions", () => {
     ["an empty fields ping from the owner", { section: "project", op: "update", fields: {} }, { agent_id: "a1", agent_type: OWNER }],
     // project_create writes the whole section at project start and is gated by
     // `owner_denied`'s research_append check, not by this arm. Low-information
-    // by design — it pins that the gate stays tool-scoped.
-    ["project_create setting status at creation", { section: "project", op: "update", fields: { status: "active" } }, { tool_name: "mcp__genealogy__project_create" }],
+    // by design — it pins that the gate stays tool-scoped. From init-project,
+    // its only holder: on the main thread project_create is an agent-only tool.
+    ["project_create setting status at creation", { section: "project", op: "update", fields: { status: "active" } }, { tool_name: "mcp__genealogy__project_create", agent_id: "a1", agent_type: "init-project" }],
   ])("allows research_append on project — %s", (_label, tool_input, extra) => {
     const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out.hookSpecificOutput).toBeUndefined();
@@ -858,12 +964,13 @@ describe("the guard script's decisions", () => {
     ["namespaced agent_type, as production reports it", GM_OWNER],
     ["bare agent_type", "gps-mentor"],
   ])("permits the gps-mentor agent its real call — %s", (_label, agent_type) => {
-    // The shape the agent emits: the verdict body as the top-level `verdict`
-    // argument, the pointer append, and the superseded_by update on the prior
-    // entry for the same focus + target. One call or two (the committed m2r
-    // run splits the update into a second call) — both shapes pass the route.
+    // The shape the agent emits through evaluation_append (issue #1491): the
+    // verdict body as the top-level `verdict` argument, the pointer append, and
+    // the superseded_by update on the prior entry for the same focus + target.
+    // One call or two (the committed m2r run splits the update into a second
+    // call) — both shapes pass the route.
     const out = runGuard({
-      tool_name: "mcp__genealogy__research_append",
+      tool_name: "mcp__genealogy__evaluation_append",
       tool_input: {
         verdict: { focus: "proof-critique", target_id: "ps_001", verdict: "address_first" },
         ops: [
@@ -896,6 +1003,25 @@ describe("the guard script's decisions", () => {
       tool_name: "mcp__genealogy__research_append",
       tool_input: { section: "plan_items", op: "update", entryId: "pli_009", fields: { status: "completed" }, planId: "pl_001" },
     })).toEqual({});
+  });
+
+  // ── caller-routed: evaluations via evaluation_append (issue #1491) ──
+  //
+  // The narrow `evaluation_append` (research_append scoped to `evaluations`) is
+  // gated by owner_denied the same way `research_append` is. Narrowing
+  // owner_denied's gate back to research_append alone turns these green.
+  it.each([
+    ["main thread (no agent_id)", {}],
+    ["agent_type present but agent_id absent", { agent_type: GM_OWNER }],
+    ["a different agent", { agent_id: "a1", agent_type: PE_OWNER }],
+  ])("denies evaluation_append — %s", (_label, extra) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__evaluation_append",
+      tool_input: { section: "evaluations", op: "append", entry: {} },
+      ...extra,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:gps-mentor");
   });
 
   // ── claim-routed: conflicts (issue #1852) ──
@@ -1295,4 +1421,133 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("`questions`");
   });
 
+});
+
+
+/** Run the no-project route hook the way the runtime does, with a chosen env. */
+function runNoProjectRoute(input: string, env: Record<string, string> = {}): any {
+  if (!PYTHON) throw new Error(`No Python 3 found (tried: ${describePythonCandidates()}).`);
+  const [cmd, ...pre] = PYTHON;
+  const base = { ...process.env };
+  delete base.GENEALOGY_HOSTED_PLANE;
+  return JSON.parse(
+    execFileSync(cmd, [...pre, NO_PROJECT_ROUTE], { input, encoding: "utf-8", env: { ...base, ...env } }),
+  );
+}
+
+describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
+  it("is registered under UserPromptSubmit", () => {
+    const commands = (loadHooks().UserPromptSubmit ?? []).flatMap((m) => m.hooks.map((h) => h.command ?? ""));
+    expect(commands.some((c) => c.includes("/hooks/no_project_route.py"))).toBe(true);
+  });
+
+  it("adds the routing sentence to a researcher's message", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Research PID L8PL-3W8. What children did he have?" }));
+    expect(out.hookSpecificOutput.hookEventName).toBe("UserPromptSubmit");
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/no project.*research skill/s);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/In that case, if the message names more than one goal/);
+  });
+
+  it("stays silent on a subagent hand-back", () => {
+    expect(runNoProjectRoute(JSON.stringify({ prompt: '<agent-message from="a1">done</agent-message>' }))).toEqual({});
+  });
+
+  it("stays silent on the hosted planes", () => {
+    const payload = JSON.stringify({ prompt: "Research PID L8PL-3W8." });
+    expect(runNoProjectRoute(payload, { GENEALOGY_HOSTED_PLANE: "1" })).toEqual({});
+  });
+
+  it("never raises on bad input", () => {
+    expect(runNoProjectRoute("not json")).toEqual({});
+    expect(runNoProjectRoute(JSON.stringify({ prompt: 42 }))).toEqual({});
+    expect(runNoProjectRoute(JSON.stringify([1, 2]))).toEqual({});
+  });
+});
+
+describe("the main thread is denied the tools only agents hold", () => {
+  const SPELLINGS = (tool: string) => [
+    `mcp__genealogy__${tool}`,
+    `mcp__remote-devices__Genealogy_Research__${tool}`,
+    `mcp__Genealogy_Research__${tool}`,
+  ];
+
+  // The raw-write deny reaches the main session too, so every writer tool it
+  // names that the main session cannot call must come with an agent that can.
+  it("the protected-file deny names, for each agent-only writer it suggests, an agent holding it", () => {
+    const { agentOnly } = guardAgentOnlyTables();
+    const reason = runGuard({ tool_name: "Write", tool_input: { file_path: "/project/research.json" } })
+      .hookSpecificOutput.permissionDecisionReason as string;
+    const named = Object.keys(agentOnly).filter((t) => new RegExp(`\\b${t}\\b`).test(reason));
+    expect(named).toEqual(expect.arrayContaining(["project_create", "tree_edit", "external_links_search"]));
+    for (const tool of named) {
+      expect(agentOnly[tool].some((a) => reason.includes(`\`@plugin:${a}\``)), tool).toBe(true);
+    }
+  });
+
+  it.each(SPELLINGS("census_children_gap"))(
+    "denies a main-thread %s and names both agents that hold it",
+    (tool_name) => {
+      const out = runGuard({ tool_name, tool_input: { personId: "I1" } });
+      expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+      const reason: string = out.hookSpecificOutput.permissionDecisionReason;
+      // The route out, in the wording owner_denied uses, naming both holders.
+      expect(reason).toMatch(/invoke `@plugin:[a-z-]+`/);
+      expect(reason).toContain("`@plugin:check-warnings`");
+      expect(reason).toContain("`@plugin:question-selection`");
+      // Recoverable: the turn continues so the model can delegate.
+      expect(out.stopReason).toBeUndefined();
+    },
+  );
+
+  it("names every one of a tool's agents, however many there are", () => {
+    const reason: string = runGuard({ tool_name: "mcp__genealogy__place_search", tool_input: {} })
+      .hookSpecificOutput.permissionDecisionReason;
+    for (const agent of guardAgentOnlyTables().agentOnly.place_search) {
+      expect(reason).toContain(`\`@plugin:${agent}\``);
+    }
+  });
+
+  it.each([
+    ["the namespaced agent_type production reports", { agent_id: "a1", agent_type: "genealogy-research:check-warnings" }],
+    ["the bare agent_type the harnesses report", { agent_id: "a1", agent_type: "question-selection" }],
+  ])("lets the same call through from an agent: %s", (_how, caller) => {
+    expect(
+      runGuard({ tool_name: "mcp__genealogy__census_children_gap", tool_input: { personId: "I1" }, ...caller }),
+    ).toEqual({});
+  });
+
+  it("still denies a session started with --agent, which carries agent_type without agent_id", () => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__census_children_gap",
+      tool_input: { personId: "I1" },
+      agent_type: "research",
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+  });
+
+  it.each([
+    // The router reads the person itself; a skill declares it.
+    "person_read",
+    // research/SKILL.md delivers a bounded transcription itself (issue #2490).
+    "image_transcribe",
+    "sidecar_read",
+    "record_read",
+    "research_log_append",
+  ])("has no opinion on a main-thread %s", (tool) => {
+    expect(runGuard({ tool_name: `mcp__genealogy__${tool}`, tool_input: {} })).toEqual({});
+  });
+
+  it("leaves a main-thread research_append to the section rules", () => {
+    // MAIN_THREAD_OK: a plan_items status update is no section's routed claim.
+    expect(
+      runGuard({
+        tool_name: "mcp__genealogy__research_append",
+        tool_input: { section: "plan_items", op: "update", entryId: "pli_001", fields: { status: "completed" } },
+      }),
+    ).toEqual({});
+  });
+
+  it("does not deny image_read, which no agent holds", () => {
+    expect(runGuard({ tool_name: "mcp__genealogy__image_read", tool_input: {} })).toEqual({});
+  });
 });

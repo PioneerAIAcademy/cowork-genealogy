@@ -348,6 +348,33 @@ def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_
     )
 
 
+def test_relays_the_agents_tail_verbatim(text_response, test):
+    """The router prints a stubbed agent's tail -- everything after its final
+    ``---`` -- verbatim, compared under the e2e relay-fidelity normalization
+    (issue #3862).
+
+    Tag-gated on ``relays-agent-tail``; the agent is the ``routes-to:`` callee.
+    The tail is read from the test's own canned response, never from
+    ``agent_returns``: there it is wrapped in harness scaffolding the router is
+    told never to print. The tail's closing punctuation is not required: a router
+    that carries the agent's last sentence on into its own ask for verdicts has
+    still relayed every word.
+    """
+    from harness.skill_runner import normalize, tail_after_final_rule
+    from harness.skill_stubs import parse_stub_skills
+
+    if "relays-agent-tail" not in (test.get("tags") or []):
+        pytest.skip("not a relay-fidelity test")
+    agent = _expected_skill(test)
+    assert agent, "relays-agent-tail needs a routes-to:<agent> tag naming the relayed agent"
+    tail = tail_after_final_rule(parse_stub_skills(test.get("execution")).get(agent) or "")
+    assert tail, f"relays-agent-tail needs a stubbed {agent} response with a `---` tail"
+    assert normalize(tail).rstrip(".!?") in normalize(text_response or ""), (
+        f"the router did not relay {agent}'s summary verbatim; expected, after "
+        f"normalization:\n{tail}"
+    )
+
+
 # The search steps a bounded request must not reach when the answer is already
 # attached. MCP side and delegation side are listed separately because the rule
 # is defeated by either: an inline `record_search` and a hand-off to
@@ -552,13 +579,13 @@ _DELIVERED_TOOL = "research_delivered"
 def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
     """Tag-gated (``ends-with-delivery``). Issue #2813 item 1, the enforcement half.
 
-    The skill body telling the model to "end your turn" is not what ends it. On the
-    hosted plane an SDK Stop hook VETOES a voluntary stop while the project objective
-    is incomplete and nudges the agent onward; the only arm that lets a bounded turn
-    stop is `delivered`, set when the model calls `research_delivered`
-    (`apps/server/app/agent/real_agent.py`, `should_continue_run`). A bounded turn that
-    ends without the call is answered and then nudged back into more research -- the
-    alpha report behind this test.
+    The skill body telling the model to "end your turn" was not what ended it. On the
+    hosted plane an SDK Stop hook VETOED a voluntary stop while the project objective
+    was incomplete and nudged the agent onward; the only arm that let a bounded turn
+    stop was `delivered`, set when the model called `research_delivered`. A bounded
+    turn that ended without the call was answered and then nudged back into more
+    research -- the alpha report behind this test. Step mode phase 2 deleted that Stop
+    hook (and `should_continue_run` with it).
 
     Gated on its own tag, NOT on `bounded-request`: `ut_research_023` carries that tag
     and is the `--autonomous` carve-out, where the router must run the job and must NOT
@@ -962,6 +989,36 @@ def _first_handoff_args(callee: str | None, builtin_tool_calls) -> str | None:
         if name == callee:
             return json.dumps(args)
     return None
+
+
+_DELEGATES_VERBATIM_TAG = "delegates-verbatim"
+
+
+def _quote_and_space_normal(text: str) -> str:
+    text = text.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    return " ".join(text.split())
+
+
+def test_person_evidence_spawn_carries_the_users_words(test, builtin_tool_calls):
+    """Tag-gated (``delegates-verbatim``). research/SKILL.md sends a researcher
+    who doubts or denies that a record is this person to person-evidence with
+    their message copied verbatim (#3601): a hedge relayed as a "no" becomes a
+    rejection the researcher never made. The spawn prompt is invisible to the
+    judge, so it is read from the hook records. The user message without
+    ``/research`` must appear in at least one person-evidence spawn prompt,
+    with whitespace collapsed and straight and curly quotes made equal on both
+    sides."""
+    if _DELEGATES_VERBATIM_TAG not in (test.get("tags") or []):
+        pytest.skip("not a delegates-verbatim test")
+    message = re.sub(r"^/research\b", "", (test.get("user_message") or "").strip()).strip()
+    assert message, "the test has no user message to relay"
+    prompts = _spawn_prompts(builtin_tool_calls, "person-evidence")
+    assert prompts, "no person-evidence spawn to carry the user's words"
+    wanted = _quote_and_space_normal(message)
+    assert any(wanted in _quote_and_space_normal(p) for p in prompts), (
+        "no person-evidence spawn carries the user's message verbatim.\n"
+        f"  message: {message!r}\n  prompts: {[p[:400] for p in prompts]!r}"
+    )
 
 
 def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_calls):

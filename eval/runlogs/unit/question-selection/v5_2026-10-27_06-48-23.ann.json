@@ -1,0 +1,166 @@
+{
+  "run_log": "v5_2026-10-27_06-48-23.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_wm7`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified one missing child born on or before June 1900 who is living at both censuses, matching the census_children_gap tool output exactly. The question accurately reflects the census data (3 children born/living in 1900, 4 born/living in 1910) and correctly names the two known pre-1900 children (James b. 1892, Catherine b. 1895). The rationale correctly explains why one child is missing: the 1900 census shows 3 children but only 2 are in the tree. No fabricated material or unsupported claims appear. The selection_basis of 'objective_decomposition' is correct per the priority table.\n\nJunior: (Pass - The tool correctly identifies one missing child born on or before the 1900 census and living at both census dates, avoids double-counting the census gap, accurately references the known pre-1900 children (James and Catherine), and does not invent any deceased or additional children. The selected basis, objective_decomposition, is also consistent with the priority guidance and the output of the census_children_gap analysis.)"
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_wm7`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: called census_children_gap with correct parameters (motherId I1, both census entries), received the gap analysis confirming one missing living child, and wrote a single research question targeting that one child. The question includes specific persons (Ellen and Patrick Brannon), time period (born on or before June 1900), and the fact sought (identity of the missing child). Dependencies and unblocks fields are properly populated. No required work was omitted.\n\nJunior: (Pass - The skill completed all required work end-to-end: it invoked census_children_gap with the correct mother ID and census data, correctly interpreted the result as one missing living child, and recorded a single focused research question seeking that child's identity. The question includes the relevant parents, timeframe, and research objective, while the supporting fields (selection basis, dependencies, and unblocks) were properly populated with no required elements omitted.)"
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_wm7`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching expected usage. The census_children_gap call correctly provided motherId 'I1', projectPath, and both census entries with accurate counts (1900: 3 born/3 living; 1910: 4 born/4 living). The project_context, person_warnings, research_query, and research_append calls all used correct parameters. No tool calls returned fixture_not_found errors. All critical identifiers and arguments were accurate.\n\nJunior: (Pass - All tool calls used the expected arguments and identifiers. The census_children_gap invocation correctly supplied motherIdI1, the project path, and both census entries with the required children-born and children-living counts (1900: 3/3; 1910: 4/4), while the supporting project_context, person_warnings, research_query, and research_append calls were also correctly parameterized. No argument mismatches or fixture_not_found errors occurred, indicating accurate and reliable tool usage throughout the workflow.)"
+    },
+    {
+      "test_id": "ut_question_selection_wm7",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_wm7`** — `rubric` / `Question specificity`\nLLM: 3 → Junior: 3\n\n> The question is concrete and answerable: 'Who was the child of Ellen Brannon (b. ~1870, Ohio) and Patrick Brannon born on or before June 1900 who is not yet recorded in the family tree?' It names specific persons (Ellen and Patrick Brannon), a precise time period (on or before June 1900), and the specific fact sought (identity of the missing child). A follow-up search could be designed to answer it by searching birth and baptismal records. The question is not vague or overly broad.\n\nJunior: (Pass - The research question is highly specific and clearly actionable. It identifies the target parents, Ellen Brannon and Patrick Brannon, defines a precise timeframe (\"born on or before June 1900\"), and seeks a single, concrete fact: the identity of the missing child not currently represented in the family tree. The question is narrow enough to guide focused searches in birth, baptismal, and vital records while avoiding ambiguity or unnecessary scope.)"
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d04`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly determined that no new question should be written. The analysis is factually sound: q_001 covers the objective scope, pli_001 remains at 'planned' status (not exhausted), and Serena Deacon and Samuel Jesse Purnell are correctly identified as out-of-scope relatives. The tool responses confirm no conflicts, hypotheses, or warnings exist. Claude's reasoning about Priority 4 and Priority 6 is accurate per the question-selection rules.\n\nJunior: (Pass - The skill correctly determined that no new research question should be created because q_001 already addresses the project's objective of identifying the parents of Job Purnell, and the planned research item pli_001 remains unexecuted. It accurately recognized that Serena Deacon and Samuel Jesse Purnell are out of scope for the current objective, properly rejected their record gaps as a basis for a new question, and correctly applied the Priority 4 and Priority 6 rules by recommending execution of pli_001 rather than opening additional research questions.)"
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d04`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed all required elements: confirmed the existing question covers the objective, verified plan status and item status, checked for conflicts/hypotheses/warnings, correctly scoped Serena and Samuel as out-of-scope, and recommended the next step (executing pli_001). No required analysis was omitted. The response fully explains why no new question is warranted.\n\nJunior: (Pass - The skill addressed every required element of the evaluation. It confirmed that the existing question (q_001) already covers the project's objective, verified that pli_001 remains in planned status and therefore should be executed before considering additional questions, checked for conflicts, hypotheses, and warnings, and correctly identified Serena Deacon and Samuel Jesse Purnell as outside the scope of the objective. The response also provided the appropriate next step by directing work toward pli_001, while clearly explaining why no new research question should be created.)"
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d04`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All five MCP tool calls used correct arguments. project_context and research_query calls passed the correct projectPath and section parameters. person_warnings call correctly targeted I1 (Job Purnell). No calls returned fixture_not_found errors. Arguments matched expected usage semantically and structurally.\n\nJunior: (Pass - All five MCP tool calls were invoked with the correct arguments and identifiers. The project_context and research_query calls used the appropriate projectPath, sections, and question reference (q_001 where required), while person_warnings correctly targeted I1 (Job Purnell). No parameter mismatches or fixture_not_found errors occurred, and all calls conformed to the expected structure and semantics for the workflow.)"
+    },
+    {
+      "test_id": "ut_question_selection_d04",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_question_selection_d04`** — `rubric` / `Question specificity`\nLLM: N/A → Junior: N/A\n\n> N/A — no new question was written. This dimension grades the specificity of questions the skill produces; since the skill correctly declined to produce a new question, the dimension does not apply.\n\nJunior: (This dimension does not apply because the skill correctly did not create a new research question. Since no question was written, there is no question specificity to evaluate; the appropriate action was to continue with the existing in-scope question (q_001) and execute pli_001 rather than formulate an additional question.)"
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d05`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly decomposed the motivation objective ('why did they come?') into a concrete event question about arrival timing. The question 'When did Patrick Flynn and his family arrive in Schuylkill County, Pennsylvania?' is factually sound and avoids asking for the reason itself. The rationale correctly explains that migration reasons are explained from historical context once facts are established, not proved directly. The response accurately reflects the project state (stub person, no prior questions) and the date window (1850–1880) is correctly treated as bounding which questions to ask, not capping evidence. No fabricated material or unsupported claims.\n\nJunior: (Pass - The skill correctly decomposed the motivation objective into a single, concrete event question:\"When did Patrick Flynn and his family arrive in Schuylkill County, Pennsylvania?\" rather than incorrectly attempting to prove the family's reason for moving directly. The rationale accurately explains that migration motives are inferred from historical context after establishing the underlying facts, correctly treats the 1850–1880 period as a question-selection boundary rather than an evidence restriction, and faithfully reflects the project's initial state with no unsupported assumptions or fabricated conclusions.)"
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d05`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: selected a specific research question grounded in the objective, explained the decomposition basis, identified dependencies (none for first question), and provided clear next steps. The response includes both the terse caller-facing section (q_001 written with the question) and the detailed researcher-facing section after the '---' separator that explains why the reason will be established from historical context rather than proved. All required components of the per-test context were covered.\n\nJunior: (Pass - The skill correctly decomposed the motivation objective into a single, fact-based research question:\"When did Patrick Flynn and his family arrive in Schuylkill County, Pennsylvania?\" rather than incorrectly attempting to prove a migration motive directly. The rationale appropriately explains that reasons for migration are inferred from established facts and historical context, correctly uses the 1850-1880 period as a boundary for question selection rather than an evidence restriction, and makes no unsupported assumptions about the family's motivations or circumstances.)"
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d05`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All five MCP tool calls used correct arguments. The project_context call retrieved the objective and project state correctly. The research_query calls for 'questions' and 'conflicts' sections properly queried the existing state. The person_warnings call correctly identified the stub record issue. The research_append call properly structured the question entry with all required fields (question text, rationale, selection_basis, question_kind, priority, status, depends_on, unblocks, etc.) and successfully persisted it. No fixture_not_found errors; all calls matched.kind == 'live'.\n\nJunior: (Pass - All five MCP tool calls used appropriate arguments and matched the expected workflow. The project_context call correctly retrieved the project objective and state, the research_query calls properly examined the existing questions and conflicts, and the person_warnings call correctly targeted I1 (Patrick Flynn) to assess record issues. The research_append call was accurately structured with all required fields, including the question text, rationale, selection basis, priority, status, dependencies, and search-stop metadata, and successfully recorded the new question. No fixture_not_found errors occurred, and all tool invocations matched the expected live fixtures and argument structure.)"
+    },
+    {
+      "test_id": "ut_question_selection_d05",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d05`** — `rubric` / `Question specificity`\nLLM: 3 → Junior: 3\n\n> The question 'When did Patrick Flynn and his family arrive in Schuylkill County, Pennsylvania?' is concrete and answerable. It names the specific person (Patrick Flynn), the specific location (Schuylkill County, Pennsylvania), and the specific fact sought (arrival timing). It is not vague like 'learn more about Patrick's early life' and holds exactly one unknown (the arrival date/window), meeting the per-test requirement. A follow-up search targeting 1850–1880 federal census records for Schuylkill County can directly answer it.\n\nJunior: (Pass - The question,\"When did Patrick Flynn and his family arrive in Schuylkill County, Pennsylvania?\", is highly specific and focused on a single, answerable fact. It identifies a specific subject, a specific location, and one unknown (the arrival date or arrival window), avoiding broader or compound questions that would introduce multiple unknowns. The question is well-scoped for genealogical research and can be directly investigated through census and related records, making it an effective decomposition of the larger motivation objective.)"
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that pli_006 (Thomas Flynn probate search) is in_progress and applied the gate rule: no new question can be written while an active plan item is underway and no blocking conflicts or contradiction warnings exist. The tool responses confirm c_001 is resolved with no blocks, and person_warnings returned zero warnings. Claude's decision to defer is factually correct given the project state.\n\nJunior: (Pass - The skill correctly applied the in-progress gate rule by recognizing that pli_006 (Thomas Flynn probate search) was already underway and therefore prevented the creation of a new research question. Its decision was consistent with the project state: c_001 was resolved, no blocking conflicts remained, and person_warnings reported no contradictions or warnings that would justify interrupting the active plan item. As a result, deferring additional question selection until the current research task is completed was the correct action.)"
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the full scope of the task: checked the in-progress gate (pli_006 status), verified no unresolved blocking conflicts (c_001 is resolved), confirmed no contradiction warnings (person_warnings returned 0), and correctly concluded no new question should be written. The response included the required recommendation for next steps (complete pli_006, then re-invoke).\n\nJunior: (Pass - The skill fully addressed the task requirements by verifying the current project state before deciding whether to create a new question. It confirmed that the active plan item (pli_006) remained in progress, checked that the only documented conflict (c_001) had already been resolved, and verified that no contradiction warnings were present through the person_warnings results. Based on those findings, it correctly concluded that no new research question should be written at this stage and provided the appropriate next step: complete pli_006 and then re-evaluate the project for additional question selection.)"
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All seven MCP tool calls passed correct arguments matching the fixture's expected_args. Calls to project_context, research_query (questions/conflicts/hypotheses/timelines/plans), and person_warnings all used correct projectPath and section/personId parameters. No calls landed in fixture_not_found; all matched.kind == 'live'. Arguments were semantically appropriate and complete.\n\nJunior: (Pass - All seven MCP tool calls were executed with the correct arguments and matched the fixture's expected usage. The project_context call correctly retrieved the project state, while the research_query calls appropriately examined the questions, conflicts, hypotheses, timelines, and plans sections using the correct projectPath. The person_warnings call also targeted the correct person record, and all calls returned live fixture results rather than fixture_not_found errors. Overall, the arguments were structurally correct, semantically appropriate, and complete for the task being performed.)"
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_question_selection_001`** — `rubric` / `Question specificity`\nLLM: N/A → Junior: N/A\n\n> This dimension is N/A because Claude correctly deferred adding a new question. The per-test context explicitly states: 'when the skill correctly defers adding a new question (no new question added), this dimension is N/A and should be scored null.' No new question was written, so specificity does not apply.\n\nJunior: (This dimension is not applicable because the skill correctly did not create a new research question. The evaluation criteria explicitly state that when the appropriate outcome is to defer question creation and continue with existing work, question specificity should be scored null/N/A rather than evaluated. Since no new question was written, there is no question wording, scope, or focus to assess under this dimension.)"
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_016`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified the gating premise: Rosalind's surname 'Hartwell' is unverified and may be her married name from Thomas Hartwell, not her birth surname. The question 'What was the maiden name of Rosalind Hartwell, born circa 1855 in Ohio?' directly addresses this premise and names the specific fact needed to unlock the parent search. The rationale accurately explains why establishing birth surname is the load-bearing premise before any parent identification can proceed. The tool calls succeeded (no fixture_not_found errors), and the question was correctly persisted to research.json with appropriate metadata (selection_basis: objective_decomposition, priority: high, status: open).\n\nJunior: (Pass - The skill correctly identified the key gating premise: whether Rosalind Hartwell was actually born with the surname \"Hartwell\" or acquired it through marriage to Thomas Hartwell. The selected question,\"What was the maiden name of Rosalind Hartwell, born circa 1855 in Ohio?\", directly targets the critical fact that must be established before any reliable parent search can proceed. The rationale accurately explains that an unverified surname could misdirect all subsequent research, and the question was properly recorded with appropriate metadata, including selection_basis: objective_decomposition, priority: high, and status: open.)"
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_016`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed everything required: it read the project context (objective, persons, sources), identified the unverified surname premise, formulated a specific research question that names the fact needed (maiden name), explained the rationale for prioritizing this question, and persisted it to the research.json file. The question was recorded with all required fields populated (question, rationale, selection_basis, question_kind, priority, status, depends_on, unblocks). No required work was omitted.\n\nJunior: (Pass - The skill completed all required work for this scenario. It reviewed the project context, identified that the recorded surname\"Hartwell\" was an unverified and potentially married surname, formulated a research question that directly names the required gating fact (Rosalind's maiden name), and clearly explained why resolving that premise must come before any parent-identification effort. The question was successfully recorded with all required metadata fields, including the question text, rationale, selection basis, question kind, priority, status, dependencies, and unblocks, with no required analysis or workflow steps omitted.)"
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_016`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All six MCP tool calls passed with correct arguments and matched.kind='live' (no fixture_not_found errors). The calls were semantically appropriate: project_context to read the objective and persons, research_query calls to check existing questions/conflicts/hypotheses/timelines, person_warnings to check for flags, and research_append to persist the new question. The append call included all required fields (question, rationale, selection_basis, question_kind, priority, status, depends_on, unblocks, resolved, resolution_assertion_ids, search_stop). No critical identifiers were wrong, and no calls failed validation.\n\nJunior: (Pass - All six MCP tool calls were executed with correct and appropriate arguments, and each call successfully resolved against a live fixture with no fixture_not_found or validation errors. The workflow appropriately used project_context to retrieve the project objective and context, research_query to inspect existing questions, conflicts, hypotheses, and timelines, person_warnings to identify any record concerns for Rosalind Hartwell, and research_append to persist the new research question. The append operation included all required fields, including the question, rationale, selection basis, question kind, priority, status, dependencies, unblocks, resolution metadata, and search-stop structure, demonstrating complete and accurate tool usage throughout the task.)"
+    },
+    {
+      "test_id": "ut_question_selection_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_016`** — `rubric` / `Question specificity`\nLLM: 3 → Junior: 3\n\n> The question 'What was the maiden name of Rosalind Hartwell, born circa 1855 in Ohio?' is concrete and answerable. It names the specific person (Rosalind Hartwell), the time period (born circa 1855), the location (Ohio), and the precise fact being sought (maiden name). This is specific enough to drive a follow-up search design (marriage records, vital records, census records). It is not vague like 'learn more about Rosalind' or 'who were her parents'; it names the exact fact that must be resolved first.\n\nJunior: (Pass - )The question,\"What was the maiden name of Rosalind Hartwell, born circa 1855 in Ohio?\", is highly specific, focused, and directly answerable. It clearly identifies the subject, provides distinguishing context (approximate birth year and location), and names a single, precise fact to be determined: her maiden name. This level of specificity is sufficient to guide targeted research in marriage records, vital records, and census records, while avoiding broader or ambiguous questions such as \"learn more about Rosalind\" or \"who were her parents?\" that would encompass multiple unknowns."
+    }
+  ]
+}

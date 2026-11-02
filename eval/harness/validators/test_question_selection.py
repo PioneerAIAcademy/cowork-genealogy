@@ -411,6 +411,57 @@ def test_new_question_not_vague(before_state, after_state):
     )
 
 
+# --- Universal: every new question states its date window (#2424) ------
+
+_DATE_WINDOW = re.compile(r"^(\d{4})-(\d{4})$")
+
+
+def test_new_question_has_date_window(before_state, after_state):
+    """Universal: every newly written question carries `date_window`,
+    "YYYY-YYYY" with start <= end. research_append warns when a plan leaves
+    most of that window unsearched, and the warning is silent on a question
+    without one -- so a question written without it disarms the check."""
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    offenders: list[str] = []
+    for q in _new_questions(before, after):
+        window = q.get("date_window")
+        m = _DATE_WINDOW.match(window) if isinstance(window, str) else None
+        if not m or int(m.group(1)) > int(m.group(2)):
+            offenders.append(f"{q.get('id')}: date_window={window!r}")
+    assert not offenders, (
+        'new question(s) without a "YYYY-YYYY" date_window: ' + ", ".join(offenders)
+    )
+
+
+_QUESTION_KINDS = ("enumerative", "targeted")
+
+
+def test_new_question_carries_question_kind(before_state, after_state):
+    """Universal: every question question-selection writes carries a
+    `question_kind` (issue #1830 item 1, the lead's 2026-08-31 ruling on
+    #1917). The field is optional in the schema only so older questions still
+    validate; research-plan reads it to decide whether the five-event breadth
+    obligation applies, so a question written without it silently opts out.
+    The engine already refuses an invalid value, so absence is what this
+    catches."""
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    offenders = [
+        f"{q.get('id')}: question_kind={q.get('question_kind')!r}"
+        for q in _new_questions(before, after)
+        if q.get("question_kind") not in _QUESTION_KINDS
+    ]
+    assert not offenders, (
+        f"new question(s) without a question_kind in {_QUESTION_KINDS}: "
+        + ", ".join(offenders)
+    )
+
+
 # --- Tag-gated: the timelines section must actually be queried (V3) ---
 
 def test_person_warnings_called_before_deciding(tool_calls, test):

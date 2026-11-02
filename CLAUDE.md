@@ -51,6 +51,9 @@ Several MCP tools call hosted sidecar services rather than public APIs:
   hit `GET /page/{title}` for a specific wiki page. The pre-crawled
   markdown corpus lives on the server, not on each developer's laptop.
 - `place_population` calls the hosted Pop Stats API.
+- `same_person` and ranking (`rank_search_matches`, and `record_search` when it
+  ranks) call the matcher service when `config.json`'s `matcher` is `service`,
+  and FamilySearch's matcher otherwise (`docs/specs/matcher-shim-spec.md`).
 
 The MCP code is HTTP-only for all of these — it does not import or
 depend on any Python code from those services. The base URL for the
@@ -63,7 +66,12 @@ reachable.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
 `DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at a
 `*.ts.net` host served to the public internet through Tailscale Funnel, so
 every install reaches it. Never describe it as private, undeployed or
-unreachable — not in a README, a known-limits list or a review. A `dig`
+unreachable — not in a README, a known-limits list or a review. The ingress
+that makes those URLs resolve is recorded in
+`scripts/tailscale-services.sh` — the Funnel mappings, the loopback ports
+and systemd units behind them, and `check` to probe all of it. The mappings
+themselves live in tailscaled's state on that one host, so that script is
+the only copy in source. A `dig`
 returning a `100.64.0.0/10` address is the tailnet-internal answer and says
 nothing about public reach. The hosted path can now be redirected without an
 engine rebuild — set `WIKI_API_URL` / `POP_STATS_URL` on the control
@@ -333,6 +341,14 @@ path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 (ADR-0005); whether that is a per-session setting is not known. **Do not rely on
 which one it is** — the hook bound under both, which is the part that matters.
 
+A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds one conditional
+sentence to each Cowork researcher message (no project → a research request goes to the
+research skill). It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
+the SDK env, so the hosted planes keep their own text-only fix (`project_note`,
+`DELIVERY_GUIDANCE`). The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
+`no_project_route.HOSTED_PLANE_ENV`; change both together, and
+`test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ.
+
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
 plugin agent's instructions or `tools:` list. The hosted path, both harnesses and
@@ -356,7 +372,7 @@ refusing to load it — asserted by `tests/packaging/plugin-hooks.test.ts`.
 
 **After changing anything under `hooks/`, run `make hook-smoke`.**
 `plugin-hooks.test.ts` proves the script *decides* correctly; only `hook-smoke`
-proves a runtime *binds* it, and since the script must never raise, a hook that
+proves a runtime *binds* a `PreToolUse` hook (it probes no other event), and since the script must never raise, a hook that
 stopped binding looks exactly like one with no opinion. It is live, billed, and
 run by no CI job. It covers the **hosted** loader only — Cowork's stays on the
 `nothing-checks` register (`docs/specs/e2e-test-spec.md` §6.1.1).
@@ -366,11 +382,15 @@ only narrow what the session already holds — the session's tool set is always 
 superset — so no allow-list can deny the *main thread* a tool one of its
 subagents needs. Discriminating by caller is a `PreToolUse` hook's job, and the
 shipped hook already does it: it routes `research_append` by caller identity
-(`owner_denied`, `AGENT_WRITABLE_SECTIONS`) — don't re-derive that. The one arm
-that stayed harness-only is the tool-level one, which denies `image_read` when
-`agent_id` is absent (`eval/harness/harness/context_policy.py`); porting it was
+(`owner_denied`, `AGENT_WRITABLE_SECTIONS`) — don't re-derive that. It also
+denies the main thread every tool only agents hold (`AGENT_ONLY_TOOLS`), naming
+the agents to delegate to; a tool only agents hold goes on that map or on
+`MAIN_THREAD_OK` with its reason, **by hand, never derived** (lead, 2026-10-20),
+and `plugin-hooks.test.ts` fails until it does. Grant a new tool to an agent and
+you owe that line, plus the `hooks.json` matcher if it is denied. The one arm
+still harness-only is `image_read`, which no agent holds; porting it was
 **declined by lead ruling 2026-08-17**, so it is not pending work. ADR-0006
-records why.
+records both.
 
 Do **not** reach for a server-level prefix grant (`mcp__remote-devices`):
 that namespace also carries `device_bash`, `device_commit_files`, and
@@ -589,6 +609,12 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
 | `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user in the `.mcpb` install dialog (layered over `config.json`, and winning over it) or directly in `config.json`. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent, naming both places to set it. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel(principal)` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
+| `webPublicUrl` | `project_create`, `project_context` | Optional | The self-hosted beta web tier's public origin. Set, with a store that has a `projectId`, both tools return `projectUrl` (`src/utils/project-links.ts`). The hosted tool server reads it from `WEB_PUBLIC_URL` (`src/hosted-config-env.ts`), trimmed; one that is not a plain http(s) URL with no `#`, `?`, credentials, backslash, space or control character refuses start-up. |
+| `uploadsEnabled` | `project_context` | Optional | `true` adds `uploadUrl` beside `projectUrl`. From `UPLOADS_ENABLED`: `true`/`false` only, anything else refuses start-up. |
+| `transcriptionEnabled` | no reader yet | Optional | The beta's transcription switch; unset means as today. From `TRANSCRIPTION_ENABLED`, strict like `uploadsEnabled`. |
+| `matcher` | `same_person`, `rank_search_matches`, `record_search` when it ranks | Optional | `"familysearch"` (the default) or `"service"`. Read by `getMatcherSettings(principal)` in `src/auth/config.ts`. Any other value throws. No fallback between them. The alpha's control plane, and the beta's tool server, set it from `MATCHER_URL` and `MATCHER_API_KEY`; a developer sets it by hand. |
+| `matcherUrl` | as `matcher` | When `matcher` is `"service"` | Base URL of the matcher service (`POST /v1/score`). Trailing slash stripped. No default. |
+| `matcherApiKey` | as `matcher` | When `matcher` is `"service"` | This caller's bearer key. Never echoed; the run-log and feedback redactors drop its value. |
 
 Each `get*` helper throws an LLM-instruction error when its required
 field is missing — the error message tells Claude what to put in the

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 vi.mock('../../../contexts/ResearchDataContext', async () => {
@@ -88,5 +88,31 @@ describe('Export GEDCOM button', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+describe('Print button', () => {
+  it('is disabled with no research loaded', () => {
+    vi.mocked(useResearchData).mockReturnValue(buildMockContext({ research: null }))
+    render(<Header />)
+    expect(screen.getByRole('button', { name: 'Print' })).toBeDisabled()
+  })
+
+  it('mounts the print view until the print dialog closes', async () => {
+    vi.stubGlobal('print', vi.fn())
+    vi.mocked(useResearchData).mockReturnValue(buildMockContext())
+    render(<Header />)
+    expect(document.getElementById('print-root')).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Print' }))
+    expect(document.getElementById('print-root')).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Print' })).toBeDisabled()
+    await waitFor(() => expect(window.print).toHaveBeenCalledTimes(1))
+
+    act(() => {
+      window.dispatchEvent(new Event('afterprint'))
+    })
+    expect(document.getElementById('print-root')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Print' })).toBeEnabled()
   })
 })

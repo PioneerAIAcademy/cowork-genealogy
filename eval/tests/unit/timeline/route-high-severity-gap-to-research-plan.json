@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_timeline_rt3",
+    "skill": "timeline",
+    "name": "A high-severity timeline gap routes to research-plan, not question-selection (E)",
+    "type": "positive",
+    "description": "mid-research-flynn carries a high-severity gap on the open q_001. Section E moves that hand-off to research-plan: a gap in a person's timeline is a SEARCH on the question already open, and asking question-selection for a new question would leave q_001 unfinished while a second competes with it. timeline is reachable from conflict-resolution's identity row, so this route also decides where an identity investigation goes next.",
+    "tags": [
+      "timeline",
+      "gaps",
+      "high-severity",
+      "routing",
+      "step-mode",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Build the timeline for Patrick Flynn (person I1), then say what happens next.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "judge_context": [
+    "The hand-off for the high-severity gap must name **research-plan**, and should say which span the searches would cover so the plan has something to act on.",
+    "Naming **question-selection**, or suggesting a new research question, is the failure this test exists for. q_001 is still open, so a second question would compete with the one being worked.",
+    "The other hand-off rows are unchanged and must not be charged: a failed hypothesis test still goes to hypothesis-tracking, and a visible vital-limit contradiction still goes to check-warnings. Only the gap row moved.",
+    "Do not charge the agent on the timeline's CONTENT — which events it ordered, or how it classified the gap's severity. Those are other tests' subjects; this one is only about where the gap routes.",
+    "Naming BOTH research-plan and question-selection is not a pass. The point of the change is that one of them is wrong, so offering both leaves the caller to pick.",
+    "**The last line must be the offer**, written exactly as \"Continue with planning the searches?\". The host parses only the last line, against the step labels, so a reply naming research-plan mid-text and ending some other way offers the researcher nothing."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 600,
+    "sdk_message_silence_seconds": 300
+  }
+}

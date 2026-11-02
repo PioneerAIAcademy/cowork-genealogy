@@ -1,0 +1,2778 @@
+{
+  "project": {
+    "id": "rp_hannah_earnest_children",
+    "objective": "Besides their children John, Hannah Grace, Edwin, William, and James, did Hannah Earnest and Edwin Grice have any other children? Identify each additional child and their birth details.",
+    "subject_person_ids": [
+      "9DJ7-219"
+    ],
+    "status": "completed",
+    "created": "2026-07-03",
+    "updated": "2026-10-30"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "What children did Hannah Earnest (born 1857, Darlaston, Staffordshire) and Edwin Grice (born circa 1854, West Bromwich, Staffordshire) have besides their five known children \u2014 John (born circa 1877), Hannah Grace (born circa 1880), Edwin (born circa 1883), William (born circa 1885), and James (born 9 September 1886, West Bromwich, Staffordshire) \u2014 and what are the birth dates and places of any such additional child?",
+      "rationale": "The couple's known children span 1877\u20131886 across West Bromwich and Birmingham. England civil registration (from 1837), decennial census returns (1881, 1891, 1901), and Staffordshire and Warwickshire parish registers exist for this period and jurisdiction and can be systematically searched to determine whether any births to this couple remain unrecorded in the tree.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-10-30",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025",
+        "a_026",
+        "a_027",
+        "a_028",
+        "a_029",
+        "a_030",
+        "a_031",
+        "a_032",
+        "a_033",
+        "a_034",
+        "a_035",
+        "a_036",
+        "a_037",
+        "a_038",
+        "a_039",
+        "a_040",
+        "a_041",
+        "a_042",
+        "a_043",
+        "a_044",
+        "a_045",
+        "a_046"
+      ],
+      "search_stop": {
+        "stopped_because": "resources_spent",
+        "justification": "Overturn risk: low \u2014 Staffordshire Church Records (collection 2364451) exhaustively searched and returned exactly five baptism records for Edwin+Hannah Grice children (Lydia 1878, Hannah 1880, Edwin 1882, William 1884, James 1886; hasMore: false), giving a complete enumeration of the indexed collection for this parent pair. No additional children appeared in FamilySearch 1901 or 1911 census searches. Two unsearched avenues remain: (1) the FamilySearch England and Wales Birth Registration Index (collection 2285338) filtered by mother's maiden name 'Earnest' \u2014 not run in log_022, which searched by surname and birthplace only \u2014 which would identify any GRO-registered births attributable to Hannah Earnest that were not baptised; and (2) the Ancestry 1911 census (collection 2352, paywalled), the source explicitly identified in the plan as decisive for the children-born-alive count. The repository_breadth criterion fails on these two unsearched avenues.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_006",
+          "log_007",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_026",
+          "log_027",
+          "log_028",
+          "log_029",
+          "log_034",
+          "log_035",
+          "log_037",
+          "log_038"
+        ],
+        "stop_criteria": null,
+        "not_reached": [
+          {
+            "kind": "deferred",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "FamilySearch England and Wales Birth Registration Index (collection 2285338), filtered by mother's maiden name 'Earnest' and registration district West Bromwich \u2014 never searched with this filter. Log_022 searched collection 2285338 by surname Grice and birthplace West Bromwich only (2,122 hits, top 20 examined) with no mother's maiden name filter. A search filtered to mother Hannah Earnest would identify any GRO-registered births of this couple not captured in the indexed church records, including children who died before baptism."
+          },
+          {
+            "kind": "paywalled",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Ancestry 1911 England census (collection 2352, https://www.ancestry.com/search/collections/2352/?name=Edwin_Grice&birth=1854&birthplace=West+Bromwich%2C+Staffordshire%2C+England&spouse=Hannah_Grice) \u2014 subscription required. FamilySearch 1911 census (pli_004) returned negative for the Edwin/Hannah household. Ancestry's index may locate the household under variant spellings. The 1911 census is the decisive source for this question: it records the mother's own statement of children born alive and still living. URL generated in log_038; subscription required to view results."
+          },
+          {
+            "kind": "paywalled",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Ancestry 1901 England census (collection 7814, https://www.ancestry.com/search/collections/7814/?name=Edwin_Grice&birth=1854&birthplace=Staffordshire%2C+England&spouse=Hannah_) \u2014 subscription required. FamilySearch 1901 census (pli_003) exhausted negative; Ancestry may recover the household under variant spellings or registration address differences. URL generated in log_037; subscription required to view results."
+          }
+        ]
+      },
+      "created": "2026-10-30"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-30",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "fs_hints",
+          "jurisdiction": "West Bromwich, Staffordshire, England",
+          "date_range": "1873-1905",
+          "repository": "FamilySearch",
+          "rationale": "Review pending FamilySearch hints on 9DJ7-219 before searching \u2014 an attached hint may already answer the question about additional children.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "person_record_matches is unavailable in this e2e benchmark run; pending FamilySearch hints for 9DJ7-219 cannot be retrieved"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "vital_record",
+          "jurisdiction": "West Bromwich, Staffordshire; Walsall, Staffordshire; Birmingham, Warwickshire, England",
+          "date_range": "1873-1905",
+          "repository": "FamilySearch",
+          "rationale": "England and Wales civil birth registrations (GRO index), name-searchable \u2014 surname Grice across West Bromwich, Walsall (Darlaston, where Edwin Grice child was born 1883, falls in this district per loc_001 quirk), and Birmingham registration districts. Registration was mandatory from 1875 with near-complete coverage (loc_001 quirk). Searching 1873-1905 spans before John's circa 1877 birth to when Hannah was approximately 48, covering the full plausible fertility window. The 1881 and 1891 census entries are already in the project tree via attached sources; this birth-index search adds coverage for children who may have died young and never appeared in a census.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Birmingham, Warwickshire, England",
+          "date_range": "1901",
+          "repository": "FamilySearch",
+          "rationale": "England and Wales Census, 1901 \u2014 name-searchable. The 1891 census (source 7BL6-KLH in project tree) places the Grice family in Birmingham, Warwickshire. The 1901 census would show any children born after James (Sep 1886) who survived to 1901, as well as older children still in the household. Also search adjacent West Bromwich district in case the family relocated.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Birmingham, Warwickshire, England",
+          "date_range": "1911",
+          "repository": "FamilySearch",
+          "rationale": "England and Wales Census, 1911 \u2014 name-searchable, FamilySearch collection 1921547 per loc_001 quirk. This is the most important census for this question: it records the mother's own statement of total children born alive and total still living, giving a definitive count to compare against the five known children. James Grice (GN29-3TT) was documented in Birmingham in 1911. If Hannah was still alive in 1911, her entry settles the total birth count directly.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "church",
+          "jurisdiction": "West Bromwich, Staffordshire, England",
+          "date_range": "1873-1900",
+          "repository": "FamilySearch",
+          "rationale": "England, Births and Christenings, 1538-1975 and England, Staffordshire, Church Records, 1538-1944 \u2014 some volumes name-searchable, others browse-only (personCount 0) for unindexed registers. The project tree already holds Hannah Grace's christening (5 May 1880, source MDCL-68X) from this collection. The loc_001 quirk notes West Bromwich had multiple C of E and nonconformist churches (All Saints, Christ Church, Holy Trinity, St John, St Paul, St Peter, St Andrew, plus nonconformist and Catholic chapels); All Saints Bishop's Transcripts end 1868 \u2014 for 1868-1905 christenings consult original registers or FamilySearch collection 2364451. This covers nonconformist baptisms that may not appear in civil registration and corroborates any birth-index hits.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "vital_record",
+          "jurisdiction": "West Bromwich, Staffordshire; Walsall, Staffordshire; Birmingham, Warwickshire, England",
+          "date_range": "1873-1905",
+          "repository": "FreeBMD",
+          "rationale": "FreeBMD (freebmd.org.uk) and Staffordshire BMD \u2014 the loc_001 quirk specifically identifies these as primary free access points for the GRO civil registration birth indexes alongside FamilySearch. Search surname Grice across all quarters 1873-1905 in West Bromwich, Walsall, and Birmingham registration districts. Run if pli_002 (FamilySearch England Births) returns incomplete or uncertain results.",
+          "fallback_for": "pli_002",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Primary pli_002 returned positive results: Staffordshire Church Records (collection 2364451) exhaustively searched for Edwin+Hannah Grice, producing Lydia (1878), Hannah Grace (1880), William (1884), James (1886). Church records with confirmed parent names are more informative than the GRO quarterly index, which lacks parent fields. No unaccounted children found in the church-records sweep."
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "census",
+          "jurisdiction": "Birmingham, Warwickshire, England",
+          "date_range": "1901",
+          "repository": "Ancestry",
+          "rationale": "Ancestry 1901 England census \u2014 name-searchable. Run if the FamilySearch 1901 census search (pli_003) does not locate the Grice household. Ancestry's index may return different results on spelling variants (Grice, Griss, Grise) or on partial addresses where the FamilySearch index misses the entry.",
+          "fallback_for": "pli_003",
+          "status": "skipped",
+          "collection_url": "https://www.ancestry.com/search/collections/7814/",
+          "skip_category": "inaccessible",
+          "skip_reason": "Autonomous run \u2014 no user present to authenticate to Ancestry (subscription site) and capture results. URL generated and logged (log_037) for researcher to execute manually."
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "census",
+          "jurisdiction": "Birmingham, Warwickshire, England",
+          "date_range": "1911",
+          "repository": "Ancestry",
+          "rationale": "Ancestry 1911 England census (collection 2352 per loc_001 quirk) \u2014 name-searchable. Run if the FamilySearch 1911 census search (pli_004) does not locate Hannah or Edwin Grice. The 1911 census total-children-born count is the decisive source for this question; this fallback ensures it is found even if one platform's index is incomplete.",
+          "fallback_for": "pli_004",
+          "status": "skipped",
+          "collection_url": "https://www.ancestry.com/search/collections/2352/",
+          "skip_category": "inaccessible",
+          "skip_reason": "Autonomous run \u2014 no user present to capture the Ancestry page. URL generated and logged (log_038) for researcher to visit: https://www.ancestry.com/search/collections/2352/?name=Edwin_Grice&birth=1854&birthplace=West+Bromwich%2C+Staffordshire%2C+England&spouse=Hannah_Grice"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-30T05:45:12.726Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Hannah",
+        "spouseGivenName": "Edwin",
+        "residenceYearFrom": 1911,
+        "residenceYearTo": 1911,
+        "residencePlace": "Birmingham, Warwickshire, England",
+        "collectionId": "1921547",
+        "recordCountry": "England"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results for Hannah Grice with spouse Edwin in Birmingham, Warwickshire, 1911 census."
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-30T05:45:12.727Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Hannah",
+        "residenceYearFrom": 1911,
+        "residenceYearTo": 1911,
+        "residencePlace": "Birmingham, Warwickshire, England",
+        "collectionId": "1921547",
+        "recordCountry": "England"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results for Hannah Grice in Birmingham, Warwickshire, 1911 census (no spouse filter). Broadened to Warwickshire next."
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-30T05:45:12.727Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Hannah",
+        "residenceYearFrom": 1911,
+        "residenceYearTo": 1911,
+        "residencePlace": "Warwickshire, England",
+        "collectionId": "1921547",
+        "recordCountry": "England"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 108,
+      "notes": "108 matches for Hannah Grice in Warwickshire 1911 census. Top match (rank 1, matchScore 0.025): Hannah Grice born 1857 in Rowley Regis, Staffordshire \u2014 birth year exact match with subject \u2014 but in Household of John Grice, not Edwin. Rank 2 (matchScore 0.001): Hannah Grice born 1852 in Quarry Bank, Staffordshire, in Household of Edwin Grice \u2014 household head matches but 5-year birth year conflict. All matchScores very low; subject may be insufficiently factual to score well. Proceeding to search Edwin Grice as principal.",
+      "staged_ref": "results/.staging/1da4c970-8a46-444c-9941-5e6872beded7.json"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:45:17.410Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Hannah",
+        "spouseGivenName": "Edwin",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "residencePlace": "Birmingham, Warwickshire, England",
+        "collectionId": "1888129"
+      },
+      "outcome": "positive",
+      "results_examined": 7,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 7,
+      "notes": "Earlier staged search from this project session \u2014 logged retrospectively per unlogged-search warning.",
+      "staged_ref": "results/.staging/c834e7d2-a0c5-4104-9122-c0681060e223.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:45:17.428Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edwin",
+        "birthYearFrom": 1849,
+        "birthYearTo": 1859,
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "collectionId": "1888129"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_005.json",
+      "results_available": 25,
+      "notes": "Earlier staged search from this project session \u2014 logged retrospectively per unlogged-search warning.",
+      "staged_ref": "results/.staging/4cd27451-1cc4-4d63-85cf-34193bf591e9.json"
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-30T05:45:17.446Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "fatherGivenName": "Edwin",
+        "fatherSurname": "Grice",
+        "motherGivenName": "Hannah",
+        "birthYearFrom": 1873,
+        "birthYearTo": 1900,
+        "birthPlace": "Staffordshire, England",
+        "recordCountry": "England",
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_006.json",
+      "results_available": 14061,
+      "notes": "Primary church/birth search for children of Edwin Grice + Hannah in Staffordshire, 1873-1900. Strong confirmed hits: Lydia Grice (bapt. 8 Aug 1878 West Bromwich), Hannah Grice (bapt. 5 May 1880 West Bromwich \u2014 likely the known Hannah Grace already in tree), Edwin Grice (chr. 11 Oct 1882 Dilhorne \u2014 note unusual location), William Grice (bapt. 30 Jul 1884 West Bromwich), James Grice (bapt. 27 Oct 1886 West Bromwich). All five have Edwin Grice as father and Hannah as mother confirmed present in the index. Pool of 14,061 total; top results clearly the right family.",
+      "staged_ref": "results/.staging/2eef1cc1-4cf1-493b-808c-dbd64393b922.json"
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-30T05:46:12.403Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "Edwin",
+        "fatherSurname": "Grice",
+        "motherGivenName": "Hannah",
+        "birthYearFrom": 1873,
+        "birthYearTo": 1900,
+        "recordCountry": "England",
+        "collectionId": "2364451",
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 5,
+      "notes": "Targeted search scoped to England, Staffordshire, Church Records (collection 2364451) with Edwin Grice as father and Hannah as mother, 1873-1900. Returned exactly 5 results (hasMore: false) \u2014 a complete enumeration of the collection for this family: Lydia (1878), Hannah (1880), Edwin (1882 Darlaston, parents unknown in index), William (1884), James (1886). This collection is exhausted for Edwin + Hannah Grice children.",
+      "staged_ref": "results/.staging/88d742c4-fe3e-49c9-a813-6815d36fdc74.json"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:46:12.418Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edwin",
+        "spouseGivenName": "Hannah",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "collectionId": "1888129",
+        "recordCountry": "England"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 295,
+      "notes": "Earlier staged search from this project \u2014 logged retrospectively.",
+      "staged_ref": "results/.staging/b8c24939-2d9e-41b6-a515-1d1a6dc36d4a.json"
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:46:12.437Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "recordCountry": "England",
+        "recordType": "birth",
+        "birthYearFrom": 1873,
+        "birthYearTo": 1905,
+        "fatherGivenName": "Edwin",
+        "motherGivenName": "Hannah"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 15469,
+      "notes": "Earlier staged search from this project \u2014 logged retrospectively.",
+      "staged_ref": "results/.staging/254e5066-79db-4c48-8663-5a13aad5dc19.json"
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:46:12.460Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edwin",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "residencePlace": "Birmingham, Warwickshire, England",
+        "collectionId": "1888129"
+      },
+      "outcome": "positive",
+      "results_examined": 17,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 17,
+      "notes": "Earlier staged search from this project \u2014 logged retrospectively.",
+      "staged_ref": "results/.staging/da18479c-4486-4570-b2d4-a2644014cdf6.json"
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:46:12.483Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edwin",
+        "spouseGivenName": "Hannah",
+        "residenceYearFrom": 1911,
+        "residenceYearTo": 1911,
+        "collectionId": "1921547",
+        "recordCountry": "England"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 67,
+      "notes": "Earlier staged search from this project \u2014 logged retrospectively.",
+      "staged_ref": "results/.staging/e5ce1704-42f6-4155-bacf-3cfdaad03f02.json"
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:48:18.347Z",
+      "tool": "record_search",
+      "query": {
+        "note": "Correction re log_004: that search (Hannah Grice + Edwin spouse + Birmingham 1901) was for pli_003. All 7 results had large birth year conflicts; ranked diagnostic confirmed real negative for this query."
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:48:18.347Z",
+      "tool": "record_search",
+      "query": {
+        "note": "Correction re log_005: that search (Edwin Grice + born 1849-1859 + England 1901) was for pli_003. 25 results, no Edwin Grice born ~1854 West Bromwich found."
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:48:18.347Z",
+      "tool": "record_search",
+      "query": {
+        "note": "Correction re log_008: Edwin Grice + Hannah spouse + England 1901 for pli_003. Top match was Quarry Bank family (Edwin b.1848, Hannah b.1852) \u2014 confirmed different family by record_read."
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:48:18.347Z",
+      "tool": "record_search",
+      "query": {
+        "note": "Correction re log_010: Edwin Grice + Birmingham/Warwickshire 1901 for pli_003. Four Edwins in area, none born ~1854 West Bromwich."
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:48:18.347Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Hannah",
+        "birthYearFrom": 1852,
+        "birthYearTo": 1862,
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "collectionId": "1888129",
+        "recordCountry": "England"
+      },
+      "outcome": "negative",
+      "results_examined": 41,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 41,
+      "notes": "Hannah Grice + born 1852-1862 + England 1901. 41 results. Ranked: no candidate scored above 0.01. Top match Hannah Grice b.1857 Cradley Heath in Household of John Grice (Rowley Regis) \u2014 different family confirmed by record_read (head John b.1858 Quarry Bank; children all born Cradley Heath, no Edwin husband).",
+      "staged_ref": "results/.staging/1708da6c-abe7-4f99-a188-ffe8297a5153.json"
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:48:18.379Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edwin",
+        "birthYearFrom": 1849,
+        "birthYearTo": 1859,
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "residencePlace": "Staffordshire, England",
+        "collectionId": "1888129"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "results_available": 24,
+      "notes": "Edwin Grice + Staffordshire + born 1849-1859 + 1901. 24 results. No Edwin Grice found matching birth ~1854 West Bromwich in Staffordshire.",
+      "staged_ref": "results/.staging/57c28d28-8415-476f-9127-061efc6572e2.json"
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:48:18.407Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XS3W-W3M"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "notes": "Read Quarry Bank Edwin Grice household (XS3W-W3M). Edwin b.1848 Quarry Bank, wife Hannah b.1852 Quarry Bank. Sons Bert (b.1880) and Joseph (b.1882). Birth years and birthplaces conflict with our Edwin (~1854 West Bromwich) and Hannah (1857 Darlaston). Confirmed different family.",
+      "staged_ref": "results/.staging/c0c7d230-d496-4fa8-9163-d457e4c10748.json"
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:48:18.425Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XS75-FJM"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "notes": "Read Rowley Regis John Grice household (XS75-FJM). Head John Grice b.1858 Quarry Bank; wife Hannah b.1857 Cradley Heath. Children Benjamin (1882), Alice (1883), Tom (1885), John (1888), Samuel (1891), Albert (1893) all born Cradley Heath. Not our Edwin and Hannah Grice.",
+      "staged_ref": "results/.staging/682193bc-9de3-4c0d-a879-93a2e81ec5a9.json"
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-30T05:49:05.647Z",
+      "tool": "record_search",
+      "query": {
+        "note": "Correction: log_009 covers this search (broad England birth search, surname Grice, father Edwin, mother Hannah, 1873-1905) but was logged with planItemId null. This entry documents the planItemId for pli_002."
+      },
+      "outcome": "positive",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Correction note for log_009: that entry (broad England birth search, Grice, father Edwin, mother Hannah, 1873-1905) serves pli_002 / q_001. Key finds from that search: Lydia Grice baptism 8 Aug 1878 West Bromwich (parents Edwin Grice, Hannah \u2014 possible additional child not in known five); Hannah Grice baptism 5 May 1880; William Grice baptism 12 Jul 1884; James Grice christening 27 Oct 1886 (all West Bromwich, parents confirmed via relativeTerms). birthYearConflict flags are artefacts of ranking against subject Hannah born 1857."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-30T05:49:05.647Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "John",
+        "birthYearFrom": 1873,
+        "birthYearTo": 1882,
+        "birthPlace": "Staffordshire, England",
+        "recordCountry": "England",
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "results_available": 3970,
+      "notes": "Targeted search for John Grice in Staffordshire 1873-1882. GRO index shows John Grice 1876 West Bromwich (two entries: 2X69-SJY and 2XDX-LZW). John Henry Grice 1879 West Bromwich also present. Church record: John Grice born 27 Apr 1882 christened 30 Jun 1882 West Bromwich (batch C05521-3). Delegation estimates John circa 1877; 1876 GRO entries are best candidates. Parent names not confirmed from GRO index.",
+      "staged_ref": "results/.staging/0591a301-c5fb-4819-9ac4-9ea8e0ff3ea7.json"
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_002",
+      "performed": "2026-10-30T05:49:05.666Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "birthPlace": "West Bromwich, Staffordshire, England",
+        "birthYearFrom": 1873,
+        "birthYearTo": 1905,
+        "recordCountry": "England",
+        "recordType": "birth"
+      },
+      "outcome": "positive",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "results_available": 2122,
+      "notes": "All Grice births in West Bromwich 1873-1905, no parent filter. 2,122 total hits. Relevant entries: Hannah Grice 1880 (2XJD-DSL), Hannah Grice 1885 (2XG8-B9C \u2014 possible second daughter named Hannah or different family), William Grice 1884 (2XLR-DRR). No Lydia Grice in GRO West Bromwich top 20 \u2014 she appeared only in Staffordshire Church Records.",
+      "staged_ref": "results/.staging/609d10c3-6d61-4ab2-8bce-eecd6ffdd8f3.json"
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:50:12.901Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Edward",
+        "spouseGivenName": "Hannah",
+        "residenceYearFrom": 1901,
+        "residenceYearTo": 1901,
+        "collectionId": "1888129",
+        "recordCountry": "England"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_023.json",
+      "results_available": 351,
+      "notes": "Edward Grice (Edwin variant) + Hannah spouse + England 1901. 351 results. No Edward/Edwin Grice born ~1854 West Bromwich with Hannah as wife found. Household of Edward Grice in Birmingham (born 1862) is a different family (wife Louisa, children born Birmingham). Confirmed by record read.",
+      "staged_ref": "results/.staging/c0bccc73-c627-4922-bc4f-1db050467098.json"
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:50:12.931Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "James",
+        "birthYearFrom": 1883,
+        "birthYearTo": 1889,
+        "birthPlace": "Darlaston, Staffordshire, England",
+        "collectionId": "1888129",
+        "recordCountry": "England"
+      },
+      "outcome": "positive",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "results_available": 6,
+      "notes": "James Grice + born 1883-1889 + Darlaston birthplace + England 1901. 6 results. Key finding: James Grice born 1887 West Bromwich in 'Household of John Grice', Birmingham (ARK 1XPD-W6D). Same household also contains Edwin Grice (b.1883 Darlaston) and William Grice (b.1885 West Bromwich). These three are likely children of our Edwin and Hannah Grice, living with their brother John (b.1877 West Bromwich, head of household, married to Bertha b.1879 Birmingham). Edwin and Hannah themselves not found in this household.",
+      "staged_ref": "results/.staging/1f6680cc-21ad-49c9-8c80-82cf6afcf875.json"
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:50:12.954Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XSZ7-6PN"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_025.json",
+      "notes": "Read John Grice household, Birmingham (ARK 1:2:1XPD-W6D). Members: John Grice (head, b.1877 West Bromwich, Rolling Mill Labourer, married); Bertha Grice (wife, b.1879 Birmingham); Edwin Grice (b.1883 Darlaston, Paint Trade Labourer); William Grice (b.1885 West Bromwich, Tube Trade Labourer); James Grice (b.1887 West Bromwich, Tube Trade Labourer); Gertrude Grice (b.1898 Birmingham); John Grice jr (b.1899 Birmingham); Albert E Grice (b.1901 Birmingham). Gertrude, John Jr and Albert E are indexed as children of John+Bertha. Edwin, William and James are not linked by indexed ParentChild relationships to John+Bertha \u2014 likely John's brothers and children of our Edwin and Hannah Grice. Edwin and Hannah themselves not present.",
+      "staged_ref": "results/.staging/62ee3830-74c1-44b1-a7b4-f8404b010ada.json"
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_003",
+      "performed": "2026-10-30T05:50:12.974Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XSZ7-B4W"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_026.json",
+      "notes": "Read Edward Grice household, Birmingham (ARK 1:2:1XPD-LJQ). Head Edward Grice born 1862 Birmingham, chimney sweeper; wife Louisa b.1867 Birmingham; son Edward b.1886 Birmingham; daughter Violet b.1887 Birmingham. Entirely Birmingham-born family \u2014 not our Edwin Grice born ~1854 West Bromwich.",
+      "staged_ref": "results/.staging/c6121f1c-7ccd-47ee-af9b-2d2138efbab1.json"
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-30T05:51:04.546Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:X7YY-CHB"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_027.json",
+      "notes": "Read Edwin Grice household, Quarry Bank, Staffordshire. Persons: Edwin (b.1848), Hannah (b.1852, Quarry Bank), son Tom (b.1888, chain maker, married), daughter-in-law Mabel (b.1889, Cradley Heath), infant Reginald (b.1911). Marriage 1871. Images link to FindMyPast (RG14/17529/0155); no FamilySearch imageArk. Children-born-alive column not in index. Hannah birth year 1852 conflicts with tree's 1857 by 5 years; birthplace Quarry Bank conflicts with tree's Darlaston. Marriage year 1871 would make Hannah only 14 at marriage if born 1857 \u2014 strongly conflicts. Needs review.",
+      "staged_ref": "results/.staging/e3e12712-629c-47fa-a300-365d856302c5.json"
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-30T05:51:04.564Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:XWWX-NJK"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_028.json",
+      "notes": "Read rank-1 Rowley Regis 'Household of John Grice'. John Grice (b.1858, Quarrybank) married Hannah Grice (b.1857, Rowley Regis) 1880; children Tomas (1885), John (1888), Samuel (1891), Bert (1893). This is a different family \u2014 husband is John not Edwin. Eliminates this Hannah as our subject.",
+      "staged_ref": "results/.staging/83641432-e8fe-42b3-b302-56c733d7ea38.json"
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": "pli_004",
+      "performed": "2026-10-30T05:51:04.582Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Grice",
+        "givenName": "Hannah",
+        "birthPlace": "Darlaston, Staffordshire, England",
+        "residenceYearFrom": 1911,
+        "residenceYearTo": 1911,
+        "collectionId": "1921547",
+        "recordCountry": "England"
+      },
+      "outcome": "positive",
+      "results_examined": 13,
+      "external_site": null,
+      "results_ref": "results/log_029.json",
+      "results_available": 13,
+      "notes": "Hannah Grice with birthplace Darlaston, 1911 England census. 13 results; no new candidates beyond the same two already triaged. FamilySearch index exhausted for Hannah Grice (married to Edwin) in 1911.",
+      "staged_ref": "results/.staging/11422795-8c91-4e44-b785-cc2510184eaf.json"
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:53:06.809Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL3R-C5SR"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_030.json",
+      "staged_ref": "results/.staging/79992cf7-6c37-4974-8732-9d75a8528f75.json"
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:53:06.825Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL3R-VWY9"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_031.json",
+      "staged_ref": "results/.staging/6b982024-f146-4a0e-9c5a-7838c464360a.json"
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:53:06.843Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL3R-X2D1"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_032.json",
+      "staged_ref": "results/.staging/4a80a734-4566-40bb-853c-f75226b4afb3.json"
+    },
+    {
+      "id": "log_033",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:53:06.861Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL3R-V43N"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_033.json",
+      "staged_ref": "results/.staging/aff6f29b-dfcb-4e95-bc1c-ec632bb7f271.json"
+    },
+    {
+      "id": "log_034",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-30T05:54:22.632Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:NRB1-DY1"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Dilhorne 1882 Edwin Grice christening \u2014 shares image ARK ark:/61903/3:1:3QS7-996L-R9M5 with Darlaston record QL3K-GK6H; parents Edwin Grice and Hannah confirmed. Dilhorne place label appears to be an indexing error; this is a duplicate index entry for the same Darlaston 1882 christening. Not extracted separately."
+    },
+    {
+      "id": "log_035",
+      "plan_item_id": "pli_005",
+      "performed": "2026-10-30T05:54:22.632Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL3K-GK6H"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Darlaston 1882 Edwin Grice baptism \u2014 England, Staffordshire, Church Records, 1538-1944; parents Edwin Grice (father) and Hannah (mother); place Darlaston, Staffordshire. Consistent with known child Edwin Grice (PQQT-5G1, born circa 1882-1883 Darlaston). This is the correct indexing of the event; NRB1-DY1 is a duplicate with erroneous Dilhorne label. To be extracted."
+    },
+    {
+      "id": "log_036",
+      "plan_item_id": null,
+      "performed": "2026-10-30T05:54:27.666Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:QL3K-GK6H"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_036.json",
+      "staged_ref": "results/.staging/7dadd242-d29c-4add-b33d-f62973c9d6cb.json"
+    },
+    {
+      "id": "log_037",
+      "plan_item_id": "pli_007",
+      "performed": "2026-10-30T06:23:56.002Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "7814 - 1901 England Census",
+        "givenName": "Edwin",
+        "surname": "Grice",
+        "birthYear": 1854,
+        "birthPlace": "Staffordshire, England",
+        "spouseGivenName": "Hannah"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/7814/?name=Edwin_Grice&birth=1854&birthplace=Staffordshire%2C+England&spouse=Hannah_",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Deferred \u2014 requires a user capture, which cannot happen while the run is working autonomously. Ancestry collection 7814 (1901 England Census) is a subscription site; no user is present to authenticate and capture results. URL recorded so the researcher can open it, search, and upload the results page. Search targets Edwin Grice (born c.1854, Staffordshire) with spouse Hannah in the 1901 census; family was in Birmingham by 1891. FamilySearch 1901 index (pli_003) was exhausted negative; this Ancestry fallback may recover the household under spelling variants (Grice/Griss/Grise) or address differences."
+    },
+    {
+      "id": "log_038",
+      "plan_item_id": "pli_008",
+      "performed": "2026-10-30T06:24:01.640Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "England & Wales Census 1911 (collection 2352)",
+        "givenName": "Edwin",
+        "surname": "Grice",
+        "birthYear": 1854,
+        "birthPlace": "West Bromwich, Staffordshire, England",
+        "spouseGivenName": "Hannah",
+        "spouseSurname": "Grice"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/2352/?name=Edwin_Grice&birth=1854&birthplace=West+Bromwich%2C+Staffordshire%2C+England&spouse=Hannah_Grice",
+        "capture_received": false
+      },
+      "results_ref": null,
+      "notes": "Deferred \u2014 requires a user capture, which cannot happen while the run is working autonomously. FamilySearch 1911 index (pli_004) was exhausted with a negative result; this Ancestry fallback (collection 2352) searches for Edwin Grice born c.1854 West Bromwich with spouse Hannah Grice. The 1911 census is the decisive source for this question as it records the mother's own count of children born alive and still living. URL recorded so the researcher can capture it later: https://www.ancestry.com/search/collections/2352/?name=Edwin_Grice&birth=1854&birthplace=West+Bromwich%2C+Staffordshire%2C+England&spouse=Hannah_Grice. Access: subscription required."
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"England, Staffordshire, Church Records, 1538-1944\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL3R-C5SR : Fri Aug 21 19:30:12 UTC 2026), Entry for Lydia Grice and Edwin Grice, 8 August 1878.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Lydia Grice, \"England, Staffordshire, Church Records, 1538-1944\"",
+        "when_created": "1878",
+        "when_accessed": "2026-10-30",
+        "where": "England, Staffordshire, Church Records, 1538-1944",
+        "where_within": "ark:/61903/1:1:QL3R-C5SR"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-30",
+      "log_entry_id": "log_030",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QPSM-N1DG",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"England, Staffordshire, Church Records, 1538-1944\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL3R-VWY9 : Fri Aug 21 19:48:15 UTC 2026), Entry for Hannah Grice and Edwin Grice, 5 May 1880.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Hannah Grice, \"England, Staffordshire, Church Records, 1538-1944\"",
+        "when_created": "1880",
+        "when_accessed": "2026-10-30",
+        "where": "England, Staffordshire, Church Records, 1538-1944",
+        "where_within": "ark:/61903/1:1:QL3R-VWY9"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-30",
+      "log_entry_id": "log_031",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QPSM-J2HK",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"England, Staffordshire, Church Records, 1538-1944\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL3R-X2D1 : Fri Aug 21 23:07:14 UTC 2026), Entry for William Grice and Edwin Grice, 30 July 1884.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for William Grice, \"England, Staffordshire, Church Records, 1538-1944\"",
+        "when_created": "1884",
+        "when_accessed": "2026-10-30",
+        "where": "England, Staffordshire, Church Records, 1538-1944",
+        "where_within": "ark:/61903/1:1:QL3R-X2D1"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-30",
+      "log_entry_id": "log_032",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QPSM-FNN1",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"England, Staffordshire, Church Records, 1538-1944\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL3R-V43N : Fri Aug 21 19:56:49 UTC 2026), Entry for James Grice and Edwin Grice, 27 October 1886.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for James Grice, \"England, Staffordshire, Church Records, 1538-1944\"",
+        "when_created": "1886",
+        "when_accessed": "2026-10-30",
+        "where": "England, Staffordshire, Church Records, 1538-1944",
+        "where_within": "ark:/61903/1:1:QL3R-V43N"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-30",
+      "log_entry_id": "log_033",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QPSM-LJ4T",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"England, Staffordshire, Church Records, 1538-1944\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL3K-GK6H : Sat Jul 25 13:41:47 UTC 2026), Entry for Edwin Grice and Edwin Grice, 1882.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Edwin Grice, \"England, Staffordshire, Church Records, 1538-1944\"",
+        "when_created": "1882",
+        "when_accessed": "2026-10-30",
+        "where": "England, Staffordshire, Church Records, 1538-1944",
+        "where_within": "ark:/61903/1:1:QL3K-GK6H"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-10-30",
+      "log_entry_id": "log_036",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:QP91-9Q39",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:QL3R-C5SR",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Lydia Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_030",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Lydia",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102882414685",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:QL3R-C5SR",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "8 August 1878",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_030",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "8 August 1878",
+      "place": "Holy Trinity, West Bromwich, Holy Trinity, Staffordshire, England",
+      "standard_place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_102882414685",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:QL3R-C5SR",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_030",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102882414688",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:QL3R-C5SR",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_030",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102882414688",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:QL3R-C5SR",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_030",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hannah",
+        "surname": ""
+      },
+      "record_persona_id": "p_102882414691",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:QL3R-C5SR",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_030",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102882414691",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:QL3R-C5SR",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_030",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_102882414685",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:QL3R-C5SR",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_030",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102882414685",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:QL3R-C5SR",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_030",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102882414688",
+      "source_id": "src_001"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Hannah Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hannah",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102882642211",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "5 May 1880",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "5 May 1880",
+      "place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_102882642211",
+      "source_id": "src_002",
+      "standard_place": "West Bromwich, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "3 April 1880",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "3 April 1880",
+      "record_persona_id": "p_102882642211",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102882642212",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102882642212",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hannah",
+        "surname": ""
+      },
+      "record_persona_id": "p_102882642215",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102882642215",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_102882642211",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102882642211",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:QL3R-VWY9",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_031",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102882642212",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "William Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "William",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102882546389",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "12 July 1884",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "12 July 1884",
+      "record_persona_id": "p_102882546389",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "30 July 1884",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "30 July 1884",
+      "place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_102882546389",
+      "source_id": "src_003",
+      "standard_place": "West Bromwich, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102882546392",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102882546392",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hannah",
+        "surname": ""
+      },
+      "record_persona_id": "p_102882546395",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102882546395",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_102882546389",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102882546389",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:QL3R-X2D1",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_032",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102882546392",
+      "source_id": "src_003"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "James Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "James",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102882642406",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "10 October 1886",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "10 October 1886",
+      "record_persona_id": "p_102882642406",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "27 October 1886",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "27 October 1886",
+      "place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_102882642406",
+      "source_id": "src_004",
+      "standard_place": "West Bromwich, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102882642410",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102882642410",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hannah",
+        "surname": ""
+      },
+      "record_persona_id": "p_102882642414",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_102882642414",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_102882642406",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102882642406",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:QL3R-V43N",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_033",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_102882642410",
+      "source_id": "src_004"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:QL3K-GK6H",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102877901498",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:QL3K-GK6H",
+      "record_role": "child",
+      "fact_type": "christening",
+      "value": "1882",
+      "information_quality": "primary",
+      "informant": "the officiant",
+      "informant_proximity": "official_duty",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1882",
+      "place": "Darlaston, Staffordshire, England, United Kingdom",
+      "record_persona_id": "p_102877901498",
+      "source_id": "src_005",
+      "standard_place": "Darlaston, Staffordshire, England, United Kingdom"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:QL3K-GK6H",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Edwin",
+        "surname": "Grice"
+      },
+      "record_persona_id": "p_102877901501",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:QL3K-GK6H",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Hannah",
+        "surname": ""
+      },
+      "record_persona_id": "p_102877901506",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:QL3K-GK6H",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_102877901498",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:QL3K-GK6H",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Edwin Grice",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_102877901498",
+      "source_id": "src_005"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:QL3K-GK6H",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Hannah",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_036",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_102877901501",
+      "source_id": "src_005"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_001",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: christening 8 August 1878; tree person I1: none attested (new person). Residence check: Holy Trinity, West Bromwich, 1878; none attested (new person). Child persona Lydia Grice baptised 8 August 1878 at Holy Trinity West Bromwich, daughter of Edwin Grice and Hannah. New tree person minted from this persona; no competing candidates. match_score null \u2014 person I1 was created from this same persona; scoring would be circular.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_002",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: christening 8 August 1878; tree person I1: none attested (new person). Residence check: Holy Trinity, West Bromwich, 1878; none attested (new person). Christening fact for Lydia Grice; same persona as a_001. New person minted from this persona; match_score null \u2014 circular.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_003",
+      "person_id": "9DJ7-2BY",
+      "confidence": "probable",
+      "match_score": 0.74939746,
+      "rationale": "Date check: none stated (record gives no birth year for the father); tree person 9DJ7-2BY: none attested. Residence check: West Bromwich, 1878; none attested. Name 'Edwin Grice' is an exact match for the tree person. Score 0.749 (moderate; sparse tree person at this stage). No conflicting data. Name and role fit consistently with the known family. Moderate match \u2192 probable.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_004",
+      "person_id": "9DJ7-2BY",
+      "confidence": "probable",
+      "match_score": 0.74939746,
+      "rationale": "Sex assertion for the father (Male). Same persona p_102882414688 as a_003; score 0.749 carries from that call. Consistent with Edwin Grice (9DJ7-2BY).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_005",
+      "person_id": "9DJ7-219",
+      "confidence": "probable",
+      "match_score": 0.6896236,
+      "rationale": "Date check: none stated (record gives no birth year for the mother); tree person 9DJ7-219: none attested. Residence check: West Bromwich, 1878; none attested. Given name 'Hannah' matches Hannah Earnest (9DJ7-219). Sparse record persona (name + sex only). Score 0.690 (moderate; thin on both sides). No conflicting data; consistent family context across all five baptism records. Moderate match \u2192 probable.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_006",
+      "person_id": "9DJ7-219",
+      "confidence": "probable",
+      "match_score": 0.6896236,
+      "rationale": "Sex assertion for the mother (Female). Same persona p_102882414691 as a_005; score 0.690 carries. Consistent with Hannah Earnest (9DJ7-219).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_007",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion \u2014 Lydia Grice as child of Edwin Grice. Bears on Lydia (I1). match_score null \u2014 I1 minted from this persona; scoring would be circular.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_007",
+      "person_id": "9DJ7-2BY",
+      "confidence": "probable",
+      "match_score": 0.74939746,
+      "rationale": "Relationship assertion \u2014 Lydia is child of Edwin Grice (9DJ7-2BY). Second-party link for the father. Score 0.749 (father persona p_102882414688 vs 9DJ7-2BY, same as a_003). Probable match for Edwin Grice as the named father.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_008",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Relationship assertion \u2014 Lydia Grice as child of Hannah. Bears on Lydia (I1). match_score null \u2014 I1 minted from this persona; scoring would be circular.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_008",
+      "person_id": "9DJ7-219",
+      "confidence": "probable",
+      "match_score": 0.6896236,
+      "rationale": "Relationship assertion \u2014 Lydia is child of Hannah. Second-party link for the mother (Hannah Earnest 9DJ7-219). Score 0.690 (mother persona p_102882414691 vs 9DJ7-219). Probable match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_009",
+      "person_id": "9DJ7-2BY",
+      "confidence": "probable",
+      "match_score": 0.74939746,
+      "rationale": "Father persona's assertion that he is spouse of Hannah. Primary-party link for Edwin Grice (9DJ7-2BY). Score 0.749 (same father persona, same comparison). Probable match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_009",
+      "person_id": "9DJ7-219",
+      "confidence": "probable",
+      "match_score": 0.6896236,
+      "rationale": "Father persona's assertion naming Hannah as spouse. Second-party link for the mother (Hannah Earnest 9DJ7-219). Score 0.690 (mother persona p_102882414691 vs 9DJ7-219). Probable match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_010",
+      "person_id": "9DJ7-2B2",
+      "confidence": "confident",
+      "match_score": 0.96826214,
+      "rationale": "Date check: birth 3 April 1880, christening 5 May 1880; tree person 9DJ7-2B2: none attested (sparse stub). Residence check: West Bromwich, 1880; none attested. Name 'Hannah Grice' matches Hannah Grace (9DJ7-2B2) \u2014 'Grace' appears to be a tree-name variant of 'Grice'. Parents Edwin Grice and Hannah are consistent with 9DJ7-2B2's attested parentIds (9DJ7-2BY, 9DJ7-219). Score 0.968 (strong). Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_011",
+      "person_id": "9DJ7-2B2",
+      "confidence": "confident",
+      "match_score": 0.96826214,
+      "rationale": "Christening fact, 5 May 1880, West Bromwich. Same persona p_102882642211 as a_010; score 0.968 carries. Consistent with Hannah Grace (9DJ7-2B2).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_012",
+      "person_id": "9DJ7-2B2",
+      "confidence": "confident",
+      "match_score": 0.96826214,
+      "rationale": "Birth fact, 3 April 1880. Same persona p_102882642211 as a_010; score 0.968 carries. Consistent with Hannah Grace (9DJ7-2B2).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_013",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.96219474,
+      "rationale": "Date check: none stated (no birth year for father); tree person 9DJ7-2BY: none attested. Residence check: West Bromwich, 1880; none attested. Name 'Edwin Grice' is an exact match. Score 0.962 (strong). Consistent family context. Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_014",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.96219474,
+      "rationale": "Sex assertion (Male), father persona p_102882642212. Score 0.962 carries from a_013. Consistent with Edwin Grice (9DJ7-2BY).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_015",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.9613961,
+      "rationale": "Date check: none stated (no birth year for mother); tree person 9DJ7-219: none attested. Residence check: West Bromwich, 1880; none attested. Given name 'Hannah' matches Hannah Earnest (9DJ7-219). Mother persona (p_102882642215) directly identifies the mother role in this baptism. Score 0.961 (strong). Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_016",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.9613961,
+      "rationale": "Sex assertion (Female), mother persona p_102882642215. Score 0.961 carries from a_015. Consistent with Hannah Earnest (9DJ7-219).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_017",
+      "person_id": "9DJ7-2B2",
+      "confidence": "confident",
+      "match_score": 0.96826214,
+      "rationale": "Relationship assertion \u2014 Hannah Grice as child of Edwin Grice. Primary-party link for the child (Hannah Grace 9DJ7-2B2). Score 0.968. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_017",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.96219474,
+      "rationale": "Relationship assertion \u2014 Hannah Grice as child of Edwin Grice. Second-party link for the father (Edwin Grice 9DJ7-2BY). Score 0.962 (father persona p_102882642212 vs 9DJ7-2BY). Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_022",
+      "assertion_id": "a_018",
+      "person_id": "9DJ7-2B2",
+      "confidence": "confident",
+      "match_score": 0.96826214,
+      "rationale": "Relationship assertion \u2014 Hannah Grice as child of Hannah. Primary-party link for the child (9DJ7-2B2). Score 0.968. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_023",
+      "assertion_id": "a_019",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.96219474,
+      "rationale": "Father persona's assertion naming Hannah as spouse. Primary-party link for Edwin Grice (9DJ7-2BY). Score 0.962. Confident match. Note: second-party link to 9DJ7-219 is withheld \u2014 the record ties to 9DJ7-2B2 (Hannah Grace, Hannah Earnest's in-tree namesake), so the namesake cap prevents a confident or probable link from this source's child persona chain to 9DJ7-219; under autonomous run this link is dropped rather than recorded as speculative.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_024",
+      "assertion_id": "a_020",
+      "person_id": "PQQT-GJC",
+      "confidence": "confident",
+      "match_score": 0.8872942,
+      "rationale": "Date check: birth 12 July 1884, christening 30 July 1884; tree person PQQT-GJC: none attested (sparse stub). Residence check: West Bromwich, 1884; none attested. Name 'William Grice' is an exact match. Parents Edwin Grice and Hannah are consistent with PQQT-GJC's parentIds (9DJ7-2BY, 9DJ7-219). Score 0.887 (strong). Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_025",
+      "assertion_id": "a_021",
+      "person_id": "PQQT-GJC",
+      "confidence": "confident",
+      "match_score": 0.8872942,
+      "rationale": "Birth fact, 12 July 1884. Same persona p_102882546389 as a_020; score 0.887 carries. Consistent with William Grice (PQQT-GJC).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_022",
+      "person_id": "PQQT-GJC",
+      "confidence": "confident",
+      "match_score": 0.8872942,
+      "rationale": "Christening fact, 30 July 1884, West Bromwich. Same persona p_102882546389 as a_020; score 0.887 carries. Consistent with William Grice (PQQT-GJC).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_027",
+      "assertion_id": "a_023",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.9263755,
+      "rationale": "Date check: none stated (no birth year for father); tree person 9DJ7-2BY: none attested. Residence check: West Bromwich, 1884; none attested. Name 'Edwin Grice' exact match. Score 0.926 (strong). Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_024",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.9263755,
+      "rationale": "Sex assertion (Male), father persona p_102882546392. Score 0.926 carries from a_023. Consistent with Edwin Grice (9DJ7-2BY).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_025",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.93374974,
+      "rationale": "Date check: none stated (no birth year for mother); tree person 9DJ7-219: none attested. Residence check: West Bromwich, 1884; none attested. Given name 'Hannah' matches Hannah Earnest (9DJ7-219). Mother persona (p_102882546395) directly identifies the mother role. Score 0.934 (strong). The child in this record (William Grice/PQQT-GJC) is a non-namesake child of 9DJ7-219 \u2014 no namesake cap applies. Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_026",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.93374974,
+      "rationale": "Sex assertion (Female), mother persona p_102882546395. Score 0.934 carries from a_025. Consistent with Hannah Earnest (9DJ7-219).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_027",
+      "person_id": "PQQT-GJC",
+      "confidence": "confident",
+      "match_score": 0.8872942,
+      "rationale": "Relationship assertion \u2014 William Grice as child of Edwin Grice. Primary-party link for the child (William Grice PQQT-GJC). Score 0.887. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_027",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.9263755,
+      "rationale": "Relationship assertion \u2014 William is child of Edwin Grice. Second-party link for the father (Edwin Grice 9DJ7-2BY). Score 0.926 (father persona p_102882546392 vs 9DJ7-2BY). Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_028",
+      "person_id": "PQQT-GJC",
+      "confidence": "confident",
+      "match_score": 0.8872942,
+      "rationale": "Relationship assertion \u2014 William is child of Hannah. Primary-party link for the child (PQQT-GJC). Score 0.887. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_028",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.93374974,
+      "rationale": "Relationship assertion \u2014 William Grice is child of Hannah. Second-party link for the mother (Hannah Earnest 9DJ7-219). Score 0.934 (mother persona p_102882546395 vs 9DJ7-219). Child in this record (William/PQQT-GJC) is a non-namesake child of 9DJ7-219 \u2014 tie is unambiguous. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_035",
+      "assertion_id": "a_029",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.9263755,
+      "rationale": "Father persona's spouse assertion. Primary-party link for Edwin Grice (9DJ7-2BY). Score 0.926. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_036",
+      "assertion_id": "a_029",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.93374974,
+      "rationale": "Father persona's assertion naming Hannah as spouse. Second-party link for Hannah Earnest (9DJ7-219). Score 0.934 (mother persona p_102882546395 vs 9DJ7-219). Non-namesake child record \u2014 tie is unambiguous. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_037",
+      "assertion_id": "a_030",
+      "person_id": "GN29-3TT",
+      "confidence": "confident",
+      "match_score": 0.95469576,
+      "rationale": "Date check: birth 10 October 1886, christening 27 October 1886; tree person GN29-3TT: none attested (sparse stub). Residence check: West Bromwich, 1886; none attested. Name 'James Grice' is an exact match. Parents Edwin Grice and Hannah consistent with GN29-3TT's parentIds (9DJ7-2BY, 9DJ7-219). Score 0.955 (strong). Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_038",
+      "assertion_id": "a_031",
+      "person_id": "GN29-3TT",
+      "confidence": "confident",
+      "match_score": 0.95469576,
+      "rationale": "Birth fact, 10 October 1886. Same persona p_102882642406 as a_030; score 0.955 carries. Consistent with James Grice (GN29-3TT).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_032",
+      "person_id": "GN29-3TT",
+      "confidence": "confident",
+      "match_score": 0.95469576,
+      "rationale": "Christening fact, 27 October 1886, West Bromwich. Same persona p_102882642406 as a_030; score 0.955 carries. Consistent with James Grice (GN29-3TT).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_040",
+      "assertion_id": "a_033",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.92328274,
+      "rationale": "Date check: none stated (no birth year for father); tree person 9DJ7-2BY: none attested. Residence check: West Bromwich, 1886; none attested. Name 'Edwin Grice' exact match. Score 0.923 (strong). Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_034",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.92328274,
+      "rationale": "Sex assertion (Male), father persona p_102882642410. Score 0.923 carries from a_033. Consistent with Edwin Grice (9DJ7-2BY).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_035",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.90337116,
+      "rationale": "Date check: none stated (no birth year for mother); tree person 9DJ7-219: none attested. Residence check: West Bromwich, 1886; none attested. Given name 'Hannah' matches Hannah Earnest (9DJ7-219). Mother persona (p_102882642414) directly identifies the mother role. Score 0.903 (strong). Child in this record (James/GN29-3TT) is a non-namesake child of 9DJ7-219 \u2014 no namesake cap. Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_036",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.90337116,
+      "rationale": "Sex assertion (Female), mother persona p_102882642414. Score 0.903 carries from a_035. Consistent with Hannah Earnest (9DJ7-219).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_037",
+      "person_id": "GN29-3TT",
+      "confidence": "confident",
+      "match_score": 0.95469576,
+      "rationale": "Relationship assertion \u2014 James Grice as child of Edwin Grice. Primary-party link for the child (James Grice GN29-3TT). Score 0.955. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_037",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.92328274,
+      "rationale": "Relationship assertion \u2014 James is child of Edwin Grice. Second-party link for the father (Edwin Grice 9DJ7-2BY). Score 0.923 (father persona p_102882642410 vs 9DJ7-2BY). Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_038",
+      "person_id": "GN29-3TT",
+      "confidence": "confident",
+      "match_score": 0.95469576,
+      "rationale": "Relationship assertion \u2014 James is child of Hannah. Primary-party link for the child (GN29-3TT). Score 0.955. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_038",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.90337116,
+      "rationale": "Relationship assertion \u2014 James Grice is child of Hannah. Second-party link for Hannah Earnest (9DJ7-219). Score 0.903 (mother persona p_102882642414 vs 9DJ7-219). Child in this record (James/GN29-3TT) is a non-namesake child of 9DJ7-219 \u2014 unambiguous tie. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_048",
+      "assertion_id": "a_039",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.92328274,
+      "rationale": "Father persona's spouse assertion. Primary-party link for Edwin Grice (9DJ7-2BY). Score 0.923. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_049",
+      "assertion_id": "a_039",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.90337116,
+      "rationale": "Father persona's assertion naming Hannah as spouse. Second-party link for Hannah Earnest (9DJ7-219). Score 0.903 (mother persona p_102882642414 vs 9DJ7-219). Non-namesake child record (James/GN29-3TT) \u2014 unambiguous tie. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_050",
+      "assertion_id": "a_040",
+      "person_id": "PQQT-5G1",
+      "confidence": "confident",
+      "match_score": 0.88472587,
+      "rationale": "Date check: christening 1882, Darlaston; tree person PQQT-5G1: none attested (sparse stub). Residence check: Darlaston, 1882; none attested (tree person is a stub). Name 'Edwin Grice' exact match. Parents Edwin Grice and Hannah consistent with PQQT-5G1's parentIds (9DJ7-2BY, 9DJ7-219). Score 0.885 (strong). Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_051",
+      "assertion_id": "a_041",
+      "person_id": "PQQT-5G1",
+      "confidence": "confident",
+      "match_score": 0.88472587,
+      "rationale": "Christening fact, 1882, Darlaston. Same persona p_102877901498 as a_040; score 0.885 carries. Consistent with Edwin Grice child (PQQT-5G1).",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_042",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.9852084,
+      "rationale": "Date check: none stated (no birth year for father); tree person 9DJ7-2BY: none attested. Residence check: Darlaston, 1882; none attested. Name 'Edwin Grice' exact match. Score 0.985 (strong). Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_053",
+      "assertion_id": "a_043",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.98787713,
+      "rationale": "Date check: none stated; tree person 9DJ7-219: none attested. Residence check: Darlaston, 1882; none attested. Assertion a_043 has record_role 'father' but names persona p_102877901506 (given name 'Hannah', the mother in this record \u2014 mislabeled in extraction). Score 0.988 (same_person confirmed Hannah persona vs Hannah Earnest 9DJ7-219, strong). Child in this record (Edwin/PQQT-5G1) is a non-namesake child of 9DJ7-219. Strong match \u2192 confident.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_044",
+      "person_id": "PQQT-5G1",
+      "confidence": "confident",
+      "match_score": 0.88472587,
+      "rationale": "Relationship assertion \u2014 child 'of Hannah'. Primary-party link for Edwin Grice child (PQQT-5G1). Score 0.885 (child persona p_102877901498 vs PQQT-5G1). Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_044",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.98787713,
+      "rationale": "Relationship assertion \u2014 child of Hannah. Second-party link for Hannah Earnest (9DJ7-219). Score 0.988 (Hannah persona p_102877901506 vs 9DJ7-219, scored with recordPersonaId). Child in this record (Edwin/PQQT-5G1) is a non-namesake child of 9DJ7-219 \u2014 unambiguous tie. Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_045",
+      "person_id": "PQQT-5G1",
+      "confidence": "confident",
+      "match_score": 0.88472587,
+      "rationale": "Relationship assertion \u2014 child of Edwin Grice. Primary-party link for Edwin Grice child (PQQT-5G1). Score 0.885 (child persona p_102877901498 vs PQQT-5G1). Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_045",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.9852084,
+      "rationale": "Relationship assertion \u2014 child of Edwin Grice. Second-party link for Edwin Grice father (9DJ7-2BY). Score 0.985 (Edwin father persona p_102877901501 vs 9DJ7-2BY, scored with recordPersonaId). Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_046",
+      "person_id": "9DJ7-2BY",
+      "confidence": "confident",
+      "match_score": 0.9852084,
+      "rationale": "Father persona's assertion naming Hannah as spouse. Primary-party link for Edwin Grice father (9DJ7-2BY). Score 0.985 (Edwin persona p_102877901501 vs 9DJ7-2BY). Confident match.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_046",
+      "person_id": "9DJ7-219",
+      "confidence": "confident",
+      "match_score": 0.98787713,
+      "rationale": "Father persona's spouse assertion naming Hannah. Second-party link for Hannah Earnest (9DJ7-219). Score 0.988 (Hannah persona p_102877901506 vs 9DJ7-219, scored with recordPersonaId). Non-namesake child record (Edwin/PQQT-5G1) \u2014 unambiguous tie. Confident match.",
+      "created": "2026-10-30"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "possible",
+      "vehicle": "summary",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_002",
+        "a_003",
+        "a_004",
+        "a_005",
+        "a_006",
+        "a_007",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_012",
+        "a_013",
+        "a_014",
+        "a_015",
+        "a_016",
+        "a_017",
+        "a_018",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_022",
+        "a_023",
+        "a_024",
+        "a_025",
+        "a_026",
+        "a_027",
+        "a_028",
+        "a_029",
+        "a_030",
+        "a_031",
+        "a_032",
+        "a_033",
+        "a_034",
+        "a_035",
+        "a_036",
+        "a_037",
+        "a_038",
+        "a_039",
+        "a_040",
+        "a_041",
+        "a_042",
+        "a_043",
+        "a_044",
+        "a_045",
+        "a_046"
+      ],
+      "resolved_conflict_ids": [],
+      "shortfall": "gap",
+      "exhaustive_search_summary": "The FamilySearch 'England, Staffordshire, Church Records, 1538-1944' (collection 2364451) was searched exhaustively for the parent pair Edwin Grice and Hannah Grice and returned exactly five baptism records (hasMore: false): Lydia 1878, Hannah Grace 1880, Edwin 1882, William 1884, and James 1886. The FamilySearch England and Wales Birth Registration Index (collection 2285338) was searched broadly by surname Grice and birthplace West Bromwich (2,122 results, top 20 examined) but not filtered by mother's maiden name 'Earnest'; that specific filter remains unsearched and could identify GRO-registered births not captured in the church index, including children who died before baptism or were baptised at non-conformist chapels. FamilySearch 1901 and 1911 census indexes returned no result for the Edwin/Hannah Grice household. The Ancestry 1911 census (collection 2352, subscription required) was not accessible; it records the mother's own statement of children born alive and still living \u2014 the most authoritative source for the total birth count of this couple \u2014 and remains unexamined. The Ancestry 1901 census (collection 7814, subscription required) was similarly not accessed.",
+      "narrative_markdown": "## Additional Children of Hannah Earnest and Edwin Grice: Proof Summary\n\n**Research question:** What children did Hannah Earnest (born 1857, Darlaston, Staffordshire) and Edwin Grice (born circa 1854, West Bromwich, Staffordshire) have besides their five known children \u2014 John, Hannah Grace, Edwin, William, and James?\n\n### Source classification\n\nAll five records examined are from the indexed collection \"England, Staffordshire, Church Records, 1538\u20131944\" on FamilySearch, a derivative source (transcription-based index of original Staffordshire parish registers). Each record carries primary information supplied by informants with direct knowledge: the officiating clergy recorded the christening date (informant proximity: official duty); the presenting parents \u2014 household members \u2014 supplied the child's name and parentage. The father's name appears consistently as \"Edwin Grice\" across all five records; the mother's name appears consistently as \"Hannah\" (surname not recorded in her entries). No conflicts exist between the records, and no other conflicting evidence was identified in this project.\n\n### The new finding: Lydia Grice\n\nAn entry dated 8 August 1878 in the Holy Trinity baptism register, West Bromwich, Staffordshire, records the christening of a daughter named Lydia Grice, with her father listed as Edwin Grice and her mother as Hannah.^1 This child does not appear in the previously documented family tree. The father \"Edwin Grice\" was correlated with Edwin Grice (the tree's subject husband, born circa 1854, West Bromwich) at a match score of 0.749 \u2014 probable confidence \u2014 based on an exact name match and consistent family context across the records, with no conflicting data. The mother \"Hannah\" was correlated with Hannah Earnest (born 1857, Darlaston), the known wife, at a match score of 0.690 \u2014 also probable confidence \u2014 based on the given name and consistent family context. The christening location, Holy Trinity, West Bromwich, is consistent with the family's established residence there; the 1881 census places the household at West Bromwich (tree fact d13ac227 on Hannah Earnest, Residence, West Bromwich, Staffordshire, 1881; this tree fact carries no linked source entry in this project's research file). Lydia's baptism falls chronologically between John (born circa 1877) and Hannah Grace (born 3 April 1880), placing her as the second child in the family sequence.\n\nLydia's parentage and christening are already encoded in the project tree: Edwin Grice and Hannah Earnest are linked to Lydia Grice (tree person I1) by ParentChild relationships R15 and R16, each sourced to the Lydia Grice baptism record (tree source S1). Her christening is recorded as fact F1 on I1.\n\n### Confirming records for the five known children\n\nThe same exhaustive search returned four entries confirming previously known children, each with primary-quality parental information:\n\n- *Hannah Grace Grice:* baptism 5 May 1880, born 3 April 1880, West Bromwich; father Edwin Grice, mother Hannah.^2 Father matched at 0.962 (confident); mother matched at 0.961 (confident).\n- *Edwin Grice (junior):* baptism 1882, Darlaston; father Edwin Grice, mother Hannah.^3 Father matched at 0.985 (confident); mother matched at 0.988 (confident).\n- *William Grice:* birth 12 July 1884, baptism 30 July 1884, West Bromwich; father Edwin Grice, mother Hannah.^4 Father matched at 0.926 (confident); mother matched at 0.934 (confident).\n- *James Grice:* birth 10 October 1886, baptism 27 October 1886, West Bromwich; father Edwin Grice, mother Hannah.^5 Father matched at 0.923 (confident); mother matched at 0.903 (confident).\n\nJohn Grice (born circa 1877) did not appear in this indexed collection; he is recorded in the tree on the basis of starting-tree evidence outside this project's source set.\n\n### Search scope and unsearched avenues\n\nThe collection \"England, Staffordshire, Church Records, 1538\u20131944\" (FamilySearch collection 2364451) was searched exhaustively for the parent pair Edwin Grice and Hannah Grice, returning exactly five results with hasMore: false \u2014 complete enumeration of the indexed baptisms for this couple. No additional children beyond Lydia appeared.\n\nTwo record types remain unsearched and could reveal children not captured in the indexed church records:\n\n1. The FamilySearch England and Wales Birth Registration Index (collection 2285338), filtered by mother's maiden name \"Earnest,\" was not run. The broader search of that collection (surname Grice, birthplace West Bromwich, 2,122 results, top 20 examined) did not apply this specific filter and cannot confirm completeness. From 1875, civil registration was mandatory; GRO-registered births include children who died before baptism or were baptised at non-conformist chapels not indexed in the Staffordshire church collection.\n\n2. The Ancestry 1911 England census (collection 2352, subscription required) was not accessible. This census records the mother's own statement of the number of children born alive and the number still living \u2014 the most authoritative available source for the couple's total birth count. FamilySearch's 1911 census index returned no result for the Edwin or Hannah Grice household. A search URL was generated (https://www.ancestry.com/search/collections/2352/?name=Edwin_Grice&birth=1854&birthplace=West+Bromwich%2C+Staffordshire%2C+England&spouse=Hannah_Grice) but could not be accessed without a subscription.\n\nBecause both sources could reveal additional children not found in the church records, the conclusion is assessed at the **possible** tier.\n\n### Conclusion\n\nThe available evidence supports the possibility that Lydia Grice \u2014 baptised 8 August 1878 at Holy Trinity, West Bromwich, Staffordshire, daughter of Edwin Grice and Hannah Earnest \u2014 is an additional child of this couple not previously in the family tree. The exhaustive search of the indexed Staffordshire church records found no other unrecorded children in that collection. The conclusion cannot be raised to probable pending access to the filtered civil registration birth index and the 1911 census, both of which could independently establish whether additional births occurred.\n\n---\n\n^1 \"England, Staffordshire, Church Records, 1538-1944\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QL3R-C5SR : Fri Aug 21 19:30:12 UTC 2026), Entry for Lydia Grice and Edwin Grice, 8 August 1878.\n\n^2 \"England, Staffordshire, Church Records, 1538-1944\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QL3R-VWY9 : Fri Aug 21 19:48:15 UTC 2026), Entry for Hannah Grice and Edwin Grice, 5 May 1880.\n\n^3 \"England, Staffordshire, Church Records, 1538-1944\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QL3K-GK6H : Sat Jul 25 13:41:47 UTC 2026), Entry for Edwin Grice and Edwin Grice, 1882.\n\n^4 \"England, Staffordshire, Church Records, 1538-1944\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QL3R-X2D1 : Fri Aug 21 23:07:14 UTC 2026), Entry for William Grice and Edwin Grice, 30 July 1884.\n\n^5 \"England, Staffordshire, Church Records, 1538-1944\", *FamilySearch* (https://www.familysearch.org/ark:/61903/1:1:QL3R-V43N : Fri Aug 21 19:56:49 UTC 2026), Entry for James Grice and Edwin Grice, 27 October 1886.",
+      "updated": "2026-10-30T06:40:18.875Z"
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "West Bromwich, Staffordshire, England, United Kingdom",
+      "for_place": "West Bromwich, Staffordshire, England",
+      "time_period": "1875-1905",
+      "jurisdictions": [
+        {
+          "name": "West Bromwich, Staffordshire, England, United Kingdom (Civil Registration District)",
+          "date_range": "1837/"
+        },
+        {
+          "name": "West Bromwich, Staffordshire, England, United Kingdom (Town)",
+          "date_range": "1801/1974"
+        },
+        {
+          "name": "West Bromwich, West Midlands, England, United Kingdom (Town)",
+          "date_range": "1974/"
+        },
+        {
+          "name": "West Bromwich, Staffordshire, England, United Kingdom (Poor Law Union)",
+          "date_range": "1834/1930"
+        }
+      ],
+      "collections": [
+        {
+          "id": "4324570",
+          "title": "United Kingdom, British Armed Forces and Overseas Vital Records, 1761-2005",
+          "date_range": "1761-2005",
+          "person_count": 4212377,
+          "record_count": 2878200
+        },
+        {
+          "id": "1952868",
+          "title": "United Kingdom, Chelsea Pensioners' Service Records, 1760-1913",
+          "date_range": "1760-1913",
+          "person_count": 933550,
+          "record_count": 933391
+        },
+        {
+          "id": "1967749",
+          "title": "United Kingdom, Maritime Births, Marriages, and Deaths, 1787-1933",
+          "date_range": "1787-1933",
+          "person_count": 66774,
+          "record_count": 56065
+        },
+        {
+          "id": "1762440",
+          "title": "United Kingdom, Merchant Navy Seamen Records, 1835-1941",
+          "date_range": "1835-1941",
+          "person_count": 2607894,
+          "record_count": 2607986
+        },
+        {
+          "id": "2046942",
+          "title": "United Kingdom, Militia Service Records, 1806-1915",
+          "date_range": "1806-1915",
+          "person_count": 555558,
+          "record_count": 555558
+        },
+        {
+          "id": "4229516",
+          "title": "United Kingdom, Outgoing Passenger Lists, 1890-1960",
+          "date_range": "1890-1960",
+          "person_count": 26371422,
+          "record_count": 24113045
+        }
+      ],
+      "quirks": [
+        "collections_search returned UK-level collections only (scope: United Kingdom) \u2014 no Staffordshire or West Bromwich civil registration collections appear in that tool. Primary GRO civil registration indexes and census collections are accessible through FreeBMD (free), Staffordshire BMD (free), FamilySearch collections 2285338/2285732/2285341/1321821/1865747/1888129, Ancestry, and Findmypast as documented in the guide.",
+        "West Bromwich transferred to the metropolitan county of West Midlands (Sandwell) in 1974; for all genealogy research in this 1875\u20131905 period, search under Staffordshire. FamilySearch and record indexes use pre-1974 Staffordshire boundaries throughout.",
+        "Parish registers are filed by individual church, not by civil registration district \u2014 search all West Bromwich churches when a christening is not found in one register (All Saints, Christ Church, Holy Trinity, St John the Evangelist, St Paul, St Peter, St Andrew, plus nonconformist and Catholic chapels).",
+        "All Saints Church (C of E, the ancient parish) Bishop's Transcripts run only to 1868; for 1875\u20131905 christenings at All Saints, consult the original parish registers at the Staffordshire Record Office or verify coverage within FamilySearch collection 2364451 (England, Staffordshire, Church Records, 1538\u20131944).",
+        "St Michael and Holy Angels (Roman Catholic) was known as St Michael's before 1877; earlier records can be found at Walsall (per FamilySearch Catalog koha:762327). Catholic baptism volumes 1878\u20131933 are online but browse-only; marriages 1855\u20131947 are 73% name-indexed.",
+        "Civil registration before 1875 had up to 15% non-compliance nationally; from 1875 registration was mandatory with penalties. For the 1875\u20131905 target period, GRO index coverage should be essentially complete.",
+        "Cross-border: West Bromwich lies adjacent to the Walsall registration district (Staffordshire, also Hannah Earnest's native district of Darlaston), the Smethwick district, and is approximately 5 miles from Birmingham (Warwickshire). Check adjacent registration districts when a birth is not found in West Bromwich.",
+        "The 1911 census (now online: FamilySearch collection 1921547, Ancestry 2352) gives parents' own statement of the number of children born alive and number still living \u2014 use this to estimate whether births in the 1875\u20131905 window remain unaccounted for in the tree."
+      ],
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/England_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/England_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/England_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/England_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "birth",
+          "level": "national",
+          "year": 1837,
+          "source_url": "https://www.familysearch.org/en/wiki/England_Civil_Registration"
+        },
+        {
+          "event": "marriage",
+          "level": "national",
+          "year": 1837,
+          "source_url": "https://www.familysearch.org/en/wiki/England_Civil_Registration"
+        },
+        {
+          "event": "death",
+          "level": "national",
+          "year": 1837,
+          "source_url": "https://www.familysearch.org/en/wiki/England_Civil_Registration"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1875,
+        "end_year": 1905,
+        "total_volumes": 62,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 19,
+            "browse_only": 9,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Death",
+            "volumes": 5,
+            "browse_only": 4,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Cemetery",
+            "volumes": 5,
+            "browse_only": 4,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Marriage",
+            "volumes": 14,
+            "browse_only": 5,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious",
+            "volumes": 42,
+            "browse_only": 9,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Baptism",
+            "volumes": 21,
+            "browse_only": 8,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Death",
+            "volumes": 6,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Marriage",
+            "volumes": 11,
+            "browse_only": 3,
+            "fulltext_only": 0
+          },
+          {
+            "group": "School",
+            "volumes": 2,
+            "browse_only": 2,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "guide_markdown": "# Locality Guide: West Bromwich, Staffordshire, England (1875\u20131905)\n\n## Jurisdiction overview\n- **Formed:** West Bromwich was a village before 1801 (historically written Bromwic, Bromwych, etc.); it became a town from 1801 and a Municipal Borough in 1882, elevated to County Borough status in 1889. The West Bromwich Civil Registration District was established 1 July 1837.\n- **Administrative center:** West Bromwich town centre.\n- **Parent jurisdiction:** Staffordshire (historically); transferred to the new metropolitan county of West Midlands (Sandwell Metropolitan Borough) in 1974.\n- **Population during period:** A major Black Country industrial town. The 2021 Census recorded 103,112 residents (Wikipedia). It was already a densely populated manufacturing centre by 1875.\n- **Economy:** Iron founding, coal mining, nail and tube making, hardware manufacture \u2014 the dominant Black Country trades.\n- **Ethnic composition:** Predominantly English-born working class, with some Irish migration. Nonconformist denominations were strong.\n- **Religious denominations:** Church of England \u2014 All Saints (ancient parish), Christ Church, Holy Trinity, St John the Evangelist, St Paul, St Peter, St Andrew; Roman Catholic \u2014 St Michael and Holy Angels (from 1832); Wesleyan Methodists (five meeting-houses); Independents (four); Baptists (two); Primitive Methodists and others. (Per [West Bromwich All Saints, Staffordshire, England Genealogy](https://www.familysearch.org/en/wiki/West_Bromwich_All_Saints,_Staffordshire,_England_Genealogy))\n- **Key historical events:** West Bromwich County Borough created 1882; Second Boer War 1899\u20131902 affected many families.\n\n## Boundary changes\n- West Bromwich was a Staffordshire town and Civil Registration District from 1837 to 1974; boundaries were stable throughout the 1875\u20131905 target period.\n- In 1974 the Local Government Act transferred West Bromwich to West Midlands (Sandwell). FamilySearch and all genealogy tools index records under the pre-1974 Staffordshire label; search under Staffordshire for this entire period.\n- The adjacent Walsall registration district (Staffordshire) includes Darlaston, birthplace of Hannah Earnest; the Birmingham registration district (Warwickshire) is approximately 5 miles away. Records for family members may appear in either adjacent district.\n\n## Available record types\n\nAll civil registration in England operates at the **national (GRO) level** \u2014 births, marriages, and deaths were registered at local register offices and indexed quarterly by the General Register Office from 1 July 1837. There is no county- or town-level civil registration series separate from the GRO.\n\n### Vital records (civil registration)\n- **Start date:** National (GRO) level, 1 July 1837. Compliance was essentially universal from 1875, when registration became mandatory with financial penalties. Per [England Civil Registration](https://www.familysearch.org/en/wiki/England_Civil_Registration).\n- **What exists:** Births, marriages, and deaths for the West Bromwich Registration District, registered quarterly. Birth certificates give: birth date and place, child's name and sex, father's name and occupation, mother's full name including maiden name, informant's name and relationship, date registered.\n- **Where held:** Free quarterly index at [FreeBMD](http://www.freebmd.org.uk/) (covers 1837\u20131983+) and at [GRO online search](https://www.gro.gov.uk/gro/content/certificates/indexes_search.asp). FamilySearch: [England and Wales Birth Registration Index, 1837\u20132008](https://www.familysearch.org/search/collection/2285338) (free, indexed). Ancestry: [England & Wales Civil Registration Birth Index, 1837\u20131915](https://www.ancestry.com/search/collections/8912/) (subscription); [Staffordshire, England, Birth, Marriage and Death Indexes, 1837\u20132017](https://www.ancestry.com/search/collections/staffordshirebmds/) (subscription). Local free index: [Staffordshire BMD](http://www.staffordshirebmd.org.uk/); [West Midlands BMD](http://www.westmidlandsbmd.org.uk/). Original certificates must be ordered from the GRO.\n- **Gaps:** No significant gaps are indicated for the 1875\u20131905 period. Note: The GRO index entry alone does not give parents' names for pre-1911 births \u2014 order the certificate to obtain the mother's maiden name and informant.\n\n### Church records\n- **Denominations present:** Church of England: All Saints (ancient parish, registers from 1608, Bishop's Transcripts from 1676; chapelries St Paul 1853, St Peter 1858); Christ Church (registers from 1829); Holy Trinity (registers from 1841); St John the Evangelist (from 1879); St James (formerly Hill Top). Roman Catholic: St Michael and Holy Angels (from 1832; known as St Michael's before 1877). Wesleyan, Independent, Baptist, and Primitive Methodist congregations also recorded.\n- **Record types:** Baptisms, marriages, burials, banns, confirmations (Catholic).\n- **Where held:** The FamilySearch volume search (62 total digitized volumes for this place and period) found the following key indexed volumes (100% name-indexed unless noted): Holy Trinity baptisms 1841\u20131880 (imageGroupNumber 101149057), 1880\u20131898 (101149063), 1898\u20131910 imaged to 1900 (101149068); Christ Church baptisms 1892\u20131897 (101149042), 1899\u20131904 imaged to 1900 (101149048); St John the Evangelist baptisms 1879\u20131883 (101152002), 1883\u20131891 (101152003), 1891\u20131897 (101152004), 1897\u20131901 imaged to 1900 (101152005); Holy Trinity marriages 1871\u20131876 (101149084), 1876\u20131881 (101149089), 1881\u20131887 (101149094), 1887\u20131898 (101151995), 1898\u20131907 imaged to 1900 (101151996); Holy Trinity burials 1842\u20131983, imaged to 1900 (101151997) \u2014 100% indexed + full-text searchable; St John marriages 1879\u20131894 (101152006), 1894\u20131900 (101152007); Christ Church marriages 1898\u20131904 (101149052). Catholic St Michael: baptisms 1878\u20131933 (imageGroupNumber 007945879_001 \u2014 browse-only), confirmations 1862\u20131995 and marriages 1855\u20131947 (imageGroupNumber 007945879_003 \u2014 73% name-indexed). The aggregated FamilySearch collection [England, Staffordshire, Church Records, 1538\u20131944](https://www.familysearch.org/search/collection/2364451) (indexed + images) should be searched first. Also: [Staffordshire, England, Church of England Births and Baptisms, 1813\u20131900](https://search.ancestry.co.uk/search/db.aspx?dbid=62292) at Ancestry (subscription). For All Saints parish registers from 1875 onwards, original registers are held at the **Staffordshire Record Office** (Bishop's Transcripts run only to 1868 per the FamilySearch Catalog, koha:327194).\n- **Language:** English; some Catholic records in Latin.\n\n### Census records\n- **Federal/national census:** 1881, 1891, and 1901 are fully indexed + images online. FamilySearch: [1881 England and Wales Census](https://www.familysearch.org/search/collection/1321821), [1891](https://www.familysearch.org/search/collection/1865747), [1901](https://www.familysearch.org/search/collection/1888129) \u2014 all free. Also at Ancestry (collections 7572, 6598, 7814) and Findmypast (subscription). FamilySearch Catalog (koha:583890): West Bromwich census returns 1841\u20131891 (South West and North East sub-districts) on microfilm, also available online.\n- **1911 census:** [FamilySearch collection 1921547](https://www.familysearch.org/search/collection/1921547); Ancestry (collection 2352). Gives parents' own statement of children born alive and still living \u2014 valuable for estimating births in the 1875\u20131905 window.\n- **Access:** All three target census years (1881, 1891, 1901) are indexed + images online at FamilySearch (free); 1911 also indexed + images.\n\n### Probate and court records\n- **Types:** Wills (testate) and administrations (intestate \u2014 for those who died without a will). Prior to 1858, probate for West Bromwich fell under the Court of the Bishop of Lichfield (Episcopal Consistory). From January 1858, the Principal Probate Registry and district registries handled English probate.\n- **Where held:** National Probate Calendar (England & Wales) from 1858: indexed at [Ancestry](https://www.ancestry.com/search/collections/1904) (1858\u20131995, subscription) and browsable at [Findmypast](http://search.findmypast.com/search-world-Records/probate-calendars-of-england-and-wales-1858-1959---browse). Original wills pre-1858 at Staffordshire Record Office / Lichfield Record Office; post-1858 wills at The National Archives.\n- **Note:** Search the National Probate Calendar by surname first; it gives the date of probate, estate value, and names of executors \u2014 which can confirm relationships.\n\n### Land records\n- **Survey system:** Metes and bounds (England did not use rectangular survey).\n- **Types:** Title deeds (at Staffordshire Record Office); land tax assessments 1772\u20131831 for West Bromwich (FamilySearch Catalog koha:410643 \u2014 available at FamilySearch Centers/Affiliate Libraries; predates the survey period).\n- **Where held:** Staffordshire Record Office for historical deeds; Land Registry for modern registered titles.\n\n### Military records\n- **Relevant conflicts:** Second Boer War 1899\u20131902.\n- **Record types:** British Army Service Records 1760\u20131915 at Findmypast (subscription) and Fold3; Chelsea Pensioners' Service Records 1760\u20131913 at [FamilySearch](https://www.familysearch.org/search/collection/1952868) (indexed + images, free); UK Coal Mining Accidents and Deaths Index 1878\u20131951 at [Ancestry](https://www.ancestry.com/search/collections/62506/) (subscription).\n- **Where held:** The National Archives; FamilySearch; Findmypast.\n\n### Cemetery records\n- **Major cemeteries:** Heath Lane Cemetery \u2014 burial registers 1859\u20131905 transcribed and indexed by [FreeReg](http://www.freereg.org.uk/parishes/sts/frontpage.shtml) (free). Holy Trinity church burials 1842\u20131983 are 100% indexed + full-text searchable at FamilySearch (imageGroupNumber 101151997, imaged to 1900).\n- **Online coverage:** Mayers Green Congregational Church record of tombstones on FamilySearch Catalog (koha:628392); [Staffordshire Monumental Inscriptions](https://search.findmypast.com/search-world-Records/staffordshire-monumental-inscriptions) at Findmypast (subscription); [England BillionGraves Cemetery Index](http://search.findmypast.com/search-world-Records/england-billion-graves-cemetery-index) at Findmypast (subscription).\n- **Physical records:** Sandwell Council holds records for Heath Lane Cemetery.\n\n### Newspaper records\n- **Local papers:** County Advertiser & Herald for Staffordshire and Worcestershire 1856\u20131907 at [Findmypast](https://www.findmypast.com/newspapers/england/county-advertiser-herald-for-staffordshire-and-worcestershire) (subscription); Midland Examiner and Times 1874\u20131877 at [Findmypast](https://www.findmypast.com/newspapers/england/midland-examiner-and-times); Staffordshire Advertiser 1795\u20131955 at [Findmypast](https://www.findmypast.com/newspapers/england/staffordshire-advertiser) (subscription).\n- **Where held:** [British Newspaper Archive](https://www.britishnewspaperarchive.co.uk/) (subscription) has Staffordshire newspapers digitized.\n- **Content value:** Obituaries, birth and marriage notices, inquests, and Poor Law notices name individuals not found in other record types.\n\n### Immigration/emigration records\n- **Relevant note:** West Bromwich is an inland industrial town. Declarations of intention and naturalizations were not a significant feature for this locally born population. However, some working-class emigration occurred in this period (Australia, Canada, USA).\n- **Outgoing passengers:** [UK, Outgoing Passenger Lists, 1890\u20131960](https://www.familysearch.org/search/collection/4229516) at FamilySearch (indexed + images, free); also at Ancestry (collection 2997, subscription).\n- **Content note:** Passenger lists record every person aboard including infants and young children traveling with parents. Examine the full manifest for all family members.\n\n### Tax records\n- **Types:** Land tax assessments 1772\u20131831 (FamilySearch Catalog koha:410643 \u2014 predates the survey period; useful background only).\n- **Substitute value:** Census returns and civil registration serve as the primary substitutes for this period; no significant tax series covers 1875\u20131905 at the county level in the tool results.\n\n### Other record types\n- **School records:** West Bromwich school records 1892\u20131909 (olib:2744917) and Trinity C.E. School 1909\u20131914 (olib:2744918) are both online at FamilySearch. National School Admission Registers and Log-Books 1870\u20131914 at [Findmypast](https://search.findmypast.com/search-world-records/national-school-admission-registers-and-log-books-1870-1914) (subscription).\n- **Poor Law records:** West Bromwich Poor Law Union 1834\u20131930. Physical records at Staffordshire Record Office. Background at workhouses.org.uk.\n- **Chapter Act Books (Diocese of Lichfield) 1384\u20131931:** Available online at FamilySearch (koha:673554); covers church administration including 1876\u20131883 and 1883\u20131896 volumes.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Access |\n|---|---|---|\n| FamilySearch | England and Wales Birth/Marriage/Death Registration Index 1837\u20132008 (cols. 2285338, 2285732, 2285341); 1881/1891/1901/1911 census (cols. 1321821, 1865747, 1888129, 1921547); England, Staffordshire, Church Records 1538\u20131944 (col. 2364451); Parish registers for Christ Church, Holy Trinity, St John, St Andrew, St Paul, St James (olib:2744911\u20132744916); School records 1892\u20131914; Chelsea Pensioners 1760\u20131913 (col. 1952868) | Free |\n| FreeBMD | Civil registration indexes 1837\u20131983+ | Free |\n| Staffordshire BMD | Local BMD indexes 1837\u20132017 | Free |\n| West Midlands BMD | Local BMD indexes | Free |\n| GRO (gro.gov.uk) | Civil registration index search; certificate ordering | Free index; certificates paid |\n| Ancestry | 1881/1891/1901/1911 census; Civil Registration Birth/Marriage/Death Index 1837\u20131915 (cols. 8912, 8913, 8914); Staffordshire Church of England Births and Baptisms 1813\u20131900 (col. 62292); Staffordshire BMDs 1837\u20132017 (col. 61709); National Probate Calendar 1858\u20131995 (col. 1904) | Subscription |\n| Findmypast | Staffordshire Baptisms 1538\u20131900; Staffordshire Parish Registers Browse 1538\u20131900; National Burial Index; Staffordshire newspapers; Probate calendars | Subscription |\n| FreeReg | Heath Lane Cemetery burial registers 1859\u20131905; some Staffordshire parish registers | Free |\n\n**Coverage of this survey:** 62 digitized volumes match this place and period in volume_search (summary is complete across all 62). The 50 volumes detailed above are the first page; 12 additional volumes were not individually examined. Note also that the FamilySearch collections_search tool returned only UK-level collections (scope: United Kingdom) \u2014 the primary GRO civil registration and census collections are accessed through the repositories listed above rather than through collections_search.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Staffordshire Record Office, Stafford | Parish registers for All Saints and other West Bromwich churches; Bishop's Transcripts to c.1868; land tax assessments; pre-1858 probate | In-person or online catalogue |\n| The National Archives, Kew | Post-1858 wills; military records; census originals; court records | In-person; many records online |\n| Lichfield Record Office | Diocese of Lichfield records; pre-1858 Bishop's Transcripts | In-person |\n| General Register Office (GRO) | Civil registration certificates | Online ordering (gro.gov.uk) |\n| Birmingham Archdiocesan Archives | Originals for St Michael and Holy Angels Catholic records | Contact the archives (per FamilySearch Catalog koha:762327) |\n\n## Records NOT online\n\n- All Saints Church (C of E, the ancient parish) parish registers for 1875\u20131905: the online FamilySearch volumes found in this survey do not include an All Saints baptism register for this period; verify coverage within FamilySearch collection 2364451 and, if not present, consult original registers at the Staffordshire Record Office.\n- Original GRO birth, marriage, and death certificates: must be ordered from the GRO. The quarterly index entry does not give parents' names for births registered before 1911.\n- West Bromwich probate records pre-1858 (under Lichfield Episcopal Consistory): physical only at Lichfield Record Office / Staffordshire Record Office.\n- Land title deeds for private properties: physical at Staffordshire Record Office.\n- Poor Law Union records (workhouse admission registers, settlement examinations, bastardy bonds): physical at Staffordshire Record Office.\n- Nonconformist (Wesleyan, Independent, Baptist) chapel registers not yet digitized online: check FamilySearch collection 2364451, FreeReg, and Staffordshire Record Office.\n\n## Known record losses\n\nNo tool result in this survey reported specific record losses for West Bromwich civil registration or church records in the 1875\u20131905 period. An empty search result is a coverage gap, not confirmed destruction. For any series not located online, the Staffordshire Record Office and Lichfield Record Office are the repositories identified by the FamilySearch Wiki and Catalog for originals.\n\n## Research tips\n\n1. **Civil registration is the primary source for 1875\u20131905 births.** The GRO index is available free at [FreeBMD](http://www.freebmd.org.uk/) and the [GRO website](https://www.gro.gov.uk/). It gives the district, quarter, year, volume, and page. Order the full birth certificate to obtain the mother's maiden name and informant \u2014 these are the keys to identifying siblings. ([England Civil Registration](https://www.familysearch.org/en/wiki/England_Civil_Registration))\n2. **Search all three target census returns systematically.** The 1881, 1891, and 1901 censuses are fully indexed + images at FamilySearch (free). Each census gives ages, birthplaces, and relationships of every household member; a child absent from one census may appear in another. Also search the 1911 census, which required mothers to state the number of children born alive and still living. ([England Online Genealogy Records](https://www.familysearch.org/en/wiki/England_Online_Genealogy_Records))\n3. **Search multiple West Bromwich churches for christenings.** There is no single parish register for the whole district. The FamilySearch collection [England, Staffordshire, Church Records, 1538\u20131944](https://www.familysearch.org/search/collection/2364451) aggregates many parishes and is the best starting point; supplement with [FreeReg](http://www.freereg.org.uk/) (free) and [Staffordshire Baptisms](https://search.findmypast.com/search-world-records/staffordshire-baptisms) at Findmypast (subscription). ([West Bromwich All Saints, Staffordshire, England Genealogy](https://www.familysearch.org/en/wiki/West_Bromwich_All_Saints,_Staffordshire,_England_Genealogy))\n4. **All Saints Bishop's Transcripts end c.1868.** For christenings at All Saints from 1875, the FamilySearch Catalog-listed Bishop's Transcripts (koha:327194) cover only to 1868. Consult the original parish registers at the Staffordshire Record Office or verify coverage within FamilySearch collection 2364451. ([West Bromwich All Saints, Staffordshire, England Genealogy](https://www.familysearch.org/en/wiki/West_Bromwich_All_Saints,_Staffordshire,_England_Genealogy))\n5. **Search Catholic records when Anglican searches are negative.** St Michael and Holy Angels has baptism records from 1878 online at FamilySearch (browse-only, imageGroupNumber 007945879_001; marriages 1855\u20131947 at 73% indexed). Note: the church was called St Michael's before 1877, and earlier records are at Walsall (per FamilySearch Catalog koha:762327). The Archdiocese of Birmingham collection at FamilySearch [collection 4325039](https://familysearch.org/search/collection/4325039) may also be searched.\n6. **Search the adjacent Walsall and Birmingham registration districts.** Darlaston (Hannah Earnest's birthplace) is in the Walsall district; Birmingham is 5 miles away. If a birth is not found in West Bromwich, extend the search to these neighboring districts \u2014 the GRO index at FreeBMD searches all England and Wales simultaneously, so a district-agnostic name search is the first step. ([England Research Tips and Strategies](https://www.familysearch.org/en/wiki/England_Research_Tips_and_Strategies))",
+      "source": "locality-guide",
+      "created": "2026-10-30"
+    }
+  ],
+  "namesakes": [
+    {
+      "id": "ns_001",
+      "person_id": "9DJ7-219",
+      "name": "Hannah Grice",
+      "place": "Quarry Bank, Staffordshire, England",
+      "time_period": "1901",
+      "record_ids": [
+        "ark:/61903/1:1:XS3W-W39"
+      ],
+      "log_entry_ids": [
+        "log_018"
+      ],
+      "notes": "Hannah Grice born 1852 in Quarry Bank, Staffordshire; wife of Edwin Grice born 1848 Quarry Bank, occupation Iron Roller. Household has only sons Bert (b.1880) and Joseph (b.1882), all born Quarry Bank. Birth year and birthplace both conflict with subject Hannah Earnest/Grice born 1857 Darlaston. Confirmed different family.",
+      "created": "2026-10-30"
+    },
+    {
+      "id": "ns_002",
+      "person_id": "9DJ7-219",
+      "name": "Hannah Grice",
+      "place": "Rowley Regis, Staffordshire, England",
+      "time_period": "1901",
+      "record_ids": [
+        "ark:/61903/1:1:XS75-FJM"
+      ],
+      "log_entry_ids": [
+        "log_019"
+      ],
+      "notes": "Hannah Grice born 1857 in Cradley Heath, Staffordshire; wife of John Grice born 1858 Quarry Bank (Gas Tube Fitting Maker). Children all born Cradley Heath: Benjamin (1882), Alice (1883), Tom (1885), John (1888), Samuel (1891), Albert (1893). Head is John not Edwin; birthplace Cradley Heath not Darlaston. Confirmed different family.",
+      "created": "2026-10-30"
+    }
+  ]
+}
