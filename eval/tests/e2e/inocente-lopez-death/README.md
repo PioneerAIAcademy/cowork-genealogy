@@ -44,7 +44,7 @@ match strength.
 - **The index confirms it without the image.** The same infant was independently indexed at his civil birth registration: Inocente de José López, born 28 December 1905 at Suchitoto, mother Santos López, no father named (`ark:/61903/1:1:QGF2-WRZP`). That makes him sixteen days old at death against the eighteen stated, a small slip in what the informant gave.
 - **No source conflict.** The hint's `1:1:` id is not among the tree's cited sources.
 
-**The real death.** A search of the civil registers for Inocente López with spouse Virginia Mendoza returned `ark:/61903/1:1:QPHJ-JVY1`: Ynocente Lopez Carpio, died 22 September 1916, death registered at Suchitoto, spouse **Virginia Mendoza**, parents Matías López and Mauricia Carpio (register image `ark:/61903/3:1:33SQ-GTRF-NTF`). It is not attached in the tree. A second index of the same death, `ark:/61903/1:1:655Y-1SYB` (image `ark:/61903/3:1:3QHK-1Q52-59S4-G`), gives the same parents, 23 September 1916, and a computed birth year of 1844. The two civil indexes disagree by one day. No licensed reading of either civil register image exists (see "The second civil register image" below; the AI reading of the first is discarded), so it is not established which of the two dates is his death date, or whether either is a registration date.
+**The real death.** A search of the civil registers for Inocente López with spouse Virginia Mendoza returned `ark:/61903/1:1:QPHJ-JVY1`: Ynocente Lopez Carpio, died 22 September 1916, death registered at Suchitoto, spouse **Virginia Mendoza**, parents Matías López and Mauricia Carpio (register image `ark:/61903/3:1:33SQ-GTRF-NTF`). It is not attached in the tree. A second index of the same death, `ark:/61903/1:1:655Y-1SYB` (image `ark:/61903/3:1:3QHK-1Q52-59S4-G`), gives the same parents, 23 September 1916, and a computed birth year of 1844. The two civil indexes disagree by one day. No licensed reading of either civil register image exists (see "The first civil register image" and "The second civil register image" below; the AI reading of the first is discarded), so it is not established which of the two dates is his death date, or whether either is a registration date.
 
 The identification rests on the indexes:
 
@@ -69,6 +69,12 @@ The reading is kept here as context only:
 > En Suchitoto a veintiuno de Septiembre de mil novecientos dieciseis murio Inocente Lopez de setenta y dos casado con Virginia Mendoza hijo legitimo de Matias Lopez y Maria N; murio anoche de fiebre en El Molino. — De orden Superior, Evaristo Sanchez.
 
 It suggests why the index reads as it does. The entry is dated 21 September and says he died "anoche", the night before. Every entry on the folio says *murio* and none mentions burial, and the page is stamped by the Gobernación Política of Cuscatlán. So the index's "burial" date is probably the date the entry was written. Because the reading is unlicensed, that is an interpretation, not evidence.
+
+**The first civil register image.** The genealogist examined the layout of the image behind the first civil index, `ark:/61903/3:1:33SQ-GTRF-NTF`, to identify the entries and their positions on the two facing pages.
+
+- **Layout.** The target, entry 382, is on the right-hand page, and entry 381 (Dolores) is above it on that same page. Entries 379 (Rufina Borja) and 380 (Felipe Landaverde) are on the facing left-hand page. Besides the target, only entry 381 is on the target's page.
+
+No reading of this image is licensed under Step 1a, and nothing in f1 rests on it. Entry 381's index record (`ark:/61903/1:1:QPHJ-JVYY`) is linked to this image, but it is the only indexed entry on the target's page, and Step 1a needs two. Entries 379 and 380 also have index records linked to this image (`ark:/61903/1:1:QPHJ-JVY2`, `ark:/61903/1:1:QPHJ-JVYP`), but they are on the facing page, which, as for the parish image, is not treated as the target's page.
 
 **The second civil register image.** The genealogist examined the image behind the second civil index, `ark:/61903/3:1:3QHK-1Q52-59S4-G`, personally. Their own reading:
 
