@@ -41,6 +41,12 @@ import {
   textNamesPlace,
   samePlace,
 } from "../../src/utils/place-resolver.js";
+import {
+  configureFsBudget,
+  consumeFsBudgetSlot,
+  isFsBudgetExhausted,
+  __resetFsBudgetForTests,
+} from "../../src/utils/fs-budget.js";
 
 const mockSearchPlace = vi.mocked(searchPlace);
 const mockGetPlaceById = vi.mocked(getPlaceById);
@@ -2183,5 +2189,81 @@ describe("checkFirstPlace (#3696)", () => {
     } finally {
       __usePlaceTableForTests(null);
     }
+  });
+});
+
+// A spent process-wide budget is a REFUSAL, not an answer. Every bare `catch`
+// in this module used to turn it into null / [] / "lookup_failed", so the agent
+// was told the place has no coordinates when the truth was "wait N seconds".
+describe("a spent FamilySearch budget reaches the caller", () => {
+  const FS_URL = "https://www.familysearch.org/service/places/search";
+
+  beforeEach(() => {
+    __resetFsBudgetForTests();
+  });
+
+  afterEach(() => {
+    __resetFsBudgetForTests();
+  });
+
+  /** Spend the one slot, then let every Places fetcher refuse as production does. */
+  function spendBudget(): void {
+    configureFsBudget({ perMinute: 1 });
+    consumeFsBudgetSlot(FS_URL);
+    const refuse = (): never => {
+      consumeFsBudgetSlot(FS_URL); // throws the real refusal, as fetchWithTimeout would
+      throw new Error("unreachable");
+    };
+    mockSearchPlace.mockImplementation(refuse);
+    mockGetPlaceById.mockImplementation(refuse);
+    mockGetPlaceReps.mockImplementation(refuse);
+    mockGetPlaceCandidateNames.mockImplementation(refuse);
+  }
+
+  async function thrown(p: Promise<unknown>): Promise<unknown> {
+    return p.then(
+      () => null,
+      (e) => e,
+    );
+  }
+
+  // The case from the review: place_distance reported "Could not resolve
+  // coordinates... use place_search first", naming a cause that was not true
+  // and a remedy that would have been refused too.
+  it("standardPlaceToCoords throws the refusal instead of reporting no coordinates", async () => {
+    spendBudget();
+    const err = await thrown(standardPlaceToCoords("Lexington, Fayette, Kentucky, United States"));
+    expect(isFsBudgetExhausted(err)).toBe(true);
+    expect(String(err)).toMatch(/try again in about/);
+  });
+
+  it("resolveStandardPlace throws the refusal instead of returning null", async () => {
+    spendBudget();
+    expect(isFsBudgetExhausted(await thrown(resolveStandardPlace("Lexington, Ky")))).toBe(true);
+  });
+
+  it("placeIdToRepIds throws the refusal instead of returning an empty list", async () => {
+    spendBudget();
+    expect(isFsBudgetExhausted(await thrown(placeIdToRepIds("p1")))).toBe(true);
+  });
+
+  it("checkFirstPlace throws the refusal instead of reporting lookup_failed", async () => {
+    spendBudget();
+    expect(isFsBudgetExhausted(await thrown(checkFirstPlace("Sierkopas, Germany")))).toBe(true);
+  });
+
+  // The other direction: the rethrow must not swallow the degradation these
+  // callers are built on. An ordinary upstream failure still answers null.
+  it("an ordinary Places failure still degrades, with the budget on but unspent", async () => {
+    configureFsBudget({ perMinute: 100 });
+    mockSearchPlace.mockRejectedValue(new Error("502 Bad Gateway"));
+    expect(await standardPlaceToCoords("Lexington, Fayette, Kentucky, United States")).toBeNull();
+    expect(await resolveStandardPlace("Lexington, Ky")).toBeNull();
+    expect((await checkFirstPlace("Sierkopas, Germany")).status).toBe("lookup_failed");
+  });
+
+  it("an ordinary failure degrades with no budget configured at all", async () => {
+    mockSearchPlace.mockRejectedValue(new Error("502 Bad Gateway"));
+    expect(await standardPlaceToCoords("Lexington, Fayette, Kentucky, United States")).toBeNull();
   });
 });
