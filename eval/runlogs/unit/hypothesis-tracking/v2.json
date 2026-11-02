@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "hypothesis-tracking",
   "version": 2,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-11-02_11-33-41",
@@ -108,7 +108,7 @@
       },
       "totals": {
         "duration_ms": 12588.80050899461,
-        "duration_api_ms": 10837.0,
+        "duration_api_ms": 10837,
         "judge_duration_ms": 3660.2265420078766,
         "wall_clock_ms": 16323.023080825806,
         "num_turns": 2,
@@ -131,7 +131,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 12588.80050899461,
-          "duration_api_ms": 10837.0,
+          "duration_api_ms": 10837,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1486,
@@ -202,7 +202,7 @@
           },
           "skill_cost_usd": 0.12210332499999998,
           "output": {
-            "text_response": "The hypothesis-tracking agent determined that this task falls outside its scope. It reports:\n\n**Hand-back: conflict-resolution** \u2014 weighing assertion `a_002` against `a_009` to decide which birthplace is correct for Patrick Flynn is a **fact conflict**, not a hypothesis-tracking task. The right agent for this is **conflict-resolution**, which handles cases where two sources disagree about the same fact and a determination must be made about which is correct.",
+            "text_response": "The hypothesis-tracking agent determined that this task falls outside its scope. It reports:\n\n**Hand-back: conflict-resolution** — weighing assertion `a_002` against `a_009` to decide which birthplace is correct for Patrick Flynn is a **fact conflict**, not a hypothesis-tracking task. The right agent for this is **conflict-resolution**, which handles cases where two sources disagree about the same fact and a determination must be made about which is correct.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -221,7 +221,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hand-back: conflict-resolution \u2014 this weighs a fact conflict, not a hypothesis."
+                "text": "Hand-back: conflict-resolution — this weighs a fact conflict, not a hypothesis."
               }
             ],
             "warnings": [
@@ -244,7 +244,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -310,7 +310,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -346,7 +346,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -364,13 +364,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -558,7 +558,7 @@
       },
       "totals": {
         "duration_ms": 50359.61725699599,
-        "duration_api_ms": 27515.0,
+        "duration_api_ms": 27515,
         "judge_duration_ms": 10162.388208002085,
         "wall_clock_ms": 63200.94704627991,
         "num_turns": 2,
@@ -581,7 +581,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 50359.61725699599,
-          "duration_api_ms": 27515.0,
+          "duration_api_ms": 27515,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1550,
@@ -660,7 +660,7 @@
           },
           "skill_cost_usd": 0.13395791,
           "output": {
-            "text_response": "The hypothesis-tracking agent reviewed all unlinked assertions and updated **h_001** (Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania). Here's a summary of what was done:\n\n**Five assertions added as supporting evidence:**\n- **a_001** \u2013 1850 census: Patrick Flynn in the household (stated)\n- **a_003** \u2013 1850 census: residence in Schuylkill County (stated)\n- **a_005** \u2013 1850 census: head of household named Thomas Flynn (inferred)\n- **a_008** \u2013 1860 census: Patrick Flynn in the household (stated)\n- **a_010** \u2013 1860 census: Patrick listed in Thomas's household, position consistent with son (inferred)\n\nThese join the three that were already linked (a_004, a_013, and one other), bringing the total supporting evidence to **7 assertions**.\n\n**Assertions reviewed but not linked:**\n- **a_002, a_009** \u2013 Age and Ireland birthplace; these relate to birth facts, not parentage (belong to conflict c_001)\n- **a_011** \u2013 Death date; doesn't bear on parentage\n- **a_012** \u2013 Death certificate birthplace \"Pennsylvania\"; part of conflict c_001\n- **a_006, a_007** \u2013 Ancestry transcription of the same 1850 census page; derivative of the FamilySearch original, so adding it would double-count the same record\n\nThe hypothesis status remains **SUPPORTED**, and the schema validation passed with no errors. The agent also noted that the open probate search for Thomas Flynn's will is the most likely source of further confirmation.",
+            "text_response": "The hypothesis-tracking agent reviewed all unlinked assertions and updated **h_001** (Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania). Here's a summary of what was done:\n\n**Five assertions added as supporting evidence:**\n- **a_001** – 1850 census: Patrick Flynn in the household (stated)\n- **a_003** – 1850 census: residence in Schuylkill County (stated)\n- **a_005** – 1850 census: head of household named Thomas Flynn (inferred)\n- **a_008** – 1860 census: Patrick Flynn in the household (stated)\n- **a_010** – 1860 census: Patrick listed in Thomas's household, position consistent with son (inferred)\n\nThese join the three that were already linked (a_004, a_013, and one other), bringing the total supporting evidence to **7 assertions**.\n\n**Assertions reviewed but not linked:**\n- **a_002, a_009** – Age and Ireland birthplace; these relate to birth facts, not parentage (belong to conflict c_001)\n- **a_011** – Death date; doesn't bear on parentage\n- **a_012** – Death certificate birthplace \"Pennsylvania\"; part of conflict c_001\n- **a_006, a_007** – Ancestry transcription of the same 1850 census page; derivative of the FamilySearch original, so adding it would double-count the same record\n\nThe hypothesis status remains **SUPPORTED**, and the schema validation passed with no errors. The agent also noted that the open probate search for Thomas Flynn's will is the most likely source of further confirmation.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -724,7 +724,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Review unlinked assertions for hypothesis h_001",
-                  "prompt": "I noticed h_001 has three assertions linked as supporting evidence, but there are other assertions in research.json that seem relevant to the Thomas Flynn parentage claim \u2014 like a_005 which identifies Thomas Flynn by name in the 1850 census. Can you review the unlinked assertions and add any that also support the hypothesis?\n\nprojectPath: /tmp/eval-ut_hypothesis_tracking_003-0-0-7qrn4yc2",
+                  "prompt": "I noticed h_001 has three assertions linked as supporting evidence, but there are other assertions in research.json that seem relevant to the Thomas Flynn parentage claim — like a_005 which identifies Thomas Flynn by name in the 1850 census. Can you review the unlinked assertions and add any that also support the hypothesis?\n\nprojectPath: /tmp/eval-ut_hypothesis_tracking_003-0-0-7qrn4yc2",
                   "subagent_type": "hypothesis-tracking",
                   "run_in_background": "False"
                 }
@@ -740,7 +740,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus: SUPPORTED (unchanged)\n\nSupporting evidence (7):\n  + a_001  1850 census: Patrick Flynn in the household (stated) \u2014 added\n  + a_003  1850 census: residence in Schuylkill County (stated) \u2014 added\n  + a_004  1850 census: listed in Thomas's household, position consistent with child (inferred)\n  + a_005  1850 census: head of household named Thomas Flynn (inferred) \u2014 added\n  + a_008  1860 census: Patrick Flynn in the household (stated) \u2014 added\n  + a_010  1860 census: listed in Thomas's household, position consistent with son (inferred)\n  + a_013  Death certificate: \"Father: Thomas Flynn\" (stated)\n\nContradicting evidence (0): (none)\n\nReviewed and not linked:\n  - a_002, a_009: Ages and Ireland birthplace. These bear on birth facts, not parentage. They belong to conflict c_001.\n  - a_011: Death date. Does not bear on parentage.\n  - a_012: Death certificate birthplace \"Pennsylvania\". Part of conflict c_001, not evidence for parentage.\n  - a_006, a_007: Ancestry transcription of the same 1850 census page. Derivative of the FamilySearch original, so they add no independent support. Left out to avoid counting one record twice.\n\nCompeting hypotheses: none exist for this claim in the project.\n\nValidator: passed with no errors or warnings.\n\n---\nI added five more pieces of evidence to the Thomas Flynn parentage claim. They show Patrick living in Schuylkill County in the 1850 and 1860 households headed by Thomas Flynn, and they name Thomas as the head of that household. I left out the age, birthplace and death-date entries, along with the Ancestry copy of the 1850 census, because they either do not speak to parentage or repeat a record already counted. The claim's status stays at supported, since no contradicting evidence was added. Next, the probate search for Thomas Flynn's will is still open and is the most likely source of further confirmation."
+                "text": "Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus: SUPPORTED (unchanged)\n\nSupporting evidence (7):\n  + a_001  1850 census: Patrick Flynn in the household (stated) — added\n  + a_003  1850 census: residence in Schuylkill County (stated) — added\n  + a_004  1850 census: listed in Thomas's household, position consistent with child (inferred)\n  + a_005  1850 census: head of household named Thomas Flynn (inferred) — added\n  + a_008  1860 census: Patrick Flynn in the household (stated) — added\n  + a_010  1860 census: listed in Thomas's household, position consistent with son (inferred)\n  + a_013  Death certificate: \"Father: Thomas Flynn\" (stated)\n\nContradicting evidence (0): (none)\n\nReviewed and not linked:\n  - a_002, a_009: Ages and Ireland birthplace. These bear on birth facts, not parentage. They belong to conflict c_001.\n  - a_011: Death date. Does not bear on parentage.\n  - a_012: Death certificate birthplace \"Pennsylvania\". Part of conflict c_001, not evidence for parentage.\n  - a_006, a_007: Ancestry transcription of the same 1850 census page. Derivative of the FamilySearch original, so they add no independent support. Left out to avoid counting one record twice.\n\nCompeting hypotheses: none exist for this claim in the project.\n\nValidator: passed with no errors or warnings.\n\n---\nI added five more pieces of evidence to the Thomas Flynn parentage claim. They show Patrick living in Schuylkill County in the 1850 and 1860 households headed by Thomas Flynn, and they name Thomas as the head of that household. I left out the age, birthplace and death-date entries, along with the Ancestry copy of the 1850 census, because they either do not speak to parentage or repeat a record already counted. The claim's status stays at supported, since no contradicting evidence was added. Next, the probate search for Thomas Flynn's will is still open and is the most likely source of further confirmation."
               }
             ],
             "file_changes": {
@@ -1092,7 +1092,7 @@
             "source": "rubric",
             "name": "Status transitions",
             "score": 3,
-            "rationale": "Both hypotheses are correctly set to 'active' status, which is appropriate for newly formulated hypotheses with no resolution yet. h_002 is not marked 'supported' despite having three supporting assertions because the unresolved conflict c_001 (birthplace) blocks it\u2014the skill correctly notes this in the hypothesis notes. h_003 is correctly 'active' with no supporting assertions because household 197 has not been extracted. Neither hypothesis is marked 'ruled_out' because there is no affirmative refutation, only lack of evidence for h_003. The skill correctly follows the status-transitions rules: 'supported' requires either one direct supporting assertion or two indirect from different sources, with all conflicts resolved; 'ruled_out' requires affirmative refutation. The current statuses match these rules."
+            "rationale": "Both hypotheses are correctly set to 'active' status, which is appropriate for newly formulated hypotheses with no resolution yet. h_002 is not marked 'supported' despite having three supporting assertions because the unresolved conflict c_001 (birthplace) blocks it—the skill correctly notes this in the hypothesis notes. h_003 is correctly 'active' with no supporting assertions because household 197 has not been extracted. Neither hypothesis is marked 'ruled_out' because there is no affirmative refutation, only lack of evidence for h_003. The skill correctly follows the status-transitions rules: 'supported' requires either one direct supporting assertion or two indirect from different sources, with all conflicts resolved; 'ruled_out' requires affirmative refutation. The current statuses match these rules."
           }
         ],
         "review_dimensions": [
@@ -1130,13 +1130,13 @@
             "source": "rubric",
             "name": "Status transitions",
             "score": 3,
-            "rationale": "Both hypotheses are correctly set to 'active' status, which is appropriate for newly formulated hypotheses with no resolution yet. h_002 is not marked 'supported' despite having three supporting assertions because the unresolved conflict c_001 (birthplace) blocks it\u2014the skill correctly notes this in the hypothesis notes. h_003 is correctly 'active' with no supporting assertions because household 197 has not been extracted. Neither hypothesis is marked 'ruled_out' because there is no affirmative refutation, only lack of evidence for h_003. The skill correctly follows the status-transitions rules: 'supported' requires either one direct supporting assertion or two indirect from different sources, with all conflicts resolved; 'ruled_out' requires affirmative refutation. The current statuses match these rules."
+            "rationale": "Both hypotheses are correctly set to 'active' status, which is appropriate for newly formulated hypotheses with no resolution yet. h_002 is not marked 'supported' despite having three supporting assertions because the unresolved conflict c_001 (birthplace) blocks it—the skill correctly notes this in the hypothesis notes. h_003 is correctly 'active' with no supporting assertions because household 197 has not been extracted. Neither hypothesis is marked 'ruled_out' because there is no affirmative refutation, only lack of evidence for h_003. The skill correctly follows the status-transitions rules: 'supported' requires either one direct supporting assertion or two indirect from different sources, with all conflicts resolved; 'ruled_out' requires affirmative refutation. The current statuses match these rules."
           }
         ]
       },
       "totals": {
         "duration_ms": 63822.36974299303,
-        "duration_api_ms": 43625.0,
+        "duration_api_ms": 43625,
         "judge_duration_ms": 16008.88774698251,
         "wall_clock_ms": 82133.9304447174,
         "num_turns": 2,
@@ -1159,7 +1159,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 63822.36974299303,
-          "duration_api_ms": 43625.0,
+          "duration_api_ms": 43625,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1489,
@@ -1238,7 +1238,7 @@
           },
           "skill_cost_usd": 0.13390597999999998,
           "output": {
-            "text_response": "Two competing hypotheses have been created for the **c_002** identity conflict:\n\n---\n\n**h_002 \u2014 Household 84 Patrick (1850) is the 1908 death-certificate subject** *(ACTIVE)*\n\n- **Supporting:** 1850 census name match (a_001), residence in Schuylkill County (a_003), death certificate naming father Thomas Flynn (a_013 \u2014 links only if this Thomas is household 84's head)\n- **Contradicting:** Death certificate says born Pennsylvania; census says Ireland (open conflict c_001)\n\n---\n\n**h_003 \u2014 Household 197 Patrick (age 6, 1850) is the 1908 death-certificate subject** *(ACTIVE)*\n\n- **Supporting:** None yet \u2014 the household 197 record has not been extracted\n- **Contradicting:** None yet\n\n---\n\n**Next step:** The household 197 record needs to be extracted and its assertions created so the two candidates can be properly tested against each other. Until then, h_002 has some support but is hampered by the unresolved birthplace conflict, while h_003 is a live alternative with no evidence in the file yet.",
+            "text_response": "Two competing hypotheses have been created for the **c_002** identity conflict:\n\n---\n\n**h_002 — Household 84 Patrick (1850) is the 1908 death-certificate subject** *(ACTIVE)*\n\n- **Supporting:** 1850 census name match (a_001), residence in Schuylkill County (a_003), death certificate naming father Thomas Flynn (a_013 — links only if this Thomas is household 84's head)\n- **Contradicting:** Death certificate says born Pennsylvania; census says Ireland (open conflict c_001)\n\n---\n\n**h_003 — Household 197 Patrick (age 6, 1850) is the 1908 death-certificate subject** *(ACTIVE)*\n\n- **Supporting:** None yet — the household 197 record has not been extracted\n- **Contradicting:** None yet\n\n---\n\n**Next step:** The household 197 record needs to be extracted and its assertions created so the two candidates can be properly tested against each other. Until then, h_002 has some support but is hampered by the unresolved birthplace conflict, while h_003 is a live alternative with no evidence in the file yet.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1353,7 +1353,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_002 and h_003 (new, both ACTIVE)\n\nCreated two competing hypotheses for the c_002 identity question. Neither is supported or ruled out yet.\n\n```\nHypothesis: h_002 \u2014 Household 84 Patrick (1850) is the 1908 death-certificate subject\nStatus:     ACTIVE\n\nSupporting evidence (3):\n  + a_001  1850 census: Patrick Flynn, Thomas Flynn household (stated; name alone is weak)\n  + a_003  1850 census: residence in Schuylkill County (stated)\n  + a_013  Death certificate: father Thomas Flynn (stated; links only if this Thomas is household 84's head)\n\nContradicting evidence (1):\n  - a_012  Death certificate: born Pennsylvania (census says Ireland; open conflict c_001)\n\nCompeting hypotheses:\n  h_003  Household 197 Patrick (age 6) \u2014 ACTIVE (no linked evidence yet)\n\n---\nHypothesis: h_003 \u2014 Household 197 Patrick (1850, age 6) is the 1908 death-certificate subject\nStatus:     ACTIVE\n\nSupporting evidence (0):  (none \u2014 no assertion exists for household 197)\nContradicting evidence (0):  (none)\n\nCompeting hypotheses:\n  h_002  Household 84 Patrick \u2014 ACTIVE\n```\n\nValidator: passed with no errors or warnings.\n\nIssues to address (not changed, since this request covered only the two new hypotheses):\n- **h_001 is marked \"supported\" but rests on the identity question c_002 is still open on.** Its evidence is about the household 84 Patrick, and c_002 is unresolved. Its status should be reviewed before proof-conclusion.\n- **The q_002 closure contradicts c_002.** The log says no other Patrick Flynn of matching age was found in the county, but c_002 describes a second Patrick in household 197, age 6.\n- **Household 197 has not been extracted.** Testing h_003 needs that record pulled and its assertions created. Those assertions are outside my remit.\n- **c_002 lists only a_001 as competing.** It should eventually include the household 197 assertion.\n\n---\n\nI formed two competing hypotheses for the identity conflict: the Patrick Flynn in Thomas Flynn's 1850 household is the man who died in 1908, or the second Patrick Flynn of similar age in household 197 is. Right now the household 84 candidate has some support but is held back by an unresolved birthplace disagreement, and the household 197 candidate has no evidence in the file yet.\n\nNext, the household 197 record needs to be pulled and recorded so the two candidates can be tested against each other."
+                "text": "Hypothesis: h_002 and h_003 (new, both ACTIVE)\n\nCreated two competing hypotheses for the c_002 identity question. Neither is supported or ruled out yet.\n\n```\nHypothesis: h_002 — Household 84 Patrick (1850) is the 1908 death-certificate subject\nStatus:     ACTIVE\n\nSupporting evidence (3):\n  + a_001  1850 census: Patrick Flynn, Thomas Flynn household (stated; name alone is weak)\n  + a_003  1850 census: residence in Schuylkill County (stated)\n  + a_013  Death certificate: father Thomas Flynn (stated; links only if this Thomas is household 84's head)\n\nContradicting evidence (1):\n  - a_012  Death certificate: born Pennsylvania (census says Ireland; open conflict c_001)\n\nCompeting hypotheses:\n  h_003  Household 197 Patrick (age 6) — ACTIVE (no linked evidence yet)\n\n---\nHypothesis: h_003 — Household 197 Patrick (1850, age 6) is the 1908 death-certificate subject\nStatus:     ACTIVE\n\nSupporting evidence (0):  (none — no assertion exists for household 197)\nContradicting evidence (0):  (none)\n\nCompeting hypotheses:\n  h_002  Household 84 Patrick — ACTIVE\n```\n\nValidator: passed with no errors or warnings.\n\nIssues to address (not changed, since this request covered only the two new hypotheses):\n- **h_001 is marked \"supported\" but rests on the identity question c_002 is still open on.** Its evidence is about the household 84 Patrick, and c_002 is unresolved. Its status should be reviewed before proof-conclusion.\n- **The q_002 closure contradicts c_002.** The log says no other Patrick Flynn of matching age was found in the county, but c_002 describes a second Patrick in household 197, age 6.\n- **Household 197 has not been extracted.** Testing h_003 needs that record pulled and its assertions created. Those assertions are outside my remit.\n- **c_002 lists only a_001 as competing.** It should eventually include the household 197 assertion.\n\n---\n\nI formed two competing hypotheses for the identity conflict: the Patrick Flynn in Thomas Flynn's 1850 household is the man who died in 1908, or the second Patrick Flynn of similar age in household 197 is. Right now the household 84 candidate has some support but is held back by an unresolved birthplace disagreement, and the household 197 candidate has no evidence in the file yet.\n\nNext, the household 197 record needs to be pulled and recorded so the two candidates can be tested against each other."
               }
             ],
             "file_changes": {
@@ -1650,7 +1650,7 @@
                 "source": "rubric",
                 "name": "Status transitions",
                 "score": 3,
-                "rationale": "Both hypotheses are correctly set to 'active' status, which is appropriate for newly formulated hypotheses with no resolution yet. h_002 is not marked 'supported' despite having three supporting assertions because the unresolved conflict c_001 (birthplace) blocks it\u2014the skill correctly notes this in the hypothesis notes. h_003 is correctly 'active' with no supporting assertions because household 197 has not been extracted. Neither hypothesis is marked 'ruled_out' because there is no affirmative refutation, only lack of evidence for h_003. The skill correctly follows the status-transitions rules: 'supported' requires either one direct supporting assertion or two indirect from different sources, with all conflicts resolved; 'ruled_out' requires affirmative refutation. The current statuses match these rules."
+                "rationale": "Both hypotheses are correctly set to 'active' status, which is appropriate for newly formulated hypotheses with no resolution yet. h_002 is not marked 'supported' despite having three supporting assertions because the unresolved conflict c_001 (birthplace) blocks it—the skill correctly notes this in the hypothesis notes. h_003 is correctly 'active' with no supporting assertions because household 197 has not been extracted. Neither hypothesis is marked 'ruled_out' because there is no affirmative refutation, only lack of evidence for h_003. The skill correctly follows the status-transitions rules: 'supported' requires either one direct supporting assertion or two indirect from different sources, with all conflicts resolved; 'ruled_out' requires affirmative refutation. The current statuses match these rules."
               }
             ],
             "judge_cost_usd": 0.018980999999999998,
@@ -1760,7 +1760,7 @@
       },
       "totals": {
         "duration_ms": 24680.858214996988,
-        "duration_api_ms": 22413.0,
+        "duration_api_ms": 22413,
         "judge_duration_ms": 9939.437444001669,
         "wall_clock_ms": 34722.737073898315,
         "num_turns": 2,
@@ -1783,7 +1783,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 24680.858214996988,
-          "duration_api_ms": 22413.0,
+          "duration_api_ms": 22413,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1468,
@@ -1861,7 +1861,7 @@
           },
           "skill_cost_usd": 0.133667315,
           "output": {
-            "text_response": "Here's the status of your hypothesis that Thomas Flynn was Patrick's father:\n\n---\n\n**Hypothesis h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania**\n**Status: SUPPORTED**\n\n**Supporting Evidence (3 items):**\n- **a_004** \u2014 1850 census: Patrick listed in Thomas Flynn's household, position consistent with a child (inferred)\n- **a_010** \u2014 1860 census: Patrick listed in Thomas Flynn's household, age and position consistent with son (inferred)\n- **a_013** \u2014 1908 death certificate: \"Father: Thomas Flynn\" (stated; informant is son-in-law James Brown, secondary for parentage)\n\n**Contradicting Evidence:** None linked.\n\n**Competing Hypotheses:** None recorded \u2014 no rival Thomas Flynn or other candidate father has been entered.\n\n---\n\n**Observations worth noting:**\n- A pending plan item (pli_006) awaits **Thomas Flynn's probate records (1870\u20131890)** \u2014 still in progress.\n- The **1870, 1880, and 1900 censuses** are unsearched.\n- A **1881 will of Thomas Flynn (src_006)** and a **1881 deed from Thomas Flynn to Patrick Flynn (src_008)** are on file but have no linked assertions yet \u2014 these could significantly strengthen or challenge the hypothesis once reviewed.\n- The existing proof summary (ps_001) rates the question **Probable**, which fits the current evidence.\n\n---\n\nIn short, the theory is well-supported: the two censuses place Patrick in Thomas's household at a child's age, and the death certificate directly names Thomas as Patrick's father. However, the census links are inferred from household position (not a stated relationship), and the death certificate came from a son-in-law (a secondary informant for parentage). The next steps to strengthen the conclusion would be finishing the probate search and checking the 1870\u20131900 censuses.",
+            "text_response": "Here's the status of your hypothesis that Thomas Flynn was Patrick's father:\n\n---\n\n**Hypothesis h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania**\n**Status: SUPPORTED**\n\n**Supporting Evidence (3 items):**\n- **a_004** — 1850 census: Patrick listed in Thomas Flynn's household, position consistent with a child (inferred)\n- **a_010** — 1860 census: Patrick listed in Thomas Flynn's household, age and position consistent with son (inferred)\n- **a_013** — 1908 death certificate: \"Father: Thomas Flynn\" (stated; informant is son-in-law James Brown, secondary for parentage)\n\n**Contradicting Evidence:** None linked.\n\n**Competing Hypotheses:** None recorded — no rival Thomas Flynn or other candidate father has been entered.\n\n---\n\n**Observations worth noting:**\n- A pending plan item (pli_006) awaits **Thomas Flynn's probate records (1870–1890)** — still in progress.\n- The **1870, 1880, and 1900 censuses** are unsearched.\n- A **1881 will of Thomas Flynn (src_006)** and a **1881 deed from Thomas Flynn to Patrick Flynn (src_008)** are on file but have no linked assertions yet — these could significantly strengthen or challenge the hypothesis once reviewed.\n- The existing proof summary (ps_001) rates the question **Probable**, which fits the current evidence.\n\n---\n\nIn short, the theory is well-supported: the two censuses place Patrick in Thomas's household at a child's age, and the death certificate directly names Thomas as Patrick's father. However, the census links are inferred from household position (not a stated relationship), and the death certificate came from a son-in-law (a secondary informant for parentage). The next steps to strengthen the conclusion would be finishing the probate search and checking the 1870–1900 censuses.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1902,7 +1902,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus: SUPPORTED (read-only review; no changes made)\n\nSupporting evidence (3):\n  + a_004  1850 census: Patrick listed in Thomas Flynn's household, position consistent with child (inferred)\n  + a_010  1860 census: Patrick listed in Thomas Flynn's household, age and position consistent with son (inferred)\n  + a_013  1908 death certificate: \"Father: Thomas Flynn\" (stated; informant is son-in-law James Brown, secondary for parentage)\n\nContradicting evidence (0): (none linked)\n\nConflict check: c_001 (birthplace, Ireland vs. Pennsylvania) is resolved and its competing assertions (a_002, a_009, a_012) do not overlap h_001's supporting set. The \"supported\" status meets the criteria: a stated assertion (a_013) is present, and the conflict check passes.\n\nCompeting hypotheses: none recorded. No rival Thomas Flynn or other candidate father has an h_ entry.\n\nObservations (not acted on):\n  - The h_001 notes say it is awaiting probate records. The plan item pli_006 (Thomas Flynn probate, 1870-1890) is still in progress.\n  - The 1870, 1880, and 1900 censuses are unsearched, as the proof summary notes.\n  - The sources list includes a 1881 will of Thomas Flynn (src_006) and a 1881 deed from Thomas Flynn to Patrick Flynn (src_008). Neither has linked assertions yet. If they are checked, they could confirm or challenge the hypothesis.\n  - The proof summary ps_001 rates the question Probable, which fits the evidence. It is ready for a proof conclusion if you want one written.\n\nValidator: research.json and tree.gedcomx.json both pass validation with no errors or warnings.\n\n---\nYour working theory that Thomas Flynn was Patrick's father is currently marked as well supported. Three records point the same way: the 1850 and 1860 censuses list Patrick in Thomas's household at a child's age, and Patrick's 1908 death certificate names Thomas as his father. The census links are inferred from household position rather than stated outright, and the death certificate was reported by a son-in-law, so the case is solid but not yet proven. No rival candidate was found, so nothing has been set aside. A 1881 will and deed between the two men are on file but not yet tied to the evidence, and they could strengthen or weaken the case.\nNext, the probate search for Thomas Flynn's records and the unsearched 1870 to 1900 censuses would be the checks to finish before a final written conclusion."
+                "text": "Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus: SUPPORTED (read-only review; no changes made)\n\nSupporting evidence (3):\n  + a_004  1850 census: Patrick listed in Thomas Flynn's household, position consistent with child (inferred)\n  + a_010  1860 census: Patrick listed in Thomas Flynn's household, age and position consistent with son (inferred)\n  + a_013  1908 death certificate: \"Father: Thomas Flynn\" (stated; informant is son-in-law James Brown, secondary for parentage)\n\nContradicting evidence (0): (none linked)\n\nConflict check: c_001 (birthplace, Ireland vs. Pennsylvania) is resolved and its competing assertions (a_002, a_009, a_012) do not overlap h_001's supporting set. The \"supported\" status meets the criteria: a stated assertion (a_013) is present, and the conflict check passes.\n\nCompeting hypotheses: none recorded. No rival Thomas Flynn or other candidate father has an h_ entry.\n\nObservations (not acted on):\n  - The h_001 notes say it is awaiting probate records. The plan item pli_006 (Thomas Flynn probate, 1870-1890) is still in progress.\n  - The 1870, 1880, and 1900 censuses are unsearched, as the proof summary notes.\n  - The sources list includes a 1881 will of Thomas Flynn (src_006) and a 1881 deed from Thomas Flynn to Patrick Flynn (src_008). Neither has linked assertions yet. If they are checked, they could confirm or challenge the hypothesis.\n  - The proof summary ps_001 rates the question Probable, which fits the evidence. It is ready for a proof conclusion if you want one written.\n\nValidator: research.json and tree.gedcomx.json both pass validation with no errors or warnings.\n\n---\nYour working theory that Thomas Flynn was Patrick's father is currently marked as well supported. Three records point the same way: the 1850 and 1860 censuses list Patrick in Thomas's household at a child's age, and Patrick's 1908 death certificate names Thomas as his father. The census links are inferred from household position rather than stated outright, and the death certificate was reported by a son-in-law, so the case is solid but not yet proven. No rival candidate was found, so nothing has been set aside. A 1881 will and deed between the two men are on file but not yet tied to the evidence, and they could strengthen or weaken the case.\nNext, the probate search for Thomas Flynn's records and the unsearched 1870 to 1900 censuses would be the checks to finish before a final written conclusion."
               }
             ],
             "warnings": [
@@ -2215,13 +2215,13 @@
             "source": "rubric",
             "name": "Evidence linkage",
             "score": 3,
-            "rationale": "Claude correctly linked supporting assertions to each hypothesis: for h_001, the presence of 'Patrick Flynn' age 5 in Thomas Flynn's household (1850 census); for h_002, the presence of 'Patrick Flynn' age 6 in Michael Flynn's household (1850 census). The 1860 census (Patrick as boarder with no Flynn adult) and death certificate (father field blank) are correctly identified as negative bridging evidence\u2014they bear directly on whether either 1850 household can be connected to the adult Patrick. No tangential assertions were included."
+            "rationale": "Claude correctly linked supporting assertions to each hypothesis: for h_001, the presence of 'Patrick Flynn' age 5 in Thomas Flynn's household (1850 census); for h_002, the presence of 'Patrick Flynn' age 6 in Michael Flynn's household (1850 census). The 1860 census (Patrick as boarder with no Flynn adult) and death certificate (father field blank) are correctly identified as negative bridging evidence—they bear directly on whether either 1850 household can be connected to the adult Patrick. No tangential assertions were included."
           },
           {
             "source": "rubric",
             "name": "Status transitions",
             "score": 3,
-            "rationale": "Both hypotheses correctly remain 'active'. Neither was moved to 'supported' because each has only inferred assertions from a single source (the 1850 census page for each household), failing the threshold of either one direct assertion or two inferred from two distinct sources. Neither was moved to 'ruled_out' because no affirmative refutation exists\u2014the blank father field and 1860 boarder status are negative evidence, not proof of paternity elsewhere. The status transitions comply with research-schema-spec.md rules."
+            "rationale": "Both hypotheses correctly remain 'active'. Neither was moved to 'supported' because each has only inferred assertions from a single source (the 1850 census page for each household), failing the threshold of either one direct assertion or two inferred from two distinct sources. Neither was moved to 'ruled_out' because no affirmative refutation exists—the blank father field and 1860 boarder status are negative evidence, not proof of paternity elsewhere. The status transitions comply with research-schema-spec.md rules."
           }
         ],
         "review_dimensions": [
@@ -2253,19 +2253,19 @@
             "source": "rubric",
             "name": "Evidence linkage",
             "score": 3,
-            "rationale": "Claude correctly linked supporting assertions to each hypothesis: for h_001, the presence of 'Patrick Flynn' age 5 in Thomas Flynn's household (1850 census); for h_002, the presence of 'Patrick Flynn' age 6 in Michael Flynn's household (1850 census). The 1860 census (Patrick as boarder with no Flynn adult) and death certificate (father field blank) are correctly identified as negative bridging evidence\u2014they bear directly on whether either 1850 household can be connected to the adult Patrick. No tangential assertions were included."
+            "rationale": "Claude correctly linked supporting assertions to each hypothesis: for h_001, the presence of 'Patrick Flynn' age 5 in Thomas Flynn's household (1850 census); for h_002, the presence of 'Patrick Flynn' age 6 in Michael Flynn's household (1850 census). The 1860 census (Patrick as boarder with no Flynn adult) and death certificate (father field blank) are correctly identified as negative bridging evidence—they bear directly on whether either 1850 household can be connected to the adult Patrick. No tangential assertions were included."
           },
           {
             "source": "rubric",
             "name": "Status transitions",
             "score": 3,
-            "rationale": "Both hypotheses correctly remain 'active'. Neither was moved to 'supported' because each has only inferred assertions from a single source (the 1850 census page for each household), failing the threshold of either one direct assertion or two inferred from two distinct sources. Neither was moved to 'ruled_out' because no affirmative refutation exists\u2014the blank father field and 1860 boarder status are negative evidence, not proof of paternity elsewhere. The status transitions comply with research-schema-spec.md rules."
+            "rationale": "Both hypotheses correctly remain 'active'. Neither was moved to 'supported' because each has only inferred assertions from a single source (the 1850 census page for each household), failing the threshold of either one direct assertion or two inferred from two distinct sources. Neither was moved to 'ruled_out' because no affirmative refutation exists—the blank father field and 1860 boarder status are negative evidence, not proof of paternity elsewhere. The status transitions comply with research-schema-spec.md rules."
           }
         ]
       },
       "totals": {
         "duration_ms": 27804.761037026765,
-        "duration_api_ms": 25462.0,
+        "duration_api_ms": 25462,
         "judge_duration_ms": 11843.03739501047,
         "wall_clock_ms": 39747.952699661255,
         "num_turns": 2,
@@ -2288,7 +2288,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 27804.761037026765,
-          "duration_api_ms": 25462.0,
+          "duration_api_ms": 25462,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1468,
@@ -2366,7 +2366,7 @@
           },
           "skill_cost_usd": 0.13535568,
           "output": {
-            "text_response": "Here is the hypothesis-tracking agent's review:\n\n---\n\n**Hypotheses for q_001** \u2014 *Who fathered Patrick Flynn (b. ~1845, d. 1908, Schuylkill Co.)?*\n\n---\n\n### h_001 \u2014 Father: **Thomas Flynn** (dwelling 84, 1850 census)\n**Status:** ACTIVE\n\n| | Assertion | Basis |\n|---|---|---|\n| \u2705 | Patrick Flynn, age 5, in dwelling 84 | inferred |\n| \u2705 | Listed in Thomas Flynn's household, child position | inferred |\n\n**Contradicting evidence:** none\n\n---\n\n### h_002 \u2014 Father: **Michael Flynn** (dwelling 210, 1850 census)\n**Status:** ACTIVE\n\n| | Assertion | Basis |\n|---|---|---|\n| \u2705 | Patrick Flynn, age 6, in dwelling 210 | inferred |\n| \u2705 | Listed in Michael Flynn's household, child position | inferred |\n\n**Contradicting evidence:** none\n\n---\n\n### Why neither hypothesis is `supported`\n\nBoth hypotheses rest entirely on **inferred** assertions from a **single source** (a single 1850 census page each). Promotion to `supported` requires either one `stated` assertion or two `inferred` assertions from *distinct* sources \u2014 neither hypothesis meets that bar.\n\nCritical gaps:\n- No record connects the **adult** Patrick (1860 boarder; 1908 decedent) to either 1850 household.\n- The 1908 death certificate lists his father as **unknown**.\n- The 1860 census is negative: no Flynn adult is bridging.\n- Catholic baptism records returned nothing.\n\n**The two candidates are tied.** The same unproven assumption underlies both: that the child in each household *is* the subject. The evidence cannot separate them.\n\n---\n\n### What Happens Next\n\nThe path forward is to plan searches that could distinguish between Thomas Flynn and Michael Flynn as the father:\n\n1. **Patrick's own marriage record** \u2014 may name his father\n2. **1855 Pennsylvania state census** \u2014 could show Patrick still in one household\n3. **Probate or land records for Thomas and Michael Flynn** \u2014 may name heirs or children\n4. **Civil or church records** that bridge the 1850 child to the adult Patrick\n\nWould you like to continue with planning those searches?",
+            "text_response": "Here is the hypothesis-tracking agent's review:\n\n---\n\n**Hypotheses for q_001** — *Who fathered Patrick Flynn (b. ~1845, d. 1908, Schuylkill Co.)?*\n\n---\n\n### h_001 — Father: **Thomas Flynn** (dwelling 84, 1850 census)\n**Status:** ACTIVE\n\n| | Assertion | Basis |\n|---|---|---|\n| ✅ | Patrick Flynn, age 5, in dwelling 84 | inferred |\n| ✅ | Listed in Thomas Flynn's household, child position | inferred |\n\n**Contradicting evidence:** none\n\n---\n\n### h_002 — Father: **Michael Flynn** (dwelling 210, 1850 census)\n**Status:** ACTIVE\n\n| | Assertion | Basis |\n|---|---|---|\n| ✅ | Patrick Flynn, age 6, in dwelling 210 | inferred |\n| ✅ | Listed in Michael Flynn's household, child position | inferred |\n\n**Contradicting evidence:** none\n\n---\n\n### Why neither hypothesis is `supported`\n\nBoth hypotheses rest entirely on **inferred** assertions from a **single source** (a single 1850 census page each). Promotion to `supported` requires either one `stated` assertion or two `inferred` assertions from *distinct* sources — neither hypothesis meets that bar.\n\nCritical gaps:\n- No record connects the **adult** Patrick (1860 boarder; 1908 decedent) to either 1850 household.\n- The 1908 death certificate lists his father as **unknown**.\n- The 1860 census is negative: no Flynn adult is bridging.\n- Catholic baptism records returned nothing.\n\n**The two candidates are tied.** The same unproven assumption underlies both: that the child in each household *is* the subject. The evidence cannot separate them.\n\n---\n\n### What Happens Next\n\nThe path forward is to plan searches that could distinguish between Thomas Flynn and Michael Flynn as the father:\n\n1. **Patrick's own marriage record** — may name his father\n2. **1855 Pennsylvania state census** — could show Patrick still in one household\n3. **Probate or land records for Thomas and Michael Flynn** — may name heirs or children\n4. **Civil or church records** that bridge the 1850 child to the adult Patrick\n\nWould you like to continue with planning those searches?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2411,7 +2411,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Read-only review of q_001 (who fathered Patrick Flynn, b. ~1845, d. 1908 Schuylkill Co.). I changed nothing in `research.json`.\n\nHypothesis state:\n\nHypothesis: h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County (dwelling 84, 1850)\nStatus:     ACTIVE (remains active)\n\nSupporting evidence (2):\n  + a_001  1850 census, dwelling 84: \"Patrick Flynn,\" age 5 (inferred)\n  + a_003  1850 census: listed in Thomas Flynn's household, child position (inferred)\n\nContradicting evidence (0):  (none)\n\nHypothesis: h_002 \u2014 Patrick Flynn's father was Michael Flynn of Schuylkill County (dwelling 210, 1850)\nStatus:     ACTIVE (remains active)\n\nSupporting evidence (2):\n  + a_005  1850 census, dwelling 210: \"Patrick Flynn,\" age 6 (inferred)\n  + a_007  1850 census: listed in Michael Flynn's household, child position (inferred)\n\nContradicting evidence (0):  (none)\n\nCompeting hypotheses: h_001 and h_002 are both live. Neither has been ruled out.\n\nWhy neither is `supported`:\n- Every supporting assertion for both hypotheses is `inferred` and comes from a single source (the 1850 census page for each household). The `supported` test needs either one `stated` assertion or two `inferred` assertions from two distinct sources. Neither hypothesis meets it.\n- No conflicts are recorded, so that condition is met trivially. The evidence is internally consistent.\n- Nothing links the adult Patrick (1860 boarder with the Donnelly household, 1908 decedent) back to either 1850 household. The death certificate's father field is blank and the informant gave \"unknown.\" The 1860 census is negative bridging evidence: no Flynn adult is present.\n- The Catholic baptism search returned nothing, so the record type that would have named the father is not available.\n\nAssessment: both candidates rest on the same unproven assumption, that the age-5 or age-6 child in each 1850 household is the subject. The evidence cannot separate them, so there is no basis to rule either out or promote either one.\n\nValidator: `validate_research_schema` passed with no errors or warnings.\n\n---\nThe two candidate fathers are still tied: a Thomas Flynn household and a Michael Flynn household in the 1850 census each contain a Patrick of the right age, and no record yet proves which Patrick is the subject. Nothing has been ruled out, and nothing can be promoted until a source connects the adult Patrick to one of those households or names his father. The next step is to plan the searches that could do that, such as Patrick's own marriage or other civil records, the 1855 Pennsylvania state census, and probate or land records for Thomas and Michael, with each search chosen to separate the two candidates. Continue with planning the searches?"
+                "text": "Read-only review of q_001 (who fathered Patrick Flynn, b. ~1845, d. 1908 Schuylkill Co.). I changed nothing in `research.json`.\n\nHypothesis state:\n\nHypothesis: h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County (dwelling 84, 1850)\nStatus:     ACTIVE (remains active)\n\nSupporting evidence (2):\n  + a_001  1850 census, dwelling 84: \"Patrick Flynn,\" age 5 (inferred)\n  + a_003  1850 census: listed in Thomas Flynn's household, child position (inferred)\n\nContradicting evidence (0):  (none)\n\nHypothesis: h_002 — Patrick Flynn's father was Michael Flynn of Schuylkill County (dwelling 210, 1850)\nStatus:     ACTIVE (remains active)\n\nSupporting evidence (2):\n  + a_005  1850 census, dwelling 210: \"Patrick Flynn,\" age 6 (inferred)\n  + a_007  1850 census: listed in Michael Flynn's household, child position (inferred)\n\nContradicting evidence (0):  (none)\n\nCompeting hypotheses: h_001 and h_002 are both live. Neither has been ruled out.\n\nWhy neither is `supported`:\n- Every supporting assertion for both hypotheses is `inferred` and comes from a single source (the 1850 census page for each household). The `supported` test needs either one `stated` assertion or two `inferred` assertions from two distinct sources. Neither hypothesis meets it.\n- No conflicts are recorded, so that condition is met trivially. The evidence is internally consistent.\n- Nothing links the adult Patrick (1860 boarder with the Donnelly household, 1908 decedent) back to either 1850 household. The death certificate's father field is blank and the informant gave \"unknown.\" The 1860 census is negative bridging evidence: no Flynn adult is present.\n- The Catholic baptism search returned nothing, so the record type that would have named the father is not available.\n\nAssessment: both candidates rest on the same unproven assumption, that the age-5 or age-6 child in each 1850 household is the subject. The evidence cannot separate them, so there is no basis to rule either out or promote either one.\n\nValidator: `validate_research_schema` passed with no errors or warnings.\n\n---\nThe two candidate fathers are still tied: a Thomas Flynn household and a Michael Flynn household in the 1850 census each contain a Patrick of the right age, and no record yet proves which Patrick is the subject. Nothing has been ruled out, and nothing can be promoted until a source connects the adult Patrick to one of those households or names his father. The next step is to plan the searches that could do that, such as Patrick's own marriage or other civil records, the 1855 Pennsylvania state census, and probate or land records for Thomas and Michael, with each search chosen to separate the two candidates. Continue with planning the searches?"
               }
             ],
             "warnings": [
@@ -2655,13 +2655,13 @@
                 "source": "rubric",
                 "name": "Evidence linkage",
                 "score": 3,
-                "rationale": "Claude correctly linked supporting assertions to each hypothesis: for h_001, the presence of 'Patrick Flynn' age 5 in Thomas Flynn's household (1850 census); for h_002, the presence of 'Patrick Flynn' age 6 in Michael Flynn's household (1850 census). The 1860 census (Patrick as boarder with no Flynn adult) and death certificate (father field blank) are correctly identified as negative bridging evidence\u2014they bear directly on whether either 1850 household can be connected to the adult Patrick. No tangential assertions were included."
+                "rationale": "Claude correctly linked supporting assertions to each hypothesis: for h_001, the presence of 'Patrick Flynn' age 5 in Thomas Flynn's household (1850 census); for h_002, the presence of 'Patrick Flynn' age 6 in Michael Flynn's household (1850 census). The 1860 census (Patrick as boarder with no Flynn adult) and death certificate (father field blank) are correctly identified as negative bridging evidence—they bear directly on whether either 1850 household can be connected to the adult Patrick. No tangential assertions were included."
               },
               {
                 "source": "rubric",
                 "name": "Status transitions",
                 "score": 3,
-                "rationale": "Both hypotheses correctly remain 'active'. Neither was moved to 'supported' because each has only inferred assertions from a single source (the 1850 census page for each household), failing the threshold of either one direct assertion or two inferred from two distinct sources. Neither was moved to 'ruled_out' because no affirmative refutation exists\u2014the blank father field and 1860 boarder status are negative evidence, not proof of paternity elsewhere. The status transitions comply with research-schema-spec.md rules."
+                "rationale": "Both hypotheses correctly remain 'active'. Neither was moved to 'supported' because each has only inferred assertions from a single source (the 1850 census page for each household), failing the threshold of either one direct assertion or two inferred from two distinct sources. Neither was moved to 'ruled_out' because no affirmative refutation exists—the blank father field and 1860 boarder status are negative evidence, not proof of paternity elsewhere. The status transitions comply with research-schema-spec.md rules."
               }
             ],
             "judge_cost_usd": 0.015126,
@@ -2697,7 +2697,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that the Luzerne County Thomas Flynn death record (a_016, dated 15 September 1840) creates a chronological impossibility for paternity of Patrick Flynn (born ~1845). The ruling-out is justified by affirmative refutation\u2014a specific death date\u2014not mere absence of evidence. The death record was already on file (src_006, log_007) and is now properly linked as contradicting evidence. The ruled_out_reason cites the death date and the timeline gap explicitly, establishing the biological impossibility. No fabricated material; all claims are grounded in the project's existing sources and the logical inference from dates."
+            "rationale": "Claude correctly identified that the Luzerne County Thomas Flynn death record (a_016, dated 15 September 1840) creates a chronological impossibility for paternity of Patrick Flynn (born ~1845). The ruling-out is justified by affirmative refutation—a specific death date—not mere absence of evidence. The death record was already on file (src_006, log_007) and is now properly linked as contradicting evidence. The ruled_out_reason cites the death date and the timeline gap explicitly, establishing the biological impossibility. No fabricated material; all claims are grounded in the project's existing sources and the logical inference from dates."
           },
           {
             "source": "base",
@@ -2709,7 +2709,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Two tool calls were made. First, mcp__genealogy__research_append with op='update', entryId='h_002', and fields including status, ruled_out, ruled_out_reason, contradicting_assertion_ids, and notes\u2014all appropriate for updating a hypothesis to ruled_out status. Second, mcp__genealogy__validate_research_schema with projectPath matching the workspace. Both calls matched live/predicate fixtures with no fixture_not_found errors. Arguments are semantically correct and well-formed."
+            "rationale": "Two tool calls were made. First, mcp__genealogy__research_append with op='update', entryId='h_002', and fields including status, ruled_out, ruled_out_reason, contradicting_assertion_ids, and notes—all appropriate for updating a hypothesis to ruled_out status. Second, mcp__genealogy__validate_research_schema with projectPath matching the workspace. Both calls matched live/predicate fixtures with no fixture_not_found errors. Arguments are semantically correct and well-formed."
           },
           {
             "source": "rubric",
@@ -2735,7 +2735,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that the Luzerne County Thomas Flynn death record (a_016, dated 15 September 1840) creates a chronological impossibility for paternity of Patrick Flynn (born ~1845). The ruling-out is justified by affirmative refutation\u2014a specific death date\u2014not mere absence of evidence. The death record was already on file (src_006, log_007) and is now properly linked as contradicting evidence. The ruled_out_reason cites the death date and the timeline gap explicitly, establishing the biological impossibility. No fabricated material; all claims are grounded in the project's existing sources and the logical inference from dates."
+            "rationale": "Claude correctly identified that the Luzerne County Thomas Flynn death record (a_016, dated 15 September 1840) creates a chronological impossibility for paternity of Patrick Flynn (born ~1845). The ruling-out is justified by affirmative refutation—a specific death date—not mere absence of evidence. The death record was already on file (src_006, log_007) and is now properly linked as contradicting evidence. The ruled_out_reason cites the death date and the timeline gap explicitly, establishing the biological impossibility. No fabricated material; all claims are grounded in the project's existing sources and the logical inference from dates."
           },
           {
             "source": "base",
@@ -2747,7 +2747,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Two tool calls were made. First, mcp__genealogy__research_append with op='update', entryId='h_002', and fields including status, ruled_out, ruled_out_reason, contradicting_assertion_ids, and notes\u2014all appropriate for updating a hypothesis to ruled_out status. Second, mcp__genealogy__validate_research_schema with projectPath matching the workspace. Both calls matched live/predicate fixtures with no fixture_not_found errors. Arguments are semantically correct and well-formed."
+            "rationale": "Two tool calls were made. First, mcp__genealogy__research_append with op='update', entryId='h_002', and fields including status, ruled_out, ruled_out_reason, contradicting_assertion_ids, and notes—all appropriate for updating a hypothesis to ruled_out status. Second, mcp__genealogy__validate_research_schema with projectPath matching the workspace. Both calls matched live/predicate fixtures with no fixture_not_found errors. Arguments are semantically correct and well-formed."
           },
           {
             "source": "rubric",
@@ -2771,7 +2771,7 @@
       },
       "totals": {
         "duration_ms": 46225.95446501509,
-        "duration_api_ms": 30795.0,
+        "duration_api_ms": 30795,
         "judge_duration_ms": 13320.373335009208,
         "wall_clock_ms": 59731.7636013031,
         "num_turns": 2,
@@ -2794,7 +2794,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 46225.95446501509,
-          "duration_api_ms": 30795.0,
+          "duration_api_ms": 30795,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1479,
@@ -2873,7 +2873,7 @@
           },
           "skill_cost_usd": 0.131561475,
           "output": {
-            "text_response": "Here is the subagent's report:\n\n---\n\n**Hypothesis h_002 \u2014 Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania**\n**Status: RULED OUT**\n\n**Supporting evidence (1):**\n- a_014 \u2014 1840 census: Thomas Flynn, head, Luzerne County, age 30 (inferred)\n\n**Contradicting evidence (1):**\n- a_016 \u2014 Luzerne County death record: Thomas Flynn, age 30, died 15 September 1840 (stated, primary)\n\n**Competing hypotheses:**\n- h_001 \u2014 Thomas Flynn of Schuylkill County \u2014 SUPPORTED *(not changed by this update)*\n\n---\n\n**Summary:** The Luzerne County Thomas Flynn was enumerated in the 1840 census, but the death record shows he died in September 1840 \u2014 roughly five years before Patrick Flynn was born (~1845). This man could not have been Patrick's father, so h_002 has been **ruled out**.\n\nThe Schuylkill County candidate (h_001) remains the leading explanation. Next steps: search probate records and later censuses (1870\u20131900) before writing a final proof conclusion.\n\n**Validator:** Valid \u2014 no schema errors or warnings.\n**Files changed:** `research.json`",
+            "text_response": "Here is the subagent's report:\n\n---\n\n**Hypothesis h_002 — Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania**\n**Status: RULED OUT**\n\n**Supporting evidence (1):**\n- a_014 — 1840 census: Thomas Flynn, head, Luzerne County, age 30 (inferred)\n\n**Contradicting evidence (1):**\n- a_016 — Luzerne County death record: Thomas Flynn, age 30, died 15 September 1840 (stated, primary)\n\n**Competing hypotheses:**\n- h_001 — Thomas Flynn of Schuylkill County — SUPPORTED *(not changed by this update)*\n\n---\n\n**Summary:** The Luzerne County Thomas Flynn was enumerated in the 1840 census, but the death record shows he died in September 1840 — roughly five years before Patrick Flynn was born (~1845). This man could not have been Patrick's father, so h_002 has been **ruled out**.\n\nThe Schuylkill County candidate (h_001) remains the leading explanation. Next steps: search probate records and later censuses (1870–1900) before writing a final proof conclusion.\n\n**Validator:** Valid — no schema errors or warnings.\n**Files changed:** `research.json`",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2951,7 +2951,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_002 \u2014 Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania\nStatus:     RULED OUT\n\nSupporting evidence (1):\n  + a_014  1840 census: Thomas Flynn, head, Luzerne County, age 30 (inferred)\n\nContradicting evidence (1):\n  - a_016  Luzerne County death record: Thomas Flynn, age 30, died 15 September 1840 (stated, primary)\n\nCompeting hypotheses:\n  h_001  Thomas Flynn of Schuylkill County \u2014 SUPPORTED (not changed by this update)\n\nNext steps:\n  - h_001 is ready for proof-conclusion, though the proof summary still lists probate and the 1870\u20131900 censuses as unsearched.\n\nValidator: valid, no errors or warnings.\n\nFiles changed: /tmp/eval-ut_hypothesis_tracking_004-0-0-bverx79m/research.json\n\n---\nThe possibility being tested was that Patrick Flynn's father was a different Thomas Flynn who lived in Luzerne County. That Thomas was enumerated there in 1840, but a Luzerne County death record shows he died in September 1840. Patrick was born around 1845, about five years later, so this man could not have been his father. The death record was already in the project, and it is now recorded against this explanation, which has been set aside. The Schuylkill County Thomas Flynn remains the leading explanation, and nothing else about him was changed.\n\nNext, the Schuylkill County candidate needs probate or later census records to confirm the link before a final write-up."
+                "text": "Hypothesis: h_002 — Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania\nStatus:     RULED OUT\n\nSupporting evidence (1):\n  + a_014  1840 census: Thomas Flynn, head, Luzerne County, age 30 (inferred)\n\nContradicting evidence (1):\n  - a_016  Luzerne County death record: Thomas Flynn, age 30, died 15 September 1840 (stated, primary)\n\nCompeting hypotheses:\n  h_001  Thomas Flynn of Schuylkill County — SUPPORTED (not changed by this update)\n\nNext steps:\n  - h_001 is ready for proof-conclusion, though the proof summary still lists probate and the 1870–1900 censuses as unsearched.\n\nValidator: valid, no errors or warnings.\n\nFiles changed: /tmp/eval-ut_hypothesis_tracking_004-0-0-bverx79m/research.json\n\n---\nThe possibility being tested was that Patrick Flynn's father was a different Thomas Flynn who lived in Luzerne County. That Thomas was enumerated there in 1840, but a Luzerne County death record shows he died in September 1840. Patrick was born around 1845, about five years later, so this man could not have been his father. The death record was already in the project, and it is now recorded against this explanation, which has been set aside. The Schuylkill County Thomas Flynn remains the leading explanation, and nothing else about him was changed.\n\nNext, the Schuylkill County candidate needs probate or later census records to confirm the link before a final write-up."
               }
             ],
             "file_changes": {
@@ -2985,7 +2985,7 @@
                             "after": true
                           },
                           "notes": {
-                            "before": "Alternative candidate father. A Thomas Flynn age 30 was found in the 1840 Luzerne County census with 1 male child under 5 in the household. However, a death record shows this Thomas Flynn died 15 September 1840 of typhoid fever \u2014 5 years before Patrick's estimated 1845 birth. This chronological evidence needs evaluation to determine whether this candidate can be ruled out.",
+                            "before": "Alternative candidate father. A Thomas Flynn age 30 was found in the 1840 Luzerne County census with 1 male child under 5 in the household. However, a death record shows this Thomas Flynn died 15 September 1840 of typhoid fever — 5 years before Patrick's estimated 1845 birth. This chronological evidence needs evaluation to determine whether this candidate can be ruled out.",
                             "after": "Ruled out 2 November 2026. The 1840 Luzerne death record (a_016) was already in the project from log_007; it is now linked here as contradicting evidence. The 1840 census entry (a_014) remains supporting evidence only for the identity of the 1840 household head, not for paternity. Other candidate: h_001 (Thomas Flynn of Schuylkill County) is unaffected by this ruling."
                           }
                         }
@@ -3218,7 +3218,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that the Luzerne County Thomas Flynn death record (a_016, dated 15 September 1840) creates a chronological impossibility for paternity of Patrick Flynn (born ~1845). The ruling-out is justified by affirmative refutation\u2014a specific death date\u2014not mere absence of evidence. The death record was already on file (src_006, log_007) and is now properly linked as contradicting evidence. The ruled_out_reason cites the death date and the timeline gap explicitly, establishing the biological impossibility. No fabricated material; all claims are grounded in the project's existing sources and the logical inference from dates."
+                "rationale": "Claude correctly identified that the Luzerne County Thomas Flynn death record (a_016, dated 15 September 1840) creates a chronological impossibility for paternity of Patrick Flynn (born ~1845). The ruling-out is justified by affirmative refutation—a specific death date—not mere absence of evidence. The death record was already on file (src_006, log_007) and is now properly linked as contradicting evidence. The ruled_out_reason cites the death date and the timeline gap explicitly, establishing the biological impossibility. No fabricated material; all claims are grounded in the project's existing sources and the logical inference from dates."
               },
               {
                 "source": "base",
@@ -3230,7 +3230,7 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Two tool calls were made. First, mcp__genealogy__research_append with op='update', entryId='h_002', and fields including status, ruled_out, ruled_out_reason, contradicting_assertion_ids, and notes\u2014all appropriate for updating a hypothesis to ruled_out status. Second, mcp__genealogy__validate_research_schema with projectPath matching the workspace. Both calls matched live/predicate fixtures with no fixture_not_found errors. Arguments are semantically correct and well-formed."
+                "rationale": "Two tool calls were made. First, mcp__genealogy__research_append with op='update', entryId='h_002', and fields including status, ruled_out, ruled_out_reason, contradicting_assertion_ids, and notes—all appropriate for updating a hypothesis to ruled_out status. Second, mcp__genealogy__validate_research_schema with projectPath matching the workspace. Both calls matched live/predicate fixtures with no fixture_not_found errors. Arguments are semantically correct and well-formed."
               },
               {
                 "source": "rubric",
@@ -3358,7 +3358,7 @@
       },
       "totals": {
         "duration_ms": 24265.270561998477,
-        "duration_api_ms": 22295.0,
+        "duration_api_ms": 22295,
         "judge_duration_ms": 11379.762525000842,
         "wall_clock_ms": 35736.89317703247,
         "num_turns": 2,
@@ -3381,7 +3381,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 24265.270561998477,
-          "duration_api_ms": 22295.0,
+          "duration_api_ms": 22295,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1533,
@@ -3460,7 +3460,7 @@
           },
           "skill_cost_usd": 0.12747522,
           "output": {
-            "text_response": "Hypothesis **h_001** has been created and is now active in your project. Here's a summary of what was set up:\n\n**Hypothesis h_001**\n> Thomas Flynn of Schuylkill County, Pennsylvania (resident there in the 1840s) was the father of Patrick Flynn.\n\n- **Status:** Active\n- **Supporting evidence:** None yet\n- **Contradicting evidence:** None yet\n- **Competing candidates:** None recorded yet\n\n**Suggested next steps to test this hypothesis:**\n1. Search the **1850 and 1860 census records** for a Thomas Flynn household in Schuylkill County that includes Patrick as a child.\n2. Look for **probate or estate records** for Thomas Flynn that might name Patrick as a son or heir.\n3. Watch for **other Thomas Flynns** in Pennsylvania \u2014 if another candidate emerges, a second hypothesis can be added to track him as a competitor.\n\nAs you find evidence, you can link it to this hypothesis to mark it as supporting or contradicting, and the status will update (to *supported* or *ruled out*) as the picture becomes clearer.",
+            "text_response": "Hypothesis **h_001** has been created and is now active in your project. Here's a summary of what was set up:\n\n**Hypothesis h_001**\n> Thomas Flynn of Schuylkill County, Pennsylvania (resident there in the 1840s) was the father of Patrick Flynn.\n\n- **Status:** Active\n- **Supporting evidence:** None yet\n- **Contradicting evidence:** None yet\n- **Competing candidates:** None recorded yet\n\n**Suggested next steps to test this hypothesis:**\n1. Search the **1850 and 1860 census records** for a Thomas Flynn household in Schuylkill County that includes Patrick as a child.\n2. Look for **probate or estate records** for Thomas Flynn that might name Patrick as a son or heir.\n3. Watch for **other Thomas Flynns** in Pennsylvania — if another candidate emerges, a second hypothesis can be added to track him as a competitor.\n\nAs you find evidence, you can link it to this hypothesis to mark it as supporting or contradicting, and the status will update (to *supported* or *ruled out*) as the picture becomes clearer.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3538,7 +3538,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis h_001 is created with status ACTIVE.\n\nHypothesis: h_001 \u2014 Thomas Flynn of Schuylkill County, Pennsylvania (resident there in the 1840s) was the father of Patrick Flynn (born ca. 1845, died 1908 in Schuylkill County), subject I1\nStatus: ACTIVE\n\nSupporting evidence (0): (none yet)\nContradicting evidence (0): (none yet)\nCompeting hypotheses: none recorded yet\nRelated questions: none (the project has no research questions yet)\n\nNext steps:\n  - Test it against original records: census households for 1850 and 1860 showing Patrick with Thomas, and any probate or estate records for Thomas.\n  - Check for other Thomas Flynns in Pennsylvania. Same-name matches do not establish identity on their own, so a second candidate would need its own hypothesis.\n  - Link evidence as you find it.\n\nValidator: passed, no errors or warnings.\n\n---\nI set up a working theory that Patrick Flynn's father was Thomas Flynn, who lived in Schuylkill County in the 1840s. It is recorded as an open guess, not a fact, and no evidence supports or contradicts it yet. The next step is to look for census records that show Patrick living in Thomas's household, and any estate papers for Thomas, and to add each finding as it turns up."
+                "text": "Hypothesis h_001 is created with status ACTIVE.\n\nHypothesis: h_001 — Thomas Flynn of Schuylkill County, Pennsylvania (resident there in the 1840s) was the father of Patrick Flynn (born ca. 1845, died 1908 in Schuylkill County), subject I1\nStatus: ACTIVE\n\nSupporting evidence (0): (none yet)\nContradicting evidence (0): (none yet)\nCompeting hypotheses: none recorded yet\nRelated questions: none (the project has no research questions yet)\n\nNext steps:\n  - Test it against original records: census households for 1850 and 1860 showing Patrick with Thomas, and any probate or estate records for Thomas.\n  - Check for other Thomas Flynns in Pennsylvania. Same-name matches do not establish identity on their own, so a second candidate would need its own hypothesis.\n  - Link evidence as you find it.\n\nValidator: passed, no errors or warnings.\n\n---\nI set up a working theory that Patrick Flynn's father was Thomas Flynn, who lived in Schuylkill County in the 1840s. It is recorded as an open guess, not a fact, and no evidence supports or contradicts it yet. The next step is to look for census records that show Patrick living in Thomas's household, and any estate papers for Thomas, and to add each finding as it turns up."
               }
             ],
             "file_changes": {
@@ -3924,7 +3924,7 @@
       },
       "totals": {
         "duration_ms": 27267.48674598639,
-        "duration_api_ms": 25032.0,
+        "duration_api_ms": 25032,
         "judge_duration_ms": 9641.748641995946,
         "wall_clock_ms": 36985.108613967896,
         "num_turns": 2,
@@ -3947,7 +3947,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 27267.48674598639,
-          "duration_api_ms": 25032.0,
+          "duration_api_ms": 25032,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1483,
@@ -4025,7 +4025,7 @@
           },
           "skill_cost_usd": 0.132336215,
           "output": {
-            "text_response": "Here's a quick snapshot of where the parentage hypotheses stand:\n\n---\n\n**h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, PA**\n**Status: SUPPORTED**\n\nThree records back this up:\n- 1850 census: Patrick appears in Thomas's household\n- 1860 census: Patrick again in Thomas's household\n- 1908 death certificate: names Thomas Flynn as Patrick's father\n\nNo contradicting evidence on file.\n\n---\n\n**h_002 \u2014 Patrick Flynn's father was Thomas Flynn of Luzerne County, PA**\n**Status: ACTIVE** *(but effectively refuted)*\n\nOne supporting record: a Thomas Flynn, age 30, appears in the 1840 Luzerne census.\n\nHowever, a Luzerne death record shows this Thomas Flynn died on **15 September 1840** \u2014 about five years before Patrick was born (~1845). This effectively rules him out, though the hypothesis hasn't been formally set to *ruled_out* yet.\n\n---\n\n**Summary:**\nThe Schuylkill County Thomas Flynn is the strongly supported candidate. The Luzerne County candidate should almost certainly be ruled out based on the 1840 death record \u2014 that step just hasn't been formally recorded yet.\n\n**Suggested next steps:**\n1. Formally rule out h_002 by linking the 1840 Luzerne death record against it.\n2. Search Schuylkill County probate records for Thomas Flynn to add further confirmation to h_001.",
+            "text_response": "Here's a quick snapshot of where the parentage hypotheses stand:\n\n---\n\n**h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, PA**\n**Status: SUPPORTED**\n\nThree records back this up:\n- 1850 census: Patrick appears in Thomas's household\n- 1860 census: Patrick again in Thomas's household\n- 1908 death certificate: names Thomas Flynn as Patrick's father\n\nNo contradicting evidence on file.\n\n---\n\n**h_002 — Patrick Flynn's father was Thomas Flynn of Luzerne County, PA**\n**Status: ACTIVE** *(but effectively refuted)*\n\nOne supporting record: a Thomas Flynn, age 30, appears in the 1840 Luzerne census.\n\nHowever, a Luzerne death record shows this Thomas Flynn died on **15 September 1840** — about five years before Patrick was born (~1845). This effectively rules him out, though the hypothesis hasn't been formally set to *ruled_out* yet.\n\n---\n\n**Summary:**\nThe Schuylkill County Thomas Flynn is the strongly supported candidate. The Luzerne County candidate should almost certainly be ruled out based on the 1840 death record — that step just hasn't been formally recorded yet.\n\n**Suggested next steps:**\n1. Formally rule out h_002 by linking the 1840 Luzerne death record against it.\n2. Search Schuylkill County probate records for Thomas Flynn to add further confirmation to h_001.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4066,7 +4066,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus: SUPPORTED (no change made)\n\nSupporting evidence (3):\n  + a_004  1850 census: Patrick in Thomas's household, relationship inferred (inferred)\n  + a_010  1860 census: Patrick in Thomas's household, relationship inferred (inferred)\n  + a_013  1908 death certificate names Thomas Flynn as father (stated, secondary informant)\n\nContradicting evidence (0)\n\nHypothesis: h_002 \u2014 Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania\nStatus: ACTIVE (no change made)\n\nSupporting evidence (1):\n  + a_014  1840 Luzerne census: Thomas Flynn, age 30, head of household (inferred)\n\nContradicting evidence (0 recorded; 1 unlinked):\n  - a_016  Luzerne death record: Thomas Flynn died 15 September 1840 (primary, confident match pe_008), about five years before Patrick's ~1845 birth\n\nCompeting hypotheses: h_001 and h_002 are the only two candidate fathers on file.\n\nValidator: valid, no errors or warnings.\n\n---\nThe main explanation is that Patrick's father was the Thomas Flynn living in Schuylkill County, and that is already marked as supported. Three records point that way: he appears in Thomas's household in 1850 and 1860, and his death certificate names Thomas as his father. The other candidate, a Thomas Flynn in Luzerne County, has one record placing him there, but a Luzerne death record shows that man died in 1840, about five years before Patrick was born, so he cannot be the father. That record is not yet linked against his hypothesis, and that candidate has not been formally set aside. Nothing was changed in the project files; I only read them and checked them for errors, and they passed.\n\nNext steps: the Luzerne candidate should be ruled out on the 1840 death record, and that step needs a follow-up request, since this was a read-only review. Probate records for Thomas Flynn in Schuylkill County are still pending and would add confirmation to the main explanation."
+                "text": "Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus: SUPPORTED (no change made)\n\nSupporting evidence (3):\n  + a_004  1850 census: Patrick in Thomas's household, relationship inferred (inferred)\n  + a_010  1860 census: Patrick in Thomas's household, relationship inferred (inferred)\n  + a_013  1908 death certificate names Thomas Flynn as father (stated, secondary informant)\n\nContradicting evidence (0)\n\nHypothesis: h_002 — Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania\nStatus: ACTIVE (no change made)\n\nSupporting evidence (1):\n  + a_014  1840 Luzerne census: Thomas Flynn, age 30, head of household (inferred)\n\nContradicting evidence (0 recorded; 1 unlinked):\n  - a_016  Luzerne death record: Thomas Flynn died 15 September 1840 (primary, confident match pe_008), about five years before Patrick's ~1845 birth\n\nCompeting hypotheses: h_001 and h_002 are the only two candidate fathers on file.\n\nValidator: valid, no errors or warnings.\n\n---\nThe main explanation is that Patrick's father was the Thomas Flynn living in Schuylkill County, and that is already marked as supported. Three records point that way: he appears in Thomas's household in 1850 and 1860, and his death certificate names Thomas as his father. The other candidate, a Thomas Flynn in Luzerne County, has one record placing him there, but a Luzerne death record shows that man died in 1840, about five years before Patrick was born, so he cannot be the father. That record is not yet linked against his hypothesis, and that candidate has not been formally set aside. Nothing was changed in the project files; I only read them and checked them for errors, and they passed.\n\nNext steps: the Luzerne candidate should be ruled out on the 1840 death record, and that step needs a follow-up request, since this was a read-only review. Probate records for Thomas Flynn in Schuylkill County are still pending and would add confirmation to the main explanation."
               }
             ],
             "warnings": [
@@ -4426,7 +4426,7 @@
       },
       "totals": {
         "duration_ms": 46684.90141900838,
-        "duration_api_ms": 25166.0,
+        "duration_api_ms": 25166,
         "judge_duration_ms": 12288.104115024908,
         "wall_clock_ms": 59080.552101135254,
         "num_turns": 2,
@@ -4449,7 +4449,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 46684.90141900838,
-          "duration_api_ms": 25166.0,
+          "duration_api_ms": 25166,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1530,
@@ -4528,7 +4528,7 @@
           },
           "skill_cost_usd": 0.13230477000000002,
           "output": {
-            "text_response": "The hypothesis-tracking agent has set up a new hypothesis (h_002) for you. Here's a summary of what was done:\n\n**Hypothesis Created: h_002 \u2014 Patrick Flynn was the son of Margaret O'Brien, born in County Cork, Ireland**\n- **Status:** Active (open for investigation)\n- **Source note:** Recorded as an unverified lead, originating from a user-submitted FamilySearch family tree (not an original record)\n\n**Current evidence state:**\n- No supporting or contradicting evidence linked yet\n- The existing records (1850/1860 censuses, 1908 death certificate) don't mention his mother at all \u2014 so they neither confirm nor refute the claim\n- The Irish birthplace recorded in the censuses is consistent with a County Cork origin, but doesn't name a county or mother specifically\n\n**Suggested next steps to test this hypothesis:**\n1. Check Patrick's **1845 baptism record at St. Mary's, Pottsville** \u2014 it may list both parents\n2. Review **Thomas Flynn's 1881 will** \u2014 it may name family members including a wife\n3. Search the **1870 and 1880 censuses** for relationship data\n4. Look for a **Flynn\u2013O'Brien marriage record** in Schuylkill County or Ireland\n5. Search for an **O'Brien family in County Cork** whose son Patrick emigrated, to test against competing candidates\n\nThe project files validated with no errors or warnings, and no other existing hypotheses were changed.",
+            "text_response": "The hypothesis-tracking agent has set up a new hypothesis (h_002) for you. Here's a summary of what was done:\n\n**Hypothesis Created: h_002 — Patrick Flynn was the son of Margaret O'Brien, born in County Cork, Ireland**\n- **Status:** Active (open for investigation)\n- **Source note:** Recorded as an unverified lead, originating from a user-submitted FamilySearch family tree (not an original record)\n\n**Current evidence state:**\n- No supporting or contradicting evidence linked yet\n- The existing records (1850/1860 censuses, 1908 death certificate) don't mention his mother at all — so they neither confirm nor refute the claim\n- The Irish birthplace recorded in the censuses is consistent with a County Cork origin, but doesn't name a county or mother specifically\n\n**Suggested next steps to test this hypothesis:**\n1. Check Patrick's **1845 baptism record at St. Mary's, Pottsville** — it may list both parents\n2. Review **Thomas Flynn's 1881 will** — it may name family members including a wife\n3. Search the **1870 and 1880 censuses** for relationship data\n4. Look for a **Flynn–O'Brien marriage record** in Schuylkill County or Ireland\n5. Search for an **O'Brien family in County Cork** whose son Patrick emigrated, to test against competing candidates\n\nThe project files validated with no errors or warnings, and no other existing hypotheses were changed.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4608,7 +4608,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_002 \u2014 Patrick Flynn was the son of Margaret O'Brien, born in County Cork, Ireland\nStatus: ACTIVE (new, no evidence linked yet)\n\nSupporting evidence (0): none yet\nContradicting evidence (0): none\n\nCompeting hypotheses: none recorded for the mother's identity. h_001 (Thomas Flynn as father) is a separate claim and is unchanged.\n\nNotes on what the current record says:\n- The 1850 and 1860 censuses name no relationships, so they cannot confirm or refute a mother.\n- The 1908 death certificate names only the father, Thomas Flynn. It is silent on the mother.\n- The Irish birthplace in the censuses is consistent with the claim but does not name a county or mother.\n\nNext steps:\n- Look for records that name a mother: Patrick's 1845 baptism at St. Mary's, Pottsville (src_005, which may list parents), Thomas Flynn's 1881 will, and the 1870 and 1880 censuses.\n- Search for a Flynn\u2013O'Brien marriage record in Schuylkill County or Ireland.\n- A search for an O'Brien family in County Cork with a son Patrick who emigrated would test the claim against other candidates.\n\nValidator: research.json passes with no errors or warnings. No other hypotheses or project files were changed.\n\n---\nI set up a tracking entry for the claim that Patrick Flynn's mother was Margaret O'Brien from County Cork. Because it came from a user-submitted family tree and not an original record, it is recorded as an unverified lead. None of the records gathered so far mention his mother, so nothing yet supports or contradicts the claim, and it stays open.\n\nNext, the records that could name a mother, such as his baptism record and Thomas Flynn's will, need to be searched before the claim can be tested."
+                "text": "Hypothesis: h_002 — Patrick Flynn was the son of Margaret O'Brien, born in County Cork, Ireland\nStatus: ACTIVE (new, no evidence linked yet)\n\nSupporting evidence (0): none yet\nContradicting evidence (0): none\n\nCompeting hypotheses: none recorded for the mother's identity. h_001 (Thomas Flynn as father) is a separate claim and is unchanged.\n\nNotes on what the current record says:\n- The 1850 and 1860 censuses name no relationships, so they cannot confirm or refute a mother.\n- The 1908 death certificate names only the father, Thomas Flynn. It is silent on the mother.\n- The Irish birthplace in the censuses is consistent with the claim but does not name a county or mother.\n\nNext steps:\n- Look for records that name a mother: Patrick's 1845 baptism at St. Mary's, Pottsville (src_005, which may list parents), Thomas Flynn's 1881 will, and the 1870 and 1880 censuses.\n- Search for a Flynn–O'Brien marriage record in Schuylkill County or Ireland.\n- A search for an O'Brien family in County Cork with a son Patrick who emigrated would test the claim against other candidates.\n\nValidator: research.json passes with no errors or warnings. No other hypotheses or project files were changed.\n\n---\nI set up a tracking entry for the claim that Patrick Flynn's mother was Margaret O'Brien from County Cork. Because it came from a user-submitted family tree and not an original record, it is recorded as an unverified lead. None of the records gathered so far mention his mother, so nothing yet supports or contradicts the claim, and it stays open.\n\nNext, the records that could name a mother, such as his baptism record and Thomas Flynn's will, need to be searched before the claim can be tested."
               }
             ],
             "file_changes": {
@@ -4946,7 +4946,7 @@
             "source": "rubric",
             "name": "Evidence linkage",
             "score": 3,
-            "rationale": "Claude correctly linked a_003 (1850 census: Patrick in Thomas's household) as supporting evidence and a_006 (baptism showing Thomas born 1835) as contradicting evidence. Both assertions directly bear on the paternity hypothesis. The linkage is not tangential\u2014the baptism's date of birth is the direct evidence that makes Thomas biologically impossible as Patrick's father. No off-topic assertions were included."
+            "rationale": "Claude correctly linked a_003 (1850 census: Patrick in Thomas's household) as supporting evidence and a_006 (baptism showing Thomas born 1835) as contradicting evidence. Both assertions directly bear on the paternity hypothesis. The linkage is not tangential—the baptism's date of birth is the direct evidence that makes Thomas biologically impossible as Patrick's father. No off-topic assertions were included."
           },
           {
             "source": "rubric",
@@ -4984,7 +4984,7 @@
             "source": "rubric",
             "name": "Evidence linkage",
             "score": 3,
-            "rationale": "Claude correctly linked a_003 (1850 census: Patrick in Thomas's household) as supporting evidence and a_006 (baptism showing Thomas born 1835) as contradicting evidence. Both assertions directly bear on the paternity hypothesis. The linkage is not tangential\u2014the baptism's date of birth is the direct evidence that makes Thomas biologically impossible as Patrick's father. No off-topic assertions were included."
+            "rationale": "Claude correctly linked a_003 (1850 census: Patrick in Thomas's household) as supporting evidence and a_006 (baptism showing Thomas born 1835) as contradicting evidence. Both assertions directly bear on the paternity hypothesis. The linkage is not tangential—the baptism's date of birth is the direct evidence that makes Thomas biologically impossible as Patrick's father. No off-topic assertions were included."
           },
           {
             "source": "rubric",
@@ -4996,7 +4996,7 @@
       },
       "totals": {
         "duration_ms": 48587.90722498088,
-        "duration_api_ms": 26613.0,
+        "duration_api_ms": 26613,
         "judge_duration_ms": 12574.54944498022,
         "wall_clock_ms": 64248.64959716797,
         "num_turns": 2,
@@ -5019,7 +5019,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 48587.90722498088,
-          "duration_api_ms": 26613.0,
+          "duration_api_ms": 26613,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1529,
@@ -5098,7 +5098,7 @@
           },
           "skill_cost_usd": 0.13016993999999998,
           "output": {
-            "text_response": "Here is the subagent's report:\n\n---\n\n**Hypothesis h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania**\n**Status: RULED OUT** (changed from ACTIVE)\n\n**Supporting evidence (1):**\n- a_003 \u2014 1850 census: Patrick listed in Thomas's household (inferred)\n\n**Contradicting evidence (1):**\n- a_006 \u2014 Baptism, Dungarvan, 12 March 1835: Thomas son of Michael Flynn and Bridget Morrissey (stated, primary)\n\n---\n\n**What changed and why:**\n\nThe new Irish baptism record names a Thomas Flynn born in 1835, which would make him approximately 10 years old when Patrick was born around 1845 \u2014 far too young to be a father. This is a primary record made at the time of the event, so it carries strong weight. The hypothesis has been ruled out and the baptism linked as contradicting evidence.\n\n**Next lead:**\n\nThe baptism names Thomas's parents as **Michael Flynn and Bridget Morrissey**, which points toward a new candidate for Patrick's father. A separate hypothesis would need to be created and verified before relying on that lead.",
+            "text_response": "Here is the subagent's report:\n\n---\n\n**Hypothesis h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania**\n**Status: RULED OUT** (changed from ACTIVE)\n\n**Supporting evidence (1):**\n- a_003 — 1850 census: Patrick listed in Thomas's household (inferred)\n\n**Contradicting evidence (1):**\n- a_006 — Baptism, Dungarvan, 12 March 1835: Thomas son of Michael Flynn and Bridget Morrissey (stated, primary)\n\n---\n\n**What changed and why:**\n\nThe new Irish baptism record names a Thomas Flynn born in 1835, which would make him approximately 10 years old when Patrick was born around 1845 — far too young to be a father. This is a primary record made at the time of the event, so it carries strong weight. The hypothesis has been ruled out and the baptism linked as contradicting evidence.\n\n**Next lead:**\n\nThe baptism names Thomas's parents as **Michael Flynn and Bridget Morrissey**, which points toward a new candidate for Patrick's father. A separate hypothesis would need to be created and verified before relying on that lead.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5159,7 +5159,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Hypothesis tracking for Thomas Flynn baptism record",
-                  "prompt": "I found a baptism record for Thomas Flynn in Dungarvan, County Waterford \u2014 he was baptized on 12 March 1835. I've already added the source and assertion to research.json. Can you check whether this changes anything for our hypothesis about Thomas being Patrick's father?\n\nprojectPath: /tmp/eval-ut_hypothesis_tracking_009-0-0-npewvr56",
+                  "prompt": "I found a baptism record for Thomas Flynn in Dungarvan, County Waterford — he was baptized on 12 March 1835. I've already added the source and assertion to research.json. Can you check whether this changes anything for our hypothesis about Thomas being Patrick's father?\n\nprojectPath: /tmp/eval-ut_hypothesis_tracking_009-0-0-npewvr56",
                   "subagent_type": "hypothesis-tracking",
                   "run_in_background": "False"
                 }
@@ -5175,7 +5175,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus:     RULED OUT (changed from ACTIVE)\n\nSupporting evidence (1):\n  + a_003  1850 census: Patrick listed in Thomas's household (inferred)\n\nContradicting evidence (1):\n  - a_006  Baptism, Dungarvan, 12 March 1835: Thomas son of Michael Flynn and Bridget Morrissey (stated, primary)\n\nCompeting hypotheses:\n  (none recorded yet)\n\nNext steps:\n  - The baptism parents, Michael Flynn and Bridget Morrissey, are a new lead for Patrick's father. They are a compiled-record lead only and need a separate hypothesis and verification. I did not create one.\n\nValidator: valid, no errors or warnings.\n\n---\nThe possible explanation I was weighing was that Thomas Flynn, the head of the household Patrick lived in during the 1850 census, was Patrick's father. The new Irish baptism record names a Thomas Flynn born in 1835, which would make him about 10 years old when Patrick was born around 1845. A boy that young cannot be a father, so the record rules this explanation out. The 1850 census age of about 20 would also put Thomas at about 15, which is implausible, and the baptism is a primary record made at the time of the event. I marked the explanation as ruled out and linked the baptism to it as contradicting evidence.\nNext, the baptism names different parents for this Thomas, Michael Flynn and Bridget Morrissey, which points toward a new candidate for Patrick's father that would need its own hypothesis and checking before anyone relies on it."
+                "text": "Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus:     RULED OUT (changed from ACTIVE)\n\nSupporting evidence (1):\n  + a_003  1850 census: Patrick listed in Thomas's household (inferred)\n\nContradicting evidence (1):\n  - a_006  Baptism, Dungarvan, 12 March 1835: Thomas son of Michael Flynn and Bridget Morrissey (stated, primary)\n\nCompeting hypotheses:\n  (none recorded yet)\n\nNext steps:\n  - The baptism parents, Michael Flynn and Bridget Morrissey, are a new lead for Patrick's father. They are a compiled-record lead only and need a separate hypothesis and verification. I did not create one.\n\nValidator: valid, no errors or warnings.\n\n---\nThe possible explanation I was weighing was that Thomas Flynn, the head of the household Patrick lived in during the 1850 census, was Patrick's father. The new Irish baptism record names a Thomas Flynn born in 1835, which would make him about 10 years old when Patrick was born around 1845. A boy that young cannot be a father, so the record rules this explanation out. The 1850 census age of about 20 would also put Thomas at about 15, which is implausible, and the baptism is a primary record made at the time of the event. I marked the explanation as ruled out and linked the baptism to it as contradicting evidence.\nNext, the baptism names different parents for this Thomas, Michael Flynn and Bridget Morrissey, which points toward a new candidate for Patrick's father that would need its own hypothesis and checking before anyone relies on it."
               }
             ],
             "file_changes": {
@@ -5457,7 +5457,7 @@
                 "source": "rubric",
                 "name": "Evidence linkage",
                 "score": 3,
-                "rationale": "Claude correctly linked a_003 (1850 census: Patrick in Thomas's household) as supporting evidence and a_006 (baptism showing Thomas born 1835) as contradicting evidence. Both assertions directly bear on the paternity hypothesis. The linkage is not tangential\u2014the baptism's date of birth is the direct evidence that makes Thomas biologically impossible as Patrick's father. No off-topic assertions were included."
+                "rationale": "Claude correctly linked a_003 (1850 census: Patrick in Thomas's household) as supporting evidence and a_006 (baptism showing Thomas born 1835) as contradicting evidence. Both assertions directly bear on the paternity hypothesis. The linkage is not tangential—the baptism's date of birth is the direct evidence that makes Thomas biologically impossible as Patrick's father. No off-topic assertions were included."
               },
               {
                 "source": "rubric",
@@ -5573,7 +5573,7 @@
       },
       "totals": {
         "duration_ms": 51711.37165502296,
-        "duration_api_ms": 29003.0,
+        "duration_api_ms": 29003,
         "judge_duration_ms": 13043.896132992813,
         "wall_clock_ms": 64881.287813186646,
         "num_turns": 2,
@@ -5596,7 +5596,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 51711.37165502296,
-          "duration_api_ms": 29003.0,
+          "duration_api_ms": 29003,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1574,
@@ -5675,7 +5675,7 @@
           },
           "skill_cost_usd": 0.13449683,
           "output": {
-            "text_response": "The hypothesis-tracking agent has processed your finding. Here's what was done:\n\n**Assertion a_017 linked to hypothesis h_001** (Thomas Flynn of Schuylkill County)\n\nThe 1842 Philadelphia marriage record is now recorded as **contradicting evidence** against the hypothesis \u2014 specifically, Thomas's self-reported age of 19 implies a birth year of ~1823, which conflicts with the ~1818 estimate from the 1850 census.\n\n**Key takeaways:**\n- **Hypothesis status stays SUPPORTED.** The birth-year gap (5 years) is typical of 19th-century age reporting and doesn't undermine the parentage claim itself.\n- **The identity link matters.** The marriage's connection to your Schuylkill Thomas is only a *probable* match (confidence 0.7), so the contradiction carries proportionally limited weight.\n- **No new conflict opened.** The birth-year discrepancy is noted but doesn't rise to the level of an unresolved conflict requiring formal resolution.\n\n**Suggested next steps:**\n1. Continue the probate search for Thomas's will (plan item pli_006) \u2014 that's still the most valuable evidence.\n2. Update proof summary ps_001 to mention the marriage record and the birth-year discrepancy.",
+            "text_response": "The hypothesis-tracking agent has processed your finding. Here's what was done:\n\n**Assertion a_017 linked to hypothesis h_001** (Thomas Flynn of Schuylkill County)\n\nThe 1842 Philadelphia marriage record is now recorded as **contradicting evidence** against the hypothesis — specifically, Thomas's self-reported age of 19 implies a birth year of ~1823, which conflicts with the ~1818 estimate from the 1850 census.\n\n**Key takeaways:**\n- **Hypothesis status stays SUPPORTED.** The birth-year gap (5 years) is typical of 19th-century age reporting and doesn't undermine the parentage claim itself.\n- **The identity link matters.** The marriage's connection to your Schuylkill Thomas is only a *probable* match (confidence 0.7), so the contradiction carries proportionally limited weight.\n- **No new conflict opened.** The birth-year discrepancy is noted but doesn't rise to the level of an unresolved conflict requiring formal resolution.\n\n**Suggested next steps:**\n1. Continue the probate search for Thomas's will (plan item pli_006) — that's still the most valuable evidence.\n2. Update proof summary ps_001 to mention the marriage record and the birth-year discrepancy.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5749,7 +5749,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus:     SUPPORTED (unchanged)\n\nSupporting evidence (3):\n  + a_004  1850 census: Patrick in Thomas's household (inferred)\n  + a_010  1860 census: Patrick in Thomas's household (inferred)\n  + a_013  Death certificate: \"Father: Thomas Flynn\" (stated)\n\nContradicting evidence (1):\n  - a_017  1842 Philadelphia marriage: Thomas Flynn, age 19, implies birth ~1823 (inferred, self-reported age)\n\nCompeting hypotheses:\n  h_002  Thomas Flynn of Luzerne County \u2014 ACTIVE (not changed in this step)\n\nNotes:\n  - a_017 is not linked to any open conflict, so h_001 keeps `supported` under the criteria.\n  - The marriage's identity link to the Schuylkill Thomas (person_evidence pe_009) is only \"probable\" at match score 0.7. The contradiction counts only if that marriage is the same Thomas.\n  - The 1850 census age gives birth ~1818 and the marriage gives ~1823. That is a five-year gap, consistent with age misstatement in 19th-century records, so it does not undermine the parentage claim.\n\nNext steps:\n  - h_001 remains ready for proof-conclusion. Proof summary ps_001 does not yet mention the marriage record or the birth-year discrepancy, so it may need updating.\n  - Probate records for Thomas (pli_006) are still in progress and would help more than the birth-year question.\n\nValidator: research.json passes all checks, no errors or warnings.\n\n---\nI linked the 1842 Philadelphia marriage record to the Schuylkill County Thomas Flynn hypothesis as evidence that cuts against it. The record gives his age as 19, which points to a birth around 1823, while the 1850 census suggests about 1818. That five-year gap is common in 19th-century records and does not overturn the claim that he was Patrick's father, so the hypothesis stays marked as supported. The marriage is only a probable match to this Thomas, so the weight of the point depends on that identification.\n\nNext, the probate search for Thomas's will is still the most useful step, and the summary of findings should be updated to mention the marriage record."
+                "text": "Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus:     SUPPORTED (unchanged)\n\nSupporting evidence (3):\n  + a_004  1850 census: Patrick in Thomas's household (inferred)\n  + a_010  1860 census: Patrick in Thomas's household (inferred)\n  + a_013  Death certificate: \"Father: Thomas Flynn\" (stated)\n\nContradicting evidence (1):\n  - a_017  1842 Philadelphia marriage: Thomas Flynn, age 19, implies birth ~1823 (inferred, self-reported age)\n\nCompeting hypotheses:\n  h_002  Thomas Flynn of Luzerne County — ACTIVE (not changed in this step)\n\nNotes:\n  - a_017 is not linked to any open conflict, so h_001 keeps `supported` under the criteria.\n  - The marriage's identity link to the Schuylkill Thomas (person_evidence pe_009) is only \"probable\" at match score 0.7. The contradiction counts only if that marriage is the same Thomas.\n  - The 1850 census age gives birth ~1818 and the marriage gives ~1823. That is a five-year gap, consistent with age misstatement in 19th-century records, so it does not undermine the parentage claim.\n\nNext steps:\n  - h_001 remains ready for proof-conclusion. Proof summary ps_001 does not yet mention the marriage record or the birth-year discrepancy, so it may need updating.\n  - Probate records for Thomas (pli_006) are still in progress and would help more than the birth-year question.\n\nValidator: research.json passes all checks, no errors or warnings.\n\n---\nI linked the 1842 Philadelphia marriage record to the Schuylkill County Thomas Flynn hypothesis as evidence that cuts against it. The record gives his age as 19, which points to a birth around 1823, while the 1850 census suggests about 1818. That five-year gap is common in 19th-century records and does not overturn the claim that he was Patrick's father, so the hypothesis stays marked as supported. The marriage is only a probable match to this Thomas, so the weight of the point depends on that identification.\n\nNext, the probate search for Thomas's will is still the most useful step, and the summary of findings should be updated to mention the marriage record."
               }
             ],
             "file_changes": {
@@ -6084,7 +6084,7 @@
             "source": "rubric",
             "name": "Claim clarity",
             "score": 3,
-            "rationale": "Claude stated the hypothesis clearly: 'Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania' \u2014 naming specific persons, the specific relationship (paternity), and place/time detail (Luzerne County, death 1840, birth ~1845). The claim is testable and specific enough that follow-up research could verify or refute it. The chronological impossibility is stated with concrete dates."
+            "rationale": "Claude stated the hypothesis clearly: 'Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania' — naming specific persons, the specific relationship (paternity), and place/time detail (Luzerne County, death 1840, birth ~1845). The claim is testable and specific enough that follow-up research could verify or refute it. The chronological impossibility is stated with concrete dates."
           },
           {
             "source": "rubric",
@@ -6122,7 +6122,7 @@
             "source": "rubric",
             "name": "Claim clarity",
             "score": 3,
-            "rationale": "Claude stated the hypothesis clearly: 'Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania' \u2014 naming specific persons, the specific relationship (paternity), and place/time detail (Luzerne County, death 1840, birth ~1845). The claim is testable and specific enough that follow-up research could verify or refute it. The chronological impossibility is stated with concrete dates."
+            "rationale": "Claude stated the hypothesis clearly: 'Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania' — naming specific persons, the specific relationship (paternity), and place/time detail (Luzerne County, death 1840, birth ~1845). The claim is testable and specific enough that follow-up research could verify or refute it. The chronological impossibility is stated with concrete dates."
           },
           {
             "source": "rubric",
@@ -6140,7 +6140,7 @@
       },
       "totals": {
         "duration_ms": 43045.795119018294,
-        "duration_api_ms": 28540.0,
+        "duration_api_ms": 28540,
         "judge_duration_ms": 10718.997265008511,
         "wall_clock_ms": 53917.94157028198,
         "num_turns": 2,
@@ -6163,7 +6163,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 43045.795119018294,
-          "duration_api_ms": 28540.0,
+          "duration_api_ms": 28540,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1486,
@@ -6242,7 +6242,7 @@
           },
           "skill_cost_usd": 0.128829455,
           "output": {
-            "text_response": "The hypothesis-tracking agent reviewed **h_002 \u2014 Thomas Flynn of Luzerne County** and was unable to mark it as supported. Here's what it found:\n\n- **Contradicting evidence** on record: A Luzerne County death record shows Thomas Flynn (age 30) died on **15 September 1840** \u2014 roughly five years before Patrick Flynn was born around 1845. A man who died before a child was born cannot be that child's father, so this candidate has been **ruled out**.\n\n- The competing hypothesis, **h_001 \u2014 Thomas Flynn of Schuylkill County**, remains **supported** and is the current leading explanation.\n\nIf you believe there's a reason to keep the Luzerne County candidate open (e.g., a different Thomas Flynn in the area, or a question about the death record's identity), the agent can revisit it with that additional evidence in mind.",
+            "text_response": "The hypothesis-tracking agent reviewed **h_002 — Thomas Flynn of Luzerne County** and was unable to mark it as supported. Here's what it found:\n\n- **Contradicting evidence** on record: A Luzerne County death record shows Thomas Flynn (age 30) died on **15 September 1840** — roughly five years before Patrick Flynn was born around 1845. A man who died before a child was born cannot be that child's father, so this candidate has been **ruled out**.\n\n- The competing hypothesis, **h_001 — Thomas Flynn of Schuylkill County**, remains **supported** and is the current leading explanation.\n\nIf you believe there's a reason to keep the Luzerne County candidate open (e.g., a different Thomas Flynn in the area, or a question about the death record's identity), the agent can revisit it with that additional evidence in mind.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6319,7 +6319,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_002 \u2014 Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania\nStatus: RULED OUT (I did not mark it supported)\n\nSupporting evidence (1):\n  + a_014  1840 census, Luzerne County: Thomas Flynn, head, age 30 (inferred)\n\nContradicting evidence (1):\n  - a_016  Luzerne County death record: Thomas Flynn, age 30, died 15 September 1840 (stated, primary)\n\nCompeting hypotheses:\n  h_001  Thomas Flynn of Schuylkill County \u2014 SUPPORTED (unchanged)\n\nValidator: valid, no errors or warnings.\n\n---\nI could not mark the Luzerne County candidate as supported, because the records show he could not have been Patrick's father. A Thomas Flynn of Luzerne County died in 1840, about five years before Patrick was born around 1845, so I have set that candidate aside. The Schuylkill County candidate, Thomas Flynn, remains the leading explanation. If you want the Luzerne candidate kept open for another reason, tell me what evidence you have in mind and I can look at it."
+                "text": "Hypothesis: h_002 — Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania\nStatus: RULED OUT (I did not mark it supported)\n\nSupporting evidence (1):\n  + a_014  1840 census, Luzerne County: Thomas Flynn, head, age 30 (inferred)\n\nContradicting evidence (1):\n  - a_016  Luzerne County death record: Thomas Flynn, age 30, died 15 September 1840 (stated, primary)\n\nCompeting hypotheses:\n  h_001  Thomas Flynn of Schuylkill County — SUPPORTED (unchanged)\n\nValidator: valid, no errors or warnings.\n\n---\nI could not mark the Luzerne County candidate as supported, because the records show he could not have been Patrick's father. A Thomas Flynn of Luzerne County died in 1840, about five years before Patrick was born around 1845, so I have set that candidate aside. The Schuylkill County candidate, Thomas Flynn, remains the leading explanation. If you want the Luzerne candidate kept open for another reason, tell me what evidence you have in mind and I can look at it."
               }
             ],
             "file_changes": {
@@ -6595,7 +6595,7 @@
                 "source": "rubric",
                 "name": "Claim clarity",
                 "score": 3,
-                "rationale": "Claude stated the hypothesis clearly: 'Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania' \u2014 naming specific persons, the specific relationship (paternity), and place/time detail (Luzerne County, death 1840, birth ~1845). The claim is testable and specific enough that follow-up research could verify or refute it. The chronological impossibility is stated with concrete dates."
+                "rationale": "Claude stated the hypothesis clearly: 'Patrick Flynn's father was Thomas Flynn of Luzerne County, Pennsylvania' — naming specific persons, the specific relationship (paternity), and place/time detail (Luzerne County, death 1840, birth ~1845). The claim is testable and specific enough that follow-up research could verify or refute it. The chronological impossibility is stated with concrete dates."
               },
               {
                 "source": "rubric",
@@ -6717,7 +6717,7 @@
       },
       "totals": {
         "duration_ms": 47550.09554798016,
-        "duration_api_ms": 32399.0,
+        "duration_api_ms": 32399,
         "judge_duration_ms": 10810.20929600345,
         "wall_clock_ms": 58698.3904838562,
         "num_turns": 2,
@@ -6740,7 +6740,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 47550.09554798016,
-          "duration_api_ms": 32399.0,
+          "duration_api_ms": 32399,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1553,
@@ -6818,7 +6818,7 @@
           },
           "skill_cost_usd": 0.1364557,
           "output": {
-            "text_response": "The hypothesis-tracking agent reviewed **h_001** carefully and here is its finding:\n\n---\n\n**Hypothesis h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania**\n**Status: SUPPORTED (unchanged)**\n\n### Supporting Evidence\n| Assertion | Record | Basis |\n|-----------|--------|-------|\n| a_004 | 1850 census: Patrick in Thomas's household | Inferred (src_001) |\n| a_010 | 1860 census: Patrick in Thomas's household | Inferred (src_003) |\n| a_013 | 1908 death certificate: \"Father: Thomas Flynn\" | Stated (informant: James Brown, son-in-law \u2014 secondary) |\n\n### Why No Downgrade?\nThe project's threshold for **supported** requires either a *stated* assertion **or** two inferred assertions from distinct sources. Here, both routes are independently met:\n- **Stated route:** a_013 is a stated record, even though its informant is secondary.\n- **Inferred route:** a_004 and a_010 each draw from separate sources (src_001 and src_003).\n\nThe rules do not require a downgrade merely because an informant is secondary, and no contradicting evidence exists.\n\n### Your Concern Is Valid, Though\nThe secondary informant *is* a genuine weakness \u2014 a son-in-law present at Patrick's death in 1908 could not have had firsthand knowledge of Patrick's 1840s parentage. This limitation is already reflected in the existing proof summary (ps_001, **Probable** tier).\n\n### Recommended Next Steps\n- **Thomas Flynn's probate records** (pli_006, in progress) \u2014 the strongest potential corroboration\n- **1870 and 1880 censuses** \u2014 could either confirm or weaken the household link\n\nIf you want the secondary-informant weakness *explicitly reflected in the status* (e.g., downgrading to active), just say the word and the agent will make that change.",
+            "text_response": "The hypothesis-tracking agent reviewed **h_001** carefully and here is its finding:\n\n---\n\n**Hypothesis h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania**\n**Status: SUPPORTED (unchanged)**\n\n### Supporting Evidence\n| Assertion | Record | Basis |\n|-----------|--------|-------|\n| a_004 | 1850 census: Patrick in Thomas's household | Inferred (src_001) |\n| a_010 | 1860 census: Patrick in Thomas's household | Inferred (src_003) |\n| a_013 | 1908 death certificate: \"Father: Thomas Flynn\" | Stated (informant: James Brown, son-in-law — secondary) |\n\n### Why No Downgrade?\nThe project's threshold for **supported** requires either a *stated* assertion **or** two inferred assertions from distinct sources. Here, both routes are independently met:\n- **Stated route:** a_013 is a stated record, even though its informant is secondary.\n- **Inferred route:** a_004 and a_010 each draw from separate sources (src_001 and src_003).\n\nThe rules do not require a downgrade merely because an informant is secondary, and no contradicting evidence exists.\n\n### Your Concern Is Valid, Though\nThe secondary informant *is* a genuine weakness — a son-in-law present at Patrick's death in 1908 could not have had firsthand knowledge of Patrick's 1840s parentage. This limitation is already reflected in the existing proof summary (ps_001, **Probable** tier).\n\n### Recommended Next Steps\n- **Thomas Flynn's probate records** (pli_006, in progress) — the strongest potential corroboration\n- **1870 and 1880 censuses** — could either confirm or weaken the household link\n\nIf you want the secondary-informant weakness *explicitly reflected in the status* (e.g., downgrading to active), just say the word and the agent will make that change.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6843,7 +6843,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Relay hypothesis tracking message",
-                  "prompt": "I've been looking at h_001 more carefully. Our only direct evidence that Thomas was Patrick's father is a_013 \u2014 the death certificate. But the informant was James Brown, a son-in-law. That makes it secondary information for the parentage fact. Should we downgrade h_001 from supported back to active since our only direct evidence comes from a secondary informant?\n\nprojectPath: /tmp/eval-ut_hypothesis_tracking_012-0-0-na374hku",
+                  "prompt": "I've been looking at h_001 more carefully. Our only direct evidence that Thomas was Patrick's father is a_013 — the death certificate. But the informant was James Brown, a son-in-law. That makes it secondary information for the parentage fact. Should we downgrade h_001 from supported back to active since our only direct evidence comes from a secondary informant?\n\nprojectPath: /tmp/eval-ut_hypothesis_tracking_012-0-0-na374hku",
                   "subagent_type": "hypothesis-tracking",
                   "run_in_background": "False"
                 }
@@ -6859,7 +6859,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus: SUPPORTED (unchanged; no write made)\n\nSupporting evidence (3):\n  + a_004  1850 census: Patrick in Thomas's household, relationship inferred (inferred, src_001)\n  + a_010  1860 census: Patrick in Thomas's household, relationship inferred (inferred, src_003)\n  + a_013  1908 death certificate: \"Father: Thomas Flynn\" (stated; informant James Brown, son-in-law, secondary)\n\nContradicting evidence (0): (none)\n\nCriteria check against the supported threshold:\n  - Conflicts: c_001 (birthplace) covers a_002, a_009, a_012. None of those overlap h_001's supporting ids, and c_001 is resolved. Met.\n  - Basis: a_013 is record_basis \"stated\", so the stated-or-two-inferred test is met. The two inferred assertions also cite two distinct sources (src_001, src_003), so that route is met too. Met.\n  - Consistency: no check-warnings or timeline infeasibility recorded for h_001 (t_001). Met.\n\nCompeting hypotheses: none exist in the project.\n\nNext steps:\n  - The secondary informant on a_013 is a real weakness. The criteria do not exclude secondary informants, though, and the rule against downgrading for minor issues applies. The current proof summary (ps_001, Probable) already weighs this informant.\n  - The two census assertions are the weaker part. Their parent-child link rests on household position and surname, not on a stated relationship.\n  - Thomas Flynn's probate (pli_006, in progress) and the 1870 and 1880 censuses are the records most likely to move this either way.\n\nValidator: valid, no errors, no warnings.\n\n---\nPatrick's parentage is being weighed against one main explanation: that Thomas Flynn of Schuylkill County was his father. The death certificate names Thomas as father, but it was given by a son-in-law who was not present at Patrick's birth, so that statement is secondhand. The two censuses place Patrick in Thomas's household but do not say he was the son. The current standing still meets the project's rules for \"supported,\" because the death certificate is a stated record and the census links are backed by two separate sources. I did not change the status, since the rules do not require a downgrade for a secondary informant and nothing contradicts the claim.\nThe next step is to check Thomas Flynn's probate records and the 1870 and 1880 censuses, which could confirm or weaken the link; if you want the weaker informant reflected in the status, tell me and I will change it."
+                "text": "Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus: SUPPORTED (unchanged; no write made)\n\nSupporting evidence (3):\n  + a_004  1850 census: Patrick in Thomas's household, relationship inferred (inferred, src_001)\n  + a_010  1860 census: Patrick in Thomas's household, relationship inferred (inferred, src_003)\n  + a_013  1908 death certificate: \"Father: Thomas Flynn\" (stated; informant James Brown, son-in-law, secondary)\n\nContradicting evidence (0): (none)\n\nCriteria check against the supported threshold:\n  - Conflicts: c_001 (birthplace) covers a_002, a_009, a_012. None of those overlap h_001's supporting ids, and c_001 is resolved. Met.\n  - Basis: a_013 is record_basis \"stated\", so the stated-or-two-inferred test is met. The two inferred assertions also cite two distinct sources (src_001, src_003), so that route is met too. Met.\n  - Consistency: no check-warnings or timeline infeasibility recorded for h_001 (t_001). Met.\n\nCompeting hypotheses: none exist in the project.\n\nNext steps:\n  - The secondary informant on a_013 is a real weakness. The criteria do not exclude secondary informants, though, and the rule against downgrading for minor issues applies. The current proof summary (ps_001, Probable) already weighs this informant.\n  - The two census assertions are the weaker part. Their parent-child link rests on household position and surname, not on a stated relationship.\n  - Thomas Flynn's probate (pli_006, in progress) and the 1870 and 1880 censuses are the records most likely to move this either way.\n\nValidator: valid, no errors, no warnings.\n\n---\nPatrick's parentage is being weighed against one main explanation: that Thomas Flynn of Schuylkill County was his father. The death certificate names Thomas as father, but it was given by a son-in-law who was not present at Patrick's birth, so that statement is secondhand. The two censuses place Patrick in Thomas's household but do not say he was the son. The current standing still meets the project's rules for \"supported,\" because the death certificate is a stated record and the census links are backed by two separate sources. I did not change the status, since the rules do not require a downgrade for a secondary informant and nothing contradicts the claim.\nThe next step is to check Thomas Flynn's probate records and the 1870 and 1880 censuses, which could confirm or weaken the link; if you want the weaker informant reflected in the status, tell me and I will change it."
               }
             ],
             "warnings": [
@@ -7150,7 +7150,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude created h_002 with a specific, testable claim naming both persons (Thomas Flynn of Schuylkill County, Patrick Flynn) and the specific alternative relationship (paternal uncle, not father). The claim includes place and time detail sufficient for follow-up testing. The hypothesis was correctly persisted with status 'active' and related_question_ids ['q_001']. Claude correctly identified a_013 (death certificate) as contradicting evidence and reasonably noted a_004 and a_010 (census inferences) as contradicting but low-weight. Critically, Claude did NOT modify h_001 \u2014 it remains 'supported' unchanged. The tool calls succeeded (validate_research_schema confirmed valid state). No fabricated material or unsupported claims."
+            "rationale": "Claude created h_002 with a specific, testable claim naming both persons (Thomas Flynn of Schuylkill County, Patrick Flynn) and the specific alternative relationship (paternal uncle, not father). The claim includes place and time detail sufficient for follow-up testing. The hypothesis was correctly persisted with status 'active' and related_question_ids ['q_001']. Claude correctly identified a_013 (death certificate) as contradicting evidence and reasonably noted a_004 and a_010 (census inferences) as contradicting but low-weight. Critically, Claude did NOT modify h_001 — it remains 'supported' unchanged. The tool calls succeeded (validate_research_schema confirmed valid state). No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -7174,13 +7174,13 @@
             "source": "rubric",
             "name": "Evidence linkage",
             "score": 3,
-            "rationale": "Claude linked three contradicting assertions: a_013 (death certificate naming Thomas as father \u2014 directly contradicts uncle claim), a_004 (1850 census position inferred as child \u2014 leans toward father), a_010 (1860 census position inferred as son \u2014 leans toward father). Claude explicitly noted that a_001, a_003, a_005, a_008 (co-residence only) are neutral and do not discriminate, so correctly excluded them from contradicting_assertion_ids. Each linked assertion genuinely bears on the hypothesis. No tangential or arbitrary linkage."
+            "rationale": "Claude linked three contradicting assertions: a_013 (death certificate naming Thomas as father — directly contradicts uncle claim), a_004 (1850 census position inferred as child — leans toward father), a_010 (1860 census position inferred as son — leans toward father). Claude explicitly noted that a_001, a_003, a_005, a_008 (co-residence only) are neutral and do not discriminate, so correctly excluded them from contradicting_assertion_ids. Each linked assertion genuinely bears on the hypothesis. No tangential or arbitrary linkage."
           },
           {
             "source": "rubric",
             "name": "Status transitions",
             "score": 3,
-            "rationale": "h_002 was created with status 'active' (correct per creation rule \u2014 new hypothesis with no supporting evidence starts active). supporting_assertion_ids is empty (no direct or indirect support yet), contradicting_assertion_ids populated with a_013, a_004, a_010. ruled_out is false (no affirmative refutation, only lack of supporting evidence). h_001 remains 'supported' unchanged \u2014 no improper status transition of the existing hypothesis. The new hypothesis correctly follows the status-transitions rules: active on creation, no premature promotion to supported or ruled_out."
+            "rationale": "h_002 was created with status 'active' (correct per creation rule — new hypothesis with no supporting evidence starts active). supporting_assertion_ids is empty (no direct or indirect support yet), contradicting_assertion_ids populated with a_013, a_004, a_010. ruled_out is false (no affirmative refutation, only lack of supporting evidence). h_001 remains 'supported' unchanged — no improper status transition of the existing hypothesis. The new hypothesis correctly follows the status-transitions rules: active on creation, no premature promotion to supported or ruled_out."
           }
         ],
         "review_dimensions": [
@@ -7188,7 +7188,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude created h_002 with a specific, testable claim naming both persons (Thomas Flynn of Schuylkill County, Patrick Flynn) and the specific alternative relationship (paternal uncle, not father). The claim includes place and time detail sufficient for follow-up testing. The hypothesis was correctly persisted with status 'active' and related_question_ids ['q_001']. Claude correctly identified a_013 (death certificate) as contradicting evidence and reasonably noted a_004 and a_010 (census inferences) as contradicting but low-weight. Critically, Claude did NOT modify h_001 \u2014 it remains 'supported' unchanged. The tool calls succeeded (validate_research_schema confirmed valid state). No fabricated material or unsupported claims."
+            "rationale": "Claude created h_002 with a specific, testable claim naming both persons (Thomas Flynn of Schuylkill County, Patrick Flynn) and the specific alternative relationship (paternal uncle, not father). The claim includes place and time detail sufficient for follow-up testing. The hypothesis was correctly persisted with status 'active' and related_question_ids ['q_001']. Claude correctly identified a_013 (death certificate) as contradicting evidence and reasonably noted a_004 and a_010 (census inferences) as contradicting but low-weight. Critically, Claude did NOT modify h_001 — it remains 'supported' unchanged. The tool calls succeeded (validate_research_schema confirmed valid state). No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -7212,19 +7212,19 @@
             "source": "rubric",
             "name": "Evidence linkage",
             "score": 3,
-            "rationale": "Claude linked three contradicting assertions: a_013 (death certificate naming Thomas as father \u2014 directly contradicts uncle claim), a_004 (1850 census position inferred as child \u2014 leans toward father), a_010 (1860 census position inferred as son \u2014 leans toward father). Claude explicitly noted that a_001, a_003, a_005, a_008 (co-residence only) are neutral and do not discriminate, so correctly excluded them from contradicting_assertion_ids. Each linked assertion genuinely bears on the hypothesis. No tangential or arbitrary linkage."
+            "rationale": "Claude linked three contradicting assertions: a_013 (death certificate naming Thomas as father — directly contradicts uncle claim), a_004 (1850 census position inferred as child — leans toward father), a_010 (1860 census position inferred as son — leans toward father). Claude explicitly noted that a_001, a_003, a_005, a_008 (co-residence only) are neutral and do not discriminate, so correctly excluded them from contradicting_assertion_ids. Each linked assertion genuinely bears on the hypothesis. No tangential or arbitrary linkage."
           },
           {
             "source": "rubric",
             "name": "Status transitions",
             "score": 3,
-            "rationale": "h_002 was created with status 'active' (correct per creation rule \u2014 new hypothesis with no supporting evidence starts active). supporting_assertion_ids is empty (no direct or indirect support yet), contradicting_assertion_ids populated with a_013, a_004, a_010. ruled_out is false (no affirmative refutation, only lack of supporting evidence). h_001 remains 'supported' unchanged \u2014 no improper status transition of the existing hypothesis. The new hypothesis correctly follows the status-transitions rules: active on creation, no premature promotion to supported or ruled_out."
+            "rationale": "h_002 was created with status 'active' (correct per creation rule — new hypothesis with no supporting evidence starts active). supporting_assertion_ids is empty (no direct or indirect support yet), contradicting_assertion_ids populated with a_013, a_004, a_010. ruled_out is false (no affirmative refutation, only lack of supporting evidence). h_001 remains 'supported' unchanged — no improper status transition of the existing hypothesis. The new hypothesis correctly follows the status-transitions rules: active on creation, no premature promotion to supported or ruled_out."
           }
         ]
       },
       "totals": {
         "duration_ms": 54553.5054919892,
-        "duration_api_ms": 33676.0,
+        "duration_api_ms": 33676,
         "judge_duration_ms": 12385.712151997723,
         "wall_clock_ms": 69097.66697883606,
         "num_turns": 2,
@@ -7247,7 +7247,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 54553.5054919892,
-          "duration_api_ms": 33676.0,
+          "duration_api_ms": 33676,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1598,
@@ -7326,7 +7326,7 @@
           },
           "skill_cost_usd": 0.13666816999999998,
           "output": {
-            "text_response": "A competing hypothesis has been created and saved. Here's a summary:\n\n---\n\n**New Hypothesis h_002 \u2014 Thomas Flynn was Patrick's paternal uncle (not father)**\n**Status: Active**\n\n**Contradicting evidence (3 assertions):**\n- **a_013** \u2014 Death certificate names \"Father: Thomas Flynn\" (informant was son-in-law James Brown, who may have assumed the relationship)\n- **a_004** \u2014 1850 census: household position inferred as \"child\" (low weight \u2014 no explicit statement)\n- **a_010** \u2014 1860 census: household position inferred as \"son\" (low weight \u2014 no explicit statement)\n\n**Supporting evidence:** None yet.\n\n**Neutral (neither confirming nor ruling out):** Co-residence records (a_001, a_003, a_005, a_008) \u2014 being in the same household is consistent with both a father *and* an uncle relationship.\n\n---\n\n**What this means for both hypotheses:**\n- **h_001** (Thomas is Patrick's *father*) remains **Supported**, currently resting on the death certificate plus the two inferred household relationships.\n- **h_002** (Thomas is Patrick's *uncle*) is **Active** with no supporting evidence yet \u2014 the key vulnerability in h_001 is that the informant (James Brown, son-in-law) may have assumed the relationship rather than known it.\n\n---\n\n**Recommended next steps to discriminate between the two:**\n1. **Thomas Flynn's 1881 will (src_006)** \u2014 not yet abstracted; a will may mention Patrick's relationship.\n2. **1880 census** \u2014 the first US census to explicitly state household relationships; would directly address the co-residence ambiguity.\n3. **Patrick's 1845 baptism (src_005)** \u2014 may name parents directly.\n\nWould you like to plan searches for any of these records?",
+            "text_response": "A competing hypothesis has been created and saved. Here's a summary:\n\n---\n\n**New Hypothesis h_002 — Thomas Flynn was Patrick's paternal uncle (not father)**\n**Status: Active**\n\n**Contradicting evidence (3 assertions):**\n- **a_013** — Death certificate names \"Father: Thomas Flynn\" (informant was son-in-law James Brown, who may have assumed the relationship)\n- **a_004** — 1850 census: household position inferred as \"child\" (low weight — no explicit statement)\n- **a_010** — 1860 census: household position inferred as \"son\" (low weight — no explicit statement)\n\n**Supporting evidence:** None yet.\n\n**Neutral (neither confirming nor ruling out):** Co-residence records (a_001, a_003, a_005, a_008) — being in the same household is consistent with both a father *and* an uncle relationship.\n\n---\n\n**What this means for both hypotheses:**\n- **h_001** (Thomas is Patrick's *father*) remains **Supported**, currently resting on the death certificate plus the two inferred household relationships.\n- **h_002** (Thomas is Patrick's *uncle*) is **Active** with no supporting evidence yet — the key vulnerability in h_001 is that the informant (James Brown, son-in-law) may have assumed the relationship rather than known it.\n\n---\n\n**Recommended next steps to discriminate between the two:**\n1. **Thomas Flynn's 1881 will (src_006)** — not yet abstracted; a will may mention Patrick's relationship.\n2. **1880 census** — the first US census to explicitly state household relationships; would directly address the co-residence ambiguity.\n3. **Patrick's 1845 baptism (src_005)** — may name parents directly.\n\nWould you like to plan searches for any of these records?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7410,7 +7410,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_002 \u2014 Thomas Flynn of Schuylkill County was Patrick Flynn's paternal uncle, not his father\nStatus: ACTIVE (new; starts active by rule and no evidence yet favors it over h_001)\n\nSupporting evidence (0):  (none yet)\n\nContradicting evidence (3):\n  - a_013  Death certificate: \"Father: Thomas Flynn\" (stated; informant son-in-law James Brown, family not present)\n  - a_004  1850 census: relationship inferred as \"child\" from household position (inferred, low weight)\n  - a_010  1860 census: relationship inferred as \"son\" from household position and age (inferred, low weight)\n\nNeutral (co-residence only, a_001, a_003, a_005, a_008): these fit either father or uncle and do not discriminate between h_001 and h_002.\n\nCompeting hypotheses:\n  h_001  Thomas Flynn was Patrick's father \u2014 SUPPORTED (unchanged; see note below)\n\nNext steps:\n  - The deciding evidence is the 1880 census (first to state relationships), Thomas Flynn's 1881 will (src_006, not yet abstracted), and Patrick's 1845 baptism (src_005), which may name parents. Continue with planning the searches? That would attach to q_001.\n  - Brown's reliability as informant is the main attack on a_013. It has not been tested. Patrick's parentage depends heavily on a_013 for h_001, and h_001 is currently SUPPORTED on the strength of a_013 plus two inferred household relationships. I did not change h_001's status because you asked only about the new hypothesis. Consider re-evaluating h_001 once the will or the 1880 census is in.\n\nValidator: valid, no errors, no warnings.\n\n---\nI created a competing explanation that Thomas Flynn was Patrick's uncle rather than his father, so both possibilities can be tracked side by side. The only record that states a family relationship is the death certificate, which names Thomas as father, and that is the main evidence against the uncle explanation. The census records only place the two in the same household, which fits either explanation, so they don't favor one over the other. The explanation is still open and has no supporting evidence yet.\n\nNext, the will and the 1880 census would be the most useful records to check, and I can plan those searches if you want to go ahead."
+                "text": "Hypothesis: h_002 — Thomas Flynn of Schuylkill County was Patrick Flynn's paternal uncle, not his father\nStatus: ACTIVE (new; starts active by rule and no evidence yet favors it over h_001)\n\nSupporting evidence (0):  (none yet)\n\nContradicting evidence (3):\n  - a_013  Death certificate: \"Father: Thomas Flynn\" (stated; informant son-in-law James Brown, family not present)\n  - a_004  1850 census: relationship inferred as \"child\" from household position (inferred, low weight)\n  - a_010  1860 census: relationship inferred as \"son\" from household position and age (inferred, low weight)\n\nNeutral (co-residence only, a_001, a_003, a_005, a_008): these fit either father or uncle and do not discriminate between h_001 and h_002.\n\nCompeting hypotheses:\n  h_001  Thomas Flynn was Patrick's father — SUPPORTED (unchanged; see note below)\n\nNext steps:\n  - The deciding evidence is the 1880 census (first to state relationships), Thomas Flynn's 1881 will (src_006, not yet abstracted), and Patrick's 1845 baptism (src_005), which may name parents. Continue with planning the searches? That would attach to q_001.\n  - Brown's reliability as informant is the main attack on a_013. It has not been tested. Patrick's parentage depends heavily on a_013 for h_001, and h_001 is currently SUPPORTED on the strength of a_013 plus two inferred household relationships. I did not change h_001's status because you asked only about the new hypothesis. Consider re-evaluating h_001 once the will or the 1880 census is in.\n\nValidator: valid, no errors, no warnings.\n\n---\nI created a competing explanation that Thomas Flynn was Patrick's uncle rather than his father, so both possibilities can be tracked side by side. The only record that states a family relationship is the death certificate, which names Thomas as father, and that is the main evidence against the uncle explanation. The census records only place the two in the same household, which fits either explanation, so they don't favor one over the other. The explanation is still open and has no supporting evidence yet.\n\nNext, the will and the 1880 census would be the most useful records to check, and I can plan those searches if you want to go ahead."
               }
             ],
             "file_changes": {
@@ -7662,7 +7662,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude created h_002 with a specific, testable claim naming both persons (Thomas Flynn of Schuylkill County, Patrick Flynn) and the specific alternative relationship (paternal uncle, not father). The claim includes place and time detail sufficient for follow-up testing. The hypothesis was correctly persisted with status 'active' and related_question_ids ['q_001']. Claude correctly identified a_013 (death certificate) as contradicting evidence and reasonably noted a_004 and a_010 (census inferences) as contradicting but low-weight. Critically, Claude did NOT modify h_001 \u2014 it remains 'supported' unchanged. The tool calls succeeded (validate_research_schema confirmed valid state). No fabricated material or unsupported claims."
+                "rationale": "Claude created h_002 with a specific, testable claim naming both persons (Thomas Flynn of Schuylkill County, Patrick Flynn) and the specific alternative relationship (paternal uncle, not father). The claim includes place and time detail sufficient for follow-up testing. The hypothesis was correctly persisted with status 'active' and related_question_ids ['q_001']. Claude correctly identified a_013 (death certificate) as contradicting evidence and reasonably noted a_004 and a_010 (census inferences) as contradicting but low-weight. Critically, Claude did NOT modify h_001 — it remains 'supported' unchanged. The tool calls succeeded (validate_research_schema confirmed valid state). No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -7686,13 +7686,13 @@
                 "source": "rubric",
                 "name": "Evidence linkage",
                 "score": 3,
-                "rationale": "Claude linked three contradicting assertions: a_013 (death certificate naming Thomas as father \u2014 directly contradicts uncle claim), a_004 (1850 census position inferred as child \u2014 leans toward father), a_010 (1860 census position inferred as son \u2014 leans toward father). Claude explicitly noted that a_001, a_003, a_005, a_008 (co-residence only) are neutral and do not discriminate, so correctly excluded them from contradicting_assertion_ids. Each linked assertion genuinely bears on the hypothesis. No tangential or arbitrary linkage."
+                "rationale": "Claude linked three contradicting assertions: a_013 (death certificate naming Thomas as father — directly contradicts uncle claim), a_004 (1850 census position inferred as child — leans toward father), a_010 (1860 census position inferred as son — leans toward father). Claude explicitly noted that a_001, a_003, a_005, a_008 (co-residence only) are neutral and do not discriminate, so correctly excluded them from contradicting_assertion_ids. Each linked assertion genuinely bears on the hypothesis. No tangential or arbitrary linkage."
               },
               {
                 "source": "rubric",
                 "name": "Status transitions",
                 "score": 3,
-                "rationale": "h_002 was created with status 'active' (correct per creation rule \u2014 new hypothesis with no supporting evidence starts active). supporting_assertion_ids is empty (no direct or indirect support yet), contradicting_assertion_ids populated with a_013, a_004, a_010. ruled_out is false (no affirmative refutation, only lack of supporting evidence). h_001 remains 'supported' unchanged \u2014 no improper status transition of the existing hypothesis. The new hypothesis correctly follows the status-transitions rules: active on creation, no premature promotion to supported or ruled_out."
+                "rationale": "h_002 was created with status 'active' (correct per creation rule — new hypothesis with no supporting evidence starts active). supporting_assertion_ids is empty (no direct or indirect support yet), contradicting_assertion_ids populated with a_013, a_004, a_010. ruled_out is false (no affirmative refutation, only lack of supporting evidence). h_001 remains 'supported' unchanged — no improper status transition of the existing hypothesis. The new hypothesis correctly follows the status-transitions rules: active on creation, no premature promotion to supported or ruled_out."
               }
             ],
             "judge_cost_usd": 0.020093,
@@ -7734,7 +7734,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: identified the hypothesis (h_001), stated the status change (ACTIVE \u2192 SUPPORTED), listed both supporting assertions with their sources and reasoning, confirmed no contradicting evidence, verified the conflict does not block promotion, and explained the basis for the change using the correct threshold rule. The response also appropriately noted next steps (proof-conclusion, death certificate as potential direct evidence) and caveats (inferred relationship, identity link probability). The tool calls persisted the change and validated the schema. No required work was omitted."
+            "rationale": "Claude addressed all required elements: identified the hypothesis (h_001), stated the status change (ACTIVE → SUPPORTED), listed both supporting assertions with their sources and reasoning, confirmed no contradicting evidence, verified the conflict does not block promotion, and explained the basis for the change using the correct threshold rule. The response also appropriately noted next steps (proof-conclusion, death certificate as potential direct evidence) and caveats (inferred relationship, identity link probability). The tool calls persisted the change and validated the schema. No required work was omitted."
           },
           {
             "source": "base",
@@ -7746,7 +7746,7 @@
             "source": "rubric",
             "name": "Claim clarity",
             "score": 3,
-            "rationale": "The hypothesis is stated with high specificity: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names both specific persons, the specific relationship (father-child), and includes place detail (Schuylkill County, Pennsylvania). The claim is testable and falsifiable\u2014direct evidence of a different father, or evidence that Patrick was not in Thomas's household, would refute it. The claim is neither vague nor overbroad."
+            "rationale": "The hypothesis is stated with high specificity: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names both specific persons, the specific relationship (father-child), and includes place detail (Schuylkill County, Pennsylvania). The claim is testable and falsifiable—direct evidence of a different father, or evidence that Patrick was not in Thomas's household, would refute it. The claim is neither vague nor overbroad."
           },
           {
             "source": "rubric",
@@ -7758,7 +7758,7 @@
             "source": "rubric",
             "name": "Status transitions",
             "score": 3,
-            "rationale": "Claude correctly applied the supported-status threshold from research-schema-spec.md \u00a75.9: two inferred assertions from two distinct sources (a_004 from src_001, a_010 from src_003) meet the requirement. The conflict c_001 is already resolved (status: resolved) and its competing assertions (a_002, a_009) do not overlap h_001's supporting or contradicting lists, so no unresolved conflicts block promotion. The per-test context confirms all three conditions are met. Claude did not withhold promotion due to lack of direct evidence\u2014the correct behavior under the current gate. The status change was persisted via research_append."
+            "rationale": "Claude correctly applied the supported-status threshold from research-schema-spec.md §5.9: two inferred assertions from two distinct sources (a_004 from src_001, a_010 from src_003) meet the requirement. The conflict c_001 is already resolved (status: resolved) and its competing assertions (a_002, a_009) do not overlap h_001's supporting or contradicting lists, so no unresolved conflicts block promotion. The per-test context confirms all three conditions are met. Claude did not withhold promotion due to lack of direct evidence—the correct behavior under the current gate. The status change was persisted via research_append."
           }
         ],
         "review_dimensions": [
@@ -7772,7 +7772,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: identified the hypothesis (h_001), stated the status change (ACTIVE \u2192 SUPPORTED), listed both supporting assertions with their sources and reasoning, confirmed no contradicting evidence, verified the conflict does not block promotion, and explained the basis for the change using the correct threshold rule. The response also appropriately noted next steps (proof-conclusion, death certificate as potential direct evidence) and caveats (inferred relationship, identity link probability). The tool calls persisted the change and validated the schema. No required work was omitted."
+            "rationale": "Claude addressed all required elements: identified the hypothesis (h_001), stated the status change (ACTIVE → SUPPORTED), listed both supporting assertions with their sources and reasoning, confirmed no contradicting evidence, verified the conflict does not block promotion, and explained the basis for the change using the correct threshold rule. The response also appropriately noted next steps (proof-conclusion, death certificate as potential direct evidence) and caveats (inferred relationship, identity link probability). The tool calls persisted the change and validated the schema. No required work was omitted."
           },
           {
             "source": "base",
@@ -7784,7 +7784,7 @@
             "source": "rubric",
             "name": "Claim clarity",
             "score": 3,
-            "rationale": "The hypothesis is stated with high specificity: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names both specific persons, the specific relationship (father-child), and includes place detail (Schuylkill County, Pennsylvania). The claim is testable and falsifiable\u2014direct evidence of a different father, or evidence that Patrick was not in Thomas's household, would refute it. The claim is neither vague nor overbroad."
+            "rationale": "The hypothesis is stated with high specificity: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names both specific persons, the specific relationship (father-child), and includes place detail (Schuylkill County, Pennsylvania). The claim is testable and falsifiable—direct evidence of a different father, or evidence that Patrick was not in Thomas's household, would refute it. The claim is neither vague nor overbroad."
           },
           {
             "source": "rubric",
@@ -7796,13 +7796,13 @@
             "source": "rubric",
             "name": "Status transitions",
             "score": 3,
-            "rationale": "Claude correctly applied the supported-status threshold from research-schema-spec.md \u00a75.9: two inferred assertions from two distinct sources (a_004 from src_001, a_010 from src_003) meet the requirement. The conflict c_001 is already resolved (status: resolved) and its competing assertions (a_002, a_009) do not overlap h_001's supporting or contradicting lists, so no unresolved conflicts block promotion. The per-test context confirms all three conditions are met. Claude did not withhold promotion due to lack of direct evidence\u2014the correct behavior under the current gate. The status change was persisted via research_append."
+            "rationale": "Claude correctly applied the supported-status threshold from research-schema-spec.md §5.9: two inferred assertions from two distinct sources (a_004 from src_001, a_010 from src_003) meet the requirement. The conflict c_001 is already resolved (status: resolved) and its competing assertions (a_002, a_009) do not overlap h_001's supporting or contradicting lists, so no unresolved conflicts block promotion. The per-test context confirms all three conditions are met. Claude did not withhold promotion due to lack of direct evidence—the correct behavior under the current gate. The status change was persisted via research_append."
           }
         ]
       },
       "totals": {
         "duration_ms": 53603.42608299106,
-        "duration_api_ms": 33230.0,
+        "duration_api_ms": 33230,
         "judge_duration_ms": 12389.917073014658,
         "wall_clock_ms": 68201.9715309143,
         "num_turns": 2,
@@ -7825,7 +7825,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 53603.42608299106,
-          "duration_api_ms": 33230.0,
+          "duration_api_ms": 33230,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1524,
@@ -7904,7 +7904,7 @@
           },
           "skill_cost_usd": 0.13254044499999998,
           "output": {
-            "text_response": "**Hypothesis h_001 \u2014 Patrick Flynn's father was Thomas Flynn \u2014 is now marked SUPPORTED.**\n\nHere's the reasoning the agent applied:\n\n**Why \"supported\" is warranted now:**\nTwo independent sources (the 1850 and 1860 censuses) each show Patrick living in Thomas Flynn's household. That meets the two-inferred-assertions threshold for moving to *supported* status, even without direct evidence like a birth or death certificate.\n\n**Important caveats to keep in mind:**\n- Neither census explicitly states the relationship \u2014 the \"child\" reading is inferred from household position and shared surname.\n- The Thomas Flynn identity link sits at 0.82 (probable, not confident).\n- No exhaustive search for other Thomas Flynns in Schuylkill County is yet on record.\n\n**What this means for the proof tier:**\nThe conclusion will likely be **Probable**, not **Proved**. The evidence is well-corroborated but remains indirect \u2014 you don't need to wait for a death certificate to call it supported, but that death certificate (plan item pli_005) is the record most likely to push this to *proved*.\n\n**Recommended next steps:**\n1. Proceed to **proof-conclusion** \u2014 the evidence base is ready for a Probable proof argument.\n2. Keep the 1908 death certificate search active \u2014 if it names Thomas as Patrick's father, you can update to *proved*.",
+            "text_response": "**Hypothesis h_001 — Patrick Flynn's father was Thomas Flynn — is now marked SUPPORTED.**\n\nHere's the reasoning the agent applied:\n\n**Why \"supported\" is warranted now:**\nTwo independent sources (the 1850 and 1860 censuses) each show Patrick living in Thomas Flynn's household. That meets the two-inferred-assertions threshold for moving to *supported* status, even without direct evidence like a birth or death certificate.\n\n**Important caveats to keep in mind:**\n- Neither census explicitly states the relationship — the \"child\" reading is inferred from household position and shared surname.\n- The Thomas Flynn identity link sits at 0.82 (probable, not confident).\n- No exhaustive search for other Thomas Flynns in Schuylkill County is yet on record.\n\n**What this means for the proof tier:**\nThe conclusion will likely be **Probable**, not **Proved**. The evidence is well-corroborated but remains indirect — you don't need to wait for a death certificate to call it supported, but that death certificate (plan item pli_005) is the record most likely to push this to *proved*.\n\n**Recommended next steps:**\n1. Proceed to **proof-conclusion** — the evidence base is ready for a Probable proof argument.\n2. Keep the 1908 death certificate search active — if it names Thomas as Patrick's father, you can update to *proved*.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7961,7 +7961,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Hypothesis tracking status update for h_001",
-                  "prompt": "We still haven't found Thomas Flynn's death certificate, but we do have two independent census records \u2014 1850 and 1860 \u2014 both showing Patrick living in Thomas's household. Can we call h_001 supported based on that, or do we need to wait for direct evidence?\n\nprojectPath: /tmp/eval-ut_hypothesis_tracking_017-0-0-42omaf0g",
+                  "prompt": "We still haven't found Thomas Flynn's death certificate, but we do have two independent census records — 1850 and 1860 — both showing Patrick living in Thomas's household. Can we call h_001 supported based on that, or do we need to wait for direct evidence?\n\nprojectPath: /tmp/eval-ut_hypothesis_tracking_017-0-0-42omaf0g",
                   "subagent_type": "hypothesis-tracking",
                   "run_in_background": "False"
                 }
@@ -7977,7 +7977,7 @@
             "agent_returns": [
               {
                 "subagent_type": "hypothesis-tracking",
-                "text": "Hypothesis: h_001 \u2014 Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus:     SUPPORTED (changed from ACTIVE)\n\nSupporting evidence (2):\n  + a_004  1850 census: Patrick listed in Thomas Flynn's household, child position (inferred, src_001)\n  + a_010  1860 census: Patrick, age 15, listed in Thomas Flynn's household, position consistent with son (inferred, src_003)\n\nContradicting evidence (0):  (none)\n\nBasis for the change:\n  - Both supporting assertions are inferred, and they come from two distinct sources (1850 and 1860 census), which meets the two-inferred-assertions threshold.\n  - The only conflict on file (c_001) concerns birthplace and uses different assertions (a_002, a_009), so it does not block h_001.\n  - Caveats: neither census states the relationship. The \"child\" reading rests on household position and shared surname. The Thomas Flynn identity link (pe_003) is probable at 0.82, not confident. No exhaustive check for other Thomas Flynns in the county is recorded.\n\nCompeting hypotheses:\n  (none on file)\n\nNext steps:\n  - h_001 is ready for proof-conclusion. The proof tier will likely be Probable, not Proved, because the relationship is inferred.\n  - The 1908 death certificate (pli_005, in progress) is the item most likely to add direct evidence.\n\nValidator: valid, no errors, no warnings.\n\n---\nYes, by the standard the project uses, h_001 can now be marked supported. Two censuses taken ten years apart, from two separate sources, both place Patrick in Thomas Flynn's household. The evidence does not state that Thomas is Patrick's father; that relationship is read from the household layout and shared surname. So the conclusion is a well-supported probable answer rather than a proven one, and no direct record of parentage has been found yet. Nothing on file argues against it, and I changed no other hypothesis or record.\n\nNext, the work can move on to writing the proof conclusion, and a 1908 death certificate that names parents would be the record most likely to move this from probable to proved."
+                "text": "Hypothesis: h_001 — Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania\nStatus:     SUPPORTED (changed from ACTIVE)\n\nSupporting evidence (2):\n  + a_004  1850 census: Patrick listed in Thomas Flynn's household, child position (inferred, src_001)\n  + a_010  1860 census: Patrick, age 15, listed in Thomas Flynn's household, position consistent with son (inferred, src_003)\n\nContradicting evidence (0):  (none)\n\nBasis for the change:\n  - Both supporting assertions are inferred, and they come from two distinct sources (1850 and 1860 census), which meets the two-inferred-assertions threshold.\n  - The only conflict on file (c_001) concerns birthplace and uses different assertions (a_002, a_009), so it does not block h_001.\n  - Caveats: neither census states the relationship. The \"child\" reading rests on household position and shared surname. The Thomas Flynn identity link (pe_003) is probable at 0.82, not confident. No exhaustive check for other Thomas Flynns in the county is recorded.\n\nCompeting hypotheses:\n  (none on file)\n\nNext steps:\n  - h_001 is ready for proof-conclusion. The proof tier will likely be Probable, not Proved, because the relationship is inferred.\n  - The 1908 death certificate (pli_005, in progress) is the item most likely to add direct evidence.\n\nValidator: valid, no errors, no warnings.\n\n---\nYes, by the standard the project uses, h_001 can now be marked supported. Two censuses taken ten years apart, from two separate sources, both place Patrick in Thomas Flynn's household. The evidence does not state that Thomas is Patrick's father; that relationship is read from the household layout and shared surname. So the conclusion is a well-supported probable answer rather than a proven one, and no direct record of parentage has been found yet. Nothing on file argues against it, and I changed no other hypothesis or record.\n\nNext, the work can move on to writing the proof conclusion, and a 1908 death certificate that names parents would be the record most likely to move this from probable to proved."
               }
             ],
             "file_changes": {
@@ -7997,7 +7997,7 @@
                             "after": "supported"
                           },
                           "notes": {
-                            "before": "Two census records show co-enumeration. Death certificate search in progress \u2014 may provide direct evidence.",
+                            "before": "Two census records show co-enumeration. Death certificate search in progress — may provide direct evidence.",
                             "after": "Two census records show co-enumeration of Patrick and Thomas Flynn: 1850 (src_001, dwelling 84) and 1860 (src_003, dwelling 112). Both relationship assertions (a_004, a_010) are inferred from household position and shared surname, from two distinct sources; no stated relationship in either census. No conflict overlaps the supporting assertions (c_001 concerns birthplace, competing a_002/a_009). No contradicting evidence recorded. Supported status is a threshold for proof-conclusion only; proof tier will be Probable until direct evidence (1908 death certificate, which may name parents) is examined. Thomas Flynn identity link (pe_003) is probable (match score 0.82), not confident; no exhaustive check for other Thomas Flynns in the county is recorded."
                           }
                         }
@@ -8236,7 +8236,7 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: identified the hypothesis (h_001), stated the status change (ACTIVE \u2192 SUPPORTED), listed both supporting assertions with their sources and reasoning, confirmed no contradicting evidence, verified the conflict does not block promotion, and explained the basis for the change using the correct threshold rule. The response also appropriately noted next steps (proof-conclusion, death certificate as potential direct evidence) and caveats (inferred relationship, identity link probability). The tool calls persisted the change and validated the schema. No required work was omitted."
+                "rationale": "Claude addressed all required elements: identified the hypothesis (h_001), stated the status change (ACTIVE → SUPPORTED), listed both supporting assertions with their sources and reasoning, confirmed no contradicting evidence, verified the conflict does not block promotion, and explained the basis for the change using the correct threshold rule. The response also appropriately noted next steps (proof-conclusion, death certificate as potential direct evidence) and caveats (inferred relationship, identity link probability). The tool calls persisted the change and validated the schema. No required work was omitted."
               },
               {
                 "source": "base",
@@ -8248,7 +8248,7 @@
                 "source": "rubric",
                 "name": "Claim clarity",
                 "score": 3,
-                "rationale": "The hypothesis is stated with high specificity: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names both specific persons, the specific relationship (father-child), and includes place detail (Schuylkill County, Pennsylvania). The claim is testable and falsifiable\u2014direct evidence of a different father, or evidence that Patrick was not in Thomas's household, would refute it. The claim is neither vague nor overbroad."
+                "rationale": "The hypothesis is stated with high specificity: 'Patrick Flynn's father was Thomas Flynn of Schuylkill County, Pennsylvania.' It names both specific persons, the specific relationship (father-child), and includes place detail (Schuylkill County, Pennsylvania). The claim is testable and falsifiable—direct evidence of a different father, or evidence that Patrick was not in Thomas's household, would refute it. The claim is neither vague nor overbroad."
               },
               {
                 "source": "rubric",
@@ -8260,7 +8260,7 @@
                 "source": "rubric",
                 "name": "Status transitions",
                 "score": 3,
-                "rationale": "Claude correctly applied the supported-status threshold from research-schema-spec.md \u00a75.9: two inferred assertions from two distinct sources (a_004 from src_001, a_010 from src_003) meet the requirement. The conflict c_001 is already resolved (status: resolved) and its competing assertions (a_002, a_009) do not overlap h_001's supporting or contradicting lists, so no unresolved conflicts block promotion. The per-test context confirms all three conditions are met. Claude did not withhold promotion due to lack of direct evidence\u2014the correct behavior under the current gate. The status change was persisted via research_append."
+                "rationale": "Claude correctly applied the supported-status threshold from research-schema-spec.md §5.9: two inferred assertions from two distinct sources (a_004 from src_001, a_010 from src_003) meet the requirement. The conflict c_001 is already resolved (status: resolved) and its competing assertions (a_002, a_009) do not overlap h_001's supporting or contradicting lists, so no unresolved conflicts block promotion. The per-test context confirms all three conditions are met. Claude did not withhold promotion due to lack of direct evidence—the correct behavior under the current gate. The status change was persisted via research_append."
               }
             ],
             "judge_cost_usd": 0.016348,
@@ -8280,7 +8280,7 @@
   ],
   "totals": {
     "duration_ms": 622752.1210749983,
-    "duration_api_ms": 416601.0,
+    "duration_api_ms": 416601,
     "judge_duration_ms": 170167.2473170329,
     "num_turns": 30,
     "input_tokens": 22750,
