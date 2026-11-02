@@ -65,8 +65,8 @@ it with the proto/sql/*.sql this tier ships, running no DDL (U9) -- and syncs th
 allowlist, one inline attempt each under one ``STARTUP_BUDGET_S``; a failure is retried
 in the background and never stops the tier listening (U10). It logs
 ``queue: <url>; sqs credentials: <mode>; region <r>``. Until the allowlist has synced, a
-FamilySearch-configured tier answers 503 at both allowlist checks rather than read a
-table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
+FamilySearch-configured tier admitting by allowlist (no ``GENEALOGY_MAX_USERS``) answers
+503 at both allowlist checks rather than read a table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
 either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
 label, never a message.
 

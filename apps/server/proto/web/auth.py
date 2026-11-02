@@ -186,10 +186,8 @@ def max_users() -> int | None:
     raw = _env("GENEALOGY_MAX_USERS")
     if not raw:
         return None
-    try:
-        value = int(raw)
-    except ValueError:
-        value = 0
+    # ASCII digits only: int() would also take "1_000", "+5" and non-ASCII digits.
+    value = int(raw) if re.fullmatch(r"[0-9]+", raw) else 0
     if value < 1:
         raise RuntimeError(f"GENEALOGY_MAX_USERS is {raw!r}: set it to a positive integer, or leave it unset")
     return value

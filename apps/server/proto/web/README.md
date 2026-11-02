@@ -61,7 +61,8 @@ U2 in `docs/plan/familysearch-handoff.md`.
   `make e2e-login` and `make proto-grant` need the same port, so stop the override while
   either runs.
 - **Environment**: `PUBLIC_URL`, `WEB_ORIGIN`, `SESSION_SECRET`, `FS_TOKEN_ENC_KEY`,
-  `ALLOWED_EMAILS`, `FAMILYSEARCH_WEB_ENABLED`, `FAMILYSEARCH_CONFIG` (see the
+  `ALLOWED_EMAILS` (ignored when `GENEALOGY_MAX_USERS` is set), `FAMILYSEARCH_WEB_ENABLED`,
+  `FAMILYSEARCH_CONFIG` (see the
   `web/auth.py` docstring). `ALLOWED_EMAILS` is comma- or space-separated; write it
   space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL`, or with
   FamilySearch sign-in on at any scheme, the tier refuses to start with a default or empty

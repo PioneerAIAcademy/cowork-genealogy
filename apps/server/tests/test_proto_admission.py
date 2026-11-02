@@ -10,11 +10,13 @@ refused in every mode.
 from __future__ import annotations
 
 import asyncio
+import re
 
 import httpx
 import pytest
 
 from tests.test_proto_auth import _callback, _fake_fs
+from web.app import AdmissionBusy
 from tests.test_proto_web import (
     AUTH_ENV, USER_A, FakeQueue, FakeStore, RefreshingStore, _per_project_routes, _project_path, make_client,
 )
@@ -49,11 +51,12 @@ def _app_client(application) -> httpx.AsyncClient:
 @pytest.mark.parametrize(("name", "value"), [
     ("GENEALOGY_CHAT", "flase"), ("GENEALOGY_CHAT", "0"),
     ("GENEALOGY_MAX_USERS", "0"), ("GENEALOGY_MAX_USERS", "-1"), ("GENEALOGY_MAX_USERS", "abc"),
-    ("GENEALOGY_MAX_USERS", "2.5"),
+    ("GENEALOGY_MAX_USERS", "2.5"), ("GENEALOGY_MAX_USERS", "1_000"), ("GENEALOGY_MAX_USERS", "+5"),
+    ("GENEALOGY_MAX_USERS", "\u0665"),
 ])
 def test_preflight_refuses_a_bad_value_on_the_http_dev_tier_too(monkeypatch, name, value):
     monkeypatch.setenv(name, value)
-    with pytest.raises(RuntimeError, match=f"{name} is '{value}'"):
+    with pytest.raises(RuntimeError, match=re.escape(f"{name} is {value!r}")):
         auth.preflight()
 
 
@@ -162,6 +165,49 @@ async def test_a_blocked_user_is_refused_at_sign_in_and_nothing_is_written(fs_on
     assert r.status_code == 403 and "is blocked" in r.text
     assert store.grants == {} and store.users[USER_A.id].familysearch_id is None
     assert auth.COOKIE_NAME not in r.cookies
+
+
+async def _callback_on(application) -> httpx.Response:
+    oauth = auth.oauth_state_cookie("verifier-1", "st", None)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t",
+                                 cookies={auth.FS_OAUTH_COOKIE: oauth}) as c:
+        return await c.get("/callback", params={"code": "code-1", "state": "st"})
+
+
+async def test_a_busy_admission_lock_answers_503_and_writes_nothing(fs_on):
+    fs_on.setenv("GENEALOGY_MAX_USERS", "5")
+    _fake_fs(fs_on, email="new@example.org")
+    store = FakeStore()
+
+    async def upsert_user(email, familysearch_id, *, max_users=None):
+        raise AdmissionBusy(email)
+
+    store.upsert_user = upsert_user
+    r = await _callback_on(create_app(store, FakeQueue()))
+    assert r.status_code == 503 and "Sign-in is busy" in r.text
+    assert store.grants == {} and auth.COOKIE_NAME not in r.cookies
+
+
+async def test_the_callback_waits_for_the_allowlist_in_allowlist_mode_only(fs_on):
+    _fake_fs(fs_on, email=USER_A.email)
+    store = FakeStore()
+    store.allowed = {USER_A.email}
+    application = create_app(store, FakeQueue())
+    application.state.startup = {"allowlist": "pending"}
+    r = await _callback_on(application)
+    assert r.status_code == 503 and "the allowlist has not loaded yet" in r.text
+    assert store.grants == {}
+    fs_on.setenv("GENEALOGY_MAX_USERS", "5")
+    r = await _callback_on(application)
+    assert r.status_code in (302, 307), r.text
+
+
+async def test_cap_mode_with_an_empty_allowlist_starts_with_familysearch_on(fs_on):
+    fs_on.setenv("ALLOWED_EMAILS", "")
+    fs_on.setenv("GENEALOGY_MAX_USERS", "5")
+    application = create_app(store=FakeStore(), queue=FakeQueue())
+    async with application.router.lifespan_context(application):
+        assert application.state.startup == {"allowlist": "ok"}
 
 
 # ── the chat switch ──────────────────────────────────────────────────────────────
