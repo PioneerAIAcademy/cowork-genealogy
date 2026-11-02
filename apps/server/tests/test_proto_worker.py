@@ -173,6 +173,14 @@ class FakeCursor:
             return (self.conn.research,)
         if "SELECT count(*) FROM tool_calls" in sql:
             return (self.conn.tool_call_count,)
+        if sql == worker.COMPACTIONS_SQL:  # 018: (sum of preTokens, count)
+            return self.conn.compactions
+        if sql == worker.SPEND_CORRECTIONS_SQL:
+            return (self.conn.spend_correction,)
+        if sql == worker.STARTING_COST_SQL:
+            return None if self.conn.starting_cost is None else (self.conn.starting_cost,)
+        if "SELECT COALESCE(max(seq), 0) FROM session_entries" == sql:
+            return (self.conn.high_water,)
         if "RETURNING zero_progress_attempts" in sql:
             self.conn.zero_progress_attempts += 1
             return (self.conn.zero_progress_attempts,)
@@ -249,6 +257,12 @@ class FakeConn:
         # answer no row: a newer claim holds the turn.
         self.claim_epoch = claim_epoch
         self.superseded = False
+        # 018: COMPACTIONS_SQL's (preTokens sum, count), the session's summed
+        # turns.spend_correction_usd, and session_entries' top seq.
+        self.compactions: tuple = (0, 0)
+        self.spend_correction = 0.0
+        self.high_water = 0
+        self.starting_cost: float | None = None  # a stored cost-state total, if any
 
     def mint_epoch(self) -> None:
         """CLAIM_TURN_SQL's CASE: an open row's claim bumps the epoch, a closed one keeps it."""
@@ -1306,10 +1320,10 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-    assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
+    assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
-    on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
-    assert on.env["ENABLE_TOOL_SEARCH"] == "true"
+    off = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "false"})
+    assert off.env["ENABLE_TOOL_SEARCH"] == "false", "the switch back, for agentgateway < 1.6 (TAP's Fargate stack)"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
         _options(worker_env={**GATEWAY_ENV, "GATEWAY_BASE_URL": " "})
 
@@ -2034,20 +2048,27 @@ def test_the_first_delivery_of_a_resumed_turn_is_never_re_queried(turn_env, monk
 # receive_count > 1 attempt. `test_the_named_fallback_*` below is that test.
 
 
-@pytest.mark.parametrize("num_turns, tool_calls, expected", [
-    (6, 1, True),
-    (6, 0, False),
-    (0, 1, False),
-    (0, 0, False),
-    (None, 0, False),
-    (1, 40, True),
-], ids=["worked", "billed-turns-touched-nothing", "no-turn-but-a-call", "dead", "unknown", "busy"])
-def test_attempt_did_work_needs_both_signals(num_turns, tool_calls, expected):
+@pytest.mark.parametrize("num_turns, tool_calls, turn_tool_calls, expected", [
+    (6, 1, 4, True),
+    (6, 0, 3, False),
+    (0, 1, 4, False),
+    (0, 0, 3, False),
+    (None, 0, 3, False),
+    (1, 40, 43, True),
+    (2, 0, 0, True),
+    (0, 0, 0, False),
+    (None, 0, 0, False),
+], ids=["worked", "billed-turns-touched-nothing", "no-turn-but-a-call", "dead", "unknown", "busy",
+        "text-reply-nothing-interrupted", "synthetic-nothing-interrupted", "unknown-nothing-interrupted"])
+def test_attempt_did_work_needs_both_signals_once_work_was_interrupted(num_turns, tool_calls, turn_tool_calls, expected):
     """The plan states the negation -- an attempt did no work when ``num_turns == 0``, OR
-    it added no tool_calls rows -- so work is the conjunction. The middle row is the one
+    it added no tool_calls rows -- so work is the conjunction. The second row is the one
     a `num_turns == 0` test alone would miss: a pass that billed model turns and changed
-    nothing, because every change to the project goes through a writer TOOL."""
-    assert worker.attempt_did_work(SimpleNamespace(num_turns=num_turns), tool_calls) is expected
+    nothing, because every change to the project goes through a writer TOOL. The tool-call
+    half needs work to have been interrupted: when no attempt of the turn ever recorded a
+    tool call, a model reply is the answer (the last three rows), and only a zero-turn
+    result still counts as no work."""
+    assert worker.attempt_did_work(SimpleNamespace(num_turns=num_turns), tool_calls, turn_tool_calls) is expected
 
 
 def test_the_named_fallback_a_synthetic_zero_turn_redelivery_is_a_failure_not_a_completion(
@@ -2075,10 +2096,28 @@ def test_the_named_fallback_a_synthetic_zero_turn_redelivery_is_a_failure_not_a_
 def test_a_redelivery_that_billed_model_turns_but_recorded_no_tool_call_counts_too(turn_env):
     """The second arm of attempt_did_work, through run_turn: the model talked and touched
     nothing. resume_produced_no_turn never fires here (num_turns > 0), so this attempt is
-    caught only by the tool-call half."""
+    caught only by the tool-call half. The killed attempt had recorded calls, so there
+    was work to redo."""
+    turn_env["conn"].tool_call_count = 3
     with pytest.raises(worker.ResumeFailure, match="tool_calls=0"):
         _run_passes(turn_env, [[_init(), _text("thinking about it"), _result(num_turns=9)]], receive_count=2)
     assert not _turn_done_written(turn_env["conn"])
+
+
+def test_a_text_reply_on_the_redelivery_of_a_turn_that_never_called_a_tool_is_the_answer(turn_env, monkeypatch):
+    """U24, 2026-10-31 (compose, gateway, n=1): a status question killed 8 s in, inside its
+    start-of-turn compaction, recorded no tool call on any attempt. Its redelivery answered
+    in text; the tool-call half read that as no work, re-ran it, showed the patron the
+    answer twice and closed the turn ``no_progress``. Nothing was interrupted, so the
+    reply completes the turn as it would on a first delivery."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    turn_env["conn"].tool_call_count = 0
+    summary = _run_passes(turn_env, [[_init(), _text("Two sentences of status."), _result(num_turns=2)]],
+                          receive_count=2)
+    assert summary["outcome"] == worker.OK_OUTCOME
+    assert _turn_done_written(turn_env["conn"])
+    assert not [f for f in logged if f.get("ev") == "zero_progress_attempt"]
 
 
 def test_the_cap_closes_the_turn_itself_with_a_visible_outcome_instead_of_raising(turn_env, monkeypatch):
@@ -3208,6 +3247,69 @@ def test_session_spend_usd_prices_the_rows_and_is_zero_without_a_session():
     empty = FakeConn()
     assert worker.session_spend_usd(empty, "") == 0.0, "no SDK session, no query"
     assert empty.executed == [], "the short-circuit must come before the query"
+
+
+def test_the_session_spend_counts_compactions_the_transcript_lacks_and_each_attempts_correction():
+    """U24, 2026-10-31 (compose, gateway, n=1): 5 of 5 compaction summary calls were absent
+    from session_entries, $0.42 of a $2.27 session, so the cap never saw them. Each
+    compact_boundary is now priced as a cache read of its preTokens plus
+    COMPACTION_OUTPUT_TOKENS of output, and finished attempts add their correction (018)."""
+    conn = FakeConn(usage=(1_000_000, 0, 0, 0))
+    conn.compactions = (2_000_000, 2)
+    conn.spend_correction = 0.25
+    rates = worker.PRICE_PER_MTOK
+    estimate = 2 * rates["cache_read"] + 2 * worker.COMPACTION_OUTPUT_TOKENS * rates["output"] / 1e6
+    assert worker.session_spend_usd(conn, "sdk-1") == pytest.approx(rates["input"] + estimate + 0.25)
+    sqls = [s for s, _ in conn.executed]
+    assert worker.COMPACTIONS_SQL in sqls and worker.SPEND_CORRECTIONS_SQL in sqls
+    assert worker.compactions_usd(0, 0) == 0.0, "no compaction, nothing added"
+
+
+def test_a_finished_attempts_correction_makes_it_count_at_the_clis_own_figure():
+    """The correction is the ResultMessage cost minus what session_spend_usd already counts
+    for the attempt -- its transcript and its compaction estimates -- so, added back, the
+    attempt counts at exactly the CLI's figure: the 018 gateway check, where
+    turns.cost_usd $0.272142 matched the gateway's two calls, compaction included."""
+    conn = FakeConn(usage=(1472, 35, 102_057, 3967))
+    conn.compactions = (102_175, 1)
+    correction = worker.attempt_spend_correction(conn, "sdk-1", 40, 0.272142)
+    counted = worker.price_usd((1472, 35, 102_057, 3967)) + worker.compactions_usd(102_175, 1)
+    assert correction == pytest.approx(0.272142 - counted)
+    assert counted + correction == pytest.approx(0.272142)
+    attempt_sql, params = next((s, p) for s, p in conn.executed if "sum((u->>'input_tokens')" in s)
+    assert params == ("sdk-1", 40) and "seq > %s" in attempt_sql, "bounded by the attempt's own mark"
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, None) is None, "no CLI figure, no correction"
+    assert worker.attempt_spend_correction(conn, "", 40, 1.0) is None
+
+
+def test_a_restored_cost_state_total_is_not_counted_twice():
+    """The CLI documents that a resumed session's total_cost_usd continues from the total
+    a `cost-state` transcript entry saved. The worker's SDK mode writes none today (0
+    stored, 2026-10-31), but if one appears the attempt's figure carries every earlier
+    turn, so the correction subtracts the total the attempt started from."""
+    conn = FakeConn(usage=(0, 0, 0, 0))
+    conn.starting_cost = 2.0
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, 2.3) == pytest.approx(0.3)
+    _, params = next((s, p) for s, p in conn.executed if s == worker.STARTING_COST_SQL)
+    assert params == ("sdk-1", 40), "the latest saved total at or before the attempt's mark"
+    conn.starting_cost = None
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, 2.3) == pytest.approx(2.3), "none saved, nothing subtracted"
+
+
+def test_a_billed_attempt_writes_its_correction_fenced_before_the_zero_progress_raise(turn_env):
+    """An attempt that is billed and then failed still cost money, so its correction is
+    written before ResumeFailure, and only under its own claim epoch (U6)."""
+    turn_env["conn"].tool_call_count = 3
+    turn_env["conn"].high_water = 70
+    with pytest.raises(worker.ResumeFailure):
+        _run_passes(turn_env, [[_init(), _text("thinking"), _result(num_turns=4, cost=0.31)]], receive_count=2)
+    writes = [(s, p) for s, p in turn_env["conn"].executed if "SET spend_correction_usd" in s]
+    assert len(writes) == 1
+    sql, (correction, turn_id, epoch) = writes[0]
+    assert sql.endswith("WHERE turn_id = %s AND claim_epoch = %s"), "a superseded attempt must write nothing"
+    assert correction == pytest.approx(0.31 - worker.price_usd(turn_env["conn"].usage))
+    assert turn_id == TURN["turn_id"]
+    assert epoch == TURN["claim_epoch"], "fenced by the attempt's own claim"
 
 
 def test_a_message_typed_mid_turn_ends_the_turn_at_the_next_tool_call(turn_env, monkeypatch):

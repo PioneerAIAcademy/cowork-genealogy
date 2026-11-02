@@ -2448,3 +2448,33 @@ async def test_an_x_orig_base_mismatch_warns_once_per_process(monkeypatch, caplo
             await c.get("/api/health", headers={"X-Orig-Base": "/elsewhere"})
     lines = [r.message for r in caplog.records if "ev=prefix_mismatch" in r.message]
     assert len(lines) == 1 and "agent-tools/other" in lines[0], lines
+
+
+@pytest.mark.parametrize("public_url, prefix", [(f"https://edge.test{PREFIX}", PREFIX), ("https://edge.test", "")])
+async def test_a_trailing_slash_redirect_stays_under_the_prefix_and_relative(monkeypatch, public_url, prefix):
+    # FS112 u28-web, 2026-10-31: the edge strips the prefix and the load balancer speaks http, so
+    # Starlette's slash redirect answered `http://<host>/api/health` -- off the prefix, and http.
+    monkeypatch.setenv("PUBLIC_URL", public_url)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path, want in (("/api/health/", f"{prefix}/api/health"),
+                           ("/auth/config/?x=1&y=2", f"{prefix}/auth/config?x=1&y=2")):
+            r = await c.get(path, headers={"Host": "integration.example.org"}, follow_redirects=False)
+            assert r.status_code == 307 and r.headers["location"] == want, (path, r.headers.get("location"))
+
+
+@pytest.mark.parametrize("location, host, base, want", [
+    ("http://h.test/api/health", "h.test", "", "/api/health"),
+    ("https://h.test/p/x?q=1", "h.test", "", "/p/x?q=1"),
+    ("http://h.test", "h.test", "", "/"),
+    ("http://h.test/api/health", "h.test", PREFIX, f"{PREFIX}/api/health"),
+    ("http://h.test", "h.test", PREFIX, f"{PREFIX}/"),
+    (f"https://h.test{PREFIX}/", "h.test", PREFIX, f"{PREFIX}/"),
+    (f"https://h.test{PREFIX}", "h.test", PREFIX, PREFIX),
+    (f"https://h.test{PREFIX}x/y", "h.test", PREFIX, f"{PREFIX}{PREFIX}x/y"),
+    ("https://ident.example.org/authorize?a=1", "h.test", PREFIX, "https://ident.example.org/authorize?a=1"),
+    ("http://h.test:8085/x", "h.test", PREFIX, "http://h.test:8085/x"),
+    ("/already/relative", "h.test", PREFIX, "/already/relative"),
+    ("http://h.test/x", None, PREFIX, "http://h.test/x"),
+])
+def test_self_redirects_become_root_relative_under_the_prefix_and_others_are_untouched(location, host, base, want):
+    assert app._relative_self_location(location, host, base) == want

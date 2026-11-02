@@ -64,12 +64,12 @@ export const STAGING_CAPABLE_TOOLS = new Set([
  * it does not carry (#2038). `record_search` and `record_read` results key on
  * `recordId`; the persona-less producer `fulltext_search` keys on `id`, as do
  * legacy `external_links_search` sidecars from before #2995. Mirrors
- * `personaReachable` in research-append.ts and `_persona_reachable` in the eval
- * harness.
+ * `personaReachable` in research-append.ts and `_persona_reachable` in the
+ * person-evidence eval validator.
  *
  * `record_read` was MISSING here until issue #2937, and both mirrors already
  * counted it — `personaReachable` returns true on `logEntry.tool ===
- * "record_read"`, and the harness's `_persona_reachable` says the same, each
+ * "record_read"`, and the validator's `_persona_reachable` says the same, each
  * because the tool returns a `SimplifiedGedcomX` with a persons array. This set
  * was the only one of the three that disagreed, so adding it is a CORRECTION,
  * not a widening. The omission failed precisely and silently: `record_read`

@@ -286,11 +286,13 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         "ANTHROPIC_API_KEY": "",
         "ANTHROPIC_MODEL": GATEWAY_MODEL,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
-        # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-        # its second turn (plan P3f). TAP's Fargate stack pins 1.5.0; its EKS stack
-        # (tap-gateway) runs 1.6.0: tool search passes on a local copy of its route
-        # (2026-10-24) and is unverified on the deployed gateway (handoff U14).
-        "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
+        # On by default (Richard, 2026-10-31): TAP's EKS gateway runs agentgateway
+        # 1.6.0, and tool search held through kills, resumes, compactions and Sonnet 5
+        # subagents on a local copy of its route (handoff U14; unverified on the
+        # deployed gateway until F1). Off costs ~12-14% a run. agentgateway < 1.6
+        # cannot parse tool_reference (plan P3f): set GATEWAY_TOOL_SEARCH=false for
+        # TAP's Fargate stack, which pins 1.5.0.
+        "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "true").strip().lower(),
     }
 
 

@@ -101,6 +101,16 @@ async function main() {
     const slash = await page.goto(`${BASE}/`)
     if (!slash || slash.status() >= 400) fail(`GET ${BASE}/ answered ${slash?.status()}`)
 
+    for (const path of ['api/health/', 'auth/config/?x=1']) {
+      const res = await context.request.get(`${BASE}/${path}`, { maxRedirects: 0 })
+      const location = res.headers().location
+      const target = location === undefined ? null : new URL(location, `${BASE}/${path}`)
+      log(`GET ${path} -> ${res.status()} ${location}`)
+      if (!target || target.origin !== base.origin || !inPrefix(target.pathname)) {
+        fail(`GET ${BASE}/${path} answered ${res.status()} to ${location}, want a redirect under ${prefix}/ on ${base.origin}`)
+      }
+    }
+
     log(`dev-login as ${EMAIL}`)
     await page.locator('#email').fill(EMAIL)
     signedInAt = Date.now()

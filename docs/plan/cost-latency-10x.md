@@ -210,10 +210,10 @@ Lever 1's other half: what comes back. Tool-result carry is **24%** of the bill.
   generates a median **9,036 chars of arguments** per call — those are output tokens
   at $15/MTok. Results are the cheaper half (result/arg 0.17–0.33).
 
-**Production runs with tool search off. A short probe measured that at 2.2× cost; a full run puts it at about +12–14%.**
+**Production ran with tool search off until PR #4094 (2026-10-31). A short probe measured that at 2.2× cost; a full run puts it at about +12–14%.**
 Every figure in this plan comes from runs with tool search **on**: both harnesses and the
-alpha set `ENABLE_TOOL_SEARCH=true`. The FamilySearch gateway path turns it off:
-`GATEWAY_TOOL_SEARCH` defaults to `false` in `apps/server/proto/worker/options.py`,
+alpha set `ENABLE_TOOL_SEARCH=true`. The FamilySearch gateway path turned it off --
+`GATEWAY_TOOL_SEARCH` defaulted to `false` in `apps/server/proto/worker/options.py` --
 because agentgateway 1.5.0 cannot parse the `tool_reference` blocks tool search returns
 (`search-agent-prototype.md`, P3e/P3f). Off means all 48 tool schemas load eagerly on
 every call. Probe P3b (`make probe-gateway-path`, 2026-09-11) measured the difference:
@@ -238,11 +238,12 @@ the switch. n = 1 pair; the figure is the projection, not the totals. The hosted
 
 Two pieces of work, in order:
 
-1. **Get the gateway onto agentgateway ≥ 1.6.0, then set `GATEWAY_TOOL_SEARCH=true`.**
-   The first half is done: our PR fs-eng/tap-gateway#46 put TAP's EKS gateway on v1.6.0,
-   merged 2026-10-12, so the drafted request was never sent. The second half waits on the
-   handoff's U14 two-turn check on that gateway; until it passes, production pays for the
-   whole schema block on every call and Wave 2's schema trim is the only relief.
+1. **Done 2026-10-31. Get the gateway onto agentgateway ≥ 1.6.0, then set `GATEWAY_TOOL_SEARCH=true`.**
+   Our PR fs-eng/tap-gateway#46 put TAP's EKS gateway on v1.6.0, merged 2026-10-12, so the
+   drafted request was never sent. The handoff's U14 runs on a local copy of that gateway's
+   route held with tool search on (2026-10-31), and PR #4094 made `true` the default
+   (Richard, 2026-10-31). Unverified on the deployed gateway until F1; TAP's Fargate stack
+   (1.5.0) needs `GATEWAY_TOOL_SEARCH=false`.
 2. **Done 2026-10-09 (above). Measure one e2e panel fixture with tool search off against the same fixture with
    it on**, on the harness, so the production gap is priced on this plan's basis. Do
    this before step 1 lands, because it decides how much of the gap is this lever's.
