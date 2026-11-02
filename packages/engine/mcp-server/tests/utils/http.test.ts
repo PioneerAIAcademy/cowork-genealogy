@@ -525,7 +525,6 @@ describe("raiseConnectAttemptTimeout", () => {
 
 describe("the FamilySearch budget inside fetchWithTimeout", () => {
   const FS = "https://www.familysearch.org/x";
-  const fastOpts = { budgetMs: 5000, baseMs: 1 };
 
   afterEach(() => {
     __resetFsBudgetForTests();

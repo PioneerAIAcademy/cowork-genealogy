@@ -9,6 +9,7 @@ import {
   FS_BUDGET_MAX_PER_MINUTE,
   monotonicNow,
 } from "../../src/utils/fs-budget.js";
+import { readLimitsEnv } from "../../src/store/limits-env.js";
 
 // The process-wide FamilySearch budget (self-hosted beta E4). Off unless the
 // hosted entrypoint configured it; `src/index.ts` never does.
@@ -52,12 +53,23 @@ describe("consumeFsBudgetSlot", () => {
     expect(b).toBeGreaterThanOrEqual(a);
   });
 
-  it("refuses a rate above the ceiling rather than growing an unbounded window", () => {
-    // The window holds one timestamp per admitted call, so an absurd rate
-    // would grow an array of that many numbers with shift() going O(n).
+  // The window holds one timestamp per admitted call, so an absurd rate would
+  // grow an array of that many numbers with shift() going O(n). The ceiling is
+  // what bounds it -- but the constant lives here and the ENFORCEMENT lives in
+  // readLimitsEnv, so this pins the two to each other. (The previous version
+  // of this test configured the budget AT the ceiling and asserted nothing
+  // threw, which passes however readLimitsEnv is written -- it could not fail
+  // for the reason it named.)
+  it("is the ceiling readLimitsEnv actually enforces", () => {
     expect(FS_BUDGET_MAX_PER_MINUTE).toBeGreaterThan(0);
-    configureFsBudget({ perMinute: FS_BUDGET_MAX_PER_MINUTE });
-    expect(() => consumeFsBudgetSlot(FS, 1)).not.toThrow();
+    expect(
+      readLimitsEnv({ GENEALOGY_FS_CALLS_PER_MINUTE: String(FS_BUDGET_MAX_PER_MINUTE) })
+        .fsCallsPerMinute,
+    ).toBe(FS_BUDGET_MAX_PER_MINUTE);
+    expect(
+      readLimitsEnv({ GENEALOGY_FS_CALLS_PER_MINUTE: String(FS_BUDGET_MAX_PER_MINUTE + 1) })
+        .invalid,
+    ).toEqual(["GENEALOGY_FS_CALLS_PER_MINUTE"]);
   });
 
   it("does nothing at all when unconfigured", () => {

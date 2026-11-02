@@ -112,6 +112,15 @@ export async function rankSearchMatches(
     principal,
     { concurrency: SCORE_CONCURRENCY, retry: true },
   );
+  // A spent budget is a refusal, not "unscoreable". Counting it as a scoring
+  // error answers "20 of the 20 candidates could not be scored" and drops the
+  // one thing the agent can act on -- "try again in about N seconds".
+  // same_person already rethrows `scored.error` for the same reason
+  // (same-person.ts:85); without this the two tools disagree on the same
+  // matcher result. Per-pair failures stay fail-soft, as before.
+  const refused = call.results.find((r) => isFsBudgetExhausted(r.error));
+  if (refused) throw refused.error;
+
   sendable.forEach((s, i) => {
     s.matchScore = call.results[i].score;
     s.errored = s.matchScore === null;

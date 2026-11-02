@@ -607,7 +607,7 @@ describe("the transcription cap binds to volume_bisect", () => {
     let release!: () => void;
     const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
 
-    await expect(volumeBisectTool({ imageGroupNumber: "004516861_001_M9S4-SQB", targetYear: 1900 } as never, LOCAL)).rejects.toThrow(/already running 1 transcriptions, its limit/);
+    await expect(volumeBisectTool({ imageGroupNumber: "004516861_001_M9S4-SQB", targetYear: 1900 } as never, LOCAL)).rejects.toThrow(/already running 1 transcription, its limit/);
 
     release();
     await held;

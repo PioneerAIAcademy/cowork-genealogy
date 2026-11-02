@@ -1788,7 +1788,7 @@ describe("the transcription cap binds to image_transcribe", () => {
     let release!: () => void;
     const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
 
-    await expect(imageTranscribeTool({ imageId: "004022578_00190", projectPath: "/nope" }, LOCAL)).rejects.toThrow(/already running 1 transcriptions, its limit/);
+    await expect(imageTranscribeTool({ imageId: "004022578_00190", projectPath: "/nope" }, LOCAL)).rejects.toThrow(/already running 1 transcription, its limit/);
 
     release();
     await held;

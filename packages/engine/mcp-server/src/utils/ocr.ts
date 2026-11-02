@@ -155,7 +155,12 @@ let inFlight = 0;
 
 export function configureTranscriptionCap(opts: { max: number | undefined }): void {
   maxTranscriptions = opts.max;
-  inFlight = 0;
+  // `inFlight` is deliberately NOT reset here. At start-up -- the one caller
+  // today (src/http.ts) -- it is already 0, so a reset would be a no-op. Under
+  // live work it would be a bug: each in-flight call still runs `inFlight -= 1`
+  // in its `finally`, so zeroing leaves the counter negative and the cap is
+  // uncapped for the life of the process. Tests restart it with
+  // `__resetTranscriptionSlotsForTests`.
 }
 
 /** Test-only reset (a restart, as far as the cap can tell). */
@@ -173,7 +178,8 @@ export async function withTranscriptionSlot<T>(fn: () => Promise<T>): Promise<T>
   if (maxTranscriptions === undefined) return fn();
   if (inFlight >= maxTranscriptions) {
     throw new Error(
-      `The server is already running ${maxTranscriptions} transcriptions, its limit. ` +
+      `The server is already running ${maxTranscriptions} ` +
+        `${maxTranscriptions === 1 ? "transcription" : "transcriptions"}, its limit. ` +
         `Wait for one to finish and try this image again.`,
     );
   }

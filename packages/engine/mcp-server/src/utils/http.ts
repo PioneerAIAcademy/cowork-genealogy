@@ -286,7 +286,14 @@ export async function fetchWithRetry(
       // the same refusal plus two backoff sleeps. Rethrown even when a
       // retryable Response is already in hand (the `lastResponse` return
       // below) — handing back a stale 429 would name the wrong cause.
-      if (isFsBudgetExhausted(err)) throw err;
+      if (isFsBudgetExhausted(err)) {
+        // `lastResponse` holds a retryable Response (a 429/5xx from an earlier
+        // attempt) that nothing will read now. An unconsumed undici body holds
+        // its socket until GC (catalog-search.ts:793), and under a spent
+        // process-wide budget this path runs for every caller.
+        await lastResponse?.text().catch(() => "");
+        throw err;
+      }
       // Network error or per-attempt timeout — retryable.
       lastErr = err;
       if (!isFetchTimeout(err)) lastSocketErr = err;

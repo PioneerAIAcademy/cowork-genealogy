@@ -8,8 +8,8 @@
 // Both limits are off unless set, so `src/index.ts` (the `.mcpb`), which never
 // calls this, behaves exactly as it does today.
 
-// F13: these were exported; nothing outside this file imports them, and they
-// resolve to bare primitives, so they widened the module's surface for nothing.
+// Module-private: nothing outside this file needs them, and they resolve to
+// bare primitives, so exporting them would widen the surface for nothing.
 /** Unset or empty. Kept distinct from `null` so an invalid value cannot read
  *  as "off" and skip the exit-2 branch. */
 type Unset = undefined;

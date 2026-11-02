@@ -40,6 +40,16 @@ function collectTsFiles(dir: string): string[] {
   return out;
 }
 
+/** Comments removed, so a call written in prose never counts as a call. */
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+}
+
+/** A CALL to runOcr/runFoundCheck -- not an import, not a mention. */
+function callsOcr(src: string): boolean {
+  return /\b(?:runOcr|runFoundCheck)\s*\(/.test(stripComments(src));
+}
+
 describe("every OCR caller holds a transcription slot", () => {
   it("only the allow-listed files call runOcr or runFoundCheck", () => {
     const offenders: string[] = [];
@@ -47,8 +57,7 @@ describe("every OCR caller holds a transcription slot", () => {
       const rel = relative(srcRoot, file).split("\\").join("/");
       if (ALLOWED.has(rel)) continue;
       const src = readFileSync(file, "utf-8");
-      // Call sites, not imports or the words in a comment.
-      if (/\b(?:runOcr|runFoundCheck)\s*\(/.test(src)) offenders.push(rel);
+      if (callsOcr(src)) offenders.push(rel);
     }
     expect(
       offenders,
@@ -75,7 +84,11 @@ describe("every OCR caller holds a transcription slot", () => {
     for (const rel of ALLOWED) {
       const src = readFileSync(join(srcRoot, rel), "utf-8");
       expect(
-        /\b(?:runOcr|runFoundCheck)\s*[(,)]/.test(src) || rel === "utils/ocr.ts",
+        // The SAME matcher as the forward direction. It used to accept
+        // `[(,)]`, which a bare `import { runOcr, ... }` satisfies -- so a
+        // file that had lost every real call stayed allow-listed and this
+        // assertion, the one meant to catch exactly that, could not fire.
+        callsOcr(src) || rel === "utils/ocr.ts",
         `${rel} is allow-listed but no longer calls runOcr/runFoundCheck — drop it.`,
       ).toBe(true);
     }

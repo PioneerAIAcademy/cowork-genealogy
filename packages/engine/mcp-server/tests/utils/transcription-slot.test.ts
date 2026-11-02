@@ -50,7 +50,7 @@ describe("withTranscriptionSlot", () => {
     const first = withTranscriptionSlot(() => held.promise);
 
     await expect(withTranscriptionSlot(async () => "second")).rejects.toThrow(
-      /already running 1 transcriptions, its limit/,
+      /already running 1 transcription, its limit/,
     );
 
     held.resolve("first");
