@@ -18,6 +18,6 @@
     "Counting it twice -- once as 'missing at 1900' and once as 'missing at 1910' -- and writing two separate questions (or one question describing two missing children) is the failure this test guards, and is a FAIL, not a partial",
     "There are no deceased children: children-born equals children-living at both censuses (3/3 and 4/4), so born minus living is zero. The written question must not invent a deceased target",
     "Do not penalize correct reasoning about which census window the missing living child belongs to; the graded point is that it is counted once, not two",
-    "The question's selection_basis should be objective_decomposition (Priority 5 — a missing-child group from census_children_gap), per the skill's priority table"
+    "The question's selection_basis should be objective_decomposition (Priority 3 — a missing-child group from census_children_gap), per the skill's priority table"
   ]
 }

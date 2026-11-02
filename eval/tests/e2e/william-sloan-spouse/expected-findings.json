@@ -3,18 +3,37 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "William W Sloan had a wife named Maria, the mother of a son Thomas John Sloane (born about 1861), who married Maggie A Mahaffey in Toronto on 4 February 1891.",
+      "polarity": "avoid",
+      "description": "The agent must NOT assert that William W Sloan (PID LHG6-L26, b. 22 July 1832 Ontario, d. 25 December 1921 Toronto, buried Blyth, Huron) had a wife named Maria, nor that Maria Sloane was his spouse, nor that Thomas John Sloane (b. about 1861, married Maggie A Mahaffey at Toronto 4 February 1891) was his son. The hint record indexes the 1891 groom's parents as 'William and Maria Sloane' but gives no birthplace or residence tying that couple to the tree subject. William W Sloan's documented wife is Agnes McCaa, whom he married 4 March 1859 and who lived with him through the 1911 and 1921 censuses and is buried beside him at Blyth; 'Maria' appears on no record reviewed for him. His children are documented 1859-1876, all in Huron County, with no son Thomas John born 1861 (the 1860/61 births are Andrew McCaa Sloan, 1860, and Thomas Sloan, 1859-1861). The 1891 census places William W Sloan as a married man in Blyth, Huron East, Ontario, the same year the hint groom married in Toronto. Pass = the final tree.gedcomx.json contains no second spouse named Maria, no marriage fact to a Maria, and no son 'Thomas John Sloane' or stub person representing them for William W Sloan. A rejected candidate may be documented in research.json; writing one into the tree, even annotated as rejected, fails this finding.",
       "details": {
-        "subject_person": "William W Sloan (LHG6-L26)",
+        "subject_person": "William W Sloan (PID LHG6-L26)",
         "relation": "spouse",
-        "target_person": {
-          "name": "Maria Sloane",
-          "role": "named as the groom's mother on the 1891 Toronto marriage registration of Thomas John Sloane"
-        },
-        "child": "Thomas John Sloane, aged 30 in February 1891"
+        "wrong_candidate": {
+          "name": "Maria Sloane or a son Thomas John Sloane",
+          "note": "offered by the FamilySearch hint as a second wife of William W Sloan. the hint derives from the 1891 Toronto marriage of Thomas John Sloane (ark:/61903/1:1:FMV5-LZ2), which names the groom's parents as William and Maria Sloane but gives no birthplace or residence; the tree subject's only documented wife is Agnes McCaa (married 1859), and a distinct William Sloan and Maria J. Sloan family, with an Irish-born William (b. 1818), is independently attested in Victoria County, Ontario"
+        }
       },
       "supporting_sources": [
-        "Canada, Ontario, Marriages, 1869-1927 — marriage of Thomas John Sloane, aged 30, and Maggie A Mahaffey, Toronto, York, Ontario, 4 Feb 1891, naming the groom's parents as William and Maria Sloane and the bride's as John and Jane Mahaffey"
+        "Canada, Census, 1891 - William Sloan, born 1832 Ontario, marital status Married, residence 1891 Blyth, Huron East, Ontario, Canada (ark:/61903/1:1:MWL7-5DR) - the disproving record, placing the tree subject as a married Huron resident the same year the hint groom married in Toronto",
+        "Canada, Ontario County Marriage Registers, 1858-1869 - marriage of William Sloan to Agnes (indexed 'Agnes McAn'), 4 March 1859 (ark:/61903/1:1:Q2CB-C9MN) - establishing Agnes McCaa as his wife from 1859",
+        "Canada, Ontario, Marriages, 1869-1927 - the hint record: marriage of Thomas John Sloane and Maggie A Mahaffey, Toronto, 4 February 1891, naming the groom's parents as William and Maria Sloane with no birthplace or residence (ark:/61903/1:1:FMV5-LZ2)"
+      ],
+      "required": true
+    },
+    {
+      "id": "f2",
+      "type": "fact",
+      "description": "Having searched the FamilySearch index - 'Canada, Ontario, Marriages, 1869-1927' and the Canada census collections - for any wife named Maria for William W Sloan (PID LHG6-L26) or a son Thomas John born about 1861, and found none, the agent should document a negative conclusion: Agnes McCaa is the only wife documented for William W Sloan in the records reviewed, and no record establishes a second wife named Maria or a son Thomas John born 1861. The evidence supports rejecting the 1891 Toronto marriage as a match for William W Sloan, but the groom's identity and the identity of his parents remain unconfirmed.",
+      "details": {
+        "subject_person": "William W Sloan (PID LHG6-L26)",
+        "relation": "research conclusion",
+        "target_person": {
+          "name": "documented negative conclusion: no second wife found for William W Sloan",
+          "birth": "n/a"
+        }
+      },
+      "supporting_sources": [
+        "Absence of any record in 'Canada, Ontario, Marriages, 1869-1927' or the Canada census collections naming a wife Maria for William W Sloan (b. 1832, Huron) or a son Thomas John born 1861; a search for a William Sloan and Maria couple matching the tree subject returned only unrelated families, including a distinct William Sloan (b. 1818, Ireland) and Maria J. Sloan in Victoria County, Ontario"
       ],
       "required": true
     }

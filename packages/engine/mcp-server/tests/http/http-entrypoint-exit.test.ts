@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 // the same way, killing the child once it prints. Every inherited GENEALOGY_*
 // variable is cleared, so the case sees only what it sets. The readiness case
 // keeps the child running, with both stores pointed at a closed port, and asks
-// it for /healthz.
+// it for /healthz and /livez.
 
 const HTTP_JS = resolve(dirname(fileURLToPath(import.meta.url)), "../../build/http.js");
 
@@ -95,7 +95,7 @@ function startHttp(storeEnv: Record<string, string>): Promise<{ child: ChildProc
 }
 
 describe("build/http.js readiness", () => {
-  it("answers 503 on /healthz with Postgres and S3 unreachable and keeps running", async () => {
+  it("answers 503 on /healthz and 200 on /livez with Postgres and S3 unreachable, and keeps running", async () => {
     const { child, port } = await startHttp({
       ...BASE,
       GENEALOGY_S3_ENDPOINT: "http://127.0.0.1:1",
@@ -111,6 +111,10 @@ describe("build/http.js readiness", () => {
       expect(body.tools).toBeGreaterThan(0);
       // Labels only: nothing from the DSN, the endpoint or either key.
       expect(text).not.toMatch(/u:p|127\.0\.0\.1|ak-sentinel|sk-sentinel/);
+      // Liveness touches neither store, so it passes a deploy gate before they exist.
+      const live = await fetch(`http://127.0.0.1:${port}/livez`);
+      expect(live.status).toBe(200);
+      expect(await live.json()).toEqual({ ok: true, tools: body.tools });
       // A failing store is a 503, never an exit.
       await new Promise((r) => setTimeout(r, 200));
       expect(child.exitCode).toBeNull();

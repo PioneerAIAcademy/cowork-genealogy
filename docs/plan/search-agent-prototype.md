@@ -191,7 +191,7 @@ narration or the thinking — which is the whole argument. (It *does* fire on de
 calls: the shipped hook routes by caller identity off `agent_id`/`agent_type` in the
 payload. An earlier draft said otherwise, which contradicted both D15 and acceptance
 criterion 3.) Two `PreToolUse` hooks sit on P1's session. The shipped plugin hook's
-matcher is `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`, so it
+matcher is `Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)` (the last alternative names the tools only agents hold), so it
 never fires on `extraction_append` — the call P1 kills on. The hosted `_pretool_hook`
 the driver inherits from `build_options` has no matcher, fires on every tool including
 that one, and allows it. P1's delegation evidence comes from the SDK stream's
@@ -2857,7 +2857,8 @@ sampling, gateway-wide. TAP decided on 2026-09-21 to capture everything in int.
   tool-result JSON and image bytes do not leave.
 - *Patron data still leaves in text:* the patron's names and record details, as the
   user types them and as the model narrates what it read. About 700k characters left
-  per research turn.
+  per research turn. A whole run sends about 17 million (bagley to `completed`, 166
+  calls, local v1.6.0 copy, 2026-10-31, n=1; the handoff's F7 has the breakdown).
 
 **Re-measured 2026-10-24 on local v1.6.0 GA** (the EKS gateway's version, with
 `tap-tracing`'s fields from `fs-eng/tap-gateway` master `3e338f9b5`, a local Jaeger, real

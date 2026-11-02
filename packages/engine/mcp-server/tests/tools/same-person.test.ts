@@ -5,10 +5,13 @@ import { tmpdir } from "os";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   samePerson,
+  samePersonSchema,
   buildRecordedScore,
   describeScoredPair,
   resolvePartyBySiblings,
+  withoutRecordSourced,
 } from "../../src/tools/same-person.js";
+import { Mob } from "../../src/utils/mob.js";
 import { having, notHaving } from "../helpers/narrow.js";
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../../src/types/gedcomx.js";
 import type { SamePersonApiResponse } from "../../src/types/same-person.js";
@@ -32,12 +35,22 @@ vi.mock("../../src/tools/record-read.js", () => ({
   recordReadTool: recordReadMock,
 }));
 
+// FamilySearch's matcher unless a test names the service: LOCAL reads the
+// developer's own config.json, which may name the service.
+const matcherSettingsMock = vi.hoisted(() => vi.fn());
+vi.mock("../../src/auth/config.js", async (orig) => ({
+  ...(await orig<typeof import("../../src/auth/config.js")>()),
+  getMatcherSettings: matcherSettingsMock,
+}));
+
 beforeEach(() => {
   mockFetch.mockReset();
   getValidTokenMock.mockReset();
   getValidTokenMock.mockResolvedValue("test-token");
   recordReadMock.mockReset();
   recordReadMock.mockRejectedValue(new Error("no record_read in this test"));
+  matcherSettingsMock.mockReset();
+  matcherSettingsMock.mockResolvedValue({ backend: "familysearch" });
 });
 
 afterEach(() => {
@@ -92,7 +105,7 @@ const noMatchResponse: SamePersonApiResponse = {
  *  `samePerson`'s declared return is a union, and the project arm's member has
  *  none of them, so a test that reads `queryArk` has to say which arm it called. */
 function explicit(r: Awaited<ReturnType<typeof samePerson>>) {
-  return having(notHaving(r, "matchRelatives"), "queryArk");
+  return notHaving(notHaving(r, "matchRelatives"), "recordPersona");
 }
 
 /** The project arm's single-pair result: the member that names whom it scored. */
@@ -102,7 +115,7 @@ function projectResult(r: Awaited<ReturnType<typeof samePerson>>) {
 
 describe("samePerson", () => {
   describe("happy path", () => {
-    it("returns matched=true with confidence + score + ARKs on a match", async () => {
+    it("returns the score and ARKs on a match, and no matched or confidence", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => matchResponse,
@@ -115,8 +128,8 @@ describe("samePerson", () => {
         primaryId2: "I1",
       }, LOCAL));
 
-      expect(result.matched).toBe(true);
-      expect(result.confidence).toBe(5);
+      expect(result).not.toHaveProperty("matched");
+      expect(result).not.toHaveProperty("confidence");
       expect(result.score).toBeCloseTo(0.99983513);
       expect(result.queryArk).toBe("ark:/61903/4:1:KGS8-LY1");
       expect(result.candidateArk).toBe("ark:/61903/4:1:KCWM-J9H");
@@ -124,7 +137,7 @@ describe("samePerson", () => {
       expect(result.updated).toBe("2026-05-15T01:58:23.913Z");
     });
 
-    it("returns matched=false when entries[0] has no confidence field", async () => {
+    it("returns the score alone when entries[0] has no confidence field", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => noMatchResponse,
@@ -137,8 +150,8 @@ describe("samePerson", () => {
         primaryId2: "I1",
       }, LOCAL));
 
-      expect(result.matched).toBe(false);
-      expect(result.confidence).toBeUndefined();
+      expect(result).not.toHaveProperty("matched");
+      expect(result).not.toHaveProperty("confidence");
       expect(result.score).toBeCloseTo(2.46e-8);
       expect(result.candidateArk).toContain("MMMM-MMM");
     });
@@ -471,7 +484,7 @@ describe("samePerson", () => {
       for (const m of result.matches) {
         expect(m.role).toBe("child");
         expect(m.score).toBeCloseTo(0.99983513);
-        expect(m.confidence).toBe(5);
+        expect(m).not.toHaveProperty("confidence");
         expect(typeof m.preScore).toBe("number");
       }
       const pairings = result.matches
@@ -506,6 +519,40 @@ describe("samePerson", () => {
       if (!("matchRelatives" in result)) throw new Error("expected relatives result");
       expect(result.matches).toHaveLength(2);
       expect(result.matches.map((m) => m.candidateId).sort()).toEqual(["c-john", "c-mary"]);
+    });
+
+    it("asks FamilySearch 5 pairs at a time and retries a pair that fails once", async () => {
+      const given = ["Adam", "Bert", "Carl", "Dirk", "Emil", "Finn", "Gust", "Hans"];
+      const kids = (prefix: string) =>
+        given.map((g, i) => ({ id: `${prefix}-${g}`, given: g, year: String(1810 + 2 * i) }));
+      let inFlight = 0;
+      let peak = 0;
+      let failed = false;
+      mockFetch.mockImplementation(async (_url: string, opts: { body: string }) => {
+        peak = Math.max(peak, ++inFlight);
+        await new Promise((r) => setTimeout(r, 5));
+        inFlight--;
+        const about2: string =
+          JSON.parse(opts.body).entries[1].content.gedcomx.sourceDescriptions[0].about;
+        if (about2 === "#c-Adam" && !failed) {
+          failed = true;
+          throw new Error("transient FS failure");
+        }
+        return { ok: true, json: async () => matchResponse };
+      });
+
+      const result = await samePerson({
+        gedcomx1: household("I1", kids("t")),
+        primaryId1: "I1",
+        gedcomx2: household("I2", kids("c")),
+        primaryId2: "I2",
+        matchRelatives: true,
+      }, LOCAL);
+
+      if (!("matchRelatives" in result)) throw new Error("expected relatives result");
+      expect(peak).toBe(5);
+      expect(result.matches).toHaveLength(8);
+      expect(mockFetch).toHaveBeenCalledTimes(9);
     });
 
     it("still validates the focus ids in relatives mode", async () => {
@@ -737,8 +784,23 @@ describe("samePerson — project-relative arm", () => {
       record_role: "principal",
       tree_person_id: "I1",
       assertion_id: "a_005",
-      matched: true,
+      scorer: "familysearch",
+      model: null,
     });
+    expect(file.scores["a_005|I1"]).not.toHaveProperty("matched");
+    expect(file.scores["a_005|I1"]).not.toHaveProperty("confidence");
+  });
+
+  it("asks FamilySearch once, and rethrows its failure rather than retrying it", async () => {
+    await project();
+    mockFetch.mockResolvedValueOnce({
+      ok: false, status: 503, statusText: "Service Unavailable", json: async () => ({}),
+    });
+    mockFetch.mockResolvedValue({ ok: true, json: async () => matchResponse });
+    await expect(
+      samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1" }, LOCAL),
+    ).rejects.toThrow(/matchTwoExamples API error: 503/);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
   it("sends the matching mob as the tree side, not the whole tree", async () => {
@@ -2114,21 +2176,21 @@ describe("samePerson — project-relative arm", () => {
       );
       // An exact set, so a stray field fails as surely as a missing one.
       expect(Object.keys(match).sort()).toEqual(
-        ["confidence", "matched", "recordPersona", "recordSource", "recorded", "score", "treePerson"],
+        ["recordPersona", "recordSource", "recorded", "score", "treePerson"],
       );
       expect(match).not.toHaveProperty("queryArk");
       expect(match).not.toHaveProperty("candidateArk");
       expect(match).not.toHaveProperty("apiTitle");
       expect(match).not.toHaveProperty("updated");
 
-      // A non-match carries no confidence, and still names whom it scored.
+      // A non-match has the same fields, and still names whom it scored.
       mockFetch.mockResolvedValueOnce({ ok: true, json: async () => noMatchResponse });
       const nonMatch = notHaving(
         await samePerson({ projectPath: dir, assertionId: "a_034", treePersonId: "I3" }, LOCAL),
         "matchRelatives",
       );
       expect(Object.keys(nonMatch).sort()).toEqual(
-        ["matched", "recordPersona", "recordSource", "recorded", "score", "treePerson"],
+        ["recordPersona", "recordSource", "recorded", "score", "treePerson"],
       );
       expect(projectResult(nonMatch).treePerson).toEqual({ id: "I3", name: "Maria Elisabeth Mouchang" });
     });
@@ -2145,7 +2207,8 @@ describe("samePerson — project-relative arm", () => {
       // The harness has no fetch, so it derives the attestation from the project
       // documents with the same lookup. The two must not disagree on a call.
       const derived = buildRecordedScore(
-        hhResearch(), "a_038", "I1", "father", { score: filed.score, matched: filed.matched },
+        hhResearch(), "a_038", "I1", "father",
+        { score: filed.score, scorer: filed.scorer, model: filed.model },
       );
       expect(derived?.record_persona_id).toBe(filed.record_persona_id);
       expect(derived?.record_persona_id).toBe(HH_FATHER);
@@ -2297,6 +2360,195 @@ describe("samePerson — the recorded entry answers for the persona's other fact
   });
 });
 
+// ─── the matcher service backend ─────────────────────────────────────────────
+
+describe("samePerson — scored by the matcher service", () => {
+  let dir: string;
+  const RECORD = "https://www.familysearch.org/ark:/61903/1:1:FLYN-1870";
+  const OTHER = "https://www.familysearch.org/ark:/61903/1:1:CENS-1880";
+
+  /** I1's family: parent I0 and grandparent I9, spouse I2, child I3, and I3's
+   *  child I4. Some of I1's and I2's facts and names cite only RECORD's source. */
+  const TREE: SimplifiedGedcomX = {
+    persons: [
+      {
+        id: "I1", gender: "Male",
+        names: [
+          { given: "Thomas", surname: "Flynn" },
+          { given: "Thomas", surname: "Flinn", sources: [{ ref: "S50" }] },
+        ],
+        facts: [
+          { type: "Residence", date: "1875", sources: [{ ref: "S50" }] },
+          { type: "Residence", date: "1880", sources: [{ ref: "S60" }] },
+          { type: "Birth", date: "1844", sources: [{ ref: "#S50" }, { ref: "S60" }] },
+        ],
+      },
+      {
+        id: "I2", gender: "Female",
+        names: [{ given: "Mary", surname: "Doyle", sources: [{ ref: "S50" }] }],
+        facts: [{ type: "Residence", date: "1877", sources: [{ ref: "S50" }] }],
+      },
+      { id: "I3", gender: "Male", names: [{ given: "John", surname: "Flynn" }], facts: [{ type: "Birth", date: "1870" }] },
+      { id: "I4", gender: "Male", names: [{ given: "Peter", surname: "Flynn" }], facts: [{ type: "Birth", date: "1895" }] },
+      { id: "I0", gender: "Male", names: [{ given: "Michael", surname: "Flynn" }] },
+      { id: "I9", gender: "Male", names: [{ given: "Patrick", surname: "Flynn" }] },
+    ],
+    relationships: [
+      { type: "Couple", person1: "I1", person2: "I2" },
+      { type: "ParentChild", parent: "I1", child: "I3" },
+      { type: "ParentChild", parent: "I2", child: "I3" },
+      { type: "ParentChild", parent: "I3", child: "I4" },
+      { type: "ParentChild", parent: "I0", child: "I1" },
+      { type: "ParentChild", parent: "I9", child: "I0" },
+    ],
+  };
+
+  const RESEARCH = {
+    log: [{ id: "log_1", tool: "record_search", results_ref: "results/log_1.json" }],
+    sources: [
+      { id: "src_001", gedcomx_source_description_id: "S50" },
+      { id: "src_002", gedcomx_source_description_id: "S60" },
+    ],
+    assertions: [
+      {
+        id: "a_005", record_id: RECORD, record_role: "principal", source_id: "src_001",
+        fact_type: "name", value: "Thomas Flynn", record_persona_id: null,
+        record_basis: "stated", log_entry_id: "log_1",
+      },
+      {
+        id: "a_020", record_id: OTHER, record_role: "head", source_id: "src_002",
+        fact_type: "residence", value: null, record_basis: "stated", log_entry_id: "log_1",
+      },
+    ],
+  };
+
+  /** The fetched record: a household of three. */
+  const HOUSEHOLD: SimplifiedGedcomX = {
+    persons: [
+      { id: "MP1", gender: "Male", names: [{ given: "Thomas", surname: "Flynn" }] },
+      { id: "MP2", gender: "Female", names: [{ given: "Mary", surname: "Doyle" }] },
+      { id: "MP3", gender: "Male", names: [{ given: "John", surname: "Flynn" }], facts: [{ type: "Birth", date: "1870" }] },
+    ],
+    relationships: [
+      { type: "Couple", person1: "MP1", person2: "MP2" },
+      { type: "ParentChild", parent: "MP1", child: "MP3" },
+      { type: "ParentChild", parent: "MP2", child: "MP3" },
+    ],
+  };
+
+  function useService(score = 0.77): void {
+    matcherSettingsMock.mockResolvedValue({ backend: "service", url: "http://matcher.test", apiKey: "k".repeat(32) });
+    mockFetch.mockImplementation(async (_url: string, init: { body: string }) => {
+      const pairs = JSON.parse(init.body).pairs as Array<{ id: string }>;
+      return new Response(
+        JSON.stringify({
+          model: { version: "m16", cutoffs: { floors: { thin_subject: 0.3, real_negative: 0.05 } } },
+          results: pairs.map((p) => ({ id: p.id, score, local: score, jev: "off", veto: false })),
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      );
+    });
+  }
+
+  const posted = (call = 0) => JSON.parse(mockFetch.mock.calls[call][1].body).pairs;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "same-person-service-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(RESEARCH), "utf8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(TREE), "utf8");
+    recordReadMock.mockResolvedValue(HOUSEHOLD);
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("project arm: sends the tree FamilySearch would be sent, cut the same, without the record's own facts", async () => {
+    useService();
+    const result = projectResult(await samePerson(
+      { projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordPersonaId: "MP1" },
+      LOCAL,
+    ));
+
+    const [pair] = posted();
+    expect(pair).toMatchObject({ kind: "tree_record", pid: "I1", personaId: "MP1", rec: HOUSEHOLD });
+    const familySearchDocument = withoutRecordSourced(new Mob(TREE, "I1").matchSubset().gedcomx, RESEARCH, RECORD);
+    expect(pair.tree).toEqual(familySearchDocument);
+    expect(JSON.stringify(pair.tree)).not.toContain("1875");
+    expect(JSON.stringify(pair.tree)).not.toContain("Patrick");
+    expect(result.score).toBe(0.77);
+    expect(result).not.toHaveProperty("matched");
+    expect(result).not.toHaveProperty("confidence");
+  });
+
+  it("project arm: files the service and its model on the attestation", async () => {
+    useService();
+    await samePerson({ projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordPersonaId: "MP1" }, LOCAL);
+    const entry = findRecordedScore(await readMatchScores(dir, RECORD), "a_005", "I1");
+    expect(entry).toMatchObject({ score: 0.77, scorer: "service", model: "m16" });
+    expect(entry).not.toHaveProperty("matched");
+    expect(entry).not.toHaveProperty("confidence");
+  });
+
+  it("project relatives: each tree relative is sent with its own family, cut from the whole tree", async () => {
+    useService();
+    const result = await samePerson(
+      { projectPath: dir, assertionId: "a_005", treePersonId: "I1", recordPersonaId: "MP1", matchRelatives: true },
+      LOCAL,
+    );
+    if (!("matchRelatives" in result)) throw new Error("expected a relatives result");
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const child = posted().find((p: { pid: string }) => p.pid === "I3");
+    expect(child).toMatchObject({ kind: "tree_record", personaId: "MP3" });
+    const ids = (child.tree.persons as Array<{ id: string }>).map((p) => p.id);
+    expect(ids).toContain("I4");
+    const subjectCut = new Mob(TREE, "I1").matchSubset().gedcomx;
+    expect((subjectCut.persons ?? []).map((p) => p.id)).not.toContain("I4");
+    for (const m of result.matches) {
+      expect(m.score).toBe(0.77);
+      expect(m).not.toHaveProperty("confidence");
+    }
+  });
+
+  it("explicit arm: scores two records as record_record and returns the score alone", async () => {
+    useService(0.42);
+    const other: SimplifiedGedcomX = {
+      persons: [{ id: "Q1", gender: "Male", names: [{ given: "Thos", surname: "Flynn" }] }],
+    };
+    const result = await samePerson({ gedcomx1: HOUSEHOLD, primaryId1: "MP1", gedcomx2: other, primaryId2: "Q1" }, LOCAL);
+
+    expect(posted()).toEqual([
+      { id: "0", kind: "record_record", rec: HOUSEHOLD, personaId: "MP1", rec2: other, personaId2: "Q1" },
+    ]);
+    expect(result).toEqual({ score: 0.42 });
+  });
+
+  it("explicit arm: throws the pair's own error when the service could not score it", async () => {
+    matcherSettingsMock.mockResolvedValue({ backend: "service", url: "http://matcher.test", apiKey: "k".repeat(32) });
+    mockFetch.mockImplementation(async (_url: string, init: { body: string }) => {
+      const [p] = JSON.parse(init.body).pairs;
+      return new Response(
+        JSON.stringify({
+          model: { version: "m16", cutoffs: { floors: { thin_subject: 0.3, real_negative: 0.05 } } },
+          results: [{ id: p.id, error: { code: "persona_not_in_record" } }],
+        }),
+        { status: 200 },
+      );
+    });
+    await expect(
+      samePerson({ gedcomx1: HOUSEHOLD, primaryId1: "MP1", gedcomx2: HOUSEHOLD, primaryId2: "MP2" }, LOCAL),
+    ).rejects.toThrow(/persona_not_in_record/);
+  });
+});
+
+describe("samePersonSchema", () => {
+  it("describes no confidence and no matched", () => {
+    expect(samePersonSchema.description).not.toContain("confidence (integer");
+    expect(samePersonSchema.description).not.toContain("`matched`");
+    expect(samePersonSchema.description).not.toContain("confidence?");
+  });
+});
+
 // ─── buildRecordedScore (#1731 PR B) ────────────────────────────────────────
 //
 // Extracted so the eval harness can write a truthful attestation on a
@@ -2310,7 +2562,7 @@ describe("samePerson — the recorded entry answers for the persona's other fact
 // whole pre-existing suite.
 
 describe("buildRecordedScore", () => {
-  const RESULT = { score: 0.82, confidence: 7, matched: true };
+  const RESULT = { score: 0.82, scorer: "familysearch" as const, model: null };
   const research = (assertion: Record<string, unknown>, log: unknown[] = []) => ({
     assertions: [assertion],
     log,
@@ -2405,11 +2657,12 @@ describe("buildRecordedScore", () => {
     expect(r?.record_role).toBe("groom");
   });
 
-  it("omits confidence when the API returned none", () => {
+  it("files the scorer and model it was given, and no matched or confidence", () => {
     const r = buildRecordedScore(research({ id: "a_001", record_id: "r1" }),
-      "a_001", "I1", undefined, { score: 0.1, matched: false });
+      "a_001", "I1", undefined, { score: 0.1, scorer: "service", model: "m16" });
+    expect(r).toMatchObject({ score: 0.1, scorer: "service", model: "m16" });
     expect(r).not.toHaveProperty("confidence");
-    expect(r?.matched).toBe(false);
+    expect(r).not.toHaveProperty("matched");
   });
 
   // ── the persona it files: the same one samePerson resolves for the call ──

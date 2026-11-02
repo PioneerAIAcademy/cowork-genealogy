@@ -52,6 +52,7 @@ from .continue_policy import (
     delivered_stop_reason,
     foreground_rewrite,
     DELIVERY_GUIDANCE,
+    HOSTED_PLANE_ENV,
     completion_halt_summary,
     env_int,
     status_before_call,
@@ -591,10 +592,13 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
                     f"{tool_name} on {protected} is disabled — all writes to "
                     "research.json/tree.gedcomx.json must go through the writer tools. "
                     "To CREATE a new project use project_create, which writes both files "
-                    "together; to add to an existing one use research_append, "
-                    "research_log_append, tree_edit or tree_correct. These validate "
+                    "together (from the main session, invoke `@plugin:init-project`, which "
+                    "calls it); to add to an existing one use research_append or "
+                    "research_log_append, and for the tree tree_edit or tree_correct (from "
+                    "the main session, invoke `@plugin:tree-edit`). These validate "
                     "before persisting. Direct file writes never validate. "
-                    "external-collections.json is written only by external_links_search given a projectPath."
+                    "external-collections.json is written only by external_links_search given a "
+                    "projectPath (from the main session, invoke `@plugin:locality-guide`)."
                 ),
             },
         }
@@ -759,6 +763,7 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
         "ANTHROPIC_API_KEY": current_api_key() if api_key is None else api_key,
         "ENABLE_TOOL_SEARCH": "true",
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        HOSTED_PLANE_ENV: "1",
     }
     base_url = _current_base_url()
     if base_url:
@@ -1017,12 +1022,13 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         _log(f"[agent] staged plugin agents: {', '.join(staged)}")
 
     project_note = (
-        "You are the hosted genealogy research agent. The active research "
-        f"project lives in your current working directory ({project_dir}). It "
-        "contains research.json and tree.gedcomx.json — read and update those "
-        "files there (do NOT look in the home directory). Follow the genealogy "
-        "skills, and apply researcher_profile.narration_guidance from "
-        "research.json as your narration style."
+        "You are the hosted genealogy research agent. The research project "
+        f"lives in your current working directory ({project_dir}). Once a "
+        "project exists there it holds research.json and tree.gedcomx.json — "
+        "read and update those files there (do NOT look in the home directory). "
+        "Follow the genealogy skills, and apply "
+        "researcher_profile.narration_guidance from research.json as your "
+        "narration style."
     )
     kwargs = dict(
         cwd=str(project_dir),

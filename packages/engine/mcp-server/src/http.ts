@@ -30,7 +30,8 @@
 // (debug-holds.ts) is one more stderr line, so a forgotten one shows in the
 // logs; with neither set, nothing is printed. Nothing connects
 // before listen: `GET /healthz` probes Postgres (schema included) and S3 per
-// request and answers 503 while either is unreachable, never exiting.
+// request and answers 503 while either is unreachable, never exiting; `GET /livez`
+// probes neither and answers 200.
 //
 // The process also runs the S3 orphan sweep (store/s3-orphan-sweep.ts, U19):
 // GENEALOGY_ORPHAN_SWEEP_INTERVAL_S (3600; 0 = off; at most 2147483, setTimeout's

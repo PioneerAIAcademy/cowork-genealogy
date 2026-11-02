@@ -17,6 +17,9 @@
     "delegation": "Audit the sources on Cornelius Driscoll (GJ72-9WD) and list what is actually wrong with them, worst first.\n\nprojectPath: <workspace>",
     "scenario": "driscoll-source-audit"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "person-read-driscoll-attached-sources",
     "record-read-driscoll-baptism-1814",

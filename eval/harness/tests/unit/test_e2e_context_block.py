@@ -87,14 +87,18 @@ def test_remote_devices_spelling_is_also_blocked_on_main():
 
 
 def test_other_mcp_tools_on_main_are_not_blocked():
-    """Ordinary research tools must pass through untouched. `image_read` is the
-    whole guarded set — see the per-member test below. `extraction_append` is in
-    this list deliberately: since issue #2937 it is an ordinary main-thread
-    call."""
+    """Main-thread tools must pass through untouched: the ones a skill declares,
+    and the ones only agents hold that the hook's MAIN_THREAD_OK keeps callable.
+    `record_search` left this list in issue #3528 — only agents hold it, and the
+    per-member test below covers it. `extraction_append` is in this list
+    deliberately: since issue #2937 it is an ordinary main-thread call."""
     for name in (
         "mcp__genealogy__record_read",
         "mcp__genealogy__research_append",
-        "mcp__genealogy__record_search",
+        "mcp__genealogy__research_log_append",
+        "mcp__genealogy__image_transcribe",
+        "mcp__genealogy__sidecar_read",
+        "mcp__genealogy__person_read",
         "mcp__genealogy__extraction_append",
     ):
         assert is_main_thread_subagent_only_tool(_main(name)) is False

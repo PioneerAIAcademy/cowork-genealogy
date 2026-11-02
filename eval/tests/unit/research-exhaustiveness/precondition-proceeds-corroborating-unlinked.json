@@ -27,5 +27,8 @@
     "The search_stop.stop_criteria object must contain all seven keys: goal_alignment, repository_breadth, original_substitution, independent_verification, evidence_class, conflict_resolution, overturn_risk — each a 1-2 sentence assessment grounded in the scenario's log entries and assertions. log_entry_ids must reference the supporting log entries.",
     "It is acceptable to note the unlinked corroborating assertions as an advisory, but that note must not prevent the declaration. A refusal to declare that cites the unlinked assertions as the blocker is a FAIL for this test.",
     "The question is specifically about the FATHER; three converging sources answer it. The 1870/1880/1900 censuses and other record types are unsearched, but overturn risk is low — exhaustive does not mean exhausting every record type."
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

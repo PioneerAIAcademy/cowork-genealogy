@@ -5,18 +5,23 @@ import { configFromEnv, PER_USER_ENV } from "../../src/hosted-config-env.js";
 // absent or empty variable decides whether a container silently loses a per-user value.
 
 describe("configFromEnv", () => {
-  it("layers the four set variables over the base", () => {
+  it("layers every set variable over the base", () => {
     const config = configFromEnv({
       WIKI_API_URL: "http://wiki:8000",
       POP_STATS_URL: "http://pop:9000",
       OPENROUTER_API_KEY: "or-key",
       OPENROUTER_MODEL: "a/model",
+      MATCHER_URL: "http://matcher:8765",
+      MATCHER_API_KEY: "matcher-key",
     });
     expect(config).toEqual({
       wikiApiUrl: "http://wiki:8000",
       popStatsUrl: "http://pop:9000",
       openRouterApiKey: "or-key",
       openRouterModel: "a/model",
+      matcher: "service",
+      matcherUrl: "http://matcher:8765",
+      matcherApiKey: "matcher-key",
     });
   });
 
@@ -30,6 +35,17 @@ describe("configFromEnv", () => {
     // Absent stays absent, so each getter's own default still applies.
     expect("popStatsUrl" in config).toBe(false);
     expect("openRouterModel" in config).toBe(false);
+  });
+
+  it.each([
+    ["the URL alone", { MATCHER_URL: "http://matcher:8765" }],
+    ["the key alone", { MATCHER_API_KEY: "matcher-key" }],
+    ["the URL with an empty key", { MATCHER_URL: "http://matcher:8765", MATCHER_API_KEY: "" }],
+  ])("names no matcher from %s", (_label, env) => {
+    const config = configFromEnv(env);
+    expect("matcher" in config).toBe(false);
+    expect("matcherUrl" in config).toBe(false);
+    expect("matcherApiKey" in config).toBe(false);
   });
 
   it("does not mutate the base it was given", () => {
@@ -46,10 +62,20 @@ describe("configFromEnv", () => {
       "POP_STATS_URL",
       "OPENROUTER_API_KEY",
       "OPENROUTER_MODEL",
+      "MATCHER_URL",
+      "MATCHER_API_KEY",
     ]);
     const keys = Object.keys(
       configFromEnv(Object.fromEntries(PER_USER_ENV.map((name) => [name, "set"]))),
     );
-    expect(keys).toHaveLength(PER_USER_ENV.length);
+    expect(keys.sort()).toEqual([
+      "matcher",
+      "matcherApiKey",
+      "matcherUrl",
+      "openRouterApiKey",
+      "openRouterModel",
+      "popStatsUrl",
+      "wikiApiUrl",
+    ]);
   });
 });

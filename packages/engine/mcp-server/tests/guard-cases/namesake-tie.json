@@ -1,7 +1,7 @@
 {
   "guard": "namesake-tie",
-  "description": "A probable or confident person_evidence link to a person with a recorded namesake (namesakes[]) stands only when something in its source ties it to that person: (a) another party of the same source linked at probable or better to the person's spouse, parent or child, who has a given name of their own (not a placeholder, nor only their spouse's given name) and was not made from that source alone; or (b) an occupation or street address of the person's party on that source equal to the same field on another source's link to the person, a link itself allowed (grounding), when neither record lists a second party of that name. A family co-party does not tie when the record's household role or a statement whose type and value agree gives a different relation than the tree. A link whose assertion is absent basis is never judged and never ties. Replayed through namesakeTieInvariants, a static twin of research_append's write-time check namesakeCallCheck, with every probable or confident link to the person as a possible voucher. Which links a call asserts, and that a voucher must stand before the call, are pinned by tests/tools/research-append-namesake.test.ts.",
-  "format": "expect: fire | silent, judged for the person_evidence entry named by `write` in `research` (the document as it stands after the write). `tree` holds the tree. The tree's people are FamilySearch-shaped ids, since the replay passes no starting tree. A case with `known_let_through: true` is silent although the link is the namesake's: a let-through the guard accepts, labelled so it is never read as a correct allow.",
+  "description": "A probable or confident person_evidence link to a person with a recorded namesake (namesakes[]) stands only when something in its source ties it to that person: (a) another party of the same source linked at probable or better to the person's spouse, parent or child, who has a given name of their own (not a placeholder, nor only their spouse's given name) and was not made from that source alone; or (b) an occupation or street address of the person's party on that source equal to the same field on another source's link to the person, a link itself allowed (grounding), when neither record lists a second party of that name. A family co-party does not tie when the record's household role or a statement whose type and value agree gives a different relation than the tree, or, the record stating nothing, when the two parties' roles do (a father beside a mother is her husband, as is a father of the deceased beside a mother of the deceased, a parent of the deceased the deceased's parent; a statement linked to the person it names, by the role it names; only the principal's own family, and only the person's own roles). A link whose assertion is absent basis is never judged and never ties. Replayed through namesakeTieInvariants, a static twin of research_append's write-time check namesakeCallCheck, with every probable or confident link to the person as a possible voucher. Which links a call asserts, and that a voucher must stand before the call, are pinned by tests/tools/research-append-namesake.test.ts. A person with no row is judged too when a parent, child or sibling shares a first given name with them and is not known to be of the other sex (a namesake in the tree, #3681): the link stands when tie (a) or (b) holds and the record would not tie such a relative as well, that relative's siblings read among their relatives, or when the record fits the person and rules every such relative out by age, lifespan, adult role, the same record or the family limit, on dates from records other than this one.",
+  "format": "expect: fire | silent, judged for the person_evidence entry named by `write` in `research` (the document as it stands after the write). `tree` holds the tree. `starting_tree`, when present, is the project's starting tree, which the replay passes with its person ids; without it the tree's people are FamilySearch-shaped ids, since the replay then passes no starting tree. A case with `known_let_through: true` is silent although the link is the namesake's: a let-through the guard accepts, labelled so it is never read as a correct allow.",
   "section": "person_evidence",
   "cases": [
     {
@@ -5520,6 +5520,1956 @@
             "type": "ParentChild",
             "parent": "KWCB-111",
             "child": "KWCB-444"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-son-marriage-on-father",
+      "expect": "fire",
+      "shape": "tree-derived-pair",
+      "why": "No row, but the father and son share the given name John (#3681). The groom is 21 in 1871, born about 1850: the record does not fit the father, born 1820 (age, family limit), and nothing rules the son out.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:MAR9-001",
+            "record_role": "groom",
+            "fact_type": "name",
+            "value": "John Pratt",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:MAR9-001",
+            "record_role": "groom",
+            "fact_type": "age",
+            "value": "21",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:MAR9-001",
+            "record_role": "groom",
+            "fact_type": "marriage",
+            "value": "John Pratt and Jane Doe",
+            "record_basis": "stated",
+            "date": "1871"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWPP-001",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWPP-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1820",
+                "sources": [
+                  {
+                    "ref": "S9"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "KWPP-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1850",
+                "sources": [
+                  {
+                    "ref": "S9"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "KWPP-001",
+            "child": "KWPP-002"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Marriage"
+          },
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-son-marriage-on-son",
+      "expect": "silent",
+      "shape": "tree-derived-pair",
+      "why": "The same record on the son: born about 1850, it fits him, and the father, born 1820, is ruled out by age.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:MAR9-001",
+            "record_role": "groom",
+            "fact_type": "name",
+            "value": "John Pratt",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:MAR9-001",
+            "record_role": "groom",
+            "fact_type": "age",
+            "value": "21",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:MAR9-001",
+            "record_role": "groom",
+            "fact_type": "marriage",
+            "value": "John Pratt and Jane Doe",
+            "record_basis": "stated",
+            "date": "1871"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWPP-002",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWPP-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1820",
+                "sources": [
+                  {
+                    "ref": "S9"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "KWPP-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1850",
+                "sources": [
+                  {
+                    "ref": "S9"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "KWPP-001",
+            "child": "KWPP-002"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Marriage"
+          },
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-same-record",
+      "expect": "silent",
+      "shape": "tree-derived-pair",
+      "why": "Father and son are both on the 1860 census, the head linked to the father and the son to the son: the son is another persona of this record, so the head is not him. Neither has a date.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-002",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "John Pratt",
+            "record_basis": "stated",
+            "record_persona_id": "p1"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-002",
+            "record_role": "son",
+            "fact_type": "name",
+            "value": "John Pratt",
+            "record_basis": "stated",
+            "record_persona_id": "p2"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-002",
+            "record_role": "head",
+            "fact_type": "census",
+            "value": "1860",
+            "record_basis": "stated",
+            "record_persona_id": "p1",
+            "date": "1860"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWPP-001",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "KWPP-002",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWPP-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ]
+          },
+          {
+            "id": "KWPP-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "KWPP-001",
+            "child": "KWPP-002"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-family-limit",
+      "expect": "silent",
+      "shape": "tree-derived-pair",
+      "why": "The 1841 head, 21, was born about 1820. Neither John has a date, but the son's mother was born in 1825, so the son was born 1840 or later: the family limit rules him out.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-002",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "John Pratt",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-002",
+            "record_role": "head",
+            "fact_type": "age",
+            "value": "21",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-002",
+            "record_role": "head",
+            "fact_type": "census",
+            "value": "1841",
+            "record_basis": "stated",
+            "date": "1841"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWPP-001",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWPP-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ]
+          },
+          {
+            "id": "KWPP-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ]
+          },
+          {
+            "id": "KWPP-003",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Mary",
+                "surname": "Pratt"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1825",
+                "sources": [
+                  {
+                    "ref": "S9"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "KWPP-001",
+            "child": "KWPP-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWPP-003",
+            "child": "KWPP-002"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-tied-through-the-sons-brothers",
+      "expect": "fire",
+      "shape": "tree-derived-pair",
+      "why": "hannah-earnest-children: the son Edwin's 1901 census entry, a brother in his brother John's household with William and James, linked to his father Edwin. Tie (a) holds through the three, the father's children, but they are the son's brothers too, so the record ties the son as well and the father's ties do not count; born about 1883, it does not fit the father, born 1853.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-003",
+            "record_role": "brother_1",
+            "fact_type": "name",
+            "value": "Edwin Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p2"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-003",
+            "record_role": "brother_1",
+            "fact_type": "age",
+            "value": "18",
+            "record_basis": "stated",
+            "record_persona_id": "p2"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-003",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "John Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p1"
+          },
+          {
+            "id": "a_004",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-003",
+            "record_role": "head",
+            "fact_type": "census",
+            "value": "1901",
+            "record_basis": "stated",
+            "record_persona_id": "p1",
+            "date": "1901"
+          },
+          {
+            "id": "a_005",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-003",
+            "record_role": "brother_2",
+            "fact_type": "name",
+            "value": "William Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p3"
+          },
+          {
+            "id": "a_006",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-003",
+            "record_role": "brother_3",
+            "fact_type": "name",
+            "value": "James Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p4"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWEG-001",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_003",
+            "person_id": "KWEG-004",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_003",
+            "assertion_id": "a_005",
+            "person_id": "KWEG-005",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_004",
+            "assertion_id": "a_006",
+            "person_id": "KWEG-006",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWEG-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1853",
+                "sources": [
+                  {
+                    "ref": "S9"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "KWEG-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1883",
+                "sources": [
+                  {
+                    "ref": "S9"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "KWEG-003",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Hannah",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-004",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-005",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-006",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "James",
+                "surname": "Grice"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWEG-001",
+            "person2": "KWEG-003"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-004"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-005"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-006"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-004"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-005"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-006"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-tied-by-the-sons-own-wife",
+      "expect": "silent",
+      "shape": "tree-derived-pair",
+      "why": "The son Edwin heads an undated census with his wife Ann, linked to his own wife: she is no spouse, parent, child or sibling of his father, so the record ties only the son, and nothing needs a date.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-003",
+            "record_role": "head",
+            "fact_type": "name",
+            "value": "Edwin Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p1"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-003",
+            "record_role": "wife",
+            "fact_type": "name",
+            "value": "Ann Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p2"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWEG-002",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "KWEG-007",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWEG-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-003",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Hannah",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-004",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-005",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-006",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "James",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-007",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Ann",
+                "surname": "Grice"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWEG-001",
+            "person2": "KWEG-003"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-004"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-005"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-006"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-004"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-005"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-006"
+          },
+          {
+            "type": "Couple",
+            "person1": "KWEG-002",
+            "person2": "KWEG-007"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-fathers-entry-on-his-sons-baptism",
+      "expect": "silent",
+      "shape": "tree-derived-pair",
+      "why": "An undated baptism of William, the father Edwin's entry linked to him, beside the child linked to William and the mother to Hannah. Nothing is dated, so no pair test decides, and the son Edwin shares Hannah as a parent and William as a brother; but the roles make the child the father's child and the mother his wife, which neither is to the son, so the record ties only the father.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:BAP9-004",
+            "record_role": "father",
+            "fact_type": "name",
+            "value": "Edwin Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p2"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:BAP9-004",
+            "record_role": "child",
+            "fact_type": "name",
+            "value": "William Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p1"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:BAP9-004",
+            "record_role": "mother",
+            "fact_type": "name",
+            "value": "Hannah Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p3"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWEG-001",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "KWEG-005",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_003",
+            "assertion_id": "a_003",
+            "person_id": "KWEG-003",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWEG-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-003",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Hannah",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-005",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Grice"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWEG-001",
+            "person2": "KWEG-003"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-005"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-005"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-fathers-entry-linked-to-the-son",
+      "expect": "fire",
+      "shape": "tree-derived-pair",
+      "why": "The same baptism with the father's entry linked to the son Edwin: the roles make the mother the entry's wife, not his mother, so nothing ties it to the son, and nothing is dated.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:BAP9-004",
+            "record_role": "father",
+            "fact_type": "name",
+            "value": "Edwin Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p2"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:BAP9-004",
+            "record_role": "child",
+            "fact_type": "name",
+            "value": "William Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p1"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:BAP9-004",
+            "record_role": "mother",
+            "fact_type": "name",
+            "value": "Hannah Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p3"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWEG-002",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "KWEG-005",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_003",
+            "assertion_id": "a_003",
+            "person_id": "KWEG-003",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWEG-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-003",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Hannah",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-005",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Grice"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWEG-001",
+            "person2": "KWEG-003"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-005"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-005"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-fathers-entry-beside-the-mother-of-the-deceased",
+      "expect": "silent",
+      "shape": "tree-derived-pair",
+      "why": "An undated death record of William: the father Edwin's entry (father_of_deceased) linked to him, the mother's (mother_of_deceased) to Hannah. The son Edwin shares Hannah as a parent, but two parents of one principal are a couple, so she is the entry's wife and not the son's mother; the record ties only the father. Red when two parents of one principal are not read as a couple.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:DTH9-005",
+            "record_role": "father_of_deceased",
+            "fact_type": "name",
+            "value": "Edwin Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p2"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:DTH9-005",
+            "record_role": "deceased",
+            "fact_type": "name",
+            "value": "William Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p1"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:DTH9-005",
+            "record_role": "mother_of_deceased",
+            "fact_type": "name",
+            "value": "Hannah Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p3"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWEG-001",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "KWEG-005",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_003",
+            "assertion_id": "a_003",
+            "person_id": "KWEG-003",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWEG-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-003",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Hannah",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-005",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Grice"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWEG-001",
+            "person2": "KWEG-003"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-005"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-005"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-fathers-entry-beside-a-child-of-naming-the-mother",
+      "expect": "silent",
+      "shape": "tree-derived-pair",
+      "why": "An undated baptism of William, with no mother's entry: the child's own statement 'child of Hannah Grice' is linked to Hannah, and the father Edwin's entry to him. The statement names the mother, so beside the father she is his wife, not the son's mother; the record ties only the father. Red when a statement linked to the person it names is not read by the role it names.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:BAP9-006",
+            "record_role": "father",
+            "fact_type": "name",
+            "value": "Edwin Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p2"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:BAP9-006",
+            "record_role": "child",
+            "fact_type": "name",
+            "value": "William Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p1"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:BAP9-006",
+            "record_role": "child",
+            "fact_type": "relationship",
+            "value": "child of Hannah Grice",
+            "record_basis": "stated",
+            "record_persona_id": "p1",
+            "structured_value": {
+              "relationship_type": "child",
+              "related_person_role": "mother"
+            }
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWEG-001",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "KWEG-005",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_003",
+            "assertion_id": "a_003",
+            "person_id": "KWEG-005",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_004",
+            "assertion_id": "a_003",
+            "person_id": "KWEG-003",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWEG-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Edwin",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-003",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Hannah",
+                "surname": "Grice"
+              }
+            ]
+          },
+          {
+            "id": "KWEG-005",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Grice"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWEG-001",
+            "person2": "KWEG-003"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-001",
+            "child": "KWEG-005"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEG-003",
+            "child": "KWEG-005"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pair-duplicate-siblings",
+      "expect": "fire",
+      "shape": "tree-derived-pair",
+      "why": "elsa-heikkinen-birth: Elsa Brita and Elsa Riitta (Riitta is the Finnish Brita) have the same parents and were both born May 1832, the same woman entered twice. Nothing can tell them apart, so the cap holds; the refusal offers a merge after the speculative way out.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-002",
+            "record_role": "head_of_household",
+            "fact_type": "name",
+            "value": "Elsa Brita Heickinen",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-002",
+            "record_role": "head_of_household",
+            "fact_type": "birth",
+            "value": "May 1832",
+            "record_basis": "stated",
+            "date": "May 1832"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:CEN9-002",
+            "record_role": "head_of_household",
+            "fact_type": "census",
+            "value": "1851",
+            "record_basis": "stated",
+            "date": "1851"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWEH-001",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWEH-001",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Elsa Brita",
+                "surname": "Heikkinen"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "May 1832"
+              }
+            ]
+          },
+          {
+            "id": "KWEH-002",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Elsa Riitta",
+                "surname": "Heikkinen"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "May 1832"
+              }
+            ]
+          },
+          {
+            "id": "KWEH-010",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "Anders Johan",
+                "surname": "Heikkinen"
+              }
+            ]
+          },
+          {
+            "id": "KWEH-011",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Maria",
+                "surname": "Eskelinen"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "KWEH-010",
+            "child": "KWEH-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEH-011",
+            "child": "KWEH-001"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEH-010",
+            "child": "KWEH-002"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWEH-011",
+            "child": "KWEH-002"
+          }
+        ]
+      },
+      "starting_tree": {
+        "persons": [
+          {
+            "id": "KWEH-001",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Elsa Brita",
+                "surname": "Heikkinen"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "May 1832"
+              }
+            ]
+          },
+          {
+            "id": "KWEH-002",
+            "gender": "Female",
+            "names": [
+              {
+                "given": "Elsa Riitta",
+                "surname": "Heikkinen"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "May 1832"
+              }
+            ]
+          }
+        ],
+        "relationships": []
+      }
+    },
+    {
+      "id": "pair-starting-tree-dates",
+      "expect": "silent",
+      "shape": "tree-derived-pair",
+      "why": "The son's marriage on the son, where both births are unsourced but in the starting tree: rule 3 counts a starting-tree date whatever it cites, so the father is ruled out by age.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [],
+        "sources": [
+          {
+            "id": "src_001",
+            "gedcomx_source_description_id": "S1"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:MAR9-001",
+            "record_role": "groom",
+            "fact_type": "name",
+            "value": "John Pratt",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:MAR9-001",
+            "record_role": "groom",
+            "fact_type": "age",
+            "value": "21",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_001",
+            "record_id": "ark:/61903/1:1:MAR9-001",
+            "record_role": "groom",
+            "fact_type": "marriage",
+            "value": "John Pratt and Jane Doe",
+            "record_basis": "stated",
+            "date": "1871"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWPP-002",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWPP-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1820"
+              }
+            ]
+          },
+          {
+            "id": "KWPP-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1850"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "KWPP-001",
+            "child": "KWPP-002"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Marriage"
+          },
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      },
+      "starting_tree": {
+        "persons": [
+          {
+            "id": "KWPP-001",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1820"
+              }
+            ]
+          },
+          {
+            "id": "KWPP-002",
+            "gender": "Male",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Pratt"
+              }
+            ],
+            "facts": [
+              {
+                "type": "Birth",
+                "date": "1850"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "KWPP-001",
+            "child": "KWPP-002"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Marriage"
+          },
+          {
+            "id": "S9",
+            "title": "FamilySearch Family Tree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "relative-made-from-this-source-parents",
+      "expect": "fire",
+      "shape": "relative-minted-from-the-source",
+      "why": "#3874's shape: the child's baptism names its father and mother, and both were created from that baptism alone, so a family tie through them ties the record to itself. The parent variant of relative-made-from-this-source.",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [
+          {
+            "id": "ns_001",
+            "person_id": "KWCB-111",
+            "name": "John Smith",
+            "place": "San Francisco, California, United States",
+            "time_period": "born about 1873",
+            "record_ids": [],
+            "created": "2026-10-01"
+          }
+        ],
+        "sources": [
+          {
+            "id": "src_003",
+            "gedcomx_source_description_id": "S3"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_003",
+            "record_id": "ark:/61903/1:1:BAP3-003",
+            "record_role": "child",
+            "fact_type": "name",
+            "value": "John Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_003",
+            "record_id": "ark:/61903/1:1:BAP3-003",
+            "record_role": "father",
+            "fact_type": "name",
+            "value": "Willem Smith",
+            "record_basis": "stated"
+          },
+          {
+            "id": "a_003",
+            "source_id": "src_003",
+            "record_id": "ark:/61903/1:1:BAP3-003",
+            "record_role": "mother",
+            "fact_type": "name",
+            "value": "Grietje Smith",
+            "record_basis": "stated"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "I6",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_003",
+            "assertion_id": "a_003",
+            "person_id": "I7",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWCB-111",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "I6",
+            "names": [
+              {
+                "given": "Willem",
+                "surname": "Smith",
+                "sources": [
+                  {
+                    "ref": "S3"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "I7",
+            "names": [
+              {
+                "given": "Grietje",
+                "surname": "Smith",
+                "sources": [
+                  {
+                    "ref": "S3"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "ParentChild",
+            "parent": "I6",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "I7",
+            "child": "KWCB-111"
           }
         ]
       }
