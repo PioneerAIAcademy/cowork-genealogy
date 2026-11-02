@@ -9,6 +9,7 @@
 import {
   access,
   appendFile,
+  chmod,
   mkdir,
   readdir,
   readFile,
@@ -97,17 +98,76 @@ function tmpSibling(path: string): string {
   return join(dirname(path), `.${basename(path)}.tmp-${randomUUID()}`);
 }
 
+// ─── Read-only protected files (issue #1499) ─────────────────────────────────
+//
+// The plugin hook denies the raw file-write tools on these files, but a shell
+// write (`device_bash`, the hosted sandbox's `Bash`) never reaches it, and four
+// such writes landed. So the files themselves stay read-only on disk and only
+// this layer unlocks them: unlock, rename, re-lock. Unlock FIRST, because
+// Windows refuses to rename over a read-only target (POSIX does not care); and
+// re-lock after, because the mode does not survive the rename. Measured on
+// macOS and Windows by `dev/probe-readonly-project-files.ts`. A speed bump, not
+// a wall: a writer that runs `chmod` first still gets through, and on macOS and
+// Linux so do `sed -i` and `mv`, which replace the directory entry (Windows
+// refuses those too, as it refuses our own rename).
+// The same names as the hook's PROTECTED_PROJECT_FILES, at the project root only
+// (`tests/packaging/protected-files-parity.test.ts` holds the two lists equal).
+
+export const PROTECTED_FILES: ReadonlySet<string> = new Set([
+  "research.json",
+  "tree.gedcomx.json",
+  "starting-tree.gedcomx.json",
+  "external-collections.json",
+]);
+const LOCKED_MODE = 0o444;
+const UNLOCKED_MODE = 0o644;
+
+/** Whether the resolved `path` is one of the protected files at the project root. */
+function isProtectedPath(projectPath: string, path: string): boolean {
+  // Case-folded: on macOS and Windows `Research.json` IS the protected file.
+  return resolve(dirname(path)) === resolve(projectPath) && PROTECTED_FILES.has(basename(path).toLowerCase());
+}
+
+/**
+ * Make `path` writable. Never throws: a file that does not exist yet needs no
+ * unlock, and when chmod is refused (another owner, a filesystem without modes)
+ * the write is still attempted — the same outcome as before the lock existed.
+ */
+async function unlock(path: string): Promise<void> {
+  await chmod(path, UNLOCKED_MODE).catch(() => {});
+}
+
+/**
+ * Make `path` read-only again. Never throws: by now the data has landed or the
+ * rename's own error is the one to report, and a missing file has nothing to
+ * lock. A refusal is reported on stderr, since it leaves the shell-write guard
+ * off for this file until a later write locks it.
+ */
+async function lock(path: string): Promise<void> {
+  await chmod(path, LOCKED_MODE).catch((error: NodeJS.ErrnoException) => {
+    if (error.code !== "ENOENT") {
+      console.error(`project files: could not make ${basename(path)} read-only again (${error.code ?? error.message}); shell writes to it are not refused until the next write`);
+    }
+  });
+}
+
 /**
  * Replace `path` whole: write a sibling temp file, then rename it over the
  * target. The rename is atomic on a POSIX filesystem, so a reader sees the old
- * file or the new one, never a partly written one.
+ * file or the new one, never a partly written one. A protected file is
+ * unlocked for the rename and locked again whether or not it succeeded.
  */
-async function replaceFile(path: string, bytes: Uint8Array): Promise<void> {
+async function replaceFile(path: string, bytes: Uint8Array, isProtected = false): Promise<void> {
   const tmp = tmpSibling(path);
   await mkdir(dirname(path), { recursive: true });
   try {
     await writeFile(tmp, bytes);
-    await rename(tmp, path);
+    if (isProtected) await unlock(path);
+    try {
+      await rename(tmp, path);
+    } finally {
+      if (isProtected) await lock(path);
+    }
   } catch (error) {
     await unlink(tmp).catch(() => {});
     throw error;
@@ -317,7 +377,8 @@ export class FsProjectStore implements ProjectStore {
 
   /** Atomically write `data` as JSON (`replaceFile`). */
   async writeJson(projectPath: string, ref: string, data: unknown): Promise<void> {
-    await replaceFile(this.abs(projectPath, ref), Buffer.from(serialize(data), "utf-8"));
+    const path = this.abs(projectPath, ref);
+    await replaceFile(path, Buffer.from(serialize(data), "utf-8"), isProtectedPath(projectPath, path));
   }
 
   /**
@@ -338,32 +399,43 @@ export class FsProjectStore implements ProjectStore {
   ): Promise<void> {
     // Phase 1 — write every temp. Any failure here aborts before a single rename,
     // so all targets keep their old content.
-    const temps: Array<{ tmp: string; path: string }> = [];
+    const temps: Array<{ tmp: string; path: string; isProtected: boolean }> = [];
     try {
       for (const w of writes) {
         const path = this.abs(projectPath, w.ref);
         const tmp = tmpSibling(path);
         await mkdir(dirname(path), { recursive: true });
         await writeFile(tmp, serialize(w.data), "utf-8");
-        temps.push({ tmp, path });
+        temps.push({ tmp, path, isProtected: isProtectedPath(projectPath, path) });
       }
     } catch (error) {
       await Promise.all(temps.map((t) => unlink(t.tmp).catch(() => {})));
       throw error;
     }
 
-    // Phase 2 — rename back-to-back.
+    // Phase 2 — rename back-to-back. A failed rename leaves the temps not yet
+    // renamed behind, so remove them before reporting it.
     for (let i = 0; i < temps.length; i++) {
       if (i > 0 && options?.onBeforeSecondRename) {
         await options.onBeforeSecondRename();
       }
-      await rename(temps[i].tmp, temps[i].path);
+      const { tmp, path, isProtected } = temps[i];
+      if (isProtected) await unlock(path);
+      try {
+        await rename(tmp, path);
+      } catch (error) {
+        await Promise.all(temps.slice(i).map((t) => unlink(t.tmp).catch(() => {})));
+        throw error;
+      } finally {
+        if (isProtected) await lock(path);
+      }
     }
   }
 
   /** Atomically write a blob (`replaceFile`): a scan re-saved while another call reads it is never short. */
   async writeBytes(projectPath: string, ref: string, bytes: Uint8Array): Promise<void> {
-    await replaceFile(this.abs(projectPath, ref), bytes);
+    const path = this.abs(projectPath, ref);
+    await replaceFile(path, bytes, isProtectedPath(projectPath, path));
   }
 
   async appendText(projectPath: string, ref: string, text: string): Promise<void> {
@@ -373,7 +445,14 @@ export class FsProjectStore implements ProjectStore {
   }
 
   async remove(projectPath: string, ref: string): Promise<void> {
-    await unlink(this.abs(projectPath, ref)).catch(() => {});
+    const path = this.abs(projectPath, ref);
+    // Windows refuses to unlink a read-only file. If the unlink fails anyway
+    // (the file is held open), lock it again rather than leave it writable.
+    const isProtected = isProtectedPath(projectPath, path);
+    if (isProtected) await unlock(path);
+    await unlink(path).catch(async () => {
+      if (isProtected) await lock(path);
+    });
   }
 
   /** Each project is a folder the caller names, so there is nothing to list. */
