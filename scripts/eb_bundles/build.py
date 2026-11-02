@@ -3,6 +3,7 @@
 
     python scripts/eb_bundles/build.py [--tiers web,worker,tools] [--arch x86_64,aarch64]
                                        [--out releases] [--rds-ca FILE]
+                                       [--fs-python-requirements FILE] [--fs-node-sas-client SPEC]
 
 writes <out>/eb-{web,worker,tools}.zip and <out>/eb-bundles.json. `make eb-bundles` runs it
 under uv with Python 3.12 and the pip AL2023 ships. Stdlib only.
@@ -20,6 +21,10 @@ Unix modes (a .platform hook keeps its exec bit) and zip64.
 
 Needs git, node >= 22 with npm >= 11.12 < 12, pnpm with the JS workspace installed, and pip;
 the network for PyPI, npm and the RDS truststore (--rds-ca FILE replaces the last).
+
+The two --fs-* flags add the SAS clients (U29), which only FamilySearch's registries serve,
+so they are never declared in a lockfile. FamilySearch's runner passes both; GitHub never
+does. The registries come from the runner's own pip and npm configuration, never from here.
 """
 from __future__ import annotations
 
@@ -124,6 +129,7 @@ RULES: dict[str, tuple[Rule, ...]] = {
         Rule(PROTO + "grants.py", "grants.py"),
         Rule(PROTO + "turn_message.py", "turn_message.py"),
         Rule(PROTO + "migrate.py", "migrate.py"),
+        Rule(PROTO + "pg_credentials.py", "pg_credentials.py"),
         Rule(PROTO + "sql/", "sql/"),
         Rule(f"{layout.ENGINE_DIR}/config/familysearch.json", "config/familysearch.json"),
     ),
@@ -135,6 +141,7 @@ RULES: dict[str, tuple[Rule, ...]] = {
         Rule(PROTO + "grants.py", "proto/grants.py"),
         Rule(PROTO + "turn_message.py", "proto/turn_message.py"),
         Rule(PROTO + "migrate.py", "proto/migrate.py"),
+        Rule(PROTO + "pg_credentials.py", "proto/pg_credentials.py"),
         Rule(PROTO + "sql/", "proto/sql/"),
         Rule(PROTO + "worker/", "proto/worker/", top_py=True),
         Rule(layout.PLUGIN_DIR + "/", layout.PLUGIN_IN_BUNDLE + "/"),
@@ -240,17 +247,57 @@ def fetch_rds_ca(path: str | None) -> bytes:
 # ── tiers ────────────────────────────────────────────────────────────────────────
 
 
-def download_wheels(requirements: Path, wheels: Path, arches: list[str]) -> None:
+def download_wheels(requirements: Path, wheels: Path, arches: list[str], extra: tuple[str, ...] = ()) -> None:
     for arch in arches:
         # Every tag AL2023's glibc 2.34 accepts: pip does not widen an explicit --platform.
         platforms = [f"manylinux_2_{minor}_{arch}" for minor in range(34, 16, -1)] + [f"manylinux2014_{arch}"]
         run([sys.executable, "-m", "pip", "download", "--disable-pip-version-check", "--progress-bar", "off",
-             "-r", str(requirements), "--only-binary=:all:", "--python-version", layout.PYTHON_VERSION,
+             *extra, "-r", str(requirements), "--only-binary=:all:", "--python-version", layout.PYTHON_VERSION,
              "--implementation", "cp", "--abi", "cp" + layout.PYTHON_VERSION.replace(".", ""),
              *[a for p in platforms for a in ("--platform", p)], "-d", str(wheels)])
 
 
-def python_tier(tier: str, stage: Path, arches: list[str]) -> list[tuple[str, Path]]:
+def _canonical(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+_PINNED = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==(\S+)$")
+_REQ_NAME = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==", re.M)
+
+
+def fs_requirement_names(text: str, base: str) -> list[str]:
+    """The names in an FS-only requirements file. Every line is `name==version`, with no
+    option, URL or hash, and no name the base export already pins."""
+    lines = [ln.split("#", 1)[0].strip() for ln in text.splitlines()]
+    lines = [ln for ln in lines if ln]
+    bad = [ln for ln in lines if not _PINNED.match(ln)]
+    if bad or not lines:
+        raise BuildError(f"--fs-python-requirements wants one `name==version` per line; got {bad or 'nothing'}")
+    names = [_canonical(_PINNED.match(ln).group(1)) for ln in lines]
+    overlap = sorted(set(names) & {_canonical(n) for n in _REQ_NAME.findall(base)})
+    if overlap:
+        raise BuildError(f"--fs-python-requirements repeats packages the base export pins: {overlap}")
+    return names
+
+
+def append_hashed(req: Path, new_wheels: list[Path]) -> list[str]:
+    """Append `name==version --hash=sha256:...` for wheels that came from the unhashed FS-only
+    download, one line per distribution with a hash per wheel file. Returns the pins."""
+    by_pin: dict[str, list[str]] = {}
+    for whl in sorted(new_wheels):
+        parts = whl.name[:-len(".whl")].split("-")
+        if not whl.name.endswith(".whl") or len(parts) < 5:
+            raise BuildError(f"{whl.name} is not a wheel file name")
+        by_pin.setdefault(f"{_canonical(parts[0])}=={parts[1]}", []).append(sha256(whl))
+    with req.open("a", encoding="utf-8") as f:
+        for pin, hashes in by_pin.items():
+            f.write(pin + "".join(f" \\\n    --hash=sha256:{h}" for h in sorted(set(hashes))) + "\n")
+    return list(by_pin)
+
+
+def python_tier(tier: str, stage: Path, arches: list[str],
+                fs_requirements: Path | None = None) -> tuple[list[tuple[str, Path]], list[str] | None]:
+    """The tier's generated files, and the FS-only pins when --fs-python-requirements is given."""
     committed = REPO / layout.REQUIREMENTS[tier]
     if not committed.is_file():
         raise BuildError(f"{layout.REQUIREMENTS[tier]} is missing; run `make proto-requirements`")
@@ -258,7 +305,22 @@ def python_tier(tier: str, stage: Path, arches: list[str]) -> list[tuple[str, Pa
     wheels.mkdir()
     download_wheels(committed, wheels, arches)
     req = stage / layout.REQUIREMENTS_IN_BUNDLE
-    req.write_text(layout.REQUIREMENTS_HEADER + committed.read_text(encoding="utf-8"), encoding="utf-8")
+    base = committed.read_text(encoding="utf-8")
+    req.write_text(layout.REQUIREMENTS_HEADER + base, encoding="utf-8")
+    fs_pins = None
+    if fs_requirements is not None:
+        fs_requirement_names(fs_requirements.read_text(encoding="utf-8"), base)
+        # Separate and unhashed: one --hash line puts the whole download in hash mode.
+        fs_wheels = stage / "fs-wheels"
+        fs_wheels.mkdir()
+        download_wheels(fs_requirements, fs_wheels, arches, extra=("--no-deps",))
+        new = sorted(fs_wheels.iterdir())
+        clash = [w.name for w in new if (wheels / w.name).exists()]
+        if clash:
+            raise BuildError(f"FS-only wheels collide with base wheels: {clash}")
+        fs_pins = append_hashed(req, new)
+        for w in new:
+            shutil.move(str(w), wheels / w.name)
     out = [(layout.REQUIREMENTS_IN_BUNDLE, req)]
     out += [(f"{layout.WHEELS_DIR}/{w.name}", w) for w in sorted(wheels.iterdir())]
     if tier == "web":
@@ -267,14 +329,30 @@ def python_tier(tier: str, stage: Path, arches: list[str]) -> list[tuple[str, Pa
         run(["pnpm", "--filter", "web", "exec", "vite", "build", "--outDir", str(dist), "--emptyOutDir"],
             cwd=REPO, env={**os.environ, "VITE_SESSION_TRANSPORT": "sse"})
         out += tree(dist, layout.WEB_DIST_DIR)
-    return out
+    return out, fs_pins
 
 
-def build_tools(stage: Path, files: dict[str, int]) -> list[tuple[str, Path]]:
+SAS_NODE_PACKAGE = "@fs/sas-client"
+
+
+def node_package_record(prod: Path, name: str) -> dict[str, str | None]:
+    """Version and integrity of an installed package from npm's hidden lockfile. `resolved`
+    is left out: it names the registry host."""
+    hidden = prod / "node_modules" / ".package-lock.json"
+    try:
+        entry = json.loads(hidden.read_text(encoding="utf-8"))["packages"][f"node_modules/{name}"]
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise BuildError(f"{hidden} has no entry for {name}: {exc}") from exc
+    return {"name": name, "version": entry.get("version"), "integrity": entry.get("integrity")}
+
+
+def build_tools(stage: Path, files: dict[str, int],
+                fs_node_spec: str | None = None) -> tuple[list[tuple[str, Path]], dict | None]:
     """`npm ci && npm run build` in a stage mirroring the repo's paths (so build-info.json
     stamps the checkout's sha through GIT_DIR/GIT_WORK_TREE), the compiled smoke, then the
     production tree from a second clean `npm ci --omit=dev`. Optional dependencies are kept:
-    pg and the S3 client are optional."""
+    pg and the S3 client are optional. With `fs_node_spec`, @fs/sas-client is added to the
+    production tree without touching package.json or the lockfile."""
     mirror = stage / "mirror"
     engine = mirror / layout.ENGINE_DIR
     for p in files:
@@ -293,13 +371,22 @@ def build_tools(stage: Path, files: dict[str, int]) -> list[tuple[str, Path]]:
         if (engine / name).is_file():
             shutil.copy2(engine / name, prod / name)
     run(["npm", "ci", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund"], cwd=prod)
+    fs_node = None
+    if fs_node_spec:
+        if not fs_node_spec.startswith(SAS_NODE_PACKAGE + "@"):
+            raise BuildError(f"--fs-node-sas-client must be {SAS_NODE_PACKAGE}@<version>, got {fs_node_spec!r}")
+        run(["npm", "install", "--no-save", "--omit=dev", "--ignore-scripts", "--no-audit", "--no-fund",
+             fs_node_spec], cwd=prod)
+        if not (prod / "node_modules" / SAS_NODE_PACKAGE / "package.json").is_file():
+            raise BuildError(f"the production tree has no node_modules/{SAS_NODE_PACKAGE}")
+        fs_node = node_package_record(prod, SAS_NODE_PACKAGE)
     if not (prod / "node_modules" / "pg").is_dir():
         raise BuildError("the production tree has no node_modules/pg; optional dependencies were dropped")
 
     out = tree(engine / "build", "build")
     out += tree(engine / "smoke-build", layout.SMOKE_IN_BUNDLE)
     out += tree(prod / "node_modules", "node_modules", skip_bin=True)
-    return out
+    return out, fs_node
 
 
 def tree(root: Path, dest: str, *, skip_bin: bool = False) -> list[tuple[str, Path]]:
@@ -418,18 +505,27 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--arch", type=lambda v: _csv(v, layout.ARCHES, "--arch"), default=list(layout.ARCHES))
     ap.add_argument("--out", default="releases")
     ap.add_argument("--rds-ca", metavar="FILE")
+    ap.add_argument("--fs-python-requirements", metavar="FILE",
+                    help="FS-only Python pins (name==version per line) for web and worker; FamilySearch's runner only")
+    ap.add_argument("--fs-node-sas-client", metavar="SPEC",
+                    help="@fs/sas-client@<version> for the tools tier; FamilySearch's runner only")
     args = ap.parse_args(argv)
     use_caller_path()
+    fs_req = args.fs_python_requirements
+    fs_req_path = (Path(fs_req) if Path(fs_req).is_absolute() else REPO / fs_req) if fs_req else None
 
     try:
         return build(args.tiers, args.arch, Path(args.out) if Path(args.out).is_absolute() else REPO / args.out,
-                     args.rds_ca)
+                     args.rds_ca, fs_python_requirements=fs_req_path, fs_node_sas_client=args.fs_node_sas_client)
     except (BuildError, subprocess.CalledProcessError) as exc:
         log(f"FAILED: {exc}")
         return 1
 
 
-def build(tiers: list[str], arches: list[str], out: Path, rds_ca: str | None) -> int:
+def build(tiers: list[str], arches: list[str], out: Path, rds_ca: str | None, *,
+          fs_python_requirements: Path | None = None, fs_node_sas_client: str | None = None) -> int:
+    if fs_python_requirements is not None and not fs_python_requirements.is_file():
+        raise BuildError(f"--fs-python-requirements {fs_python_requirements} is not a file")
     if not sys.platform.startswith("linux"):
         log(f"warning: building on {sys.platform}; pip evaluates requirement markers against this host, "
             "so the AL2023 boot smoke (make eb-bundles-smoke) is the ground truth")
@@ -454,7 +550,12 @@ def build(tiers: list[str], arches: list[str], out: Path, rds_ca: str | None) ->
             stage.mkdir()
             log(f"== {tier} ==")
             entries = [(dest, REPO / src, files[src]) for src, dest in tier_sources(tier, files)]
-            generated = python_tier(tier, stage, arches) if tier != "tools" else build_tools(stage, files)
+            if tier == "tools":
+                generated, fs_node = build_tools(stage, files, fs_node_sas_client)
+                fs_extras = {"node": fs_node} if fs_node else None
+            else:
+                generated, fs_pins = python_tier(tier, stage, arches, fs_python_requirements)
+                fs_extras = {"python": fs_pins} if fs_pins is not None else None
             ca_file = stage / "rds-ca.pem"
             ca_file.write_bytes(ca)
             generated.append((layout.CA_PATH_IN_BUNDLE, ca_file))
@@ -462,6 +563,8 @@ def build(tiers: list[str], arches: list[str], out: Path, rds_ca: str | None) ->
             info = {"tier": tier, "git_sha": sha, "dirty": dirty, "built_at": dt.datetime.now(dt.timezone.utc)
                     .strftime("%Y-%m-%dT%H:%M:%SZ"), "arches": arches if tier != "tools" else [],
                     "rds_ca": ca_info, "toolchain": tools}
+            if fs_extras:
+                info["fs_extras"] = fs_extras
             info_file = stage / layout.BUILD_INFO_IN_BUNDLE
             info_file.write_text(json.dumps(info, indent=2) + "\n", encoding="utf-8")
             generated.append((layout.BUILD_INFO_IN_BUNDLE, info_file))
@@ -482,6 +585,8 @@ def build(tiers: list[str], arches: list[str], out: Path, rds_ca: str | None) ->
                 raise BuildError(f"{target.name} is {size:,} bytes, over Beanstalk's {layout.SIZE_LIMIT_BYTES:,}")
             manifest["bundles"][tier] = {"file": target.name, "size": size, "sha256": sha256(target),
                                          "entries": len(entries), "dirty": dirty}
+            if fs_extras:
+                manifest["bundles"][tier]["fs_extras"] = fs_extras
             manifest["dirty"] = manifest["dirty"] or dirty
             log(f"{target.name}: {size:,} bytes, {len(entries)} entries{' (dirty)' if dirty else ''}")
     (out / layout.MANIFEST_NAME).write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

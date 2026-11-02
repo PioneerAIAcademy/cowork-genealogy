@@ -416,7 +416,7 @@ def test_a_sweep_close_fences_the_attempt_it_gave_up_on(pg_dsn, servers, monkeyp
     assert claim(pg_dsn, row, 1).epoch == 1
     stamp(pg_dsn, row, 1)
     sql(pg_dsn, "UPDATE turns SET claimed_at = now() - interval '1 hour' WHERE turn_id = %s", (row["turn_id"],))
-    monkeypatch.setattr(worker, "PG_DSN", pg_dsn)
+    monkeypatch.setattr(worker, "PG", worker.pg_credentials.PgCredentials.fixed(pg_dsn))
     monkeypatch.setattr(worker, "QUEUE_URL", "")
     closed = worker.sweep_once(connect=psycopg.connect, max_retries=1, visibility_s=0, retention_s=0)
     assert row["turn_id"] in closed

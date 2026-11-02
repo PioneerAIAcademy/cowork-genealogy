@@ -50,6 +50,8 @@ from claude_agent_sdk.types import (
     SessionStoreEntry,
 )
 
+from proto import pg_credentials
+
 # One statement per batch, ORDER BY n so seq follows batch order. The NOT EXISTS against
 # session_entries sees the statement's snapshot, never the rows it inserts itself, which is
 # why a uuid repeated within the batch needs the second NOT EXISTS.
@@ -95,7 +97,7 @@ def entry_rows(project_id: str, key: SessionKey, entries: list[SessionStoreEntry
 class PgSessionStore(SessionStore):
     def __init__(
         self,
-        dsn: str,
+        creds: pg_credentials.PgCredentials | str,
         project_id: str,
         *,
         turn_id: str | None = None,
@@ -103,7 +105,7 @@ class PgSessionStore(SessionStore):
     ) -> None:
         if (turn_id is None) != (claim_epoch is None):
             raise ValueError("a fenced store needs both turn_id and claim_epoch")
-        self.dsn = dsn
+        self.creds = pg_credentials.PgCredentials.fixed(creds) if isinstance(creds, str) else creds
         self.project_id = project_id
         self.turn_id = turn_id
         self.claim_epoch = claim_epoch
@@ -124,6 +126,15 @@ class PgSessionStore(SessionStore):
             "subkeys_returned": 0,
         }
 
+    @property
+    def dsn(self) -> str:
+        return self.creds.cached() or ""
+
+    async def _connect(self, **kwargs) -> psycopg.AsyncConnection:
+        """A new connection; an invalid password re-resolves the credentials once (U29)."""
+        return await pg_credentials.aconnect(
+            self.creds, lambda dsn, **kw: psycopg.AsyncConnection.connect(dsn, **kw), **kwargs)
+
     async def append(self, key: SessionKey, entries: list[SessionStoreEntry]) -> None:
         self.calls["append"] += 1
         rows = entry_rows(self.project_id, key, entries)
@@ -134,7 +145,7 @@ class PgSessionStore(SessionStore):
         if self.turn_id is not None:
             # Autocommit: the one statement is its own transaction, so the share lock is
             # released at the statement's end, never held across an await.
-            async with await psycopg.AsyncConnection.connect(self.dsn, autocommit=True) as conn:
+            async with await self._connect(autocommit=True) as conn:
                 async with conn.cursor() as cur:
                     await cur.execute(_FENCED_INSERT, {**params, "turn_id": self.turn_id,
                                                        "claim_epoch": self.claim_epoch})
@@ -146,7 +157,7 @@ class PgSessionStore(SessionStore):
         else:
             # ``async with`` commits on a clean exit and rolls back on an exception, so a
             # batch lands whole or not at all.
-            async with await psycopg.AsyncConnection.connect(self.dsn) as conn:
+            async with await self._connect() as conn:
                 async with conn.cursor() as cur:
                     await cur.execute(_INSERT, params)
                     _, inserted = await cur.fetchone()
@@ -156,7 +167,7 @@ class PgSessionStore(SessionStore):
     async def load(self, key: SessionKey) -> list[SessionStoreEntry] | None:
         self.calls["load"] += 1
         params = (self.project_id, key["session_id"], key.get("subpath") or "")
-        async with await psycopg.AsyncConnection.connect(self.dsn) as conn:
+        async with await self._connect() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(_SELECT, params)
                 rows = await cur.fetchall()
@@ -169,7 +180,7 @@ class PgSessionStore(SessionStore):
 
     async def list_subkeys(self, key: SessionListSubkeysKey) -> list[str]:
         self.calls["list_subkeys"] += 1
-        async with await psycopg.AsyncConnection.connect(self.dsn) as conn:
+        async with await self._connect() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(_SELECT_SUBKEYS, (self.project_id, key["session_id"]))
                 rows = await cur.fetchall()
@@ -181,7 +192,7 @@ class PgSessionStore(SessionStore):
         """Whether a resume of ``session_id`` would find a transcript here. The SDK passes
         an explicit ``resume`` to the CLI unchanged when the store is empty, and a fresh
         container has no local transcript to fall back on -- so the worker asks first."""
-        async with await psycopg.AsyncConnection.connect(self.dsn) as conn:
+        async with await self._connect() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(_EXISTS, (self.project_id, session_id))
                 return (await cur.fetchone()) is not None
