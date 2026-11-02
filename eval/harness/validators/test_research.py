@@ -356,7 +356,9 @@ def test_relays_the_agents_tail_verbatim(text_response, test):
     Tag-gated on ``relays-agent-tail``; the agent is the ``routes-to:`` callee.
     The tail is read from the test's own canned response, never from
     ``agent_returns``: there it is wrapped in harness scaffolding the router is
-    told never to print.
+    told never to print. The tail's closing punctuation is not required: a router
+    that carries the agent's last sentence on into its own ask for verdicts has
+    still relayed every word.
     """
     from harness.skill_runner import normalize, tail_after_final_rule
     from harness.skill_stubs import parse_stub_skills
@@ -367,7 +369,7 @@ def test_relays_the_agents_tail_verbatim(text_response, test):
     assert agent, "relays-agent-tail needs a routes-to:<agent> tag naming the relayed agent"
     tail = tail_after_final_rule(parse_stub_skills(test.get("execution")).get(agent) or "")
     assert tail, f"relays-agent-tail needs a stubbed {agent} response with a `---` tail"
-    assert normalize(tail) in normalize(text_response or ""), (
+    assert normalize(tail).rstrip(".!?") in normalize(text_response or ""), (
         f"the router did not relay {agent}'s summary verbatim; expected, after "
         f"normalization:\n{tail}"
     )

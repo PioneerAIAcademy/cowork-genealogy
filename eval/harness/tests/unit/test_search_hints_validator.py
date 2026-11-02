@@ -544,3 +544,20 @@ def test_relay_skips_a_test_without_the_tag():
 def test_relay_refuses_a_tag_with_no_routes_to_callee():
     with pytest.raises(AssertionError, match="needs a routes-to"):
         check_relays_tail(_V34_REPLY, {**RELAYS, "tags": ["relays-agent-tail"]})
+
+
+def test_relay_passes_carrying_the_last_sentence_into_the_ask():
+    # ut_research_zfp's reply in a 2026-11-02 scratch run: every word relayed, the
+    # final "." replaced by the router's own ask for verdicts.
+    reply = (
+        f"Spawning search-hints now.\n\n{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST[:-1]} — let me know your "
+        "verdict on the 1870 and 1880 census hints (accept / reject / not enough information "
+        "for each) and I'll record them and carry on."
+    )
+    check_relays_tail(reply, RELAYS)
+
+
+def test_relay_fails_rewording_the_last_sentence():
+    reply = f"{_TAIL_PARAGRAPH}\n\nWhat are your verdicts on the two census hints?"
+    with pytest.raises(AssertionError, match="did not relay search-hints"):
+        check_relays_tail(reply, RELAYS)
