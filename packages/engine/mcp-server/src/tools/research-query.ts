@@ -313,7 +313,7 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
     personId: { field: "person_id", mode: "exact" },
   },
   hit_verdicts: {
-    personId: { field: "target_person_id", mode: "exact" },
+    personId: { field: "person_id", mode: "exact" },
   },
   external_collections: {
     place: { field: "place", mode: "place-or-enclosing" },
@@ -783,7 +783,7 @@ export const researchQuerySchema = {
         items: { type: "string" },
         description:
           "person_evidence: matches person_id. timelines: matches person_ids (contains). " +
-          "namesakes: matches person_id. hit_verdicts: matches target_person_id.",
+          "namesakes: matches person_id. hit_verdicts: matches person_id.",
       },
       assertionId: {
         type: ["string", "array"],

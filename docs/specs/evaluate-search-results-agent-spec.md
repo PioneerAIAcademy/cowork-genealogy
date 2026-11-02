@@ -73,7 +73,7 @@ extracts each Match from the hit's own transcript.
    or a Death fact with no date and no place, still counts as present. So the
    rule names the type groups and requires a date or place.
 7. **One `research_append`** of a `hit_verdicts` row: `log_id` and `hit_id`
-   from the `hitRef`, `target_person_id`, `verdict`, `new_vital_info`, and a
+   from the `hitRef`, `person_id`, `verdict`, `new_vital_info`, and a
    one- or two-sentence `rationale` naming the deciding facts. On a refusal it
    changes only what the refusal names and sends once more.
 8. **Return.** Four contract lines (`hitRef`, `verdict`, `newVitalInfo`,
@@ -84,7 +84,7 @@ extracts each Match from the hit's own transcript.
 ## 2. The section and its preconditions
 
 The row's shape, the fold of a second append for the same (`log_id`, `hit_id`,
-`target_person_id`) into an update of the first, and the refusals are
+`person_id`) into an update of the first, and the refusals are
 `research-schema-spec.md` §5.16 and `research-append-tool-spec.md` §3.10. The
 two that bound the flag are write-time preconditions in the writer tool, not
 prose (ADR-0011: decidable from the documents alone):
@@ -142,8 +142,6 @@ the thread that ran the search cannot label its own hits from the list.
 
 ## 4. Deferred
 
-- A historical-record target (`target_record_id`), the issue's "or historical
-  record".
 - Evaluating `record_search` hits. `rank_search_matches` scores those already;
   a full-text hit is a transcript, not a persona.
 - A Haiku arm for cost.

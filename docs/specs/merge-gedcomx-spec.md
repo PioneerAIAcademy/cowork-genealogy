@@ -229,7 +229,7 @@ Sequence inside each tool:
 2. Run `mergeGedcomx` (§5–§7) to build the new tree in memory.
 3. **`merge_tree_persons` only:** remap `research.json` person-id references from
    each collapsed id → its survivor id (§10). First, `hit_verdicts` keeps one row
-   per (`log_id`, `hit_id`, `target_person_id`), `hit_id` compared by bare id
+   per (`log_id`, `hit_id`, `person_id`), `hit_id` compared by bare id
    (`foldHitVerdictCollisions`): where the collapsed person and its survivor
    each have a verdict on one hit, the collapsed person's row is removed when
    the two give the same `verdict` and `new_vital_info`, and the survivor's row
@@ -628,7 +628,7 @@ Tool-level (wrappers over the pure core):
   (`subject_person_ids`, `person_evidence.person_id`, `rejected_links.person_id`,
   `timelines.person_ids`,
   `proof_summaries[].claims[].relationship.parent`/`.child`,
-  `namesakes[].person_id`, `hit_verdicts[].target_person_id`) repointed
+  `namesakes[].person_id`, `hit_verdicts[].person_id`) repointed
   collapsed → survivor;
   `researchRefsUpdated` counts match.
 - **Validate-before-persist** — a merge that would produce an invalid project
@@ -710,7 +710,7 @@ also asserts both files are byte-unchanged):
   vouches for the moved link, whether the row holder survives or is folded:
   merged.
 - **MS6** — the row is re-keyed onto the survivor; `researchRefsUpdated.namesakes`
-  is 1. **MS6h** — the same for a hit verdict's `target_person_id`;
+  is 1. **MS6h** — the same for a hit verdict's `person_id`;
   `researchRefsUpdated.hit_verdicts` is 1. **MS6ha** — both members have a
   verdict on one hit (one spelled as a resolver URL) with the same `verdict` and
   `new_vital_info`: one row stands, the survivor's, with its id and rationale,
@@ -766,8 +766,8 @@ also asserts both files are byte-unchanged):
   `rejected_links[].person_id`, `timelines[].person_ids`,
   `proof_summaries[].claims[].relationship.parent`/`.child`,
   `namesakes[].person_id` (so a recorded namesake keeps capping the survivor's
-  links), and `hit_verdicts[].target_person_id` (so a verdict stays on the person
-  it judged, whose `target_person_id` no update can re-point; a verdict on a hit
+  links), and `hit_verdicts[].person_id` (so a verdict stays on the person
+  it judged, whose `person_id` no update can re-point; a verdict on a hit
   the survivor also has one on is folded or refused first, §5b.2 step 3). This set is exactly `validateCrossFile`'s person-id checks in
   `src/validation/validator.ts` and **must stay in sync with it** — extract the
   field list as one shared constant (e.g. `PERSON_ID_REF_FIELDS`) consumed by

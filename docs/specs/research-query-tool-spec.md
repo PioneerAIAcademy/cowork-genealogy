@@ -109,7 +109,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | | `focus` | `focus` | exact |
 | `localities` | *(none)* | — | — |
 | `namesakes` | `personId` | `person_id` | exact |
-| `hit_verdicts` | `personId` | `target_person_id` | exact |
+| `hit_verdicts` | `personId` | `person_id` | exact |
 | `external_collections` | `place` | `place` | the place or any enclosing jurisdiction |
 | | `recordType` | `record_types` | case-insensitive substring of any |
 

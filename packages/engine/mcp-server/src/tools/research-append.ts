@@ -208,7 +208,7 @@ const SECTIONS: Record<string, SectionConfig> = {
     stampTimestamp: CREATED_DATE,
     updatableFields: ["name", "place", "time_period", "record_ids", "log_entry_ids", "notes"],
   },
-  // A verdict is never retired: log_id, hit_id and target_person_id name what
+  // A verdict is never retired: log_id, hit_id and person_id name what
   // it judged, so an update may change only the judgement.
   hit_verdicts: {
     prefix: "hv_",
@@ -9689,7 +9689,7 @@ function sidecarResultsReader(read: (ref: string) => Promise<any>): (ref: string
 /** The keys a `hit_verdicts` append carries that name what it judged. A fold
  *  drops them, with the id and the stamp, so the update carries only the
  *  judgement. */
-const HIT_VERDICT_IDENTITY = ["id", "log_id", "hit_id", "target_person_id", "created"];
+const HIT_VERDICT_IDENTITY = ["id", "log_id", "hit_id", "person_id", "created"];
 
 /** The judgement an append carries. A fold refuses one that leaves any of them
  *  out, as a fresh append is refused, so an update never pairs a new verdict
@@ -9699,7 +9699,7 @@ const HIT_VERDICT_JUDGEMENT = ["verdict", "new_vital_info", "rationale"];
 /** §3.10: each `hit_verdicts` append names a hit of a logged full-text search.
  *  Refuses one whose log entry is not a `fulltext_search` with retained results,
  *  or whose hit is not in them; rewrites `hit_id` to the stored form; and folds
- *  an append for a (log_id, hit_id, target_person_id) that already has a row
+ *  an append for a (log_id, hit_id, person_id) that already has a row
  *  into an update of it, so parallel evaluations of one hit leave one row; a
  *  fold that leaves out part of the judgement is refused instead.
  *  Pushes refusals onto `errors` and returns the fold warnings. */
@@ -9750,19 +9750,19 @@ async function prepareHitVerdicts(
       continue;
     }
     entry.hit_id = found.row.id;
-    const k = key(logId, entry.hit_id, entry.target_person_id);
+    const k = key(logId, entry.hit_id, entry.person_id);
     if (appendedHere.has(k)) {
       errors.push(
         fmt(
           i,
-          `ops[${appendedHere.get(k)}] already judges hit '${entry.hit_id}' against '${entry.target_person_id}' in this call: send one verdict per hit and person.`,
+          `ops[${appendedHere.get(k)}] already judges hit '${entry.hit_id}' against '${entry.person_id}' in this call: send one verdict per hit and person.`,
         ),
       );
       continue;
     }
     appendedHere.set(k, i);
     const existing = stored.find(
-      (r: any) => r && typeof r === "object" && key(r.log_id, r.hit_id, r.target_person_id) === k,
+      (r: any) => r && typeof r === "object" && key(r.log_id, r.hit_id, r.person_id) === k,
     );
     if (!existing || typeof existing.id !== "string") continue;
     const missing = HIT_VERDICT_JUDGEMENT.filter((f) => entry[f] === undefined);
@@ -9774,7 +9774,7 @@ async function prepareHitVerdicts(
     for (const f of HIT_VERDICT_IDENTITY) delete fields[f];
     ops[i] = { section: "hit_verdicts", op: "update", entryId: existing.id, fields };
     warnings.push(
-      `hit '${entry.hit_id}' of ${logId} already has a verdict on '${entry.target_person_id}' ` +
+      `hit '${entry.hit_id}' of ${logId} already has a verdict on '${entry.person_id}' ` +
         `(${existing.id}); this append updated it.`,
     );
   }

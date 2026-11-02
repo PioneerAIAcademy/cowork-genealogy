@@ -266,7 +266,7 @@ const EXAMPLES: Record<string, string> = {
   hit_verdicts: `{
   "log_id": "log_005",
   "hit_id": "ark:/61903/3:1:3Q9M-CSK3-ZSLR",
-  "target_person_id": "I1",
+  "person_id": "I1",
   "verdict": "match",
   "new_vital_info": true,
   "rationale": "The register names Patrick, son of Michael Flynn and Mary Doyle, baptised 12 May 1850 at Pottsville: name, parents and place fit the target, and the tree has no christening for him.",

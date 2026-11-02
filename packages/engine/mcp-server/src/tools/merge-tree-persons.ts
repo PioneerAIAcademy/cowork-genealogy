@@ -173,7 +173,7 @@ export function joinedPairRefusals(tree: SimplifiedGedcomX, merges: Array<[strin
   ];
 }
 
-/** One row per (log_id, hit_id, target_person_id): a collapsed person's verdict
+/** One row per (log_id, hit_id, person_id): a collapsed person's verdict
  *  on a hit its survivor also has a verdict on would become a second row for
  *  that key. When both give the same verdict and new_vital_info, the collapsed
  *  person's row is removed from `research`, before the remap, and the survivor's
@@ -191,7 +191,7 @@ export function foldHitVerdictCollisions(
   const byOwnKey = new Map<string, any>();
   for (const r of rows) {
     if (!isRow(r)) continue;
-    const k = key(r, r.target_person_id);
+    const k = key(r, r.person_id);
     if (!byOwnKey.has(k)) byOwnKey.set(k, r);
   }
   const lines: string[] = [];
@@ -199,14 +199,14 @@ export function foldHitVerdictCollisions(
   const drop = new Set<any>();
   for (const r of rows) {
     if (!isRow(r)) continue;
-    const survivor = collapseMap.get(r.target_person_id);
+    const survivor = collapseMap.get(r.person_id);
     if (survivor === undefined) continue;
     const kept = byOwnKey.get(key(r, survivor));
     if (!kept) continue;
     if (kept.verdict === r.verdict && kept.new_vital_info === r.new_vital_info) {
       drop.add(r);
       folded.push(
-        `hit verdict '${r.id}' on '${r.target_person_id}' folded into '${kept.id}' on '${survivor}': both judge hit ` +
+        `hit verdict '${r.id}' on '${r.person_id}' folded into '${kept.id}' on '${survivor}': both judge hit ` +
           `'${kept.hit_id}' of ${kept.log_id} ${kept.verdict} with new_vital_info ${kept.new_vital_info}, so ` +
           `'${kept.id}' and its rationale stand.`,
       );
@@ -214,7 +214,7 @@ export function foldHitVerdictCollisions(
     }
     lines.push(
       `hit verdicts '${kept.id}' on '${survivor}' (${kept.verdict}, new_vital_info ${kept.new_vital_info}) and ` +
-        `'${r.id}' on '${r.target_person_id}' (${r.verdict}, new_vital_info ${r.new_vital_info}) judge hit ` +
+        `'${r.id}' on '${r.person_id}' (${r.verdict}, new_vital_info ${r.new_vital_info}) judge hit ` +
         `'${kept.hit_id}' of ${kept.log_id} differently: this merge would make them two rows for one hit and person.`,
     );
   }

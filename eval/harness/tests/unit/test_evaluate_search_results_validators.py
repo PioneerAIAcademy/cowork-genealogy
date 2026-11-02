@@ -83,7 +83,7 @@ ROW = {
     "id": "hv_001",
     "log_id": "log_017",
     "hit_id": STORED,
-    "target_person_id": "I1",
+    "person_id": "I1",
     "verdict": "match",
     "new_vital_info": True,
     "rationale": "Parents Mary Robertson and Hiram Hy[de] in Jackson; the child is on no edge.",
@@ -127,13 +127,13 @@ def test_row_fails_on_no_row_two_rows_another_hit_or_another_target():
     with pytest.raises(AssertionError, match="exactly one new"):
         check_row(BEFORE, _after(), VERDICT)
     with pytest.raises(AssertionError, match="exactly one new"):
-        check_row(BEFORE, _after(ROW, {**ROW, "id": "hv_002", "target_person_id": "I2"}), VERDICT)
+        check_row(BEFORE, _after(ROW, {**ROW, "id": "hv_002", "person_id": "I2"}), VERDICT)
     with pytest.raises(AssertionError, match="not the delegated hit"):
         check_row(BEFORE, _after({**ROW, "hit_id": "ark:/61903/3:1:3Q9M-CSK3-ZSH4"}), VERDICT)
     with pytest.raises(AssertionError, match="not the delegated hit"):
         check_row(BEFORE, _after({**ROW, "log_id": "log_008"}), VERDICT)
     with pytest.raises(AssertionError, match="the target is 'I1'"):
-        check_row(BEFORE, _after({**ROW, "target_person_id": "I2"}), VERDICT)
+        check_row(BEFORE, _after({**ROW, "person_id": "I2"}), VERDICT)
 
 
 def test_row_target_defaults_to_the_first_subject():

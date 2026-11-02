@@ -787,18 +787,18 @@ describe("merge_tree_persons: pair and namesake checks", () => {
         results_available: 1, notes: null, external_site: null,
       }],
       hit_verdicts: [{
-        id: "hv_001", log_id: "log_001", hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR", target_person_id: "I13",
+        id: "hv_001", log_id: "log_001", hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR", person_id: "I13",
         verdict: "match", new_vital_info: false, rationale: "Names John Smith.", created: "2026-01-02",
       }],
     });
     const r = await merged([[T, "I13"]], p);
-    expect((await readResearch()).hit_verdicts[0].target_person_id).toBe(T);
+    expect((await readResearch()).hit_verdicts[0].person_id).toBe(T);
     expect(r.researchRefsUpdated.hit_verdicts).toBe(1);
   });
 
   const HIT = "ark:/61903/3:1:3Q9M-CSK3-ZSLR";
   const verdictRow = (id: string, personId: string, extra: Record<string, unknown> = {}) => ({
-    id, log_id: "log_001", hit_id: HIT, target_person_id: personId,
+    id, log_id: "log_001", hit_id: HIT, person_id: personId,
     verdict: "match", new_vital_info: false, rationale: `Judged against ${personId}.`, created: "2026-01-02", ...extra,
   });
   const withVerdicts = (rows: any[]) => {
@@ -820,7 +820,7 @@ describe("merge_tree_persons: pair and namesake checks", () => {
   ])("MS6ha folds the folded person's agreeing verdict into the survivor's row, %s", async (_order, rows, kept, gone) => {
     const r = await merged([[T, "I13"]], withVerdicts([...rows, verdictRow("hv_003", "I13", { log_id: "log_002" })]));
     const stored = (await readResearch()).hit_verdicts;
-    expect(stored.map((h: any) => [h.id, h.target_person_id])).toEqual([[kept, T], ["hv_003", T]]);
+    expect(stored.map((h: any) => [h.id, h.person_id])).toEqual([[kept, T], ["hv_003", T]]);
     expect(stored[0]).toEqual(rows.find((h: any) => h.id === kept));
     expect(r.researchRefsUpdated.hit_verdicts).toBe(1);
     expect(r.validation.warnings.join("\n")).toContain(
@@ -842,7 +842,7 @@ describe("merge_tree_persons: pair and namesake checks", () => {
 
   it("MS6hp leaves a duplicate the folded person already held to the validator, as old", async () => {
     const r = await merged([[T, "I13"]], withVerdicts([verdictRow("hv_001", "I13"), verdictRow("hv_002", "I13", { verdict: "not_a_match" })]));
-    expect((await readResearch()).hit_verdicts.map((h: any) => h.target_person_id)).toEqual([T, T]);
+    expect((await readResearch()).hit_verdicts.map((h: any) => h.person_id)).toEqual([T, T]);
     expect(r.researchRefsUpdated.hit_verdicts).toBe(2);
     expect(r.validation.warnings.join("\n")).toContain("this project has 1 pre-existing schema error(s) not caused by this call");
   });

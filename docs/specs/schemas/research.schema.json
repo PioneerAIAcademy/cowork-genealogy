@@ -2035,13 +2035,13 @@
       }
     },
     "hit_verdict_entry": {
-      "description": "A verdict on whether one full-text search hit is about one tree person, and whether it holds a vital fact that person lacks. research_append rewrites hit_id to the hit's stored id, refuses a hit not in that search, and folds a second append for the same log_id, hit_id and target_person_id into an update of the first. Never retired; an update sets only verdict, new_vital_info and rationale, and merge_tree_persons re-keys target_person_id onto the merge survivor; see research-schema-spec.md.",
+      "description": "A verdict on whether one full-text search hit is about one tree person, and whether it holds a vital fact that person lacks. research_append rewrites hit_id to the hit's stored id, refuses a hit not in that search, and folds a second append for the same log_id, hit_id and person_id into an update of the first. Never retired; an update sets only verdict, new_vital_info and rationale, and merge_tree_persons re-keys person_id onto the merge survivor; see research-schema-spec.md.",
       "type": "object",
       "required": [
         "id",
         "log_id",
         "hit_id",
-        "target_person_id",
+        "person_id",
         "verdict",
         "new_vital_info",
         "rationale",
@@ -2063,7 +2063,7 @@
           "type": "string",
           "minLength": 1
         },
-        "target_person_id": {
+        "person_id": {
           "type": "string",
           "minLength": 1
         },

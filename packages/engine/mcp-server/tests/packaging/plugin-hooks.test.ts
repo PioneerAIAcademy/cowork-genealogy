@@ -1002,7 +1002,7 @@ describe("the guard script's decisions", () => {
   const HV_ENTRY = {
     log_id: "log_017",
     hit_id: "3Q9M-CSK3-ZSLR",
-    target_person_id: "I1",
+    person_id: "I1",
     verdict: "match",
     new_vital_info: true,
     rationale: "Names Iram Hyde in Jackson with his wife Mary and a daughter Christina.",

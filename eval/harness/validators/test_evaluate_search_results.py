@@ -168,8 +168,8 @@ def test_one_verdict_row_on_the_delegated_hit(before_state, after_state, test):
         f"the row judges {row.get('log_id')}#{row.get('hit_id')}, not the delegated hit {log_id}#{hit}"
     )
     target = _target(test, before_state)
-    assert row.get("target_person_id") == target, (
-        f"the row judges the hit against {row.get('target_person_id')!r}; the target is {target!r}"
+    assert row.get("person_id") == target, (
+        f"the row judges the hit against {row.get('person_id')!r}; the target is {target!r}"
     )
 
 

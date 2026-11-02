@@ -801,7 +801,7 @@ export const RESEARCH_SHAPES = {
     "log_entry_ids", "record_persona_ids", "notes", "created",
   ]),
   hit_verdict_entry: new Set([
-    "id", "log_id", "hit_id", "target_person_id", "verdict", "new_vital_info",
+    "id", "log_id", "hit_id", "person_id", "verdict", "new_vital_info",
     "rationale", "created",
   ]),
 };
@@ -1965,7 +1965,7 @@ function validateHitVerdicts(data: any, ids: ResearchIds, path: string, report: 
     if (!isObjectEntry(hv, hp, report)) continue;
     checkRequired(
       hv,
-      ["id", "log_id", "hit_id", "target_person_id", "verdict", "new_vital_info", "rationale", "created"],
+      ["id", "log_id", "hit_id", "person_id", "verdict", "new_vital_info", "rationale", "created"],
       hp,
       report,
       new Set(),
@@ -1979,7 +1979,7 @@ function validateHitVerdicts(data: any, ids: ResearchIds, path: string, report: 
       checkIdPrefix(hv.log_id, ID_PREFIXES.log, hp, report);
       checkRefExists(hv.log_id, ids.log, "log entry", hp, report);
     }
-    for (const field of ["hit_id", "target_person_id"]) {
+    for (const field of ["hit_id", "person_id"]) {
       if (field in hv && hv[field] !== null && (typeof hv[field] !== "string" || hv[field] === "")) {
         addError(report, hp, `'${field}' must be a non-empty string`);
       }
@@ -1998,9 +1998,9 @@ function validateHitVerdicts(data: any, ids: ResearchIds, path: string, report: 
     if (
       typeof hv.log_id === "string" &&
       typeof hv.hit_id === "string" && hv.hit_id !== "" &&
-      typeof hv.target_person_id === "string" && hv.target_person_id !== ""
+      typeof hv.person_id === "string" && hv.person_id !== ""
     ) {
-      const k = `${hv.log_id}\u0000${arkToBareId(hv.hit_id)}\u0000${hv.target_person_id}`;
+      const k = `${hv.log_id}\u0000${arkToBareId(hv.hit_id)}\u0000${hv.person_id}`;
       const first = byKey.get(k);
       if (first === undefined) {
         byKey.set(k, hv.id);
@@ -2009,7 +2009,7 @@ function validateHitVerdicts(data: any, ids: ResearchIds, path: string, report: 
           report,
           hp,
           `hit verdict '${hv.id}' judges the same hit of ${hv.log_id} against the same person as '${first}' — ` +
-            "one row per (log_id, hit_id, target_person_id); an append for a judged hit updates its row",
+            "one row per (log_id, hit_id, person_id); an append for a judged hit updates its row",
         );
       }
     }

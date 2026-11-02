@@ -32,7 +32,7 @@ describe("person-id-refs walker", () => {
         },
       ],
       namesakes: [{ id: "ns_001", person_id: "I10" }],
-      hit_verdicts: [{ id: "hv_001", log_id: "log_001", hit_id: "ark:/61903/3:1:ZSLR", target_person_id: "I11" }],
+      hit_verdicts: [{ id: "hv_001", log_id: "log_001", hit_id: "ark:/61903/3:1:ZSLR", person_id: "I11" }],
     };
   }
 
@@ -87,11 +87,11 @@ describe("person-id-refs walker", () => {
     for (const ref of iteratePersonIdRefs(research)) {
       if (ref.pid === "I11") ref.set("I99");
     }
-    expect(research.hit_verdicts[0].target_person_id).toBe("I99");
+    expect(research.hit_verdicts[0].person_id).toBe("I99");
   });
 
   it("skips a malformed hit_verdicts row without throwing", () => {
-    const research = { hit_verdicts: [null, "hv_001", { target_person_id: null }, { target_person_id: "I9" }] };
+    const research = { hit_verdicts: [null, "hv_001", { person_id: null }, { person_id: "I9" }] };
     expect([...iteratePersonIdRefs(research)].map((r) => r.pid)).toEqual(["I9"]);
   });
 

@@ -15,7 +15,7 @@ A genealogy research project consists of two files:
 
 `research.json` references `tree.gedcomx.json` at two points:
 
-1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, `namesakes.person_id`, and `hit_verdicts.target_person_id` reference person IDs in `tree.gedcomx.json`.
+1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, `namesakes.person_id`, and `hit_verdicts.person_id` reference person IDs in `tree.gedcomx.json`.
 2. **Source description IDs** — `sources.gedcomx_source_description_id` references source description IDs in `tree.gedcomx.json`.
 
 At upload time, resolved person identities flow into `tree.gedcomx.json` while the assertion-to-record-role linkages stay in `research.json` as the audit trail.
@@ -1263,14 +1263,14 @@ agent (lead, 2026-10-18: verdicts live in their own section, written through
 | `id` | string | yes | `hv_` prefix |
 | `log_id` | string | yes | The `fulltext_search` log entry whose retained results (`results_ref`) hold the hit. `research_append` refuses any other log entry |
 | `hit_id` | string | yes | The hit's id. `research_append` refuses a hit not in that search's results and stores the id in the sidecar's form, whichever spelling the caller sent |
-| `target_person_id` | string | yes | GedcomX person ID of the tree person the hit was judged against |
+| `person_id` | string | yes | GedcomX person ID of the tree person the hit was judged against |
 | `verdict` | string (`hit_verdict`) | yes | `match`, `possible_match` or `not_a_match` |
 | `new_vital_info` | boolean | yes | The hit dates or places a birth, death or marriage the target lacks, or names a spouse, parent or child the target's relationships do not. As of the evaluation (below) |
 | `rationale` | string | yes | The facts that decided the verdict and the flag. Non-blank |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
 
 **One row per hit and person.** An append for a (`log_id`, `hit_id`,
-`target_person_id`) that already has a row updates that row instead
+`person_id`) that already has a row updates that row instead
 (`research-append-tool-spec.md` §3.10), so parallel evaluations of one hit leave
 one row; such an append must carry `verdict`, `new_vital_info` and `rationale`,
 like any append. The same hit judged against another person is a second row.
@@ -1298,12 +1298,13 @@ A reader treats a hit as not new once some `research.assertions[].record_id` has
 the same bare id as the row's `hit_id` (the part after the last `:` of either ARK
 form, a URL or `ark:/…`), the test the write-time precondition uses.
 
-**What a row does not carry.** No `target_record_id`: a hit is judged against a
-tree person, and judging one against a historical record is deferred. No fact
+**What a row does not carry.** No record target: a hit is judged against a tree
+person only, and a historical-record target will not be added (lead,
+2026-11-02), so the person field is plain `person_id`. No fact
 list: the rationale names the facts. No hit index: the sidecar gives it from
 `hit_id`.
 
-**`target_person_id` is walked like every other tree reference.**
+**`person_id` is walked like every other tree reference.**
 `iteratePersonIdRefs` yields it, so the validator reports a row keyed on a person
 not in the tree, `merge_tree_persons` re-keys a row onto the merge survivor
 (counted in `researchRefsUpdated.hit_verdicts`; a row folded into the
@@ -1379,7 +1380,7 @@ rejected_links
 hit_verdicts
   ├─ log_id ─────────────────────────────────────► log[].id (a fulltext_search entry)
   ├─ hit_id ─────────────────────────────────────► that entry's sidecar payload.results[].id
-  └─ target_person_id ───────────────────────────► tree.gedcomx.json persons[].id
+  └─ person_id ───────────────────────────► tree.gedcomx.json persons[].id
 ```
 
 ---

@@ -3080,7 +3080,7 @@ describe("Research closed shapes", () => {
           id: "hv_001",
           log_id: "log_001",
           hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR",
-          target_person_id: "I1",
+          person_id: "I1",
           verdict: "match",
           new_vital_info: true,
           rationale: "Names John Smith, son of Robert, christened 1850; the tree has no christening.",
@@ -3331,8 +3331,8 @@ describe("Research closed shapes", () => {
     { why: "a null new_vital_info", plant: (r) => (r.hit_verdicts[0].new_vital_info = null), message: "required field 'new_vital_info' is null" },
     { why: "a blank rationale", plant: (r) => (r.hit_verdicts[0].rationale = "  "), message: "'rationale' must be a non-empty string" },
     { why: "an empty hit_id", plant: (r) => (r.hit_verdicts[0].hit_id = ""), message: "'hit_id' must be a non-empty string" },
-    { why: "a missing target_person_id", plant: (r) => delete r.hit_verdicts[0].target_person_id, message: "missing required field 'target_person_id'" },
-    { why: "a target not in the tree", plant: (r) => (r.hit_verdicts[0].target_person_id = "I99"), message: "target_person_id 'I99' not found in tree.gedcomx.json persons" },
+    { why: "a missing person_id", plant: (r) => delete r.hit_verdicts[0].person_id, message: "missing required field 'person_id'" },
+    { why: "a target not in the tree", plant: (r) => (r.hit_verdicts[0].person_id = "I99"), message: "person_id 'I99' not found in tree.gedcomx.json persons" },
     { why: "a malformed created date", plant: (r) => (r.hit_verdicts[0].created = "29 October 2026"), message: "must be an ISO date" },
     { why: "a section that is not an array", plant: (r) => (r.hit_verdicts = { id: "hv_001" }), message: "hit_verdicts must be an array" },
   ];
@@ -3371,7 +3371,7 @@ describe("Research closed shapes", () => {
       const result = await validateParsed(research, maximalTree);
       expect(result.errors.map((e) => `${e.path}: ${e.message}`), hitId).toEqual([
         "research.json/hit_verdicts[1]: hit verdict 'hv_002' judges the same hit of log_001 against the same person as " +
-          "'hv_001' — one row per (log_id, hit_id, target_person_id); an append for a judged hit updates its row",
+          "'hv_001' — one row per (log_id, hit_id, person_id); an append for a judged hit updates its row",
       ]);
     }
   });
@@ -3380,7 +3380,7 @@ describe("Research closed shapes", () => {
     const research = maximalResearch();
     const first = research.hit_verdicts[0];
     research.hit_verdicts.push(
-      { ...first, id: "hv_002", target_person_id: "I2", verdict: "not_a_match", new_vital_info: false },
+      { ...first, id: "hv_002", person_id: "I2", verdict: "not_a_match", new_vital_info: false },
       { ...first, id: "hv_003", hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSH4" },
       { ...first, id: "hv_004", log_id: "log_002" },
     );

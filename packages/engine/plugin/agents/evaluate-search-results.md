@@ -126,7 +126,7 @@ Otherwise → proceed.
      entry: {
        log_id: "<the part of hitRef between results/ and .json>",
        hit_id: "<the part of hitRef after #>",
-       target_person_id: "<target>",
+       person_id: "<target>",
        verdict: "match",
        new_vital_info: true,
        rationale: "<one or two sentences naming the facts that decided the verdict and the flag>"

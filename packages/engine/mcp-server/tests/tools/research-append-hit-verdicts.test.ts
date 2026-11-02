@@ -91,7 +91,7 @@ const sidecar = (logId: string, tool: string, results: unknown[]) => ({
 const entry = (extra: Record<string, unknown> = {}) => ({
   log_id: "log_001",
   hit_id: HITS.christening,
-  target_person_id: "I1",
+  person_id: "I1",
   verdict: "match",
   new_vital_info: false,
   rationale: "Names John Jackson of the right parish and decade.",
@@ -144,7 +144,7 @@ describe("research_append — hit_verdicts", () => {
       [`https://www.familysearch.org/${HITS.christening}`, "I2"],
     ];
     for (const [hitId, person] of spellings) {
-      const r: any = await append(entry({ hit_id: hitId, target_person_id: person }));
+      const r: any = await append(entry({ hit_id: hitId, person_id: person }));
       expect(r.ok, errorsOf(r)).toBe(true);
     }
     const rows = (await readResearch()).hit_verdicts;
@@ -221,8 +221,8 @@ describe("research_append — hit_verdicts", () => {
     await write();
     expect((await append(entry({ new_vital_info: true }))).ok).toBe(true);
     const before = await readFile(join(dir, "research.json"), "utf-8");
-    const { log_id, hit_id, target_person_id } = entry();
-    const r = await append({ log_id, hit_id, target_person_id, ...judgement });
+    const { log_id, hit_id, person_id } = entry();
+    const r = await append({ log_id, hit_id, person_id, ...judgement });
     expect(r.ok).toBe(false);
     const refusals = (r as any).errors.filter((e: string) => !e.startsWith("worked example"));
     expect(refusals).toEqual([`missing required field '${field}'`]);
@@ -237,7 +237,7 @@ describe("research_append — hit_verdicts", () => {
       projectPath: dir,
       ops: [
         { section: "hit_verdicts", op: "append", entry: entry({ hit_id: HITS.marriage }) },
-        { section: "hit_verdicts", op: "append", entry: { log_id: "log_001", hit_id: HITS.christening, target_person_id: "I1" } },
+        { section: "hit_verdicts", op: "append", entry: { log_id: "log_001", hit_id: HITS.christening, person_id: "I1" } },
       ],
     } as any);
     expect(r.ok).toBe(false);
@@ -257,7 +257,7 @@ describe("research_append — hit_verdicts", () => {
     expect(introduced.valid).toBe(false);
     expect(introduced.errors.map((e) => e.message)).toEqual([
       "hit verdict 'hv_002' judges the same hit of log_001 against the same person as 'hv_001' — " +
-        "one row per (log_id, hit_id, target_person_id); an append for a judged hit updates its row",
+        "one row per (log_id, hit_id, person_id); an append for a judged hit updates its row",
     ]);
 
     await write(two);
@@ -286,7 +286,7 @@ describe("research_append — hit_verdicts", () => {
   it("keeps one row per person: the same hit judged against another person is a new row", async () => {
     await write();
     expect((await append(entry())).ok).toBe(true);
-    const r: any = await append(entry({ target_person_id: "I2", verdict: "not_a_match" }));
+    const r: any = await append(entry({ person_id: "I2", verdict: "not_a_match" }));
     expect(r).toMatchObject({ ok: true, op: "append", entryId: "hv_002" });
   });
 
@@ -317,7 +317,7 @@ describe("research_append — hit_verdicts", () => {
   it("refuses an update that re-points what a verdict judged", async () => {
     await write();
     expect((await append(entry())).ok).toBe(true);
-    for (const fields of [{ log_id: "log_002" }, { hit_id: HITS.marriage }, { target_person_id: "I2" }, { created: "2030-01-01" }]) {
+    for (const fields of [{ log_id: "log_002" }, { hit_id: HITS.marriage }, { person_id: "I2" }, { created: "2030-01-01" }]) {
       const r = await update("hv_001", fields);
       expect(r.ok, JSON.stringify(fields)).toBe(false);
       expect(errorsOf(r)).toContain("field(s) not updatable on 'hit_verdicts'");
@@ -387,10 +387,10 @@ describe("research_append — hit_verdicts", () => {
   it("research_query serves the section, filtered by the target person", async () => {
     await write();
     expect((await append(entry())).ok).toBe(true);
-    expect((await append(entry({ target_person_id: "I2", verdict: "not_a_match" }))).ok).toBe(true);
+    expect((await append(entry({ person_id: "I2", verdict: "not_a_match" }))).ok).toBe(true);
     const r: any = await researchQuery({ projectPath: dir, section: "hit_verdicts", personId: "I2" } as any);
     expect(r.count).toBe(1);
-    expect(r.items[0]).toMatchObject({ id: "hv_002", target_person_id: "I2" });
+    expect(r.items[0]).toMatchObject({ id: "hv_002", person_id: "I2" });
   });
 
   it("research_query answers count 0 on a project with no hit_verdicts key", async () => {

@@ -197,21 +197,21 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
     };
   }
 
-  // hit_verdicts[].target_person_id — the person a verdict judged the hit
+  // hit_verdicts[].person_id — the person a verdict judged the hit
   // against. An update cannot re-point it, so a merge re-keys it here.
   const hitVerdicts = Array.isArray(research.hit_verdicts) ? research.hit_verdicts : [];
   for (let i = 0; i < hitVerdicts.length; i++) {
     const hv = hitVerdicts[i];
     if (!isObject(hv)) continue;
-    const pid = hv.target_person_id;
+    const pid = hv.person_id;
     if (!pid) continue;
     yield {
       pid,
       field: "hit_verdicts",
       path: `research.json/hit_verdicts[${i}]`,
-      message: `target_person_id '${pid}' not found in tree.gedcomx.json persons`,
+      message: `person_id '${pid}' not found in tree.gedcomx.json persons`,
       set: (newId) => {
-        hv.target_person_id = newId;
+        hv.person_id = newId;
       },
     };
   }

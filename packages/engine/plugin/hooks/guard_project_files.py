@@ -283,7 +283,7 @@ OWNED_SECTIONS = {
     # hit_verdicts, 2026-10-29 (issue #3522, lead ruling 2026-10-18). One agent
     # per full-text hit judges it against the target's tree facts, so the main
     # thread that ran the search cannot label its own hits from the list.
-    # merge_tree_persons re-keys `target_person_id` by tool identity and never
+    # merge_tree_persons re-keys `person_id` by tool identity and never
     # reaches this hook.
     "hit_verdicts": "evaluate-search-results",
 }

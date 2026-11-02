@@ -448,7 +448,7 @@ export interface HitVerdictEntry {
   log_id: string
   /** The hit's id as that search's sidecar stores it. */
   hit_id: string
-  target_person_id: string
+  person_id: string
   verdict: HitVerdict
   /** As of the evaluation; a later extraction does not clear it. Treat the hit
    *  as not new once some assertion's `record_id` has the same bare id (the part

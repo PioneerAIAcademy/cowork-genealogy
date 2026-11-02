@@ -1192,7 +1192,7 @@ describe("tree_forget", () => {
       ],
       hit_verdicts: [
         {
-          id: "hv_001", log_id: "log_001", hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR", target_person_id: "I2",
+          id: "hv_001", log_id: "log_001", hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR", person_id: "I2",
           verdict: "match", new_vital_info: false, rationale: "Names Michael Ryan.", created: "2026-01-02",
         },
       ],
@@ -1206,7 +1206,7 @@ describe("tree_forget", () => {
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join("\n")).toContain("target_person_id 'I2' not found in tree.gedcomx.json persons");
+    expect(r.errors.join("\n")).toContain("person_id 'I2' not found in tree.gedcomx.json persons");
     expect(await readTree()).toEqual(before);
     expect(await exists(RESTORE_FILE)).toBe(false);
   });
