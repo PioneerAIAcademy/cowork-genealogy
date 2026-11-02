@@ -402,6 +402,13 @@ def _spec_positive(scenario: str | None = "demo-scenario") -> dict:
     }
 
 
+def _spec_intentionally_invalid() -> dict:
+    spec = _spec_positive()
+    spec["test"]["id"] = "ut_demo_invalid"
+    spec["intentionally_invalid"] = True
+    return spec
+
+
 def _spec_negative(scenario: str | None = "demo-scenario") -> dict:
     inp: dict = {"user_message": "Translate 'hello' to Spanish."}
     if scenario:
@@ -488,6 +495,9 @@ def _run_entry_for(test_id: str, *, direct: bool = False) -> dict:
             "passed": False,
             "results": [
                 {"name": "test_demo_check", "passed": False, "error": "expected 'X' not 'Y'"},
+                # A file-validity failure: shown to the judge unless the test
+                # is intentionally invalid, where the gate expects it (#3870).
+                {"name": "test_id_references_resolve", "passed": False, "error": "dangling"},
                 {
                     "name": "report_demo_observation",
                     "passed": False,
@@ -539,6 +549,7 @@ def _log_with(skill: str, test_spec: dict, run_entry: dict) -> dict:
         (lambda: _spec_positive(), False, "positive"),
         (lambda: _spec_negative(), False, "negative"),
         (lambda: _spec_direct(), True, "direct"),
+        (lambda: _spec_intentionally_invalid(), False, "intentionally-invalid"),
     ],
 )
 def test_regrade_and_live_render_same_prompt(disk_tree, monkeypatch, spec_builder, direct, label):
@@ -640,8 +651,14 @@ def test_regrade_and_live_render_same_prompt(disk_tree, monkeypatch, spec_builde
             stage_skills=False,
         )
         live_before_snapshot = snapshot_files(Path(_ws))
-    live_validator_failures = judge_regrade._gating_validator_failure_names(
-        run_entry["validators"]
+    # The orchestrator's own filter over the results the run recorded, not the
+    # regrade helper, which would agree with itself here (#3870).
+    live_validator_failures = _orchestrator.gating_validator_failures(
+        [
+            validator_runner.ValidatorRunResult(**r)
+            for r in run_entry["validators"]["results"]
+        ],
+        intentionally_invalid=live_spec.intentionally_invalid,
     )
     # Build the live-side observations the way the orchestrator does: run the
     # demo validator module (two real `report_*` functions in the disk tree)
@@ -707,6 +724,14 @@ def test_regrade_and_live_render_same_prompt(disk_tree, monkeypatch, spec_builde
         f"[{label}] regrade prompt kwargs diverged from live run.\n"
         f"dry  = {dry_recorder.kwargs}\n"
         f"live = {live_recorder.kwargs}"
+    )
+    expected_failures = (
+        ["test_demo_check"]
+        if label == "intentionally-invalid"
+        else ["test_demo_check", "test_id_references_resolve"]
+    )
+    assert live_recorder.kwargs["validator_failures"] == expected_failures, (
+        f"[{label}] the judge was shown {live_recorder.kwargs['validator_failures']}"
     )
 
 

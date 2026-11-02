@@ -26,10 +26,7 @@ from e2e.corpus_report import (
 )
 from e2e.pricing import estimate_cost_usd
 from e2e.runlog_selection import all_result_jsons, is_result_json, run_date
-from harness.skill_invocation import (
-    find_effects_without_invocation,
-    find_person_evidence_missing_same_person,
-)
+from harness.skill_invocation import find_effects_without_invocation
 
 
 def _write(dir_: Path, name: str, payload: dict) -> Path:
@@ -179,8 +176,7 @@ def _detector_messages() -> list[str]:
     passing while every violation of that arm silently reclassifies to `other`.
     """
     tree = {"persons": [{"id": "I1", "facts": [{"type": "Birth", "primary": True}]}]}
-    return [
-        *find_effects_without_invocation(
+    return find_effects_without_invocation(
             [],
             {
                 "questions": [{"search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}}],
@@ -194,11 +190,7 @@ def _detector_messages() -> list[str]:
                 "proof_summaries": [{"id": "ps1"}],
             },
             tree,
-        ),
-        *find_person_evidence_missing_same_person(
-            [], {"person_evidence": [{"person_id": "I1", "record_persona_id": "r1"}]}, tree
-        ),
-    ]
+    )
 
 
 def test_every_live_detector_message_maps_to_a_named_arm():
@@ -222,6 +214,16 @@ def test_every_live_detector_message_maps_to_a_named_arm():
         f"arms declared but never exercised: {declared - covered}; "
         f"exercised but not declared: {covered - declared}"
     )
+
+
+def test_a_stored_same_person_violation_reads_as_retired_not_drift():
+    """Runs logged before harness v9 stored the retired arm's message; it must
+    not land in `other`, which means a reworded live message."""
+    stored = (
+        "tree person 'I1' is new this run and has a person_evidence link, but 'same_person' "
+        "was never called for it anywhere in the run — the identity was asserted, never scored"
+    )
+    assert classify(stored) == "same_person (retired at v9)"
 
 
 def test_classify_falls_back_rather_than_dropping():
@@ -248,7 +250,7 @@ def test_tally_counts_violations_by_arm_and_by_fixture(tmp_path: Path):
         }),
     ]
     _, _, _, _, arms, per_fixture, _bash, _host_slept = tally(paths)
-    assert arms == {"same_person (per person)": 2, "proof-conclusion": 1,
+    assert arms == {"same_person (retired at v9)": 2, "proof-conclusion": 1,
                     "conflict-resolution": 1}
     assert per_fixture == {"loud-fixture": 3, "quiet-fixture": 1}
 
@@ -372,7 +374,7 @@ def test_format_report_survives_arms_without_per_fixture():
     """
     out = format_report(
         Counter({"pass": 1}), Counter({"fail": 1}), Counter({"fail": 1}),
-        n_runs=1, arms=Counter({"same_person (per person)": 3}),
+        n_runs=1, arms=Counter({"same_person (retired at v9)": 3}),
     )
     assert "violations:" in out
 
@@ -404,7 +406,7 @@ def test_an_even_split_is_not_called_a_dominant_fixture():
     """
     out = format_report(
         Counter({"pass": 2}), Counter({"fail": 2}), Counter({"fail": 2}),
-        n_runs=2, arms=Counter({"same_person (per person)": 2}),
+        n_runs=2, arms=Counter({"same_person (retired at v9)": 2}),
         per_fixture=Counter({"a": 1, "b": 1}),
     )
     assert "concentration:" in out
@@ -418,7 +420,7 @@ def test_violation_total_is_reported_over_decidable_runs():
     out = format_report(
         Counter({"pass": 30}), Counter({"fail": 13, "not_checked": 17}),
         Counter({"fail": 13}), n_runs=30,
-        arms=Counter({"same_person (per person)": 49}),
+        arms=Counter({"same_person (retired at v9)": 49}),
         per_fixture=Counter({"a": 30, "b": 19}),
     )
     assert "49 across 13 decidable run(s); 17 unknown recorded none" in out
@@ -735,44 +737,6 @@ def test_recompute_recovers_violations_a_stored_only_read_counts_as_zero(tmp_pat
     assert rt.arms.get("exhaustiveness", 0) > 0
     # Recompute found MORE than stored (which was absent) -> not a regression.
     assert rt.regressed == []
-
-
-_UNSCOREABLE_RESEARCH = {
-    "assertions": [{"id": "a_001", "record_persona_id": None, "log_entry_id": "log_001"}],
-    "log": [{"id": "log_001", "tool": "image_transcribe", "results_ref": None}],
-    "person_evidence": [{"id": "pe_001", "assertion_id": "a_001", "person_id": "I1"}],
-}
-
-
-def test_recompute_reports_the_unscoreable_by_design_bucket(tmp_path: Path):
-    """Issue #1429. The §8 narrowing exempts links whose provenance lane cannot
-    yield a record persona from what the run retained; the lead asked for that population to be
-    LABELLED rather than silently dropped, so it can be watched if it grows and
-    so the revisit trigger has something concrete to fire on."""
-    runs, fixtures = tmp_path / "runs", tmp_path / "fixtures"
-    run = _run_with_sidecars(runs, "myfix", _UNSCOREABLE_RESEARCH, {"persons": [{"id": "I1"}]})
-    (fixtures / "myfix").mkdir(parents=True)
-    _write(fixtures / "myfix", "starting-tree.gedcomx.json", {"persons": []})
-
-    rt = recompute_tally([run], fixtures_root=fixtures)
-    assert rt.unscoreable == 1
-    # Counted, never a violation -- it must not reach an arm.
-    assert rt.arms.get("same_person (per person)", 0) == 0
-    assert "unscoreable by design (links)" in format_recompute(Counter(), rt)
-
-
-def test_stored_report_calls_the_bucket_unknown_not_zero(tmp_path: Path):
-    """A stored run carries no such field, and an unknown is never a zero --
-    the same rule `axes_from_runlog` follows for `not_checked`."""
-    line = format_report(
-        Counter({"pass": 1}),
-        Counter({"fail": 1}),
-        Counter({"fail": 1}),
-        n_runs=1,
-        arms=Counter({"same_person (per person)": 1}),
-        per_fixture=Counter({"myfix": 1}),
-    )
-    assert "unscoreable by design: unknown for stored runs" in line
 
 
 def test_recompute_surfaces_a_run_where_stored_exceeds_recomputed(tmp_path: Path):

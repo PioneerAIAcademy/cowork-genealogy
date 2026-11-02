@@ -1,0 +1,190 @@
+{
+  "run_log": "v2_2026-10-28_11-57-06.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_007`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform its own task and routed the user to search-records with an accurate one-line hand-back. The delegation was correctly identified as a request for FamilySearch record searching, which is outside where-else-to-search's scope. The routing decision and hand-back text are factually correct.\n\nJunior: (Pass - The routing decision and hand-back text are factually correct.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_007`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill provided the complete required response: a clear one-line hand-back naming search-records as the appropriate skill to handle the FamilySearch census record search request. No additional output was needed or expected for a negative test with correct routing.\n\nJunior: (Pass - The skill provided complete response. No additional out was needed or expected for a negative test with correct routing.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_where_else_to_search_007`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. The skill correctly declined to invoke any tools, which aligns with the test requirement that calling any tool would be a fail. N/A because zero tool calls occurred.\n\nJunior: (N/A no MCP tool calls were made.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_006`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform its own task and routed the user to search-external-sites with a clear, accurate hand-back. The delegation asked for a search on Ancestry for Patrick Flynn in the 1880 census, which is an external-site search task outside where-else-to-search's scope. The response appropriately identified this and handed off to the correct skill without performing any substantive work itself.\n\nJunior: (Pass - The response appropriately identified this and handed off to the correct skill without performing any substative work itself.))"
+    },
+    {
+      "test_id": "ut_where_else_to_search_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill provided the complete required output for a negative test: a one-line hand-back naming the correct destination skill (search-external-sites). No additional work was needed or expected. The routing decision was made with full clarity about what the user was asking for and where it should be handled.\n\nJunior: (Pass - The skill made the routing decision with full clarity about what the user was asking for and where it should be handled.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_where_else_to_search_006`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. The skill correctly declined to invoke any tools, which is the appropriate behavior for a routing decision. Tool Arguments is N/A when zero tool calls occur.\n\nJunior: (N/A no MCP tool calls were made.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly declined to perform its own task and routed the user to the locality-guide skill, which is the appropriate skill for answering questions about what records exist for a specific county and time period. The hand-back response is accurate and appropriate.\n\nJunior: (Pass - The hand-back response is accurate and appropriate.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_008`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill provided the complete correct response: a one-line hand-back naming locality-guide as the appropriate skill to handle this query. No additional work was required or expected from where-else-to-search on this negative test.\n\nJunior: (Pass - No additional work was required or expected from where-else-to search on this negative test.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_where_else_to_search_008`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made. The skill correctly declined to invoke any tools, which aligns with the test requirement that calling any tool would be a fail. N/A applies here.\n\nJunior: (N/A no MCP tool calls were made.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_002`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All eight suggestions are drawn from rows the external_links_search tool returned. Each link is a url from a tool response, unaltered. The access values (subscription) match what build_external_search_url returned. Year ranges are accurate to the tool data. No fabricated material or unsupported claims appear.\n\nJunior: (Pass - No fabricatedd material or unsupported claims appear.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_002`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The agent addressed the full request: resolved the place (Blount, Alabama), searched for external links, selected curated rows matching the marriage event and 1850–1860 timeframe, built prefilled search URLs for each, and presented them in the required format with opening and closing sentences.\n\nJunior: (Pass - The agen addressed the full request competely.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_002`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed correct arguments. place_search received 'Blount County, Alabama' (matches ~Blount). external_links_search received standardPlace 'Blount, Alabama, United States', startYear 1850, endYear 1860 (matches ~Blount and the search window). All eight build_external_search_url calls passed the correct baseUrl from tool rows and appropriate attributes (givenName, surname, marriageYear/eventYear, marriagePlace/residencePlace as applicable to each site).\n\nJunior: (Pass - All tools passed correct arguments.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_002`** — `rubric` / `Selection`\nLLM: 3 → Junior: 3\n\n> All eight suggestions are curated rows from external_links_search results on buildable hosts (Ancestry, FindMyPast). Marriage-specific rows (Alabama Compiled Marriages, Alabama Select Marriage Indexes, Alabama Marriage Indexes, Alabama County Marriage Records, Alabama U.S. Marriage Index, U.S. Newspapers.com Marriage Index) rank first, followed by the Alabama State Census 1855 (dated, overlapping the search years). No more than 8 suggestions. No non-curated sites or hand-chosen collections appear.\n\nJunior: (Pass - No non-curated sites or hand-chosen collections appear.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_002`** — `rubric` / `Grounding`\nLLM: 3 → Junior: 3\n\n> Each reason cites the row's linkText, its year span (startYear–endYear from the tool), and how it covers the searched 1850–1860 window. Access (subscription) is stated for each. No facts about the site, place, or record set beyond what the tool returned appear. The opening states the place and years used; the closing invites the user to open a link and continue research.\n\nJunior: (Pass - The opening states the place and years used; closing invites the user to open a link and continue research.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_002`** — `rubric` / `Links`\nLLM: 3 → Junior: 3\n\n> Every link is a url from a tool response, character for character. All eight links appear in full in the summary_for_user block below the `---` line, one per suggestion. No links are missing, edited, or hand-written.\n\nJunior: (Pass - No links are missing, edited or hand-written.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_002`** — `rubric` / `Prose`\nLLM: 3 → Junior: 3\n\n> The response follows the fixed format: opening line naming the place and years, then eight suggestions each in three lines (bold linkText with site and access; year span and coverage; full link), then a closing sentence. No tool names, field names, or file names appear. No extra sentences about the person, place history, or collections beyond the grounded year and access information.\n\nJunior: (Pass - The response follows the fixed format.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> All 8 suggestions are built from rows external_links_search returned. Each link is unaltered from the tool response. Years and access values match the tool data. No fabricated claims about sites or collections. The response correctly identifies that 3 rows are unbuildable (Chronicling America, Pennsylvania Digitized Newspapers, Naturalization Petitions) and lists them separately without prefilled links.\n\nJunior: (Pass - No fabricated claims about sites or collections.))"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request fully. It resolved the place (Schuylkill County, Pennsylvania), searched for external links in the 1865–1875 range (±5 years from 1870), selected and built 8 curated suggestions with prefilled searches, and listed 3 unbuildable rows separately. All required steps were performed.\n\nJunior: (Pass - All user's request were fully addressed.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_001`** — `rubric` / `Selection`\nLLM: 3 → Junior: 3\n\n> All 8 suggestions are curated rows from external_links_search with buildable hosts (Ancestry, FindMyPast). The first 6 are dated rows (1870 Census, 1772–1890 Census Index, 1850–1880 Non-Population Schedules, 1850–1880 Mortality Schedules, 1862–1918 Tax Lists, 1865–1936 GAR Records) that overlap the searched 1870 year. The last 2 are undated (HSP Marriages, HSP Births & Baptisms). The 3 unbuildable rows (Chronicling America, PA Digitized Newspapers, Naturalization Petitions) are listed separately. Total is 8, within the 3–8 limit.\n\nJunior: (Pass - The selection was well covered.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_001`** — `rubric` / `Grounding`\nLLM: 3 → Junior: 3\n\n> Each reason cites the row's linkText, its year span (startYear–endYear from the tool or 'Undated collection'), and how it covers 1870. Access (subscription) is stated for each. No facts about sites, places, or record sets appear that the tools did not return. The opening states the place and years searched; the closing directs the user to open a link and continue researching. All grounding is tool-sourced.\n\nJunior: (Pass - No facts about sites, places, or record sets appear that the tools did not return.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_001`** — `rubric` / `Links`\nLLM: 3 → Junior: 3\n\n> Every link is a url from external_links_search or build_external_search_url, unaltered. All 8 prefilled links appear in full after the `---` separator. The 3 unbuildable rows (Chronicling America, PA Digitized Newspapers, Naturalization Petitions) are listed separately with their base URLs, not as prefilled searches. The user receives every link needed.\n\nJunior: (Pass -The user recieved every link needed.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_001`** — `rubric` / `Prose`\nLLM: 3 → Junior: 3\n\n> The response follows the fixed format: opening line states place and years searched with counts ('8 entries, 3 also-on-file rows'); then `---`; then an opening sentence; then 8 suggestions in the three-line shape (bold linkText with site and access; years and coverage; full link); then a closing sentence. No tool names, field names, or file names appear. No extra sentences about the person or period. Prose is beginner-readable.\n\nJunior: (Pass - The response followed the fixed format.)"
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_where_else_to_search_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed correct arguments. place_search received 'Schuylkill County, Pennsylvania' (matches expected ~Schuylkill). external_links_search received standardPlace 'Schuylkill, Pennsylvania, United States' and year range 1865–1875 (±5 from 1870, matching expected ~Schuylkill). All 8 build_external_search_url calls used correct baseUrls from tool responses and appropriate site identifiers (ancestry, findmypast). No fixture_not_found errors occurred.\n\nJunior:Pass - All tool calls passed correct arguments. No fixturee_not_found errors occured.)"
+    }
+  ]
+}

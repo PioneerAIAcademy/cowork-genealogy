@@ -1465,3 +1465,343 @@ def test_no_project_passes_when_nothing_is_created_and_fails_when_it_is():
     _only_logs({"research_json": None}, {"research_json": None}, _POSITIVE)
     with pytest.raises(AssertionError, match="created research.json with no project"):
         _only_logs({"research_json": None}, {"research_json": _research([_entry(1)])}, _POSITIVE)
+
+
+# --- each finding carries its record link (issue #3955) -------------------
+#
+# The K2ZH-X4G audit named three sources `(source 9H3K-XF9)` and so on. Those
+# are source-description ids; the main thread built ARKs from them and reversed
+# a correct detach. The guard is replayed on x6b's real report shapes, which
+# move between `**1.**`, `**Finding 1.**`, `**Finding 1 —**` and
+# `**Finding 1:**`.
+
+_links = _VALIDATOR.test_findings_carry_record_link
+_findings = _VALIDATOR._numbered_findings
+_HOLE_SOURCES = json.loads(
+    (_REPO / "eval/fixtures/mcp/person-read-hole-attached-sources.json").read_text(encoding="utf-8")
+)["response"]
+_HOLE_CALLS = [{"tool": "mcp__genealogy__person_read", "response": _HOLE_SOURCES}]
+_LINK_TEST = {
+    "tags": ["finding-links"],
+    "type": "positive",
+    "index_error_source": _PROTECTED,
+}
+_DEATH = "https://familysearch.org/ark:/61903/1:1:HOLE-002"
+_CENSUS_1885 = "https://familysearch.org/ark:/61903/1:1:HOLE-003"
+_CENSUS_1900 = "https://familysearch.org/ark:/61903/1:1:HOLE-001"
+
+# Verbatim from x6b's agent return on `v3_2026-10-16_07-13-48.json`, the bodies
+# cut. A candidate log, so it is pruned in time; the text is kept here.
+_FINDING_COLON = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 4 in scope, 2 findings\n\n---\n\n"
+    '**Finding 1: "Christian Hole, Minnesota State Census, 1885" (SD-HOLE-C) — misattributed source**\n\n'
+    "The source is also attached to **KD96-WX7**, a separate tree person named Christian Hole.\n\n"
+    "Next: detach this source from Christian P. Hole (KD96-TV2).\n\n---\n\n"
+    '**Finding 2: "Christian P. Hole, Minnesota Death Index, 1908-2002" (SD-HOLE-B) — indexing error in death year**\n\n'
+    "This collection is cited as \"database\" (index only, no image). There is no scan to open here.\n\n"
+    "Next: go back to the original Minnesota death certificate or state register.\n\n---\n\n"
+    '**Could not check:** SD-HOLE-D, "Hole family photograph and funeral card (uploaded memory)." '
+    "This is a contributor-uploaded memory with no indexed record behind it.\n\n---\n\n"
+    "**Impossible-date check on the project tree:** No warnings returned.\n\n---\n\n"
+    "**From FamilySearch's own profile checklist — suggestions, not errors, and not counted above:**\n\n"
+    "VERIFIABILITY\n- The marriage has no tagged sources.\n"
+)
+# Verbatim from x6b's agent return on `v1_2026-10-02_12-05-52.json`, bodies cut:
+# a lettered table, then three `**Finding N —**` findings.
+_FINDING_DASH = (
+    "SOURCES ON: Christian P. Hole (KD96-TV2) — 4 attached, 2 findings\n\n"
+    "**Source summary**\n\n| # | Title | Type |\n|---|-------|------|\n"
+    "| A | 1900 United States Census | database with images |\n"
+    "| B | Minnesota Death Index, 1908-2002 | database (index only) |\n\n---\n\n"
+    "**Finding 1 — 1900 United States Census: birth year discrepancy (classification ambiguous)**\n\n"
+    "Whether this is an indexing error on the year column or the household member's own reporting "
+    "cannot be decided from the index alone.\n\n---\n\n"
+    "**Finding 2 — Minnesota Death Index, 1908-2002: death year indexed as 1954, profile records 1945**\n\n"
+    "Next: request or locate the original Minnesota death certificate.\n\n---\n\n"
+    "**Finding 3 — Minnesota State Census, 1885: almost certainly misattributed**\n\n"
+    "The ARK is also attached to KD96-WX7.\n"
+)
+
+
+def _with_links(reply: str, links: dict[str, str]) -> str:
+    """`reply` with a `Link:` line under each finding heading naming a key of `links`."""
+    out = []
+    for line in reply.splitlines():
+        out.append(line)
+        if _VALIDATOR._FINDING_HEAD_RE.match(_VALIDATOR._unemphasised(line)):
+            key = next((k for k in links if k in line), None)
+            if key:
+                out.append("   Link: " + links[key])
+    return "\n".join(out)
+
+
+_ALL_LINKS = {"Death Index": _DEATH, "1885": _CENSUS_1885, "1900": _CENSUS_1900}
+
+
+def _check_links(reply: str, test=_LINK_TEST, calls=_HOLE_CALLS):
+    _links(calls, "Done.", test, agent_returns=_returns(reply))
+
+
+def test_a_finding_cited_by_source_id_without_a_link_fails():
+    """The issue's done-when: `(source 9H3K-XF9)` with no link fails."""
+    reply = (
+        "1. Minnesota Death Index, 1908-2002 (source 9H3K-XF9) — indexing error\n"
+        "   Next: re-read the original and correct the indexed year.\n"
+    )
+    with pytest.raises(AssertionError, match="does not carry the record link"):
+        _check_links(reply)
+
+
+def test_the_same_finding_with_the_sources_url_passes():
+    _check_links(
+        "1. Minnesota Death Index, 1908-2002 (source 9H3K-XF9) — indexing error\n"
+        f"   Link: {_DEATH}\n"
+        "   Next: re-read the original and correct the indexed year.\n"
+    )
+
+
+def test_the_bare_ark_form_passes():
+    _check_links(
+        "1. Minnesota Death Index, 1908-2002 — indexing error\n"
+        "   Link: ark:/61903/1:1:HOLE-002.\n"
+    )
+
+
+def test_an_ark_built_from_a_source_id_fails():
+    """The defect itself: an ARK made from `SD-HOLE-B` names no returned record."""
+    with pytest.raises(AssertionError, match="does not carry the record link"):
+        _check_links(
+            "1. Minnesota Death Index, 1908-2002 — indexing error\n"
+            "   Link: https://www.familysearch.org/ark:/61903/1:1:SD-HOLE-B\n"
+        )
+
+
+def test_one_linked_finding_does_not_cover_an_unlinked_one():
+    with pytest.raises(AssertionError, match="a finding carries no record link") as e:
+        _check_links(
+            f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+            "2. Minnesota State Census, 1885 — misattributed\n   Next: detach it.\n"
+        )
+    assert "Minnesota State Census, 1885" in str(e.value)
+
+
+def test_body_text_saying_cannot_be_verified_does_not_end_the_findings():
+    """Only a heading line closes the findings, so finding 2 is still checked."""
+    with pytest.raises(AssertionError, match="a finding carries no record link"):
+        _check_links(
+            f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n"
+            "   The year cannot be verified from the index alone.\n"
+            "   Could not verify the year without the certificate.\n\n"
+            "2. Minnesota State Census, 1885 — misattributed\n   Next: detach it.\n"
+        )
+
+
+@pytest.mark.parametrize("reply", [_FINDING_COLON, _FINDING_DASH], ids=["finding-colon", "finding-dash"])
+def test_replayed_finding_shapes_parse_fail_unlinked_and_pass_linked(reply):
+    assert len(_findings(reply)) == reply.count("**Finding ")
+    with pytest.raises(AssertionError):
+        _check_links(reply)
+    _check_links(_with_links(reply, _ALL_LINKS))
+
+
+def test_could_not_check_and_checklist_blocks_need_no_link():
+    """`_FINDING_COLON` ends with all three non-finding blocks, none linked."""
+    linked = _with_links(_FINDING_COLON, _ALL_LINKS)
+    assert "VERIFIABILITY" in linked and "Could not check" in linked
+    _check_links(linked)
+
+
+def test_a_could_not_verify_heading_needs_no_link():
+    """Made-up variant of the shape the relay used, not a replay."""
+    _check_links(
+        f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+        "### Could Not Verify: Uploaded Funeral Card Memory (SD-HOLE-D)\n"
+        "1. The card names Erskine, 1945.\n"
+    )
+
+
+def test_a_numbered_unverifiable_memory_needs_no_link():
+    """Made-up variant: a memory numbered as an item. Its url carries no ARK."""
+    _check_links(
+        f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+        "2. Hole Family Photograph and Funeral Card (uploaded memory) — reviewed\n"
+        "   Contributor upload; nothing to read.\n"
+    )
+
+
+def test_a_numbered_list_inside_the_checklist_needs_no_link():
+    _check_links(
+        f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+        "From FamilySearch's own profile checklist — suggestions, not errors:\n"
+        "COMPLETENESS\n1. A marriage place is missing a city.\n"
+    )
+
+
+def test_a_report_with_no_numbered_findings_is_decided_by_the_floor():
+    table = (
+        "| Source | Verdict |\n|---|---|\n"
+        "| Minnesota Death Index | keep; correct the year |\n"
+        "| Minnesota State Census, 1885 | detach |\n"
+    )
+    with pytest.raises(AssertionError, match="does not carry the record link"):
+        _check_links(table)
+    _check_links(table.replace("Minnesota Death Index |", f"Minnesota Death Index ({_DEATH}) |"))
+
+
+def test_no_person_read_source_fails_rather_than_passing():
+    with pytest.raises(AssertionError, match="checks nothing"):
+        _check_links(f"1. Death Index\n   Link: {_DEATH}\n", calls=[])
+
+
+@pytest.mark.parametrize("declared", [None, "Probate Packet"])
+def test_an_index_error_source_matching_no_source_fails(declared):
+    test = dict(_LINK_TEST, index_error_source=declared)
+    with pytest.raises(AssertionError, match="checks nothing"):
+        _check_links(f"1. Death Index\n   Link: {_DEATH}\n", test=test)
+
+
+def test_finding_links_skips_untagged_and_negative_tests():
+    for test in ({"tags": [], "type": "positive"}, dict(_LINK_TEST, type="negative")):
+        with pytest.raises(pytest.skip.Exception):
+            _check_links("Done.", test=test)
+
+
+def test_finding_links_on_every_committed_x6b_return():
+    """Real replies: one committed without links fails, and passes once every
+    finding gets its `Link:` line; one committed with links passes as is."""
+    logs = sorted(
+        p for p in glob.glob(str(_REPO / "eval/runlogs/unit/source-evaluation/v*.json"))
+        if not p.endswith(".ann.json")
+    )
+    assert any("_" not in Path(q).stem for q in logs), "the replay must read the released v<N>.json logs"
+    checked = 0
+    for path in logs:
+        log = json.loads(Path(path).read_text(encoding="utf-8"))
+        for entry in log.get("tests") or []:
+            if entry.get("test_id") != "ut_source_evaluation_x6b":
+                continue
+            reply = subject_reply_text(
+                next((r["output"]["agent_returns"] for r in reversed(entry["runs"])
+                      if (r.get("output") or {}).get("agent_returns")), None),
+                "", "source-evaluation", _LINK_TEST,
+            )
+            assert len(_findings(reply)) >= 2, f"{Path(path).name}: findings did not parse"
+            if _VALIDATOR._arks(reply):
+                _check_links(reply)
+            else:
+                with pytest.raises(AssertionError):
+                    _check_links(reply)
+                _check_links(_with_links(reply, _ALL_LINKS))
+            checked += 1
+    assert checked >= 3, f"replayed only {checked} x6b returns"
+
+
+# Shapes `/code-review` found on the first version, each pinned both ways.
+
+
+def test_a_numbered_sub_list_inside_a_finding_stays_in_its_body():
+    _check_links(
+        f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n   Next steps:\n"
+        "   1. Request the certificate.\n   2. Correct the index.\n"
+    )
+
+
+def test_a_second_finding_after_a_sub_list_is_still_checked():
+    with pytest.raises(AssertionError, match="Minnesota State Census"):
+        _check_links(
+            f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n"
+            "   1. Request the certificate.\n   2. Correct the index.\n\n"
+            "2. Minnesota State Census, 1885 — misattributed\n   Next: detach it.\n"
+        )
+
+
+@pytest.mark.parametrize("body", [
+    "   Could not verify the year: the certificate is offline.",
+    "   Could not verify: the certificate is offline.",
+    "   **Could not verify:** the year.",
+    "   ### Could not check",
+    "   The impossible-date check flagged nothing here.",
+    "   Unverified: the informant.",
+])
+def test_body_lines_do_not_end_the_findings(body):
+    with pytest.raises(AssertionError, match="Minnesota State Census"):
+        _check_links(
+            f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n{body}\n\n"
+            "2. Minnesota State Census, 1885 — misattributed\n   Next: detach it.\n"
+        )
+
+
+
+@pytest.mark.parametrize("label", [
+    "Could not check:",
+    "Could not check: these were offline.",
+    "**Could not verify:** the census entry.",
+    "*Could not verify:* the census entry.",
+])
+def test_a_closing_label_at_the_findings_indent_ends_them(label):
+    _check_links(
+        f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+        f"{label}\n2. A family Bible entry — the image is offline.\n"
+    )
+
+
+def test_a_closing_label_ends_indented_findings():
+    _check_links(
+        f"  1. Minnesota Death Index — indexing error\n     Link: {_DEATH}\n\n"
+        "  Could not check:\n  2. A family Bible entry — the image is offline.\n"
+    )
+
+
+def test_a_label_at_column_0_ends_column_0_findings():
+    """Known limit: where finding bodies start at column 0, a body label looks
+    the same as a closing one, so it ends the findings."""
+    _check_links(
+        f"**Finding 1:** Minnesota Death Index — indexing error\nLink: {_DEATH}\n"
+        "Could not verify: the certificate is offline.\n\n"
+        "**Finding 2:** Minnesota State Census, 1885 — misattributed\n"
+    )
+
+
+def test_a_hedged_heading_is_still_a_finding():
+    with pytest.raises(AssertionError, match="birth unverified"):
+        _check_links(
+            f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+            "2. Minnesota State Census, 1885 — misattributed, birth unverified\n"
+        )
+
+
+def test_a_memory_titled_with_the_persons_name_exempts_no_finding():
+    sources = _HOLE_SOURCES["sources"] + [
+        {"id": "SD-HOLE-F", "title": "Christian P. Hole", "url": "https://ancestors.familysearch.org/en/KD96-TV2/memories"}
+    ]
+    calls = [{"tool": "mcp__genealogy__person_read", "response": dict(_HOLE_SOURCES, sources=sources)}]
+    with pytest.raises(AssertionError, match="Minnesota State Census"):
+        _check_links(
+            f"1. Christian P. Hole, Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+            "2. Christian P. Hole, Minnesota State Census, 1885 — misattributed\n",
+            calls=calls,
+        )
+
+
+def test_a_bold_bare_number_is_a_finding():
+    with pytest.raises(AssertionError, match="Minnesota State Census"):
+        _check_links(
+            f"**1** Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+            "**2** Minnesota State Census, 1885 — misattributed\n"
+        )
+
+
+def test_a_link_with_a_query_string_names_the_same_record():
+    _check_links(
+        f"1. Minnesota Death Index — indexing error\n   Link: {_DEATH}?lang=en\n"
+    )
+
+
+def test_a_memory_item_headed_unverifiable_needs_no_link():
+    """Made-up variant from the plan: the relay's heading shape. Skipped by the
+    memory's title, not by the word "Unverifiable"."""
+    _check_links(
+        f"### 1. Minnesota Death Index — indexing error\n   Link: {_DEATH}\n\n"
+        "### 2. Hole Family Photograph and Funeral Card (uploaded memory) — Unverifiable\n"
+        "   Contributor upload; nothing to read.\n"
+    )

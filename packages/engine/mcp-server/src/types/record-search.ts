@@ -274,10 +274,8 @@ export interface RecordSearchResult {
    * The staged sidecar preserves it too, by keeping search order.
    */
   searchRank?: number;
-  /** 0-1 match score; null when the FS call kept failing (the row is kept). */
+  /** 0-1 match score; null when scoring failed (the row is kept). */
   matchScore?: number | null;
-  /** 1-5 confidence bucket; omitted on a no-match or a scoring failure. */
-  matchConfidence?: number;
   /** How many facts this candidate carries that discriminate one human from
    *  another. A low count means the score is unstable in either direction —
    *  reported, never thresholded. */

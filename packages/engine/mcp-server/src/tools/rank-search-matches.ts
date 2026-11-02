@@ -1,12 +1,13 @@
 import type { Principal } from "../auth/principal.js";
 import { getProjectStore } from "../store/project-store.js";
-import { scorePair } from "../utils/match-engine.js";
-import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
+import { matchPairs } from "../utils/matcher.js";
+import type { MatchCall, MatcherBackend } from "../types/matcher.js";
 import { assertInsideProject, isInsideProject } from "../utils/project-io.js";
 import { readStagedResults } from "../utils/results-staging.js";
 import { relationshipCategory } from "../utils/relationship-category.js";
 import { sourceAttachmentsTool } from "./source-attachments.js";
 import { getDayRange } from "../utils/date-helpers.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { stdDate } from "../utils/date-standardize.js";
 import { MODIFIERS, MONTHS, normalizeAccents } from "../utils/date-constants.js";
 import { gatherRelatives, hasRealGivenName, isRealGivenName } from "../utils/relatives.js";
@@ -19,11 +20,15 @@ import type {
   RankedMatch,
 } from "../types/rank-search-matches.js";
 
-/** Match-score fan-out concurrency (deliberately higher than same_person's
- *  conservative PAIR_CONCURRENCY=5; confirmed with the matchTwoExamples dev). */
+/** FamilySearch's match-score fan-out concurrency (deliberately higher than
+ *  same_person's conservative PAIR_CONCURRENCY=5; confirmed with the
+ *  matchTwoExamples dev). */
 const SCORE_CONCURRENCY = 10;
-/** A subject whose every score sits at or below this floor is unresolvable. */
-const DEGENERATE_FLOOR = 0.01;
+/** How the diagnostics name each matcher. */
+const MATCHER_LABEL: Record<MatcherBackend, string> = {
+  familysearch: "FamilySearch's matcher",
+  service: "the matcher service",
+};
 /** A candidate whose birth year differs from the subject's by MORE than this
  *  many years is flagged `birthYearConflict` — census ages and indexing slips
  *  account for a year or two, not five. */
@@ -37,8 +42,7 @@ interface ScoredCandidate {
   /** 1-based original staged position. */
   searchRank: number;
   matchScore: number | null;
-  matchConfidence?: number;
-  /** True only when an FS call was attempted and kept failing after retries. */
+  /** True only when scoring was attempted and failed. */
   errored: boolean;
 }
 
@@ -84,41 +88,33 @@ export async function rankSearchMatches(
     };
   }
 
-  // ── 3. Score every candidate (bounded fan-out, retried) ────────────────────
-  const scored = await mapWithConcurrency(
-    results,
-    SCORE_CONCURRENCY,
-    async (result, index): Promise<ScoredCandidate> => {
-      const searchRank = index + 1;
-      // Skip candidates with no gedcomx or no primaryId: a person-less doc is a
-      // certain-400 and must not burn three retries. matchScore null, no FS call.
-      if (!result.gedcomx || !result.primaryId) {
-        return { result, searchRank, matchScore: null, errored: false };
-      }
-      try {
-        const res = await withRetry(() =>
-          scorePair(
-            result.gedcomx as SimplifiedGedcomX,
-            result.primaryId as string,
-            subjectDoc,
-            subjectId,
-            principal,
-          ),
-        );
-        const out: ScoredCandidate = {
-          result,
-          searchRank,
-          matchScore: res.score,
-          errored: false,
-        };
-        if (res.confidence !== undefined) out.matchConfidence = res.confidence;
-        return out;
-      } catch {
-        // A pair that still fails after retries is kept, never dropped.
-        return { result, searchRank, matchScore: null, errored: true };
-      }
-    },
+  // ── 3. Score every candidate, the whole page in one matching call ──────────
+  // A candidate with no gedcomx or no primaryId is not sent: a person-less doc
+  // is a certain-400. It stays, unscored and not errored. A pair that fails is
+  // kept too, never dropped.
+  const scored: ScoredCandidate[] = results.map((result, index) => ({
+    result,
+    searchRank: index + 1,
+    matchScore: null,
+    errored: false,
+  }));
+  const sendable = scored.filter((s) => s.result.gedcomx && s.result.primaryId);
+  const call = await matchPairs(
+    sendable.map((s) => ({
+      kind: "tree_record" as const,
+      tree: subject.tree,
+      pid: subjectId,
+      rec: s.result.gedcomx as SimplifiedGedcomX,
+      personaId: s.result.primaryId as string,
+      familysearchTree: subjectDoc,
+    })),
+    principal,
+    { concurrency: SCORE_CONCURRENCY, retry: true },
   );
+  sendable.forEach((s, i) => {
+    s.matchScore = call.results[i].score;
+    s.errored = s.matchScore === null;
+  });
 
   const scoringErrors = scored.filter((s) => s.errored).length;
 
@@ -135,19 +131,24 @@ export async function rankSearchMatches(
     projectPath,
     input,
     scored,
+    call,
   );
 
-  // No score clears the degenerate floor. Two very different situations share
-  // this signature, and they need opposite responses from the caller:
+  // No score clears the active matcher's floor. Two very different situations
+  // share this signature, and they need opposite responses from the caller:
   //   (a) the SUBJECT carries no dated or placed fact — the ranking is noise;
   //   (b) the subject is fine and genuinely nothing in this pool matches — a
   //       real, useful negative ("not here; page deeper or narrow").
   // Inferring from the score distribution alone conflates them. Disambiguate by
-  // looking at the subject document we actually sent.
-  const noSignal = !scored.some(
-    (s) => s.matchScore !== null && s.matchScore > DEGENERATE_FLOOR,
-  );
+  // looking at the subject document we actually sent. Each has its own floor.
+  // A candidate that went unscored might have cleared it, so neither branch
+  // claims a negative while one did.
+  const { thinSubject, realNegative } = call.floors;
   const noDatedOrPlacedFact = subject.discriminatingFacts === 0;
+  const floor = noDatedOrPlacedFact ? thinSubject : realNegative;
+  const noSignal = !scored.some(
+    (s) => s.matchScore !== null && s.matchScore > floor,
+  );
 
   // ── 6+7. Build the stubs; fold in attachments if requested ────────────────
   // Every scored candidate, not a fixed top-N (#1212). `top` narrows only when
@@ -188,24 +189,35 @@ export async function rankSearchMatches(
     // or narrow the query.
     out.matches = [];
     out.returnedCount = 0;
-    out.subjectResolvable = false;
+    if (scoringErrors === 0) out.subjectResolvable = false;
+    const below =
+      scoringErrors === 0
+        ? `every candidate scored at or below ${thinSubject}`
+        : `no candidate it could score came above ${thinSubject}, while ` +
+          `${scoringErrors} of the ${scored.length} could not be scored`;
     out.diagnostic =
       `Subject '${subjectId}' carries no fact with a date or place, so ` +
-      `FamilySearch's matcher cannot discriminate it from any same-named ` +
-      `person and every candidate scored at or below ${DEGENERATE_FLOOR}. The ` +
+      `${MATCHER_LABEL[call.scorer]} cannot discriminate it from any same-named ` +
+      `person and ${below}. The ` +
       `ranking would be search order wearing match scores, so it is withheld. ` +
       `Give the subject at least one dated or placed fact — record it on the ` +
       `tree person, or extract and link an assertion via person_evidence — ` +
       `then rank again. Meanwhile, narrow the search (collection, place, ` +
       `date range) rather than triaging this pool by hand.`;
-  } else if (noSignal) {
+  } else if (noSignal && scoringErrors === 0) {
     // Subject is fine; the pool genuinely holds no match. That IS the finding.
     out.subjectResolvable = false;
     out.diagnostic =
       `Subject '${subjectId}' is scoreable (${subject.discriminatingFacts} ` +
       `dated/placed fact(s)), but no candidate in this pool scored above ` +
-      `${DEGENERATE_FLOOR}. Treat that as a real negative for this query — ` +
+      `${realNegative}. Treat that as a real negative for this query — ` +
       `page deeper (offset) or narrow the query; do not hand-triage the stubs.`;
+  } else if (noSignal) {
+    // The candidates that went unscored might hold the match: no negative yet.
+    out.diagnostic =
+      `${scoringErrors} of the ${scored.length} candidates could not be scored, ` +
+      `and none of the rest scored above ${realNegative}, so this pool has not ` +
+      `been shown to hold no match. Rank it again before reading it as a negative.`;
   }
 
   // Built from `out.matches`, not `matches` — the withheld branch above empties
@@ -553,7 +565,7 @@ function liveLinkedAssertions(research: any, subjectId: string): any[] {
   const all = Array.isArray(research?.assertions) ? research.assertions : [];
   return all.filter(
     (a: any) =>
-      linkedIds.has(a?.id) && a?.record_basis !== "absent",
+      isLiveAssertion(a) && linkedIds.has(a?.id) && a?.record_basis !== "absent",
   );
 }
 
@@ -616,7 +628,11 @@ function tooThinField(subject: SubjectDoc): { subjectTooThin?: true } {
 }
 
 interface SubjectDoc {
+  /** The enriched subject alone: what FamilySearch's matcher is sent. */
   doc: SimplifiedGedcomX;
+  /** The project tree with the enriched subject in place of the tree person:
+   *  what the matcher service is sent, cut around the subject. */
+  tree: SimplifiedGedcomX;
   /** Facts carrying a date or place, after enrichment. */
   discriminatingFacts: number;
   /** How many facts enrichment contributed on top of the bare tree person. */
@@ -760,11 +776,11 @@ export async function buildSubjectDoc(
 
   // The mint-hardening in match-engine synthesizes a conforming Persistent id
   // for the ark-less subject, so scoring stays deterministic.
+  const safeTree = wellFormedTree(tree);
   // #2811: a subject is "too thin" when it has no date narrower than a year AND
   // no named relative — nothing that separates it from any same-named person.
   let tooThin: boolean;
   try {
-    const safeTree = wellFormedTree(tree);
     const self = subjectNames(enriched.names);
     const evidence = linkedEvidence(research, subjectId, enriched.names);
     tooThin =
@@ -782,6 +798,10 @@ export async function buildSubjectDoc(
 
   return {
     doc: { persons: [enriched] },
+    tree: {
+      ...safeTree,
+      persons: (safeTree.persons ?? []).map((p) => (p.id === subjectId ? enriched : p)),
+    },
     birthYear: subjectBirthYear(enriched),
     discriminatingFacts: discriminatingFactCount(enriched),
     enrichedFacts: (enriched.facts ?? []).length - before,
@@ -881,7 +901,6 @@ function toStub(
   // annotated in place — so duplicating its fields onto the stub is the
   // duplication the ruling removed. FamilySearch's `score`/`confidence` are
   // likewise not carried: `matchScore` supersedes them.
-  if (s.matchConfidence !== undefined) stub.matchConfidence = s.matchConfidence;
   // Candidate-side thinness — reported alongside the score so a caller can see
   // that a 0.09 on a dateless stub and a 0.09 on a rich record mean different
   // things. Counted off the staged row's own fields (the sidecar keeps them).
@@ -920,8 +939,10 @@ async function appendScoreLog(
   projectPath: string,
   input: RankSearchMatchesInput,
   scored: ScoredCandidate[],
+  call: MatchCall,
 ): Promise<string | null> {
-  // One JSON line per scored candidate (ALL of them, not just the returned top).
+  // One JSON line per scored candidate (ALL of them, not just the returned top),
+  // each naming the matcher that made its score.
   const performed = new Date().toISOString();
   const body = scored
     .map((s, i) => {
@@ -940,7 +961,8 @@ async function appendScoreLog(
         death_date: r.deathDate ?? null,
         collection_title: r.collectionTitle ?? null,
         match_score: s.matchScore,
-        match_confidence: s.matchConfidence ?? null,
+        scorer: call.scorer,
+        model: call.model,
       };
       return JSON.stringify(line) + "\n";
     })
@@ -990,8 +1012,8 @@ export const rankSearchMatchesSchema = {
     "candidate against the subject person, and returns every scored candidate " +
     "sorted by match score — no bulk gedcomx crosses the wire. Treat the result " +
     "as a REVIEW SURFACE (confirm with role/age cross-checks), not an " +
-    "accept/reject. When `subjectResolvable` is false, READ THE `diagnostic` " +
-    "FIELD — it means one of two opposite things. Either the subject carries no " +
+    "accept/reject. Whenever a `diagnostic` is present, READ IT; when " +
+    "`subjectResolvable` is false it means one of two opposite things. Either the subject carries no " +
     "dated or placed fact, so the scores are noise and `matches` is withheld " +
     "deliberately (give the subject a dated/placed fact, or narrow the query — " +
     "do NOT hand-triage the stubs, and do NOT re-score with `same_person` " +

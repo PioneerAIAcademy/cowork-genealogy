@@ -461,8 +461,8 @@ async function main(): Promise<void> {
     ]);
 
     console.log("\n── B. does the projected Age fact help? ──");
-    console.log(`with Age:    score=${a.score}  confidence=${a.confidence ?? "(none)"}`);
-    console.log(`without Age: score=${b.score}  confidence=${b.confidence ?? "(none)"}`);
+    console.log(`with Age:    score=${a.score}`);
+    console.log(`without Age: score=${b.score}`);
     const delta = a.score - b.score;
     console.log(`delta:       ${delta >= 0 ? "+" : ""}${delta}`);
     // A delta of exactly 0 does NOT mean "it helps" — on an unsaturated score it
@@ -476,7 +476,7 @@ async function main(): Promise<void> {
       ),
     );
     const c = await scorePair(absurd, "principal", treeSide, "I1", LOCAL);
-    console.log(`absurd Age=999: score=${c.score}  confidence=${c.confidence ?? "(none)"}`);
+    console.log(`absurd Age=999: score=${c.score}`);
 
     // Same question for `marriage`, the other type the projection admits and the
     // tree write does not. Unlike Age it HAS precedent (14 of the 356 facts on

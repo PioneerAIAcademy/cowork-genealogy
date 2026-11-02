@@ -5,6 +5,7 @@ import {
   accentKey,
   foldPlaceKey,
   listedOneWordPlace,
+  oneWordListPlace,
   oneWordPlaceIsWord,
   oneWordPlaceNeedsCountry,
   ONE_WORD_PLACES_PATH,
@@ -186,5 +187,13 @@ describe("the bundled one-word list (the lead, 2026-10-26)", () => {
     expect(oneWordPlaceNeedsCountry("Kent")).toBe(false);
     expect(oneWordPlaceNeedsCountry("Ísland")).toBe(false);
     expect(oneWordPlaceNeedsCountry("Shenandoah")).toBe(false);
+  });
+
+  it("gives the place an entry holds for a text, whatever its condition", () => {
+    expect(oneWordListPlace("W. Va.")).toBe("West Virginia, United States");
+    expect(oneWordListPlace("Texas")).toBe("Texas, United States");
+    expect(oneWordListPlace("Louth")).toBe("County Louth, Ireland");
+    expect(oneWordListPlace("Island")).toBe("Iceland");
+    expect(oneWordListPlace("Shenandoah")).toBeNull();
   });
 });

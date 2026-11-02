@@ -1,0 +1,106 @@
+{
+  "tool": "record_read",
+  "description": "Full record for Theresia (Birth of Theresia, daughter of Jakob Reding and Maria Johanna Fautsch), Luxembourg, Church and Civil Registration (5000012). Mirrors the gedcomx already embedded in record-search-theresia-luxembourg-hit — same persons, same relationships, no new genealogical claims. Stocked so that a thorough agent that reads the record before reporting does not abort the run as an unregistered tool.",
+  "args": {
+    "recordId": "~6LYM-X1PN"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Theresia",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Birth",
+            "date": "17 June 1846",
+            "place": "Luxemburg"
+          }
+        ],
+        "ark": "ark:/61903/1:1:6LYM-X1PN",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Luxembourg, Church and Civil Registration"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Jakob",
+            "surname": "Reding",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Luxembourg, Church and Civil Registration"
+          }
+        ]
+      },
+      {
+        "id": "P3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N3",
+            "preferred": true,
+            "given": "Maria Johanna",
+            "surname": "Fautsch",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Luxembourg, Church and Civil Registration"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "CR1",
+        "type": "ParentChild",
+        "parent": "P2",
+        "child": "P1"
+      },
+      {
+        "id": "CR2",
+        "type": "ParentChild",
+        "parent": "P3",
+        "child": "P1"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Luxembourg, Church and Civil Registration",
+        "collectionId": "5000012",
+        "ark": "ark:/61903/1:1:6LYM-X1PN"
+      }
+    ],
+    "places": [
+      {
+        "id": "PL1",
+        "name": "Luxemburg"
+      }
+    ]
+  }
+}

@@ -301,3 +301,43 @@ def test_missing_research_json_returns_empty_so_callers_must_skip_first():
     `validator_runner` records a bare pass as evidence the invariant held."""
     assert check_no_gate_stop({"research_json": None}, _state(_q())) == []
     assert check_no_gate_stop(_state(_q()), {"research_json": None}) == []
+
+
+# --- continue_offers: what the unsettled-conflict validators read as an offer ---
+
+from validators_lib import continue_offers  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Continue with planning the searches?",
+        "Continue with resolving the conflict?",
+        "Continue with writing the conclusion?",
+        "**Continue with planning the searches?**",
+        "`Continue with research-plan?`",
+        "Continue with research-plan?",
+        "Continue with planning the searches for the marriage act?",
+        "continue with question-selection?",
+        "- Continue with planning the searches?",
+        "Continue with planning the searches?",
+        "Continue with planning the searches？",
+        "Continue with  conflict-resolution ?",
+    ],
+)
+def test_continue_offers_catches_an_offer(line):
+    assert continue_offers(f"Weighed c_001.\n{line}\n\nSomething plain.") != []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "No record left to search can settle this.",
+        "Wrap it up, or continue with a different question?",
+        "You can continue with a different question.",
+        "",
+        None,
+    ],
+)
+def test_continue_offers_ignores_prose(text):
+    assert continue_offers(text) == []

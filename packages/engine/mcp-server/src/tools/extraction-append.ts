@@ -62,6 +62,8 @@ import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { sourceIdsForRecordIds, activePlanItems } from "./research-append.js";
 import { findAnchor, collectSourceRefs, ATTACHMENT_LINK_RATIONALE } from "../utils/tree-person.js";
 import { isRejectedPair } from "../utils/rejected-links.js";
+import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
+import { assertionReferrers, liveAssertionsOfRecord } from "../utils/assertion-retirement.js";
 import { summarizeExtraction, censusStatedRelationships, detectRecordType } from "../utils/record-extract.js";
 import {
   validateStructuredDocument,
@@ -104,6 +106,20 @@ export async function runExtractionAppend(
   const retired = RETIRED_EXTRACTION_KEYS.filter((k) => (input as any)?.[k] !== undefined);
   if (retired.length > 0) {
     return { ok: false, records: [], errors: [retiredExtractionMessage(retired)] };
+  }
+  const reextract = (input as any)?.reextract;
+  if (reextract !== undefined && typeof reextract !== "boolean") {
+    return { ok: false, records: [], errors: ["`reextract` must be true or false."] };
+  }
+  if (reextract === true && (input.personId !== undefined || input.absences !== undefined)) {
+    return {
+      ok: false,
+      records: [],
+      errors: [
+        "`reextract` applies to `recordIds` or `documents` only: name the record to extract again there, " +
+          "not a person or an absence.",
+      ],
+    };
   }
   if (got.length !== 1) {
     return {
@@ -194,6 +210,8 @@ export interface ExtractionBatchInput {
   personId?: string;
   /** Expected-but-absent persons for a record in `recordIds`, keyed by its id. */
   absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
+  /** Extract an already-extracted record again and retire its old assertions (#3678). */
+  reextract?: boolean;
 }
 
 export type RecordOutcomeStatus = "extracted" | "already_extracted" | "read_failed" | "refused";
@@ -207,6 +225,8 @@ export interface RecordOutcome {
   summary: string;
   errors?: string[];
   warnings?: string[];
+  /** A re-extraction's retired assertions: each old id and what superseded it. */
+  retired?: { id: string; supersededBy: string }[];
 }
 
 export interface ExtractionBatchResult {
@@ -304,7 +324,7 @@ async function tieRecordToQuestions(
 ): Promise<{ tied: string[]; warnings: string[] }> {
   const ops: ResearchAppendOp[] = [];
   for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-    if (!a || typeof a.id !== "string" || typeof a.record_id !== "string" || !recordIds.has(arkToBareId(a.record_id))) continue;
+    if (!isLiveAssertion(a) || typeof a.id !== "string" || typeof a.record_id !== "string" || !recordIds.has(arkToBareId(a.record_id))) continue;
     const have: string[] = Array.isArray(a.extracted_for_question_ids) ? a.extracted_for_question_ids : [];
     const add = questionIds.filter((q) => !have.includes(q));
     if (add.length === 0) continue;
@@ -446,6 +466,63 @@ async function personaGroups(projectPath: string, research: any): Promise<Map<st
   return groups;
 }
 
+/**
+ * What a re-extraction of one record retires (#3678): the live assertions
+ * extracted under the record's OWN id, never a household sibling's. `refusal`
+ * when something still rests on them, or when the record was extracted only under
+ * another persona's or household member's id; `undefined` when nothing extracted
+ * it, so the call is an ordinary first extraction.
+ */
+function reextractTarget(
+  research: any,
+  tree: any,
+  bare: string,
+  widened: ReadonlySet<string>,
+): { ids: string[] } | { refusal: string } | undefined {
+  const own = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
+    (a: any) => typeof a?.record_id === "string" && arkToBareId(a.record_id) === bare,
+  );
+  if (own.length === 0) {
+    const carriers = [
+      ...new Set(
+        (Array.isArray(research?.assertions) ? research.assertions : [])
+          .filter((a: any) => isLiveAssertion(a) && typeof a.record_id === "string" && widened.has(arkToBareId(a.record_id)))
+          .map((a: any) => a.record_id as string),
+      ),
+    ];
+    if (carriers.length === 0) return undefined;
+    return {
+      refusal:
+        `it was extracted under ${carriers.join(", ")}, not under this id. Re-extract ${carriers.length === 1 ? "that id" : "one of those ids"}; ` +
+        "a re-extraction retires only the assertions of the id it names.",
+    };
+  }
+  const ids = liveAssertionsOfRecord(research, bare, arkToBareId).map((a) => a.id as string);
+  const referrers = assertionReferrers(research, tree, new Set(ids));
+  if (referrers.length > 0) return { refusal: `its assertions are still in use. ${referrers.join(" ")}` };
+  return { ids };
+}
+
+/** The re-extracted outcomes' retirements, read back once after every write. */
+async function noteRetired(projectPath: string, outcomes: (RecordOutcome & { retireIds?: string[] })[]): Promise<void> {
+  const done = outcomes.filter((o) => o.status === "extracted" && o.retireIds && o.retireIds.length > 0);
+  if (done.length === 0) return;
+  let research: any;
+  try {
+    research = await readProjectJson(projectPath, "research.json");
+  } catch {
+    return;
+  }
+  const byId = new Map<string, any>((Array.isArray(research.assertions) ? research.assertions : []).map((a: any) => [a?.id, a]));
+  for (const o of done) {
+    o.retired = o.retireIds!.map((id) => ({ id, supersededBy: String(byId.get(id)?.superseded_by ?? "") }));
+    const retracted = o.retired.filter((r) => r.supersededBy === RETRACTED).length;
+    o.summary +=
+      ` Re-extracted: ${o.retired.length} earlier assertion${o.retired.length === 1 ? "" : "s"} retired` +
+      `${retracted > 0 ? ` (${retracted} retracted: the new reading has no counterpart)` : ""}.`;
+  }
+}
+
 /** Internal per-call options for `recordIdsMode`, never an input field. */
 interface RecordIdsOptions {
   /** Bare record id -> the tree S the import already made for it. */
@@ -544,7 +621,7 @@ async function personIdMode(
     return { ...extraction, errors: [...(extraction.errors ?? []), `could not re-read research.json to link: ${e instanceof Error ? e.message : String(e)}`] };
   }
   const groups = await personaGroups(input.projectPath, after);
-  const assertions: any[] = Array.isArray(after.assertions) ? after.assertions : [];
+  const assertions: any[] = (Array.isArray(after.assertions) ? after.assertions : []).filter(isLiveAssertion);
   const liveLinked = new Set(
     (Array.isArray(after.person_evidence) ? after.person_evidence : [])
       .filter((pe: any) => pe && pe.superseded_by == null)
@@ -665,9 +742,18 @@ async function recordIdsMode(
     return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
   }
 
+  let tree: any;
+  if (input.reextract === true) {
+    try {
+      tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
+    } catch (e) {
+      return { ok: false, records: [], errors: [`could not read tree.gedcomx.json: ${e instanceof Error ? e.message : String(e)}`] };
+    }
+  }
+
   // One outcome per DISTINCT record: a repeated id in the call is one record.
   const seen = new Set<string>();
-  const outcomes: (RecordOutcome & { stagedRef?: string; hintLogId?: string })[] = [];
+  const outcomes: (RecordOutcome & { stagedRef?: string; hintLogId?: string; retireIds?: string[] })[] = [];
   for (const raw of ids) {
     const bare = arkToBareId(raw.trim());
     if (seen.has(bare)) continue;
@@ -690,6 +776,19 @@ async function recordIdsMode(
   );
   for (const o of outcomes) {
     const bare = arkToBareId(o.recordId);
+    if (input.reextract === true) {
+      const target = reextractTarget(research, tree, bare, widen(bare));
+      if (target && "refusal" in target) {
+        o.status = "refused";
+        o.errors = [target.refusal];
+        o.summary = `${o.recordId}: not re-extracted: ${target.refusal}`;
+        continue;
+      }
+      if (target) {
+        o.retireIds = target.ids;
+        continue;
+      }
+    }
     let existing = sourceIdsForRecordIds(research, widen(bare));
     if (existing.size > 0 && sourceIdsForRecordIds(research, new Set([bare])).size === 0) {
       const pending = await reusableLogEntry(input.projectPath, research, bare, citedLogIds);
@@ -771,7 +870,7 @@ async function recordIdsMode(
   for (const o of ownersFirst) {
     const arks = households.get(o.recordId);
     if (o.status !== "extracted" || !arks) continue;
-    if (!owesEntry(o)) {
+    if (!owesEntry(o) && o.retireIds === undefined) {
       const existing = sourceIdsForRecordIds(research, arks);
       if (existing.size > 0) {
         o.status = "already_extracted";
@@ -861,9 +960,10 @@ async function recordIdsMode(
       // no duplicate S is minted. research_append refuses both at once.
       const importedS = opts.sourceDescriptionIdByBare?.get(arkToBareId(o.recordId));
       if (importedS) (ops[0] as any).entry.gedcomx_source_description_id = importedS;
+      const retire = o.retireIds?.length ? { retireAssertions: { recordId: o.recordId, ids: o.retireIds } } : {};
       const written = await researchAppend(
         { projectPath: input.projectPath, ops, ...(importedS ? {} : { sourceDescription }) } as ResearchAppendInput,
-        { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append", ...(hintReads ? { hintReads } : {}) },
+        { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append", ...(hintReads ? { hintReads } : {}), ...retire },
       );
       if (!written.ok) {
         o.status = "refused";
@@ -872,7 +972,7 @@ async function recordIdsMode(
         continue;
       }
       o.srcId = srcIdOf(written);
-      o.summary = summarizeExtraction(doc, extraction);
+      o.summary = summarizeExtraction(doc, extraction, written.unresolvedPlaces);
       o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
     }
   }
@@ -889,10 +989,11 @@ async function recordIdsMode(
     }
   }
 
+  await noteRetired(input.projectPath, outcomes);
   const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes), groups);
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
-    records: outcomes.map(({ stagedRef: _s, hintLogId: _h, ...rest }) => rest),
+    records: outcomes.map(({ stagedRef: _s, hintLogId: _h, retireIds: _r, ...rest }) => rest),
     ...(planItems ? { planItems } : {}),
   };
 }
@@ -1266,7 +1367,16 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
   }
 
-  type DocOutcome = RecordOutcome & { d: DocumentInput };
+  let tree: any;
+  if (input.reextract === true) {
+    try {
+      tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
+    } catch (e) {
+      return { ok: false, records: [], errors: [`could not read tree.gedcomx.json: ${e instanceof Error ? e.message : String(e)}`] };
+    }
+  }
+
+  type DocOutcome = RecordOutcome & { d: DocumentInput; retireIds?: string[] };
   const outcomes: DocOutcome[] = docs.map((d) => ({
     recordId: d.recordId.trim(),
     status: "extracted",
@@ -1274,6 +1384,20 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     d,
   }));
   for (const o of outcomes) {
+    if (input.reextract === true) {
+      const bare = arkToBareId(o.recordId);
+      const target = reextractTarget(research, tree, bare, new Set([bare]));
+      if (target && "refusal" in target) {
+        o.status = "refused";
+        o.errors = [target.refusal];
+        o.summary = `${o.recordId}: not re-extracted: ${target.refusal}`;
+        continue;
+      }
+      if (target) {
+        o.retireIds = target.ids;
+        continue;
+      }
+    }
     const existing = sourceIdsForRecordIds(research, new Set([arkToBareId(o.recordId)]));
     if (existing.size > 0) {
       o.status = "already_extracted";
@@ -1412,13 +1536,14 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
         ];
         const src = o.d.document.source;
         const sdUrl = src.url ?? c?.hit?.sourceUrl;
+        const retire = o.retireIds?.length ? { retireAssertions: { recordId: o.recordId, ids: o.retireIds } } : {};
         const written = await researchAppend(
           {
             projectPath: input.projectPath,
             ops,
             sourceDescription: sdUrl ? { title: src.title, url: sdUrl } : { title: src.title },
           } as ResearchAppendInput,
-          { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+          { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append", ...retire },
         );
         if (!written.ok) {
           o.status = "refused";
@@ -1427,15 +1552,16 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
           continue;
         }
         o.srcId = srcIdOf(written);
-        o.summary = summarizeExtraction(extract, extraction);
+        o.summary = summarizeExtraction(extract, extraction, written.unresolvedPlaces);
         o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
       }
     }
   }
+  await noteRetired(input.projectPath, outcomes);
   const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes));
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
-    records: outcomes.map(({ d: _d, ...rest }) => rest),
+    records: outcomes.map(({ d: _d, retireIds: _r, ...rest }) => rest),
     ...(planItems ? { planItems } : {}),
   };
 }
@@ -1637,8 +1763,13 @@ export const extractionAppendSchema = {
     "it verbatim, since you do not see the record yourself; `personId` also " +
     "returns one `summary` for the whole call. Identity links " +
     "(`person_evidence`) are NOT written here except those unverified " +
-    "attachment links; a correction to an existing " +
-    "assertion goes through `research_append`.",
+    "attachment links.\n" +
+    "\n" +
+    "A record extracted WRONGLY is corrected by sending it again with " +
+    "`reextract: true` (with `recordIds` or `documents`): the record is " +
+    "extracted afresh and its earlier assertions are retired, each pointing at " +
+    "its replacement or marked retracted. Refused while anything still cites " +
+    "them; the refusal names each one.",
   inputSchema: {
     type: "object",
     properties: {
@@ -1661,6 +1792,12 @@ export const extractionAppendSchema = {
           "found, `absentPersons` with that record's `recordId`.",
       },
       questionIds: QUESTION_IDS,
+      reextract: {
+        type: "boolean",
+        description:
+          "Only to correct a record extracted wrongly: extract it again and retire its earlier " +
+          "assertions. With `recordIds` or `documents`, never `personId` or `absences`.",
+      },
       absentPersons: {
         type: "array",
         items: {

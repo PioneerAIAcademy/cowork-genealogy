@@ -6,8 +6,6 @@
     "treePersonId": "~"
   },
   "response": {
-    "matched": true,
-    "confidence": 2,
     "score": 0.2415185,
     "recordSource": "record_read",
     "recorded": true,

@@ -12,6 +12,13 @@ vi.mock("../../src/auth/refresh.js", () => ({
 vi.mock("../../src/utils/match-engine.js", () => ({
   scorePair: vi.fn(),
 }));
+// FamilySearch's matcher unless a test names the service: LOCAL reads the
+// developer's own config.json, which may name the service.
+const matcherSettingsMock = vi.hoisted(() => vi.fn());
+vi.mock("../../src/auth/config.js", async (orig) => ({
+  ...(await orig<typeof import("../../src/auth/config.js")>()),
+  getMatcherSettings: matcherSettingsMock,
+}));
 
 import { rankSearchMatches } from "../../src/tools/rank-search-matches.js";
 import { getValidToken } from "../../src/auth/refresh.js";
@@ -21,7 +28,7 @@ import {
   finalizeStagedResults,
   STAGING_SUBDIR,
 } from "../../src/utils/results-staging.js";
-import type { SamePersonResult } from "../../src/types/same-person.js";
+import type { FamilySearchMatch } from "../../src/types/same-person.js";
 
 const getValidTokenMock = vi.mocked(getValidToken);
 const scorePairMock = vi.mocked(scorePair);
@@ -30,6 +37,8 @@ beforeEach(() => {
   getValidTokenMock.mockReset();
   getValidTokenMock.mockResolvedValue("test-token");
   scorePairMock.mockReset();
+  matcherSettingsMock.mockReset();
+  matcherSettingsMock.mockResolvedValue({ backend: "familysearch" });
 });
 
 afterEach(() => {
@@ -52,17 +61,14 @@ const subjectTree = {
   sources: [],
 };
 
-function scoreResult(score: number, confidence?: number): SamePersonResult {
-  const out: SamePersonResult = {
-    matched: confidence !== undefined,
+function scoreResult(score: number): FamilySearchMatch {
+  return {
     score,
     queryArk: "ark:/61903/1:1:QUERY",
     candidateArk: "ark:/61903/1:1:CAND",
     apiTitle: "Matches for ark:/61903/1:1:QUERY",
     updated: "2026-07-06T00:00:00.000Z",
   };
-  if (confidence !== undefined) out.confidence = confidence;
-  return out;
 }
 
 interface CandOpts {
@@ -168,7 +174,7 @@ describe("rank_search_matches", () => {
         { id: "a_003", fact_type: "birth", structured_value: { year: "1799" } },
       ],
     });
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
     const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
 
     const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
@@ -201,7 +207,7 @@ describe("rank_search_matches", () => {
         { id: "a_002", fact_type: "residence", structured_value: { place: "Acme, New Mexico" } },
       ],
     });
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
     const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
 
     const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
@@ -231,7 +237,7 @@ describe("rank_search_matches", () => {
         structured_value: { year: "1858", place: "Memphis, Tennessee" },
       })),
     });
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
     const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
 
     await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
@@ -280,7 +286,7 @@ describe("rank_search_matches", () => {
 
   it("falls back to the bare tree person when research.json is absent", async () => {
     await writeTree();
-    scorePairMock.mockResolvedValue(scoreResult(0.8, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.8));
     const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
 
     const out = await rankSearchMatches({
@@ -295,7 +301,7 @@ describe("rank_search_matches", () => {
 
   it("reports candidate thinness without thresholding on it", async () => {
     await writeTree();
-    scorePairMock.mockResolvedValue(scoreResult(0.8, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.8));
     const thin = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" });
     const rich = candidate({ recordId: "ark:/61903/1:1:AAAA-AA2", primaryId: "p2", birthDate: "1858" });
     (rich as any).events = [{ type: "Census", date: "1900", place: "Jackson, TN" }];
@@ -316,7 +322,7 @@ describe("rank_search_matches", () => {
     // The default subject was born 4 Dec 1917.
     const rank = async (candidates: unknown[], tree?: unknown) => {
       await writeTree(tree);
-      scorePairMock.mockResolvedValue(scoreResult(0.86, 4));
+      scorePairMock.mockResolvedValue(scoreResult(0.86));
       const ref = await stage(candidates);
       return rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: SUBJECT_ID }, LOCAL);
     };
@@ -403,7 +409,7 @@ describe("rank_search_matches", () => {
 
     const scores: Record<string, number> = { p1: 0.99, p2: 0.3, p3: 0.72 };
     scorePairMock.mockImplementation(async (_g1, id1) =>
-      scoreResult(scores[id1], scores[id1] > 0.5 ? 5 : undefined),
+      scoreResult(scores[id1]),
     );
 
     const out = await rankSearchMatches({
@@ -429,7 +435,7 @@ describe("rank_search_matches", () => {
     // searchRank carries the original staged position (1-based).
     expect(out.matches.map((m) => m.searchRank)).toEqual([1, 3, 2, 4]);
     expect(out.matches[0].matchScore).toBeCloseTo(0.99);
-    expect(out.matches[0].matchConfidence).toBe(5);
+    expect(out.matches[0]).not.toHaveProperty("matchConfidence");
     expect(out.matches[3].matchScore).toBeNull();
     // The no-gedcomx candidate never hit the scorer.
     expect(scorePairMock).toHaveBeenCalledTimes(3);
@@ -443,7 +449,7 @@ describe("rank_search_matches", () => {
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA3", primaryId: "p3" }),
     ]);
     const scores: Record<string, number> = { p1: 0.9, p2: 0.4, p3: 0.7 };
-    scorePairMock.mockImplementation(async (_g1, id1) => scoreResult(scores[id1], 5));
+    scorePairMock.mockImplementation(async (_g1, id1) => scoreResult(scores[id1]));
 
     const out = await rankSearchMatches({
       projectPath: dir,
@@ -472,7 +478,7 @@ describe("rank_search_matches", () => {
     ]);
     const scores: Record<string, number> = { p1: 0.99, p2: 0.2, p3: 0.6 };
     scorePairMock.mockImplementation(async (_g1, id1) =>
-      scoreResult(scores[id1], scores[id1] > 0.5 ? 5 : undefined),
+      scoreResult(scores[id1]),
     );
 
     const out = await rankSearchMatches({
@@ -501,8 +507,10 @@ describe("rank_search_matches", () => {
       birth_date: "1917",
       collection_title: "Find A Grave Index",
       match_score: 0.99,
-      match_confidence: 5,
+      scorer: "familysearch",
+      model: null,
     });
+    expect(log[0]).not.toHaveProperty("match_confidence");
     expect(typeof log[0].performed).toBe("string");
   });
 
@@ -511,7 +519,7 @@ describe("rank_search_matches", () => {
     const ref = await stage([
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" }),
     ]);
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 5));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
 
     // Force EISDIR: pre-create the score-log path as a directory.
     await mkdir(join(dir, "results/match-scores.jsonl"), { recursive: true });
@@ -539,7 +547,7 @@ describe("rank_search_matches", () => {
     ]);
     scorePairMock.mockImplementation(async (_g1, id1) => {
       if (id1 === "pfail") throw new Error("transient FS failure");
-      return scoreResult(0.95, 5);
+      return scoreResult(0.95);
     });
 
     const out = await rankSearchMatches({
@@ -563,7 +571,7 @@ describe("rank_search_matches", () => {
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" }),
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA5", hasGedcomx: false }),
     ]);
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 5));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
 
     const out = await rankSearchMatches({
       projectPath: dir,
@@ -586,7 +594,7 @@ describe("rank_search_matches", () => {
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" }),
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA2", primaryId: "p2" }),
     ]);
-    scorePairMock.mockResolvedValue(scoreResult(0.001)); // near-zero, no confidence
+    scorePairMock.mockResolvedValue(scoreResult(0.001)); // near-zero
 
     const out = await rankSearchMatches({
       projectPath: dir,
@@ -602,7 +610,7 @@ describe("rank_search_matches", () => {
     const ref = await stage([
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" }),
     ]);
-    scorePairMock.mockResolvedValue(scoreResult(0.8, 5));
+    scorePairMock.mockResolvedValue(scoreResult(0.8));
 
     const out = await rankSearchMatches({
       projectPath: dir,
@@ -714,7 +722,7 @@ describe("rank_search_matches", () => {
       },
     });
     if (!handle) throw new Error("expected a staged handle");
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 5));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
 
     await rankSearchMatches({
       projectPath: dir,
@@ -753,7 +761,7 @@ describe("rank_search_matches", () => {
       }),
       "utf-8",
     );
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 5));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
 
     const out = await rankSearchMatches({
       projectPath: dir,
@@ -772,7 +780,7 @@ describe("rank_search_matches", () => {
     // confirmed, so the finding has to survive `toStub`'s projection. The ranker
     // only copies it — it neither recomputes nor scores it.
     await writeTree();
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
     const staged = candidate({
       recordId: "ark:/61903/1:1:AAAA-AA1",
       primaryId: "p1",
@@ -802,7 +810,7 @@ describe("rank_search_matches", () => {
     // caller reads — so a batch number that stops at `results` is invisible on
     // the most common call shape, and the enumerate-the-batch loop dead-ends.
     await writeTree();
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
     const staged = candidate({
       recordId: "ark:/61903/1:1:AAAA-AA1",
       primaryId: "p1",
@@ -823,7 +831,7 @@ describe("rank_search_matches", () => {
     // Most records trace to no batch. Absence is not a finding and must not be
     // reported as an empty value the caller could pass back as a query.
     await writeTree();
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
     const ref = await stage([
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" }),
     ]);
@@ -842,7 +850,7 @@ describe("rank_search_matches", () => {
     // blind to whether the record names the father. A top-ranked hit with
     // `father: absent` looks more confirmed than anything else on the page.
     await writeTree();
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
     const rows = ["AA1", "AA2", "AA3"].map((suffix, i) => {
       const r = candidate({
         recordId: `ark:/61903/1:1:AAAA-${suffix}`,
@@ -902,7 +910,7 @@ describe("rank_search_matches", () => {
     // "We could not tell" is not a finding to warn about, and warning on it
     // would train the caller to ignore the note.
     await writeTree();
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
     const row = candidate({
       recordId: "ark:/61903/1:1:AAAA-AA1",
       primaryId: "p1",
@@ -921,7 +929,7 @@ describe("rank_search_matches", () => {
 
   it("omits relativeTerms on the stub when the staged row has none", async () => {
     await writeTree();
-    scorePairMock.mockResolvedValue(scoreResult(0.9, 4));
+    scorePairMock.mockResolvedValue(scoreResult(0.9));
     const ref = await stage([
       candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" }),
     ]);
@@ -955,7 +963,7 @@ describe("rank_search_matches", () => {
     // genuinely rankable and `subjectResolvable` stays true.
     scorePairMock.mockImplementation(async (_g1, id1: string) => {
       const i = Number(String(id1).replace("pool", ""));
-      return scoreResult(0.99 - i * 0.001, 6);
+      return scoreResult(0.99 - i * 0.001);
     });
   }
 
@@ -1010,7 +1018,7 @@ describe("rank_search_matches", () => {
         treeMatches: [{ id: "KWZZ-XYZ", name: "A B" }],
       },
     ]);
-    scorePairMock.mockImplementation(async () => scoreResult(0.9, 7));
+    scorePairMock.mockImplementation(async () => scoreResult(0.9));
   
     const out = await rankSearchMatches({
       projectPath: dir,
@@ -1080,7 +1088,7 @@ describe("rank_search_matches", () => {
 
     async function rankFlag(tree: unknown): Promise<boolean | undefined> {
       await writeTree(tree);
-      scorePairMock.mockResolvedValue(scoreResult(0.5, 3));
+      scorePairMock.mockResolvedValue(scoreResult(0.5));
       const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
       const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
       return out.subjectTooThin;
@@ -1607,6 +1615,226 @@ describe("rank_search_matches", () => {
           LOCAL,
         ),
       ).rejects.toThrow(/top must be a positive integer/);
+    });
+  });
+
+  // ── The matcher shim: the service backend and each backend's floors ────────
+
+  describe("the matcher shim", () => {
+    const SERVICE = { backend: "service", url: "http://matcher.test", apiKey: "k".repeat(32) };
+    let serviceFetch: ReturnType<typeof vi.fn>;
+
+    /** The matcher service, answering each pair by its record persona: a
+     *  number is its score, a string its error code. */
+    function useService(byPersona: Record<string, number | string>): void {
+      matcherSettingsMock.mockResolvedValue(SERVICE);
+      serviceFetch = vi.fn(async (_url: string | URL, init: RequestInit = {}) => {
+        const pairs = JSON.parse(String(init.body)).pairs as Array<{ id: string; personaId: string }>;
+        return new Response(
+          JSON.stringify({
+            model: { version: "m16", cutoffs: { floors: { thin_subject: 0.3, real_negative: 0.05 } } },
+            results: pairs.map((p) => {
+              const v = byPersona[p.personaId];
+              return typeof v === "number"
+                ? { id: p.id, score: v, local: v, jev: "off", veto: false }
+                : { id: p.id, error: { code: v } };
+            }),
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      });
+      vi.stubGlobal("fetch", serviceFetch);
+    }
+
+    /** FamilySearch's matcher, answering by record persona: a number is its
+     *  score, null a pair that throws on every attempt. */
+    function useFamilySearch(byPersona: Record<string, number | null>): void {
+      scorePairMock.mockImplementation(async (_g1, id1) => {
+        const v = byPersona[id1];
+        if (v === null) throw new Error("FamilySearch matchTwoExamples API error: 500 Internal.");
+        return scoreResult(v);
+      });
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    const ids = (n: number) => Array.from({ length: n }, (_, i) => `p${i + 1}`);
+    const page = (n: number) =>
+      stage(ids(n).map((id, i) => candidate({ recordId: `ark:/61903/1:1:AAAA-AB${i}`, primaryId: id })));
+    const rank = async (subjectId: string, n: number) =>
+      rankSearchMatches({ projectPath: dir, stagedResultsRef: await page(n), subjectId }, LOCAL);
+
+    const placedTree = subjectTree;
+    const thinTree = {
+      persons: [{ id: "I1", names: [{ preferred: true, given: "James", surname: "Stephens" }] }],
+      relationships: [],
+      sources: [],
+    };
+
+    it("sends the whole page in one call, and never asks FamilySearch", async () => {
+      await writeTree();
+      useService({ p1: 0.9, p2: 0.4, p3: 0.7 });
+      const out = await rank(SUBJECT_ID, 3);
+
+      expect(serviceFetch).toHaveBeenCalledTimes(1);
+      const sent = JSON.parse(String(serviceFetch.mock.calls[0][1].body)).pairs;
+      expect(sent.map((p: { personaId: string }) => p.personaId)).toEqual(["p1", "p2", "p3"]);
+      expect(out.matches.map((m) => m.matchScore)).toEqual([0.9, 0.7, 0.4]);
+      expect(scorePairMock).not.toHaveBeenCalled();
+    });
+
+    it("sends the subject's family from the project tree, with the enriched subject", async () => {
+      await writeTree({
+        persons: [
+          { id: "I1", gender: "Male", names: [{ given: "James", surname: "Stephens" }], facts: [{ type: "Birth", date: "1858" }] },
+          { id: "I2", gender: "Male", names: [{ given: "Thomas", surname: "Stephens" }] },
+          { id: "I3", gender: "Male", names: [{ given: "William", surname: "Stephens" }] },
+        ],
+        relationships: [
+          { type: "ParentChild", parent: "I2", child: "I1" },
+          { type: "ParentChild", parent: "I3", child: "I2" },
+        ],
+        sources: [],
+      });
+      await writeResearch({
+        person_evidence: [{ id: "pe_001", person_id: "I1", assertion_id: "a_001" }],
+        assertions: [{ id: "a_001", fact_type: "residence", structured_value: { place: "Acme, New Mexico" } }],
+      });
+      useService({ p1: 0.9, p2: 0.8 });
+      await rank("I1", 2);
+
+      const pairs = JSON.parse(String(serviceFetch.mock.calls[0][1].body)).pairs;
+      for (const pair of pairs) {
+        const persons = pair.tree.persons as Array<{ id: string; facts?: unknown[] }>;
+        expect(persons.map((p) => p.id).sort()).toEqual(["I1", "I2"]);
+        expect(persons.find((p) => p.id === "I1")?.facts).toContainEqual({ type: "Residence", place: "Acme, New Mexico" });
+        expect(pair.pid).toBe("I1");
+      }
+    });
+
+    it("withholds a thin subject's ranking under the service's 0.3 floor, not under FamilySearch's 0.01", async () => {
+      await writeTree(thinTree);
+      useService({ p1: 0.25, p2: 0.04 });
+      const service = await rank("I1", 2);
+      expect(service.matches).toEqual([]);
+      expect(service.subjectResolvable).toBe(false);
+      expect(service.diagnostic).toMatch(/the matcher service cannot discriminate/);
+      expect(service.diagnostic).toMatch(/at or below 0\.3\./);
+
+      vi.unstubAllGlobals();
+      matcherSettingsMock.mockResolvedValue({ backend: "familysearch" });
+      useFamilySearch({ p1: 0.25, p2: 0.04 });
+      const fs = await rank("I1", 2);
+      expect(fs.matches).toHaveLength(2);
+      expect(fs.subjectResolvable).toBeUndefined();
+      expect(fs.diagnostic).toBeUndefined();
+    });
+
+    it("reports a real negative under the service's 0.05 floor, not under FamilySearch's 0.01", async () => {
+      await writeTree(placedTree);
+      useService({ p1: 0.04, p2: 0.02 });
+      const service = await rank(SUBJECT_ID, 2);
+      expect(service.matches).toHaveLength(2);
+      expect(service.subjectResolvable).toBe(false);
+      expect(service.diagnostic).toMatch(/scored above 0\.05\. Treat that as a real negative/);
+
+      vi.unstubAllGlobals();
+      matcherSettingsMock.mockResolvedValue({ backend: "familysearch" });
+      useFamilySearch({ p1: 0.04, p2: 0.02 });
+      const fs = await rank(SUBJECT_ID, 2);
+      expect(fs.subjectResolvable).toBeUndefined();
+      expect(fs.diagnostic).toBeUndefined();
+    });
+
+    it("gives a placed subject at 0.25 no diagnostic under either matcher", async () => {
+      await writeTree(placedTree);
+      useService({ p1: 0.25 });
+      const service = await rank(SUBJECT_ID, 1);
+      expect(service.subjectResolvable).toBeUndefined();
+      expect(service.diagnostic).toBeUndefined();
+
+      vi.unstubAllGlobals();
+      matcherSettingsMock.mockResolvedValue({ backend: "familysearch" });
+      useFamilySearch({ p1: 0.25 });
+      const fs = await rank(SUBJECT_ID, 1);
+      expect(fs.subjectResolvable).toBeUndefined();
+      expect(fs.diagnostic).toBeUndefined();
+    });
+
+    describe("a page with unscored candidates claims no negative", () => {
+      it.each([
+        ["the service", () => useService({ p1: "deadline", p2: "deadline", p3: "deadline", p4: 0.02, p5: 0.02 })],
+        ["FamilySearch", () => useFamilySearch({ p1: null, p2: null, p3: null, p4: 0.005, p5: 0.005 })],
+      ])("under %s, for a placed subject: no real negative, every row back", async (_label, use) => {
+        await writeTree(placedTree);
+        use();
+        const out = await rank(SUBJECT_ID, 5);
+        expect(out.scoringErrors).toBe(3);
+        expect(out.matches).toHaveLength(5);
+        expect(out.subjectResolvable).toBeUndefined();
+        expect(out.diagnostic).toMatch(/^3 of the 5 candidates could not be scored/);
+        expect(out.diagnostic).not.toMatch(/real negative for this query/);
+      });
+
+      it.each([
+        ["the service", () => useService({ p1: "deadline", p2: "deadline", p3: 0.2, p4: 0.2, p5: 0.2 })],
+        ["FamilySearch", () => useFamilySearch({ p1: null, p2: null, p3: 0.005, p4: 0.005, p5: 0.005 })],
+      ])("under %s, for a thin subject: still withheld, but not unresolvable", async (_label, use) => {
+        await writeTree(thinTree);
+        use();
+        const out = await rank("I1", 5);
+        expect(out.scoringErrors).toBe(2);
+        expect(out.matches).toEqual([]);
+        expect(out.subjectResolvable).toBeUndefined();
+        expect(out.diagnostic).toMatch(/carries no fact with a date or place/);
+        expect(out.diagnostic).toMatch(/2 of the 5 could not be scored/);
+      });
+    });
+
+    it("FamilySearch: scores 10 at a time and retries a pair that fails once", async () => {
+      await writeTree();
+      let inFlight = 0;
+      let peak = 0;
+      let failed = false;
+      scorePairMock.mockImplementation(async (_g1, id1) => {
+        peak = Math.max(peak, ++inFlight);
+        await new Promise((r) => setTimeout(r, 5));
+        inFlight--;
+        if (id1 === "p1" && !failed) {
+          failed = true;
+          throw new Error("FamilySearch matchTwoExamples API error: 503 Service Unavailable.");
+        }
+        return scoreResult(0.9);
+      });
+      const out = await rank(SUBJECT_ID, 20);
+      expect(peak).toBe(10);
+      expect(out.scoringErrors).toBe(0);
+      expect(scorePairMock).toHaveBeenCalledTimes(21);
+    });
+
+    it("logs which matcher and model made each score", async () => {
+      await writeTree();
+      useService({ p1: 0.9, p2: "deadline" });
+      await rank(SUBJECT_ID, 2);
+      const log = await readScoreLog();
+      expect(log).toHaveLength(2);
+      for (const line of log) {
+        expect(line).toMatchObject({ scorer: "service", model: "m16" });
+        expect(line).not.toHaveProperty("match_confidence");
+      }
+    });
+
+    it("throws when the service scores no candidate, and does not re-score with FamilySearch", async () => {
+      await writeTree();
+      matcherSettingsMock.mockResolvedValue(SERVICE);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => new Response(JSON.stringify({ error: { code: "unauthorized" } }), { status: 401 })),
+      );
+      await expect(rank(SUBJECT_ID, 2)).rejects.toThrow(/matcher service rejected/);
+      expect(scorePairMock).not.toHaveBeenCalled();
     });
   });
 });

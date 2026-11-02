@@ -1,0 +1,246 @@
+{
+  "run_log": "v5_2026-10-29_23-35-19.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The validator returned valid with no errors or warnings; the reply says both files passed and invents no problem."
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names both files and confirms each passed; flags none of the valid patterns the test lists."
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Right project path; the log entry has the instructed fields, and outcome positive is the instructed value."
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "rubric",
+      "dimension_name": "No-edit discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The only change is the one log entry, which the rubric says is not an edit"
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_validate_schema_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "0 errors and 0 warnings, matching the validator; both conflicts are correctly shaped in the fixture, so calling them valid is right."
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Validated both files and answered the conflict-shape question directly."
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Right project path; the log entry has the instructed fields"
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_validate_schema_002",
+      "dimension_source": "rubric",
+      "dimension_name": "No-edit discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Only the log entry was written; it says whether the conflicts are resolved is a separate question and stops there."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names assertions[0], information_quality, 'tertiary' and the three allowed values; the two failing schema validators fail by design."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Reports the error, explains it, gives a fix, says the tree file passed, and logs the report."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Right path on both calls; outcome positive as instructed, resultsExamined 1 for one error."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Explains that the field accepts only three values and 'tertiary' isn't one of them."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names all three allowed values and ties the choice to the informant, which points to 'indeterminate' and clears the error."
+    },
+    {
+      "test_id": "ut_validate_schema_004",
+      "dimension_source": "rubric",
+      "dimension_name": "No-edit discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Only the log entry was written; 'tertiary' is still in the file afterwards."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Names sources[0], gedcomx_source_description_id and 'GX-MISSING', matching the validator; the failing validator is the fixture's planted error."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Covers every judge_context point, including both fixes."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Right path; outcome positive, resultsExamined 1 for one error."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Explains that the ID points to a source the tree file doesn't have, so the two files don't agree."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both fixes clear the error without creating a new one."
+    },
+    {
+      "test_id": "ut_validate_schema_008",
+      "dimension_source": "rubric",
+      "dimension_name": "No-edit discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Only the log entry was written; tree.gedcomx.json untouched."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Reports returned_count 5 against 2 saved results in results/log_001.json, matching the validator."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Failed status, the 5-vs-2 mismatch, a plain explanation, a fix, and the report logged."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Right path; outcome positive as instructed, resultsExamined 1 for one error."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool-response interpretation & error explanation",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Explains that the saved results claim 5 but hold 2, so part of the search may have been cut off."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Fix-suggestion specificity",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Restoring all 5 results from the original output would clear the error. But if that output is gone, the reply says to log the re-run as a new entry, which leaves results/log_001.json failing, and it rules out setting returned_count to 2, a fix the test accepts."
+    },
+    {
+      "test_id": "ut_validate_schema_009",
+      "dimension_source": "rubric",
+      "dimension_name": "No-edit discipline & scope adherence",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The sidecar was left broken and the only write was the log entry."
+    }
+  ]
+}

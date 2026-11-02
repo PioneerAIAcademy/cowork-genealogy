@@ -425,12 +425,12 @@ never replaces it (see step 3).
    call, call
    `same_person({ projectPath, assertionId, treePersonId, matchRelatives: true })`
    **once**. It returns a `matches` array of `{ role, targetId, candidateId,
-   score, confidence?, preScore }` triples pairing the record's relatives to the
+   score, preScore }` triples pairing the record's relatives to the
    tree person's relatives. `targetId` is on the record side, `candidateId` on
    the tree side. **Optional** — only for a household; a single-person match
    needs the focus call alone. If it comes back with a `note` saying the record
    side carries no relatives, there is nothing to pair; move on. Feed each
-   relative `score`/`confidence` into the threshold policy (step 3) exactly as
+   relative `score` into the threshold policy (step 3) exactly as
    you do the focus score, and carry the `matches` into the cross-person
    consistency check (step 7). These triples inform the tier only: they record
    no score, so each relative you link still needs one
@@ -584,15 +584,21 @@ exists because an autonomous run linked a death certificate scored
 0.026 at `probable` — a different person's death entered the tree as
 the subject's.)
 
+**Recording a rejection.** Append a `rejected_links` entry only when the
+researcher's message clearly says this record is not this person. When
+they are unsure, neither link nor reject. Put the researcher's message,
+copied verbatim, in `researcher_words`; your own analysis goes in
+`reason`. The same write retires the pair's live link and removes the
+facts it put on the person; report what the response names as kept.
+
 **Disclose the score.** Whenever a `same_person` score was computed for
 a link decision, state it in the pe_ entry's rationale (e.g. "score
 0.32; linked on strong non-name correlation") — an undisclosed score
 hides exactly the number a reviewer needs to audit the decision.
 
 For reference, `same_person` scores broadly track the strength
-tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
-search-records uses for triage. Treat that as corroboration of the
-correlation assessment, not a replacement for it.
+tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak. Treat that as
+corroboration of the correlation assessment, not a replacement for it.
 
 **Thin-subject scores.** A sparse tree person — a name and a fact or two —
 scores lower against the right record than a fuller person would, often in the
