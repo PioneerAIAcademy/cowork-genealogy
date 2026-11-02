@@ -10,7 +10,7 @@ import type { Principal } from "../auth/principal.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
 import { imageSearchTool } from "./image-search.js";
 import { resolveFsImageInput, fetchFsImageBytes } from "../utils/fs-image-fetch.js";
-import { runOcr } from "../utils/ocr.js";
+import { runOcr, withTranscriptionSlot } from "../utils/ocr.js";
 import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 import type {
   VolumeBisectInput,
@@ -254,10 +254,13 @@ function trailingNullRun(readings: VolumeBisectReading[]): number {
   return n;
 }
 
-export async function volumeBisectTool(
-  input: VolumeBisectInput,
-  principal: Principal,
-): Promise<VolumeBisectResult> {
+/** A bare image-group prefix names a whole film, which concatenates bound
+ *  books, so year is not monotone across it and a bisect converges on the
+ *  wrong book with a plausible reading at every step.
+ *
+ *  Pure, so it runs in the exported wrapper before a slot is taken and again
+ *  in the body, which stays safe to call directly. */
+function assertSplitGroup(input: VolumeBisectInput): void {
   const groupName = (input.imageGroupNumber ?? "").trim();
   if (!SPLIT_GROUP.test(groupName)) {
     throw new Error(
@@ -271,6 +274,12 @@ export async function volumeBisectTool(
         `bare number itself: the film is not split, and volume_bisect cannot take it.`,
     );
   }
+}
+
+/** Pure, like `assertSplitGroup`, and checked in the wrapper for the same
+ *  reason: a malformed year costs no OCR, and refusing it with "the server is
+ *  busy" hides the one error the caller can act on. */
+function assertTargetYear(input: VolumeBisectInput): void {
   if (
     !Number.isInteger(input.targetYear) ||
     input.targetYear < YEAR_MIN ||
@@ -278,6 +287,32 @@ export async function volumeBisectTool(
   ) {
     throw new Error(`targetYear must be an integer in ${YEAR_MIN}-${YEAR_MAX}.`);
   }
+}
+
+/** Holds one transcription slot for the whole call (self-hosted beta E4).
+ *
+ * Same shape as image_transcribe's: a thin wrapper, so the slot is taken
+ * before `checkImageBrowseCap` and before any image bytes are read without
+ * re-indenting the body or touching the line issue #3996 also edits. */
+export async function volumeBisectTool(
+  input: VolumeBisectInput,
+  principal: Principal,
+): Promise<VolumeBisectResult> {
+  // Both inputs are checked BEFORE the slot: a malformed name or year costs no OCR,
+  // and refusing it with "the server is busy" hides the one error the caller
+  // can act on, so it retries the same bad input.
+  assertSplitGroup(input);
+  assertTargetYear(input);
+  return withTranscriptionSlot(() => volumeBisectToolInner(input, principal));
+}
+
+async function volumeBisectToolInner(
+  input: VolumeBisectInput,
+  principal: Principal,
+): Promise<VolumeBisectResult> {
+  assertSplitGroup(input);
+  assertTargetYear(input);
+  const groupName = (input.imageGroupNumber ?? "").trim();
 
   // Resolve credentials BEFORE reading bytes, so a missing key fails fast rather
   // than after a download.
