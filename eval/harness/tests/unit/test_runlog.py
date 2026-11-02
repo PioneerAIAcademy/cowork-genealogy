@@ -17,6 +17,7 @@ from harness.runlog import (
     build_run_log,
     bundled_cli_version,
     derive_activated,
+    refresh_test_entry_outcome,
     suppressed_failure,
     unexpected_pass,
     validate_run_log,
@@ -1145,3 +1146,141 @@ def test_a_malformed_main_thread_is_rejected_by_both_schema_trees():
     _, log = _captured_entry(run)
     with pytest.raises(jsonschema.ValidationError):
         _validate_both_schema_trees(log)
+
+
+def _entry(run_outcomes, dims_per_run, *, summary, outcome, flaky=False, skipped=None):
+    """A committed test entry as it sits in a run log: raw dicts, not SingleRun."""
+    skipped = skipped or [False] * len(run_outcomes)
+    return {
+        "test_id": "ut_x_001",
+        "outcome": outcome,
+        "flaky": flaky,
+        "outcome_summary": summary,
+        "runs": [
+            {
+                "outcome": o,
+                "validators": {"passed": True, "results": []},
+                "judge": {"skipped": s, "dimensions": d},
+            }
+            for o, d, s in zip(run_outcomes, dims_per_run, skipped)
+        ],
+    }
+
+
+def _dim(score):
+    return [{"source": "base", "name": "Correctness", "score": score, "rationale": "x"}]
+
+
+def test_refresh_rebuilds_a_summary_left_stale_by_a_regrade():
+    """The regrade bug: `outcome` refreshed, everything derived from runs not.
+
+    Fails before refresh_test_entry_outcome existed — judge_regrade updated
+    `outcome` alone, so a reddened entry kept `per_run_outcomes: ["pass"]` and
+    the pre-regrade dimension scores that `skill_gate` reads.
+    """
+    entry = _entry(
+        ["fail"],
+        [_dim(1)],
+        summary={
+            "per_run_outcomes": ["pass"],
+            "aggregated_dimensions": _dim(3),
+            "review_dimensions": _dim(3),
+        },
+        outcome="fail",
+    )
+    assert refresh_test_entry_outcome(entry) == "fail"
+    summary = entry["outcome_summary"]
+    assert summary["per_run_outcomes"] == ["fail"]
+    assert summary["aggregated_dimensions"][0]["score"] == 1
+    assert summary["review_dimensions"][0]["score"] == 1
+
+
+def test_refresh_leaves_an_already_consistent_entry_alone():
+    """The other direction: a correct entry must not be rewritten.
+
+    A rebuild that 'fixed' consistent entries would rewrite every committed
+    log on every run and make the repair indistinguishable from churn.
+    """
+    entry = _entry(
+        ["pass"],
+        [_dim(3)],
+        summary={
+            "per_run_outcomes": ["pass"],
+            "aggregated_dimensions": _dim(3),
+            "review_dimensions": _dim(3),
+        },
+        outcome="pass",
+    )
+    before = json.dumps(entry, sort_keys=True)
+    assert refresh_test_entry_outcome(entry) == "pass"
+    assert json.dumps(entry, sort_keys=True) == before
+
+
+def test_refresh_spans_every_run_including_a_judge_skipped_one():
+    """`per_run_outcomes` and `flaky` cover all runs; the modal covers the judged.
+
+    `ut_locality_guide_022` is the live shape — one judge-skipped run beside
+    three judged ones. Deriving either field from the judged runs alone drops
+    that run's `fail` and reports the test as non-flaky. The exclusion of a
+    skipped run from the modal is `aggregate_dimensions`' own contract and is
+    pinned by its tests; a committed skipped run carries no dimensions, so
+    asserting it here would pass against either behaviour.
+    """
+    entry = _entry(
+        ["fail", "partial", "pass", "pass"],
+        [[], _dim(2), _dim(3), _dim(3)],
+        summary={"per_run_outcomes": [], "aggregated_dimensions": [], "review_dimensions": []},
+        outcome="pass",
+        skipped=[True, False, False, False],
+    )
+    assert refresh_test_entry_outcome(entry) == "pass"
+    summary = entry["outcome_summary"]
+    assert summary["per_run_outcomes"] == ["fail", "partial", "pass", "pass"]
+    assert summary["aggregated_dimensions"][0]["score"] == 3
+    assert entry["flaky"] is True
+
+
+def test_refresh_returns_none_and_writes_nothing_without_runs():
+    entry = {"test_id": "ut_x_002", "outcome": "aborted", "runs": []}
+    assert refresh_test_entry_outcome(entry) is None
+    assert "outcome_summary" not in entry
+
+
+def test_refresh_keeps_a_validator_failing_run_out_of_the_aggregate():
+    """`include_validator_failed=True` must never reach `aggregated_dimensions`.
+
+    It is the one lever that shifts every committed baseline at once, and
+    `aggregate_dimensions` reserves it for `review_dimensions`. A rebuild that
+    passed it to both would move the numbers `skill_gate` compares against
+    without any run being re-judged.
+    """
+    entry = _entry(
+        ["pass", "fail"],
+        [_dim(3), _dim(1)],
+        summary={"per_run_outcomes": [], "aggregated_dimensions": [], "review_dimensions": []},
+        outcome="pass",
+    )
+    entry["runs"][1]["validators"] = {"passed": False, "results": []}
+    refresh_test_entry_outcome(entry)
+    summary = entry["outcome_summary"]
+    assert summary["aggregated_dimensions"][0]["score"] == 3
+    assert summary["per_run_outcomes"] == ["pass", "fail"]
+
+
+def test_refresh_falls_back_to_review_dimensions_when_every_run_failed_a_validator():
+    """Empty aggregate -> review rows come from the validator-failing runs.
+
+    Without the fallback the test reaches the annotation planes looking
+    ungraded, which is the shape `review_sample` exists to avoid.
+    """
+    entry = _entry(
+        ["fail"],
+        [_dim(2)],
+        summary={"per_run_outcomes": [], "aggregated_dimensions": [], "review_dimensions": []},
+        outcome="fail",
+    )
+    entry["runs"][0]["validators"] = {"passed": False, "results": []}
+    refresh_test_entry_outcome(entry)
+    summary = entry["outcome_summary"]
+    assert summary["aggregated_dimensions"] == []
+    assert summary["review_dimensions"][0]["score"] == 2
