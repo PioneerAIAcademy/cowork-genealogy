@@ -408,7 +408,7 @@ def report(projects: list[Project], min_messages: int, bundles: int, skipped: Co
               + ", ".join(f"{k} {n}" for k, n in sorted(skipped.items())) + ").")
     print(f"{bundles} web bundles hold {len(projects)} hosted sessions (projects); "
           f"{len(projects) - len(kept)} left out; {len(qualified)} of the remaining {len(kept)} have "
-          f">= {min_messages} user messages.")
+          f">= {min_messages} messages (a person's or a host reply).")
     for p in projects:
         if p.excluded:
             print(f"  left out: {p.name} ({p.excluded}; bundles {', '.join(p.bundles)})")
@@ -420,7 +420,7 @@ def report(projects: list[Project], min_messages: int, bundles: int, skipped: Co
         print("No hosted session qualifies.")
         return 1
     seed = SEEDS[1]
-    header = ["project", "bundles", "SDK sessions", "user msgs", "host replies", "Yes. folded",
+    header = ["project", "bundles", "SDK sessions", "messages", "host replies", "Yes. folded",
               "calls", "compactions", "cost", "main cost", f"excess@{seed // 1000}k",
               f"share@{seed // 1000}k"]
     body = [[p.name, len(p.bundles), len(p.sessions), len(p.messages[True]),
