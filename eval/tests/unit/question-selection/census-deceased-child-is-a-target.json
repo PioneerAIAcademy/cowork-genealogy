@@ -19,6 +19,6 @@
     "One enumerative question covering all of the couple's children missing from the tree is correct. It satisfies the missing-children requirement when the reply names both missing children: the one who died before the June 1900 enumeration and the living one born 1900–1910. Do not mark it down for not singling out one child",
     "A targeted question about one of the two children satisfies that requirement only if the reply names the other as a remaining research target. A reply that never mentions the pre-1900 deceased child is a FAIL on the gap dimension, not a partial",
     "The deceased child is a research target (born and died before the enumeration), not a tree or data error — do not present it as a person_warnings-style contradiction",
-    "The question's selection_basis should be objective_decomposition (a missing-child group from census_children_gap, per the skill's priority table). That table rank is not the question's `priority` field; do not compare the two"
+    "The question's selection_basis should be objective_decomposition (a missing-child group from census_children_gap, per the skill's priority table). That table rank is not the question's `priority` field; do not compare the two. A reply that cites its priority-table rank, such as 'Priority 3', is correct and does not contradict the question's `priority` field (high/medium/low)"
   ]
 }
