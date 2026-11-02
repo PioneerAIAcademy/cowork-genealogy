@@ -72,6 +72,17 @@ describe("source_attachments", () => {
     expect(out.unattached).toEqual([ark(2)]);
   });
 
+  it("sends a resolver URL without www in the same form as its bare ARK", async () => {
+    const noWww = `https://familysearch.org/${ark(1)}`;
+    mockFetch.mockResolvedValueOnce(okWith({ [url(1)]: entryFor("KWZZ-111") }));
+
+    const out = await sourceAttachmentsTool({ uris: [noWww, `${url(2)}?lang=en`] }, LOCAL);
+
+    expect(sentBatches()[0]).toEqual([url(1), url(2)]);
+    expect(out.attachments[noWww]).toEqual([{ personId: "KWZZ-111", tags: ["Birth"] }]);
+    expect(out.unattached).toEqual([`${url(2)}?lang=en`]);
+  });
+
   // ─── The cap (#1212) ──────────────────────────────────────────────────────
   // FamilySearch rejects a batch over 100 outright: measured live 2026-09-11,
   // 100 -> 200 and 101 -> `400.002 LimitException: Limit Exceeded 100`.
