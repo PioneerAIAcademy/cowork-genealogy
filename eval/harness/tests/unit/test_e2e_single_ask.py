@@ -654,6 +654,16 @@ def test_loader_carries_lists_and_keeps_absent_a_bool(tmp_path):
         ({"expected_save": {"section": "log", "tool": "record_search", "outcome": "nil"}}, "outcome must be"),
         ({"expected_save": [{"section": "sources", "absent": True}, {"section": "sources"}]}, "always passes"),
         ({"expected_save": {"section": "sources", "absent": True}}, "needs required_tools"),
+        (
+            {
+                "expected_owner": [None, "search-records"],
+                "expected_save": [
+                    {"section": "log", "tool": "record_search"},
+                    {"section": "sources", "absent": True},
+                ],
+            },
+            "needs required_tools",
+        ),
         ({"forbidden_tools": "record_search"}, "list of tool names"),
         ({"required_tools": [""]}, "list of tool names"),
         ({"forbidden_tools": ["mcp__genealogy__record_search"]}, "bare name"),

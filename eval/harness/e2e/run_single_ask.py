@@ -132,9 +132,9 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
                 "use the bare name (`record_search`, not `mcp__genealogy__record_search`)"
             )
         tool_lists[key] = tuple(names)
-    if all(alt.get("absent") for alt in alternatives) and not tool_lists["required_tools"]:
+    if any(alt.get("absent") for alt in alternatives) and not tool_lists["required_tools"]:
         raise FixtureError(
-            f"{fixture_dir.name}: a fixture whose expected_save is only `absent` needs "
+            f"{fixture_dir.name}: a fixture with an `absent` expected_save alternative needs "
             "required_tools, or an empty turn passes"
         )
     if not isinstance(raw.get("is_plan_ask", False), bool):
