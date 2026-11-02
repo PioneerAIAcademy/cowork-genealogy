@@ -333,6 +333,42 @@ def test_nil_logged_does_not_treat_a_hit_as_a_nil():
     check_every_nil_logged(*_logged(), [c])
 
 
+def test_nil_logged_keys_on_the_collection_scope():
+    """A collection-scoped nil and an unscoped one on the same term are two
+    searches; logging the unscoped one does not cover the scoped one."""
+    calls = [_nil(keywords="+Flynn", collectionId="2017696"), _nil(keywords="+Flynn")]
+    with pytest.raises(AssertionError) as e:
+        check_every_nil_logged(*_logged({"keywords": "+Flynn"}), calls)
+    assert "collectionId" in str(e.value)
+    check_every_nil_logged(*_logged({"keywords": "+Flynn"}, {"keywords": "+Flynn", "collectionId": "2017696"}), calls)
+
+
+def test_nil_logged_keys_on_the_image_group():
+    with pytest.raises(AssertionError, match="imageGroupNumber"):
+        check_every_nil_logged(
+            *_logged({"keywords": "+Flynn"}), [_nil(keywords="+Flynn", imageGroupNumber="004012345")]
+        )
+
+
+def test_nil_logged_reads_a_non_numeric_total_as_no_hits():
+    c = call("fulltext_search", keywords="+Flynn", projectPath=_PP)
+    c["response"] = {"results": [], "totalResults": "0"}
+    with pytest.raises(AssertionError, match="Flynn"):
+        check_every_nil_logged(*_logged(), [c])
+
+
+def test_filtered_nil_retry_reads_a_filter_sent_empty_as_unset():
+    """As the write-boundary guard does: `place: ""` sets no filter, so the call
+    is not a filtered nil, and a later call carrying one is not its retry."""
+    check_filtered_nil_retry([_filtered_nil_call("+Flynn", place="")])
+    calls = [
+        _filtered_nil_call("+Flynn", place="Pennsylvania", yearFrom=1870, yearTo=1890),
+        _unfiltered_call("+Flynn", place="Pennsylvania", yearFrom=1870, yearTo=1890, recordType=""),
+    ]
+    with pytest.raises(AssertionError):
+        check_filtered_nil_retry(calls)
+
+
 def test_name_field_retry_passes_both_nil_checks():
     """A name-field nil, logged under its name handle, then a keywords retry:
     exempt from the filter-removal retry, but still owed a log entry."""

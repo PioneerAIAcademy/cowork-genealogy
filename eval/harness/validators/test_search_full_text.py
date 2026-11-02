@@ -354,6 +354,13 @@ def test_record_place_filters_use_facet_form(tool_calls):
     )
 
 
+def _fts_filters(args):
+    """The post-search filter keys a call sent with a value, as the write-boundary
+    guard reads them (`fulltextFilterKeys` in research-log-append.ts): absent,
+    null and "" are unset."""
+    return [k for k in POST_SEARCH_FILTER_KEYS if args.get(k) not in (None, "")]
+
+
 def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
     """SKILL.md step 4 / query-syntax.md: when a fulltext_search call carries
     post-search filters and returns zero results, the next call for the same
@@ -380,7 +387,7 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
             # keywords), not filter removal; their retry has a different handle.
             if "name" in args:
                 continue
-            present_filters = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
+            present_filters = _fts_filters(args)
             if not present_filters:
                 continue
             resp = c.get("response") or {}
@@ -394,7 +401,7 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
                 continue
             later_calls = handle_calls[i + 1:]
             retry_found = any(
-                {k for k in POST_SEARCH_FILTER_KEYS if k in lc["args"]} < set(present_filters)
+                set(_fts_filters(lc["args"])) < set(present_filters)
                 for lc in later_calls
             )
             if not retry_found:
@@ -408,11 +415,16 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
     )
 
 
+_FTS_SCOPE_KEYS = ("collectionId", "imageGroupNumber")
+
+
 def _fts_search_key(args):
-    """(handle, frozenset of filter keys sent with a value). `includeFacets`,
-    `count` and `offset` change what comes back, not what was searched."""
+    """(handle, frozenset of filter and scope keys sent with a value).
+    `includeFacets`, `count` and `offset` change what comes back, not what was
+    searched."""
     handle = args.get("keywords") or args.get("nlQuery") or args.get("name") or ""
-    return handle, frozenset(k for k in POST_SEARCH_FILTER_KEYS if args.get(k) not in (None, ""))
+    scopes = [k for k in _FTS_SCOPE_KEYS if args.get(k) not in (None, "")]
+    return handle, frozenset(_fts_filters(args) + scopes)
 
 
 def test_every_nil_fulltext_search_is_logged(before_state, after_state, tool_calls):
@@ -420,8 +432,10 @@ def test_every_nil_fulltext_search_is_logged(before_state, after_state, tool_cal
     #3974). A nil stages nothing, so `research_log_append`'s guards never see one
     left unlogged; this checks what research.json holds, so a refused batch does
     not count. A `name`-field nil is exempt from the retry rule, not from this.
-    The key ignores filter values: one entry covers two nils that differ only
-    in them. Reopen trigger: docs/specs/guardrail-enforcement-spec.md §9."""
+    A call with no `projectPath` is out of scope, as the ruling words it: it is
+    the throwaway probe the tool's schema lets the agent leave unlogged. The key
+    ignores filter values: one entry covers two nils that differ only in them.
+    Reopen trigger: docs/specs/guardrail-enforcement-spec.md §9."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
@@ -440,7 +454,8 @@ def test_every_nil_fulltext_search_is_logged(before_state, after_state, tool_cal
             continue
         if not isinstance(resp, dict) or "error" in resp:
             continue
-        if resp.get("results") or (resp.get("totalResults") or 0) > 0:
+        total = resp.get("totalResults")
+        if resp.get("results") or (isinstance(total, (int, float)) and total > 0):
             continue
         key = _fts_search_key(args)
         if key not in logged and key not in missing:

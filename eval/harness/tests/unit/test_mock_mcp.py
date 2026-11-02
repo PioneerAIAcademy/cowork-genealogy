@@ -732,6 +732,20 @@ def test_fulltext_search_withholding_facets_does_not_strip_them_from_the_fixture
     assert body["facets"] == _fixture_facets()
 
 
+def test_facets_gate_has_not_drifted_from_the_typescript_source():
+    """The mock's gate restates the tool's condition: it selects the response
+    rather than transforming a staged one, and the tool exports no function for
+    it. A stale copy is silent, so pin the expression and its place before staging."""
+    src = (REPO_ROOT / "packages/engine/mcp-server/src/tools/fulltext-search.ts").read_text(
+        encoding="utf-8"
+    )
+    gate = src.find("if (input.includeFacets && data.facets) {")
+    assert gate != -1, "fulltext-search.ts no longer gates facets on includeFacets; update the mock"
+    assert src.count("out.facets =") == 1, "fulltext-search.ts sets facets somewhere else too"
+    stage = src.find("stageSearchResults(", gate)
+    assert gate < src.find("out.facets =") < stage, "facets are no longer set before staging"
+
+
 @pytest.mark.requires_engine_build
 def test_fulltext_search_stages_no_facets_without_include_facets(tmp_path):
     """The sidecar records what the search returned, so it lacks them too."""
