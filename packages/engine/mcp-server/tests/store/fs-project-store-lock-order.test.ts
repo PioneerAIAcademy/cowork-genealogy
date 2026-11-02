@@ -45,6 +45,10 @@ vi.mock("node:fs/promises", async (importOriginal) => {
   };
 });
 
+// A setup file may already have loaded the store with the real fs (the
+// Postgres run's does, through PgRoutingStore), so drop the module cache and
+// load it again under the mock.
+vi.resetModules();
 const { FsProjectStore } = await import("../../src/store/fs-project-store.js");
 
 describe("FsProjectStore unlocks before the rename and re-locks after it", () => {
