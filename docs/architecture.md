@@ -659,7 +659,15 @@ Architecturally:
   handler reads but the schema omits is unreachable over MCP while every
   handler-level test stays green. Advertise it, or, for a deliberate unadvertised
   alias, add it to `ACCEPTED_ALIASES` there with its reason (a snapshot test pins
-  that list). The unit harness calls handlers directly and never runs the guard.
+  that list). The unit harness applies that same compiled guard before each mock tool
+  call, so an eval refuses the argument keys production refuses instead of
+  silently dropping them — though it fails OPEN, with a warning, when the build
+  is missing or node faults, so it narrows the gap rather than closing it.
+  **The reverse gap is the one still caught by nothing:** a key the handler
+  READS that is on neither the schema nor `ACCEPTED_ALIASES` is unreachable over
+  MCP while every handler-level test stays green. That stays unguarded by ruling
+  (lead, 2026-10-29): closing it needs TypeScript-type parsing, for the
+  lower-severity half of the pair.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
   `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
@@ -1247,6 +1255,12 @@ a person's attached records as unchecked candidates. Code composes each op whole
 as it does the `extracted_for_question_ids` growth a re-found record gets, so no
 input field reaches any of them (ADR-0006, amended 2026-10-20).
 
+`evaluation_append` is the second variant: `research_append` restricted to the
+single `evaluations` section, held only by the `gps-mentor` agent — the most
+prompt-exposed agent in the system. Unlike `extraction_append` it has no bespoke
+input surface; the mentor supplies an ordinary `evaluations` append and the lane
+gate forces the section (`research-append-tool-spec.md` §12).
+
 The pattern comes from an observed failure: a delegation message prompted the
 extractor past its prose lane and it fabricated a match score. The analysis:
 
@@ -1547,7 +1561,8 @@ tool and it belongs in that module**, so there is no second copy to drift.
 
 ### 6.2 Writes go only through validating writer tools
 
-`research_append` (and its lane-scoped variant `extraction_append`, §5.3),
+`research_append` (and its lane-scoped variants `extraction_append` and
+`evaluation_append`, §5.3),
 `research_log_append`, `tree_edit`, `tree_correct`, `merge_tree_persons`,
 `tree_forget`, and `materialize_facts` each **validate the whole project in
 memory and block only on errors the call itself introduces** — pre-existing
