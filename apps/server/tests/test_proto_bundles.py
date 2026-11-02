@@ -215,7 +215,7 @@ def test_no_dev_variable_in_a_template(tier):
     ("web", {"BLOCKED_TOOLS": "person_read"}, True),
     ("worker", {"AUTONOMOUS_MAX_NUDGES": "60"}, True),
     ("worker", {"WORKER_TURN_USERS": "none"}, True),
-    ("web", {"AUTONOMOUS_MAX_NUDGES": "60"}, False),
+    ("web", {"AUTONOMOUS_MAX_NUDGES": "60"}, True),
     ("worker", {"WORKER_TURN_USERS": "genealogy-turn-0 genealogy-turn-1"}, False),
     ("worker", {"PGSSLMODE": "verify-full", "SWEEP_INTERVAL_S": "300"}, False),
 ])
@@ -270,7 +270,7 @@ def test_no_dev_variable_in_a_shipped_file_or_image(tier):
     ("worker", "ENV WORKER_TURN_USERS=none\n", True),
     ("worker", "WORKER_TURN_USERS: \"None\"\n", True),
     ("worker", "# DEV_PATHS is compose's, never set here\nset -euo pipefail\n", False),
-    ("web", "ENV AUTONOMOUS_MAX_NUDGES=60\n", False),
+    ("web", "ENV AUTONOMOUS_MAX_NUDGES=60\n", True),
     ("worker", 'TURN_USERS="genealogy-turn-0"\ndev_dir=/opt\nWORKER_TURN_USERS=nonesuch\n', False),
     ("web", "ENV GENEALOGY_SQS_REGION=us-east-1 SQS_ENDPOINT_URL=x\n", False),
 ])

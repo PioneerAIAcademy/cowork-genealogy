@@ -876,11 +876,10 @@ the `max_cost_usd` note in §6 step 5.
 
    **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
    `project.status == "completed"`. A `Stop` hook vetoes every voluntary yield before
-   that (except on a session with no `research.json`) with **one** reply, the prototype
-   worker's `CONTINUE_REASON`
-   (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
-   two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
-   the copy). The hosted planes' completion halt is NOT emulated: they end the turn at the
+   that (except on a session with no `research.json`) with **one** reply, a fixed continue
+   text (`stop_checker.py`). The hosted planes no longer veto a stop (step mode phase 2),
+   so a paired grade no longer compares one Stop policy; the e2e half of phase 2 deletes
+   this veto. Nothing pins the text. The hosted planes' completion halt is NOT emulated: they end the turn at the
    PostToolUse of the proof-conclusion call that completes the project
    (`completion_halt_summary`), so a completed e2e run still pays the closing relay call
    those planes no longer make, and its cost overstates a hosted one by that call. Before replying, the hook classifies the agent's closing words
@@ -2780,9 +2779,9 @@ A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 ### 16.5 What a pass does not show
 
 A pass here is **not** a pass on today's hosted alpha. That plane appends
-DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`) and nudges any stop not
-preceded by `research_delivered`; a single ask that ends without it would be
-pushed on into more work. The `delivered` column is what shows that risk.
+DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`). It no longer nudges a stop
+(step mode's phase 2 deleted the Stop veto), so a single ask that ends without
+`research_delivered` simply ends; the `delivered` column shows which did.
 
 ### 16.6 Cost
 
