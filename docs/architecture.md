@@ -562,9 +562,9 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `hypothesis-tracking` → `claude-haiku-5-5`; `search-records`, `timeline` declare none and inherit the session's; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `hypothesis-tracking` → `claude-haiku-5-5`; `search-records`, `timeline` declare none and inherit the session's; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `hypothesis-tracking` → `low`; `survey-surname`, `search-images` → `medium`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `hypothesis-tracking` → `low`; `survey-surname`, `search-images` → `medium`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
 | **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220, 2.1.294 and 2.1.308 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12, 2026-10-20 and 2026-10-22; the harnesses run the hosted CLI, 2.1.308). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
 | **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
@@ -1334,12 +1334,14 @@ Two behaviors of the script that are deliberate:
 - It is **stdlib-only and never raises.** Every failure path — unparseable
   stdin, missing fields — falls through to **allowing** the call, because an
   exception here would fail a tool call the user was entitled to make.
-- **The `Bash` route is deliberately open.** The guard matches on `file_path`, so
-  `cat >`, `sed -i`, and `python -c` all get through. Pattern-matching command
-  text would false-deny a legitimate `python script.py research.json > out` while
-  still missing a variable-built path, and **a false deny is the worse failure
-  mode**. The rationale lives in `guardrail-enforcement-spec.md` §6 ("`Bash` is
-  not covered"), to be revisited only if a bypass ever uses the shell.
+- **The hook does not match `Bash`; the file mode does the job.** The guard
+  matches on `file_path`, and pattern-matching command text would false-deny a
+  legitimate `python script.py research.json > out` while still missing a
+  variable-built path — **a false deny is the worse failure mode**. Instead the
+  protected files are read-only on disk between writes, and `FsProjectStore` is
+  the only layer that unlocks them, so `>`, `>>`, `tee` and
+  `open(…, 'w')` are refused by the filesystem. `chmod` first still gets
+  through, and so do `sed -i` and `mv` on macOS and Linux. `guardrail-enforcement-spec.md` §6 and §6.1.
 
 Packaging is guarded: `package-plugin.mjs`'s `INCLUDE` must carry `"hooks"`, or
 the directory never ships. Asserted by `tests/packaging/plugin-hooks.test.ts`,
