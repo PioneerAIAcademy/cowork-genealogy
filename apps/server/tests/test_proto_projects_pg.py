@@ -1,4 +1,5 @@
-"""Project viewer queries against REAL Postgres: ownership, labels and document times.
+"""Web-store queries against REAL Postgres: project ownership, labels and document times, and
+the conditional session title the fake store cannot prove.
 
 Without the DSN this module skips, except under ``CI``, where it fails.
 """
@@ -13,7 +14,7 @@ from pathlib import Path
 import pytest
 from psycopg.types.json import Jsonb
 
-from tests._proto_pg import database, sql
+from tests._proto_pg import database, session, sql
 
 PROTO = Path(__file__).resolve().parents[1] / "proto"
 if str(PROTO) not in sys.path:
@@ -126,3 +127,14 @@ def test_documents_and_document_versions_follow_real_row_updates(pg_dsn):
     docs["research.json"] = (4, updated)
     assert asyncio.run(store.documents("proj_documents")) == docs
     assert asyncio.run(store.document_versions("proj_documents")) == {name: v for name, (v, _) in docs.items()}
+
+
+def test_title_if_default_writes_only_over_the_default_title(pg_dsn):
+    row = session(pg_dsn)
+    store = PgStore(pg_dsn)
+    named = asyncio.run(store.patch_session(row.session_id, None, None, "Agent title"))
+    assert named.title == "Agent title"
+    renamed = asyncio.run(store.patch_session(row.session_id, "My family", None))
+    assert renamed.title == "My family"
+    kept = asyncio.run(store.patch_session(row.session_id, None, None, "Later agent title"))
+    assert kept.title == "My family"

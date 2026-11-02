@@ -67,3 +67,68 @@ describe('SessionList delete', () => {
     expect(document.querySelector('.bannerError')).toBeNull()
   })
 })
+
+describe('SessionList rename', () => {
+  it('saves once on Enter and blur, shows the returned name, and never opens the card', async () => {
+    let resolveSave!: (session: SessionSummary) => void
+    const patch = vi.spyOn(api, 'patchSession').mockReturnValue(new Promise((resolve) => { resolveSave = resolve }))
+    const onOpen = vi.fn()
+    render(<SessionList onOpen={onOpen} />)
+    fireEvent.click(await screen.findByTitle('Rename session'))
+    const input = screen.getByRole('textbox', { name: 'Session name' }) as HTMLInputElement
+    expect(document.activeElement).toBe(input)
+    expect(input.selectionStart).toBe(0)
+    expect(input.selectionEnd).toBe(SESSION.title.length)
+    expect(input.maxLength).toBe(120)
+    fireEvent.mouseDown(input)
+    fireEvent.click(input)
+    fireEvent.change(input, { target: { value: '  Smith family  ' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    fireEvent.blur(input)
+    expect(patch).toHaveBeenCalledExactlyOnceWith('sess_1', { title: 'Smith family' })
+    resolveSave({ ...SESSION, title: 'Smith family (saved)' })
+    expect(await screen.findByText('Smith family (saved)')).toBeTruthy()
+    expect(screen.queryByLabelText('Session name')).toBeNull()
+    expect(onOpen).not.toHaveBeenCalled()
+  })
+
+  it('cancels on Escape without sending or changing the title', async () => {
+    const patch = vi.spyOn(api, 'patchSession').mockResolvedValue(SESSION)
+    render(<SessionList onOpen={vi.fn()} />)
+    fireEvent.click(await screen.findByTitle('Rename session'))
+    const input = screen.getByRole('textbox', { name: 'Session name' })
+    fireEvent.change(input, { target: { value: 'Discard this' } })
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(screen.queryByLabelText('Session name')).toBeNull()
+    expect(patch).not.toHaveBeenCalled()
+    expect(screen.getByText('Research')).toBeTruthy()
+  })
+
+  it('cancels blank or unchanged names without sending', async () => {
+    const patch = vi.spyOn(api, 'patchSession').mockResolvedValue(SESSION)
+    render(<SessionList onOpen={vi.fn()} />)
+    for (const value of ['', '   ', '  Research  ']) {
+      fireEvent.click(await screen.findByTitle('Rename session'))
+      const input = screen.getByRole('textbox', { name: 'Session name' })
+      fireEvent.change(input, { target: { value } })
+      fireEvent.blur(input)
+      expect(patch).not.toHaveBeenCalled()
+      expect(screen.queryByLabelText('Session name')).toBeNull()
+      expect(screen.getByText('Research')).toBeTruthy()
+    }
+  })
+
+  it('shows a rename refusal and keeps the old title', async () => {
+    const detail = "A session name can't be blank."
+    const patch = vi.spyOn(api, 'patchSession').mockRejectedValue(new ApiError(400, detail))
+    render(<SessionList onOpen={vi.fn()} />)
+    fireEvent.click(await screen.findByTitle('Rename session'))
+    const input = screen.getByRole('textbox', { name: 'Session name' })
+    fireEvent.change(input, { target: { value: 'Smith family' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(await screen.findByText(detail)).toBeTruthy()
+    expect(patch).toHaveBeenCalledExactlyOnceWith('sess_1', { title: 'Smith family' })
+    expect(screen.getByText('Research')).toBeTruthy()
+    expect(screen.queryByLabelText('Session name')).toBeNull()
+  })
+})

@@ -637,11 +637,11 @@
                 "rationale": "The write went through research_append with a single op: 'update' on src_001, correctly batched. The validate_research_schema call followed immediately and returned valid: true. The response's description ('The county history now carries a full citation in standard published-work form') matches the ledger. No tool outside the declared set was called. The required validation step was performed and confirmed."
               }
             ],
-            "judge_cost_usd": 0.0127106,
+            "judge_cost_usd": 0.012013,
             "duration_ms": 12826.944416970946,
             "error": null,
             "input_tokens": 6018,
-            "cached_input_tokens": 6976,
+            "cached_input_tokens": 0,
             "output_tokens": 1199
           },
           "started_at": 1791984410.415188,
@@ -670,49 +670,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The refined citation correctly identifies the Pennsylvania Department of Health as the creator (not FamilySearch), includes the certificate number 12455 from the source notes, specifies the year 1905, and names Mary Elizabeth Flynn. The citation properly flags birth date and birthplace as [NOT RECORDED] with explicit unknown-markers, directing the user to check the certificate image. No fabricated values were persisted. The archive element (Pennsylvania State Archives, Harrisburg) is not on file for src_007/S6 and was correctly omitted without penalty per the per-test override."
+            "rationale": "The refined citation correctly identifies the Pennsylvania Department of Health as the creator, includes the certificate number 12455 from the source notes, specifies the year 1905, and names Mary Elizabeth Flynn. The citation properly flags the birth date and birthplace as [BIRTH DATE NOT RECORDED] and [BIRTH PLACE NOT RECORDED] since these values are not on file in src_007. The citation does not fabricate these missing elements. The FamilySearch URL and access date are correctly persisted from the source entry. No factual errors or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the full refinement task: corrected the 'who' field from FamilySearch to Pennsylvania Department of Health, made 'what' specific with certificate number and child's name, populated all five Evidence Explained elements (who/what/when/where/where_within) with available data, and flagged the two genuinely-absent locators (birth date and birthplace) with unknown-markers and a clear referral to the user to read them from the certificate image. The citation was persisted and validated."
+            "rationale": "The skill addressed the complete refinement task for src_007. It extracted and applied the certificate number 12455 from the notes field, structured the citation according to the birth-certificate template with all available elements (creator, certificate number, year, child's name, repository access path, access date), and properly flagged the two genuinely-absent locators (birth date and birthplace) with explicit unknown-markers. The user was directed to check the certificate image for the missing values. No required work was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The research_append call correctly targeted src_007 with op: 'update', passed the refined citation and citation_detail fields with appropriate structure, and included all necessary data. The validate_research_schema call followed immediately with the correct projectPath. Both calls matched the expected tool behavior and the fixture accepted them (matched.kind: 'live' and 'predicate', both ok: true)."
+            "rationale": "The research_append call correctly targeted src_007 with op: 'update' and passed the refined citation and citation_detail fields with appropriate structure. The validate_research_schema call followed immediately with the correct projectPath argument. Both calls matched the expected tool behavior for a citation refinement workflow. No critical arguments were wrong, and the tool ledger shows the required validation step was executed."
           },
           {
             "source": "rubric",
             "name": "Evidence Explained compliance",
             "score": 3,
-            "rationale": "All five Evidence Explained elements are present and correctly populated: who (Pennsylvania Department of Health), what (birth certificate no. 12455, Mary Elizabeth Flynn), when_created (1905), where (FamilySearch.org), where_within (Certificate no. 12455 with flagged unknown-markers for birth date and birthplace). The two elements whose data is genuinely absent from the source entry are explicitly flagged with [BIRTH DATE NOT RECORDED] and [BIRTH PLACE NOT RECORDED], which is the correct handling per the rubric."
+            "rationale": "All five Evidence Explained elements are present and correctly populated: Who (Pennsylvania Department of Health), What (birth certificate no. 12455, Mary Elizabeth Flynn), When (1905), Where (FamilySearch.org digital access), Where-within (certificate number 12455 plus explicit unknown-markers for birth date and birthplace). The unknown-markers are appropriate because the source entry genuinely lacks these values. No elements are generic or conflated. The citation meets the framework requirements given the data available on file."
           },
           {
             "source": "rubric",
             "name": "Replication test",
             "score": 3,
-            "rationale": "The citation carries every locator the source data supplies: certificate number 12455 (from notes), year 1905, child's name Mary Elizabeth Flynn, and the FamilySearch URL. The birth date and birthplace are genuinely absent from the source entry and are flagged with explicit unknown-markers AND the user is referred to check the certificate image. Per the Decisive rule, this is a pass: a genuinely-absent locator flagged with an unknown-marker and referred to the user qualifies as full compliance, not partial."
+            "rationale": "The citation carries every locator the source data supplies: certificate number 12455 (from notes), year 1905, and the FamilySearch URL. The birth date and birthplace are genuinely absent from src_007 and are flagged with explicit unknown-markers ([BIRTH DATE NOT RECORDED], [BIRTH PLACE NOT RECORDED]) with a clear instruction to the user to read these values from the certificate image. Per the Decisive rule, a genuinely-absent locator flagged with an unknown-marker and referred to the user is a pass. No on-file locator was omitted or coarsened."
           },
           {
             "source": "rubric",
             "name": "Source vs information distinction",
             "score": 3,
-            "rationale": "The source_classification was not modified in this refinement (it remains 'original' from the before-state), and no new source was created. The citation correctly identifies the Pennsylvania Department of Health as the original source (the issuing agency), not conflating it with information quality. No source classification error occurred."
+            "rationale": "The source_classification was not modified in this refinement (it remains 'original' from the before-state), and no new source was created. The citation correctly identifies the Pennsylvania Department of Health as the original record creator. No conflation between source type and information quality occurred. The dimension's failure mode did not arise, so this scores a pass."
           },
           {
             "source": "rubric",
             "name": "Source fidelity \u2014 no fabricated detail",
             "score": 3,
-            "rationale": "Every concrete value in the persisted citation is traceable to the source entry or scenario: certificate number 12455 appears in src_007's notes field; year 1905 is in when_created; Mary Elizabeth Flynn is the subject; FamilySearch.org and the ARK URL are on file; access date 2026-05-12 matches the before-state. The birth date and birthplace are not on file and are correctly flagged with unknown-markers rather than invented. No fabricated locators, dates, or values appear in the citation or response."
+            "rationale": "Every concrete value in the refined citation is traceable to the source entry or scenario: certificate number 12455 appears in src_007's notes field; year 1905 is in the citation_detail when_created; Mary Elizabeth Flynn is the subject; the FamilySearch URL and access date 2026-05-12 are from the source entry. The birth date and birthplace are not on file and are not fabricated\u2014they are explicitly flagged as [BIRTH DATE NOT RECORDED] and [BIRTH PLACE NOT RECORDED]. The citation does not invent plausible-looking values for these missing elements. No unverifiable concrete locators were added to the persisted fields or the response."
           },
           {
             "source": "rubric",
             "name": "Tool usage \u2014 the write path",
             "score": 3,
-            "rationale": "The write went through research_append with op: 'update' on src_007, persisting the refined citation and citation_detail fields. validate_research_schema was called immediately after and returned valid: true with no errors. The response correctly states the refinement was validated. The tool ledger shows both required steps completed in the correct order."
+            "rationale": "The write went through research_append with op: 'update' on src_007, correctly persisting the refined citation and citation_detail fields. The validate_research_schema call immediately followed, and the response_summary confirms both the write succeeded (ok: true, valid: true) and validation passed (valid: true, no warnings). The tool ledger matches the response's account. No tool outside the declared set was called. The required validation step was executed as mandated by the agent body."
           }
         ],
         "review_dimensions": [
@@ -720,49 +720,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The refined citation correctly identifies the Pennsylvania Department of Health as the creator (not FamilySearch), includes the certificate number 12455 from the source notes, specifies the year 1905, and names Mary Elizabeth Flynn. The citation properly flags birth date and birthplace as [NOT RECORDED] with explicit unknown-markers, directing the user to check the certificate image. No fabricated values were persisted. The archive element (Pennsylvania State Archives, Harrisburg) is not on file for src_007/S6 and was correctly omitted without penalty per the per-test override."
+            "rationale": "The refined citation correctly identifies the Pennsylvania Department of Health as the creator, includes the certificate number 12455 from the source notes, specifies the year 1905, and names Mary Elizabeth Flynn. The citation properly flags the birth date and birthplace as [BIRTH DATE NOT RECORDED] and [BIRTH PLACE NOT RECORDED] since these values are not on file in src_007. The citation does not fabricate these missing elements. The FamilySearch URL and access date are correctly persisted from the source entry. No factual errors or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the full refinement task: corrected the 'who' field from FamilySearch to Pennsylvania Department of Health, made 'what' specific with certificate number and child's name, populated all five Evidence Explained elements (who/what/when/where/where_within) with available data, and flagged the two genuinely-absent locators (birth date and birthplace) with unknown-markers and a clear referral to the user to read them from the certificate image. The citation was persisted and validated."
+            "rationale": "The skill addressed the complete refinement task for src_007. It extracted and applied the certificate number 12455 from the notes field, structured the citation according to the birth-certificate template with all available elements (creator, certificate number, year, child's name, repository access path, access date), and properly flagged the two genuinely-absent locators (birth date and birthplace) with explicit unknown-markers. The user was directed to check the certificate image for the missing values. No required work was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The research_append call correctly targeted src_007 with op: 'update', passed the refined citation and citation_detail fields with appropriate structure, and included all necessary data. The validate_research_schema call followed immediately with the correct projectPath. Both calls matched the expected tool behavior and the fixture accepted them (matched.kind: 'live' and 'predicate', both ok: true)."
+            "rationale": "The research_append call correctly targeted src_007 with op: 'update' and passed the refined citation and citation_detail fields with appropriate structure. The validate_research_schema call followed immediately with the correct projectPath argument. Both calls matched the expected tool behavior for a citation refinement workflow. No critical arguments were wrong, and the tool ledger shows the required validation step was executed."
           },
           {
             "source": "rubric",
             "name": "Evidence Explained compliance",
             "score": 3,
-            "rationale": "All five Evidence Explained elements are present and correctly populated: who (Pennsylvania Department of Health), what (birth certificate no. 12455, Mary Elizabeth Flynn), when_created (1905), where (FamilySearch.org), where_within (Certificate no. 12455 with flagged unknown-markers for birth date and birthplace). The two elements whose data is genuinely absent from the source entry are explicitly flagged with [BIRTH DATE NOT RECORDED] and [BIRTH PLACE NOT RECORDED], which is the correct handling per the rubric."
+            "rationale": "All five Evidence Explained elements are present and correctly populated: Who (Pennsylvania Department of Health), What (birth certificate no. 12455, Mary Elizabeth Flynn), When (1905), Where (FamilySearch.org digital access), Where-within (certificate number 12455 plus explicit unknown-markers for birth date and birthplace). The unknown-markers are appropriate because the source entry genuinely lacks these values. No elements are generic or conflated. The citation meets the framework requirements given the data available on file."
           },
           {
             "source": "rubric",
             "name": "Replication test",
             "score": 3,
-            "rationale": "The citation carries every locator the source data supplies: certificate number 12455 (from notes), year 1905, child's name Mary Elizabeth Flynn, and the FamilySearch URL. The birth date and birthplace are genuinely absent from the source entry and are flagged with explicit unknown-markers AND the user is referred to check the certificate image. Per the Decisive rule, this is a pass: a genuinely-absent locator flagged with an unknown-marker and referred to the user qualifies as full compliance, not partial."
+            "rationale": "The citation carries every locator the source data supplies: certificate number 12455 (from notes), year 1905, and the FamilySearch URL. The birth date and birthplace are genuinely absent from src_007 and are flagged with explicit unknown-markers ([BIRTH DATE NOT RECORDED], [BIRTH PLACE NOT RECORDED]) with a clear instruction to the user to read these values from the certificate image. Per the Decisive rule, a genuinely-absent locator flagged with an unknown-marker and referred to the user is a pass. No on-file locator was omitted or coarsened."
           },
           {
             "source": "rubric",
             "name": "Source vs information distinction",
             "score": 3,
-            "rationale": "The source_classification was not modified in this refinement (it remains 'original' from the before-state), and no new source was created. The citation correctly identifies the Pennsylvania Department of Health as the original source (the issuing agency), not conflating it with information quality. No source classification error occurred."
+            "rationale": "The source_classification was not modified in this refinement (it remains 'original' from the before-state), and no new source was created. The citation correctly identifies the Pennsylvania Department of Health as the original record creator. No conflation between source type and information quality occurred. The dimension's failure mode did not arise, so this scores a pass."
           },
           {
             "source": "rubric",
             "name": "Source fidelity \u2014 no fabricated detail",
             "score": 3,
-            "rationale": "Every concrete value in the persisted citation is traceable to the source entry or scenario: certificate number 12455 appears in src_007's notes field; year 1905 is in when_created; Mary Elizabeth Flynn is the subject; FamilySearch.org and the ARK URL are on file; access date 2026-05-12 matches the before-state. The birth date and birthplace are not on file and are correctly flagged with unknown-markers rather than invented. No fabricated locators, dates, or values appear in the citation or response."
+            "rationale": "Every concrete value in the refined citation is traceable to the source entry or scenario: certificate number 12455 appears in src_007's notes field; year 1905 is in the citation_detail when_created; Mary Elizabeth Flynn is the subject; the FamilySearch URL and access date 2026-05-12 are from the source entry. The birth date and birthplace are not on file and are not fabricated\u2014they are explicitly flagged as [BIRTH DATE NOT RECORDED] and [BIRTH PLACE NOT RECORDED]. The citation does not invent plausible-looking values for these missing elements. No unverifiable concrete locators were added to the persisted fields or the response."
           },
           {
             "source": "rubric",
             "name": "Tool usage \u2014 the write path",
             "score": 3,
-            "rationale": "The write went through research_append with op: 'update' on src_007, persisting the refined citation and citation_detail fields. validate_research_schema was called immediately after and returned valid: true with no errors. The response correctly states the refinement was validated. The tool ledger shows both required steps completed in the correct order."
+            "rationale": "The write went through research_append with op: 'update' on src_007, correctly persisting the refined citation and citation_detail fields. The validate_research_schema call immediately followed, and the response_summary confirms both the write succeeded (ok: true, valid: true) and validation passed (valid: true, no warnings). The tool ledger matches the response's account. No tool outside the declared set was called. The required validation step was executed as mandated by the agent body."
           }
         ]
       },
@@ -1203,57 +1203,57 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The refined citation correctly identifies the Pennsylvania Department of Health as the creator (not FamilySearch), includes the certificate number 12455 from the source notes, specifies the year 1905, and names Mary Elizabeth Flynn. The citation properly flags birth date and birthplace as [NOT RECORDED] with explicit unknown-markers, directing the user to check the certificate image. No fabricated values were persisted. The archive element (Pennsylvania State Archives, Harrisburg) is not on file for src_007/S6 and was correctly omitted without penalty per the per-test override."
+                "rationale": "The refined citation correctly identifies the Pennsylvania Department of Health as the creator, includes the certificate number 12455 from the source notes, specifies the year 1905, and names Mary Elizabeth Flynn. The citation properly flags the birth date and birthplace as [BIRTH DATE NOT RECORDED] and [BIRTH PLACE NOT RECORDED] since these values are not on file in src_007. The citation does not fabricate these missing elements. The FamilySearch URL and access date are correctly persisted from the source entry. No factual errors or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the full refinement task: corrected the 'who' field from FamilySearch to Pennsylvania Department of Health, made 'what' specific with certificate number and child's name, populated all five Evidence Explained elements (who/what/when/where/where_within) with available data, and flagged the two genuinely-absent locators (birth date and birthplace) with unknown-markers and a clear referral to the user to read them from the certificate image. The citation was persisted and validated."
+                "rationale": "The skill addressed the complete refinement task for src_007. It extracted and applied the certificate number 12455 from the notes field, structured the citation according to the birth-certificate template with all available elements (creator, certificate number, year, child's name, repository access path, access date), and properly flagged the two genuinely-absent locators (birth date and birthplace) with explicit unknown-markers. The user was directed to check the certificate image for the missing values. No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The research_append call correctly targeted src_007 with op: 'update', passed the refined citation and citation_detail fields with appropriate structure, and included all necessary data. The validate_research_schema call followed immediately with the correct projectPath. Both calls matched the expected tool behavior and the fixture accepted them (matched.kind: 'live' and 'predicate', both ok: true)."
+                "rationale": "The research_append call correctly targeted src_007 with op: 'update' and passed the refined citation and citation_detail fields with appropriate structure. The validate_research_schema call followed immediately with the correct projectPath argument. Both calls matched the expected tool behavior for a citation refinement workflow. No critical arguments were wrong, and the tool ledger shows the required validation step was executed."
               },
               {
                 "source": "rubric",
                 "name": "Evidence Explained compliance",
                 "score": 3,
-                "rationale": "All five Evidence Explained elements are present and correctly populated: who (Pennsylvania Department of Health), what (birth certificate no. 12455, Mary Elizabeth Flynn), when_created (1905), where (FamilySearch.org), where_within (Certificate no. 12455 with flagged unknown-markers for birth date and birthplace). The two elements whose data is genuinely absent from the source entry are explicitly flagged with [BIRTH DATE NOT RECORDED] and [BIRTH PLACE NOT RECORDED], which is the correct handling per the rubric."
+                "rationale": "All five Evidence Explained elements are present and correctly populated: Who (Pennsylvania Department of Health), What (birth certificate no. 12455, Mary Elizabeth Flynn), When (1905), Where (FamilySearch.org digital access), Where-within (certificate number 12455 plus explicit unknown-markers for birth date and birthplace). The unknown-markers are appropriate because the source entry genuinely lacks these values. No elements are generic or conflated. The citation meets the framework requirements given the data available on file."
               },
               {
                 "source": "rubric",
                 "name": "Replication test",
                 "score": 3,
-                "rationale": "The citation carries every locator the source data supplies: certificate number 12455 (from notes), year 1905, child's name Mary Elizabeth Flynn, and the FamilySearch URL. The birth date and birthplace are genuinely absent from the source entry and are flagged with explicit unknown-markers AND the user is referred to check the certificate image. Per the Decisive rule, this is a pass: a genuinely-absent locator flagged with an unknown-marker and referred to the user qualifies as full compliance, not partial."
+                "rationale": "The citation carries every locator the source data supplies: certificate number 12455 (from notes), year 1905, and the FamilySearch URL. The birth date and birthplace are genuinely absent from src_007 and are flagged with explicit unknown-markers ([BIRTH DATE NOT RECORDED], [BIRTH PLACE NOT RECORDED]) with a clear instruction to the user to read these values from the certificate image. Per the Decisive rule, a genuinely-absent locator flagged with an unknown-marker and referred to the user is a pass. No on-file locator was omitted or coarsened."
               },
               {
                 "source": "rubric",
                 "name": "Source vs information distinction",
                 "score": 3,
-                "rationale": "The source_classification was not modified in this refinement (it remains 'original' from the before-state), and no new source was created. The citation correctly identifies the Pennsylvania Department of Health as the original source (the issuing agency), not conflating it with information quality. No source classification error occurred."
+                "rationale": "The source_classification was not modified in this refinement (it remains 'original' from the before-state), and no new source was created. The citation correctly identifies the Pennsylvania Department of Health as the original record creator. No conflation between source type and information quality occurred. The dimension's failure mode did not arise, so this scores a pass."
               },
               {
                 "source": "rubric",
                 "name": "Source fidelity \u2014 no fabricated detail",
                 "score": 3,
-                "rationale": "Every concrete value in the persisted citation is traceable to the source entry or scenario: certificate number 12455 appears in src_007's notes field; year 1905 is in when_created; Mary Elizabeth Flynn is the subject; FamilySearch.org and the ARK URL are on file; access date 2026-05-12 matches the before-state. The birth date and birthplace are not on file and are correctly flagged with unknown-markers rather than invented. No fabricated locators, dates, or values appear in the citation or response."
+                "rationale": "Every concrete value in the refined citation is traceable to the source entry or scenario: certificate number 12455 appears in src_007's notes field; year 1905 is in the citation_detail when_created; Mary Elizabeth Flynn is the subject; the FamilySearch URL and access date 2026-05-12 are from the source entry. The birth date and birthplace are not on file and are not fabricated\u2014they are explicitly flagged as [BIRTH DATE NOT RECORDED] and [BIRTH PLACE NOT RECORDED]. The citation does not invent plausible-looking values for these missing elements. No unverifiable concrete locators were added to the persisted fields or the response."
               },
               {
                 "source": "rubric",
                 "name": "Tool usage \u2014 the write path",
                 "score": 3,
-                "rationale": "The write went through research_append with op: 'update' on src_007, persisting the refined citation and citation_detail fields. validate_research_schema was called immediately after and returned valid: true with no errors. The response correctly states the refinement was validated. The tool ledger shows both required steps completed in the correct order."
+                "rationale": "The write went through research_append with op: 'update' on src_007, correctly persisting the refined citation and citation_detail fields. The validate_research_schema call immediately followed, and the response_summary confirms both the write succeeded (ok: true, valid: true) and validation passed (valid: true, no warnings). The tool ledger matches the response's account. No tool outside the declared set was called. The required validation step was executed as mandated by the agent body."
               }
             ],
-            "judge_cost_usd": 0.0169806,
+            "judge_cost_usd": 0.0173306,
             "duration_ms": 13135.637667030096,
             "error": null,
             "input_tokens": 10413,
             "cached_input_tokens": 6976,
-            "output_tokens": 1174
+            "output_tokens": 1244
           },
           "started_at": 1791984345.7083368,
           "ended_at": 1791984389.493577
@@ -2480,11 +2480,11 @@
                 "rationale": "The write path is correct. The research_append call persisted the refined citation, citation_detail, and notes to src_004 with op: 'update'. The validate_research_schema call immediately followed and returned valid: true with no errors. The response accurately reports that the citation was refined and validated. No tool outside the declared set was called. The persisted state matches the response's description."
               }
             ],
-            "judge_cost_usd": 0.016771,
+            "judge_cost_usd": 0.0174686,
             "duration_ms": 13606.666667037643,
             "error": null,
             "input_tokens": 10651,
-            "cached_input_tokens": 0,
+            "cached_input_tokens": 6976,
             "output_tokens": 1224
           },
           "started_at": 1791984305.004738,
@@ -10373,5 +10373,6 @@
     "cursor": [],
     "seed": 1828
   },
-  "tool_search": true
+  "tool_search": true,
+  "judge_render_hash": "87d458173e4cd34a626222fac36b1c3cc622954eab42ac21b2eb01b7546624e1"
 }

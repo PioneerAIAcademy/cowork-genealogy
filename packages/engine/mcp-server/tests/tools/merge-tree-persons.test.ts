@@ -12,6 +12,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 import { standardPlaceToCoords } from "../../src/utils/place-resolver.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 function baseResearch() {
   return {
@@ -296,8 +297,8 @@ describe("merge_tree_persons: pair and namesake checks", () => {
     };
   }
   async function write(p: { tree: any; research: any }, starting?: any) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(p.research, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(p.tree, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(p.research, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(p.tree, null, 2));
     if (starting) {
       await writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify({ relationships: [], sources: [], ...starting }, null, 2));
     }
