@@ -162,6 +162,17 @@ nothing. Decided 2026-10-01: the bisect is not exempt.
 Probes must pass `imageId`, never `ark`: an ARK carries no image-group number, so
 an ark-driven read is never counted.
 
+## 7a. Concurrent-transcription cap (process-wide, off unless set)
+
+`volume_bisect` transcribes a probe image, so it takes a slot from the same
+process-wide cap as `image_transcribe` (`GENEALOGY_MAX_TRANSCRIPTIONS`,
+self-hosted beta E4). While the cap is reached, a call is refused at once with
+an LLM-actionable message naming the limit — refused, never queued.
+
+The slot is taken on `volumeBisectTool` before the image cap check (§7) and
+before any image bytes are read, and released in `finally`. Unset, there is no
+cap and behaviour is exactly as it was.
+
 ## 8. Timeouts — a three-leg budget under 60s
 
 Cowork aborts at 60s, so all three legs are bounded to fit, not just the OCR:

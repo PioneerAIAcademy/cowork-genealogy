@@ -87,7 +87,7 @@ CODE_EXEMPT = ("node_modules/", "plugin/", "web-dist/", "wheels/")
 DEV_PREFIXES = ("DEV_", "GENEALOGY_DEBUG_")
 DEV_VARIABLES = frozenset({"BLOCKED_TOOLS", "SQS_ENDPOINT", "QUEUE_NAME", "FAMILYSEARCH_CONFIG"})
 DEV_VARIABLES_BY_TIER = {
-    "web": frozenset(),
+    "web": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
     "worker": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
     "tools": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
 }

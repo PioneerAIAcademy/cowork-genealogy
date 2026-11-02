@@ -387,9 +387,13 @@ def test_a_fenced_batch_never_holds_the_turn_lock_across_an_await(pg_dsn):
             loop = asyncio.get_running_loop()
 
             def sync_hook() -> None:
-                # What record_nudge does from a Stop hook: a blocking same-row write.
+                # A blocking same-row write, as the worker's sync hooks once made (the
+                # Stop hook's `record_nudge`, deleted in step mode phase 2). It always
+                # touches the row (unlike reset_zero_progress, which skips a zero count),
+                # so it always needs the row lock the batch must not hold.
                 try:
-                    worker.record_nudge(hook_conn, row["turn_id"], writes[0])
+                    hook_conn.execute("UPDATE turns SET nudges = COALESCE(nudges, 0) WHERE turn_id = %s",
+                                      (row["turn_id"],))
                     writes[0] += 1
                 except psycopg.errors.LockNotAvailable as exc:
                     wedged.append(str(exc))

@@ -3,19 +3,21 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Salvador Choc and Petrona Choc had a daughter, Antonia, born in August 1877 and baptised at San Pedro Carchá, Alta Verapaz, Guatemala, in 1877; the baptism entry names her parents as Salvador Choc and Petrona Choc and her godparents as Manuel Tiul and María Santos.",
+      "description": "Salvador Choc and Petrona Choc had a daughter, Antonia, born 15 August 1877 and baptised 29 October 1877 at San Pedro Carchá, Alta Verapaz, Guatemala; the baptism register image names her parents as Salvador Choc and Petrona Choc and her godparents as Manuel Tiul and Mª Santos; the FamilySearch index misdates the birth as '1581' (indexing error for 1877).",
       "details": {
         "subject_person": "Salvador Choc (MGDD-CB5)",
         "relation": "child",
         "target_person": {
           "name": "Antonia Choc",
-          "birth": "August 1877, San Pedro Carchá, Alta Verapaz, Guatemala",
-          "christening": "1877, San Pedro Carchá, Alta Verapaz, Guatemala"
+          "birth": "15 August 1877, San Pedro Carchá, Alta Verapaz, Guatemala",
+          "christening": "29 October 1877, San Pedro Carchá, Alta Verapaz, Guatemala"
         },
-        "mother": "Petrona Choc"
+        "mother": "Petrona Choc, bride of the 9 August 1871 marriage"
       },
       "supporting_sources": [
-        "Guatemala, Catholic Church Records, 1581-2023 — baptism of Antonia, San Pedro Carchá baptism register June 1877–August 1878, parents Salvador Choc and Petrona Choc, godparents Manuel Tiul and María Santos"
+        "Guatemala, Catholic Church Records, 1581-2023 — index entry for Antonia, daughter of Salvador Choc and Petrona Choc, born 15 August 1877 / baptised 29 October 1877 at San Pedro Carchá, Alta Verapaz; index misdates birth as '1581' (indexing error for 1877) (ark:/61903/1:1:XS7R-WRSY)",
+        "San Pedro Carchá baptism register, June 1877–August 1878, image 149 of 407 (ark:/61903/3:1:3QHJ-M745-8H2G): entry for Antonia, born 'quince de Agosto' [15 August] 1877, baptised 29 October 1877, daughter of Salvador Choc and Petrona Choc, godparents Manuel Tiul and Mª Santos — image-confirmed dates and parentage",
+        "San Pedro Carchá marriage register, 9 August 1871 (ark:/61903/1:1:FL48-S1R): Salvador Choc and Petrona Choc (Petrona Ba) married — establishes Petrona Choc as Salvador's 1871 wife (GG1G-697), distinguishing her from Petrona Xol (MGDD-Z43)"
       ],
       "required": true
     }

@@ -21,7 +21,7 @@ autocommit statement (``_FENCED_INSERT``). The fence is ``FOR SHARE`` on the ``t
 so a newer claim waits for an in-flight batch, and once it commits no stale row can land:
 the redelivery's ``has_entries``/``load`` see a stable prefix. One statement, because a
 two-statement transaction would hold that share lock across an await while a sync hook on
-the same event loop (``record_nudge``, ``reset_zero_progress``, ``complete()``'s FOR UPDATE)
+the same event loop (``reset_zero_progress``, ``complete()``'s FOR UPDATE)
 blocks on the row -- a self-deadlock. No ``completed_at`` term: the closer's own trailing
 flush must land. ``load``, ``list_subkeys`` and ``has_entries`` stay unfenced; they are
 reads by the current claimer.
