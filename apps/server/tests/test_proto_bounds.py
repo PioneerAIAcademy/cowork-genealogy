@@ -227,20 +227,6 @@ def test_cap_checks_fail_each_missing_piece(over, failing):
     assert bad and any(failing in name for name in bad), bad
 
 
-def test_q1_reads_the_stop_dispatch_between_the_halt_and_the_attempts_end():
-    halt = ev("halt", reason=options.STOP_REASON)
-    assert bounds.q1_answer([ev("allow"), halt, ev("terminal", reason="stopped", recorded="stopped"),
-                             ev("turn", status=200, max_nudges=3)], "t1")[0] == "dispatched"
-    assert bounds.q1_answer([halt, ev("nudge", n=1)], "t1")[0] == "dispatched"
-    assert bounds.q1_answer([halt, ev("turn", status=200, max_nudges=3)], "t1")[0] == "not_dispatched"
-    # A later attempt's terminal is not this halt's dispatch.
-    assert bounds.q1_answer([halt, ev("turn", status=500, error="x"), ev("terminal", reason="stopped")], "t1")[0] \
-        == "not_dispatched"
-    assert bounds.q1_answer([halt, ev("terminal", "t2", reason="x")], "t1")[0] == "not_dispatched"
-    assert bounds.q1_answer([ev("turn", status=200, max_nudges=3)], "t1")[0] == "no_halt"
-    assert bounds.q1_answer([halt, ev("turn", status=200, max_nudges=0)], "t1")[0] == "hook_off"
-
-
 def test_q2_reads_the_parent_after_the_first_subagent_halt():
     calls = [call(1, agent="a1"), call(2, "halt", agent="a1", s=10)]
     main_after = [(5, "", entry("assistant", {"type": "text", "text": "carrying on"}, ts="2026-10-05T12:00:20Z"))]
@@ -751,7 +737,6 @@ def test_the_probe_texts_exist_and_the_delegation_one_never_asks_for_background(
     assert "how many" not in spill, "a count is answerable from the preview without reading the spill"
 
 
-_NUDGES_3 = re.compile(r"""^export AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:-3\}\1$""")
 _CAP_PASS = re.compile(r"""^export SESSION_SPEND_CAP_USD=(["']?)\$\$\{SESSION_SPEND_CAP_USD:-35\}\1$""")
 _UP = re.compile(r"^\$\(PROTO_COMPOSE\)\s+up\b")
 
@@ -763,14 +748,14 @@ def _before_up(commands: list[str], pattern: re.Pattern) -> bool:
 
 
 @pytest.mark.parametrize("body, ok", [
-    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-3}"; \\', "\t  $(PROTO_COMPOSE) up -d --build"], True),
-    (["\texport AUTONOMOUS_MAX_NUDGES=$${AUTONOMOUS_MAX_NUDGES:-3} && $(PROTO_COMPOSE)  up -d"], True),
-    (['\t$(PROTO_COMPOSE) up -d; export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-3}"'], False),
-    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-3}"; $(PROTO_COMPOSE) up -d'], False),
-    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; $(PROTO_COMPOSE) up -d'], False),
+    (['\texport SESSION_SPEND_CAP_USD="$${SESSION_SPEND_CAP_USD:-35}"; \\', "\t  $(PROTO_COMPOSE) up -d --build"], True),
+    (["\texport SESSION_SPEND_CAP_USD=$${SESSION_SPEND_CAP_USD:-35} && $(PROTO_COMPOSE)  up -d"], True),
+    (['\t$(PROTO_COMPOSE) up -d; export SESSION_SPEND_CAP_USD="$${SESSION_SPEND_CAP_USD:-35}"'], False),
+    (['\texport SESSION_SPEND_CAP_USD="$${SESSION_SPEND_CAP_USD-35}"; $(PROTO_COMPOSE) up -d'], False),
+    (['\texport SESSION_SPEND_CAP_USD="$${SESSION_SPEND_CAP_USD:-0}"; $(PROTO_COMPOSE) up -d'], False),
 ])
 def test_the_pin_reader_accepts_a_reflow_and_rejects_a_late_or_wrong_pin(body, ok):
-    assert _before_up(_recipe_commands(body), _NUDGES_3) is ok
+    assert _before_up(_recipe_commands(body), _CAP_PASS) is ok
 
 
 def test_proto_bounds_target():
@@ -778,8 +763,8 @@ def test_proto_bounds_target():
     body = "\n".join(lines)
     commands = _recipe_commands(lines)
     assert re.search(r'test -n "\$\(CASE\)"', body), "refuse without CASE rather than guess one"
-    assert _before_up(commands, _NUDGES_3), "the Stop hook on at 3 before compose takes its environment (Q1)"
     assert _before_up(commands, _CAP_PASS), "SESSION_SPEND_CAP_USD must reach compose, defaulting to the worker's 35"
+    assert "AUTONOMOUS_MAX_NUDGES" not in body, "the Stop veto is deleted; nothing reads its cap"
     assert "apps/server/proto/env.sh" in body and "ANTHROPIC_API_KEY" in body
     assert re.search(r"up -d --wait postgres minio elasticmq worker shim web tools", body), body
     assert re.search(r"PROTO_COMPOSE=\"\$\(PROTO_COMPOSE\)\" uv run python proto/bounds.py --case '\$\(CASE\)'", body), \
