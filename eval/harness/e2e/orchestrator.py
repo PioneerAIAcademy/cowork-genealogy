@@ -58,7 +58,7 @@ from harness.context_policy import (
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
     AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
-    MAIN_THREAD_SYSTEM_PROMPT,  # the SHIPPED hook's sentence, not a copy
+    collections_note_hook,  # adds the SHIPPED hook's sentence, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.delegation import foreground_rewrite
@@ -2509,8 +2509,6 @@ async def _run_agent(
     options = ClaudeAgentOptions(
         cwd=str(workspace),
         setting_sources=["project"],
-        # Issue #4011: the main-thread sentence every production path carries.
-        system_prompt=MAIN_THREAD_SYSTEM_PROMPT,
         # One definition, shared with preflight's connection check (#941) — a
         # preflight that proves a *different* config than the run uses is the
         # bug class that issue was filed about.
@@ -2589,6 +2587,8 @@ async def _run_agent(
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
             "Stop": [HookMatcher(matcher=None, hooks=[stop_hook])],
+            # Issue #4011: the sentence every production path carries, added as Cowork does.
+            "UserPromptSubmit": [HookMatcher(matcher=None, hooks=[collections_note_hook])],
         },
     )
 

@@ -292,11 +292,26 @@ def _load_route_hook():
     return module
 
 
-#: The main-thread system prompt both harnesses pass (issue #4011). Every production
-#: path carries this sentence to the main thread -- the hosted planes append it, the
-#: Cowork hook adds it -- and the harnesses otherwise run an empty system prompt, so
-#: without it no unit or e2e run could see the fix. The hook's text, not a copy.
-MAIN_THREAD_SYSTEM_PROMPT = _load_route_hook().COLLECTIONS_NOTE
+#: Issue #4011. Every production path carries this sentence to the main thread -- the
+#: hosted planes append it, the Cowork hook adds it -- so both harnesses add it the
+#: way Cowork does, as context on each user message (`collections_note_hook`). Passed
+#: as the whole system prompt instead it read as an identity and broke routing
+#: (ut_research_027 1 of 5, against 4 of 5 without it). The hook's text, not a copy.
+COLLECTIONS_NOTE = _load_route_hook().COLLECTIONS_NOTE
+
+
+async def collections_note_hook(input_data, tool_use_id, context):
+    """UserPromptSubmit: add `COLLECTIONS_NOTE`, skipping a subagent hand-back as the
+    shipped hook does."""
+    prompt = (input_data or {}).get("prompt")
+    if not isinstance(prompt, str) or prompt.lstrip().startswith("<agent-message"):
+        return {}
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": COLLECTIONS_NOTE,
+        }
+    }
 
 #: Tools the main thread may not call: the harness-only `image_read` deny plus
 #: the shipped hook's AGENT_ONLY_TOOLS. Same import-don't-copy discipline as

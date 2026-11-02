@@ -1214,6 +1214,26 @@ _RECORD_WORD = re.compile(
     re.IGNORECASE,
 )
 _REPOSITORY_WORD = re.compile(r"\b(archives?|library|museum|office|society)\b", re.IGNORECASE)
+_GENERIC_RECORD_WORD = re.compile(r"\b(records?|registers?|index|books)\b", re.IGNORECASE)
+_PLACE_CONNECTORS = frozenset(
+    {"of", "and", "the", "de", "la", "del", "des", "du", "van", "von", "upon", "y", "e", "da", "do", "di"}
+)
+
+
+def _title_start(first_field: str) -> str:
+    """The trailing run of a title's first field that reads as a place or title: words
+    that start with a capital, a digit or an apostrophe-led capital, joined by
+    connectors ("Isle of Man"), with no connector leading. Prose before it is cut, so
+    "Start with Kenya" yields "Kenya" and "…was strengthened over time" yields ""."""
+    kept: list[str] = []
+    for word in reversed(first_field.split()):
+        if word[:1].isupper() or word[:1].isdigit() or word.casefold() in _PLACE_CONNECTORS:
+            kept.append(word)
+        else:
+            break
+    while kept and kept[-1].casefold() in _PLACE_CONNECTORS:
+        kept.pop()
+    return " ".join(reversed(kept))
 
 
 def _normalised_title(text: str) -> str:
@@ -1224,8 +1244,11 @@ def _normalised_title(text: str) -> str:
 def _collection_title_candidates(reply: str) -> list[str]:
     """Runs of reply text shaped like a FamilySearch collection title: from the
     segment's first capital, holding a comma and a record word, through a year range.
-    A run whose first field names a repository (an archive, library, museum, office
-    or society) is a repository recommendation, not a collection, and is dropped."""
+    The first field is cut to its title-shaped tail (`_title_start`), so sentence prose
+    before a comma is not read as a title. A run whose first field names a repository
+    (an archive, library, museum, office or society) is a repository recommendation,
+    not a collection, and is dropped. A two-field run ("Kenya Records, 1888–1960") is a
+    heading unless it names a specific record type, not just records or registers."""
     reply = re.sub(r"[*_`]", "", _MD_LINK.sub(r"\1", reply))
     found = []
     for segment in _SEGMENT_BREAK.split(reply):
@@ -1237,9 +1260,16 @@ def _collection_title_candidates(reply: str) -> list[str]:
         if not years:
             continue
         run = run[: years.end()]
-        if "," not in run or not _RECORD_WORD.search(run):
+        if "," not in run:
             continue
-        if _REPOSITORY_WORD.search(run.split(",")[0]):
+        first, rest = run.split(",", 1)
+        first = _title_start(first)
+        if not first:
+            continue
+        run = f"{first},{rest}"
+        if not _RECORD_WORD.search(run) or _REPOSITORY_WORD.search(first):
+            continue
+        if "," not in rest and not _RECORD_WORD.search(_GENERIC_RECORD_WORD.sub("", run)):
             continue
         found.append(run)
     return found

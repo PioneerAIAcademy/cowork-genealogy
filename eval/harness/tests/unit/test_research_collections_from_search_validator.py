@@ -47,11 +47,14 @@ EMPTY = [_search()]
         f"{KENYA_DEATHS} (FamilySearch)",
         f"[{KENYA_DEATHS}](https://www.familysearch.org/search/collection/0000000)",
         f"{KENYA_DEATHS}I'll look for his entry next.",
+        "| Kenya, Civil Registration of Births | ~1904–1960 |",
+        "Search Kenya Births and Baptisms, 1900–1960 for him.",
     ],
     ids=[
         "a-plain-title", "b-hyphen-variant", "b-bold-list-item", "i-inline-after-colon",
         "j-list-under-lead-in", "k-smart-quoted", "l-trailing-parenthetical",
-        "m-markdown-link", "n-joined-text-block",
+        "m-markdown-link", "n-joined-text-block", "o-table-row-one-comma",
+        "p-one-comma-specific-record-type",
     ],
 )
 def test_an_unreturned_title_fires(reply):
@@ -69,11 +72,19 @@ def test_an_unreturned_title_fires(reply):
         ("FamilySearch has no indexed records for Kenya. Wadhala lived in Kisumu, Kenya, 1888–1960.", EMPTY),
         ("Kenya National Archives, Nairobi — colonial district records, 1895–1963", EMPTY),
         (f"Search {ARKANSAS} next.", [_search(ARKANSAS)]),
+        (
+            "The Kenya Registration of Births and Deaths Ordinance was strengthened over time, "
+            "but gaps remain common for the 1888–1930 period especially.",
+            EMPTY,
+        ),
+        ("Here is what I can tell you about the record landscape for Kenya, 1888–1960:", EMPTY),
+        ("## Kenya Records, 1888–1960 — General Guidance", EMPTY),
     ],
     ids=[
         "c-returned-title-quoted", "d-unconfirmed-wording", "e-life-span-parenthetical",
         "e-life-span-in-prose", "e2-two-sentence-correct-reply", "g-repository-recommendation",
-        "h-returned-apostrophe-title",
+        "h-returned-apostrophe-title", "q-sentence-before-a-comma", "r-lead-in-naming-the-place",
+        "s-generic-heading",
     ],
 )
 def test_a_correct_reply_passes(reply, calls):
