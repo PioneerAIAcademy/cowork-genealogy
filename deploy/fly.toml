@@ -43,9 +43,6 @@ primary_region = "iad"
   ORCHESTRATOR_EFFORT = "low"
   # SUBAGENT_EFFORT = "high"
   # SUBAGENT_EFFORT_BY_AGENT = '{"question-selection": "low"}'
-  # Stop veto (`config.py` autonomous_max_nudges): 0 binds no Stop hook, as step mode's
-  # PR 1 does in code; drop this line once that ships. Create-time only.
-  AUTONOMOUS_MAX_NUDGES = "0"
   # Main-thread prompt-cache lifetime (`config.py` prompt_cache_ttl_main): 1h since
   # 2026-10-25. Alpha only; create-time only.
   PROMPT_CACHE_TTL_MAIN = "1h"
