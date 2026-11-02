@@ -1318,3 +1318,43 @@ def test_names_collections_only_from_search(text_response, tool_calls, test):
         f"returned: {unreturned}. Returned titles: {returned or 'none'}. Name a collection "
         "only from a collections_search result, or say it is unconfirmed."
     )
+
+
+_ITALIC_SPAN = re.compile(r"(?<![*\w])([*_])(?!\1)([^*_\n]+?)(?<![*_\s])\1(?![*\w])")
+
+
+def _italic_titles(reply: str) -> list[str]:
+    """Italic runs shaped like a work's title: four or more words, three of them
+    capitalised. Bold, and short emphasis such as *unconfirmed* or *not*, are not seen."""
+    titles = []
+    for match in _ITALIC_SPAN.finditer(_MD_LINK.sub(r"\1", reply)):
+        words = match.group(2).split()
+        if len(words) >= 4 and sum(w[:1].isupper() for w in words) >= 3:
+            titles.append(match.group(2).strip())
+    return titles
+
+
+def _tool_result_text(tool_calls) -> str:
+    return _normalised_title(" ".join(json.dumps(call.get("response"), ensure_ascii=False, default=str) for call in tool_calls or []))
+
+
+def test_names_works_only_from_tool_results(text_response, tool_calls, test):
+    """Tag-gated (``names-collections-only-from-search``), issue #4011 as widened by the
+    lead on 2026-11-02 from issue #4125: a reply names a book, register or other cited
+    work only when a tool result in the session contains it. The #4125 reply named
+    Ayling's 1895 *Revised Register…* for the wrong war, and no tool had returned it.
+
+    Sees only titles set in italics, the way a reply cites a work. A title in plain
+    text or quotes, or a footnote naming a work without italics, passes: that half is
+    measured by the hosted replays, not here. Proven both ways in
+    ``tests/unit/test_research_collections_from_search_validator.py``.
+    """
+    if "names-collections-only-from-search" not in test.get("tags", []):
+        pytest.skip("not a names-collections-only-from-search test")
+    returned = _tool_result_text(tool_calls)
+    unreturned = [t for t in _italic_titles(text_response or "") if _normalised_title(t) not in returned]
+    assert not unreturned, (
+        f"the reply names work(s) no tool result in the session contains: {unreturned}. "
+        "Name a source, collection, book or citation only if a tool result returned it, "
+        "or say it is unconfirmed."
+    )

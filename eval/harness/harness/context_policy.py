@@ -294,14 +294,14 @@ def _load_route_hook():
 
 #: Issue #4011. Every production path carries this sentence to the main thread -- the
 #: hosted planes append it, the Cowork hook adds it -- so both harnesses add it the
-#: way Cowork does, as context on each user message (`collections_note_hook`). Passed
+#: way Cowork does, as context on each user message (`sources_note_hook`). Passed
 #: as the whole system prompt instead it read as an identity and broke routing
 #: (ut_research_027 1 of 5, against 4 of 5 without it). The hook's text, not a copy.
-COLLECTIONS_NOTE = _load_route_hook().COLLECTIONS_NOTE
+SOURCES_NOTE = _load_route_hook().SOURCES_NOTE
 
 
-async def collections_note_hook(input_data, tool_use_id, context):
-    """UserPromptSubmit: add `COLLECTIONS_NOTE`, skipping a subagent hand-back as the
+async def sources_note_hook(input_data, tool_use_id, context):
+    """UserPromptSubmit: add `SOURCES_NOTE`, skipping a subagent hand-back as the
     shipped hook does."""
     prompt = (input_data or {}).get("prompt")
     if not isinstance(prompt, str) or prompt.lstrip().startswith("<agent-message"):
@@ -309,7 +309,7 @@ async def collections_note_hook(input_data, tool_use_id, context):
     return {
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": COLLECTIONS_NOTE,
+            "additionalContext": SOURCES_NOTE,
         }
     }
 

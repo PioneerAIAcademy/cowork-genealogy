@@ -100,3 +100,56 @@ def test_an_unreturned_title_beside_a_returned_one_fires():
 def test_an_untagged_test_is_skipped():
     with pytest.raises(pytest.skip.Exception):
         check(KENYA_DEATHS, EMPTY, {"skill": "research", "tags": ["routing"]})
+
+
+# The lead's widening on #4011 (2026-11-02, from issue #4125): a named book or other
+# cited work, not only a FamilySearch collection title.
+from test_research import test_names_works_only_from_tool_results as check_works  # noqa: E402
+
+AYLING = (
+    "Revised Register of the Soldiers and Sailors of New Hampshire in the War of the "
+    "Revolution, 1775–1783"
+)
+
+
+def _wiki(text: str) -> dict:
+    return {"tool": "mcp__genealogy__wiki_search", "args": {"query": "q"}, "response": {"results": [{"text": text}]}}
+
+
+@pytest.mark.parametrize(
+    "reply",
+    [
+        f"The standard reference is Augustus D. Ayling, *{AYLING}* (1895).",
+        f"See _{AYLING}_ for the roster.",
+        "Footnote 2: Coffin, *Guns of Independence: The Siege of Fort Mifflin* (2005).",
+    ],
+    ids=["t-ayling-asterisk-italics", "u-underscore-italics", "v-italic-footnote"],
+)
+def test_an_unreturned_work_fires(reply):
+    with pytest.raises(AssertionError, match="no tool result in the session contains"):
+        check_works(reply, [_wiki("Moses Dustin served in Reid's regiment.")], TAGGED)
+
+
+@pytest.mark.parametrize(
+    ("reply", "calls"),
+    [
+        (f"The wiki points to *{AYLING.replace('–', '-')}*.", [_wiki(f"See {AYLING}.")]),
+        ("That collection is *unconfirmed* and *not* indexed.", EMPTY),
+        ("**Kenya Colony Records Overview Today**", EMPTY),
+        ("Set Kenya_Colony Records Overview Index_Today in the config.", EMPTY),
+        # Known gap, stated in the validator's docstring: plain-text works are not seen;
+        # the hosted replays measure that half.
+        ("Footnote 2: Coffin, Guns of Independence (2005).", EMPTY),
+    ],
+    ids=[
+        "w-returned-work-dash-variant", "x-short-emphasis", "y-bold-heading",
+        "z-snake-case-identifiers", "known-gap-plain-text-footnote",
+    ],
+)
+def test_a_returned_or_unmarked_work_passes(reply, calls):
+    check_works(reply, calls, TAGGED)
+
+
+def test_the_works_check_skips_an_untagged_test():
+    with pytest.raises(pytest.skip.Exception):
+        check_works(f"*{AYLING}*", EMPTY, {"skill": "research", "tags": ["routing"]})

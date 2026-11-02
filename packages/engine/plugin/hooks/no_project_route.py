@@ -43,11 +43,11 @@ CONTEXT = (
 )
 
 # Issue #4011: unconditional, so it holds with or without a project. The hosted planes
-# append the same text as `continue_policy.COLLECTIONS_GUIDANCE`; change both together.
-COLLECTIONS_NOTE = (
-    "Name a FamilySearch record collection as searchable only if a collections_search "
-    "result in this session returned it (locality-guide and research-plan run that "
-    "search); otherwise say the collection is unconfirmed."
+# append the same text as `continue_policy.SOURCES_GUIDANCE`; change both together.
+SOURCES_NOTE = (
+    "Name a source, collection, book or citation only if a tool result in this session "
+    "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
+    "collections_search, which locality-guide and research-plan run."
 )
 
 
@@ -60,7 +60,7 @@ def decision(payload: dict, env: dict) -> dict:
     return {
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": f"{CONTEXT} {COLLECTIONS_NOTE}",
+            "additionalContext": f"{CONTEXT} {SOURCES_NOTE}",
         }
     }
 

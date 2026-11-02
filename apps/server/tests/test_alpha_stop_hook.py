@@ -715,22 +715,22 @@ def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():
     assert hook.decision(payload, {}) != {}
 
 
-def test_the_collections_sentence_is_the_one_the_plugin_hook_adds(tmp_path):
-    """Issue #4011. The alpha appends `COLLECTIONS_GUIDANCE` and the Cowork hook carries
+def test_the_sources_sentence_is_the_one_the_plugin_hook_adds(tmp_path):
+    """Issue #4011. The alpha appends `SOURCES_GUIDANCE` and the Cowork hook carries
     its own copy (the hook runs in the VM and cannot import the server); a reword on one
     side alone leaves the two paths saying different things."""
     import importlib.util
 
-    from app.agent.continue_policy import COLLECTIONS_GUIDANCE
+    from app.agent.continue_policy import SOURCES_GUIDANCE
 
     path = Path(__file__).resolve().parents[3] / "packages/engine/plugin/hooks/no_project_route.py"
     spec = importlib.util.spec_from_file_location("_no_project_route", path)
     hook = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(hook)
-    assert hook.COLLECTIONS_NOTE == COLLECTIONS_GUIDANCE
+    assert hook.SOURCES_NOTE == SOURCES_GUIDANCE
     added = hook.decision({"prompt": "What Kenyan records can I search?"}, {})
-    assert COLLECTIONS_GUIDANCE in added["hookSpecificOutput"]["additionalContext"]
-    assert COLLECTIONS_GUIDANCE in real_agent.build_options(tmp_path).system_prompt["append"]
+    assert SOURCES_GUIDANCE in added["hookSpecificOutput"]["additionalContext"]
+    assert SOURCES_GUIDANCE in real_agent.build_options(tmp_path).system_prompt["append"]
 
 
 class _Turns:
