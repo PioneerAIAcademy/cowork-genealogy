@@ -4392,6 +4392,49 @@ def test_rule3_regrade_skips_a_log_absent_at_the_merge_base(
     assert "::error" not in capsys.readouterr().out
 
 
+def _rule3_regrade_main(tmp_path, monkeypatch, touched):
+    """Drive `main()` with one modified research log and the per-rule checks
+    stubbed, recording which logs the regrade arm is asked to grade."""
+    skill_dir = tmp_path / "research"
+    skill_dir.mkdir()
+    for name in ("v1.json", "v2_2026-10-26_00-00-00.json"):
+        (skill_dir / name).write_text(json.dumps({"tests": []}), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    for rule in ("rule2_active", "rule2b_judge_prompt", "rule2b_judge_render",
+                 "rule2c_instrument", "rule3_completeness", "rule11_for_skill",
+                 "rule6_regrade_outcomes"):
+        monkeypatch.setattr(check_runlogs, rule, lambda *a, **k: 0)
+    calls = []
+    monkeypatch.setattr(
+        check_runlogs, "rule3_regrade_sample_growth", lambda *a: calls.append(a) or 1
+    )
+    monkeypatch.setattr(
+        check_runlogs, "modified_runlogs",
+        lambda: [("research", "eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json")],
+    )
+    _patch_diffs(monkeypatch, touched)
+    return check_runlogs.main(), calls
+
+
+def test_main_runs_the_rule3_regrade_arm_on_a_modified_log(tmp_path, monkeypatch):
+    """A regrade-only PR touches no skill, so the arm is the only rule 3 it gets."""
+    rc, calls = _rule3_regrade_main(tmp_path, monkeypatch, [])
+    assert rc == 1
+    assert calls == [("research", "eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json")]
+
+
+def test_main_skips_the_rule3_regrade_arm_on_a_log_rule3_already_graded(
+    tmp_path, monkeypatch
+):
+    """When the skill is also touched, rule 3 proper grades the same latest log;
+    the arm must not report that debt a second time."""
+    rc, calls = _rule3_regrade_main(
+        tmp_path, monkeypatch,
+        ["eval/tests/unit/research/handle-negative-probate-result.json"],
+    )
+    assert calls == []
+
+
 def test_rule3_regrade_warns_rather_than_blocking_on_an_unreadable_base(
     monkeypatch, tmp_path, capsys
 ):

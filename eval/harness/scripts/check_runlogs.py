@@ -2658,6 +2658,7 @@ def main() -> int:
 
     graded_logs = graded_tests = 0
     rule11_graded: set[str] = set()
+    rule3_graded: set[tuple[str, str]] = set()
 
     # Rule 2b blocks when the PR itself edits the judge prompt (issue #2479 PR 1):
     # that is the only case where `make judge-regrade` is the satisfaction path.
@@ -2742,6 +2743,7 @@ def main() -> int:
             fails += rule3_completeness(
                 skill, log, filename, skill_dir, graded=graded
             )
+            rule3_graded.add((skill, filename))
             if added_name is not None:
                 # Only a PR that adds a log has a run to compare with the base.
                 fails += rule11_for_skill(skill, filename, log)
@@ -2777,7 +2779,8 @@ def main() -> int:
     # Rule 3, regrade arm: one whose review_sample grew owes those annotations.
     for skill, path in modified_runlogs():
         fails += rule6_regrade_outcomes(skill, path)
-        fails += rule3_regrade_sample_growth(skill, path)
+        if (skill, Path(path).name) not in rule3_graded:
+            fails += rule3_regrade_sample_growth(skill, path)
 
     # Warn-only fixture arm (#1094): a shared fixture this PR changed marks its
     # referencing skills' run logs stale, but only warns — never fails. See
