@@ -13,7 +13,8 @@ description: >-
   capture (use search-external-sites), to search FamilySearch records (use
   search-records), to survey what records exist for a place (use
   locality-guide), or to plan a project's next searches (use research-plan).
-model: claude-sonnet-4-6
+model: claude-sonnet-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -124,8 +125,8 @@ Otherwise → proceed.
   a record set, the person's name or origin, or the history of the period.
 - Every link you write is a `url` a tool returned in this run, character for
   character.
-- Fewer than 3 entries: give what you have and say that is all FamilySearch
-  lists for that place and period. Zero rows, or zero entries: below the `---`
+- Fewer than 3 entries: give what you have, then the fixed "that is every
+  collection" sentence below. Zero rows, or zero entries: below the `---`
   write exactly `FamilySearch lists no external collection for <standardPlace>,
   <years searched>.` and nothing else: no link, no advice, no history. Never pad
   with a site you chose yourself.
@@ -140,30 +141,33 @@ Return, in this order:
 ### `summary_for_user`
 
 After those lines, write a line containing only `---`, then plain prose with **no
-label, heading or field name**:
+label, heading or field name**, each part separated by a blank line, and nothing
+else:
 
-1. One opening sentence: these are collections FamilySearch lists for that
-   place and period on other sites, each opening with the search filled in.
+1. Exactly this sentence: `These are collections FamilySearch lists for that place and period on other sites, each opening with the search filled in.`
 2. One entry per link, exactly this shape and nothing more:
 
    ```
    **<linkText>** — <site name>, <free | needs a subscription>
-   Covers <span>, which includes your <years searched>. | Undated collection.
+   Covers <span>, which includes your <years searched>. | Covers <span>, which overlaps your <years searched> in <overlapping years>. | Covers <span>, outside your <years searched>. | Undated collection.
    <url>
    ```
 
    The span is the row's `startYear`–`endYear`, or the years its `linkText`
    names: a row with no `startYear` whose `linkText` is "Iowa State Census
    1856" is "Covers 1856, which includes your <years searched>." A row with neither is
-   "Undated collection." Never write a span that is in neither. The coverage
-   line is one of those two sentences and nothing else: no parenthesis, no
-   dash, no second clause. For a span that only partly overlaps, say which years overlap. Add no
+   "Undated collection." A span that misses the searched years is "Covers <span>,
+   outside your <years searched>." Never write a span that is in neither. The coverage
+   line is one of those sentences and nothing else: no parenthesis, no
+   dash, no second clause. A span that only partly overlaps is "Covers 1860–1869, which overlaps
+   your 1865–1875 in 1865–1869." Add no
    sentence about what the collection holds, who is in it, or why the person
    might be there: anything not in that shape is a fact no tool returned.
-3. If there are "also on file" rows: one line, "Also listed, without a filled-in
-   search:", then each `linkText` and its `url` exactly as returned, `http://`
-   included.
-4. One sentence: open a link, and bring back anything found to keep researching.
+3. With 1 or 2 entries only, exactly this sentence: `That is every collection FamilySearch lists with a filled-in search for that place and period.`
+4. If there are "also on file" rows: the line `Also listed, without a filled-in search:`,
+   then one line per row, exactly `<linkText>: <url>`, the `url` copied character
+   for character: an `https` link stays `https` and an `http` link stays `http`.
+5. Exactly this sentence: `Open a link and bring back anything found to keep researching.`
 
 The caller prints everything after that `---` verbatim and nothing above it. No
 closing essay.
