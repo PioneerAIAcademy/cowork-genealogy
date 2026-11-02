@@ -167,6 +167,11 @@ async def test_a_blocked_user_is_refused_at_sign_in_and_nothing_is_written(fs_on
 # ── the chat switch ──────────────────────────────────────────────────────────────
 
 
+def test_chat_off_drops_a_queue_a_caller_passes(monkeypatch):
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
+    assert create_app(FakeStore(), FakeQueue()).state.queue is None
+
+
 def test_chat_off_serves_no_session_route_and_keeps_the_rest(monkeypatch):
     paths = {getattr(r, "path", "") for r in create_app(FakeStore(), FakeQueue()).routes}
     assert any(p.startswith("/api/sessions") for p in paths), "control: chat on serves them"

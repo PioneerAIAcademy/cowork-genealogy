@@ -187,6 +187,17 @@ async def test_a_returning_user_does_not_wait_on_the_admission_lock(pg_dsn, monk
     assert user.familysearch_id == FS_ID
 
 
+async def test_a_held_user_row_answers_busy_not_a_hang(pg_dsn, monkeypatch):
+    """A returning patron whose row another transaction holds (an operator's delete or block)
+    gets the bounded wait too, not an unbounded one."""
+    monkeypatch.setattr(web_app.grants, "QUEUE_LOCK_TIMEOUT_S", 0.2)
+    add_user(pg_dsn, "a@example.org")
+    with psycopg.connect(pg_dsn) as holder:
+        holder.execute("SELECT 1 FROM users WHERE email = %s FOR UPDATE", ("a@example.org",))
+        with pytest.raises(AdmissionBusy):
+            await asyncio.wait_for(PgStore(pg_dsn).upsert_user("a@example.org", None, max_users=5), WAIT_S)
+
+
 async def test_a_held_admission_lock_answers_busy_not_a_hang(pg_dsn, monkeypatch):
     monkeypatch.setattr(web_app.grants, "QUEUE_LOCK_TIMEOUT_S", 0.2)
     with psycopg.connect(pg_dsn) as holder:

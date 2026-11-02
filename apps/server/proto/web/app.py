@@ -1183,8 +1183,8 @@ class PgStore:
         whatever the count, without the admission lock; a new one is inserted only while
         ``users`` holds fewer rows, else AdmissionRefused. Only a new email takes the
         tier-wide admission lock, and counts and inserts under it, so two sign-ins at cap-1
-        cannot both pass; a lock wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` raises
-        AdmissionBusy."""
+        cannot both pass; a wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` on that lock or on the
+        user's row raises AdmissionBusy."""
         from psycopg import errors
 
         email = email.strip().lower()
@@ -1198,12 +1198,13 @@ class PgStore:
                     if max_users is None:
                         await conn.execute(insert, (new_id, email))
                     else:
-                        # An existing user, row-locked so a concurrent delete waits; else the
-                        # admission lock, the same read again (a sign-in for this email may
-                        # have inserted while this one waited), the count, the insert.
+                        # One bounded wait for both locks below. An existing user, row-locked
+                        # so a concurrent delete waits; else the admission lock, the same read
+                        # again (a sign-in for this email may have inserted while this one
+                        # waited), the count, the insert.
+                        await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
                         row = await (await conn.execute(select, (email,))).fetchone()
                         if row is None:
-                            await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
                             await conn.execute(grants.ADMISSION_LOCK_SQL, (grants.ADMISSION_LOCK_NS,))
                             row = await (await conn.execute(select, (email,))).fetchone()
                         if row is None:
@@ -1688,7 +1689,8 @@ def create_app(
     # #3985: read once, so the routes and the lifespan cannot disagree; a bad value refuses here.
     app.state.chat = auth.chat_enabled()
     app.state.store = store
-    app.state.queue = queue
+    # #3985: a chat-off tier has no queue, even when a caller passes one.
+    app.state.queue = queue if app.state.chat else None
     app.state.blobs = blobs
     # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
     # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
