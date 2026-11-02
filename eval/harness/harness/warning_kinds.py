@@ -65,6 +65,10 @@ WARNING_KIND_SIDES: dict[str, str] = {
     # Neither judge-brief.md nor README.md, so the judge saw only a marker (#2478).
     "scenario_brief_missing": "harness",
     "pg_store_fault": "harness",  # --store pg: the Postgres store failed a call (U15)
+    # The mock refused a call on an argument key the tool does not take, the way
+    # server.ts refuses it in production (#3947). A fixture advisory's opposite:
+    # no fixture can cover it, so the advisory says to fix the caller's args.
+    "unknown_args_refused": "harness",
 }
 
 _VALID_SIDES = frozenset({"judge", "harness"})
