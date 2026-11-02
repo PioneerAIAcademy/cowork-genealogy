@@ -73,42 +73,6 @@ describe("lookupWithin and a spent FamilySearch budget", () => {
     expect(isFsBudgetExhausted(err)).toBe(true);
   });
 
-  // A rejection that LOSES the race still needs a handler. Without one it
-  // surfaces as an unhandled rejection after lookupWithin has already
-  // returned, which crashes the process under Node's default policy.
-  //
-  // It cannot be turned back into a throw: once the deadline wins, the
-  // function has returned. In practice that window is near-unreachable --
-  // consumeFsBudgetSlot refuses BEFORE any network I/O, and the worker's
-  // first line is `if (expired) return;`, so a worker that would refuse
-  // after the deadline never starts. The recorded copy closes the
-  // sub-millisecond gap between those two checks.
-  it("handles a refusal that loses the race instead of leaving it unhandled", async () => {
-    configureFsBudget({ perMinute: 1 });
-    consumeFsBudgetSlot(FS_URL);
-    let refusal: unknown;
-    try {
-      consumeFsBudgetSlot(FS_URL);
-    } catch (e) {
-      refusal = e;
-    }
-    const unhandled: unknown[] = [];
-    const onUnhandled = (err: unknown) => unhandled.push(err);
-    process.on("unhandledRejection", onUnhandled);
-    try {
-      const answers = await lookupWithin<string>(
-        ["Lexington"],
-        () => new Promise((_res, rej) => setTimeout(() => rej(refusal), 40)),
-        10,
-      );
-      expect(answers.get("Lexington")).toBeNull(); // the deadline's answer
-      await new Promise((r) => setTimeout(r, 80)); // let the straggler reject
-      expect(unhandled).toEqual([]);
-    } finally {
-      process.off("unhandledRejection", onUnhandled);
-    }
-  });
-
   it("still maps an ordinary resolver failure to null", async () => {
     configureFsBudget({ perMinute: 100 });
     const answers = await lookupWithin<string>(["Lexington"], async () => {

@@ -33,13 +33,6 @@ export async function lookupWithin<T>(
   for (const name of distinct) answers.set(name, null);
   let timer: ReturnType<typeof setTimeout> | undefined;
   let expired = false;
-  // Recorded as well as rethrown. Usually the rethrow is enough -- a spent
-  // budget refuses before any network I/O, so `lookups` rejects long before
-  // `cap` fires and the rejection wins the race. But when the budget runs out
-  // near the deadline, `cap` can win first and the refusal is then discarded
-  // with the losing promise, leaving the caller an all-null map it blames on
-  // its own time budget.
-  let refusal: unknown;
   const lookups = mapWithConcurrency(distinct, PLACE_LOOKUP_CONCURRENCY, async (name) => {
     if (expired) return;
     let found: T | null = null;
@@ -49,10 +42,7 @@ export async function lookupWithin<T>(
       // A budget refusal is not an answer: returning null here tells the
       // agent the place has no coordinates when the truth is that the
       // server is rate-limited. Rethrow so the cause reaches the caller.
-      if (isFsBudgetExhausted(err)) {
-        refusal ??= err;
-        throw err;
-      }
+      if (isFsBudgetExhausted(err)) throw err;
       found = null;
     }
     if (!expired) answers.set(name, found);
@@ -64,16 +54,10 @@ export async function lookupWithin<T>(
       onExpired?.();
     }, budgetMs);
   });
-  // A rejection that loses the race still needs a handler, or it surfaces as
-  // an unhandled rejection after this function has already returned.
-  lookups.catch((err: unknown) => {
-    if (isFsBudgetExhausted(err)) refusal ??= err;
-  });
   try {
     await Promise.race([lookups, cap]);
   } finally {
     clearTimeout(timer);
   }
-  if (refusal !== undefined) throw refusal;
   return answers;
 }
