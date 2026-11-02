@@ -27,6 +27,7 @@ import { treeEdit, checkWarningGate } from "../../src/tools/tree-edit.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
 import { familySearchPlace, resolveStandardPlace, textNamesPlace } from "../../src/utils/place-resolver.js";
 import { validateProject } from "../../src/validation/validator.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -54,7 +55,7 @@ describe("tree_edit", () => {
 
   async function writeProject(tree: any, research: any = minimalResearch) {
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
   const exists = async (rel: string) => access(join(dir, rel)).then(() => true, () => false);
@@ -2756,7 +2757,7 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
   });
   async function writeProject(tree: any, research: any) {
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
 
