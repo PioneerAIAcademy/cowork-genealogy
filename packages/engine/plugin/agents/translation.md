@@ -15,7 +15,8 @@ description: >-
   English record (use the record-structurer agent), wants historical context
   about a place (use historical-context), or wants a locality guide (use
   locality-guide). A Wikipedia lookup is search-wikipedia, not translation.
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
+effort: low
 tools:
   - Read
   - mcp__genealogy__research_log_append
