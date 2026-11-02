@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { compoundJurisdictionError, planItemFlags } from "../../src/utils/plan-item-plausibility.js";
+import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../../src/utils/plan-item-plausibility.js";
 
 // Phase 3 item 5: "dead ends become next actions", and the next actions have to be
 // usable. In the reported failure 2 of 8, then 1 of 3 suggestions were viable -- the
@@ -180,6 +180,141 @@ describe("research_append surfaces the plan-item flags", () => {
   it("stays silent on a jurisdiction inside a recorded locality", async () => {
     const text = await append(project({}), { ...ITEM, jurisdiction: "Pottsville, Schuylkill, Pennsylvania" });
     expect(text).not.toMatch(/outside|inconsistent/i);
+  });
+});
+
+
+// Issue #2424 (umbrella #2475): a plan that stops short of its question's own date
+// window. The window is stated on the question by question-selection; the subject's
+// lifetime is not a stand-in (measured: 145 of 391 committed plan-bearing questions,
+// correct plans included). Advisory, decided 2026-10-01.
+
+const q = (date_window?: string) => ({ id: "q_001", ...(date_window ? { date_window } : {}) });
+const plan = (ranges: string[], extra: Record<string, unknown> = {}) => ({
+  id: "pl_001", question_id: "q_001", status: "active",
+  items: ranges.map((date_range) => ({ date_range, status: "planned" })), ...extra,
+});
+
+describe("planWindowFlag", () => {
+  it("fires on the anders-monsen shape: items from 1797 against a 1777-1799 marriage window", () => {
+    const msg = planWindowFlag(q("1777-1799"), [plan(["1820-1900", "1797-1900", "1891"])]);
+    expect(msg).toMatch(/q_001's plans span 1797–1900 but its date window is 1777–1799: 20 of its 23 years/);
+  });
+
+  it("fires on the Rule B shape: censuses 1850 and 1860 against a 1845-1908 window", () => {
+    expect(planWindowFlag(q("1845-1908"), [plan(["1850-1850", "1860"])])).toMatch(/53 of its 64 years/);
+  });
+
+  it("is silent on the correct marriage plan, 1770-1800", () => {
+    expect(planWindowFlag(q("1777-1799"), [plan(["1770-1800"])])).toBeNull();
+  });
+
+  it("judges the span, not summed years: single-year censuses 1850…1900 cover 1845-1908", () => {
+    expect(planWindowFlag(q("1845-1908"), [plan(["1850", "1860", "1870", "1880", "1900"])])).toBeNull();
+  });
+
+  it("pins the threshold at more than half: 10 of 20 uncovered is silent, 11 of 20 fires", () => {
+    expect(planWindowFlag(q("1800-1819"), [plan(["1810-1819"])])).toBeNull();
+    expect(planWindowFlag(q("1800-1819"), [plan(["1811-1819"])])).toMatch(/11 of its 20 years/);
+  });
+
+  it("counts a plan entirely outside the window as fully uncovered", () => {
+    expect(planWindowFlag(q("1777-1799"), [plan(["1840-1880"])])).toMatch(/23 of its 23 years/);
+  });
+
+  it("has no opinion without a window, with a malformed one, or with no parseable item", () => {
+    expect(planWindowFlag(q(), [plan(["1840-1880"])])).toBeNull();
+    expect(planWindowFlag(q("c. 1780s"), [plan(["1840-1880"])])).toBeNull();
+    expect(planWindowFlag(q("1799-1777"), [plan(["1840-1880"])])).toBeNull();
+    expect(planWindowFlag(q("1777-1799"), [plan(["c. 1880s", ""])])).toBeNull();
+  });
+
+  it("leaves out skipped items and superseded plans — they search nothing", () => {
+    const skipped = plan(["1770-1800"]);
+    (skipped.items[0] as any).status = "skipped";
+    expect(planWindowFlag(q("1777-1799"), [skipped, plan(["1840-1880"], { id: "pl_002" })])).toMatch(/23 of/);
+    const retired = plan(["1770-1800"], { status: "superseded" });
+    expect(planWindowFlag(q("1777-1799"), [retired, plan(["1840-1880"], { id: "pl_002" })])).toMatch(/23 of/);
+  });
+
+  it("reads only the question's own plans", () => {
+    const other = plan(["1770-1800"], { id: "pl_002", question_id: "q_002" });
+    expect(planWindowFlag(q("1777-1799"), [other, plan(["1840-1880"])])).toMatch(/23 of/);
+  });
+});
+
+describe("research_append surfaces the date-window flag", () => {
+  const WINDOW_Q = [{ id: "q_001", question: "When did he marry?", date_window: "1777-1799" }];
+  const withItems = (ranges: string[]) => [{
+    id: "pl_001", question_id: "q_001", status: "active",
+    items: ranges.map((date_range, i) => ({ ...ITEM, id: `pli_00${i + 1}`, sequence: i + 1, date_range })),
+  }];
+
+  it("warns on an item append that leaves the window uncovered, and still writes", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
+    const text = await append(dir, { ...ITEM, date_range: "1840-1880" });
+    expect(text).toMatch(/"ok":\s*true/);
+    expect(text).toMatch(/date window is 1777–1799/);
+  });
+
+  it("is silent when the plan reaches the window", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
+    expect(await append(dir, { ...ITEM, date_range: "1770-1800" })).not.toMatch(/date window/);
+  });
+
+  it("is silent for a question with no date_window", async () => {
+    const dir = project({ plans: withItems(["1820-1900"]) });
+    expect(await append(dir, { ...ITEM, date_range: "1840-1880" })).not.toMatch(/date window/);
+  });
+
+  it("does not re-warn on a status-only item update — a search agent's write", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001",
+      entryId: "pli_001", fields: { status: "in_progress" },
+    } as never, undefined as never);
+    expect(JSON.stringify(out)).not.toMatch(/date window/);
+  });
+
+  it("warns on an update that moves an item's date_range out of the window", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1770-1800"]) });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001",
+      entryId: "pli_001", fields: { date_range: "1840-1880" },
+    } as never, undefined as never);
+    expect(JSON.stringify(out)).toMatch(/date window is 1777–1799/);
+  });
+
+  it("warns on a plans append whose inline items leave the window uncovered, and still writes", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: [] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plans", op: "append",
+      entry: { question_id: "q_001", status: "active", items: [{ ...ITEM, id: "pli_001", date_range: "1840-1880" }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    const text = out instanceof Error ? out.message : JSON.stringify(out);
+    expect(text).toMatch(/"ok":\s*true/);
+    expect(text).toMatch(/date window is 1777–1799/);
+  });
+
+  it("warns on a plans update that replaces items with an uncovered set", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1770-1800"]) });
+    const out = await researchAppend({
+      projectPath: dir, section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [{ ...ITEM, id: "pli_001", date_range: "1840-1880" }] },
+    } as never, undefined as never);
+    expect(JSON.stringify(out)).toMatch(/date window is 1777–1799/);
+  });
+
+  it("warns once per question for a batch of two item appends", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
+    const out = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "append", planId: "pl_001", entry: { ...ITEM, date_range: "1840-1880" } },
+        { section: "plan_items", op: "append", planId: "pl_001", entry: { ...ITEM, sequence: 2, date_range: "1850-1890" } },
+      ],
+    } as never, undefined as never);
+    expect(JSON.stringify(out).match(/date window is 1777–1799/g)).toHaveLength(1);
   });
 });
 
