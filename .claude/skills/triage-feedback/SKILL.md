@@ -29,8 +29,8 @@ move on. Do not batch the report and do not run ahead of the lead.
 problem you find in the bundle that they did not, ends as one of four things:
 filed as an issue, folded into an existing issue, refuted with the path that
 shows it, or ruled out of scope by the lead. Nothing is dropped silently. That does not mean one new issue per
-problem: fold wherever an issue already covers it, and put findings that share a
-fix site in one issue. The findings ledger (Section 2) is how you keep count.
+problem: fold wherever an issue already covers it, and put findings that change
+the same file under the same eval run in one issue. The findings ledger (Section 2) is how you keep count.
 
 ## 0. The queue
 
@@ -65,11 +65,12 @@ not reach is still there next run. Say how many are left when you stop.
 Two items with timestamps a few minutes apart are usually one tester resubmitting,
 not two bugs. Open both before triaging either.
 
-**Group the queue by tester.** Each bundle's `FEEDBACK.md` names who sent it. Say
-which items share a tester when you list the queue. One tester's bundles tend to
-share root causes, and a ruling the lead makes on the first applies to the rest
-(Section 5). Do not read every bundle up front: triage in order, and carry each
-ruling forward.
+**Group the queue by tester.** The issue body does not name the sender; only the
+`From:` line of each bundle's `FEEDBACK.md` does. Extract each zip and read that
+one line, then say which items share a tester when you list the queue. One
+tester's bundles tend to share root causes, and a ruling the lead makes on the
+first applies to the rest (Section 5). Do not read the rest of any bundle up
+front: triage in order, and carry each ruling forward.
 
 ## 1. Report the feedback
 
@@ -310,7 +311,7 @@ out at standup.
 
 Per item, as you go: each ledger row's disposition, and the issue numbers they
 produced or landed on. At the end of the run: how many items you triaged, how
-many findings they held, the split across the three dispositions, and how many
+many findings they held, the split across the four dispositions, and how many
 items are still in the column.
 
 **Do not propose the work.** Filing it well is the whole job.
