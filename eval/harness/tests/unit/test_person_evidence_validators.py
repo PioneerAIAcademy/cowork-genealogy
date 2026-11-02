@@ -46,6 +46,8 @@ from test_person_evidence import (  # noqa: E402
     test_unexplained_move_not_confident as check_unexplained,
     test_corridor_move_links_confident as check_corridor_link,
     test_identity_links_follow_their_persona as check_identity,
+    test_naturalization_shortfall_stated as check_shortfall,
+    test_naturalization_exception_not_flagged as check_exception,
 )
 
 
@@ -1661,3 +1663,333 @@ def test_identity_matches_a_record_id_across_its_spellings():
 def test_identity_stands_down_without_research_json():
     with pytest.raises(pytest.skip.Exception):
         check_identity(_state(None), _state(None), [])
+
+
+# --- Arrival to naturalization interval (issue #3969) ------------------
+
+# Every committed `ut_person_evidence_wfh` run's a_007/a_014 entries, verbatim
+# from the run logs' `file_changes` diffs. None states the residence
+# shortfall (the issue's baseline: 0 of 9), and all of them say "gap 5
+# years", "Residence check:" or "four years" about other things.
+_WFH_COMMITTED_RUNS = {'v4_2026-10-27_07-06-48#run0': [{'id': 'pe_007',
+                                  'assertion_id': 'a_007',
+                                  'person_id': 'I1',
+                                  'confidence': 'speculative',
+                                  'core_identifier_conflict': 'Records give birth '
+                                                              '~1854 (src_001: age 21 '
+                                                              'at Aug 13 1875; '
+                                                              'src_002: index states '
+                                                              'b. 1854); tree I1 '
+                                                              'attests birth ~1859 '
+                                                              '(unsourced) — a 5-year '
+                                                              'gap.',
+                                  'rationale': 'Date check: record birth ~1854 (from '
+                                               'stated age) vs. tree ~1859 '
+                                               '(unsourced): gap ~5 years. Residence '
+                                               'check: San Francisco, California, 1875 '
+                                               "vs. I1's San Francisco location: same "
+                                               'city. Score 0.43 (moderate). '
+                                               'Naturalization Aug 13 1875 California '
+                                               '4th District Court (San Francisco) — '
+                                               'registrant naturalized and registered '
+                                               'to vote same day, consistent with '
+                                               'adult immigrant male behavior. The '
+                                               'corresponding court record in '
+                                               'FamilySearch collection 2125028 should '
+                                               'be consulted for corroboration. '
+                                               'Identity basis as for a_001.'},
+                                 {'id': 'pe_014',
+                                  'assertion_id': 'a_014',
+                                  'person_id': 'I1',
+                                  'confidence': 'speculative',
+                                  'core_identifier_conflict': 'Records give birth '
+                                                              '~1854 (src_001: age 21 '
+                                                              'at Aug 13 1875; '
+                                                              'src_002: index states '
+                                                              'b. 1854); tree I1 '
+                                                              'attests birth ~1859 '
+                                                              '(unsourced) — a 5-year '
+                                                              'gap.',
+                                  'rationale': 'Date check: index birth year 1854 vs. '
+                                               'tree ~1859 (unsourced): gap ~5 years. '
+                                               'Residence check: New York, 2 Jun 1871 '
+                                               "(arrival port) vs. I1's nearest "
+                                               'attested U.S. residence — none before '
+                                               "SF children's births; this is the "
+                                               'immigration arrival event, not a '
+                                               'sustained U.S. residence. Score 0.006 '
+                                               '(near-zero; thin-subject explained). '
+                                               'Arrival New York 1871 followed by SF '
+                                               'Great Register 1875 is a coherent '
+                                               '4-year migration via transcontinental '
+                                               'railroad (opened 1869). Identity basis '
+                                               'as for a_010.'}],
+ 'v6#run0': [{'id': 'pe_007',
+              'assertion_id': 'a_007',
+              'person_id': 'I1',
+              'confidence': 'speculative',
+              'core_identifier_conflict': 'Record gives birth ~1854 (from stated age '
+                                          '21 at 13 Aug 1875); tree attests birth '
+                                          '~1859 (unsourced estimate).',
+              'rationale': 'Date check: ~1854 (from age 21, 1875) vs. I1 tree birth '
+                           '~1859 (unsourced): gap 5 years. Residence check: '
+                           'California naturalization, 1875 vs. San Francisco (nearest '
+                           'attested pre-run): same state. Score 0.43; matched: true. '
+                           'Naturalization 13 Aug 1875, California 4th District Court '
+                           '(seated in San Francisco): independently corroborates '
+                           'California residence by that date and reflects legal '
+                           'establishment prior to starting a family. The '
+                           'corresponding court record in FamilySearch collection '
+                           '2125028 may carry a more specific German origin locality. '
+                           'Core identifier conflict as stated; speculative pending '
+                           'resolution. Same persona as a_001.'},
+             {'id': 'pe_014',
+              'assertion_id': 'a_014',
+              'person_id': 'I1',
+              'confidence': 'speculative',
+              'core_identifier_conflict': 'Record gives birth 1854 (stated); tree '
+                                          'attests birth ~1859 (unsourced estimate).',
+              'rationale': 'Date check: 1854 (stated birth year) vs. I1 tree birth '
+                           '~1859 (unsourced): gap 5 years. Residence check: New York, '
+                           'New York, 1871 (arrival) vs. San Francisco (nearest '
+                           'attested pre-run): outside. Bridge: src_001 '
+                           '(naturalization California 1875, same-named individual '
+                           'born ~1854) documents the person at the California '
+                           'destination four years after this arrival, establishing '
+                           'the New York-to-California migration path. Score 0.006; '
+                           'matched: false (dataset distance, not conflict). '
+                           'Immigration arrival 2 Jun 1871, New York: consistent with '
+                           'a young man born 1854 emigrating at age ~17. This record '
+                           'answers part of q_001 (when immigration occurred: arrived '
+                           'New York 2 Jun 1871) but not the specific German origin '
+                           'locality. The index carries no ship name or departure '
+                           'port, so the original manifest — which may carry a more '
+                           'specific origin — cannot be located from this entry alone. '
+                           'Core identifier conflict as stated; speculative pending '
+                           'resolution. Same persona as a_010.'}],
+ 'v7#run0': [{'id': 'pe_007',
+              'assertion_id': 'a_007',
+              'person_id': 'I1',
+              'confidence': 'speculative',
+              'core_identifier_conflict': 'Record birth ~1854 (computed from stated '
+                                          'age 21, registered 13 Aug 1875); tree I1 '
+                                          'attests birth ~1859 (unsourced) — ~5-year '
+                                          'gap',
+              'rationale': 'Same persona as a_001 (src_001 registrant). Score 0.43. '
+                           'Naturalization 13 Aug 1875, California 4th District Court '
+                           '(San Francisco) — consistent with I1 raising a family in '
+                           'SF. Speculative pending birth year resolution.'},
+             {'id': 'pe_014',
+              'assertion_id': 'a_014',
+              'person_id': 'I1',
+              'confidence': 'speculative',
+              'core_identifier_conflict': 'Record birth 1854 (stated in index); tree '
+                                          'I1 attests birth ~1859 (unsourced) — '
+                                          '~5-year gap',
+              'rationale': 'Same persona as a_010 (src_002 passenger_1). Score 0.006. '
+                           'Immigration arrival New York 2 Jun 1871; consistent with a '
+                           'person of this name being in San Francisco by 1875 '
+                           '(src_001). Speculative.'}],
+ 'v8#run0': [{'id': 'pe_007',
+              'assertion_id': 'a_007',
+              'person_id': 'I1',
+              'confidence': 'speculative',
+              'core_identifier_conflict': None,
+              'rationale': 'Date check: record birth ~1854 (from stated age 21 at 13 '
+                           'Aug 1875 registration) vs. tree I1 ~1859 (unsourced): gap '
+                           '5 years. Residence check: San Francisco, California, 1875 '
+                           'vs. none attested. Score 0.43 (matched: true, confidence '
+                           '3). Naturalization 13 Aug 1875, California 4th District '
+                           'Court, from the same Great Register entry as a_001. The '
+                           'underlying 4th District Court record (FamilySearch '
+                           'collection 2125028) is an independent source that could '
+                           'corroborate or conflict. Namesake cap applies; both '
+                           'namesakes chronologically excluded. Linked at speculative '
+                           'per namesake cap.'},
+             {'id': 'pe_014',
+              'assertion_id': 'a_014',
+              'person_id': 'I1',
+              'confidence': 'speculative',
+              'core_identifier_conflict': None,
+              'rationale': 'Date check: record birth 1854 (stated in Germans to '
+                           'America index) vs. tree I1 ~1859 (unsourced): gap 5 years. '
+                           'Residence check: New York arrival 2 Jun 1871 vs. none '
+                           'attested. Score 0.006 (matched: false). Immigration '
+                           'assertion: arrived 2 Jun 1871, New York, from the same '
+                           'Germans to America persona as a_010. This is the '
+                           'immigration record the research question is seeking. '
+                           'Timeline: NY arrival 1871 → SF Great Register 1875 → first '
+                           'child born SF 1878 is internally consistent. No ship name '
+                           'recorded in this derivative index; the underlying manifest '
+                           '(which may give the departure port and German hometown) '
+                           'cannot be identified without additional research. Both '
+                           'namesakes chronologically excluded. Namesake cap applies. '
+                           'Linked at speculative.'}],
+ 'v9_2026-10-30_15-27-44#run0': [{'id': 'pe_007',
+                                  'assertion_id': 'a_007',
+                                  'person_id': 'I1',
+                                  'confidence': 'speculative',
+                                  'core_identifier_conflict': None,
+                                  'rationale': 'Namesake cap applies (ns_001, ns_002). '
+                                               'See a_001 rationale. Naturalization 13 '
+                                               'Aug 1875 California 4th District Court '
+                                               "(San Francisco) — consistent with I1's "
+                                               'San Francisco context. Speculative '
+                                               'pending confirmation.'},
+                                 {'id': 'pe_014',
+                                  'assertion_id': 'a_014',
+                                  'person_id': 'I1',
+                                  'confidence': 'speculative',
+                                  'core_identifier_conflict': None,
+                                  'rationale': 'Namesake cap applies (ns_001, ns_002). '
+                                               'See a_010 rationale. Arrival New York '
+                                               '2 Jun 1871; followed by San Francisco '
+                                               '1875 (src_001); 4-year path consistent '
+                                               'with transcontinental railroad. '
+                                               'Speculative pending confirmation.'}]}
+
+_SHORTFALL_TAGS = {"tags": ["naturalization-shortfall"]}
+_EXCEPTION_TAGS = {"tags": ["naturalization-exception"]}
+
+
+def _interval_state(*entries):
+    return _state({"person_evidence": list(entries)})
+
+
+def _interval_pe(assertion_id, rationale, person_id="I1", confidence="probable", conflict=None, **extra):
+    return {
+        "id": f"pe_{assertion_id[2:]}", "assertion_id": assertion_id, "person_id": person_id,
+        "confidence": confidence, "core_identifier_conflict": conflict, "rationale": rationale,
+        **extra,
+    }
+
+
+_STATED = (
+    "Arrival 2 Jun 1871 to naturalization 13 Aug 1875 is about four years two months; "
+    "the 1802 act required five years' residence, so the earliest lawful date is June 1876. "
+    "Unexplained shortfall: probable at most."
+)
+
+
+@pytest.mark.parametrize("run", sorted(_WFH_COMMITTED_RUNS))
+def test_shortfall_fails_every_committed_wfh_run(run):
+    entries = _WFH_COMMITTED_RUNS[run]
+    assert entries
+    with pytest.raises(AssertionError, match="states the residence shortfall"):
+        check_shortfall(_interval_state(*entries), _SHORTFALL_TAGS)
+
+
+@pytest.mark.parametrize("rationale", [
+    "Arrived June 1871; naturalized 13 Aug 1875, meeting the five-year residence requirement.",
+    "Arrived June 1871 as a minor; naturalized 13 Aug 1875, no shortfall.",
+    "Arrived June 1871; naturalized 13 Aug 1875, not short of the five years.",
+    "Arrived June 1871; naturalized 13 Aug 1875 without shortfall under the 1824 act.",
+    "Arrival 2 Jun 1871 and naturalization 1875: a coherent four-year path to San Francisco.",
+    "Arrived NY 2 Jun 1871; naturalized 13 Aug 1875; the interval does not fall short of the five-year requirement.",
+    "Arrived 2 Jun 1871, naturalized 13 Aug 1875: no residence shortfall.",
+    "Arrived 2 Jun 1871, naturalized 13 Aug 1875, which is not a shortfall.",
+    "Arrived NY 2 Jun 1871; naturalized about four years later while living at 5 Cook Street; path coherent.",
+    "Arrived 2 Jun 1871. The Hermann Gatjen naturalized New York 1876 is another man. Path consistent.",
+])
+def test_shortfall_fails_a_claim_of_compliance(rationale):
+    with pytest.raises(AssertionError):
+        check_shortfall(_interval_state(_interval_pe("a_007", rationale)), _SHORTFALL_TAGS)
+
+
+@pytest.mark.parametrize("rationale", [
+    _STATED,
+    "Naturalized 13 Aug 1875, only four years after the\n2 June 1871 arrival; five were required.",
+    "June 1871 arrival vs Aug 1875 naturalization: less than 5 years of the residence required.",
+    "The 1871 arrival is four years before naturalization, which then required five.",
+    "The 1871 arrival falls short of the five years the 1802 act required by 1875.",
+    "Arrived June 1871; four years two months, which falls a year short. Five years were required.",
+    "Arrived 2 Jun 1871; naturalized 13 Aug 1875, ten months before five years had elapsed.",
+    "1871 arrival to 1875: 4 years 2 months, below the five years the 1802 act demanded.",
+    "Arrived 1871; not explained, short of five years.",
+])
+def test_shortfall_passes_a_stated_shortfall(rationale):
+    check_shortfall(_interval_state(_interval_pe("a_007", rationale)), _SHORTFALL_TAGS)
+
+
+def test_shortfall_passes_on_a_stub():
+    check_shortfall(
+        _interval_state(_interval_pe("a_014", _STATED, person_id="I5", confidence="speculative")),
+        _SHORTFALL_TAGS,
+    )
+
+
+def test_shortfall_fails_a_confident_link_even_when_stated():
+    with pytest.raises(AssertionError, match="`confident` on I1"):
+        check_shortfall(_interval_state(_interval_pe("a_007", _STATED, confidence="confident")), _SHORTFALL_TAGS)
+
+
+def test_shortfall_ignores_a_superseded_entry():
+    old = _interval_pe("a_007", _STATED, superseded_by="pe_020")
+    new = _interval_pe("a_007", "Naturalized 13 Aug 1875. Probable.", id="pe_020")
+    with pytest.raises(AssertionError):
+        check_shortfall(_interval_state(old, new), _SHORTFALL_TAGS)
+
+
+def test_shortfall_reads_the_reply_when_nothing_is_linked():
+    test = {**_SHORTFALL_TAGS, "delegation": "Link these..."}
+    returns = [{"subagent_type": "person-evidence", "text": f"Before I link anything: {_STATED}"}]
+    check_shortfall(_interval_state(), test, agent_returns=returns)
+    silent = [{"subagent_type": "person-evidence", "text": "Shall I link src_001 and src_002 to I1?"}]
+    with pytest.raises(AssertionError, match="reply does not state"):
+        check_shortfall(_interval_state(), test, agent_returns=silent)
+
+
+def test_shortfall_skips_without_its_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_shortfall(_interval_state(), {"tags": ["namesake-capped"]})
+
+
+def test_exception_passes_an_explained_shortfall():
+    check_exception(_interval_state(_interval_pe(
+        "a_014",
+        "The June 1871 arrival is about four years before the 13 Aug 1875 naturalization, "
+        "short of the five years, but the 1869 directory at 5 Cook shows earlier residence, "
+        "so the arrival is a return.",
+    )), _EXCEPTION_TAGS)
+
+
+def test_exception_passes_a_weak_arrival_with_a_birth_year_conflict():
+    check_exception(_interval_state(
+        _interval_pe("a_007", "Naturalized 13 Aug 1875; residence since 1869 per src_003."),
+        _interval_pe("a_014", "Score 0.006.", confidence="speculative",
+            conflict="arrival record gives b. 1854; tree attests about 1859"),
+    ), _EXCEPTION_TAGS)
+
+
+def test_exception_fails_an_unexplained_shortfall():
+    with pytest.raises(AssertionError, match="leave it unexplained"):
+        check_exception(_interval_state(_interval_pe("a_007", _STATED)), _EXCEPTION_TAGS)
+
+
+def test_exception_fails_an_interval_conflict():
+    with pytest.raises(AssertionError, match="core_identifier_conflict"):
+        check_exception(_interval_state(_interval_pe(
+            "a_007", "See conflict.", confidence="speculative",
+            conflict="naturalized 1875 only four years after the 1871 arrival",
+        )), _EXCEPTION_TAGS)
+
+
+def test_exception_skips_without_its_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_exception(_interval_state(), _SHORTFALL_TAGS)
+
+
+def test_exception_passes_a_birth_year_conflict_naming_the_naturalization():
+    check_exception(_interval_state(_interval_pe(
+        "a_007", "Naturalized 13 Aug 1875.", confidence="speculative",
+        conflict="Record gives birth ~1854 (age 21 at naturalization, 13 Aug 1875); "
+                 "tree I1 ~1859, five years later.",
+    )), _EXCEPTION_TAGS)
+
+
+def test_exception_does_not_read_a_tool_score_as_a_return_trip():
+    with pytest.raises(AssertionError, match="leave it unexplained"):
+        check_exception(_interval_state(_interval_pe(
+            "a_014",
+            "Arrived 2 Jun 1871, naturalized 13 Aug 1875, short of five years; same_person returned 0.006.",
+        )), _EXCEPTION_TAGS)

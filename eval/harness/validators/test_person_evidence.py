@@ -18,6 +18,7 @@ rules + tag-gated regression checks.
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
@@ -1483,6 +1484,140 @@ def test_corridor_move_links_confident(before_state, after_state, test):
         "correlation across two independent records is `confident`; links "
         f"written to the subject {sorted(subjects)}: "
         f"{[(e.get('id'), e.get('assertion_id'), e.get('confidence')) for e in to_subject] or 'none'}"
+    )
+
+
+# --- Arrival to naturalization interval (issue #3969) -----------------
+
+# The Gaetjen scenarios: a_007 is the 13 Aug 1875 naturalization, a_014 the
+# 2 Jun 1871 arrival.
+_INTERVAL_ASSERTIONS = ("a_007", "a_014")
+
+# Keyed on the shortfall itself, never on the requirement alone: "meets the
+# five-year residence requirement" is the false claim the issue's baseline
+# made. Also never on "five year(s)" (the 1854 vs ~1859 birth-year gap),
+# "residence" (every rationale's "Residence check:" line) or "four years"
+# (the committed runs call the 1871-1875 path coherent in those words).
+# A bare "1876" is not keyed either: the log names a different Hermann
+# Gatjen "naturalized New York 1876". "5 Cook" is the register's address, so
+# a "5" before it is not the five years.
+_FIVE = r"(?:five|5)\b(?!\s+Cook)"
+_SHORTFALL = re.compile(
+    r"\bshort(?:fall)?\b(?!-)"
+    r"|earliest lawful"
+    r"|\b(?:earliest|eligible|lawful|until|no earlier than|not before)\D{0,40}\b1876\b"
+    r"|\b(?:less|fewer) than (?:the )?(?:required )?" + _FIVE +
+    r"|\b(?:below|under|before) (?:the )?(?:required )?(?:five|5)[- ](?:full )?years?"
+    r"|\b(?:only|about|roughly|just over) (?:four|4)[- ]years?.{0,60}?\b" + _FIVE +
+    r"|\b(?:four|4)[- ]years?.{0,40}?(?:require|need|demand)",
+    re.IGNORECASE | re.DOTALL,
+)
+# A negator up to two words before the match, in the same clause: "no
+# shortfall", "no residence shortfall", "does not fall short".
+_NEGATED = re.compile(r"\b(?:no|not|without|never|nor)\b(?:\s+\S+){0,2}\s*$", re.IGNORECASE)
+_CLAUSE_BREAK = re.compile(r"[,.;:!?\n]")
+_RETURN_TRIP = re.compile(
+    r"\breturn (?:trip|voyage|journey|visit)\b|\b(?:is|was) a return\b|\breturned (?:to|from)\b"
+    r"|\bre-?entry\b|\b1869\b|directory|earlier (?:U\.?S\.? )?residence"
+    r"|already (?:resident|living)\b|resident (?:since|before)\b",
+    re.IGNORECASE,
+)
+_INTERVAL_CONFLICT = re.compile(r"interval|residence (?:requirement|required)", re.IGNORECASE)
+
+
+def _states_naturalization_shortfall(text):
+    """Names the 1871 arrival and a shortfall against the residence the law
+    required. A shortfall negated in its own clause ("no shortfall", "does not
+    fall short of the five years") does not count."""
+    if not text or "1871" not in text:
+        return False
+    return any(
+        not _NEGATED.search(_CLAUSE_BREAK.split(text[: m.start()])[-1])
+        for m in _SHORTFALL.finditer(text)
+    )
+
+
+def _is_interval_conflict(text):
+    """A conflict about the interval, not the 1854 vs ~1859 birth year: it
+    names the interval or the requirement, states the shortfall, or sets the
+    1871 arrival against the naturalization."""
+    return bool(
+        _INTERVAL_CONFLICT.search(text)
+        or _states_naturalization_shortfall(text)
+        or ("1871" in text and re.search(r"naturaliz", text, re.IGNORECASE))
+    )
+
+
+def _live_interval_entries(after_state):
+    research = after_state.get("research_json") or {}
+    return [
+        e for e in (research.get("person_evidence") or [])
+        if not e.get("superseded_by") and e.get("assertion_id") in _INTERVAL_ASSERTIONS
+    ]
+
+
+def test_naturalization_shortfall_stated(after_state, test, agent_returns=None, text_response=None):
+    """Tag-gated (`naturalization-shortfall`): the 1871 arrival leaves about
+    four years before the 1875 naturalization, against five required, and
+    nothing in the project explains it. A rationale on the arrival's or the
+    naturalization's entry (linked to I1 or a stub) names the shortfall, and
+    neither links to I1 `confident` (lead ruling 2026-11-01: `probable` at
+    most). A run that writes neither entry and asks first passes when its
+    reply names the shortfall."""
+    if "naturalization-shortfall" not in (test.get("tags") or []):
+        pytest.skip("not a naturalization-shortfall test")
+    entries = _live_interval_entries(after_state)
+    confident = [
+        (e.get("id"), e.get("assertion_id"))
+        for e in entries
+        if e.get("person_id") == "I1" and e.get("confidence") == "confident"
+    ]
+    assert not confident, (
+        "an unexplained arrival-to-naturalization shortfall caps the arrival's "
+        f"and the naturalization's links at `probable`; `confident` on I1: {confident}"
+    )
+    if entries:
+        assert any(_states_naturalization_shortfall(e.get("rationale")) for e in entries), (
+            "no rationale on the a_007/a_014 entries states the residence shortfall "
+            "(June 1871 arrival, 13 Aug 1875 naturalization, five years required): "
+            f"{[(e.get('id'), e.get('assertion_id'), e.get('person_id')) for e in entries]}"
+        )
+        return
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "person-evidence", test)
+    assert _states_naturalization_shortfall(reply), (
+        "the run linked neither a_007 nor a_014, and its reply does not state the "
+        "residence shortfall either"
+    )
+
+
+def test_naturalization_exception_not_flagged(after_state, test):
+    """Tag-gated (`naturalization-exception`): an 1869 directory in the project
+    shows residence before the 1871 arrival, so the arrival is a return trip
+    and the interval decides nothing. No a_007/a_014 rationale may state a
+    shortfall it leaves unexplained, and no a_007/a_014 entry may carry a
+    `core_identifier_conflict` about the interval. No tier is asserted: the
+    arrival is a weak match on its own and may stay speculative or stubbed."""
+    if "naturalization-exception" not in (test.get("tags") or []):
+        pytest.skip("not a naturalization-exception test")
+    entries = _live_interval_entries(after_state)
+    unexplained = [
+        e.get("id") for e in entries
+        if _states_naturalization_shortfall(e.get("rationale"))
+        and not _RETURN_TRIP.search(e.get("rationale") or "")
+    ]
+    assert not unexplained, (
+        "the project's 1869 directory makes the 1871 arrival a return trip, but "
+        f"these rationales state a shortfall and leave it unexplained: {unexplained}"
+    )
+    conflicts = [
+        (e.get("id"), e.get("core_identifier_conflict")) for e in entries
+        if _is_interval_conflict(e.get("core_identifier_conflict") or "")
+    ]
+    assert not conflicts, (
+        "an explained arrival-to-naturalization interval is not a "
+        f"core_identifier_conflict: {conflicts}"
     )
 
 

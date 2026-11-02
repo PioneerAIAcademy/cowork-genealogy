@@ -506,6 +506,17 @@ never weighs. A move
 that a corridor or a record explains takes the ordinary tiers; name what
 explains it.
 
+**Arrival to naturalization.** When one person's records give an arrival
+and a naturalization, compare the interval with the residence the law then
+required (U.S. from 1802: five years; arriving as a minor does not shorten
+it). A record in the project explains a shortfall when it shows earlier U.S.
+residence (the arrival was a return trip), an honorable U.S. Army discharge
+(one year, from 1862), or a father naturalized while the person was a minor.
+If nothing does, the arrival's and the naturalization's links are `probable`
+at most and their `rationale` names the shortfall: both dates, the interval
+and the requirement. Other facts of those records keep their ordinary tiers.
+This is not a `core_identifier_conflict`.
+
 **Occupation and age norms weigh; they never cap.** Where trades were
 bound by apprenticeship or indenture, an agreeing occupation is strong
 correlation and a differing one is a reservation to name, not a conflict.
