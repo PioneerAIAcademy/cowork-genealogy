@@ -100,6 +100,7 @@ const EXAMPLES: Record<string, string> = {
   "rationale": "The death certificate names a father (Thomas Flynn) on a single uncorroborated reading; no record yet names the mother.",
   "selection_basis": "unresolved_conflict",
   "priority": "high",
+  "date_window": "1845-1908",
   "status": "open",
   "depends_on": [],
   "unblocks": [],
