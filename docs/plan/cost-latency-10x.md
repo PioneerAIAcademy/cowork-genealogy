@@ -411,7 +411,7 @@ runlog summary plus a warn-only check makes every future PR's cost visible.
     fetch (33–36 s cold, unless its 1-hour cache is warm). On a subject with attached records
     it also adds record reads (4.5–7.2 s for 14–16 records) and the extraction summary in
     context.
-  - Issue #3153's hints item adds a search-hints spawn on identity and parentage questions.
+  - Issue #3153's hints item adds a search-hints spawn on identity, parentage, birth, death and marriage questions (#3906 widened it).
     In e2e that spawn cannot read hints, because `person_record_matches` is blocked.
 
   Compare runs from either side of them like with like.

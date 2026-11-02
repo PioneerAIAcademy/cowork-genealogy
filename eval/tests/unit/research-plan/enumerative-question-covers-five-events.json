@@ -10,7 +10,9 @@
       "record-type-selection",
       "new-plan-items-planned-status",
       "direct-arm",
-      "enumerative-five-events"
+      "enumerative-five-events",
+      "no-fs-hints",
+      "issue-3906"
     ]
   },
   "input": {
