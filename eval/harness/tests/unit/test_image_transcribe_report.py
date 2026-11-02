@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 from e2e.image_transcribe_report import (
+    IMAGE_CAP,
     Call,
     SUCCESS,
     TIMEOUT,
@@ -134,6 +135,22 @@ def test_the_bound_is_only_claimed_when_captures_were_actually_stripped(tmp_path
 
 
 # --- classification ---------------------------------------------------------
+
+
+def test_the_per_film_image_cap_is_its_own_bucket_not_an_upstream_error(tmp_path: Path):
+    """The engine refuses a 21st distinct image from one film before any fetch.
+    Filed as `upstream_error` it read as a service fault; it is a budget the
+    agent ran into, in both summary shapes."""
+    refusal = ('{"error":"Image cap reached: 20 distinct images from image group 008133009 '
+               'have already been read in this project"}')
+    assert classify(refusal) == IMAGE_CAP
+    assert classify(refusal.replace('"', '\\"')) == IMAGE_CAP
+    assert classify('{"error":"FamilySearch image fetch failed: 403"}') == UPSTREAM_ERROR
+
+    p = _run(tmp_path / "fix", "run-2026-08-20_00-00-00.json", [refusal, "ok"])
+    r = scan([p], author_of=_authors({}))
+    assert r.reachability_failures == 0
+    assert r.measurable == 2
 
 
 def test_unrecognized_ark_is_not_counted_as_a_reachability_failure(tmp_path: Path):

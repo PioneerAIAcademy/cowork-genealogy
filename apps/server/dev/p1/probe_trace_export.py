@@ -3,7 +3,8 @@
 
 Plan: R11 in ``docs/plan/search-agent-prototype.md``. Sends calls through ``--base`` (a
 local agentgateway carrying TAP's ``/bedrock`` route and ``tap-tracing``'s ``gen_ai.*``
-fields, exporting to a local Jaeger) in which every content type carries its own marker,
+fields, exporting to a local Jaeger: ``tap-local-gateway.yaml`` here, whose header says
+how to run both) in which every content type carries its own marker,
 then reads the spans back from ``--jaeger`` and reports which markers left.
 
     uv run python -m dev.p1.probe_trace_export --base URL --jaeger URL

@@ -34,7 +34,7 @@ Requires authentication (OAuth tokens obtained via the `login` tool).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `uris` | string[] | **Yes** | List of source ARKs (canonical `ark:/61903/...`) — record personas (`1:1:`) and/or document images (`3:1:`/`3:2:`). Full resolver URLs are also accepted. |
+| `uris` | string[] | **Yes** | List of source ARKs (canonical `ark:/61903/...`) — record personas (`1:1:`) and/or document images (`3:1:`/`3:2:`). Full resolver URLs are also accepted, with or without `www.`, and are sent in one canonical form. For a source already on a tree person, pass its `url` from `person_read`, never an ARK built from its `id` (a source-description id, not a record id). |
 
 Example (mixing a record persona and a document image in one call):
 
@@ -78,7 +78,7 @@ results (`3:1:`/`3:2:` document images).
 | `attachments` | object | Map of source ARK → array of attached tree persons, keyed by the exact strings the caller passed in `uris`. Only ARKs with at least one attachment appear here. |
 | `attachments[].personId` | string | Tree person ID (PID) the record is attached to. |
 | `attachments[].tags` | string[] | What information the record contains (e.g., `"Name"`, `"Birth"`, `"Death"`, `"Burial"`, `"Gender"`). |
-| `unattached` | string[] | Input URIs that had no attachments (echoed in the form the caller passed). |
+| `unattached` | string[] | Input URIs that had no attachments (echoed in the form the caller passed). An ARK that names no record lands here too; nothing in the response tells the two apart. |
 
 ---
 
@@ -93,7 +93,8 @@ results (`3:1:`/`3:2:` document images).
     "either record personas (1:1:) from record_search results, or document " +
     "images (3:1: / 3:2:) from fulltext_search results — and get back which " +
     "tree person IDs each source is attached to, plus tags indicating what " +
-    "information the source contains. " +
+    "information the source contains. For a source already on a tree person, " +
+    "pass that source's `url`, never an ARK built from its `id`. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -106,7 +107,12 @@ results (`3:1:`/`3:2:` document images).
           "(e.g. 'ark:/61903/1:1:QK2S-4W7G'). Each may be a record-persona " +
           "ARK (contains '1:1:', the `recordId` from record_search results) " +
           "or a document-image ARK (contains '3:1:' or '3:2:', from " +
-          "fulltext_search results). Full resolver URLs are also accepted."
+          "fulltext_search results). Full resolver URLs are also accepted. " +
+          "For a source on a tree person (from person_read), pass its `url`. " +
+          "Its `id` is a source-description id, not a record id, so an ARK " +
+          "built from it names a different record or none. `unattached` also " +
+          "covers an ARK that names no record, so confirm a surprising " +
+          "`unattached` on a record ARK (1:1:) with record_read before acting on it."
       }
     },
     required: ["uris"]

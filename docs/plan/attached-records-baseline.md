@@ -1,6 +1,6 @@
 # Attached records baseline: extract, link and timeline a person in code, and close the plan item
 
-**Status:** PR C is split. C1 (PR #3670), everything in § PR C except `timeline_build`, has merged. C2 (`timeline_build` and the census table) is in review; its deviations are recorded under § The census table and § `timeline_build`. PR D is not started. They build on PR A (PR #3616) and PR B (PR #3613), whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
+**Status:** PR C has merged in two parts: C1 (PR #3670), everything in § PR C except `timeline_build`, and C2 (PR #3777), `timeline_build` and the census table, whose deviations are recorded under § The census table and § `timeline_build`. PR D is not started. It now also carries household linking by attachment and relationship-level attachments (decisions 11 and 17, amended 2026-10-30); the relationship-level engine work may be its own free-tier PR, before or beside PR D. They build on PR A (PR #3616) and PR B (PR #3613), whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
 
 **Priority:** quality, and a prerequisite of step mode, not Beta's speed critical path (lead, 2026-10-20). PR B comes first, because step mode's "not exhaustive" choice, its wrap-up and its one-question rule all need searched plan items closed (`docs/plan/research-step-mode.md`, prerequisites).
 
@@ -9,7 +9,7 @@
 - **A baseline step, all code.** `extraction_append({ projectPath, personId })` extracts every indexed record FamilySearch has attached to a person and links each one to that person as `speculative`. `timeline_build({ projectPath, personId })` then builds the person's timeline from those links. No agent runs.
 - **Where it runs.** In a /research job, once per subject after init-project and before the first question-selection. "Create a timeline for <PID>" is a bounded ask that runs both and stops. The timeline agent runs `extraction_append` once itself when nothing is linked (decision 16).
 
-Not in this plan: verifying attachments (issue #3584, parked), the hints plan item (issue #3153), and the unit snapshot rule (issue #3568).
+Not in this plan: checking attachments, which is issue #3504's read-only tool (issue #3584, which would have removed them, is closed), the hints plan item (issue #3153), and the unit snapshot rule (issue #3568).
 
 ## Decisions
 
@@ -17,7 +17,7 @@ Carried from issue #3516 (lead, 2026-10-19 and 2026-10-20):
 
 1. A timeline is never built from tree facts. In person mode, unsourced tree facts become gaps, never events.
 2. The first step is all code and assumes every attachment is correct: `speculative` links with a fixed rationale, no agent and no `same_person` gate.
-3. Verifying attachments is a separate request (issue #3584).
+3. Checking attachments is a separate request the user makes. Issue #3504's tool does it, read-only: it reports each attachment's verdict and never removes one (lead, 2026-10-30; issue #3584 is closed).
 4. The timeline is built in code by `timeline_build`. The timeline agent keeps travel feasibility, chronology anomalies and hypothesis mode (Mode B). The military and immigration gap rules stay in Mode B; person timelines do not apply them.
 5. "Create a timeline for <PID>" is a bounded ask. A /research job runs the step and `timeline_build` before its first question-selection.
 
@@ -31,13 +31,13 @@ Added (lead, 2026-10-20):
 8. **Completion is read off the saved search results.** An `in_progress` item on an active plan completes when any of its plan-tied positive or partial `record_search` or `fulltext_search` entries lists, in its sidecar (`results[].recordId`, or a full-text hit's `results[].id`), a record that now has an assertion. That covers fresh extractions, reused reads, re-sends, and a record two items both found. Tagging the fresh `record_read` entry with the item's id (issue #3525, Part 1.2) is not built.
 9. **A search that ran is never marked skipped.** `research_append` refuses `skipped` on an item with a tied `record_search`, `fulltext_search` or `image_search` entry that did not error, or a tied `external_site` entry whose capture arrived. Completing an item whose searches all found nothing is research-plan's Dispose, widened in the step-mode plan. **Exemption (lead, 2026-10-20):** an `inaccessible` or `user_declined` skip stands where capture-pending would refuse `completed`. That is search-records' escalation with no user present, which otherwise leaves the item with no terminal status.
 10. **ADR-0006 is amended.** A mode may reach a further section only where code composes the whole entry. `extraction_append` writes `person_evidence` only in `personId` mode (speculative, null score, the fixed rationale), plan-item status only `in_progress` → `completed` under rule 8, and assertions only by growing `extracted_for_question_ids`. No input field reaches any of these writes.
-11. **Relationship-level attachments are never linked**, because 32 of 42 in the e2e trees name the other party. They are not extracted for now either. The step reads person-, name- and fact-level refs, and so does the leak check.
+11. **Relationship-level attachments are extracted and linked (lead, 2026-10-30).** Relationships matter too much to leave out. Person mode also reads the refs on the person's Couple and ParentChild relationships and extracts each record under the tree S the import made for it. It links each party's own persona, chosen by `selectSubjectPersona` (issue #3892, PR #3944), which moves from `dev/source-screen.ts` into a shared engine module so the dev script and person mode run the same code. A party whose persona cannot be chosen is not linked. The leak check widens to relationship-level refs: umbelina-azevedo-death cites three records attached to its subject only through ParentChild refs (77F3-D8T2, 794X-QD3Z, 79FM-TFZM), which a genealogist strips or allow-lists with a reason. Issue #3504's tool scores relationship-level sources from this extraction. This replaces "relationship-level attachments are never linked", which rested on 32 of 42 in the e2e trees naming the other party; choosing each party's own persona answers that.
 12. **The acceptance run is joao-sousa-death.** It is adjudicated, and its three attached records that findings cite are starting evidence (PR A). carel-kolbe-death is still a draft pending adjudication (PR #3517).
 13. **maria-bracero-marriage's f2 becomes non-required.** Her attached 1973 death record answers it without the hint. The required marriage finding still needs the hint.
 14. **Census years come from a census table in code, never from the catalog (lead, 2026-10-21).** A census gap means FamilySearch likely holds a record that could be attached and is not. A false `high` gap is worse than a missed one. The catalog cannot tell a fragment from a full census, and the place a collection is filed under is not the area it covers, so `timeline_build` reads the table (§ The census table) and never fetches the catalog. A named list of fragments stays out of the table. A place no row covers produces no census gap. ADR-0012 is amended to match.
 15. **ferber-marriage's f2 stays required.** Its notes keep the attached 1900 census as an anchor the research starts from, so extracting it at setup is the intended path, not a leak.
 16. **With nothing linked, the timeline agent extracts once.** When `timeline_build` returns `no_linked_evidence`, the agent calls `extraction_append({ projectPath, personId })` once, then `timeline_build` again. If still nothing is linked, it says that no record yet places the person. It never hands back.
-17. **Attached records are checked only on request.** A /research job runs person-evidence on attachment-linked assertions only where the unlinked-proof gate needs it: when a question's assertions have no other live link (project_context's rung, through the router's widened person-evidence row), or when the gate refuses a proof that cites them because none of its supporting assertions has a live link that is not speculative (person-evidence Step 1's refused-proof route). Otherwise they stay speculative, and a proof may cite them beside an assertion whose link is not speculative. The other personas in an attached record are linked only once a question's search re-finds that record (decision 7). Checking them otherwise is a separate request (decision 3).
+17. **Attached records are checked only on request.** A /research job runs person-evidence on attachment-linked assertions only where the unlinked-proof gate needs it: when a question's assertions have no other live link (project_context's rung, through the router's widened person-evidence row), or when the gate refuses a proof that cites them because none of its supporting assertions has a live link that is not speculative (person-evidence Step 1's refused-proof route). Otherwise they stay speculative, and a proof may cite them beside an assertion whose link is not speculative. **Household linking by attachment (lead, 2026-10-30).** A new project assumes every tree attachment is correct, on every person in the tree, not only the subject, because it cannot re-check every attachment when it starts. So when person mode extracts a record, it links each persona in it to the tree person who attaches that persona's id, as an attachment link. Relationship refs are excluded here, and an id two tree persons attach links neither. It costs no extra reads. No link count across the starting trees is needed: a disagreement surfaces only when one side of it belongs to a question. This replaces "the other personas in an attached record are linked only once a question's search re-finds that record". Checking attachments is a separate request (decision 3).
 
 **One narrowing of the 2026-10-19 ruling, confirmed by the lead on 2026-10-20.** project_context's "none linked → person-evidence" rung ignores only links that carry `ATTACHMENT_LINK_RATIONALE`, not every speculative link. person-evidence itself writes a speculative link when the researcher confirms a weak match, and ignoring those would send the question back to person-evidence to ask again. The unlinked-proof gate still ignores every speculative link.
 
@@ -49,6 +49,8 @@ Both are Emruthwill's, and their checklists live on the PRs.
 - **PR B is PR #3613:** `extraction_append` completes the plan item behind the records it extracts, and a question that finds a record already extracted claims it (decisions 6–9). PR C lands after it.
 
 ## PR C — the baseline step and timeline_build
+
+Merged (C1 and C2); this checklist records what it built. Its "person-, name- and fact-level refs only" items are superseded by decision 11 as amended on 2026-10-30.
 
 Free tier, plus one `make hook-smoke` run and one `make engine-smoke-http` run. Land it after PR B. It shares the score gate, the reused-hint code, ADR-0009's same_person constraint and the guardrail row with issue #3552, so whichever lands second rebases.
 
@@ -258,6 +260,8 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
 
 Paid: the timeline, research, question-selection and person-evidence suites, each with a genealogist annotation. Lands after PR A, whose allow-list the acceptance run's leak check reads.
 
+**Not yet checklisted here: the 2026-10-30 additions.** Household linking (decision 17), relationship-level extraction with `selectSubjectPersona` moved into the engine and the widened leak check (decision 11), and the thomas-hanrahan-marriage replay are listed in issue #3516's stage list. The relationship-level work is engine side and may be its own free-tier PR. Whoever builds them adds their checklist items here.
+
 ### `agents/timeline.md`
 
 - [ ] **Mode A:** replace Steps 2–4 and 7 with one `timeline_build({ projectPath, personId })` call. Keep Step 5 (travel feasibility, chronology anomalies) and Step 8, working from the timeline the tool wrote. Step 5 loses its sentence about referencing conflicts, because `timeline_build` writes `conflict_ids` and `conflict_note`. Add `timeline_build` and `extraction_append` to `tools:` under all three spellings, which changes the permission snapshot in `agent-tool-names.test.ts`. Keep the inlined places guidance verbatim; `tests/packaging/skill-guidance.test.ts` pins it.
@@ -367,7 +371,7 @@ Paid: the timeline, research, question-selection and person-evidence suites, eac
 
 ### Acceptance e2e
 
-Before PR D merges, post its worktree path and `make e2e-run TEST=joao-sousa-death` on issue #3516; the lead runs it. PR D's body carries the report, and the tool's spec carries `timeline_build`'s figures. Report:
+Before PR D merges, Pascal or a genealogist runs `make e2e-run TEST=joao-sousa-death` and `make e2e-run TEST=thomas-hanrahan-marriage` (alpha feedback issue #3931, the household-linking case) from PR D's worktree. PR D's body carries both reports, and the tool's spec carries `timeline_build`'s figures. thomas-hanrahan-marriage still ending at `proved` does not hold PR D: the replay proves only that the disagreement is reported, and the run's report says whether conflict-resolution needs work (lead, 2026-10-30). For each run, report:
 
 - the records extracted and the assertions linked;
 - the result size and tool time of `extraction_append({ personId })` and of `timeline_build`, and the main-thread turns they add;
@@ -411,7 +415,7 @@ Before PR D merges, comment each item below on the open `nothing-checks` issue t
 - **Step mode** (`docs/plan/research-step-mode.md`): PR B is a prerequisite. Completing items whose searches all found nothing, routing a refused declaration's `in_progress` items to Dispose, and research-plan's Termination are in its research-plan prep PR and PR 2.
   - One of step mode's prep PRs edits `agents/timeline.md`, and its PR 2 edits `person-evidence.md`, `question-selection.md` and `research/SKILL.md`. So all four of PR D's suites overlap, and whichever lands second re-runs them.
   - PR D and step mode's PR 2 land in either order; of this plan's PRs, only PR B gates PR 2. If PR D lands first, PR 2's Priority 3 rewrite deletes PR D's gate and the "Fresh project" timeline sentence PR D adds, and keeps PR D's first-question test passing. If PR 2 lands first, PR D drops its `agents/question-selection.md` edit, because Priority 3 is already gone, and keeps the test. It also adds to the router's setup-step report what the attached records show (events, how many are unverified, the high gaps), which step mode's "What the researcher sees" names and PR 2 had nothing to report from.
-- **Issue #3584** (parked): this plan's source reuse does not unblock it.
+- **Issue #3504** (the read-only attachment check) is blocked on decision 11's relationship-level extraction for its relationship checks. Issue #3584 is closed.
 
 ## Costs
 
