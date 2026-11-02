@@ -280,11 +280,11 @@ it by name.
    search for each, or ask the researcher for the record's identifier, before
    `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. If the
    record contradicts a hypothesis, say so — do not present its facts as
-   support for that hypothesis or any theory built on it. The same holds for a
-   relationship you or an earlier log note inferred from shared surname, place
-   or era with no record linking the people: it is a hypothesis, not a fact.
-   Log notes that say people "look like", "appear to be", "likely are", or
-   "seem to be" relatives qualify. Spawn `@plugin:hypothesis-tracking` to
+   support for that hypothesis or any theory built on it. The same holds for
+   a relationship you or an earlier log note inferred from shared surname,
+   place or era with no record linking the people: it is a hypothesis, not a
+   fact. Log notes that say people "look like", "appear to be", "likely are",
+   or "seem to be" relatives qualify. Spawn `@plugin:hypothesis-tracking` to
    register it before any plan item dispatch, person-evidence pass,
    research-exhaustiveness call, search, filter or rejection relies on it —
    regardless of what `project_context.nextStep` suggests.
