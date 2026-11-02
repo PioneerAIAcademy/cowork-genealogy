@@ -87,3 +87,44 @@ def test_the_partial_index_finds_only_the_writes(pg_dsn):
                 "SELECT tool_use_id FROM tool_calls WHERE wrote IS NOT NULL "
                 "AND tool_use_id IN (%s, %s)", (written, read))
     assert [r[0] for r in found] == [written]
+
+
+def _insert_decided(dsn: str, decision: str, wrote) -> tuple[str, str]:
+    turn_id, session_id = _turn(dsn)
+    use_id = "toolu_" + uuid.uuid4().hex[:10]
+    with psycopg.connect(dsn) as conn:
+        worker.insert_tool_call(conn, {"turn_id": turn_id, "session_id": session_id,
+                                       "tool_name": "mcp__genealogy__research_append",
+                                       "decision": decision, "tool_use_id": use_id, "wrote": wrote})
+        conn.commit()
+    return turn_id, use_id
+
+
+def test_a_call_the_plugin_hook_denied_loses_its_allow_and_its_write(pg_dsn):
+    """The worker's hook allowed it and recorded the write; the plugin's hook then denied
+    it, so the call never ran. Left as is, the change scan would show a write that never
+    happened (live on compose, 2026-10-31: an agent-only tool's row read `allow`)."""
+    shape = {"section": "proof_summaries", "op": "append", "ids": []}
+    turn_id, use_id = _insert_decided(pg_dsn, "allow", shape)
+    with psycopg.connect(pg_dsn) as conn:
+        assert worker.mark_hook_denied(conn, turn_id, use_id) == "mcp__genealogy__research_append"
+        assert worker.mark_hook_denied(conn, turn_id, use_id) is None, "already a deny"
+    assert sql(pg_dsn, "SELECT decision, wrote FROM tool_calls WHERE tool_use_id = %s",
+               (use_id,)) == [("deny", None)]
+
+
+@pytest.mark.parametrize("decision", ["deny", "halt"])
+def test_a_row_this_worker_already_stopped_is_left_alone(pg_dsn, decision):
+    turn_id, use_id = _insert_decided(pg_dsn, decision, None)
+    with psycopg.connect(pg_dsn) as conn:
+        assert worker.mark_hook_denied(conn, turn_id, use_id) is None
+    assert sql(pg_dsn, "SELECT decision FROM tool_calls WHERE tool_use_id = %s", (use_id,)) == [(decision,)]
+
+
+def test_another_turns_row_with_the_same_id_is_untouched(pg_dsn):
+    """A redelivery repeats tool_use ids, so the match is on the turn as well."""
+    turn_a, use_id = _insert_decided(pg_dsn, "allow", None)
+    turn_b, _ = _turn(pg_dsn)
+    with psycopg.connect(pg_dsn) as conn:
+        assert worker.mark_hook_denied(conn, turn_b, use_id) is None
+    assert sql(pg_dsn, "SELECT decision FROM tool_calls WHERE tool_use_id = %s", (use_id,)) == [("allow",)]

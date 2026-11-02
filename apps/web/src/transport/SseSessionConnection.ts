@@ -49,7 +49,7 @@ export class SseSessionConnection implements SessionConnection {
   ) {}
 
   private url(path: string): string {
-    return `${this.base}/api/sessions/${encodeURIComponent(this.sessionId)}${path}`
+    return `${this.base}api/sessions/${encodeURIComponent(this.sessionId)}${path}`
   }
 
   private emit(msg: WsMessage): void {

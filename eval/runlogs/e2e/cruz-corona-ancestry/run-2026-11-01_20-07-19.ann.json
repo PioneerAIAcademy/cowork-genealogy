@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false",
+    "f3": "false",
+    "f4": "false",
+    "f5": "false"
+  },
+  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140",
+  "blind_bundle_digest": "095ba2ed08b6fdff20a4c2946dd8874e5ae8201ca13fd56fa0ef05e2d8738dee"
+}

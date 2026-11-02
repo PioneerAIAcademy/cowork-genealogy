@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1 in flight:** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883) and the route PRs #3914 and #3915 are merged; the timeline route PR (#3916), PR 2 (#3917) and the conflict PR (#3937) are open. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. Phase 2 can start. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -786,17 +786,27 @@ that apply:
   because conflict-resolution fills both analysis fields on every pass and conflicts carry no
   timestamp. So:
   - **A new optional conflict field, `weighed_log_entry_ids`:** the question's log entries
-    conflict-resolution has weighed, written on every analysis. It mirrors
+    conflict-resolution has weighed, on the analysis that found nothing left to search. Whether
+    a decisive record is still unsearched cannot be read from the documents (an analysis that
+    names one leaves every entry weighed and no item open, exactly as a searched-out one does),
+    so conflict-resolution declares it by sending the field. `research_append` fills the value
+    from the helper the ladder reads (`conflictCoverageLogIds`), because the set includes an
+    upload matched to its hand-off by URL, which an agent building the list by hand misses, and
+    clears the field on any other analysis write (one carrying `independence_analysis`) or a
+    settle. It refuses the declaration when the coverage set is empty. It mirrors
     `search_stop.log_entry_ids`. "The question's log entries" is B's coverage set: entries on
     its plans' items plus closing entries matched by `closesHandOff`.
   - **The ladder gains one arm, above the conflict arm.** It applies when there is at least
     one open conflict, every open conflict carries `independence_analysis` and a
     `weighed_log_entry_ids` that covers every log entry of the question, and no plan item is
     open (an item waiting only on an upload aside). Then:
-    - if the question has a `not_proved` summary with `shortfall: "conflict"`, there is no next
-      step: "the research ended on an unsettled conflict";
+    - if the question has a summary with `shortfall: "conflict"`, at whatever tier the evidence
+      reached, whose `updated` is not older than the question's latest log entry, there is no
+      next step: "the research ended on an unsettled conflict";
     - otherwise the next step is proof-conclusion, which writes or refreshes that summary and
-      leaves the question open (decision 12).
+      leaves the question open (decision 12). An update that refreshes a stale summary must
+      send both text fields, since only those move `updated`; `research_append` refuses one
+      that sends neither.
   - **The summary is the terminal marker, not `search_stop`.** proof-conclusion may not write
     `search_stop`: the plugin hook routes every non-null `stopped_because` to
     research-exhaustiveness (`guard_project_files.py`, `OWNED_DECLARATIONS`, pinned in
@@ -807,9 +817,8 @@ that apply:
     PR 1 corrects it.
   - **A later upload or steer** adds a log entry the weighed list does not cover, so the
     conflict goes back to conflict-resolution. If that pass still settles nothing, the arm
-    finds the old `not_proved`/`conflict` summary and stops without refreshing it; the
-    conflict's own analysis records the new evidence. That is the accepted cost of using the
-    summary as the marker.
+    finds the old `conflict` summary older than the new entry and routes to proof-conclusion,
+    which refreshes it over the new evidence.
   - **The router's conflict row** follows the ladder's `nextStep` for the question, not the
     bare presence of a conflict. A new row above it (`skills/research/SKILL.md:220`): when
     `project_context` reports no next step for an unresolved question, run nothing and name
@@ -1054,7 +1063,7 @@ file's own sections, top to bottom.
 | Ruling: the prototype is production; the alpha is backported to and retired; Cowork may be degraded | **Unaffected.** Cowork's enforcement waits on phase 0 |
 | Ruling: the spend bound continues in a new session | **Unaffected;** it matters most under "Keep going" |
 | Ruling: an errand pauses the job and waits (2026-09-27) | **Kept, loosened** (decision 16): an errand is a step that ends naming what to fetch, and the researcher may carry on without waiting (section I) |
-| "The Stop hook binds on every browser turn"; nudge cap 60; the alpha's `auto_continue` | **Superseded:** no turn arms the veto, and phase 2 deletes it. "Keep going" is the host's replies (section A2), which the alpha's `auto_continue` chain carries |
+| "The Stop hook binds on every browser turn"; nudge cap 60; the alpha's `auto_continue` | **Superseded:** no turn arms the veto, and phase 2 deletes it. "Keep going" is the host's replies (section A2). The alpha's `auto_continue` chain does not carry them: it matches only the retired `Next: <step>. Continue?` line (`hand_back.py`), so it never starts, and the alpha has no "Keep going" (checked 2026-11-02) |
 | `turns.outcome` values | **Mostly unchanged.** A step turn ends `ok` (no label); the worker sets `completed` at turn close when the step finished the project; `delivered` goes in phase 2 (pending the "Open, for Praise" question there) |
 | "`decision` and `mcp_unavailable` cannot fire" | **Unaffected;** step mode needs no `decision` exit |
 | person-evidence's weak-match pause and its autonomous-only resolve-downward rule | **The pause becomes the link step's closing question,** asked with the researcher present. Resolve-downward applies in "Keep going." and "Wrap it up." turns, from the router's `userPresent: no` (section B2) |
@@ -1244,10 +1253,14 @@ in parallel with PR 2.
   PR 1, independent of PR 2.** It needs PR 1's `weighed_log_entry_ids` field; until it lands no
   conflict carries the field, so PR 1's unsettled-conflict arm never fires and routing is
   today's.
-  - **conflict-resolution:** writes `weighed_log_entry_ids` on every analysis, and ends a pass
+  - **`research_append`:** fills `weighed_log_entry_ids` on the unresolved analysis that sends
+    it, refuses it without an analysis or with nothing searched, and clears it on any other
+    analysis write or a settle
+    (ADR-0011: the value is decidable from the documents; the declaration is not);
+  - **conflict-resolution:** ends a pass
     that settles nothing and names nothing to search without a Continue line (E);
-  - **proof-conclusion:** in that state, writes or refreshes `not_proved` with
-    `shortfall: "conflict"`, leaves the question open, and its report ends without a Continue
+  - **proof-conclusion:** in that state, writes or refreshes a summary at the tier the
+    evidence reaches with `shortfall: "conflict"`, leaves the question open, and its report ends without a Continue
     line (E);
   - **tests:** the conflict-resolution and proof-conclusion cases for the unsettled conflict in
     acceptance item 7. The "a following continue runs no step" case needs PR 2's router rows
@@ -1302,6 +1315,13 @@ in parallel with PR 2.
     `AskUserQuestion` on the alpha — ADR-0005 item 10 measured it in Cowork, where it waits
     but resumes the same turn. The alpha has no hook and no Stop veto after PR 1, so if its
     `AskUserQuestion` does not wait, nothing stops a step there and the fix is a follow-on.
+    **Done 2026-11-02 (Praise, alpha build `365f4d903`, which includes #3917 and #3937):**
+    the first step ended on its "Continue with …?" line and waited with nothing running;
+    "Continue." ran one more step and stopped again; "Wrap it up." ended the research. The
+    alpha shows no reply buttons (only the prototype worker sends `turn_done.options`), and
+    nothing on it sends "Keep going"'s host replies, so that path is the prototype's to check.
+    The first message had to ask for a project in so many words: a lookup-shaped one skipped
+    project setup (issue #3768).
 - **Prerequisites, staffed separately:**
   - issue #2243 for the fan-out, and its handed-state follow-up for D's handed state;
   - prototype uploads (research-as-a-job's "let documents in") for external-site searches on
@@ -1409,8 +1429,8 @@ in parallel with PR 2.
      extracted, otherwise the next item's search (search-records for FamilySearch);
    - a concluded, unresolved question with no open conflict routes to proof-conclusion;
    - an analysed, unresolved conflict that has weighed every log entry, with no open item,
-     routes to proof-conclusion; once the question has a `not_proved` summary with
-     `shortfall: "conflict"`, there is no next step; one more log entry sends it back to
+     routes to proof-conclusion; once the question has a summary with `shortfall: "conflict"`
+     no older than its latest log entry, at any tier, there is no next step; one more log entry sends it back to
      conflict-resolution; the same holds for a question already `exhaustive_declared`;
    - the arm does not fire with no open conflict, or for a conflict-blocked question with no log
      entries whose conflict carries no `weighed_log_entry_ids`; that question goes to
@@ -1460,7 +1480,7 @@ in parallel with PR 2.
      question in a conflict's evidence round, each end with a refreshed summary and the new
      question offered;
    - a conflict-resolution pass that cannot settle the conflict and names nothing to search
-     writes `weighed_log_entry_ids` and ends without a "Continue with …?" line; proof-conclusion
+     declares `weighed_log_entry_ids` on its analysis and ends without a "Continue with …?" line; proof-conclusion
      then writes `not_proved` with `shortfall: "conflict"` and no `search_stop`, and a following
      "continue" runs no step (with PR 2's router rows);
    - with one wrapped-up `not_proved` question with no open conflict, and one proved question,
