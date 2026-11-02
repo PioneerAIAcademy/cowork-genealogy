@@ -69,11 +69,26 @@ jobs:
 
       - name: Install dependencies
         working-directory: packages/engine/mcp-server
-        run: npm ci
+        # The touch is make's sentinel ($(ENGINE_DEPS)). Without it the
+        # engine-smoke-stdio step below re-runs a full `npm ci` before
+        # building, because make cannot tell this install happened.
+        run: |
+          npm ci
+          touch node_modules/.make-installed
 
       - name: Run vitest (pretest builds first)
         working-directory: packages/engine/mcp-server
         run: npm test
+
+      # The stdio transport the shipped .mcpb actually uses. No workflow ran it
+      # either, and unlike the HTTP smoke it needs no Docker, no network and no
+      # credentials -- `npm test` above has already built build/index.js, so
+      # this is seconds on a job that is already required. It drives the real
+      # stdio transport through src/server.ts's dispatch, which no vitest file
+      # does. verify-mcpb.sh boots the packed server and lists tools, but runs
+      # no call plan.
+      - name: Smoke the built engine over stdio (offline rows)
+        run: make engine-smoke-stdio
 
       # Build both shipped artifacts here, not in a workflow of their own: this
       # job is already a required check and already carries every prerequisite
@@ -183,22 +198,30 @@ jobs:
         run: npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts tests/store/pg-routing-store.test.ts tests/store/s3-orphan-sweep.test.ts
 
   # The transport smoke: drives the COMPILED build/http.js over a real MCP SDK
-  # Streamable HTTP transport, with the per-request bearer principal, the
-  # X-Genealogy-Project-Id store binding and the U4/U6 claim fence. No vitest
-  # file exercises that path, which is how #3905 broke on main unnoticed.
+  # Streamable HTTP transport, against the PgS3ProjectStore bound per request
+  # from X-Genealogy-Project-Id. No vitest file exercises that path, so a
+  # regression in a tool's dispatch arm in src/server.ts ships green without
+  # it.
   #
-  # Offline rows only (lead, 2026-11-01: "I don't think we need to test
-  # connections in CI"). The network and credentialed rows stay uncovered here
-  # on purpose; `make engine-smoke-http` with no SMOKE_OFFLINE_ONLY runs them
-  # locally. The stack is vitest-pg's, started the same way.
+  # What it does NOT cover, so nobody reads more into a green tick than is
+  # there: offline rows only (lead, 2026-11-01: "I don't think we need to test
+  # connections in CI"). The bearer-carrying rows are every `tokenStep`, and
+  # those are not offline -- so the per-request PRINCIPAL reaching a
+  # FamilySearch tool is NOT checked here, and neither is the image_transcribe
+  # row of #3905, which is not an offline row either. Those run only in a local
+  # `make engine-smoke-http` with no SMOKE_OFFLINE_ONLY. Issue #4167 carries
+  # the gap. The stack is vitest-pg's, started the same way.
   engine-smoke-http:
     runs-on: ubuntu-latest
+    # The tool calls carry no client-side deadline, so a stalled one would hang
+    # to the runner's 6-hour default on a required check.
+    timeout-minutes: 20
     env:
+      # The only load-bearing one: PROTO_PG_DSN defaults to the COMPOSE port
+      # 5434 (Makefile), and this stack is on 5432. The PROTO_S3_* block that
+      # vitest-pg carries is deliberately absent -- nothing in this job reads
+      # it, because the Makefile passes the GENEALOGY_S3_* values itself.
       PROTO_PG_DSN: postgresql://postgres:proto@localhost:5432/proto
-      PROTO_S3_ENDPOINT: http://localhost:9000
-      PROTO_S3_BUCKET: projects
-      PROTO_S3_ACCESS_KEY: proto
-      PROTO_S3_SECRET_KEY: protoproto
     steps:
       - name: Check out PR
         uses: actions/checkout@v7
@@ -256,4 +279,31 @@ jobs:
           SMOKE_STACK_DEP: ''
           SMOKE_PG_CONTAINER: pg
           SMOKE_OFFLINE_ONLY: '1'
-        run: make engine-smoke-http
+        run: |
+          set -euo pipefail
+          make engine-smoke-http 2>&1 | tee "$RUNNER_TEMP/smoke.txt"
+
+      # Exit 0 is not proof the right rows ran. Rename SMOKE_OFFLINE_ONLY, drop
+      # $(smoke_offline_flag) from the Makefile, or mistype either, and the flag
+      # expands to nothing: the job runs the whole plan, most of which passes in
+      # no-bearer mode, and a REQUIRED check silently starts depending on
+      # FamilySearch, Wikipedia and a personal *.ts.net host being up.
+      - name: The offline filter actually applied
+        run: |
+          set -euo pipefail
+          log="$RUNNER_TEMP/smoke.txt"
+          grep -q 'offline-only=true' "$log" \
+            || { echo "::error::the smoke header does not say offline-only=true, so --offline-only never reached it"; exit 1; }
+          # The direct property: no row that needs the network ran. These are
+          # the loudest of them; any one appearing means the plan was unfiltered.
+          if grep -qE '\b(wikipedia_search|wiki_search|wiki_read|wiki_place_page|record_search|person_search|place_population|external_links_search)\b' "$log"; then
+            echo "::error::a network row ran in CI — the offline filter did not apply"
+            grep -nE '\b(wikipedia_search|wiki_search|wiki_read|wiki_place_page|record_search|person_search|place_population|external_links_search)\b' "$log" >&2
+            exit 1
+          fi
+          # And it ran SOMETHING: a filter that matched nothing also prints no
+          # network rows.
+          calls="$(sed -n 's/^\([0-9][0-9]*\) call(s),.*/\1/p' "$log" | tail -1)"
+          [ -n "$calls" ] && [ "$calls" -ge 20 ] \
+            || { echo "::error::expected the smoke to report at least 20 calls, got '${calls:-<none>}'"; exit 1; }
+          echo "offline filter applied: $calls call(s), no network rows"
