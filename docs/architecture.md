@@ -659,7 +659,15 @@ Architecturally:
   handler reads but the schema omits is unreachable over MCP while every
   handler-level test stays green. Advertise it, or, for a deliberate unadvertised
   alias, add it to `ACCEPTED_ALIASES` there with its reason (a snapshot test pins
-  that list). The unit harness calls handlers directly and never runs the guard.
+  that list). The unit harness applies that same compiled guard before each mock tool
+  call, so an eval refuses the argument keys production refuses instead of
+  silently dropping them — though it fails OPEN, with a warning, when the build
+  is missing or node faults, so it narrows the gap rather than closing it.
+  **The reverse gap is the one still caught by nothing:** a key the handler
+  READS that is on neither the schema nor `ACCEPTED_ALIASES` is unreachable over
+  MCP while every handler-level test stays green. That stays unguarded by ruling
+  (lead, 2026-10-29): closing it needs TypeScript-type parsing, for the
+  lower-severity half of the pair.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
   `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
