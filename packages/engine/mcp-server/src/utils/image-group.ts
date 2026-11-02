@@ -56,6 +56,10 @@ export async function fsGet(url: string, principal: Principal, timing: Timing): 
       timing.budgetMs === undefined ? undefined : { budgetMs: timing.budgetMs },
     );
   } catch (error) {
+    // The budget refusal must reach the caller marked: rewrapping it here
+    // destroys the marker and every isFsBudgetExhausted guard downstream
+    // silently stops firing (same reason as match-engine.ts).
+    if (isFsBudgetExhausted(error)) throw error;
     throw new Error(
       `Could not reach FamilySearch image search API: ${describeFetchError(error)}.`
     );
