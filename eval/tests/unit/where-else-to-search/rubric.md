@@ -16,8 +16,10 @@ Did the agent pick the right curated rows, and only curated rows?
 
 Is each reason drawn from what the tools returned? This dimension needs a genealogist's annotation.
 
+**Grading note (every dimension, base dimensions included):** Which span an entry states is checked by the validator `test_each_entry_states_its_rows_span_and_nothing_more`: the row's `startYear`–`endYear`, years its `linkText` names, or "Undated collection.". Do not score any dimension down for the span itself, including a `startYear`–`endYear` wider than the years in the `linkText`. Do score whether the rest of the coverage line (includes / overlaps … in … / outside your <years searched>) is right about the searched years.
+
 - **pass:** Each reason gives the row's `linkText`, its years (the row's `startYear`-`endYear` or years its `linkText` names; "Undated collection." when neither has any) and how they cover the searched years, and whether the site is free or needs a subscription, as `access` reported it. Nothing else is asserted about the site, the place or the record set. With fewer than 3 suggestions, the reply says that is all FamilySearch lists for that place and period.
-- **partial:** A reason omits the years or the access, or calls a dated row's coverage wrong (e.g. says it covers a year outside its span).
+- **partial:** A reason omits the years or the access, or says a span includes or overlaps searched years it does not.
 - **fail:** A reason states a fact about a site, place or collection that no tool returned, or a generic line ("Ancestry has many records") stands in for the grounded one.
 
 ## Links

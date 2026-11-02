@@ -103,7 +103,7 @@ appear more than once, with different collections.
   is no project.
 - **Model `claude-sonnet-4-6`**, the pin most agents carry. `claude-haiku-4-5` was
   tried on scratch runs (2026-10-26) and rejected: it altered a curated `baseUrl`
-  (a trailing `/`), gave undated rows a span read from their title, and was not
+  (a trailing `/`; the validators now accept that change on an Ancestry collection, because the engine's `collectionKey` treats the two as one collection), gave undated rows a span read from their title, and was not
   reliably faster (80 s and 154 s on the same test). Neither model meets one
   minute: the time is model generation, not tool round-trips, so the batch form
   of `build_external_search_url` below would not close it.

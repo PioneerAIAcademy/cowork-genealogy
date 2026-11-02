@@ -257,3 +257,38 @@ def test_zero_results_fires_on_any_build_or_link_and_accepts_a_plain_answer():
         check_zero([links_call()], reply(plain + " Try https://www.findmypast.ie/."), None, t)
     with pytest.raises(pytest.skip.Exception):
         check_zero([], reply(plain), None, where_test())
+
+
+def _row_call(url):
+    return call(
+        "external_links_search",
+        {"results": [{"url": url, "linkText": "x", "startYear": 1860, "endYear": 1869}]},
+    )
+
+
+def _build_with_base(base, url):
+    return call("build_external_search_url", {"ok": True, "url": url}, site="ancestry", baseUrl=base)
+
+
+def test_curated_and_span_accept_a_trailing_slash_change_on_an_ancestry_collection():
+    t = where_test()
+    slash = CURATED + "/"
+    built_url = BUILT
+    # base gains a slash the row lacks
+    calls = [_row_call(CURATED), _build_with_base(slash, built_url)]
+    check_curated(calls, t)
+    check_span(calls, _span_reply(_entry("**Muster Rolls**", "Covers 1860–1869.", built_url)), None, t)
+    # base drops a slash the row has
+    calls = [_row_call(slash), _build_with_base(CURATED, built_url)]
+    check_curated(calls, t)
+    check_span(calls, _span_reply(_entry("**Muster Rolls**", "Covers 1860–1869.", built_url)), None, t)
+
+
+def test_curated_still_fires_on_a_different_ancestry_id_or_a_slash_on_another_host():
+    t = where_test()
+    with pytest.raises(AssertionError):
+        check_curated([_row_call(CURATED), _build_with_base("https://www.ancestry.com/search/collections/9041/", BUILT)], t)
+    host = "https://www.pa-archives.example/civil-war"
+    with pytest.raises(AssertionError):
+        check_curated([_row_call(host), _build_with_base(host + "/", OTHER)], t)
+    check_curated([_row_call(host), _build_with_base(host, OTHER)], t)
