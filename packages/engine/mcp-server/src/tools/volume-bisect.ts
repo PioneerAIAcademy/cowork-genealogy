@@ -10,7 +10,7 @@ import type { Principal } from "../auth/principal.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../auth/config.js";
 import { imageSearchTool } from "./image-search.js";
 import { resolveFsImageInput, fetchFsImageBytes } from "../utils/fs-image-fetch.js";
-import { runOcr } from "../utils/ocr.js";
+import { runOcr, withTranscriptionSlot } from "../utils/ocr.js";
 import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 import type {
   VolumeBisectInput,
@@ -254,7 +254,19 @@ function trailingNullRun(readings: VolumeBisectReading[]): number {
   return n;
 }
 
+/** Holds one transcription slot for the whole call (self-hosted beta E4).
+ *
+ * Same shape as image_transcribe's: a thin wrapper, so the slot is taken
+ * before `checkImageBrowseCap` and before any image bytes are read without
+ * re-indenting the body or touching the line issue #3996 also edits. */
 export async function volumeBisectTool(
+  input: VolumeBisectInput,
+  principal: Principal,
+): Promise<VolumeBisectResult> {
+  return withTranscriptionSlot(() => volumeBisectToolInner(input, principal));
+}
+
+async function volumeBisectToolInner(
   input: VolumeBisectInput,
   principal: Principal,
 ): Promise<VolumeBisectResult> {

@@ -43,6 +43,11 @@ import { resolveFsImageInput, fetchFsImageBytes } from "../../src/utils/fs-image
 import { runOcr } from "../../src/utils/ocr.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../../src/auth/config.js";
 import type { VolumeBisectReading } from "../../src/types/volume-bisect.js";
+import {
+  configureTranscriptionCap,
+  withTranscriptionSlot,
+  __resetTranscriptionSlotsForTests,
+} from "../../src/utils/ocr.js";
 
 /** The reviewer's image group and Natural Group, by name. The mocked id list
  *  below is a synthetic position index, NOT that volume's real sequence — the
@@ -585,5 +590,32 @@ describe("parseProbeYear", () => {
     expect(parseProbeYear("16000")).toBeNull();
     // The filming stamp the ceiling excludes.
     expect(parseProbeYear("DEC 2 . 1952")).toBeNull();
+  });
+});
+
+// The process-wide transcription cap (self-hosted beta E4) binds HERE, on the
+// exported tool function, not on its MCP wrapper -- person_read calls this
+// function directly (person-read.ts), so a cap on the wrapper would leave that
+// path uncapped. Refused before any fixture work, so this needs no image.
+describe("the transcription cap binds to volume_bisect", () => {
+  afterEach(() => {
+    __resetTranscriptionSlotsForTests();
+  });
+
+  it("refuses when every slot is held, before touching the image", async () => {
+    configureTranscriptionCap({ max: 1 });
+    let release!: () => void;
+    const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
+
+    await expect(volumeBisectTool({ imageGroupNumber: "004022578", targetYear: 1900 } as never, LOCAL)).rejects.toThrow(/already running 1 transcriptions, its limit/);
+
+    release();
+    await held;
+  });
+
+  it("is off when unconfigured, so the tool is reached as before", async () => {
+    // No cap configured: the wrapper calls straight through and the tool fails
+    // on its own input, not on a slot.
+    await expect(volumeBisectTool({ imageGroupNumber: "004022578", targetYear: 1900 } as never, LOCAL)).rejects.not.toThrow(/transcriptions, its limit/);
   });
 });

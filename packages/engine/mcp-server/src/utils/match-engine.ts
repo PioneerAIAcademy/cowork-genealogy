@@ -13,6 +13,7 @@
 import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetchWithTimeout } from "./fs-fetch.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 import { describeFetchError } from "./http.js";
 import { toGedcomX } from "./gedcomx-convert.js";
 import { isFamilySearchPersonId } from "./fs-id.js";
@@ -62,6 +63,11 @@ export async function scorePair(
       }),
     });
   } catch (err) {
+    // A spent budget is rethrown UNCHANGED. Wrapping it in a plain Error
+    // destroys the marker, and `withRetry` (place-resolver.ts) — which
+    // `matcher.ts` wraps this call in when `retry: true` — would then retry
+    // one local refusal three times and report it as unreachable.
+    if (isFsBudgetExhausted(err)) throw err;
     throw new Error(
       `Could not reach FamilySearch matchTwoExamples API: ${describeFetchError(err)}.`,
     );

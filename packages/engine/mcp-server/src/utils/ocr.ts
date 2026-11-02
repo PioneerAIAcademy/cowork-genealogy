@@ -140,6 +140,51 @@ export interface OcrOutcome {
   truncationNotice?: string;
 }
 
+// ---------------------------------------------------------------------------
+// Concurrent-transcription cap (self-hosted beta E4), off unless configured.
+//
+// Takes no `Principal`: this is a PROCESS limit, and `runOcr` must stay
+// principal-free (issue #3996). Module state for the same reason.
+//
+// Held at the TOOL, never inside `runOcr`: inside, the multi-MB image download
+// has already happened, and `image_transcribe`'s second OpenRouter call
+// (`runFoundCheck`) would run outside the slot.
+
+let maxTranscriptions: number | undefined;
+let inFlight = 0;
+
+export function configureTranscriptionCap(opts: { max: number | undefined }): void {
+  maxTranscriptions = opts.max;
+  inFlight = 0;
+}
+
+/** Test-only reset (a restart, as far as the cap can tell). */
+export function __resetTranscriptionSlotsForTests(): void {
+  maxTranscriptions = undefined;
+  inFlight = 0;
+}
+
+/** Run `fn` holding one transcription slot, or refuse at once.
+ *
+ * Refused, never queued: a caller that waits would hold the tool call open for
+ * as long as the busiest transcription takes, and the agent gets no signal.
+ * The slot is released in `finally`, so a throw inside `fn` cannot leak it. */
+export async function withTranscriptionSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (maxTranscriptions === undefined) return fn();
+  if (inFlight >= maxTranscriptions) {
+    throw new Error(
+      `The server is already running ${maxTranscriptions} transcriptions, its limit. ` +
+        `Wait for one to finish and try this image again.`,
+    );
+  }
+  inFlight += 1;
+  try {
+    return await fn();
+  } finally {
+    inFlight -= 1;
+  }
+}
+
 /**
  * POST one image to the OCR model and return its text.
  *

@@ -1,9 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 import { searchPlace } from "../../src/utils/place-api.js";
+import { bearerPrincipal } from "../../src/auth/principal.js";
+import {
+  configureFsBudget,
+  __resetFsBudgetForTests,
+} from "../../src/utils/fs-budget.js";
 
 function emptyResponse() {
   return {
@@ -182,5 +187,35 @@ describe("searchPlace date qualifier", () => {
     await searchPlace("Rochdale, England", { date: 1880 });
     const sent = new URL(mockFetch.mock.calls[0][0] as string).searchParams.get("q") ?? "";
     expect(sent).toBe('name:"Rochdale, England" +date:+1880');
+  });
+});
+
+// The budget lives in fetchWithTimeout, NOT fsFetch. place-api.ts reaches
+// FamilySearch through fetchWithRetry directly -- 6 call sites, none through
+// fsFetch -- so a budget hooked into fsFetch would leave every Places lookup
+// uncounted while CI stayed green. Same for memories.ts, fs-image-fetch.ts and
+// auth/refresh.ts.
+describe("the FamilySearch budget covers place-api, which never calls fsFetch", () => {
+  afterEach(() => {
+    __resetFsBudgetForTests();
+  });
+
+  it("counts a Places lookup against the shared budget", async () => {
+    const P = bearerPrincipal("tok");
+    configureFsBudget({ perMinute: 1 });
+
+    await searchPlace("West Bromwich", P);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    mockFetch.mockClear();
+
+    await expect(searchPlace("West Bromwich", P)).rejects.toThrow(/budget is spent/);
+    // Refused before any network I/O.
+    expect(mockFetch).toHaveBeenCalledTimes(0);
+  });
+
+  it("is unaffected when the budget is off", async () => {
+    const P = bearerPrincipal("tok");
+    for (let i = 0; i < 10; i++) await searchPlace("West Bromwich", P);
+    expect(mockFetch).toHaveBeenCalledTimes(10);
   });
 });

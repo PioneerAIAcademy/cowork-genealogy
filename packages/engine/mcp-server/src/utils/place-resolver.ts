@@ -26,6 +26,7 @@ import {
   getPlaceCandidateNames,
   type PlaceRep,
 } from "./place-api.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 import { stdDate } from "./date-standardize.js";
 import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "./date-helpers.js";
 import { foldPlaceKey, listedOneWordPlace, oneWordPlaceIsWord, oneWordPlaceNeedsCountry } from "./one-word-places.js";
@@ -299,6 +300,10 @@ export async function withRetry<T>(
     try {
       return await fn();
     } catch (err) {
+      // A spent FamilySearch budget is a local refusal: nothing reached the
+      // upstream, so the next two attempts refuse identically and only add
+      // backoff sleeps. The one exception to the NOTE above.
+      if (isFsBudgetExhausted(err)) throw err;
       lastErr = err;
       if (attempt < attempts - 1) {
         const backoff = baseMs * 2 ** attempt;

@@ -43,6 +43,9 @@ import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
 import { startHttpServer, MCP_PATH } from "./http-server.js";
 import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
+import { readLimitsEnv } from "./store/limits-env.js";
+import { configureFsBudget } from "./utils/fs-budget.js";
+import { configureTranscriptionCap } from "./utils/ocr.js";
 import { readPgS3Env } from "./store/pg-s3-env.js";
 import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
@@ -63,15 +66,20 @@ if (!Number.isInteger(port) || port < 0 || port > 65535) {
 }
 
 const storeEnv = readPgS3Env(process.env);
+const limitsEnv = readLimitsEnv(process.env);
 if (storeEnv.missing.length > 0) {
   process.stderr.write(`http: required environment not set: ${storeEnv.missing.join(", ")}\n`);
   process.exit(2);
 }
-if (storeEnv.invalid.length > 0) {
+// One branch for both parsers: an invalid value from either exits 2 before
+// `listen`, so a mistyped limit cannot start a server that silently has none.
+const invalidEnv = [...storeEnv.invalid, ...limitsEnv.invalid];
+if (invalidEnv.length > 0) {
   process.stderr.write(
-    `http: environment set to an invalid value: ${storeEnv.invalid.join(", ")} ` +
+    `http: environment set to an invalid value: ${invalidEnv.join(", ")} ` +
       "(GENEALOGY_S3_FORCE_PATH_STYLE takes true or false; the GENEALOGY_ORPHAN_* variables whole seconds, " +
-      "the grace at least 3600, the interval at most 2147483)\n",
+      "the grace at least 3600, the interval at most 2147483; " +
+      "GENEALOGY_FS_CALLS_PER_MINUTE and GENEALOGY_MAX_TRANSCRIPTIONS whole numbers above 0)\n",
   );
   process.exit(2);
 }
@@ -83,6 +91,18 @@ process.stderr.write(
 const { intervalS, graceS } = storeEnv.orphanSweep;
 process.stderr.write(
   intervalS > 0 ? `orphan sweep: every ${intervalS} s, grace ${graceS} s\n` : "orphan sweep: off\n",
+);
+configureFsBudget({ perMinute: limitsEnv.fsCallsPerMinute });
+process.stderr.write(
+  limitsEnv.fsCallsPerMinute !== undefined
+    ? `fs budget: ${limitsEnv.fsCallsPerMinute} calls/min\n`
+    : "fs budget: off\n",
+);
+configureTranscriptionCap({ max: limitsEnv.maxTranscriptions });
+process.stderr.write(
+  limitsEnv.maxTranscriptions !== undefined
+    ? `transcription cap: ${limitsEnv.maxTranscriptions} at a time\n`
+    : "transcription cap: off\n",
 );
 const holdLine = debugHoldStartupLine(process.env);
 if (holdLine) process.stderr.write(holdLine);

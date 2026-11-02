@@ -23,6 +23,7 @@ import {
   OCR_TIMEOUT_MS,
   OCR_MAX_TOKENS,
   MAX_OCR_INPUT_BYTES,
+  withTranscriptionSlot,
 } from "../utils/ocr.js";
 import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 import { getProjectStore } from "../store/project-store.js";
@@ -111,7 +112,25 @@ function captureIdFor(ref: string): string {
  * host-side → OpenRouter and never cross the MCP transport, so there is no
  * size cap (unlike image_read). See docs/specs/image-transcribe-tool-spec.md.
  */
+/** Holds one transcription slot for the whole call (self-hosted beta E4).
+ *
+ * A thin wrapper rather than a `try`/`finally` around the body: the slot then
+ * covers EVERY caller of this function, `person_read`'s memories phase
+ * (person-read.ts) included, with no re-indent of the 320-line body and no
+ * edit at line ~227 where issue #3996 also works. Off unless configured, in
+ * which case `withTranscriptionSlot` calls straight through.
+ *
+ * Taken before the body runs, so before `checkImageBrowseCap` and before any
+ * image bytes are read, as E4 requires. */
 export async function imageTranscribeTool(
+  input: ImageTranscribeInput,
+  principal: Principal,
+  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
+): Promise<ImageTranscribeResult | NoProjectResult> {
+  return withTranscriptionSlot(() => imageTranscribeToolInner(input, principal, opts));
+}
+
+async function imageTranscribeToolInner(
   input: ImageTranscribeInput,
   principal: Principal,
   /**
