@@ -9,6 +9,7 @@ from app.config import get_settings
 from app.db import get_engine
 from app.main import app
 from app.models import User
+from app.sessions import _maybe_backfill_title
 
 
 def test_unauthenticated_is_rejected():
@@ -81,6 +82,79 @@ def test_session_lifecycle_and_sample_seed():
         assert client.post(f"/api/sessions/{sid}/resume").status_code == 200
         assert client.delete(f"/api/sessions/{sid}").status_code == 200
         assert sid not in [p["id"] for p in client.get("/api/sessions").json()]
+
+
+def test_patch_title_is_stripped_capped_and_listed():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "rename-normalized@example.com"})
+        sid = client.post("/api/sessions", json={}).json()["id"]
+        r = client.patch(f"/api/sessions/{sid}", json={"title": "  Smith family  "})
+        assert r.status_code == 200, r.text
+        assert r.json()["title"] == "Smith family"
+        listed = client.get("/api/sessions").json()
+        assert next(p for p in listed if p["id"] == sid)["title"] == "Smith family"
+
+        r = client.patch(f"/api/sessions/{sid}", json={"title": "x" * 200})
+        assert r.status_code == 200, r.text
+        assert r.json()["title"] == "x" * 120
+        r = client.patch(f"/api/sessions/{sid}", json={"title": "x" * 119 + " y"})
+        assert r.json()["title"] == "x" * 119
+
+
+def test_patch_refuses_a_blank_title():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "rename-blank@example.com"})
+        project = client.post("/api/sessions", json={}).json()
+        sid = project["id"]
+        for title in ("", "   "):
+            r = client.patch(f"/api/sessions/{sid}", json={"title": title, "model": "other"})
+            assert r.status_code == 400, r.text
+            assert r.json()["detail"] == "A session name can't be blank."
+            stored = client.get(f"/api/sessions/{sid}").json()
+            assert stored["title"] == project["title"]
+            assert stored["model"] == project["model"]
+            assert stored["updated"] == project["updated"]
+
+        r = client.patch(f"/api/sessions/{sid}", json={"model": "claude-sonnet-4-6"})
+        assert r.status_code == 200, r.text
+        assert r.json()["title"] == project["title"]
+
+
+def test_backfill_does_not_overwrite_a_rename_made_while_state_was_loading():
+    from app.models import Project
+
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "rename-backfill-race@example.com"})
+        sid = client.post("/api/sessions", json={}).json()["id"]
+        with Session(get_engine()) as s:
+            project = s.get(Project, sid)
+            assert project.title == "New research session"
+            r = client.patch(f"/api/sessions/{sid}", json={"title": "My family"})
+            assert r.status_code == 200, r.text
+            _maybe_backfill_title(s, project, {"project": {"title": "Agent title"}})
+        assert client.get(f"/api/sessions/{sid}").json()["title"] == "My family"
+
+
+def test_title_if_default_names_only_a_default_session():
+    with TestClient(app) as client:
+        client.post("/auth/dev-login", json={"email": "rename-if-default@example.com"})
+        sid = client.post("/api/sessions", json={}).json()["id"]
+        for title in ("", "   "):
+            r = client.patch(f"/api/sessions/{sid}", json={"title_if_default": title})
+            assert r.status_code == 400, r.text
+            assert r.json()["detail"] == "A session name can't be blank."
+            assert client.get(f"/api/sessions/{sid}").json()["title"] == "New research session"
+
+        r = client.patch(f"/api/sessions/{sid}", json={"title_if_default": "  " + "A" * 200 + "  "})
+        assert r.status_code == 200, r.text
+        assert r.json()["title"] == "A" * 120
+        r = client.patch(f"/api/sessions/{sid}", json={"title": "My family", "title_if_default": "Ignored"})
+        assert r.status_code == 200, r.text
+        assert r.json()["title"] == "My family"
+        r = client.patch(f"/api/sessions/{sid}", json={"title_if_default": "Agent title"})
+        assert r.status_code == 200, r.text
+        assert r.json()["title"] == "My family"
+        assert client.get(f"/api/sessions/{sid}").json()["title"] == "My family"
 
 
 def test_session_image_serves_saved_scan():

@@ -87,6 +87,24 @@ def _trees_equal(before: dict | None, after: dict | None) -> bool:
     return before == after
 
 
+def test_verification_reads_the_tree(builtin_tool_calls, test):
+    """Tag-gated (reads-tree): the delegation states the values it wants
+    confirmed, so a reply can repeat them without looking. Only a Read of
+    tree.gedcomx.json shows the tree was checked."""
+    if "reads-tree" not in test.get("tags", []):
+        pytest.skip("not a reads-tree scenario")
+    reads = [
+        (c.get("args") or {}).get("file_path", "")
+        for c in builtin_tool_calls or []
+        if c.get("tool") == "Read"
+    ]
+    tree_reads = [r for r in reads if r.replace("\\", "/").endswith("tree.gedcomx.json")]
+    assert tree_reads, (
+        "The agent reported on the tree without reading tree.gedcomx.json; "
+        f"its Read calls were {reads[:3]}"
+    )
+
+
 def test_tree_edit_noop(before_state, after_state, test):
     """Tag-gated: when the requested edit is already satisfied by the
     existing tree, tree-edit must make NO modifications. Touching a
