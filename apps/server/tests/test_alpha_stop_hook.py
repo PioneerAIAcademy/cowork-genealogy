@@ -684,6 +684,37 @@ def test_the_alpha_system_prompt_carries_the_delivery_guidance(tmp_path):
     assert "research_delivered" in opts.system_prompt["append"]
 
 
+def test_the_alpha_system_prompt_is_true_before_a_project_exists(tmp_path):
+    """Issue #3768. On a fresh session the folder holds no research.json; a note saying it
+    did pointed the model at a project that was not there, and first messages were answered
+    from one lookup. The delivery text also names the no-project exclusion, and the env
+    carries the flag that keeps the Cowork-only `no_project_route.py` hook silent here."""
+    opts = real_agent.build_options(tmp_path)
+    append = opts.system_prompt["append"]
+    assert append.startswith("You are the hosted genealogy research agent")
+    assert "contains research.json" not in append
+    assert "Once a project exists there it holds research.json" in append
+    assert "while no project exists yet" in real_agent.DELIVERY_GUIDANCE
+    assert "nothing has created one since" in real_agent.DELIVERY_GUIDANCE
+    assert "no_project" in real_agent.DELIVERY_GUIDANCE
+    assert opts.env[real_agent.HOSTED_PLANE_ENV] == "1"
+
+
+def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():
+    """The server and the plugin hook each define `GENEALOGY_HOSTED_PLANE`. A rename on one
+    side alone leaves every server test green while the hook speaks on both hosted planes,
+    so this loads the hook from the repo and checks its behaviour under the server's name."""
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[3] / "packages/engine/plugin/hooks/no_project_route.py"
+    spec = importlib.util.spec_from_file_location("_no_project_route", path)
+    hook = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(hook)
+    payload = {"prompt": "Research PID L8PL-3W8."}
+    assert hook.decision(payload, {real_agent.HOSTED_PLANE_ENV: "1"}) == {}
+    assert hook.decision(payload, {}) != {}
+
+
 class _Turns:
     """Stands in for the session, borrowing the REAL turn-boundary method.
 

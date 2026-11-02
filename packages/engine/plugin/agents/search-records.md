@@ -437,7 +437,7 @@ re-orders by real match quality — **not** FamilySearch's search rank, which is
 unreliable — and annotates **every scored candidate** in `results[]`, returned
 best first. There is one row list: the rows you already know, now carrying
 `matchRank`, `searchRank` (their original FamilySearch position — shows how far
-the ranker missed), `matchScore` (0–1), `matchConfidence` (1–10),
+the ranker missed), `matchScore` (0–1),
 `candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
 carries counts and diagnostics only. The bulk GedcomX stays host-side, and a
 per-result `same_person` loop plus a separate `source_attachments` call are both
@@ -714,7 +714,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
 
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
-2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped into a batched `ops[]` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
+2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped as an `ops[]` array in one `research_log_append` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
    is a legitimate next step, not an unsupported guess — `*` and `?` both bind, and the

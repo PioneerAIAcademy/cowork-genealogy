@@ -63,10 +63,8 @@ export interface RankedMatch {
   /** Candidate birth year minus subject birth year, in years (negative: the
    *  candidate is older). Present exactly when `birthYearConflict` is. */
   birthYearGap?: number;
-  /** 0-1 match score; null when the FS call kept failing (never dropped). */
+  /** 0-1 match score; null when scoring failed (never dropped). */
   matchScore: number | null;
-  /** 1-5 confidence bucket; omitted on a no-match / failure. */
-  matchConfidence?: number;
   /** Only set when `checkAttachments` and the batch call succeeded. */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
@@ -88,20 +86,22 @@ export interface RankSearchMatchesResult {
   scoredCount: number;
   /** scoredCount, or min(top, scoredCount) when `top` is given. */
   returnedCount: number;
-  /** Pairs whose FS call kept failing (kept, matchScore null). */
+  /** Candidates whose scoring failed (kept, matchScore null). */
   scoringErrors: number;
   /** Non-null only when the best-effort calibration append failed. */
   scoreLogError: string | null;
   /**
-   * Present and `false` only when no candidate scored above the degenerate
-   * floor. Read it together with `diagnostic`, which says WHY — a subject too
-   * thin to discriminate (the scores are noise, and `matches` is withheld
-   * entirely) versus a scoreable subject against a pool that genuinely holds no
-   * match (a real negative worth acting on).
+   * Present and `false` only when no candidate scored above the active
+   * matcher's floor for this subject. Read it together with `diagnostic`, which
+   * says WHY — a subject too thin to discriminate (the scores are noise, and
+   * `matches` is withheld entirely) versus a scoreable subject against a pool
+   * that genuinely holds no match (a real negative worth acting on). Neither
+   * floor sets it while a candidate went unscored, since that one might match.
    */
   subjectResolvable?: boolean;
-  /** Present whenever `subjectResolvable` is false: what happened and what to
-   *  do about it, in the caller's terms. */
+  /** Present whenever `subjectResolvable` is false, and when no candidate
+   *  cleared the floor while some went unscored: what happened and what to do
+   *  about it, in the caller's terms. */
   diagnostic?: string;
   /** Facts the subject document gained from the project's own evidence
    *  (assertions linked through `person_evidence`) on top of the bare tree

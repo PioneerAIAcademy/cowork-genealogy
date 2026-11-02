@@ -13,7 +13,7 @@ import type { AppConfig } from "./types/auth.js";
 
 /** The variable names, in the order they appear on `AppConfig`. Read as source text by the
  *  prototype's config test, so keep them literal. */
-export const PER_USER_ENV = ["WIKI_API_URL", "POP_STATS_URL", "OPENROUTER_API_KEY", "OPENROUTER_MODEL"] as const;
+export const PER_USER_ENV = ["WIKI_API_URL", "POP_STATS_URL", "OPENROUTER_API_KEY", "OPENROUTER_MODEL", "MATCHER_URL", "MATCHER_API_KEY"] as const;
 
 /**
  * `base` with the per-user config the environment names layered over it.
@@ -28,5 +28,11 @@ export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): App
   if (env.POP_STATS_URL) out.popStatsUrl = env.POP_STATS_URL;
   if (env.OPENROUTER_API_KEY) out.openRouterApiKey = env.OPENROUTER_API_KEY;
   if (env.OPENROUTER_MODEL) out.openRouterModel = env.OPENROUTER_MODEL;
+  // The matcher service needs both; one alone names no service to call.
+  if (env.MATCHER_URL && env.MATCHER_API_KEY) {
+    out.matcher = "service";
+    out.matcherUrl = env.MATCHER_URL;
+    out.matcherApiKey = env.MATCHER_API_KEY;
+  }
   return out;
 }

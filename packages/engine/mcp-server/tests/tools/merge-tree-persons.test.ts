@@ -1003,7 +1003,7 @@ describe("merge_tree_persons: pair and namesake checks", () => {
   const attest = (personId: string) =>
     recordMatchScore(dir, {
       record_id: rec(1), record_persona_id: null, record_role: "head", tree_person_id: personId, score: 0.9,
-      matched: true, assertion_id: "a_011", record_source: "record_read", computed: "2026-10-26T00:00:00Z",
+      scorer: "familysearch", model: null, assertion_id: "a_011", record_source: "record_read", computed: "2026-10-26T00:00:00Z",
     });
 
   it("ML1 refuses moving a confident link across a move nothing explains", async () => {
