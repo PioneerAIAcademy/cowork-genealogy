@@ -617,16 +617,30 @@ def test_append_hashed_refuses_a_name_that_is_not_a_wheel(tmp_path):
         build.append_hashed(req, [_wheel(tmp_path, "sas_client-1.2.3.tar.gz", b"x")])
 
 
-def test_fs_requirement_names_accepts_pins_and_refuses_the_rest():
+def test_fs_requirement_lines_accepts_pins_and_refuses_the_rest():
     base = "annotated-types==0.7.0 \\\n    --hash=sha256:00\npsycopg-binary==3.3.4 \\\n"
-    assert build.fs_requirement_names("# FS only\nsas-client==1.2.3\nFs_Dep==0.1  # via sas-client\n", base) \
-        == ["sas-client", "fs-dep"]
+    assert build.fs_requirement_lines("# FS only\nsas-client==1.2.3\nFs_Dep==0.1  # via sas-client\n", base) \
+        == ["sas-client==1.2.3", "Fs_Dep==0.1"]
     for bad in ("", "# nothing\n", "sas-client>=1\n", "sas-client==1 --hash=sha256:00\n",
                 "--index-url https://example.invalid/simple\nsas-client==1\n", "sas-client\n"):
         with pytest.raises(build.BuildError, match="one `name==version` per line"):
-            build.fs_requirement_names(bad, base)
-    with pytest.raises(build.BuildError, match="repeats packages the base export pins"):
-        build.fs_requirement_names("sas-client==1\nPsycopg_Binary==3.3.4\n", base)
+            build.fs_requirement_lines(bad, base)
+    with pytest.raises(build.BuildError, match=r"disagrees with the base export: \['Psycopg_Binary==3.3.5 \(base 3.3.4\)'\]"):
+        build.fs_requirement_lines("sas-client==1\nPsycopg_Binary==3.3.5\n", base)
+
+
+def test_fs_requirement_lines_drops_what_the_tier_already_pins():
+    base = "boto3==1.43.106 \\\n    --hash=sha256:00\ncertifi==2026.5.20 \\\n"
+    fs = "sas-client==0.2.1.16\nboto3==1.43.106\nCertifi==2026.5.20\n"
+    assert build.fs_requirement_lines(fs, base) == ["sas-client==0.2.1.16"]
+    assert build.fs_requirement_lines(fs, "certifi==2026.5.20 \\\n") == ["sas-client==0.2.1.16", "boto3==1.43.106"]
+
+
+def test_the_committed_fs_requirements_fit_both_python_tiers():
+    fs = (REPO / "apps/server/proto/requirements-fs.txt").read_text(encoding="utf-8")
+    for tier in ("web", "worker"):
+        keep = build.fs_requirement_lines(fs, (REPO / layout.REQUIREMENTS[tier]).read_text(encoding="utf-8"))
+        assert keep[:2] == ["sas-client==0.2.1.16", "binding-register-client==0.1.1.14"], tier
 
 
 def test_python_tier_adds_the_fs_wheels_hashed_and_records_the_pins(tmp_path, monkeypatch):
@@ -645,7 +659,7 @@ def test_python_tier_adds_the_fs_wheels_hashed_and_records_the_pins(tmp_path, mo
     stage = tmp_path / "stage"
     stage.mkdir()
     out, pins = build.python_tier("worker", stage, ["x86_64", "aarch64"], fs_req)
-    assert calls == [("requirements.txt", ()), ("requirements-fs.txt", ("--no-deps",))]
+    assert calls == [("requirements.txt", ()), ("fs-requirements.txt", ("--no-deps",))]
     assert pins == ["sas-client==1.2.3"]
     dests = [d for d, _ in out]
     assert "wheels/sas_client-1.2.3-py3-none-any.whl" in dests and "wheels/anyio-4.14.2-py3-none-any.whl" in dests

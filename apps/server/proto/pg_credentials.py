@@ -15,6 +15,7 @@ Stdlib and psycopg only; the SAS client is imported lazily, in ``_fetch_sas_obje
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import importlib
 import importlib.util
 import logging
@@ -28,7 +29,6 @@ from urllib.parse import quote
 
 import psycopg
 
-# ASSUMED import name and API (no Artifactory access to verify): handoff U29, open risk 1.
 SAS_MODULE = "sas_client"
 MIN_REFRESH_INTERVAL_S = 30.0
 MIN_FETCH_INTERVAL_S = 0.5
@@ -54,9 +54,19 @@ def sas_installed() -> bool:
 
 
 def _fetch_sas_object(name: str) -> Mapping[str, str]:
-    """The only SAS client call. A new client per call, so no client cache returns a stale password."""
-    module = importlib.import_module(SAS_MODULE)
-    return module.SasClient().get_secure_object(name)
+    """The only SAS client call (sas-client 0.2.1.16: an async ``get_secure_object``). A new
+    client per call, so no client cache returns a stale password."""
+    client_class = importlib.import_module(SAS_MODULE + ".sas_client").SasClient
+
+    def run() -> Mapping[str, str]:
+        return asyncio.run(client_class().get_secure_object(sas_object_name=name))
+
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return run()
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+        return pool.submit(run).result()
 
 
 def jdbc_to_dsn(obj: Mapping[str, Any]) -> str:

@@ -262,22 +262,30 @@ def _canonical(name: str) -> str:
 
 
 _PINNED = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==(\S+)$")
-_REQ_NAME = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==", re.M)
+_REQ_PIN = re.compile(r"^([A-Za-z0-9][A-Za-z0-9._-]*)==([^\s\\;]+)", re.M)
 
 
-def fs_requirement_names(text: str, base: str) -> list[str]:
-    """The names in an FS-only requirements file. Every line is `name==version`, with no
-    option, URL or hash, and no name the base export already pins."""
+def fs_requirement_lines(text: str, base: str) -> list[str]:
+    """The lines of an FS-only requirements file this tier must add. Every line is
+    `name==version`, with no option, URL or hash. A line the base export already pins at the
+    same version is dropped; one it pins at another version refuses."""
     lines = [ln.split("#", 1)[0].strip() for ln in text.splitlines()]
     lines = [ln for ln in lines if ln]
     bad = [ln for ln in lines if not _PINNED.match(ln)]
     if bad or not lines:
         raise BuildError(f"--fs-python-requirements wants one `name==version` per line; got {bad or 'nothing'}")
-    names = [_canonical(_PINNED.match(ln).group(1)) for ln in lines]
-    overlap = sorted(set(names) & {_canonical(n) for n in _REQ_NAME.findall(base)})
-    if overlap:
-        raise BuildError(f"--fs-python-requirements repeats packages the base export pins: {overlap}")
-    return names
+    pinned = {_canonical(n): v for n, v in _REQ_PIN.findall(base)}
+    keep, clash = [], []
+    for ln in lines:
+        name, version = _PINNED.match(ln).groups()
+        have = pinned.get(_canonical(name))
+        if have is None:
+            keep.append(ln)
+        elif have != version:
+            clash.append(f"{ln} (base {have})")
+    if clash:
+        raise BuildError(f"--fs-python-requirements disagrees with the base export: {clash}")
+    return keep
 
 
 def append_hashed(req: Path, new_wheels: list[Path]) -> list[str]:
@@ -309,12 +317,16 @@ def python_tier(tier: str, stage: Path, arches: list[str],
     req.write_text(layout.REQUIREMENTS_HEADER + base, encoding="utf-8")
     fs_pins = None
     if fs_requirements is not None:
-        fs_requirement_names(fs_requirements.read_text(encoding="utf-8"), base)
+        keep = fs_requirement_lines(fs_requirements.read_text(encoding="utf-8"), base)
         # Separate and unhashed: one --hash line puts the whole download in hash mode.
         fs_wheels = stage / "fs-wheels"
         fs_wheels.mkdir()
-        download_wheels(fs_requirements, fs_wheels, arches, extra=("--no-deps",))
-        new = sorted(fs_wheels.iterdir())
+        new: list[Path] = []
+        if keep:
+            fs_tier = stage / "fs-requirements.txt"
+            fs_tier.write_text("\n".join(keep) + "\n", encoding="utf-8")
+            download_wheels(fs_tier, fs_wheels, arches, extra=("--no-deps",))
+            new = sorted(fs_wheels.iterdir())
         clash = [w.name for w in new if (wheels / w.name).exists()]
         if clash:
             raise BuildError(f"FS-only wheels collide with base wheels: {clash}")

@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sys
 import threading
+import types
 from urllib.parse import quote
 
 import psycopg
@@ -204,6 +206,48 @@ def test_sas_installed_reads_the_module_name(monkeypatch):
     assert pc.sas_installed()
     monkeypatch.setattr(pc, "SAS_MODULE", "no_such_module_u29")
     assert not pc.sas_installed()
+
+
+def fake_sas_package(monkeypatch, calls: list) -> None:
+    """sas-client 0.2.1.16's shape: an empty package, ``sas_client.sas_client.SasClient``,
+    and ``async def get_secure_object(self, sas_object_name)``."""
+    package, module = types.ModuleType("sas_client"), types.ModuleType("sas_client.sas_client")
+
+    class SasClient:
+        async def get_secure_object(self, sas_object_name):
+            calls.append((id(self), sas_object_name, threading.get_ident()))
+            return obj()
+
+    module.SasClient = SasClient
+    package.sas_client = module
+    monkeypatch.setitem(sys.modules, "sas_client", package)
+    monkeypatch.setitem(sys.modules, "sas_client.sas_client", module)
+
+
+def test_fetch_awaits_the_real_client_shape(monkeypatch):
+    calls: list = []
+    fake_sas_package(monkeypatch, calls)
+    assert pc._fetch_sas_object("fch-db") == obj()
+    assert pc._fetch_sas_object("fch-db") == obj()
+    assert [c[1] for c in calls] == ["fch-db", "fch-db"]
+    assert calls[0][0] != calls[1][0], "a new client per fetch, so its cache cannot serve a rotated password"
+
+
+def test_fetch_works_from_inside_a_running_loop(monkeypatch):
+    calls: list = []
+    fake_sas_package(monkeypatch, calls)
+
+    async def inside() -> object:
+        return pc._fetch_sas_object("fch-db")
+
+    assert asyncio.run(inside()) == obj()
+    assert calls[0][2] != threading.get_ident()
+
+
+def test_a_sas_dsn_resolves_through_the_real_client_shape(monkeypatch):
+    fake_sas_package(monkeypatch, [])
+    monkeypatch.setattr(pc, "sas_installed", lambda: True)
+    assert from_env({"PG_SAS_OBJECT": "fch-db"}).dsn() == DSN1
 
 
 # ── connect ──────────────────────────────────────────────────────────────────────
