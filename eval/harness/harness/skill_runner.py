@@ -53,6 +53,7 @@ from claude_agent_sdk import (
 
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
+    MAIN_THREAD_SYSTEM_PROMPT,
     owned_section_denial,
     owner_denied,
     protected_file_denial,
@@ -1359,6 +1360,9 @@ async def run_skill(
         # reproducibility across machines and CI; "project" only achieves
         # that. The spec was updated to match.
         setting_sources=["project"],
+        # Issue #4011: the main-thread sentence every production path carries, in
+        # place of the empty system prompt the SDK sends when this is None.
+        system_prompt=MAIN_THREAD_SYSTEM_PROMPT,
         mcp_servers={"genealogy": mock_server},
         # Only the genealogy mock — ignore every other MCP source the CLI would
         # otherwise load. Without this, a run under subscription auth inherits the

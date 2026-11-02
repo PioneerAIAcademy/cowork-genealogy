@@ -279,6 +279,25 @@ _guard = _load_guard()
 #: hook's map, not a copy.
 AGENT_ONLY_TOOLS = _guard.AGENT_ONLY_TOOLS
 
+_ROUTE_HOOK_PATH = _GUARD_HOOK_PATH.with_name("no_project_route.py")
+
+
+def _load_route_hook():
+    """Import the shipped `no_project_route.py` by file path; fail-closed like `_load_guard`."""
+    spec = importlib.util.spec_from_file_location("_genealogy_no_project_route", _ROUTE_HOOK_PATH)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load route hook at {_ROUTE_HOOK_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+#: The main-thread system prompt both harnesses pass (issue #4011). Every production
+#: path carries this sentence to the main thread -- the hosted planes append it, the
+#: Cowork hook adds it -- and the harnesses otherwise run an empty system prompt, so
+#: without it no unit or e2e run could see the fix. The hook's text, not a copy.
+MAIN_THREAD_SYSTEM_PROMPT = _load_route_hook().COLLECTIONS_NOTE
+
 #: Tools the main thread may not call: the harness-only `image_read` deny plus
 #: the shipped hook's AGENT_ONLY_TOOLS. Same import-don't-copy discipline as
 #: OWNED_SECTIONS below.
