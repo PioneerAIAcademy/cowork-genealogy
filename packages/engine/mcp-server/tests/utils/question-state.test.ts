@@ -227,9 +227,10 @@ describe("questionStatus — the state ladder", () => {
   });
 
   describe("evidence-gathered with planned items: dispose first, then the gate (#3546)", () => {
-    const evidence = (items: Record<string, unknown>[], planStatus = "active") =>
+    const evidence = (items: Record<string, unknown>[], planStatus = "active", log: Record<string, unknown>[] = []) =>
       doc({
         plans: [{ id: "pl_1", question_id: Q, status: planStatus, items }],
+        log,
         assertions: [{ id: "a_1", extracted_for_question_ids: [Q] }],
         person_evidence: [{ assertion_id: "a_1", person_id: "I1" }],
       });
@@ -261,19 +262,22 @@ describe("questionStatus — the state ladder", () => {
     });
 
     it("a planned item waiting only on the researcher's upload is left alone", () => {
-      const d = evidence([
-        { id: "pli_1", sequence: 1, status: "planned", repository: "MyHeritage" },
-        { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
-      ]);
-      d.log = [
-        {
-          id: "log_9",
-          plan_item_id: "pli_1",
-          tool: "external_site",
-          outcome: "partial",
-          external_site: { url_generated: "https://www.myheritage.com/x", capture_received: false },
-        },
-      ];
+      const d = evidence(
+        [
+          { id: "pli_1", sequence: 1, status: "planned", repository: "MyHeritage" },
+          { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
+        ],
+        "active",
+        [
+          {
+            id: "log_9",
+            plan_item_id: "pli_1",
+            tool: "external_site",
+            outcome: "partial",
+            external_site: { url_generated: "https://www.myheritage.com/x", capture_received: false },
+          },
+        ],
+      );
       expect(questionStatus(d, question()).nextStep).toBe(
         "search-records — next item pli_2, or research-plan — dispose of pli_2 if the evidence already answers the question",
       );
