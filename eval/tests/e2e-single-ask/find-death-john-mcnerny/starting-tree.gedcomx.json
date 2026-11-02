@@ -1,0 +1,616 @@
+{
+  "persons": [
+    {
+      "id": "KP9Y-74L",
+      "ark": "ark:/61903/4:1:KP9Y-74L",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "John",
+          "surname": "McNerny",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "Abt 1834",
+          "standard_date": "Abt 1834",
+          "place": ",, Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "place": "Cornplanter Township, Venango, Pennsylvania, United States",
+          "standard_place": "Cornplanter Township, Venango, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "M6GY-JCJ",
+      "ark": "ark:/61903/4:1:M6GY-JCJ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Mary Ann",
+          "surname": "Mcnerny",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "Abt 1854",
+          "standard_date": "Abt 1854",
+          "place": "New York, New York, New York",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "af2adf79-bdcd-45d1-befd-5700542f15de",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Oil City, Venango, Pennsylvania, United States",
+          "standard_place": "Oil City, Venango, Pennsylvania, United States"
+        },
+        {
+          "id": "538498a7-26e9-44ed-87ad-c69a67d56f1e",
+          "type": "Death",
+          "date": "24 September 1899",
+          "standard_date": "24 Sep 1899",
+          "place": "Buffalo, Erie, New York, United States",
+          "standard_place": "Buffalo, Erie, New York, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S64J-XHG"
+        },
+        {
+          "ref": "S64J-XQ8"
+        },
+        {
+          "ref": "S64J-61M"
+        },
+        {
+          "ref": "S64J-WPX"
+        }
+      ]
+    },
+    {
+      "id": "KP9Y-7HW",
+      "ark": "ark:/61903/4:1:KP9Y-7HW",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Mary",
+          "surname": "Carson",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "Abt 1834",
+          "standard_date": "Abt 1834",
+          "place": ",, Ireland",
+          "standard_place": "Ireland"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WQMV-9N1"
+        }
+      ]
+    },
+    {
+      "id": "KP3C-ZNH",
+      "ark": "ark:/61903/4:1:KP3C-ZNH",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "Agnes Francis",
+          "surname": "McNerny",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Agnes",
+          "surname": "Mc Narnal",
+          "type": "BirthName"
+        },
+        {
+          "id": "970ee2de-e481-4fa0-a7c8-bf4b3b3e24b7",
+          "given": "Agnes",
+          "surname": "McNerney",
+          "type": "BirthName"
+        },
+        {
+          "id": "c9075aec-0093-4635-8218-b4b05b7e90a8",
+          "given": "Agness",
+          "surname": "McNerny",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "6 February 1856",
+          "standard_date": "6 Feb 1856",
+          "place": "Manhattan, New York County, New York, United States",
+          "standard_place": "New York County, New York, United States"
+        },
+        {
+          "id": "50ce4ed1-fb40-4b68-a640-5750bb33cd40",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Elk, Clarion, Pennsylvania, United States",
+          "standard_place": "Elk Township, Clarion, Pennsylvania, United States"
+        },
+        {
+          "id": "8ef3cf4a-9cdf-4412-9654-83855dbaac42",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Clarion Township Starttanville borough, Clarion, Pennsylvania, United States",
+          "standard_place": "Clarion Township, Clarion, Pennsylvania, United States"
+        },
+        {
+          "id": "e0ab79ab-b708-4acf-8732-e7d408c2e1f7",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "Clarion, Clarion, Pennsylvania, United States",
+          "standard_place": "Clarion, Clarion, Pennsylvania, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "26 February 1918",
+          "standard_date": "26 Feb 1918",
+          "place": "Clarion, Clarion, Pennsylvania, United States",
+          "standard_place": "Clarion, Clarion, Pennsylvania, United States"
+        },
+        {
+          "id": "646a62a0-1319-4cd6-be8f-5bba0f220d38",
+          "type": "Burial",
+          "date": "1918",
+          "standard_date": "1918",
+          "place": "Clarion Cemetery, Clarion, Clarion, Pennsylvania, United States of America",
+          "standard_place": "Clarion Cemetery, Clarion, Clarion, Pennsylvania, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7QKL-6WS"
+        },
+        {
+          "ref": "36KM-SNG"
+        },
+        {
+          "ref": "3QJB-3R5"
+        },
+        {
+          "ref": "SB4Q-Y4M"
+        },
+        {
+          "ref": "SR4H-GXY"
+        },
+        {
+          "ref": "S561-FHZ"
+        },
+        {
+          "ref": "S2PG-VN9"
+        },
+        {
+          "ref": "S2CR-FXJ"
+        },
+        {
+          "ref": "S2CR-HLV"
+        },
+        {
+          "ref": "S244-GF9"
+        },
+        {
+          "ref": "S2QT-9LF"
+        },
+        {
+          "ref": "SQ19-1C8"
+        },
+        {
+          "ref": "9YJD-K5H"
+        },
+        {
+          "ref": "9YMQ-2GZ"
+        },
+        {
+          "ref": "9KPK-3MX"
+        },
+        {
+          "ref": "9KPV-79J"
+        },
+        {
+          "ref": "9KPN-JK3"
+        },
+        {
+          "ref": "9KPN-6BY"
+        },
+        {
+          "ref": "9KPN-D54"
+        },
+        {
+          "ref": "9KPN-HF5"
+        },
+        {
+          "ref": "9KPN-4DZ"
+        }
+      ]
+    },
+    {
+      "id": "M6GY-JZR",
+      "ark": "ark:/61903/4:1:M6GY-JZR",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Son",
+          "surname": "Mcnerny",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "Abt 1860",
+          "standard_date": "Abt 1860",
+          "place": ",, New York",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ]
+    },
+    {
+      "id": "M6GY-JZS",
+      "ark": "ark:/61903/4:1:M6GY-JZS",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Son",
+          "surname": "Mcnerny",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "Abt 1858",
+          "standard_date": "Abt 1858",
+          "place": "New York, New York, New York",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "Abt 1859",
+          "standard_date": "Abt 1859"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KP9Y-74L",
+      "person2": "KP9Y-7HW",
+      "facts": [
+        {
+          "id": "c2548be5-44c9-49c5-ae5a-d0a959a813e6",
+          "type": "Marriage",
+          "date": "Abt 1853",
+          "standard_date": "Abt 1853"
+        },
+        {
+          "id": "27913e02-f2f7-4653-9bc3-9a13a0896872",
+          "type": "Marriage",
+          "date": "Abt 1853",
+          "standard_date": "Abt 1853",
+          "place": "New York, New York, New York",
+          "standard_place": "New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "KP9Y-74L",
+      "child": "M6GY-JCJ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KP9Y-7HW",
+      "child": "M6GY-JCJ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KP9Y-74L",
+      "child": "KP3C-ZNH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KP9Y-7HW",
+      "child": "KP3C-ZNH",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KP9Y-74L",
+      "child": "M6GY-JZS",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KP9Y-7HW",
+      "child": "M6GY-JZS",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KP9Y-74L",
+      "child": "M6GY-JZR",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "KP9Y-7HW",
+      "child": "M6GY-JZR",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_KP9Y-74L",
+      "title": "John McNerny",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for John McNerny (PID KP9Y-74L); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP9Y-74L"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_M6GY-JCJ",
+      "title": "Mary Ann Mcnerny",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Mary Ann Mcnerny (PID M6GY-JCJ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:M6GY-JCJ"
+    },
+    {
+      "id": "sd_person_KP9Y-7HW",
+      "title": "Mary Carson",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Mary Carson (PID KP9Y-7HW); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP9Y-7HW"
+    },
+    {
+      "id": "sd_person_KP3C-ZNH",
+      "title": "Agnes Mc Narnal",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Agnes Mc Narnal (PID KP3C-ZNH); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP3C-ZNH"
+    },
+    {
+      "id": "sd_person_M6GY-JZR",
+      "title": "Son Mcnerny",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Son Mcnerny (PID M6GY-JZR); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:M6GY-JZR"
+    },
+    {
+      "id": "sd_person_M6GY-JZS",
+      "title": "Son Mcnerny",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Son Mcnerny (PID M6GY-JZS); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:M6GY-JZS"
+    },
+    {
+      "id": "S64J-XHG",
+      "title": "Mary McNerney, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QKNB-B6CX : Fri Mar 08 17:20:39 UTC 2024), Mary McNerney in entry for George B Lozier, 31 January 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QKNB-B6CX"
+    },
+    {
+      "id": "S64J-XQ8",
+      "title": "Mary McNerney, \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F6S4-R7G : Fri Oct 16 17:49:29 UTC 2026), Mary McNerney in entry for George B. Lozier, 2 Feb 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F6S4-R7G"
+    },
+    {
+      "id": "S64J-61M",
+      "title": "Mary McNerney, \"New York, County Marriages, 1778-1848; 1908-1937\"",
+      "citation": "\"New York, County Marriages, 1778-1848; 1908-1937\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XVPL-7S3 : Sun Mar 10 17:56:32 UTC 2024), Mary McNerney in entry for George B. Lozier, 2 February 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XVPL-7S3"
+    },
+    {
+      "id": "S64J-WPX",
+      "title": "Mary E. Lozier, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWVV-KR4 : Wed Sep 09 07:46:43 UTC 2026), Mary E. Lozier in entry for W. A. Lozier, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWVV-KR4"
+    },
+    {
+      "id": "WQMV-9N1",
+      "title": "Mary McNerey, \"New York, New York City Municipal Deaths, 1795-1949\"",
+      "citation": "\"New York, New York City Municipal Deaths, 1795-1949\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2W6R-89T : Wed Mar 26 18:02:01 UTC 2025), Mary McNerey in entry for Thomas Frances McNerey, 8 Apr 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:2W6R-89T"
+    },
+    {
+      "id": "7QKL-6WS",
+      "title": "Agnes McNarnell, \"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\"",
+      "citation": "\"The Church of Jesus Christ of Latter-day Saints, Record of Members (Worldwide), 1836-1970\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:62JY-W5RY : Fri Mar 27 04:39:05 UTC 2026), Agnes McNarnell in entry for John Royal Vearlee Call.",
+      "url": "https://familysearch.org/ark:/61903/1:1:62JY-W5RY"
+    },
+    {
+      "id": "36KM-SNG",
+      "title": "Agnes Mc Nerny, \"Ohio, County Marriages, 1789-2016\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZZY9-6GW2 : Sun Mar 10 21:03:23 UTC 2024), Agnes Mc Nerny in entry for Ernest B. Hilbish and Mary A. Call, 9 Feb 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZZY9-6GW2"
+    },
+    {
+      "id": "3QJB-3R5",
+      "title": "Agnes Frances McNerny, \"Pennsylvania, Delayed Birth Records, 1780-1977\"",
+      "citation": "\"Pennsylvania, Delayed Birth Records, 1780-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:83XN-1V6Z : Tue Dec 16 07:36:30 UTC 2025), Agnes Frances McNerny in entry for George Edward Call, 3 Jun 1885.",
+      "url": "https://familysearch.org/ark:/61903/1:1:83XN-1V6Z"
+    },
+    {
+      "id": "SB4Q-Y4M",
+      "title": "Agnes Frances McNerny, \"Pennsylvania, Delayed Birth Records, 1780-1977\"",
+      "citation": "\"Pennsylvania, Delayed Birth Records, 1780-1977\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:83F4-3YT2 : Tue Dec 16 07:40:00 UTC 2025), Agnes Frances McNerny in entry for John Royal Call, 22 Sep 1878.",
+      "url": "https://familysearch.org/ark:/61903/1:1:83F4-3YT2"
+    },
+    {
+      "id": "SR4H-GXY",
+      "title": "Agnes Call, \"Pennsylvania, Marriages, 1709-1940\"",
+      "citation": "\"Pennsylvania, Marriages, 1709-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H5JB-J16Z : Fri Oct 16 19:31:22 UTC 2026), Agnes Call in entry for J. A. Swarm, 22 Nov 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H5JB-J16Z"
+    },
+    {
+      "id": "S561-FHZ",
+      "title": "Agnes Francis McNerney Call, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK1F-V6FT : Sun Oct 04 23:38:16 UTC 2026), Agnes Francis McNerney Call, 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK1F-V6FT"
+    },
+    {
+      "id": "S2PG-VN9",
+      "title": "Agnes Call, \"Pennsylvania, County Marriages, 1775-1991\"",
+      "citation": "\"Pennsylvania, County Marriages, 1775-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VF9C-6NM : Fri May 08 00:26:36 UTC 2026), Agnes Call in entry for George Wolfe and Hattie Call, 9 August 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VF9C-6NM"
+    },
+    {
+      "id": "S2CR-FXJ",
+      "title": "Agnes, \"Pennsylvania, Marriages, 1709-1940\"",
+      "citation": "\"Pennsylvania, Marriages, 1709-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H5V4-QVMM : Fri Oct 16 20:57:07 UTC 2026), Agnes in entry for Geo. E. Call, 20 Mar 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H5V4-QVMM"
+    },
+    {
+      "id": "S2CR-HLV",
+      "title": "Agnes, \"Pennsylvania, County Marriages, 1775-1991\"",
+      "citation": "\"Pennsylvania, County Marriages, 1775-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFWP-3D5 : Thu May 07 23:29:28 UTC 2026), Agnes in entry for Geo. E. Call and Besse Rebecca Weckerly, 20 March 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFWP-3D5"
+    },
+    {
+      "id": "S244-GF9",
+      "title": "Agnes, \"Pennsylvania, Marriages, 1709-1940\"",
+      "citation": "\"Pennsylvania, Marriages, 1709-1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H5V4-QJZM : Fri Oct 16 19:28:04 UTC 2026), Agnes in entry for Winfield Call, 20 Mar 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H5V4-QJZM"
+    },
+    {
+      "id": "S2QT-9LF",
+      "title": "Agnes F Call in entry for Mildred Lilian Call, \"Pennsylvania, Births and Christenings, 1709-1950\"",
+      "citation": "\"Pennsylvania, Births and Christenings, 1709-1950\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HHN4-ZDZM : 8 October 2026), Agnes F Call in entry for Mildred Lilian Call, 1896.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HHN4-ZDZM"
+    },
+    {
+      "id": "SQ19-1C8",
+      "title": "Agnes Call, \"Pennsylvania, County Marriages, 1775-1991\"",
+      "citation": "\"Pennsylvania, County Marriages, 1775-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFWP-4SK : Thu May 07 23:29:33 UTC 2026), Agnes Call in entry for J. A. Swarm and Marjory Estella Call, 22 November 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFWP-4SK"
+    },
+    {
+      "id": "9YJD-K5H",
+      "title": "1885 Birth - George Edward CALL - son of Jacob W. CALL & Agnes Frances McNERNY",
+      "citation": "FHL film #1315267 Delayed Birth Records, Clarion County, PA;  File No. 1128 filed 22 February 1943 submitted by George Edward CALL.",
+      "url": "https://www.familysearch.org/photos/artifacts/53302248"
+    },
+    {
+      "id": "9YMQ-2GZ",
+      "title": "Mcnearny, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPWK-9VC : Tue Feb 25 18:18:24 UTC 2025), Mcnearny in entry for John R Call, 23 Feb 1959.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPWK-9VC"
+    },
+    {
+      "id": "9KPK-3MX",
+      "title": "Agnes in entry for Winfield Call and Laura Ogden, \"Pennsylvania, County Marriages, 1885-1950\"",
+      "citation": "\"Pennsylvania, County Marriages, 1775-1991\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VFWP-3DV : Fri May 08 00:55:19 UTC 2026), Agnes in entry for Winfield Call and Laura Ogden, 20 March 1907.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VFWP-3DV"
+    },
+    {
+      "id": "9KPV-79J",
+      "title": "Agnes Mcnerey in entry for Claude Raymond Call, \"Ohio Deaths, 1908-1953\"",
+      "citation": "\"Ohio, Deaths, 1908-1953\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XD1F-ZYW : Thu Jan 16 02:06:51 UTC 2025), Agnes Mcnerey in entry for Claude Raymond Call, 31 Mar 1931.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XD1F-ZYW"
+    },
+    {
+      "id": "9KPN-JK3",
+      "title": "Agnes Mcnerny in entry for Jacob Winfield Call, \"Ohio Deaths, 1908-1953\"",
+      "citation": "\"Ohio, Deaths, 1908-1953\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X638-19M : Tue Mar 05 06:32:05 UTC 2024), Agnes Mcnerny in entry for Jacob Winfield Call, 16 Dec 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X638-19M"
+    },
+    {
+      "id": "9KPN-6BY",
+      "title": "Agnes Mc Nerny in entry for Ernest B. Hilbish and Mary A. Call, \"Ohio, County Marriages, 1789-2013\"",
+      "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZZY9-6GW2 : Sun Mar 10 21:03:23 UTC 2024), Agnes Mc Nerny in entry for Ernest B. Hilbish and Mary A. Call, 9 Feb 1926.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZY6-B98"
+    },
+    {
+      "id": "9KPN-D54",
+      "title": "Agnes Call in household of Jacob W Call, \"United States Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MGZ7-534 : Wed Aug 13 19:32:11 UTC 2025), Agnes Call in entry for Jacob W Call, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MGZ7-534"
+    },
+    {
+      "id": "9KPN-HF5",
+      "title": "Agness F Call in household of Jacob Call, \"United States Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M392-K2T : Thu Jan 01 21:54:08 UTC 2026), Agness F Call in entry for Jacob Call, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M392-K2T"
+    },
+    {
+      "id": "9KPN-4DZ",
+      "title": "Agness Call in household of Jacob Call, \"United States Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MWXP-GWG : Wed Sep 09 03:42:06 UTC 2026), Agness Call in entry for Jacob Call, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MWXP-GWG"
+    }
+  ]
+}
