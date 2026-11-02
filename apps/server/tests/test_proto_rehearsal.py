@@ -1403,7 +1403,7 @@ def test_cases_cover_the_plan_list():
         "web_half_sqs", "sqs_region_contradicts", "fast_errors", "maxretries_2", "maxretries_1", "tmpdir_bad",
         "worker_no_provider", "worker_no_tool_url", "worker_blocked_tools", "worker_no_queue_url",
         "worker_default_enc_key", "web_no_queue_url", "default_session_secret", "kill_window", "debug_hold",
-        "refresh_age_0", "cap_1usd", "nudges_3", "nudges_0", "no_telemetry", "idle_session_60s",
+        "refresh_age_0", "cap_1usd", "no_telemetry", "idle_session_60s",
         "slots_4", "slots_8", "worker_xlarge"}
 
 
@@ -1416,20 +1416,14 @@ def test_every_case_has_a_row_in_the_readme_probe_table():
 
 
 @pytest.mark.parametrize("case, tier, name, value", [
-    ("nudges_3", "web", "AUTONOMOUS_MAX_NUDGES", "3"),
-    ("nudges_0", "web", "AUTONOMOUS_MAX_NUDGES", "0"),
     ("no_telemetry", "worker", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"),
 ])
-def test_nudge_and_telemetry_cases_set_one_name_and_remove_it_on_restore(stack, case, tier, name, value):
-    """Neither name is in up's API layer, so the restore removes it: on web the template's
-    AUTONOMOUS_MAX_NUDGES=0 (01-web.config) applies again; the worker template sets neither."""
+def test_the_telemetry_case_sets_one_name_and_removes_it_on_restore(stack, case, tier, name, value):
+    """The name is not in up's API layer, so the restore removes it; the worker template
+    does not set it."""
     assert rh.CASES[case]["ops"] == {tier: [(rh.ENV_NS, name, value)]} and "allow" not in rh.CASES[case]
-    # The template is 0 under step mode (decision 25), so `nudges_0` now sets the
-    # value the template already carries. The case still earns its keep: it proves
-    # the rehearsal APPLIES and REMOVES the option, which is what the restore tests,
-    # and it is the case that would catch the template drifting back above 0.
-    assert rh.template_env("web")["AUTONOMOUS_MAX_NUDGES"] == "0"
     assert "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" not in rh.template_env("worker")
+    assert "AUTONOMOUS_MAX_NUDGES" not in rh.template_env("web"), "the Stop veto's cap is deleted"
     env, fake, _ = stack
     env_name = rh.ENV_NAMES[tier]
     assert (rh.ENV_NS, name) not in rh.options_map(json.loads(

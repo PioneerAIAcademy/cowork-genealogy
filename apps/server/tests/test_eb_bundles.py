@@ -322,8 +322,6 @@ LEGITIMATE = {
         "node_modules/somepkg/README.md": b""}),
     "a dirty build stamp": ("tools", {"build/build-info.json": json.dumps(
         {"version": "0.1.0+2026-10-02.abc12345.dirty"}).encode()}),
-    "the web tier's nudge cap": ("web", {".ebextensions/01-web.config": _config(
-        {"PORT": "8000", "PGSSLROOTCERT": CA, "AUTONOMOUS_MAX_NUDGES": "60"})}),
     "the worker's slot users": ("worker", {".ebextensions/02-worker.config": _config(
         {"PORT": "8000", "PGSSLROOTCERT": CA, "WORKER_TURN_USERS": "genealogy-turn-0 genealogy-turn-1"})}),
 }
@@ -449,6 +447,10 @@ REJECTED = {
     "the nudge cap in the worker template": ("worker", lambda: _add("worker", **{
         ".ebextensions/02-worker.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
                                                    "AUTONOMOUS_MAX_NUDGES": "60"})}),
+        "sets AUTONOMOUS_MAX_NUDGES"),
+    "the nudge cap in the web template": ("web", lambda: _add("web", **{
+        ".ebextensions/01-web.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
+                                                "AUTONOMOUS_MAX_NUDGES": "60"})}),
         "sets AUTONOMOUS_MAX_NUDGES"),
     "no slot users in the worker template": ("worker", lambda: _add("worker", **{
         ".ebextensions/02-worker.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
