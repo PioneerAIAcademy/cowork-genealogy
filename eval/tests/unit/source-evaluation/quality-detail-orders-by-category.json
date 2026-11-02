@@ -18,6 +18,9 @@
     "delegation": "Have a look at the sources attached to Christian P. Hole (KD96-TV2) — are they actually right, or is something mis-indexed?\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-quality"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "person-read-hole-attached-sources",
     "record-read-hole-1900-census",

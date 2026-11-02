@@ -132,10 +132,10 @@ Three kinds, and the recommendation follows the kind:
 
 Open with the count of **user-actionable** findings — neither backend metadata nor FamilySearch's profile checklist is in that count. Then, per finding:
 
-- Which source, named by its title and citation, not by its internal id
+- Which source: its `title` quoted exactly as `person_read` returned it, never paraphrased; its citation; and its record link, the source's `url` exactly as returned — never its internal id
 - What disagrees with what: the indexed value beside the recorded fact
 - The classification and the cue that decided it
-- The recommended action, in the doctrine of step 4 — for (a), go back to what the index was made from and correct it, naming whether that is the original page or (for an index-only collection) the record it derives from; for (b), detach, with the reason
+- The recommended action, in the doctrine of step 4 — for (a), go back to what the index was made from and correct it, naming whether that is the original page or (for an index-only collection) the record it derives from; for an ambiguous finding, the re-read alone, and the line ends there: no "if it fits … / if not …" branches, since the user re-invokes once the re-read settles it; for (b), detach it from the person's Sources list, with the reason
 
 **If the sweep turns up two sources disagreeing with each other** — not with the profile — characterise it and hand it on: name both sources, both values, what kind of record each is, and what would settle it. **Pick no winner and recommend no detach.** Weighing two sources against each other is the conflict workflow's job, and the user takes it there. This is the one finding that carries a route instead of a remedy. Ordinary variance between two records of the kind step 4 describes is not a disagreement worth reporting here either.
 
@@ -152,7 +152,8 @@ If any backend metadata came up, one closing sentence of context — not a list,
 ```
 SOURCES ON: Patrick Flynn (KWCJ-RN4) — 6 attached, 2 findings
 
-1. 1851 Civil Registration, Sherbrooke — indexing error
+1. Patrick Flynn, "Canada, Sherbrooke Civil Registration, 1851" — indexing error
+   Link: https://www.familysearch.org/ark:/61903/1:1:QV2J-9K4
    Indexed birth year 1814; the profile records 1816.
    Everything else in the record fits — the household, the
    wife's name, the parish. A single-digit misread in a
@@ -161,12 +162,13 @@ SOURCES ON: Patrick Flynn (KWCJ-RN4) — 6 attached, 2 findings
    birth year. Keep the source attached — it is good evidence
    with one bad field.
 
-2. 1861 Ontario Death Registration — misattributed
+2. Patrick Flynn, "Ontario, Death Registrations, 1861" — misattributed
+   Link: https://www.familysearch.org/ark:/61903/1:1:M7XQ-2PL
    Names a Patrick Flynn who died in 1861, but this Patrick
    appears as head of household in 1871 and 1881. The
    registration names parents who are not his. It is also
    attached to KWCJ-88Q, a same-name man in the next township.
-   Next: detach it — it belongs to the other Patrick Flynn.
+   Next: detach it from his Sources list — it belongs to the other Patrick Flynn.
 
 Could not check: 2 user-uploaded documents and 1 FindAGrave
 link, none of which carry a readable record id.
