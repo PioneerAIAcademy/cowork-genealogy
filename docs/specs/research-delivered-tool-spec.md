@@ -78,8 +78,9 @@ tools on purpose.
 - **Cowork and the e2e harness.** No such hook binds, and the tool IS advertised (the
   e2e orchestrator binds the real engine server and grants `mcp__genealogy` as a
   server-prefix wildcard). So it must not error and must not claim an effect it did not
-  have: it returns the acknowledgement above and the run genuinely carries on. That inert
-  behaviour is the intended one for these environments, not an oversight.
+  have: it returns the acknowledgement above, which tells the model to make no further tool
+  calls and end its turn. The tool itself still writes nothing and ends nothing; that note is
+  the only stop these environments have.
 - **The unit harness.** Advertised, and inert. That harness binds a mock server which
   registers only fixture-backed tools plus `LIVE_TOOLS` (`eval/harness/harness/mock_mcp.py`);
   this tool is a `LIVE_TOOL` there, so the real implementation runs and the call is
