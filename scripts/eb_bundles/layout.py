@@ -42,13 +42,13 @@ WEB_DIST_DIR = "web-dist"
 
 # U11: compose, harness and debug switches, never in a tier's template, hook or image.
 # DEV_PATHS and DEV_LOGIN are two of the DEV_ prefix. AUTONOMOUS_MAX_NUDGES was the deleted Stop
-# veto's cap (step mode phase 2); refused on the worker and tools tiers so a stale setting fails
-# loudly rather than reading as live.
+# veto's cap (step mode phase 2); refused on every tier, the web tier that once read it included,
+# so a stale setting fails loudly rather than reading as live.
 # WORKER_TURN_USERS=none runs every turn's CLI as the worker's own user.
 DEV_PREFIXES = ("DEV_", "GENEALOGY_DEBUG_")
 DEV_VARIABLES = frozenset({"BLOCKED_TOOLS", "SQS_ENDPOINT", "QUEUE_NAME", "FAMILYSEARCH_CONFIG"})
 DEV_VARIABLES_BY_TIER = {
-    "web": frozenset(),
+    "web": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
     "worker": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
     "tools": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
 }

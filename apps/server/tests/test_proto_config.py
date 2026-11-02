@@ -417,11 +417,30 @@ def test_ceiling_override_lowers_read_timeout_and_nothing_else():
 # A recipe's `export READ_TIMEOUT_S="${READ_TIMEOUT_S:-1800}"` in raw make text ($$ is the
 # shell's $); either default form, since this reads the number only. None exports one
 # today; a recipe that adds one is a ceiling the shim can run at.
-_EXPORTED_CEILING = re.compile(r'export READ_TIMEOUT_S="\$\$\{READ_TIMEOUT_S:?-(\d+)\}"')
+# Any assignment a recipe can make: `export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-N}"`, the
+# same unquoted or as a plain number, or an inline `READ_TIMEOUT_S=N cmd`.
+_EXPORTED_CEILING = re.compile(
+    r'\bREAD_TIMEOUT_S\s*[:?]?=\s*["\']?(?:\$\$\{READ_TIMEOUT_S:?-)?(\d+)'
+)
 
 
-def _exported_ceilings_s() -> list[int]:
-    return [int(n) for n in _EXPORTED_CEILING.findall(MAKEFILE.read_text(encoding="utf-8"))]
+def _exported_ceilings_s(text: str | None = None) -> list[int]:
+    if text is None:
+        text = MAKEFILE.read_text(encoding="utf-8")
+    return [int(n) for n in _EXPORTED_CEILING.findall(text)]
+
+
+def test_the_ceiling_reader_sees_each_spelling_of_an_export():
+    for line in (
+        'export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-7200}"',
+        "export READ_TIMEOUT_S=$${READ_TIMEOUT_S:-7200};",
+        "export READ_TIMEOUT_S=7200;",
+        "READ_TIMEOUT_S=7200 $(PYTHON) -m proto.shim",
+        "export READ_TIMEOUT_S := 7200",
+    ):
+        assert _exported_ceilings_s(line) == [7200], line
+    assert _exported_ceilings_s("export READ_TIMEOUT_SECONDS_NOTE=7200") == []
+    assert _exported_ceilings_s("echo $$READ_TIMEOUT_S") == []
 
 
 def test_elasticmq_visibility_timeout_exceeds_the_ceiling():

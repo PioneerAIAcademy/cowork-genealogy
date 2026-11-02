@@ -59,7 +59,8 @@ passes no decision clause, so it vetoes the exit like any yield and alpha tester
 behaviour until the alpha is retired~~ — **SUPERSEDED 2026-10-06** on the lead's own Done-when (a new browser session must end with
 the delivered outcome, and the default web transport is the alpha) and his 2026-10-06 comments
 asking for the duplicate-spawn fix. The struck ruling was his (496566c29). The
-alpha now halts on the delivered signal and forwards it as `should_continue_run(delivered=...)`,
+alpha then halted on the delivered signal and forwarded it as `should_continue_run(delivered=...)`
+(deleted with the Stop veto in step mode phase 2),
 and it forces delegations to the foreground like the worker. The ruling above rested on nothing
 needing those signals there; the router's "Bounded request or job" section needed the first, and
 two live incident reports on issue #2813 needed the second, so the premise lapsed. `auto_continue`

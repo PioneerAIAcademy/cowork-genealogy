@@ -1,8 +1,9 @@
 """What the hosted planes still share with the e2e harness (PR #2870 items 1b/1c/1d).
 
 The Stop veto was deleted from the hosted planes in step mode's phase 2, so
-``should_continue_run``, ``terminal_reason`` and ``CONTINUE_REASON`` now live only in
-``eval/harness/e2e/stop_checker.py``, which the e2e half of phase 2 retires. What the two
+``should_continue_run`` and ``terminal_reason`` now live only in
+``eval/harness/e2e/stop_checker.py``, and the continue text only as a string literal in
+``eval/harness/e2e/orchestrator.py``'s ``stop_hook``; the e2e half of phase 2 retires both. What the two
 packages still share is ``project_completed``:
 
     apps/server/app/agent/continue_policy.py      hosted alpha AND the prototype worker
@@ -49,10 +50,10 @@ def _lift(path: Path) -> dict:
     Only function definitions and module-level assignments of LITERALS are taken, so
     neither module's imports can drag anything in -- an assignment whose value is a call
     or an attribute lookup is left behind, and the function that needed it then raises
-    here rather than passing. That is the failure mode this wants: the shared copy's
-    `terminal_reason` returns TERMINAL_* constants, and lifting the functions alone made
-    it raise NameError on the first call, which is a true report that the seam is wider
-    than the functions.
+    here rather than passing. That is the failure mode this wants: when the shared copy
+    still had `terminal_reason` (deleted in step mode phase 2), it returned TERMINAL_*
+    constants, and lifting the functions alone made it raise NameError on the first call,
+    which is a true report that the seam is wider than the functions.
     """
     assert path.is_file(), f"{path} is gone: the parity seam moved and this test must move with it"
     tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -140,9 +141,9 @@ def test_the_env_guard_is_shared_where_it_can_be_and_only_where_it_can_be():
 
     # The precise rule, and the only one worth asserting: an environment value may not be
     # converted without a guard. Deliberately NOT "no bare int(raw) anywhere" -- an
-    # earlier draft of this test said that and flagged `parse_max_nudges`, which is
-    # correctly guarded by its caller and reads the QUEUE BODY rather than the
-    # environment. A check that fails legitimate code gets skipped within a month.
+    # earlier draft of this test said that and flagged `parse_max_nudges` (since deleted
+    # with the Stop veto), which was correctly guarded by its caller and read the QUEUE
+    # BODY rather than the environment. A check that fails legitimate code gets skipped within a month.
     out = subprocess.run(
         ["git", "grep", "--untracked", "-n", "-E",
          r"(int|float)\(os\.environ(\.get)?"],

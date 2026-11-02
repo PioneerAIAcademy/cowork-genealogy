@@ -820,8 +820,8 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         # the turn released for the first must do some work on it before handing over to
         # the second -- without the guard it halts at its own first tool call and the
         # first message gets no work at all. Counted per TURN (`turn_tool_calls`, reset in
-        # `_begin_turn_hook_state`): the hooks dict lives for the session, so the
-        # session-wide `tool_calls` would pass the guard on every turn after the first.
+        # `_begin_turn_hook_state`): the hooks dict lives for the session, so a
+        # session-wide count would pass the guard on every turn after the first.
         # This hook counts BEFORE deciding, so the turn's first call sees 1.
         if agent is not None and main_thread and counter["turn_tool_calls"] >= 2:
             try:

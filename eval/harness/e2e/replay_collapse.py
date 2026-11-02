@@ -67,8 +67,10 @@ import argparse
 import asyncio
 import json
 import math
+import os
 import re
 import shutil
+import stat
 import sys
 import tempfile
 from collections import Counter
@@ -254,6 +256,14 @@ class Outcome:
     base_accepts: bool | None = None
 
 
+def _plant(path: Path, text: str) -> None:
+    """Write a group's starting state. A replayed call that writes through the
+    engine's store leaves the file read-only, so lift the mode first."""
+    if path.exists():
+        os.chmod(path, path.stat().st_mode | stat.S_IWRITE)
+    path.write_text(text, encoding="utf-8")
+
+
 def _body(content: list[dict[str, Any]]) -> Any:
     return _parsed("".join(c.get("text", "") for c in content))
 
@@ -263,8 +273,8 @@ async def evaluate_group(g: Group, base, candidate, project: Path, tree: dict | 
     if any(c.recorded_count is None for c in g.calls):
         out.status = "unverifiable"
         return out
-    (project / "research.json").write_text(json.dumps(g.state), encoding="utf-8")
-    (project / "tree.gedcomx.json").write_text(json.dumps(tree or {}), encoding="utf-8")
+    _plant(project / "research.json", json.dumps(g.state))
+    _plant(project / "tree.gedcomx.json", json.dumps(tree or {}))
     before = _hash_dir(project)
 
     walked_ids: set[str] = set()
@@ -659,8 +669,8 @@ async def evaluate_plural_group(
     if any(c.recorded_count is None for c in g.calls):
         out.status = "unverifiable"
         return out
-    (project / "research.json").write_text(json.dumps(g.state), encoding="utf-8")
-    (project / "tree.gedcomx.json").write_text(json.dumps(tree or {}), encoding="utf-8")
+    _plant(project / "research.json", json.dumps(g.state))
+    _plant(project / "tree.gedcomx.json", json.dumps(tree or {}))
     before = _hash_dir(project)
     single = {"projectPath": str(project), "section": g.section, **g.fixed}
 

@@ -42,10 +42,33 @@ def _veto_names_in(tree: ast.AST) -> set[str]:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in _VETO_NAMES:
             found.add(node.name)
         elif isinstance(node, ast.Assign):
-            found |= {t.id for t in node.targets if isinstance(t, ast.Name) and t.id in _VETO_NAMES}
+            found |= {
+                n.id for t in node.targets for n in ast.walk(t)
+                if isinstance(n, ast.Name) and n.id in _VETO_NAMES
+            }
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.target.id in _VETO_NAMES:
+                found.add(node.target.id)
         elif isinstance(node, ast.ImportFrom):
             found |= {a.name for a in node.names if a.name in _VETO_NAMES}
+        elif _binds_a_stop_key(node):
+            found.add("Stop")
     return found
+
+
+def _is_stop(node: ast.AST | None) -> bool:
+    return isinstance(node, ast.Constant) and node.value == "Stop"
+
+
+def _binds_a_stop_key(node: ast.AST) -> bool:
+    """A `Stop` hook bound under any name: `{"Stop": ...}`, `hooks["Stop"]` or `dict(Stop=...)`."""
+    if isinstance(node, ast.Dict):
+        return any(_is_stop(k) for k in node.keys)
+    if isinstance(node, ast.Subscript):
+        return _is_stop(node.slice)
+    if isinstance(node, ast.Call):
+        return any(k.arg == "Stop" for k in node.keywords)
+    return False
 
 
 def _offenders() -> dict[str, set[str]]:
@@ -67,14 +90,26 @@ def test_the_guard_sees_each_shape_of_a_planted_veto():
         "def should_continue_run(**kw):\n    return True\n",
         "async def make_stop_hook():\n    pass\n",
         "CONTINUE_REASON = 'keep going'\n",
+        "CONTINUE_REASON: str = 'keep going'\n",
+        "CONTINUE_REASON, x = 'keep going', 1\n",
         "from app.agent.continue_policy import CONTINUE_REASON\n",
+        "hooks['Stop'] = [matcher]\n",
+        "hooks = {'Stop': [matcher]}\n",
+        "hooks = dict(Stop=[matcher])\n",
+        "hooks.update({'Stop': [matcher]})\n",
         "DELIVERED_TOOL = 'mcp__genealogy__research_delivered'\n",
         "DELIVERY_GUIDANCE = 'call research_delivered'\n",
         "def delivered_stop_reason(summary):\n    return summary\n",
         "from .continue_policy import DELIVERED_TOOL\n",
     ):
         assert _veto_names_in(ast.parse(planted)), planted
-    assert not _veto_names_in(ast.parse("x = foreground_rewrite\n"))
+    for legitimate in (
+        "x = foreground_rewrite\n",
+        "reason = 'Stop'\n",
+        "if event == 'Stop':\n    pass\n",
+        "counts = {'stop': 1}\n",
+    ):
+        assert not _veto_names_in(ast.parse(legitimate)), legitimate
 
 
 def test_the_alpha_does_not_halt_on_a_delivered_call(tmp_path):

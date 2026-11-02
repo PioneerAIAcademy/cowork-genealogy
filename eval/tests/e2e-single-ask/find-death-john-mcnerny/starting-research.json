@@ -1,13 +1,13 @@
 {
   "project": {
-    "id": "rp_review_sources_kenneth_quass",
-    "objective": "Review the existing sources on Kenneth Werner Quass (KNS4-P6W).",
+    "id": "rp_find_death_john_mcnerny",
+    "objective": "Find the death record of John McNerny (KP9Y-74L), last seen in the 1880 US Census, near Venango County, Pennsylvania.",
     "subject_person_ids": [
-      "KNS4-P6W"
+      "KP9Y-74L"
     ],
     "status": "active",
-    "created": "2026-06-15",
-    "updated": "2026-06-15"
+    "created": "2026-11-02",
+    "updated": "2026-11-02"
   },
   "researcher_profile": {
     "experience_level": "intermediate",

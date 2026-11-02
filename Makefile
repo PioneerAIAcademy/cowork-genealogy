@@ -1167,7 +1167,7 @@ eval-health: ## Weekly: unit tests below the 95% pass bar, and consistently-part
 	cd eval/harness && uv run python -m eval_health_report $(if $(SKILL),--skill $(SKILL),) $(if $(WINDOW),--window $(WINDOW),)
 
 .PHONY: judge-regrade
-judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
+judge-regrade: ## Regrade committed unit run logs against the current judge prompt AND render code (satisfies rule 2b, both halves): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
 	# Issue #2479 PR 1. Rule 2b blocks on a judge-prompt-only PR; this target
 	# is the cheap satisfaction path (~$5 of judge-only spend vs ~$95 to re-run).
 	# DRY=1 renders + hashes every eligible prompt with NO model call — used by
@@ -1656,6 +1656,10 @@ mcpb: ## Build the .mcpb desktop extension
 .PHONY: plugin
 plugin: ## Build the Cowork plugin .zip
 	node scripts/package-plugin.mjs
+
+.PHONY: plugin-connector
+plugin-connector: ## Build the plugin's connector release into releases/plugin-marketplace/ and releases/genealogy-plugin-connector.zip: make plugin-connector VERSION=x.y.z MARKETPLACE=<name>
+	node scripts/package-plugin.mjs --connector --version '$(VERSION)' --marketplace '$(MARKETPLACE)'
 
 .PHONY: cowork-install
 cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-path (Windows: eval\CoworkInstall.bat)

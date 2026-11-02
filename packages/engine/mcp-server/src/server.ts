@@ -112,6 +112,7 @@ import {
 import { projectList } from "./tools/project-list.js";
 import { treeQuery, type TreeQueryInput } from "./tools/tree-query.js";
 import { extractionAppend } from "./tools/extraction-append.js";
+import { evaluationAppend } from "./tools/evaluation-append.js";
 import { timelineBuild } from "./tools/timeline-build.js";
 import type { TimelineBuildInput } from "./types/timeline-build.js";
 import { materializeFacts } from "./tools/materialize-facts.js";
@@ -790,6 +791,16 @@ export function createServer(principal: Principal): Server {
         return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
       }
     }
+    if (request.params.name === "evaluation_append") {
+      try {
+        const args = request.params.arguments as unknown as ResearchAppendInput;
+        const result = await evaluationAppend(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
     if (request.params.name === "rank_search_matches") {
       try {
         const args = request.params.arguments as unknown as RankSearchMatchesInput;
@@ -803,7 +814,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "project_context") {
       try {
         const args = request.params.arguments as unknown as ProjectContextInput;
-        const result = await projectContext(args);
+        const result = await projectContext(args, principal);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -822,7 +833,7 @@ export function createServer(principal: Principal): Server {
     }
     if (request.params.name === "project_list") {
       try {
-        const result = await projectList();
+        const result = await projectList(principal);
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
