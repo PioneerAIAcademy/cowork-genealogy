@@ -3,7 +3,7 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(build_external_search_url|catalog_search|census_children_gap|collections_search|convert_calendar|external_links_search|fulltext_search|get_name_variants|image_search|materialize_facts|merge_tree_persons|merge_warnings|person_person_matches|person_quality|person_record_matches|person_warnings|place_distance|place_population|place_search|place_search_all|project_create|rank_search_matches|record_search|same_person|tree_correct|tree_edit|tree_gaps|volume_bisect|volume_search|wiki_place_page|wiki_read|wiki_search|wikipedia_search)",
+        "matcher": "Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(build_external_search_url|catalog_search|census_children_gap|collections_search|convert_calendar|evaluation_append|external_links_search|fulltext_search|get_name_variants|image_search|materialize_facts|merge_tree_persons|merge_warnings|person_person_matches|person_quality|person_record_matches|person_warnings|place_distance|place_population|place_search|place_search_all|project_create|rank_search_matches|record_search|same_person|tree_correct|tree_edit|tree_gaps|volume_bisect|volume_search|wiki_place_page|wiki_read|wiki_search|wikipedia_search)",
         "hooks": [
           {
             "type": "command",
