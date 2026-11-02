@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "fs";
+import { countsAgainstFsBudget } from "../../src/utils/fs-budget.js";
+import { TOKEN_URL } from "../../src/auth/config.js";
 import { join } from "path";
 
 // A spent FamilySearch budget throws a MARKED error, and every retry loop and
@@ -18,6 +20,17 @@ import { join } from "path";
 // matcher service) do not count against the budget and are not matched here.
 
 const SRC = join(import.meta.dirname, "../../src");
+
+// One file legitimately rewraps a FamilySearch call without the guard:
+// auth/refresh.ts, whose call is the OAuth token endpoint. That endpoint is
+// EXEMPT from the budget (fs-budget.ts), so no refusal can reach its catch.
+//
+// The exemption is derived, not asserted: if someone makes the OAuth endpoint
+// count again, `oauthExempt` goes false, refresh.ts stops being exempt here,
+// and this test reds until that catch grows a guard. An allow-list that just
+// named the file would silently keep passing.
+const oauthExempt = !countsAgainstFsBudget(TOKEN_URL);
+const EXEMPT_FILES = oauthExempt ? new Set(["auth/refresh.ts"]) : new Set<string>();
 
 function tsFiles(dir: string): string[] {
   const out: string[] = [];
@@ -45,6 +58,7 @@ describe("a FamilySearch rewrap lets the budget refusal past first", () => {
     for (const file of tsFiles(SRC)) {
       // fs-budget.ts defines the marker; it is not a call site.
       if (file.endsWith("/fs-budget.ts")) continue;
+      if (EXEMPT_FILES.has(file.slice(SRC.length + 1))) continue;
       const lines = readFileSync(file, "utf-8").split("\n");
 
       for (let i = 0; i < lines.length; i++) {
@@ -81,6 +95,11 @@ describe("a FamilySearch rewrap lets the budget refusal past first", () => {
         "isFsBudgetExhausted guard downstream becomes dead code:\n  " +
         offenders.join("\n  "),
     ).toEqual([]);
+  });
+
+  it("exempts auth/refresh.ts only while the OAuth endpoint is budget-exempt", () => {
+    expect(countsAgainstFsBudget(TOKEN_URL)).toBe(false);
+    expect([...EXEMPT_FILES]).toEqual(["auth/refresh.ts"]);
   });
 
   // The other direction: the check must still accept the legitimate shape, or

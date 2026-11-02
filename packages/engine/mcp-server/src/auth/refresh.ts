@@ -13,7 +13,6 @@ import {
 } from "../utils/http.js";
 import type { TokenStore, FSTokenResponse } from "../types/auth.js";
 import type { Principal } from "./principal.js";
-import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
 // The instruction the LLM gets when there is no usable FamilySearch session.
 // In hosted mode the `login` tool is a dead end (its loopback callback can't
@@ -179,12 +178,7 @@ export async function getValidToken(principal: Principal): Promise<string> {
   }
   try {
     return (await refreshLocalTokens(tokens.refreshToken)).accessToken;
-  } catch (err) {
-    // The token endpoint is a FamilySearch host, so a spent budget refuses the
-    // refresh. Rewriting that into "call the login tool" tells the user to
-    // re-authenticate over a transient rate limit, and destroys the marker
-    // every retry loop upstream uses to stop retrying.
-    if (isFsBudgetExhausted(err)) throw err;
+  } catch {
     throw new Error(
       await reauthInstruction(
         "FamilySearch session has expired and refresh failed. Call the login tool to re-authenticate.",

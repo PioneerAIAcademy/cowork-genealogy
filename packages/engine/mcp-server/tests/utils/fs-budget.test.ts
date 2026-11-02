@@ -24,7 +24,8 @@ describe("countsAgainstFsBudget", () => {
   it.each([
     "https://familysearch.org/x",
     "https://www.familysearch.org/x",
-    "https://ident.familysearch.org/cis-web/oauth2/v3/token",
+    // ident.familysearch.org itself counts -- only the OAuth paths are exempt.
+    "https://ident.familysearch.org/something-else",
     "https://sg30p0.familysearch.org/x",
     "HTTPS://WWW.FAMILYSEARCH.ORG/x",
   ])("counts %s", (url) => {
@@ -40,6 +41,27 @@ describe("countsAgainstFsBudget", () => {
     "not a url",
   ])("does not count %s", (url) => {
     expect(countsAgainstFsBudget(url)).toBe(false);
+  });
+
+  // The OAuth endpoints are a deliberate undercount, and this pins it so the
+  // exemption cannot be deleted as an oversight. getValidToken turns ANY
+  // refresh failure into "FamilySearch session has expired... Call the login
+  // tool to re-authenticate" (auth/refresh.ts), so a budget-refused refresh
+  // tells the user to re-authenticate over a transient rate limit -- and every
+  // tool needing a token then fails the same way, so one spent budget reads as
+  // a dead session instead of a wait. The cost is about one uncounted call per
+  // token expiry per user, against a per-minute budget.
+  it.each([
+    "https://ident.familysearch.org/cis-web/oauth2/v3/token",
+    "https://ident.familysearch.org/cis-web/oauth2/v3/authorization",
+    "https://IDENT.FAMILYSEARCH.ORG/CIS-WEB/OAUTH2/v3/token",
+  ])("exempts the OAuth endpoint %s, so a refresh is never refused", (url) => {
+    expect(countsAgainstFsBudget(url)).toBe(false);
+  });
+
+  it("exempts only the OAuth prefix, not the whole ident host", () => {
+    expect(countsAgainstFsBudget("https://ident.familysearch.org/cis-web/other")).toBe(true);
+    expect(countsAgainstFsBudget("https://ident.familysearch.org/")).toBe(true);
   });
 });
 

@@ -84,14 +84,38 @@ export function __resetFsBudgetForTests(): void {
 /** True for a URL the budget counts: FamilySearch itself and its subdomains,
  *  and nothing else. Parse failures are not counted — a URL `fetch` cannot
  *  parse is not a FamilySearch call. */
+/** The OAuth authorization and token endpoints (`src/auth/config.ts` pins both
+ *  under this prefix on ident.familysearch.org). */
+const FS_OAUTH_PATH_PREFIX = "/cis-web/oauth2/";
+
 export function countsAgainstFsBudget(url: string): boolean {
-  let host: string;
+  let parsed: URL;
   try {
-    host = new URL(url).hostname.toLowerCase();
+    parsed = new URL(url);
   } catch {
     return false;
   }
-  return host === "familysearch.org" || host.endsWith(".familysearch.org");
+  const host = parsed.hostname.toLowerCase();
+  if (host !== "familysearch.org" && !host.endsWith(".familysearch.org")) return false;
+
+  // The OAuth endpoints are EXEMPT, and this is a deliberate undercount: a
+  // token refresh is a real FamilySearch request, so the process can exceed
+  // its configured rate by roughly one call per token expiry per user —
+  // against a budget denominated in calls per minute, which is noise.
+  //
+  // Counting them is worse, and not by a little. `getValidToken` turns ANY
+  // refresh failure into "FamilySearch session has expired... Call the login
+  // tool to re-authenticate" (auth/refresh.ts). So a budget-refused refresh
+  // tells the user to re-authenticate over a transient rate limit — and since
+  // every tool needing a token then fails the same way, one spent budget reads
+  // as a dead session rather than a wait. Letting the refresh through keeps the
+  // session alive while the DATA calls refuse with "try again in about N
+  // seconds", which is the behaviour the budget exists to produce.
+  //
+  // Fixing it in `getValidToken` instead would work, but that catch is the
+  // documented shape of `src/auth/` (CLAUDE.md: token ops answer rather than
+  // throw), and the exemption is the smaller change in the more honest place.
+  return !parsed.pathname.toLowerCase().startsWith(FS_OAUTH_PATH_PREFIX);
 }
 
 /** Take one slot for `url`, or throw a marked refusal.
