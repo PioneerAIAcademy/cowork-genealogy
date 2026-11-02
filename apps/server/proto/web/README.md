@@ -212,7 +212,7 @@ instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` 
 
 `PG_SAS_OBJECT` (U29) names the SAS fchDatabase object to read the Postgres credentials from,
 in place of `PG_DSN`. Both set, or `PG_SAS_OBJECT` set without the SAS client installed,
-refuses to start; SAS unreachable leaves the tier listening with `/api/health` reporting
+refuses to start; SAS unreachable, or slower than 5 s, leaves the tier listening with `/api/health` reporting
 `PgCredentialsUnavailable`. An invalid password (28P01) re-reads the object, at most once
 every 30 s, and retries the connect once with the new password. The start line names
 `pg_credentials=SAS object <name>` or `environment DSN`, never a credential.
