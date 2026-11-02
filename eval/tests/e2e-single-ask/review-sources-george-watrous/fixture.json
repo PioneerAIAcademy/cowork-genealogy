@@ -1,0 +1,23 @@
+{
+  "id": "review-sources-george-watrous",
+  "message": "Review the sources attached to KNDB-F71.",
+  "expected_owner": "source-evaluation",
+  "expected_save": {
+    "section": "log",
+    "tool": "source_evaluation"
+  },
+  "is_plan_ask": false,
+  "setup_units": [],
+  "must_not": "No `question-selection`; no research job. Regression guard for issues #3524 and #3526: fails if the router stops naming `source-evaluation` or it stops saving its entry",
+  "model": {
+    "agent": "claude-sonnet-4-6"
+  },
+  "caps": {
+    "wall_clock_seconds": 2400,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 150,
+    "max_turns": 150,
+    "max_cost_usd": 6.0
+  }
+}

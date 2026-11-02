@@ -1,0 +1,32 @@
+{
+  "id": "death-attached-susan-cornwell",
+  "message": "Can you find the death record for Susan Reynolds Cornwell in New York K8TG-N4H",
+  "expected_owner": [
+    null,
+    "search-records"
+  ],
+  "expected_save": {
+    "section": "sources",
+    "absent": true
+  },
+  "is_plan_ask": false,
+  "setup_units": [],
+  "forbidden_tools": [
+    "record_search"
+  ],
+  "required_tools": [
+    "person_read"
+  ],
+  "must_not": "No `record_search` call; no `question-selection`; no research job",
+  "model": {
+    "agent": "claude-sonnet-4-6"
+  },
+  "caps": {
+    "wall_clock_seconds": 1200,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 60,
+    "max_turns": 60,
+    "max_cost_usd": 3.0
+  }
+}

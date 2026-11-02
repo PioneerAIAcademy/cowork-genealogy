@@ -1,0 +1,1307 @@
+{
+  "persons": [
+    {
+      "id": "K8TG-N4H",
+      "ark": "ark:/61903/4:1:K8TG-N4H",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "eda07737-c80f-4538-b7cb-76e55240bdd3",
+          "preferred": true,
+          "given": "Susan Ann",
+          "surname": "Reynolds",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "1 May 1828",
+          "standard_date": "1 May 1828",
+          "place": "Hempstead, Queens, New York, United States",
+          "standard_place": "Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "4 April 1892",
+          "standard_date": "4 Apr 1892",
+          "place": "Sands Point, North Hempstead, Queens, New York, United States",
+          "standard_place": "Sands Point, North Hempstead, Nassau, New York, United States"
+        },
+        {
+          "id": "96494915-b15b-4654-86f2-a41f5059b946",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "7fd9729c-a454-488a-9509-f30f24d98b43",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States",
+          "value": "Census"
+        },
+        {
+          "id": "f2a40a6b-a3f1-4fb9-bf4d-ffadeb9b7a29",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "d75e390d-a86c-45d5-a4de-b67590974191",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "af58acfa-1a7e-4f11-bd87-cf0b1b80bfee",
+          "type": "Burial",
+          "place": "Christ Church Cemetery, Manhasset, North Hempstead, Queens, New York, United States",
+          "standard_place": "Christ Church Cemetery, Manhasset, North Hempstead, Nassau, New York, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QQZL-WM4"
+        },
+        {
+          "ref": "QQZL-77N"
+        },
+        {
+          "ref": "QQZL-QC9"
+        },
+        {
+          "ref": "QQZL-S1P"
+        },
+        {
+          "ref": "MDSD-D56"
+        },
+        {
+          "ref": "M8L1-MLV"
+        },
+        {
+          "ref": "QQZK-YSN"
+        },
+        {
+          "ref": "S2W3-F8N"
+        },
+        {
+          "ref": "9545-JFM"
+        },
+        {
+          "ref": "9545-8RB"
+        },
+        {
+          "ref": "9545-ZZ5"
+        },
+        {
+          "ref": "9D15-6HV"
+        }
+      ]
+    },
+    {
+      "id": "KP9G-KH6",
+      "ark": "ark:/61903/4:1:KP9G-KH6",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "John Henry",
+          "surname": "Cornwell",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "November 1852",
+          "standard_date": "Nov 1852",
+          "place": "Steuben, New York, United States",
+          "standard_place": "Steuben, New York, United States"
+        },
+        {
+          "id": "5d71cd30-115a-439e-865b-fcbc24cf40a7",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Fort Custer, Custer, Montana, United States",
+          "standard_place": "Fort Custer, Custer, Montana, United States",
+          "value": "Census"
+        },
+        {
+          "id": "007d846e-6a29-4759-bf2f-9281c303c360",
+          "type": "Residence",
+          "date": "1900",
+          "standard_date": "1900",
+          "place": "Livingston, Park, Montana, United States",
+          "standard_place": "Livingston, Park, Montana, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "24 February 1910",
+          "standard_date": "24 Feb 1910",
+          "place": "Yakima, Washington, United States",
+          "standard_place": "Yakima, Washington, United States"
+        },
+        {
+          "id": "b206a93b-d88a-4846-84b6-3ad3a8762970",
+          "type": "Burial",
+          "date": "27 February 1910",
+          "standard_date": "27 Feb 1910",
+          "place": "Tahoma Cemetery, Yakima, Yakima, Washington, United States",
+          "standard_place": "Tahoma Cemetery, Yakima, Yakima, Washington, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "79S2-YSN"
+        },
+        {
+          "ref": "79S2-RWJ"
+        },
+        {
+          "ref": "Q512-Z9N"
+        },
+        {
+          "ref": "Q51K-RNC"
+        },
+        {
+          "ref": "Q51K-PPW"
+        },
+        {
+          "ref": "Q51K-J76"
+        },
+        {
+          "ref": "SP1F-Y14"
+        },
+        {
+          "ref": "SP1F-YL8"
+        },
+        {
+          "ref": "SP1F-T5J"
+        },
+        {
+          "ref": "SP1F-RMY"
+        },
+        {
+          "ref": "SP1F-5M7"
+        },
+        {
+          "ref": "SP1F-X24"
+        },
+        {
+          "ref": "S2PV-73B"
+        },
+        {
+          "ref": "S2FV-LJ9"
+        },
+        {
+          "ref": "S2FV-2KM"
+        },
+        {
+          "ref": "S2FV-VWY"
+        },
+        {
+          "ref": "S2FV-N5P"
+        },
+        {
+          "ref": "S2CR-136"
+        },
+        {
+          "ref": "S2CR-RZW"
+        },
+        {
+          "ref": "S24C-91M"
+        },
+        {
+          "ref": "S244-NSM"
+        },
+        {
+          "ref": "SNG5-Z6V"
+        },
+        {
+          "ref": "S6GC-WM3"
+        },
+        {
+          "ref": "S7YL-BKB"
+        },
+        {
+          "ref": "SMZP-SQG"
+        },
+        {
+          "ref": "9VHZ-4JL"
+        },
+        {
+          "ref": "9V48-6N1"
+        },
+        {
+          "ref": "9JY5-5DW"
+        },
+        {
+          "ref": "9DBQ-SVV"
+        }
+      ]
+    },
+    {
+      "id": "KHXY-6RX",
+      "ark": "ark:/61903/4:1:KHXY-6RX",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "991a0a6e-291e-4f21-a0db-159dd32b100f",
+          "preferred": true,
+          "given": "John Hewlett",
+          "surname": "Cornwell",
+          "type": "BirthName"
+        },
+        {
+          "id": "818be853-4bce-45be-aded-27f05c74db59",
+          "given": "John W",
+          "surname": "",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "248eaba5-34ae-4182-9874-bfcc07166241",
+          "type": "Birth",
+          "date": "30 March 1816",
+          "standard_date": "30 Mar 1816",
+          "place": "Hempstead, Nassau, New York, United States",
+          "standard_place": "Hempstead, Nassau, New York, United States"
+        },
+        {
+          "id": "cefbe3ac-2da3-47e0-8433-2487a695e20e",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "77b1081e-4a80-4ef2-94ef-c00e73ca98a4",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Town of North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States",
+          "value": "Census"
+        },
+        {
+          "id": "816dce28-e1d3-4a9b-9467-e6707b7910ca",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "New York, United States",
+          "standard_place": "New York, United States"
+        },
+        {
+          "id": "28778712-2353-4d9f-a127-ad251b8b3f56",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "639c12e9-b35a-4284-b8e4-d3feb754365e",
+          "type": "Burial",
+          "date": "1887",
+          "standard_date": "1887",
+          "place": "Manhasset, Nassau, New York, United States of America",
+          "standard_place": "Manhasset, North Hempstead, Nassau, New York, United States"
+        },
+        {
+          "id": "9381f219-2889-4bfc-9b03-5527232282c1",
+          "type": "Death",
+          "date": "27 December 1887",
+          "standard_date": "27 Dec 1887",
+          "place": "Sands Point, North Hempstead, Nassau, New York, United States",
+          "standard_place": "Sands Point, North Hempstead, Nassau, New York, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QQZL-Q8V"
+        },
+        {
+          "ref": "QQZL-3CZ"
+        },
+        {
+          "ref": "QQZK-T1G"
+        },
+        {
+          "ref": "MDSD-D54"
+        },
+        {
+          "ref": "M8L1-MLN"
+        },
+        {
+          "ref": "3383-6HX"
+        },
+        {
+          "ref": "S2W3-F3C"
+        },
+        {
+          "ref": "9545-J8F"
+        },
+        {
+          "ref": "9545-N1Q"
+        },
+        {
+          "ref": "9545-8JH"
+        },
+        {
+          "ref": "9545-ZMC"
+        },
+        {
+          "ref": "9D15-V3B"
+        }
+      ]
+    },
+    {
+      "id": "KZR3-7C5",
+      "ark": "ark:/61903/4:1:KZR3-7C5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Miriam W.",
+          "surname": "Cornell",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "17 September 1845",
+          "standard_date": "17 Sep 1845",
+          "place": "New York City, New York, United States",
+          "standard_place": "New York City, New York, United States"
+        },
+        {
+          "id": "57921f3c-0d8f-47a1-915b-bac0f1495879",
+          "type": "Residence",
+          "date": "1850",
+          "standard_date": "1850",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "d05343b6-69ca-40d7-b370-b84f045777af",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "Town of North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States",
+          "value": "Census"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "16 September 1887",
+          "standard_date": "16 Sep 1887"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S2W3-FK8"
+        },
+        {
+          "ref": "9545-ZFS"
+        }
+      ]
+    },
+    {
+      "id": "KHDQ-BJQ",
+      "ark": "ark:/61903/4:1:KHDQ-BJQ",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "John Hewlett",
+          "surname": "Cornwall",
+          "suffix": "Jr",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "10 December 1860",
+          "standard_date": "10 Dec 1860",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "276ea2ea-7a5f-4f98-b105-1ec5b941934f",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "3b8b0d13-a261-4e5d-8d8b-f1d900f782c0",
+          "type": "Residence",
+          "date": "21 June 1900",
+          "standard_date": "21 Jun 1900",
+          "place": "North Hempstead, Nassau, New York, United States",
+          "standard_place": "North Hempstead, Nassau, New York, United States"
+        },
+        {
+          "id": "f7debbd8-bc14-4642-b371-837a5816d2ca",
+          "type": "Residence",
+          "date": "18 April 1910",
+          "standard_date": "18 Apr 1910",
+          "place": "Sheridan, Yamhill, Oregon, United States",
+          "standard_place": "Sheridan, Yamhill, Oregon, United States"
+        },
+        {
+          "id": "bff73c82-c294-4bd6-87a6-991738df3fee",
+          "type": "Residence",
+          "date": "1915",
+          "standard_date": "1915",
+          "place": "Johnsburg, Warren, New York, United States",
+          "standard_place": "Johnsburg, Warren, New York, United States"
+        },
+        {
+          "id": "4c22a2bb-810d-4092-81c8-8cfd5bd80d43",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "Johnsburg, Warren, New York, United States",
+          "standard_place": "Johnsburg, Warren, New York, United States"
+        },
+        {
+          "id": "5118edb0-f5b0-41b8-a342-1cd1f1075fb3",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "Johnsburg, Warren, New York, United States",
+          "standard_place": "Johnsburg, Warren, New York, United States"
+        },
+        {
+          "id": "2f014728-1e8e-4e41-83b2-5138b5a70e58",
+          "type": "Burial",
+          "date": "1939",
+          "standard_date": "1939",
+          "place": "North River, Johnsburg, Warren, New York, United States",
+          "standard_place": "North River, Warren, New York, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death",
+          "date": "28 August 1939",
+          "standard_date": "28 Aug 1939",
+          "place": "Johnsburg, Warren, New York, United States",
+          "standard_place": "Johnsburg, Warren, New York, United States"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "Q51K-CWT"
+        },
+        {
+          "ref": "QQZV-CN1"
+        },
+        {
+          "ref": "3RYJ-BFW"
+        },
+        {
+          "ref": "338Y-T57"
+        },
+        {
+          "ref": "338Y-ZG1"
+        },
+        {
+          "ref": "338Q-S1V"
+        },
+        {
+          "ref": "3383-KGN"
+        },
+        {
+          "ref": "3383-N2C"
+        },
+        {
+          "ref": "9545-JT6"
+        },
+        {
+          "ref": "9545-66D"
+        }
+      ]
+    },
+    {
+      "id": "KZFV-BFT",
+      "ark": "ark:/61903/4:1:KZFV-BFT",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Mary Margaret",
+          "surname": "Cornwell",
+          "type": "BirthName"
+        },
+        {
+          "id": "4a97a8dc-5cca-4a17-bc17-c87de00aff4d",
+          "given": "Mabel",
+          "surname": "Searing",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "c239695c-ecf8-45a8-9a5f-45560085ea4c",
+          "type": "Birth",
+          "date": "1852",
+          "standard_date": "1852",
+          "place": "Sands Point, Nassau, New York, United States",
+          "standard_place": "Sands Point, North Hempstead, Nassau, New York, United States"
+        },
+        {
+          "id": "cade6ee8-158a-4681-b06b-80f6ac654869",
+          "type": "Residence",
+          "date": "1860",
+          "standard_date": "1860",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States",
+          "value": "Census"
+        },
+        {
+          "id": "149cb559-0ae3-44fe-9c30-88cc512e8847",
+          "type": "Residence",
+          "date": "1870",
+          "standard_date": "1870",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        },
+        {
+          "id": "b3a908fc-fa55-41cc-9a70-3bce236c0595",
+          "type": "Residence",
+          "date": "1880",
+          "standard_date": "1880",
+          "place": "Brooklyn, Kings, New York, United States",
+          "standard_place": "Brooklyn, Kings, New York, United States"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "QQZ5-BFK"
+        },
+        {
+          "ref": "S2W3-N45"
+        },
+        {
+          "ref": "9545-6D3"
+        },
+        {
+          "ref": "3DL6-HR7"
+        },
+        {
+          "ref": "3DL6-HVG"
+        },
+        {
+          "ref": "3DL6-H4H"
+        },
+        {
+          "ref": "SN9G-LFJ"
+        },
+        {
+          "ref": "SN9G-2YG"
+        },
+        {
+          "ref": "SN9G-2FR"
+        },
+        {
+          "ref": "SZY6-Q8R"
+        },
+        {
+          "ref": "SN9G-HRC"
+        },
+        {
+          "ref": "MZ7W-91V"
+        },
+        {
+          "ref": "9B34-M65"
+        },
+        {
+          "ref": "9B3W-1CG"
+        },
+        {
+          "ref": "MZNK-GF1"
+        },
+        {
+          "ref": "9B3W-G44"
+        },
+        {
+          "ref": "9B3W-L3V"
+        },
+        {
+          "ref": "MZW5-BZM"
+        },
+        {
+          "ref": "MDSD-D53"
+        },
+        {
+          "ref": "M8L1-MLX"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KHXY-6RX",
+      "person2": "K8TG-N4H",
+      "facts": [
+        {
+          "id": "5cf414dd-20cd-416b-98df-de1e0f2a6d8a",
+          "type": "Marriage",
+          "date": "about 1844",
+          "standard_date": "Abt 1844",
+          "place": "North Hempstead, Queens, New York, United States",
+          "standard_place": "North Hempstead, Queens, New York, United States"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "KHXY-6RX",
+      "child": "KZR3-7C5",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "K8TG-N4H",
+      "child": "KZR3-7C5",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KHXY-6RX",
+      "child": "KZFV-BFT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "K8TG-N4H",
+      "child": "KZFV-BFT",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KHXY-6RX",
+      "child": "KP9G-KH6"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "K8TG-N4H",
+      "child": "KP9G-KH6"
+    },
+    {
+      "id": "R8",
+      "type": "ParentChild",
+      "parent": "KHXY-6RX",
+      "child": "KHDQ-BJQ",
+      "subtype": "Biological"
+    },
+    {
+      "id": "R9",
+      "type": "ParentChild",
+      "parent": "K8TG-N4H",
+      "child": "KHDQ-BJQ",
+      "subtype": "Biological"
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_K8TG-N4H",
+      "title": "Susan Ann Reynolds",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Susan Ann Reynolds (PID K8TG-N4H); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:K8TG-N4H"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_KP9G-KH6",
+      "title": "John Henry Cornwell",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for John Henry Cornwell (PID KP9G-KH6); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KP9G-KH6"
+    },
+    {
+      "id": "sd_person_KHXY-6RX",
+      "title": "John W",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for John W (PID KHXY-6RX); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KHXY-6RX"
+    },
+    {
+      "id": "sd_person_KZR3-7C5",
+      "title": "Miriam W. Cornell",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Miriam W. Cornell (PID KZR3-7C5); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KZR3-7C5"
+    },
+    {
+      "id": "sd_person_KHDQ-BJQ",
+      "title": "John Hewlett Cornwall Jr",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for John Hewlett Cornwall Jr (PID KHDQ-BJQ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KHDQ-BJQ"
+    },
+    {
+      "id": "sd_person_KZFV-BFT",
+      "title": "Mary Margaret Cornwell",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Mary Margaret Cornwell (PID KZFV-BFT); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KZFV-BFT"
+    },
+    {
+      "id": "QQZL-WM4",
+      "title": "Susan Reynolds Cornwell, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKX-SXYX : Fri Oct 02 23:03:50 UTC 2026), Susan Reynolds Cornwell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKX-SXYX"
+    },
+    {
+      "id": "QQZL-77N",
+      "title": "Susan Cornwell, \"New York, State Death Index, 1880-1956\"",
+      "citation": "\"New York, State Death Index, 1880-1956\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QG5L-ZMP3 : Fri Mar 08 18:22:06 UTC 2024), Susan Cornwell, 4 Apr 1892.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QG5L-ZMP3"
+    },
+    {
+      "id": "QQZL-QC9",
+      "title": "Susan Ann Reynolds, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:24MN-TFY : Sat Jul 26 02:30:17 UTC 2025), Susan Ann Reynolds in entry for Hudson Searing and Mary Cornwell, 5 Dec 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:24MN-TFY"
+    },
+    {
+      "id": "QQZL-S1P",
+      "title": "Susan Ann Reynolds, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:24MF-V5T : Thu Jul 24 23:59:22 UTC 2025), Susan Ann Reynolds in entry for Hudson Searing and Mary Cornwell, 5 Dec 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:24MF-V5T"
+    },
+    {
+      "id": "MDSD-D56",
+      "title": "Susan Ann Reynolds in entry for Hudson R. Searing, \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F67V-RCL : 21 January 2020), Susan Ann Reynolds in entry for Hudson R. Searing, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F67V-RCL"
+    },
+    {
+      "id": "M8L1-MLV",
+      "title": "Susan Ann Reynolds in entry for Hudson R Searing, \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F67V-6YP : 21 January 2020), Susan Ann Reynolds in entry for Hudson R Searing, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F67V-6YP"
+    },
+    {
+      "id": "QQZK-YSN",
+      "title": "Susan A Reynolds, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CN-XBK5 : Fri Mar 08 16:40:19 UTC 2024), Susan A Reynolds in entry for Hudson Redowa Searing and Mary M Cornwell, 5 December 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CN-XBK5"
+    },
+    {
+      "id": "S2W3-F8N",
+      "title": "Susan A Cornell, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC4Q-LFH : Mon Jul 08 15:19:45 UTC 2024), Susan A Cornell in entry for John Cornell, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC4Q-LFH"
+    },
+    {
+      "id": "9545-JFM",
+      "title": "Susan Cornwell, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF4-RXJ : Wed Sep 09 10:54:00 UTC 2026), Susan Cornwell in entry for John H. Cornwell, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZF4-RXJ"
+    },
+    {
+      "id": "9545-8RB",
+      "title": "Susan Cornwell, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8V1-SJ7 : Sun Oct 19 04:55:54 UTC 2025), Susan Cornwell in entry for John H Cornwell, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8V1-SJ7"
+    },
+    {
+      "id": "9545-ZZ5",
+      "title": "Susan A Cornwell, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1H-4QT : Sat Oct 18 19:40:58 UTC 2025), Susan A Cornwell in entry for John Cornwell, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC1H-4QT"
+    },
+    {
+      "id": "9D15-6HV",
+      "title": "Find a Grave",
+      "citation": "Find A Grave",
+      "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&amp;GRid=44220742&amp;ref=acom"
+    },
+    {
+      "id": "79S2-YSN",
+      "title": "John H Cornwell, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MM5Z-XDB : Tue Apr 21 13:35:24 UTC 2026), John H Cornwell, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MM5Z-XDB"
+    },
+    {
+      "id": "79S2-RWJ",
+      "title": "John Henry Cornwall, \"Montana, County Marriages, 1865-1950\"",
+      "citation": "\"Montana, County Marriages, 1865-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F3QZ-SP2 : Wed Jan 22 07:41:02 UTC 2025), John Henry Cornwall and Annie Shoebey, 10 Feb 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F3QZ-SP2"
+    },
+    {
+      "id": "Q512-Z9N",
+      "title": "John Henry Cornwall, \"United States, Western States Marriage Index\"",
+      "citation": "\"United States, Western States Marriage Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XZNY-52P : Tue Feb 11 22:33:11 UTC 2025), John Henry Cornwall and Annie Shoebey, 10 Feb 1879.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XZNY-52P"
+    },
+    {
+      "id": "Q51K-RNC",
+      "title": "John Henry Cornwell, \"United States, Index to Indian Wars Pension Files, 1892-1926\"",
+      "citation": "\"United States, Index to Indian Wars Pension Files, 1892-1926\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KDRT-LQ2 : Sat Mar 09 21:22:44 UTC 2024), John Henry Cornwell, 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KDRT-LQ2"
+    },
+    {
+      "id": "Q51K-PPW",
+      "title": "John H. Cornwell, \"Washington, Deaths and Burials, 1810-1960\"",
+      "citation": "\"Washington, Deaths and Burials, 1810-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HV4P-ZS6Z : Sat Jul 26 03:05:28 UTC 2025), John H. Cornwell in entry for Anna Cornwell, 23 Jan 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HV4P-ZS6Z"
+    },
+    {
+      "id": "Q51K-J76",
+      "title": "John H Cornwell, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6KWB-BDMB : Tue Jun 30 00:35:26 UTC 2026), John H Cornwell in entry for Helen M Cornwell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6KWB-BDMB"
+    },
+    {
+      "id": "SP1F-Y14",
+      "title": "John H. Cornwall, \"Washington, Death Certificates, 1907-1960\"",
+      "citation": "\"Washington, Death Certificates, 1907-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQM6-3LN : Thu Dec 04 10:00:04 UTC 2025), John H. Cornwall, 24 Feb 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:NQM6-3LN"
+    },
+    {
+      "id": "SP1F-YL8",
+      "title": "<Unknown>, \"Washington, Deaths and Burials, 1810-1960\"",
+      "citation": "\"Washington, Deaths and Burials, 1810-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HV4Z-JB6Z : Fri Jul 25 14:20:03 UTC 2025), <Unknown> in entry for Ann Hurlbut, 1 Nov 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HV4Z-JB6Z"
+    },
+    {
+      "id": "SP1F-T5J",
+      "title": "John H. Cornwell, \"Washington, Death Certificates, 1907-1960\"",
+      "citation": "\"Washington, Death Certificates, 1907-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N35X-RYH : Thu Dec 04 13:31:09 UTC 2025), John H. Cornwell in entry for Anna Cornwell, 21 Jan 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N35X-RYH"
+    },
+    {
+      "id": "SP1F-RMY",
+      "title": "John H. Cornwall, \"Washington, Deaths and Burials, 1810-1960\"",
+      "citation": "\"Washington, Deaths and Burials, 1810-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HVQQ-R73Z : Sat Jul 26 03:46:42 UTC 2025), John H. Cornwall, 27 Feb 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HVQQ-R73Z"
+    },
+    {
+      "id": "SP1F-5M7",
+      "title": "John H. Cornwell, \"Washington, Death Certificates, 1907-1960\"",
+      "citation": "\"Washington, Death Certificates, 1907-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N31X-ZRM : Sun Dec 07 09:24:34 UTC 2025), John H. Cornwell in entry for Mary Cornwell Shick, 09 Jun 1958.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N31X-ZRM"
+    },
+    {
+      "id": "SP1F-X24",
+      "title": "John Cornwell, \"California, County Birth and Death Records, 1800-1994\"",
+      "citation": "\"California, County Birth and Death Records, 1800-1994\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQH-C342 : Tue Feb 18 22:47:06 UTC 2025), John Cornwell in entry for Edward Adelbert Cornwell, 29 April 1932.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPQH-C342"
+    },
+    {
+      "id": "S2PV-73B",
+      "title": "J. H. Cornwell, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MH84-XZV : Wed Sep 09 09:14:15 UTC 2026), J. H. Cornwell, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MH84-XZV"
+    },
+    {
+      "id": "S2FV-LJ9",
+      "title": "J H Cornwell, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMY-SQDM : Sat Mar 09 17:41:34 UTC 2024), J H Cornwell in entry for John J Winer and Nellie Cornwell, 21 October 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMY-SQDM"
+    },
+    {
+      "id": "S2FV-2KM",
+      "title": "J. H. Cornwell, \"United States, Marriages, 1733-1990\"",
+      "citation": "\"United States, Marriages, 1733-1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HFBP-XFPZ : Sun Oct 18 01:25:50 UTC 2026), J. H. Cornwell in entry for John J. Wimer, 21 Oct 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HFBP-XFPZ"
+    },
+    {
+      "id": "S2FV-VWY",
+      "title": "J H Cornwell, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMR-WC44 : Sun Mar 10 05:44:10 UTC 2024), J H Cornwell in entry for John J Wimer and Nellie Cornwell, 21 October 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMR-WC44"
+    },
+    {
+      "id": "S2FV-N5P",
+      "title": "John Cornwell, \"Washington, Deaths and Burials, 1810-1960\"",
+      "citation": "\"Washington, Deaths and Burials, 1810-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HV4N-L6MM : Fri Jul 25 08:14:49 UTC 2025), John Cornwell in entry for Nellie H. Wimer, 11 May 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HV4N-L6MM"
+    },
+    {
+      "id": "S2CR-136",
+      "title": "John H. Cornwell, \"California, Marriages, 1850-1945\"",
+      "citation": "\"California, Marriages, 1850-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H9H5-94PZ : Wed Oct 14 21:53:09 UTC 2026), John H. Cornwell in entry for John William Cornwell, 12 Mar 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H9H5-94PZ"
+    },
+    {
+      "id": "S2CR-RZW",
+      "title": "John H. Cornwall, \"California, Marriages, 1850-1945\"",
+      "citation": "\"California, Marriages, 1850-1945\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:41CL-XTMM : Wed Oct 14 20:04:23 UTC 2026), John H. Cornwall in entry for John William Cornwall, 12 March 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:41CL-XTMM"
+    },
+    {
+      "id": "S24C-91M",
+      "title": "John H Cornwell, \"California, County Marriages, 1849-1957\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K8ZP-55B : Thu Mar 07 15:47:04 UTC 2024), John H Cornwell in entry for John William Cornwell and Frances Maurine Rinehart, 12 March 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K8ZP-55B"
+    },
+    {
+      "id": "S244-NSM",
+      "title": "John Cornwell, \"Montana, Rosebud County Records, 1878-2011\"",
+      "citation": "\"Montana, Rosebud County Records, 1878-2011\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLBX-HK28 : Fri Mar 08 06:03:26 UTC 2024), John Cornwell in entry for Harry Cornwell, 16 November 1977.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QLBX-HK28"
+    },
+    {
+      "id": "SNG5-Z6V",
+      "title": "John Henry Cornwell, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPM2-49KX : Sun Mar 10 15:28:45 UTC 2024), John Henry Cornwell in entry for Norman Prentice Mead and Helen Marguerite Cornwell, 24 April 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPM2-49KX"
+    },
+    {
+      "id": "S6GC-WM3",
+      "title": "John Henry Cornwell, \"Washington, County Marriages, 1855-2008\"",
+      "citation": "\"Washington, County Marriages, 1855-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPMY-VLQ4 : Sat Mar 09 14:23:41 UTC 2024), John Henry Cornwell in entry for Norman Prentice Mead and Helen Margueritte Cornwell, 24 April 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QPMY-VLQ4"
+    },
+    {
+      "id": "S7YL-BKB",
+      "title": "John H. Cornwell, \"Montana, County Marriages, 1865-1950\"",
+      "citation": "\"Montana, County Marriages, 1865-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F371-9QJ : Sat Jan 18 21:50:07 UTC 2025), John H. Cornwell in entry for Edward A. Cornwell and Edith M. Lewis, 12 Sep 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F371-9QJ"
+    },
+    {
+      "id": "SMZP-SQG",
+      "title": "John Cornwell, \"Washington, Death Certificates, 1907-1960\"",
+      "citation": "\"Washington, Death Certificates, 1907-1960\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:N3P1-D45 : Sun Dec 07 08:33:34 UTC 2025), John Cornwell in entry for Nellie H. Wimer, 09 May 1929.",
+      "url": "https://familysearch.org/ark:/61903/1:1:N3P1-D45"
+    },
+    {
+      "id": "9VHZ-4JL",
+      "title": "John H Cornwell in entry for John William Cornwell and Frances Maurine Rinehart, \"California, County Marriages, 1850-1952\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XL4Z-SJ5 : Sun Mar 10 15:12:19 UTC 2024), John H Cornwell in entry for John William Cornwell and Frances Maurine Rinehart, 12 March 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XL4Z-SJ5"
+    },
+    {
+      "id": "9V48-6N1",
+      "title": "John Henry Cornwell in entry for Sidney J. Shick and Mary Irene Cornwell, \"Montana, County Marriages, 1865-1950\"",
+      "citation": "\"Montana, County Marriages, 1865-1950\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F3Q2-M4M : Wed Jan 22 06:34:10 UTC 2025), John Henry Cornwell in entry for Sidney J. Shick and Mary Irene Cornwell, 09 Dec 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F3Q2-M4M"
+    },
+    {
+      "id": "9JY5-5DW",
+      "title": "John Henry Cornwell, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QV2K-X449 : Fri Oct 02 09:12:22 UTC 2026), John Henry Cornwell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QV2K-X449"
+    },
+    {
+      "id": "9DBQ-SVV",
+      "title": "U.S., Civil War Pension Index 1861-1934",
+      "citation": "Original data: General Index to Pension Files, 1861-1934. Washington, D.C.: National Archives and Records Administration. T288, 546 rolls."
+    },
+    {
+      "id": "QQZL-Q8V",
+      "title": "John H., \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:24MN-TFT : Sat Jul 26 02:30:17 UTC 2025), John H. in entry for Hudson Searing and Mary Cornwell, 5 Dec 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:24MN-TFT"
+    },
+    {
+      "id": "QQZL-3CZ",
+      "title": "John W, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:24MF-V5R : Thu Jul 24 23:59:22 UTC 2025), John W in entry for Hudson Searing and Mary Cornwell, 5 Dec 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:24MF-V5R"
+    },
+    {
+      "id": "QQZK-T1G",
+      "title": "John H, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CN-XBKF : Fri Mar 08 16:40:19 UTC 2024), John H in entry for Hudson Redowa Searing and Mary M Cornwell, 5 December 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CN-XBKF"
+    },
+    {
+      "id": "MDSD-D54",
+      "title": "John H. in entry for Hudson R. Searing, \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F67V-RC2 : 21 January 2020), John H. in entry for Hudson R. Searing, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F67V-RC2"
+    },
+    {
+      "id": "M8L1-MLN",
+      "title": "John W in entry for Hudson R Searing, \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F67V-6YG : 21 January 2020), John W in entry for Hudson R Searing, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F67V-6YG"
+    },
+    {
+      "id": "3383-6HX",
+      "title": "John H Cornwell, \"New York, State Death Index, 1880-1956\"",
+      "citation": "\"New York, State Death Index, 1880-1956\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGK5-G4C1 : Sat Mar 09 18:12:27 UTC 2024), John H Cornwell, 27 Dec 1887.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGK5-G4C1"
+    },
+    {
+      "id": "S2W3-F3C",
+      "title": "John H Cornell, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC4Q-LF4 : Mon Jul 08 15:19:45 UTC 2024), John H Cornell in entry for John Cornell, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC4Q-LF4"
+    },
+    {
+      "id": "9545-J8F",
+      "title": "John H. Cornwell, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF4-RXN : Wed Sep 09 10:54:00 UTC 2026), John H. Cornwell, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZF4-RXN"
+    },
+    {
+      "id": "9545-N1Q",
+      "title": "Capt John Hewlett Cornwell, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKX-SXYC : Sat Oct 03 13:43:02 UTC 2026), Capt John Hewlett Cornwell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVKX-SXYC"
+    },
+    {
+      "id": "9545-8JH",
+      "title": "John H Cornwell, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8V1-SJQ : Sun Oct 19 04:55:54 UTC 2025), John H Cornwell in entry for John H Cornwell, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8V1-SJQ"
+    },
+    {
+      "id": "9545-ZMC",
+      "title": "John H Cornwell, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1H-4QR : Sat Oct 18 19:40:58 UTC 2025), John H Cornwell in entry for John Cornwell, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC1H-4QR"
+    },
+    {
+      "id": "9D15-V3B",
+      "title": "Find A Grave",
+      "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&amp;GRid=44220714&amp;ref=acom"
+    },
+    {
+      "id": "S2W3-FK8",
+      "title": "Meriam W Cornell, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC4Q-LFC : Mon Jul 08 15:19:45 UTC 2024), Meriam W Cornell in entry for John Cornell, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC4Q-LFC"
+    },
+    {
+      "id": "9545-ZFS",
+      "title": "Marian W Cornwell, \"United States, Census, 1850\"",
+      "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC1H-4QY : Sat Oct 18 19:40:58 UTC 2025), Marian W Cornwell in entry for John Cornwell, 1850.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC1H-4QY"
+    },
+    {
+      "id": "Q51K-CWT",
+      "title": "John H Cornwell, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K93-7VJN : Fri Jul 03 18:54:42 UTC 2026), John H Cornwell in entry for Hewlett Cornwell.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K93-7VJN"
+    },
+    {
+      "id": "QQZV-CN1",
+      "title": "John Cornwall, \"New York, State Census, 1915\"",
+      "citation": "\"New York, State Census, 1915\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K95M-J4N : Wed Dec 24 18:32:59 UTC 2025), John Cornwall, 1915.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K95M-J4N"
+    },
+    {
+      "id": "3RYJ-BFW",
+      "title": "John H Cornwall, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X4LY-2TY : Sun Nov 01 08:11:26 UTC 2026), John H Cornwall, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:X4LY-2TY"
+    },
+    {
+      "id": "338Y-T57",
+      "title": "John H Cornwell, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVSY-YJF : Wed Oct 14 11:18:07 UTC 2026), John H Cornwell, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVSY-YJF"
+    },
+    {
+      "id": "338Y-ZG1",
+      "title": "John H Cornwall, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MLB9-HL8 : Wed Aug 13 17:25:43 UTC 2025), John H Cornwall, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MLB9-HL8"
+    },
+    {
+      "id": "338Q-S1V",
+      "title": "John H Cornwell, \"United States, Census, 1900\"",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MSJ6-88K : Tue Oct 21 23:24:04 UTC 2025), John H Cornwell, 1900.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MSJ6-88K"
+    },
+    {
+      "id": "3383-KGN",
+      "title": "John Cornwall, \"New York, State Death Index, 1880-1956\"",
+      "citation": "\"New York, State Death Index, 1880-1956\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGPJ-9S2G : Fri Mar 08 20:15:18 UTC 2024), John Cornwall, 28 Aug 1939.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QGPJ-9S2G"
+    },
+    {
+      "id": "3383-N2C",
+      "title": "John Hewlett Cornwall, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZR6L-ZQ6Z : Sat Oct 03 09:27:50 UTC 2026), John Hewlett Cornwall.",
+      "url": "https://familysearch.org/ark:/61903/1:1:ZR6L-ZQ6Z"
+    },
+    {
+      "id": "9545-JT6",
+      "title": "John H. Cornwell, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF4-RXV : Wed Sep 09 10:54:00 UTC 2026), John H. Cornwell in entry for John H. Cornwell, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZF4-RXV"
+    },
+    {
+      "id": "9545-66D",
+      "title": "John H Cornwell, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8V1-SJ4 : Sun Oct 19 04:55:54 UTC 2025), John H Cornwell in entry for John H Cornwell, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8V1-SJ4"
+    },
+    {
+      "id": "QQZ5-BFK",
+      "title": "Mabel Searing, \"United States, Census, 1880\"",
+      "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZDM-LXX : Wed Sep 09 10:37:48 UTC 2026), Mabel Searing in entry for Hudson Searing, 1880.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MZDM-LXX"
+    },
+    {
+      "id": "S2W3-N45",
+      "title": "Mary M Cornell, \"United States, Census, 1860\"",
+      "citation": "\"United States, Census, 1860\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MC4Q-LFZ : Mon Jul 08 15:19:45 UTC 2024), Mary M Cornell in entry for John Cornell, 1860.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MC4Q-LFZ"
+    },
+    {
+      "id": "9545-6D3",
+      "title": "Mary M Cornwell, \"United States, Census, 1870\"",
+      "citation": "\"United States, Census, 1870\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8V1-SJW : Sun Oct 19 04:55:54 UTC 2025), Mary M Cornwell in entry for John H Cornwell, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:M8V1-SJW"
+    },
+    {
+      "id": "3DL6-HR7",
+      "title": "Mary, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CV-54NK : Thu Mar 27 16:37:49 UTC 2025), Mary in entry for Henry William Wells and Florence Haider Searing, 14 June 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CV-54NK"
+    },
+    {
+      "id": "3DL6-HVG",
+      "title": "Mary Margaret Cornwell, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HQBQ-4H2M : Fri Oct 16 17:24:22 UTC 2026), Mary Margaret Cornwell in entry for Searing.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HQBQ-4H2M"
+    },
+    {
+      "id": "3DL6-H4H",
+      "title": "Mary Margaret Cornwell Searing, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:HQT2-356Z : Fri Oct 16 19:06:32 UTC 2026), Mary Margaret Cornwell Searing in entry for Hudson Searing.",
+      "url": "https://familysearch.org/ark:/61903/1:1:HQT2-356Z"
+    },
+    {
+      "id": "SN9G-LFJ",
+      "title": "Mary M. Cornwall, \"New York, New York City Births, 1846-1909\"",
+      "citation": "\"New York, New York City Births, 1846-1909\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27BM-XHH : Tue Mar 11 23:19:40 UTC 2025), Mary M. Cornwall in entry for Searing, 20 Dec 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27BM-XHH"
+    },
+    {
+      "id": "SN9G-2YG",
+      "title": "Mary Margaret Cornwell, \"New York, New York City Births, 1846-1909\"",
+      "citation": "\"New York, New York City Births, 1846-1909\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:271Q-2DM : Wed Jul 08 14:56:49 UTC 2026), Mary Margaret Cornwell in entry for Searing, 12 Apr 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:271Q-2DM"
+    },
+    {
+      "id": "SN9G-2FR",
+      "title": "Mary M Cornwell, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CN-XBKQ : Fri Mar 08 16:40:19 UTC 2024), Hudson Redowa Searing and Mary M Cornwell, 5 December 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CN-XBKQ"
+    },
+    {
+      "id": "SZY6-Q8R",
+      "title": "Mary Margaret Cornwall, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2CV-RZ67 : Thu Mar 27 18:09:50 UTC 2025), Mary Margaret Cornwall in entry for Francis H Scantleburg and Miriam Blanche Searing, 15 November 1905.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q2CV-RZ67"
+    },
+    {
+      "id": "SN9G-HRC",
+      "title": "Mary Margt. Cornwell, \"New York, New York City Births, 1846-1909\"",
+      "citation": "\"New York, New York City Births, 1846-1909\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27B3-7QH : Tue Mar 11 23:21:51 UTC 2025), Mary Margt. Cornwell in entry for Hudson Searing, 22 Feb 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27B3-7QH"
+    },
+    {
+      "id": "MZ7W-91V",
+      "title": "Mary Margt. Cornwell in entry for Hudson Searing, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDRG-FF6 : 21 September 2026), Mary Margt. Cornwell in entry for Hudson Searing, 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDRG-FF6"
+    },
+    {
+      "id": "9B34-M65",
+      "title": "Mary Margaret Cornwall Searing, \"New York, New York City Births, 1846-1909\"",
+      "citation": "\"New York, New York City Births, 1846-1909\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27B6-NKG : Wed Jul 08 14:51:45 UTC 2026), Mary Margaret Cornwall Searing in entry for Searing, 20 Dec 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27B6-NKG"
+    },
+    {
+      "id": "9B3W-1CG",
+      "title": "Mary Margaret Cornwell Searing, \"New York, New York City Births, 1846-1909\"",
+      "citation": "\"New York, New York City Births, 1846-1909\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:27BN-NGH : Wed Jul 08 14:52:04 UTC 2026), Mary Margaret Cornwell Searing in entry for Hudson Searing, 22 Feb 1873.",
+      "url": "https://familysearch.org/ark:/61903/1:1:27BN-NGH"
+    },
+    {
+      "id": "MZNK-GF1",
+      "title": "Mary Margaret Cornwall Searing in entry for Searing, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:FD5L-6Q6 : 18 January 2020), Mary Margaret Cornwall Searing in entry for Searing, 1871.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FD5L-6Q6"
+    },
+    {
+      "id": "9B3W-G44",
+      "title": "Mary Cornwell, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:24MF-V55 : Thu Jul 24 23:59:22 UTC 2025), Hudson Searing and Mary Cornwell, 5 Dec 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:24MF-V55"
+    },
+    {
+      "id": "9B3W-L3V",
+      "title": "Mary Cornwell, \"New York, New York City Marriage Records, 1829-1938\"",
+      "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:24MN-TFR : Sat Jul 26 02:30:17 UTC 2025), Hudson Searing and Mary Cornwell, 5 Dec 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:24MN-TFR"
+    },
+    {
+      "id": "MZW5-BZM",
+      "title": "Mary Margaret Cornwell in entry for Searing, \"New York, Births and Christenings, 1640-1962\"",
+      "citation": "\"New York, Births and Christenings, 1640-1962\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FDY9-6ML : 8 October 2026), Mary Margaret Cornwell in entry for Searing, 1876.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FDY9-6ML"
+    },
+    {
+      "id": "MDSD-D53",
+      "title": "Mary Margaret Cornwell in entry for Hudson R. Searing, \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F67V-RCK : 21 January 2020), Mary Margaret Cornwell in entry for Hudson R. Searing, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F67V-RCK"
+    },
+    {
+      "id": "M8L1-MLX",
+      "title": "Mary Margaret Cornwell in entry for Hudson R Searing, \"New York, Marriages, 1686-1980\"",
+      "citation": "\"New York, Marriages, 1686-1980\", , <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:F67V-6YL : 21 January 2020), Mary Margaret Cornwell in entry for Hudson R Searing, 1870.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F67V-6YL"
+    }
+  ]
+}
