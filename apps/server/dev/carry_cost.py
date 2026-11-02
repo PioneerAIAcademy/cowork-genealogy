@@ -24,7 +24,9 @@ How each figure is measured:
   entry), `<synthetic>` API-error placeholders skipped. A call's context is its input +
   cache-write + cache-read tokens.
 - **A user message** is a `user` row a person sent. The text rule: the row has text, and it is
-  not a tool result, `isMeta`, a compaction summary or an interrupt marker. In a log that
+  not a tool result, `isMeta`, a compaction summary, an interrupt marker or a background agent's
+  `<task-notification>` (an agent finishing inside a turn, which a fresh start would not cut
+  at: in one session 17 of 19 "messages" were these). In a log that
   records `promptSource`, the row must also be marked "sdk"; rows the mark and the text rule
   read differently, either way, are counted and printed. A message counts only if a call
   follows it. A "Yes." answering the hand-back line (`app.agent.hand_back`) is the runner's
@@ -32,6 +34,11 @@ How each figure is measured:
   before it; the figure without folding is printed too. As in the runner, the text a hand-back
   would end is cleared at each prompt, interrupt and API error, so only a "Yes." right after a
   turn that ended on the hand-back line is folded.
+- **A host reply** is the prototype's own reply under step mode's "Keep going" (`REPLY_KEEP_GOING`
+  or `REPLY_WRAP_UP` in the plugin's `step_boundary.py`). It starts a new turn, so it is a message
+  boundary like a person's, but it is counted and priced apart from them. The transcript cannot
+  tell it from the same phrase typed (`turns.auto` does not reach the bundle), so a typed "Keep
+  going" counts as a host reply; the boundaries, and so the total, are the same either way.
 - **Excess:** for each user message, its first call's context minus (baseline + seed), floored
   at 0. The message's calls carry it from its first call until a compaction (`isCompactSummary`,
   or a "This session is being continued" prompt), which resets the carried context, and no
@@ -71,6 +78,7 @@ SERVER_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SERVER_DIR))
 
 from app.agent.hand_back import AUTO_CONTINUE_TEXT, ends_with_hand_back  # noqa: E402
+from proto.worker.options import load_step_boundary  # noqa: E402
 from app.agent.spend import (  # noqa: E402
     cache_write_1h_rate,
     price_usd,
@@ -97,6 +105,11 @@ finally:
 
 SEEDS = (2_000, 5_000, 10_000)
 BAR = 0.10
+
+_BOUNDARY = load_step_boundary()
+HOST_REPLIES = frozenset(_BOUNDARY.normalize_reply(t)
+                         for t in (_BOUNDARY.REPLY_KEEP_GOING, _BOUNDARY.REPLY_WRAP_UP))
+TASK_NOTIFICATION = "<task-notification>"
 
 
 @dataclass
@@ -148,6 +161,7 @@ class Message:
     carrying: list[Call] = field(default_factory=list)
     after_compaction: int = 0
     folded: int = 0
+    host: bool = False  # a host reply under "Keep going", not a person's message
 
     def excess(self, fresh: int) -> int:
         return max(0, (self.first_context or 0) - fresh)
@@ -173,8 +187,12 @@ class Project:
         calls = self.main_calls if main_only else self.main_calls + self.other_calls
         return sum(c.cost() for c in calls)
 
-    def excess_cost(self, seed: int, positional: bool, fold: bool = True) -> float:
-        return sum(m.cost(self.baseline + seed, positional) for m in self.messages[fold])
+    def excess_cost(self, seed: int, positional: bool, fold: bool = True,
+                    host: bool | None = None) -> float:
+        """The carried excess over every message, or only the host replies (`host=True`) or
+        only the person's messages (`host=False`)."""
+        return sum(m.cost(self.baseline + seed, positional) for m in self.messages[fold]
+                   if host is None or m.host == host)
 
 
 def _text(row: dict) -> str | None:
@@ -197,11 +215,21 @@ def _is_compaction(row: dict) -> bool:
 
 def _by_text(row: dict) -> bool:
     """The text rule: a `user` row with text that is not a tool result, `isMeta`, a compaction
-    summary or an interrupt marker."""
+    summary, an interrupt marker or a background agent's `<task-notification>`."""
     if row.get("type") != "user" or row.get("isMeta") or _is_compaction(row):
         return False
     text = (_text(row) or "").strip()
-    return bool(text) and not text.startswith("[Request interrupted")
+    return bool(text) and not text.startswith("[Request interrupted") \
+        and not _is_task_notification(row)
+
+
+def _is_task_notification(row: dict) -> bool:
+    """A background agent finishing: never a person's message, whatever its mark says."""
+    return row.get("type") == "user" and (_text(row) or "").strip().startswith(TASK_NOTIFICATION)
+
+
+def _is_host_reply(text: str) -> bool:
+    return _BOUNDARY.normalize_reply(text) in HOST_REPLIES
 
 
 def _sdk_marked(rows: list[dict]) -> bool:
@@ -245,7 +273,7 @@ def _walk(rows: list[dict], fold: bool) -> tuple[list[Message], list[Call], int,
     and how many user rows the "sdk" mark and the text rule read differently, either way."""
     final = _calls(rows)
     sdk_marked = _sdk_marked(rows)
-    disagree = sum(1 for r in rows if r.get("type") == "user"
+    disagree = sum(1 for r in rows if r.get("type") == "user" and not _is_task_notification(r)
                    and (r.get("promptSource") == "sdk") != _by_text(r)) if sdk_marked else 0
     messages: list[Message] = []
     calls: list[Call] = []
@@ -265,7 +293,7 @@ def _walk(rows: list[dict], fold: bool) -> tuple[list[Message], list[Call], int,
             if folding:
                 current.folded += 1
                 continue
-            current = Message(str(row.get("timestamp", ""))[:19])
+            current = Message(str(row.get("timestamp", ""))[:19], host=_is_host_reply(text))
             messages.append(current)
             carrying = False
         elif _is_compaction(row):
@@ -392,9 +420,11 @@ def report(projects: list[Project], min_messages: int, bundles: int, skipped: Co
         print("No hosted session qualifies.")
         return 1
     seed = SEEDS[1]
-    header = ["project", "bundles", "SDK sessions", "user msgs", "Yes. folded", "calls",
-              "compactions", "cost", "main cost", f"excess@{seed // 1000}k", f"share@{seed // 1000}k"]
+    header = ["project", "bundles", "SDK sessions", "user msgs", "host replies", "Yes. folded",
+              "calls", "compactions", "cost", "main cost", f"excess@{seed // 1000}k",
+              f"share@{seed // 1000}k"]
     body = [[p.name, len(p.bundles), len(p.sessions), len(p.messages[True]),
+             sum(m.host for m in p.messages[True]),
              sum(m.folded for m in p.messages[True]), len(p.main_calls), p.compactions,
              _money(p.cost()), _money(p.cost(main_only=True)),
              _money(p.excess_cost(seed, positional=False)),
@@ -415,6 +445,12 @@ def report(projects: list[Project], min_messages: int, bundles: int, skipped: Co
         positional = sum(p.excess_cost(s, positional=True) for p in qualified)
         print(f"  {s:>6,}  {_money(blended):>9}  {_pct(blended, total):>7}  {_pct(blended, main_total):>7}  "
               f"{_money(positional):>10}  {_pct(positional, total):>7}  {_pct(positional, main_total):>7}")
+    replies = sum(m.host for p in qualified for m in p.messages[True])
+    people = sum(not m.host for p in qualified for m in p.messages[True])
+    print(f"By kind, at {seed:,}: {people} person messages carry "
+          f"{_pct(sum(p.excess_cost(seed, False, host=False) for p in qualified), total)} of cost, "
+          f"{replies} host replies (\"Keep going.\", \"Wrap it up.\") carry "
+          f"{_pct(sum(p.excess_cost(seed, False, host=True) for p in qualified), total)}.")
     unfolded = [p for p in kept if len(p.messages[False]) >= min_messages]
     folded = sum(m.folded for p in kept for m in p.messages[True])
     if folded:
@@ -438,10 +474,11 @@ def explain(projects: list[Project], target: str, seed: int) -> int:
     print(f"cost {_exact(p.cost())} (main thread {_exact(p.cost(main_only=True))}, "
           f"{len(p.other_calls)} sidechain and agent calls); baseline {p.baseline:,}; "
           f"fresh start with a {seed:,}-token seed = {fresh:,}; {p.compactions} compactions.")
-    print("  #  sent                 first-call ctx   excess  carrying  after compaction  "
+    print("  #  sent                 kind    first-call ctx   excess  carrying  after compaction  "
           "Yes. folded     blended   positional")
     for i, m in enumerate(p.messages[True], 1):
-        print(f"  {i:<2} {m.when:<19}  {m.first_context or 0:>14,}  {m.excess(fresh):>7,}  "
+        print(f"  {i:<2} {m.when:<19}  {'host' if m.host else 'person':<6}  "
+              f"{m.first_context or 0:>14,}  {m.excess(fresh):>7,}  "
               f"{len(m.carrying):>8}  {m.after_compaction:>16}  {m.folded:>11}  "
               f"{_exact(m.cost(fresh, False)):>10}  {_exact(m.cost(fresh, True)):>11}")
     print(f"  excess total: blended {_exact(p.excess_cost(seed, False))}, "

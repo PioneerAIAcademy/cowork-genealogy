@@ -314,3 +314,82 @@ def test_a_1h_cache_write_is_priced_at_2x_input_not_the_5_minute_rate():
         assert hour.carry_cost(15_000, 45_000, positional) == pytest.approx(6_000 * 6.00 / 1e6)
     half = carry_cost.Call("claude-sonnet-4-6", (0, 2_000, 0, 0), write_1h=1_000)
     assert half.cost() == pytest.approx((1_000 * 3.75 + 1_000 * 6.00) / 1e6)
+
+
+def _notification(sid, minute, *, as_list=False, **fields):
+    text = ("<task-notification>\n<task-id>a1</task-id>\n<status>completed</status>\n"
+            "</task-notification>")
+    content = [{"type": "text", "text": text}] if as_list else text
+    return _row(sid, minute, type="user", message={"role": "user", "content": content}, **fields)
+
+
+@pytest.mark.parametrize("marked, mark", [(True, {}), (True, {"promptSource": "sdk"}), (False, {})],
+                         ids=["unmarked row in an sdk-marked log", "row marked sdk", "unmarked log"])
+@pytest.mark.parametrize("as_list", [False, True], ids=["string content", "text block"])
+def test_a_background_agents_task_notification_is_not_a_message(tmp_path, marked, mark, as_list):
+    """A background agent finishing inside a turn: the calls after it go on carrying the
+    message that launched the agent, and the row is no disagreement between the two rules."""
+    rows = [person("s", 0, "Start."), call("s", 1, "a", cw=40_000),
+            person("s", 2, "Find his parents."), call("s", 3, "b", cw=60_000),
+            _notification("s", 4, as_list=as_list, **mark), call("s", 5, "c", cr=60_000),
+            _notification("s", 6, as_list=as_list, **mark), call("s", 7, "d", cr=60_000)]
+    rows[0]["parentUuid"] = None
+    if not marked:
+        for r in rows:
+            r.pop("promptSource", None)
+    [project] = carry_cost.analyze([bundle(tmp_path, "b", "prj", {"session-log.jsonl": rows})])
+    messages = project.messages[True]
+    assert len(messages) == 2 and project.disagree == 0
+    assert len(messages[1].carrying) == 3
+
+
+def _step_mode_rows():
+    """A researcher's step, two host replies ("Keep going." and "Wrap it up."), then a typed
+    question. Baseline 40,000; at a 5,000 seed each boundary's excess is priced on its first
+    call alone, all written at $3.75: 15,000, 25,000, 35,000 and 5,000 tokens."""
+    rows = [person("s", 0, "Start."), call("s", 1, "a", cw=40_000),
+            person("s", 2, "Search the 1841 census."), call("s", 3, "b", cw=60_000),
+            person("s", 4, "Keep going."), call("s", 5, "c", cw=70_000),
+            person("s", 6, "wrap it up!"), call("s", 7, "d", cw=80_000),
+            person("s", 8, "Why 1841?"), call("s", 9, "e", cw=50_000)]
+    rows[0]["parentUuid"] = None
+    return rows
+
+
+def test_a_host_reply_is_a_boundary_counted_apart_from_the_persons_messages(tmp_path):
+    [project] = carry_cost.analyze([bundle(tmp_path, "b", "prj", {"session-log.jsonl": _step_mode_rows()})])
+    messages = project.messages[True]
+    assert [m.host for m in messages] == [False, False, True, True, False]
+    assert [m.excess(45_000) for m in messages] == [0, 15_000, 25_000, 35_000, 5_000]
+    host = project.excess_cost(5_000, positional=False, host=True)
+    person_ = project.excess_cost(5_000, positional=False, host=False)
+    assert host == pytest.approx(60_000 * 3.75 / 1e6)
+    assert person_ == pytest.approx(20_000 * 3.75 / 1e6)
+    assert host + person_ == pytest.approx(project.excess_cost(5_000, positional=False))
+
+
+def test_the_report_names_host_replies_and_their_share_separately(tmp_path, capsys):
+    """Cost: 40,000 + 60,000 + 70,000 + 80,000 + 50,000 written at $3.75, plus 50 output
+    tokens at $15 = $1.12575. Person messages carry 20,000 x 3.75 = $0.075 (6.7%), host
+    replies 60,000 x 3.75 = $0.225 (20.0%)."""
+    b = bundle(tmp_path, "b", "prj", {"session-log.jsonl": _step_mode_rows()}, platform="web")
+    carry_cost.main([str(b[1])])
+    out = capsys.readouterr().out
+    assert ('By kind, at 5,000: 3 person messages carry 6.7% of cost, 2 host replies '
+            '("Keep going.", "Wrap it up.") carry 20.0%.') in out
+    carry_cost.main([str(b[1]), "--explain", "prj"])
+    kinds = [line.split()[2] for line in capsys.readouterr().out.splitlines()
+             if line.startswith("  ") and line.split()[0].isdigit()]
+    assert kinds == ["person", "person", "host", "host", "person"]
+
+
+def test_the_host_phrases_are_the_shipped_step_boundarys_own():
+    """One spelling: read from the plugin's `step_boundary.py`, the module the worker
+    replies with, not restated here."""
+    from proto.worker.options import load_step_boundary
+
+    b = load_step_boundary()
+    assert carry_cost.HOST_REPLIES == {b.normalize_reply(b.REPLY_KEEP_GOING),
+                                       b.normalize_reply(b.REPLY_WRAP_UP)}
+    assert not carry_cost._is_host_reply(b.REPLY_CONTINUE)
+    assert not carry_cost._is_host_reply("Keep going with the German research.")
