@@ -197,18 +197,24 @@ and drops the one the 202's `seq` names; everything else relays.
   `python -m uvicorn web.app:app --host 127.0.0.1 --port 8000` with `WEB_DIST_DIR=web-dist`;
   why each setting: `../eb-web/README.md`.
 
-`QUEUE_URL` unset or empty refuses to start (a `RuntimeError` from the lifespan, U11): a
-tier with no queue records a turn and nothing ever runs it. The driver's embedded tier is
+With the chat on (`GENEALOGY_CHAT` unset or `true`), `QUEUE_URL` unset or empty refuses to
+start (a `RuntimeError` from the lifespan, U11): a tier with no queue records a turn and
+nothing ever runs it. With `GENEALOGY_CHAT=false` there is no queue, no grant refresher and
+no `/api/sessions` route; `/api/health` reports `"queue": null`. The driver's embedded tier is
 the one queue-less mode, and it passes `drive.py`'s own `NullQueue` to `create_app`: the
 turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and stays
 `turn_active` until the seeder closes it through `worker.complete()` itself.
 
-Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required), `POLL_S` (1),
+Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required with the chat on),
+`GENEALOGY_CHAT` (unset: on; `false`: off; anything else refuses to start),
+`GENEALOGY_MAX_USERS` (a positive integer: sign-in admits by user cap, blocked users counted,
+and ignores `ALLOWED_EMAILS`; unset: the allowlist; anything else refuses to start), `POLL_S` (1),
 `SSE_PING_S` (15, capped at 15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
 `GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
 `QUEUE_URL` host's region). The start line names the mode, never a key:
-`queue: <url>; sqs credentials: <mode>; region <r>`.
+`queue: <url>; sqs credentials: <mode>; region <r>`. `GET /livez` answers `200 {"ok": true}`
+touching no store, in both chat modes; `/api/health` stays the readiness check.
 
 ## The driver (`../drive.py`)
 

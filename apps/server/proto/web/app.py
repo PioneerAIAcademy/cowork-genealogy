@@ -6,7 +6,8 @@ sees the model stream: the worker (D9-10) writes ``map_message`` output into
 turn's evidence reaches Postgres without a hop that dies with the worker.
 
 Routes are on the same paths ``apps/web`` already calls (``api.ts``), so the SPA is
-reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
+reused verbatim with ``VITE_SESSION_TRANSPORT=sse``. Every ``/api/sessions`` route exists only
+with the chat on (#3985, ``GENEALOGY_CHAT``):
 
   POST /api/sessions/{id}/messages {text}      mint turn_id, record it, enqueue it   -> 202
   GET  /api/sessions/{id}/events?after=N       one-shot poll read (JSON)
@@ -22,6 +23,7 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
   GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
   POST /api/sessions/{id}/interrupt                Stop: raise the flag        -> 202
+  GET  /livez                                   200 {ok: true}, touching no store (#3985)
   GET  /api/feedback/context?sessionId=         the files and transcript size a report would carry
   POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
                                                 web/feedback.py); stored, sent nowhere
@@ -51,7 +53,9 @@ and the transient frames are never replayed -- the same split as TRANSIENT_KINDS
 hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
-queue URL, the shim's shape; required -- unset or empty refuses to start),
+queue URL, the shim's shape; required with the chat on -- unset or empty refuses to start),
+GENEALOGY_CHAT (unset or true; false serves no /api/sessions route and needs no queue),
+GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user cap does),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``), AUTONOMOUS_MAX_NUDGES (0 -- see ``max_nudges``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
@@ -99,13 +103,13 @@ import time
 import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, HTTPException, Request, File, UploadFile
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -286,6 +290,8 @@ class User:
     email: str
     familysearch_id: str | None = None
     sessions_revoked_at: datetime | None = None
+    # 016: set by an operator to refuse the patron at sign-in and on every request.
+    blocked_at: datetime | None = None
 
 
 class ProjectNotOwned(Exception):
@@ -315,6 +321,28 @@ class IdentityMismatch(Exception):
     FamilySearch account. The alpha's upsert never compared the two
     (apps/server/app/auth.py _upsert_user), so any account carrying an allowlisted email
     signed in as the existing user."""
+
+
+class AdmissionRefused(Exception):
+    """A new user's sign-in found ``GENEALOGY_MAX_USERS`` users already (blocked users
+    count). No row is written; the callback answers 403 before any grant."""
+
+
+# #3985: status, API detail and sign-in page text ({who}: the escaped account, {fail}: the
+# try-again line) for each reason ``_admission_refusal`` returns. upsert_user's own outcomes
+# (AdmissionRefused, AdmissionBusy) are answered at the callback's ``except``s.
+ADMISSION_REFUSALS: dict[str, tuple[int, str, str]] = {
+    "blocked": (403, "Account blocked", "{who} is blocked. Ask the administrator."),
+    "not_ready": (503, "Not ready", "Not ready: the allowlist has not loaded yet. {fail}"),
+    "not_allowed": (403, "Account removed from allowlist",
+                    "{who} is not on the allowlist. Ask the administrator to add this exact address, "
+                    "then sign in again."),
+}
+
+
+class AdmissionBusy(Exception):
+    """A new user's capped sign-in could not take the admission lock within
+    ``grants.QUEUE_LOCK_TIMEOUT_S``; the callback answers 503 and nothing is written."""
 
 
 @dataclass(frozen=True)
@@ -363,7 +391,7 @@ class Store(Protocol):
     async def request_stop(self, session_id: str) -> bool: ...
     # 008: sign-in. store_grant takes CIPHERTEXT; web/auth.py encrypts before the call.
     async def get_user(self, user_id: str) -> User | None: ...
-    async def upsert_user(self, email: str, familysearch_id: str | None) -> User: ...
+    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User: ...
     async def is_allowed(self, email: str) -> bool: ...
     async def sync_allowlist(self, emails: set[str]) -> None: ...
     async def revoke_sessions(self, user_id: str) -> None: ...
@@ -1128,10 +1156,10 @@ class PgStore:
     def _user(r: dict[str, Any]) -> User:
         return User(
             id=r["id"], email=r["email"], familysearch_id=r["familysearch_id"],
-            sessions_revoked_at=r["sessions_revoked_at"],
+            sessions_revoked_at=r["sessions_revoked_at"], blocked_at=r["blocked_at"],
         )
 
-    _USER = "SELECT id, email, familysearch_id, sessions_revoked_at FROM users"
+    _USER = "SELECT id, email, familysearch_id, sessions_revoked_at, blocked_at FROM users"
 
     async def get_user(self, user_id: str) -> User | None:
         async with await self._connect() as conn:
@@ -1139,26 +1167,56 @@ class PgStore:
             row = await cur.fetchone()
         return self._user(row) if row else None
 
-    async def upsert_user(self, email: str, familysearch_id: str | None) -> User:
+    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User:
         """The user for this email, created on first sign-in. The FamilySearch id is
         pinned on first sight; a later sign-in presenting a DIFFERENT one raises
-        IdentityMismatch (trust on first use)."""
+        IdentityMismatch (trust on first use). A blocked user is returned unpinned, so the
+        caller's refusal writes nothing.
+
+        With ``max_users`` (#3985, ``GENEALOGY_MAX_USERS``), an existing user is returned
+        whatever the count, without the admission lock; a new one is inserted only while
+        ``users`` holds fewer rows, else AdmissionRefused. Only a new email takes the
+        tier-wide admission lock, and counts and inserts under it, so two sign-ins at cap-1
+        cannot both pass; a lock wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` raises
+        AdmissionBusy."""
+        from psycopg import errors
+
         email = email.strip().lower()
-        async with await self._connect() as conn:
-            async with conn.transaction():
-                await conn.execute(
-                    "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING",
-                    ("usr_" + uuid.uuid4().hex[:16], email),
-                )
-                cur = await conn.execute(self._USER + " WHERE email = %s FOR UPDATE", (email,))
-                user = self._user(await cur.fetchone())
-                if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
-                    raise IdentityMismatch(email)
-                if familysearch_id and not user.familysearch_id:
-                    await conn.execute(
-                        "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
-                    )
-                    user = User(user.id, user.email, familysearch_id, user.sessions_revoked_at)
+        new_id = "usr_" + uuid.uuid4().hex[:16]
+        insert = "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING"
+        select = self._USER + " WHERE email = %s FOR UPDATE"
+        try:
+            async with await self._connect() as conn:
+                async with conn.transaction():
+                    row = None
+                    if max_users is None:
+                        await conn.execute(insert, (new_id, email))
+                    else:
+                        # An existing user, row-locked so a concurrent delete waits; else the
+                        # admission lock, the same read again (a sign-in for this email may
+                        # have inserted while this one waited), the count, the insert.
+                        row = await (await conn.execute(select, (email,))).fetchone()
+                        if row is None:
+                            await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
+                            await conn.execute(grants.ADMISSION_LOCK_SQL, (grants.ADMISSION_LOCK_NS,))
+                            row = await (await conn.execute(select, (email,))).fetchone()
+                        if row is None:
+                            cur = await conn.execute("SELECT count(*) AS n FROM users")
+                            if (await cur.fetchone())["n"] >= max_users:
+                                raise AdmissionRefused(email)
+                            await conn.execute(insert, (new_id, email))
+                    if row is None:
+                        row = await (await conn.execute(select, (email,))).fetchone()
+                    user = self._user(row)
+                    if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+                        raise IdentityMismatch(email)
+                    if familysearch_id and not user.familysearch_id and user.blocked_at is None:
+                        await conn.execute(
+                            "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
+                        )
+                        user = replace(user, familysearch_id=familysearch_id)
+        except errors.LockNotAvailable as exc:
+            raise AdmissionBusy(email) from exc
         return user
 
     async def is_allowed(self, email: str) -> bool:
@@ -1539,7 +1597,8 @@ def create_app(
     blobs: Any = None,
 ) -> FastAPI:
     """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
-    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings.
+    from env, refusing to start without a QUEUE_URL while the chat is on (#3985,
+    ``GENEALOGY_CHAT``, read once here); tests pass fakes and shrink the timings.
     ``blobs`` (U20) is the feedback bucket (``blobstore.S3Blobs``); None with no store
     passed means the lifespan builds it from GENEALOGY_S3_*."""
 
@@ -1547,8 +1606,9 @@ def create_app(
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
         # U7: a half SQS pair refuses here, before a startup step or its background retry
-        # exists, so the refusal leaves nothing running.
-        if app.state.queue is None:
+        # exists, so the refusal leaves nothing running. #3985: with the chat off there is no
+        # queue to need, and app.state.queue stays None.
+        if app.state.chat and app.state.queue is None:
             # U11: no queue means a turn is recorded and nothing ever runs it.
             queue_url = (os.environ.get("QUEUE_URL") or "").strip()
             if not queue_url:
@@ -1596,8 +1656,9 @@ def create_app(
         failing = {name: step for name, step in steps.items() if startup[name] != "ok"}
         retry = asyncio.create_task(retry_startup(startup, failing)) if failing else None
         # U3: only a store that can refresh (PgStore) gets the loop; a test's FakeStore never.
+        # #3985: nor a chat-off tier, which runs no turn a grant could serve.
         refresher = None
-        if hasattr(store, "refresh_grant"):
+        if app.state.chat and hasattr(store, "refresh_grant"):
             interval = grants.env_seconds(os.environ, "FS_GRANT_REFRESH_INTERVAL_S", grants.DEFAULT_REFRESH_INTERVAL_S)
             refresher = asyncio.create_task(grant_refresh_loop(
                 store, refresh=auth.refresh_tokens,
@@ -1617,6 +1678,8 @@ def create_app(
     # public host, and nothing in the repo reads them.
     app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
+    # #3985: read once, so the routes and the lifespan cannot disagree; a bad value refuses here.
+    app.state.chat = auth.chat_enabled()
     app.state.store = store
     app.state.queue = queue
     app.state.blobs = blobs
@@ -1723,6 +1786,23 @@ def create_app(
         startup = request.app.state.startup
         return startup is None or startup.get("allowlist", "ok") == "ok"
 
+    async def _admission_refusal(request: Request, email: str, user: User | None) -> str | None:
+        """The one admission check (#3985), for ``current_user`` and ``/callback``: the
+        ``ADMISSION_REFUSALS`` reason to refuse with, or None. A blocked user is refused always, FamilySearch
+        configured or not. Otherwise, with FamilySearch configured and no
+        ``GENEALOGY_MAX_USERS``, the allowlist decides (fail-closed until it has loaded); with
+        a cap, nothing here: an existing user is admitted, and a new one only through
+        ``upsert_user(max_users=...)``. ``user`` is None before the callback's upsert, so the
+        allowlist refuses a stranger before any row is written."""
+        if user is not None and user.blocked_at is not None:
+            return "blocked"
+        if auth.familysearch_configured() and auth.max_users() is None:
+            if not _allowlist_ready(request):
+                return "not_ready"
+            if not await _store(request).is_allowed(email):
+                return "not_allowed"
+        return None
+
     async def current_user(request: Request) -> User:
         """The signed-in patron, or 401/403. On every /api/sessions and /api/projects route."""
         data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
@@ -1734,11 +1814,9 @@ def create_app(
             raise HTTPException(status_code=401, detail="Unknown user")
         if auth.revoked(data.get("iat"), user.sessions_revoked_at):
             raise HTTPException(status_code=401, detail="Session revoked")
-        if auth.familysearch_configured():
-            if not _allowlist_ready(request):
-                raise HTTPException(status_code=503, detail="Not ready")
-            if not await store.is_allowed(user.email):
-                raise HTTPException(status_code=403, detail="Account removed from allowlist")
+        if (reason := await _admission_refusal(request, user.email, user)) is not None:
+            status, detail, _page = ADMISSION_REFUSALS[reason]
+            raise HTTPException(status_code=status, detail=detail)
         return user
 
     async def _session(request: Request, session_id: str, user: User) -> SessionRow:
@@ -1760,6 +1838,12 @@ def create_app(
 
     # -- health ---------------------------------------------------------------------
 
+    @app.get("/livez")
+    async def livez() -> dict:
+        """Liveness (#3985): the process answers. Touches no store and no startup step, so a
+        Postgres outage never cycles an instance; in both chat modes."""
+        return {"ok": True}
+
     @app.get("/api/health")
     async def health(request: Request) -> JSONResponse:
         """Readiness (U10): 200 or 503, the same keys either way so every script reading
@@ -1770,7 +1854,8 @@ def create_app(
         body: dict[str, Any] = {
             "ok": True,
             "tier": "proto-web",
-            "queue": type(state.queue).__name__,
+            # #3985: null with the chat off, never "NoneType".
+            "queue": None if state.queue is None else type(state.queue).__name__,
             "poll_s": state.poll_s,
             "ping_s": state.ping_s,
             "base_path": state.base_path,
@@ -1843,8 +1928,9 @@ def create_app(
         """The registered FamilySearch redirect: a TOP-LEVEL /callback (auth.redirect_uri).
 
         Order matters, and each refusal writes nothing: state, code exchange, identity,
-        allowlist, then the user (refused if the email is pinned to another FamilySearch
-        account), and only then the grant -- encrypted here, so the store sees ciphertext.
+        allowlist (none under ``GENEALOGY_MAX_USERS``), then the user (refused if the email is
+        pinned to another FamilySearch account, if it is new and the cap is reached, or if it
+        is blocked), and only then the grant -- encrypted here, so the store sees ciphertext.
         The write takes the patron's grant write lock (``PgStore.store_grant``), so it never
         interleaves with a refresh; while a refresher holds the lock past
         ``grants.WRITE_LOCK_TIMEOUT_S`` it answers 503 and the patron signs in again. Every
@@ -1869,23 +1955,32 @@ def create_app(
                 status_code=403,
             )
         store = _store(request)
-        if not _allowlist_ready(request):
-            return HTMLResponse(f"Not ready: the allowlist has not loaded yet. {fail}", status_code=503)
-        if not await store.is_allowed(email):
-            return HTMLResponse(
-                f"The FamilySearch account <strong>{html.escape(email)}</strong> is not on the allowlist. "
-                "Ask the administrator to add this exact address, then sign in again.",
-                status_code=403,
-            )
+
+        def refused(reason: str) -> HTMLResponse:
+            status, _detail, page = ADMISSION_REFUSALS[reason]
+            who = f"The FamilySearch account <strong>{html.escape(email)}</strong>"
+            return HTMLResponse(page.format(who=who, fail=fail), status_code=status)
+
+        if (reason := await _admission_refusal(request, email, None)) is not None:
+            return refused(reason)
         fs_id = identity.get("id")
         try:
-            user = await store.upsert_user(email, str(fs_id) if fs_id else None)
+            user = await store.upsert_user(email, str(fs_id) if fs_id else None, max_users=auth.max_users())
         except IdentityMismatch:
             return HTMLResponse(
                 f"<strong>{html.escape(email)}</strong> is already linked to a different FamilySearch "
                 "account. Sign in with that account, or ask the administrator.",
                 status_code=403,
             )
+        except AdmissionRefused:
+            return HTMLResponse(
+                "This app has reached its user limit, so a new account cannot sign in. Ask the administrator.",
+                status_code=403,
+            )
+        except AdmissionBusy:
+            return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
+        if (reason := await _admission_refusal(request, email, user)) is not None:
+            return refused(reason)
         refresh = token_json.get("refresh_token")
         try:
             await store.store_grant(
@@ -1953,12 +2048,16 @@ def create_app(
         return await _image(request, project_id, filename)
 
     # -- sessions -----------------------------------------------------------------
+    # #3985: with the chat on these register on the app, as before; with it off, on a router
+    # nothing includes, so a chat-off tier serves no /api/sessions route. (An included router
+    # stays one lazy entry in app.routes on this FastAPI, which the route sweeps cannot see.)
+    sessions = app if app.state.chat else APIRouter()
 
-    @app.get("/api/sessions")
+    @sessions.get("/api/sessions")
     async def list_sessions(request: Request, user: User = Depends(current_user)) -> list[dict]:
         return [session_out(r) for r in await _store(request).list_sessions(user.id)]
 
-    @app.post("/api/sessions")
+    @sessions.post("/api/sessions")
     async def create_session(body: CreateSessionBody, request: Request, user: User = Depends(current_user)) -> dict:
         try:
             row = await _store(request).create_session(
@@ -1969,7 +2068,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="Project not found") from exc
         return session_out(row)
 
-    @app.post("/api/sessions/{session_id}/continue")
+    @sessions.post("/api/sessions/{session_id}/continue")
     async def continue_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         """U19: a new session on a retired session's project, so its research goes on."""
         row = await _session(request, session_id, user)
@@ -1981,11 +2080,11 @@ def create_app(
             raise HTTPException(status_code=404, detail="Project not found") from exc
         return session_out(new)
 
-    @app.get("/api/sessions/{session_id}")
+    @sessions.get("/api/sessions/{session_id}")
     async def get_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         return session_out(await _session(request, session_id, user))
 
-    @app.patch("/api/sessions/{session_id}")
+    @sessions.patch("/api/sessions/{session_id}")
     async def patch_session(
         session_id: str, body: PatchSessionBody, request: Request, user: User = Depends(current_user)
     ) -> dict:
@@ -1997,11 +2096,11 @@ def create_app(
             raise HTTPException(status_code=404, detail="Session not found")
         return session_out(row)
 
-    @app.post("/api/sessions/{session_id}/resume")
+    @sessions.post("/api/sessions/{session_id}/resume")
     async def resume_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         return session_out(await _session(request, session_id, user))  # nothing to resume: no sandbox
 
-    @app.delete("/api/sessions/{session_id}")
+    @sessions.delete("/api/sessions/{session_id}")
     async def delete_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         await _session(request, session_id, user)
         try:
@@ -2015,7 +2114,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="Session not found")
         return {"ok": True}
 
-    @app.get("/api/sessions/{session_id}/state")
+    @sessions.get("/api/sessions/{session_id}/state")
     async def session_state(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         row = await _session(request, session_id, user)
         docs = await _store(request).documents(row.project_id)
@@ -2026,7 +2125,7 @@ def create_app(
             "sidecars": [],
         }
 
-    @app.get("/api/sessions/{session_id}/sidecar/{log_id}")
+    @sessions.get("/api/sessions/{session_id}/sidecar/{log_id}")
     async def session_sidecar(
         session_id: str, log_id: str, request: Request, user: User = Depends(current_user)
     ) -> dict:
@@ -2072,12 +2171,12 @@ def create_app(
         "logs": "There are no sandbox logs on this backend; read the worker's stdout",
     }
 
-    @app.get("/api/sessions/{session_id}/logs")
+    @sessions.get("/api/sessions/{session_id}/logs")
     async def not_in_prototype_get(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
         await _session(request, session_id, user)
         raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
 
-    @app.get("/api/sessions/{session_id}/image")
+    @sessions.get("/api/sessions/{session_id}/image")
     async def session_image(
         session_id: str, request: Request, filename: str | None = None,
         user: User = Depends(current_user),
@@ -2118,7 +2217,7 @@ def create_app(
         # PNG bytes; browsers sniff, and matching the alpha beats a third behaviour.
         return Response(content=blob.body, media_type="image/jpeg")
 
-    @app.post("/api/sessions/{session_id}/files")
+    @sessions.post("/api/sessions/{session_id}/files")
     async def upload_session_file(
         session_id: str,
         request: Request,
@@ -2193,7 +2292,7 @@ def create_app(
         written = await asyncio.to_thread(_write)
         return {"path": key, "sizeBytes": written}
 
-    @app.post("/api/sessions/{session_id}/interrupt", status_code=202)
+    @sessions.post("/api/sessions/{session_id}/interrupt", status_code=202)
     async def interrupt(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         """1c: Stop. This used to answer 501 -- "the worker owns the turn" -- and the whole
         design rests on it, so it is phase-1 work rather than a later nicety.
@@ -2210,7 +2309,7 @@ def create_app(
 
     # -- turns and events ---------------------------------------------------------
 
-    @app.post("/api/sessions/{session_id}/messages", status_code=202)
+    @sessions.post("/api/sessions/{session_id}/messages", status_code=202)
     async def post_message(
         session_id: str, body: MessageBody, request: Request, user: User = Depends(current_user)
     ) -> dict:
@@ -2263,7 +2362,7 @@ def create_app(
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 
-    @app.get("/api/sessions/{session_id}/events")
+    @sessions.get("/api/sessions/{session_id}/events")
     async def get_events(
         session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
     ) -> dict:
@@ -2283,7 +2382,7 @@ def create_app(
             "next_after": rows[-1].seq if rows else cursor,
         }
 
-    @app.get("/api/sessions/{session_id}/events/stream")
+    @sessions.get("/api/sessions/{session_id}/events/stream")
     async def stream_events(
         session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
     ) -> StreamingResponse:

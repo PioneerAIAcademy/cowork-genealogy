@@ -864,7 +864,8 @@ async def test_token_calls_send_the_browser_user_agent(monkeypatch):
     (FS_ID, FS_ID, False), (None, FS_ID, False), (FS_ID, None, False), (FS_ID, "ZZZZ-999", True),
 ])
 async def test_pgstore_upsert_user_pins_the_familysearch_id(stored, presented, raises):
-    row = {"id": "usr_a", "email": "a@example.org", "familysearch_id": stored, "sessions_revoked_at": None}
+    row = {"id": "usr_a", "email": "a@example.org", "familysearch_id": stored, "sessions_revoked_at": None,
+           "blocked_at": None}
     conn = ScriptedConn(lambda sql: row if sql.startswith("SELECT id, email") else None)
     store = _store(conn)
     if raises:

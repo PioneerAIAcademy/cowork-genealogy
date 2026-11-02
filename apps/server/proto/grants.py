@@ -28,6 +28,11 @@ second half is ``hashtext(session_id)`` -- so the engine's single-bigint
                    inside an explicit transaction (an autocommit statement would drop it
                    at once), never on the grant connection, and never across an SQS send.
                    The wait is bounded (``QUEUE_LOCK_TIMEOUT_SQL``), as the write lock's is.
+  ADMISSION_LOCK_NS  (#3985) transaction-scoped, ONE key ``(ns, 0)`` for the whole tier: a
+                   capped sign-in holds it across counting ``users`` and inserting the new
+                   row, so two sign-ins at cap-1 cannot both pass the count. Taken inside
+                   ``upsert_user``'s transaction only when ``GENEALOGY_MAX_USERS`` is set; its
+                   wait is bounded with ``QUEUE_LOCK_TIMEOUT_SQL``.
 
 A ``hashtext`` collision between two patrons only over-serializes them (a refresh is
 skipped), never lets one through. Every namespace is cast ``::int4``. psycopg 3 types a
@@ -63,6 +68,7 @@ DEV_FS_TOKEN_ENC_KEY = "dev-insecure-fs-token-key-change-me"
 ATTEMPT_LOCK_NS = 30301
 WRITE_LOCK_NS = 30302
 QUEUE_LOCK_NS = 30303
+ADMISSION_LOCK_NS = 30304
 
 # -- thresholds ------------------------------------------------------------------
 
@@ -132,6 +138,8 @@ ATTEMPT_LOCK_HELD_SQL = (
 TRY_LOCK_SQL = "SELECT pg_try_advisory_lock(%s::int4, hashtext(%s))"
 WRITE_XACT_LOCK_SQL = "SELECT pg_advisory_xact_lock(%s::int4, hashtext(%s))"
 QUEUE_LOCK_SQL = "SELECT pg_advisory_xact_lock(%s::int4, hashtext(%s))"
+# One key for the tier, not per patron: the cap counts every user.
+ADMISSION_LOCK_SQL = "SELECT pg_advisory_xact_lock(%s::int4, 0)"
 # U19: retention TRIES the queue lock, never waits: admit_message and delete_session hold it
 # and then lock the sessions row retention already holds, so a wait could deadlock. The same
 # key as QUEUE_LOCK_SQL, or the exclusion is void (a test pins the two together).
