@@ -1,6 +1,6 @@
 ---
 name: triage-feedback
-description: Use when the lead wants the kanban Feedback column worked — "triage the feedback", "work the feedback queue", "what feedback came in", "go through the feedback column", or a bare "/triage-feedback". Takes each untriaged alpha-feedback issue one at a time: reports what the tester said, verifies the claim against the repo, checks whether an issue already covers it, and puts one of three verdicts to the lead — Not planned, fold into an existing issue, or Backlog with written instructions for whoever picks it up. The gate between the feedback endpoint, which files raw submissions into the Feedback column, and /fill-ready, which ranks and promotes what reaches Backlog. Proposes first and applies only what the lead approves; never starts the work it scopes.
+description: Use when the lead wants the kanban Feedback column worked — "triage the feedback", "work the feedback queue", "what feedback came in", "go through the feedback column", or a bare "/triage-feedback". Takes each untriaged alpha-feedback issue one at a time: reports what the tester said, verifies every claim against the bundle and the repo, checks whether an issue already covers it, and keeps a findings ledger so that every problem the tester reported or the bundle shows gets a disposition. It puts one of three verdicts to the lead for each finding: Not planned, fold into an existing issue, or Backlog with written instructions for whoever picks it up. The gate between the feedback endpoint, which files raw submissions into the Feedback column, and /fill-ready, which ranks and promotes what reaches Backlog. Proposes first and applies only what the lead approves; never starts the work it scopes.
 allowed-tools:
   - Read
   - Bash
@@ -24,6 +24,13 @@ You have no `Edit` or `Write` tool on purpose.
 
 **One item at a time.** Report, verify, recommend, wait for the verdict, apply,
 move on. Do not batch the report and do not run ahead of the lead.
+
+**Every problem gets a disposition.** Every complaint the tester made, and every
+problem you find in the bundle that they did not, ends as one of four things:
+filed as an issue, folded into an existing issue, refuted with the path that
+shows it, or ruled out of scope by the lead. Nothing is dropped silently. That does not mean one new issue per
+problem: fold wherever an issue already covers it, and put findings that share a
+fix site in one issue. The findings ledger (Section 2) is how you keep count.
 
 ## 0. The queue
 
@@ -50,12 +57,19 @@ points budget, not the hourly window, and it clears in minutes, so do not wait
 for the `reset` timestamp. **Never re-read the board to check one card** — use
 the single-card query in Section 6.
 
-**Oldest first**, and **cap the run at about eight.** The column is the queue, so
-an item you did not reach is still there next run. Say how many are left when you
-stop.
+**Oldest first**, and **cap the run at about four.** Triaging one item properly
+fills a quarter of a session, and the items past a higher cap get the shallow
+pass this skill exists to prevent. The column is the queue, so an item you did
+not reach is still there next run. Say how many are left when you stop.
 
 Two items with timestamps a few minutes apart are usually one tester resubmitting,
 not two bugs. Open both before triaging either.
+
+**Group the queue by tester.** Each bundle's `FEEDBACK.md` names who sent it. Say
+which items share a tester when you list the queue. One tester's bundles tend to
+share root causes, and a ruling the lead makes on the first applies to the rest
+(Section 5). Do not read every bundle up front: triage in order, and carry each
+ruling forward.
 
 ## 1. Report the feedback
 
@@ -108,6 +122,28 @@ For each claim, say which it is:
 
 **Name the files you read.** A verdict with no cited path is an opinion.
 
+**Record the model and effort.** Each assistant line in the session log carries
+`requestedModel` and `effort`, and each subagent's `.meta.json` carries `effort`.
+Compare them with `deploy/fly.toml` (`DEFAULT_MODEL`, `ORCHESTRATOR_EFFORT`) and
+say in one line whether the session ran as configured. That rules configuration
+in or out before a prompt or a tool is blamed.
+
+**Check a rule where it is enforced, not where it is written.** When a doc or an
+agent body says X and the bundle shows not-X, find the code that should enforce X.
+A rule that lives only in prose is itself a finding: `init-project` said "No ID,
+no project" while `project_create` accepted a create with no person ID.
+
+**Build the findings ledger.** One row for each complaint in the tester's text,
+taken a sentence at a time from all five prose fields, and one row for each
+problem you found that they did not report. Each row gets what was observed, your
+verdict on it (confirmed, refuted, unverifiable) and its disposition. Show the
+ledger to the lead with your recommendation. These are not dispositions:
+
+- **"Another agent's job."** File it against that agent.
+- **"Out of scope."** That is the lead's call. Put it to him as a question.
+- **"Refuted."** That only holds with nothing real underneath. Name what the
+  tester actually saw, and dispose of that.
+
 ## 3. Check whether an issue already covers it
 
 **Before the expensive code read, not after.** One bundle routinely produces
@@ -132,7 +168,7 @@ Put one to the lead with a recommendation and the context behind it. He decides.
 
 | Verdict | When | What you do |
 |---|---|---|
-| **Not planned** | Nothing to build: the agent behaved correctly, the ask is out of scope, the claim is refuted with nothing real underneath, or it is a duplicate submission of another feedback item. | Close with a one-line reason. The card moves itself. |
+| **Not planned** | Nothing to build: the agent behaved correctly, the lead has ruled the ask out of scope, the claim is refuted with nothing real underneath, or it is a duplicate submission of another feedback item. | Close with a one-line reason. The card moves itself. |
 | **Fold into #N** | An open issue already covers it. | Comment on #N with what this case adds — a second instance, a new cost, a sharper repro. Then close the feedback issue pointing at #N. |
 | **Backlog** | Real work nobody has filed. | Write the instructions below, relabel, and move the card. |
 
@@ -146,7 +182,13 @@ tick it and then describe four problems. The prose decides.
 and close the feedback issue pointing at all of them. Findings from one bundle
 routinely belong to different lanes — a tool bug, a doctrine gap, a schema
 question — and no one person can take them as a single card. Never leave one
-issue holding N findings as rows.
+issue holding N findings as rows. The exception runs the other way: findings that
+change the same file, under the same eval run, go in one issue.
+
+A verdict is per finding, not per feedback issue. One bundle can need a fold, two
+new issues and a refutation. The feedback issue closes once every row of its
+ledger has a disposition. If it holds a single problem, rewrite it in place and
+send it to Backlog.
 
 ## 5. Writing the Backlog issue
 
@@ -178,6 +220,16 @@ Write into the body:
   and what would show it worked.
 - **What is deliberately not in scope**, when a finding has halves that belong to
   different lanes.
+- **`**Decided (lead, <date>):**`**, for any decision the lead made during triage:
+  his answer, the option it beat, and why. A ruling made on one item binds the
+  rest of the run. Apply it to every later item it touches, and say so where you
+  do.
+
+**Check every remedy before you write it.** Any tool or agent named in "What to
+do" must work on this input. Check its spec's limits, and what the bundle showed
+it doing. An `image_read` re-read was once written into an issue after the same
+bundle's log had shown `image_read` refusing that page as too large. A
+capability nobody has verified does not go into an issue.
 
 **Prefer a tool rule to skill prose.** If the thing can be decided by reading the
 project documents alone, it is a writer-tool precondition, where it binds
@@ -189,6 +241,12 @@ gate did not fire, then add the guard" is a task. A guessed root cause written a
 instruction is worse than none, because the next person implements it.
 
 ## 6. Applying an approved verdict
+
+**Before you close the feedback issue, check the ledger against the tester's
+words.** Re-read the five prose fields one sentence at a time, and confirm each
+complaint maps to a row with a disposition. The closing comment lists every row
+and where it went, an issue number, a fold target, or the path that refutes it,
+so a later reader can see nothing was dropped.
 
 **Not planned, or folding into an existing issue:**
 
@@ -250,8 +308,9 @@ out at standup.
 
 ## 7. Report
 
-Per item, as you go: the verdict applied and the issue number it produced or
-landed on. At the end of the run: how many you triaged, the split across the
-three verdicts, and how many are still in the column.
+Per item, as you go: each ledger row's disposition, and the issue numbers they
+produced or landed on. At the end of the run: how many items you triaged, how
+many findings they held, the split across the three dispositions, and how many
+items are still in the column.
 
 **Do not propose the work.** Filing it well is the whole job.
