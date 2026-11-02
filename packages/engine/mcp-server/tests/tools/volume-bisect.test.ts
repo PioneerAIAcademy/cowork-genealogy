@@ -11,7 +11,7 @@
  * OpenRouter. `browse-budget.ts` is deliberately NOT mocked — the third check is
  * about that module's real keying.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/tools/image-search.js", () => ({ imageSearchTool: vi.fn() }));
 // Partial: the network legs are mocked, the pure helpers stay real so the

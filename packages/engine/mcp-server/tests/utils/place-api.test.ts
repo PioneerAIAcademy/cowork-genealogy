@@ -4,7 +4,6 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 import { searchPlace } from "../../src/utils/place-api.js";
-import { bearerPrincipal } from "../../src/auth/principal.js";
 import {
   configureFsBudget,
   __resetFsBudgetForTests,
@@ -201,21 +200,19 @@ describe("the FamilySearch budget covers place-api, which never calls fsFetch", 
   });
 
   it("counts a Places lookup against the shared budget", async () => {
-    const P = bearerPrincipal("tok");
     configureFsBudget({ perMinute: 1 });
 
-    await searchPlace("West Bromwich", P);
+    await searchPlace("West Bromwich");
     expect(mockFetch).toHaveBeenCalledTimes(1);
     mockFetch.mockClear();
 
-    await expect(searchPlace("West Bromwich", P)).rejects.toThrow(/budget is spent/);
+    await expect(searchPlace("West Bromwich")).rejects.toThrow(/budget is spent/);
     // Refused before any network I/O.
     expect(mockFetch).toHaveBeenCalledTimes(0);
   });
 
   it("is unaffected when the budget is off", async () => {
-    const P = bearerPrincipal("tok");
-    for (let i = 0; i < 10; i++) await searchPlace("West Bromwich", P);
+    for (let i = 0; i < 10; i++) await searchPlace("West Bromwich");
     expect(mockFetch).toHaveBeenCalledTimes(10);
   });
 });
