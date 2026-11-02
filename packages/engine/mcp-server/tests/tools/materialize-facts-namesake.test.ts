@@ -3,6 +3,7 @@ import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { materializeFacts, namedPartyTargetRefusal } from "../../src/tools/materialize-facts.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 // The namesake copy gate and item 34 (issue #3363 PR 1d): a record's facts reach
 // a person with a recorded namesake only through a link the namesake cap allows,
@@ -134,7 +135,7 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
 
   async function setup(r: any, t: any) {
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2), "utf-8");
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2), "utf-8");
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2), "utf-8");
   }
   const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
 
@@ -548,7 +549,7 @@ describe("materialize_facts under a namesake in the tree (#3681)", () => {
   });
   async function setup(r: any, t: any, startingTree?: any) {
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2), "utf-8");
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2), "utf-8");
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2), "utf-8");
     if (startingTree) await writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(startingTree, null, 2), "utf-8");
   }
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));

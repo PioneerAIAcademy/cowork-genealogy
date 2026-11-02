@@ -16,6 +16,7 @@ vi.mock("../../src/utils/place-api.js", () => ({
 import { searchPlace } from "../../src/utils/place-api.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { __clearPlaceResolverCachesForTests } from "../../src/utils/place-resolver.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 const research = (tool: string) => ({
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -94,7 +95,7 @@ afterEach(async () => {
 
 /** The standard_place research_append writes for `place` in `record`. */
 async function standardized(record: { tool: string; result: unknown; recordId: string }, place: string) {
-  await writeFile(join(dir, "research.json"), JSON.stringify(research(record.tool)));
+  await writeProjectFile(join(dir, "research.json"), JSON.stringify(research(record.tool)));
   await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree));
   await mkdir(join(dir, "results"), { recursive: true });
   await writeFile(
@@ -152,7 +153,7 @@ async function liftedOnUpdate(record: { tool: string; result: unknown; recordId:
     log_entry_id: "log_001",
     extracted_for_question_ids: [],
   };
-  await writeFile(join(dir, "research.json"), JSON.stringify({ ...research(record.tool), assertions: [stored] }));
+  await writeProjectFile(join(dir, "research.json"), JSON.stringify({ ...research(record.tool), assertions: [stored] }));
   await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree));
   await mkdir(join(dir, "results"), { recursive: true });
   await writeFile(

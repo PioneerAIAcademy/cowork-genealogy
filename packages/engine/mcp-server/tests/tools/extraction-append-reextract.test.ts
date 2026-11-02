@@ -27,6 +27,7 @@ import { validateParsed } from "../../src/validation/validator.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { LOCAL } from "../../src/auth/principal.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 const noReader = { readRecord: async () => { throw new Error("no reads on the document path"); } } as any;
 const RECORD = "capture:deed-384";
@@ -71,7 +72,7 @@ describe("extraction_append: reextract", () => {
   let dir: string;
   const read = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf8"));
-  const write = async (name: string, doc: unknown) => writeFile(join(dir, name), JSON.stringify(doc), "utf8");
+  const write = async (name: string, doc: unknown) => writeProjectFile(join(dir, name), JSON.stringify(doc), "utf8");
   const run = (input: Record<string, unknown>) =>
     runExtractionAppend({ projectPath: dir, ...input } as any, noReader, LOCAL) as unknown as Promise<ExtractionBatchResult>;
   const extractWrong = async (recordId = RECORD): Promise<string[]> => {

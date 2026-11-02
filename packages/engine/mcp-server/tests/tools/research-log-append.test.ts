@@ -10,6 +10,7 @@ import { stageSearchResults, STAGING_SUBDIR } from "../../src/utils/results-stag
 import { setProjectStore, type ProjectStore } from "../../src/store/project-store.js";
 import { backingStore } from "../helpers/store-backend.js";
 import { validateProject } from "../../src/validation/validator.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 function baseResearch(log: any[] = []) {
   return {
@@ -53,7 +54,7 @@ describe("research_log_append", () => {
   });
 
   async function writeProject(research: any, tree: any = minimalTree) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
@@ -251,7 +252,7 @@ describe("research_log_append", () => {
       await researchLogAppend({ projectPath: dir, stagedResultsRef: handle!.resultsRef } as any);
       const research = await readJson("research.json");
       delete research.log[0].staged_ref;
-      await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+      await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
 
       const again = await researchLogAppend({ projectPath: dir, stagedResultsRef: handle!.resultsRef } as any);
       expect(again.ok).toBe(false);
@@ -1563,7 +1564,7 @@ describe("research_log_append — logging-without-persistence nudge (#1478)", ()
     await rm(dir, { recursive: true, force: true });
   });
   const write = async (research: any, tree: any = minimalTree) => {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   };
   const pos = (n: number) => ({ ...logEntry(n), outcome: "positive" });

@@ -47,6 +47,7 @@ import { extractionAppend, EXTRACTION_SECTIONS, PLAN_COMPLETION_SECTIONS } from 
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 const EXTRACTION_LANE = { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" } as any;
 
@@ -673,7 +674,7 @@ describe("extraction_append: recordIds and absences", () => {
   });
   const seedLog = async (log: any[]) => {
     const r = await research();
-    await writeFile(join(dir, "research.json"), JSON.stringify({ ...r, log }), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify({ ...r, log }), "utf8");
   };
 
   it("cites an accepted hint's log entry and writes no second record_read entry", async () => {
@@ -1211,7 +1212,7 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     await seed({ questions: [question("q_001"), question("q_002")] });
     await runExtractionAppend({ projectPath: dir, recordIds: [death.recordId], questionIds: ["q_001"] }, readerFor([death]) as any, LOCAL);
     const before = await research();
-    await writeFile(
+    await writeProjectFile(
       join(dir, "research.json"),
       JSON.stringify({
         ...before,
@@ -1265,7 +1266,7 @@ describe("extraction_append: closes the plan item and claims re-found records", 
     // whose role is not the literal "absent".
     const legacy = before.assertions[0];
     legacy.record_basis = "absent";
-    await writeFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
     const r = await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_002"] }, readerFor([marriage]) as any, LOCAL);
     expect(r.records[0].summary).toMatch(/tied to q_002/);
     expect(r.records[0].warnings?.some((w) => w.startsWith(`${legacy.id} was not tied`))).toBe(true);
@@ -1284,7 +1285,7 @@ describe("extraction_append: closes the plan item and claims re-found records", 
       a.informant_proximity = "unknown";
       a.information_quality = "primary";
     }
-    await writeFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(before), "utf8");
     const r = await runExtractionAppend({ projectPath: dir, recordIds: [marriage.recordId], questionIds: ["q_002"] }, readerFor([marriage]) as any, LOCAL);
     expect(r.records[0].summary).toMatch(/tied to q_002/);
     expect(r.records[0].warnings ?? []).toEqual([]);
@@ -1539,7 +1540,7 @@ describe("extraction_append: personId extracts and links a person's attachments"
     const r0 = await research();
     const johns = r0.assertions.filter((a: any) => a.record_persona_id === "p_260900945");
     r0.person_evidence = [{ id: "pe_001", assertion_id: johns[0].id, person_id: "I7", confidence: "probable", rationale: "someone decided", created: "2026-01-01", match_score: null }];
-    await writeFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
     const r = await run("I1");
     expect(r.linked).toBe(0);
     expect(r.alreadyLinked).toBe(1);
@@ -1552,7 +1553,7 @@ describe("extraction_append: personId extracts and links a person's attachments"
     const r0 = await research();
     const johns = r0.assertions.filter((a: any) => a.record_persona_id === "p_260900945");
     r0.rejected_links = [{ id: "rj_001", assertion_id: johns[0].id, person_id: "I1", created: "2026-01-01" }];
-    await writeFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r0), "utf8");
     const r = await run("I1");
     expect(r.rejectedSkipped).toBe(1);
     expect(r.linked).toBe(johns.length - 1);

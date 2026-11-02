@@ -18,6 +18,7 @@ import { treeEdit } from "../../src/tools/tree-edit.js";
 import { getPlaceById, getPlaceReps, searchPlace } from "../../src/utils/place-api.js";
 import { __clearPlaceResolverCachesForTests } from "../../src/utils/place-resolver.js";
 import type { GedcomX } from "../../src/types/gedcomx.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 /** FamilySearch's record API body for persona 6J8F-6678, saved 2026-10-26: Marie
  *  Catherine Sabattier's death registered 3 Apr 1874 at "Olne, Liège, Belgique". */
@@ -107,7 +108,7 @@ describe("tree_edit: a fact citing a record read takes FamilySearch's standard p
         id: `pe_${String(i + 1).padStart(3, "0")}`, assertion_id: a.id, person_id: "I1", confidence: "probable",
         rationale: "the deceased is I1", match_score: 0.9, created: "2026-01-01", superseded_by: null,
       }));
-    await writeFile(join(dir, "research.json"), JSON.stringify(research));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research));
     const r = await treeEdit({
       projectPath: dir,
       operation: "add_fact",

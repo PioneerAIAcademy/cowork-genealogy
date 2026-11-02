@@ -428,6 +428,12 @@ Three properties are load-bearing:
   SKILL.md had to spend a paragraph warning about.) `restoreFile` is returned on
   every non-dry run regardless of whether this run created it.
 
+Restoring is a person's step, by hand: move the restore file over
+`tree.gedcomx.json` (`mv`, or rename it in a file manager). A plain copy onto
+it fails, because the engine leaves `tree.gedcomx.json` read-only between
+writes (guardrail-enforcement-spec §6.1); `mv` replaces the directory entry, which the mode does
+not stop.
+
 ## 6. Re-invocation
 
 Forgetting is **additive**: a second call strips a further slice from the
