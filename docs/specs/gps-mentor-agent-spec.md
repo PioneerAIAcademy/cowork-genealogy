@@ -17,7 +17,7 @@ sections other than `evaluations[]`, and `tree.gedcomx.json`). Its only write ou
 - A structured JSON verdict written to `evaluations/` in the project folder
 - A pointer record **appended** to the `evaluations` array in `research.json` (append-only — it does not touch any other section)
 
-Both are produced by a **single `research_append` call** carrying the verdict body as
+Both are produced by a **single `evaluation_append` call** carrying the verdict body as
 the top-level `verdict` argument: the tool writes the sidecar, creates the directory,
 stamps `file_path`, assigns the `ev_NNN` id, and commits both files atomically. The agent
 holds no filesystem write tool and never hand-serializes the verdict — the same division
@@ -106,7 +106,7 @@ project (`target_id: "project"`, `target_type: "project"`), which is the only va
 §12.1 can validate when no `ps_` exists. Without this, the §9 refusal would be
 unpersistable — `validate_research_schema` cross-references `target_id` against the
 real `questions`/`proof_summaries` ids, so a made-up `ps_` fails the whole
-`research_append` call and the refusal vanishes instead of joining the audit trail.
+`evaluation_append` call and the refusal vanishes instead of joining the audit trail.
 
 If a caller passes an explicit `q_` `target_id` **with** a craft-framed request, do not
 retarget it (§15: one target per invocation) and do not critique a question's prose.
@@ -160,7 +160,7 @@ description: >-
 model: claude-sonnet-5
 tools:
   # These ten, each under all three server spellings:
-  #   research_query, project_context, sidecar_read, research_append,
+  #   research_query, project_context, sidecar_read, evaluation_append,
   #   validate_research_schema, place_search, place_distance, collections_search,
   #   wiki_place_page, wiki_search
   # The full 30-entry list is NOT repeated here. The authoritative copy is the
@@ -702,7 +702,7 @@ what was reviewed.
 
 After completing a review, the agent must:
 
-1. Make one `research_append` call on `section: "evaluations"`, `op: "append"`, passing
+1. Make one `evaluation_append` call on `section: "evaluations"`, `op: "append"`, passing
    the structured verdict body as the top-level `verdict` argument and the pointer record
    as `entry` (see §12). The tool creates `evaluations/`, writes
    `evaluations/<focus>-<target_id>-<short_iso>.json`, stamps `file_path`, assigns the
@@ -843,7 +843,7 @@ filesystem; the research.json entry is a pointer, not a duplicate.
 
 This is the entry **as persisted**. The agent supplies only the non-tool-owned fields
 (`focus`, `target_id`, `target_type`, `verdict`, `timestamp`, `superseded_by`); `id` and
-`file_path` are filled in by `research_append` (§8).
+`file_path` are filled in by `evaluation_append` (§8).
 
 ```json
 {
@@ -860,12 +860,12 @@ This is the entry **as persisted**. The agent supplies only the non-tool-owned f
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | yes | `ev_` prefix. Immutable once created. **Assigned by `research_append`** — the agent must not supply it. |
+| `id` | string | yes | `ev_` prefix. Immutable once created. **Assigned by `evaluation_append`** — the agent must not supply it. |
 | `focus` | string | yes | Focus mode used |
 | `target_id` | string | yes | `q_` or `ps_` ID evaluated |
 | `target_type` | string | yes | `"question"`, `"proof_summary"`, or `"project"` |
 | `verdict` | string | yes | Verdict value from the evaluation |
-| `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder. **Stamped by `research_append`** from the `verdict` argument — the agent must not supply it. |
+| `file_path` | string | yes | Path to the JSON verdict file, relative to the project folder. **Stamped by `evaluation_append`** from the `verdict` argument — the agent must not supply it. |
 | `timestamp` | string | yes | UTC ISO 8601 timestamp |
 | `superseded_by` | string \| null | yes | `ev_` ID of a later evaluation for the same focus+target, or null |
 

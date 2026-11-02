@@ -277,6 +277,38 @@ def test_image_read_is_the_guarded_tool():
     assert "record_read" not in SUBAGENT_ONLY_TOOLS
 
 
+# --- evaluation_append: the gps-mentor verdict writer (issue #1491) ---
+#
+# A member through the hook's AGENT_ONLY_TOOLS (owned by gps-mentor). These pin
+# that the e2e plane denies the main thread, exempts gps-mentor's own call, and
+# tells the router where to go instead.
+
+
+def test_evaluation_append_is_guarded():
+    assert "evaluation_append" in SUBAGENT_ONLY_TOOLS
+
+
+def test_evaluation_append_on_main_thread_is_denied():
+    """A main-thread evaluation write is the router grading its own work."""
+    assert (
+        subagent_only_violation(_main("mcp__genealogy__evaluation_append"))
+        == "evaluation_append"
+    )
+
+
+def test_evaluation_append_allowed_inside_the_subagent():
+    """gps-mentor always runs as a subagent; its own call carries agent_id."""
+    assert subagent_only_violation(_sub("mcp__genealogy__evaluation_append")) is None
+
+
+def test_evaluation_append_denial_reason_names_the_route_out():
+    reason = subagent_only_denial("evaluation_append")["hookSpecificOutput"][
+        "permissionDecisionReason"
+    ]
+    assert "evaluation_append" in reason
+    assert "gps-mentor" in reason
+
+
 def test_the_guarded_set_is_image_read_plus_the_hooks_agent_only_tools():
     # Pinned as an EQUALITY, not a membership: an equality is what catches a tool
     # being quietly added back (`extraction_append`, #2937). Since issue #3528 the

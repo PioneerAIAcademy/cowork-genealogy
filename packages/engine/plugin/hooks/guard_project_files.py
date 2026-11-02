@@ -115,6 +115,7 @@ AGENT_ONLY_TOOLS = {
         "search-external-sites",
     ),
     "convert_calendar": ("conflict-resolution", "convert-dates"),
+    "evaluation_append": ("gps-mentor",),
     "external_links_search": (
         "locality-guide",
         "research-plan",
@@ -273,6 +274,8 @@ OWNED_SECTIONS = {
     # the MAIN-THREAD write -- the committed non-owner op is a main thread
     # recording its own mentor verdict, which makes the second opinion
     # self-issued. The per-agent lanes already kept every other agent off it.
+    # The agent writes it through the narrow `evaluation_append` (issue #1491);
+    # `owner_denied` routes that tool here as well as `research_append`.
     "evaluations": "gps-mentor",
 }
 
@@ -702,15 +705,18 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     `ps_NNN` in place on every re-conclusion, and a rule that saw only appends
     would leave that path denied in production with its fixture still green.
 
-    **Gating on `research_append` alone is complete, and here is the check that
-    says so** — it looks like an oversight and is the first thing a reader asks.
-    Of the six declared writers of any research.json section
-    (`research_append`, `project_create`, `research_log_append`,
-    `extraction_append`, `merge_tree_persons`, `build_external_search_url`),
-    two also write a section this function routes without ever passing through
-    here. `merge_tree_persons` reaches `person_evidence` and `proof_summaries`.
-    `extraction_append`, in `personId` mode only, appends `person_evidence`
-    links.
+    **Gating on `research_append` and `evaluation_append` is complete, and here
+    is the check that says so** — it looks like an oversight and is the first
+    thing a reader asks. `evaluation_append` is `research_append` scoped to
+    `evaluations` by tool identity (issue #1491), so it is gated here for the
+    same reason and its ops carry `section: "evaluations"` for the routed check
+    to read. Of the seven declared writers of any research.json section
+    (`research_append`, `evaluation_append`, `project_create`,
+    `research_log_append`, `extraction_append`, `merge_tree_persons`,
+    `build_external_search_url`), the two this function does NOT gate also write a
+    section it routes without ever passing through here. `merge_tree_persons`
+    reaches `person_evidence` and `proof_summaries`. `extraction_append`, in
+    `personId` mode only, appends `person_evidence` links.
 
     That is safe for a structural reason, not a lucky one: it writes those
     sections through `iteratePersonIdRefs`, whose setters assign one field on an
@@ -730,7 +736,7 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     section through anything but a ref setter, this docstring is what stops
     being true, and nothing checks it.
     """
-    if _basename(tool_name.replace("__", "/")) != "research_append":
+    if _basename(tool_name.replace("__", "/")) not in ("research_append", "evaluation_append"):
         return None
     caller = ""
     if "agent_id" in payload:
