@@ -3238,6 +3238,14 @@ async def _run_turn(
             # host's reply.
             research, offered = close_context(conn, boundary, project_id,
                                               getattr(result, "result", None), log)
+            # A step halt ends the turn before the model writes its offer -- two spawns
+            # in one message are enough -- so the offer the halt named stands in for it,
+            # shown as the turn's last line so the buttons have a question to answer.
+            halt_offer = getattr(step_gate, "halt_offer", None)
+            if halt_offer and boundary is not None:
+                offered = halt_offer
+                write_event(conn, session_id, {"kind": "text", "text": boundary.offer_line(halt_offer)},
+                            TRANSIENT_KINDS, counters)
             outcome = TRANSCRIPT_LOST_OUTCOME if transcript_lost else (
                 terminal["reason"]
                 or (TERMINAL_STOPPED if stop_requested(conn, session_id) else OK_OUTCOME)

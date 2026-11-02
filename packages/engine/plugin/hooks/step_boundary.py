@@ -443,6 +443,12 @@ def offered_step(text: str | None) -> str | None:
     return _LABEL_TO_KEY.get(match.group("label").strip().strip("*_`").casefold())
 
 
+def offer_line(step) -> str | None:
+    """The line a turn ends on to offer `step`, which `offered_step` reads back."""
+    label = STEP_LABELS.get(offer_key(step))
+    return f"Continue with {label}?" if label else None
+
+
 def reply_options(offered_step, research: dict | None = None) -> list[str]:
     """The replies that apply to this turn, as exact phrases.
 
@@ -590,6 +596,12 @@ class StepGate:
     and end its turn -- never reaches the halt at all. One that keeps spawning has
     ignored the instruction, and the halt ends the turn and denies the call it stopped.
 
+    Two spawns sent in ONE message reach the gate before the model has seen either
+    deny, so the second halts a model that never ignored anything, and the turn ends
+    before it writes its offer. `halt_offer` keeps the step the halt offered, so the
+    host can still answer the turn: every plane reads it in place of the turn's last
+    line when the gate halted.
+
     `steps` is seeded on a REDELIVERY from the turn row, because the hook is rebuilt
     per attempt and redelivery is the normal resume path: without the seed a resumed
     attempt would think it was starting the turn's first step and let a second one
@@ -612,6 +624,8 @@ class StepGate:
         self._ctx_value = None if callable(ctx) else ctx
         self.steps: list[str] = [s for s in (steps or []) if s]
         self.denials = 0
+        # The `STEP_LABELS` key the halt's reason offers, or None until a halt.
+        self.halt_offer: str | None = None
         self._log = log
         self._turn_id = turn_id
         # Called ONCE, when the turn's first step is allowed. The worker persists it to
@@ -671,6 +685,8 @@ class StepGate:
         self.denials += 1
         reason = self._b.deny_reason(name, self.mode, self.steps)
         decision = "halt" if self.denials > 1 else "deny"
+        if decision == "halt" and self.halt_offer is None:
+            self.halt_offer = self._b.offered_step(reason)
         if self._log is not None:
             # Rider 2: log EVERY halt. The router prose is identical on both planes,
             # so this rate is how often a run tries to cross a boundary it was told
