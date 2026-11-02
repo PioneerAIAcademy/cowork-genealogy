@@ -52,11 +52,6 @@ TERMINAL_DECISION = "decision"
 # renders it as nothing, while a delivery has something to report.
 TERMINAL_DELIVERED = "delivered"
 TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
-# A session with no research.json. It is
-# `ok` ("ended with no terminal reason", per the note above `delivered`) because the browser
-# leaves that unlabelled, where `delivered` would render "Done" on a turn that may have
-# stopped to ask for a person id.
-TERMINAL_OK = "ok"
 
 
 # The signal that produces TERMINAL_DELIVERED above. Shared because BOTH planes match on
@@ -142,10 +137,10 @@ HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
 # at all, which is why every call not explicitly False is rewritten).
 #
 # Shared because the hosted alpha reproduced, twice, the failure the prototype
-# already fixed. The Stop hook cannot see that the turn is waiting on its own
-# background subagent -- it reads `project.status` and its own counters -- so it
-# nudges ("invoke the `research` skill"), and the model, told to get on with
-# it, starts a DUPLICATE of the agent still running. Measured on the alpha:
+# already fixed. The Stop hook (since deleted) could not see that the turn was waiting
+# on its own background subagent -- it read `project.status` and its own counters --
+# so it nudged ("invoke the `research` skill"), and the model, told to get on with
+# it, started a DUPLICATE of the agent still running. Measured on the alpha:
 # duplicate `q_001`/`q_002` from two question-selection spawns (feedback issue
 # #3156), and four record-extractors relaunched synchronously while the
 # background copies kept going -- one orphaned source, one extractor hung 56

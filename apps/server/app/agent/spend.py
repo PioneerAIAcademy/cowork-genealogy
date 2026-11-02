@@ -72,8 +72,9 @@ PRICE_PER_MTOK = {
 # `test_the_spend_cap_clears_the_costliest_run_in_the_corpus` re-derives that.
 #
 # It exists because continuous work removes the human who used to end a run by not
-# clicking Continue. The nudge cap does not replace them: it is consulted only at a
-# voluntary yield, 31% of runs never yield, and it resets on every attempt. There is
+# clicking Continue. The nudge cap never replaced them: it was consulted only at a
+# voluntary yield, 31% of runs never yielded, and it reset on every attempt (it was
+# deleted in step mode phase 2). There is
 # deliberately no in-session grant flow: a session at the bound stops, and the way on is a
 # new session on the same project. 0 switches the cap off.
 #

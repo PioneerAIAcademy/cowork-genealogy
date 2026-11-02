@@ -579,13 +579,13 @@ _DELIVERED_TOOL = "research_delivered"
 def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
     """Tag-gated (``ends-with-delivery``). Issue #2813 item 1, the enforcement half.
 
-    The skill body telling the model to "end your turn" is not what ends it. On the
-    hosted plane an SDK Stop hook VETOES a voluntary stop while the project objective
-    is incomplete and nudges the agent onward; the only arm that lets a bounded turn
-    stop is `delivered`, set when the model calls `research_delivered`
-    (`apps/server/app/agent/real_agent.py`, `should_continue_run`). A bounded turn that
-    ends without the call is answered and then nudged back into more research -- the
-    alpha report behind this test.
+    The skill body telling the model to "end your turn" was not what ended it. On the
+    hosted plane an SDK Stop hook VETOED a voluntary stop while the project objective
+    was incomplete and nudged the agent onward; the only arm that let a bounded turn
+    stop was `delivered`, set when the model called `research_delivered`. A bounded
+    turn that ended without the call was answered and then nudged back into more
+    research -- the alpha report behind this test. Step mode phase 2 deleted that Stop
+    hook (and `should_continue_run` with it).
 
     Gated on its own tag, NOT on `bounded-request`: `ut_research_023` carries that tag
     and is the `--autonomous` carve-out, where the router must run the job and must NOT

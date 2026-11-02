@@ -140,9 +140,9 @@ def test_the_env_guard_is_shared_where_it_can_be_and_only_where_it_can_be():
 
     # The precise rule, and the only one worth asserting: an environment value may not be
     # converted without a guard. Deliberately NOT "no bare int(raw) anywhere" -- an
-    # earlier draft of this test said that and flagged `parse_max_nudges`, which is
-    # correctly guarded by its caller and reads the QUEUE BODY rather than the
-    # environment. A check that fails legitimate code gets skipped within a month.
+    # earlier draft of this test said that and flagged `parse_max_nudges` (since deleted
+    # with the Stop veto), which was correctly guarded by its caller and read the QUEUE
+    # BODY rather than the environment. A check that fails legitimate code gets skipped within a month.
     out = subprocess.run(
         ["git", "grep", "--untracked", "-n", "-E",
          r"(int|float)\(os\.environ(\.get)?"],

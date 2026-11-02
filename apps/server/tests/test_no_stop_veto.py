@@ -39,7 +39,13 @@ def _veto_names_in(tree: ast.AST) -> set[str]:
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in _VETO_NAMES:
             found.add(node.name)
         elif isinstance(node, ast.Assign):
-            found |= {t.id for t in node.targets if isinstance(t, ast.Name) and t.id in _VETO_NAMES}
+            found |= {
+                n.id for t in node.targets for n in ast.walk(t)
+                if isinstance(n, ast.Name) and n.id in _VETO_NAMES
+            }
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.target.id in _VETO_NAMES:
+                found.add(node.target.id)
         elif isinstance(node, ast.ImportFrom):
             found |= {a.name for a in node.names if a.name in _VETO_NAMES}
     return found
@@ -64,6 +70,8 @@ def test_the_guard_sees_each_shape_of_a_planted_veto():
         "def should_continue_run(**kw):\n    return True\n",
         "async def make_stop_hook():\n    pass\n",
         "CONTINUE_REASON = 'keep going'\n",
+        "CONTINUE_REASON: str = 'keep going'\n",
+        "CONTINUE_REASON, x = 'keep going', 1\n",
         "from app.agent.continue_policy import CONTINUE_REASON\n",
     ):
         assert _veto_names_in(ast.parse(planted)), planted
