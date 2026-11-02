@@ -1265,6 +1265,7 @@ audit's recommendation #5):
 | `plan_items` append/update newly setting **`status: "skipped"`**, and a `plans` op's inline `items` doing the same | **must carry `skip_category`**, unless the item was already `skipped` before this call. A `plan_items` update setting `skipped` additionally must not change `rationale`; the skip detail goes in `skip_reason` | A skipped item records a decision, and the exhaustiveness gate has to tell "decided not to" from "could not reach it" — the two route differently, and only `inaccessible` and `no_coverage` are eligible for the decisive-record exception. Measured over the e2e corpus: **38 leftover items across 9 declarations of 181, all 38 carrying a `rationale` and none a skip reason**, so the distinction was unrecoverable from the document. Keeping `rationale` unchanged on the same op is what stops the skip detail overwriting the item's original purpose; it goes in `skip_reason`. `planItemSkipInvariants` |
 | `plan_items` append/update setting **`collection_url`**, and a `plans` op's inline `items` doing the same | **must name a collection in `external-collections.json`**, under any stored place, compared by collection key (`ancestry:<id>`, so `/search/collections/<id>/` and `?dbid=<id>` are one collection); an update that leaves the field unchanged is not re-checked | A plan item names a collection FamilySearch curates for the place, never one recalled from memory. Omit the field for a site-wide search. `collectionUrlInvariants` |
 | A `plan_items` append, or an inline item of a `plans` append, whose `repository` is not FamilySearch and that has no `collection_url` | **a warning, never a refusal**, listing the stored collections that fit it: rows of a stored place whose first part names a part of the item's jurisdiction, narrowed to its record type | The agent sees its choices as it writes. The free-text jurisdiction is matched loosely, which a hint can afford and a refusal could not. Silent when nothing fits or nothing is stored. `storedCollectionsHint` |
+| A `plans` append, a `plans` update carrying `items`, a `plan_items` append, or a `plan_items` update setting `date_range` or `status: "skipped"`, on a question with a `date_window` | **a warning, never a refusal**, when the span of the question's live plan items (no `superseded` plan, no `skipped` item) leaves more than half of the window uncovered; once per question per call, on the end state | A plan can stop short of the years its question needs, which a lifetime cannot stand in for — [`guardrail-enforcement-spec.md` §"A plan should reach its question's date window"](guardrail-enforcement-spec.md#a-plan-should-reach-its-questions-date-window) |
 | A `plan_items` append, a `plan_items` update that changes `jurisdiction`, or an inline item of a `plans` op whose `jurisdiction` changed | **refused** when the `jurisdiction` splits on "and", "or", "&", ";" or "/" into two or more parts and every part sits inside, or encloses, a recorded `localities[].place` (the same tail match as the locality warning) | search-records hands a plan item's jurisdiction to `record_search` as its one `residencePlace`, so "Alabama and Texas, United States" names no searchable place. Requiring every part to be a researched locality is what leaves a single place with a joiner in its name ("Lewis and Clark County, Montana") alone; an elided part ("Smith County and Hill County, Texas") is not caught. Not applied to an edit that leaves a stored item's jurisdiction unchanged, even one re-sending it, so an item written before the rule stays editable. A two-place jurisdiction with one part the project has not researched ("Alabama and Georgia" where only Alabama is recorded) passes. The message tells the agent to write one item per place. | `compoundJurisdictionError` |
 | any section | a **required-object field** holding a primitive is rejected — `search_stop`, `external_site`, `citation_detail`. Absent and null stay with the required-field check, which already reports them, so the message is never doubled. `search_stop` renamed from `exhaustive_declaration` (2026-10-07) | The three sites opened with `if (typeof X === "object" && X !== null)`, which is right about not crashing and silent about everything else: a primitive skipped the whole block, so `citation_detail: "Schuylkill County registrar, certificate 24601"` validated clean while `research.schema.json` requires the six-key object. **Measured cost, per ADR-0011 limit 2, measured at 9a0eb98e5: 17 of 323 (5.3%), in 4 run-log files across 3 e2e fixtures.** The denominator is stated because it moves with the method: count `sources` ops with `op: "append"` in the `args` of every `tool_calls[]` entry whose tool is **`research_append`**, over the tracked files under `eval/runlogs/` excluding `.ann.json`, and take those whose `entry.citation_detail` is non-null. That gives 323 supplying the field, 306 objects and 17 strings. The primary figure does not depend on the method: it comes out the same under every traversal and op filter tried. A parenthetical here used to give the both-writers total as well, and it is deleted rather than corrected: three people produced three different values for it across three review rounds, one of them mine from a throwaway script, while the 17 never moved. Re-derive it if you need it. All of it sits in the e2e logs; the unit run logs carry no `citation_detail` at all. Nothing teaches the string form — `citation/SKILL.md` and `record-extractor.md` both teach the six keys — so the satisfying shape is the only documented one. Unlike the `stop_criteria` row above, the owning skill running does not prevent this shape: all 17 come from e2e runs that invoked `record-extraction` and ran the `record-extractor` agent, so its `0 of 241 writes made by runs that invoked the owning skill` has no analogue here. The satisfiability argument rests on the 5.3% rate alone. Run granularity: the `tool_calls[]` records carry `tool` and `args` only, so this shows the skill and agent ran, not that the agent made the write |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-append.ts` ("must not carry an id — the tool assigns it"); id immutability: [`research-schema-spec.md` §"3. ID Conventions"](research-schema-spec.md#3-id-conventions) |
@@ -1341,7 +1342,7 @@ field. Reachability *is* knowable statelessly — the join is
 `assertion_id → assertions[].id → log_entry_id → log[].tool/results_ref`, all
 inside the document being written — so the narrowing costs nothing in
 statelessness and buys precision. `personaReachable` in `research-append.ts`
-mirrors `_persona_reachable` in `eval/harness/harness/skill_invocation.py`;
+mirrors `_persona_reachable` in `eval/harness/validators/test_person_evidence.py`;
 `guardrail-enforcement-spec.md` §4 owns the criterion.
 
 It is not an escape hatch: a link that genuinely cannot be scored keeps
@@ -3315,3 +3316,40 @@ no `same_person` gate. Checking the attachments is a separate request.
   records): **19.1 s cold** (20 extracted, 119 assertions linked), **0.14 s** on a
   re-send (all 20 records left as already linked). Cowork aborts a call at 60 s.
   46 of 186 e2e subjects have at least one attached indexed record.
+
+## 12. `evaluation_append` — the second lane-scoped variant
+
+`evaluation_append` is this tool restricted to a single section: **`evaluations`**.
+It exists for the same reason `extraction_append` does (§11.1): the lane must be
+expressed as tool identity, not prose or a parameter, because the caller — the
+gps-mentor agent — is the most prompt-exposed agent in the system, and a
+delegation can instruct it to write anything. The three-way table in §11.1 holds
+unchanged; only tool identity survives a caller that prompts against the rule.
+
+Unlike `extraction_append`, there is **no bespoke input surface and no in-code
+extraction**: the mentor supplies an ordinary `evaluations` append (or `update`),
+the same shape `research_append` takes, and the tool only forces the lane. The
+implementation is a thin wrapper
+(`src/tools/evaluation-append.ts`): `evaluationAppend(input)` calls
+`researchAppend(input, { allowedSections: new Set(["evaluations"]), toolName:
+"evaluation_append" })`. No `principal` is threaded — `researchAppend` is
+`(input, options)`, exactly as the `research_append` dispatch arm calls it. The
+lane gate (§11.4's `allowedSections` machinery) rejects any op whose section is
+not `evaluations` before the write, so a delegation that tells the mentor to grade
+`proof_summaries` or append to `conflicts` is refused with the same
+`section 'X' is not writable by evaluation_append` error `extraction_append`
+produces for its out-of-lane sections.
+
+The advertised input schema (`evaluationAppendSchema`) is `researchAppendSchema`'s
+with `section`'s enum narrowed to `["evaluations"]` on both the top-level field and
+each `ops[]` item, so the model is never offered another section; the runtime lane
+gate enforces the same restriction, and the schema narrowing just keeps the
+advertised surface honest. The `verdict` composite field (§3) is kept — it is the
+mechanism by which a mentor verdict body is written to a sidecar and `file_path`
+stamped.
+
+gps-mentor's frontmatter omits the broad `research_append` and holds only
+`evaluation_append` (plus its read tools). The omission is the whole mechanism
+(§11.1); `agent-tool-names.test.ts` pins the swap. The ownership manifest's
+`evaluations` row names `evaluation_append` as its sole `writerTool`, and
+`agent:gps-mentor` as owner and caller.

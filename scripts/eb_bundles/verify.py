@@ -45,7 +45,12 @@ COMMON_REQUIRED = ("Procfile", "BUILD-INFO.json", "certs/rds-global-bundle.pem")
 REQUIRED = {
     "web": COMMON_REQUIRED + ("requirements.txt", "web/app.py", "web/auth.py", "web/spa.py", "web/feedback.py",
                               "web/blobstore.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py", "config/familysearch.json",
-                              "web-dist/index.html"),
+                              "web-dist/index.html",
+                              # Missing, nginx falls back to 8 KB header lines and a patron's
+                              # .familysearch.org cookies can 400 every request, or to a 1 MB body
+                              # and every upload over it answers 413 (U28).
+                              ".platform/nginx/conf.d/01-web-headers.conf",
+                              ".platform/nginx/conf.d/01-web-uploads.conf"),
     "worker": COMMON_REQUIRED + ("requirements.txt", "app/__init__.py", "app/agent/__init__.py",
                                  "app/agent/real_agent.py", "proto/enqueue.py", "proto/grants.py",
                                    "proto/turn_message.py", "proto/migrate.py",
@@ -78,7 +83,7 @@ CODE_EXEMPT = ("node_modules/", "plugin/", "web-dist/", "wheels/")
 DEV_PREFIXES = ("DEV_", "GENEALOGY_DEBUG_")
 DEV_VARIABLES = frozenset({"BLOCKED_TOOLS", "SQS_ENDPOINT", "QUEUE_NAME", "FAMILYSEARCH_CONFIG"})
 DEV_VARIABLES_BY_TIER = {
-    "web": frozenset(),
+    "web": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
     "worker": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
     "tools": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
 }

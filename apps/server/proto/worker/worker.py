@@ -62,7 +62,8 @@ since ``num_turns == 0`` means the discarded pass billed no model turn.
 
 The resume GUARD (PR #2870 item 0a) is what happens when that re-query does not help.
 A redelivered attempt whose figures still show no work -- ``attempt_did_work``:
-``num_turns == 0``, or no ``tool_calls`` row recorded this pass -- is a resume FAILURE,
+``num_turns == 0``, or no ``tool_calls`` row recorded this pass once an earlier attempt
+of the turn had recorded one -- is a resume FAILURE,
 not a completion. D17 used to complete such a turn "as it stands", which records a
 half-finished run as finished: PR #2695's acceptance run did exactly that on 2026-09-20,
 in 10 ms, with ``project.status`` still ``active``. Now the attempt bumps
@@ -233,7 +234,6 @@ from proto.worker.options import (  # noqa: E402
     make_posttool_hook,
     status_before_call,
     make_pretool_hook,
-    make_stop_hook,
     dev_paths,
     model_provider,
     parse_blocked_tools,
@@ -334,10 +334,6 @@ _AGENTS_ERROR: str | None = None
 _PLUGIN_DIR: str = ENGINE_PLUGIN_DIR
 _PLUGIN_COPY_LOCK = threading.Lock()
 _BLOCKED: frozenset[str] = frozenset()  # BLOCKED_TOOLS, the harness's tree-read block
-# AUTONOMOUS_MAX_NUDGES (D18): the Stop hook's veto cap for a message WITHOUT max_nudges
-# (turn_max_nudges); 0 = no Stop hook for those. The web tier stamps its own cap on every
-# message it enqueues, so this value does not govern a web-tier turn.
-_AUTONOMOUS_MAX_NUDGES: int = 0
 
 # turns.outcome. 0a adds the first value that is not "ok": a turn the worker closed
 # ITSELF, without the model having finished, because re-running it would not help.
@@ -404,17 +400,6 @@ def _env_float(name: str, default: float) -> float:
 # counts healthy ceiling crossings -- and crash, deploy and SIGTERM receives -- with the
 # same number; see that file's header.
 ZERO_PROGRESS_CAP = 2
-
-
-def parse_max_nudges(value: str | None) -> int:
-    """``AUTONOMOUS_MAX_NUDGES``: a non-negative int; unset or blank is 0 (off)."""
-    text = (value or "").strip()
-    if not text:
-        return 0
-    n = int(text)
-    if n < 0:
-        raise ValueError(f"AUTONOMOUS_MAX_NUDGES must be >= 0, not {n}")
-    return n
 
 
 class RegistrationError(RuntimeError):
@@ -737,6 +722,44 @@ SESSION_USAGE_SQL = TURN_USAGE_SQL.replace(
 )
 assert "entries_seq_before" not in SESSION_USAGE_SQL, "the session cap must not be turn-bounded"
 
+# One attempt's share of the same sum: the entries appended after the attempt's own
+# high-water mark (`session_entries_high_water`, read before the CLI connects).
+ATTEMPT_USAGE_SQL = TURN_USAGE_SQL.replace(
+    "COALESCE((SELECT entries_seq_before FROM turns WHERE turn_id = %s), 0)", "%s"
+)
+assert "entries_seq_before" not in ATTEMPT_USAGE_SQL, "an attempt is bounded by its own mark"
+
+# A compaction's summary call is not in the transcript, so the sums above never see it
+# (U24, 2026-10-31: 5 of 5 missing on the gateway, $0.42 of a $2.27 session). Each one
+# leaves a compact_boundary entry whose preTokens is the context it summarised; the cap
+# prices that as a cache read plus COMPACTION_OUTPUT_TOKENS of summary, the top of the
+# 2,478-3,970 measured. An attempt that returns a ResultMessage replaces these estimates
+# with the CLI's own figure through turns.spend_correction_usd (018).
+COMPACTION_OUTPUT_TOKENS = 4000
+COMPACTIONS_SQL = (
+    "SELECT COALESCE(sum((entry->'compactMetadata'->>'preTokens')::bigint), 0), count(*) "
+    "FROM session_entries WHERE session_id = %s AND seq > %s "
+    "AND entry->>'type' = 'system' AND entry->>'subtype' = 'compact_boundary'"
+)
+SPEND_CORRECTIONS_SQL = (
+    "SELECT COALESCE(sum(t.spend_correction_usd), 0) FROM turns t "
+    "JOIN sessions s ON s.session_id = t.session_id WHERE s.sdk_session_id = %s"
+)
+# The CLI documents that a resumed session's total_cost_usd "continues from the total its
+# transcript saved" -- a `cost-state` entry -- so an attempt's figure would then include
+# every earlier one. In the worker's SDK mode it writes none (0 stored, and a later turn's
+# cost_usd matched its own tokens alone, 2026-10-31, n=1); should one appear, the attempt
+# subtracts the total it started from rather than count earlier turns twice.
+STARTING_COST_SQL = (
+    "SELECT (entry->>'totalCostUSD')::double precision FROM session_entries "
+    "WHERE session_id = %s AND seq <= %s AND entry->>'type' = 'cost-state' "
+    "ORDER BY seq DESC LIMIT 1"
+)
+ADD_SPEND_CORRECTION_SQL = (
+    "UPDATE turns SET spend_correction_usd = spend_correction_usd + %s "
+    "WHERE turn_id = %s AND claim_epoch = %s"
+)
+
 
 def price_usd(tokens: tuple) -> float:
     """Tokens (input, cache_write, cache_read, output) priced at PRICE_PER_MTOK.
@@ -749,14 +772,67 @@ def price_usd(tokens: tuple) -> float:
     return shared_price_usd(tuple(int(t or 0) for t in tokens))
 
 
+def compactions_usd(pre_tokens: Any, count: Any) -> float:
+    """The estimate for ``count`` compactions that summarised ``pre_tokens`` in all."""
+    n = int(count or 0)
+    return price_usd((0, 0, int(pre_tokens or 0), COMPACTION_OUTPUT_TOKENS * n)) if n else 0.0
+
+
+def _compactions_after(cur: Any, sdk_session_id: str, seq_after: int) -> float:
+    cur.execute(COMPACTIONS_SQL, (sdk_session_id, seq_after))
+    row = cur.fetchone()
+    return compactions_usd(*(row or (0, 0)))
+
+
 def session_spend_usd(conn: psycopg.Connection, sdk_session_id: str) -> float:
-    """What this SITTING has spent so far (1e), priced live off session_entries."""
+    """What this SITTING has spent so far (1e), priced live off session_entries: the
+    transcript, an estimate per compaction (whose summary call the transcript lacks), and
+    each finished attempt's correction to the CLI's own figure (018)."""
     if not sdk_session_id:
         return 0.0
     with conn.cursor() as cur:
         cur.execute(SESSION_USAGE_SQL, (sdk_session_id,))
         row = cur.fetchone()
-    return price_usd(tuple(row) if row else (0, 0, 0, 0))
+        spent = price_usd(tuple(row) if row else (0, 0, 0, 0))
+        spent += _compactions_after(cur, sdk_session_id, 0)
+        cur.execute(SPEND_CORRECTIONS_SQL, (sdk_session_id,))
+        row = cur.fetchone()
+    return spent + float((row or (0,))[0] or 0)
+
+
+def session_entries_high_water(conn: psycopg.Connection) -> int:
+    """``session_entries``' current top seq: an attempt's entries are the ones above it."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT COALESCE(max(seq), 0) FROM session_entries")
+        row = cur.fetchone()
+    return int((row or (0,))[0] or 0)
+
+
+def attempt_spend_correction(conn: psycopg.Connection, sdk_session_id: str, seq_before: int,
+                             total_cost_usd: Any) -> float | None:
+    """What to add to the cap's count so this finished attempt counts at the CLI's figure:
+    its ResultMessage cost, less any total the CLI restored from a ``cost-state`` entry,
+    minus its transcript and compaction estimates as session_spend_usd prices them. None
+    when the CLI reported no cost."""
+    if total_cost_usd is None or not sdk_session_id:
+        return None
+    with conn.cursor() as cur:
+        cur.execute(STARTING_COST_SQL, (sdk_session_id, seq_before))
+        row = cur.fetchone()
+        starting = float((row or (0,))[0] or 0)
+        cur.execute(ATTEMPT_USAGE_SQL, (sdk_session_id, seq_before))
+        row = cur.fetchone()
+        counted = price_usd(tuple(row) if row else (0, 0, 0, 0))
+        counted += _compactions_after(cur, sdk_session_id, seq_before)
+    return float(total_cost_usd) - starting - counted
+
+
+def add_spend_correction(conn: psycopg.Connection, turn_id: str, epoch: int, correction: float) -> bool:
+    """Add ``correction`` to the turn's ``spend_correction_usd``, only while ``epoch``
+    holds the claim (U6). False when superseded: nothing written."""
+    with conn.cursor() as cur:
+        cur.execute(ADD_SPEND_CORRECTION_SQL, (correction, turn_id, epoch))
+        return cur.rowcount != 0
 
 
 # 1b's held-message shape, asked under the queue lock: a reply is queued only when
@@ -769,7 +845,7 @@ HAS_QUEUED_SQL = (
 STOP_SET_SQL = "SELECT stop_requested_at IS NOT NULL AS stopped FROM sessions WHERE session_id = %s"
 
 
-def queue_auto_reply(cur, turn: dict, reply: str, state: dict, nudges: int) -> str | None:
+def queue_auto_reply(cur, turn: dict, reply: str, state: dict) -> str | None:
     """Queue the host's reply as a held turn row, inside ``complete()``'s transaction
     and under its queue lock. Returns the new turn id, or None when the run is over.
 
@@ -798,7 +874,7 @@ def queue_auto_reply(cur, turn: dict, reply: str, state: dict, nudges: int) -> s
     turn_id = str(uuid.uuid4())
     enqueued_at = datetime.now(tz=timezone.utc).isoformat()
     body = turn_message.queue_body(
-        turn_id, session_id, turn["project_id"], reply, enqueued_at, nudges, auto=True,
+        turn_id, session_id, turn["project_id"], reply, enqueued_at, auto=True,
     )
     cur.execute(
         "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
@@ -826,20 +902,18 @@ def complete(
     num_turns: int | None = None,
     duration_ms: int | None = None,
     sdk_session_id: str | None = None,
-    nudges: int | None = None,
     outcome: str = OK_OUTCOME,
     detail: dict[str, Any] | None = None,
     only_if_open: bool = False,
     claim_epoch: int | None,
     auto_reply: dict[str, Any] | None = None,
-    max_nudges: int = 0,
     lock_timeout: float = grants.QUEUE_LOCK_TIMEOUT_S,
 ) -> int | None:
     """Append the turn_done event (per-session seq via next_session_seq) and close the
     turn -- with the ResultMessage's figures when there are any, the token sum over
-    ``session_entries`` when ``sdk_session_id`` is given, and the Stop hook's veto count
-    (``nudges``: the cumulative count record_nudge persisted, else 0, since a turn the
-    hook never vetoed has nothing on the row) -- in ONE commit.
+    ``session_entries`` when ``sdk_session_id`` is given -- in ONE commit. ``turns.nudges``
+    is written 0 on a row that has none: the Stop veto that counted into it is gone
+    (step mode phase 2), and its readers expect a number.
 
     ``outcome`` is ``"ok"`` for every ordinary close. 0a passes
     ``NO_PROGRESS_OUTCOME`` when the worker closes the turn itself because redelivering
@@ -872,19 +946,19 @@ def complete(
     if auto_reply is not None:
         try:
             return _complete(conn, turn, receive_count, cost_usd=cost_usd, num_turns=num_turns,
-                             duration_ms=duration_ms, sdk_session_id=sdk_session_id, nudges=nudges,
+                             duration_ms=duration_ms, sdk_session_id=sdk_session_id,
                              outcome=outcome, detail=detail, only_if_open=only_if_open,
                              claim_epoch=claim_epoch, auto_reply=auto_reply,
-                             max_nudges=max_nudges, lock_timeout=lock_timeout)
+                             lock_timeout=lock_timeout)
         except psycopg.errors.LockNotAvailable:
             # The web tier holds the lock: the researcher is posting right now, so their
             # message is the next turn and the run is over anyway.
             conn.rollback()
             log(ev="auto_reply_lock_timeout", turn_id=turn["turn_id"], session_id=turn["session_id"])
             seq = _complete(conn, turn, receive_count, cost_usd=cost_usd, num_turns=num_turns,
-                            duration_ms=duration_ms, sdk_session_id=sdk_session_id, nudges=nudges,
+                            duration_ms=duration_ms, sdk_session_id=sdk_session_id,
                             outcome=outcome, detail=detail, only_if_open=only_if_open,
-                            claim_epoch=claim_epoch, auto_reply=None, max_nudges=max_nudges,
+                            claim_epoch=claim_epoch, auto_reply=None,
                             lock_timeout=lock_timeout)
             # The run ended with its reply lost, so its state goes too: the next "Keep
             # going." must start a fresh budget. One row, no queue lock needed.
@@ -893,9 +967,9 @@ def complete(
             conn.commit()
             return seq
     return _complete(conn, turn, receive_count, cost_usd=cost_usd, num_turns=num_turns,
-                     duration_ms=duration_ms, sdk_session_id=sdk_session_id, nudges=nudges,
+                     duration_ms=duration_ms, sdk_session_id=sdk_session_id,
                      outcome=outcome, detail=detail, only_if_open=only_if_open,
-                     claim_epoch=claim_epoch, auto_reply=None, max_nudges=max_nudges,
+                     claim_epoch=claim_epoch, auto_reply=None,
                      lock_timeout=lock_timeout)
 
 
@@ -908,13 +982,11 @@ def _complete(
     num_turns: int | None,
     duration_ms: int | None,
     sdk_session_id: str | None,
-    nudges: int | None,
     outcome: str,
     detail: dict[str, Any] | None,
     only_if_open: bool,
     claim_epoch: int | None,
     auto_reply: dict[str, Any] | None,
-    max_nudges: int,
     lock_timeout: float,
 ) -> int | None:
     """``complete()``'s one transaction. Separate so the lock-timeout path can run it
@@ -939,7 +1011,7 @@ def _complete(
             queued = None
             if auto_reply is not None:
                 reply = auto_reply.get("reply")
-                queued = (queue_auto_reply(cur, turn, reply, auto_reply.get("state") or {}, max_nudges)
+                queued = (queue_auto_reply(cur, turn, reply, auto_reply.get("state") or {})
                           if reply else None)
                 if queued is None:
                     # The run ended -- no offer, a cap, Stop, or the researcher's own
@@ -981,11 +1053,11 @@ def _complete(
                 "cache_creation_tokens = COALESCE(%s, cache_creation_tokens), "
                 "cache_read_tokens = COALESCE(%s, cache_read_tokens), "
                 "output_tokens = COALESCE(%s, output_tokens), "
-                "nudges = COALESCE(%s, nudges, 0), "
+                "nudges = COALESCE(nudges, 0), "
                 "claim_epoch = CASE WHEN %s::bigint IS NULL THEN claim_epoch + 1 ELSE claim_epoch END "
                 "WHERE turn_id = %s AND (%s::bigint IS NULL OR claim_epoch = %s)"
                 + (" AND completed_at IS NULL" if only_if_open else ""),
-                (outcome, cost_usd, num_turns, duration_ms, *tokens, nudges, claim_epoch, turn["turn_id"],
+                (outcome, cost_usd, num_turns, duration_ms, *tokens, claim_epoch, turn["turn_id"],
                  claim_epoch, claim_epoch),
             )
     conn.commit()
@@ -1256,9 +1328,8 @@ def stop_requested(conn: psycopg.Connection, session_id: str) -> bool:
 
 
 def pending_user_message(conn: psycopg.Connection, session_id: str) -> bool:
-    """Whether a message is held for this session (1b). The Stop hook ALLOWS the stop when
-    one is: that message becomes the next turn, and nudging the model onward would make
-    the patron wait out the rest of a 53-minute job to be heard."""
+    """Whether a message is held for this session (1b): that message becomes the next
+    turn, so the halt hands over to it rather than make the patron wait to be heard."""
     with conn.cursor() as cur:
         cur.execute(
             "SELECT EXISTS (SELECT 1 FROM turns WHERE session_id = %s AND outcome = %s "
@@ -1379,34 +1450,6 @@ def hold_queued_turn(conn: psycopg.Connection, turn_id: str, claimed_at: Any) ->
             (QUEUED_OUTCOME, turn_id, claimed_at),
         )
         return cur.rowcount == 1
-
-
-def nudges_so_far(conn: psycopg.Connection, turn_id: str) -> int:
-    """``turns.nudges`` for this turn, so a redelivery seeds the Stop hook's counter
-    rather than restarting it (1c). The hook's state is created per ATTEMPT while the cap
-    is meant to bound the TURN -- and since 0b makes resume the normal path, an unseeded
-    cap of 60 is 60 per attempt, six times over on the longest run in the corpus."""
-    with conn.cursor() as cur:
-        cur.execute("SELECT nudges FROM turns WHERE turn_id = %s", (turn_id,))
-        row = cur.fetchone()
-    return int(row[0]) if row and row[0] is not None else 0
-
-
-def record_nudge(conn: psycopg.Connection, turn_id: str, cumulative: int) -> None:
-    """Persist the veto count AS IT HAPPENS (1c).
-
-    ``complete()`` also writes this column, but only when the turn CLOSES -- and a
-    redelivery happens precisely when the previous attempt did NOT close: killed at the
-    step ceiling, by a crash, a deploy or SIGTERM, or failed. So a seed that read only ``complete``'s write would find NULL
-    on every redelivery and hand each attempt a fresh budget: the per-attempt cap 1c
-    exists to remove, six times over on the longest run in the corpus.
-
-    ``GREATEST`` so a late write from a slower attempt cannot walk the count backwards."""
-    with conn.cursor() as cur:
-        cur.execute(
-            "UPDATE turns SET nudges = GREATEST(COALESCE(nudges, 0), %s) WHERE turn_id = %s",
-            (cumulative, turn_id),
-        )
 
 
 def release_queued_turn(
@@ -1557,8 +1600,7 @@ def close_turn(
 
 
 def count_tool_calls(conn: psycopg.Connection, turn_id: str) -> int:
-    """The turn's tool_calls rows so far -- every attempt's, which is what the Stop hook's
-    no-progress check compares between two stops."""
+    """The turn's tool_calls rows so far -- every attempt's."""
     with conn.cursor() as cur:
         cur.execute("SELECT count(*) FROM tool_calls WHERE turn_id = %s", (turn_id,))
         row = cur.fetchone()
@@ -1851,7 +1893,7 @@ def prepare() -> None:
     """Everything a real turn needs that touches no network, done once; a failure is
     logged, fails only the real turns (the stub arms keep working) and fails /healthz.
     The schema is checked after listen, by ``start_schema_thread``."""
-    global _AGENTS, _AGENTS_ERROR, _PLUGIN_DIR, _BLOCKED, _AUTONOMOUS_MAX_NUDGES
+    global _AGENTS, _AGENTS_ERROR, _PLUGIN_DIR, _BLOCKED
     try:
         ensure_cwd(WORKER_CWD)
     except OSError as exc:
@@ -1878,18 +1920,13 @@ def prepare() -> None:
             log(ev="prepare", step="plugin_copy", error=_AGENTS_ERROR)
     _BLOCKED = parse_blocked_tools(os.environ.get("BLOCKED_TOOLS"))
     try:
-        _AUTONOMOUS_MAX_NUDGES = parse_max_nudges(os.environ.get("AUTONOMOUS_MAX_NUDGES"))
-    except ValueError as exc:
-        _AUTONOMOUS_MAX_NUDGES = 0
-        log(ev="prepare", step="nudges", error=f"{type(exc).__name__}: {exc}")
-    try:
         from claude_agent_sdk._cli_version import __cli_version__ as cli_version
     except Exception:  # noqa: BLE001
         cli_version = None
     log(
         ev="prepare", step="agents", agents=sorted(_AGENTS or {}),
         skills_on_disk=count_skills(ENGINE_PLUGIN_DIR), skills_expected=EXPECTED_SKILLS,
-        blocked_tools=sorted(_BLOCKED), autonomous_max_nudges=_AUTONOMOUS_MAX_NUDGES,
+        blocked_tools=sorted(_BLOCKED),
         error=_AGENTS_ERROR, plugin_dir=_PLUGIN_DIR,
         cli_version=cli_version,
     )
@@ -2402,44 +2439,28 @@ def resume_produced_no_turn(result: Any, resume: str | None, receive_count: int)
     )
 
 
-def turn_max_nudges(message: Any, fallback: int) -> int:
-    """The Stop hook's veto cap for THIS turn (1a): the queue body's ``max_nudges`` when
-    the web tier stamped one, else the worker's own ``AUTONOMOUS_MAX_NUDGES``.
-
-    The body wins because ONE worker serves the browser and ``make proto-demo``, and it
-    has no way to tell them apart -- there is no browser path it can see. Each recipe
-    recreates the WEB container with its own export instead, and the value rides the
-    message.
-
-    The fallback covers a message enqueued before this field existed (``proto/drive.py``'s
-    rows, and anything already on the queue at upgrade), which must not start behaving
-    differently just because the worker was restarted. A negative or unparsable value
-    takes the fallback too: silently disabling the Stop hook is the invisible failure this
-    whole item exists to remove."""
-    raw = message.get("max_nudges") if isinstance(message, dict) else None
-    if raw is None or isinstance(raw, bool):
-        return fallback
-    try:
-        n = int(raw)
-    except (TypeError, ValueError):
-        return fallback
-    return n if n >= 0 else fallback
-
-
-def attempt_did_work(result: Any, tool_calls: int) -> bool:
-    """Whether THIS attempt moved the turn forward (0a). Both signals must be positive.
+def attempt_did_work(result: Any, tool_calls: int, turn_tool_calls: int) -> bool:
+    """Whether THIS attempt moved the turn forward (0a).
 
     The plan states the negation: a redelivered attempt did no work when
     ``num_turns == 0``, *or* it added no ``tool_calls`` rows. The first is the D17
     synthetic result -- the CLI answered its own meta prompt about the orphaned agents and
     returned, so the interrupted work was never redone. The second is the attempt that
     billed model turns and wrote nothing: every change to the project goes through a
-    writer TOOL, so a pass with no tool call changed nothing, and under continuous work
-    that is a stall rather than a short answer.
+    writer TOOL, so a pass with no tool call left the interrupted work undone.
+
+    The second arm needs interrupted work, so it applies only once some attempt of the turn
+    recorded a tool call (``turn_tool_calls``, every attempt's rows). A turn killed before
+    its first tool call -- a status question killed inside its start-of-turn compaction --
+    interrupted nothing, and its redelivery's text reply is the answer, as it would be on a
+    first delivery; without this it is re-run and closed ``no_progress`` with the patron
+    shown the answer twice (U24, 2026-10-31).
 
     A caller applies this on a REDELIVERY only. On a first delivery a short, tool-free
     answer is an ordinary turn and completes as it stands."""
-    return int(getattr(result, "num_turns", 0) or 0) > 0 and tool_calls > 0
+    if int(getattr(result, "num_turns", 0) or 0) <= 0:
+        return False
+    return tool_calls > 0 or turn_tool_calls == 0
 
 
 # -- the grant (U3) --------------------------------------------------------------
@@ -2578,8 +2599,8 @@ async def _run_turn(
     ensure_cwd(WORKER_CWD)
 
     started = time.monotonic()
-    counters = {"events": 0, "activity": 0, "tool_calls": 0, "nudges": 0}
-    # Set by the Stop hook when it ALLOWS a stop (1b/1c); None means the turn just ended.
+    counters = {"events": 0, "activity": 0, "tool_calls": 0}
+    # Set by a halt that names why the turn ended (1b/1c/1e); None means it just ended.
     terminal: dict[str, Any] = {"reason": None}
     # U6: this attempt's transcript appends land only while its claim epoch holds the turn.
     store = PgSessionStore(PG_DSN, project_id, turn_id=turn_id, claim_epoch=turn["claim_epoch"])
@@ -2659,9 +2680,8 @@ async def _run_turn(
                 reset_zero_progress(conn, turn_id, turn["claim_epoch"])
                 attempt["progress_reset"] = True
 
-        # 1c: the halt predicate, checked before EVERY tool call. The Stop hook fires at
-        # a voluntary yield -- a median of once per run -- so a Stop wired to it would
-        # answer after 53 minutes. This one answers in a median of 2.6 s. Each clause is
+        # 1c: the halt predicate, checked before EVERY tool call, so a Stop answers in a
+        # median of 2.6 s. Each clause is
         # one function in halt_clauses, run in its own try by halt() below.
         def epoch_clause() -> str | None:
             # U6: first. A newer claim holds the turn, so nothing this attempt does is
@@ -2909,54 +2929,6 @@ async def _run_turn(
             on_completed=on_completed,
         )
 
-        stop_hook = None
-        max_nudges = turn_max_nudges(message, _AUTONOMOUS_MAX_NUDGES)
-        if max_nudges > 0:
-
-            def on_nudge(n: int) -> None:
-                # `n` is the hook's CUMULATIVE count -- seeded from the row on a
-                # redelivery -- not this attempt's tally, so the column spans the turn.
-                counters["nudges"] = n
-                record_nudge(conn, turn_id, n)
-                log(ev="nudge", turn_id=turn_id, n=n, max=max_nudges)
-
-            def on_allow(reason: str) -> None:
-                # The Stop hook let the turn end; this is WHY, and it is what complete()
-                # writes. Without it every ending is 'ok' and a budget-capped run is
-                # indistinguishable from a finished one.
-                #
-                # It must not CLOBBER a reason the halt path already set. A turn halted by
-                # the spend cap that then sees a Stop dispatch would otherwise be recorded
-                # as whatever the Stop hook made of it -- most likely `no_progress`, which
-                # tells the patron the opposite of what happened.
-                if terminal["reason"] is None:
-                    terminal["reason"] = reason
-                log(ev="terminal", turn_id=turn_id, session_id=session_id, reason=reason,
-                    recorded=terminal["reason"])
-
-            stop_hook = make_stop_hook(
-                turn_id=turn_id, max_nudges=max_nudges,
-                research=lambda: read_research(conn, project_id),
-                tool_count=lambda: count_tool_calls(conn, turn_id),
-                on_nudge=on_nudge, log=log,
-                # `halted` is the load-bearing half, and it is NOT the same question as
-                # `stop_requested`. The PreToolUse hook halts on the patron's Stop AND on
-                # 1e's spend cap; only the first raises a row. If a halt then dispatches a
-                # Stop -- which the plan lists as unmeasured -- this hook would find an
-                # unfinished project with budget left and VETO the halt, and the run would
-                # carry straight on past the spend bound. Reading the turn's own decision
-                # makes that impossible either way the measurement lands.
-                stopped=lambda: bool(terminal.get("halted")) or stop_requested(conn, session_id),
-                pending_user_message=lambda: pending_user_message(conn, session_id),
-                # Phase 3 writes the row this will read; until then the agent has no way
-                # to ask, so the clause exists and never fires. Built now so the shape is
-                # settled and phase 3 is a query, not a redesign.
-                pending_decision=lambda: False,
-                on_allow=on_allow,
-                # 1c: seed from the row, or the cap is per ATTEMPT and 0b made resume the
-                # normal path -- median two attempts, longest six.
-                nudges_used=nudges_so_far(conn, turn_id) if receive_count > 1 else 0,
-            )
         # Before a slot is taken, so a failed rebuild holds none.
         plugin_dir = attempt_plugin_dir()
         # U3: this attempt's CLI runs as a slot user that owns its config dir and home and
@@ -2985,12 +2957,16 @@ async def _run_turn(
             turn_id=turn_id,
             claim_epoch=turn["claim_epoch"],
             stderr=lambda line: log(ev="cli_stderr", turn_id=turn_id, line=line[:500]),
-            stop_hook=stop_hook,
             turn_user=slot.name if slot else None,
             turn_home=turn_home,
         )
         if slot is not None:
             turn_users.chown_tree(config_dir, slot)  # after mcp.json is written into it
+        try:
+            attempt_seq_before: int | None = session_entries_high_water(conn)
+        except Exception as exc:  # noqa: BLE001 - a spend figure never fails a turn
+            attempt_seq_before = None
+            log(ev="spend_correction_failed", turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
         client = ClaudeSDKClient(options=options)
         await client.connect()
         try:
@@ -3078,6 +3054,19 @@ async def _run_turn(
                     receive_count=receive_count, query=index + 1,
                     result=str(result.result or "")[:200])
 
+            # 018: before any raise below, so an attempt that is billed and then failed --
+            # zero progress, a lost grant lock -- still counts at the CLI's figure.
+            if attempt_seq_before is not None:
+                try:
+                    correction = attempt_spend_correction(conn, sdk_session_id, attempt_seq_before,
+                                                          getattr(result, "total_cost_usd", None))
+                    if correction is not None:
+                        written = add_spend_correction(conn, turn_id, turn["claim_epoch"], correction)
+                        log(ev="spend_correction", turn_id=turn_id, receive_count=receive_count,
+                            correction_usd=round(correction, 4), written=written)
+                except Exception as exc:  # noqa: BLE001 - a spend figure never fails a turn
+                    log(ev="spend_correction_failed", turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
+
             # U3: halted because the grant lock was lost. Not a completion -- raise, so the
             # turn stays open and the redelivery bears the current grant under a new lock.
             if terminal["reason"] == GRANT_LOCK_LOST:
@@ -3112,9 +3101,9 @@ async def _run_turn(
             # At the cap the worker therefore stops raising and closes the turn itself,
             # 200, with an outcome that says what happened -- because a terminal failure
             # surfaced as an error is redelivered and re-runs the model forever.
-            # 1b/1c: what the browser renders for this ending. The Stop hook's verdict
-            # wins when it fired; a turn halted by the PreToolUse hook may never reach a
-            # Stop dispatch at all, so the flag is re-read here rather than assumed.
+            # 1b/1c: what the browser renders for this ending. A turn halted by the
+            # PreToolUse hook names its reason; the flag is re-read here rather than
+            # assumed.
             # Section A/A2: research.json and the turn's offer line, read once and used
             # three times below -- the `completed` outcome, `turn_done.options`, and the
             # host's reply.
@@ -3124,8 +3113,8 @@ async def _run_turn(
                 terminal["reason"]
                 or (TERMINAL_STOPPED if stop_requested(conn, session_id) else OK_OUTCOME)
             )
-            # A step turn that finished the project has no Stop verdict to say so -- at
-            # cap 0 no plane binds the Stop hook -- so the honest `completed` label would
+            # A step turn that finished the project has no other verdict to say so -- no
+            # plane binds a Stop hook (step mode phase 2) -- so the honest `completed` label would
             # never reach the browser on a step turn without this. Only where the close
             # was an ordinary `ok`: a stop, a cap or a lost transcript each say something
             # the project's own status does not override. And only on the FIRST such
@@ -3149,7 +3138,8 @@ async def _run_turn(
             if (not stopped_here
                     and not transcript_lost
                     and receive_count > 1
-                    and not attempt_did_work(result, counters["tool_calls"])):
+                    and not attempt_did_work(result, counters["tool_calls"],
+                                             count_tool_calls(conn, turn_id))):
                 zero_progress = bump_zero_progress(conn, turn_id, turn["claim_epoch"])
                 log(ev="zero_progress_attempt", turn_id=turn_id, session_id=session_id,
                     receive_count=receive_count, attempts=zero_progress, cap=ZERO_PROGRESS_CAP,
@@ -3161,9 +3151,8 @@ async def _run_turn(
                         f"zero-progress attempt {zero_progress} of {ZERO_PROGRESS_CAP}"
                     )
                 outcome = NO_PROGRESS_OUTCOME
-            # 1e: `limit` separates the two budgets that both end as `budget` -- the
-            # nudge cap, where another message continues the same session, and the spend
-            # cap, where it does not. `spend_estimate_usd` sits beside the
+            # 1e: `limit` names the budget that ended the turn (today only the spend
+            # cap). `spend_estimate_usd` sits beside the
             # ResultMessage's own cost_usd on every turn, which is what calibrates the
             # price vector on the first real runs.
             detail = {k: terminal[k] for k in ("limit", "spent_usd") if k in terminal}
@@ -3194,16 +3183,8 @@ async def _run_turn(
                 # not write. `result.result` is the turn's last text, whose final line
                 # carries the offer.
                 auto_reply=auto_reply,
-                max_nudges=max_nudges,
                 cost_usd=result.total_cost_usd, num_turns=result.num_turns, duration_ms=result.duration_ms,
                 sdk_session_id=sdk_session_id,
-                # `or None` so COALESCE keeps what record_nudge already wrote. The counter
-                # is 0 whenever THIS attempt vetoed nothing, and 31% of runs never yield
-                # at all -- so a plain assignment walks a cumulative count of 5 back to 0
-                # on the attempt that happens to finish, destroying the figure the column
-                # was added for. Zero is not a measurement here; it is "nothing to add" --
-                # complete()'s trailing 0 is what a turn no attempt vetoed ends up with.
-                nudges=counters["nudges"] or None,
                 # U5 D3: SIGTERM's last-receive close may have closed the row first; then
                 # this writes nothing, returns None, and releases nothing.
                 only_if_open=True,
@@ -3243,7 +3224,6 @@ async def _run_turn(
         "outcome": outcome,
         **detail,
         "released_turn": released,
-        "max_nudges": max_nudges,
         "resumed": resume is not None,
         "sdk_session_id": sdk_session_id,
         "num_turns": result.num_turns,
@@ -3260,7 +3240,6 @@ async def _run_turn(
         "list_subkeys": store.calls["list_subkeys"],
         "subkeys_returned": store.calls["subkeys_returned"],
         "tool_calls": counters["tool_calls"],
-        "nudges": counters["nudges"],
     }
     # U10 D6: closed (above) and released before it fails, so the redelivery answers 200
     # without re-running a paid turn that would lose its transcript the same way.

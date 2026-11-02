@@ -19,6 +19,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const EMAIL_STORAGE_KEY = 'feedback.email'
 // Must match MAX_FIELD_CHARS in src/main/feedback.ts (the canonical validator).
 const MAX_FIELD_CHARS = 10_000
+const MEDIA_DEFAULT_OFF_BYTES = 15 * 1024 * 1024
 
 // One reason a send can't go through, tied to the control it is about. Every
 // blocker gets the same treatment — an inline message under its own field — so
@@ -69,11 +70,9 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
   // the reporter the opposite of what the bundle does.
   const [contextUnavailable, setContextUnavailable] = useState(false)
 
-  // On by default: a report about an uploaded document is useless without it,
-  // and when the project has no media the flag is a no-op (the checkbox is
-  // disabled at mediaCount === 0). Oversize bundles are handled downstream —
-  // the web path drops the largest files and reports them.
-  const [includeMedia, setIncludeMedia] = useState(true)
+  // null until the reporter touches the box; the default is derived from the
+  // media total below.
+  const [mediaChoice, setMediaChoice] = useState<boolean | null>(null)
   const [includeSessionLog, setIncludeSessionLog] = useState(true)
   const [showFileList, setShowFileList] = useState(false)
 
@@ -125,25 +124,27 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
       })
   }, [getFeedbackContext])
 
-  const { selectedFiles, selectedBytes, mediaCount, mediaBytes } = useMemo(() => {
+  const { mediaCount, mediaBytes } = useMemo(() => {
     let mc = 0
     let mb = 0
-    const selected: ProjectFile[] = []
-    let sb = 0
     for (const f of files) {
       if (f.isMedia) {
         mc++
         mb += f.sizeBytes
-        if (includeMedia) {
-          selected.push(f)
-          sb += f.sizeBytes
-        }
-      } else {
-        selected.push(f)
-        sb += f.sizeBytes
       }
     }
-    return { selectedFiles: selected, selectedBytes: sb, mediaCount: mc, mediaBytes: mb }
+    return { mediaCount: mc, mediaBytes: mb }
+  }, [files])
+
+  // On by default, since a report about an uploaded document is useless without
+  // it — unless the media alone exceed MEDIA_DEFAULT_OFF_BYTES, where the upload
+  // is slow and fails outright ("Failed to fetch") on a large bundle.
+  const includeMedia = mediaChoice ?? mediaBytes <= MEDIA_DEFAULT_OFF_BYTES
+
+  const { selectedFiles, selectedBytes } = useMemo(() => {
+    const selected = files.filter((f) => includeMedia || !f.isMedia)
+    const sb = selected.reduce((sum, f) => sum + f.sizeBytes, 0)
+    return { selectedFiles: selected, selectedBytes: sb }
   }, [files, includeMedia])
 
   const emailTrimmed = email.trim()
@@ -517,7 +518,7 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
                 type="checkbox"
                 checked={includeMedia && (mediaCount > 0 || contextUnavailable)}
                 disabled={mediaCount === 0 && !contextUnavailable}
-                onChange={(e) => setIncludeMedia(e.target.checked)}
+                onChange={(e) => setMediaChoice(e.target.checked)}
               />
               <span className={styles.labelText}>
                 Include media files{' '}
@@ -560,7 +561,8 @@ export default function FeedbackDialog({ onClose }: FeedbackDialogProps): React.
           <div className={styles.privacy}>
             Send packages your project folder as a zip and uploads it to a private Google Drive
             folder accessible only to the Pioneer Academy team. Documents and images you uploaded
-            are included &mdash; untick &ldquo;Include media files&rdquo; to leave them out. The
+            are included unless they total more than 15 MB &mdash; tick or untick &ldquo;Include
+            media files&rdquo; to change that. The
             session log includes your prompts, Claude&apos;s replies and internal reasoning, and
             every tool call with its results &mdash; the reasoning is what lets us diagnose why the
             agent did what it did.

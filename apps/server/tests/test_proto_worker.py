@@ -33,12 +33,8 @@ Dockerfile and 004_worker.sql are read as text. What these pin:
 - the container: tmpfs for TMPDIR, the key passed through (never a literal, never baked
   into the image), /project present, no tokens.json, no Node, no engine and no store
   credentials, the SDK pinned, 004 additive only;
-- D18's Stop hook: ``should_continue_run`` on the harness's own truth table, the hook's
-  block with the harness's reason text verbatim (read off orchestrator.py), its cap, its
-  no-progress arm, that it never raises; the ``Stop`` matcher bound only when a hook is
-  given; run_turn wiring it only when the turn's cap > 0 (the body's ``max_nudges``, which
-  the web tier stamps on every message, else the worker's AUTONOMOUS_MAX_NUDGES) and
-  writing ``nudges``;
+- no ``Stop`` hook: step mode's phase 2 deleted the D18 veto, so run_turn binds none even
+  for a message still stamped with ``max_nudges``;
 - U5: the last-receive close (200 ``retries_exhausted``, one release) and every way it
   must NOT fire; ``complete(only_if_open=True)`` and the close race; the guarded release;
   the sweep's statement and its off-unless-configured rule; and SIGTERM in-process -- the
@@ -173,6 +169,14 @@ class FakeCursor:
             return (self.conn.research,)
         if "SELECT count(*) FROM tool_calls" in sql:
             return (self.conn.tool_call_count,)
+        if sql == worker.COMPACTIONS_SQL:  # 018: (sum of preTokens, count)
+            return self.conn.compactions
+        if sql == worker.SPEND_CORRECTIONS_SQL:
+            return (self.conn.spend_correction,)
+        if sql == worker.STARTING_COST_SQL:
+            return None if self.conn.starting_cost is None else (self.conn.starting_cost,)
+        if "SELECT COALESCE(max(seq), 0) FROM session_entries" == sql:
+            return (self.conn.high_water,)
         if "RETURNING zero_progress_attempts" in sql:
             self.conn.zero_progress_attempts += 1
             return (self.conn.zero_progress_attempts,)
@@ -249,6 +253,12 @@ class FakeConn:
         # answer no row: a newer claim holds the turn.
         self.claim_epoch = claim_epoch
         self.superseded = False
+        # 018: COMPACTIONS_SQL's (preTokens sum, count), the session's summed
+        # turns.spend_correction_usd, and session_entries' top seq.
+        self.compactions: tuple = (0, 0)
+        self.spend_correction = 0.0
+        self.high_water = 0
+        self.starting_cost: float | None = None  # a stored cost-state total, if any
 
     def mint_epoch(self) -> None:
         """CLAIM_TURN_SQL's CASE: an open row's claim bumps the epoch, a closed one keeps it."""
@@ -416,7 +426,7 @@ def test_complete_writes_turn_done_and_closes_the_turn_with_the_result_figures_i
     assert "next_session_seq" in sqls[0]
     assert sqls[1].startswith("INSERT INTO session_events") and "'turn_done'" in sqls[1]
     assert sqls[2].startswith("UPDATE turns SET completed_at = now(), outcome = %s")
-    assert conn.executed[2][1] == ("ok", 0.0123, 4, 9876, None, None, None, None, None, None, "turn-1", None, None), \
+    assert conn.executed[2][1] == ("ok", 0.0123, 4, 9876, None, None, None, None, None, "turn-1", None, None), \
         "the outcome is a bound parameter now (0a), and defaults to ok"
     assert conn.transactions == 1 and conn.transaction_exits == 1
 
@@ -436,7 +446,7 @@ def test_complete_sums_the_turns_tokens_from_session_entries_in_the_same_transac
     update_sql, update_params = conn.executed[3]
     assert update_sql.startswith("UPDATE turns SET completed_at = now(), outcome = %s")
     assert "input_tokens = COALESCE(%s, input_tokens)" in update_sql and "output_tokens = COALESCE(%s, output_tokens)" in update_sql
-    assert update_params == ("ok", 0.4592, 22, 74294, *TOKENS, None, None, "turn-1", None, None)
+    assert update_params == ("ok", 0.4592, 22, 74294, *TOKENS, None, "turn-1", None, None)
     assert sqls[-1] is update_sql and conn.transactions == 1, "the sum and the close are one transaction"
 
 
@@ -446,16 +456,6 @@ def test_complete_without_figures_keeps_the_existing_columns():
     sql, params = conn.executed[2]
     assert "COALESCE(%s, cost_usd)" in sql and params[0] == "ok" and params[1:9] == (None,) * 8
     assert not any("sum(" in s for s, _ in conn.executed), "no SDK session, no usage query (the stub arms)"
-
-
-def test_complete_writes_the_nudge_count_with_coalesce_like_the_other_figures():
-    conn = FakeConn()
-    worker.complete(conn, TURN, 1, nudges=3, claim_epoch=None)
-    sql, params = conn.executed[2]
-    assert "nudges = COALESCE(%s, nudges, 0)" in sql and params[8] == 3 and params[10] == "turn-1" and params[0] == "ok"
-    conn = FakeConn()
-    worker.complete(conn, TURN, 1, nudges=0, claim_epoch=None)
-    assert conn.executed[2][1][8] == 0, "zero is a figure (the arm was off or never vetoed), not an absence"
 
 
 def test_turn_completed_reads_completed_at():
@@ -1306,10 +1306,10 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
     assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-    assert opts.env["ENABLE_TOOL_SEARCH"] == "false", "tool_reference does not parse below agentgateway 1.6"
+    assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
-    on = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "true"})
-    assert on.env["ENABLE_TOOL_SEARCH"] == "true"
+    off = _options(worker_env={**GATEWAY_ENV, "GATEWAY_TOOL_SEARCH": "false"})
+    assert off.env["ENABLE_TOOL_SEARCH"] == "false", "the switch back, for agentgateway < 1.6 (TAP's Fargate stack)"
     with pytest.raises(ValueError, match="GATEWAY_BASE_URL"):
         _options(worker_env={**GATEWAY_ENV, "GATEWAY_BASE_URL": " "})
 
@@ -1364,7 +1364,7 @@ def test_prepare_on_the_gateway_refuses_turns_when_an_agent_model_has_no_gateway
                         lambda plugin_dir: ({"a": agent("claude-sonnet-4-6"), "b": agent("claude-opus-9")}, None))
     monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
-    for name in ("_AGENTS", "_AGENTS_ERROR", "_PLUGIN_DIR", "_BLOCKED", "_AUTONOMOUS_MAX_NUDGES"):
+    for name in ("_AGENTS", "_AGENTS_ERROR", "_PLUGIN_DIR", "_BLOCKED"):
         monkeypatch.setattr(worker, name, getattr(worker, name))  # prepare() rebinds them; restored on teardown
     monkeypatch.setenv("MODEL_PROVIDER", "gateway")
     monkeypatch.setenv("GATEWAY_BASE_URL", "http://gw.example/bedrock")
@@ -1424,7 +1424,7 @@ def test_prepare_passes_the_gateway_copy_as_the_plugin_dir(monkeypatch, tmp_path
     monkeypatch.setattr(worker, "load_plugin_agents", lambda plugin_dir: ({}, None))
     monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
-    for name in ("_AGENTS", "_AGENTS_ERROR", "_PLUGIN_DIR", "_BLOCKED", "_AUTONOMOUS_MAX_NUDGES"):
+    for name in ("_AGENTS", "_AGENTS_ERROR", "_PLUGIN_DIR", "_BLOCKED"):
         monkeypatch.setattr(worker, name, getattr(worker, name))  # prepare() rebinds them; restored on teardown
     stale = tmp_path / "plugin-gateway-stale"
     stale.mkdir()
@@ -1499,10 +1499,7 @@ def test_worker_tmpfs_holds_tmpdir_and_the_key_is_passed_through_not_literal():
     for key in ("GATEWAY_BASE_URL", "GATEWAY_API_KEY", "GATEWAY_TOOL_SEARCH"):
         assert env[key].startswith("${" + key), f"{key} is passed through, never a literal"
     assert env["BLOCKED_TOOLS"].startswith("${BLOCKED_TOOLS"), "the tree-read block is the caller's, empty by default"
-    # The worker's own cap governs only a message without max_nudges; the web tier stamps
-    # its own on every message it enqueues, so this 0 does not turn the hook off there.
-    assert env["AUTONOMOUS_MAX_NUDGES"].startswith("${AUTONOMOUS_MAX_NUDGES"), "the fallback cap is the caller's"
-    assert env["AUTONOMOUS_MAX_NUDGES"].endswith(":-0}"), "unset means no hook for an unstamped message, not the arm's default"
+    assert "AUTONOMOUS_MAX_NUDGES" not in env, "the Stop veto is deleted; nothing reads its cap"
     assert env["WORKER_CWD"] == "/project"
     # The tools are the `tools` service's: the store credentials and image_transcribe's
     # key stay out of the process that runs the agent loop.
@@ -1670,15 +1667,6 @@ class ToolCall:
         self.agent_id = agent_id
 
 
-class StopDispatch:
-    """A sentinel in a canned stream: the fake client fires the turn's REAL Stop hook.
-
-    The CLI dispatches a Stop when the model tries to end its turn, which is where
-    `on_allow` records WHY the run ended. Without this the callback is never invoked in
-    these tests and anything it does -- including refusing to overwrite a reason the
-    PreToolUse halt already set -- is untested."""
-
-
 class FakeClient:
     """ClaudeSDKClient's surface as run_turn uses it: a canned message stream."""
 
@@ -1688,7 +1676,6 @@ class FakeClient:
         self.disconnected = False
         self.env = env  # the turn_env fixture's state, for the captured hooks
         self.tool_uses = 0
-        self.stops: list[dict] = []
         self.pretool_replies: list[dict] = []  # what the PreToolUse hook answered, per call
 
     async def _fire_pretool(self, call: "ToolCall") -> None:
@@ -1700,11 +1687,6 @@ class FakeClient:
             data["agent_id"] = call.agent_id
         self.pretool_replies.append(
             await hook(data, f"toolu_{self.tool_uses}", None))
-
-    async def _fire_stop(self) -> None:
-        hook = ((self.env or {}).get("options") or {}).get("stop_hook")
-        assert hook is not None, "no Stop hook is bound: the arm is off, so nothing to dispatch"
-        self.stops.append(await hook({}, None, None))
 
     async def connect(self) -> None:
         pass
@@ -1724,9 +1706,6 @@ class FakeClient:
         for m in self.messages:
             if isinstance(m, ToolCall):
                 await self._fire_pretool(m)
-                continue
-            if isinstance(m, StopDispatch):
-                await self._fire_stop()
                 continue
             yield m
 
@@ -1834,6 +1813,18 @@ def test_run_turn_completes_a_good_stream_with_the_results_figures(turn_env):
     assert summary["events"] == 1 and summary["sdk_session_id"] == SID and summary["seq"] == 2, "text event, then turn_done"
 
 
+def test_run_turn_binds_no_stop_hook_even_for_a_message_stamped_with_a_cap(turn_env, monkeypatch, tmp_path):
+    """Step mode phase 2: a stamp left on a message enqueued before the veto was deleted
+    is ignored, and nothing reaches the options builder that could bind a Stop hook."""
+    monkeypatch.setitem(TURN, "message", {**TURN["message"], "max_nudges": 40})
+    _run(turn_env, _good())
+    # The real builder, on what run_turn passed it: a Stop hook bound by any route shows.
+    # The turn's config dir is gone with the turn, so the rebuild gets its own.
+    opts = options.build_worker_options(**{**turn_env["options"], "worker_env": WORKER_ENV,
+                                           "config_dir": str(tmp_path)})
+    assert "Stop" not in opts.hooks
+
+
 def test_run_turn_passes_a_whole_gateway_copy_as_plugins(turn_env, monkeypatch, tmp_path):
     monkeypatch.setattr(worker, "ENGINE_PLUGIN_DIR", str(PLUGIN_DIR))
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
@@ -1906,9 +1897,6 @@ class TwoPassClient(FakeClient):
         for m in stream:
             if isinstance(m, ToolCall):
                 await self._fire_pretool(m)
-                continue
-            if isinstance(m, StopDispatch):
-                await self._fire_stop()
                 continue
             yield m
 
@@ -2034,20 +2022,27 @@ def test_the_first_delivery_of_a_resumed_turn_is_never_re_queried(turn_env, monk
 # receive_count > 1 attempt. `test_the_named_fallback_*` below is that test.
 
 
-@pytest.mark.parametrize("num_turns, tool_calls, expected", [
-    (6, 1, True),
-    (6, 0, False),
-    (0, 1, False),
-    (0, 0, False),
-    (None, 0, False),
-    (1, 40, True),
-], ids=["worked", "billed-turns-touched-nothing", "no-turn-but-a-call", "dead", "unknown", "busy"])
-def test_attempt_did_work_needs_both_signals(num_turns, tool_calls, expected):
+@pytest.mark.parametrize("num_turns, tool_calls, turn_tool_calls, expected", [
+    (6, 1, 4, True),
+    (6, 0, 3, False),
+    (0, 1, 4, False),
+    (0, 0, 3, False),
+    (None, 0, 3, False),
+    (1, 40, 43, True),
+    (2, 0, 0, True),
+    (0, 0, 0, False),
+    (None, 0, 0, False),
+], ids=["worked", "billed-turns-touched-nothing", "no-turn-but-a-call", "dead", "unknown", "busy",
+        "text-reply-nothing-interrupted", "synthetic-nothing-interrupted", "unknown-nothing-interrupted"])
+def test_attempt_did_work_needs_both_signals_once_work_was_interrupted(num_turns, tool_calls, turn_tool_calls, expected):
     """The plan states the negation -- an attempt did no work when ``num_turns == 0``, OR
-    it added no tool_calls rows -- so work is the conjunction. The middle row is the one
+    it added no tool_calls rows -- so work is the conjunction. The second row is the one
     a `num_turns == 0` test alone would miss: a pass that billed model turns and changed
-    nothing, because every change to the project goes through a writer TOOL."""
-    assert worker.attempt_did_work(SimpleNamespace(num_turns=num_turns), tool_calls) is expected
+    nothing, because every change to the project goes through a writer TOOL. The tool-call
+    half needs work to have been interrupted: when no attempt of the turn ever recorded a
+    tool call, a model reply is the answer (the last three rows), and only a zero-turn
+    result still counts as no work."""
+    assert worker.attempt_did_work(SimpleNamespace(num_turns=num_turns), tool_calls, turn_tool_calls) is expected
 
 
 def test_the_named_fallback_a_synthetic_zero_turn_redelivery_is_a_failure_not_a_completion(
@@ -2075,10 +2070,28 @@ def test_the_named_fallback_a_synthetic_zero_turn_redelivery_is_a_failure_not_a_
 def test_a_redelivery_that_billed_model_turns_but_recorded_no_tool_call_counts_too(turn_env):
     """The second arm of attempt_did_work, through run_turn: the model talked and touched
     nothing. resume_produced_no_turn never fires here (num_turns > 0), so this attempt is
-    caught only by the tool-call half."""
+    caught only by the tool-call half. The killed attempt had recorded calls, so there
+    was work to redo."""
+    turn_env["conn"].tool_call_count = 3
     with pytest.raises(worker.ResumeFailure, match="tool_calls=0"):
         _run_passes(turn_env, [[_init(), _text("thinking about it"), _result(num_turns=9)]], receive_count=2)
     assert not _turn_done_written(turn_env["conn"])
+
+
+def test_a_text_reply_on_the_redelivery_of_a_turn_that_never_called_a_tool_is_the_answer(turn_env, monkeypatch):
+    """U24, 2026-10-31 (compose, gateway, n=1): a status question killed 8 s in, inside its
+    start-of-turn compaction, recorded no tool call on any attempt. Its redelivery answered
+    in text; the tool-call half read that as no work, re-ran it, showed the patron the
+    answer twice and closed the turn ``no_progress``. Nothing was interrupted, so the
+    reply completes the turn as it would on a first delivery."""
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    turn_env["conn"].tool_call_count = 0
+    summary = _run_passes(turn_env, [[_init(), _text("Two sentences of status."), _result(num_turns=2)]],
+                          receive_count=2)
+    assert summary["outcome"] == worker.OK_OUTCOME
+    assert _turn_done_written(turn_env["conn"])
+    assert not [f for f in logged if f.get("ev") == "zero_progress_attempt"]
 
 
 def test_the_cap_closes_the_turn_itself_with_a_visible_outcome_instead_of_raising(turn_env, monkeypatch):
@@ -2408,60 +2421,6 @@ def test_options_bind_the_post_hook_on_success_and_on_failure(tmp_path):
 # (issue #3274), so None cannot be the baseline a flag is tested against: the flag would
 # be unable to change the answer. A literal because `_INCOMPLETE` is defined further down
 # and this line runs at import.
-_STOP_KW = dict(research={"project": {"status": "in_progress"}}, nudges_used=0, max_nudges=5,
-                tool_count=0, tool_count_at_last_nudge=-1)
-
-
-@pytest.mark.parametrize("flag, reason", [
-    ("stopped", "stopped"),
-    ("mcp_unavailable", "mcp_unavailable"),
-    ("pending_user_message", "queued"),
-    ("pending_decision", "decision"),
-])
-def test_each_new_clause_allows_the_stop_and_names_itself(flag, reason):
-    assert options.should_continue_run(**{**_STOP_KW, flag: True}) is False
-    # research=None on purpose: every flag outranks the no-research.json clause, so a
-    # project-less session that ended for one of these reasons still names it, not `ok`.
-    assert options.terminal_reason(
-        research=None, nudges_used=0, max_nudges=5, **{flag: True}
-    ) == reason
-
-
-def test_stopped_is_the_first_clause_ahead_of_every_other():
-    """1c. None of the original four paths is "the user stopped", and the no-progress
-    escape cannot stand in for one: a halted call still writes a tool_calls row and
-    count_tool_calls counts ROWS, so the counter moves and that escape never fires.
-    Stop must therefore win against a project that looks complete, a spent budget, and
-    every other flag at once."""
-    every = dict(research={"project": {"status": "completed"}}, nudges_used=99, max_nudges=1,
-                 mcp_unavailable=True, pending_user_message=True, pending_decision=True)
-    assert options.terminal_reason(stopped=True, **every) == "stopped"
-    assert options.should_continue_run(tool_count=0, tool_count_at_last_nudge=-1,
-                                       stopped=True, **every) is False
-
-
-def test_terminal_reason_and_should_continue_run_walk_in_lockstep():
-    """They are two readings of one decision, and they drift silently: a reason that
-    disagrees with the bool would label a run with the wrong ending, which is the exact
-    bug the terminal-state work exists to fix. So every combination is walked."""
-    import itertools
-
-    flags = ("stopped", "mcp_unavailable", "pending_user_message", "pending_decision")
-    # None (no research.json: a terminal reason of its own), an unfinished project (the
-    # only one that can keep going) and a finished one.
-    for bits in itertools.product((False, True), repeat=len(flags)):
-        for research in (None, {"project": {"status": "in_progress"}},
-                         {"project": {"status": "completed"}}):
-            for nudges, cap in ((0, 5), (5, 5)):
-                kw = dict(zip(flags, bits))
-                cont = options.should_continue_run(
-                    research=research, nudges_used=nudges, max_nudges=cap,
-                    tool_count=3, tool_count_at_last_nudge=-1, **kw)
-                reason = options.terminal_reason(
-                    research=research, nudges_used=nudges, max_nudges=cap, **kw)
-                # continue == True happens only when NOTHING is terminal, and the only
-                # reason left is the fall-through.
-                assert cont is (reason == "no_progress"), (kw, research, nudges, cap, cont, reason)
 
 
 def test_the_halt_returns_the_sdks_stop_fields_and_denies_the_call(tmp_path):
@@ -2533,47 +2492,6 @@ def test_no_halt_predicate_is_the_old_behaviour_exactly(tmp_path):
         turn_id="t", session_id="s", cwd=str(tmp_path), config_root=str(tmp_path), record=rows.append)
     assert _call(hook, {"tool_name": "mcp__genealogy__record_search", "tool_input": {}}) == {}
     assert [r["decision"] for r in rows] == ["allow"]
-
-
-def test_the_stop_hook_reports_why_it_allowed_the_stop():
-    seen: list[str] = []
-    hook = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: {"project": {"status": "completed"}},
-        tool_count=lambda: 3, on_nudge=lambda n: None, on_allow=seen.append,
-    )
-    assert asyncio.run(hook({}, None, None)) == {}
-    assert seen == ["completed"], "complete() writes this; 'ok' for every ending is the bug"
-
-
-def test_the_stop_hook_seeds_its_counter_from_the_row_on_a_redelivery():
-    """1c. The hook's state is created per ATTEMPT while the cap is meant to bound the
-    TURN, and 0b made resume the normal path -- median two attempts, longest six. An
-    unseeded cap of 60 is 60 per attempt."""
-    seen: list[str] = []
-    # An unfinished project: with no research.json neither hook below would veto anything,
-    # and `budget` would read `ok` (issue #3274).
-    spent = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: _INCOMPLETE, tool_count=lambda: 3,
-        on_nudge=lambda n: None, on_allow=seen.append, nudges_used=5,
-    )
-    assert asyncio.run(spent({}, None, None)) == {}, "the budget was already spent on an earlier attempt"
-    assert seen == ["budget"]
-    fresh = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: _INCOMPLETE, tool_count=lambda: 3,
-        on_nudge=lambda n: None, on_allow=seen.append,
-    )
-    assert asyncio.run(fresh({}, None, None))["decision"] == "block", "an unseeded hook has its whole budget"
-
-
-def test_a_held_message_allows_the_stop_so_the_patron_is_not_made_to_wait_out_the_job():
-    seen: list[str] = []
-    # An unfinished project, so the held message is the only reason the stop is allowed.
-    hook = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=lambda: _INCOMPLETE, tool_count=lambda: 3,
-        on_nudge=lambda n: None, on_allow=seen.append, pending_user_message=lambda: True,
-    )
-    assert asyncio.run(hook({}, None, None)) == {}
-    assert seen == ["queued"]
 
 
 def test_run_turn_halts_on_the_stop_flag_and_answers_200_with_a_stopped_outcome(turn_env, monkeypatch):
@@ -3210,6 +3128,69 @@ def test_session_spend_usd_prices_the_rows_and_is_zero_without_a_session():
     assert empty.executed == [], "the short-circuit must come before the query"
 
 
+def test_the_session_spend_counts_compactions_the_transcript_lacks_and_each_attempts_correction():
+    """U24, 2026-10-31 (compose, gateway, n=1): 5 of 5 compaction summary calls were absent
+    from session_entries, $0.42 of a $2.27 session, so the cap never saw them. Each
+    compact_boundary is now priced as a cache read of its preTokens plus
+    COMPACTION_OUTPUT_TOKENS of output, and finished attempts add their correction (018)."""
+    conn = FakeConn(usage=(1_000_000, 0, 0, 0))
+    conn.compactions = (2_000_000, 2)
+    conn.spend_correction = 0.25
+    rates = worker.PRICE_PER_MTOK
+    estimate = 2 * rates["cache_read"] + 2 * worker.COMPACTION_OUTPUT_TOKENS * rates["output"] / 1e6
+    assert worker.session_spend_usd(conn, "sdk-1") == pytest.approx(rates["input"] + estimate + 0.25)
+    sqls = [s for s, _ in conn.executed]
+    assert worker.COMPACTIONS_SQL in sqls and worker.SPEND_CORRECTIONS_SQL in sqls
+    assert worker.compactions_usd(0, 0) == 0.0, "no compaction, nothing added"
+
+
+def test_a_finished_attempts_correction_makes_it_count_at_the_clis_own_figure():
+    """The correction is the ResultMessage cost minus what session_spend_usd already counts
+    for the attempt -- its transcript and its compaction estimates -- so, added back, the
+    attempt counts at exactly the CLI's figure: the 018 gateway check, where
+    turns.cost_usd $0.272142 matched the gateway's two calls, compaction included."""
+    conn = FakeConn(usage=(1472, 35, 102_057, 3967))
+    conn.compactions = (102_175, 1)
+    correction = worker.attempt_spend_correction(conn, "sdk-1", 40, 0.272142)
+    counted = worker.price_usd((1472, 35, 102_057, 3967)) + worker.compactions_usd(102_175, 1)
+    assert correction == pytest.approx(0.272142 - counted)
+    assert counted + correction == pytest.approx(0.272142)
+    attempt_sql, params = next((s, p) for s, p in conn.executed if "sum((u->>'input_tokens')" in s)
+    assert params == ("sdk-1", 40) and "seq > %s" in attempt_sql, "bounded by the attempt's own mark"
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, None) is None, "no CLI figure, no correction"
+    assert worker.attempt_spend_correction(conn, "", 40, 1.0) is None
+
+
+def test_a_restored_cost_state_total_is_not_counted_twice():
+    """The CLI documents that a resumed session's total_cost_usd continues from the total
+    a `cost-state` transcript entry saved. The worker's SDK mode writes none today (0
+    stored, 2026-10-31), but if one appears the attempt's figure carries every earlier
+    turn, so the correction subtracts the total the attempt started from."""
+    conn = FakeConn(usage=(0, 0, 0, 0))
+    conn.starting_cost = 2.0
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, 2.3) == pytest.approx(0.3)
+    _, params = next((s, p) for s, p in conn.executed if s == worker.STARTING_COST_SQL)
+    assert params == ("sdk-1", 40), "the latest saved total at or before the attempt's mark"
+    conn.starting_cost = None
+    assert worker.attempt_spend_correction(conn, "sdk-1", 40, 2.3) == pytest.approx(2.3), "none saved, nothing subtracted"
+
+
+def test_a_billed_attempt_writes_its_correction_fenced_before_the_zero_progress_raise(turn_env):
+    """An attempt that is billed and then failed still cost money, so its correction is
+    written before ResumeFailure, and only under its own claim epoch (U6)."""
+    turn_env["conn"].tool_call_count = 3
+    turn_env["conn"].high_water = 70
+    with pytest.raises(worker.ResumeFailure):
+        _run_passes(turn_env, [[_init(), _text("thinking"), _result(num_turns=4, cost=0.31)]], receive_count=2)
+    writes = [(s, p) for s, p in turn_env["conn"].executed if "SET spend_correction_usd" in s]
+    assert len(writes) == 1
+    sql, (correction, turn_id, epoch) = writes[0]
+    assert sql.endswith("WHERE turn_id = %s AND claim_epoch = %s"), "a superseded attempt must write nothing"
+    assert correction == pytest.approx(0.31 - worker.price_usd(turn_env["conn"].usage))
+    assert turn_id == TURN["turn_id"]
+    assert epoch == TURN["claim_epoch"], "fenced by the attempt's own claim"
+
+
 def test_a_message_typed_mid_turn_ends_the_turn_at_the_next_tool_call(turn_env, monkeypatch):
     """1b's acceptance line says a message typed mid-run is "answered at the next step
     boundary", and the UI tells the patron exactly that. The Stop hook has a clause for it,
@@ -3300,95 +3281,6 @@ def test_stop_outranks_a_waiting_message(turn_env, monkeypatch):
     assert _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])["outcome"] == "stopped"
 
 
-def test_the_nudge_count_is_persisted_as_it_happens_not_only_at_the_close(turn_env, monkeypatch):
-    """1c required EITHER seeding the hook from turns.nudges on a redelivery OR writing
-    down that the cap is per attempt. The seed only works if the column is written before
-    the turn closes -- and a redelivery happens precisely when the previous attempt did
-    NOT close. `complete()`'s write alone would leave every attempt reading NULL and
-    starting a fresh budget: the per-attempt cap 1c exists to remove, six times over on
-    the longest run in the corpus."""
-    # A project exists, so the Stop is vetoed; with no research.json it is allowed (issue #3274).
-    turn_env["conn"].research = _INCOMPLETE
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
-    monkeypatch.setattr(worker, "SPEND_CAP_USD", 0.0)
-    _run(turn_env, [_init(), ToolCall(), StopDispatch(), _text("x"), _result(num_turns=2)])
-    writes = [(sql, params) for sql, params in turn_env["conn"].executed
-              if "SET nudges = GREATEST" in sql]
-    assert writes, "the veto was never persisted, so a redelivery would restart the budget"
-    assert writes[0][1] == (1, "turn-1"), "the CUMULATIVE count, keyed on the turn"
-    # And it lands BEFORE the close, which is the whole point.
-    order = [i for i, (sql, _) in enumerate(turn_env["conn"].executed)
-             if "SET nudges = GREATEST" in sql or sql.startswith("UPDATE turns SET completed_at")]
-    assert len(order) >= 2 and order[0] < order[-1]
-
-
-def test_completing_an_attempt_that_vetoed_nothing_does_not_erase_the_turns_count(
-    turn_env, monkeypatch
-):
-    """record_nudge writes GREATEST so a slow attempt cannot walk the count backwards --
-    and then complete() wrote the SAME column with a plain assignment from this attempt's
-    counter, which is 0 whenever this attempt vetoed nothing.
-
-    The shape: attempt 1 vetoes 5 times and is killed at the ceiling, so complete() never
-    runs. Attempt 2 finishes WITHOUT a voluntary yield, which is the common case (31% of
-    runs never yield). A plain assignment then writes 0 over the 5 that attempt 1
-    persisted, destroying the figure 1c added the column for and the one demo.py prints."""
-    conn = FakeConn(usage=(10, 0, 0, 5))
-    turn_env["conn"] = conn
-    monkeypatch.setattr(worker.psycopg, "connect", lambda *a, **k: conn)
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
-    monkeypatch.setattr(worker, "nudges_so_far", lambda c, t: 5)  # attempt 1's five
-    _run_passes(turn_env, [[_init(), ToolCall(), _result(num_turns=2)]], receive_count=2)
-    _, params = next((sql, p) for sql, p in conn.executed
-                     if sql.startswith("UPDATE turns SET completed_at"))
-    assert params[8] is None, (
-        f"complete() passed {params[8]!r} for nudges; COALESCE then keeps the row's "
-        f"value only if this is None"
-    )
-    assert "nudges = COALESCE(%s, nudges, 0)" in next(
-        sql for sql, _ in conn.executed if sql.startswith("UPDATE turns SET completed_at"))
-
-
-def _replay_nudge_writes(*steps: tuple[str, Any]) -> Any:
-    """Run the SQL record_nudge and complete() actually emit against a real turns row
-    (stdlib sqlite: GREATEST is spelled max(), now() CURRENT_TIMESTAMP) and return the
-    row's nudges. Each step is ("record", cumulative) or ("complete", nudges)."""
-    import sqlite3
-
-    db = sqlite3.connect(":memory:")
-    db.execute("CREATE TABLE turns (turn_id text, completed_at text, outcome text, cost_usd real,"
-               " num_turns int, duration_ms int, input_tokens int, cache_creation_tokens int,"
-               " cache_read_tokens int, output_tokens int, nudges int, claim_epoch int)")
-    db.execute("INSERT INTO turns (turn_id, claim_epoch) VALUES ('turn-1', 1)")
-    for kind, value in steps:
-        conn = FakeConn()
-        if kind == "record":
-            worker.record_nudge(conn, "turn-1", value)
-        else:
-            worker.complete(conn, TURN, 1, nudges=value, claim_epoch=TURN["claim_epoch"])
-        for sql, params in conn.executed:
-            if sql.startswith("UPDATE turns"):
-                db.execute(sql.replace("%s::bigint", "?").replace("%s", "?").replace("GREATEST(", "max(")
-                           .replace("now()", "CURRENT_TIMESTAMP"), params)
-    return db.execute("SELECT nudges FROM turns WHERE turn_id = 'turn-1'").fetchone()[0]
-
-
-@pytest.mark.parametrize("steps, expected", [
-    ((), None),                                            # open, never vetoed
-    ((("complete", None),), 0),                            # closed, no attempt vetoed
-    ((("complete", 0),), 0),
-    ((("record", 2), ("complete", 2)), 2),                 # one attempt, two vetoes
-    ((("record", 5), ("complete", None)), 5),              # attempt 1's five survive attempt 2
-    ((("record", 5), ("record", 3), ("complete", None)), 5),  # a slower attempt cannot walk it back
-])
-def test_turns_nudges_is_0_on_a_turn_nothing_vetoed_and_keeps_an_earlier_attempts_count(steps, expected):
-    """004_worker.sql's contract for turns.nudges, on the statements themselves rather
-    than their text: a turn the worker closed without a veto reads 0 (demo.py prints
-    "0 (cap off)", not "?"), and a later attempt that vetoed nothing (run_turn passes
-    None) leaves the cumulative count record_nudge wrote."""
-    assert _replay_nudge_writes(*steps) == expected
-
-
 def test_a_stopped_turn_is_never_re_run_as_a_zero_progress_attempt(turn_env, monkeypatch):
     """Stop has to short-circuit 0a. A turn killed at the ceiling after Stop comes back as
     exactly the synthetic zero-turn result 0a keys on, and with no tool call halt() never
@@ -3427,19 +3319,6 @@ def test_a_stopped_turn_at_the_cap_is_still_reported_as_stopped(turn_env, monkey
     assert params[0] == "stopped"
 
 
-def test_the_seed_is_read_from_the_row_on_a_redelivery_only(turn_env, monkeypatch):
-    captured: dict = {}
-    real = options.make_stop_hook
-    monkeypatch.setattr(worker, "make_stop_hook", lambda **kw: captured.update(kw) or real(**kw))
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
-    monkeypatch.setattr(worker, "nudges_so_far", lambda conn, tid: 7)
-    _run(turn_env, _good(), receive_count=1)
-    assert captured["nudges_used"] == 0, "a first delivery starts its own budget"
-    turn_env["entries"] = True
-    _run_passes(turn_env, [[_init(), ToolCall(), _result(num_turns=2)]], receive_count=2)
-    assert captured["nudges_used"] == 7, "a redelivery continues the turn's budget"
-
-
 def test_the_bound_halts_the_turn_and_says_how_to_carry_on(turn_env, monkeypatch):
     """1e's acceptance: it stops within seconds (the PreToolUse hook fires every few
     seconds, where a yield-gated check fires about once a run), it is visibly different
@@ -3459,89 +3338,6 @@ def test_the_bound_halts_the_turn_and_says_how_to_carry_on(turn_env, monkeypatch
     assert "new session" in options.SPEND_CAP_REASON
     halts = [f for f in logged if f.get("ev") == "halt"]
     assert halts and "35" in halts[0]["reason"]
-
-
-def test_a_stop_dispatch_after_a_halt_cannot_veto_the_halt(turn_env, monkeypatch):
-    """The plan's trap, from the side it does not name.
-
-    It says the Stop hook must not undo Stop, and adds `stopped()` for that. But the
-    PreToolUse hook halts on TWO things -- the patron's Stop and 1e's spend cap -- and only
-    the first raises a row. Whether a `continue_: False` also dispatches a Stop is listed
-    in the plan as unmeasured; if it does, a hook reading only `stop_requested` would find
-    an unfinished project with nudge budget left, return "keep going", and the run would
-    carry straight on PAST the spend bound it just hit.
-
-    So the hook reads the turn's own halt decision, not just the row, and this drives the
-    Stop hook directly to prove it."""
-    _mid_run(monkeypatch)
-    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
-    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 100.0)
-    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
-    captured: dict = {}
-    real = options.make_stop_hook
-
-    def capture(**kw):
-        captured.update(kw)
-        return real(**kw)
-
-    monkeypatch.setattr(worker, "make_stop_hook", capture)
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
-    summary = _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
-    assert summary["outcome"] == "budget", "the spend cap halted the turn"
-    # The project is NOT completed and the nudge budget is untouched, so every other
-    # clause says "keep going". Only the halt-aware one allows the stop.
-    assert captured["stopped"]() is True, \
-        "a Stop dispatched after a spend-cap halt would be vetoed and the run would continue"
-    assert options.should_continue_run(
-        research=_INCOMPLETE, nudges_used=0, max_nudges=40, tool_count=1,
-        tool_count_at_last_nudge=-1, stopped=captured["stopped"]()) is False
-
-    assert captured["on_allow"] is not None
-
-
-def test_a_stop_dispatched_after_a_spend_halt_does_not_relabel_the_turn(turn_env, monkeypatch):
-    """The other half of the same trap, driven through a REAL Stop dispatch mid-stream.
-
-    With `stopped()` true the Stop hook's own verdict is `stopped` -- so if `on_allow`
-    overwrote the reason, a turn that hit the patron's spend cap would be recorded and
-    rendered as "you pressed Stop", and the sentence telling them to start a new session
-    would never appear."""
-    # An unfinished project, the one the control below vetoes on. With no research.json the
-    # Stop is allowed anyway (issue #3274), so the halt flag would no longer be what this proves.
-    turn_env["conn"].research = _INCOMPLETE
-    _mid_run(monkeypatch)
-    monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
-    monkeypatch.setattr(worker, "session_spend_usd", lambda conn, sid: 100.0)
-    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
-    summary = _run(turn_env, [_init(), ToolCall(), StopDispatch(), _text("x"), _result(num_turns=2)])
-    assert turn_env["client"].stops == [{}], "the Stop hook allowed the stop rather than vetoing the halt"
-    assert summary["outcome"] == "budget" and summary["limit"] == "spend"
-    row = next(p for sql, p in turn_env["conn"].executed if sql.startswith("UPDATE turns SET completed_at"))
-    assert row[0] == "budget", "the row keeps the halt's own reason, not the Stop hook's"
-
-
-def test_a_stop_dispatch_with_nothing_wrong_vetoes_and_keeps_the_run_going(turn_env, monkeypatch):
-    """The control: the same dispatch, no halt. The hook must BLOCK -- otherwise the two
-    tests above would pass with a Stop hook that simply never vetoes anything."""
-    turn_env["conn"].research = _INCOMPLETE  # the same project the halt tests above run on
-    monkeypatch.setattr(worker, "SPEND_CAP_USD", 0.0)
-    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
-    summary = _run(turn_env, [_init(), ToolCall(), StopDispatch(), _text("x"), _result(num_turns=2)])
-    [stop] = turn_env["client"].stops
-    assert stop["decision"] == "block" and stop["reason"] == options.CONTINUE_REASON
-    assert summary["outcome"] == worker.OK_OUTCOME and summary["nudges"] == 1
-
-
-def test_the_stop_hooks_verdict_never_overwrites_a_halt_reason(turn_env, monkeypatch):
-    """A halted turn recorded as `no_progress` would tell the patron the opposite of what
-    happened: that the agent ran out of things to do, rather than that it hit their cap."""
-    _mid_run(monkeypatch)
-    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: True)
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
-    summary = _run(turn_env, [_init(), ToolCall(), _text("x"), _result(num_turns=2)])
-    assert summary["outcome"] == "stopped"
 
 
 def test_under_the_bound_nothing_halts(turn_env, monkeypatch):
@@ -3600,293 +3396,17 @@ def test_every_turn_records_the_spend_estimate_for_calibration(turn_env, monkeyp
     assert params[2].obj["spend_estimate_usd"] == pytest.approx(1.2345), "and it reaches the feed"
 
 
-# ── D18: the Stop hook (the harness's continue-nudge, ported) ─────────────────────
+# ── what a turn's ending is called ─────────────────────────────────────────────────
 
 
 _INCOMPLETE = {"project": {"status": "in_progress"}}
 _DONE = {"project": {"status": "completed"}}
 
 
-@pytest.mark.parametrize("kw, expected", [
-    # The truth table eval/harness/tests/unit/test_e2e_stop_checker.py pins, case for case.
-    (dict(research=_INCOMPLETE, nudges_used=1, max_nudges=5, tool_count=12, tool_count_at_last_nudge=8), True),
-    (dict(research=_DONE, nudges_used=0, max_nudges=5, tool_count=20, tool_count_at_last_nudge=-1), False),
-    (dict(research=_INCOMPLETE, nudges_used=5, max_nudges=5, tool_count=30, tool_count_at_last_nudge=10), False),
-    (dict(research=_INCOMPLETE, nudges_used=2, max_nudges=5, tool_count=15, tool_count_at_last_nudge=15), False),
-    (dict(research=_INCOMPLETE, nudges_used=0, max_nudges=5, tool_count=5, tool_count_at_last_nudge=-1), True),
-    (dict(research=_INCOMPLETE, nudges_used=1, max_nudges=5, tool_count=12, tool_count_at_last_nudge=8,
-          mcp_unavailable=True), False),
-    (dict(research=_INCOMPLETE, nudges_used=1, max_nudges=5, tool_count=12, tool_count_at_last_nudge=8,
-          mcp_unavailable=False), True),
-    # The worker's own edge: no research.json at all is not nudged, since there is no
-    # project to resume (issue #3274).
-    (dict(research=None, nudges_used=0, max_nudges=1, tool_count=0, tool_count_at_last_nudge=-1), False),
-], ids=["progressing", "completed", "budget-spent", "no-progress", "first-nudge-equal-counts",
-        "mcp-unavailable", "mcp-available-default", "no-research"])
-def test_should_continue_run_mirrors_the_harness_truth_table(kw, expected):
-    assert options.should_continue_run(**kw) is expected
-
-
 def test_project_completed_reads_project_status_only():
     assert options.project_completed(_DONE) is True
     assert options.project_completed(_INCOMPLETE) is False
     assert options.project_completed(None) is False and options.project_completed({}) is False
-
-
-def _stop(state: dict, *, max_nudges: int = 3, nudged: list | None = None, log=None, on_nudge=None):
-    return options.make_stop_hook(
-        turn_id="turn-1", max_nudges=max_nudges,
-        research=lambda: state["research"], tool_count=lambda: state["count"],
-        on_nudge=on_nudge or (nudged if nudged is not None else []).append, log=log,
-    )
-
-
-def test_the_stop_hook_blocks_a_vetoable_stop_with_the_harness_reason_verbatim():
-    state = {"research": _INCOMPLETE, "count": 4}
-    nudged: list[int] = []
-    hook = _stop(state, nudged=nudged)
-    assert _call(hook, {"stop_hook_active": False}) == {"decision": "block", "reason": options.CONTINUE_REASON}
-    assert nudged == [1]
-    # The reason is the orchestrator's, read off its source: every dict literal whose
-    # "decision" is "block" must carry this one literal reason. A second reply, or one
-    # computed rather than spelled, is a Stop policy the worker does not run (U17);
-    # test_continue_policy_parity.py pins the computed case.
-    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
-    blocks = [
-        node for node in ast.walk(tree)
-        if isinstance(node, ast.Dict) and any(
-            isinstance(k, ast.Constant) and k.value == "decision"
-            and isinstance(v, ast.Constant) and v.value == "block"
-            for k, v in zip(node.keys, node.values)
-        )
-    ]
-    assert blocks, "the orchestrator no longer vetoes a stop with a block dict: re-read its stop_hook"
-    reasons = [
-        v.value
-        for node in blocks
-        for k, v in zip(node.keys, node.values)
-        if isinstance(k, ast.Constant) and k.value == "reason" and isinstance(v, ast.Constant)
-    ]
-    assert reasons == [options.CONTINUE_REASON], \
-        "the worker's reason text must stay the harness's veto text, verbatim"
-
-
-def test_the_stop_hook_counts_nudges_and_allows_once_the_cap_is_spent():
-    state = {"research": _INCOMPLETE, "count": 0}
-    nudged: list[int] = []
-    hook = _stop(state, max_nudges=2, nudged=nudged)
-    state["count"] = 1
-    assert _call(hook, {})["decision"] == "block"
-    state["count"] = 2
-    assert _call(hook, {})["decision"] == "block"
-    state["count"] = 3
-    assert _call(hook, {}) == {}, "the cap is spent: the stop is allowed"
-    assert nudged == [1, 2]
-
-
-def test_the_stop_hook_allows_a_completed_project_and_a_stop_with_no_new_tool_call():
-    state = {"research": _DONE, "count": 9}
-    nudged: list[int] = []
-    assert _call(_stop(state, nudged=nudged), {}) == {} and nudged == []
-    state = {"research": _INCOMPLETE, "count": 5}
-    hook = _stop(state, nudged=nudged)
-    assert _call(hook, {})["decision"] == "block"
-    assert _call(hook, {}) == {}, "no tool call since the nudge: another will not help"
-    state["count"] = 6
-    assert _call(hook, {})["decision"] == "block", "progress resumes the vetoes"
-    assert nudged == [1, 2]
-
-
-def test_the_stop_hook_never_raises():
-    logged: list[dict] = []
-
-    def exploding() -> dict:
-        raise RuntimeError("postgres is down")
-
-    hook = options.make_stop_hook(turn_id="turn-1", max_nudges=3, research=exploding, tool_count=lambda: 1,
-                                  on_nudge=lambda n: None, log=lambda **f: logged.append(f))
-    assert _call(hook, {}) == {}
-    assert logged == [{"ev": "stop_hook_failed", "turn_id": "turn-1", "error": "RuntimeError: postgres is down"}]
-    hook = options.make_stop_hook(turn_id="turn-1", max_nudges=3, research=lambda: _INCOMPLETE, tool_count=exploding,
-                                  on_nudge=lambda n: None, log=lambda **f: logged.append(f))
-    assert _call(hook, {}) == {} and logged[-1]["ev"] == "stop_hook_failed"
-
-    def exploding_nudge(n: int) -> None:
-        raise RuntimeError("log sink gone")
-
-    hook = options.make_stop_hook(turn_id="turn-1", max_nudges=3, research=lambda: _INCOMPLETE, tool_count=lambda: 1,
-                                  on_nudge=exploding_nudge, log=lambda **f: logged.append(f))
-    assert _call(hook, {}) == {} and logged[-1]["error"] == "RuntimeError: log sink gone"
-    # No log sink at all: still {}.
-    hook = options.make_stop_hook(turn_id="turn-1", max_nudges=3, research=exploding, tool_count=lambda: 1,
-                                  on_nudge=lambda n: None)
-    assert _call(hook, "garbage") == {}  # type: ignore[arg-type]
-
-
-def test_options_bind_a_stop_matcher_only_when_a_stop_hook_is_given(tmp_path):
-    async def stop(*a):
-        return {}
-
-    opts = _options(config_dir=str(tmp_path), stop_hook=stop)
-    [matcher] = opts.hooks["Stop"]
-    assert matcher.matcher is None and matcher.hooks == [stop] and matcher.timeout == options.PRETOOL_TIMEOUT_S
-    assert set(opts.hooks) == {"PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop"}
-    assert "Stop" not in _options(config_dir=str(tmp_path)).hooks, "the interactive stack: a yield to the user ends the turn"
-    assert "Stop" not in _options(config_dir=str(tmp_path), stop_hook=None).hooks
-
-
-def test_parse_max_nudges():
-    assert worker.parse_max_nudges(None) == 0 and worker.parse_max_nudges("") == 0 and worker.parse_max_nudges(" 0 ") == 0
-    assert worker.parse_max_nudges("20") == 20 and worker.parse_max_nudges(" 5\n") == 5
-    with pytest.raises(ValueError):
-        worker.parse_max_nudges("-1")
-    with pytest.raises(ValueError):
-        worker.parse_max_nudges("twenty")
-
-
-def test_prepare_logs_a_bad_cap_and_runs_with_the_hook_off_instead_of_dying(monkeypatch):
-    """A typo'd AUTONOMOUS_MAX_NUDGES must not crash-loop the worker (compose restarts it,
-    and a demo then waits its whole deadline): the cap falls to 0 and one prepare line says why."""
-    logged: list[dict] = []
-    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
-    monkeypatch.setattr(worker, "ensure_cwd", lambda cwd: None)
-    monkeypatch.setattr(worker, "load_plugin_agents", lambda plugin_dir: ({}, None))
-    for name in ("_AGENTS", "_AGENTS_ERROR", "_BLOCKED", "_AUTONOMOUS_MAX_NUDGES"):
-        monkeypatch.setattr(worker, name, getattr(worker, name))  # prepare() rebinds them; restored on teardown
-    monkeypatch.delenv("BLOCKED_TOOLS", raising=False)
-    monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", "abc")
-    worker.prepare()
-    assert worker._AUTONOMOUS_MAX_NUDGES == 0
-    [bad] = [f for f in logged if f.get("ev") == "prepare" and f.get("step") == "nudges"]
-    assert bad["error"].startswith("ValueError") and "abc" in bad["error"]
-    assert next(f for f in logged if f.get("step") == "agents")["autonomous_max_nudges"] == 0
-    logged.clear()
-    monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", "20")
-    worker.prepare()
-    assert worker._AUTONOMOUS_MAX_NUDGES == 20 and not any(f.get("step") == "nudges" for f in logged)
-    assert next(f for f in logged if f.get("step") == "agents")["autonomous_max_nudges"] == 20
-
-
-# ── 1a: the cap rides the queue message ──────────────────────────────────────────
-
-
-@pytest.mark.parametrize("message, fallback, expected", [
-    ({"max_nudges": 60}, 0, 60),
-    ({"max_nudges": 0}, 40, 0),
-    ({"max_nudges": "60"}, 0, 60),
-    ({}, 40, 40),
-    ({"max_nudges": None}, 40, 40),
-    ({"max_nudges": -5}, 40, 40),
-    ({"max_nudges": "sixty"}, 40, 40),
-    ({"max_nudges": True}, 40, 40),
-    ({"max_nudges": 12.9}, 40, 12),
-], ids=["body-wins", "explicit-zero-wins", "numeric-string", "absent", "null", "negative",
-        "unparsable", "bool-is-not-a-count", "float-truncates"])
-def test_turn_max_nudges_prefers_the_body_and_falls_back_on_anything_unusable(message, fallback, expected):
-    """The body wins because one worker serves the browser and `make proto-demo` and has
-    no way to tell them apart. `absent` is the upgrade case -- proto/drive.py's rows and
-    anything already on the queue -- which must keep behaving as it did. A negative or
-    unparsable value takes the FALLBACK rather than 0: silently disabling the Stop hook
-    is the invisible failure 1a exists to remove."""
-    assert worker.turn_max_nudges(message, fallback) == expected
-
-
-def test_run_turn_takes_the_caps_from_the_message_over_the_module_global(turn_env, monkeypatch):
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 0)
-    turn = {**TURN, "message": {**TURN["message"], "max_nudges": 60}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
-    summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
-    assert callable(turn_env["options"]["stop_hook"]), \
-        "the browser's turn arms the Stop hook even though the worker's own cap is 0"
-    assert summary["max_nudges"] == 60
-
-    # ... and the other way: `make proto-demo` must stay a one-turn run even on a worker
-    # whose own AUTONOMOUS_MAX_NUDGES is non-zero, because the recipe exports 0 to the WEB
-    # container and the value rides the message.
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
-    turn = {**TURN, "message": {**TURN["message"], "max_nudges": 0}}
-    turn_env["client"] = FakeClient(_good(), _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
-    summary = asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
-    assert turn_env["options"]["stop_hook"] is None and summary["max_nudges"] == 0
-
-
-def test_a_message_with_no_cap_still_takes_the_workers_own(turn_env, monkeypatch):
-    """The upgrade path. A message enqueued before 1a carries no max_nudges, and the
-    worker must not change its behaviour underneath it."""
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 20)
-    summary = _run(turn_env, _good())
-    assert callable(turn_env["options"]["stop_hook"]) and summary["max_nudges"] == 20
-    assert "max_nudges" not in TURN["message"], "the fixture message predates 1a, like a queued row"
-
-
-def test_run_turn_wires_the_stop_hook_only_on_the_autonomous_arm_and_records_nudges(turn_env, monkeypatch):
-    completed: list[dict] = []
-    original = worker.complete
-
-    def spy(conn, turn, rc, **kw):
-        completed.append(kw)
-        return original(conn, turn, rc, **kw)
-
-    monkeypatch.setattr(worker, "complete", spy)
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 0)
-    summary = _run(turn_env, _good())
-    assert turn_env["options"]["stop_hook"] is None and summary["nudges"] == 0
-    # None, not 0: record_nudge owns this column now, and a 0 here is "this attempt
-    # vetoed nothing", not "the turn's count is zero". See the regression below.
-    assert completed[-1]["nudges"] is None
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 20)
-    summary = _run(turn_env, _good())
-    assert callable(turn_env["options"]["stop_hook"]) and summary["nudges"] == 0
-    assert completed[-1]["nudges"] is None
-    update = next(sql for sql, _ in turn_env["conn"].executed if sql.startswith("UPDATE turns SET completed_at"))
-    assert "nudges = COALESCE(%s, nudges, 0)" in update
-
-
-def test_the_wired_stop_hook_reads_research_and_the_tool_count_off_the_turns_connection(turn_env, monkeypatch):
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 2)
-    logged: list[dict] = []
-    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
-    conn = turn_env["conn"]
-    conn.research, conn.tool_call_count = _INCOMPLETE, 3
-    _run(turn_env, _good())
-    hook = turn_env["options"]["stop_hook"]
-    assert _call(hook, {"stop_hook_active": False}) == {"decision": "block", "reason": options.CONTINUE_REASON}
-    assert [f for f in logged if f.get("ev") == "nudge"] == [{"ev": "nudge", "turn_id": "turn-1", "n": 1, "max": 2}]
-    assert any("SELECT doc FROM documents" in s and p == ("proj-1",) for s, p in conn.executed), "research.json by project"
-    assert any("SELECT count(*) FROM tool_calls" in s and p == ("turn-1",) for s, p in conn.executed), "the turn's calls"
-    assert _call(hook, {}) == {}, "no new tool call: allowed"
-    conn.tool_call_count = 4
-    assert _call(hook, {})["decision"] == "block"
-    conn.research, conn.tool_call_count = _DONE, 9
-    assert _call(hook, {}) == {}, "completed: allowed"
-    assert [f["n"] for f in logged if f.get("ev") == "nudge"] == [1, 2]
-
-
-class NudgingClient(FakeClient):
-    """The CLI's stream with two voluntary yields the Stop hook vetoes before the result."""
-
-    def __init__(self, info, state) -> None:
-        super().__init__([], info)
-        self.state = state
-
-    async def receive_response(self):
-        yield _init()
-        hook, conn = self.state["options"]["stop_hook"], self.state["conn"]
-        conn.research, conn.tool_call_count = _INCOMPLETE, 1
-        assert (await hook({"stop_hook_active": False}, None, {}))["decision"] == "block"
-        conn.tool_call_count = 2
-        assert (await hook({"stop_hook_active": True}, None, {}))["decision"] == "block"
-        yield _text("done")
-        yield _result()
-
-
-def test_two_vetoes_land_on_the_turns_row_and_in_the_summary(turn_env, monkeypatch):
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 5)
-    turn_env["client"] = NudgingClient(_info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
-    summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
-    assert summary["nudges"] == 2
-    sql, params = next((s, p) for s, p in turn_env["conn"].executed if s.startswith("UPDATE turns SET completed_at"))
-    assert "nudges = COALESCE(%s, nudges, 0)" in sql and params[8] == 2, params
 
 
 def test_read_research_and_count_tool_calls_read_the_rows():
@@ -3899,7 +3419,6 @@ def test_read_research_and_count_tool_calls_read_the_rows():
     assert worker.read_research(conn, "proj-1") is None
     conn.research = None
     assert worker.read_research(conn, "proj-1") is None
-
 
 
 # ── U5: the last-receive close, the close race, the sweep, SIGTERM ───────────────
@@ -4680,7 +4199,6 @@ def refused_pg():
     pg.close()
 
 
-
 @contextlib.contextmanager
 def _serving():
     """The worker's real Handler on a ThreadingHTTPServer, port 0."""
@@ -5128,8 +4646,6 @@ def test_session_spend_usd_prices_decimal_sums(turn_env, monkeypatch):
 # or the spend bound. `delivered` is how a turn says it did the thing that was asked and
 # stopped on purpose. It is a NEW value, not `ok`: `ok` means "ended with no terminal
 # reason" and chatEvents renders it as nothing, while a delivery has something to report.
-
-
 
 
 def test_the_delivered_tool_name_is_pinned():
@@ -5602,23 +5118,15 @@ def test_worker_tables_include_the_grant_tables():
     assert {"projects", "familysearch_tokens"} <= set(worker.WORKER_TABLES)
 
 
-def test_a_stop_dispatched_after_a_delivery_does_not_relabel_the_turn(turn_env, monkeypatch):
-    """`terminal["halted"] = True` in on_delivered is what lets the Stop hook ALLOW the
-    stop after a delivery instead of vetoing it. Deleting that line leaves every other
-    worker test green, so it needs its own.
-
-    Same trap as the spend-cap version above: if `on_allow` overwrote the reason, a turn
-    that delivered would be recorded and rendered as "you pressed Stop"."""
-    # An unfinished project. With no research.json the Stop is allowed anyway (issue #3274),
-    # so without this the deleted line above would leave the test green.
+def test_a_delivered_turn_on_an_unfinished_project_is_labelled_delivered(turn_env, monkeypatch):
+    """A delivery records its own reason, and nothing later relabels it -- the turn would
+    otherwise be rendered as something it was not."""
     turn_env["conn"].research = _INCOMPLETE
     monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     summary = _run(turn_env, [
-        _init(), ToolCall(options.DELIVERED_TOOL), StopDispatch(), _text("x"),
+        _init(), ToolCall(options.DELIVERED_TOOL), _text("x"),
         _result(num_turns=2),
     ])
-    assert turn_env["client"].stops == [{}], "the Stop hook vetoed instead of allowing the stop"
     assert summary["outcome"] == "delivered"
     row = next(p for sql, p in turn_env["conn"].executed
                if sql.startswith("UPDATE turns SET completed_at"))
@@ -5792,7 +5300,6 @@ def test_the_ids_are_the_message_s_own(monkeypatch, post_env):
         conn.close()
     [turn] = post_env["real"]
     assert {k: turn[k] for k in IDS} == IDS, "msgid is a log field, never the turn id"
-
 
 
 def test_a_real_turn_naming_no_row_is_400_through_the_handler(monkeypatch):
@@ -5977,21 +5484,20 @@ def test_an_outage_with_stop_pressed_halts_and_the_attempt_answers_500(turn_env,
     worker.psycopg.errors.AdminShutdown("terminating connection due to administrator command"),
 ], ids=["operational", "interface", "admin_shutdown"])
 def test_once_the_store_is_down_nothing_asks_postgres_again(turn_env, monkeypatch, exc):
-    """Sticky: after the first store error, halt(), record(), finish() and the Stop hook
-    leave Postgres alone, and the raise comes before the zero-progress count, the Stop
-    re-read and complete()."""
+    """Sticky: after the first store error, halt(), record() and finish() leave Postgres
+    alone, and the raise comes before the zero-progress count, the Stop re-read and
+    complete()."""
     _mid_run(monkeypatch)
     monkeypatch.setattr(worker, "SPEND_CAP_USD", 35.0)
     spend = _outage(RuntimeError("never reached"), after=99, value=1.0)
     monkeypatch.setattr(worker, "session_spend_usd", spend)
     stop = _outage(exc)
     monkeypatch.setattr(worker, "stop_requested", stop)
-    monkeypatch.setattr(worker, "_AUTONOMOUS_MAX_NUDGES", 40)
     finished: list[str] = []
     monkeypatch.setattr(worker, "finish_tool_call", lambda conn, tid, tuid: finished.append(tuid))
     turn_env["entries"] = True
     turn_env["client"] = FakeClient(
-        [_init(), ToolCall(), ToolCall(), ToolCall(), StopDispatch(), _text("x"), _result(num_turns=0)],
+        [_init(), ToolCall(), ToolCall(), ToolCall(), _text("x"), _result(num_turns=0)],
         _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
     with pytest.raises(worker.StoreUnavailable):
         asyncio.run(worker.run_turn(TURN, 2, SID, agents={"gps-mentor": object()}))
@@ -6000,7 +5506,7 @@ def test_once_the_store_is_down_nothing_asks_postgres_again(turn_env, monkeypatc
     assert finished == [], "finish() wrote to a down store"
     assert len(stop.calls) == 2 and len(spend.calls) == 1, "halt() asked Postgres after the outage"
     client = turn_env["client"]
-    assert client.tool_uses == 3 and client.stops == [{}], "the Stop hook allowed the stop"
+    assert client.tool_uses == 3
     assert len(client.queried) == 1, "no resume re-query after the outage"
     sql = [s for s, _ in turn_env["conn"].executed]
     assert sum(s.startswith("INSERT INTO tool_calls") for s in sql) == 1
@@ -6180,23 +5686,6 @@ def test_pg_connect_bounds_the_connect_unless_the_caller_does(monkeypatch):
 @pytest.mark.parametrize("cap, shown", [(35.0, "$35 "), (0.5, "$0.5 "), (12.25, "$12.25 ")])
 def test_the_spend_cap_reason_shows_the_cap_unrounded(cap, shown):
     assert shown in options.SPEND_CAP_REASON.format(cap=cap)
-
-
-def test_the_stop_hook_allows_a_halted_turn_without_reading_the_store():
-    """U23: a halted turn (one whose store is down among them) allows the stop before the
-    tool-count and research reads, and still says why."""
-    seen: list[str] = []
-    logged: list[dict] = []
-
-    def down():
-        raise worker.psycopg.OperationalError("down")
-
-    hook = options.make_stop_hook(
-        turn_id="t", max_nudges=5, research=down, tool_count=down, on_nudge=lambda n: None,
-        on_allow=seen.append, stopped=lambda: True, log=lambda **f: logged.append(f),
-    )
-    assert asyncio.run(hook({}, None, None)) == {}
-    assert seen == ["stopped"] and logged == []
 
 
 # ── U6: claim fencing ────────────────────────────────────────────────────────────
@@ -6428,7 +5917,6 @@ _APPEND = {"tool_name": "mcp__genealogy__research_append",
            "tool_input": {"section": "person_evidence", "op": "update", "entryId": "pe_1"}}
 
 
-
 def test_a_DENIED_writer_records_no_write(tmp_path):
     """A denied call never runs. Recording a shape would put a write that never happened
     into the change-review scan, which the `WHERE wrote IS NOT NULL` index cannot filter
@@ -6499,7 +5987,6 @@ def test_the_insert_names_wrote_and_binds_one_param_per_placeholder(tmp_path):
     assert sql.count("%s") == len(params) == len(cols), "a placeholder/param/column mismatch"
 
 
-
 # ── the completion halt end to end (#3542 lead 1) ─────────────────────────────────────
 
 # A proof-conclusion return that completed the project, in the PostToolUse dict shape: the
@@ -6545,9 +6032,6 @@ class AgentCallClient(FakeClient):
                 continue
             if isinstance(m, ToolCall):
                 await self._fire_pretool(m)
-                continue
-            if isinstance(m, StopDispatch):
-                await self._fire_stop()
                 continue
             yield m
 
@@ -6705,7 +6189,6 @@ def test_a_raising_status_read_lets_the_call_run(turn_env, monkeypatch):
     summary = asyncio.run(worker.run_turn(TURN, 1, SID, agents={"gps-mentor": object()}))
     assert call.posttool_reply == {}
     assert summary["outcome"] == "ok"
-
 
 
 def test_the_summary_is_dropped_when_the_model_kept_talking(turn_env, monkeypatch):

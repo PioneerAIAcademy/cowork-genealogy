@@ -1,5 +1,11 @@
 import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  configureFsBudget,
+  consumeFsBudgetSlot,
+  isFsBudgetExhausted,
+  __resetFsBudgetForTests,
+} from "../../src/utils/fs-budget.js";
 import { mkdtemp, writeFile, readFile, rm, mkdir, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -1672,6 +1678,36 @@ describe("rank_search_matches", () => {
       relationships: [],
       sources: [],
     };
+
+    // A spent budget is a refusal, not "unscoreable". Before this, every
+    // candidate came back errored and the tool answered "N of the N candidates
+    // could not be scored" -- the wrong cause, with the wait time dropped.
+    // same_person rethrows the same error, so the two tools used to disagree.
+    it("surfaces a spent FamilySearch budget instead of counting it as a scoring error", async () => {
+      await writeTree();
+      matcherSettingsMock.mockResolvedValue({ backend: "familysearch" });
+      let refusal: unknown;
+      try {
+        configureFsBudget({ perMinute: 1 });
+        consumeFsBudgetSlot("https://www.familysearch.org/service/tree/x");
+        try {
+          consumeFsBudgetSlot("https://www.familysearch.org/service/tree/x");
+        } catch (e) {
+          refusal = e;
+        }
+        expect(isFsBudgetExhausted(refusal)).toBe(true);
+        scorePairMock.mockRejectedValue(refusal);
+
+        const err = await rank(SUBJECT_ID, 3).then(
+          () => null,
+          (e) => e,
+        );
+        expect(isFsBudgetExhausted(err)).toBe(true);
+        expect(String(err)).toMatch(/try again in about/);
+      } finally {
+        __resetFsBudgetForTests();
+      }
+    });
 
     it("sends the whole page in one call, and never asks FamilySearch", async () => {
       await writeTree();

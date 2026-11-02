@@ -27,8 +27,7 @@ post-hoc families and the §11 unnamed-delegate check below, whose graduations
 **Stored and replayed are different questions.** Each family is printed twice: a
 STORED count, read from what a run recorded when it ran, and — under `--replay` —
 a REPLAYED count, recomputed now from the run's committed log: its final-state
-sidecars, or its `tool_calls` ledger for the #963 provenance and §11
-unnamed-delegate checks. A stored count reads 0 over every run made before that
+sidecars, or its `tool_calls` ledger for the §11 unnamed-delegate check. A stored count reads 0 over every run made before that
 check shipped, so on a corpus that is 84% July it measures the corpus's age
 rather than the behaviour. Read `--replay` before concluding a check never fires.
 
@@ -95,7 +94,6 @@ from harness.skill_invocation import (
     CITATION_NULLING_KIND,
     TREE_CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
-    did_not_land,
     find_citation_nulling_in_conclusions,
     find_citation_nulling_in_tree_sources,
     find_conclusions_without_tree_encoding,
@@ -106,12 +104,9 @@ from harness.skill_invocation import (
     find_unpersisted_conflict_resolutions,
     owning_skills,
     strip_agent_namespace,
-    PERSON_EVIDENCE_DENY_KIND,
-    same_person_scored_ids,
     skill_name_if_skill_call,
     TREE_ENCODING_KIND,
     TREE_FACT_ASSERTION_KIND,
-    unguarded_new_person_evidence_links,
     WARNINGS_UNCHECKED_KIND,
     WARNINGS_UNCHECKED_KIND_LEGACY,
 )
@@ -214,17 +209,15 @@ def _scan_stored(
     This is the STORED read. It reports what a run recorded when it ran, so a
     check reads 0 over every run made before it shipped — on today's corpus that
     is most of it. **It is not evidence that a check never fires**; for that, read
-    `replay_post_hoc` (the six post-hoc families) or `replay_provenance` (#963),
-    which recompute from committed state.
+    `replay_post_hoc` (the six post-hoc families), which recomputes from
+    committed state.
 
     This docstring used to say the stored families could not be replayed at all,
     giving as the reason that citation-nulling and conflict-unpersisted "are
     post-hoc reads of the final research.json". That is backwards: being a
     post-hoc read of a **committed sidecar** is exactly what makes them
     replayable, and replaying them turned two of the three zeros above into real
-    counts. Only the #963 gap has a genuine replay caveat — it is a lower bound,
-    because the live hook may not see a same-turn `same_person` while the replay
-    always sees the full prefix.
+    counts.
 
     All families share `guardrail_shadow_violations` and are told apart by their
     `kind`, so each passes its own predicate here. Unreadable files are skipped
@@ -251,40 +244,6 @@ def _scan_stored(
                 display_path = str(path)
             out.append({**v, "file": display_path, "fixture": path.parent.name})
     return out
-
-
-def scan_provenance(paths: list[Path]) -> list[dict[str, Any]]:
-    """The issue-#963 provenance shadow entries STORED in each run's
-    `guardrail_shadow_violations` (a `person_evidence` link written with no
-    prior `same_person`). Identified by the `detail` key, which the stored
-    sources set — but EXCLUDING the other `detail`-carrying kinds counted in
-    their own buckets: #1133 citation-nulling (`scan_citation_nulling`), #1317
-    conflict-unpersisted (`scan_conflict_unpersisted`), deny-mode provenance
-    (`PERSON_EVIDENCE_DENY_KIND`), #1193 warnings-unchecked, #1490 tree-encoding
-    and #2472 tree-fact/assertion disagreement.
-
-    **Every kind with its own bucket belongs in that tuple.** `TREE_ENCODING_KIND`
-    was missing from it: its entries carry `detail`, so each would have been
-    counted a second time here as a #963 provenance gap. No committed run stores
-    one today, so no published number moves — which is exactly why only a test
-    can hold this, and `test_the_provenance_scan_excludes_the_tree_encoding_arm`
-    does.
-    """
-    return _scan_stored(
-        paths,
-        lambda v: "detail" in v
-        and v.get("kind")
-        not in (
-            CITATION_NULLING_KIND,
-            TREE_CITATION_NULLING_KIND,
-            CONFLICT_UNPERSISTED_KIND,
-            PERSON_EVIDENCE_DENY_KIND,
-            WARNINGS_UNCHECKED_KIND,
-            WARNINGS_UNCHECKED_KIND_LEGACY,
-            TREE_ENCODING_KIND,
-            TREE_FACT_ASSERTION_KIND,
-        ),
-    )
 
 
 def scan_citation_nulling(paths: list[Path]) -> list[dict[str, Any]]:
@@ -603,15 +562,7 @@ def load_run_inputs(path: Path, *, fixtures_root: Path = E2E_FIXTURES) -> RunInp
     faithful: the orchestrator writes them from the same post-run reads the live
     detectors saw.
 
-    Serves `replay_post_hoc`. **`replay_provenance` deliberately does not use it.**
-    It now reads one final-state sidecar (`final-research.json`, for the §8
-    provenance join) but still not the other, and routing it through a
-    four-input loader would parse every `final-tree` it never touches, twice
-    over, since `--replay` runs both replays. Its skip message also carries the
-    exception type (`unreadable run log (JSONDecodeError)`) plus a stderr note,
-    which this loader does not preserve, and its missing-sidecar path is a
-    *counter* rather than a skip. They are two loaders because they load two
-    different things.
+    Serves `replay_post_hoc`.
 
     The near-identical copies in `e2e/corpus_report.py` (`recompute_tally`) and
     `e2e/detector_before_after_report.py` are left alone for a separate reason:
@@ -642,8 +593,7 @@ class CheckReplay:
     unreadable — the whole defect this module is being changed to fix is a number
     printed against a corpus it silently could not see.
 
-    **It counts runs READ, not runs that could fire**, which is a weaker claim
-    than `ProvenanceReplay.runs_linking` makes and is deliberate: these are
+    **It counts runs READ, not runs that could fire**, and that is deliberate: these are
     behaviour-PRESENCE numbers ("does this shape occur at all"), not conditional
     rates. Both research-only checks are gated on a non-empty `proof_summaries`
     and warnings-unchecked on a new relationship, so some scanned runs could
@@ -736,7 +686,7 @@ def replay_post_hoc(
     than the rule those runs ran under. For "did this shape ever occur" that is
     the right direction, but it is not a historical compliance figure.
 
-    Skip discipline follows `replay_provenance` and `recompute_tally`: a run
+    Skip discipline follows `recompute_tally`: a run
     missing an input a check needs is NAMED in that check's `skipped` and excluded
     from that check's denominator, never counted as a clean zero. A count that
     quietly shrank reads as a clean corpus — which is the failure being fixed.
@@ -831,230 +781,6 @@ def replay_post_hoc(
     return out
 
 
-@dataclass
-class ProvenanceReplay:
-    """What `replay_provenance` recovers from a corpus of committed runs.
-
-    `runs_linking` is the denominator the fire RATE is read against — runs that
-    link any `person_evidence` at all. A run that links nobody cannot produce a
-    gap, so counting it would understate the rate.
-    """
-
-    violations: list[dict[str, Any]] = field(default_factory=list)
-    skipped: list[str] = field(default_factory=list)
-    runs_scanned: int = 0
-    runs_linking: int = 0
-    #: Runs measured with NO provenance join, because no committed
-    #: `run-<ts>.final-research.json` could be read. Those runs are replayed
-    #: un-narrowed (today's behaviour) rather than skipped, so they still
-    #: contribute — but the count is printed, because a replay that silently
-    #: measured a different rule on part of its corpus is exactly the shape
-    #: this module refuses elsewhere. 0 on today's corpus.
-    runs_without_provenance: int = 0
-    #: Links the narrowing skipped — the *unscoreable by design* population,
-    #: printed as a number beside the rate so the exemption is never a silent
-    #: subtraction from it.
-    exempted_links: int = 0
-
-
-def _links_any_person_evidence(tool: str, args: dict[str, Any] | None) -> bool:
-    """Whether this call appends any `person_evidence` at all.
-
-    Derived from `unguarded_new_person_evidence_links` with both exclusion sets
-    empty — with nothing seeded and nothing scored, every linked id is returned —
-    rather than re-walking `ops` here. That keeps ONE implementation of the
-    op-shape parsing (`{section, op, entry|fields|flat}`), which is the part that
-    has historically drifted.
-    """
-    return bool(unguarded_new_person_evidence_links(tool, args, scored_ids=set(), starting_ids=set()))
-
-
-def replay_provenance(
-    paths: list[Path], *, fixtures_root: Path = E2E_FIXTURES
-) -> ProvenanceReplay:
-    """Recompute the #963 provenance check from `tool_calls` + each fixture's
-    COMMITTED seed tree, instead of reading what a run stored.
-
-    Why this exists (issue #1231). `scan_provenance` can only see runs made after
-    #1178 merged, which on today's corpus is none of them — so the 144 committed
-    runs are unreadable without a replay. It also lets a candidate rule variant
-    be scored against history before it ships, which is what deciding the
-    `record_search`-only narrowing needs.
-
-    **This is a LOWER BOUND on what the live hook records.** The hook runs from a
-    spawned control-request task while `tool_calls` is appended by the message
-    loop, so a `same_person` issued in the same turn as the write may not be
-    visible to it yet; the replay always sees the full prefix and therefore
-    clears some gaps the hook would have recorded. It is deliberately NOT a lower
-    bound in the other direction: slicing `tool_calls[:i]` reproduces the hook's
-    "only calls already made" scope, so link-then-score stays a gap here exactly
-    as it is there (and a pass for the whole-run post-run detector).
-
-    The `is_error` success gate inside `same_person_scored_ids` is a no-op on
-    this corpus — no committed log carries the key — which is harmless rather
-    than a silent divergence: `docs/specs/e2e-test-spec.md` measured that none of
-    the corpus's error-shaped entries is a `same_person`, `research_append`, or
-    `extraction_append`.
-
-    **The corpus is branch-scoped.** This reads `eval/runlogs/e2e/` as it exists
-    in the CURRENT checkout, so a graded run committed on an unmerged branch is
-    invisible — it is not skipped, it is never seen (issue #1444).
-    `describe_window()`'s printed line says so on every run of this report;
-    `make e2e-branch-only` names what another ref carries that this one
-    doesn't. Read any rate off an up-to-date `main` with in-flight fixture PRs
-    merged, or it is biased at exactly the moment it is used.
-
-    **The provenance join reads the run's FINAL research.json**, since the
-    narrowed rule (spec §8) skips a link whose provenance lane cannot yield a
-    persona from what the run retained and only the project document can answer that. This is loaded with
-    the module's own `_load_json` on that one sidecar rather than through
-    `load_run_inputs`, for the reasons that loader documents. A run with no
-    readable sidecar is replayed with `research=None` — un-narrowed, today's
-    behaviour — and counted in `runs_without_provenance`, NOT skipped: every
-    `replay_provenance` unit test builds a run log with no sidecar, so skipping
-    would turn the whole suite into vacuous passes.
-
-    That join introduces one asymmetry worth stating, because it runs opposite to
-    the lower-bound caveat above: the document is the run's FINAL state, so an
-    assertion written AFTER the link that cites it is visible to the replay and
-    was not on disk when the hook ran. The replay therefore under-flags the hook
-    on that shape. It is measured, not hypothetical — 17 landed `research_append`
-    calls across 9 runs write `assertions` and `person_evidence` ops together,
-    covering 66 ops.
-
-    A run whose fixture has no committed `starting-tree.gedcomx.json` is NAMED in
-    `skipped` and excluded from both counts, never silently dropped — with no
-    baseline every person reads as new, which would manufacture exactly the
-    violations this measures. An unreadable run log is recorded the same way, for
-    the same reason: a count that quietly shrank reads as a clean corpus.
-
-    Writes that never landed are skipped, which is what keeps a deny-mode run
-    from double-counting — a blocked attempt and its retry are one logical gap,
-    not two. "Never landed" is `is_error: true` OR the no-project answer, which
-    writes nothing and carries no `is_error`; `did_not_land` decides both.
-    """
-    out = ProvenanceReplay()
-    for path in paths:
-        slug = path.parent.name
-        seed_path = fixtures_root / slug / "starting-tree.gedcomx.json"
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except UNREADABLE_FILE as e:
-            # Recorded, not just warned. A stderr line vanishes from the printed
-            # summary, which then reads as "covered everything" — the same
-            # failure the missing-seed-tree branch below avoids.
-            print(f"  skip {path}: {e}", file=sys.stderr)
-            out.skipped.append(f"{slug}/{path.name}: unreadable run log ({type(e).__name__})")
-            continue
-        try:
-            seed = json.loads(seed_path.read_text(encoding="utf-8"))
-        except UNREADABLE_FILE:
-            out.skipped.append(f"{slug}/{path.name}: no readable {seed_path.name}")
-            continue
-
-        persons = seed.get("persons") if isinstance(seed.get("persons"), list) else []
-        starting = {p["id"] for p in persons if isinstance(p, dict) and isinstance(p.get("id"), str)}
-        tool_calls = data.get("tool_calls") or []
-        # The provenance join. Absent sidecar => replay un-narrowed (None) and
-        # count it, rather than skip: see this function's docstring.
-        research = _load_json(path.with_name(f"{path.stem}.final-research.json"))
-        if research is None:
-            out.runs_without_provenance += 1
-
-        out.runs_scanned += 1
-        try:
-            display_path = str(path.relative_to(REPO_ROOT))
-        except ValueError:
-            display_path = str(path)
-
-        links = False
-        for i, entry in enumerate(tool_calls):
-            tool = entry.get("tool", "")
-            args = entry.get("args") or {}
-            # A write that never landed is not a write. A PreToolUse DENY is
-            # recorded here with `is_error: true` (e2e-test-spec §8.1.1), so on a
-            # deny-mode run the blocked attempt AND the retry would each count —
-            # double-counting one logical gap and inflating the fire rate this
-            # exists to measure. Ordinary failed writes drop out for the same
-            # reason: they linked nobody. Same success-gating
-            # `same_person_scored_ids` and `find_unguarded_protected_writes`
-            # already apply. No effect on today's corpus, where no committed log
-            # carries the key at all — so the baseline does not move.
-            # The no-project answer (issue #1695) drops out here too: it wrote
-            # nothing and deliberately carries no `is_error`, so `did_not_land`
-            # covers both shapes.
-            if did_not_land(entry):
-                continue
-            if not _links_any_person_evidence(tool, args):
-                continue
-            links = True
-            scored_so_far = same_person_scored_ids(tool_calls[:i])
-            unguarded = unguarded_new_person_evidence_links(
-                tool,
-                args,
-                scored_ids=scored_so_far,
-                starting_ids=starting,
-                research=research,
-            )
-            # What the narrowing skipped on this call: the ids the UN-narrowed
-            # predicate would have flagged, minus the ones it still does. Counted
-            # so the exemption is a number beside the rate rather than a silent
-            # subtraction from it.
-            out.exempted_links += max(
-                0,
-                len(
-                    unguarded_new_person_evidence_links(
-                        tool, args, scored_ids=scored_so_far, starting_ids=starting
-                    )
-                )
-                - len(unguarded),
-            )
-            for pid in unguarded:
-                out.violations.append(
-                    {
-                        "index": i,
-                        "tool": "research_append",
-                        "required_skill": "person-evidence",
-                        "question_id": None,
-                        "detail": f"person_evidence link for new tree person {pid} with no prior same_person",
-                        "file": display_path,
-                        "fixture": slug,
-                    }
-                )
-        if links:
-            out.runs_linking += 1
-    return out
-
-
-def format_provenance_replay(replay: ProvenanceReplay) -> str:
-    """The replayed fire RATE, against the runs that could have produced a gap.
-
-    Prints the denominator rather than a bare count because the graduation
-    decision (issue #1231 prereq 1) is a rate judgment — "is a deny a nudge or a
-    wall" — and an absolute is unreadable as one.
-    """
-    affected_runs = len({v["file"] for v in replay.violations})
-    affected_fixtures = len({v["fixture"] for v in replay.violations})
-    lines = [
-        "",
-        f"§8 provenance check REPLAYED over {replay.runs_scanned} run(s): "
-        f"{affected_runs} of {replay.runs_linking} run(s) that link a person have "
-        f"≥1 gap ({len(replay.violations)} link(s), {affected_fixtures} fixture(s)).",
-        "  A lower bound: the live hook may not see a same-turn same_person; the replay always does.",
-        f"  {replay.exempted_links} link(s) NOT counted: their provenance lane cannot "
-        "yield a persona from what the run retained (spec §8).",
-        # Both numbers print unconditionally, including at 0. A count that appears
-        # only when non-zero reads identically to one nobody computed, which is
-        # the inference this module refuses everywhere else.
-        f"  {replay.runs_without_provenance} run(s) had no readable final-research.json "
-        "and were replayed UN-NARROWED (no provenance join).",
-    ]
-    if replay.skipped:
-        lines.append(f"  Skipped {len(replay.skipped)} run(s) with no committed seed tree:")
-        lines.extend(f"    {s}" for s in replay.skipped)
-    return "\n".join(lines)
-
-
 def format_post_hoc_replay(replay: PostHocReplay) -> str:
     """The six post-hoc checks REPLAYED, each against its own denominator.
 
@@ -1093,21 +819,8 @@ def format_post_hoc_replay(replay: PostHocReplay) -> str:
     return "\n".join(lines)
 
 
-def format_provenance(violations: list[dict[str, Any]]) -> str:
-    """One flat count — no window column, because the #963 check has no window
-    (`same_person` is a required call, so "was it called for this person" is a
-    fact). Runs written before the check shipped simply contribute nothing."""
-    affected = len({v["file"] for v in violations})
-    lines = [
-        "",
-        f"§8 live provenance check (issue #963, shadow): {len(violations)} "
-        f"person_evidence link(s) with no prior same_person, across {affected} run(s).",
-    ]
-    return "\n".join(lines)
-
-
 def format_citation_nulling(violations: list[dict[str, Any]]) -> str:
-    """One flat count — no window column, like `format_provenance`: the #1133
+    """One flat count — no window column: the #1133
     check is a fact about the final research.json, not a windowed recency scan.
     This is the number the graduation decision (shadow → hard §7.5 compliance
     check) is gated on."""
@@ -1732,10 +1445,7 @@ def format_feedback_report(results: list[dict[str, Any]]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     # The house pattern (`e2e/author.py`). A Windows console defaults to cp1252
-    # and dies on the `≥` in `format_provenance_replay` — which prints BEFORE the
-    # post-hoc replay block, so the whole of `--replay`'s new output is
-    # unreachable there. This module's own docstring now tells readers to run
-    # `--replay` before concluding a check never fires, and the team it is
+    # and dies on any non-ASCII character this report prints, and the team it is
     # written for is on Windows.
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
@@ -1760,10 +1470,9 @@ def main(argv: list[str] | None = None) -> int:
         "--replay",
         action="store_true",
         help=(
-            "additionally RECOMPUTE the seven post-hoc families and the §11 "
+            "additionally RECOMPUTE the six post-hoc families and the §11 "
             "unnamed-delegate check instead of only reading what runs stored: the "
-            "#963 provenance check from tool_calls + each fixture's committed seed "
-            "tree, the six §7/§7.5 checks from each run's committed final-research "
+            "six §7/§7.5 checks from each run's committed final-research "
             "/ final-tree sidecars, and §11 from each run's tool_calls. The stored "
             "path sees only runs made after each check shipped, which on today's "
             "corpus is a small minority; this reads the whole historical corpus."
@@ -1863,9 +1572,6 @@ def main(argv: list[str] | None = None) -> int:
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
     print(format_summary(by_window, n_runs=len(paths)))
 
-    provenance = scan_provenance(paths)
-    print(format_provenance(provenance))
-
     citation_nulling = scan_citation_nulling(paths)
     print(format_citation_nulling(citation_nulling))
 
@@ -1897,10 +1603,6 @@ def main(argv: list[str] | None = None) -> int:
     # made the seed-tree lookup here untestable, and left the test that pins this
     # very wiring passing while warnings-unchecked silently scanned nothing.
     # Naming it here makes it a module-global read at CALL time.
-    replay = replay_provenance(paths, fixtures_root=E2E_FIXTURES) if args.replay else None
-    if replay is not None:
-        print(format_provenance_replay(replay))
-
     post_hoc = replay_post_hoc(paths, fixtures_root=E2E_FIXTURES) if args.replay else None
     if post_hoc is not None:
         print(format_post_hoc_replay(post_hoc))
@@ -1909,9 +1611,6 @@ def main(argv: list[str] | None = None) -> int:
         smallest = min(windows)
         print(f"\nViolations at window={smallest}:")
         print(format_detail(by_window[smallest]))
-        print(f"\nProvenance gaps (issue #963), {len(provenance)}:")
-        for v in provenance:
-            print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
         print(f"\nCitation nulling (issue #1133), {len(citation_nulling)}:")
         for v in citation_nulling:
             print(f"  {v['fixture']:<35} {v['detail']}")
@@ -1941,10 +1640,6 @@ def main(argv: list[str] | None = None) -> int:
             print(f"\nReplayed unnamed delegate (issue #980), {len(unnamed_delegate.replayed)}:")
             for v in unnamed_delegate.replayed:
                 print(f"  {v['fixture']:<35} {v['detail']}")
-        if replay is not None:
-            print(f"\nReplayed provenance gaps (issue #1231), {len(replay.violations)}:")
-            for v in replay.violations:
-                print(f"  {v['fixture']:<35} idx={v['index']:<4} {v['detail']}")
         if post_hoc is not None:
             # Every family `format_post_hoc_replay` prints, in its order. This
             # loop listed three of the five and so printed nothing for the two

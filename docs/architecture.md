@@ -562,9 +562,9 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname` → `claude-haiku-5-5`; `search-records`, `timeline` declare none and inherit the session's; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking` → `claude-haiku-5-5`; `search-records`, `timeline` declare none and inherit the session's; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project` → `low`; `survey-surname` → `medium`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking` → `low`; `survey-surname`, `search-images`, `search-hints` → `medium`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
 | **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220, 2.1.294 and 2.1.308 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12, 2026-10-20 and 2026-10-22; the harnesses run the hosted CLI, 2.1.308). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
 | **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
@@ -659,7 +659,15 @@ Architecturally:
   handler reads but the schema omits is unreachable over MCP while every
   handler-level test stays green. Advertise it, or, for a deliberate unadvertised
   alias, add it to `ACCEPTED_ALIASES` there with its reason (a snapshot test pins
-  that list). The unit harness calls handlers directly and never runs the guard.
+  that list). The unit harness applies that same compiled guard before each mock tool
+  call, so an eval refuses the argument keys production refuses instead of
+  silently dropping them — though it fails OPEN, with a warning, when the build
+  is missing or node faults, so it narrows the gap rather than closing it.
+  **The reverse gap is the one still caught by nothing:** a key the handler
+  READS that is on neither the schema nor `ACCEPTED_ALIASES` is unreachable over
+  MCP while every handler-level test stays green. That stays unguarded by ruling
+  (lead, 2026-10-29): closing it needs TypeScript-type parsing, for the
+  lower-severity half of the pair.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
   `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
@@ -1247,6 +1255,12 @@ a person's attached records as unchecked candidates. Code composes each op whole
 as it does the `extracted_for_question_ids` growth a re-found record gets, so no
 input field reaches any of them (ADR-0006, amended 2026-10-20).
 
+`evaluation_append` is the second variant: `research_append` restricted to the
+single `evaluations` section, held only by the `gps-mentor` agent — the most
+prompt-exposed agent in the system. Unlike `extraction_append` it has no bespoke
+input surface; the mentor supplies an ordinary `evaluations` append and the lane
+gate forces the section (`research-append-tool-spec.md` §12).
+
 The pattern comes from an observed failure: a delegation message prompted the
 extractor past its prose lane and it fabricated a match score. The analysis:
 
@@ -1258,21 +1272,13 @@ extractor past its prose lane and it fabricated a match score. The analysis:
 
 Full rationale and error contract: `research-append-tool-spec.md` §11.
 
-> **Open — but the open question has moved.** The same reasoning is wanted for
-> identity scoring: a run should not be able to attach a persona from a new
-> record to an existing tree person without a `same_person` attestation. Three
-> candidate discriminators failed adversarial review, and a **fourth now ships,
-> in shadow** — the live pre-write provenance check in
-> `guardrail-enforcement-spec.md` **§4**'s last row and **§8**, which fires in the
-> e2e harness's `pretool_hook`, records into `guardrail_shadow_violations`, and
-> lets the write through, with an opt-in per-run `deny`. So the deliverable is no
-> longer *deriving* a discriminator; it is **graduating this one to a deny**,
-> which is gated on a replay number that must be re-measured rather than read off
-> a page (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`) *and* on the satisfying
-> call shape being one agents actually produce — they produced it in 3 of 103
-> corpus runs. **Read
-> [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before proposing a
-> fifth**, and satisfy its six named constraints, including **satisfiability**.
+> **Identity scoring is enforced at the same boundary.** `research_append`
+> refuses a `person_evidence` link to a reachable record persona unless
+> `same_person` scored that pairing, and refuses a score on a person minted from
+> the record the link cites (`guardrail-enforcement-spec.md` §4). The e2e
+> harness hook that measured it before it graduated was retired at harness v9.
+> **Read [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before changing
+> the rule**, and satisfy its six named constraints, including **satisfiability**.
 
 ### 5.4 The write-lockdown hook
 
@@ -1342,12 +1348,14 @@ Two behaviors of the script that are deliberate:
 - It is **stdlib-only and never raises.** Every failure path — unparseable
   stdin, missing fields — falls through to **allowing** the call, because an
   exception here would fail a tool call the user was entitled to make.
-- **The `Bash` route is deliberately open.** The guard matches on `file_path`, so
-  `cat >`, `sed -i`, and `python -c` all get through. Pattern-matching command
-  text would false-deny a legitimate `python script.py research.json > out` while
-  still missing a variable-built path, and **a false deny is the worse failure
-  mode**. The rationale lives in `guardrail-enforcement-spec.md` §6 ("`Bash` is
-  not covered"), to be revisited only if a bypass ever uses the shell.
+- **The hook does not match `Bash`; the file mode does the job.** The guard
+  matches on `file_path`, and pattern-matching command text would false-deny a
+  legitimate `python script.py research.json > out` while still missing a
+  variable-built path — **a false deny is the worse failure mode**. Instead the
+  protected files are read-only on disk between writes, and `FsProjectStore` is
+  the only layer that unlocks them, so `>`, `>>`, `tee` and
+  `open(…, 'w')` are refused by the filesystem. `chmod` first still gets
+  through, and so do `sed -i` and `mv` on macOS and Linux. `guardrail-enforcement-spec.md` §6 and §6.1.
 
 Packaging is guarded: `package-plugin.mjs`'s `INCLUDE` must carry `"hooks"`, or
 the directory never ships. Asserted by `tests/packaging/plugin-hooks.test.ts`,
@@ -1553,7 +1561,8 @@ tool and it belongs in that module**, so there is no second copy to drift.
 
 ### 6.2 Writes go only through validating writer tools
 
-`research_append` (and its lane-scoped variant `extraction_append`, §5.3),
+`research_append` (and its lane-scoped variants `extraction_append` and
+`evaluation_append`, §5.3),
 `research_log_append`, `tree_edit`, `tree_correct`, `merge_tree_persons`,
 `tree_forget`, and `materialize_facts` each **validate the whole project in
 memory and block only on errors the call itself introduces** — pre-existing
@@ -2089,7 +2098,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: per-test pass rates are `make eval-health`'s job. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
 | `make matcher-accuracy` | the **matcher's ranking** over the record-hint fixtures whose `fixture.json` `hint.identity` is `same` or `different`, each pair scored through `matchPairs` (`packages/engine/mcp-server/src/utils/matcher.ts`, the call `same_person` and ranking make, so it measures whichever matcher config.json names): the AUC, the confusion table at the person-evidence bands (score > 0.7 and > 0.4), and the pairs those bands misrank. Needs a FamilySearch login (`make e2e-login`), so no CI job runs it. Exits non-zero when the AUC falls below `MIN_AUC` (default 0.65), and when nothing was scored, a class is empty or a labelled fixture could not be scored (e2e spec §3.6.2) | `unresolved`, `null` and draft hints — listed as skipped, never scored; the inputs `rank_search_matches` hands the matcher (a staged search hit, not a `record_read` of the hinted persona); FamilySearch's own hint ranking; whether an agent acts on the score. A floor, not a pinned value: a matcher change that lowers the AUC but stays above `MIN_AUC` passes |
-| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first, that no research job started, and that the expected source or log entry was saved — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE and nudges any stop not preceded by `research_delivered` (the `delivered` column shows that risk but does not gate); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
+| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first (or that none did), that no research job started, that the expected source or log entry was saved (or, for an "answer already attached" ask, that none was), and that named tools were or were not called — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE (it no longer nudges a stop: step mode's phase 2 deleted the Stop veto); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
 
 ### 9.2 The lint layer
 
@@ -2458,24 +2467,15 @@ answered — is where an unsettled question waits. `/fill-ready` § "Above the j
 pools" owns the split, and `/make-decisions` drains the `needs-decision` queue
 daily; `/find-big-wins` reads it as evidence but never removes the label.
 
-Two are stated **where they bind**, because each one will stop a change you might
+One is stated **where it binds**, because it will stop a change you might
 otherwise make:
 
-- **The `same_person` write boundary** (§5.3). The direction is settled and a
-  fourth discriminator ships in shadow; what is open is its graduation to a deny.
-  **Read [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before
-  proposing a fifth** — three failed adversarial review and the ledger names the
-  six constraints a candidate has to satisfy.
 - **Whether a compliance detector follows the router's paraphrase or the owning
-  skill's contract.** The owning skill wins, and the §8 `same_person` provenance
-  check is the worked case: it now narrows on whether a **record persona is
-  reachable** — image-, external-site-, PDF- and full-text-sourced links and
-  sidecar-less searches are exempt and counted, `record_read`-sourced links stay
-  flagged — rather than on the null `record_persona_id` the older reading
-  exempted on. What stays open is that these detectors remain uncalibrated, which
-  is why §9.4 says not to quote a violation rate.
+  skill's contract.** The owning skill wins. What stays open is that these
+  detectors remain uncalibrated, which is why §9.4 says not to quote a violation
+  rate.
 
-Before adding a third, check it is not already refuted — ADR-0009 is a ledger of
+Before adding another, check it is not already refuted — ADR-0009 is a ledger of
 questions that only look open.
 
 ---

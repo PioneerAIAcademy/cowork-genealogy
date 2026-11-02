@@ -26,14 +26,10 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
                                                 web/feedback.py); stored, sent nowhere
 
-The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at,
-max_nudges}``. The ``turn_id`` is a UUID minted here and travels IN THE BODY -- never the
-SQS MessageId, which the shim holds and the worker never sees. ``max_nudges`` (1a) is
-this tier's ``AUTONOMOUS_MAX_NUDGES``, stamped on every message and preferred by the
-worker over its own: the worker serves the browser and ``make proto-demo`` alike and
-cannot tell them apart. It is read from the ENVIRONMENT and never from the request --
-the cap is the operator's, so a ``MessageBody`` field would let a signed-in patron set
-their own nudge budget.
+The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at}``. The
+``turn_id`` is a UUID minted here and travels IN THE BODY -- never the SQS MessageId,
+which the shim holds and the worker never sees. A body enqueued before the Stop veto was
+deleted may still carry ``max_nudges``; the worker ignores it.
 
 Row -> wire contract (the worker writes the rows; the SPA's chatEvents.ts reads the wire):
 
@@ -52,7 +48,7 @@ hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
 queue URL, the shim's shape; required -- unset or empty refuses to start),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (0 -- see ``max_nudges``),
+POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
@@ -97,7 +93,7 @@ import secrets
 import sys
 import time
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -179,6 +175,9 @@ READY_SQL = (
 STARTUP_BUDGET_S = 5.0
 STARTUP_BACKOFF_FIRST_S = 1.0
 STARTUP_BACKOFF_MAX_S = 30.0
+# The edge's alias path cuts a stream silent for ~45 s (handoff F11), so the ping stays
+# well under it whatever SSE_PING_S says.
+SSE_PING_MAX_S = 15.0
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -344,7 +343,9 @@ class Store(Protocol):
     ) -> SessionRow: ...
     async def list_sessions(self, owner: str) -> list[SessionRow]: ...
     async def get_session(self, session_id: str) -> SessionRow | None: ...
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None: ...
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None: ...
     async def delete_session(self, session_id: str) -> bool: ...
     async def document_versions(self, project_id: str) -> dict[str, int]: ...
     async def documents(
@@ -440,12 +441,12 @@ def resolve_cursor(last_event_id: str | None, after: str | None) -> int:
     return value
 
 
-def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, nudges: int) -> dict[str, Any]:
+def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str) -> dict[str, Any]:
     """This tier's call into the shared builder (``proto/turn_message.py``), which the
     worker also enqueues through. Kept as a wrapper because every call site here holds
     a ``SessionRow`` and the worker holds none."""
     return turn_message.queue_body(
-        turn_id, session.session_id, session.project_id, text, enqueued_at, nudges
+        turn_id, session.session_id, session.project_id, text, enqueued_at
     )
 
 
@@ -823,12 +824,16 @@ class PgStore:
             row = await cur.fetchone()
         return self._row(row) if row else None
 
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None:
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None:
+        # title_if_default names the session only while it still has the default title, in this one
+        # UPDATE, so an agent's title never overwrites a name the user chose.
         async with await self._connect() as conn:
             cur = await conn.execute(
-                "UPDATE sessions SET title = COALESCE(%s, title), model = COALESCE(%s, model), "
-                "updated_at = now() WHERE session_id = %s RETURNING session_id",
-                (title, model, session_id),
+                "UPDATE sessions SET title = COALESCE(%s, CASE WHEN title = %s THEN %s END, title), "
+                "model = COALESCE(%s, model), updated_at = now() WHERE session_id = %s RETURNING session_id",
+                (title, DEFAULT_TITLE, title_if_default, model, session_id),
             )
             hit = await cur.fetchone()
         return await self.get_session(session_id) if hit else None
@@ -1006,7 +1011,7 @@ class PgStore:
 
         turn_id = str(uuid.uuid4())
         enqueued_at = datetime.now(tz=timezone.utc).isoformat()
-        body = queue_body(turn_id, session, text, enqueued_at, max_nudges())
+        body = queue_body(turn_id, session, text, enqueued_at)
         await conn.execute(
             "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
             "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
@@ -1340,6 +1345,7 @@ class CreateSessionBody(BaseModel):
 
 class PatchSessionBody(BaseModel):
     title: str | None = None
+    title_if_default: str | None = None
     model: str | None = None
 
 
@@ -1358,6 +1364,24 @@ class MessageBody(BaseModel):
 
 class DevLoginBody(BaseModel):
     email: str | None = None
+
+
+def _relative_self_location(location: str, host: str | None, base_path: str = "") -> str:
+    """U28: a redirect to this tier's own host, made root-relative and put under the prefix.
+    Behind the edge this tier sees http from its load balancer and a path with the prefix
+    stripped, so an absolute URL Starlette builds from the request (its trailing-slash 307)
+    leaves the prefix and drops https. A path already under the prefix (the callback's
+    PUBLIC_URL target) keeps it once. Any other host, or a host:port that differs from the
+    request's, is left alone."""
+    if not host:
+        return location
+    parts = urlparse(location)
+    if parts.scheme not in ("http", "https") or parts.netloc.lower() != host.lower():
+        return location
+    path = parts.path or "/"
+    if base_path and path != base_path and not path.startswith(f"{base_path}/"):
+        path = f"{base_path}{path}"
+    return path + (f"?{parts.query}" if parts.query else "")
 
 
 def _env_float(name: str, default: float) -> float:
@@ -1381,48 +1405,6 @@ def _env_float(name: str, default: float) -> float:
         log.warning("%s=%r is not a number; using %s", name, raw, default)
         return default
     return value if value > 0 else default
-
-
-# 0 under step mode (decision 25): a turn is one step and ends at its boundary on
-# purpose, so there is nothing for a Stop veto to re-open. The earlier 60 was sized
-# on step count per run to clear a p99 under a harness that FORBADE yielding; that
-# regime is gone, and the test that re-derived the p99 from the corpus went with it.
-DEFAULT_MAX_NUDGES = 0
-
-
-def max_nudges(env: Mapping[str, str] | None = None) -> int:
-    """``AUTONOMOUS_MAX_NUDGES`` for the turns this tier enqueues (1a).
-
-    Read from the tier's OWN environment and stamped on the queue body -- never taken
-    from the request. The cap is the operator's, so a field on ``MessageBody`` would let a
-    signed-in patron set their own nudge budget, and the worker cannot tell the browser from
-    ``make proto-demo``: there is no browser path it can see. Each recipe recreates this
-    container with its own export instead.
-
-    **The default is now 0, and the reason inverted** (step mode, decision 25,
-    2026-10-21). This paragraph used to say "not 0", because a tier that enqueued 0 would
-    ship "the stop-every-step behaviour the plan exists to remove". Under step mode
-    stopping at each step IS the behaviour: every turn runs one step, reports it and ends
-    with "Continue with X?". A nudge past that re-opens a turn that ended on purpose.
-
-    A malformed or unset value still takes the default, and that default is still the
-    operator's to change -- but a positive cap no longer restores the old continuous
-    behaviour, because the step boundary is enforced independently of it. A turn under a
-    positive cap is vetoed for ending at its boundary, reaches for the next step, is
-    denied by the gate, and halts. Export a positive cap only to exercise that path."""
-    raw = (os.environ if env is None else env).get("AUTONOMOUS_MAX_NUDGES")
-    text = (raw or "").strip()
-    if not text:
-        return DEFAULT_MAX_NUDGES
-    try:
-        n = int(text)
-    except ValueError:
-        log.warning("AUTONOMOUS_MAX_NUDGES=%r is not an integer; using %d", raw, DEFAULT_MAX_NUDGES)
-        return DEFAULT_MAX_NUDGES
-    if n < 0:
-        log.warning("AUTONOMOUS_MAX_NUDGES=%d is negative; using 0 (the Stop hook off)", n)
-        return 0
-    return n
 
 
 # ── startup (U10) ────────────────────────────────────────────────────────────────
@@ -1603,7 +1585,15 @@ def create_app(
     # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
     app.state.startup = None
     app.state.poll_s = poll_s if poll_s is not None else _env_float("POLL_S", 1.0)
-    app.state.ping_s = ping_s if ping_s is not None else _env_float("SSE_PING_S", 15.0)
+    if ping_s is None:
+        ping_s = _env_float("SSE_PING_S", SSE_PING_MAX_S)
+        if ping_s > SSE_PING_MAX_S:
+            log.warning("SSE_PING_S=%s is above the %ss cap; using %s", ping_s, SSE_PING_MAX_S, SSE_PING_MAX_S)
+    app.state.ping_s = min(ping_s, SSE_PING_MAX_S)
+    # U28: PUBLIC_URL's path, the prefix the edge strips. Raises on a bad PUBLIC_URL, so a
+    # tier that would scope its cookies wrongly never constructs.
+    app.state.base_path = auth.base_path()
+    prefix_mismatch_logged = False
     app.state.stream_max_polls = stream_max_polls
 
     class ProjectCacheHeaders:
@@ -1637,6 +1627,53 @@ def create_app(
             await self.app(scope, receive, send_headers)
 
     app.add_middleware(ProjectCacheHeaders)
+
+    class PrefixMismatchWarning:
+        """One warning per process, the first time the edge's ``X-Orig-Base`` disagrees with
+        PUBLIC_URL's path: a PUBLIC_URL missing its prefix scopes the session cookie to the
+        whole shared host. The header only warns; it is forgeable off the edge."""
+
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            nonlocal prefix_mismatch_logged
+            if scope["type"] in ("http", "websocket") and not prefix_mismatch_logged:
+                for name, value in scope.get("headers") or ():
+                    if name == b"x-orig-base":
+                        seen = value.decode("latin-1").strip().rstrip("/")
+                        if seen != app.state.base_path:
+                            prefix_mismatch_logged = True
+                            log.warning("ev=prefix_mismatch x_orig_base=%r base_path=%r",
+                                        seen[:200], app.state.base_path)
+                        break
+            await self.app(scope, receive, send)
+
+    app.add_middleware(PrefixMismatchWarning)
+
+    class RelativeSelfRedirects:
+        """U28: see ``_relative_self_location``."""
+
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            if scope["type"] != "http":
+                await self.app(scope, receive, send)
+                return
+            host = next((v.decode("latin-1") for k, v in scope.get("headers") or () if k == b"host"), None)
+
+            async def send_relative(message: Message) -> None:
+                if message["type"] == "http.response.start" and 300 <= message["status"] < 400:
+                    headers = MutableHeaders(scope=message)
+                    location = headers.get("location")
+                    if location is not None:
+                        headers["location"] = _relative_self_location(location, host, app.state.base_path)
+                await send(message)
+
+            await self.app(scope, receive, send_relative)
+
+    app.add_middleware(RelativeSelfRedirects)
 
     def _store(request: Request) -> Store:
         return request.app.state.store
@@ -1697,6 +1734,7 @@ def create_app(
             "queue": type(state.queue).__name__,
             "poll_s": state.poll_s,
             "ping_s": state.ping_s,
+            "base_path": state.base_path,
         }
         checks: dict[str, Any] = {}
         try:
@@ -1742,7 +1780,7 @@ def create_app(
         data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
         if data is not None:
             await _store(request).revoke_sessions(data["uid"])
-        response.delete_cookie(auth.COOKIE_NAME, path="/", samesite="lax", secure=auth.is_https())
+        response.delete_cookie(auth.COOKIE_NAME, path=auth.cookie_path(), samesite="lax", secure=auth.is_https())
         return {"ok": True}
 
     @app.get("/auth/familysearch/login")
@@ -1823,7 +1861,7 @@ def create_app(
         resp.set_cookie(
             auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
         )
-        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path="/")
+        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp
 
     # -- projects -----------------------------------------------------------------
@@ -1915,7 +1953,7 @@ def create_app(
         # Check, then act: an existing project's owner only ever moves from NULL to a
         # user, and a NULL owner has already failed the check.
         await _session(request, session_id, user)
-        row = await _store(request).patch_session(session_id, body.title, body.model)
+        row = await _store(request).patch_session(session_id, body.title, body.model, body.title_if_default)
         if row is None:
             raise HTTPException(status_code=404, detail="Session not found")
         return session_out(row)
@@ -2323,7 +2361,7 @@ def create_app(
         return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
-    spa.mount_spa(app, tier_root=PROTO_DIR)
+    spa.mount_spa(app, tier_root=PROTO_DIR, base_path=app.state.base_path)
     return app
 
 

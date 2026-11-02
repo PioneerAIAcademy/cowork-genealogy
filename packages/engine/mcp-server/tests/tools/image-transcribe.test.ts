@@ -40,6 +40,11 @@ import {
   sourceImageCapState,
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
+import {
+  configureTranscriptionCap,
+  withTranscriptionSlot,
+  __resetTranscriptionSlotsForTests,
+} from "../../src/utils/ocr.js";
 import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
 import { imageReadTool } from "../../src/tools/image-read.js";
 import {
@@ -1766,5 +1771,50 @@ describe("imageTranscribeTool — a Memories PAGE url (#2987)", () => {
     expect(fetchFsImageBytesMock.mock.calls[0][0]).toBe(ABOUT);
     // Only the OCR call; the resolver was never entered.
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+// The process-wide transcription cap (self-hosted beta E4) binds HERE, on the
+// exported tool function, not on its MCP wrapper -- person_read calls this
+// function directly (person-read.ts), so a cap on the wrapper would leave that
+// path uncapped. Refused before any fixture work, so this needs no image.
+describe("the transcription cap binds to image_transcribe", () => {
+  afterEach(() => {
+    __resetTranscriptionSlotsForTests();
+  });
+
+  it("refuses when every slot is held, before touching the image", async () => {
+    configureTranscriptionCap({ max: 1 });
+    let release!: () => void;
+    const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
+
+    await expect(imageTranscribeTool({ imageId: "004022578_00190", projectPath: "/nope" }, LOCAL)).rejects.toThrow(/already running 1 transcription, its limit/);
+
+    release();
+    await held;
+  });
+
+  it("reports conflicting inputs even when every slot is held", async () => {
+    // Finding 6: a caller passing two identifiers should be told which ones
+    // conflict, not that the server is busy.
+    configureTranscriptionCap({ max: 1 });
+    let release!: () => void;
+    const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
+
+    await expect(
+      imageTranscribeTool(
+        { imageId: "004022578_00190", ark: "ark:/61903/3:1:ABC", projectPath: "/nope" },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/Provide exactly one of/);
+
+    release();
+    await held;
+  });
+
+  it("is off when unconfigured, so the tool is reached as before", async () => {
+    // No cap configured: the wrapper calls straight through and the tool fails
+    // on its own input, not on a slot.
+    await expect(imageTranscribeTool({ imageId: "004022578_00190", projectPath: "/nope" }, LOCAL)).rejects.not.toThrow(/transcriptions, its limit/);
   });
 });

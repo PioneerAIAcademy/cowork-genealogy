@@ -1,5 +1,6 @@
 import { useState, useMemo, Fragment } from 'react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
+import { usePrintMode } from '../../contexts/PrintModeContext'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
 import Linkify from '../shared/Linkify'
@@ -33,17 +34,24 @@ function compareEntries(a: LogEntry, b: LogEntry, key: SortKey, dir: SortDir): n
   return dir === 'desc' ? -cmp : cmp
 }
 
-function viewResultsLabel(entry: LogEntry): string {
+function resultsCount(entry: LogEntry): string {
   const examined = entry.results_examined
   const available = entry.results_available
   if (available !== undefined && available !== null && available > examined) {
-    return `View ${examined} of ${available} results →`
+    return `${examined} of ${available} results`
   }
-  return `View ${examined} results →`
+  return `${examined} results`
+}
+
+function viewResultsLabel(entry: LogEntry): string {
+  return `View ${resultsCount(entry)} →`
 }
 
 export default function ResearchLogSection(): React.JSX.Element {
   const { research, devMode, openSidecar } = useResearchData()
+  // Printing shows every detail row and drops what only works on screen: the
+  // row toggle, the sidecar buttons (search results are not printed) and Raw JSON.
+  const print = usePrintMode()
   const logEntries = useMemo(() => research?.log ?? [], [research?.log])
   const sources = useMemo<Source[]>(() => research?.sources ?? [], [research?.sources])
   const assertions = useMemo<Assertion[]>(() => research?.assertions ?? [], [research?.assertions])
@@ -76,7 +84,7 @@ export default function ResearchLogSection(): React.JSX.Element {
   // difference is which group they sit in, and duplicating the body would let
   // the two drift.
   const renderEntry = (entry: LogEntry): React.JSX.Element => {
-            const isExpanded = expandedId === entry.id
+            const isExpanded = print || expandedId === entry.id
             const when = splitLogTimestamp(entry.performed)
             const capturedSources = sourcesByLogEntry.get(entry.id) ?? []
             const producedAssertions = assertionsByLogEntry.get(entry.id) ?? []
@@ -90,7 +98,7 @@ export default function ResearchLogSection(): React.JSX.Element {
                 <tr
                   id={entry.id}
                   className={styles.clickableRow}
-                  onClick={() => setExpandedId(isExpanded ? null : entry.id)}
+                  onClick={print ? undefined : () => setExpandedId(isExpanded ? null : entry.id)}
                 >
                   <td className={styles.whenCell}>
                     {/* Date over time, not a raw `2026-05-01T10:15:00Z`. The date is what a
@@ -114,7 +122,9 @@ export default function ResearchLogSection(): React.JSX.Element {
                     <StatusBadge value={entry.outcome} />
                   </td>
                   <td>
-                    {entry.results_ref ? (
+                    {entry.results_ref && print ? (
+                      resultsCount(entry)
+                    ) : entry.results_ref ? (
                       <button
                         type="button"
                         className={styles.viewResultsInline}
@@ -166,7 +176,7 @@ export default function ResearchLogSection(): React.JSX.Element {
                           </div>
                         )}
 
-                        {entry.results_ref && (
+                        {entry.results_ref && !print && (
                           <div className={styles.field}>
                             <div className={styles.fieldLabel}>Results</div>
                             <button
@@ -217,7 +227,7 @@ export default function ResearchLogSection(): React.JSX.Element {
                           </div>
                         )}
 
-                        {devMode && (
+                        {devMode && !print && (
                           <div className={styles.field}>
                             <div className={styles.fieldLabel}>Raw JSON</div>
                             <pre className={styles.queryBlock}>

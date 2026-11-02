@@ -10,7 +10,13 @@ answer: a wrong method 405 -> 404, the trailing-slash 307 -> 404, and a POST to 
 path 404 -> 405. This module instead enumerates the top level of the dist: ``/`` serves
 ``index.html``, each top-level file gets its own GET/HEAD route and each top-level
 directory a ``StaticFiles`` mount, so every API status is unchanged by construction. The
-SPA routes by hash and asks for ``/assets/...`` absolutely, so it needs no fallback.
+SPA routes by hash and asks for ``./assets/...`` and its API document-relatively, so it
+needs no fallback and runs at ``/`` or under the prefix an edge strips (U28).
+
+Under a prefix (``base_path``, PUBLIC_URL's path) ``/`` and ``/index.html`` serve
+``index.html`` with ``<base href="<prefix>/">`` right after ``<head>``, so a browser that
+landed on ``<prefix>`` without its trailing slash still resolves those URLs under it. At the
+root the file is served byte for byte.
 
   WEB_DIST_DIR unset or empty    no SPA routes (tests, compose without the image's ENV)
   set, relative                  resolved against the tier root (``web/``'s parent), not cwd
@@ -25,7 +31,9 @@ is ``public, max-age=31536000, immutable``. Any other directory is ``no-cache``.
 
 from __future__ import annotations
 
+import html
 import os
+import re
 from collections.abc import Mapping
 from pathlib import Path
 
@@ -40,6 +48,7 @@ NO_CACHE = "no-cache"
 IMMUTABLE = "public, max-age=31536000, immutable"
 HASHED_DIR = "assets"
 RESERVED = frozenset({"api", "auth", "callback"})
+HEAD_RE = re.compile(rb"<head(\s[^>]*)?>", re.IGNORECASE)
 
 
 class _CachedStaticFiles(StaticFiles):
@@ -75,9 +84,27 @@ def _file_route(path: str, file: Path) -> Route:
     return Route(path, serve, methods=["GET", "HEAD"], include_in_schema=False)
 
 
-def mount_spa(app: FastAPI, *, tier_root: Path, env: Mapping[str, str] | None = None) -> Path | None:
+def _index_route(path: str, body: bytes) -> Route:
+    async def serve(_request) -> Response:
+        return Response(body, media_type="text/html", headers={"Cache-Control": NO_CACHE})
+
+    return Route(path, serve, methods=["GET", "HEAD"], include_in_schema=False)
+
+
+def with_base(index: bytes, base_path: str) -> bytes:
+    """``index`` with ``<base href="<base_path>/">`` after its ``<head>``."""
+    head = HEAD_RE.search(index)
+    if head is None:
+        raise RuntimeError("index.html has no <head> to carry the <base href> a path prefix needs")
+    tag = f'<base href="{html.escape(base_path + "/", quote=True)}">'.encode()
+    return index[:head.end()] + tag + index[head.end():]
+
+
+def mount_spa(app: FastAPI, *, tier_root: Path, env: Mapping[str, str] | None = None,
+              base_path: str = "") -> Path | None:
     """Add the dist's routes to ``app``; call it after every API route exists. Returns the
-    dist served, or None when ``WEB_DIST_DIR`` is unset. Raises before adding anything."""
+    dist served, or None when ``WEB_DIST_DIR`` is unset. Raises before adding anything.
+    ``base_path`` is the public prefix (``''`` at the root), read once here."""
     dist = dist_dir(tier_root, env)
     if dist is None:
         return None
@@ -90,8 +117,14 @@ def mount_spa(app: FastAPI, *, tier_root: Path, env: Mapping[str, str] | None = 
     clash = sorted(p.name for p in entries if p.name in RESERVED | _taken(app))
     if clash:
         raise RuntimeError(f"{ENV_VAR}={dist}: top-level {clash} collide with API routes")
-    routes: list[Route | Mount] = [_file_route("/", index)]
+    if base_path:
+        body = with_base(index.read_bytes(), base_path)
+        routes: list[Route | Mount] = [_index_route("/", body), _index_route("/index.html", body)]
+    else:
+        routes = [_file_route("/", index)]
     for entry in entries:
+        if base_path and entry == index:
+            continue
         if entry.is_dir():
             cache = IMMUTABLE if entry.name == HASHED_DIR else NO_CACHE
             routes.append(Mount(f"/{entry.name}", app=_CachedStaticFiles(directory=entry, cache_control=cache),

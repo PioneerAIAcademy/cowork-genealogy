@@ -36,7 +36,7 @@ sys.path.insert(0, str(PROTO))
 
 from drive import parse_frame  # noqa: E402  (the driver's SSE parser; one parser, two callers)
 import turn_message  # noqa: E402  (the shared claim and banner SQL, as the web image imports it)
-from web import app, auth  # noqa: E402  (queue_body / max_nudges: one definition for the fake store too)
+from web import app, auth  # noqa: E402  (queue_body: one definition for the fake store too)
 from web.app import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_TITLE,
@@ -154,10 +154,14 @@ class FakeStore:
     async def get_session(self, session_id: str) -> SessionRow | None:
         return self.sessions.get(session_id)
 
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None:
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None:
         row = self.sessions.get(session_id)
         if row is None:
             return None
+        if title is None and row.title == DEFAULT_TITLE:
+            title = title_if_default
         row = SessionRow(row.session_id, row.project_id, title or row.title, model or row.model, row.created_at,
                          T0 + timedelta(minutes=1), row.owner_id)
         self.sessions[session_id] = row
@@ -205,7 +209,7 @@ class FakeStore:
         seq = self.add_event(session.session_id, "user_msg", {"text": text, "turn_id": turn_id})
         # The real helper, not a hand-rolled copy: a fake that builds its own body would
         # let the route tests pass while production enqueued a different shape.
-        body = app.queue_body(turn_id, session, text, T0.isoformat(), app.max_nudges())
+        body = app.queue_body(turn_id, session, text, T0.isoformat())
         turn = Turn(turn_id=turn_id, seq=seq, body=body)
         self.turns.append(turn)
         if queued:
@@ -435,6 +439,17 @@ async def test_session_crud_speaks_the_spa_shape():
         assert (await c.get(f"/api/sessions/{sid}")).status_code == 404
 
 
+async def test_title_if_default_names_only_a_default_session():
+    store, queue = FakeStore(), FakeQueue()
+    async with make_client(store, queue) as c:
+        sid = (await c.post("/api/sessions", json={})).json()["id"]
+        r = await c.patch(f"/api/sessions/{sid}", json={"title_if_default": "Agent title"})
+        assert r.json()["title"] == "Agent title"
+        await c.patch(f"/api/sessions/{sid}", json={"title": "My family"})
+        r = await c.patch(f"/api/sessions/{sid}", json={"title_if_default": "Later agent title"})
+        assert r.json()["title"] == "My family"
+
+
 async def test_state_reads_documents_and_the_unserved_routes_say_so():
     store, queue = FakeStore(), FakeQueue()
     row = store.seed_session()
@@ -477,8 +492,6 @@ async def test_post_message_mints_turn_id_records_user_msg_and_enqueues_the_body
     assert queue.sent == [{
         "turn_id": out["turn_id"], "session_id": row.session_id, "project_id": row.project_id,
         "text": "Find Thomas Flynn", "enqueued_at": T0.isoformat(),
-        # 1a: the cap rides the message, from this tier's environment.
-        "max_nudges": app.DEFAULT_MAX_NUDGES,
     }]
     events = store.events[row.session_id]
     assert [e.kind for e in events] == ["user_msg"]
@@ -910,20 +923,15 @@ async def test_the_real_has_queued_and_request_stop_run_the_sql_they_claim():
     assert "RETURNING stop_requested_at" in stop_sql, "a missing session must answer False, not silently pass"
 
 
-async def test_the_real_begin_turn_stamps_the_tiers_cap_and_not_a_literal(monkeypatch):
-    """1a's whole carrier. `queue_body(..., max_nudges())` swapped for `queue_body(..., 0)`
-    survived the suite -- and a 0 turns the nudge budget OFF for every turn this tier
-    enqueues, shipping the stop-at-every-step behaviour the plan exists to remove while
-    looking exactly like the feature simply not working."""
+async def test_the_real_begin_turn_stamps_no_nudge_cap(monkeypatch):
+    """The Stop veto is deleted (step mode phase 2), so the body carries no ``max_nudges``
+    -- even with the old variable still set in this tier's environment."""
     monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", "37")
     conn = await _begin(queued=False)
     inserts = [p for sql, p in zip(conn.sql, conn.params) if sql.startswith("INSERT INTO turns")]
     assert len(inserts) == 1
     body = inserts[0][3].obj if hasattr(inserts[0][3], "obj") else inserts[0][3]
-    assert body["max_nudges"] == 37, (
-        f"the row carries max_nudges={body['max_nudges']}; it must come from this tier's "
-        f"own environment, which is 1a's only carrier"
-    )
+    assert "max_nudges" not in body
 
 
 async def test_the_real_begin_turn_clears_the_stop_flag_only_when_it_enqueues():
@@ -1979,8 +1987,8 @@ async def test_supplied_project_id_is_created_or_claimed_only_under_dev_login(mo
 def test_queue_body_carries_no_token_or_user_field():
     """U3 resolves the patron from the project_id already in the body; a token in the body
     would persist in turns.message, SQS and the DLQ."""
-    body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat(), 1)
-    assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at", "max_nudges"}
+    body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat())
+    assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at"}
 
 
 # ── U10: /api/health as readiness ────────────────────────────────────────────────
@@ -2376,3 +2384,105 @@ async def test_docs_and_openapi_are_off_with_and_without_the_spa(dist, monkeypat
     async with make_client(FakeStore(), FakeQueue(), user=None) as c:
         for path in ("/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"):
             assert (await c.get(path)).status_code == 404, path
+
+
+# ── U28: a path prefix on PUBLIC_URL ────────────────────────────────────────────
+
+PREFIX = "/service/search/agent-tools/web"
+PREFIX_INDEX = ('<!doctype html><html><head>\n<meta charset="UTF-8">'
+                '<script type="module" src="./assets/x-abc.js"></script></head><body></body></html>')
+
+
+@pytest.fixture
+def prefix_dist(dist, monkeypatch) -> Path:
+    (dist / "index.html").write_text(PREFIX_INDEX, encoding="utf-8")
+    monkeypatch.setenv("PUBLIC_URL", f"http://edge.test{PREFIX}")
+    return dist
+
+
+async def test_spa_under_a_prefix_injects_a_base_href_after_head(prefix_dist):
+    want = PREFIX_INDEX.replace("<head>", f'<head><base href="{PREFIX}/">', 1)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path in ("/", "/index.html"):
+            r = await c.get(path)
+            assert r.status_code == 200 and r.text == want, path
+            assert r.headers["content-type"].startswith("text/html") and r.headers["cache-control"] == "no-cache"
+        head = await c.head("/")
+        assert head.status_code == 200 and head.content == b""
+        assert (await c.get("/assets/x-abc.js")).status_code == 200
+
+
+async def test_spa_at_the_root_serves_index_html_byte_for_byte(prefix_dist, monkeypatch):
+    monkeypatch.delenv("PUBLIC_URL")
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path in ("/", "/index.html"):
+            r = await c.get(path)
+            assert r.content == PREFIX_INDEX.encode() and b"<base" not in r.content, path
+
+
+def test_spa_base_href_is_escaped_and_a_headless_index_refuses():
+    assert spa.with_base(b"<HEAD lang=x>", '/a"b') == b'<HEAD lang=x><base href="/a&quot;b/">'
+    with pytest.raises(RuntimeError, match="<head>"):
+        spa.with_base(b"<!doctype html><title>x</title>", PREFIX)
+
+
+async def test_health_reports_the_base_path(monkeypatch):
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        assert (await c.get("/api/health")).json()["base_path"] == ""
+    monkeypatch.setenv("PUBLIC_URL", f"https://edge.test{PREFIX}/")
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        assert (await c.get("/api/health")).json()["base_path"] == PREFIX
+
+
+@pytest.mark.parametrize("raw, want, warned", [("60", 15.0, True), ("15", 15.0, False), ("5", 5.0, False)])
+async def test_sse_ping_is_capped_under_the_alias_idle_cut(monkeypatch, caplog, raw, want, warned):
+    monkeypatch.setenv("SSE_PING_S", raw)
+    with caplog.at_level("WARNING", logger="proto.web"):
+        application = create_app(FakeStore(), FakeQueue(), poll_s=0.0)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t") as c:
+        assert (await c.get("/api/health")).json()["ping_s"] == want
+    assert any("SSE_PING_S" in r.message for r in caplog.records) is warned
+    assert app.SSE_PING_MAX_S == 15.0
+
+
+async def test_an_x_orig_base_mismatch_warns_once_per_process(monkeypatch, caplog):
+    monkeypatch.setenv("PUBLIC_URL", f"http://edge.test{PREFIX}")
+    with caplog.at_level("WARNING", logger="proto.web"):
+        async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+            await c.get("/api/health", headers={"X-Orig-Base": f"{PREFIX}/"})
+            await c.get("/api/health")
+            assert not [r for r in caplog.records if "prefix_mismatch" in r.message], "a match is silent"
+            await c.get("/api/health", headers={"X-Orig-Base": "/service/search/agent-tools/other"})
+            await c.get("/api/health", headers={"X-Orig-Base": "/elsewhere"})
+    lines = [r.message for r in caplog.records if "ev=prefix_mismatch" in r.message]
+    assert len(lines) == 1 and "agent-tools/other" in lines[0], lines
+
+
+@pytest.mark.parametrize("public_url, prefix", [(f"https://edge.test{PREFIX}", PREFIX), ("https://edge.test", "")])
+async def test_a_trailing_slash_redirect_stays_under_the_prefix_and_relative(monkeypatch, public_url, prefix):
+    # FS112 u28-web, 2026-10-31: the edge strips the prefix and the load balancer speaks http, so
+    # Starlette's slash redirect answered `http://<host>/api/health` -- off the prefix, and http.
+    monkeypatch.setenv("PUBLIC_URL", public_url)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path, want in (("/api/health/", f"{prefix}/api/health"),
+                           ("/auth/config/?x=1&y=2", f"{prefix}/auth/config?x=1&y=2")):
+            r = await c.get(path, headers={"Host": "integration.example.org"}, follow_redirects=False)
+            assert r.status_code == 307 and r.headers["location"] == want, (path, r.headers.get("location"))
+
+
+@pytest.mark.parametrize("location, host, base, want", [
+    ("http://h.test/api/health", "h.test", "", "/api/health"),
+    ("https://h.test/p/x?q=1", "h.test", "", "/p/x?q=1"),
+    ("http://h.test", "h.test", "", "/"),
+    ("http://h.test/api/health", "h.test", PREFIX, f"{PREFIX}/api/health"),
+    ("http://h.test", "h.test", PREFIX, f"{PREFIX}/"),
+    (f"https://h.test{PREFIX}/", "h.test", PREFIX, f"{PREFIX}/"),
+    (f"https://h.test{PREFIX}", "h.test", PREFIX, PREFIX),
+    (f"https://h.test{PREFIX}x/y", "h.test", PREFIX, f"{PREFIX}{PREFIX}x/y"),
+    ("https://ident.example.org/authorize?a=1", "h.test", PREFIX, "https://ident.example.org/authorize?a=1"),
+    ("http://h.test:8085/x", "h.test", PREFIX, "http://h.test:8085/x"),
+    ("/already/relative", "h.test", PREFIX, "/already/relative"),
+    ("http://h.test/x", None, PREFIX, "http://h.test/x"),
+])
+def test_self_redirects_become_root_relative_under_the_prefix_and_others_are_untouched(location, host, base, want):
+    assert app._relative_self_location(location, host, base) == want
