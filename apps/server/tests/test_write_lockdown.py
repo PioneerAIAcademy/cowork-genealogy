@@ -189,8 +189,8 @@ def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
     opts = real_agent.build_options(tmp_path)
 
     matchers = opts.hooks["PreToolUse"]
-    # Since 1d there are TWO PreToolUse matchers: an unscoped counter for the Stop hook's
-    # no-progress arm, and the deny hook on its own narrow matcher. Identity is the wrong
+    # There are several PreToolUse matchers: an unscoped counter (the delivered and
+    # pending-message halts), and the deny hook on its own narrow matcher. Identity is the wrong
     # assertion now, but "the deny still fires" is not -- this hook is the session's only
     # restraint under bypassPermissions, so a refactor that stopped it reaching the write
     # lockdown would let every raw write onto research.json through with this test green.
@@ -620,12 +620,12 @@ def test_the_matcher_binds_under_both_readings(tool_name):
 
 # ── delegations run in the foreground (issue #2813, feedback #3156 and #3159) ──
 #
-# The Stop hook cannot see that a turn is waiting on its own background subagent
-# -- it reads `project.status` and its own counters -- so it nudges, and the
-# model answers the nudge by spawning a DUPLICATE of the agent still running.
-# Measured twice on the alpha: duplicate q_001/q_002 from two question-selection
-# spawns, and four record-extractors relaunched synchronously while the
-# background copies kept going. The prototype has forced the foreground since
+# A background delegation leaves the turn running while its agent works, and the
+# (since deleted) Stop hook nudged such a turn, so the model spawned a DUPLICATE of
+# the agent still running. Measured twice on the alpha: duplicate q_001/q_002 from
+# two question-selection spawns, and four record-extractors relaunched synchronously
+# while the background copies kept going. The rewrite stays after the veto went
+# (decision 26): a turn must not end while its own agent is still running. The prototype has forced the foreground since
 # the 2026-09-23 lead ruling; this is that arm on the hosted plane.
 
 async def test_a_delegation_is_rewritten_to_run_in_the_foreground():
