@@ -632,6 +632,50 @@ def strip_agent_return_trailer(text: str) -> str:
     return text.strip()
 
 
+def normalize(text: str) -> str:
+    """Canonical form for comparing a relay with a return.
+
+    An ORDERED, exact list, because "normalize dashes" alone is ambiguous
+    enough to move the headline: collapsing runs of `-` as well scores 16 where
+    this scores 13, and both are faithful readings of a looser rule.
+
+    Runs of `-` are deliberately NOT collapsed -- agents write an em dash as
+    `--` and relays render it as a single character, so collapsing would make
+    `--` and `-` interchangeable and over-count survival.
+    """
+    out = text.replace("*", "")
+    for src, dst in (("“", '"'), ("”", '"'), ("‘", "'"), ("’", "'")):
+        out = out.replace(src, dst)
+    for src in ("—", "–", "−"):
+        out = out.replace(src, "-")
+    return " ".join(out.split()).strip()
+
+
+def tail_after_final_rule(text: str) -> str:
+    """The text after the return's final `---` line, or "" if it has none.
+
+    A line whose STRIPPED content is exactly `---`, after the runtime trailers
+    are removed and fenced blocks dropped -- a `---` inside a code fence would
+    otherwise move what counts as "final".
+    """
+    lines = strip_agent_return_trailer(text or "").splitlines()
+    last = None
+    in_fence = False
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence and line.strip() == "---":
+            last = i
+    if last is None:
+        return ""
+    # Sliced from the ORIGINAL lines, never the fence-stripped ones: the tail
+    # is matched against an unstripped `text_response`, so returning a
+    # fence-stripped tail made a summary containing a code block impossible to
+    # match even when relayed verbatim.
+    return "\n".join(lines[last + 1 :]).strip()
+
+
 def agent_return_text(agent_returns: list[dict[str, Any]] | None, agent: str) -> str:
     """Every return `agent` made this run, joined -- the text a direct test grades.
 
