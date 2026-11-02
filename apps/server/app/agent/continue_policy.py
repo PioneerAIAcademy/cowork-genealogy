@@ -1,21 +1,18 @@
-"""Whether a run keeps going, and what its ending is called.
+"""How a hosted turn ends, and what its ending is called.
 
 ONE copy for two planes. The hosted alpha (``real_agent.build_options``) and the
-prototype worker (``proto/worker/options.py``) both bind a ``Stop`` hook, and the worker
-already imports from this package -- ``options.py`` takes ``direct_project_file_write``
-and ``worker.py`` takes ``map_message``, both from ``app.agent.real_agent`` -- so a module
-here serves both without a second implementation.
+prototype worker (``proto/worker/options.py``) both read the outcomes, the delivered
+halt and the foreground rewrite from here; the worker already imports from this package
+-- ``options.py`` takes ``direct_project_file_write`` and ``worker.py`` takes
+``map_message``, both from ``app.agent.real_agent`` -- so a module here serves both
+without a second implementation.
 
-``eval/harness/e2e/stop_checker.py`` stays genuinely separate: the worker image does not
-copy ``eval/``, and a test asserts those two trees never import each other. So there are
-**two** copies, not three, and
-``apps/server/tests/test_continue_policy_parity.py`` pins them against each other by
-lifting both with ``ast`` -- the pattern
-``eval/harness/tests/unit/test_write_lockdown_parity.py`` already uses for exactly this
-problem.
+Neither plane vetoes a stop. Step mode ends each turn at its boundary on purpose, and
+"Keep going" is the host's reply rather than a veto (docs/plan/research-step-mode.md,
+section A2 and Phase 2).
 
-Pure stdlib and no I/O beyond ``read_research_json``, so the parity test can lift the
-predicates into a clean namespace without importing ``claude_agent_sdk``.
+Pure stdlib and no I/O beyond ``read_research_json``, so ``test_continue_policy_parity.py``
+can lift the predicates into a clean namespace without importing ``claude_agent_sdk``.
 """
 
 from __future__ import annotations
@@ -33,8 +30,8 @@ from typing import Any
 #   completed        the project reached project.status == "completed"
 #   stopped          the patron pressed Stop
 #   queued           the turn ended to pick up a message the patron typed mid-turn
-#   budget           a budget is spent -- the nudge cap, or 1e's per-session spend bound
-#   no_progress      a nudge produced no tool call, mid-research
+#   budget           1e's per-session spend bound is spent
+#   no_progress      a redelivered attempt did no work ZERO_PROGRESS_CAP times running
 #   decision         the agent asked something only the patron can answer (phase 3)
 #   delivered        a BOUNDED request was met and the turn stopped on purpose
 #   mcp_unavailable  the genealogy tool surface went away
@@ -55,7 +52,7 @@ TERMINAL_DECISION = "decision"
 # renders it as nothing, while a delivery has something to report.
 TERMINAL_DELIVERED = "delivered"
 TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
-# A session with no research.json: nothing to nudge toward, so the stop is allowed. It is
+# A session with no research.json. It is
 # `ok` ("ended with no terminal reason", per the note above `delivered`) because the browser
 # leaves that unlabelled, where `delivered` would render "Done" on a turn that may have
 # stopped to ask for a person id.
@@ -153,6 +150,11 @@ HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
 # #3156), and four record-extractors relaunched synchronously while the
 # background copies kept going -- one orphaned source, one extractor hung 56
 # minutes, ~20 minutes of re-extraction (feedback issue #3159).
+#
+# The Stop veto is gone (step mode phase 2), and the rewrite stays (decision 26): an
+# `Agent` call with no `run_in_background` key still runs in the background, so the
+# turn ends while its agent runs, and the prototype worker kills the CLI at the turn's
+# first result, taking a still-running agent with it.
 DELEGATION_TOOLS = frozenset({"Agent", "Task"})
 
 
@@ -351,134 +353,6 @@ def completion_halt_summary(
     if summary is None or not summary.endswith(PROOF_CONCLUSION_FINISHED):
         return None
     return summary
-
-
-def should_continue_run(
-    *,
-    research: Mapping[str, Any] | None,
-    nudges_used: int,
-    max_nudges: int,
-    tool_count: int,
-    tool_count_at_last_nudge: int,
-    mcp_unavailable: bool = False,
-    stopped: bool = False,
-    pending_user_message: bool = False,
-    pending_decision: bool = False,
-    delivered: bool = False,
-) -> bool:
-    """Whether to veto an agent's *voluntary* stop and nudge it onward.
-
-    True  -> block the Stop: the run is unfinished and a nudge may help.
-    False -> allow the Stop: the patron stopped the run (1c), the project is complete, the
-             nudge budget is spent, the previous nudge produced no tool call (the agent
-             isn't making progress, so another nudge won't either), a message the patron
-             typed mid-turn is waiting (1b), the agent has asked something only the patron
-             can answer (the clause phase 3 fills in), the agent met a BOUNDED request and
-             stopped on purpose (`delivered`), there is no research.json (lead ruling
-             2026-10-12, issue #3274), or the genealogy MCP surface is
-             gone -- which neither plane can observe today, so callers leave the default.
-
-    ``stopped`` is FIRST, ahead of everything. None of the original four paths is "the
-    patron stopped", and the no-progress escape cannot stand in for one: a halted call
-    still writes a tool_calls row and the counter counts ROWS, so it moves and that escape
-    never fires.
-
-    ``research is None`` sits just before ``project_completed``, so a project-less session
-    still ends ``stopped``, ``delivered`` and so on when one of those is why it ended. It is
-    an ``is None`` test, not a falsy one: ``read_research_json`` returns None for a missing,
-    unreadable and corrupt file alike, while an empty ``{}`` document is a project that has
-    not started and still reads as incomplete. The nudge says to re-read research.json, which
-    cannot help a session that has none.
-
-    The four added flags default False, so the harness's own truth table -- which the first
-    five parameters are a port of -- still describes this function exactly.
-
-    ``delivered`` was added, removed as dead code when no caller passed it, and added back
-    once one did: the router's "Bounded request or job" section (#2813 item 1) tells the
-    model to stop when a bounded request is met, and without this arm THIS plane vetoed
-    that stop and nudged it onward -- the exact thrash the section exists to end.
-    """
-    if stopped:
-        return False
-    if mcp_unavailable:
-        return False
-    if pending_user_message:
-        return False
-    if pending_decision:
-        return False
-    if delivered:
-        return False
-    if research is None:
-        return False
-    if project_completed(research):
-        return False
-    if nudges_used >= max_nudges:
-        return False
-    if nudges_used > 0 and tool_count == tool_count_at_last_nudge:
-        return False
-    return True
-
-
-def terminal_reason(
-    *,
-    research: Mapping[str, Any] | None,
-    nudges_used: int,
-    max_nudges: int,
-    mcp_unavailable: bool = False,
-    stopped: bool = False,
-    pending_user_message: bool = False,
-    pending_decision: bool = False,
-    delivered: bool = False,
-) -> str:
-    """WHY ``should_continue_run`` is about to return False.
-
-    It mirrors that function's clause order exactly, which is the only thing keeping the
-    two in agreement; a test walks both in lockstep over every combination.
-
-    ``delivered`` was added here in the same commit as its sibling clause. It is not
-    reachable from either plane yet -- the alpha ends a delivered turn through the
-    PreToolUse halt rather than this path -- but a flag that returns False in one function
-    and is unnameable in the other breaks the mirror this docstring promises, and the
-    parity test is hand-maintained, so nothing else would have caught it.
-    """
-    if stopped:
-        return TERMINAL_STOPPED
-    if mcp_unavailable:
-        return TERMINAL_MCP_UNAVAILABLE
-    if pending_user_message:
-        return TERMINAL_QUEUED
-    if pending_decision:
-        return TERMINAL_DECISION
-    if delivered:
-        return TERMINAL_DELIVERED
-    if research is None:
-        return TERMINAL_OK
-    if project_completed(research):
-        return TERMINAL_COMPLETED
-    if nudges_used >= max_nudges:
-        return TERMINAL_BUDGET
-    return TERMINAL_NO_PROGRESS
-
-
-
-# The veto text both Stop hooks send, verbatim from the harness's. It lived in TWO copies
-# -- `proto/worker/options.py` and `real_agent.py` -- each with a comment saying it was
-# copied from the other, which is what a shared module is for: the whole point of this
-# text is that all three readers send the SAME words, and two hand-kept copies is the one
-# arrangement that cannot guarantee it.
-#
-# Every vetoed stop takes this text, on every plane: the e2e harness's hook answers a
-# retired `Next: <step>. Continue?` hand-back (issue #2292) with it too, rather than
-# "Yes.", so the harness grades the Stop policy the prototype runs (U17).
-# `eval/harness` cannot import this module, so `test_continue_policy_parity.py` reads
-# the harness's copy off its source and goes red when either side moves.
-CONTINUE_REASON = (
-    "You are mid-run in an autonomous /research session and the "
-    "project is not yet complete (project.status is not "
-    "'completed'). Re-read research.json and invoke the `research` skill "
-    "now; keep going until project.status is "
-    "'completed' or you hit a genuine, logged blocker."
-)
 
 
 def env_int(name: str, default: int, *, env=None, on_error=None, floor: int = 0) -> int:

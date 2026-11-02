@@ -1335,7 +1335,7 @@ in parallel with PR 2.
   - **Open, for Praise:** decision 25's prototype halt reuses `_halt`, which a main-thread
     `research_delivered` triggers today (`apps/server/proto/worker/options.py`). Say whether
     this bullet still stands under decision 25, and if it does, what ends a bounded ask.
-- **Delete the Stop veto:** `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
+- **Delete the Stop veto:** **Hosted half done** (the alpha and the prototype: no `Stop` hook binds, the cap and its settings are gone, `proto-demo-auto` retired, `turns.nudges` and `turn_costs.continuations` kept and now always 0). **Owed, in its own PR:** the e2e half — make `--step-mode job` the e2e default, then delete `eval/harness/e2e/stop_checker.py`'s veto and `max_continue_nudges`. The alpha's runner chain and `auto_continue_max_steps` were left in place (Praise, 2026-11-02): the chain matches only the retired `Next: <step>. Continue?` line, so it never starts, and the alpha is being retired. Original scope: `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
   counters, `stop_checker.py`'s veto, and `AUTONOMOUS_MAX_NUDGES` with its compose, Beanstalk
   and bundle settings, and the alpha's `autonomous_max_nudges` and `auto_continue_max_steps`.
   `hand_back.py` and the runner's chain stay; they carry "Keep going". `foreground_rewrite` and

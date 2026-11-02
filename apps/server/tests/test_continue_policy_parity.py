@@ -1,36 +1,23 @@
-"""The continue-policy copies must agree (PR #2870 items 1b/1c/1d).
+"""What the hosted planes still share with the e2e harness (PR #2870 items 1b/1c/1d).
 
-"Whether to veto the model's voluntary stop" exists in **two** implementations, in two
-packages that cannot import each other:
+The Stop veto was deleted from the hosted planes in step mode's phase 2, so
+``should_continue_run``, ``terminal_reason`` and ``CONTINUE_REASON`` now live only in
+``eval/harness/e2e/stop_checker.py``, which the e2e half of phase 2 retires. What the two
+packages still share is ``project_completed``:
 
     apps/server/app/agent/continue_policy.py      hosted alpha AND the prototype worker
     eval/harness/e2e/stop_checker.py              the e2e harness
 
-Two, not three, and that is the point of 1d. The worker already imports from
-``apps/server/app`` -- ``options.py`` takes ``direct_project_file_write`` and ``worker.py``
-takes ``map_message`` -- so the alpha and the prototype SHARE one copy rather than each
-carrying its own. What stays genuinely separate is ``eval/harness``: the worker image does
-not copy ``eval/``, and a test asserts those two trees never import each other.
-
-So this file pins the one remaining seam. The harness's version is the original; the
-shared copy is a port that has since grown several clauses (``stopped``,
-``pending_user_message``, ``pending_decision``) the harness does not have. Those default
-False, which is exactly what makes the comparison meaningful: **with the new flags off,
-the two must be the same function**, case for case. A change to the harness's rule that
-does not land here -- or the reverse -- is the drift this catches.
-
 **Extracted with `ast`, not imported**, the pattern
 ``eval/harness/tests/unit/test_write_lockdown_parity.py`` already uses: the two live in
 packages with separate virtualenvs, and importing either pulls in dependencies the other
-does not have. Both predicates are pure stdlib, so lifting the functions they need into a
-clean namespace exercises the real code with none of that. Extraction failing is a hard
-error, never a skip -- a renamed predicate must break this test, not silently empty it.
+does not have. Extraction failing is a hard error, never a skip -- a renamed predicate must
+break this test, not silently empty it.
 """
 
 from __future__ import annotations
 
 import ast
-import itertools
 import subprocess
 from pathlib import Path
 
@@ -40,11 +27,9 @@ REPO = Path(__file__).resolve().parents[3]
 
 SHARED = REPO / "apps/server/app/agent/continue_policy.py"
 HARNESS = REPO / "eval/harness/e2e/stop_checker.py"
-ORCHESTRATOR = REPO / "eval/harness/e2e/orchestrator.py"
 
-# The names each copy must expose. `terminal_reason` is in both: the harness wrote it
-# first, and 1c ported it so `turns.outcome` can say WHY a run ended.
-LIFTED = ("project_completed", "should_continue_run", "terminal_reason")
+# The names each copy must expose.
+LIFTED = ("project_completed",)
 
 
 def _is_literal(value: ast.expr) -> bool:
@@ -93,29 +78,12 @@ def copies() -> tuple[dict, dict]:
     return _lift(SHARED), _lift(HARNESS)
 
 
-# The harness's five-parameter signature -- the shared copy's extra flags default False,
-# so this is the surface on which the two must be identical.
 _RESEARCH = (None, {}, {"project": {}}, {"project": {"status": "active"}},
              {"project": {"status": "completed"}})
-_NUDGES = ((0, 0), (0, 5), (1, 5), (5, 5), (6, 5))
-_TOOLS = ((0, -1), (12, 8), (15, 15), (3, 3))
-_MCP = (False, True)
 
 
-def _cases():
-    for research, (used, cap), (count, at_last), mcp in itertools.product(
-        _RESEARCH, _NUDGES, _TOOLS, _MCP
-    ):
-        yield dict(research=research, nudges_used=used, max_nudges=cap,
-                   tool_count=count, tool_count_at_last_nudge=at_last, mcp_unavailable=mcp)
 
 
-def test_should_continue_run_agrees_case_for_case(copies):
-    shared, harness = copies
-    cases = list(_cases())
-    assert len(cases) >= 100, "the sweep collapsed; it is meant to cover the whole table"
-    for kw in cases:
-        assert shared["should_continue_run"](**kw) is harness["should_continue_run"](**kw), kw
 
 
 def test_project_completed_agrees_including_the_shapes_that_are_not_dicts(copies):
@@ -125,136 +93,21 @@ def test_project_completed_agrees_including_the_shapes_that_are_not_dicts(copies
         assert shared["project_completed"](research) is harness["project_completed"](research), research
 
 
-def test_terminal_reason_agrees_wherever_the_harness_has_an_opinion(copies):
-    """The harness's five reasons must still come out of the shared copy unchanged. The
-    shared one has four MORE -- stopped, queued, decision, delivered -- which it can only
-    reach through flags the harness has no parameter for, so they cannot collide."""
-    shared, harness = copies
-    for kw in _cases():
-        call = {k: kw[k] for k in ("research", "nudges_used", "max_nudges", "mcp_unavailable")}
-        assert shared["terminal_reason"](**call) == harness["terminal_reason"](**call), call
 
 
-def test_the_shared_copy_is_the_one_with_the_new_clauses(copies):
-    """Directional, so a lazy "fix" that deletes the new clauses to make the sweep pass
-    reds instead. The first three flags are 1b's and 1c's whole mechanism; `delivered`
-    joined them with the hosted-alpha port and is listed here for the same reason -- it
-    returns False in `should_continue_run`, so it must be nameable by `terminal_reason`
-    or the two have silently stopped mirroring each other.
-
-    The sweep above only exercises the harness's 5-parameter signature, so a clause
-    that exists ONLY in the shared copy would be invisible to it by construction, and
-    this test is the sole compensator: any such clause has to be added here by hand or
-    it is unguarded.
-
-    The base is an ACTIVE project, not None: with no research.json the policy allows every
-    stop (issue #3274), so a None base would let a deleted flag clause pass on that alone."""
-    shared, _ = copies
-    base = dict(research={"project": {"status": "active"}}, nudges_used=0, max_nudges=5,
-                tool_count=0, tool_count_at_last_nudge=-1)
-    for flag, reason in (("stopped", "stopped"), ("pending_user_message", "queued"),
-                         ("pending_decision", "decision"), ("delivered", "delivered"),
-                         ("mcp_unavailable", "mcp_unavailable")):
-        assert shared["should_continue_run"](**{**base, flag: True}) is False, flag
-        # research=None on purpose: each flag outranks the no-research.json clause.
-        assert shared["terminal_reason"](
-            research=None, nudges_used=0, max_nudges=5, **{flag: True}) == reason
-    # The clause itself. The sweep above compares the two copies, so it cannot see the
-    # clause go from both at once; this can.
-    assert shared["terminal_reason"](research=None, nudges_used=0, max_nudges=5) == "ok"
-    # `is None`, not falsiness: an empty document is a project that has not started, and is
-    # still nudged. The sweep cannot tell the two apart for the same reason.
-    assert shared["should_continue_run"](**{**base, "research": {}}) is True
-    assert shared["terminal_reason"](research={}, nudges_used=0, max_nudges=5) == "no_progress"
 
 
-def test_the_harness_stop_hook_has_one_reply_and_it_is_the_workers(copies):
-    """U17: the harness answered a `Next: <step>. Continue?` hand-back "Yes." (1 of 3
-    bagley stops) and a false completion with text of its own, where the worker sends
-    CONTINUE_REASON to every stop it vetoes. A paired grade then compares two Stop
-    policies, not two stacks.
-
-    So every `return` in the orchestrator's `stop_hook` is either the allow (`{}`) or a
-    block dict whose reason is spelled as a literal equal to the shared CONTINUE_REASON.
-    A reason held in a name, a dict built elsewhere, or a second literal fails here --
-    the shapes the retired branch took (`return {"decision": "block", "reason": reply}`)."""
-    shared, _ = copies
-    tree = ast.parse(ORCHESTRATOR.read_text(encoding="utf-8"))
-    hooks = [n for n in ast.walk(tree)
-             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "stop_hook"]
-    assert len(hooks) == 1, f"expected one stop_hook in orchestrator.py, found {len(hooks)}"
-    returns = [n for n in ast.walk(hooks[0]) if isinstance(n, ast.Return)]
-    blocks = 0
-    for ret in returns:
-        where = f"orchestrator.py:{ret.lineno}"
-        assert isinstance(ret.value, ast.Dict), f"{where}: stop_hook returns a non-literal"
-        fields = {k.value: v for k, v in zip(ret.value.keys, ret.value.values)
-                  if isinstance(k, ast.Constant)}
-        assert len(fields) == len(ret.value.keys), f"{where}: a computed key in the reply"
-        if not fields:
-            continue
-        assert set(fields) == {"decision", "reason"}, f"{where}: reply keys {sorted(fields)}"
-        decision, reason = fields["decision"], fields["reason"]
-        assert isinstance(decision, ast.Constant) and decision.value == "block", where
-        assert isinstance(reason, ast.Constant), f"{where}: the veto reason is computed"
-        assert reason.value == shared["CONTINUE_REASON"], (
-            f"{where}: the harness vetoes with text the worker does not send"
-        )
-        blocks += 1
-    assert blocks == 1, f"stop_hook has {blocks} veto replies; parity allows exactly one"
 
 
-def test_there_is_no_third_copy(tmp_path):
-    """1d says two copies, not three. A new one is only findable by looking."""
-    import subprocess
-
-    # Two ways this check can cover nothing, both of which it hit while being written:
-    # without --untracked a copy added in THIS branch is invisible, and without the `^`
-    # anchor the pattern matches its own quoted self in this file -- so the check reported
-    # a third copy that was only ever the grep string. The anchor is also the more precise
-    # question: both real copies are module-level definitions.
-    out = subprocess.run(
-        ["git", "grep", "--untracked", "-l", "-e", "^def should_continue_run"],
-        cwd=REPO, capture_output=True, text=True, encoding="utf-8",
-    )
-    assert out.returncode in (0, 1), out.stderr
-    found = {line.strip() for line in out.stdout.splitlines() if line.strip()}
-    expected = {"apps/server/app/agent/continue_policy.py", "eval/harness/e2e/stop_checker.py"}
-    assert found == expected, (
-        f"should_continue_run is defined in {sorted(found)}; 1d allows exactly {sorted(expected)}. "
-        "A third copy means the alpha and the prototype have stopped sharing one."
-    )
 
 
 def test_the_worker_imports_the_shared_copy_rather_than_redefining_it():
     options = (REPO / "apps/server/proto/worker/options.py").read_text(encoding="utf-8")
     assert "from app.agent.continue_policy import" in options
-    assert "def should_continue_run(" not in options, "the worker must import, not redefine"
     real_agent = (REPO / "apps/server/app/agent/real_agent.py").read_text(encoding="utf-8")
     assert "from .continue_policy import" in real_agent, "and so must the alpha"
 
 
-def test_the_veto_text_has_exactly_one_definition():
-    """The whole point of CONTINUE_REASON is that every plane sends the SAME words. It
-    shipped as two hand-kept copies -- one in `proto/worker/options.py`, one in
-    `real_agent.py` -- each carrying a comment saying it was copied from the other, which
-    is the one arrangement that cannot guarantee it. `--untracked` because git grep skips
-    files a branch has not added yet, and `^CONTINUE_REASON` so this test's own quoted
-    mention of the name does not match itself."""
-    out = subprocess.run(
-        ["git", "grep", "--untracked", "-l", "-e", "^CONTINUE_REASON = "],
-        cwd=REPO, capture_output=True, text=True, encoding="utf-8",
-    )
-    assert out.returncode in (0, 1), out.stderr
-    found = {line.strip() for line in out.stdout.splitlines() if line.strip()}
-    assert found == {"apps/server/app/agent/continue_policy.py"}, (
-        f"CONTINUE_REASON is defined in {sorted(found)}; there must be exactly one. "
-        "Both Stop hooks import it, and two copies drift silently."
-    )
-    for rel in ("apps/server/proto/worker/options.py", "apps/server/app/agent/real_agent.py"):
-        body = (REPO / rel).read_text(encoding="utf-8")
-        assert "CONTINUE_REASON" in body, f"{rel} still sends the veto"
-        assert "CONTINUE_REASON = (" not in body, f"{rel} must import it, not redefine it"
 
 
 def test_the_env_guard_is_shared_where_it_can_be_and_only_where_it_can_be():
@@ -281,7 +134,7 @@ def test_the_env_guard_is_shared_where_it_can_be_and_only_where_it_can_be():
     )
 
     # Everything that CAN share, does.
-    for rel in ("apps/server/app/agent/real_agent.py", "apps/server/proto/worker/worker.py"):
+    for rel in ("apps/server/proto/worker/worker.py",):
         body = (REPO / rel).read_text(encoding="utf-8")
         assert "env_int(" in body or "env_float(" in body, f"{rel} must use the shared guard"
 

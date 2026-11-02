@@ -36,7 +36,7 @@ sys.path.insert(0, str(PROTO))
 
 from drive import parse_frame  # noqa: E402  (the driver's SSE parser; one parser, two callers)
 import turn_message  # noqa: E402  (the shared claim and banner SQL, as the web image imports it)
-from web import app, auth  # noqa: E402  (queue_body / max_nudges: one definition for the fake store too)
+from web import app, auth  # noqa: E402  (queue_body: one definition for the fake store too)
 from web.app import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_TITLE,
@@ -205,7 +205,7 @@ class FakeStore:
         seq = self.add_event(session.session_id, "user_msg", {"text": text, "turn_id": turn_id})
         # The real helper, not a hand-rolled copy: a fake that builds its own body would
         # let the route tests pass while production enqueued a different shape.
-        body = app.queue_body(turn_id, session, text, T0.isoformat(), app.max_nudges())
+        body = app.queue_body(turn_id, session, text, T0.isoformat())
         turn = Turn(turn_id=turn_id, seq=seq, body=body)
         self.turns.append(turn)
         if queued:
@@ -477,8 +477,6 @@ async def test_post_message_mints_turn_id_records_user_msg_and_enqueues_the_body
     assert queue.sent == [{
         "turn_id": out["turn_id"], "session_id": row.session_id, "project_id": row.project_id,
         "text": "Find Thomas Flynn", "enqueued_at": T0.isoformat(),
-        # 1a: the cap rides the message, from this tier's environment.
-        "max_nudges": app.DEFAULT_MAX_NUDGES,
     }]
     events = store.events[row.session_id]
     assert [e.kind for e in events] == ["user_msg"]
@@ -910,20 +908,15 @@ async def test_the_real_has_queued_and_request_stop_run_the_sql_they_claim():
     assert "RETURNING stop_requested_at" in stop_sql, "a missing session must answer False, not silently pass"
 
 
-async def test_the_real_begin_turn_stamps_the_tiers_cap_and_not_a_literal(monkeypatch):
-    """1a's whole carrier. `queue_body(..., max_nudges())` swapped for `queue_body(..., 0)`
-    survived the suite -- and a 0 turns the nudge budget OFF for every turn this tier
-    enqueues, shipping the stop-at-every-step behaviour the plan exists to remove while
-    looking exactly like the feature simply not working."""
+async def test_the_real_begin_turn_stamps_no_nudge_cap(monkeypatch):
+    """The Stop veto is deleted (step mode phase 2), so the body carries no ``max_nudges``
+    -- even with the old variable still set in this tier's environment."""
     monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", "37")
     conn = await _begin(queued=False)
     inserts = [p for sql, p in zip(conn.sql, conn.params) if sql.startswith("INSERT INTO turns")]
     assert len(inserts) == 1
     body = inserts[0][3].obj if hasattr(inserts[0][3], "obj") else inserts[0][3]
-    assert body["max_nudges"] == 37, (
-        f"the row carries max_nudges={body['max_nudges']}; it must come from this tier's "
-        f"own environment, which is 1a's only carrier"
-    )
+    assert "max_nudges" not in body
 
 
 async def test_the_real_begin_turn_clears_the_stop_flag_only_when_it_enqueues():
@@ -1979,8 +1972,8 @@ async def test_supplied_project_id_is_created_or_claimed_only_under_dev_login(mo
 def test_queue_body_carries_no_token_or_user_field():
     """U3 resolves the patron from the project_id already in the body; a token in the body
     would persist in turns.message, SQS and the DLQ."""
-    body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat(), 1)
-    assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at", "max_nudges"}
+    body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat())
+    assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at"}
 
 
 # ── U10: /api/health as readiness ────────────────────────────────────────────────

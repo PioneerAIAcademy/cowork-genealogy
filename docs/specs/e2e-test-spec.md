@@ -2768,9 +2768,9 @@ A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 ### 16.5 What a pass does not show
 
 A pass here is **not** a pass on today's hosted alpha. That plane appends
-DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`) and nudges any stop not
-preceded by `research_delivered`; a single ask that ends without it would be
-pushed on into more work. The `delivered` column is what shows that risk.
+DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`). It no longer nudges a stop
+(step mode's phase 2 deleted the Stop veto), so a single ask that ends without
+`research_delivered` simply ends; the `delivered` column shows which did.
 
 ### 16.6 Cost
 

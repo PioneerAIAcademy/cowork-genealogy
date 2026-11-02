@@ -30,16 +30,14 @@ caught a tool's refusal being read as a hook's.
 
 THREE THINGS THIS DELIBERATELY DOES NOT DO
 
-  * **No Stop hook.** Both planes veto a voluntary stop while `research.json` is
-    not `completed` (alpha `_DEFAULT_MAX_NUDGES = 30`, `real_agent.py:608`;
-    text `CONTINUE_REASON`, `continue_policy.py:330` -- "keep going"). Left
-    armed, the model would be denied, report, try to stop, and be nudged onward
-    up to 30 times: the probe would record "retried" caused by the veto's own
-    instruction, not by the deny. PR 1 DELETES the veto, so measuring with it
-    armed would record a world PR 1 does not ship. The project is also left
-    empty, so `read_research_json` -> None would allow the stop anyway
-    (`continue_policy.py:266`) -- belt and braces, because this is the single
-    confound that would invert the result.
+  * **No Stop hook.** When this probe was written, both planes vetoed a
+    voluntary stop while `research.json` was not `completed`. Left armed, the
+    model would have been denied, reported, tried to stop, and been nudged
+    onward: the probe would record "retried" caused by the veto's own
+    instruction, not by the deny. Step mode's phase 2 has since deleted the
+    veto from both hosted planes, so no plane binds one. The project is also
+    left empty, belt and braces, because this is the single confound that
+    would invert the result.
 
   * **No instruction about what to do after a deny.** The prompt sets up the
     delegation and stops talking. `probe_hook_binding.py`'s QUERY commands "Do
