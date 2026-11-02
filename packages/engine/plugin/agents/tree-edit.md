@@ -18,7 +18,7 @@ description: >-
   record (extraction — sourced facts materialize onto tree
   persons via person-evidence, then proof-conclusion sets the concluded
   value).
-model: claude-haiku-5-5
+model: claude-sonnet-5-5
 effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
