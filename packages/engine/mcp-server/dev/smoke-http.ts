@@ -9,7 +9,11 @@
  *   GENEALOGY_PG_DSN=… GENEALOGY_S3_… node build/http.js --port 8787 &
  *   npx tsx dev/smoke-http.ts [--base http://127.0.0.1:8787] [--project-id ID]
  *                             [--project-path /project] [--host-config] [--bearer TOKEN]
- *                             [--pg-dsn DSN]
+ *                             [--pg-dsn DSN] [--offline-only]
+ *
+ * `--offline-only` runs just the SmokeStep.offline rows — no network and no
+ * credentials — which is what the CI job uses. `assertCoverage` still runs over
+ * the WHOLE plan, so a newly advertised tool with no row still fails.
  *
  * Two clients, because the server admits a project request only for the bearer
  * stamped on an open attempt of that project (U4):
@@ -69,6 +73,7 @@ const { values } = parseArgs({
     "host-config": { type: "boolean", default: false },
     bearer: { type: "string" },
     "pg-dsn": { type: "string" },
+    "offline-only": { type: "boolean", default: false },
   },
 });
 
@@ -84,6 +89,7 @@ if (!pgDsn) {
 const base = (values.base as string).replace(/\/$/, "");
 const projectId = values["project-id"] ?? `smoke-${randomUUID()}`;
 const hostConfig = values["host-config"] === true;
+const offlineOnly = values["offline-only"] === true;
 const bearer = await detectBearer(values.bearer);
 const project = anchoredProject(values["project-path"] as string);
 const ctx: SmokeCtx = {
@@ -120,6 +126,7 @@ printHeader("smoke-http", ctx, [
   `project-id=${projectId}`,
   `turn-id=${turnId}`,
   `host-config=${hostConfig}`,
+  `offline-only=${offlineOnly}`,
 ]);
 
 const db = new pg.Client({ connectionString: pgDsn, connectionTimeoutMillis: 10_000 });
@@ -186,6 +193,7 @@ try {
     (tool, args) =>
       callViaClient("projectPath" in args || tool === "project_list" ? projectClient : plainClient, tool, args),
     ctx,
+    { offlineOnly },
   );
   calls = run.calls;
   failures = failures.concat(run.failures);

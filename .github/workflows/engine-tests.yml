@@ -181,3 +181,79 @@ jobs:
           AWS_CONFIG_FILE: /nonexistent
           AWS_EC2_METADATA_DISABLED: 'true'
         run: npx vitest run tests/store/pg-s3-project-store.test.ts tests/http/http-server-pg.test.ts tests/store/pg-routing-store.test.ts tests/store/s3-orphan-sweep.test.ts
+
+  # The transport smoke: drives the COMPILED build/http.js over a real MCP SDK
+  # Streamable HTTP transport, with the per-request bearer principal, the
+  # X-Genealogy-Project-Id store binding and the U4/U6 claim fence. No vitest
+  # file exercises that path, which is how #3905 broke on main unnoticed.
+  #
+  # Offline rows only (lead, 2026-11-01: "I don't think we need to test
+  # connections in CI"). The network and credentialed rows stay uncovered here
+  # on purpose; `make engine-smoke-http` with no SMOKE_OFFLINE_ONLY runs them
+  # locally. The stack is vitest-pg's, started the same way.
+  engine-smoke-http:
+    runs-on: ubuntu-latest
+    env:
+      PROTO_PG_DSN: postgresql://postgres:proto@localhost:5432/proto
+      PROTO_S3_ENDPOINT: http://localhost:9000
+      PROTO_S3_BUCKET: projects
+      PROTO_S3_ACCESS_KEY: proto
+      PROTO_S3_SECRET_KEY: protoproto
+    steps:
+      - name: Check out PR
+        uses: actions/checkout@v7
+
+      - name: Start Postgres and MinIO
+        run: |
+          set -euo pipefail
+          docker run -d --name pg -e POSTGRES_DB=proto -e POSTGRES_PASSWORD=proto -p 5432:5432 postgres:16-alpine
+          docker run -d --name minio -e MINIO_ROOT_USER=proto -e MINIO_ROOT_PASSWORD=protoproto -p 9000:9000 \
+            pgsty/minio:RELEASE.2026-08-04T00-00-00Z server /data
+
+      - name: Set up uv (Python 3.12, for the migrations runner and the harness)
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.12'
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: packages/engine/mcp-server/package-lock.json
+
+      - name: Install the pinned npm (from the packageManager field)
+        run: |
+          NPM_VER="$(node -p "require('./packages/engine/mcp-server/package.json').packageManager.split('@')[1]")"
+          npm install -g "npm@${NPM_VER}"
+
+      - name: Install dependencies
+        working-directory: packages/engine/mcp-server
+        # The touch is make's sentinel ($(ENGINE_DEPS), Makefile). Without it
+        # `make engine-smoke-http` re-runs a full `npm ci` before building.
+        run: |
+          npm ci
+          touch node_modules/.make-installed
+
+      - name: Wait for both, create the bucket, apply the schema
+        run: |
+          set -euo pipefail
+          ready() {
+            for _ in $(seq 1 60); do
+              if "$@" >/dev/null 2>&1; then return 0; fi
+              sleep 1
+            done
+            return 1
+          }
+          ready docker exec pg pg_isready -U postgres -h 127.0.0.1 || { docker logs pg; echo "::error::postgres never became ready"; exit 1; }
+          ready docker exec minio mc ready local || { docker logs minio; echo "::error::minio never became ready"; exit 1; }
+          docker exec minio mc alias set proto http://127.0.0.1:9000 proto protoproto
+          docker exec minio mc mb --ignore-existing proto/projects
+          cd apps/server && MIGRATE_PG_DSN="$PROTO_PG_DSN" uv run --frozen python proto/migrate.py
+
+      - name: Smoke the built engine over Streamable HTTP (offline rows)
+        env:
+          SMOKE_STACK_DEP: ''
+          SMOKE_PG_CONTAINER: pg
+          SMOKE_OFFLINE_ONLY: '1'
+        run: make engine-smoke-http
