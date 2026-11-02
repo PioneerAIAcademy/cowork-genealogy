@@ -341,8 +341,9 @@ ADMISSION_REFUSALS: dict[str, tuple[int, str, str]] = {
 
 
 class AdmissionBusy(Exception):
-    """A new user's capped sign-in could not take the admission lock within
-    ``grants.QUEUE_LOCK_TIMEOUT_S``; the callback answers 503 and nothing is written."""
+    """A capped sign-in could not take the user's row (a returning user) or the admission
+    lock (a new one) within ``grants.QUEUE_LOCK_TIMEOUT_S``; the callback answers 503 and
+    nothing is written."""
 
 
 @dataclass(frozen=True)

@@ -31,8 +31,9 @@ second half is ``hashtext(session_id)`` -- so the engine's single-bigint
   ADMISSION_LOCK_NS  (#3985) transaction-scoped, ONE key ``(ns, 0)`` for the whole tier: a
                    capped sign-in holds it across counting ``users`` and inserting the new
                    row, so two sign-ins at cap-1 cannot both pass the count. Taken inside
-                   ``upsert_user``'s transaction only when ``GENEALOGY_MAX_USERS`` is set; its
-                   wait is bounded with ``QUEUE_LOCK_TIMEOUT_SQL``.
+                   ``upsert_user``'s transaction only when ``GENEALOGY_MAX_USERS`` is set and
+                   the email is new. ``QUEUE_LOCK_TIMEOUT_SQL`` bounds that wait and the
+                   returning user's row lock alike.
 
 A ``hashtext`` collision between two patrons only over-serializes them (a refresh is
 skipped), never lets one through. Every namespace is cast ``::int4``. psycopg 3 types a
