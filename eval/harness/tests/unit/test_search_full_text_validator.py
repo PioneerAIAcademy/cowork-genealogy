@@ -29,6 +29,7 @@ from test_search_full_text import (  # noqa: E402
     test_topical_fixture_actually_used as check_topical_fixture,
     test_log_query_traces_to_fulltext_search_call as check_log_fidelity,
     test_filtered_nil_is_followed_by_unfiltered_retry as check_filtered_nil_retry,
+    test_every_nil_fulltext_search_is_logged as check_every_nil_logged,
     test_fulltext_search_never_scopes_to_collection_id as check_never_scopes_to_collection_id,
     test_plan_item_completion_matches_its_own_record_type as check_plan_item_completion,
     test_record_place_filters_use_facet_form as check_record_place_form,
@@ -116,28 +117,17 @@ def _filtered_nil_call(keywords, **filter_kwargs):
 
 
 def _unfiltered_call(keywords, **kwargs):
-    c = call("fulltext_search", keywords=keywords, **kwargs)
+    if keywords is not None:
+        kwargs["keywords"] = keywords
+    c = call("fulltext_search", **kwargs)
     c["response"] = {"results": [{"recordId": "ark:/61903/1:1:XXXX"}], "totalResults": 1}
     return c
 
 
-def _log_fts(keywords, **filter_kwargs):
-    """A research_log_append op that LOGS a filtered fulltext nil, so the
-    filtered-nil check (scoped to logged nils, issue #3432) applies to it. A fire
-    case pairs this with its `_filtered_nil_call`; an unlogged probe omits it."""
-    return call("research_log_append", ops=[{
-        "tool": "fulltext_search",
-        "outcome": "negative",
-        "resultsExamined": 0,
-        "query": {"keywords": keywords, **filter_kwargs},
-    }])
-
-
 def test_filtered_nil_retry_fires_when_no_retry_follows():
-    """Validator fires when a LOGGED filtered nil has no unfiltered follow-up."""
+    """Validator fires when a filtered nil has no unfiltered follow-up."""
     calls = [
         _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
-        _log_fts("+Flynn +Patrick", recordPlace1="Pennsylvania"),
     ]
     with pytest.raises(AssertionError) as e:
         check_filtered_nil_retry(calls)
@@ -146,17 +136,27 @@ def test_filtered_nil_retry_fires_when_no_retry_follows():
     assert "+Flynn +Patrick" in msg
 
 
-def test_filtered_nil_from_an_unlogged_probe_does_not_fire():
-    """An unlogged exploratory filtered nil is not held to the retry — the check
-    shadows the write-boundary guard, which governs only logged findings (#3432,
-    the ut_search_full_text_015 shape: a bare surname hit a catch-all nil and the
-    agent recovered via the name field without logging the probe)."""
+def test_filtered_nil_recovered_only_by_a_name_search_fires():
+    """The ut_search_full_text_015 shape PR #3593 exempted, unlogged: a filtered
+    +Flynn nil the agent recovered via the name field. Logged or not, it is now
+    held to the retry (issue #3974). A name search does not retry a keywords nil
+    -- nor does research_log_append's filteredNilRetryInvariants accept one."""
     calls = [
         _filtered_nil_call("+Flynn", place="Schuylkill County, Pennsylvania"),
-        # no _log_fts — the probe was never logged
-        call("fulltext_search", name="Thomas Flynn"),  # recovered via the name field
+        _unfiltered_call(None, name="Thomas Flynn"),
     ]
-    check_filtered_nil_retry(calls)  # does not raise
+    with pytest.raises(AssertionError) as e:
+        check_filtered_nil_retry(calls)
+    assert "'+Flynn'" in str(e.value)
+
+
+def test_filtered_name_field_nil_is_exempt_from_the_retry():
+    """A name-field nil takes the name-field retry (switch to keywords), not a
+    filter-removal retry; the write-boundary guard exempts it the same way."""
+    nil = call("fulltext_search", name="Thomas Flynn", place="Schuylkill County, Pennsylvania")
+    nil["response"] = {"results": [], "totalResults": 0}
+    check_filtered_nil_retry([nil, _unfiltered_call("+Thomas +Flynn")])
+    check_filtered_nil_retry([nil])
 
 
 def test_filtered_nil_retry_passes_when_unfiltered_retry_follows():
@@ -185,7 +185,6 @@ def test_filtered_nil_variant_is_not_covered_by_the_canonical_spelling():
     calls = [
         _unfiltered_call("+Flynn +witness"),
         _filtered_nil_call("+Flinn +witness", recordPlace1="Pennsylvania"),
-        _log_fts("+Flinn +witness", recordPlace1="Pennsylvania"),
     ]
     with pytest.raises(AssertionError):
         check_filtered_nil_retry(calls)
@@ -196,10 +195,152 @@ def test_filtered_nil_is_not_covered_by_a_broader_positive_search():
     calls = [
         _unfiltered_call("+Flynn"),
         _filtered_nil_call("+Flynn +Patrick", recordPlace1="Pennsylvania"),
-        _log_fts("+Flynn +Patrick", recordPlace1="Pennsylvania"),
     ]
     with pytest.raises(AssertionError):
         check_filtered_nil_retry(calls)
+
+
+# --- test_every_nil_fulltext_search_is_logged (issue #3974) -------------
+# Every search is logged, empty ones included. Reads the new log[] entries in
+# after_state, keyed on (handle, filter keys sent).
+
+_PP = "/tmp/eval-ws"
+
+
+def _nil(**args):
+    c = call("fulltext_search", projectPath=_PP, **args)
+    c["response"] = {"results": [], "totalResults": 0}
+    return c
+
+
+def _hit(**args):
+    c = call("fulltext_search", projectPath=_PP, **args)
+    c["response"] = {"results": [{"id": "ark:/61903/1:1:XXXX"}], "totalResults": 1}
+    return c
+
+
+def _logged(*queries, tool="fulltext_search"):
+    before = {"research_json": {"log": [{"id": "log_001", "tool": "record_search", "query": {}}]}}
+    after = {"research_json": {"log": before["research_json"]["log"] + [
+        {"id": f"log_{n:03d}", "tool": tool, "query": q, "outcome": "negative"}
+        for n, q in enumerate(queries, start=2)
+    ]}}
+    return before, after
+
+
+# The planted run: ut_search_full_text_015, v2_2026-10-29_13-26-38.json run 0.
+# Every search here was logged in one ok:true research_log_append batch.
+_015_CALLS = [
+    _nil(keywords='+"Thomas Flynn"', place="Schuylkill County, Pennsylvania", yearFrom=1870, yearTo=1890),
+    _nil(keywords='+"Thomas Flynn"'),
+    _nil(keywords='+"Thos Flynn"'),
+    _hit(name="Thomas Flynn"),
+]
+_015_LOGGED = [
+    {"keywords": '+"Thomas Flynn"', "place": "Schuylkill County, Pennsylvania", "yearFrom": 1870, "yearTo": 1890},
+    {"keywords": '+"Thomas Flynn"'},
+    {"keywords": '+"Thos Flynn"'},
+    {"name": "Thomas Flynn"},
+]
+
+
+def test_planted_015_run_passes_both_nil_checks():
+    check_every_nil_logged(*_logged(*_015_LOGGED), _015_CALLS)
+    check_filtered_nil_retry(_015_CALLS)
+
+
+def test_planted_015_run_fires_the_retry_check_without_its_unfiltered_retry():
+    with pytest.raises(AssertionError, match="Thomas Flynn"):
+        check_filtered_nil_retry([c for i, c in enumerate(_015_CALLS) if i != 1])
+
+
+def test_planted_015_run_fires_when_the_unfiltered_nil_goes_unlogged():
+    """The filtered entry shares the handle and must not cover the unfiltered nil."""
+    unlogged = [q for q in _015_LOGGED if q != {"keywords": '+"Thomas Flynn"'}]
+    with pytest.raises(AssertionError) as e:
+        check_every_nil_logged(*_logged(*unlogged), _015_CALLS)
+    assert "'+\"Thomas Flynn\"' with filters []" in str(e.value)
+
+
+def test_nil_logged_skips_when_no_fulltext_search_was_called():
+    with pytest.raises(pytest.skip.Exception):
+        check_every_nil_logged(*_logged(), [call("record_search", surname="Flynn")])
+
+
+def test_nil_logged_fires_on_an_unlogged_nil():
+    with pytest.raises(AssertionError, match="Flynn"):
+        check_every_nil_logged(*_logged(), [_nil(keywords="+Flynn")])
+
+
+def test_nil_logged_does_not_count_an_entry_the_scenario_already_held():
+    before, after = _logged({"keywords": "+Flynn"})
+    before = after
+    with pytest.raises(AssertionError):
+        check_every_nil_logged(before, after, [_nil(keywords="+Flynn")])
+
+
+def test_nil_logged_does_not_count_an_entry_logged_for_another_tool():
+    with pytest.raises(AssertionError):
+        check_every_nil_logged(*_logged({"keywords": "+Flynn"}, tool="record_search"), [_nil(keywords="+Flynn")])
+
+
+def test_nil_logged_fires_when_only_the_filtered_twin_is_logged():
+    calls = [_nil(keywords="+Flynn", place="Pennsylvania"), _nil(keywords="+Flynn")]
+    with pytest.raises(AssertionError) as e:
+        check_every_nil_logged(*_logged({"keywords": "+Flynn", "place": "Pennsylvania"}), calls)
+    assert "filters []" in str(e.value)
+    assert "'place'" not in str(e.value)
+
+
+def test_nil_logged_needs_one_entry_for_a_repeated_identical_nil():
+    calls = [_nil(keywords="+Flynn"), _nil(keywords="+Flynn")]
+    check_every_nil_logged(*_logged({"keywords": "+Flynn"}), calls)
+
+
+def test_nil_logged_ignores_include_facets_count_and_offset():
+    calls = [_nil(keywords="+Flynn", includeFacets=True, count=20, offset=0)]
+    check_every_nil_logged(*_logged({"keywords": "+Flynn"}), calls)
+
+
+def test_nil_logged_ignores_a_filter_sent_empty():
+    check_every_nil_logged(*_logged({"keywords": "+Flynn"}), [_nil(keywords="+Flynn", place="")])
+
+
+def test_nil_logged_matches_an_nl_query():
+    check_every_nil_logged(*_logged({"nlQuery": "Thomas Flynn will"}), [_nil(nlQuery="Thomas Flynn will")])
+
+
+def test_nil_logged_skips_a_nil_with_no_project():
+    for project_path in (None, "", "   "):
+        c = call("fulltext_search", keywords="+Flynn", projectPath=project_path)
+        c["response"] = {"results": [], "totalResults": 0}
+        check_every_nil_logged(*_logged(), [c])
+    c = call("fulltext_search", keywords="+Flynn")
+    c["response"] = {"results": [], "totalResults": 0}
+    check_every_nil_logged(*_logged(), [c])
+
+
+def test_nil_logged_skips_an_error_response():
+    c = call("fulltext_search", keywords="+Flynn", projectPath=_PP)
+    c["response"] = {"error": "fixture_not_found", "message": "No fixture matched"}
+    check_every_nil_logged(*_logged(), [c])
+
+
+def test_nil_logged_does_not_treat_a_hit_as_a_nil():
+    check_every_nil_logged(*_logged(), [_hit(keywords="+Flynn")])
+    c = call("fulltext_search", keywords="+Flynn", projectPath=_PP)
+    c["response"] = {"results": [], "totalResults": 12}
+    check_every_nil_logged(*_logged(), [c])
+
+
+def test_name_field_retry_passes_both_nil_checks():
+    """A name-field nil, logged under its name handle, then a keywords retry:
+    exempt from the filter-removal retry, but still owed a log entry."""
+    calls = [_nil(name="Thomas Flynn", place="Pennsylvania"), _hit(keywords="+Thomas +Flynn")]
+    check_filtered_nil_retry(calls)
+    check_every_nil_logged(*_logged({"name": "Thomas Flynn", "place": "Pennsylvania"}), calls)
+    with pytest.raises(AssertionError, match="Thomas Flynn"):
+        check_every_nil_logged(*_logged(), calls)
 
 
 # --- test_plan_item_completion_matches_its_own_record_type --------------
@@ -481,7 +622,6 @@ def test_filtered_nil_is_not_answered_by_a_different_filter():
     calls = [
         _filtered_nil_call("+Flynn", recordPlace1="Pennsylvania"),
         _unfiltered_call("+Flynn", recordPlace2="Schuylkill"),
-        _log_fts("+Flynn", recordPlace1="Pennsylvania"),
     ]
     with pytest.raises(AssertionError):
         check_filtered_nil_retry(calls)
@@ -696,7 +836,6 @@ def test_filtered_nil_retry_fires_on_a_place_nil_with_no_retry():
     with pytest.raises(AssertionError):
         check_filtered_nil_retry([
             _filtered_nil_call("+Flynn +Patrick", place="Schuylkill County, Pennsylvania"),
-            _log_fts("+Flynn +Patrick", place="Schuylkill County, Pennsylvania"),
         ])
 
 

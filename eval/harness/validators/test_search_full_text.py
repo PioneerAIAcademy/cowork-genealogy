@@ -262,39 +262,6 @@ def _fts_tool_calls(tool_calls):
     return [tc for tc in (tool_calls or []) if (tc.get("tool") or "").endswith("fulltext_search")]
 
 
-def _logged_fulltext_filters(tool_calls):
-    """(handle, frozenset of present post-search filter keys) for every
-    fulltext_search op the run LOGGED via research_log_append.
-
-    The write-boundary guard `filteredNilRetryInvariants` (research-log-append.ts,
-    issue #3432) enforces the unfiltered retry on exactly these — a filtered nil
-    the agent records as a finding. The filtered-nil check below is that guard's
-    shadow plane, so it judges the same population: an UNLOGGED exploratory probe
-    the agent abandoned (e.g. a bare surname that hit a catch-all nil, then
-    recovered via the name field) is not part of the research record and is not
-    held to the retry."""
-    out = set()
-    for tc in (tool_calls or []):
-        if not (tc.get("tool") or "").endswith("research_log_append"):
-            continue
-        args = tc.get("args") or {}
-        ops = args.get("ops")
-        if isinstance(ops, str):
-            try:
-                ops = json.loads(ops)
-            except ValueError:
-                ops = None
-        for op in (ops if isinstance(ops, list) else [args]):
-            if not isinstance(op, dict) or op.get("tool") != "fulltext_search":
-                continue
-            q = op.get("query")
-            if not isinstance(q, dict):
-                continue
-            handle = q.get("keywords") or q.get("nlQuery") or ""
-            out.add((handle, frozenset(k for k in POST_SEARCH_FILTER_KEYS if k in q)))
-    return out
-
-
 def test_log_query_traces_to_fulltext_search_call(before_state, after_state, tool_calls):
     """A new fulltext_search log entry's query must not record a
     recordPlace/yearFrom/yearTo/recordType/collectionId filter that was
@@ -392,12 +359,13 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
     post-search filters and returns zero results, the next call for the same
     topic (same keywords/nlQuery handle) must omit those filters — a nil under
     a filter may be a metadata mismatch, not a true negative. Spelling and
-    abbreviation variants are not exempt (SKILL.md step 4)."""
+    abbreviation variants are not exempt (SKILL.md step 4). Judges every call,
+    logged or not (lead, 2026-11-01, issue #3974): an unlogged filtered nil is
+    the escape the write-boundary guard cannot see."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
 
-    logged = _logged_fulltext_filters(tool_calls)
     by_handle: dict = {}
     for c in calls:
         args = c["args"]
@@ -414,11 +382,6 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
                 continue
             present_filters = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
             if not present_filters:
-                continue
-            # Shadow of the write-boundary guard (issue #3432): judge only a
-            # filtered nil the agent LOGGED as a finding, not an unlogged probe it
-            # ran and abandoned. See _logged_fulltext_filters.
-            if (handle, frozenset(present_filters)) not in logged:
                 continue
             resp = c.get("response") or {}
             results = resp.get("results")
@@ -442,6 +405,48 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
                 )
     assert not errors, (
         "Filtered nil not followed by unfiltered retry:\n  - " + "\n  - ".join(errors)
+    )
+
+
+def _fts_search_key(args):
+    """(handle, frozenset of filter keys sent with a value). `includeFacets`,
+    `count` and `offset` change what comes back, not what was searched."""
+    handle = args.get("keywords") or args.get("nlQuery") or args.get("name") or ""
+    return handle, frozenset(k for k in POST_SEARCH_FILTER_KEYS if args.get(k) not in (None, ""))
+
+
+def test_every_nil_fulltext_search_is_logged(before_state, after_state, tool_calls):
+    """Every search is logged, empty ones included (lead, 2026-11-01, issue
+    #3974). A nil stages nothing, so `research_log_append`'s guards never see one
+    left unlogged; this checks what research.json holds, so a refused batch does
+    not count. A `name`-field nil is exempt from the retry rule, not from this.
+    The key ignores filter values: one entry covers two nils that differ only
+    in them. Reopen trigger: docs/specs/guardrail-enforcement-spec.md §9."""
+    calls = _fts_tool_calls(tool_calls)
+    if not calls:
+        pytest.skip("no fulltext_search calls this turn")
+
+    logged = {
+        _fts_search_key(e["query"])
+        for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "fulltext_search" and isinstance(e.get("query"), dict)
+    }
+    missing = []
+    for c in calls:
+        args = c.get("args") or {}
+        resp = c.get("response")
+        project_path = args.get("projectPath")
+        if not (isinstance(project_path, str) and project_path.strip()):
+            continue
+        if not isinstance(resp, dict) or "error" in resp:
+            continue
+        if resp.get("results") or (resp.get("totalResults") or 0) > 0:
+            continue
+        key = _fts_search_key(args)
+        if key not in logged and key not in missing:
+            missing.append(key)
+    assert not missing, "Nil fulltext_search with no research_log_append entry:\n  - " + "\n  - ".join(
+        f"{handle!r} with filters {sorted(filters)}" for handle, filters in missing
     )
 
 
