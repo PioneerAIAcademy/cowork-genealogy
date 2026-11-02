@@ -46,12 +46,11 @@ Two independent grounds rule this out:
 2. **Impossible dates.** Rozália Görög was born about 1860; in 1871 she would
    have been approximately eleven years old — far too young to be a mother.
    The couple's own children begin in 1884. The tree already holds their
-   daughter Veronika, born January 1897 (PID PQ6N-SP8), and she is the only
-   Veronika in this family.
+   daughter Veronika, born January 1897 (PID PQ6N-SP8).
 
-The 1871 baptism belongs to a different Tarjányi household in the same town —
-likely an older relative's — and no substitute record for an earlier Veronika
-was sought, because the research question asks about the children of Rozália
-Görög and János Tarjányi, and the existing tree already documents their full
-family. The hint record's `ark:/61903/1:1:XZ1Y-W4K` is the disproving record;
-retrieval was by index only (familysearch.org).
+The 1871 baptism belongs to a different Tarjányi household in the same town.
+Every baptism of the couple's own children in the same collection (1884–1894)
+indexes the mother as Görög Rozál, never Bona. Her age comes from her civil
+death entry (Kecskemét, 30 Oct 1916, ark:/61903/1:1:6V15-LZ5H). No search was
+made for children born before 1884, so this fixture does not claim the tree's
+seven children are complete.
