@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Still open from Phase 1: the manual alpha check after deploy and the re-scoping of the two-question e2e fixtures. Phase 2 waits on step mode being live. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. Phase 2 can start. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -1063,7 +1063,7 @@ file's own sections, top to bottom.
 | Ruling: the prototype is production; the alpha is backported to and retired; Cowork may be degraded | **Unaffected.** Cowork's enforcement waits on phase 0 |
 | Ruling: the spend bound continues in a new session | **Unaffected;** it matters most under "Keep going" |
 | Ruling: an errand pauses the job and waits (2026-09-27) | **Kept, loosened** (decision 16): an errand is a step that ends naming what to fetch, and the researcher may carry on without waiting (section I) |
-| "The Stop hook binds on every browser turn"; nudge cap 60; the alpha's `auto_continue` | **Superseded:** no turn arms the veto, and phase 2 deletes it. "Keep going" is the host's replies (section A2), which the alpha's `auto_continue` chain carries |
+| "The Stop hook binds on every browser turn"; nudge cap 60; the alpha's `auto_continue` | **Superseded:** no turn arms the veto, and phase 2 deletes it. "Keep going" is the host's replies (section A2). The alpha's `auto_continue` chain does not carry them: it matches only the retired `Next: <step>. Continue?` line (`hand_back.py`), so it never starts, and the alpha has no "Keep going" (checked 2026-11-02) |
 | `turns.outcome` values | **Mostly unchanged.** A step turn ends `ok` (no label); the worker sets `completed` at turn close when the step finished the project; `delivered` goes in phase 2 (pending the "Open, for Praise" question there) |
 | "`decision` and `mcp_unavailable` cannot fire" | **Unaffected;** step mode needs no `decision` exit |
 | person-evidence's weak-match pause and its autonomous-only resolve-downward rule | **The pause becomes the link step's closing question,** asked with the researcher present. Resolve-downward applies in "Keep going." and "Wrap it up." turns, from the router's `userPresent: no` (section B2) |
@@ -1315,6 +1315,13 @@ in parallel with PR 2.
     `AskUserQuestion` on the alpha — ADR-0005 item 10 measured it in Cowork, where it waits
     but resumes the same turn. The alpha has no hook and no Stop veto after PR 1, so if its
     `AskUserQuestion` does not wait, nothing stops a step there and the fix is a follow-on.
+    **Done 2026-11-02 (Praise, alpha build `365f4d903`, which includes #3917 and #3937):**
+    the first step ended on its "Continue with …?" line and waited with nothing running;
+    "Continue." ran one more step and stopped again; "Wrap it up." ended the research. The
+    alpha shows no reply buttons (only the prototype worker sends `turn_done.options`), and
+    nothing on it sends "Keep going"'s host replies, so that path is the prototype's to check.
+    The first message had to ask for a project in so many words: a lookup-shaped one skipped
+    project setup (issue #3768).
 - **Prerequisites, staffed separately:**
   - issue #2243 for the fan-out, and its handed-state follow-up for D's handed state;
   - prototype uploads (research-as-a-job's "let documents in") for external-site searches on
