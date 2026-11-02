@@ -177,9 +177,9 @@ countries, and the shared text is `/resolve-record-hint` boilerplate. Each still
 costs its own run, so merging them buys nothing. **Sharing a slot is necessary
 and not sufficient** — the merge has to be coverable by *one* run.
 
-If a set genuinely wants shared scheduling rather than merging, the tools are the
-`cluster:*` label and the standing `next run: <skill>` issue, both owned by
-`/audit-board`. Say so in the report and let that pass place them.
+If a set genuinely wants shared scheduling rather than merging, the tool is a
+`cluster:*` label, owned by `/audit-board`. Say so in the report and let that
+pass place it.
 
 ### No depth target
 
@@ -282,8 +282,8 @@ bought back.
    sentence.
 4. **Outside the slots** — merges from the file-convergence section, kept separate
    because they buy a reviewer and a rebase, never a run.
-5. **Hand to `/audit-board`** — sets that want a `cluster:*` label or a `next run:`
-   issue rather than a merge.
+5. **Hand to `/audit-board`** — sets that want a `cluster:*` label rather than a
+   merge.
 6. **Blockers found discharged** — every hold you checked and found already
    cleared, with what you read. These leave the pass as comments on those issues,
    and they are often worth more than the merges.
