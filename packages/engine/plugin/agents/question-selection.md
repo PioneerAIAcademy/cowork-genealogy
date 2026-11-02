@@ -283,6 +283,7 @@ research_append({
     selection_basis: "<the basis you chose from the Step 2 priority table>",
     question_kind: "<enumerative | targeted>",
     priority: "<high | medium | low>",
+    date_window: "<YYYY-YYYY>",
     status: "open",
     depends_on: [], unblocks: [],
     resolved: null, resolution_assertion_ids: [],
@@ -299,6 +300,11 @@ person's parents included.
 The tool validates the whole project before writing and writes nothing on
 failure; on `{ ok: false, errors }`, surface the errors and fix the entry —
 do not retry the same payload blindly.
+
+`date_window` is the span of years whose records could answer this question:
+from the earliest record that could hold the fact to the latest that could
+state it. A parentage question runs to the subject's death record; a marriage
+question covers the plausible marrying ages. A single year is `"1850-1850"`.
 
 **Set dependency links:**
 - `depends_on`: questions whose resolution enables or informs this question's
