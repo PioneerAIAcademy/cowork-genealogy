@@ -1334,12 +1334,14 @@ Two behaviors of the script that are deliberate:
 - It is **stdlib-only and never raises.** Every failure path — unparseable
   stdin, missing fields — falls through to **allowing** the call, because an
   exception here would fail a tool call the user was entitled to make.
-- **The `Bash` route is deliberately open.** The guard matches on `file_path`, so
-  `cat >`, `sed -i`, and `python -c` all get through. Pattern-matching command
-  text would false-deny a legitimate `python script.py research.json > out` while
-  still missing a variable-built path, and **a false deny is the worse failure
-  mode**. The rationale lives in `guardrail-enforcement-spec.md` §6 ("`Bash` is
-  not covered"), to be revisited only if a bypass ever uses the shell.
+- **The hook does not match `Bash`; the file mode does the job.** The guard
+  matches on `file_path`, and pattern-matching command text would false-deny a
+  legitimate `python script.py research.json > out` while still missing a
+  variable-built path — **a false deny is the worse failure mode**. Instead the
+  protected files are read-only on disk between writes, and `FsProjectStore` is
+  the only layer that unlocks them, so `>`, `>>`, `tee` and
+  `open(…, 'w')` are refused by the filesystem. `chmod` first still gets
+  through, and so do `sed -i` and `mv` on macOS and Linux. `guardrail-enforcement-spec.md` §6 and §6.1.
 
 Packaging is guarded: `package-plugin.mjs`'s `INCLUDE` must carry `"hooks"`, or
 the directory never ships. Asserted by `tests/packaging/plugin-hooks.test.ts`,
