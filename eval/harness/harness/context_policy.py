@@ -36,17 +36,15 @@ One scope limit (plan §4.1):
   `search-records` declare `extraction_append` in their own `allowed-tools` and
   call it from the main thread as their ordinary route, and `extraction_append` accordingly left
   `SUBAGENT_ONLY_TOOLS` (see the set's own comment for what that retires).
-  Neither current member is declared by a SKILL, so for both `agent_id`
-  presence alone decides: `image_read` is declared by no skill and no agent —
-  pages are read with `image_transcribe`, and the image-reader agents are retired
-  (issue #2013, #2490) — and `evaluation_append` (issue #1491) is declared by the
-  gps-mentor AGENT, whose own call is a subagent call the `agent_id` check
-  exempts; a skill-level declaration is what the exemption reads, and there is
-  none. Pinned by `tests/unit/test_context_policy.py`.
+  `image_read` is still declared by no skill and no agent — pages are read with
+  `image_transcribe`, and the image-reader agents are retired (issue #2013,
+  #2490) — and the hook's AGENT_ONLY_TOOLS are declared by no skill by
+  definition, so for every member `agent_id` presence alone still decides. Pinned by
+  `tests/unit/test_context_policy.py`.
 
 e2e enforcement covers **every member of `SUBAGENT_ONLY_TOOLS`** — `image_read`
-(#1273) and `evaluation_append` (#1491), since `extraction_append` (#942) left
-the set in issue #2937. Because no skill declares either member, `agent_id`
+(#1273) and, since issue #3528, the shipped hook's AGENT_ONLY_TOOLS, the tools
+only agents hold. Because no skill declares any member, `agent_id`
 presence alone discriminates a legitimate subagent call from a router
 substitution, which is all e2e can see — its sub-skills run in the same session
 via the `Skill` tool with no `agent_id` to attribute them. The e2e block is
@@ -99,20 +97,15 @@ from typing import Any
 # The declared-tools exemption below is NO LONGER unreachable: `research` and
 # `search-records` declare `extraction_append`, which is exactly the case condition 3 describes.
 #
-# `evaluation_append` — the gps-mentor agent's verdict writer (issue #1491), a
-# `research_append` scoped to `evaluations` by tool identity. gps-mentor is the
-# only writer of that section and it always runs as a subagent, so a main-thread
-# call is the router grading the work itself. Unlike `image_read` this member IS
-# declared by an agent (gps-mentor's `tools:`), which is an AGENT declaration,
-# not a skill `allowed-tools` one, so the declared-tools exemption (condition 3,
-# skill-level) does not reach it and `agent_id` presence is what exempts the
-# agent's own call. The hook plane denies the same write by caller identity
-# (`guard_project_files.py` `OWNED_SECTIONS`/`owner_denied`); this is the harness
-# e2e plane's half of the same deny.
+# The rest of the set is the shipped hook's AGENT_ONLY_TOOLS (issue #3528): the
+# tools only agents hold, which the plugin hook denies the main thread in
+# Cowork and the hosted path. Imported rather than copied, so a production deny
+# is a harness deny ("Denies production genuinely has stay too", CLAUDE.md).
+# `SUBAGENT_ONLY_TOOLS` is therefore assigned below, once the hook is loaded.
 #
 # Keep this a plain set, not a policy engine. Matched on the bare name, so it is
 # transport-agnostic.
-SUBAGENT_ONLY_TOOLS = frozenset({"image_read", "evaluation_append"})
+_HARNESS_ONLY_SUBAGENT_TOOLS = frozenset({"image_read"})
 
 
 def bare_tool_name(tool_name: str) -> str:
@@ -158,9 +151,9 @@ def subagent_only_violation(
     3. The skill did **not** declare the tool in its own `allowed-tools`
        (`declared_tools`, from `allowed_tools.declared_skill_tools`). A skill
        that claimed the tool for itself may call it directly; a skill that
-       holds it only through the agent-union may not. No skill declares either
-       guarded tool today — pages are read with `image_transcribe` — so this
-       exemption is currently unreachable, and `agent_id` presence alone decides (see
+       holds it only through the agent-union may not. No skill declares a
+       guarded tool today — AGENT_ONLY_TOOLS is by definition declared by none —
+       so this exemption is currently unreachable, and `agent_id` presence alone decides (see
        `e2e/orchestrator.py` and e2e-test-spec §6.1.1).
 
     `declared_tools=None` means "unknown", and is treated as **declaring
@@ -197,12 +190,6 @@ _DENIAL_REASONS = {
         "`found` and `digest`, and read the page with "
         "sidecar_read({ projectPath, ref: staged.resultsRef }) when you need it."
     ),
-    "evaluation_append": (
-        "evaluation_append may not be called from the main session — the "
-        "`evaluations` section is the gps-mentor agent's, which applies the "
-        "mandatory proof critique. Writing it here would grade the work itself. "
-        "Delegate: invoke `@plugin:gps-mentor` and let it append the evaluation."
-    ),
 }
 
 # A fallback that still refuses, for a guarded tool added to SUBAGENT_ONLY_TOOLS
@@ -220,9 +207,14 @@ def subagent_only_denial(bare: str) -> dict[str, Any]:
     Deliberately returns no `stopReason`: a denied call is a recoverable
     mistake, not a fatal one. The run continues so the router can pivot —
     matching how the e2e tree-read block behaves. The reason text is the
-    model's only feedback here, so it names the fix per tool (`_DENIAL_REASONS`).
+    model's only feedback here, so it names the fix per tool: the shipped
+    hook's own text for an agent-only tool, so the harness denies with what the
+    agent meets in Cowork, and `_DENIAL_REASONS` for the harness-only rest.
     """
-    reason = _DENIAL_REASONS.get(bare, _DENIAL_REASON_FALLBACK.format(bare=bare))
+    if bare in _guard.AGENT_ONLY_TOOLS:
+        reason = _guard.agent_only_reason(bare)
+    else:
+        reason = _DENIAL_REASONS.get(bare, _DENIAL_REASON_FALLBACK.format(bare=bare))
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
@@ -282,6 +274,15 @@ def _load_guard():
 
 
 _guard = _load_guard()
+
+#: Tool -> the agents that hold it, for the tools only agents hold. The shipped
+#: hook's map, not a copy.
+AGENT_ONLY_TOOLS = _guard.AGENT_ONLY_TOOLS
+
+#: Tools the main thread may not call: the harness-only `image_read` deny plus
+#: the shipped hook's AGENT_ONLY_TOOLS. Same import-don't-copy discipline as
+#: OWNED_SECTIONS below.
+SUBAGENT_ONLY_TOOLS = _HARNESS_ONLY_SUBAGENT_TOOLS | frozenset(AGENT_ONLY_TOOLS)
 
 
 #: research.json sections the shipped hook routes to a named agent, mapped to

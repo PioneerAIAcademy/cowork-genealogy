@@ -63,7 +63,7 @@ def test_the_evaluator_reads_both_readings():
 def test_the_six_alarms_and_only_no_progress_is_held():
     assert set(ALARMS) == PAGING | {"no_progress"}
     assert {n for n, a in ALARMS.items() if a["page"] is True} == PAGING
-    assert ALARMS["no_progress"]["page"] is False, "U24 question 3: no_progress must not page yet"
+    assert ALARMS["no_progress"]["page"] is False, "no_progress does not page (Richard, 2026-10-31)"
 
 
 def test_every_alarm_is_complete():

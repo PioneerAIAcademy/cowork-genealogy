@@ -85,6 +85,10 @@ EXPECTED_TABLES = frozenset({
     "users",
     "allowed_emails",
     "familysearch_tokens",
+    # 016/017 (S1): the beta's sign-in.
+    "connector_tokens",
+    "authorization_codes",
+    "signin_states",
 })
 
 _CREATE_TABLE = re.compile(r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?\"?(\w+)\"?", re.IGNORECASE)
@@ -836,6 +840,51 @@ def test_008_is_idempotent_and_owner_is_nullable():
     [tokens] = [s for s in statements if re.search(r"CREATE TABLE IF NOT EXISTS familysearch_tokens\b", s, re.I)]
     assert re.search(r"\buser_id text PRIMARY KEY\b", tokens), "one grant row per patron: U3 locks it"
     assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "the sign-in time"
+
+
+def test_016_is_idempotent_and_its_columns_are_nullable():
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    016 must be a no-op the second time. S1 adds nullable user columns without a backfill
+    and makes FamilySearch ids unique while leaving dev-login users with NULL ids alone."""
+    statements = _statements(SQL_DIR / "016_users_beta.sql")
+    assert statements, "016_users_beta.sql has no statements"
+    for stmt in statements:
+        assert re.match(r"(CREATE TABLE IF NOT EXISTS|CREATE UNIQUE INDEX IF NOT EXISTS|CREATE INDEX IF NOT EXISTS|"
+                        r"ALTER TABLE \w+ ADD COLUMN IF NOT EXISTS) ", stmt, re.I), f"not idempotent: {stmt}"
+    assert "CREATE UNIQUE INDEX IF NOT EXISTS users_familysearch_id_key ON users (familysearch_id)" in statements
+    for name in ("terms_accepted_at", "blocked_at", "openrouter_key_enc"):
+        [column] = [s for s in statements if re.search(rf"ADD COLUMN IF NOT EXISTS {name}\b", s, re.I)]
+        assert column.upper().startswith("ALTER TABLE USERS "), column
+        assert "NOT NULL" not in column.upper(), f"users.{name} must be nullable: {column}"
+
+
+def test_017_is_idempotent_and_keyed_by_hash():
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    017 must be a no-op the second time. S1 stores hashes of tokens, codes and sign-in
+    state; tokens and codes belong to a user and expire by Postgres's clock."""
+    statements = _statements(SQL_DIR / "017_connector_auth.sql")
+    assert statements, "017_connector_auth.sql has no statements"
+    for stmt in statements:
+        assert re.match(r"(CREATE TABLE IF NOT EXISTS|CREATE UNIQUE INDEX IF NOT EXISTS|CREATE INDEX IF NOT EXISTS|"
+                        r"ALTER TABLE \w+ ADD COLUMN IF NOT EXISTS) ", stmt, re.I), f"not idempotent: {stmt}"
+    for name, key in (("connector_tokens", "token"), ("authorization_codes", "code"), ("signin_states", "state")):
+        [table] = [s for s in statements if re.search(rf"CREATE TABLE IF NOT EXISTS {name}\b", s, re.I)]
+        assert re.search(rf"\b{key}_sha256 text PRIMARY KEY\b", table), table
+        if name != "signin_states":
+            assert re.search(r"\buser_id text NOT NULL REFERENCES users\(id\) ON DELETE CASCADE\b", table), table
+            assert re.search(r"\bscopes text\[\] NOT NULL\b", table), table
+            assert re.search(r"\bexpires_at timestamptz NOT NULL\b", table), table
+    assert "CREATE INDEX IF NOT EXISTS connector_tokens_user_idx ON connector_tokens (user_id)" in statements
+
+
+def test_018_adds_an_idempotent_spend_correction_column_that_reads_zero_and_its_join_index():
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    018 must be a no-op the second time. The column is summed into the spend cap, so a
+    turn written before it must read 0 -- what the cap counted for it then -- not NULL."""
+    assert _statements(SQL_DIR / "018_spend_correction.sql") == [
+        "ALTER TABLE turns ADD COLUMN IF NOT EXISTS spend_correction_usd double precision NOT NULL DEFAULT 0",
+        "CREATE INDEX IF NOT EXISTS sessions_sdk_session_idx ON sessions (sdk_session_id)",
+    ], "the cap's per-tool-call join reaches turns through sessions.sdk_session_id: it needs the index"
 
 
 # U9: a shipped file runs once and is never edited, so a later file may only add. Read off the

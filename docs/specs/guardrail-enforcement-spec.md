@@ -176,7 +176,6 @@ depends on another shipping first.
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | — | Step boundary (`step_allowed`, `StepGate`) | **prototype worker and both eval harnesses only — NOT Cowork, NOT the hosted alpha** | a second step spawned inside one turn: the turn runs one step, reports it, and ends. Ships in `packages/engine/plugin/hooks/step_boundary.py` as a **library** loaded with `importlib`, not as a registered plugin hook, so there is no `hooks.json` entry, no matcher-coverage case and no `make hook-smoke` arm. Cowork runs on router prose alone (decision 25, lead 2026-10-21): the cost exposure is the prototype, and a Cowork researcher can press stop. Rider 2's halt rate on the prototype is what would buy the hook later, with numbers rather than a guess | **enforcing on the prototype; absent in Cowork by decision** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
-| §8 | Live pre-write `same_person` provenance check | e2e harness only (`pretool_hook`) | a `person_evidence` link for a brand-new tree person written before any `same_person` scored that identity | **shadow only** (opt-in `deny` per run). Its writer-side counterpart is no longer shadow: see the row below |
 | §5 | `person_evidence` requires a recorded score | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` **append** for a reachable persona with no `same_person` score recorded for that pairing in `results/.scores/`, or any link the tool can prove circular at write time that nonetheless CARRIES a score. Exempt by tool identity: `extraction_append({ personId })`'s unchecked attachment links (`speculative`, no score, `ATTACHMENT_LINK_RATIONALE`), on an internal flag no caller reaches (lead, 2026-10-19) | **enforcing** (since 2026-09-24). The fabrication arm is deliberately NOT gated on reachability: a score on a provably circular pairing is wrong however the record was retrieved, and gating it left `ut_person_evidence_014` permanently uncatchable because its assertion is full-text sourced. Matched by an exact lookup on `(assertion_id, tree_person_id)`, the pair both the writer and the reader always hold, then by the persona arm: when the assertion carries a verified `record_persona_id` its record gives one role and names no second person, a `party_resolved` score that compared that persona with the same tree person, under a role the record gives it, answers for every such fact of that persona. Keying on the party could not see a score written by `same_person`'s fetched route, which resolves a real `persons[].id` where the assertion carries null; that case still falls to the exact key. ADR-0009 constraint 3 holds because the persona arm needs the persona to match, so a second persona of a linked record needs its own score, and the tree person keeps the two links of a relationship assertion apart |
 | §5 | An attachment link is only ever superseded | engine (MCP tool) - so Cowork, hosted, both harnesses | a `person_evidence` update of an attachment link (`isAttachmentLink`), live or retired, that sets anything but `superseded_by`: raising one in place would skip `same_person`, since the score gate checks an update only when it writes `match_score`, `assertion_id` or `person_id` | **enforcing** (since 2026-10-20; refuses 0 committed links, none carries the rationale yet) |
 | §6 | Section ownership by caller (`proof_summaries`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which since 2026-08-23 calls the shipped predicate rather than its own copy (the "neither harness" this row used to claim was stale from Phase 3, which added the e2e arm); **and the unit harness since 2026-09-02**, where the deny is gated by `test_no_out_of_lane_section_writes` | a `proof_summaries` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, on append **and** update | **enforcing** (since 2026-08-19; unproven against a real Cowork payload; the **hosted** binding of this arm is proven by `make hook-smoke` (§6.4)) |
@@ -184,7 +183,8 @@ depends on another shipping first.
 | §6 | Field ownership by caller (`project.status`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic and so gates this arm with no edit | a `project.status` write from anything but the `proof-conclusion` agent, in either the single-op or `ops[]` form, from either the `fields` or `entry` key, on append **and** update. Keyed on presence, not on a value: any write of the field asserts the project's state. The co-written rest of `project` — including the `updated` activity ping — is untouched | **enforcing** (since 2026-09-24). **Nothing proves this arm binds in Cowork**, which is true of every hook arm (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
 | §6 | Append ownership by caller (`questions`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | a `questions` op with `op: "append"` from anything but the `question-selection` agent, in either the single-op or `ops[]` form (including a stringified `ops`). An agent whose lane lacks `questions` meets the lane arm instead. Updates are untouched, so research-exhaustiveness and proof-conclusion keep theirs; a main-thread update that rewrites a question's text is knowingly allowed (ADR-0011 limit 1) | **enforcing** (since 2026-10-28). The main thread minted a question itself in 3 of 15 hosted sessions (feedback 2026-10-05 to 10-18); 28 of 28 October 2026 e2e creations came from the agent, so it refuses nothing in the corpus. **Nothing proves this arm binds in Cowork** (`docs/architecture.md` §9.4 gap 1); `make hook-smoke` proves the hook binds in the hosted loader, through a different arm |
 | §6 | Claim ownership by caller (`conflicts`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | a `conflicts` op from anything but the `conflict-resolution` agent that sets `status: "resolved"` or `"moot"` with its rationale, or sets any of `independence_analysis`, `weighing_analysis`, `preferred_assertion_id`, `resolution_rationale`, `resolution_kind`, `resolved_value` or `weighed_log_entry_ids` truthy — single-op or `ops[]`, `fields` or `entry`, stringified or not. A skeleton open (the schema's required fields only) and a re-open to `unresolved` claim nothing and pass, because six skills open conflicts | **enforcing** (since 2026-09-29). Nothing proves this arm binds in Cowork (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs |
-| §6 | Section ownership by caller (`evaluations`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | an `evaluations` write from anything but the `gps-mentor` agent — the main thread included, which was the one committed non-owner shape: a main thread recording its own mentor verdict before gps-mentor was spawned — through `evaluation_append` or `research_append`, in either the single-op or `ops[]` form, stringified or not, on append **and** update. Since 2026-10-27 gps-mentor holds only the narrow `evaluation_append` (`research_append` scoped to `evaluations` by tool identity), and `owner_denied` gates both tools. The harness e2e plane also denies a main-thread `evaluation_append` through `SUBAGENT_ONLY_TOOLS` | **enforcing** (since 2026-10-26, lead ruling 2026-10-12; nothing proves this arm binds in Cowork (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs) |
+| §6 | Section ownership by caller (`evaluations`) | plugin hook — Cowork, hosted, wherever the plugin loads; **and the e2e harness**, which calls the shipped predicate rather than a copy; **and the unit harness** via `test_no_out_of_lane_section_writes`, which is rule-agnostic | an `evaluations` write from anything but the `gps-mentor` agent — the main thread included, which was the one committed non-owner shape: a main thread recording its own mentor verdict before gps-mentor was spawned — through `evaluation_append` or `research_append`, in either the single-op or `ops[]` form, stringified or not, on append **and** update. Since 2026-10-27 gps-mentor holds only the narrow `evaluation_append` (`research_append` scoped to `evaluations` by tool identity), and `owner_denied` gates both tools. `evaluation_append` is also in `AGENT_ONLY_TOOLS` (next row), so a main-thread call is denied by that arm too, on both harness planes | **enforcing** (since 2026-10-26, lead ruling 2026-10-12; nothing proves this arm binds in Cowork (`docs/architecture.md` §9.4 gap 1); the **hosted** binding is provable by `make hook-smoke` (§6.4), which no CI job runs) |
+| §6 | Main-thread deny of the tools only agents hold (`AGENT_ONLY_TOOLS`) | plugin hook — Cowork, hosted, the prototype worker, wherever the plugin loads; **and both harnesses**, which import the map into `context_policy.SUBAGENT_ONLY_TOOLS` rather than copy it (the unit harness through `test_no_main_thread_subagent_only_calls`) | a call with no `agent_id` key to a tool held by agents and declared by no skill, under any server spelling. The deny names every agent that holds the tool as an `@plugin:<agent>` invocation, so the model delegates instead of meeting a wall. Five such tools stay callable (`MAIN_THREAD_OK`): `image_transcribe`, `sidecar_read`, `record_read` and `research_log_append`, which `research` uses to deliver and log a transcription itself, and `research_append`, which `owner_denied` routes per section. **Hand-kept, not derived** (lead, 2026-10-20): deriving the list as "agents' tools minus skills' `allowed-tools`" would turn `allowed-tools` into a main-thread restriction, which it is not, and would grow it silently on every skill-to-agent conversion. So a person places each tool only agents hold on `AGENT_ONLY_TOOLS` or on `MAIN_THREAD_OK` with its reason, and `plugin-hooks.test.ts` fails when a tool is on neither, on a list it no longer qualifies for, or carries owners that differ from the agents' `tools:`. The `hooks.json` matcher names each denied tool (not `.*`, which would start a `python3` for every MCP call) | **enforcing** (since 2026-10-29). Replayed over the 12 committed e2e runs that invoke no converted skill (measured at 54a8e1561), it would refuse 25 calls in 3 of them (10 `fulltext_search`, 9 `record_search`, one each of six more), every one the router running a search agent's step itself. The `research` unit suite makes 0 such calls in its 12 newest logs, nor do the 350 other unit runs whose threads can be told apart. The **hosted** binding is proven by `make hook-smoke`'s agent-only case (§6.4; BOUND 2026-10-29, Claude Code 2.1.308), which no CI job runs; nothing proves it binds in Cowork (`docs/architecture.md` §9.4 gap 1) |
 | below | Section ownership | unit harness only, and only inside a paid per-skill run | a skill writing a section of either project document that it does not own | **enforcing there, nowhere else** |
 | below | Staged-search backlog note | engine (MCP tool) — so Cowork, hosted, both harnesses | a search whose staged response no `research.json` log entry accounts for, and a nil search on a project path | **advisory only — reports, refuses nothing** (since 2026-08-31; from an alpha-feedback session where 11 `record_search` calls and one skill invocation produced zero log entries). Detection, not enforcement: whether it becomes a refusal wants the run-log rate first, which `make e2e-advisories SINCE=all` now reports (fired / acted / ignored / condition-never-held / not-observable per advisory, split by `agent_type`). A nil search stages nothing, so the backlog half is structurally blind to it |
 | §5 | Completion gate: blocking conflicts | engine (MCP tool) — so Cowork, hosted, both harnesses | `project.status: "completed"` while an unresolved conflict blocks a question — it names one, is an identity conflict, or disputes an assertion a question was built on | **enforcing** (the two declared arms shipped first, motivated by the `wilkins-death-kentucky` finding of 2026-07-15; the derived arm widens them. refuses 11 of 128 (9%) completed corpus runs against the previous 5, measured at f459af71b; all 11 refusals read individually per ADR-0011 limit 2 and all are true positives) |
@@ -410,7 +410,7 @@ and getting it wrong is what made three checks look dead for a fortnight:
 | Check | Stored | Replayed | Status |
 |---|---:|---:|---|
 | §7 caller-attributed recency | 823 (window 40), 130 runs | n/a — windowed replay, see the table above | **retired permanently**, not queued |
-| §8 live `same_person` provenance | 12, across 7 runs | 115 of 149 runs that link a person | **graduated 2026-09-24**, on the writer side rather than as an e2e hook: `research_append` now refuses the append itself. The e2e pre-write hook stays shadow, since it fires on a different plane and catches the ordering rather than the attestation |
+| §8 live `same_person` provenance | — | — | **graduated 2026-09-24** on the writer side: `research_append` refuses the append itself. The e2e hook and detector were **retired at harness v9** (below) |
 | §7.5 citation-nulling (`find_citation_nulling_in_conclusions`) | **0**, 0 runs | **0**, of 159 scanned | never observed either way |
 | §7.5 citation-nulling, TREE side (`find_citation_nulling_in_tree_sources`) | **0**, 0 runs — arm added 2026-08-25, no run has carried it yet | **111 source(s), across 50 runs**, of 159 scanned | shadow, reported; **deliberately not graduated** — see below |
 | §7.5 conflict-unpersisted (`find_unpersisted_conflict_resolutions`) | **6**, across 5 runs, measured at 0b65122bc | **10** summaries across 9 of 194 runs, measured at 0b65122bc | **graduated 2026-09-28** to a `research_append` precondition that refuses the `proof_summaries` write, under ADR-0011's labelled-case rule. The harness detector stays as the document-plane reading, and both replay one case file |
@@ -616,19 +616,16 @@ corpus only grows:
 make e2e-guardrail-shadow REPLAY=1 SINCE=all
 ```
 
-`REPLAY=1` recomputes **the seven post-hoc families and the §11 unnamed-delegate
-check**, not just `same_person` provenance: that one from each run's `tool_calls`
-plus its fixture's committed seed tree, the six §7/§7.5 checks from each run's
-committed `.final-research.json` / `.final-tree.gedcomx.json` sidecars, and §11
-from each run's `tool_calls`. Each is a distinct
+`REPLAY=1` recomputes **the six post-hoc families and the §11 unnamed-delegate
+check**: the six §7/§7.5 checks from each run's committed `.final-research.json`
+/ `.final-tree.gedcomx.json` sidecars, and §11 from each run's `tool_calls`. Each is a distinct
 number from the *stored* count printed above it, and the distinction is the thing
 to understand before reading either:
 
 - The **stored** count covers only runs made after each live check shipped. That
-  is what made every post-hoc check read zero: `same_person` provenance shipped
-  `2026-08-04 23:45Z`, citation-nulling `2026-08-06`, warnings-unchecked
-  `2026-08-10`, conflict-unpersisted `2026-08-12`, against a corpus that is 84%
-  July. Today the stored counts are 12 (`same_person`, 7 runs), 1
+  is what made every post-hoc check read zero: citation-nulling shipped
+  `2026-08-06`, warnings-unchecked `2026-08-10`, conflict-unpersisted
+  `2026-08-12`, against a corpus that is 84% July. Today the stored counts are 1
   (warnings-unchecked, 1 run) and 0 for the other two. This needs no code — each
   committed e2e run produces stored entries by itself.
 - Both counts are **branch-scoped** — they read `eval/runlogs/e2e/` in the
@@ -677,15 +674,7 @@ to understand before reading either:
   the crawl leaves the GitHub-side cross-reference to the human rather than
   querying it itself. A human runs the target and triages the result only
   when a decision is actually about to be taken off one of these counts.
-- The **replayed** counts read the whole corpus. `same_person` provenance: **115
-  of the 149 runs that link a person have ≥1 gap (699 links, 76 fixtures)**, with
-  one run skipped and named for having no committed seed tree. Before the
-  persona-reachability narrowing the same replay read 120 of 149 and 788 links;
-  the difference is links whose provenance lane cannot yield a persona from what the run retained. It is a **lower
-  bound** — the live hook may not yet see a `same_person` issued in the same turn
-  as the write, while the replay always sees the full prefix. Its second job is
-  scoring a candidate *narrowing* of the rule against history before that
-  narrowing ships. The three post-hoc checks: citation-nulling **0** of 159
+- The **replayed** counts read the whole corpus. The three post-hoc checks: citation-nulling **0** of 159
   scanned, conflict-unpersisted **4 runs** of 159 (10 summaries across 9 of 194 runs when it graduated, measured at 0b65122bc), warnings-unchecked **0 runs**
   of 67 scanned, 134 skipped. The skips are the capture-stripped logs, which
   carry no `response_summary` and so cannot hold the refusal marker; the
@@ -695,50 +684,33 @@ to understand before reading either:
   quietly shrank reads as a clean corpus, which is the failure this whole section
   exists to correct.
 
-**Why a deny needs more than a number: the reason has to be satisfiable.** The
-original reason said a brand-new identity "should be scored before it is
-asserted", which the agent believes it did. The cause is an **id mismatch**, not
-laziness: `tree_edit` mints local ids (`I1`) and rejects caller-supplied ones,
-while `same_person`'s explicit arm scores `primaryId1`/`primaryId2` *inside the
-caller's own gedcomx documents*. Under that arm the one satisfying shape was to
-pass the tree side as `gedcomx2` with `primaryId2: "I1"`, which agents produced
-in 3 of 103 corpus runs.
+**§8 `same_person` provenance: enforced by the writer, retired from the
+harness.** `research_append` refuses a `person_evidence` link to a reachable
+record persona unless `same_person` scored that pairing, and refuses a score on a
+person minted from the very record the link cites (`personEvidenceScoreInvariants`
+and `mintedFromThisRecord` in `research-append.ts`). That refusal binds on every
+path, Cowork and hosted included, so the e2e harness no longer checks it: the
+post-run detector, the live shadow hook and the opt-in `PERSON_EVIDENCE_GUARD=deny`
+mode were deleted at harness v9. Every remaining case they raised was one the
+writer allows on purpose, a person minted from the record the link cites; all 24
+raised over 2026-10-18..11-01 were that case. Runs logged before v9 still store
+the message, and `make e2e-corpus` files it under `same_person (retired at v9)`.
 
-**The satisfying shape has since changed, and the reason text names the new
-one.** `same_person` gained a project-relative arm that takes
-`{ projectPath, assertionId, treePersonId }` and assembles both documents
-host-side, so the reason now names that call and deliberately stops teaching the
-hand-assembled recipe: naming it would steer the agent straight back to the cost
-that produced the skipped call this gate fires on. The reason still says the
-**entire batch** is rejected (a `PreToolUse` deny is all-or-nothing, and these
-batches run to a median of 17 ops), and states the escape below. The text lives
-in `eval/harness/e2e/orchestrator.py`, and
-`tests/unit/test_e2e_orchestrator.py::test_provenance_gap_reason_names_the_satisfiable_call_shape`
-pins that it names the new shape and not the old.
-
-**One class of write genuinely cannot satisfy the gate — but it is about a tenth
-the size it was long described as, and smaller again since the tool changed.**
-The check narrows on whether a **record persona is reachable**, not on whether
-`record_persona_id` is null.
-
+**One class of write genuinely cannot be scored.** The writer narrows on whether a
+**record persona is reachable**, not on whether `record_persona_id` is null.
 `same_person` never reads `record_persona_id`; that field is a pointer into a
 retained search sidecar, so a null value proves only that no sidecar was kept.
 
-**Read the table below as what the DETECTOR still assumes, not as what is
-true.** `same_person`'s project-relative arm resolves the record itself —
-retained sidecar, fresh read, or, failing both, a persona projected from the
-record's own extracted assertions — so the bottom three rows are scorable in
-practice and only two exemptions survive in the tool: the record holds no
-persona for the party this link is about, and the candidate is a stub minted
-from the very persona being scored. The detector was deliberately not widened in
-the same change that told the agent to adopt the new call, because a rise in
-flagged links would then be unreadable: the agent failing to adopt it and the
-predicate getting stricter look identical from the count, which is the error
-constraint 6 of ADR-0009 exists to prevent. Widening belongs with the
-writer-side requirement, whose own evidence is a recorded run at the new shape.
-Until then the table over-exempts, which is the safe direction.
+**Read the table below as what the predicate assumes, not as what is true.**
+`same_person`'s project-relative arm resolves the record itself — retained
+sidecar, fresh read, or, failing both, a persona projected from the record's own
+extracted assertions — so the bottom three rows are scorable in practice and only
+two exemptions survive in the tool: the record holds no persona for the party this
+link is about, and the candidate is a stub minted from the very persona being
+scored. Until the predicate is widened the table over-exempts, which is the safe
+direction.
 
-What the detector currently treats as deciding reachability:
+What `personaReachable` treats as deciding reachability:
 
 | provenance | reachable? | why |
 |---|---|---|
@@ -749,75 +721,27 @@ What the detector currently treats as deciding reachability:
 | `fulltext_search` | **no** | an FTS result carries transcript text, names and places but no GedcomX, and its ARK is a `3:1:`/`3:2:` image entry `record_read` (which takes a `1:1:` record-persona ARK) cannot open |
 | image, external site, PDF | **no** | unstructured; no persons array |
 | a search whose sidecar was not retained | **no** | nothing to read the persona out of |
-| provenance that cannot be resolved | **flagged anyway** | unknown is not proof; exempting on an absent field would let an assertion written with no `log_entry_id` shed the requirement |
+| provenance that cannot be resolved | **required anyway** | unknown is not proof; exempting on an absent field would let an assertion written with no `log_entry_id` shed the requirement |
 
-**A fourth legitimate null the predicate cannot see.** Scoring a record persona
-against a tree person *minted from that same persona* is circular — it can only
-confirm itself — so a null `match_score` is correct there and the skill says so.
-The detector cannot detect it: by the time the link is written the stub is an
-ordinary tree person, indistinguishable from one that has been in the tree for
-months. So it is named in the doctrine and in `research_append`'s warning text
-rather than encoded in `_persona_reachable`.
-
-Observed working, and the before/after is the sharpest evidence in this change.
-In the two committed runs preceding it (`v1_2026-08-24_18-17-08` and
-`v1_2026-08-24_22-05-46`) `ut_person_evidence_n7v` made **zero** `same_person`
-calls and wrote every `match_score` null — including for `I1` and `I2`, which are
-pre-existing scenario persons, not minted stubs — and failed both times. Its
-stated reason was the refuted claim itself: *"same_person scoring skipped — I1 and
-I2 are local stubs with no FamilySearch ARK, so any score would be degenerate
-(uninformative)."* In `v1_2026-08-27_16-24-49` the same test scores both
-reachable pairings (`F1`→`I1` at 0.58, `M1`→`I2` at 0.89), lets the distinctive
-surname carry `confident` while the given-name-only match stays `probable`, and
-declines exactly one — the persona it had just minted a stub from. So the skill
-went from skipping every score on a refuted excuse to scoring what is scoreable
-and declining only what is circular.
-
-**The exemption is counted, not silent.** `make e2e-corpus RECOMPUTE=1` prints an
-*unscoreable by design (links)* line beside the violation arms, from
-`unscoreable_person_evidence_links`. A population dropped with no number attached
-cannot be watched if it grows, and gives a revisit trigger nothing to fire on.
-The stored-field path prints it as unknown rather than zero.
+**The circular case.** Scoring a record persona against a tree person *minted
+from that same persona* can only confirm itself, so a null `match_score` is
+correct there. The writer detects it from the person's source refs: every record
+they reach is the one under scrutiny, and the person is neither a FamilySearch
+person nor in the starting tree (`mintedFromThisRecord`).
 
 **The question is "what did the run retain", not "what could be fetched".** The
-table above reads the provenance lane, which is what a sidecar on disk or an
-already-returned `record_read` document can answer offline. It deliberately does
-not decide whether a *fresh* fetch would produce a persona. Measured: **48 of the
-306 exempted links** carry a `record_id` that is a `1:1:` FamilySearch record ARK
-(29 sidecar-less `record_search`, 19 `image_transcribe`), so a `record_read` might
-reach a persona for them. They stay exempt, because the detector cannot verify
-offline that the fetch resolves, and flagging on an unproven capability is exactly
-the error corrected in the `fulltext_search` lane above.
+table reads the provenance lane, which a sidecar on disk or an already-returned
+`record_read` document can answer offline. It deliberately does not decide
+whether a *fresh* fetch would produce a persona: a `record_id` that is a `1:1:`
+FamilySearch record ARK on a sidecar-less search or an `image_transcribe`
+assertion stays exempt, because flagging on an unproven capability is the error
+corrected in the `fulltext_search` lane above. Tightening it also obliges
+`person-evidence` to reach for `record_read` on a sidecar-less search, which
+roughly eleven of its unit tests exercise while stocking no `record_read` or
+`same_person` fixture.
 
-**Revisit trigger, and its price.** A committed run where one of those 48 produced
-a wrong identity conclusion. Tightening the rule to flag a `1:1:` ARK is a real
-option rather than an oversight, but it is not a one-line change: it also obliges
-`person-evidence` to reach for `record_read` on a sidecar-less search, and roughly
-eleven of its unit tests exercise that shape while stocking no `record_read` or
-`same_person` fixture, so each would abort on an unregistered tool. Cost it with
-that included.
-
-Two further limits, both pushing toward flagging, so neither can manufacture a
-`compliance: pass`: the detector cannot read sidecars (they live in the run's
-workspace), so a `record_id` that is legally outside its sidecar is over-flagged;
-and it cannot see whether a relationship assertion's **second** party has a
-persona in the record at all.
-
-**Superseded.** Two 2026-08-09 rulings on this check exempted `record_read`-,
-FTS-, image- and PDF-sourced links together, "by schema design", on the reading
-that a null `record_persona_id` made them unscoreable. The `record_read` half of
-that is wrong and is no longer in force; the counter those rulings asked for is
-kept and is described above. The reason text's old escape — record in the
-`rationale` that no score was obtainable, and proceed — is gone with it: no
-flagged link is that case any more. A narrower exit survives for provenance the
-check could not resolve, which is a different thing.
-
-The same skill also says a locally-minted stub returns a degenerate score to be
-treated as "no score available". **That guidance is stale, and acting on it would
-be the more expensive mistake**, because it excuses the agent from the exact call
-this layer exists to require. It dates from 2026-07-02; the match-engine
-mint-hardening that made an ARK-less focus person score on document content
-landed 2026-07-07, five days later. Probed live
+**A person minted from an earlier record is scorable, and must be scored.**
+`same_person` scores document content, not identity resolution. Probed live
 (`packages/engine/mcp-server/dev/probe-same-person-local-id.ts`), holding the
 record side and every fact constant and varying only the tree side's `ark`:
 
@@ -828,45 +752,10 @@ record side and every fact constant and varying only the tree side's `ark`:
 | B2 | identical to B1, fresh random mint | `0.9999484` |
 | C | every tree ARK removed | `0.9999484` |
 
-B1 and B2 are identical although `randomFsId()` mints a different id per call,
-and stripping every ARK degrades nothing further — the score is document
-content, not identity resolution. **A newly-minted tree person is scorable, so
-the gate is achievable for it.** The consequence for graduation is the opposite
-of what the fire rate suggests on its own: the rate measures an agent that does
-not know the call shape, not a gate that cannot be met — which makes the reason
-rewrite the lever, and a later deny more defensible than the raw number implies.
-
-One caveat on the probe: it is a single pair with strongly agreeing name, date,
-place and a parent relationship. A minted person carrying thinner content will
-score lower — but that is a real weak-match signal, which is what the gate is
-for, not an ARK artifact.
-
-**Trying a deny on one fixture.** `make e2e-run TEST=<slug>
-PERSON_EVIDENCE_GUARD=deny` (default `shadow`) blocks the write instead of only
-recording it, bounded by a two-limit loop valve: per id set, and per run. Past
-either the write is **released** rather than denied again, because a denied
-`research_append` returns before `tool_call_count` and so charges no budget,
-while `activity_count` increments regardless — so without the valve the only stop
-is `max_turns` / the wall clock, the §10 failure mode the deny is supposed to
-avoid. Releasing falls through to the normal path and charges budget, which is
-the only bound a wedged agent can actually reach.
-
-Two things about a deny-mode run's output:
-
-- Its provenance entries carry `kind: "person_evidence_deny"`, and
-  `guardrail_shadow_report`'s stored scan **excludes** them. Without that they
-  would land in the shadow corpus indistinguishably and inflated — the valve
-  records several denials plus a release for one logical gap — corrupting the
-  number the graduation is gated on. Those entries also carry
-  `valve_released: true|false`, which is how you tell the two apart: `false` is a
-  write the gate actually blocked, `true` is one it let through because a limit
-  was reached. **Reading a deny-mode run's fire rate means counting
-  `valve_released: false` only** — the releases are the valve working, not
-  additional violations.
-- **Its `compliance` axis is not comparable to a shadow run's.** The denied write
-  never lands, so `find_person_evidence_missing_same_person` finds no
-  `person_evidence` entry for that person and its arm passes **vacuously**. The
-  mode is recorded in the runlog's `usage` block so a reader can tell.
+B1 and B2 are identical although `randomFsId()` mints a different id per call.
+The probe is a single pair with strongly agreeing name, date, place and a parent
+relationship; a minted person carrying thinner content scores lower, which is a
+real weak-match signal, not an ARK artifact.
 
 ## 5. Write-boundary invariants
 
@@ -1851,7 +1740,7 @@ before — in Cowork, the one environment the closure was built for. Every test
 was green, including the one named "matches every tool the guard script itself
 denies", which restated the three raw-write tool names inline instead of reading
 them from the script. The matcher is now
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task` — `.*`-prefixed on the
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)` — the last alternative naming every `AGENT_ONLY_TOOLS` key — `.*`-prefixed on the
 namespaced arms so they bind under an anchored full match as well as a substring
 search, and against both the bare and the `mcp__remote-devices__`-namespaced
 spelling — and `tests/packaging/plugin-hooks.test.ts` derives the expected tool
@@ -1887,10 +1776,12 @@ with the credential-read arm. The foreground arm is the one entry
 here that is NOT a deny: it allows the call and rewrites `run_in_background` to
 `False`, and it needs the matcher exactly as much as a deny does, because an arm
 the matcher cannot reach is inert with the suite green. And it is **not** "the
-plugin's minus `.*research_append`" — it is that minus `.*research_append`
-**plus `Bash`, `Read`, `Grep` and `Glob`**. The plugin's is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task`.
-`research_append` is absent here because this hook returns `{}` for it, so
+plugin's minus `.*research_append`" — it is that minus `.*research_append` and
+the plugin's last alternative, **plus `Bash`, `Read`, `Grep` and `Glob`**. The
+plugin's is
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)`, whose last alternative names the tools only agents hold.
+Those are absent here because the plugin hook, which binds on the hosted path
+too, already denies them. `research_append` is absent because this hook returns `{}` for it, so
 binding it would only widen the blast radius of a starved callback; `Bash` is
 present because this hook carries the credential-exfiltration arm; `Read`, `Grep`
 and `Glob` are present because this hook carries the credential-read arm.
@@ -2282,6 +2173,15 @@ deny back; a packaging problem reports as VOID (preflight), never as "does not
 bind". The preflight was proven to fail four ways — script absent, script always
 allowing, script exiting non-zero, script printing non-JSON.
 
+**A third case, since 2026-10-29: a main-thread `convert_calendar`.** It is a tool
+only agents hold (`AGENT_ONLY_TOOLS`), the cheapest to provoke — pure
+computation, no network, no project — and it reaches the script only through the
+matcher's agent-only alternative, so a pass proves that alternative binds. The
+expected text is `agent_only_reason("convert_calendar")`, imported; arm B gets the
+tool's own answer back. Measured 2026-10-29 (Claude Code 2.1.308, agent SDK
+0.2.172): **BOUND** — arm A `DENIED_BY_GUARD`, arm B `NOT_DENIED` with the
+calendar answer returned.
+
 **Measured 2026-09-09** (Claude Code 2.1.258, agent SDK 0.2.128): the hosted SDK
 loader **does** bind it. Arm A came back `DENIED_BY_GUARD` with `OWNER_REASON` on
 the `research_append` tool_result; arm B, the same turn with `hooks/` removed,
@@ -2325,8 +2225,7 @@ Design points that were paid for and should not be re-derived:
   `ToolResultBlock.is_error`, joined onto each entry by `apply_tool_result` in
   `e2e/orchestrator.py` and read by the `entry.get("is_error") is True` gates in
   `harness/skill_invocation.py` — `recently_succeeded`,
-  `find_unguarded_protected_writes`, `find_effects_without_invocation`, and
-  `find_person_evidence_missing_same_person`.
+  `find_unguarded_protected_writes` and `find_effects_without_invocation`.
 
   `find_protected_writes_by_unnamed_delegate` (§11) deliberately does **not**
   read `is_error`: its gate is caller identity, not skill
@@ -2349,10 +2248,8 @@ Design points that were paid for and should not be re-derived:
     `OK_FALSE_IS_FAILURE` — so `research_append`'s `fail()` helper, which
     *returns* rather than throws, now records `is_error: true`. Runs predating
     that change carry the old classification and are `HARNESS_SCHEMA_VERSION` 3.
-  - **What it does gate today:** MCP tools that throw — an errored
-    `same_person` no longer enters `find_person_evidence_missing_same_person`'s
-    `scored_ids`, and an errored `tree_edit` no longer counts as a protected
-    write in `find_unguarded_protected_writes`.
+  - **What it does gate today:** MCP tools that throw — an errored `tree_edit`
+    no longer counts as a protected write in `find_unguarded_protected_writes`.
 
   Violation counts and the §8 `compliance` verdict are not comparable
   across that join. The boundary is the commit, not cleanly a version number —
@@ -2428,11 +2325,12 @@ expectation that it graduates.
 
 ## 8. Post-run compliance detectors
 
-Two non-windowed checks over the final project state and the run's tool-call
-log; any violation sets `compliance: fail`. Specified in full — including the historical
+A non-windowed check over the final project state and the run's tool-call log;
+any violation sets `compliance: fail`. Specified in full — including the historical
 `not_checked` handling — in `docs/specs/e2e-test-spec.md` §7.5. Implemented in
-`skill_invocation.py` (`find_effects_without_invocation`,
-`find_person_evidence_missing_same_person`).
+`skill_invocation.py` (`find_effects_without_invocation`). A second check, that a
+brand-new person's link was scored by `same_person`, was retired at harness v9:
+`research_append` enforces it at write time (§4).
 
 **They report; they do not gate.** A violation moves the `compliance` axis and
 nothing else. Until 2026-09-25 it also forced `outcome: fail` regardless of what
@@ -2464,12 +2362,9 @@ Two further properties worth keeping in view here:
   calls away for a different record. That is precisely what §7 exists to catch
   and why both layers are needed.
 - **A required-tool fingerprint beats a proximity heuristic where one exists.**
-  Check 2 works because `same_person` is a *required call*, so "was it called
-  for this person" is a fact — but only where the call is possible. It skips a
-  link whose own provenance lane cannot yield a record persona from what the run retained, and counts
-  what it skipped (§4, "One class of write genuinely cannot satisfy the gate").
-  A person drops out only when EVERY link to them is unscoreable. None of the other three guardrail skills has an
-  equally unambiguous fingerprint, which is why they stay on §7's windowed path.
+  `same_person` is a *required call*, so the writer can refuse an unscored link
+  outright (§4). None of the other three guardrail skills has an equally
+  unambiguous fingerprint, which is why they stay on §7's windowed path.
 
 Porting these to production is a **retention** problem first: the hosted path
 keeps no tool-call ledger to run them over.
@@ -2924,8 +2819,9 @@ that outlive any one of them.
   §6 — in both cases deliberately, in favor of the failure mode that is merely
   wrong over the one that is stuck.
 - **A gate can be unsatisfiable by doctrine, not just mistuned** — and the
-  owning skill's doctrine can itself be stale. §4's live provenance check asks
-  for a `same_person` score on writes `person-evidence` says cannot be scored.
+  owning skill's doctrine can itself be stale. §4's provenance check, before its
+  harness half was retired, asked for a `same_person` score on writes
+  `person-evidence` said cannot be scored.
   One of those two claims is true (a non-`record_search` assertion has no
   `record_persona_id` to compare against); the other — that a locally-minted stub
   returns a degenerate score — was **refuted by probing the live API**, and had

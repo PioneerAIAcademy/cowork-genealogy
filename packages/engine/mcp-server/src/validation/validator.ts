@@ -19,6 +19,7 @@ import {
   isObject,
 } from "./types.js";
 import { isInsideProject } from "../utils/project-io.js";
+import { RETRACTED } from "../utils/assertion-liveness.js";
 import {
   TREE_TOP_LEVEL_FIELDS,
   TREE_PERSON_FIELDS,
@@ -81,6 +82,7 @@ const CLOSED_ENUMS = {
   person_evidence_confidence: new Set(["confident", "probable", "speculative"]),
   project_status: new Set(["active", "paused", "completed"]),
   priority: new Set(["high", "medium", "low"]),
+  question_kind: new Set(["enumerative", "targeted"]),
   informant_proximity: new Set([
     "self", "witness", "household_member",
     "family_not_present", "researcher", "official_duty", "unknown",
@@ -691,8 +693,8 @@ export const RESEARCH_SHAPES = {
     "experience_level", "subscriptions", "narration_guidance", "intended_audience",
   ]),
   question: new Set([
-    "id", "question", "rationale", "selection_basis", "priority", "status",
-    "depends_on", "unblocks", "created", "resolved",
+    "id", "question", "rationale", "selection_basis", "question_kind",
+    "priority", "status", "depends_on", "unblocks", "created", "resolved",
     "resolution_assertion_ids", "search_stop",
   ]),
   search_stop: new Set([
@@ -734,14 +736,14 @@ export const RESEARCH_SHAPES = {
     "fact_type", "value", "structured_value", "date", "date_certainty",
     "place", "standard_place", "information_quality", "informant",
     "informant_proximity", "informant_bias_notes", "record_basis",
-    "log_entry_id", "extracted_for_question_ids",
+    "log_entry_id", "extracted_for_question_ids", "superseded_by", "superseded_reason",
   ]),
   person_evidence_entry: new Set([
     "id", "assertion_id", "person_id", "confidence", "rationale",
     "core_identifier_conflict", "move_bridge", "match_score", "created", "superseded_by",
   ]),
   rejected_link_entry: new Set([
-    "id", "assertion_id", "person_id", "reason", "created",
+    "id", "assertion_id", "person_id", "reason", "researcher_words", "created",
   ]),
   conflict: new Set([
     "id", "conflict_type", "description", "disputed_attribute",
@@ -923,6 +925,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("priority" in q) {
       checkEnum(q.priority, "priority", qp, report);
+    }
+    if ("question_kind" in q) {
+      checkEnum(q.question_kind, "question_kind", qp, report);
     }
     if ("selection_basis" in q && !SELECTION_BASIS_VALUES.has(q.selection_basis)) {
       const sorted = Array.from(SELECTION_BASIS_VALUES).sort();
@@ -1282,7 +1287,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(a, RESEARCH_SHAPES.assertion, "assertions", ap, report);
     checkStringOrNull(
       a,
-      ["date", "place", "standard_place", "record_persona_id", "informant_bias_notes"],
+      ["date", "place", "standard_place", "record_persona_id", "informant_bias_notes", "superseded_reason"],
       ap,
       report
     );
@@ -1409,6 +1414,27 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkRefExists(a.log_entry_id, ids.log, "log entry", ap, report);
     }
   }
+  // A retired assertion (#3678) names its replacement, or is "retracted" with a
+  // reason. Second pass: a replacement may sit later in the array.
+  for (let i = 0; i < assertions.length; i++) {
+    const a = assertions[i];
+    if (!a || typeof a !== "object" || !("superseded_by" in a) || a.superseded_by === null) continue;
+    const ap = `${path}/assertions[${i}]`;
+    const by = a.superseded_by;
+    if (typeof by !== "string") {
+      addError(report, ap, `superseded_by must be a string or null, got ${typeof by}`);
+    } else if (by === RETRACTED) {
+      if (typeof a.superseded_reason !== "string" || a.superseded_reason.trim() === "") {
+        addError(report, ap, `superseded_by "${RETRACTED}" requires a non-empty superseded_reason`);
+      }
+    } else if (!by.startsWith(ID_PREFIXES.assertions)) {
+      addError(report, ap, `superseded_by '${by}' must be an '${ID_PREFIXES.assertions}' id or "${RETRACTED}"`);
+    } else if (by === a.id) {
+      addError(report, ap, `superseded_by '${by}' names the assertion itself`);
+    } else {
+      checkRefExists(by, ids.assertions, "assertion", ap, report);
+    }
+  }
 
   // Rejected links. RESEARCH_SHAPES.rejected_link_entry existed and was referenced
   // NOWHERE, so the section had no shape check at all: a scratch write of
@@ -1441,6 +1467,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("reason" in rj && rj.reason != null) {
       if (typeof rj.reason !== "string" || rj.reason.trim() === "") {
         addError(report, rp, "reason must be a non-empty string or null");
+      }
+    }
+    // Optional here so a row written before the field existed still loads;
+    // research_append requires it on every append.
+    if ("researcher_words" in rj) {
+      if (typeof rj.researcher_words !== "string" || rj.researcher_words.trim() === "") {
+        addError(report, rp, "researcher_words must be a non-empty string");
       }
     }
     if ("created" in rj) checkIsoDate(rj, "created", rp, report);
@@ -1480,6 +1513,11 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     }
     if ("assertion_id" in pe) {
       checkRefExists(pe.assertion_id, ids.assertions, "assertion", pp, report);
+    }
+    // A link a rejection retired names the rejection. Rejected links are read
+    // above, so the id set is complete here.
+    if (typeof pe.superseded_by === "string" && pe.superseded_by.startsWith(ID_PREFIXES.rejected_links)) {
+      checkRefExists(pe.superseded_by, rejectedIds, "rejected link", pp, report);
     }
     checkIsoDate(pe, "created", pp, report);
   }

@@ -73,11 +73,11 @@ from typing import Any
 #       direction: an entry whose `ToolResultBlock` never arrived (any aborted or
 #       wall-clock-capped run) carries no key at all, at `3` exactly as at `2`.
 #
-#       What moves across the boundary, and by how much. Both hard-fail arms of
-#       `check_guardrail_compliance` get strictly stricter —
-#       `find_effects_without_invocation` stops crediting a failed `Skill` call,
-#       and `find_person_evidence_missing_same_person` shrinks `scored_ids` — and
-#       both feed `guardrail_bypass_violations`, which sets `compliance: fail`
+#       What moves across the boundary, and by how much. Both hard-fail arms
+#       `check_guardrail_compliance` had then got strictly stricter —
+#       `find_effects_without_invocation` stopped crediting a failed `Skill` call,
+#       and the since-retired same_person arm (entry 9) shrank `scored_ids` — and
+#       both fed `guardrail_bypass_violations`, which sets `compliance: fail`
 #       (and, through v5 only, `outcome: fail`). So a run that passed compliance
 #       before the join can hard-fail after it from an identical trace, and
 #       `compliance` is not comparable across it. `outcome` IS: since entry 6 it
@@ -172,6 +172,19 @@ from typing import Any
 #       relay-fidelity reader that does not will score the log's own
 #       truncation as content the relay dropped, which is the measurement
 #       inverting the thing it measures (#3188).
+#   9 — `compliance` gets strictly LOOSER again: the same_person arm
+#       (`find_person_evidence_missing_same_person`, "tree person 'I1' is new
+#       this run and has a person_evidence link, but 'same_person' was never
+#       called …") is gone, along with the live shadow hook and the opt-in
+#       `--person-evidence-guard deny` mode. `research_append` refuses an
+#       unscored link to a reachable record persona at write time, so the arm
+#       could only add the cases the writer deliberately allows: a person minted
+#       from the very record the link cites, where a score would compare the
+#       record with itself. Every one of the 24 it raised over 2026-10-18..11-01
+#       was that case. A v1-v8 log's stored `compliance` and
+#       `guardrail_bypass_violations` can carry one of these messages;
+#       `corpus_report` files it under a retired arm rather than as drift, and
+#       `--recompute` no longer raises it. `outcome` does not move.
 #
 # A change readers can detect from the payload itself does NOT need a bump.
 # `narration` replacing `.transcript.md` is one: the field is a dataclass
@@ -179,7 +192,7 @@ from typing import Any
 # log written since carries the key and every earlier one lacks it. Branch on
 # `"narration" in data`, not on a version. Bump only when a key keeps its name
 # and type while its MEANING changes — that is the case with no structural tell,
-# and entries 2, 4, 5, 6, 7 and 8 above are exactly it: `response_summary` stays
+# and entries 2, 4, 5, 6, 7, 8 and 9 above are exactly it: `response_summary` stays
 # a string, `is_error` stays a bool and `outcome` stays a string, and only what
 # each one means changes. `narration`'s new `thread` key is the other case and
 # does NOT drive this bump: it is key-presence-detectable, exactly like
@@ -189,7 +202,7 @@ from typing import Any
 # the orchestrator saves a staged page under this key. Read the key when
 # present, else `response_summary`'s `transcription` — the shape every earlier
 # log has.
-HARNESS_SCHEMA_VERSION = 8
+HARNESS_SCHEMA_VERSION = 9
 
 
 @dataclass
@@ -273,11 +286,11 @@ class E2eResult:
     # Calls the per-context policy denied. TWO arms, and only `tool` tells them
     # apart — `blocked_by` is "context" for both:
     #   - a `SUBAGENT_ONLY_TOOLS` tool on the main thread: `image_read` (whose
-    #     base64 would overflow the transport), since #1273 Item 1, and
-    #     `evaluation_append` (the gps-mentor agent's verdict writer), since
-    #     #1491. `extraction_append` (the record-extractor's write, #942) was a
-    #     member until issue #2937 removed it from the set. None has been
-    #     observed in the committed corpus.
+    #     base64 would overflow the transport), since #1273 Item 1, and since
+    #     issue #3528 every tool only agents hold (the shipped hook's
+    #     AGENT_ONLY_TOOLS). `extraction_append` (the record-extractor's write,
+    #     #942) was a member until issue #2937 removed it from the set. No run
+    #     committed before #3528 carries this arm.
     #   - an owned-section `research_append` (#1273): a caller wrote a section it
     #     does not own. NOT main-thread-only — `owner_denied`'s `out_of_lane` rule
     #     fires for a named subagent reaching outside its own sections. Every

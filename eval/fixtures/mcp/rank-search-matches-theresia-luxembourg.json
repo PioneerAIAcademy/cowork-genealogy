@@ -1,0 +1,30 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches re-ranks the staged Luxembourg birth candidate (Theresia, daughter of Jakob Reding and Maria Johanna Fautsch, ark 6LYM-X1PN) against subject I1 (Theresia Reding). Ranks #1 with a strong score — given name, birth year (1846), and parent surnames (Reding / Fautsch) align with the tree. Matched on subjectId; independent of the per-run stagedResultsRef.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 1,
+    "returnedCount": 1,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:6LYM-X1PN",
+        "primaryId": "P1",
+        "personName": "Theresia (daughter of Jakob Reding and Maria Johanna Fautsch)",
+        "sex": "Female",
+        "birthDate": "17 June 1846",
+        "birthPlace": "Luxemburg",
+        "collectionTitle": "Luxembourg, Church and Civil Registration",
+        "matchScore": 0.93,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}

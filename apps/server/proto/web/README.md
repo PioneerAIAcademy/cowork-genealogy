@@ -17,11 +17,20 @@ bundle both set it.
 | `GET /api/sessions/{id}/events?after=N` | One-shot poll: `{events, activity, turn_active, next_after}`. `Last-Event-ID` beats `after`. |
 | `GET /api/sessions/{id}/events/stream?after=N` | `text/event-stream`. `retry: 1000`; the catch-up rows after the cursor; the current documents once; then `status turn_active` if a turn is in flight; then a 1 s poll. `: ping` after 15 s idle. |
 | `GET/POST /api/sessions`, `GET/PATCH/DELETE /api/sessions/{id}`, `POST …/resume`, `POST …/continue`, `GET …/state` | Session CRUD in the SPA's `SessionSummary` shape; `DELETE` answers 409 while a turn may still be running (its `turn:<id>` backend is connected, or it was claimed in the last 2 min, or queued unclaimed in the last 15) and removes the SDK transcript (S3 objects are left to the orphan sweep, U19); a session the worker's retention retired (U19, idle past `RETENTION_SESSION_IDLE_S`) reads `status: retired`, answers 410 to a message, and `POST …/continue` opens a new session on its project; `/state` reads `documents` (`research.json`, `tree.gedcomx.json`). |
-| `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` | Patron sign-in (U2, below). Every `/api/sessions` route needs the session cookie and answers 404 for a session on a project the caller does not own. |
-| `GET …/sidecar/{log_id}` → 404; `GET …/image`, `GET …/logs`, `POST …/files` → 501 | Not in the prototype; each says why. |
+| `GET /api/projects` | Only the caller's projects: `[{id, label, updated_at}]`, with a research title or objective and an ISO-8601 time (each nullable). |
+| `GET /api/projects/{id}/state` | Owner-checked `{label, research, gedcomx, sidecars: [], version}`; `ETag: "rN-tN"` from document versions, or an empty 304 when `If-None-Match` matches. |
+| `GET /api/projects/{id}/sidecar/{log_id}` | Owner-checked search-result body, `{raw, mtime}`; 404 when absent. |
+| `GET /api/projects/{id}/image?filename=` | Owner-checked persisted source page scan, `image/jpeg`; 404 when absent. |
+| `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` | Patron sign-in (U2, below). Every `/api/sessions` and `/api/projects` route needs the session cookie. Session routes answer 404 for a session on a project the caller does not own. |
+| `GET /api/sessions/{id}/sidecar/{log_id}`, `GET …/image`, `GET …/logs`, `POST …/files` | Sidecars return `{raw, mtime}` and images return the persisted scan (404 when absent); logs answer 501; file uploads are stored and return `{path, sizeBytes}`. |
 | `GET /`, each top-level file of the dist, `GET /assets/…` | The SPA, when `WEB_DIST_DIR` is set (below). `/docs`, `/redoc` and `/openapi.json` are off. |
 | `GET /api/feedback/context?sessionId=`, `POST /api/feedback` | The SPA's feedback dialog (U20, below): the files and transcript size a report would carry; then the zip, stored in S3 under `feedback/` and sent nowhere. 200 `{ok, filename}`. |
 | `POST …/interrupt` → 202 | Stop (PR #2870 item 1c). The worker owns the turn and no control channel reaches it, so this raises a flag on a control-plane row that the worker's `PreToolUse` hook reads before every tool call. |
+
+The project routes give missing, foreign and NULL-owner projects the identical 404
+`"Project not found"`, before validating a filename or log id or comparing an ETag.
+Every `/api/projects` response a route or FastAPI produces, including errors and 304s,
+carries `Cache-Control: private, no-store` and `Vary: Cookie` (merged with existing values).
 
 ## Sign-in and ownership (U2)
 
@@ -57,6 +66,12 @@ U2 in `docs/plan/familysearch-handoff.md`.
   space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL`, or with
   FamilySearch sign-in on at any scheme, the tier refuses to start with a default or empty
   secret.
+- **Path prefix (U28)**: `PUBLIC_URL` may carry a path, the prefix an edge strips before
+  the origin (`https://<host>/service/search/agent-tools/<name>`). The routes stay at `/…`;
+  the path scopes both cookies, the OAuth `redirect_uri` (`<PUBLIC_URL>/callback`), the
+  callback's landing (`<prefix>/`) and the SPA's `<base href>`. A path outside unreserved
+  segments, or any query or fragment, refuses to start. The first request whose
+  `X-Orig-Base` differs logs `ev=prefix_mismatch`; `/api/health` reports `base_path`.
 
 **Grants (U3).** Every turn's FamilySearch calls run on its project owner's grant, which
 the worker reads from `familysearch_tokens` at the start of each attempt while it holds that
@@ -189,7 +204,7 @@ turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and sta
 `turn_active` until the seeder closes it through `worker.complete()` itself.
 
 Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required), `POLL_S` (1),
-`SSE_PING_S` (15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
+`SSE_PING_S` (15, capped at 15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
 `GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
 `QUEUE_URL` host's region). The start line names the mode, never a key:
@@ -230,8 +245,10 @@ frames without ids, `turn_active` after the catch-up rows and false at the end.
 `tests/test_proto_web.py` (`make proto-test`, and `make server-test` runs it): pure
 helpers, the routes over `httpx.ASGITransport` with a fake store and queue, the stream
 generator pulled directly (httpx runs an ASGI app to completion, so an endless stream
-cannot be tested through the route), and the compose/schema shape. The grant custody
-(U3): `tests/test_proto_grants.py` (the pure decisions and the numbers the locks rest on,
+cannot be tested through the route), and the compose/schema shape.
+`tests/test_proto_projects_pg.py` checks project ownership, labels, document times and
+document versions against real Postgres; it skips without `PROTO_TEST_PG_DSN` outside CI.
+The grant custody (U3): `tests/test_proto_grants.py` (the pure decisions and the numbers the locks rest on,
 offline) and `tests/test_proto_grants_pg.py` (the lock interleavings against real Postgres;
 it skips in `make proto-test` without `PROTO_TEST_PG_DSN`, and `make proto-grants-test` and CI
 run it for real). Feedback (U20): `tests/test_proto_feedback.py` (the routes over a fake store
