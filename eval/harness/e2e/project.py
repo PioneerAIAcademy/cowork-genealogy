@@ -23,7 +23,9 @@ wipe a debugging session); pass --force / FORCE=1 to start fresh.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
+import stat
 import sys
 from pathlib import Path
 
@@ -81,7 +83,10 @@ def main(argv: list[str] | None = None) -> int:
         (starting_tree, out_dir / "starting-tree.gedcomx.json"),
     ]
     for src, dest in seeds:
-        dest.unlink(missing_ok=True)
+        if dest.exists():
+            # Windows refuses to unlink a read-only file, so lift the mode first.
+            os.chmod(dest, dest.stat().st_mode | stat.S_IWRITE)
+            dest.unlink()
         shutil.copyfile(src, dest)
 
     print(f"Seeded an editable project at {out_dir}")

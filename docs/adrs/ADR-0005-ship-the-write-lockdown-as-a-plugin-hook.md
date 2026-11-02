@@ -122,8 +122,8 @@ scenario flails against denied writes rather than producing an unvalidated file
    still misses a variable-built path. After four shell writes landed (issue
    #1499), the protected files became read-only on disk between writes, with
    `FsProjectStore` the only layer that unlocks them. That refuses `>`, `>>`,
-   `tee` and `open(…, 'w')`, and does not refuse `chmod` first, `sed -i` or
-   `mv` — a speed bump, not a wall. It binds wherever the file store runs, not on
+   `tee` and `open(…, 'w')`, and does not refuse `chmod` first, nor `sed -i` or
+   `mv` on macOS and Linux — a speed bump, not a wall. It binds wherever the file store runs, not on
    the prototype's Postgres store. Details: `docs/specs/guardrail-enforcement-spec.md`
    §6 ("The hook does not match `Bash`") and §6.1.
 2. **Three sibling implementations exist** — the plugin hook, the hosted SDK

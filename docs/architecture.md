@@ -1340,8 +1340,8 @@ Two behaviors of the script that are deliberate:
   variable-built path — **a false deny is the worse failure mode**. Instead the
   protected files are read-only on disk between writes, and `FsProjectStore` is
   the only layer that unlocks them, so `>`, `>>`, `tee` and
-  `open(…, 'w')` are refused by the filesystem. `chmod` first, `sed -i` and `mv`
-  still get through. `guardrail-enforcement-spec.md` §6 and §6.1.
+  `open(…, 'w')` are refused by the filesystem. `chmod` first still gets
+  through, and so do `sed -i` and `mv` on macOS and Linux. `guardrail-enforcement-spec.md` §6 and §6.1.
 
 Packaging is guarded: `package-plugin.mjs`'s `INCLUDE` must carry `"hooks"`, or
 the directory never ships. Asserted by `tests/packaging/plugin-hooks.test.ts`,

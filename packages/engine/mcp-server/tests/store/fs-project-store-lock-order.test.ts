@@ -4,12 +4,14 @@
 // to rename over a read-only file. This pins the order on any platform by
 // recording the calls.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const events: string[] = [];
-const failRename = { once: false };
+const failRename = { once: false, onCall: 0 };
+const failUnlink = { once: false };
+let renameCalls = 0;
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const real = await importOriginal<typeof import("node:fs/promises")>();
@@ -22,6 +24,10 @@ vi.mock("node:fs/promises", async (importOriginal) => {
     },
     rename: async (from: Parameters<typeof real.rename>[0], to: Parameters<typeof real.rename>[1]) => {
       events.push(`rename ${name(to)}`);
+      renameCalls += 1;
+      if (failRename.onCall === renameCalls) {
+        throw Object.assign(new Error("EPERM: injected"), { code: "EPERM" });
+      }
       if (failRename.once) {
         failRename.once = false;
         throw Object.assign(new Error("EPERM: injected"), { code: "EPERM" });
@@ -30,6 +36,10 @@ vi.mock("node:fs/promises", async (importOriginal) => {
     },
     unlink: async (p: Parameters<typeof real.unlink>[0]) => {
       if (!name(p).startsWith(".")) events.push(`unlink ${name(p)}`);
+      if (failUnlink.once && !name(p).startsWith(".")) {
+        failUnlink.once = false;
+        throw Object.assign(new Error("EBUSY: injected"), { code: "EBUSY" });
+      }
       return real.unlink(p);
     },
   };
@@ -45,6 +55,9 @@ describe("FsProjectStore unlocks before the rename and re-locks after it", () =>
     dir = await mkdtemp(join(tmpdir(), "lock-order-"));
     events.length = 0;
     failRename.once = false;
+    failRename.onCall = 0;
+    failUnlink.once = false;
+    renameCalls = 0;
   });
   afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
@@ -87,6 +100,30 @@ describe("FsProjectStore unlocks before the rename and re-locks after it", () =>
     events.length = 0;
     await store.remove(dir, "research.json");
     expect(events).toEqual(["chmod research.json 644", "unlink research.json"]);
+  });
+
+  it("remove re-locks a file it could not delete", async () => {
+    await store.writeJson(dir, "research.json", { v: 1 });
+    events.length = 0;
+    failUnlink.once = true;
+    await store.remove(dir, "research.json");
+    expect(events).toEqual(["chmod research.json 644", "unlink research.json", "chmod research.json 444"]);
+  });
+
+  it("writeJsonBoth removes the temps it did not rename when a rename fails", async () => {
+    failRename.onCall = 2;
+    await expect(
+      store.writeJsonBoth(dir, [
+        { ref: "tree.gedcomx.json", data: {} },
+        { ref: "research.json", data: {} },
+      ]),
+    ).rejects.toThrow("EPERM: injected");
+    expect((await readdir(dir)).filter((f) => f.includes(".tmp-"))).toEqual([]);
+  });
+
+  it("matches a protected name in any case, as macOS and Windows do", async () => {
+    await store.writeJson(dir, "Research.json", { v: 1 });
+    expect(events).toEqual(["chmod Research.json 644", "rename Research.json", "chmod Research.json 444"]);
   });
 
   it("an unprotected file is never chmodded", async () => {

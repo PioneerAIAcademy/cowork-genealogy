@@ -16,7 +16,7 @@ const GUARD_HOOK = join(
 /** The names in the hook's PROTECTED_PROJECT_FILES; throws rather than returning
  *  empty, which would make the comparison below vacuous. */
 function hookProtectedFiles(): string[] {
-  const body = readFileSync(GUARD_HOOK, "utf8").match(/^PROTECTED_PROJECT_FILES\s*=\s*\(([^)]*)\)/m)?.[1];
+  const body = readFileSync(GUARD_HOOK, "utf8").match(/^PROTECTED_PROJECT_FILES(?:\s*:[^=\n]+)?\s*=\s*\(([^)]*)\)/m)?.[1];
   const names = [...(body ?? "").matchAll(/"([^"]+)"/g)].map((m) => m[1]);
   if (names.length === 0) throw new Error(`PROTECTED_PROJECT_FILES not found or empty in ${GUARD_HOOK}`);
   return names;

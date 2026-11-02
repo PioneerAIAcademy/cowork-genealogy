@@ -54,8 +54,12 @@ DEFAULT_SCRATCH_DIR = REPO_ROOT.parent / "e2e-scratch"
 
 
 
-def _clear_readonly_and_retry(func, path, _exc_info) -> None:
-    os.chmod(path, stat.S_IWRITE)
+def _clear_readonly_and_retry(func, path, exc) -> None:
+    """`rmtree` onexc: a read-only FILE (the engine's protected project files)
+    gets its write bit added and is retried; anything else is re-raised."""
+    if not isinstance(exc, PermissionError) or not os.path.isfile(path):
+        raise exc
+    os.chmod(path, os.stat(path).st_mode | stat.S_IWRITE)
     func(path)
 
 def write_mcp_config(target: Path, mcp_server_entry: Path) -> None:

@@ -107,8 +107,9 @@ function tmpSibling(path: string): string {
 // Windows refuses to rename over a read-only target (POSIX does not care); and
 // re-lock after, because the mode does not survive the rename. Measured on
 // macOS and Windows by `dev/probe-readonly-project-files.ts`. A speed bump, not
-// a wall: a writer that runs `chmod` first still gets through, and `sed -i` /
-// `mv` replace the directory entry, which the mode does not stop.
+// a wall: a writer that runs `chmod` first still gets through, and on macOS and
+// Linux so do `sed -i` and `mv`, which replace the directory entry (Windows
+// refuses those too, as it refuses our own rename).
 // The same names as the hook's PROTECTED_PROJECT_FILES, at the project root only
 // (`tests/packaging/protected-files-parity.test.ts` holds the two lists equal).
 
@@ -123,7 +124,8 @@ const UNLOCKED_MODE = 0o644;
 
 /** Whether the resolved `path` is one of the protected files at the project root. */
 function isProtectedPath(projectPath: string, path: string): boolean {
-  return resolve(dirname(path)) === resolve(projectPath) && PROTECTED_FILES.has(basename(path));
+  // Case-folded: on macOS and Windows `Research.json` IS the protected file.
+  return resolve(dirname(path)) === resolve(projectPath) && PROTECTED_FILES.has(basename(path).toLowerCase());
 }
 
 /**
@@ -137,10 +139,16 @@ async function unlock(path: string): Promise<void> {
 
 /**
  * Make `path` read-only again. Never throws: by now the data has landed or the
- * rename's own error is the one to report, and a missing file has nothing to lock.
+ * rename's own error is the one to report, and a missing file has nothing to
+ * lock. A refusal is reported on stderr, since it leaves the shell-write guard
+ * off for this file until a later write locks it.
  */
 async function lock(path: string): Promise<void> {
-  await chmod(path, LOCKED_MODE).catch(() => {});
+  await chmod(path, LOCKED_MODE).catch((error: NodeJS.ErrnoException) => {
+    if (error.code !== "ENOENT") {
+      console.error(`project files: could not make ${basename(path)} read-only again (${error.code ?? error.message}); shell writes to it are not refused until the next write`);
+    }
+  });
 }
 
 /**
@@ -405,7 +413,8 @@ export class FsProjectStore implements ProjectStore {
       throw error;
     }
 
-    // Phase 2 — rename back-to-back.
+    // Phase 2 — rename back-to-back. A failed rename leaves the temps not yet
+    // renamed behind, so remove them before reporting it.
     for (let i = 0; i < temps.length; i++) {
       if (i > 0 && options?.onBeforeSecondRename) {
         await options.onBeforeSecondRename();
@@ -414,6 +423,9 @@ export class FsProjectStore implements ProjectStore {
       if (isProtected) await unlock(path);
       try {
         await rename(tmp, path);
+      } catch (error) {
+        await Promise.all(temps.slice(i).map((t) => unlink(t.tmp).catch(() => {})));
+        throw error;
       } finally {
         if (isProtected) await lock(path);
       }
@@ -434,9 +446,13 @@ export class FsProjectStore implements ProjectStore {
 
   async remove(projectPath: string, ref: string): Promise<void> {
     const path = this.abs(projectPath, ref);
-    // Windows refuses to unlink a read-only file.
-    if (isProtectedPath(projectPath, path)) await unlock(path);
-    await unlink(path).catch(() => {});
+    // Windows refuses to unlink a read-only file. If the unlink fails anyway
+    // (the file is held open), lock it again rather than leave it writable.
+    const isProtected = isProtectedPath(projectPath, path);
+    if (isProtected) await unlock(path);
+    await unlink(path).catch(async () => {
+      if (isProtected) await lock(path);
+    });
   }
 
   /** Each project is a folder the caller names, so there is nothing to list. */
