@@ -32,6 +32,7 @@ import psycopg
 SAS_MODULE = "sas_client"
 MIN_REFRESH_INTERVAL_S = 30.0
 MIN_FETCH_INTERVAL_S = 0.5
+START_CHECK_TIMEOUT_S = 5.0
 
 log = logging.getLogger("pg_credentials")
 
@@ -181,17 +182,33 @@ class PgCredentials:
     def _refresh_interval(self) -> float:
         return MIN_REFRESH_INTERVAL_S if self._min_interval_s is None else self._min_interval_s
 
-    def check_at_start(self) -> None:
+    def check_at_start(self, timeout_s: float | None = START_CHECK_TIMEOUT_S) -> None:
         """One SAS fetch before a tier serves: an unusable object raises ``PgCredentialsError``
-        (refuse to start, D5); an unreachable SAS is an outage and returns, logged."""
+        (refuse to start, D5); an unreachable SAS is an outage and returns, logged. A fetch
+        still running after ``timeout_s`` is an outage too: the client's own timeout covers
+        only the SAS request, not its S3 key and properties reads. The fetch carries on in a
+        daemon thread holding the lock, so the first ``dsn()`` waits for its answer."""
         if self.mode == "env":
             return
-        with self._lock:
-            if self._dsn:
+        result: list[PgCredentialsError | None] = []
+
+        def run() -> None:
+            with self._lock:
+                if not self._dsn:
+                    result.append(self._fetch_locked(interval=0.0)[2])
+
+        if timeout_s is None:
+            run()
+        else:
+            thread = threading.Thread(target=run, name="pg-credentials-start", daemon=True)
+            thread.start()
+            thread.join(timeout_s)
+            if thread.is_alive():
+                log.warning("ev=pg_credentials error=start_timeout object=%s timeout_s=%s",
+                            self._sas_object, timeout_s)
                 return
-            _dsn, _failure, config = self._fetch_locked(interval=0.0)
-        if config is not None:
-            raise PgCredentialsError(str(config))
+        if result and result[0] is not None:
+            raise PgCredentialsError(str(result[0]))
 
     def dsn(self) -> str:
         if self.mode == "env":

@@ -1916,7 +1916,7 @@ def require_start_config(env: Mapping[str, str]) -> str:
         log(ev="prepare", step="pg_credentials", error="config", detail=problem)
         raise SystemExit(2)
     try:
-        creds.check_at_start()  # an unusable SAS object refuses; an unreachable SAS does not
+        creds.check_at_start()  # an unusable SAS object refuses; an unreachable or slow SAS does not
     except pg_credentials.PgCredentialsError as exc:
         log(ev="prepare", step="pg_credentials", error="config", detail=str(exc))
         raise SystemExit(2) from None

@@ -9,9 +9,11 @@ raises a connect-phase auth failure (no sqlstate). The real-Postgres half, a rea
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 import sys
 import threading
+import time
 import types
 from urllib.parse import quote
 
@@ -419,6 +421,40 @@ def test_check_at_start_lets_an_unreachable_sas_through_and_caches_a_good_one():
     assert sas.calls == 1, "a cached DSN is not re-read"
     pc.PgCredentials.fixed(DSN1).check_at_start()  # env mode: nothing to fetch
 
+
+
+def test_check_at_start_does_not_wait_out_a_hung_sas(caplog):
+    release = threading.Event()
+    calls = []
+
+    def hung(name: str):
+        calls.append(name)
+        release.wait(10)
+        return obj("pw-one")
+
+    creds = pc.PgCredentials(mode="sas", sas_object="fch-db", fetch=hung, clock=Clock())
+    started = time.monotonic()
+    try:
+        with caplog.at_level(logging.WARNING, logger="pg_credentials"):
+            assert creds.check_at_start(timeout_s=0.2) is None
+        assert time.monotonic() - started < 2, "the start check waited out the hung fetch"
+        assert creds.cached() is None
+        assert "error=start_timeout object=fch-db" in caplog.text
+    finally:
+        release.set()
+    assert creds.dsn() == DSN1 and calls == ["fch-db"], "dsn() takes the start fetch's answer"
+
+
+def test_check_at_start_is_bounded_by_default():
+    assert pc.START_CHECK_TIMEOUT_S == 5.0
+    sig = inspect.signature(pc.PgCredentials.check_at_start)
+    assert sig.parameters["timeout_s"].default == pc.START_CHECK_TIMEOUT_S
+
+
+def test_check_at_start_refuses_a_malformed_object_inside_the_bound():
+    creds = sas_creds(Sas({"fchUser": "svc", "fchPassword": "zz-secret"}))
+    with pytest.raises(pc.PgCredentialsError, match="fchDbConnectUrl"):
+        creds.check_at_start(timeout_s=5.0)
 
 # ── aconnect ─────────────────────────────────────────────────────────────────────
 

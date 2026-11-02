@@ -1597,11 +1597,11 @@ def create_app(
             log.info("%s", blobstore.describe(os.environ))
         # U10 D8: the store goes on app.state before either step, so every route and
         # /api/health see it while Postgres is down; neither step can stop the tier listening.
-        # U29: SAS unreachable is an outage (the tier listens, readiness reports it); a
-        # configuration error refuses here.
+        # U29: SAS unreachable, or slower than STARTUP_BUDGET_S, is an outage (the tier
+        # listens, readiness reports it); a configuration error refuses here.
         creds = _pg_creds_from_env()
         try:
-            await asyncio.to_thread(creds.check_at_start)
+            await asyncio.to_thread(creds.check_at_start, STARTUP_BUDGET_S)
         except pg_credentials.PgCredentialsError as exc:
             raise RuntimeError(str(exc)) from None
         app.state.pg_creds = getattr(app.state.store, "creds", None) or creds
