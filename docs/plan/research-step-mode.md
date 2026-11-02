@@ -1325,7 +1325,7 @@ in parallel with PR 2.
     PR 2's paid research run.
 
 **Phase 2 — cleanup, once step mode is live.**
-- **Delete `research_delivered` everywhere.** About 24 files, including:
+- **Delete `research_delivered` everywhere.** **Done** (Praise, 2026-11-02, on a Fable review). The open question below resolves: `_halt` (`proto/worker/options.py`) is a stateless helper with three callers (the Stop/spend/handover halt, the delivered arm, the step boundary); deleting the delivered arm leaves the other two, and a bounded ask now ends on the model's own end of turn, with the step gate stopping a second step. The no-project routing sentence (#3768) moved from `DELIVERY_GUIDANCE` into both planes' `project_note` (`continue_policy.NO_PROJECT_NOTE`). The completion-halt contract moved to `docs/specs/completion-halt-spec.md`. Deviation: the web `delivered` label stays, for rows written before. Original scope: About 24 files, including:
   - `manifest.json`, `tool-schemas.ts`, `server.ts` and `dev/smoke-calls.ts`;
   - the delivered arms in `options.py`, `worker.py` and `real_agent.py`;
   - the web `delivered` label;

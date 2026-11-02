@@ -245,16 +245,6 @@ deliver one answer and stop on those. Its message carries the leading `/research
 once PR #3146 made `skills_invoked` record a slash-command entry at index 0, so this
 is the e2e entry form exactly.
 
-**What they do NOT cover, and cannot:** that a bounded turn ends with the
-`delivered` OUTCOME. `research_delivered` IS in this harness's `LIVE_TOOLS` now, so the
-CALL is observable and `test_a_bounded_turn_ends_with_the_delivery_signal` grades it
-(gated on the `ends-with-delivery` tag). What stays unobservable is the effect: no hook
-binds here, so nothing halts the turn and the outcome is whatever the run would otherwise
-have been. Both hosted planes now halt on the signal — the prototype
-via its own `PreToolUse` arm plus `DELIVERY_GUIDANCE`, the alpha via `count_only` and
-`should_continue_run(delivered=...)` — and that half is covered by
-`apps/server/tests/test_alpha_stop_hook.py`, not here.
-
 ## Moved negatives (issue #2268)
 
 `ut_research_016` (negative-research-plan.json) and `ut_research_017`

@@ -20,7 +20,6 @@ allowed-tools:
   - validate_research_schema
   - research_query
   - extraction_append
-  - research_delivered
   - person_read
   - source_attachments
 ---
@@ -197,17 +196,11 @@ is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree.
 
 When this turn's deliverable is produced — the only one asked for, or the first
-of several — **end your turn by calling `research_delivered`**.
-Say what you produced first: the turn ends where you stop, so anything you were
-going to add afterwards never reaches the researcher. Name what this turn saved
+of several — **end your turn**. Name what this turn saved
 and where — "Saved to Susan Cornwell: death index, 4 Apr 1892" — and name
 anything this turn found but did not save: the record and the person it was for,
 not "an extraction did not finish". Then offer to take it further. The offer is
 not something you wait for — their answer arrives as the next message.
-
-Call it last, with a one-sentence summary of what you delivered, after everything
-you want the researcher to read. If you do not already hold its schema, search for
-it by name.
 
 ## What to do
 

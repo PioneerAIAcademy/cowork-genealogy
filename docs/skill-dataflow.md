@@ -111,7 +111,7 @@ boxes have no routing row; whether an autonomous run reaches them is unmeasured 
 
 A *bounded* request — one record, one plan, a transcription, a status question — skips
 the loop: the orchestrator hands it straight to the step that owns the deliverable and
-ends the turn with `research_delivered` (research/SKILL.md, "Bounded request or job").
+ends the turn there (research/SKILL.md, "Bounded request or job").
 
 ---
 

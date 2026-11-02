@@ -1,8 +1,8 @@
 """How a hosted turn ends, and what its ending is called.
 
 ONE copy for two planes. The hosted alpha (``real_agent.build_options``) and the
-prototype worker (``proto/worker/options.py``) both read the outcomes, the delivered
-halt and the foreground rewrite from here; the worker already imports from this package
+prototype worker (``proto/worker/options.py``) both read the outcomes, the no-project
+note and the foreground rewrite from here; the worker already imports from this package
 -- ``options.py`` takes ``direct_project_file_write`` and ``worker.py`` takes
 ``map_message``, both from ``app.agent.real_agent`` -- so a module here serves both
 without a second implementation.
@@ -33,7 +33,7 @@ from typing import Any
 #   budget           1e's per-session spend bound is spent
 #   no_progress      a redelivered attempt did no work ZERO_PROGRESS_CAP times running
 #   decision         the agent asked something only the patron can answer (phase 3)
-#   delivered        a BOUNDED request was met and the turn stopped on purpose
+#   delivered        (legacy) a bounded request met, before research_delivered was deleted
 #   mcp_unavailable  the genealogy tool surface went away
 #   ok               the session has no research.json; the browser shows nothing
 #
@@ -47,77 +47,21 @@ TERMINAL_QUEUED = "queued"
 TERMINAL_BUDGET = "budget"
 TERMINAL_NO_PROGRESS = "no_progress"
 TERMINAL_DECISION = "decision"
-# The agent delivered what a BOUNDED request asked for and stopped on purpose.
-# A new value, not `ok`: `ok` means "ended with no terminal reason" and the browser
-# renders it as nothing, while a delivery has something to report.
-TERMINAL_DELIVERED = "delivered"
 TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 # A session with no research.json. It is
-# `ok` ("ended with no terminal reason", per the note above `delivered`) because the browser
-# leaves that unlabelled, where `delivered` would render "Done" on a turn that may have
-# stopped to ask for a person id.
+# `ok` ("ended with no terminal reason") because the browser leaves that unlabelled.
 TERMINAL_OK = "ok"
 
 
-# The signal that produces TERMINAL_DELIVERED above. Shared because BOTH planes match on
-# string -- the prototype in its PreToolUse arm, the hosted alpha in `count_only` --
-# and a tool name that drifts between two copies fails open on the plane holding the
-# stale one: the arm simply never matches and the stop is vetoed as if the rule did
-# not exist.
-DELIVERED_TOOL = "mcp__genealogy__research_delivered"
-# What the researcher is told when that signal fires. Kept beside the tool name for the
-# same reason: both planes halt on this, and the prototype appends a one-sentence summary
-# ahead of it, so its length is load-bearing there.
-DELIVERED_REASON = (
-    "You have delivered what this message asked for. Stopping here rather than carrying "
-    "on; your next message picks up from here."
-)
-
-
-# The per-turn instruction that makes the halt reachable: nothing calls a tool it was
-# never told about. Both hosted planes append this to their system prompt. It lives
-# here, beside the tool name and the halt text, because a plane that wires the ARM
-# without the GUIDANCE ships a dead rule that looks identical to a working one.
-#
-# IT RIDES THE SYSTEM PROMPT, AND ONE SKILL BODY NAMES IT. The hook that makes this tool
-# end a turn exists only on the two hosted planes, which is why no skill body named it at
-# first: the rule would teach every skill to call a tool inert elsewhere.
-#
-# That held until the field showed the cost of the silence. `research/SKILL.md` already
-# spoke at the same moment -- "end your turn" -- and a model following the nearer, more
-# specific instruction ended the turn without the call, so the hosted arm never halted and
-# the nudge arm pushed it on into more research. The two instructions were competing, not
-# complementing. The router's bounded close now names the tool as well; the Cowork cost is
-# one inert call per bounded turn, and it is ONE body, not every skill. The harness half
-# of the original premise is also gone -- the tool is a LIVE_TOOL there now.
-# See docs/specs/research-delivered-tool-spec.md, "When the agent is told to call it".
-#
-# All three exclusions in the text are load-bearing. Calling it when the OBJECTIVE is finished
-# would report `delivered` where `completed` is true and the run ends on its own. Calling
-# it instead of asking would swallow a question nobody answers: an ask waits, a delivery
-# does not. That is also why the carrier is a separate tool rather than AskUserQuestion --
-# one tool carrying both speech acts leaves the hook with no discriminator. Calling it while
-# no project exists let a "Research PID X. <question>" first message be answered from a
-# lookup and delivered as a "single lookup", with no project and no research (issue #3768:
-# 11 of 15 local replays on `main` created no project and 6 of 15 ended on
-# `research_delivered`, 2026-10-30). It is keyed on the project, not the message: a turn-1
-# "start a project on X and just give me a plan" creates the project first and still
-# delivers.
-DELIVERY_GUIDANCE = (
-    "When this message asked for one or more bounded things and you have produced one — "
-    "the only one asked for, or the first of several — WRITE YOUR "
-    "REPLY FIRST -- this call ends the turn, so nothing you say after it reaches the "
-    "researcher -- then call "
-    "`research_delivered` with a one-sentence summary and stop: a plan the researcher "
-    "asked you to stop after, a single record or lookup, or a status question such as "
-    "\"where are we?\". Do not call it when the project's research objective itself is "
-    "finished -- that run ends on its own -- do not call it in place of asking the "
-    "researcher a question, which waits for their answer, and do not call it while no "
-    "project exists yet (`project_context` returned `no_project` and nothing has created "
-    "one since): a request to research a person is a research job, not a single lookup. "
-    "If you do not "
-    "already hold "
-    "its schema, search for it by name."
+# #3768: a first message that arrives before any project exists was answered from a
+# lookup and ended, with no project and no research. Both hosted planes append this to
+# their project note; Cowork's twin is the plugin's `no_project_route.py` hook. It lived
+# in the deleted research_delivered guidance (step mode phase 2) and moved here rather
+# than going with it.
+NO_PROJECT_NOTE = (
+    "While no project exists yet (`project_context` returns `no_project`), a request to "
+    "research a person is a research job, not a single lookup: follow the research "
+    "skill, which sets up the project first."
 )
 
 
@@ -157,26 +101,6 @@ HOSTED_PLANE_ENV = "GENEALOGY_HOSTED_PLANE"
 # first result, taking a still-running agent with it.
 DELEGATION_TOOLS = frozenset({"Agent", "Task"})
 
-
-
-def delivered_stop_reason(summary: str | None) -> str:
-    """The halt text for a delivery, summary FIRST.
-
-    Shared because both planes built this string by hand and the two could drift
-    on exactly the thing that matters: the browser replaces the chip with the
-    result text cut at 160 chars, and DELIVERED_REASON alone is 124, so appending
-    rather than prepending eats the window and cuts what the researcher most
-    needs. A single mutation here fails tests on both planes -- but only once the
-    prototype's assertion checks the PREFIX rather than mere containment, which is
-    why `test_proto_worker` now uses `startswith`.
-    """
-    # str() BEFORE strip(). The alpha used to cast and the de-duplication dropped it,
-    # so a non-string summary (123, ["a"], {"x": 1}) raised AttributeError inside the
-    # PreToolUse callback -- which fails the tool call, loses the halt, and leaves
-    # `delivered` already set. Nothing validates the tool's inputSchema, so that input
-    # is reachable. Casting here covers both planes rather than one.
-    text = str(summary or "").strip()
-    return f"Delivered: {text} {DELIVERED_REASON}" if text else DELIVERED_REASON
 
 
 def foreground_rewrite(tool_name: str, tool_input: Mapping[str, Any] | None) -> dict[str, Any] | None:

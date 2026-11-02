@@ -2725,8 +2725,7 @@ There is no `expected-findings.json` and no judge.
 ### 16.3 How the turn runs
 
 - The message is sent **verbatim**: no `/research` prefix, no `--autonomous`, no
-  provided-documents suffix. The system prompt is the autonomous mode's (no
-  DELIVERY_GUIDANCE).
+  provided-documents suffix. The system prompt is the autonomous mode's.
 - **No continue nudges.** The Stop hook returns `{}` at once, and there is no
   stall resume (it sends a second message). This matches Cowork today and step
   mode's cap 0 (`docs/plan/research-step-mode.md`, decision 1).
@@ -2758,8 +2757,7 @@ namespace; it is stripped, as it is from spawned names):
    here even if it saved: the patron never got the answer. `cost_cap` is not a
    cut-off (§6: it only labels a finished run), so it does not fail this check.
 
-Printed, not graded: whether the main thread called `research_delivered`, every
-unit in order (nested ones in parentheses), the `extraction_append` count, how the
+Printed, not graded: every unit in order (nested ones in parentheses), the `extraction_append` count, how the
 turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
 any background spawn ("Async agent launched"), whose save can land after the grade
 reads `research.json`.
@@ -2767,10 +2765,10 @@ A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 
 ### 16.5 What a pass does not show
 
-A pass here is **not** a pass on today's hosted alpha. That plane appends
-DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`). It no longer nudges a stop
-(step mode's phase 2 deleted the Stop veto), so a single ask that ends without
-`research_delivered` simply ends; the `delivered` column shows which did.
+A pass here is **not** a pass on today's hosted alpha, whose system prompt
+(`apps/server/app/agent/real_agent.py`) differs from the harness's. Since step mode's
+phase 2 neither plane nudges a stop or halts on a delivery signal: a single ask ends
+where the model ends it.
 
 ### 16.6 Cost
 

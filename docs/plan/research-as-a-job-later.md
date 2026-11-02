@@ -92,7 +92,7 @@ in issue #2932 "leave it at that" was the second message on an existing project,
 void on the next message. The agent says it has delivered what was asked by calling
 `research_delivered` — a tool SEPARATE from the *I need you* carrier below, because an ask
 waits for an answer and a delivery waits for nothing (ruled by the user 2026-09-29; the carriers were
-split, see `docs/specs/research-delivered-tool-spec.md`). **Landing on `main` separately**: the exit,
+split, see `docs/specs/completion-halt-spec.md`; the `research_delivered` tool itself was deleted in step mode's phase 2). **Landing on `main` separately**: the exit,
 the tool and the browser label ship independently of this plan. The turn ends with an
 outcome of its own — `completed`
 means the project is done and reads "Research complete.". "Where are we?" is a bounded request

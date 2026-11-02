@@ -46,11 +46,8 @@ from pathlib import Path
 from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     DELEGATION_TOOLS,
-    DELIVERED_REASON,  # noqa: F401 - tests read it off this module
-    DELIVERED_TOOL,
-    delivered_stop_reason,
     foreground_rewrite,
-    DELIVERY_GUIDANCE,
+    NO_PROJECT_NOTE,
     HOSTED_PLANE_ENV,
     completion_halt_summary,
     status_before_call,
@@ -776,7 +773,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     The counter lives here rather than on a module global, so two sandboxes in one
     process cannot read each other's state."""
     counter = {
-        "turn_tool_calls": 0, "delivered": False, "continuations": 0,
+        "turn_tool_calls": 0, "continuations": 0,
         # The completion halt (#3542 lead 1): the status just before each main-thread
         # proof-conclusion call, by tool_use_id, and the summary to show.
         "status_before": {},
@@ -810,26 +807,12 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
             note_effort(counter, data)
         except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
             _log(f"[agent] effort note failed: {type(exc).__name__}: {exc}")
-        # Both arms below are gated on the MAIN thread -- membership, not truthiness: the
-        # key is absent on the main thread, and a subagent whose `agent_id` is None or ""
-        # is still a subagent. Delivered: a subagent calling it means only its own leg is
-        # done. Pending message (#3376): halting a subagent mid-task strands the
-        # orchestrator, which takes its last in-progress note as the final report and
+        # The arm below is gated on the MAIN thread -- membership, not truthiness: the key
+        # is absent on the main thread, and a subagent whose `agent_id` is None or "" is
+        # still a subagent. Pending message (#3376): halting a subagent mid-task strands
+        # the orchestrator, which takes its last in-progress note as the final report and
         # re-does the work in a fresh subagent.
         main_thread = "agent_id" not in data
-        # A bounded request was met and the model is stopping on purpose (#2813 item 1).
-        if data.get("tool_name") == DELIVERED_TOOL and main_thread:
-            counter["delivered"] = True
-            _log("[agent] delivered — allowing the stop")
-            # Prepend the model's own one-sentence summary, as the prototype does
-            # (`options.py`). It is the whole reason the tool takes a `summary`:
-            # without it the researcher is told a delivery happened but not what
-            # was delivered, and the two planes claim a parity they do not have.
-            delivered_input = data.get("tool_input") or {}
-            return {
-                "continue": False,
-                "stopReason": delivered_stop_reason(delivered_input.get("summary")),
-            }
         # The researcher typed mid-turn. Main-thread only (#3376): a subagent runs to the
         # end of its task and the message is taken at the orchestrator's next tool call.
         # The count guard is the prototype's one-call rule (worker.py, handover_clause):
@@ -933,7 +916,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         system_prompt={
             "type": "preset",
             "preset": "claude_code",
-            "append": f"{project_note}\n\n{DELIVERY_GUIDANCE}",
+            "append": f"{project_note}\n\n{NO_PROJECT_NOTE}",
         },
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents
@@ -1525,24 +1508,16 @@ class RealAgent:
     def _begin_turn_hook_state(self) -> None:
         """Clear the per-TURN half of the hook counter. Called at the turn boundary.
 
-        `delivered` means "THIS turn delivered what was asked". The hooks dict is
-        built once per SESSION, because the SDK client is cached (`if self._client
-        is None`), so without this the flag set by one bounded turn authorises a
-        voluntary stop in every later turn -- the next research job ends after a
-        single sub-skill, with no error and nothing in the log.
-
-        A method rather than three inline lines so it can be driven by a test. The
-        first cut cleared on the next tool call instead, and was wrong twice: a turn
-        that yields without calling any tool never cleared it, and the clearing was
-        not main-thread gated, so a straggler subagent call could clear a
-        main-thread delivery. `continuations` is the cost report's count of overridden
+        The hooks dict is built once per SESSION, because the SDK client is cached
+        (`if self._client is None`), so per-turn state must be cleared here. A method
+        rather than inline lines so it can be driven by a test. `continuations` is the
+        cost report's count of overridden
         stops, always 0 since the Stop hook was deleted (step mode phase 2). `turn_tool_calls`
         is the pending-message halt's one-call guard.
         """
         counter = getattr(self, "_hook_counter", None)
         if counter is not None:
             counter["turn_tool_calls"] = 0
-            counter["delivered"] = False
             counter["continuations"] = 0
             counter["effort_seen"] = {}
             counter["effort_injected"] = 0

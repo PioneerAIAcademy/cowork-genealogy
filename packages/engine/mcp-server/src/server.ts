@@ -15,7 +15,6 @@ import {
   ListToolsRequestSchema
 } from "@modelcontextprotocol/sdk/types.js";
 import { wikipediaSearch, type WikipediaSearchInput } from "./tools/wikipedia.js";
-import { researchDelivered, type ResearchDeliveredInput } from "./tools/research-delivered.js";
 import {
   placeSearchTool,
   placeSearchAllTool,
@@ -165,29 +164,6 @@ export function createServer(principal: Principal): Server {
         content: [{ type: "text", text: JSON.stringify({ error: unknownArgs }) }],
         isError: true
       };
-    }
-
-    if (request.params.name === "research_delivered") {
-      // A pure signal: no network, no auth, no project write. On BOTH hosted planes a
-      // PreToolUse hook ends the turn on this tool's NAME before it executes, so this
-      // arm runs only where no such hook binds (Cowork, the e2e harness).
-      //
-      // The try/catch is not decoration: the server checks argument names, not their
-      // types, so a non-string `summary` reaches the body and `.trim()` throws. Every other arm
-      // here returns `isError` with a readable message; without this one, that throw
-      // escapes as a protocol-level MCP error instead.
-      try {
-        const args = request.params.arguments as unknown as ResearchDeliveredInput;
-        return {
-          content: [{ type: "text", text: JSON.stringify(researchDelivered(args)) }]
-        };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error";
-        return {
-          content: [{ type: "text", text: JSON.stringify({ error: message }) }],
-          isError: true
-        };
-      }
     }
 
     if (request.params.name === "wikipedia_search") {

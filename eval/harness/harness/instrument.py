@@ -77,17 +77,6 @@ LIVE_TOOLS: set[str] = {
     "person_quality",
     "project_context",
     "tree_query",
-    # The bounded-delivery signal. Live rather than fixture-backed because the
-    # tool IS inert by contract -- no network, no auth, no project write; it
-    # returns a fixed acknowledgement (`research-delivered.ts`) -- so running the
-    # real one is both free and more faithful than a canned answer.
-    #
-    # It was advertised NOWHERE in this harness until now, which is why #2813
-    # item 1 reached alpha untested: the hosted Stop hook only allows a bounded
-    # turn to stop when the model calls this tool, and a model that cannot see
-    # the tool cannot call it. Every unit eval therefore graded the skill on
-    # prose it had no way to act on.
-    "research_delivered",
     # Read-only projection over the workspace's own research.json — same shape
     # as project_context, and deterministic, so mocking it would only invite
     # drift. Added when search-records / research were pointed at it in place of
@@ -163,7 +152,6 @@ LIVE_MODULES: dict[str, str] = {
     "person_quality": "tools/person-quality.js",
     "project_context": "tools/project-context.js",
     "tree_query": "tools/tree-query.js",
-    "research_delivered": "tools/research-delivered.js",
     "research_query": "tools/research-query.js",
     "sidecar_read": "tools/sidecar-read.js",
     "project_create": "tools/project-create.js",
