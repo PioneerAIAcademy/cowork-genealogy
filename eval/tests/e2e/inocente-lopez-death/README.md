@@ -44,7 +44,7 @@ match strength.
 - **The index confirms it without the image.** The same infant was independently indexed at his civil birth registration: Inocente de José López, born 28 December 1905 at Suchitoto, mother Santos López, no father named (`ark:/61903/1:1:QGF2-WRZP`). That makes him sixteen days old at death against the eighteen stated, a small slip in what the informant gave.
 - **No source conflict.** The hint's `1:1:` id is not among the tree's cited sources.
 
-**The real death.** A search of the civil registers for Inocente López with spouse Virginia Mendoza returned `ark:/61903/1:1:QPHJ-JVY1`: Ynocente Lopez Carpio, died 22 September 1916, death registered at Suchitoto, spouse **Virginia Mendoza**, parents Matías López and Mauricia Carpio (register image `ark:/61903/3:1:33SQ-GTRF-NTF`). It is not attached in the tree. A second index of the same death, `ark:/61903/1:1:655Y-1SYB` (image `ark:/61903/3:1:3QHK-1Q52-59S4-G`), gives the same parents, 23 September 1916, and a computed birth year of 1844. The two civil indexes disagree by one day. Neither civil register image has been read by a person (the AI reading below is discarded), so it is not established which of the two dates is his death date, or whether either is a registration date.
+**The real death.** A search of the civil registers for Inocente López with spouse Virginia Mendoza returned `ark:/61903/1:1:QPHJ-JVY1`: Ynocente Lopez Carpio, died 22 September 1916, death registered at Suchitoto, spouse **Virginia Mendoza**, parents Matías López and Mauricia Carpio (register image `ark:/61903/3:1:33SQ-GTRF-NTF`). It is not attached in the tree. A second index of the same death, `ark:/61903/1:1:655Y-1SYB` (image `ark:/61903/3:1:3QHK-1Q52-59S4-G`), gives the same parents, 23 September 1916, and a computed birth year of 1844. The two civil indexes disagree by one day. No licensed reading of either civil register image exists (see "The second civil register image" below; the AI reading of the first is discarded), so it is not established which of the two dates is his death date, or whether either is a registration date.
 
 The identification rests on the indexes:
 
@@ -70,6 +70,19 @@ The reading is kept here as context only:
 
 It suggests why the index reads as it does. The entry is dated 21 September and says he died "anoche", the night before. Every entry on the folio says *murio* and none mentions burial, and the page is stamped by the Gobernación Política of Cuscatlán. So the index's "burial" date is probably the date the entry was written. Because the reading is unlicensed, that is an interpretation, not evidence.
 
+**The second civil register image.** The genealogist examined the image behind the second civil index, `ark:/61903/3:1:3QHK-1Q52-59S4-G`, personally. Their own reading:
+
+- **Heading and opening.** The entry is headed "P. N. 382". Its opening line begins "En Suchitoto á veinti… de Sept…"; the day and the year were not legible to them.
+- **Identity.** The first line names "Ynocente Lopez", and what appears to read "Virginia Mendoza" follows just below. They could not confirm the other details.
+- **Death wording.** Not legible enough for them to vouch for.
+- **Layout.** On the 3QHK image they examined, the target's page is the right-hand page: entry 381 (Dolores) is at the top and entry 382, the target, below it. The facing left-hand page holds entries 379 (Rufina Borja) and 380 (Felipe Landaverde). Besides the target, only entry 381 is on the target's page.
+
+That reading is unlicensed under `docs/e2e-testing-guide.md` Step 1a, and nothing in f1 rests on it. The reason is the page, not who read it: only one other entry, 381, shares the target's page, and this register's index holds no record for it (its only index record, `ark:/61903/1:1:QPHJ-JVYY`, belongs to the first civil register). Step 1a needs two indexed neighbours on the same page.
+
+Machine transcripts of this image are separate tool output, not the genealogist's reading, and are not relied on. FamilySearch's full-text transcript and an AI transcription (`image_transcribe`) both read the opening as "a veintitrés de Septiembre de mil novecientos diez y seis" and the death wording as "murió anoche a las ocho", and supply further identity details (age, occupation, parents, informant). None of these is the genealogist's observation.
+
+What stays open is the day of death, and what the dates and "anoche" in the church and civil entries each mean.
+
 **The 1916 page reading is discarded.** An AI transcription (`dev/try-image-transcribe.ts`) of `…-NTF` failed calibration. It read the given name "Paulina" where the index has Rufina Borja Suares (`ark:/61903/1:1:QPHJ-JVY2`), and the surname "Candavende" where the index has Felipe Landaverde (`ark:/61903/1:1:QPHJ-JVYP`). Nothing from that reading is relied on here.
 
-Retrieval was tool-assisted: `packages/engine/mcp-server/dev/try-record-read.ts`, `try-record-search.ts` and `try-image-transcribe.ts` against live FamilySearch. The identity judgement was the genealogist's. The church death record's image was read by the genealogist on familysearch.org; its index and the neighbouring entries' index records were retrieved with the MCP `record_read` and `record_search` tools.
+Retrieval was tool-assisted: `packages/engine/mcp-server/dev/try-record-read.ts`, `try-record-search.ts` and `try-image-transcribe.ts` against live FamilySearch. The identity judgement was the genealogist's. The church death record's image was read by the genealogist on familysearch.org; its index and the neighbouring entries' index records were retrieved with the MCP `record_read` and `record_search` tools. The second civil register image was examined by the genealogist; its image group (`113701001`) was found with `volume_search`, and its full-text transcript was retrieved with `fulltext_search`.
