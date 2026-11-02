@@ -2689,6 +2689,19 @@ def test_guard_refuses_a_non_parameter_key_on_a_fixture_backed_tool(tmp_path):
 
 
 @pytest.mark.requires_engine_build
+def test_guard_refuses_a_non_parameter_key_on_person_quality_too(tmp_path):
+    """The third registration site: `person_quality` has its own handler."""
+    _pq_tree(tmp_path, [PATRICK])
+    _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+
+    result = _invoke(tools_by_name, "person_quality", {"personId": "I1", "bogusKey": 1})
+
+    assert result["is_error"] is True
+    assert "has no parameter `bogusKey`" in _extract_response_dict(result)["error"]
+    assert call_log[-1]["matched"]["kind"] == "unknown_args_refused"
+
+
+@pytest.mark.requires_engine_build
 def test_guard_passes_a_real_parameter_and_an_accepted_alias(tmp_path):
     """The other direction, twice. A declared parameter passes, and so does an
     `ACCEPTED_ALIASES` entry — `imageArk` on `image_read` — which a naive
