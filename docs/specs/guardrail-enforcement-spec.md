@@ -172,7 +172,7 @@ depends on another shipping first.
 | §5.5 | Provenance nudge | engine (MCP tool) — so Cowork, hosted, both harnesses | a `timelines` append, or an update setting `events`, that leaves events with empty `assertion_ids` — tree or user facts presented beside record-backed ones | **advisory only — warns, refuses nothing.** Refusal rejected 2026-10-18 and kept a warning on 2026-10-19, though that ruling withdrew the "tree-built first pass" premise for person-mode timelines (there an unsourced tree fact becomes a gap). Whether person mode should refuse instead is open with the lead |
 | §5.6 | Namesake warning (`namesakeRowWarnings`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a `research_append` call that appends or updates a `namesakes` row whose holder has live `probable` or `confident` links the namesake cap refuses: it lists them, the facts their parties carried and the names citing their sources | **advisory only — warns, refuses nothing** (lead, 2026-10-18, item 5 of the list of 2026-10-17). With rows planted on the 212 committed e2e final states (measured at `20ad24872`, `dev/measure-namesake-cap.ts` §4): 455 of 1,306 persons warned, listing 2,216 links; on subjects alone, 58 of 181, listing 366 links |
 | §5 | Circular-corroboration gate (`circularCorroborationCallCheck`) | engine (MCP tool) — so Cowork, hosted, both harnesses | a `person_evidence` link a call asserts at `probable`/`confident` to a starting-tree person whose only corroboration is the linked record's own: every source on the baseline relationship to each role-matched parent or spouse is that record or a copy of it (a copy: a shared source or description, or a party's birth, christening or baptism with the same full date, place and given name). Where no such relative exists the person's own sources decide, and only `confident` is refused. Instrument: `packages/engine/mcp-server/dev/measure-circular-corroboration.ts` | **enforcing**. Measured at `e28bffc08`, as committed it refuses **6 of 10,417** committed links, all `confident`, subject-alone, in one fixture (`ferber-marriage`, I4 and the 1900 census `MM88-DGG`, two runs): I4's only non-tree source is that census, and one of the six (`pe_024`, residence) matches a tree fact sourced to the same census; the other five match name and birth month against facts whose tree provenance is unknown. Read by the genealogist (2026-10-24), who ruled all six true positives, so the gate ships enforcing. **Unmeasurable on the relationship arm:** 20 of 2,036 committed starting-tree relationships carry a source (captured before relationship sources existed), so the arm that catches the reported Latham shape can fire on none of them. Planted instead, with every role-matched edge sourced to the record alone: 486 of 1,672 links that reach one are refused, and 0 of 1,672 once the edge also carries another record. A mother of `<x>` beside a father of `<x>` reads as a couple since 2026-10-29, so 355 parent entries reach the relationship arm rather than the subject alone, where `probable` can be refused (1,317 links reached it before): as committed the same 6 are refused, and planted they add 61 refusals, 27 `probable` and 34 `confident` (425 of 1,317 before) |
-| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool | **enforcing** |
+| §6 | Raw-write lockdown | plugin hook (Cowork, hosted, wherever the plugin loads) + SDK hook (hosted) + e2e harness for the file-write tools; **the file mode** for shell writes (`Bash`, `device_bash`): `FsProjectStore` keeps the files read-only between writes, so it binds wherever that store runs — the desktop `.mcpb`, both harnesses, the hosted sandbox — and not on the prototype's Postgres store, which has no files | writing a protected project file (`research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json`, `external-collections.json`) without going through its writing tool. The file mode refuses `>`, `>>`, `tee` and `open(…, 'w')`; it does not refuse `chmod` first, nor `sed -i` or `mv` on macOS and Linux (§6.1) | **enforcing** |
 | §7 | Caller-attributed recency check | e2e harness only | a protected write with no recent successful invocation of its owning skill | **shadow only — permanently, unless a skill gains a completion signal** |
 | — | Step boundary (`step_allowed`, `StepGate`) | **prototype worker and both eval harnesses only — NOT Cowork, NOT the hosted alpha** | a second step spawned inside one turn: the turn runs one step, reports it, and ends. Ships in `packages/engine/plugin/hooks/step_boundary.py` as a **library** loaded with `importlib`, not as a registered plugin hook, so there is no `hooks.json` entry, no matcher-coverage case and no `make hook-smoke` arm. Cowork runs on router prose alone (decision 25, lead 2026-10-21): the cost exposure is the prototype, and a Cowork researcher can press stop. Rider 2's halt rate on the prototype is what would buy the hook later, with numbers rather than a guess | **enforcing on the prototype; absent in Cowork by decision** |
 | §8 | Post-run compliance detectors | e2e harness only | a guardrail skill's effect in the final state with no invocation anywhere in the run | **reported (compliance axis); does not gate the run** |
@@ -1618,8 +1618,13 @@ some of them fails `make harness-test`.
 
 **Deliberate gaps.**
 
-- **`Bash` is not covered.** All three copies of the guard match on `file_path`,
-  so `cat > research.json`, `sed -i`, and `python -c` all get through. Skills run
+- **The hook does not match `Bash`; the file mode covers it instead.** All three
+  copies of the guard match on `file_path`, so `cat > research.json`, `sed -i`,
+  and `python -c` reach the shell. The protected files are
+  read-only on disk between writes, so the write forms are refused by the
+  filesystem rather than the hook (§6.1, the `device_bash` section). A `chmod`
+  first still gets through everywhere, and `sed -i` and `mv` do on macOS and
+  Linux (Windows refuses to replace a read-only file). Skills run
   their stdlib-only scripts through `Bash` so it cannot be revoked, and matching
   command text would deny a legitimate `python script.py research.json > out`
   while still missing a variable-built path. A false deny is the worse failure
@@ -1650,10 +1655,10 @@ some of them fails `make harness-test`.
   path runs `bypassPermissions`, so neither environment has the thing that
   refused these two.
 
-  This does not by itself close the gap — the false-deny argument above is
-  unchanged, and no *landed* shell write has been observed. It does move the
-  question from "has this ever happened" to "what stops it where the permission
-  prompt does not", which is the form the next decision has to take.
+  Four shell writes have since landed, in Cowork and on the hosted path (§6.1 describes
+  one), so "what stops it where the permission prompt does
+  not" is now answered by the file mode below, not by a matcher — the
+  false-deny argument above is unchanged.
 - **`Read` is not revoked, and should not be** until there is a way to read the
   same data. `research_query` covers 13 of `research.json`'s 17 top-level
   sections (missing `project`, `researcher_profile`, `known_holdings`,
@@ -1954,7 +1959,7 @@ code:
   which payload key carries content, which is the same speculation the walk
   refuses by design and that write-shape matching is held back for.
 
-#### `device_bash` is still open, and a bypass through it LANDED — 2026-08-17
+#### Shell writes (`device_bash`, sandbox `Bash`): refused by the file mode
 
 **Reproduced live, on request, in Cowork with a connected folder.** Asked to
 append a note to `research.json` "using the shell or a file write", the agent did
@@ -1974,14 +1979,14 @@ The damage is worse than an unvalidated entry:
   validation — it made the tools that perform validation unusable until the
   entry was removed by hand.
 
-**This falsifies the reasoning that kept the route open**, which is recorded here
-rather than deleted, because the error is instructive. The argument was "0 landed
+**This falsified the reasoning that had kept the route open**, which is recorded
+here rather than deleted, because the error is instructive. The argument was "0 landed
 across the corpus". But every write-shaped shell attempt in the corpus was
 refused by the **harness's** `dontAsk` permission mode — and this section already
 said, in the paragraph above, that neither Cowork nor the hosted path has that
 refusal. The corpus structurally could not record a landed write, so "0 landed"
 measured where the light was. The close-condition stated here — *"close this if a
-bypass appears in a runlog or a feedback case"* — is now met.
+bypass appears in a runlog or a feedback case"* — was met.
 
 **What does NOT change: a command-text matcher is still the wrong instrument.**
 `cat research.json` and `cat > research.json` remain indistinguishable without
@@ -1990,9 +1995,10 @@ because `research_query` covers 13 of 17 sections and there is no tree query
 surface at all; and a denial simply moves the agent to `head`, `python`, or a
 path built from a variable — the harness's own denial text suggests as much.
 
-**Chosen direction: make the FILE the unit, not the command.** Keep both project
-files read-only on disk and have the shared write layer re-apply the mode after
-each write. Measured on macOS: mode 444 blocks `>`, `>>`, `tee` and
+**The mechanism: the FILE is the unit, not the command.** The protected files
+stay read-only on disk, and `FsProjectStore` (`src/store/fs-project-store.ts`) —
+the one layer every writer tool reaches disk through — unlocks, renames and
+re-locks them. Measured on macOS: mode 444 blocks `>`, `>>`, `tee` and
 `python open(w)` — including today's bypass — while reads still work and
 `atomicWriteJson`/`atomicWriteBoth` still succeed, because they rename a temp
 over the target and POSIX rename ignores the target's mode. The mode does not
@@ -2024,9 +2030,15 @@ chmod(target, 0o444)
 
 Both halves are exercised by the probe's two `FIX:` lines — the first that the
 sanctioned write still works, the second that protection survives it — and both
-pass on macOS. **They must be run on Windows before this ships**; a pass on one
-platform proves nothing about the other, which is the whole reason the probe
-exists.
+passed on macOS and Windows (2026-08-17). CI runs Linux only, where a rename
+ignores the target's mode, so a missing or late unlock would pass every
+behavioural test there and break every write on Windows. The order is therefore
+pinned by recording the calls (`tests/store/fs-project-store-lock-order.test.ts`),
+the behaviour on POSIX by `tests/store/fs-project-store-readonly.test.ts`, and the
+store's list against the hook's `PROTECTED_PROJECT_FILES` by
+`tests/packaging/protected-files-parity.test.ts`. A failed `chmod` never fails a
+write: the unlock is attempted and the rename goes ahead regardless (as before
+the lock existed), and a failed re-lock after a rename that landed is ignored.
 
 Two costs, both accepted rather than hidden. There is a microsecond window in
 which the file is writable, which no agent is positioned to exploit. And the
@@ -2035,8 +2047,10 @@ point is not a wall but converting a one-step accident into a two-step deliberat
 act, which is what today's `python open(w)` bypass was.
 
 **Write-shape matching is held back on purpose.** Denying the narrow, unambiguous
-write forms a read-only file misses — `sed -i`, `mv` over the target, and an
-explicit `chmod` — would close the rename-shaped residue. It is **not** being
+write forms a read-only file misses — `sed -i` and `mv` over the target (on
+macOS and Linux; Windows refuses to replace a read-only file, as the measured
+`fs.rename` row above shows), and an explicit `chmod` — would close the
+rename-shaped residue. It is **not** being
 built now (lead ruling, 2026-08-17): the file-mode approach covers today's
 observed bypass, and the corpus cannot say how often the rename shapes are
 reached for, so the matcher would be scope bought on speculation. Add it only if

@@ -4,6 +4,7 @@ import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 // ─── fixture builders (valid research.json + tree.gedcomx.json) ───────────────
 
@@ -124,7 +125,7 @@ describe("materialize_facts", () => {
       );
     }
     await writeFile(join(dir, "research.json"), JSON.stringify(researchDoc, null, 2), "utf-8");
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(treeDoc, null, 2), "utf-8");
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(treeDoc, null, 2), "utf-8");
   }
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
   const exists = async (name: string) => access(join(dir, name)).then(() => true, () => false);

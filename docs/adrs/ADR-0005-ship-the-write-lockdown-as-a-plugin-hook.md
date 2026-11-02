@@ -1,8 +1,8 @@
 # ADR-0005: Ship the write lockdown as a plugin `PreToolUse` hook
 
 > **Read before you:** add a guardrail · restrain the main thread · try to stop
-> the agent doing something with an allow-list · wonder why the `Bash` route is
-> left open · change `PROTECTED_PROJECT_FILES`.
+> the agent doing something with an allow-list · wonder why the hook does not
+> match `Bash` · change `PROTECTED_PROJECT_FILES`.
 
 - **Status:** Accepted
 - **Decided:** 2026-07-30 (#989; Windows path fix #984)
@@ -62,8 +62,8 @@ as part of the plugin, and the hosted path gets it alongside its own `hooks=`.
 Verified live in Cowork on 2026-07-30 — the hook loads, fires under either
 matcher form, and its deny is honored with the script's own reason text
 surfacing. (That probe used a **broader matcher** than the shipped one and so
-also fired for `Bash`; the `Bash` route is deliberately open — see the costs
-below.) The hosted path runs `bypassPermissions`; a hook binds under both.
+also fired for `Bash`; the shipped hook does not match `Bash`, and shell writes
+are refused by the protected files' read-only mode instead — see the costs below.) The hosted path runs `bypassPermissions`; a hook binds under both.
 Cowork's `permission_mode` is recorded `"default"` here and was observed
 `"auto"` on 2026-10-19 (see "What the step-mode phase-0 probe found"); the
 hook bound under both.
@@ -91,7 +91,9 @@ Three deliberate properties of the script:
    call the user was entitled to make.
 2. **The deny names the sanctioned writer tools, and sets no `stopReason`.** A
    denied write is a recoverable mistake, not a stop; the turn continues.
-3. **The `Bash` route is deliberately left open.**
+3. **The hook does not match `Bash`.** Shell writes to a protected file are
+   refused by the file's read-only mode, which only the engine's file store lifts
+   (issue #1499).
 
 ## Alternatives considered
 
@@ -113,14 +115,17 @@ scenario flails against denied writes rather than producing an unvalidated file
 
 **Costs, knowingly accepted.**
 
-1. **The `Bash` route is open, on purpose.** `cat >`, `sed -i`, and `python -c`
-   all get through, because the guard matches on `file_path`. The stated
-   rationale — "skills run their stdlib-only scripts through `Bash`, so it cannot
-   be revoked" — is currently *hypothetical*: no skill ships a `scripts/` folder
-   today. **The decision stands on the false-deny argument alone**, which is the
-   honest version. The rationale lives in `docs/specs/guardrail-enforcement-spec.md`
-   §6 ("`Bash` is not covered"), to be revisited only if a bypass ever actually
-   uses the shell.
+1. **The hook does not match `Bash`; the file mode covers it, and only partly.**
+   The guard matches on `file_path`, so `cat >`, `sed -i` and `python -c` reach
+   the shell. Matching command text was rejected on the false-deny argument: most
+   shell touches of these files are reads the system depends on, and a matcher
+   still misses a variable-built path. After four shell writes landed (issue
+   #1499), the protected files became read-only on disk between writes, with
+   `FsProjectStore` the only layer that unlocks them. That refuses `>`, `>>`,
+   `tee` and `open(…, 'w')`, and does not refuse `chmod` first, nor `sed -i` or
+   `mv` on macOS and Linux — a speed bump, not a wall. It binds wherever the file store runs, not on
+   the prototype's Postgres store. Details: `docs/specs/guardrail-enforcement-spec.md`
+   §6 ("The hook does not match `Bash`") and §6.1.
 2. **Three sibling implementations exist** — the plugin hook, the hosted SDK
    hook, and the e2e harness's own. They are behaviourally identical but are not
    textual copies, so the same-behavior test had to be vector-driven rather than
@@ -356,12 +361,9 @@ environment, and enforcing-vs-shadow status.
 
 ## Revisit when
 
-A bypass is observed using the shell route — at which point the false-deny
-calculus changes and `Bash` matching becomes worth its cost. **Observed
-2026-08-17** and tracked as issue #1499, whose chosen direction is the file mode
-rather than a command matcher, pending the Windows rename-over-read-only
-measurement. Or a skill ships a `scripts/` folder, which would finally make the
-hypothetical half of the rationale real.
+A rename-shaped shell bypass is observed — `sed -i`, `mv` over the target, or
+`chmod` then a write — which the file mode does not stop; write-shape matching
+for those forms was held back until one is seen (lead ruling, 2026-08-17).
 
 **The per-context trigger has fired.** Porting that policy to production was
 listed here as a future event; it happened on 2026-08-19 (see the Decision), so

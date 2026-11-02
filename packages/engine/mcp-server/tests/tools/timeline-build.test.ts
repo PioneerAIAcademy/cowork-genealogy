@@ -6,6 +6,7 @@ import { tmpdir } from "os";
 import { formatEventDate, planTimeline, timelineBuild } from "../../src/tools/timeline-build.js";
 import { extractRecord } from "../../src/utils/record-extract.js";
 import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 const SCENARIOS = resolve(__dirname, "../../../../../eval/fixtures/scenarios");
 const scenario = (name: string) => ({
@@ -747,7 +748,7 @@ describe("timelineBuild on a project", () => {
     expect(first).toMatchObject({ ok: true, status: "written" });
     const research = await read();
     research.timelines.find((t: any) => t.id === first.timelineId).person_ids = ["KWCJ-RN4"];
-    await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
     const second: any = await timelineBuild({ projectPath: dir, personId: "I1" }, deps);
     expect(second).toMatchObject({ status: "updated", timelineId: first.timelineId });
     expect((await read()).timelines.find((t: any) => t.id === first.timelineId).person_ids).toEqual(["KWCJ-RN4"]);
