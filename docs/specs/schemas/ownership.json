@@ -8,8 +8,11 @@
     "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25), conflicts (CLAIM-scoped over several fields on the analytical product, 2026-09-29), rejected_links (section-scoped, 2026-09-30), namesakes (section-scoped, 2026-10-25) and evaluations (section-scoped, 2026-10-26, issue #3191). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "hookRouting": {
-    "$comment": "What the plugin PreToolUse hook routes by section, read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py so the actual-writer reach rule has one source. `tool` is the one writer tool guard_project_files.py's owner_denied gates (plugin-hooks.test.ts pins it against the script); `treeRowsVia` maps each tree.gedcomx.json row that tool writes to the research.json section whose op writes it.",
-    "tool": "research_append",
+    "$comment": "What the plugin PreToolUse hook routes by section, read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py so the actual-writer reach rule has one source. `tool` is the writer tools guard_project_files.py's owner_denied gates (plugin-hooks.test.ts pins them against the script): `research_append`, and `evaluation_append`, which is `research_append` scoped to `evaluations` by tool identity and routed the same way (issue #1491). A row's `hookCallers` counts for whichever of these tools its `writerTools` also lists. `treeRowsVia` maps each tree.gedcomx.json row `research_append` writes to the research.json section whose op writes it (evaluation_append writes no tree row).",
+    "tool": [
+      "research_append",
+      "evaluation_append"
+    ],
     "treeRowsVia": {
       "persons": "assertions",
       "sources": "sources"
@@ -531,6 +534,7 @@
         "agent:gps-mentor"
       ],
       "writerTools": [
+        "evaluation_append",
         "research_append"
       ],
       "enforceableAt": [
@@ -539,8 +543,8 @@
       "hookCallers": [
         "agent:gps-mentor"
       ],
-      "notes": "Enforced at the hook plane since 2026-10-26 (issue #3191, lead ruling 2026-10-12), section-scoped: the guard's OWNED_SECTIONS routes the section to the gps-mentor agent, so a MAIN-THREAD write — which carries no agent_id and was the one committed non-owner shape: a main thread recording its own mentor verdict before gps-mentor was spawned (katalin-horak-son/run-2026-08-03_21-26-35.json, tool_calls[93] and [94], spawn at [97]) — is denied; every other agent was already held off by its AGENT_WRITABLE_SECTIONS lane. Not `unit`: the section is outside the diff set that plane iterates, and test_ownership_table keys on the calling skill's SKILL.md frontmatter name, so it could not express an agent owner either. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
-      "requires": "Only the gps-mentor agent appends an evaluation. A superseded evaluation is retired by pointing `superseded_by` at its replacement, never by deletion.",
+      "notes": "Enforced at the hook plane since 2026-10-26 (issue #3191, lead ruling 2026-10-12), section-scoped: the guard's OWNED_SECTIONS routes the section to the gps-mentor agent, so a MAIN-THREAD write — which carries no agent_id and was the one committed non-owner shape: a main thread recording its own mentor verdict before gps-mentor was spawned (katalin-horak-son/run-2026-08-03_21-26-35.json, tool_calls[93] and [94], spawn at [97]) — is denied; every other agent was already held off by its AGENT_WRITABLE_SECTIONS lane. Since 2026-10-27 (issue #1491) gps-mentor writes it through the narrow `evaluation_append`, which the guard routes the same way as `research_append`. Not `unit`: the section is outside the diff set that plane iterates, and test_ownership_table keys on the calling skill's SKILL.md frontmatter name, so it could not express an agent owner either. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
+      "requires": "Only the gps-mentor agent appends an evaluation, through evaluation_append. A superseded evaluation is retired by pointing `superseded_by` at its replacement, never by deletion.",
       "failure": "A main thread recording its own verdict makes the second opinion self-issued — a caller appending its own evaluation grades its own work.",
       "remedy": "Invoke gps-mentor and let it write the entry.",
       "override": "none"

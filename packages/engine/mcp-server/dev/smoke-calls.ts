@@ -354,6 +354,31 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: okTrue,
   },
   {
+    tool: "evaluation_append",
+    label: "evaluation_append (evaluations + verdict)",
+    offline: true,
+    // research_append scoped to `evaluations` by tool identity (ADR-0006). The
+    // narrow tool takes the same single-op shape and forces the lane.
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      section: "evaluations",
+      op: "append",
+      // Its own timestamp: the sidecar is named focus-target-<second>, so without
+      // it this step, run in the same second as the research_append one above,
+      // would overwrite that step's sidecar and prove nothing about its own.
+      entry: {
+        focus: "on-demand",
+        target_id: "project",
+        target_type: "project",
+        verdict: "looks_solid",
+        timestamp: "2026-01-01T00:00:01Z",
+        superseded_by: null,
+      },
+      verdict: { summary: "narrow-tool transport smoke" },
+    }),
+    expect: okTrue,
+  },
+  {
     tool: "research_query",
     label: "research_query (evaluations)",
     offline: true,

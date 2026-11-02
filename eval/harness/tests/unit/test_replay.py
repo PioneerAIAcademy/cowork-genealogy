@@ -571,3 +571,21 @@ def test_an_edits_only_update_the_replay_cannot_show_is_not_counted_applied():
                       OK_PS1)], starting_research=start)
     assert r.unmodelled == {"proof_summaries:edits": 1}
     assert r.applied == 0
+
+
+OK_EV1 = '[{"type": "text", "text": "{\\n  \\"ok\\": true,\\n  \\"entryId\\": \\"ev_001\\"\\n}"}]'
+
+
+def test_evaluation_append_is_applied_to_evaluations():
+    """gps-mentor writes `evaluations` only through `evaluation_append` (#1491).
+    Skipping it left every verdict out of the replay while `unmodelled` stayed
+    empty, so the gap read as full coverage."""
+    r = replay([_call("evaluation_append", {"section": "evaluations", "op": "append", "entry": {"focus": "on-demand"}}, OK_EV1)])
+    assert [e["id"] for e in r.research["evaluations"]] == ["ev_001"]
+    assert r.applied == 1 and r.unmodelled == {}
+
+
+def test_evaluation_append_with_no_section_still_means_evaluations():
+    r = replay([_call("evaluation_append", {"op": "append", "entry": {"focus": "on-demand"}}, OK_EV1)])
+    assert [e["id"] for e in r.research["evaluations"]] == ["ev_001"]
+    assert "log" not in r.research or r.research["log"] == []

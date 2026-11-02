@@ -16,7 +16,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 import { RESEARCH_APPEND_SECTIONS } from "../../src/tools/research-append.js";
 import { NOT_A_DOCUMENT_WRITER, OK_FALSE_IS_FAILURE } from "../../src/tool-result.js";
 import { frontmatterBlock, listFromBlock, parseFrontmatter, scalarValue } from "./frontmatter.js";
-import { HOOK_ROUTED_TOOL, agentWritableSections, researchAppendReaches, wholeSectionOwners } from "./hook-lanes.js";
+import { HOOK_ROUTED_TOOLS, agentWritableSections, researchAppendReaches, wholeSectionOwners } from "./hook-lanes.js";
 import { grantedTools } from "./tool-names.js";
 
 /**
@@ -454,7 +454,7 @@ function listedOn(holder: string, tool: string, row: OwnershipRow): boolean {
     // actually reaches this row with. Absent an entry, it claims none.
     return (row.agentCallers ?? []).some((a) => a.agent === holder && a.tools.includes(tool));
   }
-  if (tool === HOOK_ROUTED_TOOL && (row.hookCallers ?? []).includes(holder)) return true;
+  if (HOOK_ROUTED_TOOLS.includes(tool) && (row.hookCallers ?? []).includes(holder)) return true;
   return (row.agentCallers ?? []).some((a) => a.agent === holder && a.tools.includes(tool));
 }
 
@@ -465,9 +465,10 @@ const hookOwners = wholeSectionOwners();
  * Whether `holder` can write `row` with `tool`, decided from the shipped files.
  *
  * A tool the row's `toolAuthorized` names is authorized there for every caller,
- * so `"identity"`: the row needs to name no holder for it. Every other writer
- * tool but `research_append` writes the rows its `writerTools` entries name —
- * the section is the tool's, not the caller's. `research_append` writes the
+ * so `"identity"`: the row needs to name no holder for it. A writer tool that is
+ * not hook-routed writes the rows its `writerTools` entries name — the section
+ * is the tool's, not the caller's. A hook-routed tool (`HOOK_ROUTED_TOOLS`:
+ * `research_append`, and `evaluation_append` scoped to `evaluations`) writes the
  * section its op names: for an agent the hook confines that to its lane and to
  * sections not routed to another agent; for a skill nothing static confines
  * it, so `null` — which rows a skill writes with it is the unit plane's runtime
@@ -477,7 +478,7 @@ const hookOwners = wholeSectionOwners();
 function reaches(holder: string, tool: string, row: OwnershipRow): boolean | null | "identity" {
   if (!row.writerTools.includes(tool)) return false;
   if ((row.toolAuthorized ?? []).includes(tool)) return "identity";
-  if (tool !== HOOK_ROUTED_TOOL) return true;
+  if (!HOOK_ROUTED_TOOLS.includes(tool)) return true;
   if (!holder.startsWith("agent:")) return null;
   return researchAppendReaches(holder.slice("agent:".length), row, hookLanes, hookOwners);
 }

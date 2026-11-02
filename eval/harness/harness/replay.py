@@ -71,7 +71,7 @@ from typing import Any
 # whole-tool `tool:<name>` one: the research half really was applied, and
 # reporting the call as wholly unmodelled would be the opposite lie.
 RESEARCH_WRITERS = frozenset(
-    {"research_append", "research_log_append", "extraction_append"}
+    {"research_append", "evaluation_append", "research_log_append", "extraction_append"}
 )
 
 #: The attributes an assertion `update` mirrors onto its materialized tree fact.
@@ -290,6 +290,15 @@ def _ops_from_args(args: dict, tool: str = "") -> list[dict]:
         return [
             {"section": "log", "op": "append", "entry": _log_entry_body(o)} for o in raw
         ]
+    if tool == "evaluation_append":
+        # `research_append` scoped to `evaluations` by tool identity: an op
+        # with no section can only mean that one.
+        raw = (
+            [o for o in args["ops"] if isinstance(o, dict)]
+            if isinstance(args.get("ops"), list)
+            else [args]
+        )
+        return [o if o.get("section") else dict(o, section="evaluations") for o in raw]
     if isinstance(args.get("ops"), list):
         return [o for o in args["ops"] if isinstance(o, dict)]
     if args.get("section"):

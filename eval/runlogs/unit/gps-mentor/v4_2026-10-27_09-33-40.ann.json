@@ -1,18 +1,10 @@
 {
-  "run_log": "v1_2026-09-25_19-48-21.json",
-  "annotator": "johnpeterbrown@ymail.com",
+  "run_log": "v4_2026-10-27_09-33-40.json",
+  "annotator": "florencemashipei4@gmail.com",
   "corrections": [
     {
       "test_id": "ut_gps_mentor_k4p",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_gps_mentor_k4p",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -22,6 +14,14 @@
       "test_id": "ut_gps_mentor_k4p",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_k4p",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -60,24 +60,8 @@
     },
     {
       "test_id": "ut_gps_mentor_m2r",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_gps_mentor_m2r",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_gps_mentor_m2r",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_source": "rubric",
+      "dimension_name": "Tool work: reading the state the verdict rests on",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -85,7 +69,7 @@
     {
       "test_id": "ut_gps_mentor_m2r",
       "dimension_source": "rubric",
-      "dimension_name": "Focus discipline and refusal",
+      "dimension_name": "Mentor voice and actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -101,15 +85,31 @@
     {
       "test_id": "ut_gps_mentor_m2r",
       "dimension_source": "rubric",
-      "dimension_name": "Tool work: reading the state the verdict rests on",
+      "dimension_name": "Focus discipline and refusal",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_gps_mentor_m2r",
-      "dimension_source": "rubric",
-      "dimension_name": "Mentor voice and actionability",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_gps_mentor_m2r",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
