@@ -114,7 +114,7 @@ export default function SessionView({
   // Return here after reconnecting, not to the session list. The hash is the
   // SPA route (App.readRoute); `#` must be percent-encoded so it survives as a
   // query value rather than being read as the URL fragment.
-  const reconnectHref = `/auth/familysearch/login?next=${encodeURIComponent(`#/s/${sessionId}`)}`
+  const reconnectHref = `auth/familysearch/login?next=${encodeURIComponent(`#/s/${sessionId}`)}`
 
   // The provider is hoisted above BOTH panes so the chat can resolve the schema ids
   // in its prose against the same data the viewer renders. Nesting a second one

@@ -266,11 +266,7 @@ async def create_project(
     # keeps the login tool from claiming a browser tab opened on a headless VM.
     await fs_oauth.merge_config(
         sandbox,
-        fs_oauth.hosted_config(
-            settings.openrouter_api_key,
-            settings.wiki_api_url,
-            settings.pop_stats_url,
-        ),
+        fs_oauth.hosted_config_for(settings),
     )
     # The Anthropic key the Agent SDK runs on. Written here AND on every connect
     # (the env copy injected at create() can never be updated afterwards, so it
@@ -548,11 +544,7 @@ async def connect_session(
     settings = get_settings()
     await fs_oauth.merge_config(
         sandbox,
-        fs_oauth.hosted_config(
-            settings.openrouter_api_key,
-            settings.wiki_api_url,
-            settings.pop_stats_url,
-        ),
+        fs_oauth.hosted_config_for(settings),
     )
     # Same reasoning for the user's FamilySearch grant, which expires far faster
     # (24h absolute) than the 30-day app session cookie — so the app looks

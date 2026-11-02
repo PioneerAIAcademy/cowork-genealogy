@@ -964,6 +964,36 @@ def _first_handoff_args(callee: str | None, builtin_tool_calls) -> str | None:
     return None
 
 
+_DELEGATES_VERBATIM_TAG = "delegates-verbatim"
+
+
+def _quote_and_space_normal(text: str) -> str:
+    text = text.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    return " ".join(text.split())
+
+
+def test_person_evidence_spawn_carries_the_users_words(test, builtin_tool_calls):
+    """Tag-gated (``delegates-verbatim``). research/SKILL.md sends a researcher
+    who doubts or denies that a record is this person to person-evidence with
+    their message copied verbatim (#3601): a hedge relayed as a "no" becomes a
+    rejection the researcher never made. The spawn prompt is invisible to the
+    judge, so it is read from the hook records. The user message without
+    ``/research`` must appear in at least one person-evidence spawn prompt,
+    with whitespace collapsed and straight and curly quotes made equal on both
+    sides."""
+    if _DELEGATES_VERBATIM_TAG not in (test.get("tags") or []):
+        pytest.skip("not a delegates-verbatim test")
+    message = re.sub(r"^/research\b", "", (test.get("user_message") or "").strip()).strip()
+    assert message, "the test has no user message to relay"
+    prompts = _spawn_prompts(builtin_tool_calls, "person-evidence")
+    assert prompts, "no person-evidence spawn to carry the user's words"
+    wanted = _quote_and_space_normal(message)
+    assert any(wanted in _quote_and_space_normal(p) for p in prompts), (
+        "no person-evidence spawn carries the user's message verbatim.\n"
+        f"  message: {message!r}\n  prompts: {[p[:400] for p in prompts]!r}"
+    )
+
+
 def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_calls):
     """Tag-gated (``uses-new-project-path``). The hosted ``project_list`` answer
     lists no project about the message's person, so the first hand-off names

@@ -1,0 +1,948 @@
+{
+  "persons": [
+    {
+      "id": "KZ39-T1R",
+      "ark": "ark:/61903/4:1:KZ39-T1R",
+      "gender": "Male",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Hermenejildo Patricio",
+          "surname": "Cherres",
+          "type": "BirthName"
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Patricio",
+          "surname": "Cherres",
+          "type": "BirthName",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S4",
+              "quality": 3
+            },
+            {
+              "ref": "S5",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            },
+            {
+              "ref": "S7",
+              "quality": 3
+            },
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "M1YZ-459"
+        },
+        {
+          "ref": "M1T6-QVP"
+        }
+      ]
+    },
+    {
+      "id": "K8SF-X2K",
+      "ark": "ark:/61903/4:1:K8SF-X2K",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c60e6900-39c4-4acf-babb-36da82093b30",
+          "preferred": true,
+          "given": "Manuela",
+          "surname": "Cherres",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "date": "25 Jun 1889",
+          "standard_date": "25 Jun 1889"
+        },
+        {
+          "id": "40f0a628-7c4f-4a56-89af-dcdc1099d457",
+          "type": "Christening",
+          "date": "27 Jun 1889",
+          "standard_date": "27 Jun 1889",
+          "place": "San Pedro, Guanujo, Bol\u00edvar, Ecuador",
+          "standard_place": "Guanujo, Guaranda, Bol\u00edvar, Ecuador"
+        },
+        {
+          "id": "689dd5f0-4e0e-47e7-9415-6db71c0d6dba",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "M1YZ-4P1"
+        },
+        {
+          "ref": "M1T6-QVL"
+        }
+      ]
+    },
+    {
+      "id": "L563-DZ5",
+      "ark": "ark:/61903/4:1:L563-DZ5",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "599ed684-1c1a-4d67-9955-c6b12ddd342b",
+          "preferred": true,
+          "given": "Zoila Rosa",
+          "surname": "Cherres",
+          "type": "BirthName",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ]
+        }
+      ],
+      "facts": [
+        {
+          "id": "ae3b2f1f-f6a9-43bd-98aa-e6626eae8521",
+          "type": "Birth",
+          "date": "5 Jun 1901",
+          "standard_date": "5 Jun 1901"
+        },
+        {
+          "id": "d3973d11-792f-46b3-8f18-e8de92d2f81d",
+          "type": "Christening",
+          "date": "7 junio 1901",
+          "standard_date": "7 Jun 1901",
+          "place": "Guanujo, Guaranda, Bol\u00edvar, Ecuador",
+          "standard_place": "Guanujo, Guaranda, Bol\u00edvar, Ecuador"
+        },
+        {
+          "id": "b4755805-81ec-4c9c-a9c1-2a7c31c20f4a",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WC18-77F"
+        },
+        {
+          "ref": "QW8S-53X"
+        },
+        {
+          "ref": "3TCX-7RR"
+        },
+        {
+          "ref": "3TMJ-RXT"
+        }
+      ]
+    },
+    {
+      "id": "KZ86-TGQ",
+      "ark": "ark:/61903/4:1:KZ86-TGQ",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "c021a888-c545-4387-97e2-ba355334502c",
+          "preferred": true,
+          "given": "Nicolasa",
+          "surname": "Gabilanes",
+          "type": "BirthName",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            },
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "0ca3ae4f-95c7-4dfa-bd6c-7be6d049400e",
+          "given": "Nicolasa",
+          "surname": "Gavilanes",
+          "type": "BirthName",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            },
+            {
+              "ref": "S2",
+              "quality": 3
+            },
+            {
+              "ref": "S3",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ]
+        },
+        {
+          "id": "N9",
+          "given": "Nicolasa",
+          "surname": "Gavianes",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N11",
+          "given": "Nicolaza",
+          "surname": "Gavilanes",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "b27c0c51-6df9-4800-8b18-86397cb4fa0a",
+          "type": "Christening",
+          "date": "6 Dec 1865",
+          "standard_date": "6 Dec 1865",
+          "place": "San Pedro, Guanujo, Bol\u00edvar, Ecuador",
+          "standard_place": "Guanujo, Guaranda, Bol\u00edvar, Ecuador"
+        },
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "WC16-JK3"
+        },
+        {
+          "ref": "WC18-7XF"
+        },
+        {
+          "ref": "M1Y1-MLS"
+        },
+        {
+          "ref": "M1YZ-453"
+        },
+        {
+          "ref": "M1T6-QVY"
+        }
+      ]
+    },
+    {
+      "id": "9WYM-DDS",
+      "ark": "ark:/61903/4:1:9WYM-DDS",
+      "gender": "Female",
+      "living": false,
+      "names": [
+        {
+          "id": "ddfa08c7-905a-4cbf-b994-9d4514d2af50",
+          "preferred": true,
+          "given": "Rosario",
+          "surname": "Cherres",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "ddb21ddf-0042-4808-af3c-5b2e94e08922",
+          "type": "Death"
+        },
+        {
+          "id": "ebe0d4fe-20f8-4dad-b4b8-c69c03d0f100",
+          "type": "Birth",
+          "place": "Guaranda,Bolivar,Ecuador",
+          "standard_place": "Guaranda, Bol\u00edvar, Ecuador"
+        }
+      ],
+      "sources": [
+        {
+          "ref": "7GM7-3LX"
+        },
+        {
+          "ref": "7N2J-F2Q"
+        },
+        {
+          "ref": "7ZXG-J3L"
+        },
+        {
+          "ref": "3L3G-YTB"
+        }
+      ]
+    },
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Mar\u00eda Edelina",
+          "surname": "Cherres Gavilanes",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        },
+        {
+          "id": "N10",
+          "given": "Edelina",
+          "surname": "Cherres",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Christening",
+          "date": "6 Feb 1892",
+          "place": "Ecuador",
+          "standard_place": "Ecuador",
+          "assertion_id": "a_003",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "given": "Andres",
+          "surname": "Cherres Gavilanes",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Death",
+          "date": "22 Jul 1900",
+          "place": "San Pedro, C\u00f3rdoba, Bol\u00edvar, Colombia",
+          "standard_place": "San Pedro, C\u00f3rdoba, Bol\u00edvar, Colombia",
+          "assertion_id": "a_014",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "1894",
+          "assertion_id": "a_015",
+          "sources": [
+            {
+              "ref": "S2",
+              "quality": 2
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "given": "Mar\u00eda Victoria",
+          "surname": "Cherres Gavilanes",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Christening",
+          "date": "5 Oct 1907",
+          "place": "Ecuador, Bol\u00edvar, Guaranda, San Pedro",
+          "standard_place": "Guaranda, Bol\u00edvar, Ecuador",
+          "assertion_id": "a_025",
+          "sources": [
+            {
+              "ref": "S3",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N4",
+          "given": "Julio Cesar",
+          "surname": "Cherres",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F5",
+          "type": "Birth",
+          "date": "1906",
+          "assertion_id": "a_036",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 2
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F6",
+          "type": "Death",
+          "date": "17 May 1908",
+          "place": "San Pedro, C\u00f3rdoba, Bol\u00edvar, Colombia",
+          "standard_place": "San Pedro, C\u00f3rdoba, Bol\u00edvar, Colombia",
+          "assertion_id": "a_037",
+          "sources": [
+            {
+              "ref": "S4",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "I5",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N5",
+          "given": "Maria Mercedes",
+          "surname": "Cherres",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            },
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F7",
+          "type": "Birth",
+          "date": "27 Aug 1897",
+          "assertion_id": "a_110",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        },
+        {
+          "id": "F8",
+          "type": "Christening",
+          "date": "29 Aug 1897",
+          "place": "San Pedro, Guanujo, Guaranda, Bol\u00edvar, Ecuador",
+          "standard_place": "San Pedro, Guanujo, Guaranda, Bol\u00edvar, Ecuador",
+          "assertion_id": "a_111",
+          "sources": [
+            {
+              "ref": "S8",
+              "quality": 3
+            }
+          ],
+          "primary": true
+        }
+      ]
+    },
+    {
+      "id": "I6",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N6",
+          "given": "Bernardino",
+          "surname": "Ocampo",
+          "sources": [
+            {
+              "ref": "S5",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I7",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N7",
+          "given": "Pedro Pablo",
+          "surname": "Ocampo",
+          "sources": [
+            {
+              "ref": "S6",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    },
+    {
+      "id": "I8",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N8",
+          "given": "Francisco",
+          "surname": "Ocampo",
+          "sources": [
+            {
+              "ref": "S7",
+              "quality": 3
+            }
+          ],
+          "type": "BirthName"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "KZ39-T1R",
+      "person2": "KZ86-TGQ"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "KZ39-T1R",
+      "child": "K8SF-X2K"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "KZ86-TGQ",
+      "child": "K8SF-X2K"
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "KZ39-T1R",
+      "child": "L563-DZ5"
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "KZ86-TGQ",
+      "child": "L563-DZ5"
+    },
+    {
+      "id": "R6",
+      "type": "ParentChild",
+      "parent": "KZ39-T1R",
+      "child": "9WYM-DDS"
+    },
+    {
+      "id": "R7",
+      "type": "ParentChild",
+      "parent": "KZ86-TGQ",
+      "child": "9WYM-DDS"
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ39-T1R",
+      "child": "I1",
+      "id": "R8",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ86-TGQ",
+      "child": "I1",
+      "id": "R9",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ39-T1R",
+      "child": "I2",
+      "id": "R10",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ86-TGQ",
+      "child": "I2",
+      "id": "R11",
+      "sources": [
+        {
+          "ref": "S2",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ39-T1R",
+      "child": "I3",
+      "id": "R12",
+      "sources": [
+        {
+          "ref": "S3",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ86-TGQ",
+      "child": "I3",
+      "id": "R13",
+      "sources": [
+        {
+          "ref": "S3",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ39-T1R",
+      "child": "I4",
+      "id": "R14",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ86-TGQ",
+      "child": "I4",
+      "id": "R15",
+      "sources": [
+        {
+          "ref": "S4",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ39-T1R",
+      "child": "I5",
+      "id": "R16",
+      "sources": [
+        {
+          "ref": "S8",
+          "quality": 3
+        }
+      ]
+    },
+    {
+      "type": "ParentChild",
+      "parent": "KZ86-TGQ",
+      "child": "I5",
+      "id": "R17",
+      "sources": [
+        {
+          "ref": "S8",
+          "quality": 3
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "sd_person_KZ39-T1R",
+      "title": "Hermenejildo Patricio Cherres",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Hermenejildo Patricio Cherres (PID KZ39-T1R); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KZ39-T1R"
+    },
+    {
+      "id": "sd_tree_MMMM-MMM",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "sd_collection_0",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "sd_person_K8SF-X2K",
+      "title": "Manuela Cherres",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Manuela Cherres (PID K8SF-X2K); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:K8SF-X2K"
+    },
+    {
+      "id": "sd_person_L563-DZ5",
+      "title": "Zoila Rosa Cherres",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Zoila Rosa Cherres (PID L563-DZ5); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L563-DZ5"
+    },
+    {
+      "id": "sd_person_KZ86-TGQ",
+      "title": "Nicolasa Gavilanes",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Nicolasa Gavilanes (PID KZ86-TGQ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:KZ86-TGQ"
+    },
+    {
+      "id": "sd_person_9WYM-DDS",
+      "title": "Rosario Cherres",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Rosario Cherres (PID 9WYM-DDS); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:9WYM-DDS"
+    },
+    {
+      "id": "M1T6-QVP",
+      "title": "Patricio Cherres, \"Ecuador bautismos, 1680-1930\"",
+      "citation": "\"Ecuador bautismos, 1680-1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL9N-3Y2 : Sat Oct 17 21:20:16 UTC 2026), Patricio Cherres in entry for Manuela Cherres, 27 Jun 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL9N-3Y2"
+    },
+    {
+      "id": "M1YZ-459",
+      "title": "Hermenejildo Patricio Cherres, \"Ecuador bautismos, 1680-1930\"",
+      "citation": "\"Ecuador bautismos, 1680-1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL9N-JLZ : Sat Oct 17 21:16:30 UTC 2026), Hermenejildo Patricio Cherres in entry for Manuela Cherres, 27 Jun 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL9N-JLZ"
+    },
+    {
+      "id": "M1YZ-4P1",
+      "title": "Manuela Cherres, \"Ecuador bautismos, 1680-1930\"",
+      "citation": "\"Ecuador bautismos, 1680-1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL9N-JLC : Sat Oct 17 21:16:30 UTC 2026), Manuela Cherres, 27 Jun 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL9N-JLC"
+    },
+    {
+      "id": "M1T6-QVL",
+      "title": "Manuela Cherres, \"Ecuador bautismos, 1680-1930\"",
+      "citation": "\"Ecuador bautismos, 1680-1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL9N-3YK : Sat Oct 17 21:20:16 UTC 2026), Manuela Cherres, 27 Jun 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL9N-3YK"
+    },
+    {
+      "id": "WC18-77F",
+      "title": "Zoila Rosa Cherres Gavilanes, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "citation": "\"Ecuador, registros parroquiales y diocesanos, 1565-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:84LQ-8Y2M : Fri Mar 28 23:19:05 UTC 2025), Zoila Rosa Cherres Gavilanes, 7 Jun 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:84LQ-8Y2M"
+    },
+    {
+      "id": "QW8S-53X",
+      "title": "Zoila Rosa Cherres, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "citation": "\"Ecuador, registros parroquiales y diocesanos, 1565-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:8HLT-D5T2 : Fri Mar 28 23:21:02 UTC 2025), Zoila Rosa Cherres in entry for Francisco Ocampo, 15 Oct 1925.",
+      "url": "https://familysearch.org/ark:/61903/1:1:8HLT-D5T2"
+    },
+    {
+      "id": "3TCX-7RR",
+      "title": "Zaila Rosa, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "citation": "\"Ecuador, registros parroquiales y diocesanos, 1565-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6X63-965C : Tue Jan 13 14:21:28 UTC 2026), Zaila Rosa, 7 de junio de 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6X63-965C"
+    },
+    {
+      "id": "3TMJ-RXT",
+      "title": "Zoila Rosa Cherres, \"Ecuador bautismos, 1680-1930\"",
+      "citation": "\"Ecuador bautismos, 1680-1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F2Y1-6NY : Sat Oct 17 21:10:11 UTC 2026), Zoila Rosa Cherres, 7 Jun 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:F2Y1-6NY"
+    },
+    {
+      "id": "WC16-JK3",
+      "title": "Nicolasa Gabilanes, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "citation": "\"Ecuador, registros parroquiales y diocesanos, 1565-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6X63-4VGK : Fri Jan 09 00:56:54 UTC 2026), Nicolasa Gabilanes in entry for Mar\u00eda Mercedes Cherres, 29 de agosto de 1897.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6X63-4VGK"
+    },
+    {
+      "id": "WC18-7XF",
+      "title": "Nicolasa Gavilanes, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "citation": "\"Ecuador, registros parroquiales y diocesanos, 1565-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:84LQ-8YT2 : Fri Mar 28 23:19:05 UTC 2025), Nicolasa Gavilanes in entry for Zoila Rosa Cherres Gavilanes, 7 Jun 1901.",
+      "url": "https://familysearch.org/ark:/61903/1:1:84LQ-8YT2"
+    },
+    {
+      "id": "M1Y1-MLS",
+      "title": "Nicolasa Gabilanes, \"Ecuador bautismos, 1680-1930\"",
+      "citation": "\"Ecuador bautismos, 1680-1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL9F-D9S : Sat Oct 17 21:18:50 UTC 2026), Nicolasa Gabilanes, 6 Dec 1865.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL9F-D9S"
+    },
+    {
+      "id": "M1YZ-453",
+      "title": "Nicolasa Gabilanes, \"Ecuador bautismos, 1680-1930\"",
+      "citation": "\"Ecuador bautismos, 1680-1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL9N-JL8 : Sat Oct 17 21:16:30 UTC 2026), Nicolasa Gabilanes in entry for Manuela Cherres, 27 Jun 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL9N-JL8"
+    },
+    {
+      "id": "M1T6-QVY",
+      "title": "Nicolasa Gavilanes, \"Ecuador bautismos, 1680-1930\"",
+      "citation": "\"Ecuador bautismos, 1680-1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FL9N-3YL : Sat Oct 17 21:20:16 UTC 2026), Nicolasa Gavilanes in entry for Manuela Cherres, 27 Jun 1889.",
+      "url": "https://familysearch.org/ark:/61903/1:1:FL9N-3YL"
+    },
+    {
+      "id": "7GM7-3LX",
+      "title": "Rosario Cherres, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "citation": "\"Ecuador, registros parroquiales y diocesanos, 1565-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D4LH-LTW2 : Sat Mar 29 00:15:04 UTC 2025), Rosario Cherres in entry for Angel Celio Ledesma Cherres, 10 Oct 1914.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D4LH-LTW2"
+    },
+    {
+      "id": "7N2J-F2Q",
+      "title": "Rosario Cherres, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "citation": "\"Ecuador, registros parroquiales y diocesanos, 1565-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D4LN-XNMM : Sat Mar 29 00:15:57 UTC 2025), Rosario Cherres in entry for Manuel Leonidas Ledesma Cherres, 25 Jul 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D4LN-XNMM"
+    },
+    {
+      "id": "7ZXG-J3L",
+      "title": "Mar\u00eda Rosario Cherrez, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "citation": "\"Ecuador, registros parroquiales y diocesanos, 1565-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D42Y-Y4ZM : Fri Mar 28 23:38:56 UTC 2025), Mar\u00eda Rosario Cherrez in entry for Jos\u00e9 Augusto Ledesma Cherrez, 21 Jun 1917.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D42Y-Y4ZM"
+    },
+    {
+      "id": "3L3G-YTB",
+      "title": "Mar\u00eda Rosario Chenas, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "citation": "\"Ecuador, registros parroquiales y diocesanos, 1565-2023\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D4V8-8L2M : Fri Mar 28 16:06:31 UTC 2025), Mar\u00eda Rosario Chenas in entry for Segundo Miguel Ledesma Chenas, 7 Dec 1911.",
+      "url": "https://familysearch.org/ark:/61903/1:1:D4V8-8L2M"
+    },
+    {
+      "id": "S1",
+      "title": "Registro para Mar\u00eda Edelina Cherres Gavilanes, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:43JS-J6T2"
+    },
+    {
+      "id": "S2",
+      "title": "Registro para Andres Cherres Gavilanes, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4QD1-GVN2"
+    },
+    {
+      "id": "S3",
+      "title": "Registro para Mar\u00eda Victoria Cherres Gavilanes, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4XM8-L6N2"
+    },
+    {
+      "id": "S4",
+      "title": "Registro para Julio Cesar Cherres, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4QD1-G76Z"
+    },
+    {
+      "id": "S5",
+      "title": "Registro para Bernardino Ocampo, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4QD1-YST2"
+    },
+    {
+      "id": "S6",
+      "title": "Registro para Pedro Pablo Ocampo, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4Q6N-YJZM"
+    },
+    {
+      "id": "S7",
+      "title": "Registro para Francisco Ocampo, \"Ecuador, registros parroquiales y diocesanos, 1565-2023\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:4QF2-C93Z"
+    },
+    {
+      "id": "S8",
+      "title": "Registro para Maria Mercedes Cherres, \"Ecuador bautismos, 1680-1930\"",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MG1F-VWB"
+    }
+  ]
+}

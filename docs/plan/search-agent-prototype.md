@@ -2857,7 +2857,8 @@ sampling, gateway-wide. TAP decided on 2026-09-21 to capture everything in int.
   tool-result JSON and image bytes do not leave.
 - *Patron data still leaves in text:* the patron's names and record details, as the
   user types them and as the model narrates what it read. About 700k characters left
-  per research turn.
+  per research turn. A whole run sends about 17 million (bagley to `completed`, 166
+  calls, local v1.6.0 copy, 2026-10-31, n=1; the handoff's F7 has the breakdown).
 
 **Re-measured 2026-10-24 on local v1.6.0 GA** (the EKS gateway's version, with
 `tap-tracing`'s fields from `fs-eng/tap-gateway` master `3e338f9b5`, a local Jaeger, real

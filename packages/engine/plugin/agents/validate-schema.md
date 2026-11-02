@@ -70,20 +70,22 @@ relay that result.
 
 ## Log the report
 
-Unless the tool answered `reason: "no_project"`, before you write your reply: one
-`research_log_append` call
-with the same project directory path and one op: `tool: "validate_schema"`,
-`query: {request}` (the request in a few words), `planItemId: null`,
-`outcome: "positive"`, `resultsExamined` (errors reported; 0 on a clean pass),
-`notes` set to the **full** report exactly as you return it above the `---`
-line, never a summary. **You must actually call it — do not just describe it in your response.**
+Unless the tool answered `reason: "no_project"`, in this order:
+
+1. Write the full report from "What to do" first.
+2. One `research_log_append` call with the same project directory path and one
+   op: `tool: "validate_schema"`, `query: {request}` (the request in a few
+   words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (errors
+   reported; 0 on a clean pass), `notes` set to the report from step 1, exactly
+   as you will return it above the `---` line — never the tool's response, its
+   `message` line, or a shorter version in place of the report. **You must
+   actually call it — do not just describe it in your response.**
+3. Return the report exactly as it went into `notes`, above the `---` line —
+   never only a note that it was logged.
 
 - `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction → rewrite `notes` as instructed, use the
   same text in your return, and re-send. Never drop the entry.
-
-Then return that same report, in full, above the `---` line — never only a
-note that it was logged.
 
 A hand-back logs nothing.
 

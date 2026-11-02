@@ -64,6 +64,12 @@ def _proto_hook(**kw):
     )
 
 
+# A plugin agent's name. The prototype denies a spawn naming none (U14), so the
+# shape cases below name one; `test_only_the_prototype_denies_an_unnamed_spawn` pins
+# that difference.
+NAMED = "record-extractor"
+
+
 async def _both_planes(tool_name, tool_input):
     """`(alpha_out, prototype_out)` for one call, so every case asserts on both."""
     payload = {"tool_name": tool_name, "tool_input": tool_input}
@@ -95,9 +101,18 @@ def test_skill_is_not_a_delegation_tool():
 
 @pytest.mark.parametrize("tool", sorted(DELEGATION_TOOLS))
 async def test_both_planes_foreground_a_bare_delegation(tool):
-    alpha, proto = await _both_planes(tool, {"prompt": "go"})
+    alpha, proto = await _both_planes(tool, {"subagent_type": NAMED, "prompt": "go"})
     assert _is_foregrounded(alpha), alpha
     assert _is_foregrounded(proto), proto
+
+
+@pytest.mark.parametrize("tool", sorted(DELEGATION_TOOLS))
+async def test_only_the_prototype_denies_an_unnamed_spawn(tool):
+    """U14: a spawn naming no agent starts a general-purpose one, without any plugin
+    agent's limits. The prototype denies it; the alpha still foregrounds it."""
+    alpha, proto = await _both_planes(tool, {"prompt": "go"})
+    assert _is_foregrounded(alpha), alpha
+    assert proto["hookSpecificOutput"]["permissionDecision"] == "deny", proto
 
 
 async def test_both_planes_have_no_opinion_on_a_skill_call():
@@ -133,7 +148,7 @@ async def test_an_already_foreground_delegation_falls_through_on_both_planes(too
     """The other half of the shape-dependence, at the hook level: with the key
     explicitly False both planes reach their no-opinion fallthrough, because with every
     effort setting unset the rewrite is the last arm before it."""
-    alpha, proto = await _both_planes(tool, {"prompt": "go", "run_in_background": False})
+    alpha, proto = await _both_planes(tool, {"subagent_type": NAMED, "prompt": "go", "run_in_background": False})
     assert alpha == {}
     assert proto == {}
 
@@ -145,9 +160,9 @@ async def test_with_an_effort_setting_the_alpha_rewrites_the_foreground_shape_to
     setting). A deny placed after the rewrites is then unreachable on the alpha for BOTH
     shapes -- the ordering question above changes answer when an operator sets one."""
     monkeypatch.setenv("SUBAGENT_EFFORT", "low")
-    alpha, proto = await _both_planes(tool, {"prompt": "go", "run_in_background": False})
+    alpha, proto = await _both_planes(tool, {"subagent_type": NAMED, "prompt": "go", "run_in_background": False})
     assert alpha["hookSpecificOutput"]["updatedInput"] == {
-        "prompt": "go", "run_in_background": False, "effort": "low"}
+        "subagent_type": NAMED, "prompt": "go", "run_in_background": False, "effort": "low"}
     assert proto == {}
 
 
@@ -172,7 +187,7 @@ async def test_blocking_a_delegation_by_name_is_a_no_op_end_to_end(tool):
     not denied. A plan that assumed `blocked={"Agent"}` gives a deny arm would
     have been reading the parameter name rather than the predicate."""
     out = await _proto_hook(blocked=frozenset({tool}))(
-        {"tool_name": tool, "tool_input": {"prompt": "go"}}, "tu_1", None
+        {"tool_name": tool, "tool_input": {"subagent_type": NAMED, "prompt": "go"}}, "tu_1", None
     )
     assert _is_foregrounded(out), out
 

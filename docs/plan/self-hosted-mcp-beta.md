@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a public beta, February to July 2027
 
-**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
+**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). W3's viewer data is implemented in the web tier. The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
 
 ## What this is
 
@@ -382,6 +382,7 @@ Either way, the research skill's first line says that without an `Agent` tool, r
 - **Before the dress rehearsal:** the uploads setting. **In January:** `FEEDBACK_URL` and the limits.
 - **Before gate 4's sign-in:** the redirect setting moves from the loopback to the beta's https redirect (P0.4).
 - **Once FamilySearch's approval is in writing:** the transcription switch goes on (gate 4).
+- **When the matcher service is turned on:** `MATCHER_URL` and `MATCHER_API_KEY`, on the tools tier.
 - **On launch day:** the user cap.
 - **Instance profiles:** the tools tier's from P0.3, the web tier's when it joins. Each has `AWSElasticBeanstalkWebTier`, as the handoff's tiers have, the SSM agent's managed policy, and one inline statement denying `bedrock:*` and `aws-marketplace:*`, which the beta never uses. Then both gain object access and `s3:ListBucket` on the bucket.
 
@@ -473,7 +474,7 @@ The purge, rehearsed on a copy first:
 ## Changes to the handoff's code
 
 The team makes each of these, from the issues under "Who builds what". Each is additive and keeps the handoff's behavior as the default, so Richard reworks nothing. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there; E1 and W1 add `/livez` there as a health path that touches no store.
-- **Done:** PR #3852 added `project_list` (`src/tools/project-list.ts`, `src/server.ts`, `src/tool-schemas.ts`, `manifest.json`, `dev/smoke-calls.ts`, `dev/smoke-http.ts` and the stores) and the research router's project step, which `eb-worker.zip` carries. On the handoff's tools tier, `project_list` lists the worker's project. A worker bundle with the router's project step needs a tools tier that has `project_list`, so tools deploys first.
+- **Done:** PR #3852 added `project_list` (`src/tools/project-list.ts`, `src/server.ts`, `src/tool-schemas.ts`, `manifest.json`, `dev/smoke-calls.ts`, `dev/smoke-http.ts` and the stores) and the research router's project step, which `eb-worker.zip` carries. On the handoff's tools tier, `project_list` lists the worker's project. A worker bundle with the router's project step needs a tools tier that has `project_list`, so tools deploys first. W3's viewer data adds `GET /api/projects`, `GET /api/projects/{id}/state`, `GET /api/projects/{id}/sidecar/{log_id}` and `GET /api/projects/{id}/image` in `apps/server/proto/web/app.py`, owner-checked, with the response shapes in their route docstrings.
 - **Web tier,** `apps/server/proto/web/` (`app.py`, `auth.py`, `feedback.py`, `spa.py`): W1, W2 and W3. Chat on stays the default.
 - **Web bundle,** `apps/server/proto/eb-web/`: the nginx file.
 - **Schema,** `apps/server/proto/sql/`: S1's new files, and `test_proto_migrate.py`'s pinned digests.

@@ -91,6 +91,7 @@ const EXAMPLES: Record<string, string> = {
   "assertion_id": "a_031",
   "person_id": "I7",
   "reason": "Same name and county, but the 1880 census puts this Patrick Flynn in Luzerne with a wife named Bridget; the subject was unmarried and in Schuylkill. same_person scored 0.21.",
+  "researcher_words": "No, that's not him, wrong wife",
   "created": "2026-07-19"
 }`,
   questions: `{
