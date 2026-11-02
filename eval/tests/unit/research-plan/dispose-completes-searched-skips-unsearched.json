@@ -39,7 +39,7 @@
     "pli_004 is `planned` with no tied log entry, so no search ran. It must be `skipped` with a skip_category, NOT completed -- completing it would claim a search nobody ran.",
     "Do not require a particular skip_category for pli_004. The refusal reason is research-exhaustiveness's business; any category the agent can justify from the project is acceptable here.",
     "pli_005 was not named in the delegation. Dispose acts on the ids it was given, so pli_005 changing status is a failure.",
-    "No new plan and no supersede: the stop criteria are already judged, and superseding would carry the same items into a new plan and re-block the gate.",
+    "No new plan and no supersede: superseding would carry the same items into a new plan and re-block the gate.",
     "The agent executes nothing itself and hands execution back to its caller, so do not grade whether any search ran."
   ],
   "judge_reads_files": true,

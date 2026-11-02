@@ -796,10 +796,12 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     // inconclusive searches as `partial` and link lists as `positive`, and those
     // stay uncited for good, so the check would hold the question on extraction.
     // Planned items are searched or disposed of before the gate (lead, #3546);
-    // the search comes first so a still-needed item is never skipped by default.
-    // `in_progress` items are not disposable here (#3516 owns their closure).
+    // the search is offered first so a still-needed item is not skipped by default.
+    // `in_progress` items are not disposable here (#3516 owns their closure), and
+    // an item waiting only on the researcher's upload is left alone.
+    const waitingOnUpload = awaitingUploadItemIds(research?.log);
     const planned = openItems(plans)
-      .filter((i) => i?.status === "planned")
+      .filter((i) => i?.status === "planned" && !waitingOnUpload.has(i?.id))
       .sort((x, y) => (Number(x?.sequence) || 0) - (Number(y?.sequence) || 0));
     if (planned.length === 0) {
       nextStep = "research-exhaustiveness, then proof-conclusion";

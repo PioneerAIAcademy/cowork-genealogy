@@ -260,6 +260,25 @@ describe("questionStatus — the state ladder", () => {
       );
     });
 
+    it("a planned item waiting only on the researcher's upload is left alone", () => {
+      const d = evidence([
+        { id: "pli_1", sequence: 1, status: "planned", repository: "MyHeritage" },
+        { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
+      ]);
+      d.log = [
+        {
+          id: "log_9",
+          plan_item_id: "pli_1",
+          tool: "external_site",
+          outcome: "partial",
+          external_site: { url_generated: "https://www.myheritage.com/x", capture_received: false },
+        },
+      ];
+      expect(questionStatus(d, question()).nextStep).toBe(
+        "search-records — next item pli_2, or research-plan — dispose of pli_2 if the evidence already answers the question",
+      );
+    });
+
     it("a planned fs_hints item takes the search-hints lane", () => {
       const s = questionStatus(
         evidence([{ id: "pli_1", sequence: 1, status: "planned", record_type: "fs_hints", repository: "FamilySearch" }]),

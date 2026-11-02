@@ -312,8 +312,10 @@ A question at `evidence-gathered` reports `research-exhaustiveness` only when no
 item on its active plan is `planned`. With planned items it reports
 `<search lane> — next item <id>, or research-plan — dispose of <ids> if the
 evidence already answers the question` (the external lane keeps its own form,
-`search-external-sites — <id> (<repo>)`): the search comes first so a still-needed
-item is not skipped by default. `in_progress` items do not change it. Over the
+`search-external-sites — <id> (<repo>)`, and an `fs_hints` item reads
+`search-hints — <id>`): the search is offered first so a still-needed item is not
+skipped by default. `in_progress` items, and a planned item waiting only on the
+researcher's upload, do not change it. Over the
 corpus on 2026-11-02 (every scenario, unit-test state and e2e final state, 484
 question entries) this moves 13 entries off `research-exhaustiveness`: 3 scenarios
 and 10 e2e final states. An uncited entry does not move it back to extraction: agents log an

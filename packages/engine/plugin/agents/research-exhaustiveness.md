@@ -178,8 +178,8 @@ failed, and what the evidence could not reach. Where a criterion turns on
 whether a civil registration record could exist for this event, state the start
 date Step 1 read and the page it came from; "registration had not begun" is an
 assessment only when it rests on that fetched date. Declaring requires all seven met,
-written only in the `research_append` arguments. A decline names the blocking
-criterion in `justification`.
+written only in the call's arguments. A decline carries the same seven, honestly
+assessed, with the blocking criterion named in `justification`.
 
 | Criterion | Key question |
 |-----------|-------------|
@@ -390,8 +390,8 @@ the offending field — do not blindly retry the same payload.
 - If exhaustive: only "Research declared reasonably exhaustive. Ready for
   proof-conclusion."
 - If not yet exhaustive and gaps want planning: "Not yet exhaustive.
-  [Every unsearched avenue, as one list, including any your tool results
-  showed.] Continue with planning the searches?"
+  [Every unsearched avenue, including ones your results showed.] Continue
+  with planning the searches?"
 - If declining (§"The decline"): the sentence that verdict calls for, then
   "Continue with writing the conclusion?" (low) or "Continue with planning
   the searches?" (high). Those exact lines — the host reads the last one

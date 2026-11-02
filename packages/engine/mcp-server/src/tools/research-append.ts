@@ -5831,6 +5831,25 @@ function declarationStatusInvariants(entry: any): string[] {
   ];
 }
 
+/** Each stop criterion is 1–2 sentences (the agent's Step 2). 800 chars sits above
+ *  the corpus p90 (708); over 188 committed `stop_criteria` objects it refuses 38
+ *  (#3546, measured 2026-11-02). Runs only when the op writes `search_stop`, so a later edit to a
+ *  question that already stores a longer criterion is not refused. */
+export const STOP_CRITERION_MAX_CHARS = 800;
+
+function stopCriteriaLengthInvariants(entry: any): string[] {
+  const sc = entry?.search_stop?.stop_criteria;
+  if (!sc || typeof sc !== "object") return [];
+  return Object.entries(sc)
+    .filter(([, v]) => typeof v === "string" && v.length > STOP_CRITERION_MAX_CHARS)
+    .map(
+      ([k, v]) =>
+        `question ${entry?.id ?? "(new entry)"}: search_stop.stop_criteria.${k} is ${(v as string).length} ` +
+        `characters; the cap is ${STOP_CRITERION_MAX_CHARS}. Write 1–2 sentences per criterion and put ` +
+        `the reasoning in one place, then send this write again.`,
+    );
+}
+
 /** Exhaustiveness may not be declared while the question's own plan says a
  *  search is still running.
  *
@@ -5879,25 +5898,6 @@ function declarationStatusInvariants(entry: any): string[] {
  *  not evidence about this one. All 205 corpus plans carry the field, so the
  *  looser reading that also counts unattached plans is indistinguishable today —
  *  it is pinned here and by a synthetic test rather than by the corpus. */
-/** Each stop criterion is 1–2 sentences (the agent's Step 2). 800 chars sits above
- *  the corpus p90 (701); over 182 committed `stop_criteria` objects it refuses 35
- *  (#3546, measured 2026-10-21). Runs only when the op writes `search_stop`, so a later edit to a
- *  question that already stores a longer criterion is not refused. */
-export const STOP_CRITERION_MAX_CHARS = 800;
-
-function stopCriteriaLengthInvariants(entry: any): string[] {
-  const sc = entry?.search_stop?.stop_criteria;
-  if (!sc || typeof sc !== "object") return [];
-  return Object.entries(sc)
-    .filter(([, v]) => typeof v === "string" && v.length > STOP_CRITERION_MAX_CHARS)
-    .map(
-      ([k, v]) =>
-        `question ${entry?.id ?? "(new entry)"}: search_stop.stop_criteria.${k} is ${(v as string).length} ` +
-        `characters; the cap is ${STOP_CRITERION_MAX_CHARS}. Write 1–2 sentences per criterion and put ` +
-        `the reasoning in one place, then send this write again.`,
-    );
-}
-
 function planCompleteInvariants(entry: any, preCallResearch: any): string[] {
   if (!isStopGateSatisfied(entry)) return [];
   const qid = entry?.id;
