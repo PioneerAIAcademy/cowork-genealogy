@@ -402,6 +402,17 @@ export interface RunLogFile {
    *  logs written before the field existed, all of which ran with it on. */
   tool_search?: boolean;
   judge_prompt_hash: string;
+  /** SHA-256 of the normalized AST of the code that RENDERS the judge's input — the call
+   *  graph reached from orchestrator._run_judge, judge.grade,
+   *  judge._create_message_with_retry, judge.render_prompt_parts and
+   *  judge._grading_tool_for_rubric — the bytes sent to the judge — plus the constants they read and the whole of
+   *  harness/scenario_brief.py. judge_prompt_hash covers the prompt TEMPLATE; this covers
+   *  the code that fills its slots. Optional — absent in logs pre-dating the field, which
+   *  rule 2b warns on rather than blocking. The app does NOT recompute it: the digest is a
+   *  Python AST dump and has no TypeScript equivalent, which is why it is a separate field
+   *  rather than a widening of judge_prompt_hash (that would make the drift badge in
+   *  detectActiveRunLog report every log as drifted forever). */
+  judge_render_hash?: string;
   /** Judge model used for this run log. Optional — absent in logs pre-dating the field (issue #2479 PR 1). */
   judge_model?: string;
   /** Claude Code CLI version the run spawned. Optional — absent in logs written before 2026-10-21. */
@@ -442,7 +453,16 @@ export interface RunLogToolCall {
    */
   expected_args: Record<string, unknown> | null;
   matched: {
-    kind: 'predicate' | 'queue' | 'queue_reused' | 'none';
+    // The five kinds `mock_mcp.py` emits, and the five both run-log schema
+    // mirrors allow. `queue` / `queue_reused` were here and are gone: no mock
+    // path emits either, and a run log carrying one fails the schema write —
+    // so the type documented a state the system cannot produce.
+    kind:
+      | 'predicate'
+      | 'none'
+      | 'live'
+      | 'staged_ref_refused'
+      | 'unknown_args_refused';
     index: number | null;
   };
   response_fixture: string | null;

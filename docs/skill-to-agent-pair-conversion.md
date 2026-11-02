@@ -522,7 +522,10 @@ up while the body ran on the main thread, and each cost a run to find.
    the router can copy "everything after the final `---`" without judging what
    is researcher-facing. The router prints only that, verbatim, and appends the
    hand-back literal issue #2292 rules; it never summarizes, and no label or
-   field name reaches the researcher. `agents/citation.md`'s "Return contract"
+   field name reaches the researcher. In the autonomous `/research` loop that
+   relayed tail is also the phase's narration line, so the router writes no
+   separate one in its place (issue #3862: with both rules side by side, 0 of 85
+   e2e relays survived). `agents/citation.md`'s "Return contract"
    is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
