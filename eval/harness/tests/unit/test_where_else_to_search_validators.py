@@ -7,6 +7,7 @@ on a planted defect and passing on a legitimate variant (CLAUDE.md, "a new lint
 must be proven to fail").
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -137,7 +138,7 @@ def test_curated_fires_on_a_site_wide_or_invented_base_and_accepts_a_curated_one
     with pytest.raises(AssertionError):
         check_curated(CALLS + [site_wide], t)
     with pytest.raises(AssertionError):
-        check_curated(CALLS + [build_call() | {"args": {"site": "ancestry", "baseUrl": CURATED + "?edited=1"}}], t)
+        check_curated(CALLS + [build_call() | {"args": {"site": "ancestry", "baseUrl": CURATED.replace("9040", "9041")}}], t)
     with pytest.raises(AssertionError):  # no curated list fetched at all
         check_curated([build_call()], t)
     # A failed build on a curated row is still a curated base.
@@ -202,6 +203,9 @@ def test_span_accepts_years_the_title_names_on_an_undated_row():
     t = where_test()
     check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Undated collection.")), None, t)
     check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1880, which includes your 1870.")), None, t)
+    check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1880, which overlaps your 1875–1885 in 1875–1880.")), None, t)
+    with pytest.raises(AssertionError):  # the improvised form: a parenthesis
+        check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1880, which partly overlaps your 1875–1885 (1875–1880).")), None, t)
     with pytest.raises(AssertionError):  # a span in neither the fields nor the title
         check_span(calls, _span_reply(_entry("**Mortality Schedules** — Ancestry", "Covers 1850–1890.")), None, t)
 
@@ -259,6 +263,74 @@ def test_zero_results_fires_on_any_build_or_link_and_accepts_a_plain_answer():
         check_zero([], reply(plain), None, where_test())
 
 
+check_shape = v.test_user_block_is_the_fixed_shape_and_nothing_more
+ALSO = "http://www.genwed.com/state/algen.htm"
+ALSO_BLOCK = f"{v._ALSO_HEADER}\nAlabama Marriage Records: {ALSO}"
+
+
+def _shape_calls(n):
+    return [links_call(CURATED, ALSO)] + [build_call(url=f"{BUILT}&n={i}") for i in range(n)]
+
+
+def _shape_reply(n, *tail, opening=v._OPENING):
+    entries = [_entry("**Muster Rolls** — Ancestry, needs a subscription", "Covers 1860–1869.", f"{BUILT}&n={i}")
+               for i in range(n)]
+    return reply("Schuylkill, 1861–1865\n3 entries\n---\n" + "\n\n".join([opening, *entries, *tail]))
+
+
+def test_shape_passes_on_the_fixed_block_and_its_legitimate_variants():
+    t = where_test()
+    check_shape(_shape_calls(3), _shape_reply(3, ALSO_BLOCK, v._CLOSING), None, t)
+    check_shape(_shape_calls(3), _shape_reply(3, v._CLOSING), None, t)
+    wrapped = v._OPENING.replace(" on other sites", "\non other sites")
+    check_shape(_shape_calls(3), _shape_reply(3, v._CLOSING, opening=wrapped), None, t)
+    with_comma = v._CLOSING.replace("Open a link and", "Open a link, and")
+    check_shape(_shape_calls(3), _shape_reply(3, with_comma), None, t)
+    check_shape(_shape_calls(2), _shape_reply(2, v._SHORT, ALSO_BLOCK, v._CLOSING), None, t)
+    split_also = ALSO_BLOCK.replace("\nAlabama", "\n\nAlabama")
+    check_shape(_shape_calls(3), _shape_reply(3, split_also, v._CLOSING), None, t)
+
+
+def test_shape_fails_on_each_single_defect():
+    t = where_test()
+    cases = [
+        ("MyHeritage", 3, _shape_reply(
+            3, v._CLOSING,
+            opening=v._OPENING + " FamilySearch lists no MyHeritage collection for Alabama marriages in this period.")),
+        ("1801 census", 3, _shape_reply(
+            3, v._CLOSING + " If you find her baptism, note the parish and date, then check the 1801 census.")),
+        ("William Hood", 3, _shape_reply(
+            3, v._CLOSING,
+            opening="These are collections FamilySearch lists for Alabama on other sites, each opening with "
+                    "your William Hood search filled in.")),
+        ("(see note below)", 3, _shape_reply(3, ALSO_BLOCK + " — (see note below)", v._CLOSING)),
+        ("Also listed", 3, _shape_reply(3, v._CLOSING, ALSO_BLOCK)),
+        ("does not belong", 3, _shape_reply(3, v._SHORT, v._CLOSING)),
+        ("1 or 2 entries", 2, _shape_reply(2, v._CLOSING)),
+    ]
+    for fragment, n, bad in cases:
+        with pytest.raises(AssertionError, match=re.escape(fragment)):
+            check_shape(_shape_calls(n), bad, None, t)
+
+
+def test_shape_zero_results_is_the_one_sentence_for_the_searched_place():
+    t = where_test("zero-results")
+    calls = [call("external_links_search", {"results": []}, standardPlace="Ireland")]
+    plain = "FamilySearch lists no external collection for Ireland, 1840–1850."
+    check_shape(calls, reply(f"Ireland, 1840–1850\n0 entries\n---\n{plain}"), None, t)
+    bad = [
+        f"{v._OPENING}\n\n{plain}",
+        f"{plain} Try the National Archives of Ireland census site, which is free.",
+        f"{plain}\nTry the National Archives of Ireland census site, which is free.",
+        "FamilySearch lists no external collection for Dublin, 1840–1850.",
+    ]
+    for prose in bad:
+        with pytest.raises(AssertionError, match="zero-results sentence for Ireland"):
+            check_shape(calls, reply(f"x\n---\n{prose}"), None, t)
+    with pytest.raises(pytest.skip.Exception):  # the place was never resolved
+        check_shape([call("place_search", {"results": []})], reply(f"x\n---\n{plain}"), None, t)
+
+
 def _row_call(url):
     return call(
         "external_links_search",
@@ -292,3 +364,44 @@ def test_curated_still_fires_on_a_different_ancestry_id_or_a_slash_on_another_ho
     with pytest.raises(AssertionError):
         check_curated([_row_call(host), _build_with_base(host + "/", OTHER)], t)
     check_curated([_row_call(host), _build_with_base(host, OTHER)], t)
+
+
+ROW_7486 = "https://www.ancestry.com/search/collections/7486/?arrival=_alabama-usa_3&count=50"
+BASE_7486 = "https://www.ancestry.com/search/collections/7486?arrival=_alabama-usa_3&count=50"
+
+
+def test_curated_and_span_fold_the_slash_before_a_query():
+    t = where_test()
+    calls = [_row_call(ROW_7486), _build_with_base(BASE_7486, BUILT)]
+    check_curated(calls, t)
+    check_span(calls, _span_reply(_entry("**Passenger Lists**", "Covers 1860–1869.", BUILT)), None, t)
+    # a dbid= url on another host is not an Ancestry collection
+    other = "https://www.example.org/x?dbid=7486"
+    assert v._collection_key(other) == other
+
+
+def test_shape_fails_on_a_sentence_inside_an_entry_and_accepts_a_domain_site_name():
+    t = where_test()
+    calls = _shape_calls(3)
+    good_reply = _shape_reply(3, v._CLOSING)
+    good = good_reply[0]["text"]
+    check_shape(calls, good_reply, None, t)
+    first = "**Muster Rolls** — Ancestry, needs a subscription"
+    bad_first = good.replace(first, first + ". Your soldier is likely here.", 1)
+    bad_site = good.replace(first, "**Muster Rolls** — Ancestry. Your soldier is likely here, needs a subscription", 1)
+    link = f"{BUILT}&n=0"
+    bad_link = good.replace(link, link + " Check the 1890 census too.", 1)
+    for bad in (bad_first, bad_site, bad_link):
+        assert bad != good
+        with pytest.raises(AssertionError):
+            check_shape(calls, reply(bad), None, t)
+    domain = good.replace("— Ancestry,", "— Newspapers.com,", 1)
+    check_shape(calls, reply(domain), None, t)
+
+
+def test_shape_accepts_an_also_listed_ancestry_url_with_the_slash_changed():
+    t = where_test()
+    also = "https://www.ancestry.ca/search/collections/62200"
+    calls = [links_call(CURATED, also + "/")] + [build_call(url=f"{BUILT}&n={i}") for i in range(3)]
+    block = f"{v._ALSO_HEADER}\nAlabama Records: {also}"
+    check_shape(calls, _shape_reply(3, block, v._CLOSING), None, t)

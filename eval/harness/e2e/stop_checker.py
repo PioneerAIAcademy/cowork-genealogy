@@ -137,8 +137,8 @@ def should_continue_run(
         return False
     # #3274: with no research.json there is no project to resume, and the nudge says to
     # re-read it. `is None`, not a falsy test, so an empty `{}` still reads as an unfinished
-    # project. Same place as in the shared copy (apps/server/app/agent/continue_policy.py),
-    # which `test_continue_policy_parity.py` pins.
+    # project. The hosted copy of this predicate was deleted with the Stop veto in step
+    # mode phase 2, so nothing pins this one.
     if research is None:
         return False
     if project_completed(research):
@@ -239,9 +239,9 @@ COUNTED_TERMINAL_REASONS = frozenset({"budget", "no_progress"})
 def hand_back_key(hand_back_class: str, *, project_is_completed: bool) -> str:
     """The `usage.hand_back_classes` key for one hand-back class — telemetry only.
 
-    Every vetoed stop gets the same reply, the worker's `CONTINUE_REASON` verbatim, so
-    the e2e grade and the prototype's runs see one Stop policy (U17);
-    `test_continue_policy_parity.py` pins that the hook has no other reply.
+    Every vetoed stop gets the same reply (U17), once the worker's `CONTINUE_REASON`
+    verbatim. The hosted planes deleted their veto in step mode phase 2, so this copy
+    stands alone until the e2e half deletes it, and nothing pins the text any more.
 
     A `completion_claim` on a project that IS completed is a TRUTHFUL completion, not a
     false one — `terminal_completed`, never `false_completion`.

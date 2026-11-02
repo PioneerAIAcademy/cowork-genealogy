@@ -26,14 +26,10 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
                                                 web/feedback.py); stored, sent nowhere
 
-The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at,
-max_nudges}``. The ``turn_id`` is a UUID minted here and travels IN THE BODY -- never the
-SQS MessageId, which the shim holds and the worker never sees. ``max_nudges`` (1a) is
-this tier's ``AUTONOMOUS_MAX_NUDGES``, stamped on every message and preferred by the
-worker over its own: the worker serves the browser and ``make proto-demo`` alike and
-cannot tell them apart. It is read from the ENVIRONMENT and never from the request --
-the cap is the operator's, so a ``MessageBody`` field would let a signed-in patron set
-their own nudge budget.
+The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at}``. The
+``turn_id`` is a UUID minted here and travels IN THE BODY -- never the SQS MessageId,
+which the shim holds and the worker never sees. A body enqueued before the Stop veto was
+deleted may still carry ``max_nudges``; the worker ignores it.
 
 Row -> wire contract (the worker writes the rows; the SPA's chatEvents.ts reads the wire):
 
@@ -52,7 +48,7 @@ hosted runner.
 
 Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
 queue URL, the shim's shape; required -- unset or empty refuses to start),
-POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``), AUTONOMOUS_MAX_NUDGES (0 -- see ``max_nudges``),
+POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
@@ -97,7 +93,7 @@ import secrets
 import sys
 import time
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -347,7 +343,9 @@ class Store(Protocol):
     ) -> SessionRow: ...
     async def list_sessions(self, owner: str) -> list[SessionRow]: ...
     async def get_session(self, session_id: str) -> SessionRow | None: ...
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None: ...
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None: ...
     async def delete_session(self, session_id: str) -> bool: ...
     async def document_versions(self, project_id: str) -> dict[str, int]: ...
     async def documents(
@@ -443,12 +441,12 @@ def resolve_cursor(last_event_id: str | None, after: str | None) -> int:
     return value
 
 
-def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, nudges: int) -> dict[str, Any]:
+def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str) -> dict[str, Any]:
     """This tier's call into the shared builder (``proto/turn_message.py``), which the
     worker also enqueues through. Kept as a wrapper because every call site here holds
     a ``SessionRow`` and the worker holds none."""
     return turn_message.queue_body(
-        turn_id, session.session_id, session.project_id, text, enqueued_at, nudges
+        turn_id, session.session_id, session.project_id, text, enqueued_at
     )
 
 
@@ -826,12 +824,16 @@ class PgStore:
             row = await cur.fetchone()
         return self._row(row) if row else None
 
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None:
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None:
+        # title_if_default names the session only while it still has the default title, in this one
+        # UPDATE, so an agent's title never overwrites a name the user chose.
         async with await self._connect() as conn:
             cur = await conn.execute(
-                "UPDATE sessions SET title = COALESCE(%s, title), model = COALESCE(%s, model), "
-                "updated_at = now() WHERE session_id = %s RETURNING session_id",
-                (title, model, session_id),
+                "UPDATE sessions SET title = COALESCE(%s, CASE WHEN title = %s THEN %s END, title), "
+                "model = COALESCE(%s, model), updated_at = now() WHERE session_id = %s RETURNING session_id",
+                (title, DEFAULT_TITLE, title_if_default, model, session_id),
             )
             hit = await cur.fetchone()
         return await self.get_session(session_id) if hit else None
@@ -1009,7 +1011,7 @@ class PgStore:
 
         turn_id = str(uuid.uuid4())
         enqueued_at = datetime.now(tz=timezone.utc).isoformat()
-        body = queue_body(turn_id, session, text, enqueued_at, max_nudges())
+        body = queue_body(turn_id, session, text, enqueued_at)
         await conn.execute(
             "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
             "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
@@ -1343,6 +1345,7 @@ class CreateSessionBody(BaseModel):
 
 class PatchSessionBody(BaseModel):
     title: str | None = None
+    title_if_default: str | None = None
     model: str | None = None
 
 
@@ -1402,48 +1405,6 @@ def _env_float(name: str, default: float) -> float:
         log.warning("%s=%r is not a number; using %s", name, raw, default)
         return default
     return value if value > 0 else default
-
-
-# 0 under step mode (decision 25): a turn is one step and ends at its boundary on
-# purpose, so there is nothing for a Stop veto to re-open. The earlier 60 was sized
-# on step count per run to clear a p99 under a harness that FORBADE yielding; that
-# regime is gone, and the test that re-derived the p99 from the corpus went with it.
-DEFAULT_MAX_NUDGES = 0
-
-
-def max_nudges(env: Mapping[str, str] | None = None) -> int:
-    """``AUTONOMOUS_MAX_NUDGES`` for the turns this tier enqueues (1a).
-
-    Read from the tier's OWN environment and stamped on the queue body -- never taken
-    from the request. The cap is the operator's, so a field on ``MessageBody`` would let a
-    signed-in patron set their own nudge budget, and the worker cannot tell the browser from
-    ``make proto-demo``: there is no browser path it can see. Each recipe recreates this
-    container with its own export instead.
-
-    **The default is now 0, and the reason inverted** (step mode, decision 25,
-    2026-10-21). This paragraph used to say "not 0", because a tier that enqueued 0 would
-    ship "the stop-every-step behaviour the plan exists to remove". Under step mode
-    stopping at each step IS the behaviour: every turn runs one step, reports it and ends
-    with "Continue with X?". A nudge past that re-opens a turn that ended on purpose.
-
-    A malformed or unset value still takes the default, and that default is still the
-    operator's to change -- but a positive cap no longer restores the old continuous
-    behaviour, because the step boundary is enforced independently of it. A turn under a
-    positive cap is vetoed for ending at its boundary, reaches for the next step, is
-    denied by the gate, and halts. Export a positive cap only to exercise that path."""
-    raw = (os.environ if env is None else env).get("AUTONOMOUS_MAX_NUDGES")
-    text = (raw or "").strip()
-    if not text:
-        return DEFAULT_MAX_NUDGES
-    try:
-        n = int(text)
-    except ValueError:
-        log.warning("AUTONOMOUS_MAX_NUDGES=%r is not an integer; using %d", raw, DEFAULT_MAX_NUDGES)
-        return DEFAULT_MAX_NUDGES
-    if n < 0:
-        log.warning("AUTONOMOUS_MAX_NUDGES=%d is negative; using 0 (the Stop hook off)", n)
-        return 0
-    return n
 
 
 # ── startup (U10) ────────────────────────────────────────────────────────────────
@@ -1992,7 +1953,7 @@ def create_app(
         # Check, then act: an existing project's owner only ever moves from NULL to a
         # user, and a NULL owner has already failed the check.
         await _session(request, session_id, user)
-        row = await _store(request).patch_session(session_id, body.title, body.model)
+        row = await _store(request).patch_session(session_id, body.title, body.model, body.title_if_default)
         if row is None:
             raise HTTPException(status_code=404, detail="Session not found")
         return session_out(row)
