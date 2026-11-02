@@ -72,6 +72,7 @@ from harness.runlog import (
     unit_dir_name,
 )
 from harness.skill_runner import DEFAULT_MODEL, QUOTA_ABORT_REASON
+from harness.judge_render import judge_render_hash
 from harness.instrument import (
     CatalogUnavailable,
     instrument_for,
@@ -1020,6 +1021,7 @@ def main(argv: list[str] | None = None) -> int:
     # actually executed against.
     judge_prompt_path = REPO_ROOT / "eval" / "harness" / "judge" / "prompt.md"
     judge_hash = hash_file("eval/harness/judge/prompt.md", judge_prompt_path)
+    render_hash = judge_render_hash()
     # Judge model stamped at the envelope so judge-model bumps are dated and
     # comparable rather than silently invalidating historical scores (issue
     # #2479 PR 1). One value per run log — `judge.grade()` has no per-call
@@ -1105,6 +1107,7 @@ def main(argv: list[str] | None = None) -> int:
                     harness_version=HARNESS_VERSION,
                     model=DEFAULT_MODEL,
                     judge_prompt_hash=judge_hash,
+                    judge_render_hash=render_hash,
                     judge_model=judge_model,
                     snapshot=_snapshot_for(skill),
                     tests=entries,
@@ -1518,6 +1521,7 @@ def main(argv: list[str] | None = None) -> int:
             harness_version=HARNESS_VERSION,
             model=DEFAULT_MODEL,
             judge_prompt_hash=judge_hash,
+            judge_render_hash=render_hash,
             judge_model=judge_model,
             instrument=_instrument_for(skill, entries),
             snapshot=_snapshot_for(skill),
