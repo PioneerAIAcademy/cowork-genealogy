@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Clean match — exact date, place, and persons; corroborated by independent 1801 census. Proof quality is 2, not 3: the date/place rest on a single derivative index (research.json classifies src_001 as derivative), but the proof narrative describes it as an original register with both parties present as informants and cites an image ark (1:2:MY3L-FH3, the index itself) that the run never actually read — no image_read call appears in the run's tool calls."
+  },
+  "findings_hash": "bbedf735a335074de029068986ec084ff7cf9b5d997effee5c728690fec8618a",
+  "blind_bundle_digest": "f39151a2c232234fc5373e37c864d2bde29dfde5cc9eb63f9ea851feaed50eda"
+}

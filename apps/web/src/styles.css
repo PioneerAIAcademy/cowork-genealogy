@@ -334,7 +334,7 @@ button {
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 12px;
-  padding-right: 18px;
+  padding-right: 48px;
   line-height: 1.3;
 }
 .sessionCardMeta {
@@ -354,7 +354,8 @@ button {
   background: var(--line);
   color: var(--ink-soft);
 }
-.cardDelete {
+.cardDelete,
+.cardRename {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -365,11 +366,32 @@ button {
   opacity: 0;
   transition: opacity 0.12s, color 0.12s;
 }
-.sessionCard:hover .cardDelete {
+.cardRename {
+  right: 36px;
+}
+.sessionCard:hover .cardDelete,
+.sessionCard:hover .cardRename {
   opacity: 1;
 }
 .cardDelete:hover {
   color: var(--danger);
+}
+.cardRename:hover {
+  color: var(--accent);
+}
+.titleEditor {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  background: var(--bg-elev);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font: inherit;
+}
+.titleEditor:focus {
+  outline: 2px solid var(--accent-soft);
 }
 
 /* ── Session view (two-pane: chat | viewer) ──────────── */
@@ -464,6 +486,20 @@ button {
   font-weight: 600;
   flex: 1;
   min-width: 0; /* let the title ellipsize instead of getting crushed to "S." when the alpha cluster is present */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+button.chatTitle {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  line-height: inherit;
+  text-align: left;
+}
+.chatHeader + .bannerError {
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
