@@ -174,9 +174,10 @@ the thread that ran the search cannot label its own hits from the list.
 
 - Unit suite: `make eval-skill SKILL=evaluate-search-results`, direct arm. Five
   g9gj hits (a Match and a Possible Match already extracted, two Not a Match,
-  one of them carrying a marriage fact, and a Match with no new fact), two on
-  the `g9gj-fulltext-hits-unextracted` variant that carry new facts, and two
-  hand-backs.
+  one of them carrying a marriage fact, and a Match with no new fact), three on
+  the `g9gj-fulltext-hits-unextracted` variant (two that carry new facts, and a
+  constructed witness line that is a Possible Match on name, time and place
+  alone), and two hand-backs.
 - Validators: `eval/harness/validators/test_evaluate_search_results.py` checks
   exactly one new row on the delegated hit and no other write, one
   `sidecar_read` on that hit (plus its paging reads) and no `#hits` read, one

@@ -5,7 +5,7 @@
   "returned_count": 1,
   "payload": {
     "query": {
-      "keywords": "+\"Iram Hyde\" +Jackson",
+      "keywords": "+\"Iram Hyde\" +Foster +Gould",
       "recordPlace2": "10,New York,Washington",
       "projectPath": "<workspace>"
     },
@@ -41,7 +41,8 @@
         ],
         "highlightTerms": [
           "Iram Hyde",
-          "Jackson"
+          "Foster",
+          "Gould"
         ]
       }
     ]
