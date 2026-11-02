@@ -46,7 +46,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { redirectUriMatches } from "@modelcontextprotocol/sdk/server/auth/handlers/authorize.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { allToolSchemas } from "../src/tool-schemas.js";
-import { fetchWithTimeout } from "../src/utils/http.js";
+import { fetchWithRetry } from "../src/utils/http.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 if (!Number.isInteger(PORT) || PORT <= 0) throw new Error(`PORT must be a port number, got "${process.env.PORT}"`);
@@ -60,12 +60,16 @@ const PENDING_TTL_MS = 10 * 60_000;
 const CODE_TTL_MS = 2 * 60_000;
 const MAX_SLEEP_S = 600;
 const MAX_RESULT_CHARS = 1_000_000;
+const MAX_FORM_BYTES = 64 * 1024;
+const VERIFIER_RE = /^[A-Za-z0-9\-._~]{43,128}$/;
 const SECRET_KEYS = new Set([
   "code", "state", "code_verifier", "code_challenge",
   "access_token", "refresh_token", "client_secret", "token",
 ]);
 
 function flag(name: string, fallback: string): string {
+  const inline = process.argv.find((a) => a.startsWith(`${name}=`));
+  if (inline !== undefined) return inline.slice(name.length + 1);
   const i = process.argv.indexOf(name);
   if (i === -1) return fallback;
   const value = process.argv[i + 1];
@@ -101,10 +105,22 @@ function oauthError(res: http.ServerResponse, status: number, error: string, des
   sendJson(res, status, { error, error_description: description });
 }
 
+class BodyTooLarge extends Error {}
+
 async function readBody(req: http.IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(chunk as Buffer);
+  let size = 0;
+  for await (const chunk of req) {
+    size += (chunk as Buffer).length;
+    if (size > MAX_FORM_BYTES) throw new BodyTooLarge(`body over ${MAX_FORM_BYTES} bytes`);
+    chunks.push(chunk as Buffer);
+  }
   return Buffer.concat(chunks).toString("utf8");
+}
+
+function badBody(res: http.ServerResponse, error: unknown): void {
+  if (error instanceof BodyTooLarge) return oauthError(res, 413, "invalid_request", error.message);
+  oauthError(res, 400, "invalid_request", "body is not form-encoded or JSON");
 }
 
 function formParams(raw: string, contentType: string | undefined): Record<string, string> {
@@ -119,13 +135,12 @@ function formParams(raw: string, contentType: string | undefined): Record<string
   return Object.fromEntries(new URLSearchParams(raw));
 }
 
+// `src/auth/login.ts` has the same helper, private to the auth module; a dev
+// probe does not widen that module's surface for it.
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 
-function base64url(buf: Buffer): string {
-  return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
 
 const protectedResourceMetadata = {
   resource: MCP_URL,
@@ -147,8 +162,12 @@ const authorizationServerMetadata = {
   client_id_metadata_document_supported: true,
 };
 
-const WWW_AUTHENTICATE =
-  `Bearer error="invalid_token", resource_metadata="${PUBLIC_URL}${PRM_PATH}/mcp", scope="${SCOPE}"`;
+/** RFC 6750 §3.1: a request that carried no token gets the bare challenge; only
+ *  a token that was refused gets `error="invalid_token"`. */
+function challenge(tokenRefused: boolean): Record<string, string> {
+  const error = tokenRefused ? `error="invalid_token", ` : "";
+  return { "WWW-Authenticate": `Bearer ${error}resource_metadata="${PUBLIC_URL}${PRM_PATH}/mcp", scope="${SCOPE}"` };
+}
 
 // ---- clients: claude.ai client metadata documents only ----
 
@@ -170,7 +189,15 @@ async function fetchClientDocument(clientId: string): Promise<ClientDocument | s
   }
   log("client_doc_fetch", { url: clientId });
   try {
-    const response = await fetchWithTimeout(url, { headers: { Accept: "application/json" } }, CLIENT_DOC_TIMEOUT_MS);
+    // No redirects: a document served from another host is not claude.ai's.
+    const response = await fetchWithRetry(
+      url,
+      { headers: { Accept: "application/json" }, redirect: "manual" },
+      CLIENT_DOC_TIMEOUT_MS,
+    );
+    if (response.status >= 300 && response.status < 400) {
+      return `client_id document redirected (HTTP ${response.status}) to ${response.headers.get("location") ?? "?"}`;
+    }
     if (!response.ok) return `client_id document answered HTTP ${response.status}`;
     const doc = (await response.json()) as Partial<ClientDocument>;
     // The document is public; logging it whole is the allowlist's evidence.
@@ -197,13 +224,35 @@ const pending = new Map<string, Grant>();
 const codes = new Map<string, Grant>();
 const tokens = new Map<string, { clientId: string; expiresAt: number }>();
 
+/** Drop expired sign-ins, codes and tokens, so a long-running deployment's maps
+ *  do not grow without bound. */
+function sweep(): void {
+  const now = Date.now();
+  for (const map of [pending, codes, tokens] as Map<string, { expiresAt: number }>[]) {
+    for (const [key, entry] of map) if (entry.expiresAt < now) map.delete(key);
+  }
+}
+
+/** RFC 6749 §4.1.2.1: once redirect_uri is trusted, an error goes back to the
+ *  client, so its callback sees the refusal instead of a stalled browser. */
+function redirectError(res: http.ServerResponse, redirectUri: string, state: string | undefined, error: string, description: string): void {
+  log("oauth_error", { status: 302, error, description });
+  const target = new URL(redirectUri);
+  target.searchParams.set("error", error);
+  target.searchParams.set("error_description", description);
+  if (state !== undefined) target.searchParams.set("state", state);
+  res.writeHead(302, { Location: target.toString(), "Cache-Control": "no-store" });
+  res.end();
+}
+
 function newSecret(): string {
-  return base64url(randomBytes(32));
+  return randomBytes(32).toString("base64url");
 }
 
 async function handleAuthorize(req: http.IncomingMessage, res: http.ServerResponse, query: URLSearchParams): Promise<void> {
   const params = Object.fromEntries(query);
   log("authorize", { params: redact(params), user_agent: req.headers["user-agent"] });
+  sweep();
   const clientId = params.client_id;
   if (!clientId) return oauthError(res, 400, "invalid_request", "client_id is required");
   const client = await fetchClientDocument(clientId);
@@ -212,9 +261,14 @@ async function handleAuthorize(req: http.IncomingMessage, res: http.ServerRespon
   if (!redirectUri || !client.redirect_uris.some((registered) => redirectUriMatches(redirectUri, registered))) {
     return oauthError(res, 400, "invalid_request", "redirect_uri is missing or not in the client document");
   }
-  if (params.response_type !== "code") return oauthError(res, 400, "unsupported_response_type", "response_type must be code");
+  if (params.response_type !== "code") {
+    return redirectError(res, redirectUri, params.state, "unsupported_response_type", "response_type must be code");
+  }
   if (params.code_challenge_method !== "S256" || !params.code_challenge) {
-    return oauthError(res, 400, "invalid_request", "PKCE S256 code_challenge is required");
+    return redirectError(res, redirectUri, params.state, "invalid_request", "PKCE S256 code_challenge is required");
+  }
+  if (params.resource !== undefined && params.resource !== MCP_URL) {
+    return redirectError(res, redirectUri, params.state, "invalid_target", `resource must be ${MCP_URL}`);
   }
   const id = newSecret();
   pending.set(id, {
@@ -236,7 +290,12 @@ async function handleAuthorize(req: http.IncomingMessage, res: http.ServerRespon
 }
 
 async function handleApprove(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
-  const params = formParams(await readBody(req), req.headers["content-type"]);
+  let params: Record<string, string>;
+  try {
+    params = formParams(await readBody(req), req.headers["content-type"]);
+  } catch (error) {
+    return badBody(res, error);
+  }
   const grant = params.id ? pending.get(params.id) : undefined;
   if (params.id) pending.delete(params.id);
   if (!grant || grant.expiresAt < Date.now()) {
@@ -247,7 +306,6 @@ async function handleApprove(req: http.IncomingMessage, res: http.ServerResponse
   const target = new URL(grant.redirectUri);
   target.searchParams.set("code", code);
   if (grant.state !== undefined) target.searchParams.set("state", grant.state);
-  target.searchParams.set("iss", PUBLIC_URL);
   log("approve", { client_id: grant.clientId, redirect_origin: target.origin });
   res.writeHead(302, { Location: target.toString(), "Cache-Control": "no-store" });
   res.end();
@@ -257,8 +315,8 @@ async function handleToken(req: http.IncomingMessage, res: http.ServerResponse):
   let params: Record<string, string>;
   try {
     params = formParams(await readBody(req), req.headers["content-type"]);
-  } catch {
-    return oauthError(res, 400, "invalid_request", "body is not form-encoded or JSON");
+  } catch (error) {
+    return badBody(res, error);
   }
   log("token", {
     params: redact(params),
@@ -266,6 +324,7 @@ async function handleToken(req: http.IncomingMessage, res: http.ServerResponse):
     has_authorization_header: req.headers.authorization !== undefined,
     user_agent: req.headers["user-agent"],
   });
+  sweep();
   if (params.grant_type !== "authorization_code") {
     return oauthError(res, 400, "unsupported_grant_type", `grant_type "${params.grant_type}" is not supported`);
   }
@@ -276,8 +335,14 @@ async function handleToken(req: http.IncomingMessage, res: http.ServerResponse):
   if (params.redirect_uri !== undefined && params.redirect_uri !== grant.redirectUri) {
     return oauthError(res, 400, "invalid_grant", "redirect_uri does not match the code");
   }
+  if (params.resource !== undefined && params.resource !== MCP_URL) {
+    return oauthError(res, 400, "invalid_target", `resource must be ${MCP_URL}`);
+  }
   const verifier = params.code_verifier ?? "";
-  if (base64url(createHash("sha256").update(verifier).digest()) !== grant.codeChallenge) {
+  if (!VERIFIER_RE.test(verifier)) {
+    return oauthError(res, 400, "invalid_grant", "code_verifier must be 43-128 unreserved characters (RFC 7636)");
+  }
+  if (createHash("sha256").update(verifier).digest("base64url") !== grant.codeChallenge) {
     return oauthError(res, 400, "invalid_grant", "code_verifier does not match the code_challenge");
   }
   const accessToken = newSecret();
@@ -370,12 +435,13 @@ function bearerValid(req: http.IncomingMessage): { ok: true; clientId: string } 
 async function handleMcp(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   if (existsSync(DENY_FLAG)) {
     log("mcp_401", { why: "deny flag present", flag: DENY_FLAG });
-    return sendJson(res, 401, { error: "invalid_token" }, { "WWW-Authenticate": WWW_AUTHENTICATE });
+    return sendJson(res, 401, { error: "invalid_token" }, challenge(true));
   }
   const auth = bearerValid(req);
   if (!auth.ok) {
     log("mcp_401", { why: auth.why });
-    return sendJson(res, 401, { error: "invalid_token" }, { "WWW-Authenticate": WWW_AUTHENTICATE });
+    const tokenRefused = auth.why !== "no bearer";
+    return sendJson(res, 401, tokenRefused ? { error: "invalid_token" } : { error: "unauthorized" }, challenge(tokenRefused));
   }
   const disconnected = new AbortController();
   res.on("close", () => {
