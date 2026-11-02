@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, writeFile, rm } from "fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -12,7 +12,9 @@ import {
 } from "../../src/tools/research-query.js";
 import { readBuildInfo } from "../../src/utils/build-info.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
-import { getProjectStore } from "../../src/store/project-store.js";
+import { getProjectStore, runWithProjectStore } from "../../src/store/project-store.js";
+import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
+import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 
 describe("project_context", () => {
   let dir: string;
@@ -79,7 +81,7 @@ describe("project_context", () => {
       },
     );
 
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.projectStatus).toBe("active");
@@ -136,7 +138,7 @@ describe("project_context", () => {
         sources: [],
       },
     );
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const byId = Object.fromEntries(r.persons.map((p) => [p.id, p]));
@@ -170,7 +172,7 @@ describe("project_context", () => {
         sources: [],
       },
     );
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const byId = Object.fromEntries(r.persons.map((p) => [p.id, p.diedByYear]));
@@ -188,14 +190,14 @@ describe("project_context", () => {
       { project: { id: "rp_001", objective, status: "active", created: "2026-01-01", updated: "2026-01-01" } },
       { persons: [], relationships: [], sources: [] },
     );
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok && r.objective).toBe(objective);
 
     await writeProject(
       { project: { id: "rp_001", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
       { persons: [], relationships: [], sources: [] },
     );
-    const bare = await projectContext({ projectPath: dir });
+    const bare = await projectContext({ projectPath: dir }, LOCAL);
     expect(bare.ok && bare.objective).toBeNull();
   });
 
@@ -204,13 +206,13 @@ describe("project_context", () => {
       { project: { id: "rp_001", objective: "x", subject_person_ids: ["I1", "I2"], status: "active", created: "2026-01-01", updated: "2026-01-01" } },
       { persons: [], relationships: [], sources: [] },
     );
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok && r.subjectPersonIds).toEqual(["I1", "I2"]);
     await writeProject(
       { project: { id: "rp_001", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
       { persons: [], relationships: [], sources: [] },
     );
-    const bare = await projectContext({ projectPath: dir });
+    const bare = await projectContext({ projectPath: dir }, LOCAL);
     expect(bare.ok && bare.subjectPersonIds).toEqual([]);
   });
 
@@ -219,7 +221,7 @@ describe("project_context", () => {
       { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
       { persons: [], relationships: [], sources: [] },
     );
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r).toEqual({
       ok: true,
       buildId: readBuildInfo().version,
@@ -286,7 +288,7 @@ describe("project_context", () => {
         { persons: [], relationships: [], sources: [] },
       );
       await browseLog(reads("004452257", 20));
-      const r = await projectContext({ projectPath: dir });
+      const r = await projectContext({ projectPath: dir }, LOCAL);
       expect(r.ok && r.exhaustedImageGroups).toEqual([
         { imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_004", "pli_005"] },
       ]);
@@ -307,7 +309,7 @@ describe("project_context", () => {
         { persons: [], relationships: [], sources: [] },
       );
       await browseLog([...reads("004452257", 20), ...reads("004000001", 3)]);
-      const r = await projectContext({ projectPath: dir });
+      const r = await projectContext({ projectPath: dir }, LOCAL);
       expect(r.ok && r.exhaustedImageGroups).toEqual([
         { imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_002"] },
       ]);
@@ -317,14 +319,14 @@ describe("project_context", () => {
       await writeProject({ project: PROJECT }, { persons: [], relationships: [], sources: [] });
       const nineteen = reads("004452257", 19);
       await browseLog([...nineteen, nineteen[0]]);
-      const r = await projectContext({ projectPath: dir });
+      const r = await projectContext({ projectPath: dir }, LOCAL);
       expect(r.ok && r.exhaustedImageGroups).toEqual([]);
     });
 
     it("skips a torn line, and lists a film with no browse logged against a plan item", async () => {
       await writeProject({ project: PROJECT }, { persons: [], relationships: [], sources: [] });
       await browseLog(["{not json", ...reads("008230326", 20)]);
-      const r = await projectContext({ projectPath: dir });
+      const r = await projectContext({ projectPath: dir }, LOCAL);
       expect(r.ok && r.exhaustedImageGroups).toEqual([{ imageGroup: "008230326", imagesRead: 20, planItemIds: [] }]);
     });
   });
@@ -355,7 +357,7 @@ describe("project_context", () => {
     }
     await writeProject(research, { persons: [], relationships: [], sources: [] });
 
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     if (!r.ok) throw new Error(r.errors.join("; "));
     expect(Object.keys(r.sectionCounts).sort()).toEqual(
       RESEARCH_QUERY_SECTIONS.filter((s) => s !== EXTERNAL_COLLECTIONS_SECTION).sort(),
@@ -382,7 +384,7 @@ describe("project_context", () => {
       },
       { persons: [], relationships: [], sources: [] },
     );
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     if (!r.ok) throw new Error(r.errors.join("; "));
     expect(r.sectionCounts.localities).toBe(0);
     expect(r.sectionCounts.hypotheses).toBe(1);
@@ -414,7 +416,7 @@ describe("project_context", () => {
         { project: { id: "rp_001", objective: "T", status: "active", created: "2026-01-01", updated: "2026-01-01" }, log },
         { persons: [], relationships: [], sources: [] },
       );
-      const r = await projectContext({ projectPath: dir });
+      const r = await projectContext({ projectPath: dir }, LOCAL);
       expect(r.ok).toBe(true);
       if (!r.ok) throw new Error("project_context failed");
       return r.awaitingUser;
@@ -513,7 +515,7 @@ describe("project_context", () => {
       },
       { persons: [], relationships: [], sources: [] },
     );
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.localities).toEqual([
@@ -544,7 +546,7 @@ describe("project_context", () => {
       },
       { persons: [] },
     );
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.projectStatus).toBe("paused");
@@ -557,13 +559,13 @@ describe("project_context", () => {
   it("errors when a project file is missing or unparseable — never throws", async () => {
     fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     await writeFile(join(dir, "research.json"), JSON.stringify({ project: { status: "active" } }));
-    const missingTree = await projectContext({ projectPath: dir });
+    const missingTree = await projectContext({ projectPath: dir }, LOCAL);
     expect(missingTree.ok).toBe(false);
     if (missingTree.ok) return;
     expect(missingTree.errors.join(" ")).toMatch(/tree\.gedcomx\.json not found/);
 
     await writeFile(join(dir, "tree.gedcomx.json"), "{not json");
-    const badTree = await projectContext({ projectPath: dir });
+    const badTree = await projectContext({ projectPath: dir }, LOCAL);
     expect(badTree.ok).toBe(false);
     if (badTree.ok) return;
     expect(badTree.errors.join(" ")).toMatch(/tree\.gedcomx\.json is not valid JSON/);
@@ -576,16 +578,16 @@ describe("project_context", () => {
 
     it("carries the same stamped build on every return branch", async () => {
       await writeProject({ project: { status: "active" }, questions: [], sources: [], assertions: [] }, { persons: [] });
-      const populated = await projectContext({ projectPath: dir });
+      const populated = await projectContext({ projectPath: dir }, LOCAL);
       expect(populated.buildId).toBe(expected);
 
       await rm(join(dir, "tree.gedcomx.json")); // broken project: one file of two
-      const broken = await projectContext({ projectPath: dir });
+      const broken = await projectContext({ projectPath: dir }, LOCAL);
       expect(broken.ok).toBe(false);
       expect(broken.buildId).toBe(expected);
 
       await rm(join(dir, "research.json")); // not a project at all
-      const none = await projectContext({ projectPath: dir });
+      const none = await projectContext({ projectPath: dir }, LOCAL);
       expect(none.ok).toBe(false);
       if (!none.ok) expect(none.reason).toBe("no_project");
       expect(none.buildId).toBe(expected);
@@ -606,7 +608,7 @@ describe("project_context", () => {
       { persons: [], relationships: [], sources: [] },
     );
 
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
 
@@ -617,5 +619,135 @@ describe("project_context", () => {
 
     const q2 = r.questionStatuses.find((q) => q.id === "q_002");
     expect(q2?.storedStatus).toBeNull();
+  });
+});
+
+const EMPTY_RESEARCH = {
+  project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+};
+const EMPTY_TREE = { persons: [], relationships: [], sources: [] };
+
+describe("project_context uploads", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-uploads-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(EMPTY_RESEARCH));
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(EMPTY_TREE));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  // Seeded with fs, not the store: under PROTO_STORE=pg the routing store copies
+  // these files, mtimes included, into Postgres/S3, so `list` runs as SQL there.
+  async function upload(name: string, mtimeSec?: number) {
+    await mkdir(join(dir, "uploads"), { recursive: true });
+    await writeFile(join(dir, "uploads", name), name);
+    if (mtimeSec !== undefined) await utimes(join(dir, "uploads", name), mtimeSec, mtimeSec);
+  }
+
+  it("lists each upload once, pairing an X.txt with its X as that upload's text layer", async () => {
+    for (const name of ["census.pdf", "census.pdf.txt", "notes.txt", "b.jpg", ".DS_Store"]) await upload(name);
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const byName = [...(r.uploads ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+    expect(byName.map((u) => [u.name, u.hasText])).toEqual([
+      ["b.jpg", false],
+      ["census.pdf", true],
+      ["notes.txt", false],
+    ]);
+    for (const u of byName) expect(new Date(u.uploaded).toISOString()).toBe(u.uploaded);
+  });
+
+  it("omits uploads when the project has none", async () => {
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect("uploads" in r).toBe(false);
+  });
+
+  it("orders newest first, ties by name", async () => {
+    // Name order (a, m, y, z) is neither the answer nor its reverse.
+    const at: Record<string, number> = { "a.pdf": 1_000, "z.pdf": 3_000, "m.pdf": 2_000, "y.pdf": 3_000 };
+    for (const [name, sec] of Object.entries(at)) await upload(name, sec);
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    if (!r.ok) throw new Error(r.errors.join("; "));
+    expect(r.uploads?.map((u) => u.name)).toEqual(["y.pdf", "z.pdf", "m.pdf", "a.pdf"]);
+    expect(r.uploads?.[3].uploaded).toBe(new Date(1_000_000).toISOString());
+  });
+
+  it("omits uploads, and still answers, when the listing fails", async () => {
+    await upload("census.pdf");
+    const store = getProjectStore();
+    const failing = new Proxy(store, {
+      get(target, key) {
+        if (key === "list") {
+          return async (projectPath: string, dirRef: string) => {
+            if (dirRef === "uploads") throw new Error("listing failed");
+            return target.list(projectPath, dirRef);
+          };
+        }
+        const value = Reflect.get(target, key, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      },
+    });
+    const r = await runWithProjectStore(failing, () => projectContext({ projectPath: dir }, LOCAL));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect("uploads" in r).toBe(false);
+  });
+});
+
+describe("project_context and project_create links", () => {
+  let root: string;
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "project-links-"));
+  });
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  async function contextUnder(store: ScopedFsStore | null, config: Record<string, unknown>) {
+    const run = async () => {
+      const s = getProjectStore();
+      const path = store ? SCOPED_ANCHOR : root;
+      await s.writeJson(path, "research.json", EMPTY_RESEARCH);
+      await s.writeJson(path, "tree.gedcomx.json", EMPTY_TREE);
+      const r = await projectContext({ projectPath: path }, bearerPrincipal("tok", config));
+      if (!r.ok) throw new Error(r.errors.join("; "));
+      return r;
+    };
+    return store ? runWithProjectStore(store, run) : run();
+  }
+
+  it("returns projectUrl and uploadUrl from the store's project id when both settings are on", async () => {
+    const r = await contextUnder(new ScopedFsStore(root, "p-42"), {
+      webPublicUrl: "https://beta.example/",
+      uploadsEnabled: true,
+    });
+    expect(r.projectUrl).toBe("https://beta.example/#/p/p-42");
+    expect(r.uploadUrl).toBe("https://beta.example/#/p/p-42/upload");
+  });
+
+  it("returns projectUrl but no uploadUrl while uploads are off", async () => {
+    const off = await contextUnder(new ScopedFsStore(root, "p-42"), { webPublicUrl: "https://beta.example", uploadsEnabled: false });
+    expect(off.projectUrl).toBe("https://beta.example/#/p/p-42");
+    expect("uploadUrl" in off).toBe(false);
+    const unset = await contextUnder(new ScopedFsStore(root, "p-43"), { webPublicUrl: "https://beta.example" });
+    expect("uploadUrl" in unset).toBe(false);
+  });
+
+  it("returns neither link without the public URL", async () => {
+    const r = await contextUnder(new ScopedFsStore(root, "p-42"), { uploadsEnabled: true });
+    expect("projectUrl" in r).toBe(false);
+    expect("uploadUrl" in r).toBe(false);
+  });
+
+  it("returns neither link from a store with no project id, whatever projectPath is", async () => {
+    fileStoreOnly("the file store is the one with no project id");
+    const r = await contextUnder(null, { webPublicUrl: "https://beta.example", uploadsEnabled: true });
+    expect("projectUrl" in r).toBe(false);
+    expect("uploadUrl" in r).toBe(false);
   });
 });
