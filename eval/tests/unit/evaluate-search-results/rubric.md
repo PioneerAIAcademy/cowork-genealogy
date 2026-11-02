@@ -10,7 +10,7 @@ Harness note: `project_context`, `sidecar_read`, `tree_query` and `research_appe
 
 Does the rationale name the facts that decide the verdict, read from the hit and the tree?
 
-- **pass:** The rationale names the deciding facts on both sides: who in the hit could be the person, and the name, place, date or relative that ties them or rules them out. A Match names at least one point beyond the name; a Possible Match says what is consistent and what is missing or garbled; a Not a Match names the point that rules the person out, such as a different place in the same years or a different man of the same given name.
+- **pass:** The rationale names the deciding facts on both sides: who in the hit could be the person, and the name, place, date or relative that ties them or rules them out. A Match names a relative in the same relationship as on the person's edges, or a point independent of time and place (an occupation, an age that fits); name, time and place alone make a Possible Match. A Possible Match says what is consistent and what is missing or garbled. A Not a Match names the point that rules the person out, such as a different place in the same years or a different man of the same given name; a date after the person's death rules him out only when the hit shows him alive or acting then.
 - **partial:** The verdict follows from the facts, but the rationale is vague ("details match") or names only the name.
 - **fail:** The rationale rests on something the hit does not say, ignores a fact in the hit that rules the person out, or adopts a verdict the delegation stated without checking it.
 

@@ -1,0 +1,49 @@
+{
+  "log_id": "log_022",
+  "tool": "fulltext_search",
+  "retrieved": "2026-10-09T17:39:51.000Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "keywords": "+\"Iram Hyde\" +Jackson",
+      "recordPlace2": "10,New York,Washington",
+      "projectPath": "<workspace>"
+    },
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "ark:/61903/3:1:FTXT-JX28",
+        "sourceUrl": "https://www.familysearch.org/ark:/61903/3:1:FTXT-JX28",
+        "collectionId": "2739057",
+        "collectionTitle": "New York, Wills and Deeds, ca. 1700s-2017",
+        "title": "Washington, New York, United States Deed 1828",
+        "recordDate": "1828",
+        "recordType": "Deed",
+        "recordPlace": "Washington, New York, United States",
+        "textDocument": "This Indenture made the fourteenth day of May in the year of our Lord one thousand eight hundred and twenty eight Between John Foster of the town of Jackson in the County of Washington and State of New York of the first part and Samuel Gould of the same town of the second part Witnesseth that the said party of the first part for and in consideration of the sum of one hundred and fifty dollars to him in hand paid by the said party of the second part doth grant bargain and sell unto the said party of the second part and to his heirs and assigns forever all that certain piece or parcel of land situate in the town of Jackson aforesaid containing twenty acres of land be the same more or less To have and to hold the above granted premises unto the said party of the second part his heirs and assigns forever In witness whereof the said party of the first part hath hereunto set his hand and seal the day and year first above written -- John Foster ( L. S. ) Signed Sealed and delivered in presence of Iram Hyde -- State of New York Washington County ss . On the fourteenth day of May 1828 before me came John Foster known to me to be the person described in and who executed the within conveyance and acknowledged that he executed the same -- J. S. Leigh Commissioner",
+        "names": [
+          "John Foster",
+          "Samuel Gould",
+          "Iram Hyde",
+          "J. S. Leigh"
+        ],
+        "places": [
+          "town of Jackson",
+          "County of Washington",
+          "State of New York",
+          "Washington County"
+        ],
+        "dates": [
+          "1828"
+        ],
+        "highlightTerms": [
+          "Iram Hyde",
+          "Jackson"
+        ]
+      }
+    ]
+  }
+}

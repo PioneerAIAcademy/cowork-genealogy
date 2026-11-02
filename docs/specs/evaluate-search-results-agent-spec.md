@@ -47,13 +47,18 @@ extracts each Match from the hit's own transcript.
    titles of the sources the tree cites:
    - `match`: the name fits, at least one more point ties the hit's person to
      the target (a relative named in the same relationship as on the target's
-     edges, or a dated place the target's facts fit), and nothing rules the
-     target out;
+     edges, or a point independent of time and place, such as an occupation or
+     an age that fits), and nothing rules the target out. Name, time and place
+     agreeing, and nothing more, is `possible_match`: with a common name, the
+     right name in the right town and decade is often another man;
    - `possible_match`: the name fits and the time and place are consistent, but
      nothing else ties the person to the target, or one point disagrees in a
      way a recording error explains;
    - `not_a_match`: a point rules the target out, or the name belongs to someone
-     else in the hit.
+     else in the hit. A date after the target's death rules him out only when
+     the hit shows him alive or acting then: deeds, wills and estate papers name
+     a man after he dies, so a hit naming him as deceased is judged on its other
+     points.
 6. **`new_vital_info`**, judged against the target:
    - a birth (Birth, Christening, Baptism) or death (Death, Burial) is new when
      the hit dates or places it and the target has no fact of that group with a

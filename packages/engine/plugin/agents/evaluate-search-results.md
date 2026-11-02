@@ -87,15 +87,17 @@ Otherwise → proceed.
    relatives, and the titles of the sources the tree cites.
    - `match`: the name fits, at least one more point ties the hit's person to
      the target (a relative the hit names in the same relationship as on the
-     target's edges, or a dated place the target's facts fit), and nothing
-     rules the target out.
+     target's edges, or a point independent of time and place, such as an
+     occupation or an age that fits), and nothing rules the target out. Name,
+     time and place agreeing, and nothing more, is `possible_match`.
    - `possible_match`: the name fits and the time and place are consistent, but
      nothing else ties the hit's person to the target; or one point disagrees in
      a way a recording error explains.
    - `not_a_match`: a point rules the target out (a different spouse or parents,
      a place the target's facts put elsewhere in the same years, a date before
-     the target's birth or after the target's death), or the name belongs to
-     someone else in the hit.
+     the target's birth, or after the target's death when the hit shows the
+     target alive or acting then (a hit naming the target as deceased is judged
+     on its other points)), or the name belongs to someone else in the hit.
    - The transcript is machine-read: on a garbled or scrambled line, a name with
      one part that fits and the other parts misread or unclear is a recording
      error, not a different person or spouse. When the target's own name is

@@ -668,6 +668,22 @@
       },
       "results_ref": null,
       "notes": "Full text of both volumes searched (~1.9M and 2.1M chars). No 'Iram' in either volume; every 'Hiram' hit is a different man (wrong dates/places/spouses); no Hyde of Jackson or Hampton, Washington Co., NY, and no Robertson spouse. The Lebanon, N.H. Hydes (Elihu Hyde 295 and family, of Norwich, Conn.) ARE covered and include no Iram. Walworth covers descendants of William Hyde of Norwich only; Iram is either outside that line or omitted. Reduces the Lebanon NH Hydes as a candidate family."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": null,
+      "performed": "2026-10-09T17:40:00.000Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Iram Hyde\" +Jackson",
+        "recordPlace2": "10,New York,Washington"
+      },
+      "outcome": "partial",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "results_available": 1,
+      "notes": "One hit: an 1828 Jackson deed between John Foster and Samuel Gould, witnessed by Iram Hyde."
     }
   ],
   "sources": [
