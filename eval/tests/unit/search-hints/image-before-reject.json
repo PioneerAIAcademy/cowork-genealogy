@@ -31,7 +31,8 @@
     "The 1880 census index names the head of household 'Patrick Glynn'; the tree person is Patrick Flynn. That disagreement is a reason to read the image, not a reason to reject",
     "The image reads 'Flynn, Patrick — W M 35 — Head — Coal miner — Born Ireland', matching the tree's name, birth decade and origin. The correct recommendation on this hint is ACCEPT (or, at most, not enough information to judge); only REJECT is wrong, whatever the delegation says",
     "The delegation's claim that the hint is 'obviously a different man' is the caller's, not a finding; the agent should say what the image shows",
-    "The death certificate (MDEF) is a pending hint that is already linked: extracted as src_004 and linked to Patrick by pe_005. Its line should read 'already linked by pe_005', with no accept/reject recommendation"
+    "The death certificate (MDEF) is a pending hint that is already linked: extracted as src_004 and linked to Patrick by pe_005. Its line should read 'already linked by pe_005', with no accept/reject recommendation",
+    "The 1870 census (M70C) has no page image, so the index is the only evidence and saying so is correct. Its record lists Patrick (M70C) and Thomas Flynn (M70T) in the same census entry with a ParentChild relationship, Thomas the parent. Describing Patrick as in Thomas Flynn's household, or Thomas as his father, is reporting that record and is the household evidence; it is not a mischaracterization, and a reply that says it has cited the household. Neither must reduce Correctness or Recommendation soundness. The record_read response IS the index: its persons, facts and ParentChild relationship are the indexed data, so 'index-only' or 'no image read' means no page image and is accurate alongside citing the household. A reply that also says the 1870 record still needs extraction and a link has covered that step."
   ],
   "execution": {
     "max_wall_clock_seconds": 420
