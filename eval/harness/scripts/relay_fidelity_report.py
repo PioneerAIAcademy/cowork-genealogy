@@ -84,7 +84,11 @@ sys.path.insert(0, str(HERE))
 
 from check_runlogs import latest_full_skill_runlog  # noqa: E402
 from harness.loader import InvalidTestError, load_test  # noqa: E402
-from harness.skill_runner import strip_agent_return_trailer  # noqa: E402
+from harness.skill_runner import (  # noqa: E402
+    normalize,
+    strip_agent_return_trailer,
+    tail_after_final_rule,
+)
 from harness.snapshot import hash_file  # noqa: E402
 from harness.since_window import (  # noqa: E402
     add_since_arg,
@@ -124,50 +128,6 @@ EXCLUDED_LABEL = "excluded before bucketing"
 def strip_fences(text: str) -> str:
     """Drop fenced code blocks, so markup inside one is not read as structure."""
     return _FENCE.sub("", text)
-
-
-def normalize(text: str) -> str:
-    """Canonical form for comparing a relay with a return.
-
-    An ORDERED, exact list, because "normalize dashes" alone is ambiguous
-    enough to move the headline: collapsing runs of `-` as well scores 16 where
-    this scores 13, and both are faithful readings of a looser rule.
-
-    Runs of `-` are deliberately NOT collapsed -- agents write an em dash as
-    `--` and relays render it as a single character, so collapsing would make
-    `--` and `-` interchangeable and over-count survival.
-    """
-    out = text.replace("*", "")
-    for src, dst in (("“", '"'), ("”", '"'), ("‘", "'"), ("’", "'")):
-        out = out.replace(src, dst)
-    for src in ("—", "–", "−"):
-        out = out.replace(src, "-")
-    return " ".join(out.split()).strip()
-
-
-def tail_after_final_rule(text: str) -> str:
-    """The text after the return's final `---` line, or "" if it has none.
-
-    A line whose STRIPPED content is exactly `---`, after the runtime trailers
-    are removed and fenced blocks dropped -- a `---` inside a code fence would
-    otherwise move what counts as "final".
-    """
-    lines = strip_agent_return_trailer(text or "").splitlines()
-    last = None
-    in_fence = False
-    for i, line in enumerate(lines):
-        if line.lstrip().startswith("```"):
-            in_fence = not in_fence
-            continue
-        if not in_fence and line.strip() == "---":
-            last = i
-    if last is None:
-        return ""
-    # Sliced from the ORIGINAL lines, never the fence-stripped ones: the tail
-    # is matched against an unstripped `text_response`, so returning a
-    # fence-stripped tail made a summary containing a code block impossible to
-    # match even when relayed verbatim.
-    return "\n".join(lines[last + 1 :]).strip()
 
 
 def conforming_agents(agents_root: Path) -> set[str]:

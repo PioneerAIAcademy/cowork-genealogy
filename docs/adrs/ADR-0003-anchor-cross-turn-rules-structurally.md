@@ -169,7 +169,8 @@ for call-by-call reading, not a decay verdict on their own.
 1. **A tool check can false-deny, and that is the worse failure.** A structural
    anchor refuses work; when the check is wrong, it refuses *legitimate* work.
    `guardrail-enforcement-spec.md` is explicit that false-deny is the asymmetric
-   risk, which is why the `Bash` route stays open (ADR-0005) and why new gates
+   risk, which is why the hook does not match `Bash` (ADR-0005; the file's read-only
+   mode refuses shell writes instead) and why new gates
    are scoped conservatively.
 2. **Not everything can move.** 11 of the orchestrator's 17 routing rows need
    judgment. Those stay prose and stay subject to decay — a known, unfixed

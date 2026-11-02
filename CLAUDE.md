@@ -66,7 +66,12 @@ reachable.** `DEFAULT_WIKI_API_URL` in `src/auth/config.ts` and
 `DEFAULT_POP_STATS_URL` in `src/tools/place-population.ts` both point at a
 `*.ts.net` host served to the public internet through Tailscale Funnel, so
 every install reaches it. Never describe it as private, undeployed or
-unreachable — not in a README, a known-limits list or a review. A `dig`
+unreachable — not in a README, a known-limits list or a review. The ingress
+that makes those URLs resolve is recorded in
+`scripts/tailscale-services.sh` — the Funnel mappings, the loopback ports
+and systemd units behind them, and `check` to probe all of it. The mappings
+themselves live in tailscaled's state on that one host, so that script is
+the only copy in source. A `dig`
 returning a `100.64.0.0/10` address is the tailnet-internal answer and says
 nothing about public reach. The hosted path can now be redirected without an
 engine rebuild — set `WIKI_API_URL` / `POP_STATS_URL` on the control
