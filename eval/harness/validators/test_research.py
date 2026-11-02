@@ -1144,26 +1144,74 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
             )
             problems.append(f"plan_item for {item['id']} is not verbatim; differs on {diff}")
         tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
-        subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
-            (research.get("project") or {}).get("subject_person_ids") or []
-        )
-        match = re.search(r"subject:\s*", prompt)
-        sbrace = prompt.find("{", match.end()) if match else -1
-        if sbrace == -1:
-            problems.append(f"no subject JSON block for {item['id']}: {prompt[:160]!r}")
+        subject, problem = _handed_subject(prompt, tree, research)
+        if problem:
+            problems.append(f"{problem} for {item['id']}")
             continue
-        try:
-            subject, _ = decoder.raw_decode(prompt[sbrace:])
-        except ValueError:
-            problems.append("subject block is not valid JSON")
-            continue
-        if subject.get("subjectId") not in subject_ids:
-            problems.append(
-                f"subject.subjectId {subject.get('subjectId')!r} is not a person in the "
-                f"tree {subject_ids}"
-            )
-        if not subject.get("names"):
-            problems.append("subject block carries no names")
+        problems.extend(_handed_parents_problems(subject, tree))
+    assert not problems, "; ".join(problems)
+
+
+def _handed_subject(prompt: str, tree: dict, research: dict) -> tuple[dict | None, str | None]:
+    """The `subject:` JSON block a spawn prompt hands over, or the reason it
+    hands none a reader can use: no block, a block that is not JSON, a
+    `subjectId` that is not a person in the tree, or no `names`."""
+    subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
+        (research.get("project") or {}).get("subject_person_ids") or []
+    )
+    match = re.search(r"subject:\s*", prompt)
+    sbrace = prompt.find("{", match.end()) if match else -1
+    if sbrace == -1:
+        return None, f"no subject JSON block: {prompt[:160]!r}"
+    try:
+        subject, _ = json.JSONDecoder().raw_decode(prompt[sbrace:])
+    except ValueError:
+        return None, "subject block is not valid JSON"
+    if subject.get("subjectId") not in subject_ids:
+        return None, f"subject.subjectId {subject.get('subjectId')!r} is not a person in the tree {subject_ids}"
+    if not subject.get("names"):
+        return None, "subject block carries no names"
+    return subject, None
+
+
+def _handed_parents_problems(subject: dict, tree: dict) -> list[str]:
+    """The subject block names the subject's parents in the tree when it has one
+    or two, and none when it has more than two: two candidate couples mean the
+    parents are themselves in question (research/SKILL.md)."""
+    sid = subject.get("subjectId")
+    parents = sorted(
+        {
+            r.get("parent")
+            for r in tree.get("relationships") or []
+            if isinstance(r, dict) and r.get("type") == "ParentChild" and r.get("child") == sid and r.get("parent")
+        }
+    )
+    handed = subject.get("parents")
+    if len(parents) > 2:
+        return [f"subject.parents is handed for {sid}, who has {len(parents)} parents in the tree; leave it out"] if handed else []
+    if not parents:
+        return []
+    ids = sorted({p.get("personId") for p in handed or [] if isinstance(p, dict)})
+    if ids != parents:
+        return [f"subject.parents names {ids}, not {sid}'s parents in the tree {parents}"]
+    return []
+
+
+_HANDS_SUBJECT_TAG = "hands-subject"
+
+
+def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
+    """Tag-gated: the spawn of ``search-images`` carries the ``subject:`` block
+    (issue #3363): with no subject it can record no namesake. Whether the block
+    names the parents is checked on ``asserts-delegation-plan-item``, whose
+    scenario gives the subject two; a browse-only scenario gives none."""
+    if _HANDS_SUBJECT_TAG not in (test.get("tags") or []):
+        pytest.skip("not a hands-subject test")
+    prompts = _spawn_prompts(builtin_tool_calls, "search-images")
+    assert prompts, "No recorded spawn of 'search-images' to assert a delegation on."
+    research = before_state.get("research_json") or {}
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
+    problems = [p for p in (_handed_subject(prompt, tree, research)[1] for prompt in prompts) if p]
     assert not problems, "; ".join(problems)
 
 

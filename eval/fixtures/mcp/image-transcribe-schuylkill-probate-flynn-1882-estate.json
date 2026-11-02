@@ -1,0 +1,14 @@
+{
+  "tool": "image_transcribe",
+  "description": "image_transcribe response for image 007936749_00012 of the unindexed Schuylkill County probate volume: an estate docket page holding the 1882 administration of a Patrick Flynn of Pottsville (died 14 May 1882, intestate, widow Bridget). The subject Patrick Flynn (I1) died 12 March 1908, so the page shows a different man of his name: the Heydöcker shape of issue #3363 (a namesake ruled out in a browse). Feeds ut_search_images_012. Anchored to the full film id, as image-transcribe-schuylkill-probate-flynn-will is; pair it with image-transcribe-any, ordered last.",
+  "args": {
+    "imageId": "~007936749_00012"
+  },
+  "response": {
+    "transcription": "Register of Wills, Schuylkill County, Pennsylvania. Estate Docket, Vol. 9, page 214.\n\nNo. 2217. Estate of PATRICK FLYNN, late of the Borough of Pottsville, laborer, deceased.\nDied the 14th day of May, A.D. 1882, intestate.\nLetters of Administration granted the 22nd day of May, 1882, unto BRIDGET FLYNN, widow of said decedent.\nBond in the sum of $400, with Owen Brennan and James Dolan sureties.\nInventory and appraisement filed 30th June 1882: household goods and wearing apparel, $118.50.\nAccount of the administratrix confirmed absolutely 12th March 1883.\n\nNo. 2218. Estate of MARGARET FOLEY, late of Cass Township, widow, deceased.\nWill proved the 1st day of June, A.D. 1882. Letters testamentary unto Daniel Foley, executor.",
+    "metadata": {
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1702114
+    }
+  }
+}

@@ -87,8 +87,12 @@ NEWLY_ENFORCED = {"localities"}
 #: row's `callers` -- person-evidence appears in none, so `writer_sets` resolves its
 #: agent owner nowhere. `person_evidence` is the empty set for the same reason.
 #: `namesakes` (issue #3363, PR 2) is search-records', which the row lists in its
-#: `callers`, so it resolves.
-ADDED: dict[str, set[str]] = {"rejected_links": set(), "namesakes": {"search-records"}}
+#: `callers`, so it resolves. PR 3 adds search-images and search-full-text, which
+#: the row lists in `hookCallers` only (the hook's co-writers).
+ADDED: dict[str, set[str]] = {
+    "rejected_links": set(),
+    "namesakes": {"search-records", "search-images", "search-full-text"},
+}
 
 #: `questions` gains `proof-conclusion`. The transition it covers —
 #: `status -> resolved` — was owned by nobody: `proof-conclusion`'s body hands

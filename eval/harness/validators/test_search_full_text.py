@@ -19,6 +19,10 @@ import re
 
 import pytest
 
+from validators_lib import as_mapping as _as_mapping
+from validators_lib import assert_namesake_rows_cite as _assert_namesake_rows_cite
+from validators_lib import assert_namesake_warning_handed_back as _assert_namesake_warning_handed_back
+from validators_lib import assert_no_namesake_row_without_subject as _assert_no_namesake_row_without_subject
 from validators_lib import new_log_entries as _new_log_entries
 
 
@@ -597,3 +601,47 @@ def test_plan_item_completion_matches_its_own_record_type(before_state, after_st
     assert not errors, "Plan-item completion mismatches:\n  - " + "\n  - ".join(errors)
     if not checked_content:
         pytest.skip("completed item(s) all have a record_type outside the starter vocabulary; structural check only")
+
+
+# --- Namesake rows (issue #3363, PR 3) ---------------------------------------
+
+
+def _hit_ids(tool_calls) -> set[str]:
+    """The `id` of every result this run's fulltext_search calls returned."""
+    out: set[str] = set()
+    for c in _fts_tool_calls(tool_calls):
+        for result in _as_mapping(c.get("response")).get("results") or []:
+            if isinstance(result, dict) and isinstance(result.get("id"), str):
+                out.add(result["id"])
+    return out
+
+
+def test_namesake_row_recorded(before_state, after_state, tool_calls, test):
+    """Tag-gated (namesake-row): a hit naming a same-named person the search rules
+    out is recorded as a namesakes row on the subject (step 8b), listing the
+    hit's `id` and citing the search's `fulltext_search` log. Ids compare bare:
+    a hit's `id` may come back as an ARK URL and be listed as an ARK."""
+    if "namesake-row" not in test.get("tags", []):
+        pytest.skip("not a namesake-row scenario")
+    _assert_namesake_rows_cite(
+        before_state,
+        after_state,
+        log_tool="fulltext_search",
+        ids_read=_hit_ids(tool_calls),
+        compare_bare=True,
+        what="the id of a hit this run's fulltext_search returned",
+    )
+
+
+def test_no_namesake_row_without_subject(before_state, after_state, test):
+    """No `subject:` block in the delegation, no namesakes row (step 8b)."""
+    _assert_no_namesake_row_without_subject(before_state, after_state, test)
+
+
+def test_namesake_warning_handed_to_person_evidence(tool_calls, agent_returns, text_response, test):
+    """Tag-gated (namesake-warning): when the namesakes write warns that links to
+    the subject are untied, the return hands every listed `pe_` id to
+    person-evidence (the same line search-records owes)."""
+    if "namesake-warning" not in test.get("tags", []):
+        pytest.skip("not a namesake-warning scenario")
+    _assert_namesake_warning_handed_back(tool_calls, agent_returns, text_response, "search-full-text")

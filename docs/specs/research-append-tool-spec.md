@@ -1615,9 +1615,11 @@ is listed, and the name sentence only when a name is. It rides
   58 of 181, listing 366 links (31 in fixtures whose hint is the subject's own
   record, 45 a namesake's, 290 unlabelled; at most 24 in one state), 77 facts
   and 35 names.
-- **Who acts on it.** The row's only writer, `search-records`, holds no
-  `person_evidence` write, so its return carries the listed `pe_` ids in a
-  `Hand-back: person-evidence` line (`ut_search_records_028` asserts it). Whether
+- **Who acts on it.** None of the row's three writers (`search-records`,
+  `search-images`, `search-full-text`) holds a `person_evidence` write, so each
+  one's return carries the listed `pe_` ids in a `Hand-back: person-evidence`
+  line (`ut_search_records_028` asserts it, and one planted test in each of the
+  other two suites). Whether
   the main thread then routes them to person-evidence is not checked; the first
   e2e runs that write rows measure it.
 - **The same call stamps `record_persona_ids`.** On an append, and on an update

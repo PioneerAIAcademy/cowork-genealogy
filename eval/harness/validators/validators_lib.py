@@ -773,3 +773,104 @@ def continue_offers(text: str | None) -> list[str]:
         if plain and (_OFFER_LINE_RE.match(plain) or offered_step(plain)):
             found.append(plain)
     return found
+
+
+# --- Namesake rows (issue #3363) ---------------------------------------------
+#
+# Three agents write `namesakes`: search-records (the owner), search-images and
+# search-full-text. Each row of the two co-writers lists the id of what it read,
+# a page's image id or a full-text hit's id, which no persona search stamps, so
+# their checks compare ids instead of reading a stamp.
+
+
+def namesake_bare_id(value: Any) -> str:
+    """An id reduced to the part two spellings of it share: the text after the
+    last `:` of an ARK or an ARK URL (`ark:/61903/1:1:QV9N-KX83` and
+    `https://familysearch.org/ark:/61903/1:1:QV9N-KX83` both give `QV9N-KX83`),
+    else the value itself, so an image id like `007936749_00012` is unchanged."""
+    text = str(value or "").strip()
+    if "ark:/" in text:
+        text = text.rsplit(":", 1)[-1]
+    return text.split("?", 1)[0].rstrip("/")
+
+
+def has_subject_block(delegation: Any) -> bool:
+    """Whether a delegation hands the agent a `subject:` block on a line of its own."""
+    return bool(re.search(r"(?m)^\s*subject:\s*(?:```(?:json)?\s*)?\{", str(delegation or "")))
+
+
+def assert_namesake_rows_cite(
+    before_state: dict[str, Any],
+    after_state: dict[str, Any],
+    *,
+    log_tool: str,
+    ids_read: set[str],
+    compare_bare: bool,
+    what: str,
+) -> None:
+    """The namesake rows a run wrote from what it read: at least one, each on a
+    subject of the project, each citing a `log_tool` log entry this run wrote,
+    and each listing in `record_ids` only ids from `ids_read` (`what` names them
+    in the message). With `compare_bare`, ids compare in bare form, since a
+    full-text hit's id may come back as an ARK URL and be listed as an ARK."""
+    rows = new_section_entries(before_state, after_state, "namesakes")
+    assert rows, "the agent ruled a same-named person out but recorded no namesakes row"
+    research = after_state.get("research_json") or {}
+    subjects = set((research.get("project") or {}).get("subject_person_ids") or [])
+    logs = {e.get("id") for e in new_log_entries(before_state, after_state) if e.get("tool") == log_tool}
+    norm = namesake_bare_id if compare_bare else (lambda v: str(v or "").strip())
+    known = {norm(i) for i in ids_read}
+    for row in rows:
+        assert row.get("person_id") in subjects, (
+            f"row {row.get('id')} is on {row.get('person_id')!r}, not a subject of the project {sorted(subjects)}"
+        )
+        assert set(row.get("log_entry_ids") or []) & logs, (
+            f"row {row.get('id')} cites {row.get('log_entry_ids')}, none of them a {log_tool} log this run wrote"
+        )
+        listed = row.get("record_ids") or []
+        assert listed, f"row {row.get('id')} lists no id of what it was read from"
+        stray = [r for r in listed if norm(r) not in known]
+        assert not stray, (
+            f"row {row.get('id')} lists {stray}, which is not {what} (read: {sorted(ids_read)}); "
+            "never a response's imageRef or staged.resultsRef"
+        )
+
+
+def assert_no_namesake_row_without_subject(
+    before_state: dict[str, Any], after_state: dict[str, Any], test: dict[str, Any]
+) -> None:
+    """A co-writer handed no `subject:` block records no namesake: with no subject
+    it cannot know whose name a person bears. Skips a test with no delegation
+    (nothing says what it was handed) and one whose delegation carries a subject."""
+    delegation = (test or {}).get("delegation")
+    if not delegation:
+        pytest.skip("no delegation recorded")
+    if has_subject_block(delegation):
+        pytest.skip("the delegation hands a subject")
+    rows = new_section_entries(before_state, after_state, "namesakes")
+    assert not rows, f"no subject was handed, yet the agent recorded namesakes rows: {rows}"
+
+
+def assert_namesake_warning_handed_back(
+    tool_calls: list, agent_returns: list, text_response: str | None, agent: str
+) -> None:
+    """When a namesakes write warns that links to the subject are untied, the
+    agent's return hands every listed `pe_` id to person-evidence, the only
+    agent that may lower or tie them. Lifted from the search-records suite so
+    its two co-writers are held to the same line."""
+    from harness.skill_runner import agent_return_text
+
+    warned: set[str] = set()
+    for call in tool_calls or []:
+        if bare_tool_name(call.get("tool")) != "research_append":
+            continue
+        args = as_mapping(call.get("input") or call.get("args"))
+        ops = args.get("ops") if isinstance(args.get("ops"), list) else [args]
+        if any(isinstance(op, dict) and op.get("section") == "namesakes" for op in ops):
+            warned |= set(re.findall(r"\bpe_\d{3,}\b", json.dumps(call.get("response"), default=str)))
+    assert warned, "no namesakes write returned a warning naming a link, so the scenario did not reach the hand-back"
+    reply = agent_return_text(agent_returns, agent) or (text_response or "")
+    hand_back = re.search(r"hand[- ]?back[^\n]{0,40}`?person-evidence[^\n]*", reply, re.I)
+    assert hand_back, f"the namesakes write warned about {sorted(warned)}, but no Hand-back: person-evidence line: {reply[:600]!r}"
+    missing = sorted(p for p in warned if p not in hand_back.group(0))
+    assert not missing, f"the person-evidence hand-back omits warned links {missing}: {hand_back.group(0)!r}"

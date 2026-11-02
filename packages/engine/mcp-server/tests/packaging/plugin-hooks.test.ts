@@ -913,6 +913,36 @@ describe("the guard script's decisions", () => {
     expect(out).toEqual({});
   });
 
+  // The two co-writers (SECTION_CO_WRITERS): a page or a transcript hit can turn
+  // up a same-named person too. search-records stays the owner the deny names.
+  it.each([
+    ["search-images", "genealogy-research:search-images", { section: "namesakes", op: "append", entry: {} }],
+    ["search-full-text", "genealogy-research:search-full-text", { section: "namesakes", op: "append", entry: {} }],
+    [
+      "search-images, a row batched with its plan item's status",
+      "genealogy-research:search-images",
+      {
+        ops: [
+          { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+          { section: "namesakes", op: "append", entry: {} },
+        ],
+      },
+    ],
+  ])("permits a co-writer to record a namesake — %s", (_label, agent_type, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, agent_id: "agent-1", agent_type });
+    expect(out).toEqual({});
+  });
+
+  it.each([
+    ["a search agent outside the table", "genealogy-research:search-external-sites"],
+    ["a co-writer's agent_type with no agent_id", "genealogy-research:search-images"],
+  ])("still denies namesakes to %s", (label, agent_type) => {
+    const caller = label.includes("no agent_id") ? { agent_type } : { agent_id: "a1", agent_type };
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input: { section: "namesakes", op: "append", entry: {} }, ...caller });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:search-records");
+  });
+
   // ── caller-routed sections: research_append + evaluations (issue #3191) ──
   //
   // Section-scoped like proof_summaries and person_evidence. What this route

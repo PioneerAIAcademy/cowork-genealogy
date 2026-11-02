@@ -25,6 +25,8 @@ from validators_lib import filter_claim_findings as _filter_claim_findings
 from validators_lib import hashable_key as _hashable_key
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import new_section_entries as _new_section_entries
+from validators_lib import namesake_bare_id as _namesake_bare_id
+from validators_lib import assert_namesake_warning_handed_back as _assert_namesake_warning_handed_back
 from validators_lib import record_search_sent as _record_search_sent
 from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
@@ -969,6 +971,9 @@ def test_namesake_row_recorded(before_state, after_state, test):
         e.get("id") for e in _new_log_entries(before_state, after_state) if e.get("tool") == "record_search"
     }
     for row in rows:
+        assert not str(row.get("notes") or "").lstrip().startswith("pool:"), (
+            f"row {row.get('id')} is a pool row, but this scenario rules a person out on a stated ground: {row}"
+        )
         assert row.get("person_id") in subjects, (
             f"row {row.get('id')} is on {row.get('person_id')!r}, not a subject of the project {sorted(subjects)}"
         )
@@ -994,21 +999,76 @@ def test_namesake_warning_handed_to_person_evidence(tool_calls, agent_returns, t
     """Tag-gated (namesake-warning): when the namesakes write warns that links to
     the subject are untied, the return hands every listed `pe_` id to
     person-evidence, the only agent that may lower or tie them."""
-    from harness.skill_runner import agent_return_text
-
     if "namesake-warning" not in test.get("tags", []):
         pytest.skip("not a namesake-warning scenario")
-    warned: set[str] = set()
-    for call in tool_calls or []:
-        if _bare_tool_name(call.get("tool")) != "research_append":
-            continue
-        args = _as_mapping(call.get("input") or call.get("args"))
-        ops = args.get("ops") if isinstance(args.get("ops"), list) else [args]
-        if any(isinstance(op, dict) and op.get("section") == "namesakes" for op in ops):
-            warned |= set(re.findall(r"\bpe_\d{3,}\b", json.dumps(call.get("response"), default=str)))
-    assert warned, "no namesakes write returned a warning naming a link, so the scenario did not reach the hand-back"
-    reply = agent_return_text(agent_returns, "search-records") or (text_response or "")
-    hand_back = re.search(r"hand[- ]?back[^\n]{0,40}`?person-evidence[^\n]*", reply, re.I)
-    assert hand_back, f"the namesakes write warned about {sorted(warned)}, but no Hand-back: person-evidence line: {reply[:600]!r}"
-    missing = sorted(p for p in warned if p not in hand_back.group(0))
-    assert not missing, f"the person-evidence hand-back omits warned links {missing}: {hand_back.group(0)!r}"
+    _assert_namesake_warning_handed_back(tool_calls, agent_returns, text_response, "search-records")
+
+
+# --- Pool rows and the other parents ground (issue #3363, PR 3) -------------
+#
+# The planted record ids are named here, as `I1` is above, because a test file
+# cannot carry them: unit-test.schema.json is closed (additionalProperties false).
+
+#: Two 1845 baptisms of a Patrick Flynn in Schuylkill County, a son of Thomas
+#: (the subject block's parent) and a son of Michael, met on a search for the
+#: subject's parents (record-search-flynn-1845-baptisms-pool).
+POOL_BAPTISM_IDS = ("Q7FB-T45", "Q7FB-M45")
+#: Two marriages of a Patrick Flynn, met on a search for his wife
+#: (record-search-flynn-1870-marriages-other-parents): the groom of the first is
+#: a son of Thomas, of the second a son of Michael.
+MARRIAGE_MATCHING_PARENTS_ID = "Q7FM-T70"
+MARRIAGE_OTHER_PARENTS_ID = "Q7FM-M70"
+
+
+def test_namesake_pool_row_recorded(before_state, after_state, test):
+    """Tag-gated (namesake-pool-row): two people of the subject's name who cannot
+    both be him, neither tied to him nor ruled out, are recorded as ONE pool row:
+    `record_ids` empty, since either may be the subject, `notes` starting `pool:`
+    and naming both records, citing the search that met them.
+
+    The scenario's search is for the subject's parents, so the parents in the
+    `subject` block are the hypothesis under test, not a ground: a second row
+    marking the son of Michael as a namesake on the other-parents ground fails
+    the one-row count.
+    """
+    if "namesake-pool-row" not in test.get("tags", []):
+        pytest.skip("not a namesake-pool-row scenario")
+    rows = _new_section_entries(before_state, after_state, "namesakes")
+    assert len(rows) == 1, f"expected exactly one namesakes row, the pool, and got {len(rows)}: {rows}"
+    row = rows[0]
+    research = after_state.get("research_json") or {}
+    subjects = set((research.get("project") or {}).get("subject_person_ids") or [])
+    assert row.get("person_id") in subjects, (
+        f"the pool row is on {row.get('person_id')!r}, not a subject of the project {sorted(subjects)}"
+    )
+    assert row.get("record_ids") == [], (
+        f"a pool row lists none of its candidates in record_ids, since any may be the subject: {row.get('record_ids')}"
+    )
+    notes = str(row.get("notes") or "")
+    assert notes.lstrip().startswith("pool:"), f"a pool row's notes start 'pool:': {notes[:120]!r}"
+    unnamed = [rid for rid in POOL_BAPTISM_IDS if rid not in notes]
+    assert not unnamed, f"the pool row's notes do not name the candidate record(s) {unnamed}: {notes[:300]!r}"
+    searches = {
+        e.get("id") for e in _new_log_entries(before_state, after_state) if e.get("tool") == "record_search"
+    }
+    assert set(row.get("log_entry_ids") or []) & searches, (
+        f"the pool row cites {row.get('log_entry_ids')}, none of them a record_search this run logged"
+    )
+
+
+def test_namesake_other_parents_row(before_state, after_state, test):
+    """Tag-gated (namesake-other-parents): of two people of the subject's name,
+    the one whose parents differ from the `subject` block's is ruled out on that
+    ground and recorded; the one whose parents match may still be the subject
+    and is not. One row, and so no pool."""
+    if "namesake-other-parents" not in test.get("tags", []):
+        pytest.skip("not a namesake-other-parents scenario")
+    rows = _new_section_entries(before_state, after_state, "namesakes")
+    assert len(rows) == 1, f"expected exactly one namesakes row, and got {len(rows)}: {rows}"
+    listed = {_namesake_bare_id(r) for r in rows[0].get("record_ids") or []}
+    assert MARRIAGE_OTHER_PARENTS_ID in listed, (
+        f"the row lists {sorted(listed)}, not the son of Michael's marriage {MARRIAGE_OTHER_PARENTS_ID}"
+    )
+    assert MARRIAGE_MATCHING_PARENTS_ID not in listed, (
+        f"the row lists {MARRIAGE_MATCHING_PARENTS_ID}, whose groom's parents match the subject's: he may still be the subject"
+    )

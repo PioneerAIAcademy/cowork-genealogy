@@ -296,7 +296,7 @@ it by name.
    | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until it is registered |
    | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints`, handing it the item's `planItemId`, its plan's `planId`, the `personId` you read out of the item's `rationale` ("Review pending FamilySearch hints on <PID> before…"), and `userPresent: no` ONLY on an `--autonomous` run (otherwise omit it; absent means yes). It reviews the subject's pending FamilySearch hints and sets the item's own status — a hint that already answers the question can save a search. A hints item awaiting verdicts is not "next" (`project_context` skips it), so this never holds up the other searches |
    | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records`, handing it the item you just queried as a `plan_item:` JSON block and the subject you hold as a `subject:` block (or `@plugin:search-external-sites` for non-FS sources) |
-   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
+   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`), handing it the subject you hold as a `subject:` block |
    | A plan item is listed in `project_context`'s **`exhaustedImageGroups[].planItemIds`** — its film's image cap is spent in this project, and no new agent or session resets it. Call `project_context` again before re-spawning `@plugin:search-images` after it reports a cap refusal | `@plugin:research-plan` to **dispose of that item**, naming the film. Never spawn `@plugin:search-images` for it |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
@@ -387,13 +387,17 @@ it by name.
    otherwise `yes`) for `@plugin:person-evidence`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
-   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it, and the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`), for `@plugin:search-records`, and the `planItemId` (plus the parish page as
+   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it, for `@plugin:search-records`, and the `planItemId` (plus the parish page as
    `baseUrl` when one is known, `userPresent` — `no` in an autonomous run, otherwise `yes` —
    and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
    `@plugin:search-hints`, and the `planItemId` plus the volume's `standardPlace` (with its
-   years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`. In a wrap-up turn
+   years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`, and the
+   `planItemId` for `@plugin:search-full-text`, and the subject you already hold as a `subject:` JSON
+   block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in
+   the subject's `project_context` `parentIds`, left out when it has more than two), for
+   `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion` also take `wrapUp: yes`, and
    `@plugin:proof-conclusion` takes `newQuestion: yes` when the researcher
@@ -408,8 +412,9 @@ it by name.
 
    **Three rules the caller holds, because on this route the agent's own
    body never loads here.** Do not pre-judge the agent's gate — read nothing
-   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already
-   queried and the subject you already hold, passed verbatim and unread), and judge nothing. Do not
+   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,
+   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and
+   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing. Do not
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
    the routing table has no row for a decline. Relay the agent's return as-is.

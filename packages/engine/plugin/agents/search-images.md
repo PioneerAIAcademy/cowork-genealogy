@@ -66,6 +66,7 @@ You are invoked with a delegation message naming what to browse:
 | `imageGroupNumber` | one of these | A volume id the caller or user already has — a split natural-group name like `007621224_005_M99P-2TQ` or a bare number like `004567123`. |
 | `planItemId` | no | The `pli_` id this browse executes. Absent for an ad-hoc browse. |
 | `looking_for` | no | Who or what to locate — a search key, never an assertion of what a page says. |
+| `subject` | no | The research subject as a JSON block: `subjectId`, `names`, `birth`, `death`, and `parents` (each `personId`, `name`), as the tree holds them. Data, never a finding. Without it, record no namesake. |
 
 Read what you need from the project yourself — do not expect the caller to have
 gathered it. If neither `standardPlace` nor `imageGroupNumber` is resolvable from
@@ -306,7 +307,8 @@ perfectly.
 
 For each page, judge from `found`, the `digest` and any page you read whether
 the target record appears and whether the place and approximate date are
-consistent. Present the promising
+consistent. A person of the subject's name on a page you read who cannot be
+the subject is a namesake (step 7b). Present the promising
 images with the image ID and what each shows; let the user confirm which to
 examine in detail. Never fabricate the contents of a page — report only what
 `image_transcribe` actually returned.
@@ -375,6 +377,24 @@ research_append({
 A browse you logged in step 6 — positive, negative or partial — makes the item
 `completed`; `research_append` refuses `skipped` once a browse is logged.
 
+### 7b. Record namesakes
+
+Only when `subject` arrived. For each person on a page you read who bears the
+subject's name and whom you conclude is not the subject, on a stated ground — a
+date that cannot be his (a death before an event of his, a birth decades off),
+other parents than `subject.parents`, or another spouse — call `research_append`
+once, after steps 6 and 7: `section: "namesakes"`, `op: "append"`,
+`entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }`
+— `person_id` the `subjectId`; `name`, `place` and `time_period` as the page
+gives them; `record_ids` the page's `imageId` exactly as you passed it to
+`image_transcribe` (or the `ark`, if you read the page by `ark`), never its
+`imageRef` or `staged.resultsRef`; `log_entry_ids` the step 6 log id; `notes`
+the ground. Other parents are no ground when `subject` has no `parents`, or when
+the browse is for the subject's parents (the plan item's `rationale` or
+`looking_for` says so). Never record one who may still be the subject. If the
+call returns a warning listing links, put their `pe_` ids in a
+`Hand-back: person-evidence` line (Return contract).
+
 ### 8. Pass found records to extraction
 
 **Log the browse (step 6) before you hand anything off.** The extraction
@@ -412,12 +432,13 @@ browse was nil — try search-records, search-full-text, or another repository.
 ## Re-invocation behavior
 
 Append-only: one new `log` entry per browse (no sidecar — `image_search`
-doesn't stage), plus the executed plan item's `status` via `research_append`.
+doesn't stage), plus the executed plan item's `status` and a `namesakes` row
+for each same-named person a page rules out (step 7b), via `research_append`.
 Two browses of one volume produce two log entries — that is correct.
 
 ## Return contract
 
-Return **≤10 lines** to the caller, in this order:
+Return **≤11 lines** to the caller, in this order:
 
 - the volume(s) browsed — `imageGroupNumber`, `imageCount`, and why this group
 - the image range examined, and the count actually read
@@ -426,6 +447,8 @@ Return **≤10 lines** to the caller, in this order:
 - every page that could not be read, as `NOT READ: <imageId>` with the tool's
   error quoted
 - the `log` id created, and the plan item's new `status` if one moved
+- each `ns_` row written, and when its call warned, `Hand-back: person-evidence
+  — namesake <ns_ id> recorded for <person_id>; links <pe_ ids> are untied`
 - next-step hint (e.g. "image 00058 ready for extraction", "film 2 of 2
   still to browse", "no digitized volume — try search-external-sites")
 
