@@ -82,7 +82,7 @@ describe('SseSessionConnection — stream', () => {
     const conn = new SseSessionConnection('s1')
     const seen = listen(conn)
     conn.connect()
-    expect(last().url).toBe('/api/sessions/s1/events/stream?after=0')
+    expect(last().url).toBe('api/sessions/s1/events/stream?after=0')
     last().open()
     expect(seen).toEqual([
       { type: 'conn_state', state: 'open' },
@@ -122,7 +122,7 @@ describe('SseSessionConnection — stream', () => {
     last().fail(CLOSED) // the browser gave up
     vi.advanceTimersByTime(1000)
     expect(FakeEventSource.instances).toHaveLength(2)
-    expect(last().url).toBe('/api/sessions/s1/events/stream?after=7')
+    expect(last().url).toBe('api/sessions/s1/events/stream?after=7')
     conn.close()
   })
 
@@ -178,7 +178,7 @@ describe('SseSessionConnection — send', () => {
     conn.send({ type: 'user_msg', text: 'Find Thomas Flynn' })
     await flush()
     expect(fetchFn).toHaveBeenCalledWith(
-      '/api/sessions/s1/messages',
+      'api/sessions/s1/messages',
       expect.objectContaining({ method: 'POST', body: JSON.stringify({ text: 'Find Thomas Flynn' }) })
     )
     // The echo of the row the tier just wrote: not relayed (ChatPane already drew it).
@@ -272,7 +272,7 @@ describe('SseSessionConnection — send', () => {
     last().open()
     conn.send({ type: 'interrupt' })
     await flush()
-    expect(fetchFn).toHaveBeenCalledWith('/api/sessions/s1/interrupt', expect.objectContaining({ method: 'POST' }))
+    expect(fetchFn).toHaveBeenCalledWith('api/sessions/s1/interrupt', expect.objectContaining({ method: 'POST' }))
     const events = seen.filter((m) => m.type === 'agent_event').map((m) => (m.event as { kind: string }).kind)
     expect(events).toEqual(['error'])
     conn.close()

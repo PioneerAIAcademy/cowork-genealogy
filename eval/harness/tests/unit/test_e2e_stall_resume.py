@@ -25,7 +25,6 @@ from claude_agent_sdk import (
 from e2e import orchestrator
 from e2e.orchestrator import _run_agent, load_fixture
 from e2e.stop_checker import derive_stop_reason
-from harness.skill_invocation import find_person_evidence_missing_same_person
 
 
 def _fixture(tmp_path: Path, **caps):
@@ -283,26 +282,6 @@ def test_successful_tool_result_records_is_error_false_not_none(tmp_path, monkey
     monkeypatch.setattr(orchestrator, "open_query", lambda **kw: _FakeAgen(steps))
     tool_calls, *_ = _run(_fixture(tmp_path), tmp_path)
     assert tool_calls[0]["is_error"] is False
-
-
-def test_errored_same_person_does_not_score_the_identity(tmp_path, monkeypatch):
-    """The composition: an errored `same_person` must NOT count as having scored
-    the identity, so the person_evidence link for that new person is a violation.
-
-    Three project docs, mirroring check_guardrail_compliance's real call: the
-    person must be in `tree` and absent from `starting_tree` for the detector to
-    consider it new, and `research` supplies the person_evidence link.
-    """
-    tool_calls = _errored_same_person_run(tmp_path, monkeypatch, person_id="I1")
-    violations = find_person_evidence_missing_same_person(
-        tool_calls,
-        {"person_evidence": [{"id": "pe_001", "person_id": "I1"}]},
-        {"persons": [{"id": "I1"}]},
-        starting_tree={"persons": []},
-    )
-    assert len(violations) == 1
-    assert "I1" in violations[0]
-    assert "never scored" in violations[0]
 
 
 def test_unresolved_tool_call_carries_no_is_error_key(tmp_path, monkeypatch):

@@ -1341,7 +1341,7 @@ field. Reachability *is* knowable statelessly — the join is
 `assertion_id → assertions[].id → log_entry_id → log[].tool/results_ref`, all
 inside the document being written — so the narrowing costs nothing in
 statelessness and buys precision. `personaReachable` in `research-append.ts`
-mirrors `_persona_reachable` in `eval/harness/harness/skill_invocation.py`;
+mirrors `_persona_reachable` in `eval/harness/validators/test_person_evidence.py`;
 `guardrail-enforcement-spec.md` §4 owns the criterion.
 
 It is not an escape hatch: a link that genuinely cannot be scored keeps
