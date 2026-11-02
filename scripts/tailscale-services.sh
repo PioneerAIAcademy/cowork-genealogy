@@ -63,10 +63,13 @@
 # USAGE
 #
 #   ./scripts/tailscale-services.sh status           show the live mappings
-#   ./scripts/tailscale-services.sh check            probe all three over HTTPS
+#   ./scripts/tailscale-services.sh check            probe the durable two over HTTPS
+#   ./scripts/tailscale-services.sh check --with-probe   ... and the #3529 probe
 #   ./scripts/tailscale-services.sh apply            (re)create the durable two
 #   ./scripts/tailscale-services.sh apply --with-probe   ... and the probe on 8443
 #   ./scripts/tailscale-services.sh reset            remove ALL serve/funnel config
+#
+# Pass --with-probe only while the #3529 probe is running.
 #
 # `apply` is idempotent: it sets the mapping to the stated target rather than
 # appending, so re-running changes nothing. It needs `tailscale` already logged
@@ -100,7 +103,10 @@ cmd_check() {
   local fail=0
   _probe() { # label expected url
     local label=$1 expected=$2 url=$3 got
-    got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$url" || echo "000")
+    # The fallback is required under `set -e` (curl exits non-zero when it cannot
+    # connect) but must print nothing: curl has already written `000` from -w, so
+    # an `echo 000` here would report the doubled "000000".
+    got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$url" || true)
     if [[ "$got" == "$expected" ]]; then
       printf '  ok    %-28s %s\n' "$label" "$got"
     else
@@ -111,13 +117,18 @@ cmd_check() {
   printf 'checking https://%s\n' "$HOST_FQDN"
   _probe "wiki"            200 "https://${HOST_FQDN}/wiki/openapi.json"
   _probe "pop-stats"       200 "https://${HOST_FQDN}/pop-stats/openapi.json"
-  _probe "probe /livez"    200 "https://${HOST_FQDN}:${PROBE_PUBLIC_PORT}/livez"
-  _probe "probe /mcp (401)" 401 "https://${HOST_FQDN}:${PROBE_PUBLIC_PORT}/mcp"
+  # Only on request, mirroring `apply`. The probe is a measurement that ends, so
+  # a bare `check` has to keep meaning "are the two durable mappings up?" --
+  # otherwise, once #3529 is done, every run exits 1 and a genuine wiki or
+  # pop-stats outage is indistinguishable from the probe simply being gone.
+  if [[ "${1:-}" == "--with-probe" ]]; then
+    _probe "probe /livez"    200 "https://${HOST_FQDN}:${PROBE_PUBLIC_PORT}/livez"
+    _probe "probe /mcp (401)" 401 "https://${HOST_FQDN}:${PROBE_PUBLIC_PORT}/mcp"
+  fi
   if (( fail )); then
     printf '\nA probe failure is either the mapping or the service behind it.\n'
     printf 'Check both: ./scripts/tailscale-services.sh status\n'
     printf '            systemctl status wiki-query-api pop-stats-api\n'
-    printf 'The probe is expected to fail unless someone is running it; see above.\n'
     return 1
   fi
 }
@@ -159,7 +170,7 @@ cmd_reset() {
 
 case "${1:-}" in
   status) cmd_status ;;
-  check)  cmd_check ;;
+  check)  shift; cmd_check "${1:-}" ;;
   apply)  shift; cmd_apply "${1:-}" ;;
   reset)  cmd_reset ;;
   *)
