@@ -14,7 +14,7 @@ description: >-
   extract facts from an accepted record (use extraction), or to link a
   record to a person (use person-evidence).
 model: claude-haiku-5-5
-effort: low
+effort: medium
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
