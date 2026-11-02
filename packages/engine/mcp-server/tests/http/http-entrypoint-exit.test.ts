@@ -156,6 +156,33 @@ describe("build/http.js store environment", () => {
     expect(r.stderr).toMatch(/invalid value: GENEALOGY_ORPHAN_GRACE_S .*at least 3600/);
   }, TEST_TIMEOUT_MS);
 
+  // The two process-wide limits (self-hosted beta E4). These cases are what
+  // stops a PR shipping a fully unit-tested parser that src/http.ts never
+  // merges into its exit branch and never hands to either module -- every
+  // other test would still be green.
+  it("exits 2 naming a limit set to a value it may not take", async () => {
+    const zero = await runHttp({ ...BASE, GENEALOGY_FS_CALLS_PER_MINUTE: "0" });
+    expect(zero.code, zero.stderr).toBe(2);
+    expect(zero.stderr).toMatch(/invalid value: GENEALOGY_FS_CALLS_PER_MINUTE/);
+
+    const words = await runHttp({ ...BASE, GENEALOGY_MAX_TRANSCRIPTIONS: "abc" });
+    expect(words.code, words.stderr).toBe(2);
+    expect(words.stderr).toMatch(/invalid value: GENEALOGY_MAX_TRANSCRIPTIONS/);
+  }, TEST_TIMEOUT_MS * 2);
+
+  it("names both limits on start-up, and says when each is off", async () => {
+    const off = await runHttp(BASE, /listening on .*\n/);
+    expect(off.stderr).toMatch(/fs budget: off\n/);
+    expect(off.stderr).toMatch(/transcription cap: off\n/);
+
+    const on = await runHttp(
+      { ...BASE, GENEALOGY_FS_CALLS_PER_MINUTE: "120", GENEALOGY_MAX_TRANSCRIPTIONS: "4" },
+      /listening on .*\n/,
+    );
+    expect(on.stderr).toMatch(/fs budget: 120 calls\/min\n/);
+    expect(on.stderr).toMatch(/transcription cap: 4 at a time\n/);
+  }, (START_TIMEOUT_MS + TEST_TIMEOUT_MS) * 2);
+
   it("names the orphan sweep's schedule on start-up, and says when it is off", async () => {
     const on = await runHttp(BASE, /listening on .*\n/);
     expect(on.stderr).toMatch(/orphan sweep: every 3600 s, grace 86400 s\n/);
