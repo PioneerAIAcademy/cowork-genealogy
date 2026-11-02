@@ -21,7 +21,7 @@
     "same-person-flynn-degenerate"
   ],
   "judge_context": [
-    "same_person returns 0.2415 (matched: true) because the tree candidate I1 is thin — one name, one fact — so there is less for the record to agree with. The same record scores higher against a fuller I1, and far higher than against an unrelated person.",
+    "same_person returns 0.2415 because the tree candidate I1 is thin — one name, one fact — so there is less for the record to agree with. The same record scores higher against a fuller I1, and far higher than against an unrelated person.",
     "person-evidence must recognize a weak-band score on a thin subject as what a thin subject can reach, and weigh it against the qualitative correlation, rather than reading it as a mismatch.",
     "It is WRONG to attribute the low score to the tree id lacking a FamilySearch ARK. An ARK-less or locally-minted person IS scorable — it scores on document content — so a missing ARK is never a reason to skip the call or to discount its result.",
     "person-evidence must still create a person_evidence entry linking a_001 to I1 — the qualitative correlation is overwhelming and uncontradicted: exact name match (Patrick Flynn), age 5 in 1850, born Ireland, Schuylkill County, in the household of Thomas Flynn",

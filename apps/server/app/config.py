@@ -155,6 +155,10 @@ class Settings(BaseSettings):
     # engine (issue #290).
     wiki_api_url: str | None = None
     pop_stats_url: str | None = None
+    # The matcher service same_person and ranking score with. With both set,
+    # hosted sessions use it; otherwise FamilySearch's matcher (fs_oauth.hosted_config).
+    matcher_url: str | None = None
+    matcher_api_key: str | None = None
 
     # ── Build identity ───────────────────────────────────────────
     # Stamped into every feedback bundle so triage can tell which build a case

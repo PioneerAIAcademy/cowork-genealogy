@@ -22,6 +22,7 @@ import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 // The `namesakes` section and the cap a recorded namesake puts on links to the
 // person it is not (issue #3363). End to end through `researchAppend`.
@@ -240,7 +241,7 @@ describe("namesake cap", () => {
   });
 
   async function setup(r: Record<string, any> = research(), t: Record<string, any> = tree()) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2));
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
@@ -256,7 +257,8 @@ describe("namesake cap", () => {
         record_role: a.record_role as string,
         tree_person_id: personId,
         score: 0.9,
-        matched: true,
+        scorer: "familysearch",
+        model: null,
         assertion_id: assertionId,
         record_source: "record_read",
         computed: "2026-10-17T00:00:00Z",
@@ -273,7 +275,8 @@ describe("namesake cap", () => {
         record_role: a.record_role,
         tree_person_id: personId,
         score: 0.9,
-        matched: true,
+        scorer: "familysearch",
+        model: null,
         assertion_id: assertionId,
         record_source: "record_read",
         computed: "2026-10-17T00:00:00Z",
@@ -631,7 +634,8 @@ describe("namesake cap", () => {
         record_role: "mother",
         tree_person_id: M,
         score: 0.9,
-        matched: true,
+        scorer: "familysearch",
+        model: null,
         assertion_id: "a_023",
         record_source: "record_read",
         computed: "2026-10-17T00:00:00Z",
@@ -1796,7 +1800,8 @@ describe("tree-derived namesake pairs (#3681)", () => {
         record_role: a.record_role,
         tree_person_id: personId,
         score: 0.9,
-        matched: true,
+        scorer: "familysearch",
+        model: null,
         assertion_id: assertionId,
         record_source: "record_read",
         computed: "2026-10-29T00:00:00Z",

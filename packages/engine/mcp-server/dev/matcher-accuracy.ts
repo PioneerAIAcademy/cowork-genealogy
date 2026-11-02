@@ -12,8 +12,9 @@
  * draft (README still carrying DRAFT PENDING ADJUDICATION) are skipped and
  * counted by reason.
  *
- * Each pair is scored through `scorePair` (src/utils/match-engine.ts) — the
- * function `same_person` calls. There is no second scoring path here.
+ * Each pair is scored through `matchPairs` (src/utils/matcher.ts), the call
+ * `same_person` and ranking make, so it measures whichever matcher
+ * ~/.familysearch-mcp/config.json names. There is no second scoring path here.
  *
  *   tree side    the fixture's frozen starting-tree.gedcomx.json anchored on
  *                source_pid, cut to the `Mob.matchSubset()` mob same_person sends
@@ -49,12 +50,11 @@ import { fileURLToPath } from "node:url";
 import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { recordReadTool } from "../src/tools/record-read.js";
-import { scorePair } from "../src/utils/match-engine.js";
+import { matchPairs } from "../src/utils/matcher.js";
 import { Mob } from "../src/utils/mob.js";
-import { mapWithConcurrency, withRetry } from "../src/utils/place-resolver.js";
+import { mapWithConcurrency } from "../src/utils/place-resolver.js";
 import { arkToBareId, toArk } from "../src/utils/ark.js";
 import type { SimplifiedGedcomX } from "../src/types/gedcomx.js";
-import type { SamePersonResult } from "../src/types/same-person.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = resolve(HERE, "..", "..", "..", "..");
@@ -311,7 +311,7 @@ export interface Deps {
     id1: string,
     gedcomx2: SimplifiedGedcomX,
     id2: string,
-  ) => Promise<SamePersonResult>;
+  ) => Promise<{ score: number }>;
   ensureLogin: () => Promise<void>;
   log: (line: string) => void;
 }
@@ -321,7 +321,16 @@ export const liveDeps: Deps = {
   cacheDir: CACHE_DIR,
   fetchRecord: async (ark) =>
     (await recordReadTool({ recordId: ark }, LOCAL)) as unknown as SimplifiedGedcomX,
-  score: (g1, id1, g2, id2) => withRetry(() => scorePair(g1, id1, g2, id2, LOCAL)),
+  score: async (g1, id1, g2, id2) => {
+    const call = await matchPairs(
+      [{ kind: "tree_record", tree: g2, pid: id2, rec: g1, personaId: id1, familysearchTree: g2 }],
+      LOCAL,
+      { concurrency: 1, retry: true },
+    );
+    const [scored] = call.results;
+    if (scored.score === null) throw scored.error;
+    return { score: scored.score };
+  },
   ensureLogin: async () => {
     await getValidToken(LOCAL);
   },
@@ -332,8 +341,6 @@ interface PairRow extends ScoredPair {
   identity: Identity;
   personaArk: string;
   personaId: string;
-  matched: boolean;
-  confidence?: number;
 }
 
 export function parseArgs(argv: string[]): { refresh: boolean; csv: string | null } {
@@ -455,7 +462,7 @@ export async function main(
       const personaId = personaIdFor(gedcomx1, c.personaArk);
       const result = await deps.score(gedcomx1, personaId, gedcomx2, sourcePid);
       if (!Number.isFinite(result.score)) {
-        throw new Error(`matchTwoExamples returned a non-finite score (${result.score})`);
+        throw new Error(`the matcher returned a non-finite score (${result.score})`);
       }
       const row: PairRow = {
         slug,
@@ -464,8 +471,6 @@ export async function main(
         identity: c.identity,
         personaArk: c.personaArk,
         personaId,
-        matched: result.matched,
-        ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
       };
       return row;
     } catch (e) {
@@ -508,10 +513,10 @@ export async function main(
   }
 
   if (args.csv !== null) {
-    const header = ["slug", "identity", "label", "persona_ark", "persona_id", "score", "matched", "confidence"];
+    const header = ["slug", "identity", "label", "persona_ark", "persona_id", "score"];
     const lines = [header.join(",")].concat(
       pairs.map((p) =>
-        [p.slug, p.identity, p.label, p.personaArk, p.personaId, p.score, p.matched, p.confidence]
+        [p.slug, p.identity, p.label, p.personaArk, p.personaId, p.score]
           .map(csvCell)
           .join(","),
       ),

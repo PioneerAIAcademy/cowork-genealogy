@@ -17,11 +17,16 @@ import re
 import subprocess
 from pathlib import Path
 
+import pytest
+
+from _bash import find_bash
 from app.sandbox.e2b import _AGENT_HOME, _BUILD_INFO_PATH
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 DOCKERFILE = REPO_ROOT / "apps" / "server" / "sandbox" / "e2b.Dockerfile"
 BUILD_SCRIPT = REPO_ROOT / "apps" / "server" / "sandbox" / "build-image.sh"
+BASH = find_bash()
+_needs_bash = pytest.mark.skipif(BASH is None, reason="runs a snippet of build-image.sh; no bash found")
 
 
 def _dockerfile_lines() -> list[str]:
@@ -146,7 +151,7 @@ def _run_dirty_computation(repo: Path) -> str:
     end = next(i for i in range(start, len(script)) if script[i].rstrip() == "fi")
     block = "\n".join(script[start:end + 1])
     out = subprocess.run(
-        ["bash", "-c", f'set -euo pipefail\n{block}\nprintf "%s" "$_dirty"'],
+        [BASH, "-c", f'set -euo pipefail\n{block}\nprintf "%s" "$_dirty"'],
         cwd=repo, capture_output=True, text=True, encoding="utf-8", check=True,
     )
     return out.stdout.strip()
@@ -163,10 +168,12 @@ def _scratch_repo(tmp_path: Path) -> Path:
     return repo
 
 
+@_needs_bash
 def test_a_clean_tree_is_reported_clean(tmp_path):
     assert _run_dirty_computation(_scratch_repo(tmp_path)) == "false"
 
 
+@_needs_bash
 def test_an_uncommitted_edit_is_reported_dirty(tmp_path):
     """The failure this flag exists for. If the computation is ever deleted or
     neutered, `_dirty` stays false here and this is what says so."""
@@ -175,6 +182,7 @@ def test_an_uncommitted_edit_is_reported_dirty(tmp_path):
     assert _run_dirty_computation(repo) == "true"
 
 
+@_needs_bash
 def test_an_untracked_file_is_reported_dirty(tmp_path):
     """Untracked counts: a brand-new skill file is exactly the change most likely
     to matter and has never been committed."""
@@ -183,6 +191,7 @@ def test_an_untracked_file_is_reported_dirty(tmp_path):
     assert _run_dirty_computation(repo) == "true"
 
 
+@_needs_bash
 def test_a_gitignored_file_is_not_reported_dirty(tmp_path):
     """Editor cruft is excluded where it belongs, in .gitignore, rather than by
     narrowing what this check looks at. An allowlist would fail toward CLEAN,

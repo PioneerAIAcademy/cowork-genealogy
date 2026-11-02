@@ -39,6 +39,44 @@ from .base import (
 SERVER_ROOT = Path(__file__).resolve().parents[2]
 
 
+def _pid_alive(pid: int) -> bool:
+    """Whether a process with this pid exists.
+
+    POSIX probes with signal 0, which delivers nothing. Windows has no such signal:
+    `os.kill(pid, 0)` there sends CTRL_C_EVENT to the pid's console group, so the
+    probe would interrupt the very sibling plane it asks about. It reads the process
+    table instead (issue #4043). Either way, a process we may not touch counts as
+    alive -- the caller only ever uses "alive" to leave something alone.
+    """
+    if sys.platform == "win32":
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.OpenProcess.restype = wintypes.HANDLE
+        kernel32.OpenProcess.argtypes = (wintypes.DWORD, wintypes.BOOL, wintypes.DWORD)
+        kernel32.GetExitCodeProcess.argtypes = (wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD))
+        kernel32.CloseHandle.argtypes = (wintypes.HANDLE,)
+        process_query_limited_information, error_access_denied, still_active = 0x1000, 5, 259
+        handle = kernel32.OpenProcess(process_query_limited_information, False, pid)
+        if not handle:
+            return ctypes.get_last_error() == error_access_denied
+        try:
+            code = wintypes.DWORD()
+            if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+                return True
+            return code.value == still_active
+        finally:
+            kernel32.CloseHandle(handle)
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except OSError:  # PermissionError among them: alive, just not ours to signal
+        return True
+    return True
+
+
 async def _wait_until_accepting(port: int, *, timeout: float = 10.0) -> bool:
     """Block until a TCP connect to 127.0.0.1:port succeeds — i.e. the in-sandbox
     WS server has bound and is accepting — or `timeout` elapses.
@@ -401,13 +439,8 @@ class LocalProvider(SandboxProvider):
         owner_pid = record.get("owner_pid")
         if not isinstance(owner_pid, int) or owner_pid <= 0:
             return False
-        try:
-            os.kill(owner_pid, 0)
-        except ProcessLookupError:
-            return False  # the owner is gone; its orphans are ours to reap
-        except (PermissionError, OSError):
-            return True  # alive, just not ours to signal
-        return True
+        # A gone owner's orphans are ours to reap.
+        return _pid_alive(owner_pid)
 
     def reap_orphans(self) -> list[str]:
         """Kill WS servers left behind by an earlier control plane.

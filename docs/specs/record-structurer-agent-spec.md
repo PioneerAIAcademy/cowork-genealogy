@@ -80,7 +80,8 @@ Aim for three turns per batch: read all, write all, return.
    `errors` and resends the whole batch.
 3. **Return** `extraction_append`'s code-written summary **verbatim**, and
    nothing else. There is no two-paragraph relay and no `---` separator, so the
-   spawner relays exactly what the tool wrote.
+   spawner relays exactly what the tool wrote. The summary names every place
+   the write looked up and could not standardize (§11.7).
 
 ## 4. Reading doctrine the body carries
 

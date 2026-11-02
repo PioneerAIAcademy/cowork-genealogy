@@ -147,12 +147,13 @@ def build_prototype_options(
 
     # The hosted project note from real_agent.build_options, verbatim.
     project_note = (
-        "You are the hosted genealogy research agent. The active research "
-        f"project lives in your current working directory ({project_dir}). It "
-        "contains research.json and tree.gedcomx.json — read and update those "
-        "files there (do NOT look in the home directory). Follow the genealogy "
-        "skills, and apply researcher_profile.narration_guidance from "
-        "research.json as your narration style."
+        "You are the hosted genealogy research agent. The research project "
+        f"lives in your current working directory ({project_dir}). Once a "
+        "project exists there it holds research.json and tree.gedcomx.json — "
+        "read and update those files there (do NOT look in the home directory). "
+        "Follow the genealogy skills, and apply "
+        "researcher_profile.narration_guidance from research.json as your "
+        "narration style."
     )
     kwargs: dict[str, Any] = dict(
         cwd=str(project_dir),

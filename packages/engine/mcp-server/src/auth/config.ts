@@ -202,3 +202,45 @@ export async function getOpenRouterModel(principal: Principal): Promise<string> 
   const config = await loadConfig(principal);
   return config.openRouterModel?.trim() || DEFAULT_OPENROUTER_MODEL;
 }
+
+/** Which matcher scores a pair (`utils/matcher.ts`), and how to reach the service. */
+export type MatcherSettings =
+  | { backend: "familysearch" }
+  | { backend: "service"; url: string; apiKey: string };
+
+const NO_KEY_IN_CHAT = "Do not ask the user to paste a key into the chat.";
+
+export const MATCHER_VALUE_MESSAGE =
+  "The \"matcher\" setting in ~/.familysearch-mcp/config.json must be \"familysearch\" " +
+  "or \"service\". Fix it there, or remove it to score with FamilySearch's matcher. " +
+  NO_KEY_IN_CHAT;
+
+function matcherServiceMissing(key: "matcherUrl" | "matcherApiKey", what: string): string {
+  return (
+    `~/.familysearch-mcp/config.json sets "matcher" to "service" but has no "${key}". ` +
+    `Add ${what} as "${key}" there, or set "matcher" to "familysearch". ${NO_KEY_IN_CHAT}`
+  );
+}
+
+/** The trimmed string at `value`, or "" when it is not a string. */
+function configString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/**
+ * The matcher `principal`'s config names. No `matcher` key is FamilySearch's
+ * matcher; any value but the two throws rather than fall back to either. Config
+ * only, like every getter here: no environment variable is read.
+ */
+export async function getMatcherSettings(principal: Principal): Promise<MatcherSettings> {
+  const config = await loadConfig(principal);
+  if (!Object.hasOwn(config, "matcher") || config.matcher === "familysearch") {
+    return { backend: "familysearch" };
+  }
+  if (config.matcher !== "service") throw new Error(MATCHER_VALUE_MESSAGE);
+  const url = configString(config.matcherUrl).replace(/\/$/, "");
+  if (!url) throw new Error(matcherServiceMissing("matcherUrl", "the matcher service's base URL"));
+  const apiKey = configString(config.matcherApiKey);
+  if (!apiKey) throw new Error(matcherServiceMissing("matcherApiKey", "this caller's matcher key"));
+  return { backend: "service", url, apiKey };
+}

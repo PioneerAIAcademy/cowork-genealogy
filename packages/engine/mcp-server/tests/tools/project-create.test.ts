@@ -6,7 +6,13 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../src/utils/place-resolver.js")>();
   return { ...actual, resolveStandardPlace: vi.fn(async () => null) };
 });
+// FamilySearch's place search, offline: it finds nothing unless a test says otherwise.
+vi.mock("../../src/utils/place-api.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/place-api.js")>();
+  return { ...actual, searchPlace: vi.fn(async () => []) };
+});
 import { resolveStandardPlace } from "../../src/utils/place-resolver.js";
+import { searchPlace } from "../../src/utils/place-api.js";
 import { mkdtemp, writeFile, readFile, rm, access, mkdir } from "fs/promises";
 import { realpathSync } from "node:fs";
 import { join } from "path";
@@ -697,6 +703,16 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     }
   });
 
+  it("reports a read place the retry could not standardize either", async () => {
+    const result = structuredClone(FAMILY);
+    const fact = result.persons[0].facts.find((f: any) => f.standard_place);
+    delete fact.standard_place;
+    const ok: any = await createWith({ projectPath: dir, objective: "x", personId: "LZNY-BRF" }, result);
+    expect(ok.ok).toBe(true);
+    expect(ok.placesFilled).toBeUndefined();
+    expect(ok.validation.warnings).toContain(`Places kept as written, with no standard place found: ${fact.place}.`);
+  });
+
   it("matches the subject case-insensitively, and refuses a read that does not hold it", async () => {
     const result = structuredClone(FAMILY);
     const ok: any = await createWith({ projectPath: dir, objective: "x", personId: "lzny-brf" }, result);
@@ -1088,11 +1104,66 @@ describe("project_create — hand-entered places are standardized by the tool", 
     );
   });
 
+  it("replaces even a typed FamilySearch standard place with the resolver's, searching FamilySearch for no typed value", async () => {
+    const search = vi.mocked(searchPlace);
+    search.mockClear();
+    search.mockResolvedValue([{ fullName: "Massachusetts, United States", placeRepId: "33", placeId: "P33", type: "State" }] as never);
+    try {
+      const tree = {
+        persons: [person([{ id: "F1", type: "Birth", place: "Boston, Massachusetts", standard_place: "Massachusetts, United States" }])],
+        relationships: [], sources: [],
+      };
+      const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+      expect(result.ok).toBe(true);
+      expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+      expect(result.validation.warnings).toContain(
+        "standard_place \"Massachusetts, United States\" for 'Boston, Massachusetts' was replaced by " +
+          "'Boston, Suffolk, Massachusetts, United States': project_create standardizes hand-entered places itself",
+      );
+      expect(search).not.toHaveBeenCalled();
+    } finally {
+      search.mockResolvedValue([]);
+    }
+  });
+
+  it("keeps a standard_place the caller typed when it is the engine's own, and says nothing", async () => {
+    const tree = {
+      persons: [person([{ id: "F1", type: "Birth", place: "Boston, Massachusetts", standard_place: "Boston, Suffolk, Massachusetts, United States" }])],
+      relationships: [], sources: [],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.validation.warnings.join(" ")).not.toMatch(/standard_place/);
+  });
+
   it("fills a hand-entered place the caller left unstandardized, and reports it", async () => {
     const tree = { persons: [person([{ id: "F1", type: "Birth", place: "Boston" }])], relationships: [], sources: [] };
     const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
     expect(result.ok).toBe(true);
     expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
+    expect(result.placesFilled).toEqual([{ place: "Boston", standardPlace: "Boston, Suffolk, Massachusetts, United States" }]);
+    expect(result.unresolvedPlaces).toBeUndefined();
+  });
+
+  it("reports, once each, the hand-entered places it could not standardize", async () => {
+    const tree = {
+      persons: [
+        person([
+          { id: "F1", type: "Birth", place: "Boston" },
+          { id: "F2", type: "Death", place: "Ballyowen" },
+          { id: "F3", type: "Burial", place: "ballyowen " },
+          { id: "F4", type: "Residence", place: "Same House" },
+          { id: "F5", type: "Christening", place: "  " },
+        ]),
+      ],
+      relationships: [],
+      sources: [],
+    };
+    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
+    expect(result.ok).toBe(true);
+    expect(result.unresolvedPlaces).toEqual(["Ballyowen"]);
+    expect(result.validation.warnings).toContain("Places kept as written, with no standard place found: Ballyowen.");
     expect(result.placesFilled).toEqual([{ place: "Boston", standardPlace: "Boston, Suffolk, Massachusetts, United States" }]);
   });
 

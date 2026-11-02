@@ -1,0 +1,42 @@
+{
+  "test": {
+    "id": "ut_search_records_029",
+    "skill": "search-records",
+    "name": "Children enumeration: run one place-free search to catch children indexed under an unexpected jurisdiction",
+    "type": "positive",
+    "description": "Executing pli_001 (enumerate all children of Benjamín Silva Díaz and Clara González Pimienta in Chile civil registration), a place-anchored search over Nancagua returns 6 children but misses Zulema de Jesús (ark Q2S2-PCBW), who is indexed under Pichilemu, Petorca, Aconcagua — a different province (record-search-silva-birth-with-place). The skill must apply the place-free children-enumeration rule: when enumerating a couple's children, run at least one search with no place parameter, anchored on recordCountry=Chile and both parents' names, which surfaces all 7 children including Zulema (record-search-silva-children-no-place). Guards the rule that a place-anchored result returning some children is not sufficient — a missing sibling can be indexed under any jurisdiction in the national collection.",
+    "tags": [
+      "search",
+      "vital",
+      "chile",
+      "children-enumeration",
+      "place-free",
+      "place-levers",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Execute plan item pli_001 — enumerate all children born to Benjamín Silva Díaz and Clara González Pimienta in FamilySearch Chile civil registration (collection 1630787), approximately 1890–1910, to build the family's child list.\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"vital_record\",\n  \"jurisdiction\": \"Nancagua, Colchagua, Chile\",\n  \"date_range\": \"1890-1910\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"Enumerate all children of Benjamín Silva Díaz and Clara González Pimienta in FamilySearch Chile civil registration (collection 1630787, Chile, Civil Registration, 1880-1933). The couple lived in Nancagua; search their birth registrations there.\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Benjamín\",\n      \"surname\": \"Silva Díaz\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": null,\n  \"death\": null\n}",
+    "scenario": "chile-children-place-mismatch"
+  },
+  "mcp_fixtures": [
+    "record-search-silva-birth-with-place",
+    "record-search-silva-children-no-place",
+    "rank-search-matches-zulema-chile",
+    "record-read-zulema-q2s2-pcbw",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "CORE (Tool Arguments): the children-enumeration search must include at least one record_search with NO birthPlace parameter. The place-anchored search over Nancagua returns 6 children but misses Zulema de Jesús (record-search-silva-birth-with-place). Score Tool Arguments 3 if at least one record_search is issued with fatherSurname=Silva (or fatherGivenName=Benjamín) AND no birthPlace field, anchored on recordCountry=Chile or collectionId=1630787. Score 1 if all searches keep a birthPlace and the skill never runs a place-free query for this couple's children.",
+    "CORE (Correctness): the skill should recognize that enumerating a couple's children requires at least one place-free search over the national collection, because FamilySearch sometimes indexes a child under the wrong jurisdiction. The place-free search (record-search-silva-children-no-place) returns 7 children including Zulema de Jesús Silva González (ark Q2S2-PCBW, born 12 November 1897, Pichilemu, Petorca, Aconcagua) — a child indexed in a completely different province from the family's home jurisdiction. Surfacing Zulema in the log or the results is the successful outcome.",
+    "If the skill runs only place-pinned searches over Nancagua (even after broadening to Colchagua or all of Chile as a place parameter), finds 6 children, and stops without running a place-free search, that is a FAIL. A search that returns some children does not satisfy the requirement — the rule is specifically for children enumeration plan items.",
+    "Completeness: the search should be logged. Finding all 7 children including Zulema (Q2S2-PCBW) is a complete answer; do NOT require the skill to also complete extraction or attachment in this test.",
+    "Do NOT penalize the skill for noting the unexpected birthplace of Zulema (Pichilemu, Aconcagua vs. Nancagua, Colchagua) — naming it and flagging it for verification is correct behavior, not a defect. The skill should treat the hit as a candidate and note the parent names confirm identity.",
+    "record_read is stocked but OPTIONAL. Score neither path down."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
