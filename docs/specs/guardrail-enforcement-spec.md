@@ -2840,9 +2840,11 @@ this section before reopening one.
   `test_every_nil_fulltext_search_is_logged` (`eval/harness/validators/test_search_full_text.py`),
   which reads the new `log[]` entries rather than the call arguments, so a refused
   batch does not count, and keys each nil on its search term plus the filter keys
-  sent. Over the six committed `search-full-text` run logs (105 runs) it fires on
-  two runs, both in `v1_2026-10-20_07-55-34`, which predates the filtered-nil guard;
-  on none since. **What would reopen this:** an unlogged empty `fulltext_search`
+  sent. Over the six committed `search-full-text` run logs when it landed
+  (`v1.json`, `v1_2026-10-06_14-52-19` to `v2_2026-11-02_15-24-54`; 102 runs) it
+  fires on two runs, both in `v1_2026-10-20_07-55-34`, which ran without the
+  filtered-nil guard; on none since. Re-derive by replaying the check over each
+  run's `tool_calls` and its `file_changes` log additions. **What would reopen this:** an unlogged empty `fulltext_search`
   inside the agent on an attributed e2e run (`make e2e-advisories SINCE=all`).
 
 - **An ark cross-check on `exhaustive_search_summary`** — "every ark named in a proof
