@@ -136,7 +136,8 @@ DELIVERY_GUIDANCE = (
 SOURCES_GUIDANCE = (
     "Name a source, collection, book or citation only if a tool result in this session "
     "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
-    "collections_search, which locality-guide and research-plan run."
+    "collections_search, which locality-guide and research-plan run. This rule is about "
+    "what you name, not about which agent a question goes to."
 )
 
 
