@@ -288,8 +288,11 @@ re-fetch it. Only a successful fetch is stored.
 - **Setting unset (the default): keyed on the access token.** A call under
   another token re-fetches and replaces the slot. This is the behavior of the
   `.mcpb`, both harnesses, and any server that does not set the variable below.
-- **`GENEALOGY_SHARED_COLLECTIONS_CACHE` set (the hosted tool server,
-  self-hosted beta E4): one catalog for the whole process.** Any caller's
+- **`GENEALOGY_SHARED_COLLECTIONS_CACHE=true` (the hosted tool server,
+  self-hosted beta E4): one catalog for the whole process.** `src/http.ts`
+  reads it through `readLimitsEnv`, which takes `true` or `false` (unset or
+  `false` is per token, anything else is exit 2), and names the mode on
+  start-up. Any caller's
   cached success is served to every caller within the hour. Decided by the lead
   on 2026-11-01. The reason this spec used to give for keying on the token, that
   different users may see different collections due to access restrictions, was
@@ -334,6 +337,8 @@ and output types (`Collection`, `CollectionsSearchResult`).
 - `fetchAllCollections(token)` — cached API call
 - `configureCollectionsCache({ shared })` — the cache's mode, set once by the
   hosted entrypoint (`src/http.ts`); per token when never called
+- `collectionsCacheMode()` — the mode in force, read back for `src/http.ts`'s
+  start-up line
 - `filterByQuery(entries, query)` — case-insensitive title matching
 - `clearCollectionsCache()` — empties the cache, for testing
 

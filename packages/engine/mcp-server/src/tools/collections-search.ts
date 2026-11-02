@@ -43,6 +43,12 @@ export function configureCollectionsCache(options: { shared?: boolean }): void {
   shared = options.shared === true;
 }
 
+/** The mode in force, for the entrypoint's start-up line: read back from the
+ *  module, so the line cannot claim a mode that was never configured. */
+export function collectionsCacheMode(): "shared" | "per token" {
+  return shared ? "shared" : "per token";
+}
+
 /**
  * Extract the FSCollectionData from a GEDCOMX-wrapped entry.
  * Returns null if the entry structure is unexpected.
