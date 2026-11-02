@@ -137,8 +137,8 @@ def should_continue_run(
         return False
     # #3274: with no research.json there is no project to resume, and the nudge says to
     # re-read it. `is None`, not a falsy test, so an empty `{}` still reads as an unfinished
-    # project. Same place as in the shared copy (apps/server/app/agent/continue_policy.py),
-    # which `test_continue_policy_parity.py` pins.
+    # project. The hosted copy of this predicate was deleted with the Stop veto in step
+    # mode phase 2, so nothing pins this one.
     if research is None:
         return False
     if project_completed(research):

@@ -11,8 +11,8 @@ by ``tests/test_continue_policy_parity.py``, which evaluates its module-level co
 with nothing else in scope -- so a constant that is a function CALL rather than a literal
 turns that test into a collection error. ``PRICE_PER_MTOK`` is exactly that (four
 ``env_float`` calls). Keeping spend here also keeps the parity module to what it is
-actually pinned against: the predicate the harness's ``stop_checker`` mirrors, which has
-no opinion about money.
+actually pinned against: ``project_completed``, which the harness's ``stop_checker``
+mirrors and which has no opinion about money.
 
 ``eval/harness/e2e/pricing.py`` stays a second, genuinely separate copy -- the worker image
 carries no ``eval/`` -- pinned against this one by

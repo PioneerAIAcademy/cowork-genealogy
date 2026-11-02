@@ -130,7 +130,7 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
     running dies mid-search: D17 lost both background extractors that way (the
     `DELEGATION_TOOLS` comment in `continue_policy.py`). The Stop veto never covered this,
     because it cannot see a background agent, and from PR 1 no hosted turn binds it (cap 0,
-    section A). So PR 1 keeps the rewrite bound in the hook it edits (section A's host table),
+    section A; phase 2 deleted it). So PR 1 keeps the rewrite bound in the hook it edits (section A's host table),
     and phase 2 keeps it when it deletes the veto.
 27. **Cowork's agents run in the foreground too, by the router's wording first.** Cowork ships
     no step hook (decision 25). Its plugin hook sees every `Agent` call, to deny forks (PR
@@ -320,7 +320,7 @@ that apply:
     are always 0. `test_no_stop_veto.py` pins that nothing binds one again.
   - **Phase 2 deletes the veto** (see Phases).
 - **Outcomes:**
-  - A step turn ends `ok`, which renders no label: at cap 0 no plane binds the Stop hook.
+  - A step turn ends `ok`, which renders no label: no plane binds a Stop hook (deleted in phase 2).
   - A turn whose step completed the project has no Stop verdict to report that, so the worker
     sets `completed` at turn close from `project_completed(read_research(...))` when no Stop
     verdict was recorded. The honest `completed` label (section C) then shows on step turns

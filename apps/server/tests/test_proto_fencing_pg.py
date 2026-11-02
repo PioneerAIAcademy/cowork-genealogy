@@ -387,7 +387,8 @@ def test_a_fenced_batch_never_holds_the_turn_lock_across_an_await(pg_dsn):
             loop = asyncio.get_running_loop()
 
             def sync_hook() -> None:
-                # A blocking same-row write, as the worker's sync hooks make. It always
+                # A blocking same-row write, as the worker's sync hooks once made (the
+                # Stop hook's `record_nudge`, deleted in step mode phase 2). It always
                 # touches the row (unlike reset_zero_progress, which skips a zero count),
                 # so it always needs the row lock the batch must not hold.
                 try:

@@ -33,8 +33,9 @@ tree-encoding gate, which sends an `encode` item back to proof-conclusion when i
 unchanged.
 - The continue text points at the first owed item that is not advisory, in the engine's order:
   extract, then conclude, hypothesis and encode. The hosted copy (`CONTINUE_REASON`) was deleted
-  with the Stop veto in step mode phase 2, so the only copy left is the e2e harness's
-  (`eval/harness/e2e/stop_checker.py`), and the e2e half of phase 2 deletes that veto too. Under
+  with the Stop veto in step mode phase 2, so the only copy left is a string literal in the e2e
+  harness's `stop_hook` (`eval/harness/e2e/orchestrator.py`), and the e2e half of phase 2 deletes
+  that veto too. Under
   step mode this item is moot unless that veto survives. U24 in
   [`familysearch-handoff.md`](familysearch-handoff.md) is re-deciding the same text, and
   [`single-asks-router-batch.md`](single-asks-router-batch.md) quotes it too. If U24 has landed by
