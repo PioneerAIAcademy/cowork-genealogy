@@ -21,7 +21,7 @@
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
-import { compoundJurisdictionError, planItemFlags } from "../utils/plan-item-plausibility.js";
+import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
@@ -10973,6 +10973,29 @@ export async function researchAppend(
       for (const flag of planItemFlags(entry, localitiesForPlan)) {
         planItemWarnings.push(flag.message);
       }
+    }
+    // A plan short of its question's date window (issue #2424). Judged once per
+    // question on the call's end state, so op order in a batch cannot matter, and
+    // only on an op that can change coverage — a search agent's status-only item
+    // update leaves the span alone and must not re-warn on every search.
+    const endPlans: any[] = Array.isArray(research?.plans) ? research.plans : [];
+    const planQuestion = (planId: unknown) => endPlans.find((p) => p?.id === planId)?.question_id;
+    const windowQuestionIds = new Set<string>();
+    for (const o of ops as any[]) {
+      let qid: unknown;
+      if (o.section === "plans") {
+        if (o.op === "append") qid = o.entry?.question_id;
+        else if (o.fields && "items" in o.fields) qid = planQuestion(o.entryId);
+      } else if (o.section === "plan_items") {
+        const f = o.op === "append" ? null : (o.fields ?? {});
+        if (!f || "date_range" in f || f.status === "skipped") qid = planQuestion(o.planId);
+      }
+      if (typeof qid === "string") windowQuestionIds.add(qid);
+    }
+    for (const qid of windowQuestionIds) {
+      const question = (Array.isArray(research?.questions) ? research.questions : []).find((q: any) => q?.id === qid);
+      const flag = question ? planWindowFlag(question, endPlans) : null;
+      if (flag) planItemWarnings.push(flag);
     }
     const appendedItems = appendedPlanItems(ops);
     if (appendedItems.some((i) => i.repository && !/familysearch/i.test(String(i.repository)) && !i.collection_url)) {
