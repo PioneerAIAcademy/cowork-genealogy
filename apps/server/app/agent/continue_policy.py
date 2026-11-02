@@ -124,6 +124,20 @@ DELIVERY_GUIDANCE = (
 )
 
 
+# Issue #4011. Before any project existed, the Kenya alpha session listed "Kenya, Civil
+# Registration, deaths 1904–1967" as searchable from memory; FamilySearch has no Kenya
+# collections. The main thread cannot call `collections_search` itself (the plugin hook
+# denies it), so the sentence names the agents that hold it. Both hosted planes append it,
+# and the plugin's `no_project_route.py` carries the same text to Cowork as
+# `COLLECTIONS_NOTE`; `test_the_collections_sentence_is_the_one_the_plugin_hook_adds`
+# fails if the two differ.
+COLLECTIONS_GUIDANCE = (
+    "Name a FamilySearch record collection as searchable only if a collections_search "
+    "result in this session returned it (locality-guide and research-plan run that "
+    "search); otherwise say the collection is unconfirmed."
+)
+
+
 # Set in the SDK env by both hosted planes (`real_agent._sdk_env`, the prototype worker's
 # options). The plugin's `no_project_route.py` hook defines the same name and stays silent
 # when it is set, so its routing text reaches Cowork only and the hosted planes keep the

@@ -1417,6 +1417,14 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     expect(out.hookSpecificOutput.additionalContext).toMatch(/In that case, if the message names more than one goal/);
   });
 
+  it("adds the collections sentence to a researcher's message (#4011)", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "What Kenyan records can I search for him?" }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /Name a FamilySearch record collection as searchable only if a collections_search result in this session returned it/,
+    );
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/otherwise say the collection is unconfirmed/);
+  });
+
   it("stays silent on a subagent hand-back", () => {
     expect(runNoProjectRoute(JSON.stringify({ prompt: '<agent-message from="a1">done</agent-message>' }))).toEqual({});
   });

@@ -51,6 +51,7 @@ from .continue_policy import (
     DELIVERED_TOOL,
     delivered_stop_reason,
     foreground_rewrite,
+    COLLECTIONS_GUIDANCE,
     DELIVERY_GUIDANCE,
     HOSTED_PLANE_ENV,
     completion_halt_summary,
@@ -1038,7 +1039,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         system_prompt={
             "type": "preset",
             "preset": "claude_code",
-            "append": f"{project_note}\n\n{DELIVERY_GUIDANCE}",
+            "append": f"{project_note}\n\n{COLLECTIONS_GUIDANCE}\n\n{DELIVERY_GUIDANCE}",
         },
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents

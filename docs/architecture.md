@@ -1270,8 +1270,9 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
 + `guard_project_files.py`) and one `UserPromptSubmit` hook, `no_project_route.py`, which
-is not a guardrail: it adds one conditional sentence to each Cowork researcher message (with
-no project, a request to research a person goes to the research skill) and is silent
+is not a guardrail: it adds two sentences to each Cowork researcher message (with no project,
+a request to research a person goes to the research skill; and a FamilySearch collection is
+named as searchable only from a `collections_search` result) and is silent
 wherever `GENEALOGY_HOSTED_PLANE` is set, which both hosted planes set. It is the first plugin
 hook that adds context rather than deciding a call. The `PreToolUse` hook, despite this section's name, enforces **five**
 rules, not one. Its matcher is
