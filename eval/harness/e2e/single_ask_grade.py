@@ -4,7 +4,7 @@ Pure: every function here reads its arguments and nothing else, so the grade can
 be tested on synthetic records with no network and no workspace. The spawn
 predicate is the orchestrator's own, so there is one definition of an Agent call.
 
-PASS needs all six checks:
+PASS needs all six checks (five bullets; the tool checks share one):
 
 - ``owner`` — the first main-thread unit is the fixture's ``expected_owner``, or
   one of them when it is a list (``None`` there means no unit ran: the main
@@ -20,7 +20,9 @@ PASS needs all six checks:
   given) is the expected value, or, with ``absent``, no new entry in the section.
   New = id in the final ``research.json`` and absent from the starting one.
 - ``forbidden_tools`` / ``required_tools`` — none of the first, and every one of
-  the second, was called on any thread (bare tool names).
+  the second, was called on any thread (bare tool names); a required call that
+  errored does not count. Beside a background spawn, a forbidden-tool or
+  ``absent`` pass fails: the spawn can act after the grade reads the record.
 
 - ``stop`` — the turn ended on its own. A turn a cap or watchdog cut off fails
   here: what it saved before the cut is not an answer the patron got. The cost
@@ -204,13 +206,23 @@ def grade(
         checks["save"] = (hit is not None, hit or " or ".join(d for _, d in results))
 
     called = {_bare(str(e.get("tool") or "")) for e in tool_calls}
+    # An errored call (auth expired, denied) read nothing.
+    succeeded = {
+        _bare(str(e.get("tool") or "")) for e in tool_calls if e.get("is_error") is not True
+    }
     bad = [t for t in spec.forbidden_tools if t in called]
     checks["forbidden_tools"] = (
-        not bad, f"called {', '.join(bad)}" if bad else "none called",
+        not bad,
+        f"called {', '.join(bad)}" if bad
+        else f"none of [{', '.join(spec.forbidden_tools)}] called" if spec.forbidden_tools
+        else "none declared",
     )
-    missing = [t for t in spec.required_tools if t not in called]
+    missing = [t for t in spec.required_tools if t not in succeeded]
     checks["required_tools"] = (
-        not missing, f"never called {', '.join(missing)}" if missing else "all called",
+        not missing,
+        f"never called without error: {', '.join(missing)}" if missing
+        else f"[{', '.join(spec.required_tools)}] called" if spec.required_tools
+        else "none declared",
     )
 
     delivered = any(
@@ -230,6 +242,13 @@ def grade(
         1 for e in tool_calls
         if _is_agent_tool(str(e.get("tool") or "")) and ASYNC_LAUNCH in str(e.get("response_summary") or "")
     )
+    # A background spawn can call a tool or save after the grade reads the
+    # record, so a check that passes on an absence cannot be trusted beside one.
+    if background_spawns:
+        if spec.forbidden_tools and checks["forbidden_tools"][0]:
+            checks["forbidden_tools"] = (False, "background spawn: an absence cannot be confirmed")
+        if any(alt.get("absent") for alt in saves(spec)) and checks["save"][0]:
+            checks["save"] = (False, "background spawn: an absence cannot be confirmed")
     failed = [name for name in CHECKS if not checks[name][0]]
     return SingleAskGrade(
         passed=not failed,
@@ -262,7 +281,7 @@ def format_line(spec: SingleAskSpec, g: SingleAskGrade) -> str:
     if g.background_spawns:
         line += (
             f"\n    background spawns: {g.background_spawns} "
-            "(their saves can land after the grade read research.json)"
+            "(their tool calls and saves can land after the grade read research.json)"
         )
     if not g.checks["no_research_job"][0]:
         line += f"\n    research job: {g.checks['no_research_job'][1]}"

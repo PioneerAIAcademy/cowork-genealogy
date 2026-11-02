@@ -569,7 +569,25 @@ def test_forbidden_tool_fails_on_either_thread_and_any_spelling():
 
 def test_required_tool_missing_fails():
     g, line = run([skill("research")], final_research=START, spec=ATTACHED)
-    assert g.failed == ["required_tools"] and "never called person_read" in line
+    assert g.failed == ["required_tools"] and "never called without error: person_read" in line
+
+
+def test_an_errored_required_call_does_not_count():
+    g, line = run([{**READ, "is_error": True}], final_research=START, spec=ATTACHED)
+    assert g.failed == ["required_tools"], line
+
+
+def test_a_background_spawn_fails_an_absence_pass():
+    bg = {**agent("search-records"), "response_summary": "Async agent launched"}
+    g, line = run([READ, bg], final_research=START, spec=ATTACHED)
+    assert set(g.failed) == {"forbidden_tools", "save"}, line
+    assert "an absence cannot be confirmed" in line
+
+
+def test_tool_check_details_name_what_was_checked():
+    g, _ = run([READ], final_research=START, spec=ATTACHED)
+    assert g.checks["forbidden_tools"] == (True, "none of [record_search] called")
+    assert g.checks["required_tools"] == (True, "[person_read] called")
 
 
 FIND = SingleAskSpec(
@@ -602,8 +620,8 @@ def test_any_one_save_alternative_passes(extra, ok):
 
 def test_empty_tool_lists_pass_unchanged():
     g, _ = run([skill("research"), skill("source-evaluation")])
-    assert g.checks["forbidden_tools"] == (True, "none called")
-    assert g.checks["required_tools"] == (True, "all called")
+    assert g.checks["forbidden_tools"] == (True, "none declared")
+    assert g.checks["required_tools"] == (True, "none declared")
 
 
 def test_loader_carries_lists_and_keeps_absent_a_bool(tmp_path):
@@ -620,21 +638,48 @@ def test_loader_carries_lists_and_keeps_absent_a_bool(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "over",
+    "over, match",
     [
-        {"expected_owner": []},
-        {"expected_owner": [None, 3]},
-        {"expected_owner": [""]},
-        {"expected_save": []},
-        {"expected_save": [{"section": "sources"}, "log"]},
-        {"expected_save": {"section": "sources", "absent": "true"}},
-        {"expected_save": {"section": "sources", "absent": True, "tool": "x"}},
-        {"expected_save": {"section": "sources", "outcome": "negative"}},
-        {"expected_save": {"section": "log", "tool": "record_search", "outcome": "nil"}},
-        {"forbidden_tools": "record_search"},
-        {"required_tools": [""]},
+        ({"expected_owner": []}, "missing"),
+        ({"expected_owner": [None, 3]}, "unit names or null"),
+        ({"expected_owner": [""]}, "unit names or null"),
+        ({"expected_owner": 3}, "a name or a list"),
+        ({"expected_owner": {"x": 1}}, "a name or a list"),
+        ({"expected_save": []}, "missing"),
+        ({"expected_save": [{"section": "sources"}, "log"]}, "section must be"),
+        ({"expected_save": {"section": "sources", "absent": "true"}}, "true or false"),
+        ({"expected_save": {"section": "sources", "absent": True, "tool": "x"}}, "does not take"),
+        ({"expected_save": {"section": "sources", "outcome": "negative"}}, "does not take"),
+        ({"expected_save": {"section": "log", "tool": "record_search", "outcom": "negative"}}, "does not take"),
+        ({"expected_save": {"section": "log", "tool": "record_search", "outcome": "nil"}}, "outcome must be"),
+        ({"expected_save": [{"section": "sources", "absent": True}, {"section": "sources"}]}, "always passes"),
+        ({"expected_save": {"section": "sources", "absent": True}}, "needs required_tools"),
+        ({"forbidden_tools": "record_search"}, "list of tool names"),
+        ({"required_tools": [""]}, "list of tool names"),
+        ({"forbidden_tools": ["mcp__genealogy__record_search"]}, "bare name"),
+        ({"forbidden_tools": ["record_searh"]}, "which is no tool"),
+        ({"forbiden_tools": ["record_search"]}, "unknown keys"),
     ],
 )
-def test_bad_list_shapes_are_refused(tmp_path, over):
-    with pytest.raises(FixtureError):
+def test_bad_list_shapes_are_refused(tmp_path, over, match):
+    with pytest.raises(FixtureError, match=match):
         load_single_ask_fixture(_write(tmp_path, **over))
+
+
+def test_absent_false_and_a_known_builtin_load(tmp_path):
+    _, spec = load_single_ask_fixture(_write(
+        tmp_path,
+        expected_save=[{"section": "sources", "absent": False}],
+        required_tools=["Read"],
+    ))
+    assert spec.expected_save == ({"section": "sources", "absent": False},)
+
+
+def test_committed_absence_fixture_matches_the_graded_spec():
+    _, spec = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "death-attached-susan-cornwell")
+    assert (spec.expected_owner, spec.expected_save, spec.forbidden_tools, spec.required_tools) == (
+        ATTACHED.expected_owner, ATTACHED.expected_save,
+        ATTACHED.forbidden_tools, ATTACHED.required_tools,
+    )
+    _, spec = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "find-death-john-mcnerny")
+    assert (spec.expected_owner, spec.expected_save) == (FIND.expected_owner, FIND.expected_save)

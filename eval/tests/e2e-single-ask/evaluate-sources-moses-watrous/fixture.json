@@ -8,7 +8,7 @@
   },
   "is_plan_ask": false,
   "setup_units": [],
-  "must_not": "Start a research job (question-selection), or write the plan this turn: it is offered as the next step (\"Continue with ...?\"), not run.",
+  "must_not": "No `question-selection`; no plan written this turn; no research job",
   "model": {
     "agent": "claude-sonnet-4-6"
   },

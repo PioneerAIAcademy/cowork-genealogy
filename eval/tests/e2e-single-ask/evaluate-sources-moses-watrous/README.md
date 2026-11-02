@@ -37,8 +37,8 @@ directly). `starting-research.json` has the objective set and no questions, plan
 ## Caps
 
 `wall_clock_seconds: 2400`, `tool_calls: 150`, `max_turns: 150`: a source review over 25 attached
-sources is larger than the 12-source placeholder this replaced (25 tool calls), so its caps were not
-reused. The measured run used 38 tool calls. `max_cost_usd: 6` only labels a run (spec §6).
+sources is larger than the 12-source `review-sources-kenneth-quass` placeholder (25 tool calls), so its
+caps were not reused. The measured run used 38 tool calls. `max_cost_usd: 6` only labels a run (spec §6).
 
 ## Cost
 

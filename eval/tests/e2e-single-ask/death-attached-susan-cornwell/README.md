@@ -12,7 +12,9 @@ Row A2 of Issue #3571's adjudication on issue #3527 (2026-11-02): the second ask
 Death Index, 1880-1956, Susan Cornwell, 4 April 1892, Sands Point (source `QQZL-77N` in the tree).
 
 `required_tools: ["person_read"]` is what makes this fixture able to fail: without it an empty turn
-passes every other check. "No new source" is graded stricter than the row ("no source duplicating the
+passes every other check (the loader refuses an `absent`-only save with no `required_tools`). It follows
+the row's "read through `person_read`": a turn that answers only from the local `tree.gedcomx.json`
+fails here, though it reaches the same answer. "No new source" is graded stricter than the row ("no source duplicating the
 attached entry"): any new `research.json` source fails. A hand-off to `search-records` is allowed by the
 row but will almost always fail `forbidden_tools`, since that agent searches with `record_search`.
 

@@ -18,6 +18,7 @@ import asyncio
 import json
 import sys
 import tempfile
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -46,7 +47,14 @@ DEFAULT_SINGLE_ASK_FIXTURES = REPO_ROOT / "eval" / "tests" / "e2e-single-ask"
 # tree with no exclusion, and its CI gate demands a .ann.json for every run.
 DEFAULT_SINGLE_ASK_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "e2e-single-ask"
 REQUIRED_KEYS = ("id", "message", "expected_owner", "expected_save")
-# research.schema.json `log_outcome`.
+FIXTURE_KEYS = frozenset({
+    *REQUIRED_KEYS, "is_plan_ask", "setup_units", "must_not", "forbidden_tools",
+    "required_tools", "model", "caps", "tags", "blocked_tools",
+})
+MANIFEST = REPO_ROOT / "packages" / "engine" / "mcp-server" / "manifest.json"
+# Built-in tools a fixture may name beside the MCP server's.
+BUILTIN_TOOLS = frozenset({"Agent", "Task", "Skill", "Read", "Write", "Edit", "Bash", "Glob", "Grep", "ToolSearch"})
+# `log_outcome` in docs/specs/schemas/enums.schema.json.
 LOG_OUTCOMES = ("positive", "negative", "partial", "error")
 # Aborts after which the turn is not a data point, so nothing is graded.
 NEVER_HAPPENED = ("mcp_unavailable",)
@@ -57,22 +65,27 @@ class FixtureError(ValueError):
     pass
 
 
+@lru_cache(maxsize=1)
+def known_tool_names() -> frozenset[str]:
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    return frozenset(t["name"] for t in manifest["tools"]) | BUILTIN_TOOLS
+
+
 def _check_save(name: str, alt: Any) -> None:
     if not isinstance(alt, dict) or alt.get("section") not in SAVE_SECTIONS:
         raise FixtureError(f"{name}: expected_save.section must be one of {list(SAVE_SECTIONS)}")
     if not isinstance(alt.get("absent", False), bool):
         raise FixtureError(f"{name}: expected_save.absent must be true or false")
-    if alt.get("absent"):
-        if set(alt) - {"section", "absent"}:
-            raise FixtureError(f"{name}: an absent expected_save takes only `section`")
-        return
-    if alt["section"] == "log":
+    allowed = {"section", "absent"}
+    if not alt.get("absent") and alt["section"] == "log":
+        allowed |= {"tool", "outcome"}
         if not isinstance(alt.get("tool"), str) or not alt["tool"]:
             raise FixtureError(f"{name}: a log expected_save needs a `tool`")
         if "outcome" in alt and alt["outcome"] not in LOG_OUTCOMES:
             raise FixtureError(f"{name}: expected_save.outcome must be one of {list(LOG_OUTCOMES)}")
-    elif set(alt) - {"section"}:
-        raise FixtureError(f"{name}: a sources expected_save takes only `section`")
+    extra = sorted(set(alt) - allowed)
+    if extra:
+        raise FixtureError(f"{name}: expected_save does not take {extra}")
 
 
 def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
@@ -83,9 +96,12 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
     missing = [k for k in REQUIRED_KEYS if not raw.get(k)]
     if missing:
         raise FixtureError(f"{fixture_dir.name}: fixture.json is missing {missing}")
+    extra = sorted(set(raw) - FIXTURE_KEYS)
+    if extra:
+        raise FixtureError(f"{fixture_dir.name}: fixture.json has unknown keys {extra}")
     owner = raw["expected_owner"]
     if isinstance(owner, list):
-        if not owner or not all(o is None or (isinstance(o, str) and o) for o in owner):
+        if not all(o is None or (isinstance(o, str) and o) for o in owner):
             raise FixtureError(
                 f"{fixture_dir.name}: an expected_owner list holds unit names or null"
             )
@@ -94,17 +110,33 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
         raise FixtureError(f"{fixture_dir.name}: expected_owner must be a name or a list")
     save = raw["expected_save"]
     alternatives = save if isinstance(save, list) else [save]
-    if not alternatives:
-        raise FixtureError(f"{fixture_dir.name}: an expected_save list must not be empty")
     for alt in alternatives:
         _check_save(fixture_dir.name, alt)
+    by_section: dict[str, set[bool]] = {}
+    for alt in alternatives:
+        by_section.setdefault(alt["section"], set()).add(bool(alt.get("absent")))
+    if any(len(kinds) > 1 for kinds in by_section.values()):
+        raise FixtureError(
+            f"{fixture_dir.name}: expected_save lists a section both absent and present, so it always passes"
+        )
     save = tuple(alternatives) if isinstance(save, list) else save
     tool_lists = {}
     for key in ("forbidden_tools", "required_tools"):
         names = raw.get(key) or []
         if not isinstance(names, list) or not all(isinstance(t, str) and t for t in names):
             raise FixtureError(f"{fixture_dir.name}: {key} must be a list of tool names")
+        unknown = [t for t in names if t not in known_tool_names()]
+        if unknown:
+            raise FixtureError(
+                f"{fixture_dir.name}: {key} names {unknown}, which is no tool; "
+                "use the bare name (`record_search`, not `mcp__genealogy__record_search`)"
+            )
         tool_lists[key] = tuple(names)
+    if all(alt.get("absent") for alt in alternatives) and not tool_lists["required_tools"]:
+        raise FixtureError(
+            f"{fixture_dir.name}: a fixture whose expected_save is only `absent` needs "
+            "required_tools, or an empty turn passes"
+        )
     if not isinstance(raw.get("is_plan_ask", False), bool):
         raise FixtureError(f"{fixture_dir.name}: is_plan_ask must be true or false")
     setup = raw.get("setup_units") or []
@@ -215,6 +247,7 @@ async def run_one(
                     "delivered": g.delivered,
                     "extraction_appends": g.extraction_appends,
                     "stop": g.stop,
+                    "background_spawns": g.background_spawns,
                 },
                 **record,
                 "final_research": final_research,

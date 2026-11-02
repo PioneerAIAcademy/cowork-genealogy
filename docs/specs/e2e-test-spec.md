@@ -2711,7 +2711,11 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `expected_owner` | yes | the agent or skill name that should answer, or a list of them where `null` means the main thread answered with no unit |
 | `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
 | `forbidden_tools` | no (`[]`) | bare tool names that must not be called, on any thread |
-| `required_tools` | no (`[]`) | bare tool names that must be called, on any thread. Give an ask whose answer saves nothing a positive check here, or an empty turn passes |
+| `required_tools` | no (`[]`) | bare tool names that must be called without error, on any thread. Required when every `expected_save` alternative is `absent`: otherwise an empty turn passes |
+
+The loader refuses an unknown key (in `fixture.json` or a save alternative), a tool
+name that is not a bare name from `manifest.json` or a built-in, and a save list that
+names one section both `absent` and present (it could never fail).
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
@@ -2758,17 +2762,19 @@ namespace; it is stripped, as it is from spawned names):
    a new `log` entry whose `tool` (and `outcome`, when given) is the expected
    value, or, with `absent`, no new entry in that section. "New" means its id is
    in the final `research.json` and not in `starting-research.json`.
-4. **`forbidden_tools`** and **`required_tools`** — no call to the first and at
-   least one call to each of the second, on any thread, matched by bare name.
-5. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
+4. **`forbidden_tools`** — no call to any of them, on any thread, matched by
+   bare name.
+5. **`required_tools`** — at least one call to each that did not error.
+6. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
    here even if it saved: the patron never got the answer. `cost_cap` is not a
    cut-off (§6: it only labels a finished run), so it does not fail this check.
 
 Printed, not graded: whether the main thread called `research_delivered`, every
 unit in order (nested ones in parentheses), the `extraction_append` count, how the
 turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
-any background spawn ("Async agent launched"), whose save can land after the grade
-reads `research.json`.
+any background spawn ("Async agent launched"), whose calls and saves can land after
+the grade reads `research.json`. Beside one, a `forbidden_tools` pass or an `absent`
+save pass is turned into a FAIL: an absence cannot be confirmed.
 A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 
 ### 16.5 What a pass does not show

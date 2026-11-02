@@ -14,7 +14,7 @@
   ],
   "is_plan_ask": false,
   "setup_units": [],
-  "must_not": "Start a research job (question-selection), or search for a record already attached to KP9Y-74L.",
+  "must_not": "No `question-selection`; no research job; no search for a record already attached to KP9Y-74L",
   "model": {
     "agent": "claude-sonnet-4-6"
   },

@@ -8,11 +8,11 @@
 ## Where it came from
 
 Row C1 of Issue #3571's adjudication on issue #3527 (2026-11-02), the chosen "review the sources attached to <PID>" ask. It replaces the
-`review-sources-kenneth-quass` placeholder (same ask, and that fixture's revert proof for issue #3524 is in
+`review-sources-kenneth-quass` placeholder (the same ask about a different person; that fixture's revert proof for issue #3524 is in
 its git history).
 
 A regression guard for issue #3524: it fails on `save` if `source-evaluation` stops writing its log entry.
-It is **not** a guard for issue #3526's router row: with no `/research` prefix the main thread spawns
+The row also calls it a guard for issue #3526's router row. It is not one: with no `/research` prefix the main thread spawns
 `source-evaluation` from its own description without the router (Done-when amended on issue #3527,
 2026-10-19), so #3526's `routes-to:` unit tests cover that.
 

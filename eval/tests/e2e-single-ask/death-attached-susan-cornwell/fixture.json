@@ -17,7 +17,7 @@
   "required_tools": [
     "person_read"
   ],
-  "must_not": "Call record_search, start a research job (question-selection), or add a source duplicating the attached New York, State Death Index entry.",
+  "must_not": "No `record_search` call; no `question-selection`; no research job",
   "model": {
     "agent": "claude-sonnet-4-6"
   },

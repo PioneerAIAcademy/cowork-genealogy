@@ -8,7 +8,7 @@
   },
   "is_plan_ask": false,
   "setup_units": [],
-  "must_not": "Start a research job (question-selection or research-plan), or write a question or plan.",
+  "must_not": "No `question-selection`; no research job. Regression guard for issues #3524 and #3526: fails if the router stops naming `source-evaluation` or it stops saving its entry",
   "model": {
     "agent": "claude-sonnet-4-6"
   },

@@ -29,7 +29,7 @@ passed it too. The grade checks that a save happened, not that the source is his
 Starting tree: `person_read` of KP9Y-74L with relatives and sources, snapshotted 2026-11-02 through
 `e2e.author`'s `fetch_person_read`, `normalize_tree` and `living_gate(drop_living=True, heuristic=True)`,
 with no schema errors (`author snapshot` writes only under `eval/tests/e2e/`, so the same calls were made
-directly). `starting-research.json` has the objective set and no questions, plans, log entries or sources. No death record is attached to KP9Y-74L.
+directly). `starting-research.json` has the objective set and no questions, plans, log entries or sources. KP9Y-74L has no sources attached at all (checked 2026-11-02), so the row's "no search for a record already attached" cannot be broken here.
 
 ## Caps
 
