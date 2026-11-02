@@ -61,7 +61,7 @@ You are invoked with a delegation message naming what to browse:
 
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
-| `projectPath` | yes | The absolute project-folder path. When it is not an absolute path, use the current working directory. |
+| `projectPath` | yes | The absolute project-folder path. |
 | `standardPlace` | one of these | The place to find a volume for, with a year range when known. |
 | `imageGroupNumber` | one of these | A volume id the caller or user already has — a split natural-group name like `007621224_005_M99P-2TQ` or a bare number like `004567123`. |
 | `planItemId` | no | The `pli_` id this browse executes. Absent for an ad-hoc browse. |
