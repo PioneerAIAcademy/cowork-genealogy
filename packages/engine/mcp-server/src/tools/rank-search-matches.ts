@@ -19,6 +19,7 @@ import type {
   RankSearchMatchesResult,
   RankedMatch,
 } from "../types/rank-search-matches.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
 /** FamilySearch's match-score fan-out concurrency (deliberately higher than
  *  same_person's conservative PAIR_CONCURRENCY=5; confirmed with the
@@ -994,7 +995,8 @@ async function applyAttachments(
       stub.attachedToSubject = persons.some((p) => p.personId === subjectId);
       stub.attachedToOther = persons.some((p) => p.personId !== subjectId);
     }
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     // Best-effort: an attachments failure must not fail the rank. Leave the
     // attachedTo* fields unset rather than asserting a wrong answer.
   }
