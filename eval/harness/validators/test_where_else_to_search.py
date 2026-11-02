@@ -221,6 +221,66 @@ def test_each_entry_states_its_rows_span_and_nothing_more(tool_calls, agent_retu
         assert checked, "links were built but no entry in the user-facing block carries one"
 
 
+_OPENING = (
+    "These are collections FamilySearch lists for that place and period on other sites, "
+    "each opening with the search filled in."
+)
+_SHORT = "That is every collection FamilySearch lists with a filled-in search for that place and period."
+_CLOSING = "Open a link and bring back anything found to keep researching."
+_ALSO_HEADER = "Also listed, without a filled-in search:"
+_ALSO_ROW = re.compile(r"^(.+): (\S+)$")
+
+
+def _norm(text: str) -> str:
+    # A comma or a wrapped line is not a defect; an added sentence is.
+    return re.sub(r"\s+", " ", text.replace(",", "")).strip()
+
+
+def test_user_block_is_the_fixed_shape_and_nothing_more(tool_calls, agent_returns, text_response, test):
+    """Below the `---`: the fixed opening, the entries, the fixed sentence when
+    there are 1 or 2, the Also-listed rows, the fixed closing, and nothing else.
+    With no entry, only the zero-results sentence for the searched place."""
+    _positive(test)
+    searches = [c for c in tool_calls or [] if bare_tool_name(c.get("tool", "")) == "external_links_search"]
+    if not searches:
+        pytest.skip("no external_links_search call: the place was not resolved")
+    _, prose = _split(_reply(agent_returns, text_response, test))
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", prose) if p.strip()]
+    built = set(_built(tool_calls))
+    if not built:
+        place = (searches[0].get("args") or {}).get("standardPlace") or ""
+        zero = re.compile(rf"FamilySearch lists no external collection for {re.escape(place)}, [^.]+\.")
+        assert len(paragraphs) == 1 and zero.fullmatch(re.sub(r"\s+", " ", paragraphs[0]).strip()), (
+            f"with no entry the block is only the zero-results sentence for {place}, got: {prose.strip()}"
+        )
+        return
+    assert paragraphs and _norm(paragraphs[0]) == _norm(_OPENING), (
+        f"the block must open with the fixed sentence, got: {paragraphs[0] if paragraphs else ''}"
+    )
+    assert len(paragraphs) > 1 and _norm(paragraphs[-1]) == _norm(_CLOSING), (
+        f"the block must end with the fixed closing sentence, got: {paragraphs[-1]}"
+    )
+    curated = set(_curated_rows(tool_calls))
+    short_seen = also_seen = False
+    for p in paragraphs[1:-1]:
+        if any(u in built for u in _urls(p)):
+            continue
+        if _norm(p) == _norm(_SHORT):
+            short_seen = True
+            continue
+        lines = [ln.strip() for ln in p.splitlines() if ln.strip()]
+        if _norm(lines[0]) == _norm(_ALSO_HEADER):
+            also_seen = True
+            lines = lines[1:]
+        rows = [_ALSO_ROW.match(ln) for ln in lines]
+        is_also = also_seen and all(m and m.group(2).rstrip(".,;") in curated for m in rows)
+        assert is_also, f"nothing outside the fixed shape belongs below the `---`, got: {p}"
+    if len(built) <= 2:
+        assert short_seen, f"1 or 2 entries need the fixed sentence: {_SHORT}"
+    else:
+        assert not short_seen, f"{len(built)} entries: the fixed sentence for 1 or 2 does not belong"
+
+
 def test_zero_results_builds_and_links_nothing(tool_calls, agent_returns, text_response, test):
     if "zero-results" not in test.get("tags", []):
         pytest.skip("not a zero-results test")
