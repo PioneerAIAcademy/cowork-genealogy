@@ -715,85 +715,10 @@ def find_effects_without_invocation(
     return violations
 
 
-def same_person_scored_ids(tool_calls: list[dict[str, Any]]) -> set[str]:
-    """Every record/tree id a SUCCESSFUL `same_person` call has scored so far.
-
-    Two call shapes, both credited: the explicit form's `primaryId1`/
-    `primaryId2`, and the project-relative form's `treePersonId` (plus whichever
-    of `recordPersonaId`/`recordRole` named the record party). When one side of a
-    call is the tree,
-    that side's `primaryId` equals the tree `person_id` (see
-    `find_person_evidence_missing_same_person` for the confirmed-live basis of
-    that equality), so this doubles as "which tree persons have been scored."
-    Errored calls don't count — the spec's §7 success-gating. That guard only
-    began to bind once #1255/#1289 made the e2e orchestrator populate
-    `is_error` on each entry; before that nothing set the key, so a failed
-    `same_person` still marked the identity scored.
-
-    Ids are strings throughout: FamilySearch persona/tree ids (`primaryId1/2`
-    and `person_evidence.person_id`) are always string identifiers. The
-    `isinstance(v, str)` guard deliberately ignores any non-string value rather
-    than coercing it — a numeric or structured `primaryId` would be a malformed
-    call, and silently `str()`-ing it could fabricate a match against a
-    stringified `person_id`. Same string-only assumption in
-    `_person_id_from_pe_op` and `unguarded_new_person_evidence_links`."""
-    scored: set[str] = set()
-    for entry in tool_calls:
-        if entry.get("is_error") is True:
-            continue
-        if bare_tool_name(entry.get("tool", "")) != "same_person":
-            continue
-        args = entry.get("args") or {}
-        # The explicit two-document form.
-        for key in ("primaryId1", "primaryId2"):
-            v = args.get(key)
-            if isinstance(v, str):
-                scored.add(v)
-        # The project-relative form (issue #1731). It names the two sides by
-        # REFERENCE — the tool assembles both documents itself — so a call in
-        # this shape carries no `primaryId1`/`primaryId2` at all. Without this
-        # arm every such call is invisible here and the detector flags 100% of
-        # newly linked persons the moment the agent adopts the cheap call, which
-        # would also invalidate the corpus re-measurement PR B is gated on.
-        for key in ("treePersonId", "recordPersonaId", "recordRole"):
-            v = args.get(key)
-            if isinstance(v, str):
-                scored.add(v)
-    return scored
-
-
-def _person_id_from_pe_op(op: dict[str, Any]) -> str | None:
-    """The tree `person_id` a `person_evidence` append op links. The shape in
-    committed runlogs is `{section: 'person_evidence', op: 'append',
-    entry: {person_id: ...}}`; also tolerate a `fields`/flat shape."""
-    for container in ("entry", "fields"):
-        c = op.get(container)
-        if isinstance(c, dict) and isinstance(c.get("person_id"), str):
-            return c["person_id"]
-    return op.get("person_id") if isinstance(op.get("person_id"), str) else None
-
-
-def _assertion_id_from_pe_op(op: dict[str, Any]) -> str | None:
-    """The `assertion_id` a `person_evidence` append op cites, mirroring
-    `_person_id_from_pe_op`'s container walk.
-
-    Reads ONLY the singular key. 103 committed ops carry a plural
-    `assertion_ids` array, which is not a schema field (`person_evidence_entry`
-    is `additionalProperties: false` with `assertion_id` required), so those
-    ops are rejected writes; treating one as resolvable would exempt a link
-    that never landed."""
-    for container in ("entry", "fields"):
-        c = op.get(container)
-        if isinstance(c, dict) and isinstance(c.get("assertion_id"), str):
-            return c["assertion_id"]
-    return op.get("assertion_id") if isinstance(op.get("assertion_id"), str) else None
-
-
 def _provenance_index(
     research: dict[str, Any] | None,
 ) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
-    """`(assertions_by_id, log_entries_by_id)` for the persona-reachability
-    join. Tolerates a missing or non-list section, like every other reader
+    """`(assertions_by_id, log_entries_by_id)`. Tolerates a missing or non-list section, like every other reader
     here."""
     research = research or {}
     assertions = research.get("assertions")
@@ -822,287 +747,6 @@ def _lookup_assertion(
     return assertions_by_id.get(assertion_id) if isinstance(assertion_id, str) else None
 
 
-def _persona_reachable(
-    assertion: dict[str, Any] | None, log_entries_by_id: dict[str, dict[str, Any]]
-) -> bool:
-    """Whether a record persona `same_person` could score against is reachable
-    for this assertion — the discriminator the §8 provenance checks narrow on.
-
-    `same_person` takes two GedcomX documents plus a focus id inside each. It
-    never reads `record_persona_id`; that field is a pointer into a retained
-    search sidecar, so a null value proves only that no sidecar was kept. What
-    decides reachability is the tool that produced the assertion:
-
-    - a non-null `record_persona_id` — `research_append` verified it against
-      the record's `gedcomx.persons[]` on write, so the persona exists;
-    - `record_read` — it returns a `SimplifiedGedcomX` with a persons array,
-      so a persona was in hand when the assertion was extracted;
-    - `record_search` with a retained `results_ref` — the sidecar result
-      carries the record's `gedcomx`;
-    - `person_record_matches` — an accepted FamilySearch hint (search-hints'
-      record mode). Its ark is a `1:1:` record persona that `record_read`
-      opens, which is how record-extraction fetched it.
-
-    Everything else is unreachable: image-, external-site- and PDF-sourced
-    assertions, a search whose sidecar was not retained, and **every**
-    `fulltext_search` hit — an FTS result carries transcript text, names and
-    places but no GedcomX, and its ARK is a `3:1:`/`3:2:` image entry that
-    `record_read` (which takes a `1:1:` record-persona ARK) cannot open.
-
-    UNKNOWN provenance counts as reachable, i.e. keeps flagging. Exempting on
-    an absent field is the shape this narrowing exists to reject: it would let
-    an assertion written with no `log_entry_id` shed the scoring requirement
-    entirely. Flagging there is also never worse than the un-narrowed check.
-
-    **What this deliberately does NOT decide: whether a fresh fetch would
-    work.** The question asked is "could a persona be got out of what the run
-    RETAINED" — the sidecar on disk, or the document `record_read` already
-    returned. It is not "is there any call that might produce one". 48 of the
-    306 links it exempts on today's corpus carry a `record_id` that is a `1:1:`
-    FamilySearch record ARK (29 sidecar-less `record_search`, 19
-    `image_transcribe`), so `record_read` might reach a persona for them. That
-    is left exempt on purpose: the detector cannot verify offline that such a
-    fetch resolves, and flagging on an unproven capability is the error this
-    change corrected in the `fulltext_search` lane. Tightening it is a real
-    option, not an oversight — it would also require `person-evidence` to reach
-    for `record_read` on a sidecar-less search, which needs new fixtures on
-    roughly eleven unit tests that stock none today. See
-    `docs/specs/guardrail-enforcement-spec.md` §4 for the revisit trigger.
-    """
-    if not isinstance(assertion, dict):
-        return True  # unresolvable assertion — provenance unknown, not proven unscoreable
-    if assertion.get("record_persona_id"):
-        return True
-    # `isinstance(..., str)` before the lookup, not decoration: a malformed
-    # `log_entry_id` holding a list or dict raises `TypeError: unhashable type`
-    # inside `.get()`, and this module never raises — a raise here would kill
-    # the whole run's post-run result computation. 103 committed ops already
-    # carry a plural `assertion_ids` array, so malformed id fields are real.
-    log_entry_id = assertion.get("log_entry_id")
-    entry = log_entries_by_id.get(log_entry_id) if isinstance(log_entry_id, str) else None
-    if not isinstance(entry, dict):
-        return True  # no log entry — provenance unknown
-    tool = entry.get("tool")
-    if tool in ("record_read", "person_record_matches"):
-        return True
-    if tool == "record_search" and entry.get("results_ref"):
-        return True
-    return False
-
-
-def unguarded_new_person_evidence_links(
-    tool: str,
-    args: dict[str, Any] | None,
-    *,
-    scored_ids: set[str],
-    starting_ids: set[str],
-    research: dict[str, Any] | None = None,
-) -> list[str]:
-    """Pre-write check (issue #963, spec §8): the NEW tree person id(s) this
-    pending `research_append` would link via `person_evidence` that have NOT
-    been scored by `same_person` yet. Empty => nothing to report.
-
-    Scoped like `find_person_evidence_missing_same_person` on WHICH persons
-    count:
-    - a person id already in the starting (seed) tree is never flagged
-      (linking an assertion to a pre-existing person isn't a new identity);
-    - a person id already scored by a prior successful `same_person` passes;
-    - a link whose provenance lane cannot yield a record persona is skipped
-      (`_persona_reachable`), so a person all of whose pending links are
-      unscoreable drops out. That needs the project document to join through,
-      which is what `research` supplies.
-
-    `research=None` means "no provenance available, narrow nothing" — today's
-    un-narrowed behaviour, NOT "exempt everything". A guardrail that silently
-    disables itself on an unreadable file is the worse failure, and
-    `guardrail_shadow_report._links_any_person_evidence` relies on this
-    parameter defaulting to "no narrowing" to keep meaning "does this call link
-    anyone at all".
-
-    But it asks a STRICTER question than that post-run detector, and the two
-    are not equivalent. The post-run form is whole-run: a `same_person`
-    anywhere in the run, INCLUDING after the link, satisfies it. This one runs
-    before the write, so it can only see calls already made — link-then-score
-    is a hit here and a pass there. Rare but real: one occurrence across the
-    committed corpus (ferber-marriage 2026-07-21, person I5 linked at call #45
-    and scored at #68). Callers reading the hit count should treat it as
-    "unscored at write time", not as a preview of the post-run verdict.
-
-    Fact-based, no proximity window (unlike `find_unguarded_protected_writes`)
-    — `same_person` is a required tool call, so "was it called for this
-    person" is a fact rather than a window judgment. That is why the post-run
-    form (spec §8) went straight to a hard fail; the live pre-write form still
-    runs in shadow mode, because denying on it would fire in 65 of 81 fixtures
-    (issue #1231). Returns ids in first-seen order, de-duped.
-
-    Keying the check on `research_append` is sound because it is the only tool
-    that creates scored or judged `person_evidence` entries. `extraction_append`
-    creates one other kind, in `personId` mode only: an unchecked FamilySearch
-    attachment link (`is_attachment_link`), speculative and unscored by design
-    (lead, 2026-10-19: the baseline step has no same_person gate), and only
-    ever superseded. The merge/`tree_forget` tools only re-point or count
-    existing entries. If a future tool starts creating `person_evidence` links,
-    this gate (and the caller's `bare == "research_append"` fast-path) must be
-    widened to cover it, or that tool becomes a bypass route."""
-    args = args or {}
-    if bare_tool_name(tool) != "research_append":
-        return []
-    assertions_by_id, log_entries_by_id = _provenance_index(research)
-    out: list[str] = []
-    seen: set[str] = set()
-    for op in _iter_ops(args):
-        if op.get("section") != "person_evidence":
-            continue
-        pid = _person_id_from_pe_op(op)
-        if not pid or pid in starting_ids or pid in scored_ids or pid in seen:
-            continue
-        if research is not None and not _persona_reachable(
-            assertions_by_id.get(_assertion_id_from_pe_op(op)), log_entries_by_id
-        ):
-            continue
-        seen.add(pid)
-        out.append(pid)
-    return out
-
-
-def find_person_evidence_missing_same_person(
-    tool_calls: list[dict[str, Any]],
-    research: dict[str, Any] | None,
-    tree: dict[str, Any] | None,
-    *,
-    starting_tree: dict[str, Any] | None = None,
-) -> list[str]:
-    """Every BRAND-NEW tree person (not present in `starting_tree`) that
-    receives a **scoreable** `person_evidence` link must have been the subject
-    of at least one `same_person` call somewhere in the run.
-
-    The authority is `agents/person-evidence.md`, the agent that owns the
-    identity decision — not `research/SKILL.md`'s one-line orchestrator
-    paraphrase ("scores every cross-record link with `same_person` before it
-    links"), which this docstring used to cite. The narrower owning contract
-    wins on conflict, and citing the paraphrase is how the broad rule kept
-    being re-derived.
-
-    "Scoreable" is `_persona_reachable`: a link is skipped only when its
-    assertion's own provenance lane cannot yield a record persona —
-    image-, external-site- and PDF-sourced assertions, every `fulltext_search`
-    hit, and searches whose sidecar was not retained. A `record_read`-sourced
-    link and a sidecar-backed search link both stay flagged; so does unknown
-    provenance, since exempting on an absent field would be a bypass. A person
-    drops out only when EVERY link to them is unscoreable;
-    `unscoreable_person_evidence_links` counts what that skips.
-
-    This is a deliberately different, narrower question than
-    `find_effects_without_invocation`'s "was `person-evidence` invoked
-    anywhere" check: it asks whether the specific REQUIRED TOOL ran for THIS
-    specific person, so it catches the case that check cannot — a new
-    identity linked with zero scoring, even when `person-evidence` *was*
-    properly invoked elsewhere in the same run for unrelated work. Confirmed
-    live: the `bagley-father-1884` run linked a brand-new person (the
-    father) across 13 `person_evidence` entries with zero `same_person`
-    calls anywhere in the run, while `person-evidence` itself was invoked 52
-    tool calls later for a different, later-extracted record — invisible to
-    the "invoked anywhere" check, caught by this one.
-
-    `same_person` takes two RECORD-PERSONA arguments (`primaryId1`/
-    `primaryId2`), not a tree `person_id` — but when one side of a call IS
-    the tree, that side's `primaryId` is documented to equal a `persons[].id`
-    in its `gedcomx`, which for a tree-side call is the tree person id
-    itself (confirmed against a live example — a committed
-    `anders-monsen-ancestry` run calls `same_person` with `primaryId2:
-    "LKFW-9XH"`, a literal FamilySearch tree person id). So this is a flat
-    string match against `primaryId1`/`primaryId2` — no need to join through
-    assertions/records.
-
-    Whole-run, no proximity window — same false-positive profile as
-    `find_effects_without_invocation`'s other checks, deliberately not the
-    windowed heuristic `find_unguarded_protected_writes` uses.
-    """
-    research = research or {}
-    tree = tree or {}
-    persons = tree.get("persons") if isinstance(tree.get("persons"), list) else []
-    starting_persons = (
-        (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
-    )
-    starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
-    # No baseline: best-effort, treat every current person as new (may
-    # over-flag) — same convention find_effects_without_invocation documents.
-    new_person_ids = {p.get("id") for p in persons if isinstance(p, dict) and p.get("id") not in starting_ids}
-
-    person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
-    assertions_by_id, log_entries_by_id = _provenance_index(research)
-    linked_new_person_ids = {
-        pe.get("person_id")
-        for pe in person_evidence
-        if isinstance(pe, dict)
-        and pe.get("person_id") in new_person_ids
-        and _persona_reachable(
-            _lookup_assertion(assertions_by_id, pe.get("assertion_id")), log_entries_by_id
-        )
-    }
-    if not linked_new_person_ids:
-        return []
-
-    scored_ids = same_person_scored_ids(tool_calls)
-
-    missing = sorted(pid for pid in linked_new_person_ids if pid not in scored_ids)
-    return [
-        f"tree person '{pid}' is new this run and has a person_evidence link, but 'same_person' "
-        "was never called for it anywhere in the run — the identity was asserted, never scored"
-        for pid in missing
-    ]
-
-
-def unscoreable_person_evidence_links(
-    research: dict[str, Any] | None,
-    tree: dict[str, Any] | None,
-    *,
-    starting_tree: dict[str, Any] | None = None,
-) -> list[str]:
-    """The `person_evidence` ids on brand-new tree persons whose assertion
-    lane cannot yield a record persona — the *unscoreable by design*
-    population `find_person_evidence_missing_same_person` deliberately does not
-    flag.
-
-    A COUNT, never a violation. The lead asked (2026-08-09) for the exemption
-    to be visible rather than silent: a population that is dropped without a
-    number attached cannot be watched if it grows, and gives a revisit trigger
-    nothing to fire on. It deliberately gets no `VIOLATION_ARMS` entry in
-    `e2e.corpus_report` — that map is checked for set equality against the
-    messages the detectors actually emit, so an arm nothing emits fails the
-    test.
-
-    Scoped exactly like the detector on WHICH PERSONS count — brand-new persons
-    only, and with no `starting_tree` every current person reads as new (the
-    same best-effort convention `find_effects_without_invocation` documents).
-
-    But the two numbers are **not** complements and must not be subtracted from
-    one another: this counts exempted LINKS, while the detector emits one
-    violation per flagged PERSON. Same population of persons, different unit.
-    """
-    research = research or {}
-    tree = tree or {}
-    persons = tree.get("persons") if isinstance(tree.get("persons"), list) else []
-    starting_persons = (
-        (starting_tree or {}).get("persons") if isinstance((starting_tree or {}).get("persons"), list) else []
-    )
-    starting_ids = {p.get("id") for p in starting_persons if isinstance(p, dict)}
-    new_person_ids = {p.get("id") for p in persons if isinstance(p, dict) and p.get("id") not in starting_ids}
-
-    person_evidence = research.get("person_evidence") if isinstance(research.get("person_evidence"), list) else []
-    assertions_by_id, log_entries_by_id = _provenance_index(research)
-    return [
-        pe["id"]
-        for pe in person_evidence
-        if isinstance(pe, dict)
-        and isinstance(pe.get("id"), str)
-        and pe.get("person_id") in new_person_ids
-        and not _persona_reachable(
-            _lookup_assertion(assertions_by_id, pe.get("assertion_id")), log_entries_by_id
-        )
-    ]
-
-
 def check_guardrail_compliance(
     tool_calls: list[dict[str, Any]],
     final_research: dict[str, Any] | None,
@@ -1121,34 +765,22 @@ def check_guardrail_compliance(
     prone to false positives and was safe to hard-fail on immediately rather
     than rolling out in shadow mode first.
 
-    `find_person_evidence_missing_same_person` is a separate, also-hard,
-    also-non-windowed check added after the first real run of
-    bagley-father-1884 showed the gap in "invoked anywhere": that run linked a
-    brand-new person across 13 person_evidence entries with zero same_person
-    calls in the whole run, while person-evidence ITSELF was invoked 52 tool
-    calls later for unrelated work — passing the "invoked anywhere" bar while
-    still skipping the identity-scoring doctrine entirely. It checks the
-    specific required tool for the specific person instead of the skill's mere
-    presence in the run.
+    Whether a `person_evidence` link was scored by `same_person` is not checked
+    here: `research_append` refuses an unscored link to a reachable record
+    persona at write time, in every environment (`personEvidenceScoreInvariants`).
 
     Note this is NOT vacuous on a treeless run: the exhaustiveness arm reads
     only `research["questions"]`. That is why compliance is always a real result
     and never "not checked" for a run this harness performed.
 
-    Lives here beside the two detectors it composes so `e2e.corpus_report`
+    Lives here beside the detector it composes so `e2e.corpus_report`
     can import it without dragging `claude_agent_sdk` into its pure-analysis
     posture (issue #1484); `e2e.orchestrator` re-exports it so `run_e2e_test`
     and the `monkeypatch.setattr(orchestrator, ...)` tests keep resolving it as
-    a module global unchanged. Originally extracted from `run_e2e_test` (issue
-    #972) to be unit-testable away from the 1200-line async function.
+    a module global unchanged.
     """
-    return (
-        find_effects_without_invocation(
-            tool_calls, final_research, final_tree, starting_tree=starting_tree
-        )
-        + find_person_evidence_missing_same_person(
-            tool_calls, final_research, final_tree, starting_tree=starting_tree
-        )
+    return find_effects_without_invocation(
+        tool_calls, final_research, final_tree, starting_tree=starting_tree
     )
 
 
@@ -1495,9 +1127,8 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
     Ships in shadow mode only (`e2e/orchestrator.py`'s
     `protected_writes_by_unnamed_delegate`, logged, never denied): historical
     runlogs carry no `agent_id`/`agent_type` at all (Step 0 just landed), so
-    today's validation is one hand-backfilled fixture, not the full-corpus
-    mechanical check a check like `find_person_evidence_missing_same_person`
-    got. Graduating to a hard fail is a separate, deliberate follow-up once
+    today's validation is one hand-backfilled fixture, not a full-corpus
+    mechanical check. Graduating to a hard fail is a separate, deliberate follow-up once
     real runs accumulate a shadow-mode sample — tracked as its own backlog
     item, not duplicated here.
     """
@@ -1578,19 +1209,8 @@ def find_protected_writes_by_unnamed_delegate(tool_calls: list[dict[str, Any]]) 
 # Marks a citation-nulling shadow entry in the shared
 # `guardrail_shadow_violations` list. `guardrail_shadow_report.py` keys on it to
 # count this failure class in its own bucket instead of lumping it with the
-# #963 person_evidence-provenance gaps (both carry a `detail`).
+# other `detail`-carrying kinds.
 CITATION_NULLING_KIND = "citation_nulling"
-
-# Marks a #963 provenance entry recorded by a run launched in DENY mode
-# (`--person-evidence-guard deny`, issue #1231). Same list, same `detail` shape,
-# but a different meaning: the write was blocked and retried rather than landing,
-# and the loop valve can record several denials plus a release for one logical
-# gap. `scan_provenance` excludes it so the shadow fire rate the graduation
-# decision reads is not inflated by deny-mode runs. Lives here beside its sibling
-# rather than in `e2e/orchestrator.py` — which sets it — so that
-# `guardrail_shadow_report.py` can read it without importing the orchestrator
-# (and with it the Claude Agent SDK) just to learn one string.
-PERSON_EVIDENCE_DENY_KIND = "person_evidence_deny"
 
 # Marks a warnings-unchecked shadow entry in the shared
 # `guardrail_shadow_violations` list: a tree writer returned
@@ -1860,8 +1480,8 @@ def find_citation_nulling_in_tree_sources(
 
 
 # Marks a conflict-not-persisted shadow entry in the shared
-# `guardrail_shadow_violations` list, told apart from the citation-nulling and
-# #963 person_evidence buckets by this `kind` in `guardrail_shadow_report.py`.
+# `guardrail_shadow_violations` list, told apart from the citation-nulling
+# bucket by this `kind` in `guardrail_shadow_report.py`.
 CONFLICT_UNPERSISTED_KIND = "conflict_unpersisted"
 
 # Substrings in a `conflict_resolution` stop-criterion that mean "there was no

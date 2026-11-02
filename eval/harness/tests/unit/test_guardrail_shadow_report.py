@@ -11,7 +11,6 @@ loading, and aggregating across a corpus of files.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 from e2e.guardrail_shadow_report import (
     _is_result_json,
@@ -22,15 +21,11 @@ from e2e.guardrail_shadow_report import (
     format_detail,
     format_post_hoc_replay,
     format_summary,
-    format_provenance,
-    format_provenance_replay,
     replay_post_hoc,
-    replay_provenance,
     scan_citation_nulling,
     scan_tree_citation_nulling,
     scan_conflict_unpersisted,
     scan_corpus,
-    scan_provenance,
     scan_one,
     scan_unnamed_delegate,
     format_unnamed_delegate,
@@ -44,7 +39,6 @@ from harness.skill_invocation import (
     CITATION_NULLING_KIND,
     TREE_CITATION_NULLING_KIND,
     CONFLICT_UNPERSISTED_KIND,
-    PERSON_EVIDENCE_DENY_KIND,
     TREE_ENCODING_KIND,
     TREE_FACT_ASSERTION_KIND,
     WARNINGS_UNCHECKED_KIND,
@@ -189,10 +183,9 @@ def test_format_detail_survives_a_null_required_skill():
     assert "tree.gedcomx.json" in out
 
 
-# --- scan_provenance / format_provenance (issue #963 stored shadow entries) ---
-# These are READ from each run's stored `guardrail_shadow_violations`, not
-# replayed from tool_calls: the #963 check depends on the seed tree and on what
-# the live hook could see, neither of which a committed log lets you recompute.
+# --- stored shadow entries --------------------------------------------------
+# `_provenance_entry` is the retired #963 shape runs logged before harness v9
+# still carry; the scans below must pass over it.
 
 
 def _write_result(dir_, name, violations):
@@ -214,61 +207,9 @@ def _provenance_entry(pid="I1", index=3):
     }
 
 
-def test_scan_provenance_picks_up_stored_entries(tmp_path):
-    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry()])
-    out = scan_provenance([p])
-    assert len(out) == 1
-    assert out[0]["fixture"] == "fx"
-    assert "I1" in out[0]["detail"]
-
-
-def test_scan_provenance_ignores_section_7_entries():
-    """The two sources share one list; only the hook's entries carry `detail`,
-    so a §7 recency violation must not be counted as a #963 provenance gap."""
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as td:
-        d = Path(td) / "fx"
-        section7 = {
-            "index": 1,
-            "tool": "mcp__genealogy__research_append",
-            "required_skill": "proof-conclusion",
-            "question_id": "q_001",
-        }
-        p = _write_result(d, "run-1.json", [section7, _provenance_entry()])
-        out = scan_provenance([p])
-    assert len(out) == 1
-    assert out[0]["required_skill"] == "person-evidence"
-
-
-def test_scan_provenance_tolerates_runs_written_before_the_check(tmp_path):
-    """A pre-#963 log has no such entries; it contributes nothing rather than
-    erroring."""
-    p = _write_result(tmp_path / "fx", "run-1.json", [])
-    assert scan_provenance([p]) == []
-
-
-def test_scan_provenance_skips_unreadable_file(tmp_path, capsys):
-    d = tmp_path / "fx"
-    d.mkdir(parents=True, exist_ok=True)
-    bad = d / "run-1.json"
-    bad.write_text("{ not json", encoding="utf-8")
-    assert scan_provenance([bad]) == []
-    assert "skip" in capsys.readouterr().err
-
-
-def test_format_provenance_counts_runs_not_just_entries(tmp_path):
-    a = _write_result(tmp_path / "fx1", "run-1.json", [_provenance_entry("I1"), _provenance_entry("I2")])
-    b = _write_result(tmp_path / "fx2", "run-1.json", [_provenance_entry("I3")])
-    text = format_provenance(scan_provenance([a, b]))
-    assert "3 person_evidence link(s)" in text
-    assert "across 2 run(s)" in text
-
-
 # --- scan_citation_nulling / format_citation_nulling (issue #1133) ------------
-# The #1133 citation-nulling class ALSO carries `detail`, so it must be told
-# apart from the #963 provenance gaps by its `kind` key — else the shadow
-# fire-rate measurement the graduation decision is gated on double-counts.
+# The #1133 citation-nulling class carries `detail`, so it is told apart from
+# the other stored kinds by its `kind` key.
 
 
 def _citation_entry(sid="src_001"):
@@ -290,15 +231,6 @@ def test_scan_citation_nulling_picks_up_only_citation_entries(tmp_path):
     assert out[0]["fixture"] == "fx"
 
 
-def test_scan_provenance_excludes_citation_entries(tmp_path):
-    """A citation-nulling entry carries `detail` too, but must NOT be counted as
-    a #963 person_evidence-provenance gap."""
-    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), _citation_entry()])
-    prov = scan_provenance([p])
-    assert len(prov) == 1
-    assert prov[0]["required_skill"] == "person-evidence"
-
-
 def test_format_citation_nulling_counts_runs_not_just_entries(tmp_path):
     a = _write_result(tmp_path / "fx1", "run-1.json", [_citation_entry("src_001"), _citation_entry("src_002")])
     b = _write_result(tmp_path / "fx2", "run-1.json", [_citation_entry("src_003")])
@@ -308,10 +240,8 @@ def test_format_citation_nulling_counts_runs_not_just_entries(tmp_path):
 
 
 # --- conflict-unpersisted bucket (issue #1317) -------------------------------
-# Mirrors the citation-nulling trio: its own scan_ picks up only its kind, it is
-# excluded from the #963 provenance bucket (it also carries `detail`), and its
-# formatter counts runs not entries. Without these the scan_/format_/exclusion
-# added by this PR were mutation-provable dead (senior review of #1438).
+# Mirrors the citation-nulling pair: its own scan_ picks up only its kind, and
+# its formatter counts runs not entries.
 
 
 def _conflict_entry(psid="ps_001"):
@@ -332,78 +262,12 @@ def test_scan_conflict_unpersisted_picks_up_only_conflict_entries(tmp_path):
     assert out[0]["kind"] == CONFLICT_UNPERSISTED_KIND
 
 
-def test_scan_provenance_excludes_conflict_unpersisted_entries(tmp_path):
-    """A conflict-unpersisted entry carries `detail` too, but must NOT be counted
-    as a #963 person_evidence-provenance gap (the double-count bug 62e1baa3 fixed
-    once already, guarded here so a merge can't reintroduce it)."""
-    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), _conflict_entry()])
-    prov = scan_provenance([p])
-    assert len(prov) == 1
-    assert prov[0]["required_skill"] == "person-evidence"
-
-
 def test_format_conflict_unpersisted_counts_runs_not_just_entries(tmp_path):
     a = _write_result(tmp_path / "fx1", "run-1.json", [_conflict_entry("ps_001"), _conflict_entry("ps_002")])
     b = _write_result(tmp_path / "fx2", "run-1.json", [_conflict_entry("ps_003")])
     text = format_conflict_unpersisted(scan_conflict_unpersisted([a, b]))
     assert "3 concluded question(s)" in text
     assert "across 2 run(s)" in text
-
-
-# --- deny-mode entries must not pollute the shadow measurement (issue #1231) --
-
-
-def _deny_entry(pid="I1"):
-    """What the hook stores for a run launched with --person-evidence-guard deny."""
-    return _provenance_entry(pid) | {"kind": PERSON_EVIDENCE_DENY_KIND}
-
-
-def test_scan_provenance_excludes_deny_mode_entries(tmp_path):
-    """`scan_provenance` selects on key shape and never reads the run's mode, so
-    without a `kind` discriminator a deny-mode run lands in `SINCE=all`
-    indistinguishably from a shadow run — and inflated, since the valve permits
-    several denials plus a release for ONE logical gap. That is the number
-    prereq 1 is supposed to read."""
-    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), _deny_entry()])
-    prov = scan_provenance([p])
-    assert len(prov) == 1
-    assert "kind" not in prov[0]
-
-
-def test_scan_provenance_excludes_warnings_unchecked_entries(tmp_path):
-    """The fifth exclusion, and the last one in the tuple with no test.
-
-    `find_relationship_writes_without_warnings_check` entries carry `detail`, so
-    without their line in the tuple they are double counted in the issue-#963
-    provenance bucket -- the same defect this change fixed for
-    `TREE_ENCODING_KIND`. Deleting that one line left this file green, which is
-    the shape the repo's lint doctrine calls coverage that cannot fail.
-    """
-    warnings_entry = {
-        "index": -1,
-        "tool": "tree.gedcomx.json",
-        "required_skill": "check-warnings",
-        "kind": WARNINGS_UNCHECKED_KIND,
-        "detail": "new ParentChild/Couple relationship written with no person_warnings call",
-    }
-    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), warnings_entry])
-    prov = scan_provenance([p])
-    assert len(prov) == 1
-    assert prov[0]["required_skill"] == "person-evidence"
-
-
-# --- replay_provenance (issue #1231: a baseline over the pre-hook corpus) -----
-# The stored entries above only exist for runs made AFTER #1178 merged. Replay
-# recomputes the same check from `tool_calls` + the fixture's committed seed
-# tree, which is what makes the 144 pre-hook runs readable at all, and what lets
-# a candidate rule variant be scored before it ships.
-
-
-def _write_replay_run(root, slug, name, tool_calls):
-    d = root / "eval" / "runlogs" / "e2e" / slug
-    d.mkdir(parents=True, exist_ok=True)
-    (d / name).write_text(json.dumps({"tool_calls": tool_calls}), encoding="utf-8")
-    return d / name
 
 
 def _write_fixture(root, slug, person_ids):
@@ -413,223 +277,6 @@ def _write_fixture(root, slug, person_ids):
         json.dumps({"persons": [{"id": p} for p in person_ids]}), encoding="utf-8"
     )
     return d
-
-
-def _pe_write(person_id="I1"):
-    return {
-        "tool": "mcp__genealogy__research_append",
-        "args": {"section": "person_evidence", "op": "append", "entry": {"person_id": person_id}},
-    }
-
-
-def _same_person_call(pid1="p_9", pid2="I1"):
-    return {"tool": "mcp__genealogy__same_person", "args": {"primaryId1": pid1, "primaryId2": pid2}}
-
-
-def _write_final_research(run_path, tool, *, results_ref=None):
-    """The provenance sidecar beside a replay run log (issue #1429)."""
-    run_path.with_name(run_path.stem + ".final-research.json").write_text(
-        json.dumps(
-            {
-                "assertions": [
-                    {"id": "a_001", "record_persona_id": None, "log_entry_id": "log_001"}
-                ],
-                "log": [{"id": "log_001", "tool": tool, "results_ref": results_ref}],
-            }
-        ),
-        encoding="utf-8",
-    )
-
-
-def _pe_write_with_assertion(person_id="I1", assertion_id="a_001"):
-    return {
-        "tool": "mcp__genealogy__research_append",
-        "args": {
-            "section": "person_evidence",
-            "op": "append",
-            "entry": {"person_id": person_id, "assertion_id": assertion_id},
-        },
-    }
-
-
-def test_replay_provenance_narrows_on_an_unscoreable_assertion(tmp_path):
-    """The replay must apply the same join as the live hook, or the free replay
-    stops measuring the rule that ships."""
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write_with_assertion()])
-    _write_final_research(p, "image_transcribe")
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert rep.violations == []
-    assert rep.runs_linking == 1  # still counts toward the denominator
-    assert rep.runs_without_provenance == 0
-
-
-def test_replay_provenance_still_fires_on_a_record_read_assertion(tmp_path):
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write_with_assertion()])
-    _write_final_research(p, "record_read")
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert len(rep.violations) == 1
-    assert "I1" in rep.violations[0]["detail"]
-
-
-def test_replay_provenance_counts_a_run_with_no_provenance_sidecar(tmp_path):
-    """No committed final-research.json => replay UN-NARROWED and count it,
-    never skip it. Every other `replay_provenance` test in this file builds a
-    run log with no sidecar, so a skip would turn the whole suite into vacuous
-    passes — and a silent fallback would mean the replay measured a different
-    rule on part of its corpus without saying so."""
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write_with_assertion()])
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert len(rep.violations) == 1  # un-narrowed: still flagged
-    assert rep.runs_without_provenance == 1
-    assert rep.skipped == []
-    assert "UN-NARROWED" in format_provenance_replay(rep)
-
-
-def test_replay_provenance_flags_unscored_new_person(tmp_path):
-    fixtures = _write_fixture(tmp_path, "fx", ["KN19-Q19"]).parent
-    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("I1")])
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert len(rep.violations) == 1
-    assert rep.violations[0]["fixture"] == "fx"
-    assert "I1" in rep.violations[0]["detail"]
-    assert rep.runs_scanned == 1
-    assert rep.runs_linking == 1
-    assert rep.skipped == []
-
-
-def test_replay_provenance_clean_when_same_person_precedes_the_link(tmp_path):
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_same_person_call(), _pe_write("I1")])
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert rep.violations == []
-    assert rep.runs_linking == 1  # still counts toward the denominator
-
-
-def test_replay_provenance_only_sees_calls_before_the_write(tmp_path):
-    """The live hook cannot see a `same_person` issued after the write, so the
-    replay must not either — link-then-score is a gap here and a pass for the
-    post-run detector. This is the documented divergence, not a bug."""
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("I1"), _same_person_call()])
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert len(rep.violations) == 1
-
-
-def test_replay_provenance_clean_for_seed_person_link(tmp_path):
-    fixtures = _write_fixture(tmp_path, "fx", ["KN19-Q19"]).parent
-    p = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("KN19-Q19")])
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert rep.violations == []
-    assert rep.runs_linking == 1
-
-
-def test_replay_provenance_reports_runs_with_no_committed_seed_tree(tmp_path):
-    """One run in the corpus today (william-ferber-ancestry) has no fixture dir.
-    Dropping it silently would read as "covered everything"; it is named."""
-    fixtures = tmp_path / "eval" / "tests" / "e2e"
-    fixtures.mkdir(parents=True, exist_ok=True)
-    p = _write_replay_run(tmp_path, "gone", "run-1.json", [_pe_write("I1")])
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert rep.violations == []
-    assert len(rep.skipped) == 1
-    assert "gone" in rep.skipped[0]
-    assert rep.runs_scanned == 0  # not scanned, so not in the denominator either
-
-
-def test_replay_provenance_denominator_excludes_runs_that_link_nobody(tmp_path):
-    """The fire RATE is the number the graduation decision reads, so the
-    denominator is runs that link any person_evidence — not every run."""
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    _write_fixture(tmp_path, "fx2", [])
-    linking = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("I1")])
-    idle = _write_replay_run(tmp_path, "fx2", "run-1.json", [_same_person_call()])
-    rep = replay_provenance([linking, idle], fixtures_root=fixtures)
-    assert rep.runs_scanned == 2
-    assert rep.runs_linking == 1
-    assert len(rep.violations) == 1
-
-
-def test_replay_provenance_ignores_a_write_that_never_landed(tmp_path):
-    """A DENIED research_append still appears in `tool_calls`, with
-    `is_error: true` (e2e-test-spec §8.1.1). Counting it would double-count every
-    deny-mode gap — once for the blocked attempt and again for the retry — which
-    inflates the very fire rate the graduation decision reads. Same success-gating
-    the sibling detectors already apply, so an ordinary failed write is excluded
-    too: it linked nobody."""
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    denied = _pe_write("I1") | {"is_error": True}
-    p = _write_replay_run(tmp_path, "fx", "run-1.json", [denied])
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert rep.violations == []
-    assert rep.runs_linking == 0  # nothing landed, so nothing to have a gap
-
-
-def test_replay_provenance_ignores_a_no_project_write(tmp_path):
-    """The other way a write never lands (issue #1695): the user was not in a
-    research project, so the tool wrote nothing and returned
-    `reason: "no_project"` — deliberately WITHOUT `is_error`, because that is an
-    answer rather than a failure. Counting it would report a provenance gap for
-    a write that never happened.
-
-    Tested here and not only against the shared `did_not_land` helper because
-    this detector reads a COMMITTED corpus, where the marker arrives inside
-    `response_summary` — a field with its own truncation and double-encoding
-    lifecycle — rather than as a structured key.
-    """
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    # The MCP-envelope shape the orchestrator passes through verbatim for any
-    # response under 500 chars — which this one always is. Testing only the
-    # unwrapped form leaves the detector dark in every real run.
-    no_project = _pe_write("I1") | {
-        "response_summary": json.dumps(
-            [{"type": "text", "text": '{"ok": false, "reason": "no_project"}'}]
-        )
-    }
-    p = _write_replay_run(tmp_path, "fx", "run-1.json", [no_project])
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert rep.violations == []
-    assert rep.runs_linking == 0  # nothing landed, so nothing to have a gap
-
-
-def test_replay_provenance_counts_the_retry_after_a_denial_once(tmp_path):
-    """The deny-mode shape end to end: blocked attempt, then an unscored retry
-    that lands. Exactly one gap, not two."""
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    p = _write_replay_run(
-        tmp_path, "fx", "run-1.json", [_pe_write("I1") | {"is_error": True}, _pe_write("I1")]
-    )
-    rep = replay_provenance([p], fixtures_root=fixtures)
-    assert len(rep.violations) == 1
-    assert rep.runs_linking == 1
-
-
-def test_replay_provenance_reports_an_unreadable_run_log(tmp_path):
-    """Same contract as a missing seed tree: named in `skipped`, never silently
-    dropped. A corrupt log that only warns on stderr disappears from the printed
-    summary, which then reads as "covered everything"."""
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    d = tmp_path / "eval" / "runlogs" / "e2e" / "fx"
-    d.mkdir(parents=True, exist_ok=True)
-    bad = d / "run-1.json"
-    bad.write_text("{ not json", encoding="utf-8")
-    rep = replay_provenance([bad], fixtures_root=fixtures)
-    assert rep.violations == []
-    assert len(rep.skipped) == 1
-    assert "run-1.json" in rep.skipped[0]
-    assert rep.runs_scanned == 0
-
-
-def test_format_provenance_replay_reports_rate_against_the_denominator(tmp_path):
-    fixtures = _write_fixture(tmp_path, "fx", []).parent
-    a = _write_replay_run(tmp_path, "fx", "run-1.json", [_pe_write("I1")])
-    _write_fixture(tmp_path, "fx2", [])
-    b = _write_replay_run(tmp_path, "fx2", "run-1.json", [_pe_write("I2")])
-    text = format_provenance_replay(replay_provenance([a, b], fixtures_root=fixtures))
-    assert "2 of 2" in text  # runs with >=1 gap, out of runs that link anyone
-    assert "lower bound" in text  # the same-turn caveat is stated, not implied
 
 
 # --- replay_post_hoc: the six post-hoc checks, recomputed over history --------
@@ -988,8 +635,8 @@ def test_format_post_hoc_replay_prints_each_denominator_separately(tmp_path):
 
 def test_replay_post_hoc_lines_appear_in_main_under_replay(tmp_path, capsys, monkeypatch):
     """The test that pins the DELIVERABLE. Every other test here calls
-    replay_post_hoc directly, so all of them stay green while main() still prints
-    only the provenance family — i.e. while the report still cannot see history."""
+    replay_post_hoc directly, so all of them stay green while main() prints none
+    of the replay — i.e. while the report still cannot see history."""
     import e2e.guardrail_shadow_report as mod
 
     fixtures = _write_fixture(tmp_path, "fx", []).parent
@@ -1324,14 +971,6 @@ def test_the_two_citation_arms_never_absorb_each_other(tmp_path):
     assert len(scan_tree_citation_nulling([p])) == 1
 
 
-def test_the_provenance_scan_excludes_the_tree_arm(tmp_path):
-    """`scan_provenance` is the catch-all for entries carrying `detail`; a new kind
-    that forgets to exclude itself is double-counted there and in its own
-    bucket, inflating the very rate the graduation decision reads."""
-    p = _write_result(tmp_path / "fx", "run-1.json", [_tree_citation_entry()])
-    assert scan_provenance([p]) == []
-
-
 def test_format_tree_citation_nulling_reports_sources_and_runs():
     out = format_tree_citation_nulling(
         [
@@ -1346,10 +985,9 @@ def test_format_tree_citation_nulling_reports_sources_and_runs():
 
 
 # --- tree-fact/assertion agreement bucket (issues #2472, #2558) --------------
-# The trio every other kind has, and the reason it is not optional: without its
-# own scan_, its exclusion from the #963 provenance bucket, and a formatter that
-# counts runs rather than entries, the three new call sites are mutation-provably
-# dead (senior review of #1438).
+# The pair every other kind has: without its own scan_ and a formatter that
+# counts runs rather than entries, the new call sites are mutation-provably dead
+# (senior review of #1438).
 
 
 def _fact_assertion_entry(field="place", fact_id="F4"):
@@ -1377,36 +1015,6 @@ def test_scan_tree_fact_assertion_picks_up_only_its_own_kind(tmp_path):
     assert len(out) == 1
     assert out[0]["kind"] == TREE_FACT_ASSERTION_KIND
     assert out[0]["fixture"] == "fx"
-
-
-def test_the_provenance_scan_excludes_the_fact_assertion_arm(tmp_path):
-    """It carries `detail` too, so without the exclusion it would be double
-    counted as a #963 person_evidence-provenance gap."""
-    p = _write_result(
-        tmp_path / "fx", "run-1.json", [_provenance_entry(), _fact_assertion_entry()]
-    )
-    prov = scan_provenance([p])
-    assert len(prov) == 1
-    assert prov[0]["required_skill"] == "person-evidence"
-
-
-def test_the_provenance_scan_excludes_the_tree_encoding_arm(tmp_path):
-    """The exclusion that was missing until this change. `TREE_ENCODING_KIND`
-    entries carry `detail`, so each was counted a second time in the #963 bucket.
-    No committed run stores one, so no published number moved — which is why only
-    a test can hold it."""
-    te_entry = {
-        "index": -1,
-        "tool": "tree.gedcomx.json",
-        "required_skill": "proof-conclusion",
-        "kind": TREE_ENCODING_KIND,
-        "question_id": "q_001",
-        "detail": "proof summary ps_001 (tier probable, parentage) added no new tree structure",
-    }
-    p = _write_result(tmp_path / "fx", "run-1.json", [_provenance_entry(), te_entry])
-    prov = scan_provenance([p])
-    assert len(prov) == 1
-    assert prov[0]["required_skill"] == "person-evidence"
 
 
 def test_format_tree_fact_assertion_counts_runs_not_just_entries(tmp_path):
@@ -1635,8 +1243,6 @@ def test_a_stored_scan_names_a_cp1252_run_log_instead_of_dying_on_it(tmp_path):
     out = scan_tree_fact_assertion([bad, good])
     assert len(out) == 1
     assert out[0]["fixture"] == "fx"
-    # every other stored scan reads the same file through the same helper
-    assert scan_provenance([bad, good]) == []
 
 
 def test_replay_fact_assertion_names_a_run_with_no_research_sidecar(tmp_path):
