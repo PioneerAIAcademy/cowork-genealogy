@@ -474,10 +474,13 @@ gap no dating uncertainty bridges) — goes in the entry's
 `core_identifier_conflict` field, naming both sides ("record gives birth
 year 1858; tree person attests birth ~1845, 13-year gap").
 `research_append` then caps the link at `speculative`; a `confident` or
-`probable` entry carrying that field is refused. **A birthplace
-discrepancy is not a `core_identifier_conflict`** — it is a geography
-cap handled by **Geographic plausibility** below, and takes `probable`,
-not `speculative`. Leave the field null when nothing contradicts, and
+`probable` entry carrying that field is refused. A conflicting parent or
+spouse — a father, mother, or spouse that differs from what the tree
+person attests — goes in `core_identifier_conflict` the same way, naming
+both sides. **A birthplace discrepancy is not a `core_identifier_conflict`**
+— it is a geography cap handled by **Geographic plausibility** and
+**Birthplace assertion conflict** below, and takes `probable`, not
+`speculative`. Leave the field null when nothing contradicts, and
 clear it to null — saying why in the `rationale` — when the conflict is
 explained and does not bear on identity. The score never promotes a
 declared conflict.
@@ -523,11 +526,8 @@ states a birthplace that differs from an existing Birth or Christening
 fact on the tree person, that assertion's link is **`probable` at most,
 never `confident`** — even when the overall identity is established by
 multiple independent records. This is a geography cap, not a
-`core_identifier_conflict`: sources disagree on the birthplace; that is
-not a bar on identity. Name both birthplaces and both sources in the
-rationale. The existing Birth fact on the tree person was written by an
-earlier record; this rule means the NEWER assertion's link is capped, not
-that the earlier fact is wrong.
+`core_identifier_conflict`. Name both birthplaces and both sources in the
+rationale.
 
 **Occupation and age norms weigh; they never cap.** Where trades were
 bound by apprenticeship or indenture, an agreeing occupation is strong
