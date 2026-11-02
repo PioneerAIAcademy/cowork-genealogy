@@ -265,6 +265,10 @@
         },
         "search_stop": {
           "$ref": "#/$defs/search_stop"
+        },
+        "date_window": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{4}$"
         }
       }
     },

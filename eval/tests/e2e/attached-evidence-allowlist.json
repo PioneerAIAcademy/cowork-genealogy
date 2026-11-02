@@ -37,5 +37,9 @@
     "F5GR-QBN": "The Irish Thomas's father persona in daughter Mary's 1871 Tipperary birth entry, attached to the Saratoga Thomas where the live tree merged two families. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q.",
     "F5YK-84C": "The same, in son John's 1872 Ardfinnan birth entry. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q.",
     "MZF2-Y55": "The Saratoga Thomas's 1880 census, the New York evidence the rejection rests on. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q."
+  },
+  "william-sloan-spouse": {
+    "MWL7-5DR": "The subject's own already-attached 1891 census (tree source 9GV7-5YX), placing William W Sloan married in Blyth, Huron the same year the hint groom married in Toronto. f1 (avoid) cites it as the disproving baseline; it does not establish a wife Maria, and the fixture turns on rejecting the 1891 Toronto hint FMV5-LZ2.",
+    "Q2CB-C9MN": "The subject's own already-attached 1859 marriage to Agnes McCaa, indexed 'Agnes McAn' (tree source W6MS-J7Z), baseline identity evidence that Agnes was his wife from 1859. f1 (avoid) cites it as disproving evidence; the fixture turns on rejecting the 1891 Toronto hint FMV5-LZ2."
   }
 }

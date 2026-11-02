@@ -40,7 +40,7 @@ COMPARISON_DIRNAME = "comparison"
 #: Run settings recorded in `usage` that change what a run does or costs.
 _SETTINGS = (
     "agent_model", "subagent_model_override", "effort_level", "max_output_tokens",
-    "caps", "betas", "deny_project_reads", "deny_shell", "person_evidence_guard",
+    "caps", "betas", "deny_project_reads", "deny_shell",
     "resume_on_stall", "cli_version", "tool_search", "tool_search_offered", "step_mode",
     "wrap_up_after",
 )

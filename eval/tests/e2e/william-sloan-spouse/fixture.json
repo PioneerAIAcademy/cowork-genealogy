@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 4, hint-samples.csv row 129, flags adds_spouse, confidence 3). Draft transcribed from an 1891 Toronto civil marriage registration of a Thomas John Sloane, age 30, naming his parents as William and Maria Sloane; unverified. The tree's wife is Agnes McCaa and its two sons Thomas were born 1859 (died 1861) and 1865, so a different William Sloane family is the likely reading."
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 4, hint-samples.csv row 129, flags adds_spouse, confidence 3). Resolved 2026-10-31: false match (identity different) - the evidence supports rejecting the 1891 Toronto marriage of Thomas John Sloane (ark:/61903/1:1:FMV5-LZ2), which names his parents as William and Maria Sloane, as a match for tree subject William W Sloan (LHG6-L26); the groom's identity and his parents' identity remain unconfirmed. The only wife documented for William W Sloan in the records reviewed is Agnes McCaa (married 1859, ark:/61903/1:1:Q2CB-C9MN), his children 1859-1876 in Huron include no Thomas John born 1861, and the 1891 census (ark:/61903/1:1:MWL7-5DR) places him married in Blyth, Huron. No record reviewed establishes a wife named Maria. Index/record text only; no register image was read. Findings are a polarity:avoid guard plus a required documented-negative-conclusion finding.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:FMV5-LZ2",
+    "identity": "different"
+  }
 }
