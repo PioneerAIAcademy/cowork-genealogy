@@ -524,3 +524,117 @@ def test_the_record_keeps_subagent_summaries(monkeypatch, tmp_path):
     fixture, _ = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-kenneth-quass")
     record = asyncio.run(orch.run_single_ask_turn(fixture=fixture, message="M", workspace=tmp_path))
     assert record["subagents"] == [{"agent_type": "source-evaluation"}]
+
+
+# --- owner lists, save alternatives, forbidden/required tools (issue #3571's panel) ---
+
+ATTACHED = SingleAskSpec(
+    id="death-already-attached",
+    message="Can you find the death record for X?",
+    expected_owner=(None, "search-records"),
+    expected_save={"section": "sources", "absent": True},
+    forbidden_tools=("record_search",),
+    required_tools=("person_read",),
+)
+READ = {"tool": "mcp__genealogy__person_read", "args": {}, "thread": "main"}
+SEARCH = {"tool": "mcp__genealogy__record_search", "args": {}, "thread": "main"}
+NEW_SOURCE = final(sources=[{"id": "src_001"}])
+
+
+def test_null_owner_passes_when_the_main_thread_answers_with_no_unit():
+    g, line = run([skill("research"), READ], final_research=START, spec=ATTACHED)
+    assert g.passed, line
+    assert "expected=none|search-records" in line
+
+
+def test_owner_list_passes_on_its_named_unit_and_fails_on_another():
+    g, _ = run([agent("search-records"), READ], final_research=START, spec=ATTACHED)
+    assert g.checks["owner"][0]
+    g, line = run([agent("source-evaluation"), READ], final_research=START, spec=ATTACHED)
+    assert g.failed == ["owner"] and "expected none|search-records" in g.checks["owner"][1]
+
+
+def test_absent_save_fails_on_a_new_source():
+    g, line = run([READ], final_research=NEW_SOURCE, spec=ATTACHED)
+    assert g.failed == ["save"] and "1 new sources, expected none" in line
+
+
+def test_forbidden_tool_fails_on_either_thread_and_any_spelling():
+    for call in (SEARCH, {**SEARCH, "thread": "sub"},
+                 {**SEARCH, "tool": "mcp__remote-devices__Genealogy_Research__record_search"}):
+        g, line = run([READ, call], final_research=START, spec=ATTACHED)
+        assert g.failed == ["forbidden_tools"], line
+        assert "forbidden_tools: called record_search" in line
+
+
+def test_required_tool_missing_fails():
+    g, line = run([skill("research")], final_research=START, spec=ATTACHED)
+    assert g.failed == ["required_tools"] and "never called person_read" in line
+
+
+FIND = SingleAskSpec(
+    id="find-death",
+    message="Can you find his death record?",
+    expected_owner="search-records",
+    expected_save=(
+        {"section": "sources"},
+        {"section": "log", "tool": "record_search", "outcome": "negative"},
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    "extra, ok",
+    [
+        ({"sources": [{"id": "src_001"}]}, True),
+        ({"log": [{"id": "log_002", "tool": "record_search", "outcome": "negative"}]}, True),
+        ({"log": [{"id": "log_002", "tool": "record_search", "outcome": "positive"}]}, False),
+        ({"log": [{"id": "log_002", "tool": "full_text_search", "outcome": "negative"}]}, False),
+        ({}, False),
+    ],
+)
+def test_any_one_save_alternative_passes(extra, ok):
+    g, line = run([agent("search-records")], final_research=final(**extra), spec=FIND)
+    assert g.passed is ok, line
+    if not ok:
+        assert "missing new sources or missing log tool=record_search outcome=negative" in line
+
+
+def test_empty_tool_lists_pass_unchanged():
+    g, _ = run([skill("research"), skill("source-evaluation")])
+    assert g.checks["forbidden_tools"] == (True, "none called")
+    assert g.checks["required_tools"] == (True, "all called")
+
+
+def test_loader_carries_lists_and_keeps_absent_a_bool(tmp_path):
+    _, spec = load_single_ask_fixture(_write(
+        tmp_path,
+        expected_owner=[None, "search-records"],
+        expected_save=[{"section": "sources", "absent": True}],
+        forbidden_tools=["record_search"],
+        required_tools=["person_read"],
+    ))
+    assert spec.expected_owner == (None, "search-records")
+    assert spec.expected_save == ({"section": "sources", "absent": True},)
+    assert spec.forbidden_tools == ("record_search",) and spec.required_tools == ("person_read",)
+
+
+@pytest.mark.parametrize(
+    "over",
+    [
+        {"expected_owner": []},
+        {"expected_owner": [None, 3]},
+        {"expected_owner": [""]},
+        {"expected_save": []},
+        {"expected_save": [{"section": "sources"}, "log"]},
+        {"expected_save": {"section": "sources", "absent": "true"}},
+        {"expected_save": {"section": "sources", "absent": True, "tool": "x"}},
+        {"expected_save": {"section": "sources", "outcome": "negative"}},
+        {"expected_save": {"section": "log", "tool": "record_search", "outcome": "nil"}},
+        {"forbidden_tools": "record_search"},
+        {"required_tools": [""]},
+    ],
+)
+def test_bad_list_shapes_are_refused(tmp_path, over):
+    with pytest.raises(FixtureError):
+        load_single_ask_fixture(_write(tmp_path, **over))

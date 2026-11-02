@@ -46,6 +46,8 @@ DEFAULT_SINGLE_ASK_FIXTURES = REPO_ROOT / "eval" / "tests" / "e2e-single-ask"
 # tree with no exclusion, and its CI gate demands a .ann.json for every run.
 DEFAULT_SINGLE_ASK_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "e2e-single-ask"
 REQUIRED_KEYS = ("id", "message", "expected_owner", "expected_save")
+# research.schema.json `log_outcome`.
+LOG_OUTCOMES = ("positive", "negative", "partial", "error")
 # Aborts after which the turn is not a data point, so nothing is graded.
 NEVER_HAPPENED = ("mcp_unavailable",)
 UNGRADED = ("host_slept",)
@@ -53,6 +55,24 @@ UNGRADED = ("host_slept",)
 
 class FixtureError(ValueError):
     pass
+
+
+def _check_save(name: str, alt: Any) -> None:
+    if not isinstance(alt, dict) or alt.get("section") not in SAVE_SECTIONS:
+        raise FixtureError(f"{name}: expected_save.section must be one of {list(SAVE_SECTIONS)}")
+    if not isinstance(alt.get("absent", False), bool):
+        raise FixtureError(f"{name}: expected_save.absent must be true or false")
+    if alt.get("absent"):
+        if set(alt) - {"section", "absent"}:
+            raise FixtureError(f"{name}: an absent expected_save takes only `section`")
+        return
+    if alt["section"] == "log":
+        if not isinstance(alt.get("tool"), str) or not alt["tool"]:
+            raise FixtureError(f"{name}: a log expected_save needs a `tool`")
+        if "outcome" in alt and alt["outcome"] not in LOG_OUTCOMES:
+            raise FixtureError(f"{name}: expected_save.outcome must be one of {list(LOG_OUTCOMES)}")
+    elif set(alt) - {"section"}:
+        raise FixtureError(f"{name}: a sources expected_save takes only `section`")
 
 
 def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
@@ -63,13 +83,28 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
     missing = [k for k in REQUIRED_KEYS if not raw.get(k)]
     if missing:
         raise FixtureError(f"{fixture_dir.name}: fixture.json is missing {missing}")
+    owner = raw["expected_owner"]
+    if isinstance(owner, list):
+        if not owner or not all(o is None or (isinstance(o, str) and o) for o in owner):
+            raise FixtureError(
+                f"{fixture_dir.name}: an expected_owner list holds unit names or null"
+            )
+        owner = tuple(owner)
+    elif not isinstance(owner, str):
+        raise FixtureError(f"{fixture_dir.name}: expected_owner must be a name or a list")
     save = raw["expected_save"]
-    if not isinstance(save, dict) or save.get("section") not in SAVE_SECTIONS:
-        raise FixtureError(
-            f"{fixture_dir.name}: expected_save.section must be one of {list(SAVE_SECTIONS)}"
-        )
-    if save["section"] == "log" and not save.get("tool"):
-        raise FixtureError(f"{fixture_dir.name}: a log expected_save needs a `tool`")
+    alternatives = save if isinstance(save, list) else [save]
+    if not alternatives:
+        raise FixtureError(f"{fixture_dir.name}: an expected_save list must not be empty")
+    for alt in alternatives:
+        _check_save(fixture_dir.name, alt)
+    save = tuple(alternatives) if isinstance(save, list) else save
+    tool_lists = {}
+    for key in ("forbidden_tools", "required_tools"):
+        names = raw.get(key) or []
+        if not isinstance(names, list) or not all(isinstance(t, str) and t for t in names):
+            raise FixtureError(f"{fixture_dir.name}: {key} must be a list of tool names")
+        tool_lists[key] = tuple(names)
     if not isinstance(raw.get("is_plan_ask", False), bool):
         raise FixtureError(f"{fixture_dir.name}: is_plan_ask must be true or false")
     setup = raw.get("setup_units") or []
@@ -106,11 +141,12 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
     spec = SingleAskSpec(
         id=raw["id"],
         message=raw["message"],
-        expected_owner=raw["expected_owner"],
-        expected_save={k: str(v) for k, v in save.items()},
+        expected_owner=owner,
+        expected_save=save,
         is_plan_ask=raw.get("is_plan_ask", False),
         setup_units=tuple(setup),
         must_not=str(raw.get("must_not") or ""),
+        **tool_lists,
     )
     return fixture, spec
 
