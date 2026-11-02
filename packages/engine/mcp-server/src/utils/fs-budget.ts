@@ -17,6 +17,25 @@
 
 export const FS_BUDGET_WINDOW_MS = 60_000;
 
+/** An upper bound on the configured rate. The window holds one timestamp per
+ *  admitted call, so without a ceiling `GENEALOGY_FS_CALLS_PER_MINUTE=1000000000`
+ *  would grow an array of a billion numbers (~8 GB) with `shift()` going O(n).
+ *  `pg-s3-env.ts` caps `GENEALOGY_ORPHAN_SWEEP_INTERVAL_S` for the same class of
+ *  reason. No real deployment is near this; it exists to bound the array. */
+export const FS_BUDGET_MAX_PER_MINUTE = 100_000;
+
+/** Monotonic milliseconds, never wall clock.
+ *
+ *  `Date.now()` moves backwards on an NTP correction or a host suspend/resume.
+ *  A backwards step leaves every stored timestamp ahead of `now - WINDOW`, so
+ *  nothing is ever pruned and every FamilySearch call in the process is refused
+ *  for the size of the step -- and `calls` stops being sorted, so `calls[0]` is
+ *  no longer the oldest and the "try again in N" figure is wrong too.
+ *  `performance.now()` is monotonic and immune to both. */
+export function monotonicNow(): number {
+  return performance.now();
+}
+
 /** `Symbol.for` so the check still holds if two copies of this module are ever
  *  loaded, matching `isFetchTimeout`'s marker in `http.ts`. */
 const BUDGET_EXHAUSTED = Symbol.for("cowork-genealogy.fsBudget.exhausted");
@@ -39,7 +58,7 @@ export function isFsBudgetExhausted(err: unknown): boolean {
 function exhaustedError(retryAfterS: number): Error {
   const err = new Error(
     `The server's shared FamilySearch request budget is spent; ` +
-      `try again in about ${retryAfterS} seconds.`,
+      `try again in about ${retryAfterS} ${retryAfterS === 1 ? "second" : "seconds"}.`,
   );
   (err as unknown as Record<symbol, unknown>)[BUDGET_EXHAUSTED] = true;
   return err;
@@ -80,7 +99,7 @@ export function countsAgainstFsBudget(url: string): boolean {
  *  Called before any network I/O, so a refused call never reaches the wire.
  *  Every ATTEMPT counts, retries included: the budget is what the upstream
  *  sees, not what the caller meant to send. */
-export function consumeFsBudgetSlot(url: string, now: number = Date.now()): void {
+export function consumeFsBudgetSlot(url: string, now: number = monotonicNow()): void {
   if (perMinute === undefined) return;
   if (!countsAgainstFsBudget(url)) return;
 

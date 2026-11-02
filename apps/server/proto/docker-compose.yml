@@ -334,6 +334,10 @@ services:
       GENEALOGY_S3_ACCESS_KEY: proto
       GENEALOGY_S3_SECRET_KEY: protoproto
       GENEALOGY_ANCHOR_PATH: /project
+      # Process-wide limits (self-hosted beta E4). Empty means off, which is the
+      # default everywhere; set them in the shell to exercise the on state.
+      GENEALOGY_FS_CALLS_PER_MINUTE: ${GENEALOGY_FS_CALLS_PER_MINUTE:-}
+      GENEALOGY_MAX_TRANSCRIPTIONS: ${GENEALOGY_MAX_TRANSCRIPTIONS:-}
       # The per-user config, the keys src/hosted-config-env.ts reads from the env:
       # one shared process, so these are per-STACK here rather than per patron, which is
       # what a one-patron prototype wants. Without the OpenRouter key `image_transcribe`

@@ -1794,6 +1794,24 @@ describe("the transcription cap binds to image_transcribe", () => {
     await held;
   });
 
+  it("reports conflicting inputs even when every slot is held", async () => {
+    // Finding 6: a caller passing two identifiers should be told which ones
+    // conflict, not that the server is busy.
+    configureTranscriptionCap({ max: 1 });
+    let release!: () => void;
+    const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
+
+    await expect(
+      imageTranscribeTool(
+        { imageId: "004022578_00190", ark: "ark:/61903/3:1:ABC", projectPath: "/nope" },
+        LOCAL,
+      ),
+    ).rejects.toThrow(/Provide exactly one of/);
+
+    release();
+    await held;
+  });
+
   it("is off when unconfigured, so the tool is reached as before", async () => {
     // No cap configured: the wrapper calls straight through and the tool fails
     // on its own input, not on a slot.

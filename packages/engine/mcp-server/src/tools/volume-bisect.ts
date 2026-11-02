@@ -254,6 +254,28 @@ function trailingNullRun(readings: VolumeBisectReading[]): number {
   return n;
 }
 
+/** A bare image-group prefix names a whole film, which concatenates bound
+ *  books, so year is not monotone across it and a bisect converges on the
+ *  wrong book with a plausible reading at every step.
+ *
+ *  Pure, so it runs in the exported wrapper before a slot is taken and again
+ *  in the body, which stays safe to call directly. */
+function assertSplitGroup(input: VolumeBisectInput): void {
+  const groupName = (input.imageGroupNumber ?? "").trim();
+  if (!SPLIT_GROUP.test(groupName)) {
+    throw new Error(
+      `"${groupName}" is not a sub-volume name. A bare image-group prefix names a whole ` +
+        `film, which concatenates bound books — year is not monotone across it, so a ` +
+        `bisect converges on the wrong book with a plausible reading at every step. ` +
+        `(1) A split film: call volume_search for this film and pass one of its Natural ` +
+        `Group names (e.g. 004516861_001_M9S4-SQB). (2) You have an item number, e.g. a ` +
+        `citation "DGS 004528134, Item 5": call image_search with this film number and ` +
+        `item, and pass the imageGroupNumber it returns. (3) volume_search returned this ` +
+        `bare number itself: the film is not split, and volume_bisect cannot take it.`,
+    );
+  }
+}
+
 /** Holds one transcription slot for the whole call (self-hosted beta E4).
  *
  * Same shape as image_transcribe's: a thin wrapper, so the slot is taken
@@ -263,6 +285,10 @@ export async function volumeBisectTool(
   input: VolumeBisectInput,
   principal: Principal,
 ): Promise<VolumeBisectResult> {
+  // The group name is checked BEFORE the slot: a malformed name costs no OCR,
+  // and refusing it with "the server is busy" hides the one error the caller
+  // can act on, so it retries the same bad input.
+  assertSplitGroup(input);
   return withTranscriptionSlot(() => volumeBisectToolInner(input, principal));
 }
 

@@ -106,28 +106,59 @@ function captureIdFor(ref: string): string {
   return `capture:${base.replace(/\.[A-Za-z0-9]+$/, "")}`;
 }
 
+/** Exactly one input form, checked HERE: `resolveFsImageInput` is shared with
+ *  image_read and knows only the three FamilySearch shapes.
+ *
+ *  Pure and idempotent, so it runs in the exported wrapper (before a slot is
+ *  taken, so a malformed call is told what conflicts rather than that the
+ *  server is busy) and again in the body, which stays safe to call directly. */
+function assertOneImageForm(input: ImageTranscribeInput): void {
+  const forms = (["imageId", "ark", "memoryArtifactUrl", "file"] as const).filter(
+    (k) => typeof input[k] === "string" && input[k] !== "",
+  );
+  if (forms.length === 0) {
+    throw new Error(
+      "image_transcribe requires one of imageId, ark, memoryArtifactUrl, or file " +
+        `(a project-relative path to an uploaded image or PDF, with projectPath). ${receivedKeys(input)}`,
+    );
+  }
+  if (forms.length > 1) {
+    throw new Error(
+      `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not ${forms.join(" and ")}.`,
+    );
+  }
+}
+
 /**
  * OCR a FamilySearch page scan via a hosted VLM (OpenRouter, default
  * Gemini Flash) and return the transcription as text. The image bytes go
  * host-side → OpenRouter and never cross the MCP transport, so there is no
  * size cap (unlike image_read). See docs/specs/image-transcribe-tool-spec.md.
+ *
+ * Holds one transcription slot for the whole call (`GENEALOGY_MAX_TRANSCRIPTIONS`,
+ * self-hosted beta E4). A thin wrapper rather than a `try`/`finally` around the
+ * body: the slot then covers EVERY caller of this function — `person_read`'s
+ * memories phase included, which calls it directly rather than through the MCP
+ * wrapper — with no re-indent of the 320-line body and no edit at the line
+ * issue #3996 also works on. Off unless configured, in which case
+ * `withTranscriptionSlot` calls straight through.
+ *
+ * INPUT SHAPE IS VALIDATED FIRST, before the slot: a caller who passes two
+ * conflicting identifiers should be told which ones conflict, not that the
+ * server is busy — otherwise it retries the same malformed call forever.
  */
-/** Holds one transcription slot for the whole call (self-hosted beta E4).
- *
- * A thin wrapper rather than a `try`/`finally` around the body: the slot then
- * covers EVERY caller of this function, `person_read`'s memories phase
- * (person-read.ts) included, with no re-indent of the 320-line body and no
- * edit at line ~227 where issue #3996 also works. Off unless configured, in
- * which case `withTranscriptionSlot` calls straight through.
- *
- * Taken before the body runs, so before `checkImageBrowseCap` and before any
- * image bytes are read, as E4 requires. */
 export async function imageTranscribeTool(
   input: ImageTranscribeInput,
   principal: Principal,
   opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
 ): Promise<ImageTranscribeResult | NoProjectResult> {
-  return withTranscriptionSlot(() => imageTranscribeToolInner(input, principal, opts));
+  // Fold BEFORE validating: `imageArk` becomes `ark` here, and checking the
+  // unfolded input would read a valid imageArk call as "no image input".
+  // Folding is idempotent, so the body's own fold is still correct for a
+  // direct call to the inner function.
+  const folded = foldImageArkInput(input, "image_transcribe");
+  assertOneImageForm(folded);
+  return withTranscriptionSlot(() => imageTranscribeToolInner(folded, principal, opts));
 }
 
 async function imageTranscribeToolInner(
@@ -144,22 +175,7 @@ async function imageTranscribeToolInner(
   opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
 ): Promise<ImageTranscribeResult | NoProjectResult> {
   input = foldImageArkInput(input, "image_transcribe");
-  // Exactly one input form, checked HERE: `resolveFsImageInput` is shared with
-  // image_read and knows only the three FamilySearch shapes.
-  const forms = (["imageId", "ark", "memoryArtifactUrl", "file"] as const).filter(
-    (k) => typeof input[k] === "string" && input[k] !== "",
-  );
-  if (forms.length === 0) {
-    throw new Error(
-      "image_transcribe requires one of imageId, ark, memoryArtifactUrl, or file " +
-        `(a project-relative path to an uploaded image or PDF, with projectPath). ${receivedKeys(input)}`,
-    );
-  }
-  if (forms.length > 1) {
-    throw new Error(
-      `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not ${forms.join(" and ")}.`,
-    );
-  }
+  assertOneImageForm(input);
 
   let bytes: Uint8Array;
   let contentType: string;

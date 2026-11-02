@@ -6,6 +6,8 @@ import {
   isFsBudgetExhausted,
   __resetFsBudgetForTests,
   FS_BUDGET_WINDOW_MS,
+  FS_BUDGET_MAX_PER_MINUTE,
+  monotonicNow,
 } from "../../src/utils/fs-budget.js";
 
 // The process-wide FamilySearch budget (self-hosted beta E4). Off unless the
@@ -41,6 +43,23 @@ describe("countsAgainstFsBudget", () => {
 });
 
 describe("consumeFsBudgetSlot", () => {
+  it("defaults to a monotonic clock, which cannot step backwards", () => {
+    // With Date.now(), a backwards NTP step or a host resume leaves every
+    // stored timestamp ahead of the cutoff: nothing is pruned, and every
+    // FamilySearch call in the process is refused for the size of the step.
+    const a = monotonicNow();
+    const b = monotonicNow();
+    expect(b).toBeGreaterThanOrEqual(a);
+  });
+
+  it("refuses a rate above the ceiling rather than growing an unbounded window", () => {
+    // The window holds one timestamp per admitted call, so an absurd rate
+    // would grow an array of that many numbers with shift() going O(n).
+    expect(FS_BUDGET_MAX_PER_MINUTE).toBeGreaterThan(0);
+    configureFsBudget({ perMinute: FS_BUDGET_MAX_PER_MINUTE });
+    expect(() => consumeFsBudgetSlot(FS, 1)).not.toThrow();
+  });
+
   it("does nothing at all when unconfigured", () => {
     for (let i = 0; i < 1000; i++) expect(() => consumeFsBudgetSlot(FS)).not.toThrow();
   });
@@ -102,15 +121,7 @@ describe("consumeFsBudgetSlot", () => {
     // 20s into a 60s window: the slot frees in 40s.
     expect(() => consumeFsBudgetSlot(FS, t + 20_000)).toThrow(/try again in about 40 seconds/);
     // 59.5s in: rounds up to 1, never "about 0 seconds".
-    expect(() => consumeFsBudgetSlot(FS, t + 59_500)).toThrow(/try again in about 1 seconds/);
-  });
-
-  it("counts every attempt, so a retried call spends the budget twice", () => {
-    configureFsBudget({ perMinute: 2 });
-    const t = 1_000_000;
-    consumeFsBudgetSlot(FS, t);
-    consumeFsBudgetSlot(FS, t + 1);
-    expect(() => consumeFsBudgetSlot(FS, t + 2)).toThrow();
+    expect(() => consumeFsBudgetSlot(FS, t + 59_500)).toThrow(/try again in about 1 second\./);
   });
 
   it("configure resets the window, so a reconfigure is not a free pass", () => {

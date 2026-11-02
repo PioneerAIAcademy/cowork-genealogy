@@ -33,6 +33,15 @@
 // request and answers 503 while either is unreachable, never exiting; `GET /livez`
 // probes neither and answers 200.
 //
+// Two process-wide limits are read here too (store/limits-env.ts, self-hosted
+// beta E4), each OFF unless set, so an unset environment behaves as it always
+// has: GENEALOGY_FS_CALLS_PER_MINUTE, a sliding-60s FamilySearch request budget
+// for the whole process, and GENEALOGY_MAX_TRANSCRIPTIONS, a cap on concurrent
+// transcriptions (set it at 5 or above -- person_read transcribes five memories
+// at a time). Either set to anything but a whole number in range joins the same
+// invalid-value line and exit 2 above; otherwise one stderr line names each, or
+// says "off".
+//
 // The process also runs the S3 orphan sweep (store/s3-orphan-sweep.ts, U19):
 // GENEALOGY_ORPHAN_SWEEP_INTERVAL_S (3600; 0 = off; at most 2147483, setTimeout's
 // limit) and GENEALOGY_ORPHAN_GRACE_S
@@ -92,16 +101,19 @@ const { intervalS, graceS } = storeEnv.orphanSweep;
 process.stderr.write(
   intervalS > 0 ? `orphan sweep: every ${intervalS} s, grace ${graceS} s\n` : "orphan sweep: off\n",
 );
-configureFsBudget({ perMinute: limitsEnv.fsCallsPerMinute });
+// `invalid` was non-empty above and exited 2, so neither value is `null` here.
+// Narrowed explicitly rather than cast: this is the point the parser's three
+// states collapse to two, and it should be visible.
+const fsPerMinute = limitsEnv.fsCallsPerMinute ?? undefined;
+const maxTranscriptions = limitsEnv.maxTranscriptions ?? undefined;
+configureFsBudget({ perMinute: fsPerMinute });
 process.stderr.write(
-  limitsEnv.fsCallsPerMinute !== undefined
-    ? `fs budget: ${limitsEnv.fsCallsPerMinute} calls/min\n`
-    : "fs budget: off\n",
+  fsPerMinute !== undefined ? `fs budget: ${fsPerMinute} calls/min\n` : "fs budget: off\n",
 );
-configureTranscriptionCap({ max: limitsEnv.maxTranscriptions });
+configureTranscriptionCap({ max: maxTranscriptions });
 process.stderr.write(
-  limitsEnv.maxTranscriptions !== undefined
-    ? `transcription cap: ${limitsEnv.maxTranscriptions} at a time\n`
+  maxTranscriptions !== undefined
+    ? `transcription cap: ${maxTranscriptions} at a time\n`
     : "transcription cap: off\n",
 );
 const holdLine = debugHoldStartupLine(process.env);

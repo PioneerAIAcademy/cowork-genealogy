@@ -16,6 +16,7 @@ import {
   UNPREFIXED_IMAGE_ID_RE,
 } from "./ark.js";
 import { placeSegments } from "./place-resolver.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 
 export const GROUP_SERVICE_BASE =
   "https://sg30p0.familysearch.org/service/records/rms/group-service";
@@ -243,7 +244,9 @@ export async function imageGroupPlace(
     if (film === null) return null;
     const groupFilm = film;
     return await cached(groupPlaces, groupFilm, () => lookUpGroupPlace(groupFilm, principal));
-  } catch {
+  } catch (err) {
+    // Not "this film has no place" -- the server is rate-limited.
+    if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
 }

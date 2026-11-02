@@ -612,6 +612,26 @@ describe("fetchWithRetry does not retry a budget refusal", () => {
     await expect(fetchWithRetry(FS, {}, 1000, fastOpts)).rejects.toThrow(/budget is spent/);
   });
 
+  // EVERY ATTEMPT counts, retries included -- the budget is what the upstream
+  // sees, not what the caller meant to send. This belongs here and not in
+  // fs-budget.test.ts, which cannot drive a retry: a version of this assertion
+  // written there was three bare consume calls and could not fail.
+  it("spends one slot PER ATTEMPT, so a retried call costs two", async () => {
+    configureFsBudget({ perMinute: 2 });
+    // Attempt 1 fails at the socket (retryable), attempt 2 succeeds. Two
+    // attempts, so both slots are gone.
+    mockFetch.mockRejectedValueOnce(socketFetchFailure());
+    mockFetch.mockResolvedValueOnce(mockResponse(200));
+
+    const res = await fetchWithRetry(FS, {}, 1000, fastOpts);
+    expect(res.status).toBe(200);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    // A third call has no slot left -- which is only true if the FAILED
+    // attempt consumed one.
+    await expect(fetchWithTimeout(FS)).rejects.toThrow(/budget is spent/);
+  });
+
   it("still retries an ordinary transport failure when the budget is off", async () => {
     mockFetch.mockRejectedValueOnce(socketFetchFailure());
     mockFetch.mockResolvedValueOnce(mockResponse(200));

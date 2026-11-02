@@ -50,8 +50,9 @@ describe("readLimitsEnv", () => {
   ])("refuses %s rather than reading it as something else", (raw) => {
     const r = readLimitsEnv({ GENEALOGY_FS_CALLS_PER_MINUTE: raw });
     expect(r.invalid).toEqual(["GENEALOGY_FS_CALLS_PER_MINUTE"]);
-    // The value is NOT handed on as a working limit.
-    expect(r.fsCallsPerMinute).toBeUndefined();
+    // NOT handed on as a working limit -- and specifically `null`, not
+    // `undefined`: the caller must be unable to confuse "invalid" with "off".
+    expect(r.fsCallsPerMinute).toBeNull();
   });
 
   // The three-state point, and the reason this does not reuse pg-s3-env's
@@ -62,10 +63,21 @@ describe("readLimitsEnv", () => {
     const unset = readLimitsEnv({});
     const bad = readLimitsEnv({ GENEALOGY_FS_CALLS_PER_MINUTE: "abc" });
     expect(unset.fsCallsPerMinute).toBeUndefined();
-    expect(bad.fsCallsPerMinute).toBeUndefined();
+    // The whole point: a different value, so a caller that forgets `invalid`
+    // still cannot pass this to configureFsBudget as if it were "off".
+    expect(bad.fsCallsPerMinute).toBeNull();
     // Same value, different verdict -- that is what `invalid` carries.
     expect(unset.invalid).toEqual([]);
     expect(bad.invalid).toEqual(["GENEALOGY_FS_CALLS_PER_MINUTE"]);
+  });
+
+  it("refuses a value above the ceiling", () => {
+    // The budget stores one timestamp per admitted call, so an absurd rate
+    // would grow an unbounded array; pg-s3-env caps its interval for the same
+    // class of reason.
+    const r = readLimitsEnv({ GENEALOGY_FS_CALLS_PER_MINUTE: "1000000000" });
+    expect(r.invalid).toEqual(["GENEALOGY_FS_CALLS_PER_MINUTE"]);
+    expect(r.fsCallsPerMinute).toBeNull();
   });
 
   it("names every invalid variable, not just the first", () => {

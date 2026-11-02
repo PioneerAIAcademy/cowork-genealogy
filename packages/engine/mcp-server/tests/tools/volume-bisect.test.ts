@@ -607,15 +607,35 @@ describe("the transcription cap binds to volume_bisect", () => {
     let release!: () => void;
     const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
 
-    await expect(volumeBisectTool({ imageGroupNumber: "004022578", targetYear: 1900 } as never, LOCAL)).rejects.toThrow(/already running 1 transcriptions, its limit/);
+    await expect(volumeBisectTool({ imageGroupNumber: "004516861_001_M9S4-SQB", targetYear: 1900 } as never, LOCAL)).rejects.toThrow(/already running 1 transcriptions, its limit/);
 
     release();
     await held;
   });
 
-  it("is off when unconfigured, so the tool is reached as before", async () => {
-    // No cap configured: the wrapper calls straight through and the tool fails
-    // on its own input, not on a slot.
-    await expect(volumeBisectTool({ imageGroupNumber: "004022578", targetYear: 1900 } as never, LOCAL)).rejects.not.toThrow(/transcriptions, its limit/);
+  it("reports a malformed group name even when every slot is held", async () => {
+    // Finding 6: the slot used to wrap the whole call, so a call that costs no
+    // OCR at all was told "the server is busy" and the caller retried the same
+    // bad input forever. Validation now runs before the slot.
+    configureTranscriptionCap({ max: 1 });
+    let release!: () => void;
+    const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
+
+    await expect(
+      volumeBisectTool({ imageGroupNumber: "004022578", targetYear: 1900 } as never, LOCAL),
+    ).rejects.toThrow(/is not a sub-volume name/);
+
+    release();
+    await held;
+  });
+
+  it("is off when unconfigured, so the cap never fires", async () => {
+    // No cap configured: the wrapper calls straight through. Whatever the tool
+    // then does -- resolve or fail on its own input -- it must not be the cap.
+    const outcome = await volumeBisectTool(
+      { imageGroupNumber: "004516861_001_M9S4-SQB", targetYear: 1900 } as never,
+      LOCAL,
+    ).then(() => null, (e: unknown) => String(e));
+    if (outcome !== null) expect(outcome).not.toMatch(/transcriptions, its limit/);
   });
 });
