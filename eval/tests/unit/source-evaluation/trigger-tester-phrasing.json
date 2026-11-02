@@ -16,6 +16,9 @@
     "delegation": "Can you evaluate the sources on this profile and look for errors? KD96-TV2.\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-quality"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "person-read-hole-attached-sources",
     "record-read-hole-1900-census",
