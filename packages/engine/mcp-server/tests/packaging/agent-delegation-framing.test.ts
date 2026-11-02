@@ -315,7 +315,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two or when the question or request the search serves asks who the subject's parents are), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "agent",
@@ -347,7 +347,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two or when the question or request the search serves asks who the subject's parents are), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "agent",
@@ -375,7 +375,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two or when the question or request the search serves asks who the subject's parents are), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
       },
       {
         side: "agent",

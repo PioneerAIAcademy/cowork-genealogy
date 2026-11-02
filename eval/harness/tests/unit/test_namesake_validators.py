@@ -327,9 +327,13 @@ def tree(*parents):
     }
 
 
-def before(*parents):
-    plans = [{"id": "pl_001", "status": "active", "items": [ITEM]}]
-    return {"tree_gedcomx_json": tree(*parents), "research_json": {"project": {"subject_person_ids": ["I1"]}, "plans": plans}}
+def before(*parents, question=None):
+    plan = {"id": "pl_001", "status": "active", "items": [ITEM]}
+    research_json = {"project": {"subject_person_ids": ["I1"]}, "plans": [plan]}
+    if question is not None:
+        plan["question_id"] = "q_001"
+        research_json["questions"] = [{"id": "q_001", "question": question}]
+    return {"tree_gedcomx_json": tree(*parents), "research_json": research_json}
 
 
 def records_spawn(subject, *, indent=2):
@@ -380,6 +384,52 @@ def test_parents_pass_absent_on_three():
     research.test_delegation_hands_plan_item_verbatim(
         RTEST, [records_spawn({"subjectId": "I1", "names": NAMES})], before("I2", "I3", "I4")
     )
+
+
+PTEST = {"tags": [*RTEST["tags"], "parents-question"]}
+ASKS = "Who were the parents of Anders Unna?"
+
+
+def test_parents_question_passes_with_no_parents_handed():
+    research.test_delegation_hands_plan_item_verbatim(
+        PTEST, [records_spawn({"subjectId": "I1", "names": NAMES})], before("I2", "I3", question=ASKS)
+    )
+
+
+def test_parents_question_passes_on_an_empty_list():
+    research.test_delegation_hands_plan_item_verbatim(
+        PTEST, [records_spawn({"subjectId": "I1", "names": NAMES, "parents": []})], before("I2", "I3", question=ASKS)
+    )
+
+
+def test_parents_question_rejects_the_tree_parents_handed():
+    with pytest.raises(AssertionError, match="on a search for his parents; leave it out"):
+        research.test_delegation_hands_plan_item_verbatim(
+            PTEST, [records_spawn({"subjectId": "I1", "names": NAMES, "parents": TWO})], before("I2", "I3", question=ASKS)
+        )
+
+
+def test_parents_question_rejects_one_parent_handed():
+    with pytest.raises(AssertionError, match="on a search for his parents; leave it out"):
+        research.test_delegation_hands_plan_item_verbatim(
+            PTEST, [records_spawn({"subjectId": "I1", "names": NAMES, "parents": [TWO[0]]})], before("I2", question=ASKS)
+        )
+
+
+def test_parents_question_tag_on_a_question_asking_no_parents_is_drift():
+    with pytest.raises(AssertionError, match="Scenario drift: parents-question is set"):
+        research.test_delegation_hands_plan_item_verbatim(
+            PTEST,
+            [records_spawn({"subjectId": "I1", "names": NAMES})],
+            before("I2", "I3", question="Whom did Anders Unna marry?"),
+        )
+
+
+def test_untagged_parents_question_still_owes_the_tree_parents():
+    with pytest.raises(AssertionError, match=r"names \[\], not I1's parents"):
+        research.test_delegation_hands_plan_item_verbatim(
+            RTEST, [records_spawn({"subjectId": "I1", "names": NAMES})], before("I2", "I3", question=ASKS)
+        )
 
 
 # --- research: search-images is handed the subject ---------------------------

@@ -485,9 +485,8 @@ another spouse — call `research_append` once, after steps 7 and 8:
 `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }`
 — `person_id` the `subjectId`; `name`, `place` and `time_period` as the hit gives
 them; `record_ids` the hit's `id`, verbatim; `log_entry_ids` the step 7 log id;
-`notes` the ground. Other parents are no ground when `subject` has no `parents`,
-or when the search is for the subject's parents (the plan item's `rationale` or
-`looking_for` says so). Never record one who may still be the subject. If the
+`notes` the ground. Other parents are no ground when `subject` has no `parents`.
+Never record one who may still be the subject. If the
 call returns a warning listing links, put their `pe_` ids in a
 `Hand-back: person-evidence` line (Return contract).
 

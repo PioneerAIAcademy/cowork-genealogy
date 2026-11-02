@@ -16,7 +16,7 @@
     ]
   },
   "input": {
-    "delegation": "Execute plan item pli_006 by browsing the digitized Schuylkill County probate volume for Thomas Flynn's estate papers. Read images 007936749_00011 through 007936749_00013 and log the browse.\n\nplanItemId: pli_006\nimageGroupNumber: 007936749\nstandardPlace: Schuylkill, Pennsylvania, United States\nlooking_for: Thomas Flynn's estate papers\nprojectPath: <workspace>\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Patrick\",\n      \"surname\": \"Flynn\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"about 1845\",\n    \"place\": \"Ireland\"\n  },\n  \"death\": {\n    \"date\": \"12 March 1908\",\n    \"place\": \"Schuylkill County, Pennsylvania\"\n  },\n  \"parents\": [\n    {\n      \"personId\": \"I2\",\n      \"name\": \"Thomas Flynn\"\n    }\n  ]\n}",
+    "delegation": "Execute plan item pli_006 by browsing the digitized Schuylkill County probate volume for Thomas Flynn's estate papers. Read images 007936749_00011 through 007936749_00013 and log the browse.\n\nplanItemId: pli_006\nimageGroupNumber: 007936749\nstandardPlace: Schuylkill, Pennsylvania, United States\nlooking_for: Thomas Flynn's estate papers\nprojectPath: <workspace>\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Patrick\",\n      \"surname\": \"Flynn\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"about 1845\",\n    \"place\": \"Ireland\"\n  },\n  \"death\": {\n    \"date\": \"12 March 1908\",\n    \"place\": \"Schuylkill County, Pennsylvania\"\n  }\n}",
     "scenario": "mid-research-flynn"
   },
   "mcp_fixtures": [

@@ -1,6 +1,6 @@
 {
   "tool": "record_search",
-  "description": "record_search for a Patrick Flynn baptism returns two 1845 baptisms in Aghamore, County Mayo: Q7FB-T45, son of Thomas Flynn and Mary Gallagher (12 March 1845), and Q7FB-M45, son of Michael Flynn and Ellen Walsh (3 June 1845). The subject, Patrick Flynn (I1, born about 1845 in Ireland), has one parent in the tree, Thomas (I2), and the search is for his parents (pli_007, q_001): Thomas is the hypothesis under test, so neither baptism is tied or ruled out and the two are a pool. Feeds ut_search_records_031 (issue #3363, PR 3). Matched on surname alone; record-search-flynn-any-variant-no-results follows it for the variant spellings.",
+  "description": "record_search for a Patrick Flynn baptism returns two 1845 baptisms in Aghamore, County Mayo: Q7FB-T45, son of Thomas Flynn and Mary Gallagher (12 March 1845), and Q7FB-M45, son of Michael Flynn and Ellen Walsh (3 June 1845). The subject, Patrick Flynn (I1, born about 1845 in Ireland), has one parent in the tree, Thomas (I2), but the search is for his parents (pli_007, q_001), so the delegation names none: neither baptism is tied or ruled out and the two are a pool. Feeds ut_search_records_031 (issue #3363, PR 3). Matched on surname alone; record-search-flynn-any-variant-no-results follows it for the variant spellings.",
   "args": {
     "surname": "~Flynn"
   },

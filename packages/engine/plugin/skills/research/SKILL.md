@@ -396,7 +396,8 @@ it by name.
    years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`, and the
    `planItemId` for `@plugin:search-full-text`, and the subject you already hold as a `subject:` JSON
    block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in
-   the subject's `project_context` `parentIds`, left out when it has more than two), for
+   the subject's `project_context` `parentIds`, left out when it has more than two or when the
+   question or request the search serves asks who the subject's parents are), for
    `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion` also take `wrapUp: yes`, and

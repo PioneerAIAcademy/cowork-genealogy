@@ -497,18 +497,16 @@ candidates; you still confirm the top ones:
   **Record each same-named person you conclude is not the subject** (Step 6b),
   whatever the search was for (a search for a relative that turns up a person
   of the subject's name counts), on a stated ground: the tool's
-  `birthYearConflict`, a precise date that cannot be his, other parents or
-  another spouse, or a second candidate when another result is the subject.
-  The subject's parents are `subject.parents`; other parents are no ground when
-  `subject` arrived without them. When the search is for the subject's parents
-  (the plan item's `rationale` says so), they are neither a ground nor a tie: a
-  result naming them is not thereby the subject.
+  `birthYearConflict`, a precise date that cannot be his, other parents than
+  `subject.parents` or another spouse, or a second candidate when another result
+  is the subject. Other parents are no ground when `subject` arrived without
+  `parents`.
   Anywhere in the jurisdiction the search covered counts. An age that rules him
   out never drops him. Never record a candidate who may still be the subject.
   **When two or more people of the subject's name turn up who cannot all be one
   person** (different parents, or dates that cannot be one life), none tied to
   the subject and none ruled out on a stated ground, record them as one pool
-  (Step 6b).
+  (Step 6b) and present each as `needs-review`, none as the match.
   **This gate is not special to the namesake case — it applies to every top
   match.** Extraction may be offered only when the top match clears
   `needs-review` on every check above (logical cross-check, name/date

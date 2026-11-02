@@ -389,9 +389,8 @@ once, after steps 6 and 7: `section: "namesakes"`, `op: "append"`,
 gives them; `record_ids` the page's `imageId` exactly as you passed it to
 `image_transcribe` (or the `ark`, if you read the page by `ark`), never its
 `imageRef` or `staged.resultsRef`; `log_entry_ids` the step 6 log id; `notes`
-the ground. Other parents are no ground when `subject` has no `parents`, or when
-the browse is for the subject's parents (the plan item's `rationale` or
-`looking_for` says so). Never record one who may still be the subject. If the
+the ground. Other parents are no ground when `subject` has no `parents`. Never
+record one who may still be the subject. If the
 call returns a warning listing links, put their `pe_` ids in a
 `Hand-back: person-evidence` line (Return contract).
 

@@ -1104,8 +1104,11 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
     prompts = _spawn_prompts(builtin_tool_calls, expected)
     assert prompts, "No recorded spawn of 'search-records' to assert a delegation on."
     research = before_state.get("research_json") or {}
+    parents_question = _PARENTS_QUESTION_TAG in (test.get("tags") or [])
+    question_text = {q.get("id"): q.get("question") or "" for q in research.get("questions", []) if isinstance(q, dict)}
     items = []
     plan_of = {}
+    question_of = {}
     for plan in research.get("plans", []):
         if plan.get("status") != "active":
             continue
@@ -1113,6 +1116,7 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
             if item.get("status") in ("planned", "in_progress"):
                 items.append(item)
                 plan_of[item["id"]] = plan["id"]
+                question_of[item["id"]] = plan.get("question_id")
     assert items, "Scenario drift: no active plan item to hand over."
     decoder = json.JSONDecoder()
     problems = []
@@ -1148,7 +1152,13 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
         if problem:
             problems.append(f"{problem} for {item['id']}")
             continue
-        problems.extend(_handed_parents_problems(subject, tree))
+        if parents_question:
+            qid = question_of.get(item["id"])
+            assert "parent" in question_text.get(qid, "").lower(), (
+                f"Scenario drift: {_PARENTS_QUESTION_TAG} is set, but {item['id']} serves "
+                f"{qid!r}, which does not ask for parents: {question_text.get(qid, '')!r}"
+            )
+        problems.extend(_handed_parents_problems(subject, tree, parents_question))
     assert not problems, "; ".join(problems)
 
 
@@ -1174,11 +1184,18 @@ def _handed_subject(prompt: str, tree: dict, research: dict) -> tuple[dict | Non
     return subject, None
 
 
-def _handed_parents_problems(subject: dict, tree: dict) -> list[str]:
+_PARENTS_QUESTION_TAG = "parents-question"
+
+
+def _handed_parents_problems(subject: dict, tree: dict, parents_question: bool = False) -> list[str]:
     """The subject block names the subject's parents in the tree when it has one
-    or two, and none when it has more than two: two candidate couples mean the
-    parents are themselves in question (research/SKILL.md)."""
+    or two, and none when it has more than two (two candidate couples mean the
+    parents are themselves in question) or when the search serves a question
+    asking who they are, since there they are what the search tests
+    (research/SKILL.md)."""
     sid = subject.get("subjectId")
+    if parents_question:
+        return [f"subject.parents is handed for {sid} on a search for his parents; leave it out"] if subject.get("parents") else []
     parents = sorted(
         {
             r.get("parent")

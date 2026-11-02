@@ -1026,10 +1026,10 @@ def test_namesake_pool_row_recorded(before_state, after_state, test):
     `record_ids` empty, since either may be the subject, `notes` starting `pool:`
     and naming both records, citing the search that met them.
 
-    The scenario's search is for the subject's parents, so the parents in the
-    `subject` block are the hypothesis under test, not a ground: a second row
-    marking the son of Michael as a namesake on the other-parents ground fails
-    the one-row count.
+    The scenario's search is for the subject's parents, so the router hands the
+    `subject` block without them and neither baptism is tied or ruled out: a
+    second row marking the son of Michael as a namesake on the other-parents
+    ground fails the one-row count.
     """
     if "namesake-pool-row" not in test.get("tags", []):
         pytest.skip("not a namesake-pool-row scenario")
