@@ -1,0 +1,23 @@
+{
+  "id": "evaluate-sources-moses-watrous",
+  "message": "For PID GM5J-6WX, Moses was old enough to serve in the Civil War. But there are no sources that claim that. His birth place on his profile also doesn't match the rest of the family. Can you evaluate the sources linked to resolve his birth place and create a plan for finding out if he did serve in the Civil War?",
+  "expected_owner": "source-evaluation",
+  "expected_save": {
+    "section": "log",
+    "tool": "source_evaluation"
+  },
+  "is_plan_ask": false,
+  "setup_units": [],
+  "must_not": "Start a research job (question-selection), or write the plan this turn: it is offered as the next step (\"Continue with ...?\"), not run.",
+  "model": {
+    "agent": "claude-sonnet-4-6"
+  },
+  "caps": {
+    "wall_clock_seconds": 2400,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 150,
+    "max_turns": 150,
+    "max_cost_usd": 6.0
+  }
+}

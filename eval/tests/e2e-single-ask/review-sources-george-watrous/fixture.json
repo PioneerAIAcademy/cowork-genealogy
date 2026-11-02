@@ -1,6 +1,6 @@
 {
-  "id": "review-sources-kenneth-quass",
-  "message": "Review the sources attached to KNS4-P6W.",
+  "id": "review-sources-george-watrous",
+  "message": "Review the sources attached to KNDB-F71.",
   "expected_owner": "source-evaluation",
   "expected_save": {
     "section": "log",
@@ -13,11 +13,11 @@
     "agent": "claude-sonnet-4-6"
   },
   "caps": {
-    "wall_clock_seconds": 1200,
+    "wall_clock_seconds": 2400,
     "inactivity_seconds": 600,
     "progress_stall_seconds": 600,
-    "tool_calls": 60,
-    "max_turns": 60,
-    "max_cost_usd": 3.0
+    "tool_calls": 150,
+    "max_turns": 150,
+    "max_cost_usd": 6.0
   }
 }

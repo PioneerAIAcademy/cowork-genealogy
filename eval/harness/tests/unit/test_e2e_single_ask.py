@@ -221,7 +221,7 @@ def test_every_committed_fixture_loads():
 
 
 def _write(tmp_path: Path, **over) -> Path:
-    src = DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-kenneth-quass"
+    src = DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-george-watrous"
     raw = json.loads((src / "fixture.json").read_text(encoding="utf-8"))
     raw.update(over)
     d = tmp_path / str(raw.get("id") or "f")
@@ -341,7 +341,7 @@ def test_run_single_ask_turn_turns_the_mode_on(monkeypatch, tmp_path):
     monkeypatch.setattr(orch, "collect_subagents", lambda ws: ([], "ok"))
     monkeypatch.setattr(orch, "backfill_background_tool_calls", lambda ws, tc: None)
     monkeypatch.setattr(orch, "merge_whole_run_usage", lambda u, s: ({}, 0.42))
-    fixture, _ = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-kenneth-quass")
+    fixture, _ = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-george-watrous")
     record = asyncio.run(
         orch.run_single_ask_turn(fixture=fixture, message="M", workspace=tmp_path)
     )
@@ -521,7 +521,7 @@ def test_the_record_keeps_subagent_summaries(monkeypatch, tmp_path):
     monkeypatch.setattr(orch, "collect_subagents", lambda ws: ([{"agent_type": "source-evaluation"}], "ok"))
     monkeypatch.setattr(orch, "backfill_background_tool_calls", lambda ws, tc: None)
     monkeypatch.setattr(orch, "merge_whole_run_usage", lambda u, s: ({}, 0.1))
-    fixture, _ = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-kenneth-quass")
+    fixture, _ = load_single_ask_fixture(DEFAULT_SINGLE_ASK_FIXTURES / "review-sources-george-watrous")
     record = asyncio.run(orch.run_single_ask_turn(fixture=fixture, message="M", workspace=tmp_path))
     assert record["subagents"] == [{"agent_type": "source-evaluation"}]
 
