@@ -13,7 +13,8 @@ description: >-
   already attached or every match whatever its status (use tree-edit), to
   extract facts from an accepted record (use extraction), or to link a
   record to a person (use person-evidence).
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
