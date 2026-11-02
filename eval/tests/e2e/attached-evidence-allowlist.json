@@ -42,6 +42,11 @@
     "F5YK-84C": "The same, in son John's 1872 Ardfinnan birth entry. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q.",
     "MZF2-Y55": "The Saratoga Thomas's 1880 census, the New York evidence the rejection rests on. f1 (avoid) and f2 turn on rejecting the Ballylooby hint 6267-W22Q."
   },
+  "umbelina-azevedo-death": {
+    "77F3-D8T2": "Daughter Maura Umbelina Ferreira's 1978 death registration (Duque de Caxias), naming Umbelina Maria de Azevedo as her mother and giving a birth year of 1918; attached to Maura and to the subject's ParentChild relationship with her. Disproving evidence for f1 (avoid: the 14 Nov 1910 hint death 7975-85ZM), already in the tree. f2 turns on searching for a later death, which no attached record answers.",
+    "794X-QD3Z": "Daughter Maria Glória Ferreira's 1982 death (Rio de Janeiro), naming Umbelina Maria de Azevedo as her mother and giving a birth year of 1912; attached to Maria Glória and to the subject's ParentChild relationship with her. Disproving evidence for f1 (avoid: the 14 Nov 1910 hint death 7975-85ZM), already in the tree. f2 turns on searching for a later death, which no attached record answers.",
+    "79FM-TFZM": "Daughter Florita Umbelina dos Santos's 1980 death (Rio de Janeiro), naming Umbelina Maria Pariz de Azevedo as her mother and giving a birth year of 1915; attached to Florita and to the subject's ParentChild relationship with her. Disproving evidence for f1 (avoid: the 14 Nov 1910 hint death 7975-85ZM), already in the tree. f2 turns on searching for a later death, which no attached record answers."
+  },
   "william-sloan-spouse": {
     "MWL7-5DR": "The subject's own already-attached 1891 census (tree source 9GV7-5YX), placing William W Sloan married in Blyth, Huron the same year the hint groom married in Toronto. f1 (avoid) cites it as the disproving baseline; it does not establish a wife Maria, and the fixture turns on rejecting the 1891 Toronto hint FMV5-LZ2.",
     "Q2CB-C9MN": "The subject's own already-attached 1859 marriage to Agnes McCaa, indexed 'Agnes McAn' (tree source W6MS-J7Z), baseline identity evidence that Agnes was his wife from 1859. f1 (avoid) cites it as disproving evidence; the fixture turns on rejecting the 1891 Toronto hint FMV5-LZ2."

@@ -1251,9 +1251,11 @@ that a tool caller structurally cannot reach, because dispatch builds only the
 first argument from tool input. Since 2026-10-20 the lane is chosen per call,
 not per tool. A separate `plan_items`-only call completes the plan item behind
 an extracted record, and in `personId` mode a `person_evidence`-only call links
-a person's attached records as unchecked candidates. Code composes each op whole,
-as it does the `extracted_for_question_ids` growth a re-found record gets, so no
-input field reaches any of them (ADR-0006, amended 2026-10-20).
+the personas of a person's attached records, and of their relationships'
+records, to the tree persons who attach them as unchecked candidates. Code
+composes each op whole, as it does the `extracted_for_question_ids` growth a
+re-found record gets, so no input field reaches any of them (ADR-0006, amended
+2026-10-20 and 2026-10-30).
 
 `evaluation_append` is the second variant: `research_append` restricted to the
 single `evaluations` section, held only by the `gps-mentor` agent — the most

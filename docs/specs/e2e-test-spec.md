@@ -1066,8 +1066,8 @@ mode; lead ruling 2026-09-27).
 > A project also extracts every indexed record attached to its subject
 > before its first question, with no search at all. So a record that an
 > expected finding cites by its `1:1:` ark, and that is attached to a
-> subject person in the starting tree (at person, name or fact level),
-> is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
+> subject person in the starting tree (at person, name or fact level, or
+> on a relationship the subject is an endpoint of), is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
 > lists it for that fixture. The leak check,
 > `test_e2e_attached_evidence.py`, fails on an unlisted one, on a stale
 > entry and on a malformed one. An entry means the record is evidence

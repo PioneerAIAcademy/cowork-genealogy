@@ -3268,54 +3268,101 @@ such text would read as an instruction.
 ### 11.8 Person mode — a person's attached records, extracted and linked
 
 `extraction_append({ projectPath, personId })` is the baseline step (lead,
-2026-10-19 and 2026-10-20). It extracts every indexed record FamilySearch has
-attached to one tree person, and links each to that person as an unchecked
-candidate. It assumes every attachment is correct: no agent runs, and there is
-no `same_person` gate. Checking the attachments is a separate request.
+2026-10-19, 2026-10-20 and 2026-10-30). It extracts every indexed record
+FamilySearch has attached to one tree person or to a relationship they are an
+endpoint of, and links each persona to the tree person who attaches it as an
+unchecked candidate. It assumes every attachment is correct: no agent runs, and
+there is no `same_person` gate. Checking the attachments is a separate request.
 
 - **`personId`** is a tree id, or a FamilySearch id matched through the
   person's `ark` (`findAnchor`). It is sent alone: with `recordIds`,
   `documents` or `absences` it is refused like any two shapes together.
-- **Which records.** Only the person's own refs count: person-, name- and
-  fact-level (`collectSourceRefs`). Relationship-level refs are excluded,
-  because 32 of 42 in the e2e trees name the other party (decision 11). Each
+- **Which records.** The person's own refs: person-, name- and fact-level
+  (`collectSourceRefs`). And the `sources` refs of every tree relationship the
+  person is `person1`, `person2`, `parent` or `child` of (lead, 2026-10-30); a
+  relationship fact's own refs are not read. A relationship ref naming a record
+  already in the person's own set, or another persona of a record the own set
+  already reaches through its sidecar, is not extracted a second time. Each
   ref's tree source `url` must carry a `1:1:` record id; any other source (a
   memory, an artifact) is counted in `skipped` and named in the summary.
-- **No attachment.** A person with no `1:1:` attachment returns `ok: true` with
-  nothing written, the skipped count, and a summary saying no attached indexed
-  record exists.
+- **No attachment.** A person with no `1:1:` attachment on themselves or their
+  relationships returns `ok: true` with nothing written, the skipped count, and
+  a summary saying no attached indexed record exists on the person or the
+  person's relationships.
 - **Extraction** goes through the record-id path (§11.6), with no
   `questionIds`. Each record's source cites the tree `S` the import already
   made for it (`gedcomx_source_description_id`, matched on the bare `1:1:` id,
   never the URL string), so no second `S` is minted. Reusing that `S` does not
   make `same_person`'s leave-one-out work, because imported facts cite it too.
-- **Links.** For each record, the attached persona is the one whose
-  `persons[].ark` names the attached id, read off the record's sidecar; its
-  `id` (`p_…`) selects the assertions carrying it as `record_persona_id`. Each
-  becomes a `person_evidence` append with `confidence: "speculative"`,
-  `match_score: null` and `ATTACHMENT_LINK_RATIONALE` ("Linked because
-  FamilySearch has this record attached to this person; not verified."), in
-  a call whose lane is `person_evidence` alone, past the score gate on an
-  internal flag (§5). A record is linked only when none of that persona's
+- **Links.** A record group is a record and the other persona entries of the
+  same record its sidecar names (`personaGroups`). Each group gets one claim
+  map from persona (`p_…`, read off the sidecar's `persons[].ark`) to tree
+  person, filled in this order (lead, 2026-10-30):
+  1. **Own.** The persona whose ark the run person's own refs attach is
+     claimed by the run person, even when another tree person attaches the
+     same ark; that persona is counted in `ownContested` and linked to the
+     run person only.
+  2. **Household.** Any other persona whose ark exactly one tree person's own
+     refs attach is claimed by that person. Two attachers claim it for nobody
+     (`ambiguous`). A tree person who reaches the ark only through a
+     relationship ref claims nothing here.
+  3. **Party.** For a record read through a relationship ref, each endpoint of
+     each citing relationship is a party, and `selectSubjectPersona` (the
+     party's relationship role and gender against the record's own
+     relationships) picks its persona; a party with no known gender gets no
+     pick, since a lone candidate could be the other parent or partner. An
+     `unscored` selection (`record_unreadable`, `no_gender`,
+     `no_relationship`, `ambiguous`, `edges_disagree`) claims nothing and is
+     counted in `unselected`. A party pick that disagrees with an ark claim
+     or another party pick on the same persona leaves it to nobody
+     (`ambiguous`); one that disagrees with the run person's own claim leaves
+     the own link (`ownContested`).
+
+  Last, a tree person left claiming two personas of one record gets neither
+  (`ambiguous`); the run person keeps their own entries and loses any other
+  claim. So no persona is ever linked to two tree persons, and no tree
+  person to two personas of one record, except where the run person's own
+  refs attach both. Each count is per persona, however many routes contest it.
+
+  Each claimed persona's assertions (`record_persona_id`) become
+  `person_evidence` appends to their claimant with `confidence:
+  "speculative"`, `match_score: null` and `ATTACHMENT_LINK_RATIONALE`
+  ("Linked because FamilySearch has this record attached to this person; not
+  verified."), in a call whose lane is `person_evidence` alone, past the score
+  gate on an internal flag (§5). A household or party link carries the same
+  rationale: "this person" is the claimant, whose own refs or relationship
+  attach the record. A persona is linked only when none of its
   assertions has a live link yet, so a persona someone already decided about
-  is never split across two tree persons; such a record is counted in
-  `alreadyLinked`. A pair `rejected_links` names is never re-linked, and is
-  counted in `rejectedSkipped`. Each record's links are one write, retried one
-  link at a time on a refusal, so one refused pair never sinks the rest. A
-  record whose persona cannot be found (a reused hint, whose entry keeps no
-  sidecar) is extracted and not linked.
+  is never split across two tree persons; it is counted in `alreadyLinked`. A
+  pair `rejected_links` names is never re-linked, and is counted in
+  `rejectedSkipped`. Each group's links are one write, retried one link at a
+  time on a refusal, so one refused pair never sinks the rest; a link still
+  refused is counted in `refused`. A record whose persona cannot be found (a
+  reused hint, whose entry keeps no sidecar) is extracted and not linked.
 - **Afterwards** an attachment link is only ever superseded (§5): raising it is
   a `same_person` score and a new link.
 - **Return:** `{ ok, records, extracted, linked, skipped, alreadyLinked?,
-  rejectedSkipped?, summary }`, with `records` as §11.6 returns them and one
-  code-written `summary` for the whole call, which says checking the
-  attachments is a separate request.
-- **Tool time,** measured 2026-10-20 against live FamilySearch with
-  `dev/try-extraction-append-person.ts` on william-sloan-spouse's subject LHG6-L26,
-  the largest attached set in the committed e2e starting trees (20 indexed
-  records): **19.1 s cold** (20 extracted, 119 assertions linked), **0.14 s** on a
-  re-send (all 20 records left as already linked). Cowork aborts a call at 60 s.
-  46 of 186 e2e subjects have at least one attached indexed record.
+  rejectedSkipped?, relationshipRecords?, ambiguous?, ownContested?,
+  unselected?, refused?, linkedPersons?, summary }`, with `records` as §11.6 returns them. `linked` is
+  the total over every tree person; `linkedPersons` (`{ [treePersonId]: count
+  }`) counts the links made to each tree person other than the run person. The
+  optional counts are present only when non-zero. One code-written `summary`
+  covers the whole call: it names the other persons linked, the
+  relationship-level records, the personas left unlinked as ambiguous or
+  unselected, and the run person's own personas another tree person also
+  claims, and says checking the attachments is a separate request.
+- **Tool time,** measured 2026-11-02 against live FamilySearch with
+  `dev/try-extraction-append-person.ts`. Cowork aborts a call at 60 s.
+
+  | Subject (e2e fixture) | Records | Cold | Re-send | Linked | Other persons linked | `unselected` |
+  |---|---|---|---|---|---|---|
+  | LHG6-L26 (william-sloan-spouse), the largest own set | 20 own | 18.7 s | 0.13 s | 338 | 8 | 0 |
+  | LL4N-82C (maria-bracero-marriage), the most relationship refs | 14 own, 8 relationship | 13.1 s | 0.10 s | 244 | 13 | 4 |
+  | KHGX-XWG (thomas-hanrahan-marriage) | 3 own, 2 relationship | 5.0 s | 0.04 s | 81 | 5 | 0 |
+
+  No record group is read twice: LL4N-82C's 22 attached records are 15
+  extractions. Its `ambiguous: 2` is one tree person claiming two personas of
+  one record, so neither is linked. 46 of 186 e2e subjects have at least one attached indexed record.
 
 ## 12. `evaluation_append` — the second lane-scoped variant
 
