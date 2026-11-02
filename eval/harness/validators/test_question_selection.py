@@ -411,6 +411,31 @@ def test_new_question_not_vague(before_state, after_state):
     )
 
 
+# --- Universal: every new question states its date window (#2424) ------
+
+_DATE_WINDOW = re.compile(r"^(\d{4})-(\d{4})$")
+
+
+def test_new_question_has_date_window(before_state, after_state):
+    """Universal: every newly written question carries `date_window`,
+    "YYYY-YYYY" with start <= end. research_append warns when a plan leaves
+    most of that window unsearched, and the warning is silent on a question
+    without one -- so a question written without it disarms the check."""
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    offenders: list[str] = []
+    for q in _new_questions(before, after):
+        window = q.get("date_window")
+        m = _DATE_WINDOW.match(window) if isinstance(window, str) else None
+        if not m or int(m.group(1)) > int(m.group(2)):
+            offenders.append(f"{q.get('id')}: date_window={window!r}")
+    assert not offenders, (
+        'new question(s) without a "YYYY-YYYY" date_window: ' + ", ".join(offenders)
+    )
+
+
 _QUESTION_KINDS = ("enumerative", "targeted")
 
 

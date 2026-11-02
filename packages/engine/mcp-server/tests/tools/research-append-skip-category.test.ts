@@ -18,6 +18,7 @@ import { mkdtempSync, rmSync, writeFileSync, mkdirSync, readFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { researchAppend } from "../../src/tools/research-append.js";
+import { writeProjectFileSync } from "../helpers/project-files.js";
 
 let dir: string;
 
@@ -74,7 +75,7 @@ function seed(items: Record<string, unknown>[]) {
     proof_summaries: [],
     evaluations: [],
   };
-  writeFileSync(join(dir, "research.json"), JSON.stringify(research, null, 2), "utf-8");
+  writeProjectFileSync(join(dir, "research.json"), JSON.stringify(research, null, 2), "utf-8");
   writeFileSync(
     join(dir, "tree.gedcomx.json"),
     JSON.stringify({ persons: [], relationships: [], sources: [] }, null, 2),
