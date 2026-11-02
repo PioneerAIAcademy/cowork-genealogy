@@ -22,6 +22,7 @@ import { extractionAppend } from "../../src/tools/extraction-append.js";
 import { mergeTreePersons } from "../../src/tools/merge-tree-persons.js";
 import { treeEdit } from "../../src/tools/tree-edit.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 // The `namesakes` section and the cap a recorded namesake puts on links to the
 // person it is not (issue #3363). End to end through `researchAppend`.
@@ -240,7 +241,7 @@ describe("namesake cap", () => {
   });
 
   async function setup(r: Record<string, any> = research(), t: Record<string, any> = tree()) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2));
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
