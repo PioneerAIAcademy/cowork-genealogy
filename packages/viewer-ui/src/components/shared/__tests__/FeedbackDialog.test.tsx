@@ -469,3 +469,58 @@ describe('FeedbackDialog — publication notice', () => {
     expect(precedes).toBeTruthy()
   })
 })
+
+describe('FeedbackDialog — media default', () => {
+  const MB = 1024 * 1024
+
+  function mountWithMedia(mediaBytes: number): { submitFeedback: LooseMock } {
+    const submitFeedback: LooseMock = vi.fn(async () => ({ ok: true as const }))
+    vi.mocked(useResearchData).mockReturnValue({
+      ...buildMockContext(),
+      submitFeedback,
+      getFeedbackContext: async () => ({
+        files: [
+          { relativePath: 'research.json', sizeBytes: 1000, isMedia: false, isText: true },
+          { relativePath: 'images/scan.png', sizeBytes: mediaBytes, isMedia: true, isText: false }
+        ],
+        sessionLogSize: 0,
+        hasSessionLog: false
+      })
+    })
+    render(<FeedbackDialog onClose={() => {}} />)
+    return { submitFeedback }
+  }
+
+  async function send(user: ReturnType<typeof userEvent.setup>): Promise<void> {
+    await user.click(screen.getByRole('radio', { name: 'Yes' }))
+    await user.click(screen.getByRole('button', { name: 'Send' }))
+  }
+
+  it('ticks media by default at 15 MB or less', async () => {
+    const user = userEvent.setup()
+    const { submitFeedback } = mountWithMedia(15 * MB)
+    await screen.findByText(/15\.0 MB\)/)
+    expect(screen.getByRole('checkbox', { name: /media/i })).toBeChecked()
+    await send(user)
+    expect(submitFeedback.mock.calls[0][0].includeMedia).toBe(true)
+  })
+
+  it('unticks media by default above 15 MB', async () => {
+    const user = userEvent.setup()
+    const { submitFeedback } = mountWithMedia(15 * MB + 1)
+    await screen.findByText(/15\.0 MB\)/)
+    expect(screen.getByRole('checkbox', { name: /media/i })).not.toBeChecked()
+    await send(user)
+    expect(submitFeedback.mock.calls[0][0].includeMedia).toBe(false)
+  })
+
+  it('lets the reporter tick media back on above 15 MB', async () => {
+    const user = userEvent.setup()
+    const { submitFeedback } = mountWithMedia(175 * MB)
+    await screen.findByText(/175\.0 MB\)/)
+    await user.click(screen.getByRole('checkbox', { name: /media/i }))
+    expect(screen.getByRole('checkbox', { name: /media/i })).toBeChecked()
+    await send(user)
+    expect(submitFeedback.mock.calls[0][0].includeMedia).toBe(true)
+  })
+})
