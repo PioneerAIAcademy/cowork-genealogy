@@ -2376,3 +2376,105 @@ async def test_docs_and_openapi_are_off_with_and_without_the_spa(dist, monkeypat
     async with make_client(FakeStore(), FakeQueue(), user=None) as c:
         for path in ("/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"):
             assert (await c.get(path)).status_code == 404, path
+
+
+# ── U28: a path prefix on PUBLIC_URL ────────────────────────────────────────────
+
+PREFIX = "/service/search/agent-tools/web"
+PREFIX_INDEX = ('<!doctype html><html><head>\n<meta charset="UTF-8">'
+                '<script type="module" src="./assets/x-abc.js"></script></head><body></body></html>')
+
+
+@pytest.fixture
+def prefix_dist(dist, monkeypatch) -> Path:
+    (dist / "index.html").write_text(PREFIX_INDEX, encoding="utf-8")
+    monkeypatch.setenv("PUBLIC_URL", f"http://edge.test{PREFIX}")
+    return dist
+
+
+async def test_spa_under_a_prefix_injects_a_base_href_after_head(prefix_dist):
+    want = PREFIX_INDEX.replace("<head>", f'<head><base href="{PREFIX}/">', 1)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path in ("/", "/index.html"):
+            r = await c.get(path)
+            assert r.status_code == 200 and r.text == want, path
+            assert r.headers["content-type"].startswith("text/html") and r.headers["cache-control"] == "no-cache"
+        head = await c.head("/")
+        assert head.status_code == 200 and head.content == b""
+        assert (await c.get("/assets/x-abc.js")).status_code == 200
+
+
+async def test_spa_at_the_root_serves_index_html_byte_for_byte(prefix_dist, monkeypatch):
+    monkeypatch.delenv("PUBLIC_URL")
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path in ("/", "/index.html"):
+            r = await c.get(path)
+            assert r.content == PREFIX_INDEX.encode() and b"<base" not in r.content, path
+
+
+def test_spa_base_href_is_escaped_and_a_headless_index_refuses():
+    assert spa.with_base(b"<HEAD lang=x>", '/a"b') == b'<HEAD lang=x><base href="/a&quot;b/">'
+    with pytest.raises(RuntimeError, match="<head>"):
+        spa.with_base(b"<!doctype html><title>x</title>", PREFIX)
+
+
+async def test_health_reports_the_base_path(monkeypatch):
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        assert (await c.get("/api/health")).json()["base_path"] == ""
+    monkeypatch.setenv("PUBLIC_URL", f"https://edge.test{PREFIX}/")
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        assert (await c.get("/api/health")).json()["base_path"] == PREFIX
+
+
+@pytest.mark.parametrize("raw, want, warned", [("60", 15.0, True), ("15", 15.0, False), ("5", 5.0, False)])
+async def test_sse_ping_is_capped_under_the_alias_idle_cut(monkeypatch, caplog, raw, want, warned):
+    monkeypatch.setenv("SSE_PING_S", raw)
+    with caplog.at_level("WARNING", logger="proto.web"):
+        application = create_app(FakeStore(), FakeQueue(), poll_s=0.0)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t") as c:
+        assert (await c.get("/api/health")).json()["ping_s"] == want
+    assert any("SSE_PING_S" in r.message for r in caplog.records) is warned
+    assert app.SSE_PING_MAX_S == 15.0
+
+
+async def test_an_x_orig_base_mismatch_warns_once_per_process(monkeypatch, caplog):
+    monkeypatch.setenv("PUBLIC_URL", f"http://edge.test{PREFIX}")
+    with caplog.at_level("WARNING", logger="proto.web"):
+        async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+            await c.get("/api/health", headers={"X-Orig-Base": f"{PREFIX}/"})
+            await c.get("/api/health")
+            assert not [r for r in caplog.records if "prefix_mismatch" in r.message], "a match is silent"
+            await c.get("/api/health", headers={"X-Orig-Base": "/service/search/agent-tools/other"})
+            await c.get("/api/health", headers={"X-Orig-Base": "/elsewhere"})
+    lines = [r.message for r in caplog.records if "ev=prefix_mismatch" in r.message]
+    assert len(lines) == 1 and "agent-tools/other" in lines[0], lines
+
+
+@pytest.mark.parametrize("public_url, prefix", [(f"https://edge.test{PREFIX}", PREFIX), ("https://edge.test", "")])
+async def test_a_trailing_slash_redirect_stays_under_the_prefix_and_relative(monkeypatch, public_url, prefix):
+    # FS112 u28-web, 2026-10-31: the edge strips the prefix and the load balancer speaks http, so
+    # Starlette's slash redirect answered `http://<host>/api/health` -- off the prefix, and http.
+    monkeypatch.setenv("PUBLIC_URL", public_url)
+    async with make_client(FakeStore(), FakeQueue(), user=None) as c:
+        for path, want in (("/api/health/", f"{prefix}/api/health"),
+                           ("/auth/config/?x=1&y=2", f"{prefix}/auth/config?x=1&y=2")):
+            r = await c.get(path, headers={"Host": "integration.example.org"}, follow_redirects=False)
+            assert r.status_code == 307 and r.headers["location"] == want, (path, r.headers.get("location"))
+
+
+@pytest.mark.parametrize("location, host, base, want", [
+    ("http://h.test/api/health", "h.test", "", "/api/health"),
+    ("https://h.test/p/x?q=1", "h.test", "", "/p/x?q=1"),
+    ("http://h.test", "h.test", "", "/"),
+    ("http://h.test/api/health", "h.test", PREFIX, f"{PREFIX}/api/health"),
+    ("http://h.test", "h.test", PREFIX, f"{PREFIX}/"),
+    (f"https://h.test{PREFIX}/", "h.test", PREFIX, f"{PREFIX}/"),
+    (f"https://h.test{PREFIX}", "h.test", PREFIX, PREFIX),
+    (f"https://h.test{PREFIX}x/y", "h.test", PREFIX, f"{PREFIX}{PREFIX}x/y"),
+    ("https://ident.example.org/authorize?a=1", "h.test", PREFIX, "https://ident.example.org/authorize?a=1"),
+    ("http://h.test:8085/x", "h.test", PREFIX, "http://h.test:8085/x"),
+    ("/already/relative", "h.test", PREFIX, "/already/relative"),
+    ("http://h.test/x", None, PREFIX, "http://h.test/x"),
+])
+def test_self_redirects_become_root_relative_under_the_prefix_and_others_are_untouched(location, host, base, want):
+    assert app._relative_self_location(location, host, base) == want
