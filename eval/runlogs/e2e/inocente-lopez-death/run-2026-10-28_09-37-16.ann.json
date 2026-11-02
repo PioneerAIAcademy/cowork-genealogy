@@ -11,6 +11,6 @@
     "f3": "The tree carries no 1906 death, no Santos Lopez, and no separate Inocente Lopez person with a death -- which is the fixture's own pass condition for this avoid finding (absent, or present only as a rejected hypothesis). Graded true per the avoid-finding rule: why the candidate is absent is not part of the label. For context: the run never reached the stage where it would have encountered the false 1906 hint record, so this is an incidental correct absence rather than an evaluated-and-rejected hypothesis -- but that reasoning belongs in this note, not the label."
   },
   "annotator": "itacollins333@gmail.com",
-  "findings_hash": "71b23955d5971b16c937eef7dc62352fded7222e5515844ad4842ece4b0c9632",
-  "blind_bundle_digest": "453f3ef16d6452c08ff9637586610cf86895b00f6b107f112ac9ebe7a765b7e7"
+  "findings_hash": "9d3a1b20f01ff2a95da354249f9199708edd067498d31c53a3e8b467ad9c2f91",
+  "blind_bundle_digest": "f0f94dcda6503c1d680d1fbd7c549889a16752dcfe73ca7cc9b660d8678054a3"
 }
