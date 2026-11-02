@@ -2708,8 +2708,10 @@ would need an exclusion in every reader and breaks the first time one is missed.
 |---|---|---|
 | `id` | yes | the directory name (the loader refuses a mismatch) |
 | `message` | yes | sent verbatim |
-| `expected_owner` | yes | the agent or skill name that should answer |
-| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` or `{"section": "sources"}` |
+| `expected_owner` | yes | the agent or skill name that should answer, or a list of them where `null` means the main thread answered with no unit |
+| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
+| `forbidden_tools` | no (`[]`) | bare tool names that must not be called, on any thread |
+| `required_tools` | no (`[]`) | bare tool names that must be called, on any thread. Give an ask whose answer saves nothing a positive check here, or an empty turn passes |
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
@@ -2741,20 +2743,24 @@ There is no `expected-findings.json` and no judge.
 
 ### 16.4 Grade
 
-Deterministic, in `e2e/single_ask_grade.py`. PASS only if all four hold (`expected_owner` and `setup_units` may carry a plugin
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all six hold (`expected_owner` and `setup_units` may carry a plugin
 namespace; it is stripped, as it is from spawned names):
 
 1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
-   `research` router and any `setup_units`, is `expected_owner`. A spawn inside a
+   `research` router and any `setup_units`, is `expected_owner` (or in its list;
+   `null` there matches a turn with no such spawn). A spawn inside a
    subagent is recorded but never the owner. The thread comes from the SDK's
    `parent_tool_use_id` (the `thread` field on each `tool_calls` entry).
 2. **`no_research_job`** — no `question-selection` spawn and, unless `is_plan_ask`,
    no `research-plan` spawn, on any thread; and no new `questions` entry, nor,
    unless `is_plan_ask`, a new `plans` entry.
-3. **`save`** — a new `sources` entry, or a new `log` entry whose `tool` is the
-   expected value. "New" means its id is in the final `research.json` and not in
-   `starting-research.json`.
-4. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
+3. **`save`** — any one `expected_save` alternative holds: a new `sources` entry,
+   a new `log` entry whose `tool` (and `outcome`, when given) is the expected
+   value, or, with `absent`, no new entry in that section. "New" means its id is
+   in the final `research.json` and not in `starting-research.json`.
+4. **`forbidden_tools`** and **`required_tools`** — no call to the first and at
+   least one call to each of the second, on any thread, matched by bare name.
+5. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
    here even if it saved: the patron never got the answer. `cost_cap` is not a
    cut-off (§6: it only labels a finished run), so it does not fail this check.
 
