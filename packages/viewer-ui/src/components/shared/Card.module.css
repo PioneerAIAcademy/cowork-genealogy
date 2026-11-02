@@ -91,3 +91,9 @@
     transform: translateY(0);
   }
 }
+
+@media print {
+  .card {
+    break-inside: avoid;
+  }
+}
