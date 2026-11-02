@@ -1052,23 +1052,14 @@ describe("agent delegation framing", () => {
       (agent) =>
         !Object.entries(DELEGATION_EDGES).some(
           ([edge, spec]) =>
-            edge.endsWith(` -> ${agent}`) &&
-            // An agent-side PIN defends the path; a documented agent-side
-            // `exempt` accounts for it with a reason, under the same shrink-only
-            // and not-contradicted staleness guards the exemption block below
-            // runs — so when that side gains a rule it is pinned, not left
-            // silent. gps-mentor is routed since the evaluations deny but carries
-            // the caller-pressure analysis as an exemption (the hook-composed
-            // delegation passes only focus and target_id, like the /research one).
-            (spec.pins.some((p) => p.side === "agent") || spec.exempt?.side === "agent"),
+            edge.endsWith(` -> ${agent}`) && spec.pins.some((p) => p.side === "agent"),
         ),
     );
     expect(
       undefended,
       "the hook tells a denied caller to delegate to this agent, but no edge pins an " +
-        "AGENT-side rule for it or documents an agent-side exemption. The hook composes " +
-        "the caller side at runtime, so the agent side is the only side that can defend " +
-        "this path.",
+        "AGENT-side rule for it. The hook composes the caller side at runtime, so the " +
+        "agent side is the only side that can defend this path.",
     ).toEqual([]);
   });
 

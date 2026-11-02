@@ -534,7 +534,8 @@
         "agent:gps-mentor"
       ],
       "writerTools": [
-        "evaluation_append"
+        "evaluation_append",
+        "research_append"
       ],
       "enforceableAt": [
         "hook"

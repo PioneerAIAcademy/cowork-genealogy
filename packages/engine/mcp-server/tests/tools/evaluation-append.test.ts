@@ -111,6 +111,68 @@ describe("evaluation_append (lane gate)", () => {
     expect(ev[0].id).toMatch(/^ev_/);
   });
 
+  // The two shapes gps-mentor actually sends (agents/gps-mentor.md, the persist
+  // step): the `verdict` composite, and an append that supersedes an earlier
+  // entry in the same call.
+  it("writes the verdict file and stamps file_path when given `verdict`", async () => {
+    await writeProject();
+    const r = await evaluationAppend({
+      projectPath: dir,
+      section: "evaluations",
+      op: "append",
+      verdict: { verdict: "looks_solid", strengths: ["a"] },
+      entry: {
+        focus: "conclusion-readiness",
+        target_id: "project",
+        target_type: "project",
+        verdict: "looks_solid",
+        timestamp: "2026-01-02T03:04:05Z",
+        superseded_by: null,
+      },
+    } as any);
+    expect(r.ok).toBe(true);
+    const [ev] = (await readResearch()).evaluations;
+    expect(ev.file_path).toBe("evaluations/conclusion-readiness-project-2026-01-02T03-04-05.json");
+    const body = JSON.parse(await readFile(join(dir, ev.file_path), "utf-8"));
+    expect(body).toEqual({ verdict: "looks_solid", strengths: ["a"] });
+  });
+
+  it("appends a verdict and supersedes the earlier one in the same call", async () => {
+    const research = baseResearch();
+    research.evaluations = [{
+      id: "ev_001",
+      focus: "conclusion-readiness",
+      target_id: "project",
+      target_type: "project",
+      verdict: "address_first",
+      file_path: "evaluations/ev_001.md",
+      timestamp: "2026-01-01T00:00:00Z",
+      superseded_by: null,
+    }];
+    await writeProject(research);
+    const r = await evaluationAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "evaluations",
+          op: "append",
+          entry: {
+            focus: "conclusion-readiness",
+            target_id: "project",
+            target_type: "project",
+            verdict: "looks_solid",
+            file_path: "evaluations/ev_002.md",
+            superseded_by: null,
+          },
+        },
+        { section: "evaluations", op: "update", entryId: "ev_001", fields: { superseded_by: "ev_002" } },
+      ],
+    } as any);
+    expect(r.ok).toBe(true);
+    const ev = (await readResearch()).evaluations;
+    expect(ev.map((e: any) => [e.id, e.superseded_by])).toEqual([["ev_001", "ev_002"], ["ev_002", null]]);
+  });
+
   it("refuses a single op outside the lane, naming only evaluation_append, writing nothing", async () => {
     await writeProject();
     const before = await readFile(join(dir, "research.json"), "utf-8");

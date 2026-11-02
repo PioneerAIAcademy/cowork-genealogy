@@ -24,13 +24,15 @@ from typing import Any
 #
 # `research_append` is the exception, and the only one: it is the general writer and
 # names its section in the call, so its entry here is a default the input overrides.
+# (`evaluation_append` also takes a `section`, but it can only be `evaluations`, so
+# the tool still implies it.)
 #
 # A read recorded here would bury the diff it is meant to produce, and an unknown
 # tool records nothing rather than guessing at a shape it has never seen.
 _WRITERS: dict[str, tuple[str, str]] = {
     # tool                  (section,       default op)
     "research_append":      ("",            "append"),      # names its own section
-    "evaluation_append":    ("",            "append"),      # research_append scoped to evaluations; names its own section
+    "evaluation_append":    ("evaluations", "append"),      # research_append scoped to evaluations; the input may restate it
     "research_log_append":  ("log",         "append"),
     "extraction_append":    ("extractions", "append"),
     "tree_edit":            ("tree",        "edit"),

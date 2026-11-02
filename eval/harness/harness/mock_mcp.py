@@ -2033,24 +2033,31 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
     return handler
 
 
-def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
-    """Build the live handler for research_append.
+def _make_live_append_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    *,
+    tool: str,
+    module_file: str,
+    export: str,
+):
+    """Build a live handler that runs a compiled research-writer tool.
 
-    Calls the compiled TS tool via `node --input-type=module` against the
-    workspace path. The skill passes its own projectPath arg, but we always
-    override it with workspace (the harness tempdir) to avoid path drift.
+    Calls `export` from `build/tools/<module_file>` via `node --input-type=module`
+    against the workspace path. The skill passes its own projectPath arg, but we
+    always override it with workspace (the harness tempdir) to avoid path drift.
 
     Input is piped via stdin (as JSON) to avoid shell/JS string escaping
     issues with values that may contain quotes, backslashes, or newlines.
     """
-    append_js = _MCP_BUILD / "tools" / "research-append.js"
+    append_js = _MCP_BUILD / "tools" / module_file
 
     async def handler(args, _ws=workspace, _ajs=append_js):
         if _ws is None or not _ajs.exists():
             reason = "workspace not provided" if _ws is None else f"build not found: {_ajs}"
             response: dict[str, Any] = {
                 "ok": False,
-                "errors": [f"research_append: {reason}"],
+                "errors": [f"{tool}: {reason}"],
             }
         else:
             append_url = _node_module_url(_ajs)
@@ -2061,10 +2068,10 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             script = (
-                f"import {{ researchAppendFromCaller as researchAppend }} from '{append_url}';"
+                f"import {{ {export} as run }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                " const r = await researchAppend(input);"
+                " const r = await run(input);"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
@@ -2075,87 +2082,45 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
                     stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
                     response = {
                         "ok": False,
-                        "errors": [f"research_append: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                        "errors": [f"{tool}: node produced no output (exit {proc.returncode}): {stderr_msg}"],
                     }
             except Exception as e:
                 response = {
                     "ok": False,
-                    "errors": [f"research_append: {e}"],
+                    "errors": [f"{tool}: {e}"],
                 }
 
         entry: dict[str, Any] = {
-            "tool": "mcp__genealogy__research_append",
+            "tool": f"mcp__genealogy__{tool}",
             "args": dict(args),
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
-            "response_fixture": "live:research_append",
+            "response_fixture": f"live:{tool}",
             "response": response,
         }
         call_log.append(entry)
-        return _tool_envelope("research_append", response)
+        return _tool_envelope(tool, response)
 
     return handler
+
+
+def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """The live handler for research_append."""
+    return _make_live_append_handler(
+        workspace, call_log,
+        tool="research_append", module_file="research-append.js", export="researchAppendFromCaller",
+    )
 
 
 def _make_evaluation_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
-    """Build the live handler for evaluation_append.
-
-    Same shape as `_make_research_append_handler`, but imports the lane-scoped
-    `evaluationAppend` export (not `researchAppendFromCaller`), so the mock
-    enforces the same `allowedSections` restriction the server does — a write
-    to any section but `evaluations` is refused. projectPath is overridden with
-    the workspace and the full input is piped via stdin.
-    """
-    append_js = _MCP_BUILD / "tools" / "evaluation-append.js"
-
-    async def handler(args, _ws=workspace, _ajs=append_js):
-        if _ws is None or not _ajs.exists():
-            reason = "workspace not provided" if _ws is None else f"build not found: {_ajs}"
-            response: dict[str, Any] = {
-                "ok": False,
-                "errors": [f"evaluation_append: {reason}"],
-            }
-        else:
-            append_url = _node_module_url(_ajs)
-
-            input_obj = dict(args)
-            input_obj["projectPath"] = str(_ws).replace("\\", "/")
-
-            script = (
-                f"import {{ evaluationAppend }} from '{append_url}';"
-                " import { readFileSync } from 'node:fs';"
-                " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                " const r = await evaluationAppend(input);"
-                " process.stdout.write(JSON.stringify(r));"
-            )
-            try:
-                proc = _run_node_eval(script, json.dumps(input_obj), timeout=NODE_EVAL_TIMEOUT_LONG)
-                if proc.stdout.strip():
-                    response = json.loads(proc.stdout)
-                else:
-                    stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
-                    response = {
-                        "ok": False,
-                        "errors": [f"evaluation_append: node produced no output (exit {proc.returncode}): {stderr_msg}"],
-                    }
-            except Exception as e:
-                response = {
-                    "ok": False,
-                    "errors": [f"evaluation_append: {e}"],
-                }
-
-        entry: dict[str, Any] = {
-            "tool": "mcp__genealogy__evaluation_append",
-            "args": dict(args),
-            "expected_args": None,
-            "matched": {"kind": "live", "index": None},
-            "response_fixture": "live:evaluation_append",
-            "response": response,
-        }
-        call_log.append(entry)
-        return _tool_envelope("evaluation_append", response)
-
-    return handler
+    """The live handler for evaluation_append. It imports the lane-scoped
+    `evaluationAppend` export, so the mock enforces the same `allowedSections`
+    restriction the server does: a write to any section but `evaluations` is
+    refused."""
+    return _make_live_append_handler(
+        workspace, call_log,
+        tool="evaluation_append", module_file="evaluation-append.js", export="evaluationAppend",
+    )
 
 
 PERSON_QUALITY_REFUSAL = (
