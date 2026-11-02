@@ -453,20 +453,21 @@ async function discover(): Promise<Map<string, DiscoveredGroup[]>> {
     let pages = 0;
     do {
       const r = await volumeSearchTool(
-        { standardPlace, ...(pageToken ? { pageToken } : {}) },
+        { standardPlace, pageSize: 100, ...(pageToken ? { pageToken } : {}) },
         LOCAL,
       );
       for (const g of r.results) {
         if (!g.imageGroupNumber.includes("_")) continue;
-        if (!found.includes(g.imageGroupPrefix)) found.push(g.imageGroupPrefix);
-        const list = byFilm.get(g.imageGroupPrefix) ?? [];
+        const prefix = g.imageGroupNumber.split("_")[0];
+        if (!found.includes(prefix)) found.push(prefix);
+        const list = byFilm.get(prefix) ?? [];
         if (!list.some((d) => d.groupName === g.imageGroupNumber)) {
           list.push({
             groupName: g.imageGroupNumber,
-            place: g.coverages[0]?.place ?? "",
+            place: g.coverages[0]?.places[0] ?? "",
           });
         }
-        byFilm.set(g.imageGroupPrefix, list);
+        byFilm.set(prefix, list);
       }
       pageToken = r.nextPageToken;
       pages++;

@@ -1,0 +1,44 @@
+{
+  "test": {
+    "id": "ut_research_plan_wnc",
+    "skill": "research-plan",
+    "name": "A question's date window bounds the question, not the records that answer it",
+    "type": "positive",
+    "description": "Issue #1830. q_001 asks where Josiah Rowe lived between 1850 and 1865 — a window stated in the question itself. The record that best answers it is his Civil War pension file, assembled decades later, whose affidavits describe his residences in the 1850s. A sound plan reaches that file by dating a military/pension item to the file's own period. The validator `test_pension_item_reaches_past_window` gates this: at least one military/pension item's date_range must reach 1879, the fixture's threshold for the file (a widow's pension cannot predate his death). Late probate or cemetery items do not count. Distinct from ut_research_plan_qxr, which tests sizing an INDIRECT record to its creator's lifespan and is already licensed by the agent's 'size an indirect record's date window to its likely CREATOR' rule; here the record is about the subject himself and simply postdates the window. Synthetic scenario — no PII.",
+    "tags": [
+      "planning",
+      "date-window",
+      "record-type-selection",
+      "new-plan-items-planned-status",
+      "direct-arm",
+      "pension-reaches-past-window"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — where did Josiah Rowe reside between 1850 and 1865, and with whom was he living?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "rowe-window-is-not-a-ceiling"
+  },
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  },
+  "mcp_fixtures": [
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "person-read-empty-any",
+    "wiki-read-not-found-any"
+  ],
+  "judge_context": [
+    "Whether a military/pension item's date_range reaches the pension file is checked by the deterministic validator test_pension_item_reaches_past_window. If the plan misses it, that validator is listed among the failed validators; if it is not listed, the plan met it. Do not re-derive this from the date ranges.",
+    "Background: the question asks where Josiah Rowe lived between 1850 and 1865. He served 1862-1865. A Civil War pension file is assembled decades after the service and carries affidavits describing where the soldier lived; the locality lists the pension collection but does not say this. Look for whether the rationale treats that later file as evidence for the earlier window and says what it could answer.",
+    "Several items legitimately stop at or before 1865: the 1850 and 1860 censuses, a marriage item dated to the courtship years, and a military item for compiled service records dated to the service years. A plan may hold that service-record item alongside a separate pension item.",
+    "The repository is irrelevant. FamilySearch, Fold3 and NARA all reach the pension file, and an item may get there without naming a collection id.",
+    "Do not require any particular extra record type. Probate, cemetery, newspaper and land items all strengthen the plan and none is required. Breadth is not what this test grades.",
+    "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3."
+  ]
+}

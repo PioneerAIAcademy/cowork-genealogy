@@ -5,7 +5,7 @@
     "name": "Browse an unindexed Schuylkill probate volume image-by-image (direct-agent arm, normal phrasing)",
     "type": "positive",
     "description": "The happy-path direct twin the conversion playbook asks for: the same browse as ut_search_images_001 reached through a delegation phrased the way the orchestrator normally phrases one — neutral, naming the target and the place, asserting nothing about what any page holds. Its job is to show that the agent reaches the same outcome from its arguments alone, with no router and no adversarial framing to react against. A disagreement between this and ut_search_images_001 is a rule sitting in the wrong file.",
-    "tags": ["browse", "unindexed", "probate", "direct-arm"]
+    "tags": ["browse", "unindexed", "probate", "direct-arm", "lookingfor-no-navigation"]
   },
   "input": {
     "delegation": "Browse the digitized Schuylkill County probate volume for Thomas Flynn's will and log the browse.\n\nstandardPlace: Schuylkill, Pennsylvania, United States\nlooking_for: Thomas Flynn's will\nprojectPath: <workspace>",

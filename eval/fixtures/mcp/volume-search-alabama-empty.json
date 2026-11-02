@@ -8,7 +8,8 @@
     "query": {
       "standardPlace": "Alabama, United States",
       "startYear": 1798,
-      "endYear": 1819
+      "endYear": 1819,
+      "pageSize": 50
     },
     "totalResults": 0,
     "results": []

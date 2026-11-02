@@ -412,10 +412,9 @@ suite's **newest** releasable run log by timestamp, candidates included:
 cd eval/harness && uv run python ../../.claude/skills/audit-board/runlog_state.py
 ```
 
-Do not read a suite through `check_runlogs.latest_full_skill_runlog`. It prefers any
-released log over every candidate, so a suite whose newer candidate is active reads
-as stale and idle since its release. Such a suite is `promote` in the script's
-output: it owes a promotion in the CRUD UI, not a paid run. Name the same newest log
+A suite whose newer candidate is active while its released log is stale is
+`promote` in the script's output: it owes a promotion in the CRUD UI, not a paid
+run. Name the same newest log
 on the suite's `next run:` card.
 
 Order matters within a queue: some issues are gated on a free harness-side change

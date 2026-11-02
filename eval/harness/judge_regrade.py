@@ -62,6 +62,7 @@ from harness.orchestrator import (
     _run_judge,
     build_judge_grade_kwargs,
     flag_routing_negative_judge_fail,
+    gating_validator_failures,
 )
 from harness.scenario_brief import (
     ScenarioBrief,
@@ -72,7 +73,7 @@ from harness.warning_kinds import validate_warning_kinds
 from harness.workspace import build_workspace, snapshot_files
 from harness.outcomes import aggregate_per_run_outcome
 from harness.runlog import _replace_with_retry, validate_run_log
-from harness.versioning import classify
+from harness.versioning import latest_full_skill_runlog
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 UNIT_RUNLOGS = REPO_ROOT / "eval" / "runlogs" / "unit"
@@ -108,29 +109,13 @@ class RegradeResult:
 
 
 def _latest_full_skill_runlog(skill_dir: Path) -> tuple[str, dict[str, Any]] | None:
-    """Return (filename, parsed_log) for the newest released or candidate log.
-
-    Mirrors `check_runlogs.latest_full_skill_runlog` without pulling the
-    whole script in as a dependency.
-    """
+    """The log rule 2b grades (`versioning.latest_full_skill_runlog`), or None
+    when the directory is absent or the log is unreadable. Ordered by landing on
+    `origin/main`, which stands in for the BASE_SHA CI orders by."""
     if not skill_dir.is_dir():
         return None
-    candidates: list[tuple[tuple[int, str], Path]] = []
-    for p in skill_dir.glob("v*.json"):
-        if p.name.endswith(".ann.json"):
-            continue
-        kind, version, _ts = classify(p.name)
-        if kind == "released":
-            # Prefer released; sort to the end so it wins max().
-            candidates.append(((version, "zzz"), p))
-        elif kind == "candidate":
-            candidates.append(((version, p.name), p))
-    if not candidates:
-        return None
-    candidates.sort(key=lambda c: c[0])
-    path = candidates[-1][1]
     try:
-        return (path.name, json.loads(path.read_text(encoding="utf-8")))
+        return latest_full_skill_runlog(skill_dir, "origin/main")
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         return None
 
@@ -397,21 +382,29 @@ def _split_observations_from_warnings(
     return response_obs, state_obs
 
 
-def _gating_validator_failure_names(validators_block: dict[str, Any]) -> list[str]:
+def _gating_validator_failure_names(
+    validators_block: dict[str, Any], *, intentionally_invalid: bool
+) -> list[str]:
     """Bare names of gating (non-reporting) validator failures, in order.
 
-    Mirrors the live path in `orchestrator._execute_test`:
-      `[r.name for r in validator_results if not r.passed and not r.reporting_only]`.
-    The judge prompt renders this list as `- {name}` bullets (see
-    `judge.render_prompt_parts::failures_text`) — a "name: error" string here
-    is drift from the live render, which is exactly what this PR fixes.
+    Delegates to the live path's `orchestrator.gating_validator_failures`, so a
+    regrade and a live run cannot disagree about which failures the judge is
+    shown — including the file-validity ones an intentionally invalid test
+    expects (#3870). The judge prompt renders this list as `- {name}` bullets
+    (see `judge.render_prompt_parts::failures_text`).
     """
     results = (validators_block or {}).get("results") or []
-    return [
-        r.get("name") or "unknown"
-        for r in results
-        if r.get("passed") is False and not r.get("reporting_only", False)
-    ]
+    return gating_validator_failures(
+        [
+            SimpleNamespace(
+                name=r.get("name") or "unknown",
+                passed=r.get("passed") is not False,
+                reporting_only=r.get("reporting_only", False),
+            )
+            for r in results
+        ],
+        intentionally_invalid=intentionally_invalid,
+    )
 
 
 def _failed_validator_names(validators_block: dict[str, Any]) -> frozenset[str]:
@@ -476,7 +469,8 @@ def _build_grade_kwargs_for_run_entry(
         warnings, skill
     )
     validator_failures = _gating_validator_failure_names(
-        run_entry.get("validators") or {}
+        run_entry.get("validators") or {},
+        intentionally_invalid=spec.intentionally_invalid,
     )
 
     result = _build_result_namespace(run_entry, tool_calls)
@@ -648,7 +642,9 @@ def regrade_run_log(
             validators_block = run_entry.get("validators") or {}
             # Judge prompt gets bare gating-failure names; _compute_outcome
             # takes the frozenset including reporting-only failures.
-            validator_failure_names = _gating_validator_failure_names(validators_block)
+            validator_failure_names = _gating_validator_failure_names(
+                validators_block, intentionally_invalid=spec.intentionally_invalid
+            )
             failed_validator_names = _failed_validator_names(validators_block)
 
             try:

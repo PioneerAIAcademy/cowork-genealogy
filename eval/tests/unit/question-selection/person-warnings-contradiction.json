@@ -4,21 +4,22 @@
     "skill": "question-selection",
     "name": "Select a question driven by a person_warnings contradiction",
     "type": "positive",
-    "description": "The subject carries a real `hasEventAfterDeath1` contradiction (a posthumous residence event). The skill must call `person_warnings` before deciding and select a Priority 1 question with `selection_basis: unresolved_conflict`, not ignore the contradiction and decompose the objective instead.",
+    "description": "The subject carries a real `hasEventAfterDeath1` contradiction (a posthumous residence event). The skill must call `person_warnings` before deciding and report the contradiction as evidence to weigh on the open q_001 (conflict-resolution), writing no new question.",
     "tags": [
       "question-selection",
       "person-warnings-contradiction",
-      "selection-basis-unresolved-conflict",
+      "question-selection-no-new-question",
       "direct-arm"
     ]
   },
   "input": {
     "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
-    "scenario": "flynn-posthumous-residence"
+    "scenario": "flynn-posthumous-residence-plan-done"
   },
   "judge_context": [
-    "Should call person_warnings on the subject (I1) before writing a question",
-    "Should recognize the hasEventAfterDeath1 contradiction (a Residence event dated after the subject's death) as a Priority 1 trigger",
-    "The proposed question should pursue verifying or resolving the contradictory residence event, not an unrelated objective-decomposition question"
+    "Should call person_warnings on the subject (I1) before deciding",
+    "Should recognize the hasEventAfterDeath1 contradiction (a Residence event dated after the subject's death) and name it as evidence for conflict-resolution on q_001",
+    "**No question is proposed.** A `person_warnings` contradiction is evidence to weigh on the question already open: it goes to `conflict-resolution`, and from there to plan items. Calling `person_warnings` and reporting the contradiction is still correct and should be credited; writing a question for it is not.",
+    "**`research_append` REFUSES a new question here** (step mode, section E): `q_001` is still `in_progress` and its active plan has an open item (`pli_006`). The exemption needs a proof summary AND nothing open; the summary alone is not enough. So writing a question is not a judgement call the agent can get right — the call fails. Report that the question is still open, name what is outstanding, and route the work there instead."
   ]
 }

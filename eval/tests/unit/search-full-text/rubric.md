@@ -32,7 +32,7 @@ Did the skill log negative results with enough detail to support exhaustiveness 
 
 ## Result triage
 
-Did the skill triage returned results using the fields the tool actually returns, and correctly recognize what a staged result can and cannot tell it? A staged fulltext result carries only flat stubs — `names`, `places`, `dates`, `highlightTerms` (the matched terms as bare strings), `title`, `recordType`, `recordPlace`, `recordDate`; the full transcript (`textDocument`) is stripped from the tool response and no MCP tool reads it back, though it remains on disk at `staged.resultsRef`.
+Did the skill triage returned results using the fields the tool actually returns, and correctly recognize what a staged result can and cannot tell it? A staged fulltext result carries only flat stubs — `names`, `places`, `dates`, `highlightTerms` (the matched terms as bare strings), `title`, `recordType`, `recordPlace`, `recordDate`; the full transcript (`textDocument`) is stripped from the tool response, so triage works from the stubs, though the transcript remains on disk at `staged.resultsRef`.
 
 **This dimension fires only when at least one executed search returned results. When every search was nil, there is nothing to triage — score `pass`.**
 

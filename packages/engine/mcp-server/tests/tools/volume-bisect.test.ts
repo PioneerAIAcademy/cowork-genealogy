@@ -302,6 +302,15 @@ describe("input domain", () => {
     expect(ocr).not.toHaveBeenCalled();
   });
 
+  it("names the item route and the unsplit-film case beside volume_search", async () => {
+    const err = await volumeBisectTool({ imageGroupNumber: PREFIX, targetYear: 1700 }, LOCAL).catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    const message = (err as Error).message;
+    expect(message).toMatch(/volume_search/);
+    expect(message).toMatch(/image_search with this film number and item/);
+    expect(message).toMatch(/not split, and volume_bisect cannot take it/);
+  });
+
   it("refuses a prefix with surrounding whitespace", async () => {
     // The shape that slips past a bare `=== prefix` check.
     await expect(

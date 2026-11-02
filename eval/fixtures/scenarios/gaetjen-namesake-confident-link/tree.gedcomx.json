@@ -1,0 +1,890 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "ark:/61903/4:1:G9YD-NYZ",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Hermann",
+          "surname": "Gaetjen",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "about 1859",
+          "standard_date": "Abt 1859",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F2",
+          "type": "Death",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S11"
+        },
+        {
+          "ref": "S10"
+        },
+        {
+          "ref": "S9"
+        },
+        {
+          "ref": "S8"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "ark": "ark:/61903/4:1:L83H-NDQ",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "given": "Henry Joseph",
+          "surname": "Gaetjen",
+          "preferred": true,
+          "type": "BirthName"
+        },
+        {
+          "id": "N3",
+          "given": "Henry",
+          "surname": "Gaetjen",
+          "type": "BirthName"
+        },
+        {
+          "id": "N4",
+          "given": "Hermann",
+          "surname": "Gaetjen",
+          "type": "AlsoKnownAs"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "date": "5 May 1878",
+          "standard_date": "5 May 1878",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F4",
+          "type": "Naturalization",
+          "date": "12 November 1909",
+          "standard_date": "12 Nov 1909",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F5",
+          "type": "Residence",
+          "date": "1910",
+          "standard_date": "1910",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F6",
+          "type": "Military+Draft+Registration",
+          "date": "from 1917 to 1918",
+          "standard_date": "Bet 1917 and 1918",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F7",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F8",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F9",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F10",
+          "type": "Military+Draft+Registration",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F11",
+          "type": "Residence",
+          "date": "1942",
+          "standard_date": "1942",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F12",
+          "type": "Death",
+          "date": "28 July 1943",
+          "standard_date": "28 Jul 1943",
+          "place": "San Francisco, San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F13",
+          "type": "Social Program Claim",
+          "date": "23 November 1954",
+          "standard_date": "23 Nov 1954",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F14",
+          "type": "Citizenship",
+          "place": "United States",
+          "standard_place": "United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F15",
+          "type": "Burial",
+          "place": "Colma, San Mateo, California, United States",
+          "standard_place": "Colma, San Mateo, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S12"
+        },
+        {
+          "ref": "S13"
+        },
+        {
+          "ref": "S14"
+        },
+        {
+          "ref": "S15"
+        },
+        {
+          "ref": "S16"
+        },
+        {
+          "ref": "S17"
+        },
+        {
+          "ref": "S18"
+        },
+        {
+          "ref": "S19"
+        },
+        {
+          "ref": "S20"
+        },
+        {
+          "ref": "S21"
+        },
+        {
+          "ref": "S22"
+        },
+        {
+          "ref": "S23"
+        },
+        {
+          "ref": "S24"
+        },
+        {
+          "ref": "S25"
+        },
+        {
+          "ref": "S26"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "ark": "ark:/61903/4:1:LTLD-2Y2",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N5",
+          "given": "Amelia Otillie",
+          "surname": "Gaetjen",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F16",
+          "type": "Birth",
+          "date": "23 August 1883",
+          "standard_date": "23 Aug 1883",
+          "place": "California, United States",
+          "standard_place": "California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F17",
+          "type": "Residence",
+          "date": "1920",
+          "standard_date": "1920",
+          "place": "San Francisco Assembly District 23, San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F18",
+          "type": "Residence",
+          "date": "1930",
+          "standard_date": "1930",
+          "place": "San Francisco (Districts 1-250), San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F19",
+          "type": "Residence",
+          "date": "1935",
+          "standard_date": "1935",
+          "place": "Same House",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F20",
+          "type": "Residence",
+          "date": "1940",
+          "standard_date": "1940",
+          "place": "Assembly District 24, San Francisco, San Francisco City, San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F21",
+          "type": "Death",
+          "date": "17 August 1961",
+          "standard_date": "17 Aug 1961",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S27"
+        },
+        {
+          "ref": "S28"
+        },
+        {
+          "ref": "S29"
+        },
+        {
+          "ref": "S30"
+        },
+        {
+          "ref": "S31"
+        },
+        {
+          "ref": "S32"
+        },
+        {
+          "ref": "S33"
+        },
+        {
+          "ref": "S34"
+        },
+        {
+          "ref": "S35"
+        },
+        {
+          "ref": "S36"
+        },
+        {
+          "ref": "S37"
+        },
+        {
+          "ref": "S38"
+        },
+        {
+          "ref": "S39"
+        },
+        {
+          "ref": "S40"
+        },
+        {
+          "ref": "S41"
+        },
+        {
+          "ref": "S42"
+        },
+        {
+          "ref": "S43"
+        }
+      ]
+    },
+    {
+      "id": "I4",
+      "ark": "ark:/61903/4:1:G9K8-3V3",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N6",
+          "given": "Amelia",
+          "surname": "Nichols",
+          "preferred": true,
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F22",
+          "type": "Birth",
+          "date": "19 January 1859",
+          "standard_date": "19 Jan 1859",
+          "place": "Germany",
+          "standard_place": "Germany",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        },
+        {
+          "id": "F23",
+          "type": "Death",
+          "date": "30 December 1924",
+          "standard_date": "30 Dec 1924",
+          "place": "San Francisco, California, United States",
+          "standard_place": "San Francisco, California, United States",
+          "sources": [
+            {
+              "ref": "S1",
+              "quality": 1
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "ref": "S44"
+        },
+        {
+          "ref": "S45"
+        },
+        {
+          "ref": "S46"
+        },
+        {
+          "ref": "S47"
+        },
+        {
+          "ref": "S48"
+        },
+        {
+          "ref": "S49"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I1",
+      "person2": "I4",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I2",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "type": "ParentChild",
+      "parent": "I1",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "type": "ParentChild",
+      "parent": "I4",
+      "child": "I3",
+      "sources": [
+        {
+          "ref": "S1",
+          "quality": 1
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree (read from Hermann Gaetjen, G9YD-NYZ)",
+      "citation": "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 7 October 2026), read from the page of Hermann Gaetjen (G9YD-NYZ).",
+      "url": "https://www.familysearch.org/tree"
+    },
+    {
+      "id": "S2",
+      "title": "Hermann Gaetjen",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Hermann Gaetjen (PID G9YD-NYZ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G9YD-NYZ"
+    },
+    {
+      "id": "S3",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/trees/MMMM-MMM"
+    },
+    {
+      "id": "S4",
+      "title": "",
+      "url": "https://api.familysearch.org/platform/collections/tree"
+    },
+    {
+      "id": "S5",
+      "title": "Henry Gaetjen",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Henry Gaetjen (PID L83H-NDQ); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:L83H-NDQ"
+    },
+    {
+      "id": "S6",
+      "title": "Amelia Otillie Gaetjen",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Amelia Otillie Gaetjen (PID LTLD-2Y2); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:LTLD-2Y2"
+    },
+    {
+      "id": "S7",
+      "title": "Amelia Nichols",
+      "citation": "\"FamilySearch Tree,\" database, <i>FamilySearch</i> (https://www.familysearch.org), entry for Amelia Nichols (PID G9K8-3V3); contributed by various users.",
+      "url": "https://familysearch.org/ark:/61903/4:1:G9K8-3V3"
+    },
+    {
+      "id": "S8",
+      "title": "Hermann Gaetjen, \"California, County Marriages, 1849-1957\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XLXS-Q1B : Fri Mar 08 11:26:16 UTC 2024), Entry for William Chadwick Fralich and Amelie Ottilie Gaetjen, 21 July 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XLXS-73D"
+    },
+    {
+      "id": "S9",
+      "title": "Hermann Gaetjen, \"California, San Francisco County Records, 1824-1997\"",
+      "citation": "\"California, San Francisco County Records, 1824-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL4B-YC7W : Wed Jul 23 08:31:25 UTC 2025), Entry for William Chadwick Fralich and Edmond C Fralich, 21 Jul 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL4B-YCWM"
+    },
+    {
+      "id": "S10",
+      "title": "Hermann Gaetjen in entry for William Chadwick Fralich, \"California, Marriages, 1850-1945\"",
+      "citation": "\"California, Marriages, 1850-1945\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H97P-N33Z : 19 September 2026), Hermann Gaetjen in entry for William Chadwick Fralich, 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H97P-N33Z"
+    },
+    {
+      "id": "S11",
+      "title": "Gaetjen, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPF7-LKY : Tue Feb 25 19:49:59 UTC 2025), Entry for Henry J Gaetjen and Gaetjen, 28 Jul 1943.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPF7-LKB"
+    },
+    {
+      "id": "S12",
+      "title": "Henry Gatjens, \"Alaska, State Archives (Juneau), Naturalization Records, 1890-1972\"",
+      "citation": "\"Alaska, State Archives (Juneau), Naturalization Records, 1890-1972\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:W4RJ-31MM : Fri Apr 04 14:57:23 UTC 2025), Entry for Henry Gatjens, 12 Nov 1909.",
+      "url": "https://familysearch.org/ark:/61903/1:1:W4RJ-31MM"
+    },
+    {
+      "id": "S13",
+      "title": "Henry Gaetjen, \"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\"",
+      "citation": "\"United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6K4W-YCRH : Mon Jul 06 03:39:51 UTC 2026), Entry for Henry Gaetjen.",
+      "url": "https://familysearch.org/ark:/61903/1:1:6K4W-YCRH"
+    },
+    {
+      "id": "S14",
+      "title": "Henry Joseph Gaetjen, \"Find a Grave Index\"",
+      "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVLP-S1CN : Sat Oct 03 23:50:31 UTC 2026), Entry for Henry Joseph Gaetjen.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QVLP-S1CN"
+    },
+    {
+      "id": "S15",
+      "title": "Hermann Gaetjen, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q57Q-S5GP : Sun Jul 26 07:43:36 UTC 2026), Entry for Hermann F Gaetjen and Hermann Gaetjen, 07 Feb 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q57Q-S5G5"
+    },
+    {
+      "id": "S16",
+      "title": "Hermann Gaetjen, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q573-PWW3 : Sun Jul 26 07:43:03 UTC 2026), Entry for Charlotte E and E J Banning, 06 Feb 1904.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q573-PWSB"
+    },
+    {
+      "id": "S17",
+      "title": "Henry Joseph Gaetjen, \"United States, World War II Draft Registration Cards, 1942\"",
+      "citation": "\"United States, World War II Draft Registration Cards, 1942\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:V482-DZZ : Mon Mar 30 04:49:51 UTC 2026), Entry for Henry Joseph Gaetjen, 1942.",
+      "url": "https://familysearch.org/ark:/61903/1:1:V482-DZZ"
+    },
+    {
+      "id": "S18",
+      "title": "Henry Gaetjen, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+      "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q59F-67J4 : Sun Jul 26 07:59:04 UTC 2026), Entry for Mary and Henry Gaetjen, 07 Nov 1977.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q59F-67JH"
+    },
+    {
+      "id": "S19",
+      "title": "Henry Gaetjen, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K98B-ZLB : Wed Jan 08 02:54:22 UTC 2025), Entry for Henry Gaetjen and Mary Gaetjen, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K98B-ZLB"
+    },
+    {
+      "id": "S20",
+      "title": "Henry Gaetjen, \"United States, Social Security Death Index\"",
+      "citation": "\"United States, Social Security Death Index,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:JG3Y-446 : 11 January 2021), Henry  Gaetjen, Jul 1943; citing U.S. Social Security Administration, <i>Death Master File</i>, database (Alexandria, Virginia: National Technical Information Service, ongoing).",
+      "url": "https://familysearch.org/ark:/61903/1:1:JG3Y-446"
+    },
+    {
+      "id": "S21",
+      "title": "Henry Ga?tzen, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MH44-H72 : Tue Oct 06 09:04:01 UTC 2026), Entry for Henry Ga?tzen and Mary Ga?tzen, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MH44-H72"
+    },
+    {
+      "id": "S22",
+      "title": "Henry Gaetjen, \"United States, Census, 1910\"",
+      "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MVG8-YN4 : Wed Aug 13 15:26:17 UTC 2025), Entry for Henry Gaetjen and Mary Gaetjen, 1910.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MVG8-YN4"
+    },
+    {
+      "id": "S23",
+      "title": "Henry Goetjen, \"California, San Francisco County Records, 1824-1997\"",
+      "citation": "\"California, San Francisco County Records, 1824-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q23Q-CHC8 : Wed Jul 23 16:17:34 UTC 2025), Entry for Henry Goetjen and Mary, 28 Jul 1943.",
+      "url": "https://familysearch.org/ark:/61903/1:1:Q23Q-CHC8"
+    },
+    {
+      "id": "S24",
+      "title": "Henry Gaetjen, \"United States, World War I Draft Registration Cards, 1917-1918\"",
+      "citation": "\"United States, World War I Draft Registration Cards, 1917-1918\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KZK9-CN9 : Thu Nov 20 12:42:02 UTC 2025), Entry for Henry Gaetjen, from 1917 to 1918.",
+      "url": "https://familysearch.org/ark:/61903/1:1:KZK9-CN9"
+    },
+    {
+      "id": "S25",
+      "title": "Henry J Gaetjen, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPF7-LKY : Tue Feb 25 19:49:59 UTC 2025), Entry for Henry J Gaetjen and Gaetjen, 28 Jul 1943.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPF7-LKY"
+    },
+    {
+      "id": "S26",
+      "title": "Legacy NFS Source: Henry Gaetjen - Government record: Death record or certificate: birth-name: Henry Gaetjen",
+      "citation": "California Death Index 1940-1997"
+    },
+    {
+      "id": "S27",
+      "title": "Amelia Otillia Gaetjen in entry for William Chadwick Fralich, \"California, Marriages, 1850-1945\"",
+      "citation": "\"California, Marriages, 1850-1945\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H97P-N3ZM : 19 September 2026), Amelia Otillia Gaetjen in entry for William Chadwick Fralich, 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H97P-N3ZM"
+    },
+    {
+      "id": "S28",
+      "title": "Amelia Fralisch, \"United States, Census, 1920\"",
+      "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHWG-XMH : Tue Oct 06 08:57:18 UTC 2026), Entry for William Fralisch and Amelia Fralisch, 1920.",
+      "url": "https://familysearch.org/ark:/61903/1:1:MHWG-XMC"
+    },
+    {
+      "id": "S29",
+      "title": "Amelia O Goetjen, \"California, San Francisco County Records, 1824-1997\"",
+      "citation": "\"California, San Francisco County Records, 1824-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL4P-5LQB : Sat Aug 01 06:16:24 UTC 2026), Entry for William C Fralick and Amelia O Goetjen, 21 Jul.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL4P-5L7W"
+    },
+    {
+      "id": "S30",
+      "title": "Amelia O Gaetjen, \"California, San Francisco County Records, 1824-1997\"",
+      "citation": "\"California, San Francisco County Records, 1824-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL41-35L9 : Wed Jul 23 06:43:13 UTC 2025), Entry for William C Fralick and Amelia O Gaetjen, 21 Jul 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL41-35L4"
+    },
+    {
+      "id": "S31",
+      "title": "Amelia Otillia Gaetjen, \"California, San Francisco County Records, 1824-1997\"",
+      "citation": "\"California, San Francisco County Records, 1824-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL4T-T4MY : Wed Jul 23 04:17:59 UTC 2025), Entry for William Chadwick Frolich and Amelia Otillia Gaetjen, 21 Jul 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL4T-T49G"
+    },
+    {
+      "id": "S32",
+      "title": "Amelia O Goetjen, \"California, San Francisco County Records, 1824-1997\"",
+      "citation": "\"California, San Francisco County Records, 1824-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL4P-DQ6K : Wed Jul 23 07:59:48 UTC 2025), Entry for William C Fralick and Amelia O Goetjen, 21 Jun 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL4P-DQ6G"
+    },
+    {
+      "id": "S33",
+      "title": "Amelie Ottilie Gaetjen, \"California, County Marriages, 1849-1957\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XLXS-Q1B : Fri Mar 08 11:26:16 UTC 2024), Entry for William Chadwick Fralich and Amelie Ottilie Gaetjen, 21 July 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XLXS-738"
+    },
+    {
+      "id": "S34",
+      "title": "Amelia Fralich, \"United States, Census, 1940\"",
+      "citation": "\"United States, Census, 1940\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K98R-XM1 : Fri Mar 08 22:58:21 UTC 2024), Entry for William Fralich and Amelia Fralich, 1940.",
+      "url": "https://familysearch.org/ark:/61903/1:1:K98R-X9M"
+    },
+    {
+      "id": "S35",
+      "title": "Amelia Otillia Gaetjen, \"California, San Francisco County Records, 1824-1997\"",
+      "citation": "\"California, San Francisco County Records, 1824-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL4B-YC7W : Wed Jul 23 08:31:25 UTC 2025), Entry for William Chadwick Fralich and Edmond C Fralich, 21 Jul 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL4B-YC7T"
+    },
+    {
+      "id": "S36",
+      "title": "Amelia Fralich, \"United States, Census, 1930\"",
+      "citation": "\"United States, Census, 1930\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XC6G-C85 : Thu Mar 07 04:13:29 UTC 2024), Entry for William C Fralich and Amelia Fralich, 1930.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XC6G-C8R"
+    },
+    {
+      "id": "S37",
+      "title": "Amelia Fralich, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPW1-QVK : Tue Feb 25 14:53:56 UTC 2025), Entry for Amelia Fralich and Nickel, 17 Aug 1961.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPW1-QVK"
+    },
+    {
+      "id": "S38",
+      "title": "California, Death Index, 1940-1997",
+      "citation": "Date: 1961-08-17",
+      "url": "http://search.ancestry.com/cgi-bin/sse.dll?dbid=5180&h=2432685&indiv=try"
+    },
+    {
+      "id": "S39",
+      "title": "1920 United States Federal Census",
+      "citation": "Year: 1920; Census Place: San Francisco Assembly District 23, San Francisco, California; Roll: T625_135; Page: 14A; Enumeration District: 126",
+      "url": "http://search.ancestry.com/cgi-bin/sse.dll?dbid=6061&h=66532683&indiv=try"
+    },
+    {
+      "id": "S40",
+      "title": "U.S. City Directories, 1821-1989",
+      "url": "http://search.ancestry.com/cgi-bin/sse.dll?dbid=2469&h=220531459&indiv=try"
+    },
+    {
+      "id": "S41",
+      "title": "1940 United States Federal Census",
+      "citation": "Year: 1940; Census Place: San Francisco, San Francisco, California; Roll: T627_309; Page: 3A; Enumeration District: 38-290",
+      "url": "http://search.ancestry.com/cgi-bin/sse.dll?dbid=2442&h=71434225&indiv=try"
+    },
+    {
+      "id": "S42",
+      "title": "U.S. City Directories, 1821-1989",
+      "url": "http://search.ancestry.com/cgi-bin/sse.dll?dbid=2469&h=224033108&indiv=try"
+    },
+    {
+      "id": "S43",
+      "title": "1930 United States Federal Census",
+      "citation": "Year: 1930; Census Place: San Francisco, San Francisco, California; Roll: 196; Page: 3A; Enumeration District: 0054; Image: 285.0; FHL microfilm: 2339931",
+      "url": "http://search.ancestry.com/cgi-bin/sse.dll?dbid=6224&h=92718712&indiv=try"
+    },
+    {
+      "id": "S44",
+      "title": "Amelia Gaetjen, \"California, Death Index, 1905-1939\"",
+      "citation": "\"California, Death Index, 1905-1939\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QK91-V6MM : Sat Mar 09 16:34:50 UTC 2024), Entry for Amelia Gaetjen, 30 12 1924.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QK91-V6MM"
+    },
+    {
+      "id": "S45",
+      "title": "Nickel, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPF7-LKY : Tue Feb 25 19:49:59 UTC 2025), Entry for Henry J Gaetjen and Gaetjen, 28 Jul 1943.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPF7-LK1"
+    },
+    {
+      "id": "S46",
+      "title": "Amelia Nichols in entry for William Chadwick Fralich, \"California, Marriages, 1850-1945\"",
+      "citation": "\"California, Marriages, 1850-1945\", , <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:H97P-N3W2 : 19 September 2026), Amelia Nichols in entry for William Chadwick Fralich, 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:H97P-N3W2"
+    },
+    {
+      "id": "S47",
+      "title": "Amelia Nichols, \"California, San Francisco County Records, 1824-1997\"",
+      "citation": "\"California, San Francisco County Records, 1824-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL4B-YC7W : Wed Jul 23 08:31:25 UTC 2025), Entry for William Chadwick Fralich and Edmond C Fralich, 21 Jul 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:QL41-MJ66"
+    },
+    {
+      "id": "S48",
+      "title": "Amelia Nichols, \"California, County Marriages, 1849-1957\"",
+      "citation": "\"California, County Marriages, 1849-1957\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XLXS-Q1B : Fri Mar 08 11:26:16 UTC 2024), Entry for William Chadwick Fralich and Amelie Ottilie Gaetjen, 21 July 1913.",
+      "url": "https://familysearch.org/ark:/61903/1:1:XLXS-736"
+    },
+    {
+      "id": "S49",
+      "title": "Nickel, \"California, Death Index, 1940-1997\"",
+      "citation": "\"California, Death Index, 1940-1997\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VPW1-QVK : Tue Feb 25 14:53:56 UTC 2025), Entry for Amelia Fralich and Nickel, 17 Aug 1961.",
+      "url": "https://familysearch.org/ark:/61903/1:1:VPW1-QV2"
+    },
+    {
+      "id": "S50",
+      "title": "Entry for Hermann Gatjen, \"California, Great Registers, 1848-1921,\" 1875 Ninth Ward, San Francisco County",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:VTXM-PPN"
+    },
+    {
+      "id": "S51",
+      "title": "United States, Germans to America Index, 1850-1897",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:KD32-5DF"
+    }
+  ]
+}

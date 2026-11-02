@@ -1,5 +1,6 @@
 """The worker's ``ClaudeAgentOptions`` and its hooks: ``PreToolUse`` (deny and log),
-``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration) and, on the D18
+``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration, and end the turn when a
+proof-conclusion call completes the project) and, on the D18
 autonomous arm only, ``Stop`` (veto the model's voluntary yield, ``make_stop_hook``).
 
 This is the prototype option set (plan: "Container layout", "Removing the shell",
@@ -36,6 +37,7 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 
 The hook (``make_pretool_hook``) is the plan's deny-and-log: it denies a raw
 ``Write``/``Edit`` on the project files (the hosted ``direct_project_file_write``),
+a delegation that would start a general-purpose agent (U14),
 denies a ``Read``/``Grep``/``Glob`` under the anchor and any read or write under ``/proc``
 or ``/dev``, the turn's own process (``deny.py``), and records EVERY
 call as a ``tool_calls`` row with its decision -- so criterion 3 is a query, not a claim.
@@ -63,6 +65,7 @@ from app.agent.continue_policy import (
     delivered_stop_reason,
     foreground_rewrite,
     DELIVERY_GUIDANCE,
+    HOSTED_PLANE_ENV,
     DELIVERED_TOOL,
     CONTINUE_REASON,
     env_float,
@@ -75,9 +78,12 @@ from app.agent.continue_policy import (
     TERMINAL_NO_PROGRESS,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
+    completion_halt_summary,
     project_completed,
     should_continue_run,
+    status_before_call,
     terminal_reason,
+    wants_status_before,
 )
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
@@ -105,6 +111,7 @@ GATEWAY_AGENT_MODELS = {
     "claude-haiku-5-5": "us.anthropic.claude-haiku-5-5",
     "claude-sonnet-5-5": "us.anthropic.claude-sonnet-5-5",
 }
+BEDROCK_ID_PREFIXES = ("us.", "global.")
 PLUGIN_COMMAND_PREFIX = "genealogy-research:"
 # The SDK's unit is bytes (default 1 MiB, ``subprocess_cli._DEFAULT_MAX_BUFFER_SIZE``);
 # raised so one oversized JSON line cannot end a turn.
@@ -121,6 +128,49 @@ BLOCKED_DENY_REASON = (
     "{tool} is denied on this run: the fixture's answer sits in the live FamilySearch tree "
     "and this run must find it in records (the e2e harness's tree-read block, BLOCKED_TOOLS)."
 )
+
+
+# What the runtime starts for a spawn naming no agent, or naming this one: an agent with
+# none of a plugin agent's instructions or `tools:` limits. A gateway 400 on an agent's
+# model has ended in one silently (plan P3h), so the worker refuses it (U14).
+STAND_IN_AGENT = "general-purpose"
+
+STAND_IN_DENY_REASON = (
+    '{tool} as a "general-purpose" agent is disabled here: it runs the step without the '
+    "plugin agent's instructions and tool limits. Delegate to the named plugin agent the "
+    "step calls for (its name is the subagent_type), or do the step yourself."
+)
+
+
+def is_stand_in_delegation(tool_name: str, tool_input: Any) -> bool:
+    """An ``Agent``/``Task`` call that would start a general-purpose agent: no
+    ``subagent_type``, or ``general-purpose`` under any prefix."""
+    if tool_name not in DELEGATION_TOOLS:
+        return False
+    raw = tool_input.get("subagent_type") if isinstance(tool_input, dict) else None
+    name = raw.strip().rsplit(":", 1)[-1] if isinstance(raw, str) else ""
+    return name in ("", STAND_IN_AGENT)
+
+
+def hook_denied_tool_use_ids(message: Any) -> list[str]:
+    """The ``tool_use_id`` of each call in ``message``'s results that a ``PreToolUse`` hook
+    stopped: an ``is_error`` result whose text the CLI wrote as ``PreToolUse:<tool> hook
+    error: <reason>`` (CLI 2.1.x; the plugin hook's denies and this worker's alike, live on
+    compose 2026-10-31). No post-call hook fires for such a call, so its result is the
+    worker's only sign that the plugin hook denied what this worker's hook allowed."""
+    content = getattr(message, "content", None)
+    if not isinstance(content, list):
+        return []
+    ids: list[str] = []
+    for block in content:
+        if getattr(block, "is_error", None) is not True or not getattr(block, "tool_use_id", None):
+            continue
+        body = getattr(block, "content", None)
+        if isinstance(body, list):
+            body = "".join(str(part.get("text") or "") for part in body if isinstance(part, dict))
+        if isinstance(body, str) and body.startswith("PreToolUse:") and " hook error: " in body:
+            ids.append(block.tool_use_id)
+    return ids
 
 
 def is_blocked_call(tool_name: str, blocked: frozenset[str]) -> bool:
@@ -142,8 +192,10 @@ def parse_blocked_tools(value: str | None) -> frozenset[str]:
 WRITE_DENY_REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json must "
     "go through the writer tools. To CREATE a new project use project_create, which "
-    "writes both files together; to add to an existing one use research_append, "
-    "research_log_append, tree_edit or tree_correct. These validate before persisting. "
+    "writes both files together (from the main session, invoke `@plugin:init-project`, "
+    "which calls it); to add to an existing one use research_append or "
+    "research_log_append, and for the tree tree_edit or tree_correct (from the main "
+    "session, invoke `@plugin:tree-edit`). These validate before persisting. "
     "Direct file writes never validate."
 )
 
@@ -234,12 +286,25 @@ def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, s
         "ANTHROPIC_API_KEY": "",
         "ANTHROPIC_MODEL": GATEWAY_MODEL,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
-        # agentgateway < 1.6 cannot parse tool_reference, so tool search fails on
-        # its second turn (plan P3f). TAP's Fargate stack pins 1.5.0; its EKS stack
-        # (tap-gateway) runs 1.6.0: tool search passes on a local copy of its route
-        # (2026-10-24) and is unverified on the deployed gateway (handoff U14).
-        "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "false").strip().lower(),
+        # On by default (Richard, 2026-10-31): TAP's EKS gateway runs agentgateway
+        # 1.6.0, and tool search held through kills, resumes, compactions and Sonnet 5
+        # subagents on a local copy of its route (handoff U14; unverified on the
+        # deployed gateway until F1). Off costs ~12-14% a run. agentgateway < 1.6
+        # cannot parse tool_reference (plan P3f): set GATEWAY_TOOL_SEARCH=false for
+        # TAP's Fargate stack, which pins 1.5.0.
+        "ENABLE_TOOL_SEARCH": (worker_env.get("GATEWAY_TOOL_SEARCH") or "true").strip().lower(),
     }
+
+
+def unmapped_gateway_models(agents: Mapping[str, Any]) -> list[str]:
+    """``"<agent>: <model>"`` for each agent whose model a gateway would receive unmapped:
+    not in ``GATEWAY_AGENT_MODELS`` and not already a Bedrock id. Empty = OK (U14). An
+    agent with no model inherits the main thread's, which is mapped."""
+    return sorted(
+        f"{name}: {model}" for name, agent in agents.items()
+        if isinstance(model := getattr(agent, "model", None), str)
+        and model not in GATEWAY_AGENT_MODELS and not model.startswith(BEDROCK_ID_PREFIXES)
+    )
 
 
 def gateway_agent_models(agents: Mapping[str, Any]) -> dict[str, Any]:
@@ -659,6 +724,8 @@ def make_pretool_hook(
                 decision, reason = "deny", step_verdict[1]
             elif protected:
                 decision, reason = "deny", WRITE_DENY_REASON.format(tool=tool_name, name=protected)
+            elif is_stand_in_delegation(tool_name, tool_input):
+                decision, reason = "deny", STAND_IN_DENY_REASON.format(tool=tool_name)
             elif is_blocked_call(tool_name, blocked):
                 decision, reason = "deny", BLOCKED_DENY_REASON.format(tool=bare_tool_name(tool_name))
             else:
@@ -736,12 +803,23 @@ def make_posttool_hook(
     turn_id: str,
     finish: Callable[[str], None],
     log: Callable[..., None] | None = None,
+    research: Callable[[], Mapping[str, Any] | None] | None = None,
+    status_before: Callable[[str | None], Any] | None = None,
+    on_completed: Callable[[str], None] | None = None,
 ):
     """The worker's ``PostToolUse`` / ``PostToolUseFailure`` callback: ``finish(tool_use_id)``
     stamps the row the PreToolUse hook wrote with the call's duration (acceptance
-    criterion 4). Never raises and never changes what the model sees; a failed stamp is
-    one log line. A call in flight when its worker is killed keeps a NULL duration.
-    U19: a FamilySearch tool answering with the sign-in instruction logs ``ev=reauth_hit``."""
+    criterion 4). Never raises; a failed stamp is one log line. Its one effect on the turn
+    is the completion halt below. A call in flight when its worker is killed keeps a NULL duration.
+    U19: a FamilySearch tool answering with the sign-in instruction logs ``ev=reauth_hit``.
+
+    The completion halt (#3542 lead 1), armed when ``research``, ``status_before`` (the
+    project's status read just before this call, by its ``tool_use_id``) and
+    ``on_completed`` are given: after the main-thread proof-conclusion call that completes the project, end the
+    turn on the agent's ``summary_for_user``, the same predicate as the alpha. Exactly
+    ``{"continue_": False, "stopReason": ...}``: ``_halt``'s deny half is PreToolUse-shaped
+    and means nothing after the call ran. ``on_completed`` records the turn ``completed``,
+    because no Stop hook fires after a halt (``dev/probe_posttool_halt.py``)."""
 
     async def _posttool(input_data: Any, tool_use_id: str | None, _context: Any) -> dict[str, Any]:
         data = input_data if isinstance(input_data, dict) else {}
@@ -759,7 +837,19 @@ def make_posttool_hook(
                     agent_id=data.get("agent_id"))
         except Exception:  # noqa: BLE001, S110 - an alarm signal must not fail the call
             pass
-        return {}
+        if research is None or status_before is None or on_completed is None:
+            return {}
+        try:
+            summary = completion_halt_summary(data, status_before(use_id), research)
+            if summary is None:
+                return {}
+            on_completed(summary)
+            return {"continue_": False, "stopReason": summary}
+        except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
+            if log is not None:
+                log(ev="completion_halt_failed", turn_id=turn_id,
+                    error=f"{type(exc).__name__}: {exc}")
+            return {}
 
     return _posttool
 
@@ -945,8 +1035,9 @@ def build_worker_options(
         f"reached through the genealogy MCP tools with projectPath {cwd!r} — it is not "
         "readable as files: your working directory is an empty anchor. Read the project "
         "with project_context, research_query, record_read and sidecar_read, and change "
-        "it only through the writer tools (project_create, research_append, "
-        "research_log_append, tree_edit, tree_correct). Follow the genealogy skills, and "
+        "it only through research_append and research_log_append, or by invoking the agent "
+        "that holds the write (`@plugin:init-project` creates a project, `@plugin:tree-edit` "
+        "edits the tree). Follow the genealogy skills, and "
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style."
     )
@@ -959,6 +1050,7 @@ def build_worker_options(
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
         # main thread's context and tools, not a plugin agent's `tools:` list.
         "CLAUDE_CODE_FORK_SUBAGENT": "0",
+        HOSTED_PLANE_ENV: "1",
         "CLAUDE_CONFIG_DIR": config_dir,
         **model_env,
     }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { planItemFlags } from "../../src/utils/plan-item-plausibility.js";
+import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../../src/utils/plan-item-plausibility.js";
 
 // Phase 3 item 5: "dead ends become next actions", and the next actions have to be
 // usable. In the reported failure 2 of 8, then 1 of 3 suggestions were viable -- the
@@ -120,7 +120,7 @@ describe("planItemFlags — years", () => {
 // feature -- the plan called it built for two weeks while no caller existed.
 
 import { researchAppend } from "../../src/tools/research-append.js";
-import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -183,3 +183,250 @@ describe("research_append surfaces the plan-item flags", () => {
   });
 });
 
+
+// Issue #2424 (umbrella #2475): a plan that stops short of its question's own date
+// window. The window is stated on the question by question-selection; the subject's
+// lifetime is not a stand-in (measured: 145 of 391 committed plan-bearing questions,
+// correct plans included). Advisory, decided 2026-10-01.
+
+const q = (date_window?: string) => ({ id: "q_001", ...(date_window ? { date_window } : {}) });
+const plan = (ranges: string[], extra: Record<string, unknown> = {}) => ({
+  id: "pl_001", question_id: "q_001", status: "active",
+  items: ranges.map((date_range) => ({ date_range, status: "planned" })), ...extra,
+});
+
+describe("planWindowFlag", () => {
+  it("fires on the anders-monsen shape: items from 1797 against a 1777-1799 marriage window", () => {
+    const msg = planWindowFlag(q("1777-1799"), [plan(["1820-1900", "1797-1900", "1891"])]);
+    expect(msg).toMatch(/q_001's plans span 1797–1900 but its date window is 1777–1799: 20 of its 23 years/);
+  });
+
+  it("fires on the Rule B shape: censuses 1850 and 1860 against a 1845-1908 window", () => {
+    expect(planWindowFlag(q("1845-1908"), [plan(["1850-1850", "1860"])])).toMatch(/53 of its 64 years/);
+  });
+
+  it("is silent on the correct marriage plan, 1770-1800", () => {
+    expect(planWindowFlag(q("1777-1799"), [plan(["1770-1800"])])).toBeNull();
+  });
+
+  it("judges the span, not summed years: single-year censuses 1850…1900 cover 1845-1908", () => {
+    expect(planWindowFlag(q("1845-1908"), [plan(["1850", "1860", "1870", "1880", "1900"])])).toBeNull();
+  });
+
+  it("pins the threshold at more than half: 10 of 20 uncovered is silent, 11 of 20 fires", () => {
+    expect(planWindowFlag(q("1800-1819"), [plan(["1810-1819"])])).toBeNull();
+    expect(planWindowFlag(q("1800-1819"), [plan(["1811-1819"])])).toMatch(/11 of its 20 years/);
+  });
+
+  it("counts a plan entirely outside the window as fully uncovered", () => {
+    expect(planWindowFlag(q("1777-1799"), [plan(["1840-1880"])])).toMatch(/23 of its 23 years/);
+  });
+
+  it("has no opinion without a window, with a malformed one, or with no parseable item", () => {
+    expect(planWindowFlag(q(), [plan(["1840-1880"])])).toBeNull();
+    expect(planWindowFlag(q("c. 1780s"), [plan(["1840-1880"])])).toBeNull();
+    expect(planWindowFlag(q("1799-1777"), [plan(["1840-1880"])])).toBeNull();
+    expect(planWindowFlag(q("1777-1799"), [plan(["c. 1880s", ""])])).toBeNull();
+  });
+
+  it("leaves out skipped items and superseded plans — they search nothing", () => {
+    const skipped = plan(["1770-1800"]);
+    (skipped.items[0] as any).status = "skipped";
+    expect(planWindowFlag(q("1777-1799"), [skipped, plan(["1840-1880"], { id: "pl_002" })])).toMatch(/23 of/);
+    const retired = plan(["1770-1800"], { status: "superseded" });
+    expect(planWindowFlag(q("1777-1799"), [retired, plan(["1840-1880"], { id: "pl_002" })])).toMatch(/23 of/);
+  });
+
+  it("reads only the question's own plans", () => {
+    const other = plan(["1770-1800"], { id: "pl_002", question_id: "q_002" });
+    expect(planWindowFlag(q("1777-1799"), [other, plan(["1840-1880"])])).toMatch(/23 of/);
+  });
+});
+
+describe("research_append surfaces the date-window flag", () => {
+  const WINDOW_Q = [{ id: "q_001", question: "When did he marry?", date_window: "1777-1799" }];
+  const withItems = (ranges: string[]) => [{
+    id: "pl_001", question_id: "q_001", status: "active",
+    items: ranges.map((date_range, i) => ({ ...ITEM, id: `pli_00${i + 1}`, sequence: i + 1, date_range })),
+  }];
+
+  it("warns on an item append that leaves the window uncovered, and still writes", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
+    const text = await append(dir, { ...ITEM, date_range: "1840-1880" });
+    expect(text).toMatch(/"ok":\s*true/);
+    expect(text).toMatch(/date window is 1777–1799/);
+  });
+
+  it("is silent when the plan reaches the window", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
+    expect(await append(dir, { ...ITEM, date_range: "1770-1800" })).not.toMatch(/date window/);
+  });
+
+  it("is silent for a question with no date_window", async () => {
+    const dir = project({ plans: withItems(["1820-1900"]) });
+    expect(await append(dir, { ...ITEM, date_range: "1840-1880" })).not.toMatch(/date window/);
+  });
+
+  it("does not re-warn on a status-only item update — a search agent's write", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001",
+      entryId: "pli_001", fields: { status: "in_progress" },
+    } as never, undefined as never);
+    expect(JSON.stringify(out)).not.toMatch(/date window/);
+  });
+
+  it("warns on an update that moves an item's date_range out of the window", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1770-1800"]) });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001",
+      entryId: "pli_001", fields: { date_range: "1840-1880" },
+    } as never, undefined as never);
+    expect(JSON.stringify(out)).toMatch(/date window is 1777–1799/);
+  });
+
+  it("warns on a plans append whose inline items leave the window uncovered, and still writes", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: [] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plans", op: "append",
+      entry: { question_id: "q_001", status: "active", items: [{ ...ITEM, id: "pli_001", date_range: "1840-1880" }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    const text = out instanceof Error ? out.message : JSON.stringify(out);
+    expect(text).toMatch(/"ok":\s*true/);
+    expect(text).toMatch(/date window is 1777–1799/);
+  });
+
+  it("warns on a plans update that replaces items with an uncovered set", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1770-1800"]) });
+    const out = await researchAppend({
+      projectPath: dir, section: "plans", op: "update", entryId: "pl_001",
+      fields: { items: [{ ...ITEM, id: "pli_001", date_range: "1840-1880" }] },
+    } as never, undefined as never);
+    expect(JSON.stringify(out)).toMatch(/date window is 1777–1799/);
+  });
+
+  it("warns once per question for a batch of two item appends", async () => {
+    const dir = project({ questions: WINDOW_Q, plans: withItems(["1820-1900"]) });
+    const out = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "plan_items", op: "append", planId: "pl_001", entry: { ...ITEM, date_range: "1840-1880" } },
+        { section: "plan_items", op: "append", planId: "pl_001", entry: { ...ITEM, sequence: 2, date_range: "1850-1890" } },
+      ],
+    } as never, undefined as never);
+    expect(JSON.stringify(out).match(/date window is 1777–1799/g)).toHaveLength(1);
+  });
+});
+
+// A plan item names one place: search-records hands its jurisdiction to record_search
+// as the one residencePlace. A run of ut_research_plan_wzk wrote "Alabama and Texas,
+// United States", was only warned, and returned the warning as "cosmetic".
+
+const TWO_STATES = [loc("Alabama, United States"), loc("Texas, United States")];
+
+describe("compoundJurisdictionError", () => {
+  for (const jurisdiction of [
+    "Alabama and Texas, United States",
+    "Hill County, Texas and Alabama, United States",
+    "Blount County, Alabama and Smith County, Texas, United States",
+    "Texas and Alabama",
+    "Texas & Alabama",
+    "Alabama or Texas",
+    "Blount County, Alabama; Smith County, Texas",
+    "Alabama / Texas, United States",
+  ]) {
+    it(`refuses ${jurisdiction}, every part of which is a researched locality`, () => {
+      expect(compoundJurisdictionError({ jurisdiction }, TWO_STATES)).toMatch(/names \d places .*one item per place/);
+    });
+  }
+
+  for (const [jurisdiction, localities] of [
+    ["Lewis and Clark County, Montana, United States", [loc("Montana, United States")]],
+    ["Antigua and Barbuda", [loc("Antigua and Barbuda")]],
+    ["East and West Feliciana Parish, Louisiana", [loc("Louisiana, United States")]],
+    ["Alabama and Georgia, United States", TWO_STATES],
+    ["Smith County and Hill County, Texas", TWO_STATES],
+    ["Andalusia, Covington, Alabama, United States", TWO_STATES],
+    ["Alabama and Texas, United States", []],
+  ] as const) {
+    it(`leaves ${jurisdiction} alone (${localities.length} localities)`, () => {
+      expect(compoundJurisdictionError({ jurisdiction }, [...localities])).toBeUndefined();
+    });
+  }
+
+  it("never throws on a malformed item", () => {
+    for (const bad of [{}, { jurisdiction: 7 }, { jurisdiction: null }, null as never]) {
+      expect(compoundJurisdictionError(bad as never, TWO_STATES)).toBeUndefined();
+    }
+  });
+});
+
+describe("research_append refuses a plan item that names two places", () => {
+  const states = { localities: [{ id: "lo_001", place: "Alabama, United States" }, { id: "lo_002", place: "Texas, United States" }] };
+
+  it("refuses the append and writes nothing", async () => {
+    const dir = project(states);
+    const text = await append(dir, { ...ITEM, jurisdiction: "Alabama and Texas, United States" });
+    expect(text).toMatch(/"ok":\s*false/);
+    expect(text).toMatch(/names 2 places \(Alabama; Texas, United States\)/);
+    expect(JSON.parse(readFileSync(join(dir, "research.json"), "utf8")).plans[0].items ?? []).toEqual([]);
+  });
+
+  it("refuses the same item inline on a plans append", async () => {
+    const out = await researchAppend({
+      projectPath: project(states), section: "plans", op: "append",
+      entry: { question_id: "q_001", status: "active", items: [{ ...ITEM, id: "pli_001", jurisdiction: "Texas and Alabama" }] },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/names 2 places/);
+  });
+
+  it("accepts one item per place", async () => {
+    const dir = project(states);
+    expect(await append(dir, { ...ITEM, jurisdiction: "Alabama, United States" })).toMatch(/"ok":\s*true/);
+    expect(await append(dir, { ...ITEM, sequence: 2, jurisdiction: "Texas, United States" })).toMatch(/"ok":\s*true/);
+  });
+
+  it("does not hold an edit to a compound item written before the rule", async () => {
+    const dir = project({ ...states, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [
+      { ...ITEM, id: "pli_001", jurisdiction: "Alabama and Texas, United States" },
+    ] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { rationale: "Reworded." },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/"ok":\s*true/);
+  });
+
+  it("does not hold an update that re-sends the stored compound jurisdiction", async () => {
+    const dir = project({ ...states, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [
+      { ...ITEM, id: "pli_001", jurisdiction: "Alabama and Texas, United States" },
+    ] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { jurisdiction: "Alabama and Texas, United States", rationale: "Reworded." },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/"ok":\s*true/);
+  });
+
+  it("checks an inline item on a plans update only when its jurisdiction changed", async () => {
+    const stored = { ...ITEM, id: "pli_001", jurisdiction: "Alabama and Texas, United States" };
+    const plans = [{ id: "pl_001", question_id: "q_001", status: "active", items: [stored] }];
+    const update = (items: unknown[]) => researchAppend({
+      projectPath: project({ ...states, plans }), section: "plans", op: "update", entryId: "pl_001",
+      fields: { items },
+    } as never, undefined as never).then(JSON.stringify, (e: Error) => e.message);
+    expect(await update([{ ...stored, rationale: "Reworded." }])).toMatch(/"ok":\s*true/);
+    expect(await update([{ ...stored, jurisdiction: "Texas and Alabama" }])).toMatch(/names 2 places/);
+  });
+
+  it("refuses an update that sets a compound jurisdiction", async () => {
+    const dir = project({ ...states, plans: [{ id: "pl_001", question_id: "q_001", status: "active", items: [
+      { ...ITEM, id: "pli_001", jurisdiction: "Alabama, United States" },
+    ] }] });
+    const out = await researchAppend({
+      projectPath: dir, section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001",
+      fields: { jurisdiction: "Alabama and Texas, United States" },
+    } as never, undefined as never).catch((e: Error) => e);
+    expect(out instanceof Error ? out.message : JSON.stringify(out)).toMatch(/names 2 places/);
+  });
+});

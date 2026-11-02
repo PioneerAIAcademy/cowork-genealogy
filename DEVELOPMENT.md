@@ -139,6 +139,11 @@ Example: adding a "list providers" feature.
    - Create `packages/engine/plugin/skills/list-providers/SKILL.md`
    - In the SKILL.md, instruct Claude to call the new tool when the
      user asks what providers are available
+   - If only agents grant the tool (no skill's `allowed-tools` does), decide
+     whether the main thread may call it: add it to `AGENT_ONLY_TOOLS` in
+     `packages/engine/plugin/hooks/guard_project_files.py` with its agents and to
+     `hooks.json`'s matcher, or to `MAIN_THREAD_OK` with the call that needs it.
+     `tests/packaging/plugin-hooks.test.ts` fails until you do.
 
 3. **Rebuild both artifacts.**
    ```bash
@@ -561,6 +566,10 @@ hosted sessions at the wiki-query and Pop Stats services; leave them unset and
 the engine uses its compiled-in defaults, which name one developer's tailnet
 host. Changing one reaches existing sessions on their next connect — no need to
 recreate a project.
+
+`MATCHER_URL` belongs in `[env]` and `MATCHER_API_KEY` in `fly secrets set`. With
+both set, hosted sessions score with the matcher service; otherwise with
+FamilySearch's matcher. A change reaches existing sessions on their next connect.
 
 The agent runs on **E2B**, not in this container. The `genealogy-agent` image is
 a separate artifact built from its own Dockerfile, but `make deploy` builds and

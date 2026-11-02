@@ -1,0 +1,17 @@
+{
+  "tool": "volume_bisect",
+  "description": "volume_bisect catch-all — matches ANY imageGroupNumber (predicate '~' = empty-substring match) so a bisect not covered by a more specific fixture degrades into the tool's own inconclusive stop instead of aborting the run with unmatched_tool_call. Mirrors image-search-any. Order it LAST among volume-bisect fixtures. Added when search-images gained volume_bisect (#3549): every test that runs search-images live must stock each of its tools.",
+  "args": {
+    "imageGroupNumber": "~"
+  },
+  "response": {
+    "bracket": {
+      "lowPosition": 0,
+      "lowYear": null,
+      "highPosition": 0,
+      "highYear": null
+    },
+    "confidence": "inconclusive",
+    "stopped": "3 consecutive probes found no year (covers, blank leaves or target cards). Stopping rather than walking the volume a page at a time."
+  }
+}

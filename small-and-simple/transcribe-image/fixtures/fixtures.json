@@ -1,0 +1,15 @@
+{
+  "about": "Human-verified transcriptions of ten printed pages of Frederick Holt, 'Holt genealogy'. Copied from packages/engine/mcp-server/dev/ocr-keys/, whose README records their provenance.",
+  "cases": [
+    { "slug": "holt-042", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S31-F", "key": "holt-042.txt" },
+    { "slug": "holt-045", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S31-H", "key": "holt-045.txt" },
+    { "slug": "holt-058", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S31-P", "key": "holt-058.txt" },
+    { "slug": "holt-059", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S31-V", "key": "holt-059.txt" },
+    { "slug": "holt-069", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S31-T", "key": "holt-069.txt" },
+    { "slug": "holt-092", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S31-3", "key": "holt-092.txt" },
+    { "slug": "holt-098", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S31-D", "key": "holt-098.txt" },
+    { "slug": "holt-160", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S32-3", "key": "holt-160.txt" },
+    { "slug": "holt-175", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S31-G", "key": "holt-175.txt" },
+    { "slug": "holt-187", "ark": "ark:/61903/3:1:3Q9M-CSDM-2S31-9", "key": "holt-187.txt" }
+  ]
+}

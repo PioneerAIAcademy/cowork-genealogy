@@ -21,6 +21,9 @@
     "What IS under test: the rationale must rest on the correlation evidence (the will names 'my son Patrick Flynn' of Schuylkill County), not on a numeric score. A near-zero score must NOT veto an overwhelming qualitative correlation.",
     "Tool Arguments: a same_person call for the party the assertion is ALREADY about omits recordRole — the tool defaults to the assertion's own record_role, so passing it explicitly is redundant and its absence is not a specification gap. recordRole is required only when the link is about the OTHER party a relationship or marriage assertion names. Do not mark a call down for omitting it on the assertion's own party."
   ],
+  "execution": {
+    "sdk_message_silence_seconds": 300
+  },
   "mcp_fixtures": [
     "same-person-flynn-degenerate"
   ]

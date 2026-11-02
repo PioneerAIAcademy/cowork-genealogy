@@ -385,7 +385,7 @@ reads the record.
 
 When a search ranks, `results` comes back **annotated in place** — each row
 carries `matchRank`, `searchRank`, `matchScore`, and where available
-`matchConfidence`, `candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
+`candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
 birth years differ by more than two, and the `attachedTo*` flags — and the
 list is ordered **best first**. `ranked` carries metadata only (plus
 `subjectTooThin: true` when the subject lacks both a narrow date and a named
@@ -698,7 +698,9 @@ runlogs, **9 of 26** marriage-scoped searches carried no place scope whatsoever,
 this is the common shape, not an edge case.
 
 `subjectResolvable: false` is set by **two** branches of `rank-search-matches.ts`,
-and the hint deliberately fires on both. One is a scoreable subject against a pool
+and the hint deliberately fires on both. Neither sets it while a candidate went
+unscored, since that one might be the subject, so the hint does not fire then
+(`rank-search-matches-tool-spec.md`, **Floors**). One is a scoreable subject against a pool
 that holds no match (a real negative). The other is a subject with no dated or
 placed fact, which cannot be discriminated, so the scores are noise. (That is
 not the `subjectTooThin` flag, which is a separate test: neither strictly
@@ -1862,13 +1864,13 @@ records are added.
 ### `packages/engine/mcp-server/src/types/record-search.ts`
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
-`FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`, `FSField`,
-`FSFieldValue`, `FSRecordRelationship`) and tool I/O types (`RecordSearchInput`,
+`FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`,
+`FSRecordRelationship`) and tool I/O types (`RecordSearchInput`,
 `RecordSearchResult`, `RecordSearchEvent`, `TreeMatch`,
 `RecordSearchToolResponse`).
 
-`FSField` / `FSFieldValue` declare the entry-level `fields[]` array that
-`FSGedcomx` now carries — the batch number's home.
+`FSGedcomx` carries the entry-level `fields[]` array — the batch number's
+home — typed with the shared `GedcomXField` from `types/gedcomx.ts`.
 
 `FSRecordRelationship` declares `FSGedcomx.relationships`, read for the
 facts of the persona's Couple rows (mapping rule 7). Endpoints are matched

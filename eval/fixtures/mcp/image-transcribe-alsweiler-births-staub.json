@@ -1,0 +1,16 @@
+{
+  "tool": "image_transcribe",
+  "description": "Image 008230326_00078 of the Alsweiler civil birth register: entry 9 of 1853 is Catharina Staub, daughter of Jacobus Staub and Catharina Hoffmann. Two pages past where volume-bisect-alsweiler-births-1853 puts the start of 1853. Film-anchored full id (see image-transcribe-schuylkill-probate-flynn-will on why). Order it before image-transcribe-alsweiler-births-any. Invented entry text; the register and place are real.",
+  "args": {
+    "imageId": "~008230326_00078"
+  },
+  "response": {
+    "transcription": "Geburts-Register der Bürgermeisterei Alsweiler, 1853.\n\nNr. 8. Alsweiler, den 4. Februar 1853. Vor mir erschien Nikolaus Schäfer, Ackerer ... ein Kind männlichen Geschlechts ... Johann.\n\nNr. 9. Alsweiler, den 6. Februar 1853. Vor mir, dem Bürgermeister, erschien Jacob Staub, Tagelöhner, wohnhaft zu Alsweiler, und zeigte an, daß von Catharina Hoffmann, seiner Ehefrau, am 5. Februar 1853 ein Kind weiblichen Geschlechts geboren worden, welchem der Vorname Catharina beigelegt worden. Zeugen: Peter Wagner, Michel Recktenwald.\n\nNr. 10. Alsweiler, den 9. Februar 1853 ... [illegible]",
+    "found": "FOUND — entry Nr. 9: Catharina, born 5 February 1853 to Jacob Staub and Catharina Hoffmann",
+    "metadata": {
+      "imageId": "008230326_00078",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1702331
+    }
+  }
+}

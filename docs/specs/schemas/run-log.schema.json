@@ -80,7 +80,7 @@
           "additionalProperties": false,
           "required": ["fixture", "live"],
           "properties": {
-            "fixture": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "description + inputSchema of every tool this suite's fixtures serve. A change blocks." },
+            "fixture": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "description + inputSchema of every tool this suite's fixtures serve. A change warns." },
             "live": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "description + inputSchema of the remaining LIVE_TOOLS, advertised to every suite. A change warns." }
           }
         },

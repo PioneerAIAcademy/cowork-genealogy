@@ -62,6 +62,7 @@ import { extractionAppendSchema } from "./tools/extraction-append.js";
 import { researchQuerySchema } from "./tools/research-query.js";
 import { projectCreateSchema } from "./tools/project-create.js";
 import { buildExternalSearchUrlSchema } from "./tools/build-external-search-url.js";
+import { treeQuerySchema } from "./tools/tree-query.js";
 import { sidecarReadSchema } from "./tools/sidecar-read.js";
 import { getNameVariantsSchema } from "./tools/name-variants.js";
 
@@ -122,6 +123,7 @@ export const READ_ONLY: ReadonlySet<string> = new Set([
   "sidecar_read",
   "source_attachments",
   "tree_gaps",
+  "tree_query",
   "validate_research_schema",
   "volume_bisect",
   "volume_search",
@@ -179,6 +181,7 @@ export const allToolSchemas = [
   researchAppendSchema,
   rankSearchMatchesSchema,
   projectContextSchema,
+  treeQuerySchema,
   projectListSchema,
   materializeFactsSchema,
   extractionAppendSchema,

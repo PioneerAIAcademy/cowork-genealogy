@@ -199,27 +199,6 @@ export function assertKnownGroupNames(names: readonly unknown[]): void {
 }
 
 /**
- * Throw when `input` carries any of `aliases`, record-type field names a tool
- * does not take. Nothing validates arguments against a tool's advertised
- * schema, so an unknown field is dropped and the call runs as if it had been
- * filtered. `message` words the refusal for its tool; the valid group names
- * are appended here, so the tools that refuse list them the same way.
- */
-export function refuseRecordTypeAliases(
-  input: object,
-  aliases: readonly string[],
-  message: (alias: string) => string
-): void {
-  for (const alias of aliases) {
-    if (alias in input) {
-      throw new Error(
-        `${message(alias)} Valid groups: ${RECORD_TYPE_GROUP_NAMES.join(", ")}.`
-      );
-    }
-  }
-}
-
-/**
  * The concept ids to send for a set of group names: each group's anchor and
  * strays, **plus the strays of every group nested beneath it**.
  *

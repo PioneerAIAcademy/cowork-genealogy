@@ -130,7 +130,8 @@ whether to link the other side. Linking only the focus person and then asking
 such. (This is separate from the match-threshold policy in Step 3: you still
 pause for a *weak identity match* on any single link — but recognizing that a
 relationship assertion bears on multiple people is automatic, not something to
-ask permission for.)
+ask permission for.) A pause holds only its own link: mint and link the record's
+other persons in the same pass, before you ask.
 
 ## Building a Person Profile Before Matching
 
@@ -424,12 +425,12 @@ never replaces it (see step 3).
    call, call
    `same_person({ projectPath, assertionId, treePersonId, matchRelatives: true })`
    **once**. It returns a `matches` array of `{ role, targetId, candidateId,
-   score, confidence?, preScore }` triples pairing the record's relatives to the
+   score, preScore }` triples pairing the record's relatives to the
    tree person's relatives. `targetId` is on the record side, `candidateId` on
    the tree side. **Optional** — only for a household; a single-person match
    needs the focus call alone. If it comes back with a `note` saying the record
    side carries no relatives, there is nothing to pair; move on. Feed each
-   relative `score`/`confidence` into the threshold policy (step 3) exactly as
+   relative `score` into the threshold policy (step 3) exactly as
    you do the focus score, and carry the `matches` into the cross-person
    consistency check (step 7). These triples inform the tier only: they record
    no score, so each relative you link still needs one
@@ -493,8 +494,8 @@ distance, and that no bridge or corridor accounts for it. Every record
 beyond the same unexplained move shares the cap: a later record in the new
 place continues the move, it does not explain it. This is not a
 `core_identifier_conflict` and does not take `speculative` (an unexplained
-move is an unfinished argument, and `speculative` is a no-link in an
-autonomous run). If the page could not be retrieved, only a documentary
+move is an unfinished argument, and `speculative` is a no-link under
+`userPresent: no`). If the page could not be retrieved, only a documentary
 bridge in the project lifts the cap. When a corridor or record does bridge
 it, quote it in the entry's `move_bridge` field: `research_append` refuses
 `confident` across a move between countries without one. Distance alone
@@ -556,16 +557,17 @@ score should pull a tentative Strong back to Moderate. But:
   refuses the link for a missing score, the persona was reachable and
   the call is the fix, not a lower tier.
 
-**Autonomous mode (no user to pause with).** This resolution applies
-**only** to an autonomous run where no user can ever confirm (an
-autonomous `/research` run). **When a user is present** — a request that
-names an assertion to link, an interactive session — the pause rows
-above apply unchanged: present the evidence, disclose the score and the
+**No user to pause with (`userPresent: no`).** This resolution applies
+**only** when your delegation says `userPresent: no` — an autonomous
+`/research` run, a "Keep going." turn, or a wrap-up. **When the field is
+absent, or says `yes`,** a user is present: the pause rows above apply
+unchanged: present the evidence, disclose the score and the
 conflict, and create the `speculative` link or leave it for the user's
 confirmation. A high score capped at `speculative` by a qualitative
 conflict is still a pause-for-user, **not** a no-link — do not convert
-it into a hard rejection when a user can adjudicate. In an autonomous
-run, by contrast, the two pause rows resolve **downward, never upward**:
+it into a hard rejection when a user can adjudicate. Under
+`userPresent: no`, by contrast, the two pause rows resolve **downward,
+never upward**:
 a **Weak** match — or any match whose correlation caps confidence at
 `speculative` — becomes a **no-link**. Do
 not create the pe_ entry, and do not record a rejection: only the
@@ -582,15 +584,21 @@ exists because an autonomous run linked a death certificate scored
 0.026 at `probable` — a different person's death entered the tree as
 the subject's.)
 
+**Recording a rejection.** Append a `rejected_links` entry only when the
+researcher's message clearly says this record is not this person. When
+they are unsure, neither link nor reject. Put the researcher's message,
+copied verbatim, in `researcher_words`; your own analysis goes in
+`reason`. The same write retires the pair's live link and removes the
+facts it put on the person; report what the response names as kept.
+
 **Disclose the score.** Whenever a `same_person` score was computed for
 a link decision, state it in the pe_ entry's rationale (e.g. "score
 0.32; linked on strong non-name correlation") — an undisclosed score
 hides exactly the number a reviewer needs to audit the decision.
 
 For reference, `same_person` scores broadly track the strength
-tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak, the same bands
-search-records uses for triage. Treat that as corroboration of the
-correlation assessment, not a replacement for it.
+tiers — `>0.7` strong, `0.4–0.7` moderate, `<0.4` weak. Treat that as
+corroboration of the correlation assessment, not a replacement for it.
 
 **Thin-subject scores.** A sparse tree person — a name and a fact or two —
 scores lower against the right record than a fuller person would, often in the
@@ -622,6 +630,14 @@ Omit each entry's `id`, `created`, and `superseded_by`: the tool assigns
 the ids and validates the whole batch, writing NOTHING on a per-op failure
 (`{ ok: false, errors: ["ops[i]: <msg>"] }`) — fix the offending op rather
 than retrying blindly.
+
+**A recorded namesake.** When `materialize_facts`, `research_append` or
+`tree_edit` refuses because the person has a recorded namesake (`ns_`) and
+nothing ties the record to him, or a `Hand-back: person-evidence` line names
+untied links: tie each link the way the refusal names when the project
+already holds that tie; otherwise lower it to `speculative` in place in the
+same turn, its `rationale` naming the `ns_` row, and copy nothing from that
+record. Make that change yourself and report it.
 
 **Field guidance:**
 

@@ -1,13 +1,17 @@
 /**
- * Probe: what does the bare-name rule (genealogist ruling 2026-10-06, option C
- * with fallback B′) change, on the bare single-segment places the committed e2e
- * corpus actually wrote?
+ * Probe: what does the bare-name rule change, on the bare single-segment places
+ * the committed e2e corpus actually wrote?
  *
  * For each distinct bare name, with NO record context (the worst case — the
  * write paths pass the record's other places, which this probe does not measure):
  *   old = the best-scored hit, which is what `resolveStandardPlace` returned
- *   new = `resolveStandardPlace` now: kept only when the best hit is a
- *         jurisdiction (country, state, territory, county, region, admin div)
+ *   new = `resolveStandardPlace` now: since the lead's 2026-10-26 list, the
+ *         bundled one-word list's answer, else unset
+ *
+ * The result below measured the rule that list replaced (genealogist ruling
+ * 2026-10-06, option C with fallback B′), whose `new` was the best hit kept
+ * only when it is a jurisdiction (country, state, territory, county, region,
+ * admin div).
  *
  *   npx tsx dev/probe-bare-place-rule.ts <names.json>
  *
@@ -23,7 +27,7 @@
  * -> Missouri, "Kingservigs Prgj." -> a cemetery. Right and now lost without
  * context: West Bromwich, Milwaukee, Dallerup, Banbridge, Stagstrup (~6).
  * The first run read FamilySearch's live county type as "County (Top level)"
- * and unset every county; `isJurisdiction` drops the bracketed qualifier.
+ * and unset every county, until that rule dropped the bracketed qualifier.
  */
 import { readFileSync } from "node:fs";
 import { searchPlace } from "../src/utils/place-api.js";

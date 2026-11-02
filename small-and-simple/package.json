@@ -1,0 +1,21 @@
+{
+  "name": "small-and-simple",
+  "private": true,
+  "type": "module",
+  "description": "Single-purpose genealogy functions for a Node server: a few FamilySearch API calls and an LLM call each.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "demo:transcribe-image": "tsx transcribe-image/demo.ts",
+    "eval:transcribe-image": "tsx transcribe-image/eval.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.10"
+  }
+}

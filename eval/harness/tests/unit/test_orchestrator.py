@@ -1777,6 +1777,7 @@ from dataclasses import dataclass as _dataclass
 from harness.orchestrator import (
     FILE_VALIDITY_VALIDATORS,
     compute_validators_passed,
+    gating_validator_failures,
 )
 
 
@@ -1810,6 +1811,83 @@ def test_compute_validators_passed_behavioral_failure_always_fails():
     results = [_FakeValidator("test_log_append_only", False)]
     assert compute_validators_passed(results, intentionally_invalid=True) is False
     assert compute_validators_passed(results, intentionally_invalid=False) is False
+
+
+def test_gating_validator_failures_are_what_the_judge_is_shown():
+    # The judge's failure list honours the same flag as the gate, so an
+    # intentionally invalid test's expected file-validity failures never reach
+    # it, while a behavioural failure still does (#3870).
+    results = [
+        _FakeValidator(name, False) for name in sorted(FILE_VALIDITY_VALIDATORS)
+    ] + [
+        _FakeValidator("test_log_append_only", False),
+        _FakeValidator("report_reply_carries_findings", False, reporting_only=True),
+        _FakeValidator("test_allowlist", True),
+    ]
+    assert gating_validator_failures(results, intentionally_invalid=True) == [
+        "test_log_append_only"
+    ]
+    assert gating_validator_failures(results, intentionally_invalid=False) == [
+        *sorted(FILE_VALIDITY_VALIDATORS),
+        "test_log_append_only",
+    ]
+
+
+@pytest.mark.parametrize(
+    "flag, shown",
+    [
+        (True, ["test_log_append_only"]),
+        (False, ["test_id_references_resolve", "test_log_append_only"]),
+    ],
+)
+def test_the_judge_is_not_shown_an_expected_file_validity_failure(
+    tmp_path, monkeypatch, flag, shown
+):
+    """The call site, not only the filter: an unfiltered list there tells the
+    judge about failures the gate has already ruled expected (#3870)."""
+    import dataclasses
+
+    from harness.judge import JudgeOutput
+    from harness.skill_runner import SkillRunResult
+    from harness.validator_runner import ValidatorRunResult
+
+    monkeypatch.setattr(orchestrator, "build_workspace", lambda **kw: None)
+    monkeypatch.setattr(orchestrator, "snapshot_files", lambda ws: {
+        "research_json": {"researcher_profile": {}},
+        "tree_gedcomx_json": {"persons": []},
+        "files": [],
+    })
+    monkeypatch.setattr(orchestrator, "cleanup_session_store", lambda ws: None)
+    monkeypatch.setattr(orchestrator, "run_validators", lambda **kw: [
+        ValidatorRunResult("test_id_references_resolve", False, "dangling"),
+        ValidatorRunResult("test_log_append_only", False, "edited"),
+    ])
+    seen: list = []
+
+    async def fake_run_skill(**kwargs):
+        return SkillRunResult(
+            text_response="ok", skills_invoked=["record-extraction"], tool_calls=[],
+            duration_ms=1.0, usage={"num_turns": 1, "total_cost_usd": 0.0, "usage": {}},
+        )
+
+    def fake_run_judge(**kwargs):
+        seen.append(kwargs["validator_failures"])
+        return JudgeOutput(
+            dimensions=[], cost_usd=0.0, input_tokens=0, cached_input_tokens=0,
+            output_tokens=0, prompt_hash="stub-hash",
+        )
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_run_judge", fake_run_judge)
+
+    asyncio.run(_run_one_test_async(
+        spec=dataclasses.replace(_positive_spec(), intentionally_invalid=flag),
+        auth=AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+        paths=OrchestratorPaths(runlogs_root=tmp_path),
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-10-30_10-30-00",
+    ))
+    assert seen == [shown]
 
 # --------------------------------------------------------------------------
 # The judge's "persisted artifact" block — array-sampler truncation
@@ -2097,6 +2175,61 @@ def test_orchestrator_threads_delegation_and_builtin_calls_into_validators(tmp_p
         "direct-arm validators declare it, and an unknown validator parameter "
         "is recorded passed=False for every test of every skill"
     )
+
+
+def test_resolved_workspace_reaches_both_the_prompt_and_the_validators(tmp_path, monkeypatch):
+    """`<workspace>` is replaced in what the dispatcher is sent AND in the
+    `delegation` the verbatim-relay validator compares against (#3935). If only
+    one side is replaced, that gating validator fails every direct test whose
+    delegation carries the placeholder, 393 of them."""
+    spec = load_test(WIKI_TEST_PATH)
+    spec.skill = "research-exhaustiveness"
+    spec.raw["test"]["skill"] = "research-exhaustiveness"
+    spec.raw["input"]["delegation"] = "DELEGATION-SENTINEL\nprojectPath: <workspace>"
+    spec.delegation = spec.raw["input"]["delegation"]
+    spec.raw["input"].pop("user_message", None)
+    spec.user_message = ""
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+    sent = {}
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+        sent["prompt"] = kwargs["user_message"]
+        sent["workspace"] = kwargs["workspace"]
+        return SkillRunResult(
+            text_response="done",
+            skills_invoked=[],
+            tool_calls=[],
+            duration_ms=1.0,
+            usage={"total_cost_usd": 0.0, "usage": {}},
+        )
+
+    captured = {}
+
+    def fake_run_validators(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "run_validators", fake_run_validators)
+    monkeypatch.setattr(orchestrator, "grade", lambda **kw: (_ for _ in ()).throw(
+        JudgeError("not under test")
+    ))
+
+    asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-08-22_00-00-00",
+    ))
+
+    expected = f"DELEGATION-SENTINEL\nprojectPath: {sent['workspace'].as_posix()}"
+    assert expected in sent["prompt"], "the dispatcher was not sent the resolved path"
+    assert captured["test"].get("delegation") == expected, (
+        "the validators compare against a delegation the dispatcher was not sent"
+    )
+    assert captured["test"].get("user_message") == expected
+
 
 def test_the_skill_runs_no_result_message_reaches_the_run_entry(tmp_path, monkeypatch):
     """The same second hop, for `no_result_message` (#2189, review of #2356).

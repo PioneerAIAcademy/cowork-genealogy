@@ -4,6 +4,7 @@ import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 // ─── fixture builders (valid research.json + tree.gedcomx.json) ───────────────
 
@@ -124,7 +125,7 @@ describe("materialize_facts", () => {
       );
     }
     await writeFile(join(dir, "research.json"), JSON.stringify(researchDoc, null, 2), "utf-8");
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(treeDoc, null, 2), "utf-8");
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(treeDoc, null, 2), "utf-8");
   }
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
   const exists = async (name: string) => access(join(dir, name)).then(() => true, () => false);
@@ -896,6 +897,56 @@ describe("materialize_facts", () => {
     const births = p.facts.filter((f: any) => f.type === "Birth");
     expect(births).toHaveLength(1); // agreeing → ONE fact
     expect(births[0].sources.map((s: any) => s.ref).sort()).toEqual(["S1", "S2"]);
+  });
+
+  it("(4b) a corroborating record gives the fact its standard place only for the same place text", async () => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Jane", surname: "Doe" }] };
+    const NAUVOO = "Nauvoo, Hancock, Illinois, United States";
+    await writeProject(
+      tree({ persons: [stub], sources: [{ id: "S1", title: "Census A" }, { id: "S2", title: "Census B" }] }),
+      research({
+        sources: [source("src_001", "S1"), source("src_002", "S2")],
+        assertions: [
+          assertion("a_001", { source_id: "src_001", record_id: "REC-A", fact_type: "birth", date: "1850", place: "Illinois, United States" }),
+          assertion("a_002", { source_id: "src_001", record_id: "REC-A", fact_type: "death", date: "1900" }),
+          assertion("a_003", { source_id: "src_001", record_id: "REC-A", fact_type: "burial", date: "1900", place: "Nauvoo, Hancock, Illinois, United States" }),
+          assertion("a_004", { source_id: "src_002", record_id: "REC-B", fact_type: "birth", date: "1850", place: "Nauvoo, Hancock, Illinois", standard_place: NAUVOO }),
+          assertion("a_005", { source_id: "src_002", record_id: "REC-B", fact_type: "death", date: "1900", place: "Nauvoo, Hancock, Illinois", standard_place: NAUVOO }),
+          assertion("a_006", { source_id: "src_002", record_id: "REC-B", fact_type: "burial", date: "1900", place: "nauvoo,  hancock, ILLINOIS, united states", standard_place: NAUVOO }),
+        ],
+      }),
+    );
+    for (const recordId of ["REC-A", "REC-B"]) {
+      expect(single(await materializeFacts({ projectPath: dir, personId: "I2", recordId, recordRole: "principal" })).ok).toBe(true);
+    }
+    const facts = findPerson(await readTree(), "I2").facts;
+    const of = (type: string) => facts.filter((f: any) => f.type === type);
+    expect(of("Birth")).toEqual([expect.objectContaining({ place: "Illinois, United States" })]);
+    expect(of("Birth")[0]).not.toHaveProperty("standard_place");
+    expect(of("Death")).toEqual([expect.objectContaining({ place: "Nauvoo, Hancock, Illinois", standard_place: NAUVOO })]);
+    expect(of("Burial")).toEqual([expect.objectContaining({ place: "Nauvoo, Hancock, Illinois, United States", standard_place: NAUVOO })]);
+  });
+
+  it("(4c) a record that gives one place text two standard places copies neither, and another record's does not count", async () => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Sam", surname: "Vital" }] };
+    await writeProject(
+      tree({ persons: [stub] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_001", { record_id: "REC5", fact_type: "birth", date: "1850", place: "Nauvoo, Illinois", standard_place: "Nauvoo, Hancock, Illinois, United States" }),
+          assertion("a_002", { record_id: "REC5", record_role: "father", fact_type: "residence", date: "1850", place: "nauvoo, illinois", standard_place: "Nauvoo Township, Hancock, Illinois, United States" }),
+          assertion("a_003", { record_id: "REC5", fact_type: "death", date: "1900", place: "Carthage, Illinois", standard_place: "Carthage, Hancock, Illinois, United States" }),
+          assertion("a_004", { record_id: "REC6", fact_type: "burial", date: "1900", place: "Carthage, Illinois", standard_place: "Carthage, Hancock, Illinois" }),
+        ],
+      }),
+    );
+    expect(single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC5", recordRole: "principal" })).ok).toBe(true);
+    const facts = findPerson(await readTree(), "I2").facts;
+    const birth = facts.find((f: any) => f.type === "Birth");
+    expect(birth.place).toBe("Nauvoo, Illinois");
+    expect(birth).not.toHaveProperty("standard_place");
+    expect(facts.find((f: any) => f.type === "Death").standard_place).toBe("Carthage, Hancock, Illinois, United States");
   });
 
   it("(5) two CONFLICTING births COEXIST as two facts AND appear in conflicts_surfaced", async () => {

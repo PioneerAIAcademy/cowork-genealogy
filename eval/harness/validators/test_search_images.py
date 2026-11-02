@@ -170,3 +170,82 @@ def test_cap_refusal_relayed_and_logged_partial(
     assert link in reply, f"the return drops the refused image's link {link}"
     for label in ("**Transcription:**", "**Extracted facts:**"):
         assert label not in reply, f"the return presents a {label} section for an image that was never read"
+
+
+# --- Navigation: volume_bisect, the item route, and lookingFor (#3549) -------
+
+def _calls_named(tool_calls, name: str) -> list[tuple[int, dict]]:
+    return [(i, c) for i, c in enumerate(tool_calls or []) if (c.get("tool") or "").endswith(name)]
+
+
+def test_bisect_before_transcribe(tool_calls, test):
+    """Tag-gated: one year in a split group is found with volume_bisect, not by
+    probing pages. The first volume_bisect call precedes every image_transcribe,
+    and no page before the bracket's lowPosition is read (positions index the
+    group's image_search list from 0)."""
+    if "bisect-navigation" not in test.get("tags", []):
+        pytest.skip("not a bisect-navigation test")
+    bisects = _calls_named(tool_calls, "volume_bisect")
+    reads = _calls_named(tool_calls, "image_transcribe")
+    assert bisects, "expected a volume_bisect call before reading pages"
+    assert reads, "expected at least one image_transcribe of the bracketed range"
+    assert bisects[0][0] < reads[0][0], (
+        f"image_transcribe of {reads[0][1].get('args', {}).get('imageId')} came before the first volume_bisect"
+    )
+    group = (bisects[0][1].get("args") or {}).get("imageGroupNumber")
+    listing: list[str] = []
+    for _, c in _calls_named(tool_calls, "image_search"):
+        if (c.get("args") or {}).get("imageGroupNumber") == group:
+            listing = list((c.get("response") or {}).get("imageIds") or [])
+    assert listing, f"expected an image_search listing of {group}, which the bracket positions index"
+    bracket = next(
+        (c.get("response") or {}).get("bracket")
+        for _, c in reversed(bisects)
+        if isinstance((c.get("response") or {}).get("bracket"), dict)
+    )
+    low = bracket["lowPosition"]
+    outside = []
+    for _, c in reads:
+        image_id = (c.get("args") or {}).get("imageId")
+        if image_id not in listing or listing.index(image_id) < low:
+            outside.append(image_id)
+    assert not outside, f"read pages before the bracket (lowPosition {low}) or outside {group}: {outside}"
+
+
+def test_item_route_before_transcribe(tool_calls, test):
+    """Tag-gated: a citation with an item number goes to image_search with
+    `item` before any page is read, never a page-through of the film."""
+    if "item-route" not in test.get("tags", []):
+        pytest.skip("not an item-route test")
+    item_calls = [i for i, c in _calls_named(tool_calls, "image_search") if (c.get("args") or {}).get("item") is not None]
+    reads = _calls_named(tool_calls, "image_transcribe")
+    assert item_calls, "expected an image_search call with `item` for the cited item"
+    assert not reads or item_calls[0] < reads[0][0], (
+        f"image_transcribe of {reads[0][1].get('args', {}).get('imageId')} came before the item route"
+    )
+
+
+#: Phrases that only describe where to look, never who or what a record is about.
+#: Built from the lookingFor strings of hosted session 54c4edd6 (2026-10-14),
+#: where every FOUND they produced was the wrong page.
+_NAVIGATION_PHRASE = re.compile(
+    r"title page|volume title|title/index|table of contents|year boundary|entry structure|entry number|name index"
+    r"|end[- ]of[- ]year|\bsection\b|\b(?:start|beginning) of\b|\b1[5-9]\d\d start\b"
+    r"|\bfirst (?:birth |death |marriage |baptism |burial )?entr(?:y|ies)\b",
+    re.IGNORECASE,
+)
+
+
+def test_lookingfor_has_no_navigation_phrase(tool_calls, test):
+    """Tag-gated: lookingFor names who or what the record is about. A
+    navigation phrase in it lets any of its tokens match and report FOUND on
+    the wrong page."""
+    if "lookingfor-no-navigation" not in test.get("tags", []):
+        pytest.skip("not a lookingFor test")
+    bad = [
+        looking_for
+        for _, c in _calls_named(tool_calls, "image_transcribe")
+        if isinstance(looking_for := (c.get("args") or {}).get("lookingFor"), str)
+        and _NAVIGATION_PHRASE.search(looking_for)
+    ]
+    assert not bad, f"lookingFor carries a navigation phrase: {bad}"

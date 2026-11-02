@@ -58,8 +58,11 @@ coordinates), `now`, and `deadlineMs`. No tool caller can set them.
 - An undated assertion with an event type joins the same record, party and
   type's event, else makes none. Code extraction splits a derived birth into a
   place half and a date half (`record-extract.ts`); this joins them.
-- `standard_place` is copied from the event's assertions; when none carries one,
-  each distinct `place` text is resolved once.
+- `place` is the first of the event's assertions' places, and `standard_place`
+  is copied from an assertion whose place is that text (case, accents and
+  spacing aside; any, when no assertion has a place), never from one with
+  another place; when none carries one, each distinct `place` text is resolved
+  once.
 - `distance_from_previous_km` is the haversine distance between consecutive
   events' standard places (0 for the same place), each place looked up once;
   null when either place or its coordinates is missing.

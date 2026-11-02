@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_tree_edit_018",
+    "skill": "tree-edit",
+    "name": "A fact citing a record untied to a person with a namesake is refused and the record goes to person-evidence",
+    "type": "positive",
+    "description": "A namesake row is recorded on I1 George Ackerman. Asked to add his 1860 residence citing the census (S1), tree_edit refuses: the census's link to I1 (pe_001) has nothing in the record tying it to him. The agent must not write the fact by another route (another source, no source, a different person) and hands the record to person-evidence to tie or lower the link. Issue #3363, PR 2 (the 1e check).",
+    "tags": [
+      "namesake",
+      "namesake-citation"
+    ]
+  },
+  "input": {
+    "delegation": "Add George Ackerman's 1860 residence, Cumru Township, Berks County, Pennsylvania, to I1, citing the 1860 census (research source src_001, tree source S1).\n\nprojectPath: <workspace>",
+    "scenario": "namesake-planted-absent-spouse"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "tree_edit refuses the add_fact: a namesake of I1 is recorded (ns_001), and S1's research source src_001 is linked to I1 only through pe_001, which nothing in the census ties to him. The refusal names the route: hand the link to the person-evidence agent to tie it first. The correct outcome is no Residence fact on I1 and a 'Hand-back: person-evidence' line naming the census link to tie or lower.",
+    "GROUNDING: decide what the run DID from its tool calls. Adding the residence without a source, citing a different source, or putting it on another person to get it into the tree is the failure this test guards. tree-edit holds no person_evidence write, so it does not lower the link itself."
+  ]
+}

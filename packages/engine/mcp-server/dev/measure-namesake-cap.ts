@@ -33,6 +33,9 @@
 //       `mergeNamesakeRefusals`, `mergeCarryRefusals` and the pair checks on the
 //       call's state, with brackets, unmoved links, the gates a merge skips and
 //       a replay of lowering every refused link.
+//   §3b merge link checks (#2537): each §3 call through the shipped
+//       `mergeLinkCheckRefusals` on the merged tree and remapped research, no
+//       rows planted; birth places resolve live.
 //   §4  the namesake warning (1d): each committed e2e final state, rows
 //       written in one call on every person holding a live probable or
 //       confident link, then on the fixture subject alone; what
@@ -50,6 +53,17 @@
 //       op by op, so a call that writes one fact or name twice, or removes
 //       one, fails a floor: the shipped check judges what a call adds as a
 //       whole.
+//   §7  item 10 (PR 2): each committed e2e final state carrying rows, read as
+//       written, no row planted: the personas `research_append` stamped, and
+//       what a refusal keyed on them would refuse and spare
+//       (dev/namesake-persona-counts.ts). Zero until runs write rows.
+//   §8  tree-derived namesake pairs (#3681): each committed e2e final state,
+//       every person with a same-named parent, child or sibling, no row
+//       planted: the links ties (a) and (b) refuse, how many the pair tests
+//       tie, how many of the links they allow are held because the record ties
+//       a partner as well, and links moved to a partner, run again with every
+//       starting-tree fact cited to the FamilySearch tree. §5 also prints the
+//       copy gate's pair figures.
 //
 // Exits non-zero when a floor fails: a bracket that judged or refused nothing
 // would read as coverage and be none.
@@ -62,8 +76,10 @@ import { arkToBareId } from "../src/utils/ark.js";
 import {
   assertedNamesakeVerdicts,
   carryTriggerSources,
+  derivedNamesakePairs,
   mergeCarryRefusals,
   mergeDirections,
+  mergeLinkCheckRefusals,
   mergeNamesakeRefusals,
   namesakeRowListings,
   namesakeVerdicts,
@@ -77,7 +93,10 @@ import {
 import { isTwoParty } from "../src/utils/record-persona.js";
 import { joinedPairRefusals, survivorOrderRefusals } from "../src/tools/merge-tree-persons.js";
 import { startingPersonIdsOf } from "../src/utils/starting-tree.js";
+import { mergeGedcomx } from "../src/utils/merge-gedcomx.js";
+import { remapResearchPersonIds } from "../src/tools/merge-shared.js";
 import { personaTargetRefusal } from "../src/tools/materialize-facts.js";
+import { personaStampCounts } from "./namesake-persona-counts.js";
 import { bareName, opsOf, readRunLog, repoRoot, responseOf, toolCalls } from "./runlog-calls.js";
 
 const VERBOSE = process.argv.includes("--verbose");
@@ -788,6 +807,8 @@ function section3(lines: any[], states: FinalState[]): void {
       `${scored} carrying a match score; the move rule would refuse ${moveRefused}`,
   );
 
+  measuredMergeWorlds = worlds;
+
   let replays = 0;
   // The lowering replay: at the call whose part 1 refuses links in A, lower
   // each refused link to speculative (what the routing offers an agent that
@@ -922,6 +943,166 @@ function section5(states: FinalState[]): void {
     if (bracket === "every linked person") {
       floor(explicitJudged > 0 && explicitRefused > 0, `§5 explicit judged ${explicitJudged}, refused ${explicitRefused}`);
     }
+  }
+
+  // Namesakes in the tree (#3681): no row planted. A pair member the op's facts
+  // reach, admitted without pairs and refused with them; the lookup refuses an
+  // op it would otherwise mint for, rather than passing the member over.
+  let pairExplicitJudged = 0, pairExplicitRefused = 0, pairImplicitJudged = 0, pairImplicitRefused = 0;
+  for (const s of states) {
+    const paired = new Set(
+      ((s.finalTree.persons ?? []) as any[])
+        .map((p) => String(p?.id))
+        .filter((id) => derivedNamesakePairs(s.finalTree, id).length > 0),
+    );
+    if (paired.size === 0) continue;
+    const assertions = (s.research.assertions ?? []) as any[];
+    for (const call of toolCalls(readRunLog(s.file.replace(/\.final-research\.json$/, ".json")))) {
+      if (bareName(call) !== "materialize_facts" || responseOf(call)?.ok === false) continue;
+      for (const op of opsOf(call.args)) {
+        if (typeof op?.assertionId === "string" || typeof op?.recordId !== "string" || typeof op?.recordRole !== "string") continue;
+        const personId = typeof op.personId === "string" ? op.personId : undefined;
+        const own = new Set(
+          assertions.filter((a) => a?.record_id === op.recordId && a?.record_role === op.recordRole).map((a) => a?.id),
+        );
+        const targets =
+          personId !== undefined
+            ? [personId]
+            : ((s.finalTree.persons ?? []) as any[])
+                .filter((p) => (p?.facts ?? []).some((f: any) => own.has(f?.assertion_id)))
+                .map((p) => String(p.id));
+        for (const target of targets) {
+          if (!paired.has(target)) continue;
+          const judged = { ...op, personId: target };
+          if (personaTargetRefusal(s.finalTree, s.research, judged, s.startingIds) !== null) continue;
+          const refusal = personaTargetRefusal(s.finalTree, s.research, judged, s.startingIds, s.finalTree, {
+            startingTree: s.startTree,
+            derivedPairs: true,
+          });
+          const refused = refusal !== null;
+          if (VERBOSE && refused) {
+            console.log(`      pair copy refused: ${s.slug} ${s.run} ${op.recordId} ${op.recordRole} onto ${target}`);
+          }
+          if (personId !== undefined) {
+            pairExplicitJudged += 1;
+            if (refused) pairExplicitRefused += 1;
+          } else {
+            pairImplicitJudged += 1;
+            if (refused) pairImplicitRefused += 1;
+          }
+        }
+      }
+    }
+  }
+  console.log(
+    `  namesakes in the tree (no row): explicit ${pairExplicitJudged} ops onto a pair member admitted without ` +
+      `pairs, ${pairExplicitRefused} refused with them; implicit ${pairImplicitJudged} pair members the lookup ` +
+      `would reuse, ${pairImplicitRefused} refused with pairs (the op is refused when no other person is eligible)`,
+  );
+  floor(pairExplicitJudged + pairImplicitJudged > 0, `§5 pair ops judged ${pairExplicitJudged + pairImplicitJudged}`);
+}
+
+// ─── §8 tree-derived namesake pairs (#3681) ──────────────────────────────────
+
+/** The final state with every starting-tree fact cited to the FamilySearch
+ *  tree's own source, as project creation has cited them since 2026-10-06. */
+function fsCited(s: FinalState): { finalTree: any; startTree: any } {
+  const FS = { id: "S_FSTREE", title: "FamilySearch Family Tree" };
+  const started = new Set(((s.startTree.persons ?? []) as any[]).map((p) => String(p?.id)));
+  const cite = (f: any) => (Array.isArray(f?.sources) && f.sources.length > 0 ? f : { ...f, sources: [{ ref: FS.id }] });
+  const citeAll = (tree: any, only: ReadonlySet<string> | null) => ({
+    ...tree,
+    persons: ((tree.persons ?? []) as any[]).map((p) =>
+      only === null || only.has(String(p?.id)) ? { ...p, facts: ((p?.facts ?? []) as any[]).map(cite) } : p,
+    ),
+    sources: [...((tree.sources ?? []) as any[]), FS],
+  });
+  return { finalTree: citeAll(s.finalTree, started), startTree: citeAll(s.startTree, null) };
+}
+
+function section8(states: FinalState[]): void {
+  console.log(
+    "\n§8  tree-derived namesake pairs: each committed e2e final state, every person with a parent, child or " +
+      "sibling of the same first given name not known to be of the other sex (`derivedNamesakePairs`). Refused " +
+      "by ties: their live probable or confident links `namesakeVerdicts` refuses with a row planted on them. " +
+      "Tied by the pair tests: of those, the links it allows with no row and `derivedPairs`. Held: of the links " +
+      "the ties allow, those it refuses with `derivedPairs`, the record tying a partner as well and the pair " +
+      "tests not tying them. Mix-ups: each " +
+      "link moved to a partner with the person's other links from its source, judged with `derivedPairs`",
+  );
+  for (const variant of ["as committed", "starting-tree facts cited to the FamilySearch tree"] as const) {
+    let pairPersons = 0, refused = 0, tied = 0, movedJudged = 0, movedTied = 0, tieMovedJudged = 0, tieMovedTied = 0;
+    let tieAllowed = 0, held = 0;
+    const left: string[] = [];
+    for (const s of states) {
+      const { finalTree, startTree } = variant === "as committed" ? s : fsCited(s);
+      const research = { ...s.research, namesakes: [] };
+      const aById = new Map<string, any>(((research.assertions ?? []) as any[]).map((a) => [a?.id, a]));
+      const sourceOf = (e: any) => {
+        const a = aById.get(e?.assertion_id);
+        return typeof a?.source_id === "string" && a.source_id !== "" ? a.source_id : (a?.record_id ?? null);
+      };
+      for (const p of ((finalTree.persons ?? []) as any[]).map((x) => String(x?.id))) {
+        const partners = derivedNamesakePairs(finalTree, p);
+        if (partners.length === 0) continue;
+        pairPersons += 1;
+        const byTies = namesakeVerdicts(p, plantRows(research, [p]), finalTree, { startingPersonIds: s.startingIds });
+        const withPairs = namesakeVerdicts(p, research, finalTree, {
+          startingPersonIds: s.startingIds,
+          derivedPairs: true,
+          startingTree: startTree,
+        });
+        for (const [id, verdict] of byTies?.verdicts ?? []) {
+          const e = ((research.person_evidence ?? []) as any[]).find((x) => x?.id === id);
+          const move = (q: string) => ({
+            ...research,
+            person_evidence: ((research.person_evidence ?? []) as any[]).map((x) =>
+              x && !x.superseded_by && x.person_id === p && sourceOf(x) === sourceOf(e) ? { ...x, person_id: q } : x,
+            ),
+          });
+          const movedAllowed = (q: string) => {
+            const v = namesakeVerdicts(q, move(q), finalTree, {
+              startingPersonIds: s.startingIds,
+              only: new Set([id]),
+              derivedPairs: true,
+              startingTree: startTree,
+            })?.verdicts.get(id);
+            if (VERBOSE && v?.allowed && !verdict.allowed && variant === "as committed") {
+              const ties = v.ties.map((t) => (t.kind === "a" ? `a:${t.relative}(${t.relation})` : t.kind === "b" ? `b:${t.field}` : `pair:${t.test}`));
+              console.log(`    mix-up tied: ${s.slug} ${s.run} ${id} ${p} -> ${q} by ${ties.join(", ")}`);
+            }
+            return v?.allowed === true;
+          };
+          if (verdict.allowed) {
+            tieAllowed += 1;
+            if (!withPairs?.verdicts.get(id)?.allowed) held += 1;
+            for (const q of partners) {
+              tieMovedJudged += 1;
+              if (movedAllowed(q.personId)) tieMovedTied += 1;
+            }
+            continue;
+          }
+          refused += 1;
+          if (withPairs?.verdicts.get(id)?.allowed) tied += 1;
+          else left.push(`${s.slug} ${s.run} ${id} on ${p}`);
+          for (const q of partners) {
+            movedJudged += 1;
+            if (movedAllowed(q.personId)) movedTied += 1;
+          }
+        }
+      }
+    }
+    console.log(
+      `  ${variant}: ${pairPersons} pair members; refused by ties ${refused}, tied by the pair tests ${tied}, ` +
+        `left ${refused - tied}; allowed by ties ${tieAllowed}, held ${held}; mix-ups of refused links wrongly ` +
+        `tied ${movedTied} of ${movedJudged}; tie-allowed links still allowed when moved to a partner ` +
+        `${tieMovedTied} of ${tieMovedJudged}`,
+    );
+    for (const l of left) console.log(`    left: ${l}`);
+    floor(
+      refused > 0 && tied > 0 && movedJudged > 0 && held > 0,
+      `§8 ${variant}: refused ${refused}, tied ${tied}, held ${held}, moved ${movedJudged}`,
+    );
   }
 }
 
@@ -1207,6 +1388,78 @@ function section6(lines: any[], states: FinalState[]): void {
   }
 }
 
+// ─── §3b the link checks a merge runs (#2537) ───────────────────────────────
+
+let measuredMergeWorlds: MergeWorld[] = [];
+
+/** Each §3 call through the shipped `mergeLinkCheckRefusals`, on the merged
+ *  tree and the remapped research, with no namesake rows. Birth places resolve
+ *  live, and a place that does not resolve counts as far apart, so an offline
+ *  run is an upper bound on the contradiction cap. The project dir is empty, so
+ *  no recorded score exists and every moved link carrying one is refused. */
+async function section3b(): Promise<void> {
+  console.log("\n§3b merge link checks: each §3 call through mergeLinkCheckRefusals, no rows planted");
+  const scratch = mkdtempSync(join(tmpdir(), "merge-link-checks-"));
+  let moved = 0;
+  let refused = 0;
+  let unmerged = 0;
+  try {
+    for (const w of measuredMergeWorlds) {
+      const survivorOf = new Map(w.merges.map(([s, c]) => [c, s] as const));
+      const live = ((w.research.person_evidence ?? []) as any[]).filter((e) => e && !e.superseded_by && survivorOf.has(e.person_id));
+      moved += live.length;
+      let merged: any;
+      try {
+        merged = mergeGedcomx(w.tree, null, w.merges);
+      } catch (e) {
+        unmerged += 1;
+        console.log(`    ${w.line.run} #${w.line.call}: ${live.length} live links moved; the core refused the merge: ${e instanceof Error ? e.message : e}`);
+        continue;
+      }
+      const research = structuredClone(w.research);
+      remapResearchPersonIds(research, new Map(survivorOf));
+      const lines = await mergeLinkCheckRefusals(scratch, { research: w.research }, { research, tree: merged }, w.merges, w.startingIds);
+      const findings = lines.filter((l) => l.startsWith("person_evidence"));
+      refused += findings.length;
+      console.log(`    ${w.line.run} #${w.line.call}: ${live.length} live links moved, ${findings.length} refused`);
+      for (const f of findings) console.log(`      ${f}`);
+    }
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+  console.log(`  links moved ${moved}, refused ${refused}; calls the core could not merge ${unmerged}`);
+  floor(moved > 0, "§3b judged no moved link");
+}
+
+// ─── §7 item 10: the stamped namesake personas ──────────────────────────────
+
+function section7(states: FinalState[]): void {
+  const sum = { listed: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
+  const refusedByLabel: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
+  let carrying = 0;
+  for (const s of states) {
+    if (!Array.isArray(s.research?.namesakes) || s.research.namesakes.length === 0) continue;
+    carrying += 1;
+    const c = personaStampCounts(s.research);
+    for (const k of Object.keys(sum) as Array<keyof typeof sum>) sum[k] += c[k];
+    refusedByLabel[labelOf(s.slug)] += c.wouldRefuse;
+  }
+  console.log(
+    "\n§7  item 10 (PR 2): each committed e2e final state carrying rows, as written; the record_persona_ids " +
+      "research_append stamped and what a refusal keyed on them would do",
+  );
+  console.log(`    final states carrying rows: ${carrying}`);
+  console.log(
+    `    (c) listed records stamped: ${sum.stamped} of ${sum.listed}; ` +
+      `(d) unstamped though their row cites a persona search with a sidecar: ${sum.absent}`,
+  );
+  console.log(
+    `    (a) probable or confident links a persona rule would refuse: ${sum.wouldRefuse} ` +
+      `(hint is a namesake's: ${refusedByLabel.false}; the subject's own: ${refusedByLabel.true}; unlabelled: ${refusedByLabel.unlabelled})`,
+  );
+  console.log(`    (b) links on a listed record with another persona, which a record-id rule would refuse: ${sum.spared}`);
+}
+
 // ─── main ───────────────────────────────────────────────────────────────────
 
 console.log(`measured at ${sha} (working tree of this checkout)\n`);
@@ -1218,9 +1471,12 @@ const lines = dumpCallStates();
 shapesLine(lines);
 section2(lines, states);
 section3(lines, states);
+await section3b();
 section4(states);
 section5(states);
 section6(lines, states);
+section7(states);
+section8(states);
 if (floorsFailed > 0) {
   console.log(`\n${floorsFailed} floor(s) failed`);
   process.exit(1);

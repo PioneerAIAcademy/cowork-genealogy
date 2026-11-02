@@ -15,5 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 1, hint-samples.csv row 49, flag adds_son, confidence 3). Draft transcribed from an 1812 Sankt Georgen baptism entry for Andreas Mayer naming his parents as Johann Georg Mayer and Maria Dorothea Stokburger; unverified. Indexed in the same collection and under the same place string as the 1821 baptism of the tree's daughter Anna Maria."
+  "image_basis": true,
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 1, hint-samples.csv row 49, flag adds_son, confidence 3). Resolved as a true match: the 1812 Sankt Georgen baptism of Andreas Mayer (ark:/61903/1:1:NNXZ-4L3) is a son of the tree couple. Entry 34 and Magdalena's 1817 entry (QPD6-95WX) share family register page 70, and the index returns 11 children of this couple at 14-35 month spacing with Andreas between Jacob (Dec 1810) and Dorothea (Jan 1814). Register image read and calibrated (Image 120 of group 3015626, ark:/61903/3:1:3Q9M-CS43-L99T-Q).",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:NNXZ-4L3",
+    "identity": "same"
+  }
 }

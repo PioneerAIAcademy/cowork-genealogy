@@ -26,7 +26,8 @@
     "wiki-read-spain-naming-customs",
     "wiki-read-spanish-word-list",
     "wiki-read-any",
-    "wiki-search-any"
+    "wiki-search-any",
+    "fulltext-search-nabeda-variant-zero"
   ],
   "execution": {
     "max_wall_clock_seconds": 600

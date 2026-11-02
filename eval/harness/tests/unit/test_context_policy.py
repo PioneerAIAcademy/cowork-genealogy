@@ -13,7 +13,10 @@ from pathlib import Path
 
 from harness import context_policy
 from harness.context_policy import (
+    _DENIAL_REASON_FALLBACK,
     _DENIAL_REASONS,
+    _guard,
+    AGENT_ONLY_TOOLS,
     SUBAGENT_ONLY_TOOLS,
     bare_tool_name,
     is_subagent_call,
@@ -274,26 +277,51 @@ def test_image_read_is_the_guarded_tool():
     assert "record_read" not in SUBAGENT_ONLY_TOOLS
 
 
-def test_the_guarded_set_is_exactly_image_read():
-    # Pinned as an EQUALITY, not a membership: after #2937 removed
-    # `extraction_append` the set has one member, and an equality is what catches
-    # a tool being quietly added back.
-    assert set(SUBAGENT_ONLY_TOOLS) == {"image_read"}
+def test_the_guarded_set_is_image_read_plus_the_hooks_agent_only_tools():
+    # Pinned as an EQUALITY, not a membership: an equality is what catches a tool
+    # being quietly added back (`extraction_append`, #2937). Since issue #3528 the
+    # rest of the set is the shipped hook's map, imported, never a harness copy.
+    assert set(SUBAGENT_ONLY_TOOLS) == {"image_read"} | set(_guard.AGENT_ONLY_TOOLS)
+    assert AGENT_ONLY_TOOLS is _guard.AGENT_ONLY_TOOLS
     # research_append is the broad writer the record-extractor is denied; it must
     # NOT get swept into the subagent-only guard, which is about a different axis.
     assert "research_append" not in SUBAGENT_ONLY_TOOLS
+    # The calls the main thread still makes for a transcription it delivers itself.
+    for tool in ("image_transcribe", "sidecar_read", "record_read", "research_log_append"):
+        assert tool not in SUBAGENT_ONLY_TOOLS
 
 
 def test_every_guarded_tool_has_a_bespoke_denial_reason():
     """Parity guard: the fallback in subagent_only_denial must stay unreachable.
 
     A tool added to SUBAGENT_ONLY_TOOLS without its own reason would silently
-    fall back to a vague refusal — this fails loudly instead.
+    fall back to a vague refusal — this fails loudly instead. An agent-only
+    tool's reason is the shipped hook's, which names its agents.
     """
     for tool in SUBAGENT_ONLY_TOOLS:
-        assert tool in _DENIAL_REASONS, f"{tool} has no bespoke denial reason"
+        reason = subagent_only_denial(tool)["hookSpecificOutput"]["permissionDecisionReason"]
+        assert reason != _DENIAL_REASON_FALLBACK.format(bare=tool), (
+            f"{tool} has no bespoke denial reason"
+        )
         # The reason should reference the tool it denies.
-        assert tool in _DENIAL_REASONS[tool]
+        assert tool in reason
+
+
+def test_an_agent_only_deny_is_the_shipped_hooks_text():
+    """The harness denies with the words the agent meets in Cowork."""
+    reason = subagent_only_denial("census_children_gap")["hookSpecificOutput"][
+        "permissionDecisionReason"
+    ]
+    assert reason == _guard.agent_only_reason("census_children_gap")
+    assert "@plugin:check-warnings" in reason
+    assert "@plugin:question-selection" in reason
+
+
+def test_an_agent_only_tool_is_denied_on_main_and_allowed_in_an_agent():
+    assert subagent_only_violation(_main("mcp__genealogy__census_children_gap")) == (
+        "census_children_gap"
+    )
+    assert subagent_only_violation(_sub("mcp__genealogy__census_children_gap")) is None
 
 
 # --- grounding against the REAL skill files -------------------------------

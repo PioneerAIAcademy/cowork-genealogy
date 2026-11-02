@@ -32,6 +32,8 @@ import { readExternalCollections } from "../utils/external-collections-store.js"
 import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
+import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 
 const MAX_ITEMS = 50;
 
@@ -125,6 +127,8 @@ export interface ResearchQueryInput {
   /** Pagination, not a filter: skip the first `offset` matches, then return up
    *  to MAX_ITEMS. Applies to every section; absent ⇒ 0 (the whole first page). */
   offset?: number;
+  /** assertions only: also return the ones a re-extraction retired (#3678). */
+  includeSuperseded?: boolean;
 }
 
 export type ResearchQueryResult =
@@ -427,7 +431,7 @@ function matches(item: any, rule: FilterRule, values: string[], scope?: Set<stri
 /** The unregistered disagreements a `conflicts` read is asking about: the
  *  question's own assertions under `questionId` (project_context's scope),
  *  otherwise every assertion; narrowed to those naming any of `assertionIds`. */
-function disagreementsInScope(
+export function disagreementsInScope(
   research: any,
   input: ResearchQueryInput,
   assertionIds: string[] | undefined,
@@ -469,7 +473,7 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
           ? " Plan items live under section 'plans'."
           : section === undefined &&
               (input as unknown as Record<string, unknown>).sections !== undefined
-            ? " The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'."
+            ? ` ${SECTIONS_NEAR_MISS}`
             : "";
       throw new ResearchQueryError(
         `section ${JSON.stringify(section)} is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}.` +
@@ -494,6 +498,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
         `offset must be a non-negative whole number (got ${got}). ` +
           `Send it as a number, not a string.`,
       );
+    }
+
+    if (input.includeSuperseded !== undefined && typeof input.includeSuperseded !== "boolean") {
+      throw new ResearchQueryError("includeSuperseded must be true or false.");
     }
 
     const allowed = SECTION_FILTERS[section];
@@ -618,7 +626,9 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       assertionsFor.set(value, ids);
     }
 
-    const filtered = arr.filter((item) =>
+    // A retired assertion is history, not evidence: shown only on request.
+    const showRetired = section !== "assertions" || input.includeSuperseded === true;
+    const filtered = arr.filter((item) => (showRetired || isLiveAssertion(item)) &&
       activeFilters.every(({ rule, values }) =>
         matches(item, rule, values, rule.mode === "question-conflict" ? assertionsFor.get(values[0]) : planItemsFor.get(values[0])),
       ),
@@ -813,6 +823,12 @@ export const researchQuerySchema = {
           "skips that many, then returns up to 50. Default 0. When `truncated` is " +
           "true, fetch items 51+ by setting offset to 50, then 100, and so on. " +
           "Must be a non-negative whole number.",
+      },
+      includeSuperseded: {
+        type: "boolean",
+        description:
+          "assertions only (not a filter): true also returns assertions a re-extraction retired " +
+          "(non-null `superseded_by`). Omitted, they are left out: they are not evidence.",
       },
     },
     required: ["projectPath", "section"],

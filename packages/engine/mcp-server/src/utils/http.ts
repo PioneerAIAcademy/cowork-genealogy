@@ -13,7 +13,49 @@
 // are wrapped below rather than only the fetch itself. Size the timeout for
 // the whole transfer, not just the round-trip to first byte.
 
+import * as net from "node:net";
+
 export const DEFAULT_FETCH_TIMEOUT_MS = 30_000;
+
+/**
+ * How long Node waits on ONE address of a host before it abandons that socket and tries
+ * the next (happy eyeballs, on by default since Node 20). Its own default is 250 ms,
+ * which is less than some links take to connect at all. Measured 2026-10-22 from one
+ * machine: 81 of 270 connects to the hosts this engine calls took over 250 ms, all 60
+ * to the wiki host among them (261 to 337 ms); the slowest of the 270 took 1.2 s, and an
+ * earlier run saw one of 3.4 s. Reading a wiki page in 20 fresh processes, `fetch` failed
+ * with ETIMEDOUT in 9 at Node's 250 ms and in none at 2 s: that is what two seconds is
+ * shown to fix, not every slow connect. A connect as slow as that 3.4 s one still loses
+ * its address at two seconds unless it is the last address Node tries, which has no timer.
+ * A longer wait is paid only by an address that is black-holed, neither answering nor
+ * refusing: that now costs two seconds per NEW connection, where a refused or unreachable
+ * one still fails at once.
+ */
+export const CONNECT_ATTEMPT_TIMEOUT_MS = 2_000;
+
+/**
+ * Raise that wait to at least `minMs`. Never lowers it, so a larger value someone set,
+ * for example `NODE_OPTIONS=--network-family-autoselection-attempt-timeout=5000`, stands.
+ */
+export function raiseConnectAttemptTimeout(minMs: number): void {
+  // The .mcpb is declared for Node 18.0 and up and these two calls arrived in 18.18 and
+  // 19.8. On an older Node there is nothing to raise, and calling them would throw at import.
+  if (
+    typeof net.getDefaultAutoSelectFamilyAttemptTimeout !== "function" ||
+    typeof net.setDefaultAutoSelectFamilyAttemptTimeout !== "function"
+  ) {
+    return;
+  }
+  if (net.getDefaultAutoSelectFamilyAttemptTimeout() < minMs) {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(minMs);
+  }
+}
+
+// Once, when the module loads: this is the one module that calls the global `fetch`
+// (tests/packaging/no-bare-fetch.test.ts), so every `fetch` has passed through it. The
+// setting is process-wide, so other sockets in the same process, such as the hosted
+// server's Postgres and S3 clients, get it too.
+raiseConnectAttemptTimeout(CONNECT_ATTEMPT_TIMEOUT_MS);
 
 // Every `Response` method that consumes the body stream, and can therefore
 // reject with the abort once the timeout fires mid-transfer.

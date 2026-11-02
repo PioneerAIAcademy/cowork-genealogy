@@ -1,0 +1,11 @@
+{
+  "tool": "person_record_matches",
+  "description": "person_record_matches refused for Patrick Flynn (LZNY-BRF): no valid FamilySearch session, the error getValidToken throws, marked is_error because src/server.ts returns {error} with isError: true. The hints cannot be read. Used by search-hints' refused ending test (issue #3153).",
+  "args": {
+    "id": "LZNY-BRF"
+  },
+  "is_error": true,
+  "response": {
+    "error": "User is not logged in to FamilySearch. Call the login tool to authenticate."
+  }
+}

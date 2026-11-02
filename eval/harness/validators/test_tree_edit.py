@@ -272,3 +272,43 @@ def test_uncle_reading_is_named_at_all(text_response, test, agent_returns=None):
         "neither reading passes the lead-marker check vacuously, which is "
         "why this arm exists."
     )
+
+
+# --- Namesakes (issue #3363, PR 2) ------------------------------------
+
+def _facts_of(state: dict, person_id: str) -> list:
+    tree = state.get("tree_gedcomx_json") or state.get("tree_gedcomx") or {}
+    person = next((p for p in tree.get("persons") or [] if p.get("id") == person_id), {})
+    return person.get("facts") or []
+
+
+def test_namesake_citation_refused_and_handed_back(before_state, after_state, text_response, test, agent_returns=None):
+    """Tag-gated (`namesake-citation`): with a namesake on I1 and the census
+    untied to him, no fact is added to I1 and the return hands the census link
+    to person-evidence."""
+    if "namesake-citation" not in (test.get("tags") or []):
+        pytest.skip("not a namesake-citation test")
+    added = [f.get("type") for f in _facts_of(after_state, "I1") if f not in _facts_of(before_state, "I1")]
+    assert not added, f"facts were added to I1 although the census is untied to him: {added}"
+    from harness.skill_runner import subject_reply_text
+    text_response = subject_reply_text(agent_returns, text_response, "tree-edit", test)
+    assert re.search(r"hand[- ]?back[^\n]{0,40}`?person-evidence", text_response or "", re.I), (
+        f"the refused citation was not handed to person-evidence: {(text_response or '')[:600]!r}"
+    )
+
+
+def test_namesake_refused_merge_not_forced(before_state, after_state, test):
+    """Tag-gated (`namesake-merge-refused`): merge_tree_persons refuses to fold
+    I3 into I4 under I4's namesake row, and nothing works around it: I3, its
+    facts and its census link pe_007 are all still there."""
+    if "namesake-merge-refused" not in (test.get("tags") or []):
+        pytest.skip("not a namesake-merge-refused test")
+    tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx") or {}
+    assert "I3" in _person_ids_in_tree(tree), "I3 is gone: the refused merge was forced through"
+    missing = [f.get("id") for f in _facts_of(before_state, "I3") if f not in _facts_of(after_state, "I3")]
+    assert not missing, f"I3's facts were removed to get past the namesake check: {missing}"
+    research = after_state.get("research_json") or {}
+    link = next((e for e in research.get("person_evidence") or [] if e.get("id") == "pe_007"), {})
+    assert link.get("person_id") == "I3" and link.get("confidence") == "confident" and not link.get("superseded_by"), (
+        f"pe_007 was moved, lowered or superseded to get past the namesake check: {link}"
+    )

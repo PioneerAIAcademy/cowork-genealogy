@@ -70,14 +70,27 @@ def _schema() -> dict[str, Any]:
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
+def _no_repeated_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """`json` keeps the last of a repeated key and drops the others without a word.
+    A merge can leave two `execution` blocks in one file, and the first block's
+    settings then never apply, so a repeated key is an error."""
+    keys = [k for k, _ in pairs]
+    repeated = sorted({k for k in keys if keys.count(k) > 1})
+    if repeated:
+        raise InvalidTestError(f"repeats the key {', '.join(repeated)}")
+    return dict(pairs)
+
+
 def load_test(path: Path) -> TestSpec:
     """Load a unit-test JSON file from disk and return a validated TestSpec."""
     try:
-        raw = json.loads(Path(path).read_text(encoding="utf-8"))
+        raw = json.loads(Path(path).read_text(encoding="utf-8"), object_pairs_hook=_no_repeated_keys)
     except FileNotFoundError as e:
         raise InvalidTestError(f"test file not found: {path}") from e
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
         raise InvalidTestError(f"test file is not valid JSON: {path}: {e}") from e
+    except InvalidTestError as e:
+        raise InvalidTestError(f"test file {path} {e}") from e
     spec = load_test_from_dict(raw)
     spec.source_path = Path(path)
     return spec

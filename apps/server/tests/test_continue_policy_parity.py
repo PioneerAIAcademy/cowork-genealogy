@@ -47,6 +47,16 @@ ORCHESTRATOR = REPO / "eval/harness/e2e/orchestrator.py"
 LIFTED = ("project_completed", "should_continue_run", "terminal_reason")
 
 
+def _is_literal(value: ast.expr) -> bool:
+    """A value `ast.literal_eval` accepts. The shape test it replaces took any tuple, so a
+    tuple of `re.compile(...)` calls was lifted and raised NameError on its own import."""
+    try:
+        ast.literal_eval(value)
+    except (ValueError, TypeError, SyntaxError, MemoryError, RecursionError):
+        return False
+    return True
+
+
 def _lift(path: Path) -> dict:
     """The named functions, plus the literal constants they close over, lifted out of
     `path` into a clean namespace.
@@ -63,8 +73,7 @@ def _lift(path: Path) -> dict:
     tree = ast.parse(path.read_text(encoding="utf-8"))
     consts = [
         node for node in tree.body
-        if isinstance(node, ast.Assign) and isinstance(node.value, (ast.Constant, ast.Tuple,
-                                                                    ast.List, ast.Set, ast.Dict))
+        if isinstance(node, ast.Assign) and _is_literal(node.value)
     ]
     wanted = {
         node.name: node

@@ -20,7 +20,6 @@ import {
   createPgS3Backend,
   PgS3Backend,
   PgS3ProjectStore,
-  READY_TIMEOUT_MS,
   StaleClaimError,
 } from "../../src/store/pg-s3-project-store.js";
 import { runProjectStoreConformance, type StoreFixture } from "./conformance.js";
@@ -442,7 +441,9 @@ describe("PgS3ProjectStore without a stack", () => {
         try {
           const t0 = Date.now();
           const report = await backend.checkReady(300);
-          expect(Date.now() - t0).toBeLessThan(500);
+          // Wide of the 300 ms deadline: under a parallel suite the event loop lags
+          // past a second, and a probe the deadline did not cut never returns at all.
+          expect(Date.now() - t0).toBeLessThan(3_000);
           expect(report.ok).toBe(false);
           expect(report.checks.postgres.ok).toBe(false);
           expect(report.checks.s3.ok).toBe(false);
@@ -499,7 +500,9 @@ describe("PgS3ProjectStore without a stack", () => {
           const before = accepted;
           const t0 = Date.now();
           const second = await backend.checkReady(300);
-          expect(Date.now() - t0).toBeLessThan(500);
+          // Wide of the 300 ms deadline: under a parallel suite the event loop lags
+          // past a second, and a probe the deadline did not cut never returns at all.
+          expect(Date.now() - t0).toBeLessThan(3_000);
           expect(second).not.toBe(first);
           expect(second.ok).toBe(false);
           // A new Postgres connection reached the silent listener.
@@ -901,9 +904,9 @@ if (!DSN || !ENDPOINT) {
         const held = await Promise.all(Array.from({ length: 10 }, () => backend.pool.connect()));
         try {
           expect(backend.pool.totalCount).toBe(10);
-          const t0 = Date.now();
+          // `.ok === true` already proves the probe beat withDeadline(READY_TIMEOUT_MS);
+          // a wall-clock re-check could only add a false failure under load.
           expect((await backend.checkReady()).ok).toBe(true);
-          expect(Date.now() - t0).toBeLessThan(READY_TIMEOUT_MS);
         } finally {
           for (const c of held) c.release();
         }

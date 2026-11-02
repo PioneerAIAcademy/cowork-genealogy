@@ -86,7 +86,8 @@ class PatchSessionBody(BaseModel):
 # drifts from the current control plane (issue #3406). Lead ruling 2026-10-13:
 # past this age a session can be read but not continued. "Read" includes its
 # chat: /connect hands an old session a read-only connection that replays the
-# transcript, and the client shows no composer.
+# transcript, and the client shows no composer. Reading resumes the sandbox, so
+# the credential proxy refuses the session's calls too (`anthropic_proxy`).
 SESSION_MAX_AGE = timedelta(hours=72)
 
 _EXPIRED_DETAIL = (
@@ -265,11 +266,7 @@ async def create_project(
     # keeps the login tool from claiming a browser tab opened on a headless VM.
     await fs_oauth.merge_config(
         sandbox,
-        fs_oauth.hosted_config(
-            settings.openrouter_api_key,
-            settings.wiki_api_url,
-            settings.pop_stats_url,
-        ),
+        fs_oauth.hosted_config_for(settings),
     )
     # The Anthropic key the Agent SDK runs on. Written here AND on every connect
     # (the env copy injected at create() can never be updated afterwards, so it
@@ -527,8 +524,9 @@ async def connect_session(
         raise HTTPException(status_code=410, detail=_EXPIRED_DETAIL)
     sandbox = await provider.resume(project.sandbox_id)
     if not continuable:
-        # No secrets, config or FamilySearch grant: nothing a new turn needs
-        # reaches an old sandbox, and last_active stays where the work ended.
+        # No secrets, config or FamilySearch grant, and last_active stays where
+        # the work ended. The sandbox still holds its earlier secrets; the
+        # credential proxy refuses its calls (`anthropic_proxy`).
         conn = await sandbox.expose_port(SANDBOX_WS_PORT)
         return {
             "wssUrl": conn.url,
@@ -546,11 +544,7 @@ async def connect_session(
     settings = get_settings()
     await fs_oauth.merge_config(
         sandbox,
-        fs_oauth.hosted_config(
-            settings.openrouter_api_key,
-            settings.wiki_api_url,
-            settings.pop_stats_url,
-        ),
+        fs_oauth.hosted_config_for(settings),
     )
     # Same reasoning for the user's FamilySearch grant, which expires far faster
     # (24h absolute) than the 30-day app session cookie — so the app looks

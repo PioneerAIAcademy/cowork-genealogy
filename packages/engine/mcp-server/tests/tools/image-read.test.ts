@@ -17,6 +17,7 @@ import {
   __clearTruncatedSourceImagesForTests,
 } from "../../src/utils/image-store.js";
 import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -312,13 +313,13 @@ describe("imageReadTool — input validation", () => {
   it("rejects when both imageId and ark are provided", async () => {
     await expect(
       imageReadTool({ imageId: "004884748_02613", ark: "ark:/61903/1:2:HSJG-CLNF" }, LOCAL)
-    ).rejects.toThrow(/exactly one of imageId, ark, or memoryArtifactUrl/i);
+    ).rejects.toThrow(/exactly one of imageId or ark\./i);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it("rejects when neither imageId nor ark is provided", async () => {
     await expect(imageReadTool({}, LOCAL)).rejects.toThrow(
-      /requires one of imageId, ark, or memoryArtifactUrl\. Received no keys\./i
+      /requires one of imageId or ark\. Received no keys\./i
     );
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -326,7 +327,7 @@ describe("imageReadTool — input validation", () => {
   it("names the keys it received when none of them is an image input", async () => {
     await expect(
       imageReadTool({ imageUrl: "https://x.example/a.jpg", projectPath: "/p" } as unknown as ImageReadInput, LOCAL)
-    ).rejects.toThrow(/requires one of imageId, ark, or memoryArtifactUrl\. Received keys: imageUrl, projectPath\./);
+    ).rejects.toThrow(/requires one of imageId or ark\. Received keys: imageUrl, projectPath\./);
     // A call with no arguments at all arrives as undefined.
     await expect(imageReadTool(undefined as unknown as ImageReadInput, LOCAL)).rejects.toThrow(
       /Received no keys\./
@@ -499,6 +500,36 @@ describe("imageReadTool — hard image cap (#3010, image-transcribe spec §5.8)"
       /Image cap reached: 20 distinct images from image group 004884748/,
     );
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("says the cap is per film, per project and that nothing resets it, when the count came from a project", async () => {
+    await readTwenty();
+    const err = await imageReadTool({ imageId: img(21), projectPath: project }, LOCAL).catch((e) => e);
+    expect((err as Error).message).toMatch(
+      new RegExp(
+        `have already been read in this project, so ${img(21)}(?: \\(\\S+\\))? was not fetched\\. ` +
+          "The cap is per film, per project: every sub-volume of film 004884748 shares it, " +
+          "and nothing resets it, not a new agent and not a new session\\. Re-reading",
+      ),
+    );
+    expect((err as Error).message).not.toContain("server session, because");
+  });
+
+  it("keeps 'server session' and says a new agent does not reset it, for a read with no projectPath", async () => {
+    fileStoreOnly("a pg-bound store anchors a no-projectPath read to its project, so the count is read from the log");
+    for (let i = 1; i <= 20; i++) {
+      mockImageResponse();
+      await imageReadTool({ imageId: img(i) }, LOCAL);
+    }
+    const err = await imageReadTool({ imageId: img(21) }, LOCAL).catch((e) => e);
+    expect((err as Error).message).toMatch(/Image cap reached: 20 distinct images from image group 004884748/);
+    expect((err as Error).message).toMatch(
+      new RegExp(
+        `have already been read in this server session, because this read named no project, so ${img(21)}` +
+          "(?: \\(\\S+\\))? was not fetched\\. A new agent does not reset it\\. Re-reading",
+      ),
+    );
+    expect((err as Error).message).not.toContain("per film, per project");
   });
 
   it("re-reading one of the first 20 still works", async () => {

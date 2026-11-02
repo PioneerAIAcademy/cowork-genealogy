@@ -1,0 +1,44 @@
+{
+  "test": {
+    "id": "ut_research_plan_cap",
+    "skill": "research-plan",
+    "name": "Dispose mode for an item whose film's image cap is spent: complete the logged browse",
+    "type": "positive",
+    "description": "#3549: the research router sends a plan item listed in project_context's exhaustedImageGroups to research-plan to dispose of. barren-order-books-cap-spent: pli_003 (browse-only court order books) is planned, log_003 is its logged image_search browse (negative, cap reached), and results/image-browse.jsonl holds 20 distinct images of film 007757419. research-plan must take Dispose mode, not Review mode, and complete pli_003 because its browse was logged.",
+    "tags": [
+      "planning",
+      "dispose-mode",
+      "research-plan-dispose",
+      "research-plan-no-new-plan",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The image cap on film 007757419 is spent in this project: project_context lists it in exhaustedImageGroups with pli_003, and nothing resets it. Dispose of the named item: complete it if its search was done, or skip it with a skip_category.\n\nquestionId: q_001\nplanItemIds: pli_003\nprojectPath: <workspace>",
+    "scenario": "barren-order-books-cap-spent"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "place-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "collections-search-us-national",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "The delegation names one item, pli_003, whose film's image cap is spent (project_context exhaustedImageGroups). This is Dispose mode: research-plan sets the named item's status and adds no items and does not supersede the plan.",
+    "log_003 is pli_003's logged image_search browse (images 1-20 of film 007757419, outcome negative, cap reached). A search that was done and logged is completed, even when it found nothing. Expected result: pli_003 completed, in one research_append call; no new items, no superseded plan.",
+    "Fail if pli_003 stays planned (a Review-mode recap with nothing written), if it is skipped although its browse was logged, if items are added, or if the plan is superseded. Do not penalize the agent for not browsing: the cap forbids it."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_turns": 30
+  }
+}

@@ -160,7 +160,10 @@ describe("tree_edit and tree_correct under a recorded namesake (#3363 PR 1e)", (
     expect(errors[0]).toMatch(
       /^ops\[0\]: 'KWCB-111' has a recorded namesake \('ns_001'\), so a record goes onto 'KWCB-111''s facts and names only when something in it ties it to 'KWCB-111'\. The fact '.*' \(Occupation\) this op adds cites S2 \(research source 'src_002'\), and its link 'pe_3' to 'KWCB-111' is not tied: /,
     );
-    expect(errors[0]).toContain("Nothing was written. Cite only records that tie to 'KWCB-111', or tie the record first through person-evidence");
+    expect(errors[0]).toContain(
+      "Nothing was written. Cite only records that tie to 'KWCB-111', or hand the link to the person-evidence agent, which owns person_evidence, to tie it first",
+    );
+    expect(errors[0]).not.toMatch(/\.\.\s/);
   });
 
   it("T2 writes a fact citing a record its wife's link ties", async () => {
@@ -305,6 +308,15 @@ describe("tree_edit and tree_correct under a recorded namesake (#3363 PR 1e)", (
     const r = research({ links: [...LINKS(), link("pe_4", "a_020", W)] });
     r.sources.push(source("src_003", "S1"));
     r.assertions.push(assertion("a_020", "src_003", "REC-CEN-2", "principal", "name", "Mary Smith"));
+    await setup(r, tree());
+    await written(() => treeEdit({ projectPath: dir, ops: [{ operation: "add_fact", personId: P, fact: occupation("S1") }] } as any));
+  });
+
+  it("T16c known let through: writes a fact citing an S entry his tied census shares with the namesake's own record", async () => {
+    // REC-VOT is the record the row lists as the namesake's. Filed on the
+    // census's S entry, a fact copied from it passes on the census's tie.
+    const r = research();
+    r.sources = [source("src_001", "S1"), source("src_002", "S1")];
     await setup(r, tree());
     await written(() => treeEdit({ projectPath: dir, ops: [{ operation: "add_fact", personId: P, fact: occupation("S1") }] } as any));
   });

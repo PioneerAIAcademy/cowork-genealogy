@@ -8,20 +8,20 @@
     "query": {
       "standardPlace": "Louisiana, United States",
       "startYear": 1699,
-      "endYear": 1803
+      "endYear": 1803,
+      "pageSize": 50
     },
     "totalResults": 2,
     "results": [
       {
         "imageGroupNumber": "004330991",
-        "imageGroupPrefix": "004330991",
         "imageCount": 264,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["fr", "es"],
         "coverages": [
           {
-            "place": "Orleans, Louisiana, United States",
+            "places": ["Orleans, Louisiana, United States"],
             "dateRange": "1720-1803",
             "recordType": "Sacramental registers, Archdiocese of New Orleans"
           }
@@ -29,14 +29,13 @@
       },
       {
         "imageGroupNumber": "004330992",
-        "imageGroupPrefix": "004330992",
         "imageCount": 149,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["fr", "es"],
         "coverages": [
           {
-            "place": "Louisiana, United States",
+            "places": ["Louisiana, United States"],
             "dateRange": "1699-1769",
             "recordType": "French colonial notarial acts (Superior Council records)"
           }

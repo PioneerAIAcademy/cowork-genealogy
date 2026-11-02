@@ -1,5 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { readFileSync } from "node:fs";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import {
@@ -20,7 +22,17 @@ const here = dirname(fileURLToPath(import.meta.url));
 const fixturePath = join(here, "..", "..", "..", "..", "..", "eval", "fixtures", "mcp", "image-transcribe-cap-reached.json");
 
 describe("image-transcribe-cap-reached fixture", () => {
-  beforeEach(() => __clearImageBrowseMemoryForTests());
+  let project: string;
+
+  beforeEach(async () => {
+    __clearImageBrowseMemoryForTests();
+    project = await mkdtemp(join(tmpdir(), "imgcap-fixture-"));
+    await writeFile(join(project, "research.json"), "{}");
+  });
+
+  afterEach(async () => {
+    await rm(project, { recursive: true, force: true });
+  });
 
   it("carries the exact refusal browse-budget.ts throws for its imageId", async () => {
     const fixture = JSON.parse(readFileSync(fixturePath, "utf-8"));
@@ -29,9 +41,9 @@ describe("image-transcribe-cap-reached fixture", () => {
     for (let i = 1; i <= IMAGE_BROWSE_CAP; i++) {
       const id = `${group}_${String(i).padStart(5, "0")}`;
       expect(id).not.toBe(imageId);
-      await recordImageBrowse(await checkImageBrowseCap({ imageId: id }, undefined, "image_transcribe"));
+      await recordImageBrowse(await checkImageBrowseCap({ imageId: id }, project, "image_transcribe"));
     }
-    const err = await checkImageBrowseCap({ imageId }, undefined, "image_transcribe").catch((e) => e);
+    const err = await checkImageBrowseCap({ imageId }, project, "image_transcribe").catch((e) => e);
     expect(err).toBeInstanceOf(Error);
     expect(fixture.is_error).toBe(true);
     expect(fixture.response).toEqual({ error: (err as Error).message });

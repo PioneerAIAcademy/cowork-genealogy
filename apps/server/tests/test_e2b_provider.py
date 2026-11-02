@@ -27,6 +27,7 @@ import pytest
 from e2b.exceptions import FileNotFoundException, SandboxNotFoundException
 from e2b.sandbox.filesystem.filesystem import FileType
 
+from _bash import find_bash
 from app.sandbox.base import SandboxSpec, SandboxState
 from app.sandbox.e2b import _BUILD_INFO_PATH, _RUNNING_TIMEOUT_S, E2BProvider
 
@@ -375,6 +376,8 @@ async def test_a_hanging_read_cannot_hang_session_creation(provider, monkeypatch
 # tests/test_sandbox_image_provenance.py.
 
 _BUILD_SCRIPT = Path(__file__).resolve().parents[3] / "apps" / "server" / "sandbox" / "build-image.sh"
+_BASH = find_bash()
+_needs_bash = pytest.mark.skipif(_BASH is None, reason="runs a snippet of build-image.sh; no bash found")
 
 
 def _shipped_provenance_bytes(commit: str, dirty: str) -> bytes:
@@ -385,12 +388,13 @@ def _shipped_provenance_bytes(commit: str, dirty: str) -> bytes:
     end = next(i for i in range(start, len(lines)) if '> "${PROVENANCE_FILE}"' in lines[i])
     stmt = "\n".join(lines[start:end + 1]).replace('> "${PROVENANCE_FILE}"', "")
     out = subprocess.run(
-        ["bash", "-c", f'set -eu; _commit="{commit}"; _dirty={dirty}; {stmt}'],
+        [_BASH, "-c", f'set -eu; _commit="{commit}"; _dirty={dirty}; {stmt}'],
         capture_output=True, text=True, encoding="utf-8", check=True,
     )
     return out.stdout.encode("utf-8")
 
 
+@_needs_bash
 async def test_reader_parses_what_the_shipped_writer_emits(provider):
     """Seed the fake image with the REAL writer's bytes, not a hand-written copy."""
     _FakeAsyncSandbox.image_files = {
@@ -400,6 +404,7 @@ async def test_reader_parses_what_the_shipped_writer_emits(provider):
     assert provider.sandbox_image_commit == "abc123"
 
 
+@_needs_bash
 async def test_the_dirty_key_the_writer_emits_is_the_one_the_reader_reads(provider):
     """The silent half: a renamed `dirty` key drops the marker with no log line."""
     _FakeAsyncSandbox.image_files = {

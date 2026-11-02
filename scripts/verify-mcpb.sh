@@ -41,6 +41,7 @@ require build/build-info.json
 require config/familysearch.json
 require config/given-name-variants.json
 require config/name-variants-given.json
+require config/one-word-places.json
 require node_modules/@modelcontextprotocol/sdk
 
 forbid src

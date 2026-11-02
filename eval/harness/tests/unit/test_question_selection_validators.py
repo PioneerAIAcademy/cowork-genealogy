@@ -31,11 +31,11 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_question_selection import (  # noqa: E402
     test_disputed_parents_missing_info_handled as check_missing_info,
     test_first_question_tests_disputed_parents as check_disputed_parents,
+    test_new_question_has_date_window as check_date_window,
     test_motivation_objective_decomposed as check_motivation,
     test_new_question_not_vague as check_not_vague,
     test_premise_question_names_fact as check_premise,
     test_single_fact_objective_not_narrowed as check_single_fact,
-    test_timelines_queried_before_deciding as check_timelines_ordering,
     test_unblocks_nonempty as check_unblocks_nonempty,
 )
 
@@ -49,7 +49,6 @@ def _state(questions):
 _EMPTY = _state([])
 _DISPUTED_TAGS = {"tags": ["verifies-disputed-parents"]}
 _MISSING_INFO_TAGS = {"tags": ["disputed-parents-missing-info"]}
-_TIMELINE_TAGS = {"tags": ["selection-basis-timeline-gap"]}
 _UNBLOCKS_TAGS = {"tags": ["unblocks-nonempty"]}
 
 
@@ -160,38 +159,6 @@ def test_missing_info_check_accepts_the_ask_branch():
         "from you: what led you to doubt the parents, and the birth date "
         "and place you're working from.",
     )
-
-
-# --- test_timelines_queried_before_deciding: ordering, not just presence -
-
-
-def _call(tool, **args):
-    return {"tool": tool, "args": args}
-
-
-def test_timelines_ordering_passes_when_queried_before_the_write():
-    check_timelines_ordering(
-        _EMPTY,
-        [
-            _call("mcp__genealogy__research_query", section="timelines"),
-            _call("mcp__genealogy__research_append", section="questions"),
-        ],
-        _TIMELINE_TAGS,
-    )
-
-
-def test_timelines_ordering_fails_when_queried_only_after_the_write():
-    """Presence alone used to be enough -- a run that decided first and
-    queried timelines only afterward still passed. Must fail now."""
-    with pytest.raises(AssertionError, match="before ever calling"):
-        check_timelines_ordering(
-            _EMPTY,
-            [
-                _call("mcp__genealogy__research_append", section="questions"),
-                _call("mcp__genealogy__research_query", section="timelines"),
-            ],
-            _TIMELINE_TAGS,
-        )
 
 
 # --- test_unblocks_nonempty --------------------------------------------
@@ -425,3 +392,31 @@ def test_motivation_skips_without_its_tag():
     after = _state([_q("q_001", "Why did the Morgans move to Texas?")])
     with pytest.raises(pytest.skip.Exception):
         check_motivation(_EMPTY, after, {"tags": []})
+
+
+# --- test_new_question_has_date_window (#2424) ----------------------------
+
+
+def test_date_window_passes_a_well_formed_window():
+    check_date_window(_EMPTY, _state([_q("q_001", "When did he marry?", date_window="1777-1799")]))
+    check_date_window(_EMPTY, _state([_q("q_001", "When did he marry?", date_window="1850-1850")]))
+
+
+@pytest.mark.parametrize("window", [None, "", "1800", "c. 1780s", "1799-1777", 1780])
+def test_date_window_fails_a_missing_or_malformed_window(window):
+    extra = {} if window is None else {"date_window": window}
+    with pytest.raises(AssertionError, match="date_window"):
+        check_date_window(_EMPTY, _state([_q("q_001", "When did he marry?", **extra)]))
+
+
+def test_date_window_one_bad_question_is_not_masked_by_a_good_one():
+    with pytest.raises(AssertionError, match="q_002"):
+        check_date_window(_EMPTY, _state([
+            _q("q_001", "When did he marry?", date_window="1777-1799"),
+            _q("q_002", "Who were his parents?"),
+        ]))
+
+
+def test_date_window_ignores_questions_that_already_existed():
+    old = _q("q_001", "Who were his parents?")
+    check_date_window(_state([old]), _state([old]))

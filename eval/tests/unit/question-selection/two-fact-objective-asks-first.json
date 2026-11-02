@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_question_selection_tf1",
+    "skill": "question-selection",
+    "name": "A two-fact objective with no question yet: write nothing and ask which fact first",
+    "type": "positive",
+    "description": "The objective holds two independent facts, where Patrick Flynn is buried and whom he married, and no question covers either. Step mode section E: question-selection writes no question and asks the researcher which fact to research first, naming both. Writing a question for either one, or a question joining both, fails.",
+    "tags": [
+      "question-selection",
+      "from-objective",
+      "empty-project",
+      "question-selection-no-new-question",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-two-fact-objective"
+  },
+  "judge_context": [
+    "**No question is written.** The objective holds two independent facts (Patrick Flynn's burial place, and his spouse), and no question covers either, so the agent asks rather than choosing.",
+    "The reply must name both facts and ask the researcher which to research first. Naming only one, or asking an open 'what would you like to do?', is a partial.",
+    "Writing a question for either fact, or one question joining both, is the failure this test exists for."
+  ]
+}

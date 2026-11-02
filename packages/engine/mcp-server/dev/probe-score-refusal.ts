@@ -45,7 +45,7 @@ async function main(): Promise<void> {
 
   dir = await project();
   await recordMatchScore(dir, { record_id: "rec_A", record_persona_id: "P1",
-    record_role: "principal", tree_person_id: "I1", score: 0.82, matched: true,
+    record_role: "principal", tree_person_id: "I1", score: 0.82, scorer: "familysearch", model: null,
     assertion_id: "a_001", record_source: "record_read", computed: "2026-09-24T00:00:00Z" });
   r = await researchAppend(link(dir, "I1", 0.82) as any);
   console.log(`  attested link                -> ${r.ok ? "ACCEPTED" : "REFUSED"}`);
@@ -66,7 +66,7 @@ async function main(): Promise<void> {
   //    and the gate refused exactly the links whose call HAD been made.
   dir = await project();
   await recordMatchScore(dir, { record_id: "rec_A", record_persona_id: "PERSON1",
-    record_role: "principal", tree_person_id: "I1", score: 0.82, matched: true,
+    record_role: "principal", tree_person_id: "I1", score: 0.82, scorer: "familysearch", model: null,
     assertion_id: "a_001", record_source: "record_read", computed: "2026-09-24T00:00:00Z" });
   r = await researchAppend(link(dir, "I1", 0.82) as any);
   console.log(`  fetched-route attestation    -> ${r.ok ? "ACCEPTED" : "REFUSED"}`);
@@ -113,7 +113,7 @@ async function main(): Promise<void> {
     const d = await project();
     await writeFile(join(d, "research.json"), JSON.stringify(PERSONA_RESEARCH, null, 2), "utf8");
     await recordMatchScore(d, { record_id: "rec_A", record_persona_id: "P1",
-      record_role: "principal", tree_person_id: "I1", score: 0.82, matched: true,
+      record_role: "principal", tree_person_id: "I1", score: 0.82, scorer: "familysearch", model: null,
       assertion_id: "a_001", record_source: "record_read", computed: "2026-10-27T00:00:00Z",
       party_resolved: true });
     return d;

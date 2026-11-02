@@ -1,8 +1,8 @@
 """Tests for /audit-board's runlog_state.py.
 
 The bug these exist for: the paid-run tax table read each suite through
-`check_runlogs.latest_full_skill_runlog`, which prefers any released v{N}.json over
-every candidate. A suite whose released log was stale but whose newer candidate was
+`check_runlogs.latest_full_skill_runlog`, which then preferred any released v{N}.json
+over every candidate. A suite whose released log was stale but whose newer candidate was
 active read as stale and idle since the release date — on 2026-10-18 that was 7 of
 32 suites (init-project read 9 idle days instead of 3). They owe a promotion, not a
 paid run.

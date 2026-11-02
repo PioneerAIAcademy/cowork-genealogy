@@ -6,6 +6,7 @@
  * The filter is the lead's ruling of 2026-09-15 (issue #1689).
  */
 import type { Principal } from "../auth/principal.js";
+import { rejectedTokenMessage } from "../auth/config.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "./fs-fetch.js";
 import { fetchWithRetry } from "./http.js";
@@ -348,6 +349,15 @@ export function memoryPageId(url: string): string | null {
   return MEMORY_PAGE_PATTERN.exec(url)?.[1] ?? null;
 }
 
+/** Appended to a failed Memories lookup. It must not send the agent to login:
+ *  the bearer was already tried, and the text would match REAUTH_HITS
+ *  (apps/server/proto/turn.py), which counts as an auth failure. */
+export const MEMORY_LOOKUP_FAILED_GUIDANCE =
+  "Open the page URL in a browser to confirm the memory exists and is visible " +
+  "to you. This tool cannot read a private memory, and reconnecting or logging " +
+  "in again will not change that. Otherwise transcribe the page's image by " +
+  "another route.";
+
 /**
  * Resolve a memory id to its artifact's direct bytes URL.
  *
@@ -377,19 +387,23 @@ export async function resolveMemoryArtifactUrl(
   const lookup = `${MEMORIES_API_BASE}/${pageId}`;
 
   let res = await fetchWithRetry(lookup, { headers: FS_HEADERS });
+  let sentBearer = false;
   if (res.status === 401 || res.status === 403) {
     // Only here does a credential enter: a restricted artifact. The bearer goes
     // to api.familysearch.org and never to the URL this returns.
     res = await fsFetch(principal, lookup, { headers: FS_HEADERS });
+    sentBearer = true;
   }
 
+  // A 401 to the bearer is a rejected token, as for an image fetch.
+  if (sentBearer && res.status === 401) {
+    throw new Error(await rejectedTokenMessage(principal));
+  }
   const raw = res.status === 200 ? (await res.text()).trim() : "";
   if (res.status !== 200 || raw.length === 0) {
     throw new Error(
       `FamilySearch Memories lookup failed (${res.status}) for artifact ${pageId}. ` +
-        "Open the page URL in a browser to confirm the memory exists and is " +
-        "visible to you; if it is restricted, call the login tool and retry. " +
-        "Otherwise transcribe the page's image by another route.",
+        MEMORY_LOOKUP_FAILED_GUIDANCE,
     );
   }
 

@@ -78,6 +78,13 @@ describe("validateIntroduced", () => {
     expect(
       result.warnings.some((w) => /pre-existing schema error/.test(w.message)),
     ).toBe(true);
+    // The pointer says these are among the validator's own errors, so an agent
+    // that just reported them does not count them twice (#3870).
+    expect(
+      result.warnings.some((w) =>
+        /they are among the errors validate_research_schema lists, not new ones/.test(w.message),
+      ),
+    ).toBe(true);
   });
 
   it("blocks on drift the call itself introduces", async () => {
@@ -511,5 +518,36 @@ describe("validateIntroduced validates the serialized form (#2934)", () => {
     expect(result.valid, "a pre-existing TREE error must not block a research write").toBe(true);
     expect(result.warnings.map((w) => w.message).join(" ")).toMatch(/1 pre-existing schema error/);
     // Reverting: the `before.tree` round-trip.
+  });
+});
+
+describe("validateIntroduced — duplicate entry ids", () => {
+  const hyp = (id: string, claim: string) => ({
+    id,
+    claim,
+    status: "active",
+    supporting_assertion_ids: [],
+    contradicting_assertion_ids: [],
+    ruled_out: false,
+    ruled_out_reason: null,
+    notes: null,
+    related_question_ids: [],
+  });
+  const t = tree([validPerson("I1", "John", "Smith")]);
+
+  it("does not block a write on a project that already carried a duplicate", async () => {
+    const before = { ...minimalResearch, hypotheses: [hyp("h_001", "A"), hyp("h_001", "B")] };
+    const after = { ...before, hypotheses: [...before.hypotheses, hyp("h_002", "C")] };
+    const res = await validateIntroduced({ research: before, tree: t }, { research: after, tree: t });
+    expect(res.errors).toEqual([]);
+    expect(res.valid).toBe(true);
+  });
+
+  it("blocks a write that introduces the duplicate", async () => {
+    const before = { ...minimalResearch, hypotheses: [hyp("h_001", "A")] };
+    const after = { ...before, hypotheses: [...before.hypotheses, hyp("h_001", "B")] };
+    const res = await validateIntroduced({ research: before, tree: t }, { research: after, tree: t });
+    expect(res.valid).toBe(false);
+    expect(res.errors.map((e) => e.message).join(" | ")).toContain("duplicate hypothesis id 'h_001'");
   });
 });

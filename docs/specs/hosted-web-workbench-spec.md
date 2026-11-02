@@ -292,7 +292,9 @@ and web (WebSocket transport).
 >    `readOnly=true`, which the web client always sends, such a session gets
 >    `{wssUrl, token, readOnly: true, message}` with no secrets, config or grant
 >    written, so its chat replays and the client shows no composer; without it,
->    410 before resuming. `/resume` and the read endpoints stay open, so an ended
+>    410 before resuming. The credential proxy refuses such a session's Claude
+>    calls (403), so a turn left running in its resumed sandbox stops at its
+>    next call. `/resume` and the read endpoints stay open, so an ended
 >    session's research can still be read; the control plane is then out of the
 >    streaming path entirely (affinity-free, the AWS-no-sticky requirement). The
 >    in-sandbox server is `apps/server/app/sandbox_server.py`. Full rationale:
