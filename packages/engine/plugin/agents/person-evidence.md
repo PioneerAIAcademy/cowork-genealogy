@@ -462,28 +462,15 @@ household composition, and the independence of the evidence —
 determines the allowed confidence:
 
 **Before you pick a tier**, decide whether any core identifier —
-a birth or christening date, an age, a parent, a spouse —
-*contradicts* what the tree person already attests on its face. Include
-the tree person's existing facts as part of this comparison: a Birth,
-Death, or Christening fact already on the tree person in
-`tree.gedcomx.json` is part of what the tree attests, independent of
-which record introduced it. A date or age that cannot plausibly describe
-the same event — a gap the event itself cannot span (e.g. the record
-states birth 1858; the tree person's Birth fact attests ~1845, a 13-year
-gap no dating uncertainty bridges) — goes in the entry's
-`core_identifier_conflict` field, naming both sides ("record gives birth
-year 1858; tree person attests birth ~1845, 13-year gap").
-`research_append` then caps the link at `speculative`; a `confident` or
-`probable` entry carrying that field is refused. A conflicting parent or
-spouse — a father, mother, or spouse that differs from what the tree
-person attests — goes in `core_identifier_conflict` the same way, naming
-both sides. **A birthplace discrepancy is not a `core_identifier_conflict`**
-— it is a geography cap handled by **Geographic plausibility** and
-**Birthplace assertion conflict** below, and takes `probable`, not
-`speculative`. Leave the field null when nothing contradicts, and
-clear it to null — saying why in the `rationale` — when the conflict is
-explained and does not bear on identity. The score never promotes a
-declared conflict.
+birthplace, a birth or christening date, an age, a parent, a spouse —
+*contradicts* what the tree person already attests. If one does, put it
+in the entry's `core_identifier_conflict` field, naming both sides
+("record gives birthplace Germany; tree attests Ireland across three
+censuses"). `research_append` then caps the link at `speculative`; a
+`confident` or `probable` entry carrying that field is refused. Leave
+the field null when nothing contradicts, and clear it to null — saying
+why in the `rationale` — when the conflict is explained and does not
+bear on identity. The score never promotes a declared conflict.
 
 The comparison runs on every row of the table below, **Obvious included**:
 a person minted from this record, or found by searching for it, still has
@@ -497,11 +484,6 @@ Confidence is identity: how sure you are that this persona *is* this
 person, judged on every record that bears on the pairing. It is not the
 weight of the single assertion being linked. A secondary informant on one
 fact lowers that assertion's evidence quality, not the identity.
-**A single record, with no independent corroborating record separately
-establishing the same identity, caps the link at `probable`, not
-`confident`.** `confident` requires at least two independent sources that
-separately corroborate each other — informant quality on a single source
-does not substitute for independent corroboration.
 
 **Geographic plausibility.** When Step 2's residence-cluster lookup fired,
 decide whether something bridges the move: a documentary bridge in the
@@ -520,14 +502,6 @@ it, quote it in the entry's `move_bridge` field: `research_append` refuses
 never weighs. A move
 that a corridor or a record explains takes the ordinary tiers; name what
 explains it.
-
-**Birthplace assertion conflict.** When a birth or christening assertion
-states a birthplace that differs from an existing Birth or Christening
-fact on the tree person, that assertion's link is **`probable` at most,
-never `confident`** — even when the overall identity is established by
-multiple independent records. This is a geography cap, not a
-`core_identifier_conflict`. Name both birthplaces and both sources in the
-rationale.
 
 **Occupation and age norms weigh; they never cap.** Where trades were
 bound by apprenticeship or indenture, an agreeing occupation is strong
