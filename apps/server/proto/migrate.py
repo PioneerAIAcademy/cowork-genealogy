@@ -7,15 +7,17 @@ also records it. The web tier and the worker never apply the schema: they read t
 ledger, compare it with the files they ship (``verdict``) and report ``schema`` failing
 until someone runs this. Both images and both bundles copy it beside ``sql/`` (the web
 image as ``/app/migrate.py``, imported as ``migrate``; the worker as ``proto/migrate.py``,
-imported as ``proto.migrate``). Stdlib and psycopg only.
+imported as ``proto.migrate``), with ``pg_credentials`` beside it. Stdlib, psycopg and
+pg_credentials only.
 
   python migrate.py [--status]          (web layout: /app, or the unzipped web bundle)
   python proto/migrate.py [--status]    (worker layout, or apps/server in a checkout)
 
-The DSN comes from ``MIGRATE_PG_DSN`` and nowhere else -- never ``PG_DSN``, so a
-service's DML-only DSN is never used for DDL by accident. ``--status`` runs no DDL.
-Exit 0 current (or migrated), 1 an SQL error, a refusal or retries exhausted, 2 no DSN
-or no usable files, 3 ``--status`` found the database not current.
+The DSN comes from ``MIGRATE_PG_DSN``, or from the SAS object ``MIGRATE_PG_SAS_OBJECT``
+names (exclusive; handoff U29), and nowhere else -- never ``PG_DSN``, so a service's
+DML-only DSN is never used for DDL by accident. ``--status`` runs no DDL. Exit 0 current
+(or migrated), 1 an SQL error, a refusal or retries exhausted, 2 no DSN, a credentials
+configuration error or no usable files, 3 ``--status`` found the database not current.
 
 Runners serialise on ``pg_advisory_xact_lock(MIGRATE_LOCK_NS, 0)``, taken afresh in
 every transaction and re-checked under it, so simultaneous runners queue rather than
@@ -36,7 +38,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import os
 import re
 import sys
 import time
@@ -47,6 +48,13 @@ from typing import Any, NamedTuple
 
 import psycopg
 from psycopg import errors
+
+try:
+    from proto import pg_credentials
+except ModuleNotFoundError as e:
+    if e.name not in ("proto", "proto.pg_credentials"):
+        raise
+    import pg_credentials
 
 SQL_DIR = Path(__file__).resolve().parent / "sql"
 
@@ -244,8 +252,18 @@ def migrate_on(
         raise
 
 
+def _creds(dsn: str | pg_credentials.PgCredentials) -> pg_credentials.PgCredentials:
+    # Duck-typed: under pytest the web tier's pg_credentials is a different module object.
+    return pg_credentials.PgCredentials.fixed(dsn) if isinstance(dsn, str) else dsn
+
+
+def _connect(creds: pg_credentials.PgCredentials, connect_timeout: int) -> psycopg.Connection:
+    return pg_credentials.connect(creds, lambda d, **k: psycopg.connect(d, **k), connect_timeout=connect_timeout,
+                                  prepare_threshold=None, application_name=APPLICATION_NAME)
+
+
 def migrate(
-    dsn: str, *, sql_dir: Path = SQL_DIR, lock_wait_s: float = DEFAULT_LOCK_WAIT_S,
+    dsn: str | pg_credentials.PgCredentials, *, sql_dir: Path = SQL_DIR, lock_wait_s: float = DEFAULT_LOCK_WAIT_S,
     lock_timeout_s: float = DEFAULT_LOCK_TIMEOUT_S, connect_timeout: int = DEFAULT_CONNECT_TIMEOUT_S,
     attempts: int = DEFAULT_ATTEMPTS,
 ) -> list[str]:
@@ -254,7 +272,9 @@ def migrate(
     40P01 deadlock) with backoff ``BACKOFF_S``. ``RACE_ERRORS`` are retried only when the
     call's first successful ledger read found no ledger or an empty one (a baseline run,
     the one window where a pre-U9 instance can still be applying at its start). That is
-    decided once per call: attempt 1's ledger setup makes a later attempt read ``{}``."""
+    decided once per call: attempt 1's ledger setup makes a later attempt read ``{}``.
+    ``dsn`` may be a ``PgCredentials``; an invalid password re-resolves it once per attempt."""
+    creds = _creds(dsn)
     baseline: list[bool] = []
 
     def on_ledger(ledger: dict[str, str] | None) -> None:
@@ -263,8 +283,7 @@ def migrate(
 
     for attempt in range(1, attempts + 1):
         try:
-            conn = psycopg.connect(dsn, connect_timeout=connect_timeout, prepare_threshold=None,
-                                   application_name=APPLICATION_NAME)
+            conn = _connect(creds, connect_timeout)
             # Whatever default_transaction_isolation the role or database sets.
             conn.isolation_level = psycopg.IsolationLevel.READ_COMMITTED
             try:
@@ -289,7 +308,7 @@ def redact(text: str, dsn: str = "") -> str:
     for piece in sorted({dsn, *dsn.split()}, key=len, reverse=True):
         if piece:
             text = text.replace(piece, "<MIGRATE_PG_DSN>")
-    return _DSN_CREDENTIALS.sub("", text)
+    return pg_credentials.scrub(_DSN_CREDENTIALS.sub("", text))
 
 
 def _label(exc: BaseException) -> str:
@@ -299,9 +318,8 @@ def _label(exc: BaseException) -> str:
     return str(sqlstate) if sqlstate else type(exc).__name__
 
 
-def _status(dsn: str, shipped: list[Migration]) -> Verdict:
-    with psycopg.connect(dsn, connect_timeout=DEFAULT_CONNECT_TIMEOUT_S, prepare_threshold=None,
-                         application_name=APPLICATION_NAME) as conn:
+def _status(dsn: str | pg_credentials.PgCredentials, shipped: list[Migration]) -> Verdict:
+    with _connect(_creds(dsn), DEFAULT_CONNECT_TIMEOUT_S) as conn:
         try:
             return verdict(shipped, read_ledger(conn))
         finally:
@@ -309,7 +327,8 @@ def _status(dsn: str, shipped: list[Migration]) -> Verdict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Apply the prototype's sql/*.sql to MIGRATE_PG_DSN.")
+    parser = argparse.ArgumentParser(
+        description="Apply the prototype's sql/*.sql to MIGRATE_PG_DSN or MIGRATE_PG_SAS_OBJECT's database.")
     parser.add_argument("--status", action="store_true", help="report the ledger's level; run no DDL")
     args = parser.parse_args(argv)
     # The files before the DSN: a bundle missing sql/ fails as that, whatever the environment.
@@ -318,20 +337,29 @@ def main(argv: list[str] | None = None) -> int:
     except MigrateConfigError as exc:
         print(f"ev=migrate error=config detail={exc}", file=sys.stderr)
         return 2
-    dsn = os.environ.get("MIGRATE_PG_DSN", "")
-    if not dsn:
+    creds = pg_credentials.PgCredentials.from_env(dsn_var="MIGRATE_PG_DSN", sas_var="MIGRATE_PG_SAS_OBJECT",
+                                                  default=None)
+    if creds.problem:
+        print(f"ev=migrate error=config detail={creds.problem}", file=sys.stderr)
+        return 2
+    if creds.mode == "env" and not creds.cached():
         print(f"no MIGRATE_PG_DSN; {len(shipped)} files under {SQL_DIR}", file=sys.stderr)
         return 2
+    target = creds.cached() if creds.mode == "env" else creds
     try:
-        applied = [] if args.status else migrate(dsn, sql_dir=SQL_DIR)
-        now = _status(dsn, shipped)
+        creds.check_at_start()
+        applied = [] if args.status else migrate(target, sql_dir=SQL_DIR)
+        now = _status(target, shipped)
+    except pg_credentials.PgCredentialsError as exc:
+        print(f"ev=migrate error=config detail={exc}", file=sys.stderr)
+        return 2
     except Exception as exc:  # noqa: BLE001 - every failure is one redacted line and exit 1
         if isinstance(exc, psycopg.ProgrammingError) and not getattr(exc, "sqlstate", None):
             # libpq's conninfo parse error, raised before any connection, quotes a fragment
             # of the DSN (a password's, for a stray %): name the class, never the text.
             detail = f"{type(exc).__name__}: MIGRATE_PG_DSN does not parse"
         else:
-            detail = redact(f"{type(exc).__name__}: {exc}", dsn)
+            detail = redact(f"{type(exc).__name__}: {exc}", creds.cached() or "")
         print(f"ev=migrate error={_label(exc)} detail={detail}", file=sys.stderr)
         return 1
     if now.label is not None:
