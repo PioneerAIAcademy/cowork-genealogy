@@ -74,9 +74,9 @@ Interim, until U26's deadline: sqsd cuts only a run past 10 h. U13 measured what
 | `HttpConnections` | `2` | Unchanged from step 11. |
 | `InactivityTimeout` | `36000` | Beanstalk's documented maximum ("1 to 36000"). |
 | `VisibilityTimeout` | `36300` | `InactivityTimeout` + 300. SQS's maximum is 43200. |
-| `MaxRetries` | `5` | See below. |
+| `MaxRetries` | `5` | See below. Under Blueprint it makes no DLQ: the queue service declares `redrive_policy.max_receive_count` equal to it and a `dead_letter` queue (handoff step 11). |
 | `ErrorVisibilityTimeout` | `300` | See below. |
-| `RetentionPeriod` | `345600` | The AWS default, written down because the worker's sweep reads it. |
+| `RetentionPeriod` | `345600` | The AWS default, written down because the worker's sweep reads it. Under Blueprint it is the queue service's `message_retention_period`, and `SQSD_RETENTION_PERIOD_S` must match it (handoff step 11). |
 
 - **`MaxRetries` 5.** Receives after the first come only from a crash, a deploy or
   SIGTERM, or a 500. The 500s cover an API error surfacing as `ResultMessage.is_error`,
