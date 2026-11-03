@@ -2089,6 +2089,28 @@ def test_size_guard_drops_uncited_calls_before_the_cited_page():
     assert '"tool": "mcp__genealogy__tool_0"' not in rendered
 
 
+def test_size_guard_does_not_protect_a_call_that_only_mentions_a_cited_host():
+    """Every guide cites familysearch.org and nearly every wiki page names it
+    in the first 2,000 chars the judge already sees. Protecting those calls
+    dropped three more from v7h and bought no excerpt."""
+    filler = [
+        {
+            "tool": f"mcp__genealogy__tool_{i}",
+            "args": {"q": f"call-{i}"},
+            "matched": {"kind": "predicate", "index": None},
+            "response": {
+                "data": ("see www.familysearch.org " if i % 2 else "") + "x" * 1_500
+            },
+        }
+        for i in range(40)
+    ]
+    needles = judge._citation_needles("www.familysearch.org", "")
+    rendered = judge._render_tool_calls_with_size_guard(filler, needles)
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert rendered == judge._render_tool_calls_with_size_guard(filler)
+    assert '"tool": "mcp__genealogy__tool_1"' not in rendered
+
+
 def test_needle_inside_the_head_adds_no_excerpt():
     calls = [_wiki_page_call(_page_with(_ROOTS_URL, 500))]
     rendered = judge._render_tool_calls_with_size_guard(

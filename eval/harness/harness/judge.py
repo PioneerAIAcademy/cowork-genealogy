@@ -329,17 +329,21 @@ def _excerpts_past_cut(text: str, needles: tuple[str, ...]) -> str:
     )
 
 
-def _response_holds(response: Any, needles: tuple[str, ...]) -> bool:
-    """Whether any string anywhere in `response` contains a needle."""
+def _carries_excerpt(response: Any, needles: tuple[str, ...]) -> bool:
+    """Whether rendering `response` would append at least one excerpt.
+
+    Not merely "mentions a needle": nearly every wiki page names
+    familysearch.org, which every guide cites, and protecting all of those
+    from the size guard dropped three more calls from v7h for no excerpt.
+    """
     if not needles:
         return False
     if isinstance(response, dict):
-        return any(_response_holds(v, needles) for v in response.values())
+        return any(_carries_excerpt(v, needles) for v in response.values())
     if isinstance(response, list):
-        return any(_response_holds(v, needles) for v in response)
-    if isinstance(response, str):
-        lowered = response.lower()
-        return any(n in lowered for n in needles)
+        return any(_carries_excerpt(v, needles) for v in response)
+    if isinstance(response, str) and len(response) > _RESPONSE_STRING_MAX:
+        return bool(_excerpts_past_cut(response, needles))
     return False
 
 
@@ -718,8 +722,8 @@ def _render_tool_calls_with_size_guard(
         if dropped:
             return (
                 f"(_dropped_for_size: {dropped} tool calls dropped, oldest "
-                f"first but keeping any whose response holds a URL or host "
-                f"the agent cited, to keep tool calls under "
+                f"first but keeping any that carries a harness excerpt, "
+                f"to keep tool calls under "
                 f"{_TOOL_CALLS_MAX_CHARS} chars, "
                 f"not counting live calls' args, a refused writer's "
                 f"omitted args, or harness excerpts)\n"
@@ -728,11 +732,11 @@ def _render_tool_calls_with_size_guard(
         return body
 
     calls = list(tool_calls)
-    cited = [_response_holds(c.get("response"), needles) for c in calls]
+    cited = [_carries_excerpt(c.get("response"), needles) for c in calls]
     dropped = 0
     view = _render(calls, dropped, _live_args_omitted)
     while len(calls) > 1 and len(view) > _TOOL_CALLS_MAX_CHARS:
-        # Oldest first, but a call holding text the agent cited goes last: in
+        # Oldest first, but a call that carries an excerpt goes last: in
         # locality-guide v6 `k9d` the guard dropped the church-records page
         # every excerpt came from, and the judge saw neither head nor excerpt.
         victim = cited.index(False) if False in cited else 0
