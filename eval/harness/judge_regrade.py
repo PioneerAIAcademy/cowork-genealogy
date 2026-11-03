@@ -75,6 +75,7 @@ from harness.warning_kinds import validate_warning_kinds
 from harness.workspace import build_workspace, snapshot_files
 from harness.runlog import (
     _replace_with_retry,
+    consequential,
     refresh_test_entry_outcome,
     validate_run_log,
 )
@@ -770,28 +771,6 @@ def regrade_run_log(
 # ---- Re-aggregate (no model call) -----------------------------------------
 
 
-def _consequential(entry: dict[str, Any]) -> tuple[Any, ...]:
-    """The part of a test entry a reader acts on, for change detection.
-
-    Scores, not rationales: `skill_gate` builds its comparison map from
-    `aggregated_dimensions[].score` and never looks at the prose beside it.
-    """
-    summary = entry.get("outcome_summary") or {}
-    return (
-        entry.get("outcome"),
-        entry.get("flaky"),
-        tuple(summary.get("per_run_outcomes") or []),
-        tuple(
-            (d.get("source", ""), d.get("name", ""), d.get("score"))
-            for d in summary.get("aggregated_dimensions") or []
-        ),
-        tuple(
-            (d.get("source", ""), d.get("name", ""), d.get("score"))
-            for d in summary.get("review_dimensions") or []
-        ),
-    )
-
-
 def _refresh_review_sample(log: dict[str, Any]) -> list[str]:
     """Add every newly-mandatory test to `review_sample`; return what was added.
 
@@ -848,10 +827,10 @@ def reaggregate_log(path: Path) -> tuple[list[str], list[str]]:
     changed: list[str] = []
     for test_entry in log.get("tests") or []:
         snapshot = copy.deepcopy(test_entry)
-        before = _consequential(test_entry)
+        before = consequential(test_entry)
         if refresh_test_entry_outcome(test_entry) is None:
             continue
-        if _consequential(test_entry) == before:
+        if consequential(test_entry) == before:
             # Only the representative rationale moved. `aggregate_dimensions`
             # picks the first dim carrying the modal score, so the prose
             # follows run order and drifts whenever an earlier regrade left a
