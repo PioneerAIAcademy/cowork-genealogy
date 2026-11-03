@@ -538,12 +538,13 @@ def test_relay_passes_the_project_link_as_the_last_line():
     check_relays_tail(f"{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST}\n\n<{_PROJECT_URL}>", RELAYS)
 
 
-def test_relay_fails_anything_after_the_tail():
+def test_relay_passes_text_added_after_the_tail():
+    # Decided 2026-11-03 (lead, on #4148): the router may add its own text after the
+    # summary; only a missing or reworded summary fails.
     for added in ("Next I'll wait for your verdicts.",
                   "| Hint | Record |\n|---|---|\n| M70C | 1870 census |",
                   f"{_PROJECT_URL}\n\nAnything else?"):
-        with pytest.raises(AssertionError, match="added text after search-hints"):
-            check_relays_tail(f"{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST}\n\n{added}", RELAYS)
+        check_relays_tail(f"{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST}\n\n{added}", RELAYS)
 
 
 def test_relay_fails_keeping_only_the_last_sentence():
@@ -561,15 +562,14 @@ def test_relay_refuses_a_tag_with_no_routes_to_callee():
         check_relays_tail(_V34_REPLY, {**RELAYS, "tags": ["relays-agent-tail"]})
 
 
-def test_relay_fails_carrying_the_last_sentence_into_its_own_ask():
+def test_relay_passes_carrying_the_last_sentence_into_its_own_ask():
     # The shape medium effort wrote on 2026-11-03: every word relayed, then the router's
-    # own ask for verdicts. The agent's question already asks; the skill forbids adding one.
+    # own ask for verdicts. Text after the summary passes (lead, 2026-11-03, on #4148).
     reply = (
         f"Spawning search-hints now.\n\n{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST[:-1]} — let me know your "
         "verdict on the 1870 and 1880 census hints and I'll record them."
     )
-    with pytest.raises(AssertionError, match="added text after search-hints"):
-        check_relays_tail(reply, RELAYS)
+    check_relays_tail(reply, RELAYS)
 
 
 def test_relay_fails_rewording_the_last_sentence():
