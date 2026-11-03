@@ -7,7 +7,7 @@ not recorded in the tree; died not recorded in the tree.
 
 ## Research question
 
-> When and where was Wasyl Kapach born, and when did he immigrate to Canada?
+> When and where was Wasyl Kapach born?
 
 ## What was removed from the starting tree
 
@@ -28,6 +28,13 @@ hard — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-03 — re-scoped for step mode (issue #4145).** The question asked two
+independent facts (birth, and immigration). Reworded `researcher_question` to
+birth only; demoted `f2` (immigration) to `required: false` so a run that
+recovers it anyway still gets credit. `f3` (avoid) and `f4` (already
+non-required) are unchanged — both are tied to the birth fact. No finding
+wording changed.
 
 **Outcome (b) — answerable, but the birth YEAR differs — resolved
 2026-08-12.** The identity is a confirmed true match: the hint record

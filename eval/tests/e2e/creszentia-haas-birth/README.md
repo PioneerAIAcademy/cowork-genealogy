@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) No vital dates recorde
 
 ## Research question
 
-> When and where was Creszentia Haas — mother of Genofeva Haas (chr. 1855, Durbach, Baden) — born and christened?
+> When and where was Creszentia Haas — mother of Genofeva Haas (chr. 1855, Durbach, Baden) — born?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,14 @@ hard — the hint record is a plausible false match that has to be
 displaced by an independently-found record, not merely doubted.
 
 ## Notes for reviewers
+
+**2026-11-03 — re-scoped for step mode (issue #4145).** Birth and christening
+are two independent facts (same logic as "a death and a burial are two
+facts"). Trimmed "and christened" from `researcher_question`; `f2`
+(christening) was already `required: false`, so no finding changed. The one
+stamped annotation (`run-2026-09-11_08-49-56.ann.json`) has a `findings_hash`
+but no `blind_bundle_digest`, and `expected-findings.json` is untouched here,
+so it stays valid without re-grading.
 
 **Resolved 2026-09-10: the hint is a false match, and the real answer was
 found.** Creszentia Haas was born **28 May 1830** and christened **29 May
