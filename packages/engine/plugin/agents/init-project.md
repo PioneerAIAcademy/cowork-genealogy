@@ -12,7 +12,7 @@ description: >-
   Pass the projectPath and the user's own words (objective, person ID, known
   facts, any holdings they mention). Do NOT use when a research.json file
   already exists in the folder — the project already exists.
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
 effort: low
 tools:
   - mcp__genealogy__project_context
