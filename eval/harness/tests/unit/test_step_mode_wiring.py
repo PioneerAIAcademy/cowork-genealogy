@@ -183,6 +183,21 @@ def test_the_cli_flag_reaches_run_e2e_test():
     assert '"--step-mode"' in source and '"step_mode": args.step_mode' in source
 
 
+def test_an_e2e_run_is_a_job_run_unless_told_otherwise(tmp_path, monkeypatch):
+    """Step mode phase 2 made `job` the e2e default and deleted the Stop veto, so a run
+    with no `--step-mode` can no longer fall back to the one long, vetoed turn."""
+    from tests.unit.test_e2e_tool_search_switch import _argv, _record_run
+
+    calls = _record_run(monkeypatch)
+    from e2e import run_e2e
+
+    assert run_e2e.main(_argv(tmp_path)) == 0
+    assert calls[0]["step_mode"] == "job"
+    assert "resume_on_stall" not in calls[0]
+    assert run_e2e.main(_argv(tmp_path, "--step-mode", "step")) == 0
+    assert calls[1]["step_mode"] == "step"
+
+
 def test_each_turn_runs_under_the_mode_of_the_message_that_started_it():
     boundary = orchestrator_boundary()
     assert _e2e.step_turn_mode(boundary, "job", _Turn(index=0, sent="Find her parents.")) == "job"

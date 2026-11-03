@@ -1,8 +1,8 @@
-"""Step mode's three orchestrator fixes (review of aa48f22e, blocker 1 + asks 2-3).
+"""Step mode's orchestrator fixes (review of aa48f22e, asks 2-3), and the guard that
+no Stop veto comes back (step mode phase 2).
 
-Structural, like `test_e2e_single_ask.py`'s stop-hook test and for the same
-reason: these closures are built inside `_run_agent` and cannot be called
-without the SDK. Each test names the behaviour it stands for, and each was
+Structural, because these closures are built inside `_run_agent` and cannot be
+called without the SDK. Each test names the behaviour it stands for, and each was
 checked to fail with its fix reverted.
 """
 
@@ -20,49 +20,81 @@ SRC = (REPO_ROOT / "eval/harness/e2e/orchestrator.py").read_text(encoding="utf-8
 TREE = ast.parse(SRC)
 
 
-def _stop_hook() -> ast.AsyncFunctionDef:
-    return next(
-        n for n in ast.walk(TREE)
-        if isinstance(n, ast.AsyncFunctionDef) and n.name == "stop_hook"
-    )
+#: The e2e Stop veto's names, deleted in step mode phase 2 (PR B). A step turn ends
+#: at its boundary on purpose and the host's reply continues the run, so nothing in
+#: the harness may veto a stop again (docs/plan/research-step-mode.md, section F).
+_VETO_NAMES = {
+    "should_continue_run", "terminal_reason", "hand_back_key",
+    "COUNTED_TERMINAL_REASONS", "max_continue_nudges", "stop_hook",
+}
+HARNESS = REPO_ROOT / "eval/harness"
 
 
-def test_a_step_run_is_not_vetoed_for_ending_at_its_boundary():
-    """The blocker. A step turn ends on its Continue line by design, with the
-    project incomplete. The Stop veto read that as an early yield and told the
-    model to "keep going until project.status is" — so the model reached for the
-    next step, hit the boundary deny, was vetoed again, and ran to the halt.
-
-    `next_auto_reply`'s cap replaces `max_continue_nudges` here (section F).
-    """
-    body = _stop_hook().body
-    guards = [
-        stmt for stmt in body
-        if isinstance(stmt, ast.If)
-        and isinstance(stmt.test, ast.Compare)
-        and isinstance(stmt.test.left, ast.Name)
-        and stmt.test.left.id == "_boundary"
-        and isinstance(stmt.body[0], ast.Return)
-        and isinstance(stmt.body[0].value, ast.Dict)
-        and stmt.body[0].value.keys == []
-    ]
-    assert guards, (
-        "stop_hook has no `if _boundary is not None: return {}` statement, so a "
-        "--step-mode run keeps the Stop veto armed and every boundary is vetoed."
-    )
+def _is_stop(node: ast.AST | None) -> bool:
+    return isinstance(node, ast.Constant) and node.value == "Stop"
 
 
-def test_the_step_guard_is_its_own_statement_not_folded_into_single_ask():
-    """`test_e2e_single_ask.py::test_stop_hook_returns_allow_first_in_single_ask_mode`
-    pins the first statement's exact shape, so folding the two conditions into
-    one `if` turns that test red. Pinned here too, so the reason is written down
-    where the second guard lives rather than only in the other file."""
-    first = _stop_hook().body[0]
-    assert isinstance(first, ast.If)
-    assert isinstance(first.test, ast.Name) and first.test.id == "single_ask", (
-        "the single_ask guard must stay the FIRST statement and stay a bare "
-        "`if single_ask:` — the step guard goes after it, not inside it."
-    )
+def _binds_a_stop_key(node: ast.AST) -> bool:
+    """A `Stop` hook bound under any name: `{"Stop": ...}`, `hooks["Stop"]` or `dict(Stop=...)`."""
+    if isinstance(node, ast.Dict):
+        return any(_is_stop(k) for k in node.keys)
+    if isinstance(node, ast.Subscript):
+        return _is_stop(node.slice)
+    if isinstance(node, ast.Call):
+        return any(k.arg == "Stop" for k in node.keywords)
+    return False
+
+
+def _veto_names_in(tree: ast.AST) -> set[str]:
+    found = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in _VETO_NAMES:
+            found.add(node.name)
+        elif isinstance(node, ast.Assign):
+            found |= {
+                n.id for t in node.targets for n in ast.walk(t)
+                if isinstance(n, ast.Name) and n.id in _VETO_NAMES
+            }
+        elif isinstance(node, ast.AnnAssign):
+            if isinstance(node.target, ast.Name) and node.target.id in _VETO_NAMES:
+                found.add(node.target.id)
+        elif isinstance(node, ast.ImportFrom):
+            found |= {a.name for a in node.names if a.name in _VETO_NAMES}
+        elif _binds_a_stop_key(node):
+            found.add("Stop")
+    return found
+
+
+def test_no_harness_module_binds_a_stop_hook_or_keeps_the_veto():
+    offenders = {}
+    for root in ("e2e", "harness"):
+        for path in sorted((HARNESS / root).rglob("*.py")):
+            names = _veto_names_in(ast.parse(path.read_text(encoding="utf-8")))
+            if names:
+                offenders[str(path.relative_to(HARNESS))] = names
+    assert offenders == {}
+
+
+def test_the_guard_sees_each_shape_of_a_planted_veto():
+    for planted in (
+        "def should_continue_run(**kw):\n    return True\n",
+        "async def stop_hook(a, b, c):\n    return {}\n",
+        "COUNTED_TERMINAL_REASONS = frozenset()\n",
+        "max_continue_nudges: int = 40\n",
+        "from e2e.stop_checker import hand_back_key\n",
+        "hooks['Stop'] = [matcher]\n",
+        "hooks = {'PreToolUse': [m], 'Stop': [matcher]}\n",
+        "options = ClaudeAgentOptions(hooks=dict(Stop=[matcher]))\n",
+    ):
+        assert _veto_names_in(ast.parse(planted)), planted
+    for legitimate in (
+        "reason = 'Stop'\n",
+        "if event == 'StopFailure':\n    pass\n",
+        "stop_reason = derive_stop_reason(sdk_aborted_reason=None, research=None)\n",
+        "hooks = {'PreToolUse': [m]}\n",
+        "x = message.terminal_reason\n",
+    ):
+        assert not _veto_names_in(ast.parse(legitimate)), legitimate
 
 
 def test_the_turn_step_is_read_from_the_gate_not_re_derived():

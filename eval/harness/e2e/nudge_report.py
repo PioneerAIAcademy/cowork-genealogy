@@ -1,16 +1,17 @@
-"""How `/research` hands back at a step boundary, over committed e2e runs.
+"""How `/research` handed back at a step boundary, over committed e2e runs.
 
-GitHub issues #1104 and #2328. The `/research` skill must run until
-`project.status == "completed"`. Every voluntary yield before that is vetoed with
-the same continue text the prototype worker sends (U17), so every class counted
-here is a stall: a **silent stop** (the turn ends naming no next step), a `step`
+GitHub issues #1104 and #2328. Before step mode phase 2 an e2e run had to run until
+`project.status == "completed"`, and every voluntary yield before that was vetoed
+with one continue text (U17), so every class counted here is a stall: a **silent stop** (the turn ends naming no next step), a `step`
 (the retired `Next: <step>. Continue?` hand-back — the agent asking the patron),
 and a **false completion claim** (it claims done while
 `project.status != "completed"`).
 
 So the question this report answers is not "how often does it yield" but "how
-does it hand back", via `classify_hand_back` — the same predicate the Stop hook
-grades with, so the report and the run cannot disagree.
+does it hand back", via `classify_hand_back`. The Stop hook that once graded with
+the same predicate is gone, so this report reads the committed runs that it
+nudged; a run made since records no counter and is left out
+(`runs_carrying_the_counter`).
 
 This report answers "where does it yield" from already-committed data: no live
 run, no model, no API spend — same posture as `corpus_report.py`,
@@ -122,8 +123,8 @@ SEAMS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 # The HAND-BACK axis. One predicate, defined once: `classify_hand_back` in
-# stop_checker.py is what the harness itself uses at the Stop hook, so the report
-# grades against the same rule the run was graded by. The former ANNOUNCE_RE lived
+# stop_checker.py is what the harness itself used at the Stop hook (deleted in step
+# mode phase 2), so the report grades against the rule those runs were graded by. The former ANNOUNCE_RE lived
 # here and matched free prose — which called 32 of 74 yields "announced" where the
 # harness classifies every one of them `silent`. A report keyed on a predicate the
 # harness does not use is a report about nothing.
@@ -316,6 +317,28 @@ def counter_totals(paths: list[Path]) -> tuple[int, int]:
     return events, runs
 
 
+def runs_carrying_the_counter(paths: list[Path]) -> list[Path]:
+    """The runs that recorded `usage.continue_nudges` at all.
+
+    A run made since step mode phase 2 deleted the e2e Stop veto writes no counter,
+    because nothing can nudge it. Reading its absence as 0 would count it as a clean
+    loop and put its tool calls in the denominator, so it is left out of every figure
+    here and the report says how many it left out. Unreadable runs stay in, as before:
+    their gap is the one this report already states.
+    """
+    out = []
+    for p in paths:
+        try:
+            doc = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            out.append(p)
+            continue
+        usage = doc.get("usage") if isinstance(doc, dict) else None
+        if isinstance(usage, dict) and isinstance(usage.get("continue_nudges"), int):
+            out.append(p)
+    return out
+
+
 def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = (0, 0),
                   tool_calls_total: int = 0) -> str:
     rec_events, rec_runs = recorded
@@ -368,10 +391,9 @@ def format_report(nudges: list[Nudge], n_runs: int, recorded: tuple[int, int] = 
         ),
         "  (step should be 0 on runs since PR #2870 retired the line, 2026-09-27;"
         " earlier runs carry it from init-project and question-selection)",
-        "  (step_offer is the offer line itself. It is 0 on a --step-mode run:"
-        " that run returns from the Stop hook before any hand-back is classified,"
-        " and this report counts continue-nudges, which a step run never gets."
-        " It counts a run WITHOUT --step-mode that was vetoed at the new line)",
+        "  (step_offer is the offer line itself. A step-mode run is never nudged and"
+        " is left out; this counts an older run made without --step-mode that was"
+        " vetoed at the new line)",
         "",
         "By seam — which artifact had just been written:",
     ]
@@ -407,10 +429,18 @@ def main(argv: list[str] | None = None) -> int:
         print(branch_scope_note(), file=sys.stderr)
         return 1
 
-    nudges = scan(paths)
     print(describe_window(cutoff, n_runs=len(paths), n_total=len(all_paths)))
-    print(format_report(nudges, n_runs=len(paths), recorded=counter_totals(paths),
-                        tool_calls_total=tool_call_total(paths, {n.run for n in nudges})))
+    measured = runs_carrying_the_counter(paths)
+    if len(measured) < len(paths):
+        print(f"{len(paths) - len(measured)} of {len(paths)} run(s) record no "
+              "usage.continue_nudges (step-mode runs, which nothing can nudge) and are "
+              "left out of every figure below.")
+    if not measured:
+        print("No run in the window could be nudged, so there is nothing to report.")
+        return 0
+    nudges = scan(measured)
+    print(format_report(nudges, n_runs=len(measured), recorded=counter_totals(measured),
+                        tool_calls_total=tool_call_total(measured, {n.run for n in nudges})))
     return 0
 
 

@@ -111,8 +111,9 @@ recorded run cost, is the production figure. The corpus's own 1-hour writes
 
 ## Between turns
 
-The corpus is autonomous -- `--autonomous` plus a yield-vetoing Stop hook makes
-one giant turn per run -- so human think time between turns is NOT in it. Every
+A run made before step mode phase 2 is one giant turn (`--autonomous` plus a
+yield-vetoing Stop hook), and a step-mode run is many turns that the host answers
+at once, so human think time between turns is NOT in either. Every
 gap here is a tool, a delegation window, a stall-resume or a long generation.
 
 CLI (from eval/harness/):

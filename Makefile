@@ -1104,7 +1104,6 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# single-digit dollars, with a long tail.
 	# Keep the machine awake for the whole run — see eval/README.md "Keep the
 	# machine awake" (a sleep inflates real-clock time; the harness flags it).
-	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
 	# Reasoning is pinned so runs are reproducible (see the runlog's usage block:
 	# agent_model / subagent_model_override / effort_level / max_output_tokens / cli_version).
 	# Override:
@@ -1125,7 +1124,7 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# subagent_capture_status before reading that as 'no runaway').
 	# e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
 
 .PHONY: e2e-single-ask
 e2e-single-ask: $(ENGINE_BUILD) ## Run the single-ask e2e panel — one ordinary turn per fixture, graded on which unit ran and what was saved (live, billed): make e2e-single-ask [TEST=<slug>]
@@ -1353,8 +1352,10 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	# continue-nudge with the seam it sits on and its hand-back class --
 	# step / silent / completion_claim, per classify_hand_back.
 	#
-	# Every yield before project.status == completed is vetoed with the
-	# worker's continue text (handoff U17), so every class is a stall. `step`
+	# Reads runs made before step mode phase 2, when every yield before
+	# project.status == completed was vetoed with one continue text (handoff
+	# U17), so every class is a stall. A step-mode run records no nudge
+	# counter and is left out, and the report says how many. `step`
 	# is the hand-back line issue #2292 retired (PR #2870, 2026-09-27): runs
 	# since then should read 0, and earlier runs carry it from init-project
 	# and question-selection (PR #2649).
