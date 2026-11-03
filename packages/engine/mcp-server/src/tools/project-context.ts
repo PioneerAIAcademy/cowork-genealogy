@@ -8,7 +8,16 @@
 // fresh-context agent (the record-extractor) never opens either file.
 // Spec: docs/specs/project-context-tool-spec.md.
 
-import { questionStates, type QuestionStatus } from "../utils/question-state.js";
+import {
+  questionStates,
+  pendingExtraction,
+  questionOwnedLogEntries,
+  type QuestionStatus,
+} from "../utils/question-state.js";
+import { readSidecarSearch } from "../utils/results-staging.js";
+import { arkToBareId } from "../utils/ark.js";
+import { thinSubjectScan } from "./thin-subject-scan.js";
+import { subjectTooThinNow } from "./rank-search-matches.js";
 import {
   RESEARCH_QUERY_SECTIONS,
   RESEARCH_QUERY_OPTIONAL_SECTIONS,
@@ -30,6 +39,57 @@ import { getProjectStore } from "../store/project-store.js";
 import type { Principal } from "../auth/principal.js";
 
 const QUESTION_TRUNCATE_AT = 140;
+
+const EXTRACTION_STEP = "extraction (";
+
+/**
+ * An extraction step whose pending entries are all `record_search`es that
+ * listed only records the thin-subject gate refuses (`extraction_append`'s own
+ * scan decides it) names the way through instead: the researcher's anchor while
+ * the searched person is still thin, a new search once they are not. Left as
+ * extraction, the router sends records `extraction_append` refuses on every pass.
+ */
+async function holdThinSubjectExtraction(
+  projectPath: string,
+  research: any,
+  statuses: QuestionStatus[],
+): Promise<QuestionStatus[]> {
+  if (!statuses.some((s) => s.nextStep?.startsWith(EXTRACTION_STEP))) return statuses;
+  const scan = thinSubjectScan(projectPath, research);
+  const out: QuestionStatus[] = [];
+  for (const status of statuses) {
+    out.push(status.nextStep?.startsWith(EXTRACTION_STEP) ? await heldStep(status) : status);
+  }
+  return out;
+
+  async function heldStep(status: QuestionStatus): Promise<QuestionStatus> {
+    const pending = pendingExtraction(research, questionOwnedLogEntries(research, status.id));
+    if (pending.length === 0) return status;
+    const subjects = new Set<string>();
+    for (const entry of pending) {
+      if (entry?.tool !== "record_search" || typeof entry?.results_ref !== "string") return status;
+      const read = await readSidecarSearch(projectPath, entry.results_ref);
+      const ids = (read?.results ?? [])
+        .map((r: any) => r?.recordId)
+        .filter((id): id is string => typeof id === "string");
+      if (!read?.subjectId || ids.length === 0) return status;
+      const refused = await scan(new Map(ids.map((id) => [id, new Set([arkToBareId(id)])])));
+      if (ids.some((id) => !refused.has(id))) return status;
+      subjects.add(read.subjectId);
+    }
+    const who = [...subjects].join(", ");
+    const logIds = pending.map((e) => e.id).join(", ");
+    const thinNow = await Promise.all([...subjects].map((sid) => subjectTooThinNow(projectPath, sid)));
+    const nextStep = thinNow.some((thin) => thin !== false)
+      ? `researcher's anchor — ${who}: ${logIds} listed only records extraction_append refuses, because ` +
+        "the tree gives the person searched for no date narrower than a year and no named spouse, parent " +
+        "or child. Do not extract: report them as needs-review and ask the researcher for one of those; " +
+        "once it is recorded, search again"
+      : `search-records — ${who} is anchored now: search again, since ${logIds} ran while they were too ` +
+        "thin and extraction_append still refuses what it listed";
+    return { ...status, nextStep };
+  }
+}
 
 export interface ProjectContextInput {
   projectPath: string;
@@ -363,7 +423,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // question is waiting on, computed from the document rather than from
   // session history (the only durable state this system has). The gates in
   // research_append compute their own preconditions independently.
-  const questionStatuses = questionStates(research, tree);
+  const questionStatuses = await holdThinSubjectExtraction(input.projectPath, research, questionStates(research, tree));
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
 

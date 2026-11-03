@@ -265,6 +265,17 @@ would find it again. An uncited entry on a closed item does not: inconclusive
 the read, not the search that found the record. An item waiting only on the
 researcher's upload is skipped, as it is everywhere else in this ladder.
 
+**An extraction the thin-subject gate would refuse names the way through instead.**
+When `nextStep` would be `extraction (…)` and every pending entry the
+question owns is a `record_search` whose sidecar names a `subjectId` and lists only records
+`extraction_append`'s thin-subject scan refuses (the same function, so the two cannot
+disagree), `nextStep` reads `researcher's anchor — <subject>: <log ids> …` while the searched
+person is still thin, and `search-records — <subject> is anchored now …` once they are not:
+the saved search keeps gating what it listed, so only a new search gets a record through. One
+pending entry of any other kind, a record the scan would let through, or a sidecar with no
+subject keeps the extraction step. Without this rung the router is sent, on every pass, to
+extract records `extraction_append` refuses.
+
 **The researcher's choice is the one rung that names no step** (step mode,
 section B). When a question's search stopped on `resources_spent`, it has no
 proof summary, no `planned` or `in_progress` item is left on its active plan,

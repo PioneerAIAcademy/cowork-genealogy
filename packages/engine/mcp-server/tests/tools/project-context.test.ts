@@ -751,3 +751,111 @@ describe("project_context and project_create links", () => {
     expect("uploadUrl" in r).toBe(false);
   });
 });
+
+describe("project_context: an extraction step the thin-subject gate would refuse (issue #2213 d29)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "project-context-thin-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const EXTRACTION = "extraction (extraction_append for FamilySearch records, record-structurer for any other source)";
+
+  /** One question with one in-progress census item whose positive record_search
+   *  listed M9TB-7QX for I1, born `birth`; `payload` adds fields to the sidecar's
+   *  payload and `query` to its echoed query. */
+  async function seed(birth: string, payload: Record<string, unknown>, query: Record<string, unknown> = { subjectId: "I1" }) {
+    await mkdir(join(dir, "results"), { recursive: true });
+    await writeFile(
+      join(dir, "results", "log_001.json"),
+      JSON.stringify({
+        log_id: "log_001",
+        tool: "record_search",
+        retrieved: "2026-10-19T10:00:00Z",
+        returned_count: 1,
+        payload: { query: { surname: "Brown", ...query }, ...payload, results: [{ recordId: "ark:/61903/1:1:M9TB-7QX" }] },
+      }),
+    );
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({
+        project: { id: "rp_001", objective: "Test", status: "active", created: "2026-10-19", updated: "2026-10-19" },
+        questions: [{ id: "q_001", question: "Where was William Brown in 1900?", status: "in_progress" }],
+        plans: [
+          {
+            id: "pl_001",
+            question_id: "q_001",
+            status: "active",
+            created: "2026-10-19",
+            items: [{ id: "pli_001", sequence: 1, record_type: "census", repository: "FamilySearch", status: "in_progress" }],
+          },
+        ],
+        log: [
+          {
+            id: "log_001",
+            plan_item_id: "pli_001",
+            performed: "2026-10-19T10:00:00Z",
+            tool: "record_search",
+            query: { surname: "Brown" },
+            outcome: "positive",
+            results_examined: 1,
+            results_ref: "results/log_001.json",
+            external_site: null,
+          },
+        ],
+        sources: [],
+        assertions: [],
+      }),
+    );
+    await writeFile(
+      join(dir, "tree.gedcomx.json"),
+      JSON.stringify({
+        persons: [
+          {
+            id: "I1",
+            gender: "Male",
+            names: [{ id: "I1-N1", given: "William", surname: "Brown" }],
+            facts: [{ id: "I1-F1", type: "Birth", date: birth, place: "Virginia" }],
+          },
+        ],
+        relationships: [],
+        sources: [],
+      }),
+    );
+  }
+  const nextStep = async () => {
+    const r: any = await projectContext({ projectPath: dir }, LOCAL);
+    return r.questionStatuses[0].nextStep as string;
+  };
+
+  it("names the researcher's anchor, not extraction, while the searched person is still thin", async () => {
+    await seed("1872", { subjectTooThin: true });
+    const step = await nextStep();
+    expect(step.startsWith("researcher's anchor — I1: log_001")).toBe(true);
+    expect(step).toContain("Do not extract");
+  });
+
+  it("names a new search once the person is anchored, since the saved search still gates its records", async () => {
+    await seed("Mar 1872", { subjectTooThin: true });
+    expect((await nextStep()).startsWith("search-records — I1 is anchored now")).toBe(true);
+  });
+
+  it("judges a search saved before the flag existed on the tree as it stands", async () => {
+    await seed("1872", {});
+    expect((await nextStep()).startsWith("researcher's anchor — I1")).toBe(true);
+    await seed("Mar 1872", {});
+    expect(await nextStep()).toBe(EXTRACTION);
+  });
+
+  it("keeps extraction for a search that saved the person as not thin", async () => {
+    await seed("1872", { subjectTooThin: false });
+    expect(await nextStep()).toBe(EXTRACTION);
+  });
+
+  it("keeps extraction for a search with no subject", async () => {
+    await seed("1872", { subjectTooThin: true }, {});
+    expect(await nextStep()).toBe(EXTRACTION);
+  });
+});

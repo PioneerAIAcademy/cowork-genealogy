@@ -86,7 +86,7 @@ const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
  * external-site entry whose capture has not come back is an open hand-off, not
  * something to extract.
  */
-function pendingExtraction(research: any, logs: any[]): any[] {
+export function pendingExtraction(research: any, logs: any[]): any[] {
   const cited = new Set(arr(research?.assertions).map((a) => a?.log_entry_id));
   return logs.filter(
     (e) =>
