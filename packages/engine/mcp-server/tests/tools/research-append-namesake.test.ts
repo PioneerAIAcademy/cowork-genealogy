@@ -1908,6 +1908,25 @@ describe("a source holding two documents (#2537 case 2)", () => {
     expect(v.reasons.join(" ")).toContain("its record lists another 'John Smith'");
   });
 
+  it("keeps the created-from-this-source rule source-wide: a relative made from the source does not tie", () => {
+    const t = tree();
+    t.persons.push(person("I9", "Ann", "Brown", "Female", { names: [{ id: "I9-n1", given: "Ann", surname: "Brown", sources: [{ ref: "S9" }] }] }));
+    t.relationships.push({ id: "R4", type: "Couple", person1: P, person2: "I9" });
+    const r = research({
+      sources: [...research().sources, source("src_009", "S9")],
+      assertions: [
+        ...baseAssertions(),
+        assertion("a_201", "src_009", R1802, "groom", "name", "John Smith", doc(DOC_1802)),
+        assertion("a_207", "src_009", R1802, "bride", "name", "Ann Brown", doc(DOC_1802)),
+        assertion("a_202", "src_009", R1862, "deceased", "name", "William Smith", doc(DOC_1862)),
+      ],
+      person_evidence: [standing("pe_201", "a_201", P), standing("pe_207", "a_207", "I9")],
+    });
+    const v = namesakeVerdicts(P, r, t)!.verdicts.get("pe_201")!;
+    expect(v.allowed).toBe(false);
+    expect(v.reasons.join(" ")).toContain("was created from this source alone");
+  });
+
   it("keeps tie (b)'s same-source skip source-wide: the other document does not vouch", () => {
     const r = research({
       sources: [...research().sources, source("src_009", "S9")],

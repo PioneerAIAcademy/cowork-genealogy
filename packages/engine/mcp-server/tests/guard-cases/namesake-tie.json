@@ -4363,6 +4363,7 @@
     {
       "id": "two-documents-in-one-source-keyed",
       "expect": "fire",
+      "shape": "co-party-on-another-document",
       "why": "The same source with each assertion stamped with its document's 1:2 record ARK: the son's 1862 burial is another document, so it does not tie the father's 1802 one (#2537).",
       "write": "pe_001",
       "research": {
