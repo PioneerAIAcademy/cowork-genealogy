@@ -134,6 +134,26 @@ def test_a_model_that_obeys_the_deny_never_reaches_the_halt(boundary):
     assert g.denials == 1
 
 
+def test_a_halt_keeps_the_step_its_reason_offers(boundary):
+    """Two spawns in one message: the second halts before the model has read the first
+    deny, so the turn ends with no offer line. The host answers this instead."""
+    g = gate(boundary)
+    g.check(*spawn("search-hints"), subagent=False)
+    g.check(*spawn("search-records"), subagent=False)
+    assert g.halt_offer is None, "a deny the model may still obey is no halt"
+    assert g.check(*spawn("search-records"), subagent=False)[0] == "halt"
+    assert g.halt_offer == "search"
+    g.check(*spawn("proof-conclusion"), subagent=False)
+    assert g.halt_offer == "search", "the first halt ended the turn; a later one changes nothing"
+
+
+def test_the_offer_line_reads_back_as_the_step_it_offers(boundary):
+    for key in boundary.STEP_LABELS:
+        assert boundary.offered_step(boundary.offer_line(key)) == key, key
+    assert boundary.offer_line("search-records") == "Continue with running the searches?"
+    assert boundary.offer_line("no-such-step") is None
+
+
 def test_every_crossing_is_logged(boundary):
     """Rider 2: the rate is the only measure we get of Cowork, which has no hook."""
     seen = []
