@@ -398,10 +398,11 @@ it by name.
    years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`, and the
    `planItemId` for `@plugin:search-full-text`, and the subject you already hold as a `subject:` JSON
    block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in
-   the subject's `project_context` `parentIds`, left out when it has more than two or when the
-   question or request the search serves asks about the subject's parentage: who a parent was,
-   or whether someone was the subject's father or mother), for
-   `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. In a wrap-up turn
+   the subject's `project_context` `parentIds`, left out when it has more than two), for
+   `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. **When the
+   question or request a search serves asks about the subject's parentage, even one parent (who a
+   parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
+   block.** In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion` also take `wrapUp: yes`, and
    `@plugin:proof-conclusion` takes `newQuestion: yes` when the researcher
