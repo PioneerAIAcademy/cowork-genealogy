@@ -9,6 +9,7 @@ other. The lock semantics themselves need Postgres: test_proto_grants_pg.py.
 from __future__ import annotations
 
 import ast
+import json
 import sys
 from pathlib import Path
 
@@ -183,3 +184,42 @@ def test_grants_imports_only_stdlib_and_cryptography():
 ])
 def test_the_import_reader_sees_each_shape(source, expected):
     assert _third_party_imports(source) == expected
+
+
+# -- the shared Fernet vector (self-hosted beta E1, issue #3984) ----------------------
+
+# One fixture, two implementations. The engine decrypts the FamilySearch access
+# token and the OpenRouter key this tier encrypted, with its own ~60-line Fernet
+# in packages/engine/mcp-server/src/auth/fernet.ts rather than a dependency in a
+# tree that ships to desktops. Nothing else makes the two agree, so this vector
+# is the contract.
+#
+# NEITHER SIDE MAY REGENERATE IT. A vector rewritten whenever the two disagree
+# is a loopback, not a cross-language check: both implementations could drift
+# together with both suites green. A failure here means an implementation is
+# wrong.
+_FERNET_VECTOR = (
+    Path(__file__).resolve().parents[3]
+    / "packages/engine/mcp-server/tests/fixtures/fernet-vector.json"
+)
+
+
+def test_the_shared_fernet_vector_decrypts_here_too():
+    """The engine's tests/auth/fernet.test.ts decrypts this same file."""
+    vector = json.loads(_FERNET_VECTOR.read_text(encoding="utf-8"))
+    assert grants.decrypt(vector["token"], vector["key"]) == vector["plaintext"]
+
+
+def test_the_shared_vector_carries_non_ascii():
+    """Deliberate: a latin-1 or ascii decode on either side passes every ASCII
+    token and corrupts real ones only in production."""
+    vector = json.loads(_FERNET_VECTOR.read_text(encoding="utf-8"))
+    assert not vector["plaintext"].isascii()
+
+
+def test_the_shared_vector_is_padded_urlsafe_base64():
+    """urlsafe_b64decode REQUIRES padding and raises without it, so an engine
+    that emitted Node's unpadded `base64url` would write tokens this tier cannot
+    read at all -- while its own round trip stayed green."""
+    vector = json.loads(_FERNET_VECTOR.read_text(encoding="utf-8"))
+    assert len(vector["token"]) % 4 == 0
