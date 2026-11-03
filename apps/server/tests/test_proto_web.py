@@ -41,6 +41,7 @@ from web.app import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_TITLE,
     Activity,
+    AdmissionRefused,
     EventRow,
     IdentityMismatch,
     ProjectNotOwned,
@@ -263,17 +264,23 @@ class FakeStore:
     async def get_user(self, user_id: str) -> User | None:
         return self.users.get(user_id)
 
-    async def upsert_user(self, email: str, familysearch_id: str | None) -> User:
+    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User:
         email = email.strip().lower()
         user = next((u for u in self.users.values() if u.email == email), None)
         if user is None:
+            if max_users is not None and len(self.users) >= max_users:
+                raise AdmissionRefused(email)
             user = User(f"usr_{len(self.users) + 1}", email)
         if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
             raise IdentityMismatch(email)
-        if familysearch_id and not user.familysearch_id:
-            user = User(user.id, user.email, familysearch_id, user.sessions_revoked_at)
+        if familysearch_id and not user.familysearch_id and user.blocked_at is None:
+            user = dataclasses.replace(user, familysearch_id=familysearch_id)
         self.users[user.id] = user
         return user
+
+    def block(self, user_id: str) -> None:
+        """The operator's block (016): refused at sign-in and on every request."""
+        self.users[user_id] = dataclasses.replace(self.users[user_id], blocked_at=datetime.now(tz=timezone.utc))
 
     async def is_allowed(self, email: str) -> bool:
         return email.strip().lower() in self.allowed
@@ -282,8 +289,7 @@ class FakeStore:
         self.allowed = set(emails)
 
     async def revoke_sessions(self, user_id: str) -> None:
-        u = self.users[user_id]
-        self.users[user_id] = User(u.id, u.email, u.familysearch_id, datetime.now(tz=timezone.utc))
+        self.users[user_id] = dataclasses.replace(self.users[user_id], sessions_revoked_at=datetime.now(tz=timezone.utc))
 
     async def store_grant(self, user_id: str, access_token_enc: str, refresh_token_enc: str | None,
                           expires_at: datetime) -> None:
@@ -1424,7 +1430,7 @@ async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
 # ── U2: patron sign-in and owner scoping ────────────────────────────────────────
 
 AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "SESSION_SECRET", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS",
-            "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN")
+            "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN", "GENEALOGY_CHAT", "GENEALOGY_MAX_USERS")
 
 
 @pytest.fixture(autouse=True)
