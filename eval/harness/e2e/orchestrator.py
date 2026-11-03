@@ -2488,12 +2488,10 @@ async def _run_agent(
             f"{fixture.caps.max_continue_nudges}] agent yielded "
             f"({counter_key}); resuming"
         )
-        # One reply for every vetoed stop, whatever its class: the worker's
-        # CONTINUE_REASON (apps/server/app/agent/continue_policy.py), verbatim. A
-        # `Next: <step>. Continue?` is the agent asking the patron, which the worker
-        # vetoes with these words too; answering it "Yes." here gave the e2e grade a
-        # Stop policy the prototype does not run (U17). This tree cannot import the
-        # constant, so `test_continue_policy_parity.py` pins the copy.
+        # One reply for every vetoed stop, whatever its class: once the worker's
+        # CONTINUE_REASON verbatim (U17). The hosted planes deleted their veto, and that
+        # constant with it, in step mode phase 2, so this literal is the only copy and
+        # nothing pins it; the e2e half of phase 2 deletes this veto.
         return {
             "decision": "block",
             "reason": (

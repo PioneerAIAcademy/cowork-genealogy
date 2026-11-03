@@ -36,7 +36,7 @@ sys.path.insert(0, str(PROTO))
 
 from drive import parse_frame  # noqa: E402  (the driver's SSE parser; one parser, two callers)
 import turn_message  # noqa: E402  (the shared claim and banner SQL, as the web image imports it)
-from web import app, auth  # noqa: E402  (queue_body / max_nudges: one definition for the fake store too)
+from web import app, auth  # noqa: E402  (queue_body: one definition for the fake store too)
 from web.app import (  # noqa: E402
     DEFAULT_MODEL,
     DEFAULT_TITLE,
@@ -210,7 +210,7 @@ class FakeStore:
         seq = self.add_event(session.session_id, "user_msg", {"text": text, "turn_id": turn_id})
         # The real helper, not a hand-rolled copy: a fake that builds its own body would
         # let the route tests pass while production enqueued a different shape.
-        body = app.queue_body(turn_id, session, text, T0.isoformat(), app.max_nudges())
+        body = app.queue_body(turn_id, session, text, T0.isoformat())
         turn = Turn(turn_id=turn_id, seq=seq, body=body)
         self.turns.append(turn)
         if queued:
@@ -498,8 +498,6 @@ async def test_post_message_mints_turn_id_records_user_msg_and_enqueues_the_body
     assert queue.sent == [{
         "turn_id": out["turn_id"], "session_id": row.session_id, "project_id": row.project_id,
         "text": "Find Thomas Flynn", "enqueued_at": T0.isoformat(),
-        # 1a: the cap rides the message, from this tier's environment.
-        "max_nudges": app.DEFAULT_MAX_NUDGES,
     }]
     events = store.events[row.session_id]
     assert [e.kind for e in events] == ["user_msg"]
@@ -931,20 +929,15 @@ async def test_the_real_has_queued_and_request_stop_run_the_sql_they_claim():
     assert "RETURNING stop_requested_at" in stop_sql, "a missing session must answer False, not silently pass"
 
 
-async def test_the_real_begin_turn_stamps_the_tiers_cap_and_not_a_literal(monkeypatch):
-    """1a's whole carrier. `queue_body(..., max_nudges())` swapped for `queue_body(..., 0)`
-    survived the suite -- and a 0 turns the nudge budget OFF for every turn this tier
-    enqueues, shipping the stop-at-every-step behaviour the plan exists to remove while
-    looking exactly like the feature simply not working."""
+async def test_the_real_begin_turn_stamps_no_nudge_cap(monkeypatch):
+    """The Stop veto is deleted (step mode phase 2), so the body carries no ``max_nudges``
+    -- even with the old variable still set in this tier's environment."""
     monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", "37")
     conn = await _begin(queued=False)
     inserts = [p for sql, p in zip(conn.sql, conn.params) if sql.startswith("INSERT INTO turns")]
     assert len(inserts) == 1
     body = inserts[0][3].obj if hasattr(inserts[0][3], "obj") else inserts[0][3]
-    assert body["max_nudges"] == 37, (
-        f"the row carries max_nudges={body['max_nudges']}; it must come from this tier's "
-        f"own environment, which is 1a's only carrier"
-    )
+    assert "max_nudges" not in body
 
 
 async def test_the_real_begin_turn_clears_the_stop_flag_only_when_it_enqueues():
@@ -2000,8 +1993,8 @@ async def test_supplied_project_id_is_created_or_claimed_only_under_dev_login(mo
 def test_queue_body_carries_no_token_or_user_field():
     """U3 resolves the patron from the project_id already in the body; a token in the body
     would persist in turns.message, SQS and the DLQ."""
-    body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat(), 1)
-    assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at", "max_nudges"}
+    body = app.queue_body("t", SessionRow("s", "p", "t", "m", T0, T0, USER_A.id), "hi", T0.isoformat())
+    assert set(body) == {"turn_id", "session_id", "project_id", "text", "enqueued_at"}
 
 
 # ── U10: /api/health as readiness ────────────────────────────────────────────────
@@ -2142,6 +2135,190 @@ async def test_pgstore_check_ready_fails_fast_on_refused_and_silent_postgres(ref
     for report in (refused, silent):
         raw = json.dumps(report)
         assert "probeuser" not in raw and "127.0.0.1" not in raw and "secretpw" not in raw
+
+
+# ── U29: credentials from SAS, re-resolved on an invalid password ────────────────
+
+
+class AuthFailPostgres(SilentPostgres):
+    """A local listener that refuses every startup packet with libpq's invalid-password
+    ErrorResponse (28P01), declining SSL and GSS encryption first."""
+
+    def _accept(self) -> None:
+        while not self.stopped.is_set():
+            try:
+                conn, _ = self.sock.accept()
+            except (TimeoutError, socket.timeout):
+                continue
+            except OSError:
+                return
+            self.accepted.append(conn)
+            threading.Thread(target=self._refuse, args=(conn,), daemon=True).start()
+
+    @staticmethod
+    def _refuse(conn: socket.socket) -> None:
+        try:
+            conn.settimeout(5)
+            while True:
+                head = conn.recv(8, socket.MSG_WAITALL)
+                if len(head) < 8:
+                    return
+                length, code = int.from_bytes(head[:4], "big"), int.from_bytes(head[4:], "big")
+                if length > 8:
+                    conn.recv(length - 8, socket.MSG_WAITALL)
+                if code in (80877103, 80877104):  # SSLRequest, GSSENCRequest
+                    conn.sendall(b"N")
+                    continue
+                fields = b"".join(k + v.encode() + b"\0" for k, v in (
+                    (b"S", "FATAL"), (b"V", "FATAL"), (b"C", "28P01"),
+                    (b"M", 'password authentication failed for user "probeuser"'),
+                )) + b"\0"
+                conn.sendall(b"E" + (len(fields) + 4).to_bytes(4, "big") + fields)
+                return
+        except OSError:
+            return
+        finally:
+            conn.close()
+
+
+@pytest.fixture
+def auth_fail_pg():
+    pg = AuthFailPostgres()
+    yield pg
+    pg.close()
+
+
+def _sas_object(port: int, password: str) -> dict[str, str]:
+    return {"fchUser": "probeuser", "fchPassword": password,
+            "fchDbConnectUrl": f"jdbc:postgresql://127.0.0.1:{port}/proto?ssl=true"}
+
+
+def _record_async_connects(monkeypatch) -> list[str]:
+    import psycopg
+
+    tried: list[str] = []
+    real = psycopg.AsyncConnection.connect
+
+    async def connect(dsn, **kw):
+        tried.append(dsn)
+        return await real(dsn, **kw)
+
+    monkeypatch.setattr(psycopg.AsyncConnection, "connect", connect)
+    return tried
+
+
+async def test_pgstore_reresolves_after_28P01(monkeypatch, auth_fail_pg, refused_pg):
+    """The first SAS object points at a server that rejects its password; the store fetches
+    again and retries once, with the second object's DSN."""
+    import psycopg
+    import pg_credentials
+
+    objects = [_sas_object(auth_fail_pg.port, "old-pw-1"), _sas_object(refused_pg.port, "new-pw-2")]
+    fetched: list[str] = []
+
+    def fetch(name: str) -> dict[str, str]:
+        fetched.append(name)
+        return objects[len(fetched) - 1]
+
+    tried = _record_async_connects(monkeypatch)
+    creds = pg_credentials.PgCredentials(mode="sas", sas_object="fch-web", fetch=fetch, min_interval_s=0)
+    store = app.PgStore(creds)
+    with pytest.raises(psycopg.OperationalError) as caught:
+        await store._probe_postgres()
+    first, second = (pg_credentials.jdbc_to_dsn(o) for o in objects)
+    assert tried == [first, second], "one retry, with the re-resolved DSN"
+    assert fetched == ["fch-web", "fch-web"]
+    assert not pg_credentials.is_auth_failure(caught.value), "the retry reached the second server"
+    assert store.dsn == second
+
+
+async def test_pgstore_does_not_reresolve_an_environment_dsn(monkeypatch, auth_fail_pg):
+    import psycopg
+
+    tried = _record_async_connects(monkeypatch)
+    dsn = f"postgresql://probeuser:pw@127.0.0.1:{auth_fail_pg.port}/proto"
+    with pytest.raises(psycopg.OperationalError):
+        await app.PgStore(dsn)._probe_postgres()
+    assert tried == [dsn]
+
+
+async def test_pgstore_sas_outage_is_the_tiers_own_unavailable_error(caplog):
+    """A5: the store raises the top-level ``pg_credentials`` module's error (the one the web
+    image ships), readiness labels it, and the SAS client's message never surfaces."""
+    import logging
+    import pg_credentials
+
+    assert app.pg_credentials is pg_credentials
+    caplog.set_level(logging.DEBUG)
+
+    def fetch(name: str) -> dict[str, str]:
+        raise RuntimeError("sas said token=leaky-secret-9")
+
+    store = app.PgStore(pg_credentials.PgCredentials(mode="sas", sas_object="fch-web", fetch=fetch))
+    with pytest.raises(pg_credentials.PgCredentialsUnavailable):
+        await store._connect()
+    report = await store.check_ready(timeout_s=2)
+    assert report["checks"]["postgres"] == {"ok": False, "error": "PgCredentialsUnavailable"}
+    assert "leaky-secret-9" not in json.dumps(report) and "leaky-secret-9" not in caplog.text
+
+
+async def test_lifespan_refuses_a_malformed_sas_object_and_listens_through_a_sas_outage(monkeypatch):
+    """D5: an unusable SAS object refuses start-up; an unreachable SAS does not."""
+    import pg_credentials
+
+    monkeypatch.delenv("PG_DSN", raising=False)
+    monkeypatch.setenv("PG_SAS_OBJECT", "fch-web")
+    monkeypatch.setattr(pg_credentials, "sas_installed", lambda: True)
+    monkeypatch.setattr(pg_credentials, "_fetch_sas_object",
+                        lambda name: {"fchUser": "u", "fchPassword": "zz-web-pw"})
+    application = create_app(store=FakeStore(), queue=FakeQueue())
+    with pytest.raises(RuntimeError, match="fchDbConnectUrl") as exc:
+        async with application.router.lifespan_context(application):
+            pytest.fail("listened with an unusable SAS object")
+    assert "zz-web-pw" not in str(exc.value)
+
+    def down(name):
+        raise TimeoutError("sas down")
+    monkeypatch.setattr(pg_credentials, "_fetch_sas_object", down)
+    application = create_app(store=FakeStore(), queue=FakeQueue())
+    async with application.router.lifespan_context(application):
+        assert application.state.pg_creds is not None
+
+
+async def test_sync_routes_share_the_store_credentials(monkeypatch):
+    """The sync blob routes connect through the holder the async store reads, so a rotation
+    one path recovers from moves the other."""
+    import contextlib
+    import psycopg
+    import pg_credentials
+
+    objects = [_sas_object(5432, "old-pw-1"), _sas_object(5432, "new-pw-2")]
+    fetched: list[str] = []
+
+    def fetch(name: str) -> dict[str, str]:
+        fetched.append(name)
+        return objects[len(fetched) - 1]
+
+    first, second = (pg_credentials.jdbc_to_dsn(o) for o in objects)
+    tried: list[str] = []
+
+    def connect(dsn, **kw):
+        tried.append(dsn)
+        if dsn == first:
+            raise psycopg.OperationalError(
+                'connection failed: FATAL:  password authentication failed for user "probeuser"')
+        return contextlib.nullcontext(object())
+
+    store, queue = FakeStore(), FakeQueue()
+    store.creds = pg_credentials.PgCredentials(mode="sas", sas_object="fch-web", fetch=fetch, min_interval_s=0)
+    row = store.seed_session()
+    monkeypatch.setattr(psycopg, "connect", connect)
+    monkeypatch.setattr(app, "fetch_sidecar", lambda conn, bucket, project_id, log_id: None)
+    async with make_client(store, queue, blobs=object()) as c:
+        r = await c.get(f"/api/projects/{row.project_id}/sidecar/q_001")
+    assert r.status_code == 404
+    assert tried == [first, second] and len(fetched) == 2
+    assert store.creds.cached() == second
 
 
 async def test_concurrent_health_share_one_probe(monkeypatch, silent_pg):
@@ -2499,3 +2676,14 @@ async def test_a_trailing_slash_redirect_stays_under_the_prefix_and_relative(mon
 ])
 def test_self_redirects_become_root_relative_under_the_prefix_and_others_are_untouched(location, host, base, want):
     assert app._relative_self_location(location, host, base) == want
+
+
+def test_redact_scrubs_a_password_read_from_sas():
+    """A message that quotes a SAS password outside the URL shape still loses it."""
+    import pg_credentials
+
+    creds = pg_credentials.PgCredentials(mode="sas", sas_object="fch-web", fetch=lambda name: {
+        "fchUser": "u", "fchPassword": "p@ss w/rd-31", "fchDbConnectUrl": "jdbc:postgresql://db:5432/proto"})
+    creds.dsn()
+    out = app.redact("server said p@ss w/rd-31 and p%40ss%20w%2Frd-31 for host=db")
+    assert "p@ss w/rd-31" not in out and "p%40ss%20w%2Frd-31" not in out and "host=db" in out

@@ -563,7 +563,7 @@ describe("PgS3ProjectStore without a stack", () => {
         }),
       };
       const backend = new PgS3Backend(pool as unknown as pg.Pool, s3 as never, "projects", {
-        dsn: "postgresql://x:y@127.0.0.1:1/z",
+        clientConfig: () => ({ connectionString: "postgresql://x:y@127.0.0.1:1/z" }),
         s3: s3 as never,
       });
       const deleted: string[] = [];

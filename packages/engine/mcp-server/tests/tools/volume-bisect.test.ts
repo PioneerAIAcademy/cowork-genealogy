@@ -11,7 +11,7 @@
  * OpenRouter. `browse-budget.ts` is deliberately NOT mocked — the third check is
  * about that module's real keying.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/tools/image-search.js", () => ({ imageSearchTool: vi.fn() }));
 // Partial: the network legs are mocked, the pure helpers stay real so the
@@ -43,6 +43,11 @@ import { resolveFsImageInput, fetchFsImageBytes } from "../../src/utils/fs-image
 import { runOcr } from "../../src/utils/ocr.js";
 import { getOpenRouterApiKey, getOpenRouterModel } from "../../src/auth/config.js";
 import type { VolumeBisectReading } from "../../src/types/volume-bisect.js";
+import {
+  configureTranscriptionCap,
+  withTranscriptionSlot,
+  __resetTranscriptionSlotsForTests,
+} from "../../src/utils/ocr.js";
 
 /** The reviewer's image group and Natural Group, by name. The mocked id list
  *  below is a synthetic position index, NOT that volume's real sequence — the
@@ -585,5 +590,52 @@ describe("parseProbeYear", () => {
     expect(parseProbeYear("16000")).toBeNull();
     // The filming stamp the ceiling excludes.
     expect(parseProbeYear("DEC 2 . 1952")).toBeNull();
+  });
+});
+
+// The process-wide transcription cap (self-hosted beta E4) binds HERE, on the
+// exported tool function, not on its MCP wrapper -- person_read calls this
+// function directly (person-read.ts), so a cap on the wrapper would leave that
+// path uncapped. Refused before any fixture work, so this needs no image.
+describe("the transcription cap binds to volume_bisect", () => {
+  afterEach(() => {
+    __resetTranscriptionSlotsForTests();
+  });
+
+  it("refuses when every slot is held, before touching the image", async () => {
+    configureTranscriptionCap({ max: 1 });
+    let release!: () => void;
+    const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
+
+    await expect(volumeBisectTool({ imageGroupNumber: "004516861_001_M9S4-SQB", targetYear: 1900 } as never, LOCAL)).rejects.toThrow(/already running 1 transcription, its limit/);
+
+    release();
+    await held;
+  });
+
+  it("reports a malformed group name even when every slot is held", async () => {
+    // Finding 6: the slot used to wrap the whole call, so a call that costs no
+    // OCR at all was told "the server is busy" and the caller retried the same
+    // bad input forever. Validation now runs before the slot.
+    configureTranscriptionCap({ max: 1 });
+    let release!: () => void;
+    const held = withTranscriptionSlot(() => new Promise<void>((r) => (release = r)));
+
+    await expect(
+      volumeBisectTool({ imageGroupNumber: "004022578", targetYear: 1900 } as never, LOCAL),
+    ).rejects.toThrow(/is not a sub-volume name/);
+
+    release();
+    await held;
+  });
+
+  it("is off when unconfigured, so the cap never fires", async () => {
+    // No cap configured: the wrapper calls straight through. Whatever the tool
+    // then does -- resolve or fail on its own input -- it must not be the cap.
+    const outcome = await volumeBisectTool(
+      { imageGroupNumber: "004516861_001_M9S4-SQB", targetYear: 1900 } as never,
+      LOCAL,
+    ).then(() => null, (e: unknown) => String(e));
+    if (outcome !== null) expect(outcome).not.toMatch(/transcriptions, its limit/);
   });
 });

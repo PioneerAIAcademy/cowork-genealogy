@@ -2,9 +2,9 @@
 """U23 ``make proto-bounds CASE=<case>``: record one live bound on the compose stack.
 
 Stop during a run, the held-message release, the spend cap, Stop or the cap during a
-foreground delegation, and each under a store outage -- plus PR #2870's owed probes: the resume probe,
-SDK Q1 (does a halt's ``continue_: False`` suppress the Stop dispatch?) and Q2 (does a
-subagent's halt stop the parent?). Billed, except ``precli``.
+foreground delegation, and each under a store outage -- plus PR #2870's owed probes: the resume probe
+and SDK Q2 (does a subagent's halt stop the parent?). SDK Q1, whether a halt still dispatches
+Stop, went with the Stop veto (step mode phase 2): no plane binds a Stop hook to observe it. Billed, except ``precli``.
 
     uv run python proto/bounds.py --case <case> [--session <id>] [--fixture bagley-father-1884]
                                   [--deadline-s 1200] [--kill-after-s 10] [--pause-s 30]
@@ -15,8 +15,8 @@ subagent's halt stop the parent?). Billed, except ``precli``.
   precli           worker stopped, a message posted, Stop pressed, worker started: the
                    redelivery closes ``stopped`` before any CLI (cost 0, no ev=cli_stderr)
   stop_main        Stop after the first main-thread allow: halt row, STOP_REASON, stopped,
-                   latency, Q1; the next message clears the flag and is not stopped
-  stop_delegation  Stop after the first subagent row (seeded): subagent halt row, Q1, Q2,
+                   latency; the next message clears the flag and is not stopped
+  stop_delegation  Stop after the first subagent row (seeded): subagent halt row, Q2,
                    the ResultMessage as the worker saw it
   held_release     a second message after the first allow: queued, handover halt, the
                    released msgid delivered, the held turn runs and is not halted first
@@ -46,7 +46,7 @@ Injected usage is one ``session_entries`` row under project_key ``__u23_probe__`
 counts every project_key; the SDK store loads only its own), deleted at case end; a turn
 that carried one is excluded from calibration. Every exit that can leave a turn running
 POSTs /interrupt until the session has none (``settle``). Each case prints its evidence
-(turns, tool_calls, the worker's ev lines, turn_done payloads), findings (Q1, Q2, what was
+(turns, tool_calls, the worker's ev lines, turn_done payloads), findings (Q2, what was
 recorded), figures and PASS/FAIL per check. Exit 1 on any FAIL, 2 when the stack is not up
 or the arguments are refused.
 """
@@ -386,28 +386,6 @@ def cap_checks(label: str, snap: TurnSnap, events: list[dict], *, cap_usd: float
         (f"{label}: turn_done spent_usd >= the cap", isinstance(spent, (int, float)) and spent >= cap_usd,
          f"spent_usd={spent} cap={cap_usd}"),
     ]
-
-
-def q1_answer(events: list[dict], turn_id: str) -> tuple[str, str]:
-    """SDK Q1 over the worker's lines: after the first ev=halt, up to that attempt's ev=turn,
-    did the Stop hook run (ev=terminal / ev=nudge)? ``(dispatched | not_dispatched |
-    hook_off | no_halt, detail)``."""
-    mine = events_for(events, turn_id)
-    if any(e.get("ev") == "turn" and e.get("max_nudges") == 0 for e in mine):
-        return "hook_off", "max_nudges=0: no Stop hook to observe"
-    i = next((k for k, e in enumerate(mine) if e.get("ev") == "halt"), None)
-    if i is None:
-        return "no_halt", "no ev=halt for the turn"
-    window: list[dict] = []
-    for e in mine[i + 1:]:
-        if e.get("ev") == "turn":
-            break
-        window.append(e)
-    stops = [e for e in window if e.get("ev") in ("terminal", "nudge")]
-    if not stops:
-        return "not_dispatched", "no ev=terminal or ev=nudge between the halt and the attempt's ev=turn"
-    s = stops[0]
-    return "dispatched", f"ev={s['ev']} " + " ".join(f"{k}={s.get(k)}" for k in ("reason", "recorded", "n") if k in s)
 
 
 def q2_answer(calls: list[tuple], entries: list[tuple]) -> tuple[str, str]:
@@ -803,7 +781,6 @@ def case_stop_main(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
     rep.checks += [*halt_checks("stop_main", snap.calls, events_for(events, tid), reason=STOP_REASON, subagent=False),
                    closed_check("stop_main", snap, TERMINAL_STOPPED), payload_check("stop_main", snap, TERMINAL_STOPPED)]
     rep.figures["halt_after_press_s"] = halt_latency(snap, pressed_at)
-    rep.findings.append("Q1 (main thread): %s -- %s" % q1_answer(events, tid))
     nxt = post(ctx, client, rep, FOLLOW_UP_TEXT)["turn_id"]
     left = stopped_at(ctx, rep.session_id)
     rep.checks.append(("stop_main: the next message cleared the flag", left is None, f"stop_requested_at={left}"))
@@ -832,7 +809,6 @@ def _delegation(ctx: Ctx, client: httpx.Client, rep: Report, *, bound: str) -> N
                        closed_check(label, snap, TERMINAL_STOPPED), payload_check(label, snap, TERMINAL_STOPPED)]
     else:
         rep.checks += cap_checks(label, snap, events, cap_usd=ctx.cap_usd, subagent=True)
-    rep.findings.append("Q1 (in a delegation): %s -- %s" % q1_answer(events, tid))
     rep.findings.append("Q2 (subagent halt stops the parent?): %s -- %s" % q2_answer(snap.calls, entries(ctx, sdk, before)))
     rep.findings.extend(f"ResultMessage via ev=turn: {line}" for line in result_findings(events, tid))
 
@@ -892,7 +868,6 @@ def _held(ctx: Ctx, client: httpx.Client, rep: Report, *, stop_first: bool) -> N
     rep.checks += held_checks(rep.case, reply, sa, sb, events, shim_posts_for(released[-1] if released else None),
                               a_outcome=TERMINAL_STOPPED if stop_first else TERMINAL_QUEUED,
                               a_reason=STOP_REASON if stop_first else HANDOVER_REASON)
-    rep.findings.append("Q1 (handover): %s -- %s" % q1_answer(events, a))
 
 
 def case_held_release(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
@@ -914,7 +889,6 @@ def case_cap_main(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
         return
     snap, events = snapshot(ctx, rep.session_id, tid), events_until(tid, closing_lines)
     rep.checks += cap_checks("cap_main", snap, events, cap_usd=ctx.cap_usd, subagent=False)
-    rep.findings.append("Q1 (cap, main thread): %s -- %s" % q1_answer(events, tid))
     # The capped session's next message closes before the CLI (the precli cap half).
     nxt = post(ctx, client, rep, FOLLOW_UP_TEXT)["turn_id"]
     if not done(ctx, client, rep, nxt, label="next"):
@@ -942,7 +916,6 @@ def case_cap_main_real(ctx: Ctx, client: httpx.Client, rep: Report) -> None:
         "overshoot_usd": round(estimate - ctx.cap_usd, 4) if isinstance(estimate, (int, float)) else None,
         "cache_write_5m": m5, "cache_write_1h": h1, "cache_write_total": total,
     })
-    rep.findings.append("Q1 (real cap): %s -- %s" % q1_answer(events, tid))
 
 
 def _outage(ctx: Ctx, client: httpx.Client, rep: Report, *, condition: str) -> None:

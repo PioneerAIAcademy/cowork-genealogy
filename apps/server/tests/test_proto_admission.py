@@ -267,14 +267,22 @@ async def test_chat_on_still_needs_a_queue(monkeypatch):
 
 
 class ExplodingStore:
+    """Armed after ``create_app``, which reads ``creds`` once while it builds (U29)."""
+
+    armed = False
+
     def __getattr__(self, name):
+        if not self.armed:
+            return None
         raise AssertionError(f"/livez touched the store ({name})")
 
 
 @pytest.mark.parametrize("chat", ["true", "false"])
 async def test_livez_answers_without_a_store_or_a_cookie(monkeypatch, chat):
     monkeypatch.setenv("GENEALOGY_CHAT", chat)
-    application = create_app(store=ExplodingStore(), queue=None)
+    store = ExplodingStore()
+    application = create_app(store=store, queue=None)
+    store.armed = True
     application.state.startup = {"schema": "pending", "allowlist": "pending"}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t") as c:
         r = await c.get("/livez")

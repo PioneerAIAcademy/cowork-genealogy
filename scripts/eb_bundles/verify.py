@@ -12,6 +12,9 @@ agreed with. Same posture as scripts/verify-mcpb.sh for the .mcpb.
 
 The offline pip dry-run resolves requirements.txt against the bundle's wheels/ for each
 architecture, so a dependency with no aarch64 wheel fails on an x86_64 CI runner.
+
+A BUILD-INFO.json carrying `fs_extras` (build.py's --fs-* flags, U29) must also carry the
+SAS client it names; without `fs_extras` nothing more is required.
 """
 from __future__ import annotations
 
@@ -44,7 +47,8 @@ BUILD_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+\+(dev|\d{4}-\d{2}-\d{2}\.[0-9a-f]
 COMMON_REQUIRED = ("Procfile", "BUILD-INFO.json", "certs/rds-global-bundle.pem")
 REQUIRED = {
     "web": COMMON_REQUIRED + ("requirements.txt", "web/app.py", "web/auth.py", "web/spa.py", "web/feedback.py",
-                              "web/blobstore.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py", "config/familysearch.json",
+                              "web/blobstore.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py",
+                              "pg_credentials.py", "config/familysearch.json",
                               "web-dist/index.html",
                               # Missing, nginx falls back to 8 KB header lines and a patron's
                               # .familysearch.org cookies can 400 every request, or to a 1 MB body
@@ -53,7 +57,7 @@ REQUIRED = {
                               ".platform/nginx/conf.d/01-web-uploads.conf"),
     "worker": COMMON_REQUIRED + ("requirements.txt", "app/__init__.py", "app/agent/__init__.py",
                                  "app/agent/real_agent.py", "proto/enqueue.py", "proto/grants.py",
-                                   "proto/turn_message.py", "proto/migrate.py",
+                                   "proto/turn_message.py", "proto/migrate.py", "proto/pg_credentials.py",
                                  "proto/worker/worker.py", "proto/worker/options.py",
                                  "plugin/.claude-plugin/plugin.json", "plugin/hooks/hooks.json",
                                  # The step boundary. Missing, the worker logs one
@@ -83,7 +87,7 @@ CODE_EXEMPT = ("node_modules/", "plugin/", "web-dist/", "wheels/")
 DEV_PREFIXES = ("DEV_", "GENEALOGY_DEBUG_")
 DEV_VARIABLES = frozenset({"BLOCKED_TOOLS", "SQS_ENDPOINT", "QUEUE_NAME", "FAMILYSEARCH_CONFIG"})
 DEV_VARIABLES_BY_TIER = {
-    "web": frozenset(),
+    "web": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
     "worker": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
     "tools": frozenset({"AUTONOMOUS_MAX_NUDGES"}),
 }
@@ -91,6 +95,8 @@ DEV_VALUES = {"WORKER_TURN_USERS": "none"}
 TOOLS_FORBIDDEN_PREFIXES = ("src/", "dev/", "node_modules/typescript/", "node_modules/vitest/",
                             "node_modules/@anthropic-ai/mcpb/")
 HOOK_DIRS = (".platform/hooks/", ".platform/confighooks/")
+SAS_NODE_PACKAGE_JSON = "node_modules/@fs/sas-client/package.json"
+SAS_WHEEL = re.compile(r"wheels/sas_client-[^/]+\.whl", re.I)
 
 
 def tier_of(path: Path) -> str | None:
@@ -207,7 +213,35 @@ def verify(path: Path, *, pip: bool = True, allow_dev: bool = False, arches: tup
             _check_tools(zf, names, findings, allow_dev=allow_dev)
         if tier == "web":
             _check_spa(zf, names, findings)
+        if "BUILD-INFO.json" in names:
+            _check_fs_extras(tier, zf.read("BUILD-INFO.json"), names, findings)
     return findings
+
+
+def _check_fs_extras(tier: str, raw: bytes, names: list[str], findings: list[str]) -> None:
+    try:
+        info = json.loads(raw.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError) as exc:
+        findings.append(f"BUILD-INFO.json is not JSON: {exc}")
+        return
+    extras = info.get("fs_extras") if isinstance(info, dict) else None
+    if extras is None:
+        return
+    if not isinstance(extras, dict):
+        findings.append(f"BUILD-INFO.json fs_extras is not an object: {extras!r}")
+        return
+    if tier == "tools":
+        if not isinstance(extras.get("node"), dict):
+            findings.append("BUILD-INFO.json fs_extras names no node package")
+        if SAS_NODE_PACKAGE_JSON not in names:
+            findings.append(f"BUILD-INFO.json records fs_extras but {SAS_NODE_PACKAGE_JSON} is missing")
+        return
+    pins = extras.get("python")
+    if not isinstance(pins, list) or not any(isinstance(p, str) and p.lower().startswith("sas-client==")
+                                             for p in pins):
+        findings.append(f"BUILD-INFO.json fs_extras.python pins no sas-client: {pins!r}")
+    if not any(SAS_WHEEL.fullmatch(n) for n in names):
+        findings.append("BUILD-INFO.json records fs_extras but wheels/ holds no sas_client wheel")
 
 
 def _check_names(tier: str, names: list[str], findings: list[str]) -> None:
