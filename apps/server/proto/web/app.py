@@ -46,7 +46,8 @@ Only ``session_events`` frames carry ``id: <seq>``, so ``Last-Event-ID`` is alwa
 and the transient frames are never replayed -- the same split as TRANSIENT_KINDS in the
 hosted runner.
 
-Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
+Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto) or PG_SAS_OBJECT (the SAS
+fchDatabase object to read instead, U29; both set refuses to start), QUEUE_URL (a full SQS
 queue URL, the shim's shape; required -- unset or empty refuses to start),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
@@ -112,7 +113,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
 SQL_DIR = PROTO_DIR / "sql"
-# enqueue.py, grants.py and migrate.py are siblings of this package in the repo (proto/)
+# enqueue.py, grants.py, migrate.py and pg_credentials.py are siblings of this package in the repo (proto/)
 # and in the container (/app); make them importable from wherever uvicorn, the driver or
 # pytest started.
 if str(PROTO_DIR) not in sys.path:
@@ -122,6 +123,8 @@ import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 import grants  # noqa: E402  (U3: grant custody, shared with the worker)
 import turn_message  # noqa: E402  (the queue body, shared with the worker)
 import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no DDL)
+import pg_credentials  # noqa: E402  (U29: the DSN from the environment or from SAS)
+from pg_credentials import PgCredentials  # noqa: E402
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
@@ -387,17 +390,29 @@ class Queue(Protocol):
 
 
 
-def _pg_dsn() -> str:
-    """The web tier's Postgres DSN, resolved as the lifespan resolves it (``PgStore``).
+def _pg_connect_sync(request: Request, **kw: Any):
+    """A synchronous connection from the lifespan's credentials (``app.state.pg_creds``),
+    the holder ``PgStore`` reads, so a rotation one path recovers from reaches the other.
 
     `_sidecar`, `_image` and the upload route below open their own SYNCHRONOUS connection --
     `fetch_sidecar`, `fetch_blob` and `put_blob` are sync, and `app.state.store` is async --
-    so they cannot borrow the store's. They referenced a bare `PG_DSN` that this module has
-    never defined, which made all three raise `NameError` and answer 500 on every call
-    that got past validation. Nothing caught it: the route tests stub the client, and
-    `make harness-lint`'s F821 pass covered `eval/harness` but not `apps/server`.
+    so they cannot borrow the store's. They once referenced a bare `PG_DSN` this module
+    never defined, which made all three answer 500; the route tests stub the client.
     """
-    return os.environ.get("PG_DSN") or DEFAULT_PG_DSN
+    import psycopg
+
+    creds = request.app.state.pg_creds
+    if creds is None:  # no lifespan ran: a test's ASGITransport
+        creds = request.app.state.pg_creds = _pg_creds_from_env()
+    return pg_credentials.connect(creds, lambda d, **k: psycopg.connect(d, **k), **kw)
+
+
+def _pg_creds_from_env() -> PgCredentials:
+    """``PG_DSN`` or ``PG_SAS_OBJECT`` (U29); a configuration error raises ``RuntimeError``."""
+    creds = PgCredentials.from_env(dsn_var="PG_DSN", sas_var="PG_SAS_OBJECT", default=DEFAULT_PG_DSN)
+    if creds.problem:
+        raise RuntimeError(creds.problem)
+    return creds
 
 
 # ── rows ─────────────────────────────────────────────────────────────────────────
@@ -605,8 +620,9 @@ def ready_label(exc: BaseException) -> str:
 
 
 def redact(text: str) -> str:
-    """A message for the log, with any ``scheme://user:password@`` taken out."""
-    return _DSN_CREDENTIALS.sub("", text)
+    """A message for the log, with any ``scheme://user:password@`` and any password read
+    from SAS taken out."""
+    return pg_credentials.scrub(_DSN_CREDENTIALS.sub("", text))
 
 
 def check_out(state: str) -> dict[str, Any]:
@@ -624,12 +640,23 @@ class PgStore:
     Connections are ``autocommit=True``: a read is one round trip, and the writers that
     need several statements to land together say so with ``conn.transaction()``."""
 
-    def __init__(self, dsn: str) -> None:
-        self.dsn = dsn
+    def __init__(self, creds: PgCredentials | str) -> None:
+        self.creds = PgCredentials.fixed(creds) if isinstance(creds, str) else creds
         # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
         # and the postgres check's last outcome for the transition log.
         self._ready_task: asyncio.Task | None = None
         self._ready_last: bool | None = None
+
+    @property
+    def dsn(self) -> str:
+        return self.creds.cached() or ""
+
+    async def _aconn(self, **kw: Any):
+        """Every connection this store opens: re-resolves once on an invalid password (U29)."""
+        import psycopg
+
+        return await pg_credentials.aconnect(
+            self.creds, lambda d, **k: psycopg.AsyncConnection.connect(d, **k), **kw)
 
     async def check_ready(self, timeout_s: float | None = None) -> dict[str, Any]:
         """``{ok, checks: {postgres}}`` from a connection of its own that must see every
@@ -664,10 +691,8 @@ class PgStore:
         return {"ok": check["ok"], "checks": {"postgres": check}}
 
     async def _probe_postgres(self) -> None:
-        import psycopg
-
-        conn = await psycopg.AsyncConnection.connect(
-            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+        conn = await self._aconn(
+            autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
             options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
         )
         try:
@@ -680,12 +705,10 @@ class PgStore:
             raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
 
     async def _connect(self):
-        import psycopg
         from psycopg.rows import dict_row
 
         # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
-        return await psycopg.AsyncConnection.connect(self.dsn, row_factory=dict_row, autocommit=True,
-                                                     connect_timeout=10)
+        return await self._aconn(row_factory=dict_row, autocommit=True, connect_timeout=10)
 
     async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
         """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
@@ -695,11 +718,9 @@ class PgStore:
         migrated. A connection of its own with positional rows and a server-side
         statement_timeout, like ``_probe_postgres``, and awaited rather than run on a
         thread, so the shared startup budget can cancel it."""
-        import psycopg
-
         shipped = migrate.load(sql_dir)
-        conn = await psycopg.AsyncConnection.connect(
-            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+        conn = await self._aconn(
+            autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
             options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
         )
         try:
@@ -709,7 +730,7 @@ class PgStore:
             await conn.close()
         found = migrate.verdict(shipped, migrate.ledger_from_rows(exists, rows))
         if found.label is not None:
-            raise ReadyCheckError(found.label, f"{found.label}; run migrate.py with MIGRATE_PG_DSN")
+            raise ReadyCheckError(found.label, f"{found.label}; run migrate.py with MIGRATE_PG_DSN or MIGRATE_PG_SAS_OBJECT")
         return [m.name for m in shipped]
 
     @staticmethod
@@ -1227,12 +1248,9 @@ class PgStore:
     async def _grant_connect(self):
         """A connection of its own for one refresh: its session advisory locks die with it,
         and the server's keepalives end its backend if this host vanishes mid-refresh."""
-        import psycopg
         from psycopg.rows import dict_row
 
-        return await psycopg.AsyncConnection.connect(
-            self.dsn, row_factory=dict_row, autocommit=True, options=grants.GRANT_KEEPALIVE_OPTIONS,
-        )
+        return await self._aconn(row_factory=dict_row, autocommit=True, options=grants.GRANT_KEEPALIVE_OPTIONS)
 
     async def refresh_grant(
         self, user_id: str, *, refresh: Callable[[str], Awaitable[grants.RefreshResult]], refresh_age_s: float,
@@ -1499,7 +1517,7 @@ def create_app(
     stream_max_polls: int | None = None,
     blobs: Any = None,
 ) -> FastAPI:
-    """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
+    """Factory. With no arguments the lifespan builds PgStore(PG_DSN or PG_SAS_OBJECT) + SqsQueue(QUEUE_URL)
     from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings.
     ``blobs`` (U20) is the feedback bucket (``blobstore.S3Blobs``); None with no store
     passed means the lifespan builds it from GENEALOGY_S3_*."""
@@ -1533,9 +1551,18 @@ def create_app(
             log.info("%s", blobstore.describe(os.environ))
         # U10 D8: the store goes on app.state before either step, so every route and
         # /api/health see it while Postgres is down; neither step can stop the tier listening.
+        # U29: SAS unreachable, or slower than STARTUP_BUDGET_S, is an outage (the tier
+        # listens, readiness reports it); a configuration error refuses here.
+        creds = _pg_creds_from_env()
+        try:
+            await asyncio.to_thread(creds.check_at_start, STARTUP_BUDGET_S)
+        except pg_credentials.PgCredentialsError as exc:
+            raise RuntimeError(str(exc)) from None
+        app.state.pg_creds = getattr(app.state.store, "creds", None) or creds
+        log.info("postgres: pg_credentials=%s", app.state.pg_creds.description)
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
         if app.state.store is None:
-            app.state.store = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
+            app.state.store = PgStore(creds)
             steps["schema"] = app.state.store.verify_schema
         store = app.state.store
         if hasattr(store, "sync_allowlist"):
@@ -1581,6 +1608,7 @@ def create_app(
     app.state.store = store
     app.state.queue = queue
     app.state.blobs = blobs
+    app.state.pg_creds = getattr(store, "creds", None)
     # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
     # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
     app.state.startup = None
@@ -2010,14 +2038,12 @@ def create_app(
         if blobs is None:
             # 404, not 503: a scan reads as ABSENT rather than unimplemented.
             raise HTTPException(status_code=404, detail="no blob store configured")
-        import psycopg
-
         # Off the event loop: psycopg.connect and the S3 GET inside fetch_sidecar
         # are both blocking, and this tier runs ONE uvicorn worker (eb-web/Procfile),
         # so a slow round trip freezes every live SSE stream. The feedback route
         # below already does this; these three did not.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
                 return fetch_sidecar(conn, blobs, project_id, log_id)
 
         blob = await asyncio.to_thread(_read)
@@ -2063,11 +2089,9 @@ def create_app(
         if blobs is None:
             # 404, not 503: most projects hold no scans, so absent is the honest answer.
             raise HTTPException(status_code=404, detail="no blob store configured")
-        import psycopg
-
         # Off the event loop, for the reason given on the sidecar route above.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
                 return fetch_blob(conn, blobs, project_id, filename)
 
         blob = await asyncio.to_thread(_read)
@@ -2141,12 +2165,10 @@ def create_app(
             # missing store is "unavailable", not "absent". Matches the feedback route.
             raise HTTPException(status_code=503, detail="no blob store configured")
         key = upload_key(name)
-        import psycopg
-
         # Off the event loop, for the reason given on the sidecar route above: this one
         # also does an S3 PUT, so it is the longest of the three.
         def _write() -> int:
-            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
                 n = put_blob(conn, blobs, row.project_id, key, body, content_type=content_type)
                 conn.commit()
                 return n
