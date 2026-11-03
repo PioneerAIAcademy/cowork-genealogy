@@ -294,9 +294,9 @@ it the year also admits estimated dates from other eras.
 | Case | Period name | Modern name | No place | Target | With `*PlaceExact` | Measured |
 |---|---|---|---|---|---|---|
 | Rieti (province moved in 1927): Marchetti, death 1913, collection 2146202 | 33, all in the modern set. Year exact: 0 | 443, the no-place set itself. Year exact: 12 | 443. Year exact: 12 | `Q2HC-CWMP`: modern only, first | period 0, modern 12 | measured 2026-11-02, `npx tsx dev/probe-period-place.ts rieti` |
-| Orvieto (province of Terni from 1927): Mancini, death 1895, collection 2043538 | 34, of which 25 are in the modern set. Year exact: 1 | 198. Year exact: 3, none in the period set | 207. Year exact: 4 | `QP8Z-23J8`: modern only, first; its second index `78VB-CYMM` is period only | period 1; the modern town 0, its province "Terni, Umbria, Italy" 3 | measured 2026-11-02, `npx tsx dev/probe-period-place.ts orvieto` |
+| Orvieto (province of Terni from 1927): Mancini, death 1895, collection 2043538 | 34, of which 25 are in the modern set. Year exact: 1 | 198. Year exact: 3, none in the period set | 207. Year exact: 4 | `QP8Z-23J8`: modern only, first; its second index `78VB-CYMM` is period only | period 1; the modern town 0, its province "Terni, Umbria, Italy" 3 | measured 2026-11-03, `npx tsx dev/probe-period-place.ts orvieto` |
 | Denver (Arapahoe County to 1901): Smith, marriage 1895, collection 1932434 | 20, all in the modern set. Year exact: the same | 30. Year exact: the same | 83 | `KNQW-5GS`: modern only, first | period 16, all in the modern 26 | measured 2026-11-02, `npx tsx dev/probe-period-place.ts denver` |
-| Echaporã ("Bela Vista" 1938-1944): Silva, birth 1940, collection 2765317 | Year exact: 477, the modern set itself | Year exact: 477 | Year exact: 520 | `78K9-CWW2`: both | Year exact: period 9, modern 2, both of the 2 in the 9. Year unqualified: 10 and 2 | measured 2026-11-02, `npx tsx dev/probe-period-place.ts echapora` |
+| Echaporã ("Bela Vista" 1938-1944): Silva, birth 1940, collection 2765317 | Year exact: 477, the modern set itself | Year exact: 477 | Year exact: 520 | `78K9-CWW2`: both | Year exact: period 9, modern 2, both of the 2 in the 9. Year unqualified: 10 and 2 | measured 2026-11-03, `npx tsx dev/probe-period-place.ts echapora` |
 
 1. **Superset, disjoint or neither: it depends on the place, so no rule holds
    for all four.** In Rieti and Denver the modern set holds the whole period
@@ -305,29 +305,36 @@ it the year also admits estimated dates from other eras.
    records the other misses. Of the four deaths dated 1895, the period name
    finds one and the modern name the other three; that one is a second index
    of the target's death. With the year unqualified, 9 of the period name's 34
-   are not in the modern set. Two checked by hand. Alessandro Mancini's death
-   of 13 Jun 1887 is indexed twice, and the modern name finds the other copy,
-   `QP51-9757` (measured 2026-11-02, `npx tsx dev/try-record-search.ts Mancini
-   Alessandro --collection 2043538 --type death --death-year 1887`). Domenica
-   Ciaccio's of 5 Jan 1867 is indexed once, as "Orvieto, Perugia, Umbria"
-   (`78VB-3B6Z`), so no modern-name search finds it (measured 2026-11-02,
-   `npx tsx dev/try-record-search.ts Ciaccio Domenica --collection 2043538
-   --type death --death-year 1867`). In Echaporã the two names return the same
-   set.
+   are not in the modern set. They are people named on 8 records, and 8 of the
+   9 are relatives (spouse, father, mother) named on someone else's death. One
+   of the 8 records is the target's second index, and two were checked by hand.
+   Alessandro Mancini's death of 13 Jun 1887 is indexed twice, and a search
+   for it by name finds one copy under each name: the modern town finds
+   `QP51-9757` and the period name `78VY-GVN2` (measured 2026-11-03,
+   `npx tsx dev/try-record-search.ts Mancini Alessandro --collection 2043538
+   --type death --death-year 1887 --death-place "Orvieto, Terni, Umbria,
+   Italy"`, and the same with the period name).
+   Domenica Ciaccio's of 5 Jan 1867 is indexed once, as "Orvieto, Perugia,
+   Umbria" (`78VB-3B6Z`): the period name finds it and the modern town does not
+   (measured 2026-11-03, `npx tsx dev/try-record-search.ts Ciaccio Domenica
+   --collection 2043538 --type death --death-year 1867 --death-place "Orvieto,
+   Terni, Umbria, Italy"`, and the same with the period name). In Echaporã,
+   with the year exact, the two names return the same set.
 2. **`*PlaceExact` changes the counts in every case and the answer in two.**
    In Rieti and Denver the direction holds. In Orvieto it empties the modern
-   town: the deaths the modern name finds are indexed to the province, "Terni,
-   Umbria, Italy", and only the province name finds them exactly. In Echaporã,
-   year exact, the exact period name returns 7 records the modern name does
-   not, and the place text of every one names another town (Porangaba,
-   Palmital, Garça): "Bela Vista" is the name of more than one place. The two records whose text reads "Bela
-   Vista" are found by both names.
+   town. With the year exact, the three deaths the modern name finds are
+   indexed to the province, "Terni, Umbria, Italy", and only the province name
+   finds them exactly. In Echaporã, year exact, the exact period name returns 7
+   records the modern name does not, and the place text of every one names
+   another town (Porangaba, Palmital, Garça; the probe prints each id with its
+   place text): "Bela Vista" is the name of more than one place. The two
+   records whose text reads "Bela Vista" are found by both names.
 3. **Outside Italy: yes in the United States, no in Brazil.** Denver behaves
    like Rieti: the period name misses records the modern name finds. In
    Echaporã the rename hides no record of the renamed place.
 
 **Not measured:** more than these four collections; Echaporã with the year
-unqualified, whose sets run past the probe's read limit; the 7 Orvieto
+unqualified, whose sets run past the probe's read limit; the 5 Orvieto
 period-only records not checked by hand.
 
 ### Family member fields

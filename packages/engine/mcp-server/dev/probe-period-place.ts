@@ -24,14 +24,18 @@
  *
  * Live, authenticated FamilySearch calls, one per page, each retried twice on a
  * failure: log in first (`make e2e-login`, or `eval\Login.bat` on Windows). A
- * page that still fails marks its set incomplete and the case INCOMPLETE. Run
- * one case to check a single figure; the default runs all of them.
+ * set that comes back incomplete (a page still failing after its retries, or
+ * fewer distinct records than its total) marks the case INCOMPLETE and the run's
+ * exit code 1, unless the set was capped: a capped set's relations are not
+ * measured anyway. Run one case to check a single figure; the default runs all
+ * of them.
  *
  * WHAT THIS PROBE ESTABLISHES AND WHAT IT DOES NOT.
  * For each case it prints `totalMatches` and the collected set per input, whether
  * the case's target record is in it, and how the period set relates to the
  * modern one and to the no-place set (equal, subset, superset, disjoint or
- * neither), with up to three ids on each side of a difference to `record_read`.
+ * neither), with up to 20 ids on each side of a difference, each with its role,
+ * its record and the place text it carries.
  * A capped or failed set prints NOT MEASURED, never a direction. It does not say
  * which representation FamilySearch standardized each record to: the event
  * place a result carries is the record's own text, not the representation the
@@ -40,6 +44,7 @@
 import { LOCAL } from "../src/auth/principal.js";
 import { recordSearchTool } from "../src/tools/record-search.js";
 import type { RecordSearchInput } from "../src/types/record-search.js";
+import { withRetry } from "../src/utils/place-resolver.js";
 
 type Event = "birth" | "death" | "marriage";
 
@@ -126,6 +131,13 @@ const CASES: Case[] = [
   },
 ];
 
+/** The event types a case's place text is read from, by the case's event family. */
+const FAMILY: Record<Event, RegExp> = {
+  birth: /Birth|Christening|Baptism/,
+  death: /Death|Burial|Cremation/,
+  marriage: /Marriage|Engagement/,
+};
+
 const INPUTS = ["period", "modern", "periodParent", "modernParent", "none"] as const;
 type InputKey = (typeof INPUTS)[number];
 
@@ -136,6 +148,8 @@ interface Row {
   yearExact: boolean;
   total: number;
   ids: Set<string>;
+  /** Role, record and place text per id, printed beside a difference. */
+  info: Map<string, string>;
   truncated: boolean;
   targetAt: number | null;
   /** Set when a page still failed after its retries: the set is incomplete. */
@@ -143,15 +157,8 @@ interface Row {
 }
 
 /** One page, retried: the tool throws on a timeout, which is not an empty result. */
-async function page(input: RecordSearchInput) {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      return await recordSearchTool(input, LOCAL);
-    } catch (err) {
-      if (attempt === 3) throw err;
-      await new Promise((resolve) => setTimeout(resolve, 5000 * attempt));
-    }
-  }
+function page(input: RecordSearchInput) {
+  return withRetry(() => recordSearchTool(input, LOCAL), { attempts: 3, baseMs: 5000 });
 }
 
 function args(): { ids: string[]; max: number } {
@@ -199,6 +206,7 @@ async function collect(
 ): Promise<Row> {
   const place = input === "none" ? null : c[input];
   const ids = new Set<string>();
+  const info = new Map<string, string>();
   let total = 0;
   let targetAt: number | null = null;
   let seen = 0;
@@ -208,13 +216,17 @@ async function collect(
       response = await page({ ...query(c, place, exact, yearExact), count: 100, offset });
     } catch (err) {
       const error = err instanceof Error ? err.message.slice(0, 120) : String(err);
-      return { input, place, exact, yearExact, total, ids, truncated: total > max, targetAt, error };
+      return { input, place, exact, yearExact, total, ids, info, truncated: total > max, targetAt, error };
     }
     total = response.totalMatches;
     const results = response.results ?? [];
     for (const r of results) {
       if (targetAt === null && c.target && r.recordId === c.target) targetAt = seen + 1;
       ids.add(r.recordId);
+      const own = c.event === "death" ? r.deathPlace : c.event === "birth" ? r.birthPlace : undefined;
+      const event = r.events?.find((e) => e.place && FAMILY[c.event].test(e.type));
+      const text = own ?? event?.place ?? `(no ${c.event} place text)`;
+      info.set(r.recordId, `${r.role ?? "?"}, record ${r.recordArk ?? "?"}, ${text}`);
       seen++;
     }
     if (results.length === 0 || offset + 100 >= Math.min(total, max)) break;
@@ -224,14 +236,16 @@ async function collect(
   // smaller than the total says: comparing it would report a wrong relation.
   if (!truncated && ids.size < total) {
     const error = `read ${ids.size} distinct records of the ${total} reported`;
-    return { input, place, exact, yearExact, total, ids, truncated, targetAt, error };
+    return { input, place, exact, yearExact, total, ids, info, truncated, targetAt, error };
   }
-  return { input, place, exact, yearExact, total, ids, truncated, targetAt };
+  return { input, place, exact, yearExact, total, ids, info, truncated, targetAt };
 }
 
-/** Up to three ids in `a` and not in `b`: records to `record_read` when the sets differ. */
+/** Ids in `a` and not in `b`, up to 20, each with its role, record and place text. */
 function onlyIn(a: Row, b: Row): string[] {
-  return [...a.ids].filter((id) => !b.ids.has(id)).slice(0, 3);
+  const ids = [...a.ids].filter((id) => !b.ids.has(id));
+  const shown = ids.slice(0, 20).map((id) => `${id}  ${a.info.get(id)}`);
+  return ids.length > 20 ? [...shown, `and ${ids.length - 20} more`] : shown;
 }
 
 /** How set `a` relates to set `b`, named from `a`'s side. Not measured when either was capped. */
@@ -273,7 +287,7 @@ for (const c of cases) {
       for (const exact of input === "none" ? [false] : [false, true]) {
         const row = await collect(c, input, exact, yearExact, Math.min(c.max ?? max, max));
         rows.push(row);
-        if (row.error) failed = true;
+        if (row.error && !row.truncated) failed = true;
         const target = !c.target
           ? ""
           : row.targetAt !== null
@@ -302,14 +316,15 @@ for (const c of cases) {
       if (!period.truncated && !modern.truncated && !period.error && !modern.error) {
         const lost = onlyIn(modern, period);
         const extra = onlyIn(period, modern);
-        if (lost.length) console.log(`               modern, not period: ${lost.join(" ")}`);
-        if (extra.length) console.log(`               period, not modern: ${extra.join(" ")}`);
+        if (lost.length) console.log(`               modern, not period:\n                 ${lost.join("\n                 ")}`);
+        if (extra.length) console.log(`               period, not modern:\n                 ${extra.join("\n                 ")}`);
       }
     }
   }
   console.log(
     failed
-      ? `\n  INCOMPLETE: a search failed after its retries; re-run npx tsx dev/probe-period-place.ts ${c.id}`
+      ? `\n  INCOMPLETE: a set came back incomplete; re-run npx tsx dev/probe-period-place.ts ${c.id}`
       : `\n  measured ${measured}, npx tsx dev/probe-period-place.ts ${c.id}`,
   );
+  if (failed) process.exitCode = 1;
 }
