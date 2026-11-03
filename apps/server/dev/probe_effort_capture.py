@@ -70,8 +70,7 @@ fields reported here (`CLAUDE_CODE_EFFORT_LEVEL` outranks both levers,
 `CLAUDE_CODE_MAX_OUTPUT_TOKENS` changes `max_tokens`, `MAX_THINKING_TOKENS` changes
 `thinking`, `ANTHROPIC_DEFAULT_*_MODEL` changes `model`). Every variable with a
 `SCRUBBED_PREFIXES` prefix or in `SCRUBBED_NAMES` is removed for the run and its NAME
-reported (never its value: the prefix also matches the operator's session tokens). `MODEL` is then set to `Settings.default_model`, the model `_agent_env` hands a hosted
-sandbox unless the deploy (`DEFAULT_MODEL`) or the project overrides it. The main thread is told
+reported (never its value: the prefix also matches the operator's session tokens). The main thread is told
 to delegate one trivial task to `person-evidence`; a request whose system prompt
 carries that agent's body is the subagent's, and the arm ends as soon as one is
 logged.
@@ -523,8 +522,9 @@ async def main() -> None:
                       if k.startswith(SCRUBBED_PREFIXES) or k in SCRUBBED_NAMES)
     for k in scrubbed:
         del os.environ[k]
-    from app.config import Settings
-    os.environ["MODEL"] = Settings.model_fields["default_model"].default
+    from app.agent.main_thread import load_main_thread
+    from app.config import REPO_ROOT
+    os.environ["MODEL"] = load_main_thread(REPO_ROOT / "packages" / "engine" / "plugin").model
     import claude_agent_sdk
     report = {
         "scrubbed_env": scrubbed,
