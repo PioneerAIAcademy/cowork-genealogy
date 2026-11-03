@@ -800,6 +800,33 @@ function conflictInvariants(entry: any): string[] {
   return errs;
 }
 
+/** A conflict append that restates one already recorded: the same
+ *  `conflict_type` over the same set of `competing_assertion_ids`, at any
+ *  status. Same type and same assertions is the same disagreement, so the
+ *  existing entry is the one to update, and a resolved or moot one is reopened
+ *  by updating its status (research-schema-spec.md, `resolved_conflict_ids`).
+ *  A different type over the same assertions is a different question and
+ *  writes. Measured 2026-11-03: of the conflict appends in the committed unit
+ *  run logs, 2 restate an existing conflict (`ut_conflict_resolution_008`
+ *  run 2 over an unresolved one, `ut_research_001` v17 over a resolved one),
+ *  both duplicates; the 233 committed e2e final documents hold no such pair. */
+function duplicateConflictInvariants(entry: any, research: any): string[] {
+  const key = (c: any) =>
+    Array.isArray(c?.competing_assertion_ids) ? [...new Set(c.competing_assertion_ids)].sort().join(",") : "";
+  const own = key(entry);
+  if (own === "") return [];
+  const twin = (Array.isArray(research?.conflicts) ? research.conflicts : []).find(
+    (c: any) => c && c !== entry && c.conflict_type === entry.conflict_type && key(c) === own,
+  );
+  if (!twin) return [];
+  return [
+    `this conflict restates '${twin.id}' (status '${twin.status}'): the same conflict_type ` +
+      `over the same competing_assertion_ids. Update '${twin.id}' instead of appending; to ` +
+      `reopen a resolved or moot conflict, update its status to 'unresolved'. Read it with ` +
+      `research_query section 'conflicts', conflictId '${twin.id}'.`,
+  ];
+}
+
 /** The `conflicts` fields a resolve can set. An update naming none of them
  *  leaves the resolution as it stood, so the kind rule does not re-judge it. */
 const RESOLUTION_FIELDS = [
@@ -8444,6 +8471,7 @@ function applyOne(
   if (section === "conflicts") {
     invariantErrors.push(...conflictInvariants(resultEntry));
     invariantErrors.push(...resolutionKindInvariants(resultEntry, op));
+    if (op.op === "append") invariantErrors.push(...duplicateConflictInvariants(resultEntry, research));
     // Place containment: on append, and on an update that (re)sets the pairing.
     // Scoped that way so an unrelated edit to a conflict written before this
     // rule existed is not refused — the freeze #2354 had to design around.

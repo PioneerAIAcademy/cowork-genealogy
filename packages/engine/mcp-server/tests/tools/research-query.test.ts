@@ -1204,3 +1204,53 @@ describe("research_query — plural ids", () => {
     expect(single.count).toBe(r.countById?.a_4);
   });
 });
+
+// --- conflicts: a conflict's own id ---------------------------------------
+
+describe("research_query — conflicts by their own id", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-conflict-id-"));
+    await writeFile(
+      join(dir, "research.json"),
+      JSON.stringify({
+        conflicts: [
+          { id: "c_001", conflict_type: "fact", status: "unresolved", competing_assertion_ids: ["a_002", "a_009"] },
+          { id: "c_002", conflict_type: "identity", status: "resolved", competing_assertion_ids: ["a_001"] },
+        ],
+      }),
+      "utf-8",
+    );
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("returns the one conflict conflictId names", async () => {
+    const r = await researchQuery({ projectPath: dir, section: "conflicts", conflictId: "c_002" });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.items.map((c: any) => c.id)).toEqual(["c_002"]);
+  });
+
+  // ut_conflict_resolution_008 (v4, run 2) read c_001 this way, got 0, and
+  // appended a duplicate of it.
+  it.each([["c_001"], [["a_002", "c_001"]]])("refuses a conflict id passed as assertionId (%j)", async (assertionId) => {
+    const r = await researchQuery({ projectPath: dir, section: "conflicts", assertionId } as any);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/'c_001' is a conflict id.*conflictId 'c_001'/);
+  });
+
+  it("still matches competing assertions by assertionId", async () => {
+    const r = await researchQuery({ projectPath: dir, section: "conflicts", assertionId: "a_009" });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.items.map((c: any) => c.id)).toEqual(["c_001"]);
+  });
+
+  it("is not a filter on other sections", async () => {
+    const r = await researchQuery({ projectPath: dir, section: "hypotheses", conflictId: "c_001" } as any);
+    expect(r.ok).toBe(false);
+  });
+});

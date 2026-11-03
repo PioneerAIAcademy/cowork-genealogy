@@ -95,7 +95,8 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `person_evidence` | `personId` | `person_id` | exact |
 | | `assertionId` | `assertion_id` | exact |
 | `rejected_links` | — | — | no filters; the whole section is small by construction |
-| `conflicts` | `assertionId` | `competing_assertion_ids` | contains |
+| `conflicts` | `conflictId` | `id` | exact |
+| | `assertionId` | `competing_assertion_ids` | contains |
 | | `questionId` | `blocks_question_ids`, OR a `competing_assertion_ids` entry whose assertion's `extracted_for_question_ids` contains the value — the link the completion gate derives; any status, so a resolved conflict (whose `blocks_question_ids` is empty) still answers for its question | via assertions |
 | | `status` | `status` | exact |
 | `hypotheses` | `questionId` | `related_question_ids` | contains |
@@ -270,6 +271,13 @@ recorded here rather than discovered.
 
 The field is `id`, never `assertion_id` — an assertion object has no such key,
 so that rule would be accepted and match nothing, ever.
+
+**A conflict is read by its own id with `conflictId`, and a `c_` id sent as
+`assertionId` on `conflicts` is refused.** That filter matches the competing
+assertions, so a conflict's own id there returned `count: 0`, which reads as "no
+such conflict". In `ut_conflict_resolution_008` (conflict-resolution `v4`, run
+2) the agent read `c_001` that way and appended a duplicate of it. The refusal
+names `conflictId`; an `a_` id there still matches as before.
 
 - **A second tool, not an extension of `project_context`.** `project_context`
   is one fixed, unfiltered projection for one consumer (the record-extractor's

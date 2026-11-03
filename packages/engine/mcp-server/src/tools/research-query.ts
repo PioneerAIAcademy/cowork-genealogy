@@ -116,6 +116,8 @@ export interface ResearchQueryInput {
   questionId?: string;
   personId?: string | string[];
   assertionId?: string | string[];
+  /** conflicts only: the conflict's own id. */
+  conflictId?: string;
   planItemId?: string;
   status?: string;
   targetId?: string;
@@ -185,6 +187,7 @@ type FilterKey =
   | "questionId"
   | "personId"
   | "assertionId"
+  | "conflictId"
   | "planItemId"
   | "status"
   | "targetId"
@@ -264,6 +267,7 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
     assertionId: { field: "assertion_id", mode: "exact" },
   },
   conflicts: {
+    conflictId: { field: "id", mode: "exact" },
     assertionId: { field: "competing_assertion_ids", mode: "contains" },
     // Any status. A resolved conflict has emptied `blocks_question_ids`, and a
     // caller asking what was settled for a question needs it still:
@@ -322,6 +326,7 @@ const FILTER_KEYS: FilterKey[] = [
   "questionId",
   "personId",
   "assertionId",
+  "conflictId",
   "planItemId",
   "status",
   "targetId",
@@ -531,6 +536,18 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       activeFilters.push(filter);
     }
 
+    // On `conflicts`, `assertionId` matches the competing assertions, so a
+    // conflict's own id there matched nothing and read as "no such conflict":
+    // ut_conflict_resolution_008 (v4, run 2) then appended a duplicate of c_001.
+    const conflictIdAsAssertion =
+      section === "conflicts" ? activeFilters.find((f) => f.key === "assertionId")?.values.find((v) => /^c_\d+$/.test(v)) : undefined;
+    if (conflictIdAsAssertion) {
+      throw new ResearchQueryError(
+        `'${conflictIdAsAssertion}' is a conflict id, and on section 'conflicts' assertionId matches ` +
+          `competing_assertion_ids. To read that conflict, pass conflictId '${conflictIdAsAssertion}'.`,
+      );
+    }
+
     if (section === EXTERNAL_COLLECTIONS_SECTION) {
       let doc;
       try {
@@ -712,7 +729,7 @@ export const researchQuerySchema = {
     "`person_evidence` (personId, assertionId — pass `orderBy: \"review\"` to order by " +
     "consequence and get `reviewReasons`), `rejected_links` (no filters; the pairs a " +
     "researcher ruled out, so a later step does not re-propose them), " +
-    "`conflicts` (assertionId — matches " +
+    "`conflicts` (conflictId — the conflict's own id, assertionId — matches " +
     "competing_assertion_ids, questionId — matches blocks_question_ids or a competing " +
     "assertion of that question, at any status; status), " +
     "`hypotheses` (questionId — matches " +
@@ -788,6 +805,7 @@ export const researchQuerySchema = {
           "(contains). hypotheses: matches supporting_assertion_ids OR " +
           "contradicting_assertion_ids (contains either).",
       },
+      conflictId: { type: "string", description: "conflicts: matches the conflict's own id (c_NNN)." },
       planItemId: { type: "string", description: "log: matches plan_item_id." },
       status: {
         type: "string",

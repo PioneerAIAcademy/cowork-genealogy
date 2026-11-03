@@ -2933,6 +2933,74 @@ describe("research_append (Phase 2)", () => {
     expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
   });
 
+  // The same conflict_type over the same competing assertions is the conflict
+  // already recorded: ut_conflict_resolution_008 appended a twin of an unresolved
+  // c_001, and ut_research_001 one of a resolved c_001.
+  describe("a conflict append that restates an existing conflict", () => {
+    const appendConflict = (entry: any) =>
+      researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry });
+
+    it.each([
+      ["unresolved", {}],
+      [
+        "resolved",
+        {
+          status: "resolved",
+          resolution_kind: "competitor",
+          preferred_assertion_id: "a_001",
+          independence_analysis: "Independent informants.",
+          weighing_analysis: "The earlier record is closer to the event.",
+          resolution_rationale: "a_001 is preferred over a_002.",
+        },
+      ],
+    ])("is refused when the existing one is %s, naming it", async (status, settled) => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), ...settled, id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), competing_assertion_ids: ["a_002", "a_001"] });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(new RegExp(`restates 'c_001' \\(status '${status}'\\).*conflictId 'c_001'`));
+      expect((await readResearch()).conflicts).toHaveLength(1); // nothing written
+    });
+
+    it("is refused when the same batch appends it twice", async () => {
+      await writeProject(phase2Research());
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "conflicts", op: "append", entry: validConflict() },
+          { section: "conflicts", op: "append", entry: validConflict() },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/restates 'c_001'/);
+    });
+
+    it("writes a conflict over a different set of assertions", async () => {
+      const research = phase2Research();
+      research.assertions.push(validAssertion("a_003"));
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), competing_assertion_ids: ["a_001", "a_002", "a_003"] });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a conflict of another type over the same assertions", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({
+        ...validConflict(),
+        conflict_type: "identity",
+        disputed_attribute: null,
+        identity_question: "Are the persons in a_001 and a_002 the same man?",
+      });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+  });
+
   it("rejects resolving a conflict whose analysis fields are whitespace only", async () => {
     const research = phase2Research();
     research.conflicts = [{ ...validConflict(), id: "c_001" }];
@@ -16756,8 +16824,10 @@ describe("research_append — a resolve names how it was settled (resolution_kin
     if (kind === "synthesis") expect(c.resolved_value).toBe("about 1844");
   });
 
+  // No conflict in the starting state: appending state()'s own conflict again
+  // would be refused as a restatement of it.
   it("accepts an append that lands resolved with a kind", async () => {
-    await writeProject(state());
+    await writeProject({ ...state(), conflicts: [] });
     const { id: _id, ...entry } = conflict({
       ...ANALYSES,
       status: "resolved",
@@ -16770,7 +16840,7 @@ describe("research_append — a resolve names how it was settled (resolution_kin
   });
 
   it("refuses an append that lands resolved with no kind", async () => {
-    await writeProject(state());
+    await writeProject({ ...state(), conflicts: [] });
     const { id: _id, ...entry } = conflict({
       ...ANALYSES,
       status: "resolved",
