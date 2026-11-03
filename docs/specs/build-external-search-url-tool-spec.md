@@ -914,7 +914,9 @@ means nothing is backed.
 **Enforced since the lead ruling of 2026-10-23.** Given a `projectPath` that is
 a project, the tool refuses a `baseUrl` naming a collection whose key is not
 stored for any place (§5); `research_append` refuses the same on a plan item's
-`collection_url`. The ruling replaced "measure first" (2026-09-24): ids are now
+`collection_url`, and `research_log_append` on an `external_site` entry's
+`urlGenerated` (decided 2026-10-28: Richard's call, the lead agreeing), except a url already in the log on an
+entry that opens no new hand-off, so a hand-off stays closable. The ruling replaced "measure first" (2026-09-24): ids are now
 traceable from the project files, so the check is an exact lookup.
 
 The eval check `report_collection_scoped_url_with_no_backed_collection_id`
@@ -953,8 +955,11 @@ for p in sorted(glob.glob("eval/runlogs/e2e/*/*.final-research.json")):
 EOF
 ```
 
-If it finds an unbacked id in a run recorded after the stored list landed, the
-next step is a `research_log_append` guard with that case as its test.
+That guard now exists (above), so the script is a regression check: an unbacked
+id in a run recorded after 2026-10-28 is either a write path the guards miss or a
+url the log already held, which the guard lets through so its hand-off can still
+be closed and its capture logged. On
+2026-10-28 one run carried the field, with one collection-scoped entry, backed.
 
 ## 10. Live checks for the eight launch-scope sites and the FindAGrave fix (2026-09-11)
 

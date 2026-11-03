@@ -33,7 +33,7 @@ Arguments, decided review-ready 2026-10-14:
 | `planItemId` | `null` |
 | `query` | `{surname, place, yearSpan}` from the delegation |
 | `outcome` | `"positive"`, or `"negative"` when no census year returned a household |
-| `resultsExamined` | the number of household rows |
+| `resultsExamined` | the number of household rows, added up from each year's count rather than counted by eye; before 1850 a year's count is the sum of `returned` over its pages |
 | `stagedResultsRef` | none |
 | `notes` | the whole table |
 
@@ -109,7 +109,7 @@ One row per household:
   United States" yields county "Ohio")
 - Head of household (`personName` where `role` is Principal)
 - Other members carrying the surname, with `birthDate` where the stub has one
-- Record ARK (`recordId`)
+- Record ARK (`recordArk`, the household's record, not one person's `recordId`)
 - Ruled out (empty by default; filled only with reasons the delegation carries)
 
 ## Schedule sectioning

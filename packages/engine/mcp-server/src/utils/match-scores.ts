@@ -58,11 +58,27 @@
 // more than one tree person -- the two parties of a relationship assertion.
 // Assertion alone would merge those.
 //
+// THE PERSONA ARM (#3552). A score is a property of (persona, tree person), so
+// once the assertion key misses, a score that compared the SAME persona against
+// the same tree person answers for every other fact of that persona. That is
+// not the party key above: it fires only when the ASSERTION carries a non-null
+// persona id, which research_append verified against the record at write time,
+// and it reads the persona the score COMPARED, never the one it was filed under.
+// Only entries marked `party_resolved` qualify. Older ones are not that: before
+// #3555 a multi-person record scored `persons[0]` while filing the asked-for id,
+// and before #3791 a `recordRole` call filed the assertion's own persona. The
+// entry's role must also be one the record gives that persona, which refuses an
+// entry whose persona and role disagree. The caller passes no persona for an id
+// the record gives to several roles, since such an id names no single party,
+// nor for an assertion that names a second person, whose link may be about that
+// other party.
+//
 // Spec: docs/specs/same-person-tool-spec.md ("The recorded score").
 
 import { createHash } from "node:crypto";
 import { getProjectStore } from "../store/project-store.js";
 import { toArk } from "./ark.js";
+import type { MatcherBackend } from "../types/matcher.js";
 
 /** The dot-directory attestations live in, relative to the project root. */
 export const SCORES_SUBDIR = "results/.scores";
@@ -76,11 +92,12 @@ export interface RecordedMatchScore {
   record_persona_id: string | null;
   record_role: string | null;
   tree_person_id: string;
-  /** 0-1 from FamilySearch. The number a `match_score` is checked against. */
+  /** 0-1 from the matcher named in `scorer`. The number a `match_score` is checked against. */
   score: number;
-  /** 1-5 bucket; absent when the API treats the pair as a non-match. */
-  confidence?: number;
-  matched: boolean;
+  /** Which matcher computed `score`: config.json's `matcher` at the time. */
+  scorer: MatcherBackend;
+  /** The matcher service's model version; null for FamilySearch's matcher, which reports none. */
+  model: string | null;
   /** The assertion the call was made for. Half the map key, with
    *  `tree_person_id` -- see the header. Null only on the explicit
    *  two-document arm, which records nothing. */
@@ -89,6 +106,16 @@ export interface RecordedMatchScore {
    *  persona from a projected one without re-deriving it. */
   record_source: "record_read" | "projection";
   computed: string;
+  /** `record_persona_id` is the persona this score compared. Written by
+   *  `same_person` since #3552; an entry without it answers only its own
+   *  assertion (see THE PERSONA ARM in the header). */
+  party_resolved?: true;
+}
+
+/** The persona an assertion is about, and the roles its record gives it. */
+export interface ScoredPersona {
+  personaId: string;
+  roles: ReadonlySet<string>;
 }
 
 /** The persisted per-record envelope. */
@@ -162,25 +189,41 @@ export async function readMatchScores(
 
 /**
  * The recorded score for one pairing: an exact lookup on
- * `(assertion_id, tree_person_id)`.
+ * `(assertion_id, tree_person_id)`, then, when `persona` is given, a score that
+ * compared that persona with that tree person (THE PERSONA ARM, header).
  *
- * There is deliberately no looser arm. The persona-id/role arms this used to
- * carry could not see a score written by the fetched route, and the
- * tree-person-only arm that covered for them returned ANY entry for that person
- * -- which is ADR-0009 constraint 3 verbatim: a second persona of an
- * already-linked record attaching unscored. Both failure modes are removed by
- * keying on the pair both sides actually hold.
+ * The persona-id/role arms this used to carry could not see a score written by
+ * the fetched route, and the tree-person-only arm that covered for them
+ * returned ANY entry for that person -- ADR-0009 constraint 3 verbatim. The
+ * persona arm is neither: it needs the persona to match as well as the tree
+ * person, so a second persona of a linked record still needs its own score.
  */
 export function findRecordedScore(
   file: MatchScoreFile | null,
   assertionId: string | null,
   treePersonId: string,
+  persona?: ScoredPersona,
 ): RecordedMatchScore | null {
   // Defensive on the same shape the reader above rejects, because callers may
   // hand this a file object they built themselves rather than one it returned.
   if (!file || file.scores === null || typeof file.scores !== "object") return null;
-  if (typeof assertionId !== "string" || assertionId === "") return null;
-  return file.scores[scoreKey(assertionId, treePersonId)] ?? null;
+  if (typeof assertionId === "string" && assertionId !== "") {
+    const exact = file.scores[scoreKey(assertionId, treePersonId)];
+    if (exact) return exact;
+  }
+  if (!persona || persona.personaId === "") return null;
+  for (const s of Object.values(file.scores)) {
+    if (
+      s?.party_resolved === true &&
+      s.record_persona_id === persona.personaId &&
+      s.tree_person_id === treePersonId &&
+      typeof s.record_role === "string" &&
+      persona.roles.has(s.record_role)
+    ) {
+      return s;
+    }
+  }
+  return null;
 }
 
 /**

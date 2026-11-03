@@ -1,0 +1,3273 @@
+{
+  "rank": {
+    "requests": [
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "r1p",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Christening",
+                          "date": {
+                            "original": "13 Jan 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "r1f",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#r1f"
+                      },
+                      "person2": {
+                        "resource": "#r1p"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#r1p"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S1"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "http://gedcomx.org/Residence",
+                          "date": {
+                            "original": "1790"
+                          },
+                          "place": {
+                            "original": "Mansfeld, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S9"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 January 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#I1"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "r2p",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Georg Hufenreiter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreiter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1771"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#r2p"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S1"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "http://gedcomx.org/Residence",
+                          "date": {
+                            "original": "1790"
+                          },
+                          "place": {
+                            "original": "Mansfeld, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S9"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 January 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#I1"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "response": {
+      "subjectId": "I1",
+      "scoredCount": 3,
+      "returnedCount": 3,
+      "scoringErrors": 0,
+      "scoreLogError": null,
+      "matches": [
+        {
+          "matchRank": 1,
+          "searchRank": 1,
+          "recordId": "ark:/61903/1:1:ROW1-AAA",
+          "matchScore": 0.9,
+          "primaryId": "r1p",
+          "personName": "Johann Georg Hufenreuter",
+          "birthDate": "1758",
+          "collectionTitle": "Germany, Births and Baptisms",
+          "candidateFactCount": 2
+        },
+        {
+          "matchRank": 2,
+          "searchRank": 2,
+          "recordId": "ark:/61903/1:1:ROW2-BBB",
+          "matchScore": 0.9,
+          "primaryId": "r2p",
+          "personName": "Georg Hufenreiter",
+          "birthDate": "1771",
+          "candidateFactCount": 1,
+          "birthYearConflict": true,
+          "birthYearGap": 13
+        },
+        {
+          "matchRank": 3,
+          "searchRank": 3,
+          "recordId": "ark:/61903/1:1:ROW3-CCC",
+          "matchScore": null,
+          "personName": "J. Hufenreuter",
+          "candidateFactCount": 0
+        }
+      ],
+      "subjectEnrichedFacts": 1
+    },
+    "scoreLog": [
+      {
+        "subject_id": "I1",
+        "staged_results_ref": "<staged>",
+        "search_rank": 1,
+        "match_rank": 1,
+        "record_id": "ark:/61903/1:1:ROW1-AAA",
+        "person_name": "Johann Georg Hufenreuter",
+        "birth_date": "1758",
+        "death_date": null,
+        "collection_title": "Germany, Births and Baptisms",
+        "match_score": 0.9
+      },
+      {
+        "subject_id": "I1",
+        "staged_results_ref": "<staged>",
+        "search_rank": 2,
+        "match_rank": 2,
+        "record_id": "ark:/61903/1:1:ROW2-BBB",
+        "person_name": "Georg Hufenreiter",
+        "birth_date": "1771",
+        "death_date": null,
+        "collection_title": null,
+        "match_score": 0.9
+      },
+      {
+        "subject_id": "I1",
+        "staged_results_ref": "<staged>",
+        "search_rank": 3,
+        "match_rank": 3,
+        "record_id": "ark:/61903/1:1:ROW3-CCC",
+        "person_name": "J. Hufenreuter",
+        "birth_date": null,
+        "death_date": null,
+        "collection_title": null,
+        "match_score": null
+      }
+    ]
+  },
+  "rankRealNegative": {
+    "requests": [
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "r1p",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Christening",
+                          "date": {
+                            "original": "13 Jan 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "r1f",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#r1f"
+                      },
+                      "person2": {
+                        "resource": "#r1p"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#r1p"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S1"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "http://gedcomx.org/Residence",
+                          "date": {
+                            "original": "1790"
+                          },
+                          "place": {
+                            "original": "Mansfeld, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S9"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 January 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#I1"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "r2p",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Georg Hufenreiter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreiter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1771"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#r2p"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S1"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "http://gedcomx.org/Residence",
+                          "date": {
+                            "original": "1790"
+                          },
+                          "place": {
+                            "original": "Mansfeld, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S9"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 January 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#I1"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "response": {
+      "subjectId": "I1",
+      "scoredCount": 3,
+      "returnedCount": 3,
+      "scoringErrors": 0,
+      "scoreLogError": null,
+      "matches": [
+        {
+          "matchRank": 1,
+          "searchRank": 1,
+          "recordId": "ark:/61903/1:1:ROW1-AAA",
+          "matchScore": 0.005,
+          "primaryId": "r1p",
+          "personName": "Johann Georg Hufenreuter",
+          "birthDate": "1758",
+          "collectionTitle": "Germany, Births and Baptisms",
+          "candidateFactCount": 2
+        },
+        {
+          "matchRank": 2,
+          "searchRank": 2,
+          "recordId": "ark:/61903/1:1:ROW2-BBB",
+          "matchScore": 0.005,
+          "primaryId": "r2p",
+          "personName": "Georg Hufenreiter",
+          "birthDate": "1771",
+          "candidateFactCount": 1,
+          "birthYearConflict": true,
+          "birthYearGap": 13
+        },
+        {
+          "matchRank": 3,
+          "searchRank": 3,
+          "recordId": "ark:/61903/1:1:ROW3-CCC",
+          "matchScore": null,
+          "personName": "J. Hufenreuter",
+          "candidateFactCount": 0
+        }
+      ],
+      "subjectEnrichedFacts": 1,
+      "subjectResolvable": false,
+      "diagnostic": "Subject 'I1' is scoreable (3 dated/placed fact(s)), but no candidate in this pool scored above 0.01. Treat that as a real negative for this query — page deeper (offset) or narrow the query; do not hand-triage the stubs."
+    },
+    "scoreLog": [
+      {
+        "subject_id": "I1",
+        "staged_results_ref": "<staged>",
+        "search_rank": 1,
+        "match_rank": 1,
+        "record_id": "ark:/61903/1:1:ROW1-AAA",
+        "person_name": "Johann Georg Hufenreuter",
+        "birth_date": "1758",
+        "death_date": null,
+        "collection_title": "Germany, Births and Baptisms",
+        "match_score": 0.005
+      },
+      {
+        "subject_id": "I1",
+        "staged_results_ref": "<staged>",
+        "search_rank": 2,
+        "match_rank": 2,
+        "record_id": "ark:/61903/1:1:ROW2-BBB",
+        "person_name": "Georg Hufenreiter",
+        "birth_date": "1771",
+        "death_date": null,
+        "collection_title": null,
+        "match_score": 0.005
+      },
+      {
+        "subject_id": "I1",
+        "staged_results_ref": "<staged>",
+        "search_rank": 3,
+        "match_rank": 3,
+        "record_id": "ark:/61903/1:1:ROW3-CCC",
+        "person_name": "J. Hufenreuter",
+        "birth_date": null,
+        "death_date": null,
+        "collection_title": null,
+        "match_score": null
+      }
+    ]
+  },
+  "rankThinSubject": {
+    "requests": [
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "r1p",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Christening",
+                          "date": {
+                            "original": "13 Jan 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "r1f",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#r1f"
+                      },
+                      "person2": {
+                        "resource": "#r1p"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#r1p"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "I7",
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Wilhelm Kunze",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Wilhelm"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Kunze"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#I7"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "r2p",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Georg Hufenreiter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreiter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1771"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#r2p"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "I7",
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Wilhelm Kunze",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Wilhelm"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Kunze"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#I7"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "response": {
+      "subjectId": "I7",
+      "scoredCount": 3,
+      "returnedCount": 0,
+      "scoringErrors": 0,
+      "scoreLogError": null,
+      "subjectTooThin": true,
+      "matches": [],
+      "subjectResolvable": false,
+      "diagnostic": "Subject 'I7' carries no fact with a date or place, so FamilySearch's matcher cannot discriminate it from any same-named person and every candidate scored at or below 0.01. The ranking would be search order wearing match scores, so it is withheld. Give the subject at least one dated or placed fact — record it on the tree person, or extract and link an assertion via person_evidence — then rank again. Meanwhile, narrow the search (collection, place, date range) rather than triaging this pool by hand."
+    },
+    "scoreLog": [
+      {
+        "subject_id": "I7",
+        "staged_results_ref": "<staged>",
+        "search_rank": 1,
+        "match_rank": 1,
+        "record_id": "ark:/61903/1:1:ROW1-AAA",
+        "person_name": "Johann Georg Hufenreuter",
+        "birth_date": "1758",
+        "death_date": null,
+        "collection_title": "Germany, Births and Baptisms",
+        "match_score": 0.005
+      },
+      {
+        "subject_id": "I7",
+        "staged_results_ref": "<staged>",
+        "search_rank": 2,
+        "match_rank": 2,
+        "record_id": "ark:/61903/1:1:ROW2-BBB",
+        "person_name": "Georg Hufenreiter",
+        "birth_date": "1771",
+        "death_date": null,
+        "collection_title": null,
+        "match_score": 0.005
+      },
+      {
+        "subject_id": "I7",
+        "staged_results_ref": "<staged>",
+        "search_rank": 3,
+        "match_rank": 3,
+        "record_id": "ark:/61903/1:1:ROW3-CCC",
+        "person_name": "J. Hufenreuter",
+        "birth_date": null,
+        "death_date": null,
+        "collection_title": null,
+        "match_score": null
+      }
+    ]
+  },
+  "projectArm": {
+    "requests": [
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "P1",
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:PRTY-9ZK"
+                        ]
+                      },
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 Jan 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "P2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "P3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Christening",
+                          "date": {
+                            "original": "3 Mar 1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P2"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "titles": [
+                        {
+                          "value": "Sachsen, Kirchenbuchduplikat, 1750-1800"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "match-anchor",
+                      "about": "#P1"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "I1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S1"
+                            }
+                          ]
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "I5",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1730"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1762"
+                          },
+                          "place": {
+                            "original": "Wippra, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I2"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I5"
+                      },
+                      "person2": {
+                        "resource": "#I1"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#I1"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "response": {
+      "score": 0.9,
+      "recordSource": "record_read",
+      "recorded": true,
+      "recordPersona": {
+        "id": "P1",
+        "name": "Johann Georg Hufenreuter",
+        "role": "principal"
+      },
+      "treePerson": {
+        "id": "I1",
+        "name": "Johann Georg Hufenreuter"
+      }
+    },
+    "scoreLog": [],
+    "attestation": [
+      {
+        "record_id": "https://www.familysearch.org/ark:/61903/1:1:PRTY-9ZK",
+        "scores": {
+          "a_001|I1": {
+            "record_id": "https://www.familysearch.org/ark:/61903/1:1:PRTY-9ZK",
+            "record_persona_id": "P1",
+            "record_role": "principal",
+            "tree_person_id": "I1",
+            "score": 0.9,
+            "assertion_id": "a_001",
+            "record_source": "record_read",
+            "party_resolved": true
+          }
+        }
+      }
+    ]
+  },
+  "projectRelatives": {
+    "requests": [
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "P2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "P1",
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:PRTY-9ZK"
+                        ]
+                      },
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 Jan 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "P3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Christening",
+                          "date": {
+                            "original": "3 Mar 1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P2"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "titles": [
+                        {
+                          "value": "Sachsen, Kirchenbuchduplikat, 1750-1800"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "match-anchor",
+                      "about": "#P2"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "I2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1762"
+                          },
+                          "place": {
+                            "original": "Wippra, Sachsen, Preussen"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "I1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I5",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1730"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I2"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I5"
+                      },
+                      "person2": {
+                        "resource": "#I1"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#I2"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "P3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Christening",
+                          "date": {
+                            "original": "3 Mar 1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "P1",
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:PRTY-9ZK"
+                        ]
+                      },
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 Jan 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "P2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P2"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "titles": [
+                        {
+                          "value": "Sachsen, Kirchenbuchduplikat, 1750-1800"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "match-anchor",
+                      "about": "#P3"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "I3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "I1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          },
+                          "sources": [
+                            {
+                              "description": "#S1"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I5",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1730"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "I2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "preferred": true,
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "1762"
+                          },
+                          "place": {
+                            "original": "Wippra, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I1"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I2"
+                      },
+                      "person2": {
+                        "resource": "#I3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#I5"
+                      },
+                      "person2": {
+                        "resource": "#I1"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#I3"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "response": {
+      "matchRelatives": true,
+      "matches": [
+        {
+          "role": "spouse",
+          "targetId": "P2",
+          "candidateId": "I2",
+          "score": 0.9,
+          "preScore": 0.8
+        },
+        {
+          "role": "child",
+          "targetId": "P3",
+          "candidateId": "I3",
+          "score": 0.9,
+          "preScore": 1
+        }
+      ]
+    },
+    "scoreLog": []
+  },
+  "explicitArm": {
+    "requests": [
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "P1",
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:PRTY-9ZK"
+                        ]
+                      },
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 Jan 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "P2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "P3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Christening",
+                          "date": {
+                            "original": "3 Mar 1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P2"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "titles": [
+                        {
+                          "value": "Sachsen, Kirchenbuchduplikat, 1750-1800"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "match-anchor",
+                      "about": "#P1"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "Q1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Death",
+                          "date": {
+                            "original": "1821"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "Q2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "id": "Q3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#Q1"
+                      },
+                      "person2": {
+                        "resource": "#Q2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#Q1"
+                      },
+                      "person2": {
+                        "resource": "#Q3"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#Q1"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "response": {
+      "score": 0.9,
+      "queryArk": "ark:/61903/4:1:KGS8-LY1",
+      "candidateArk": "ark:/61903/4:1:KCWM-J9H",
+      "apiTitle": "Matches for ark:/61903/4:1:KGS8-LY1",
+      "updated": "2026-10-30T00:00:00.000Z"
+    },
+    "scoreLog": []
+  },
+  "explicitRelatives": {
+    "requests": [
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "P2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "P1",
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:PRTY-9ZK"
+                        ]
+                      },
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 Jan 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "P3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Christening",
+                          "date": {
+                            "original": "3 Mar 1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P2"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "titles": [
+                        {
+                          "value": "Sachsen, Kirchenbuchduplikat, 1750-1800"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "match-anchor",
+                      "about": "#P2"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "Q2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "Q1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Death",
+                          "date": {
+                            "original": "1821"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "Q3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#Q1"
+                      },
+                      "person2": {
+                        "resource": "#Q2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#Q1"
+                      },
+                      "person2": {
+                        "resource": "#Q3"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#Q2"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "url": "https://www.familysearch.org/service/search/record/collections/match/matchTwoExamples",
+        "method": "POST",
+        "headers": {
+          "accept": "application/json",
+          "authorization": "Bearer test-token",
+          "content-type": "application/json",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+        },
+        "body": {
+          "entries": [
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "P3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Christening",
+                          "date": {
+                            "original": "3 Mar 1785"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "P1",
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:PRTY-9ZK"
+                        ]
+                      },
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Johann Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Johann Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Birth",
+                          "date": {
+                            "original": "11 Jan 1758"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "P2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Maria Schmidt",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna Maria"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Schmidt"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P1"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#P2"
+                      },
+                      "person2": {
+                        "resource": "#P3"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "titles": [
+                        {
+                          "value": "Sachsen, Kirchenbuchduplikat, 1750-1800"
+                        }
+                      ]
+                    },
+                    {
+                      "id": "match-anchor",
+                      "about": "#P3"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "content": {
+                "gedcomx": {
+                  "persons": [
+                    {
+                      "id": "Q3",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Christoph Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Christoph"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "identifiers": {
+                        "http://gedcomx.org/Persistent": [
+                          "ark:/61903/1:1:TTTT-TTT"
+                        ]
+                      }
+                    },
+                    {
+                      "id": "Q1",
+                      "gender": {
+                        "type": "http://gedcomx.org/Male"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Georg Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Georg"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ],
+                      "facts": [
+                        {
+                          "type": "http://gedcomx.org/Death",
+                          "date": {
+                            "original": "1821"
+                          },
+                          "place": {
+                            "original": "Biesenrode, Sachsen, Preussen"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "Q2",
+                      "gender": {
+                        "type": "http://gedcomx.org/Female"
+                      },
+                      "names": [
+                        {
+                          "nameForms": [
+                            {
+                              "fullText": "Anna Hufenreuter",
+                              "parts": [
+                                {
+                                  "type": "http://gedcomx.org/Given",
+                                  "value": "Anna"
+                                },
+                                {
+                                  "type": "http://gedcomx.org/Surname",
+                                  "value": "Hufenreuter"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "relationships": [
+                    {
+                      "type": "http://gedcomx.org/Couple",
+                      "person1": {
+                        "resource": "#Q1"
+                      },
+                      "person2": {
+                        "resource": "#Q2"
+                      }
+                    },
+                    {
+                      "type": "http://gedcomx.org/ParentChild",
+                      "person1": {
+                        "resource": "#Q1"
+                      },
+                      "person2": {
+                        "resource": "#Q3"
+                      }
+                    }
+                  ],
+                  "sourceDescriptions": [
+                    {
+                      "id": "match-anchor",
+                      "about": "#Q3"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "response": {
+      "matchRelatives": true,
+      "matches": [
+        {
+          "role": "spouse",
+          "targetId": "P2",
+          "candidateId": "Q2",
+          "score": 0.9,
+          "preScore": 0.3666666666666667
+        },
+        {
+          "role": "child",
+          "targetId": "P3",
+          "candidateId": "Q3",
+          "score": 0.9,
+          "preScore": 0.6499999999999999
+        }
+      ]
+    },
+    "scoreLog": []
+  }
+}

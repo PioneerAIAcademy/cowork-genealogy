@@ -9,8 +9,11 @@ vi.mock("../../src/auth/config.js", () => ({
   getWikiApiUrl: mockGetWikiApiUrl,
 }));
 
-import { wikiReadTool } from "../../src/tools/wiki-read.js";
+import { wikiReadTool, wikiReadSchema } from "../../src/tools/wiki-read.js";
+import { WIKI_PAGE_MAX_CHARS } from "../../src/types/wikiPage.js";
+import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
+import { SHAPES, escapedBody, headingPage, oneLinePage, walkParts } from "../helpers/wiki-pages.js";
 
 const API_BASE = "http://localhost:8000";
 const TEST_URL = "https://www.familysearch.org/en/wiki/Portugal_Genealogy";
@@ -145,5 +148,172 @@ describe("wikiReadTool", () => {
       /wiki-query-api MCP is not configured/
     );
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
+// ── paging ───────────────────────────────────────────────────────────────────
+
+/** The server answers every call with this page, as the real one does. */
+function servePage(content: string | undefined): void {
+  mockFetch.mockReset();
+  mockFetch.mockImplementation(async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({ title: "Portugal_Genealogy", content, source_url: TEST_URL }),
+  }));
+}
+
+const read = (offset?: number) =>
+  wikiReadTool({ url: TEST_URL, ...(offset === undefined ? {} : { offset }) }, LOCAL);
+
+describe.each(SHAPES)("wikiReadTool, a page of %s", (_label, make) => {
+  const page = make();
+  beforeEach(() => servePage(page));
+
+  it("is a page that would have spilled: its whole answer is over the CLI limit", () => {
+    expect(JSON.stringify({ url: TEST_URL, content: page }).length).toBeGreaterThan(CLI_SPILL_CHARS);
+  });
+
+  it("(a) every part serializes under the CLI spill line, with content inside the cap", async () => {
+    const parts = await walkParts(read);
+    expect(parts.length).toBeGreaterThan(1);
+    for (const part of parts) {
+      expect(JSON.stringify(part).length).toBeLessThan(CLI_SPILL_CHARS);
+      expect(escapedBody(part.content)).toBeLessThanOrEqual(WIKI_PAGE_MAX_CHARS);
+    }
+  });
+
+  it("(b) joining content across the nextOffset chain rebuilds the page exactly", async () => {
+    const parts = await walkParts(read);
+    expect(parts.map((p) => p.content).join("")).toBe(page);
+    let at = 0;
+    for (const part of parts) {
+      expect(part.offset ?? 0).toBe(at);
+      at += part.content.length;
+    }
+    expect(parts[0].totalChars).toBe(page.length);
+  });
+
+  it("(c) the chain ends: the last part says truncated: false and carries no nextOffset", async () => {
+    const parts = await walkParts(read);
+    const last = parts[parts.length - 1];
+    expect(last.truncated).toBe(false);
+    expect("nextOffset" in last).toBe(false);
+    for (const part of parts.slice(0, -1)) {
+      expect(part.truncated).toBe(true);
+      expect(part.nextOffset).toBe((part.offset ?? 0) + part.content.length);
+    }
+  });
+
+  it("fetches the page again for each part, from the same address", async () => {
+    const parts = await walkParts(read);
+    expect(mockFetch).toHaveBeenCalledTimes(parts.length);
+    for (const call of mockFetch.mock.calls) expect(call[0]).toBe(`${API_BASE}/page/Portugal_Genealogy`);
+  });
+});
+
+describe("wikiReadTool, where the cut falls", () => {
+  it("cuts a county-style page at a heading", async () => {
+    servePage(headingPage());
+    const [first, second] = await walkParts(read);
+    expect(first.content.endsWith("\n")).toBe(true);
+    expect(second.content.startsWith("## Heading ")).toBe(true);
+    // the cut moved back at most half a part: the part is still more than half full
+    expect(first.content.length).toBeGreaterThan(WIKI_PAGE_MAX_CHARS / 2);
+  });
+
+  it("cuts a page that is one huge row in the middle of the row, as nothing better exists", async () => {
+    servePage(oneLinePage());
+    const [first, second] = await walkParts(read);
+    expect(first.content.endsWith("\n")).toBe(false);
+    expect(second.content.startsWith("#")).toBe(false);
+    // no wasted room: the first part is as full as the escape bound allows
+    expect(escapedBody(first.content)).toBeGreaterThan(WIKI_PAGE_MAX_CHARS - 10);
+  });
+});
+
+describe("wikiReadTool, a page under the cap", () => {
+  it("(d) returns exactly today's object for a 9,000-character page, with no extra keys", async () => {
+    const head = "# Small page\n";
+    const content = head + "x".repeat(9_000 - head.length);
+    expect(content.length).toBe(9_000);
+    servePage(content);
+    const result = await read();
+    expect(result).toStrictEqual({ url: TEST_URL, content });
+    expect(Object.keys(result)).toEqual(["url", "content"]);
+  });
+
+  it("returns a page whose escaped body is exactly the cap whole, and pages one unit more", async () => {
+    servePage("x".repeat(WIKI_PAGE_MAX_CHARS));
+    expect(Object.keys(await read())).toEqual(["url", "content"]);
+    servePage("x".repeat(WIKI_PAGE_MAX_CHARS + 1));
+    const parts = await walkParts(read);
+    expect(parts.map((p) => p.content.length)).toEqual([WIKI_PAGE_MAX_CHARS, 1]);
+  });
+
+  it("pages a page that is under the cap in length but over it once its line breaks are escaped", async () => {
+    const content = "a\n".repeat(WIKI_PAGE_MAX_CHARS / 2); // 40,000 characters, 60,000 escaped
+    expect(content.length).toBe(WIKI_PAGE_MAX_CHARS);
+    servePage(content);
+    const parts = await walkParts(read);
+    expect(parts.length).toBeGreaterThan(1);
+    expect(parts.map((p) => p.content).join("")).toBe(content);
+  });
+
+  it("adds the paging fields, and only those, when offset is passed on a page that fits", async () => {
+    servePage("# Small");
+    const result = await read(0);
+    expect(result).toStrictEqual({ url: TEST_URL, content: "# Small", totalChars: 7, offset: 0, truncated: false });
+  });
+
+  it("starts at the offset it is given", async () => {
+    const page = headingPage();
+    servePage(page);
+    const part = await read(5_000);
+    expect(part.offset).toBe(5_000);
+    expect(part.content).toBe(page.slice(5_000, 5_000 + part.content.length));
+  });
+
+  it("reads an offset past the end as an empty part that is not truncated", async () => {
+    servePage("# Small");
+    expect(await read(7)).toStrictEqual({ url: TEST_URL, content: "", totalChars: 7, offset: 7, truncated: false });
+    expect(await read(1_000_000)).toStrictEqual({ url: TEST_URL, content: "", totalChars: 7, offset: 7, truncated: false });
+  });
+
+  it("passes a body with no text through as it always did", async () => {
+    servePage(undefined);
+    expect(await read()).toStrictEqual({ url: TEST_URL, content: undefined });
+  });
+});
+
+describe("wikiReadTool, offset validation", () => {
+  it.each([
+    ["a string", "5", '"5"'],
+    ["a negative number", -1, "-1"],
+    ["a fraction", 1.5, "1.5"],
+    ["NaN", Number.NaN, "NaN"],
+    ["Infinity", Number.POSITIVE_INFINITY, "Infinity"],
+    ["null", null, "null"],
+  ])("(e) rejects an offset of %s with the requireWholeNumber error, before any request", async (_label, value, got) => {
+    servePage("# Small");
+    await expect(wikiReadTool({ url: TEST_URL, offset: value as unknown as number }, LOCAL)).rejects.toThrow(
+      `offset must be a whole number ≥ 0 (got ${got}). Send it as a number, not a string.`,
+    );
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(mockGetWikiApiUrl).not.toHaveBeenCalled();
+  });
+});
+
+describe("wikiReadSchema, paging", () => {
+  it("declares offset as a number and still requires only url", () => {
+    expect(wikiReadSchema.inputSchema.properties.offset.type).toBe("number");
+    expect(wikiReadSchema.inputSchema.required).toEqual(["url"]);
+  });
+
+  it("tells the agent how to continue", () => {
+    expect(wikiReadSchema.description).toContain(
+      "when `truncated` is true, call again with `offset: nextOffset` until it is false",
+    );
+    expect(wikiReadSchema.inputSchema.properties.offset.description).toContain("`nextOffset`");
   });
 });

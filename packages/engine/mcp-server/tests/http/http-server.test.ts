@@ -68,9 +68,9 @@ const clients: Client[] = [];
 // Every HTTP exchange the SDK client made, so item 1 can show the 405 arrived.
 const exchanges: Array<{ method: string; path: string; status: number }> = [];
 
-async function connect(headers?: Record<string, string>): Promise<Client> {
+async function connect(headers?: Record<string, string>, url: string = base): Promise<Client> {
   const client = new Client({ name: "http-server-test", version: "0" });
-  const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`), {
+  const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`), {
     requestInit: headers ? { headers } : undefined,
     fetch: async (url, init) => {
       const res = await fetch(url, init);
@@ -215,6 +215,33 @@ describe("tool server over Streamable HTTP", () => {
     // directories item 2 wrote.
     const dirs = (await readdir(root)).filter((d) => d !== "__missing__");
     expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
+  });
+
+  it("2d. baseConfig's public URL reaches project_create and project_context as links built from the header's project id", async () => {
+    const linked = await startHttpServer({
+      host: "127.0.0.1",
+      port: 0,
+      baseConfig: { webPublicUrl: "https://beta.example/", uploadsEnabled: true },
+      bindStore,
+      authorize,
+    });
+    const address = linked.address();
+    if (!address || typeof address !== "object") throw new Error("server did not bind a port");
+    try {
+      const id = `linked-${randomUUID()}`;
+      const client = await connect({ [PROJECT_HEADER]: id }, `http://127.0.0.1:${address.port}`);
+      const created = JSON.parse(textOf(await client.callTool({ name: "project_create", arguments: createArgs("Linked") })));
+      expect(created.ok, JSON.stringify(created)).toBe(true);
+      expect(created.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      const ctx = JSON.parse(
+        textOf(await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } })),
+      );
+      expect(ctx.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      expect(ctx.uploadUrl).toBe(`https://beta.example/#/p/${id}/upload`);
+    } finally {
+      linked.closeAllConnections();
+      await new Promise<void>((resolve) => linked.close(() => resolve()));
+    }
   });
 
   it("2c. a malformed project id is a 400 before any tool runs", async () => {
@@ -586,9 +613,11 @@ describe("tool server over Streamable HTTP", () => {
 
     const missing = await fetch(`${base}/nope`);
     expect(missing.status).toBe(404);
+    const livePost = await fetch(`${base}/livez`, { method: "POST" });
+    expect(livePost.status).toBe(404);
   });
 
-  it("5b. with checkReady, /healthz answers 200 or 503 from the report, and 503 (never 500) on a probe that rejects or never settles", async () => {
+  it("5b. with checkReady, /healthz answers 200 or 503 from the report, and 503 (never 500) on a probe that rejects or never settles; /livez is 200 throughout and never probes", async () => {
     let probe: () => Promise<ReadyReport> = async () => ({ ok: true, checks: {} });
     const ready = await startHttpServer({
       host: "127.0.0.1",
@@ -638,9 +667,25 @@ describe("tool server over Streamable HTTP", () => {
       expect(rejected.status).toBe(503);
       expect(rejected.body).toEqual({ ok: false, tools: allToolSchemas.length });
 
+      // /livez never consults checkReady: 200 while the probe rejects, and while it hangs below.
+      let probed = 0;
+      const failingProbe = probe;
+      probe = () => {
+        probed += 1;
+        return failingProbe();
+      };
+      const live = await fetch(`${url}/livez`);
+      expect(live.status).toBe(200);
+      expect(await live.json()).toEqual({ ok: true, tools: allToolSchemas.length });
+      expect(probed).toBe(0);
+
       probe = () => new Promise<ReadyReport>(() => {});
       const t0 = Date.now();
-      const [hung, other] = await Promise.all([healthz(), fetch(`${url}/nope`)]);
+      const [hung, other, liveWhileHung] = await Promise.all([
+        healthz(),
+        fetch(`${url}/nope`),
+        fetch(`${url}/livez`),
+      ]);
       // Answered at all is the property: a probe the deadline did not cut never answers
       // and hits the 10 s test timeout. Under a parallel suite the event loop lags close
       // to 3 s past the 2 s deadline, so the bound sits between the two.
@@ -649,6 +694,7 @@ describe("tool server over Streamable HTTP", () => {
       expect(hung.body).toEqual({ ok: false, tools: allToolSchemas.length });
       // The other routes are not held behind the probe.
       expect(other.status).toBe(404);
+      expect(liveWhileHung.status).toBe(200);
     } finally {
       ready.closeAllConnections();
       await new Promise<void>((resolve) => ready.close(() => resolve()));

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import FocusTrap from 'focus-trap-react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
+import ErrorBoundary from '../ErrorBoundary'
 import type { RecordSearchResult, SidecarFile, SidecarTool } from '../../lib/schema'
 import SidecarResultCard, {
   ROUTED_TOOLS,
@@ -37,10 +38,14 @@ function SummaryStrip({
 
 function LoadedBody({
   payload,
+  logId,
+  resetKey,
   focusPersonaId,
   bodyRef
 }: {
   payload: SidecarFile
+  logId: string
+  resetKey: string
   focusPersonaId?: string
   bodyRef: React.Ref<HTMLDivElement>
 }): React.JSX.Element {
@@ -87,13 +92,26 @@ function LoadedBody({
   return (
     <div ref={bodyRef} className={styles.body}>
       {results.map((r, idx) => (
-        <SidecarResultCard
+        <ErrorBoundary
           key={idx}
-          result={r}
-          tool={payload.tool}
-          focusPersonaId={focusPersonaId}
-          defaultExpanded={idx === defaultExpandedIndex}
-        />
+          resetKey={resetKey}
+          label="this result"
+          message={
+            <>
+              This result in <code>{`results/${logId}.json`}</code> could not be displayed.{' '}
+              {results.length > 1
+                ? 'The other results and the Close button still work.'
+                : 'The Close button still works.'}
+            </>
+          }
+        >
+          <SidecarResultCard
+            result={r}
+            tool={payload.tool}
+            focusPersonaId={focusPersonaId}
+            defaultExpanded={idx === defaultExpandedIndex}
+          />
+        </ErrorBoundary>
       ))}
     </div>
   )
@@ -208,14 +226,28 @@ export default function SidecarPanel(): React.JSX.Element | null {
           )}
 
           {sidecar.status === 'loaded' && (
-            <>
+            // Inside the drawer, below the header, so a payload that breaks the
+            // body still leaves the Close button and Escape working. The same
+            // log re-read after a write keeps its logId, so the mtime resets it.
+            <ErrorBoundary
+              resetKey={`${sidecar.logId}@${sidecar.lastMtime}`}
+              label="these results"
+              message={
+                <>
+                  <code>{`results/${sidecar.logId}.json`}</code> could not be displayed. The Close
+                  button still works.
+                </>
+              }
+            >
               <SummaryStrip payload={sidecar.payload} />
               <LoadedBody
                 payload={sidecar.payload}
+                logId={sidecar.logId}
+                resetKey={`${sidecar.logId}@${sidecar.lastMtime}`}
                 focusPersonaId={sidecar.focusPersonaId}
                 bodyRef={bodyRef}
               />
-            </>
+            </ErrorBoundary>
           )}
 
           {sidecar.status === 'missing' && (

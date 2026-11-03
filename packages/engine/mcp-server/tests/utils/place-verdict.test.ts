@@ -1,0 +1,280 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// The rule runs as written; only the Places API fetchers are replaced, by the
+// answers FamilySearch gave on 2026-10-29 (Accept-Language: en).
+vi.mock("../../src/utils/place-api.js", () => ({
+  searchPlace: vi.fn(),
+  getPlaceById: vi.fn(),
+  getPlaceReps: vi.fn(),
+  getPlaceCandidateNames: vi.fn(),
+}));
+
+import { isProse, judgeSupplied, keptSupplied, placeAnswer, unconfirmedByText } from "../../src/utils/place-verdict.js";
+import { searchPlace, getPlaceReps } from "../../src/utils/place-api.js";
+import { __clearPlaceResolverCachesForTests } from "../../src/utils/place-resolver.js";
+
+/** Each standard place's search entry (its place id and type) and its place's
+ *  names, every representation's, as recorded. */
+const RECORDED: Record<string, { placeId: string; type: string; names: string[] }> = {
+  "Santo António, Funchal, Madeira, Portugal": { placeId: "3668064", type: "Parish", names: ["Santo António"] },
+  "Hawaii, United States": { placeId: "12", type: "State", names: ["Hawaii", "Havaí", "Kingdom of Hawaii"] },
+  "Springfield, Sangamon, Illinois, United States": { placeId: "380949", type: "City", names: ["Springfield"] },
+  "Kentucky, United States": { placeId: "36", type: "State", names: ["Kentucky", "Kentaki"] },
+  "Laakirchen, Gmunden, Upper Austria, Austria": { placeId: "6353624", type: "Town", names: ["Laakirchen"] },
+  "Gmunden, Upper Austria, Austria": { placeId: "1958376", type: "District", names: ["Gmunden"] },
+  "Cincinnati, Hamilton, Ohio, United States": { placeId: "1011175", type: "City", names: ["Cincinnati"] },
+  "Funchal, Madeira, Portugal": { placeId: "6283660", type: "City", names: ["Funchal"] },
+  "Trowbridge, Wiltshire, England, United Kingdom": { placeId: "6136019", type: "Town", names: ["Trowbridge"] },
+};
+const search = vi.mocked(searchPlace);
+const listing = vi.mocked(getPlaceReps);
+beforeEach(() => {
+  __clearPlaceResolverCachesForTests();
+  search.mockReset();
+  listing.mockReset();
+  search.mockImplementation(async (name: string) => {
+    const key = Object.keys(RECORDED).find((k) => k.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "") ===
+      name.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, ""));
+    return key === undefined ? [] : [{ placeRepId: "r", placeId: RECORDED[key].placeId, name: key.split(",")[0], fullName: key, type: RECORDED[key].type }];
+  });
+  listing.mockImplementation(async (placeId: string) => {
+    const place = Object.values(RECORDED).find((p) => p.placeId === placeId);
+    return place ? [{ placeRepId: "r", names: place.names }] : [];
+  });
+});
+
+describe("unconfirmedByText: the place text confirms a standard place", () => {
+  it.each([
+    // The country check judges the pair, so the text need not name it.
+    ["Boston, Massachusetts, United States", "Springfield, Sangamon, Illinois, United States"],
+    // One word: the resolver's one-word rule judges it, here its top hit for a
+    // word neither on the list nor spelled in the answer.
+    ["Porto", "Porto Moniz, Madeira, Portugal"],
+    ["Ky", "Kentucky, United States"],
+    ["Birmingham", "Birmingham, Transvaal, South Africa"],
+    // The one-word list's own entry for the text, case and accents aside.
+    ["W. Va.", "West Virginia, United States"],
+    ["W. Va.", "west virginia, united states"],
+    ["State of Ohio", "Ohio, United States"],
+    ["'s Gravenhage", "The Hague, South Holland, Netherlands"],
+    // The standard place's own name is one of the text's comma parts.
+    ["412 Vine St, Cincinnati", "Cincinnati, Hamilton, Ohio, United States"],
+    ["Schuylkill County, Pennsylvania", "Schuylkill, Pennsylvania, United States"],
+    ["Lidečko, Moravia", "Lidečko, Ungarisch Brod, Moravia"],
+  ])("%j confirms %j", (place, standardPlace) => {
+    expect(unconfirmedByText(place, standardPlace)).toBeNull();
+  });
+
+  it.each([
+    ["with his daughter", "Hawaii, United States"],
+    ["at the home of her daughter", "Of, Trabzon, Türkiye"],
+    ["at the home of her daughter, Mrs. John Smith", "Of, Trabzon, Türkiye"],
+    ["Paxcroft, Wiltshire", "Trowbridge, Wiltshire, England, United Kingdom"],
+    // A list text whose answer is not the list's entry is judged by name.
+    ["W. Va.", "Virginia, United States"],
+  ])("%j does not confirm %j", (place, standardPlace) => {
+    expect(unconfirmedByText(place, standardPlace)).toBe(
+      "could not be confirmed, as the text names neither a country nor that place",
+    );
+  });
+
+  it("refuses a standard place naming no known country when the text's last part names one", () => {
+    expect(unconfirmedByText("March, Cambridgeshire, England", "March, Transvaal, South Africa")).toBe(
+      "does not name the country the text names",
+    );
+    expect(unconfirmedByText("Austria", "Bohemia")).toBe("does not name the country the text names");
+  });
+});
+
+describe("keptSupplied: what a writer keeps of a supplied standard_place", () => {
+  it("keeps it in FamilySearch's spelling, not as typed, when a part of the text names it", async () => {
+    expect(await keptSupplied("Santo Antonio, Funchal", "santo antonio, funchal, madeira, portugal")).toEqual({
+      kept: "Santo António, Funchal, Madeira, Portugal",
+    });
+    expect(search).toHaveBeenCalledWith("santo antonio, funchal, madeira, portugal");
+    expect(listing).toHaveBeenCalledWith("3668064");
+  });
+
+  it("keeps it as written when FamilySearch's search, or the place's listing, failed", async () => {
+    search.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
+    expect(await keptSupplied("Funchal, Madeira", "Funchal, Madeira, Portugal")).toEqual({ kept: "Funchal, Madeira, Portugal" });
+    // A town is named by the text's first part only, so a read listing would refuse this coarser value.
+    listing.mockRejectedValueOnce(new Error("FamilySearch API error: 503"));
+    const LAAKIRCHEN = "Laakirchen, Gmunden, Upper Austria, Austria";
+    expect(await keptSupplied("Stötten (Nötten), Laakirchen, Gmunden", LAAKIRCHEN)).toEqual({ kept: LAAKIRCHEN });
+  });
+
+  it("keeps none FamilySearch has no place of", async () => {
+    expect(await keptSupplied("Funchal, Madeira", "Funchal, Madeira, Portugal, Europe")).toEqual({
+      why: "FamilySearch's place standard has no place of that name",
+    });
+  });
+
+  // Lead, 2026-10-29: the place must also fit the fact's own text, "yes, definitely".
+  it("keeps none that no part of the place text names, though it is a FamilySearch place", async () => {
+    const notNamed = { why: "no part of the place text names that place", unnamed: true };
+    expect(await keptSupplied("Boston, Suffolk, Massachusetts", "Springfield, Sangamon, Illinois, United States")).toEqual({
+      why: "it names a different state or province than the place",
+    });
+    expect(await keptSupplied("with his daughter", "Hawaii, United States")).toEqual(notNamed);
+    // A town is named by the text's first part only.
+    expect(await keptSupplied("Stötten (Nötten), Laakirchen, Gmunden", "Laakirchen, Gmunden, Upper Austria, Austria")).toEqual(notNamed);
+    expect(await keptSupplied("Laakirchen, Gmunden", "Laakirchen, Gmunden, Upper Austria, Austria")).toEqual({
+      kept: "Laakirchen, Gmunden, Upper Austria, Austria",
+    });
+    expect(await keptSupplied("Havaí", "Hawaii, United States")).toEqual({ kept: "Hawaii, United States" });
+  });
+
+  it("keeps the one-word list's entry for the text, which need not spell it, reading no listing", async () => {
+    expect(await keptSupplied("Ky", "Kentucky, United States")).toEqual({ kept: "Kentucky, United States" });
+    expect(listing).not.toHaveBeenCalled();
+    expect(await keptSupplied("Kty", "Kentucky, United States")).toEqual({
+      why: "no part of the place text names that place",
+      unnamed: true,
+    });
+  });
+
+  it("keeps none on a fact with no place, or one that names none, asking FamilySearch nothing", async () => {
+    expect(await keptSupplied(undefined, "Hawaii, United States")).toEqual({ why: "the fact has no place" });
+    expect(await keptSupplied("  ", "Hawaii, United States")).toEqual({ why: "the fact has no place" });
+    expect(await keptSupplied("Same House,", "Same, Manufahi, Timor-Leste")).toEqual({ why: "'Same House,' names no place" });
+    expect(await keptSupplied("Funchal, England", "Funchal, Madeira, Portugal")).toEqual({
+      why: "it names a different country than the place",
+    });
+    expect(search).not.toHaveBeenCalled();
+  });
+});
+
+describe("isProse: a place text written as prose, not as a name", () => {
+  it.each([
+    "with his daughter",
+    "at the home of her daughter, Mrs. John Smith",
+    "her residence, Centre Street, Ashland",
+    "of,,Norway",
+    "412 vine st, cincinnati",
+  ])("%j is prose: its first part has no capital", (place) => {
+    expect(isProse(place)).toBe(true);
+  });
+
+  it.each([
+    "West Topsham, Orange, Vermont",
+    "of Vsetin, Czechoslovakia",
+    "Of,,,Ny",
+    ", , Suðurland, Iceland",
+    "Самара, Самарская, Россия",
+    "東京, 日本",
+    "5, Brooklyn, Kings, New York",
+    "",
+  ])("%j is not", (place) => {
+    expect(isProse(place)).toBe(false);
+  });
+});
+
+describe("placeAnswer: the engine's own answer", () => {
+  it("keeps a lookup a text written as a name does not name, and drops one naming another country", async () => {
+    // A text of the e2e final trees: West Topsham is a village of Topsham.
+    expect(await placeAnswer("West Topsham, Orange, Vermont", [], async () => "Topsham, Orange, Vermont, United States")).toEqual({
+      standardPlace: "Topsham, Orange, Vermont, United States",
+      from: "lookup",
+    });
+    expect(await placeAnswer("Funchal, England", [], async () => "Funchal, Madeira, Portugal")).toEqual({
+      standardPlace: null,
+      why: "other_country",
+      dropped: "Funchal, Madeira, Portugal",
+      reason: "'Funchal, Madeira, Portugal' names a different country than the text",
+    });
+  });
+
+  it("keeps a lookup the text confirms, and FamilySearch's own value for the text on the cited record unjudged", async () => {
+    expect(await placeAnswer("W. Va.", [], async () => "West Virginia, United States")).toEqual({
+      standardPlace: "West Virginia, United States",
+      from: "lookup",
+    });
+    // The record's own standardization of its prose, the town the record is from, is kept though the text names no place.
+    const SHENANDOAH = "Shenandoah, Schuylkill, Pennsylvania, United States";
+    expect(await placeAnswer("at his home", [SHENANDOAH], async () => null)).toEqual({ standardPlace: SHENANDOAH, from: "record" });
+  });
+
+  it.each([
+    ["with his daughter", "Hawaii, United States"],
+    ["at the home of her daughter", "Of, Trabzon, Türkiye"],
+    ["at the home of her daughter, Mrs. John Smith", "Of, Trabzon, Türkiye"],
+  ])("drops the lookup for prose %j, which does not confirm %j", async (place, lookup) => {
+    expect(await placeAnswer(place, [], async () => lookup)).toEqual({
+      standardPlace: null,
+      why: "unconfirmed",
+      reason: `the engine's place lookup answer '${lookup}' could not be confirmed, as the text names neither a country nor that place`,
+    });
+  });
+
+  it.each([
+    // Its own name is one of the text's parts.
+    ["her residence, 412 Vine St, Cincinnati", "Cincinnati, Hamilton, Ohio, United States"],
+    // The country check judges the pair.
+    ["of,,Norway", "Norway"],
+  ])("keeps the lookup for prose %j, which confirms %j", async (place, lookup) => {
+    expect(await placeAnswer(place, [], async () => lookup)).toEqual({ standardPlace: lookup, from: "lookup" });
+  });
+});
+
+describe("judgeSupplied", () => {
+  it("stores FamilySearch's spelling of a kept value with no warning, asking for no answer", async () => {
+    const answer = vi.fn();
+    expect(await judgeSupplied("Santo Antonio, Funchal", "Santo Antonio, Funchal, Madeira, Portugal", answer)).toEqual({
+      standardPlace: "Santo António, Funchal, Madeira, Portugal",
+    });
+    expect(answer).not.toHaveBeenCalled();
+  });
+
+  it("stores the engine's answer for a value it does not keep, with a warning, unless the answer is that value", async () => {
+    const lookup = (standardPlace: string) => async () => ({ standardPlace, from: "lookup" as const });
+    const text = "Stötten (Nötten), Laakirchen, Gmunden, Upper Austria, Austria";
+    const LAAKIRCHEN = "Laakirchen, Gmunden, Upper Austria, Austria";
+    expect(await judgeSupplied(text, LAAKIRCHEN, lookup("laakirchen, gmunden, upper austria, austria"))).toEqual({
+      standardPlace: "laakirchen, gmunden, upper austria, austria",
+    });
+    expect(await judgeSupplied(text, LAAKIRCHEN, lookup("Gmunden, Upper Austria, Austria"))).toEqual({
+      standardPlace: "Gmunden, Upper Austria, Austria",
+      warning:
+        `standard_place '${LAAKIRCHEN}' for '${text}' was replaced by 'Gmunden, Upper Austria, Austria', the engine's lookup: ` +
+        "no part of the place text names that place. A supplied standard_place is kept when it is a FamilySearch standard " +
+        "place (a place_search result) for the fact's own place.",
+    });
+  });
+
+  const lookup = (standardPlace: string) => async () => ({ standardPlace, from: "lookup" as const });
+
+  it("keeps a value the text names only in a later part when the lookup the text confirms gives it too", async () => {
+    const CINCINNATI = "Cincinnati, Hamilton, Ohio, United States";
+    expect(await keptSupplied("412 Vine St, Cincinnati", CINCINNATI)).toEqual({
+      why: "no part of the place text names that place",
+      unnamed: true,
+    });
+    expect(await judgeSupplied("412 Vine St, Cincinnati", CINCINNATI, lookup(CINCINNATI))).toEqual({ standardPlace: CINCINNATI });
+  });
+
+  it("keeps no refused value the lookup gives too when a text written as a name neither confirms it nor ends with its state", async () => {
+    // Trowbridge neighbours Paxcroft: the text names it by its county alone.
+    const TROWBRIDGE = "Trowbridge, Wiltshire, England, United Kingdom";
+    expect(await judgeSupplied("Paxcroft, Wiltshire", TROWBRIDGE, lookup(TROWBRIDGE))).toEqual({
+      standardPlace: null,
+      warning:
+        `standard_place '${TROWBRIDGE}' for 'Paxcroft, Wiltshire' was not kept: no part of the place text names that ` +
+        `place, and the engine has none for it: the engine's place lookup answer '${TROWBRIDGE}' could not be ` +
+        "confirmed, as the text names neither a country nor that place. A supplied standard_place is kept when it is " +
+        "a FamilySearch standard place (a place_search result) for the fact's own place.",
+    });
+  });
+
+  it("keeps no value in another state, though the lookup gives it too", async () => {
+    const SPRINGFIELD = "Springfield, Sangamon, Illinois, United States";
+    expect(await judgeSupplied("Springfield, Hampden, Massachusetts", SPRINGFIELD, lookup(SPRINGFIELD))).toEqual({
+      standardPlace: null,
+      warning:
+        `standard_place '${SPRINGFIELD}' for 'Springfield, Hampden, Massachusetts' was not kept: it names a different ` +
+        `state or province than the place, and the engine has none for it: the engine's place lookup answer ` +
+        `'${SPRINGFIELD}' does not fit it either: it names a different state or province than the place. A supplied ` +
+        "standard_place is kept when it is a FamilySearch standard place (a place_search result) for the fact's own place.",
+    });
+  });
+});

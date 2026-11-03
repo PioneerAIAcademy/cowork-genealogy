@@ -57,6 +57,7 @@ export type McpToolResult = {
 export const OK_FALSE_IS_FAILURE = [
   "research_append",
   "extraction_append",
+  "evaluation_append",
   "research_log_append",
   "tree_edit",
   "tree_correct",
@@ -69,6 +70,7 @@ export const OK_FALSE_IS_FAILURE = [
   "build_external_search_url",
   "research_query",
   "project_context",
+  "tree_query",
   "external_links_search",
   "project_create",
   "sidecar_read",
@@ -88,6 +90,7 @@ export const NOT_A_DOCUMENT_WRITER = [
   "census_children_gap",
   "research_query",
   "project_context",
+  "tree_query",
   "sidecar_read",
   "external_links_search",
 ] as const satisfies readonly (typeof OK_FALSE_IS_FAILURE)[number][];

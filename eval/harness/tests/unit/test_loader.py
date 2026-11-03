@@ -225,3 +225,22 @@ def test_rejects_record_role_list_with_invalid_item():
 def test_load_from_path_with_nonexistent_file_raises():
     with pytest.raises(InvalidTestError):
         load_test(Path("/tmp/does-not-exist-xyzzy.json"))
+
+
+@pytest.mark.parametrize("repeat", [
+    '"execution": {"max_turns": 5}, "execution": {"max_turns": 6}',
+    '"execution": {"max_turns": 5, "max_turns": 6}',
+])
+def test_rejects_a_repeated_key(tmp_path, repeat):
+    # A merge left two `execution` blocks in one committed test, and json kept
+    # only the second, so the first block's setting silently never applied.
+    path = tmp_path / "repeated.json"
+    path.write_text(json.dumps(_minimal_positive())[:-1] + ", " + repeat + "}", encoding="utf-8")
+    with pytest.raises(InvalidTestError, match="repeats the key execution|repeats the key max_turns"):
+        load_test(path)
+
+
+def test_a_file_with_each_key_once_still_loads(tmp_path):
+    path = tmp_path / "once.json"
+    path.write_text(json.dumps({**_minimal_positive(), "execution": {"max_turns": 5}}), encoding="utf-8")
+    assert load_test(path).id == "ut_loader_001"

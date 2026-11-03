@@ -6,20 +6,20 @@
   },
   "response": {
     "query": {
-      "standardPlace": "Schuylkill, Pennsylvania, United States"
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
+      "pageSize": 50
     },
     "totalResults": 3,
     "results": [
       {
         "imageGroupNumber": "007936749",
-        "imageGroupPrefix": "007936749",
         "imageCount": 15,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Schuylkill, Pennsylvania, United States",
+            "places": ["Schuylkill, Pennsylvania, United States"],
             "dateRange": "1851–1890",
             "recordType": "Probate Records"
           }
@@ -27,14 +27,13 @@
       },
       {
         "imageGroupNumber": "007936752",
-        "imageGroupPrefix": "007936752",
         "imageCount": 18,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Schuylkill, Pennsylvania, United States",
+            "places": ["Schuylkill, Pennsylvania, United States"],
             "dateRange": "1891–1930",
             "recordType": "Probate Records"
           }
@@ -42,14 +41,13 @@
       },
       {
         "imageGroupNumber": "005440021",
-        "imageGroupPrefix": "005440021",
         "imageCount": 270,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Berks, Pennsylvania, United States",
+            "places": ["Berks, Pennsylvania, United States"],
             "dateRange": "1860–1900",
             "recordType": "Probate Records"
           }

@@ -6,20 +6,20 @@
   },
   "response": {
     "query": {
-      "standardPlace": "Schuylkill, Pennsylvania, United States"
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
+      "pageSize": 50
     },
     "totalResults": 1,
     "results": [
       {
         "imageGroupNumber": "007936749",
-        "imageGroupPrefix": "007936749",
         "imageCount": 15,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Schuylkill, Pennsylvania, United States",
+            "places": ["Schuylkill, Pennsylvania, United States"],
             "dateRange": "1851–1930",
             "recordType": "Probate Records"
           }

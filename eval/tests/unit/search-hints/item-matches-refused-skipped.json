@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_search_hints_009",
+    "skill": "search-hints",
+    "name": "Hints cannot be read: the hints item is skipped as inaccessible, with no log entry",
+    "type": "positive",
+    "description": "The router hands search-hints the planned hints item pli_007 for Patrick Flynn (LZNY-BRF), and person_record_matches refuses: there is no FamilySearch session. The hints cannot be read, so triage sets pli_007 skipped with skip_category inaccessible and a skip_reason naming why. A skip needs no log entry. It does not guess at hints it could not read (issue #3153).",
+    "tags": [
+      "triage",
+      "writes-nothing",
+      "item-ends:skipped",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Review the pending FamilySearch hints on Patrick Flynn for plan item pli_007.\n\npersonId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn-hints-item"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-refused",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "person_record_matches returns an error: the user is not logged in to FamilySearch. The hints could not be read; that is not the same as there being no hints",
+    "The hints item pli_007 ends skipped, skip_category inaccessible, with a skip_reason naming the refusal, written through research_append on plan_items",
+    "No log entry is written, and in particular no negative entry claiming there are no hints",
+    "No hint lines or recommendations are invented for hints that were never read",
+    "Telling the researcher that logging in to FamilySearch would let the hints be reviewed is good; calling a login tool is not expected"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  }
+}

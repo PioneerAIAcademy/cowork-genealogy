@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ViewerBody, ResearchDataProvider } from '@genealogy/viewer-ui'
-import { api, type SessionSummary } from '../api'
+import { api, ApiError, type SessionSummary } from '../api'
 import { useAlpha } from '../lib/alpha'
 import { useChatWidth } from '../lib/chatWidth'
 import { makeSessionConnection, sessionLogsAvailable } from '../transport/makeSessionConnection'
@@ -8,6 +8,7 @@ import type { SessionConnection } from '../transport/SessionConnection'
 import { WsResearchTransport } from '../transport/WsResearchTransport'
 import ChatPane, { type UsageDelta } from './ChatPane'
 import ThemeToggle from './ThemeToggle'
+import TitleEditor from './TitleEditor'
 
 // Two-pane: chat (left) + the shared viewer (right). The viewer is the SAME
 // component Electron mounts as its whole UI — everything session-specific that
@@ -30,6 +31,8 @@ export default function SessionView({
   onOpenSession?: (sessionId: string) => void
 }): React.JSX.Element {
   const [session, setSession] = useState<SessionSummary | null>(null)
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [renameError, setRenameError] = useState<string | null>(null)
   const [conn, setConn] = useState<SessionConnection | null>(null)
   const [logs, setLogs] = useState<{ ws: string; agent: string } | null>(null)
   // The user's FamilySearch grant expired (FS caps it at 24h, so a tab left open
@@ -70,7 +73,7 @@ export default function SessionView({
     titledRef.current = true
     if (session.title === 'New research session') {
       void api
-        .patchSession(sessionId, { title: agentTitle })
+        .patchSession(sessionId, { title_if_default: agentTitle })
         .then(setSession)
         .catch(() => {
           titledRef.current = false // let a later research delta retry
@@ -109,12 +112,22 @@ export default function SessionView({
     }
   }
 
+  const rename = async (title: string): Promise<void> => {
+    try {
+      setSession(await api.patchSession(sessionId, { title }))
+    } catch (err) {
+      setRenameError(err instanceof ApiError ? err.message : 'Failed to rename session')
+    } finally {
+      setEditingTitle(false)
+    }
+  }
+
   const costLabel = `${cost.estimated ? '~' : ''}$${cost.usd.toFixed(cost.usd >= 1 ? 2 : 4)}`
 
   // Return here after reconnecting, not to the session list. The hash is the
   // SPA route (App.readRoute); `#` must be percent-encoded so it survives as a
   // query value rather than being read as the URL fragment.
-  const reconnectHref = `/auth/familysearch/login?next=${encodeURIComponent(`#/s/${sessionId}`)}`
+  const reconnectHref = `auth/familysearch/login?next=${encodeURIComponent(`#/s/${sessionId}`)}`
 
   // The provider is hoisted above BOTH panes so the chat can resolve the schema ids
   // in its prose against the same data the viewer renders. Nesting a second one
@@ -147,7 +160,23 @@ export default function SessionView({
           <button className="btnGhost" onClick={onBack} title="Back to sessions" aria-label="Back to sessions">
             ←
           </button>
-          <span className="chatTitle">{session?.title ?? 'Loading…'}</span>
+          {editingTitle && session ? (
+            <div className="chatTitle">
+              <TitleEditor title={session.title} onSave={rename} onCancel={() => setEditingTitle(false)} />
+            </div>
+          ) : (
+            <button
+              className="chatTitle"
+              title="Rename session"
+              disabled={!session}
+              onClick={() => {
+                setRenameError(null)
+                setEditingTitle(true)
+              }}
+            >
+              {session?.title ?? 'Loading…'}
+            </button>
+          )}
 
           {/* The cost chip is shown to everyone — alpha testers asked to see what
               they are spending. The ALPHA tag and Logs button stay operator-only
@@ -177,6 +206,7 @@ export default function SessionView({
 
           <ThemeToggle />
         </header>
+        {renameError && <div className="bannerError">{renameError}</div>}
         {conn ? (
           <ChatPane
             conn={conn}

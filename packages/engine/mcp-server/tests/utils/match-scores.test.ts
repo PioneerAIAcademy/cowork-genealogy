@@ -31,8 +31,8 @@ function score(over: Partial<RecordedMatchScore> = {}): RecordedMatchScore {
     record_role: "principal",
     tree_person_id: "I1",
     score: 0.87,
-    confidence: 5,
-    matched: true,
+    scorer: "familysearch",
+    model: null,
     assertion_id: "a_005",
     record_source: "record_read",
     computed: "2026-09-21T00:00:00.000Z",
@@ -184,5 +184,40 @@ describe("match-scores", () => {
       expect(() => findRecordedScore(bad, "a_005", "I1")).not.toThrow();
       expect(findRecordedScore(bad, "a_005", "I1")).toBeNull();
     }
+  });
+});
+
+describe("findRecordedScore: the persona arm (#3552)", () => {
+  // One score for persona P1 (the principal) against I1, filed under a_005.
+  const file = (over: Partial<RecordedMatchScore> = {}) => ({
+    record_id: ARK,
+    scores: { [scoreKey("a_005", "I1")]: score({ record_persona_id: "P1", party_resolved: true, ...over }) },
+  });
+  const p1 = { personaId: "P1", roles: new Set(["principal"]) };
+
+  it("answers another fact of the scored persona, against the same tree person", () => {
+    expect(findRecordedScore(file(), "a_006", "I1", p1)?.score).toBe(0.87);
+  });
+
+  it("still answers by the exact key alone when no persona is given", () => {
+    expect(findRecordedScore(file(), "a_005", "I1")?.score).toBe(0.87);
+    expect(findRecordedScore(file(), "a_006", "I1")).toBeNull();
+  });
+
+  it("does not answer for another tree person", () => {
+    expect(findRecordedScore(file(), "a_006", "I2", p1)).toBeNull();
+  });
+
+  it("does not answer for another persona of the record", () => {
+    expect(findRecordedScore(file(), "a_006", "I1", { personaId: "P2", roles: new Set(["principal"]) })).toBeNull();
+  });
+
+  it("does not extend an entry written before the persona was resolved", () => {
+    const old = { record_id: ARK, scores: { [scoreKey("a_005", "I1")]: score({ record_persona_id: "P1" }) } };
+    expect(findRecordedScore(old, "a_006", "I1", p1)).toBeNull();
+  });
+
+  it("does not extend an entry whose role the record does not give that persona", () => {
+    expect(findRecordedScore(file({ record_role: "father" }), "a_006", "I1", p1)).toBeNull();
   });
 });

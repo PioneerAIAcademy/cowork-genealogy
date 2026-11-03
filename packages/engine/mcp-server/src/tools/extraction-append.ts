@@ -42,7 +42,14 @@ import {
   type ExtractResult,
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
-import { readStagedResults, STAGING_SUBDIR } from "../utils/results-staging.js";
+import {
+  findFulltextHit,
+  readResultsEnvelope,
+  readStagedResults,
+  splitHitRef,
+  STAGING_SUBDIR,
+  type FulltextHitRow,
+} from "../utils/results-staging.js";
 import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { arkToBareId } from "../utils/ark.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -55,12 +62,15 @@ import { mapWithConcurrency } from "../utils/place-resolver.js";
 import { sourceIdsForRecordIds, activePlanItems } from "./research-append.js";
 import { findAnchor, collectSourceRefs, ATTACHMENT_LINK_RATIONALE } from "../utils/tree-person.js";
 import { isRejectedPair } from "../utils/rejected-links.js";
+import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
+import { assertionReferrers, liveAssertionsOfRecord } from "../utils/assertion-retirement.js";
 import { summarizeExtraction, censusStatedRelationships, detectRecordType } from "../utils/record-extract.js";
 import {
   validateStructuredDocument,
   documentToExtract,
   type StructuredDocument,
 } from "../utils/structured-document.js";
+import { RETIRED_EXTRACTION_KEYS, retiredExtractionMessage } from "../utils/tool-hint-messages.js";
 
 /** The sections extraction writes: one record's source plus its assertions, and
  *  the question ids a re-found record gains. */
@@ -93,19 +103,21 @@ export async function runExtractionAppend(
 ): Promise<ExtractionBatchResult> {
   const MODES = ["recordIds", "documents", "absences", "personId"] as const;
   const got = MODES.filter((k) => (input as any)?.[k] !== undefined);
-  // The hand-built forms, in both spellings (`ops`, and one flat op), and the
-  // one-record extractor mode (`logEntryId` + `recordId`).
-  const retired = (["ops", "section", "op", "entry", "entryId", "fields", "logEntryId", "recordId"] as const).filter((k) => (input as any)?.[k] !== undefined);
+  const retired = RETIRED_EXTRACTION_KEYS.filter((k) => (input as any)?.[k] !== undefined);
   if (retired.length > 0) {
+    return { ok: false, records: [], errors: [retiredExtractionMessage(retired)] };
+  }
+  const reextract = (input as any)?.reextract;
+  if (reextract !== undefined && typeof reextract !== "boolean") {
+    return { ok: false, records: [], errors: ["`reextract` must be true or false."] };
+  }
+  if (reextract === true && (input.personId !== undefined || input.absences !== undefined)) {
     return {
       ok: false,
       records: [],
       errors: [
-        `extraction_append no longer takes ${retired.map((k) => `\`${k}\``).join(" or ")}: roles and ` +
-          "classifications are decided in code, so there is nothing for a caller to compose. Send " +
-          "`recordIds` for FamilySearch records, `documents` (from the record-structurer agent) for " +
-          "any other source, or `absences` for people a search did not find. Correcting an " +
-          "existing assertion is not an extraction and is not done here.",
+        "`reextract` applies to `recordIds` or `documents` only: name the record to extract again there, " +
+          "not a person or an absence.",
       ],
     };
   }
@@ -183,7 +195,8 @@ export interface DocumentInput {
   /** The `results/` ref of the StagedTranscription the agent read. */
   transcriptionRef?: string;
   /** `image_transcribe`'s imageRef. The source's image_filename comes from the
-   *  staged transcription's `image_ref` when it has one; this is the fallback. */
+   *  staged transcription's `image_ref` when it has one; this is the fallback.
+   *  A full-text hit `transcriptionRef` writes no image_filename at all. */
   imageFilename?: string;
 }
 
@@ -197,6 +210,8 @@ export interface ExtractionBatchInput {
   personId?: string;
   /** Expected-but-absent persons for a record in `recordIds`, keyed by its id. */
   absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
+  /** Extract an already-extracted record again and retire its old assertions (#3678). */
+  reextract?: boolean;
 }
 
 export type RecordOutcomeStatus = "extracted" | "already_extracted" | "read_failed" | "refused";
@@ -210,6 +225,8 @@ export interface RecordOutcome {
   summary: string;
   errors?: string[];
   warnings?: string[];
+  /** A re-extraction's retired assertions: each old id and what superseded it. */
+  retired?: { id: string; supersededBy: string }[];
 }
 
 export interface ExtractionBatchResult {
@@ -307,7 +324,7 @@ async function tieRecordToQuestions(
 ): Promise<{ tied: string[]; warnings: string[] }> {
   const ops: ResearchAppendOp[] = [];
   for (const a of Array.isArray(research.assertions) ? research.assertions : []) {
-    if (!a || typeof a.id !== "string" || typeof a.record_id !== "string" || !recordIds.has(arkToBareId(a.record_id))) continue;
+    if (!isLiveAssertion(a) || typeof a.id !== "string" || typeof a.record_id !== "string" || !recordIds.has(arkToBareId(a.record_id))) continue;
     const have: string[] = Array.isArray(a.extracted_for_question_ids) ? a.extracted_for_question_ids : [];
     const add = questionIds.filter((q) => !have.includes(q));
     if (add.length === 0) continue;
@@ -338,15 +355,16 @@ export interface PlanItemsOutcome {
 /**
  * Completes the plan item behind a record this call extracted or re-sent. An
  * `in_progress` item on an active plan completes once ANY of its plan-tied
- * positive or partial `record_search` entries lists, in its sidecar, a record
- * that now has an assertion (lead, 2026-10-19: "every entry" left 124 of 617
+ * positive or partial `record_search` or `fulltext_search` entries lists, in its
+ * sidecar, a record or hit that now has an assertion (lead, 2026-10-19: "every entry" left 124 of 617
  * previously-completed FamilySearch items stuck, and one extraction already
  * puts "the plan item's evidence in hand", lead, 2026-08-23). Read off the
  * saved results, so a reused read, a re-send and a record two items both found
- * are covered alike (lead, 2026-10-20). Only `record_search` sidecars: a
- * full-text result names an image, never a record. Each item is its own write,
- * because one refused item fails a whole batch; a refusal is reported and
- * never fails the extraction.
+ * are covered alike (lead, 2026-10-20). `record_search` sidecars list records by
+ * `recordId`; `fulltext_search` sidecars list hits by `id`, and a hit is
+ * extracted under that id (issue #3522, Richard, 2026-10-28). Each item is its
+ * own write, because one refused item fails a whole batch; a refusal is
+ * reported and never fails the extraction.
  */
 async function completePlanItems(
   projectPath: string,
@@ -365,13 +383,14 @@ async function completePlanItems(
   const extracted = [...bareIds].filter((b) => sourceIdsForRecordIds(research, widen(b)).size > 0);
   if (extracted.length === 0) return undefined;
   const sidecarCache = new Map<string, Set<string>>();
-  const listed = async (ref: string): Promise<Set<string>> => {
+  const listed = async (ref: string, tool: string): Promise<Set<string>> => {
     let ids = sidecarCache.get(ref);
     if (!ids) {
       ids = new Set<string>();
+      const key = tool === "fulltext_search" ? "id" : "recordId";
       try {
         for (const r of (await readStagedResults(projectPath, ref)) as any[]) {
-          if (typeof r?.recordId === "string") ids.add(arkToBareId(r.recordId));
+          if (typeof r?.[key] === "string") ids.add(arkToBareId(r[key]));
         }
       } catch {
         // An unreadable sidecar lists nothing; the item stays as it is.
@@ -386,13 +405,13 @@ async function completePlanItems(
     const searches = log.filter(
       (e) =>
         e?.plan_item_id === item.itemId &&
-        e?.tool === "record_search" &&
+        (e?.tool === "record_search" || e?.tool === "fulltext_search") &&
         (e?.outcome === "positive" || e?.outcome === "partial") &&
         typeof e?.results_ref === "string",
     );
     let hit = false;
     for (const e of searches) {
-      const ids = await listed(e.results_ref);
+      const ids = await listed(e.results_ref, e.tool);
       // A search "lists the record" when it lists any of its persona ARKs.
       if (extracted.some((b) => [...widen(b)].some((x) => ids.has(x)))) {
         hit = true;
@@ -445,6 +464,63 @@ async function personaGroups(projectPath: string, research: any): Promise<Map<st
     }
   }
   return groups;
+}
+
+/**
+ * What a re-extraction of one record retires (#3678): the live assertions
+ * extracted under the record's OWN id, never a household sibling's. `refusal`
+ * when something still rests on them, or when the record was extracted only under
+ * another persona's or household member's id; `undefined` when nothing extracted
+ * it, so the call is an ordinary first extraction.
+ */
+function reextractTarget(
+  research: any,
+  tree: any,
+  bare: string,
+  widened: ReadonlySet<string>,
+): { ids: string[] } | { refusal: string } | undefined {
+  const own = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
+    (a: any) => typeof a?.record_id === "string" && arkToBareId(a.record_id) === bare,
+  );
+  if (own.length === 0) {
+    const carriers = [
+      ...new Set(
+        (Array.isArray(research?.assertions) ? research.assertions : [])
+          .filter((a: any) => isLiveAssertion(a) && typeof a.record_id === "string" && widened.has(arkToBareId(a.record_id)))
+          .map((a: any) => a.record_id as string),
+      ),
+    ];
+    if (carriers.length === 0) return undefined;
+    return {
+      refusal:
+        `it was extracted under ${carriers.join(", ")}, not under this id. Re-extract ${carriers.length === 1 ? "that id" : "one of those ids"}; ` +
+        "a re-extraction retires only the assertions of the id it names.",
+    };
+  }
+  const ids = liveAssertionsOfRecord(research, bare, arkToBareId).map((a) => a.id as string);
+  const referrers = assertionReferrers(research, tree, new Set(ids));
+  if (referrers.length > 0) return { refusal: `its assertions are still in use. ${referrers.join(" ")}` };
+  return { ids };
+}
+
+/** The re-extracted outcomes' retirements, read back once after every write. */
+async function noteRetired(projectPath: string, outcomes: (RecordOutcome & { retireIds?: string[] })[]): Promise<void> {
+  const done = outcomes.filter((o) => o.status === "extracted" && o.retireIds && o.retireIds.length > 0);
+  if (done.length === 0) return;
+  let research: any;
+  try {
+    research = await readProjectJson(projectPath, "research.json");
+  } catch {
+    return;
+  }
+  const byId = new Map<string, any>((Array.isArray(research.assertions) ? research.assertions : []).map((a: any) => [a?.id, a]));
+  for (const o of done) {
+    o.retired = o.retireIds!.map((id) => ({ id, supersededBy: String(byId.get(id)?.superseded_by ?? "") }));
+    const retracted = o.retired.filter((r) => r.supersededBy === RETRACTED).length;
+    o.summary +=
+      ` Re-extracted: ${o.retired.length} earlier assertion${o.retired.length === 1 ? "" : "s"} retired` +
+      `${retracted > 0 ? ` (${retracted} retracted: the new reading has no counterpart)` : ""}.`;
+  }
 }
 
 /** Internal per-call options for `recordIdsMode`, never an input field. */
@@ -545,7 +621,7 @@ async function personIdMode(
     return { ...extraction, errors: [...(extraction.errors ?? []), `could not re-read research.json to link: ${e instanceof Error ? e.message : String(e)}`] };
   }
   const groups = await personaGroups(input.projectPath, after);
-  const assertions: any[] = Array.isArray(after.assertions) ? after.assertions : [];
+  const assertions: any[] = (Array.isArray(after.assertions) ? after.assertions : []).filter(isLiveAssertion);
   const liveLinked = new Set(
     (Array.isArray(after.person_evidence) ? after.person_evidence : [])
       .filter((pe: any) => pe && pe.superseded_by == null)
@@ -666,9 +742,18 @@ async function recordIdsMode(
     return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
   }
 
+  let tree: any;
+  if (input.reextract === true) {
+    try {
+      tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
+    } catch (e) {
+      return { ok: false, records: [], errors: [`could not read tree.gedcomx.json: ${e instanceof Error ? e.message : String(e)}`] };
+    }
+  }
+
   // One outcome per DISTINCT record: a repeated id in the call is one record.
   const seen = new Set<string>();
-  const outcomes: (RecordOutcome & { stagedRef?: string; hintLogId?: string })[] = [];
+  const outcomes: (RecordOutcome & { stagedRef?: string; hintLogId?: string; retireIds?: string[] })[] = [];
   for (const raw of ids) {
     const bare = arkToBareId(raw.trim());
     if (seen.has(bare)) continue;
@@ -691,6 +776,19 @@ async function recordIdsMode(
   );
   for (const o of outcomes) {
     const bare = arkToBareId(o.recordId);
+    if (input.reextract === true) {
+      const target = reextractTarget(research, tree, bare, widen(bare));
+      if (target && "refusal" in target) {
+        o.status = "refused";
+        o.errors = [target.refusal];
+        o.summary = `${o.recordId}: not re-extracted: ${target.refusal}`;
+        continue;
+      }
+      if (target) {
+        o.retireIds = target.ids;
+        continue;
+      }
+    }
     let existing = sourceIdsForRecordIds(research, widen(bare));
     if (existing.size > 0 && sourceIdsForRecordIds(research, new Set([bare])).size === 0) {
       const pending = await reusableLogEntry(input.projectPath, research, bare, citedLogIds);
@@ -772,7 +870,7 @@ async function recordIdsMode(
   for (const o of ownersFirst) {
     const arks = households.get(o.recordId);
     if (o.status !== "extracted" || !arks) continue;
-    if (!owesEntry(o)) {
+    if (!owesEntry(o) && o.retireIds === undefined) {
       const existing = sourceIdsForRecordIds(research, arks);
       if (existing.size > 0) {
         o.status = "already_extracted";
@@ -855,18 +953,17 @@ async function recordIdsMode(
         { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
         { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
       );
-      // A hint's log entry keeps no sidecar, and a persona id must resolve
-      // against one: an assertion under it carries none.
-      if (reusedHint.has(o.recordId)) {
-        for (const op of ops as any[]) if (op?.entry && "record_persona_id" in op.entry) op.entry.record_persona_id = null;
-      }
+      // A hint's log entry keeps no sidecar, so the read staged in this call is
+      // what research_append verifies the persona ids against.
+      const hintReads = reusedHint.has(o.recordId) ? new Map([[o.logId!, o.stagedRef!]]) : undefined;
       // An attached record cites the tree S the import already made for it, so
       // no duplicate S is minted. research_append refuses both at once.
       const importedS = opts.sourceDescriptionIdByBare?.get(arkToBareId(o.recordId));
       if (importedS) (ops[0] as any).entry.gedcomx_source_description_id = importedS;
+      const retire = o.retireIds?.length ? { retireAssertions: { recordId: o.recordId, ids: o.retireIds } } : {};
       const written = await researchAppend(
         { projectPath: input.projectPath, ops, ...(importedS ? {} : { sourceDescription }) } as ResearchAppendInput,
-        { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+        { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append", ...(hintReads ? { hintReads } : {}), ...retire },
       );
       if (!written.ok) {
         o.status = "refused";
@@ -875,7 +972,7 @@ async function recordIdsMode(
         continue;
       }
       o.srcId = srcIdOf(written);
-      o.summary = summarizeExtraction(doc, extraction);
+      o.summary = summarizeExtraction(doc, extraction, written.unresolvedPlaces);
       o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
     }
   }
@@ -892,10 +989,11 @@ async function recordIdsMode(
     }
   }
 
+  await noteRetired(input.projectPath, outcomes);
   const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes), groups);
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
-    records: outcomes.map(({ stagedRef: _s, hintLogId: _h, ...rest }) => rest),
+    records: outcomes.map(({ stagedRef: _s, hintLogId: _h, retireIds: _r, ...rest }) => rest),
     ...(planItems ? { planItems } : {}),
   };
 }
@@ -1084,22 +1182,31 @@ const FORM_NOTE: Record<string, string> = {
   compiled_work: "read from a compiled work",
 };
 
+/** The note on a document extracted from a full-text hit's own transcript
+ *  (issue #3522): FamilySearch's machine transcription, not one of ours. */
+const FULLTEXT_NOTE = "read from FamilySearch's full-text machine transcription of the page image";
+
 /** The source entry for a document. `derivative` for everything but a compiled
- *  work (genealogist ruling, 2026-09-30): nothing on this path is `original`. */
+ *  work (genealogist ruling, 2026-09-30): nothing on this path is `original`.
+ *  A full-text hit adds no field and no value: its text is a machine transcript
+ *  like our own OCR, so it differs only in the note and the page URL. */
 function buildDocumentSource(
   d: DocumentInput,
   logEntryId: string,
   transcription: string | undefined,
   stagedImageRef: string | undefined,
+  fulltextHit?: FulltextHitRow,
 ): Record<string, unknown> {
   const src = d.document.source;
   // Derived at the write boundary, like transcription_truncated: the scan the
-  // staged text was read from beats whatever the agent relayed.
-  const imageFilename = stagedImageRef ?? d.imageFilename;
+  // staged text was read from beats whatever the agent relayed. A full-text hit
+  // stores no scan, so a relayed filename there names nothing this source read.
+  const imageFilename = fulltextHit ? undefined : (stagedImageRef ?? d.imageFilename);
+  const url = src.url ?? fulltextHit?.sourceUrl;
   const accessed = todayIso();
   const head = [src.title, src.creator, src.created, src.locator].filter(Boolean).join(", ");
   return {
-    citation: `${head} (${src.url ? `${src.url} : ` : ""}accessed ${accessed}).`,
+    citation: `${head} (${url ? `${url} : ` : ""}accessed ${accessed}).`,
     citation_detail: {
       who: src.creator ?? "the record's parties",
       what: src.title,
@@ -1112,8 +1219,8 @@ function buildDocumentSource(
     repository: src.repository,
     access_date: accessed,
     log_entry_id: logEntryId,
-    notes: [FORM_NOTE[d.document.documentForm], src.notes].filter(Boolean).join(". "),
-    ...(src.url ? { url: src.url } : {}),
+    notes: [fulltextHit ? FULLTEXT_NOTE : FORM_NOTE[d.document.documentForm], src.notes].filter(Boolean).join(". "),
+    ...(url ? { url } : {}),
     ...(transcription ? { transcription } : {}),
     ...(imageFilename ? { image_filename: imageFilename } : {}),
   };
@@ -1156,6 +1263,57 @@ function coerceComputed(f: unknown): void {
     } else out.push(c);
   }
   fact.computed = [...new Set(out)];
+}
+
+/**
+ * Cite one full-text hit (`<base>#<hit>`) for a document, or say why not. The
+ * hit must belong to a LOGGED `fulltext_search` (a staged search has no entry to
+ * cite yet), exist in that search's results, carry a transcript, and be the
+ * document's own record: a hit is extracted under its own id, so two documents
+ * read from one hit share a recordId.
+ */
+async function citeFulltextHit(
+  projectPath: string,
+  log: any[],
+  recordId: string,
+  ref: string,
+  base: string,
+  hit: string,
+): Promise<{ logId: string; resultsRef: string; hit: FulltextHitRow } | string> {
+  if (base.startsWith(`${STAGING_SUBDIR}/`)) {
+    return (
+      `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
+      `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
+      `'<its results_ref>#<hit id>'.`
+    );
+  }
+  const entry = log.find((e) => e?.results_ref === base && typeof e?.id === "string");
+  if (!entry || entry.tool !== "fulltext_search") {
+    return (
+      `transcriptionRef '${ref}': a '#…' hit selector cites one hit of a logged fulltext_search, and ` +
+      (entry ? `${base} holds the results of a ${entry.tool} entry (${entry.id}).` : `no log entry names ${base}.`)
+    );
+  }
+  let results: unknown[];
+  try {
+    results = (await readResultsEnvelope(projectPath, base)).results;
+  } catch (e) {
+    return `transcriptionRef '${ref}': ${e instanceof Error ? e.message : String(e)}`;
+  }
+  const found = findFulltextHit(results, hit);
+  if (!found) {
+    return `transcriptionRef '${ref}': ${entry.id}'s results hold no hit '${hit}' (${results.length} hits).`;
+  }
+  if (arkToBareId(found.row.id) !== arkToBareId(recordId)) {
+    return (
+      `recordId '${recordId}' is not the hit its transcriptionRef cites (${found.row.id}): a full-text ` +
+      `hit is extracted under its own id.`
+    );
+  }
+  if (typeof found.row.textDocument !== "string" || found.row.textDocument === "") {
+    return `transcriptionRef '${ref}': hit ${found.row.id} carries no transcript to extract from.`;
+  }
+  return { logId: entry.id, resultsRef: base, hit: found.row };
 }
 
 /**
@@ -1209,7 +1367,16 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
   }
 
-  type DocOutcome = RecordOutcome & { d: DocumentInput };
+  let tree: any;
+  if (input.reextract === true) {
+    try {
+      tree = await readProjectJson(input.projectPath, "tree.gedcomx.json");
+    } catch (e) {
+      return { ok: false, records: [], errors: [`could not read tree.gedcomx.json: ${e instanceof Error ? e.message : String(e)}`] };
+    }
+  }
+
+  type DocOutcome = RecordOutcome & { d: DocumentInput; retireIds?: string[] };
   const outcomes: DocOutcome[] = docs.map((d) => ({
     recordId: d.recordId.trim(),
     status: "extracted",
@@ -1217,6 +1384,20 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     d,
   }));
   for (const o of outcomes) {
+    if (input.reextract === true) {
+      const bare = arkToBareId(o.recordId);
+      const target = reextractTarget(research, tree, bare, new Set([bare]));
+      if (target && "refusal" in target) {
+        o.status = "refused";
+        o.errors = [target.refusal];
+        o.summary = `${o.recordId}: not re-extracted: ${target.refusal}`;
+        continue;
+      }
+      if (target) {
+        o.retireIds = target.ids;
+        continue;
+      }
+    }
     const existing = sourceIdsForRecordIds(research, new Set([arkToBareId(o.recordId)]));
     if (existing.size > 0) {
       o.status = "already_extracted";
@@ -1230,10 +1411,39 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
   // `results/<log_id>.json`) is cited, not logged a second time as a
   // `user_provided` entry, which would drop the scan's text from the source.
   const log: any[] = Array.isArray(research.log) ? research.log : [];
-  const cited = new Map<DocOutcome, { logId: string; resultsRef: string }>();
-  for (const o of outcomes) {
+  const cited = new Map<DocOutcome, { logId: string; resultsRef: string; hit?: FulltextHitRow }>();
+  // One document per full-text hit: a hit is extracted under its own id, so a
+  // second document from the same hit would re-persist that record.
+  const hitDocument = new Map<string, number>();
+  for (const [i, o] of outcomes.entries()) {
     const ref = o.d.transcriptionRef;
-    if (o.status !== "extracted" || !ref || ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
+    if (o.status !== "extracted" || !ref) continue;
+    const { base, hit } = splitHitRef(ref);
+    // A full-text hit (`results/<log>.json#<hit id>`, issue #3522) is extracted
+    // from FamilySearch's own transcript and cites the search that found it.
+    if (hit !== undefined) {
+      let refusal = await citeFulltextHit(input.projectPath, log, o.recordId, ref, base, hit);
+      if (typeof refusal !== "string") {
+        const key = arkToBareId(refusal.hit.id);
+        const first = hitDocument.get(key);
+        if (first !== undefined) {
+          refusal =
+            `documents[${first}] already cites hit ${refusal.hit.id}: put every person you need from ` +
+            `one full-text hit in a single document.`;
+        } else {
+          hitDocument.set(key, i);
+        }
+      }
+      if (typeof refusal === "string") {
+        o.status = "refused";
+        o.errors = [refusal];
+        o.summary = `${o.recordId}: not extracted: ${refusal}`;
+      } else {
+        cited.set(o, refusal);
+      }
+      continue;
+    }
+    if (ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
     // Only a page logged as image_transcribe: a search sidecar cited here would
     // be written as a source with no text, and its search would read as extracted.
     const entry = log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe" && typeof e?.id === "string");
@@ -1285,7 +1495,9 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
         o.logId = lr.logId;
         let transcription: string | undefined;
         let stagedImageRef: string | undefined;
-        if (o.d.transcriptionRef && lr.resultsRef) {
+        if (c?.hit) {
+          transcription = c.hit.textDocument;
+        } else if (o.d.transcriptionRef && lr.resultsRef) {
           try {
             const rows = await readStagedResults(input.projectPath, lr.resultsRef);
             const row = (rows as any[]).find((r) => typeof r?.transcription === "string");
@@ -1299,7 +1511,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
         const { extract, mode } = documentToExtract(o.recordId, o.d.document, censusStatedRelationships);
         const extraction = extractRecord(extract, { logEntryId: lr.logId, questionIds: input.questionIds ?? [], mode });
         const ops: ResearchAppendOp[] = [
-          { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription, stagedImageRef) },
+          { section: "sources", op: "append", entry: buildDocumentSource(o.d, lr.logId, transcription, stagedImageRef, c?.hit) },
           ...extraction.assertions.map((a) => ({
             section: "assertions" as const,
             op: "append" as const,
@@ -1323,13 +1535,15 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
           })),
         ];
         const src = o.d.document.source;
+        const sdUrl = src.url ?? c?.hit?.sourceUrl;
+        const retire = o.retireIds?.length ? { retireAssertions: { recordId: o.recordId, ids: o.retireIds } } : {};
         const written = await researchAppend(
           {
             projectPath: input.projectPath,
             ops,
-            sourceDescription: src.url ? { title: src.title, url: src.url } : { title: src.title },
+            sourceDescription: sdUrl ? { title: src.title, url: sdUrl } : { title: src.title },
           } as ResearchAppendInput,
-          { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+          { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append", ...retire },
         );
         if (!written.ok) {
           o.status = "refused";
@@ -1338,15 +1552,16 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
           continue;
         }
         o.srcId = srcIdOf(written);
-        o.summary = summarizeExtraction(extract, extraction);
+        o.summary = summarizeExtraction(extract, extraction, written.unresolvedPlaces);
         o.warnings = [...written.validation.warnings, ...extraction.defaultedClassifications];
       }
     }
   }
+  await noteRetired(input.projectPath, outcomes);
   const planItems = await completePlanItems(input.projectPath, landedBareIds(outcomes));
   return {
     ok: outcomes.some((o) => o.status === "extracted" || o.status === "already_extracted"),
-    records: outcomes.map(({ d: _d, ...rest }) => rest),
+    records: outcomes.map(({ d: _d, retireIds: _r, ...rest }) => rest),
     ...(planItems ? { planItems } : {}),
   };
 }
@@ -1548,8 +1763,13 @@ export const extractionAppendSchema = {
     "it verbatim, since you do not see the record yourself; `personId` also " +
     "returns one `summary` for the whole call. Identity links " +
     "(`person_evidence`) are NOT written here except those unverified " +
-    "attachment links; a correction to an existing " +
-    "assertion goes through `research_append`.",
+    "attachment links.\n" +
+    "\n" +
+    "A record extracted WRONGLY is corrected by sending it again with " +
+    "`reextract: true` (with `recordIds` or `documents`): the record is " +
+    "extracted afresh and its earlier assertions are retired, each pointing at " +
+    "its replacement or marked retracted. Refused while anything still cites " +
+    "them; the refusal names each one.",
   inputSchema: {
     type: "object",
     properties: {
@@ -1572,6 +1792,12 @@ export const extractionAppendSchema = {
           "found, `absentPersons` with that record's `recordId`.",
       },
       questionIds: QUESTION_IDS,
+      reextract: {
+        type: "boolean",
+        description:
+          "Only to correct a record extracted wrongly: extract it again and retire its earlier " +
+          "assertions. With `recordIds` or `documents`, never `personId` or `absences`.",
+      },
       absentPersons: {
         type: "array",
         items: {
@@ -1615,7 +1841,11 @@ export const extractionAppendSchema = {
             },
             transcriptionRef: {
               type: "string",
-              description: "The `results/` ref of the transcription the document was read from.",
+              description:
+                "The `results/` ref of the transcription the document was read from. For one " +
+                "hit of a logged `fulltext_search`, `<its results_ref>#<hit id>` (the `ref` " +
+                "`sidecar_read`'s `#hits` lists), with `recordId` that hit's id: the document " +
+                "is cited to that search's log entry, not a new one.",
             },
             imageFilename: {
               type: "string",

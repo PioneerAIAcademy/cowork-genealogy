@@ -562,9 +562,9 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `search-wikipedia` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking` → `claude-haiku-5-5`; `search-records`, `timeline` declare none and inherit the session's; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia` → `low`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking` → `low`; `survey-surname`, `search-images`, `search-hints` → `medium`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
 | **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220, 2.1.294 and 2.1.308 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12, 2026-10-20 and 2026-10-22; the harnesses run the hosted CLI, 2.1.308). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
 | **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
 
@@ -653,6 +653,21 @@ Architecturally:
   have a live spec, and the spec is what the implementation gets checked
   against. Copy `src/tools/wikipedia.ts` and its sibling four files as the
   template.
+- **Every key the handler reads is on the schema.** `server.ts` refuses any
+  argument key absent from the tool's `inputSchema.properties` before the
+  handler runs (`rejectUnknownArgs`, `src/utils/unknown-args.ts`), so a key the
+  handler reads but the schema omits is unreachable over MCP while every
+  handler-level test stays green. Advertise it, or, for a deliberate unadvertised
+  alias, add it to `ACCEPTED_ALIASES` there with its reason (a snapshot test pins
+  that list). The unit harness applies that same compiled guard before each mock tool
+  call, so an eval refuses the argument keys production refuses instead of
+  silently dropping them — though it fails OPEN, with a warning, when the build
+  is missing or node faults, so it narrows the gap rather than closing it.
+  **The reverse gap is the one still caught by nothing:** a key the handler
+  READS that is on neither the schema nor `ACCEPTED_ALIASES` is unreachable over
+  MCP while every handler-level test stays green. That stays unguarded by ruling
+  (lead, 2026-10-29): closing it needs TypeScript-type parsing, for the
+  lower-severity half of the pair.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
   `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
@@ -713,6 +728,11 @@ Architecturally:
   `~/.familysearch-mcp/config.json`. **Never a `process.env` fallback** — the
   file is the sole source. Throw **LLM-instruction errors**: the message must
   tell Claude what to do next, not just what failed.
+- **If it scores whether two persons are the same:** call `matchPairs`
+  (`src/utils/matcher.ts`), never `scorePair` or the matcher service directly.
+  config.json's `matcher` picks the backend, neither falls back to the other,
+  and every call returns the active backend's floors with the scores
+  (`docs/specs/matcher-shim-spec.md`).
 - **Every network leg goes through `fetchWithRetry` (`src/utils/http.ts`)** —
   the global `fetch` never times out and a stalled upstream hangs the call
   forever. Size the budget under **60s** or accept that Cowork loses the tail:
@@ -720,6 +740,12 @@ Architecturally:
   differences that bite"), so any budget above it is honoured only on the
   stdio paths (harnesses and hosted, both verified) and silently truncated in
   Cowork. Size a raise from the measured e2e corpus, not by guessing.
+  The same module raises Node's per-address connect-attempt timeout from its
+  250 ms default to 2 s when it loads (`raiseConnectAttemptTimeout`): measured
+  2026-10-22, every connect to the wiki host from one machine took 261 to 337 ms,
+  longer than the default wait, and 9 of 20 fresh processes reading a wiki page
+  failed with `ETIMEDOUT` at the default, none of 20 at 2 s. A connect slower than
+  2 s to an address that is not the last Node tries is still given up on.
 - **Reuse before you write:** `getValidToken(principal)` for auth (never re-implement
   token plumbing), `place-resolver.ts` / `place-api.ts` for places, and
   `BROWSER_USER_AGENT` from `src/constants.ts` for any FamilySearch endpoint —
@@ -878,16 +904,17 @@ There **is** an orchestrator, and it is a skill:
    tree-encoding gate and re-invokes `proof-conclusion`; it never writes the
    status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
-   or a genuine logged blocker. Nothing else — finishing a sub-skill is mid-loop.
+   or a genuine logged blocker. These describe the *job*, not the turn.
 
-   **Step mode inverts this** (decision 25, `docs/plan/research-step-mode.md`).
-   On the FS prototype a turn runs ONE step, reports it, and ends with
-   "Continue with &lt;label&gt;?" — so finishing a sub-skill is exactly where the
-   turn stops, and the stop conditions above describe the *job*, not the turn.
-   The boundary is enforced by `packages/engine/plugin/hooks/step_boundary.py`,
-   loaded as a library by the prototype worker and both eval harnesses. Cowork
-   and the hosted alpha get no such hook and keep the loop described here, so
-   both readings are live at once and which one applies depends on the plane.
+   **A turn runs ONE step** (step mode, decision 25,
+   `docs/plan/research-step-mode.md`): it reports the step and ends with
+   "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
+   stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
+   enforces that boundary on the FS prototype always, and in the eval harnesses
+   only where a test opts in through `execution.step_mode`, which no test sets
+   today. Cowork and the hosted alpha follow the router's own text with no
+   such hook, and in Cowork a "keep going" runs the remaining steps in one turn,
+   since no host is there to reply.
 
 **Two contracts the orchestrator enforces on itself**, both load-bearing for
 §§5–6: it never extracts records inline (every positive/partial log entry routes
@@ -982,13 +1009,18 @@ they have different fixes, and only one of them is a description problem.
    test with a `user_message`, no `grade_on_invariant`, and a
    `negative.correct_skill` naming the agent asserts that the utterance routes
    there, and the harness resolves an agent file as a valid target.
-   **No agent carries one today.** All 18 committed negatives that name an agent
-   set `grade_on_invariant`, which `grading_mode_for` resolves *before* the
-   routing branch, so the verdict is the tag-gated invariant validator alone and
-   the hand-off is never checked. A miss against any agent is therefore
-   unmeasured, not evidence about its description. Add the missed utterance as
-   such a negative first, and diagnose the delegation before editing any
-   description.
+   `research`'s suite hosts them (`eval/tests/unit/research/route-agent-*.json`),
+   because a message the main thread should hand straight to an agent must not
+   enter `research` first. A negative that sets `grade_on_invariant` is not one:
+   `grading_mode_for` resolves that flag *before* the routing branch, so its
+   verdict is the tag-gated invariant validator alone and the hand-off is never
+   checked. Add a missed utterance as a routing negative first, and diagnose the
+   delegation before editing any description. A miss is recorded, not edited
+   away: run new routing negatives on their own first, in a scratch run that is
+   never committed; delete any that misses and post its per-run results where
+   that agent's triggering is tracked; then commit the suite run with the rest.
+   Never mark one `xfail`, widen its `correct_skill`, or add `grade_on_invariant`
+   to make it pass.
 3. **Did it trigger and then do the wrong thing?** That is not a triggering
    failure — classify it with §3.6.
 
@@ -1223,6 +1255,12 @@ a person's attached records as unchecked candidates. Code composes each op whole
 as it does the `extracted_for_question_ids` growth a re-found record gets, so no
 input field reaches any of them (ADR-0006, amended 2026-10-20).
 
+`evaluation_append` is the second variant: `research_append` restricted to the
+single `evaluations` section, held only by the `gps-mentor` agent — the most
+prompt-exposed agent in the system. Unlike `extraction_append` it has no bespoke
+input surface; the mentor supplies an ordinary `evaluations` append and the lane
+gate forces the section (`research-append-tool-spec.md` §12).
+
 The pattern comes from an observed failure: a delegation message prompted the
 extractor past its prose lane and it fabricated a match score. The analysis:
 
@@ -1234,30 +1272,27 @@ extractor past its prose lane and it fabricated a match score. The analysis:
 
 Full rationale and error contract: `research-append-tool-spec.md` §11.
 
-> **Open — but the open question has moved.** The same reasoning is wanted for
-> identity scoring: a run should not be able to attach a persona from a new
-> record to an existing tree person without a `same_person` attestation. Three
-> candidate discriminators failed adversarial review, and a **fourth now ships,
-> in shadow** — the live pre-write provenance check in
-> `guardrail-enforcement-spec.md` **§4**'s last row and **§8**, which fires in the
-> e2e harness's `pretool_hook`, records into `guardrail_shadow_violations`, and
-> lets the write through, with an opt-in per-run `deny`. So the deliverable is no
-> longer *deriving* a discriminator; it is **graduating this one to a deny**,
-> which is gated on a replay number that must be re-measured rather than read off
-> a page (`make e2e-guardrail-shadow REPLAY=1 SINCE=all`) *and* on the satisfying
-> call shape being one agents actually produce — they produced it in 3 of 103
-> corpus runs. **Read
-> [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before proposing a
-> fifth**, and satisfy its six named constraints, including **satisfiability**.
+> **Identity scoring is enforced at the same boundary.** `research_append`
+> refuses a `person_evidence` link to a reachable record persona unless
+> `same_person` scored that pairing, and refuses a score on a person minted from
+> the record the link cites (`guardrail-enforcement-spec.md` §4). The e2e
+> harness hook that measured it before it graduated was retired at harness v9.
+> **Read [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before changing
+> the rule**, and satisfy its six named constraints, including **satisfiability**.
 
 ### 5.4 The write-lockdown hook
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
-+ `guard_project_files.py`), and despite this section's name it enforces **four**
++ `guard_project_files.py`) and one `UserPromptSubmit` hook, `no_project_route.py`, which
+is not a guardrail: it adds one conditional sentence to each Cowork researcher message (with
+no project, a request to research a person goes to the research skill) and is silent
+wherever `GENEALOGY_HOSTED_PLANE` is set, which both hosted planes set. It is the first plugin
+hook that adds context rather than deciding a call. The `PreToolUse` hook, despite this section's name, enforces **five**
 rules, not one. Its matcher is
-`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task` — wider
-than the file-write tools, because two rules act on `research_append` itself and
-one on the delegation tools:
+`Write|Edit|NotebookEdit|.*device_commit_files|.*research_append|Agent|Task|.*(…)` — wider
+than the file-write tools, because two rules act on `research_append` itself, one
+on the delegation tools, and one on the tools only agents hold, which the final
+`.*(…)` alternative names one by one:
 
 1. **The raw-write lockdown.** Denies raw `Write` / `Edit` / `NotebookEdit` on
    `research.json`, `tree.gedcomx.json`, `starting-tree.gedcomx.json` and
@@ -1265,15 +1300,17 @@ one on the delegation tools:
    on basename with both path separators handled.
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
-   `proof_summaries` to `proof-conclusion` and `person_evidence` to
-   `person-evidence`, `OWNED_DECLARATIONS` reserves
+   `proof_summaries` to `proof-conclusion`, `person_evidence` and
+   `rejected_links` to `person-evidence`, `namesakes` to `search-records`, and
+   `evaluations` to `gps-mentor`, `OWNED_DECLARATIONS` reserves
    `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
    `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
    `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
-   or any of its analysis fields set — to `conflict-resolution`. The four differ
-   in granularity and key: a whole section, a field at a particular claim value,
-   a field on presence alone, and a claim spread over several fields of one
-   section. `project` is co-written — `init-project` authors it and any writer
+   or any of its analysis fields set — to `conflict-resolution`, and
+   `OWNED_APPENDS` reserves creating a question (`op: "append"` on `questions`)
+   to `question-selection`. The five differ in granularity and key: a whole
+   section, a field at a particular claim value, a field on presence alone, a
+   claim spread over several fields of one section, and one op on a section. `project` is co-written — `init-project` authors it and any writer
    may refresh `updated` — so only the one field is routed; `conflicts` is
    opened by six skills, so only the analysis is.
 3. **The reverse rule.** `AGENT_WRITABLE_SECTIONS` stops every agent that holds
@@ -1283,6 +1320,11 @@ one on the delegation tools:
 4. **No fork subagents.** Denies `Agent` / `Task` with `subagent_type: "fork"`
    (`DELEGATION_TOOLS`). Every path we test sets `CLAUDE_CODE_FORK_SUBAGENT=0`; this
    deny is what reaches Cowork.
+5. **No agent's step on the main thread.** Denies a call with no `agent_id` to a
+   tool on `AGENT_ONLY_TOOLS` — held by agents, declared by no skill — and names
+   every agent that holds it. `MAIN_THREAD_OK` lists the few such tools the main
+   thread still needs, each with its reason; both lists are hand-kept (lead,
+   2026-10-20) and `plugin-hooks.test.ts` fails when a tool is on neither.
 
 Rule 2 is why this layer matters more than any allow-list: **caller identity is
 the one thing no `tools:` list can express.** The deny message names the
@@ -1306,12 +1348,14 @@ Two behaviors of the script that are deliberate:
 - It is **stdlib-only and never raises.** Every failure path — unparseable
   stdin, missing fields — falls through to **allowing** the call, because an
   exception here would fail a tool call the user was entitled to make.
-- **The `Bash` route is deliberately open.** The guard matches on `file_path`, so
-  `cat >`, `sed -i`, and `python -c` all get through. Pattern-matching command
-  text would false-deny a legitimate `python script.py research.json > out` while
-  still missing a variable-built path, and **a false deny is the worse failure
-  mode**. The rationale lives in `guardrail-enforcement-spec.md` §6 ("`Bash` is
-  not covered"), to be revisited only if a bypass ever uses the shell.
+- **The hook does not match `Bash`; the file mode does the job.** The guard
+  matches on `file_path`, and pattern-matching command text would false-deny a
+  legitimate `python script.py research.json > out` while still missing a
+  variable-built path — **a false deny is the worse failure mode**. Instead the
+  protected files are read-only on disk between writes, and `FsProjectStore` is
+  the only layer that unlocks them, so `>`, `>>`, `tee` and
+  `open(…, 'w')` are refused by the filesystem. `chmod` first still gets
+  through, and so do `sed -i` and `mv` on macOS and Linux. `guardrail-enforcement-spec.md` §6 and §6.1.
 
 Packaging is guarded: `package-plugin.mjs`'s `INCLUDE` must carry `"hooks"`, or
 the directory never ships. Asserted by `tests/packaging/plugin-hooks.test.ts`,
@@ -1353,11 +1397,15 @@ enforcing-vs-shadow status.
 
 > **Direction.** Discriminating by *caller* is a hook's job, and **the
 > section-ownership half has landed in the shipped hook** — rules 2 and 3 above.
-> Do not re-derive that design, and do not describe it as pending. The
-> *tool*-level arm stays harness-only: `eval/harness/harness/context_policy.py`
-> denies `image_read` when `agent_id` is absent, and **porting it into the
-> shipped hook was declined by lead ruling on 2026-08-17 — declined, not
-> pending.** The live Cowork run that the port used to wait on happened
+> Do not re-derive that design, and do not describe it as pending. A
+> *tool*-level arm shipped too (2026-10-29): the hook denies the main thread
+> every tool only agents hold (`AGENT_ONLY_TOOLS`, hand-kept beside
+> `MAIN_THREAD_OK`, lead 2026-10-20), naming the agents to delegate to, and both
+> harnesses import that map into `context_policy.SUBAGENT_ONLY_TOOLS`. The
+> `image_read` arm is the one that stays harness-only:
+> `eval/harness/harness/context_policy.py` denies it when `agent_id` is absent,
+> and **porting it into the shipped hook was declined by lead ruling on
+> 2026-08-17 — declined, not pending.** The live Cowork run that the port used to wait on happened
 > (2026-08-15): the router **does** hold `image_read`, and a plugin-hook `deny`
 > **is** honoured there. The ruling was that the reachable crash — an image just
 > under the 700 KB cap, base64-encoding past the envelope limit — does not
@@ -1380,6 +1428,12 @@ enforcing-vs-shadow status.
   and give an agent that gains `research_append` an `AGENT_WRITABLE_SECTIONS`
   lane in `hooks/guard_project_files.py`. `ownership-manifest.test.ts` and
   `plugin-hooks.test.ts` fail until both are done.
+- **A tool no skill declares needs a main-thread decision.** Add the agent to its
+  `AGENT_ONLY_TOOLS` entry in `hooks/guard_project_files.py`; for a tool new to
+  agents, put it there and in `hooks.json`'s matcher (the main thread is denied
+  it), or in `MAIN_THREAD_OK` with the main-thread call that needs it. Never
+  derive the list (lead, 2026-10-20). `plugin-hooks.test.ts` fails until it is
+  done.
 - `tests/packaging/agent-tool-names.test.ts` checks the spelling and cannot see
   the body. **No CI job checks that the tool actually binds at runtime** (§9.4);
   `make agent-smoke` verifies name resolution only, and `make
@@ -1422,7 +1476,10 @@ raise** — every failure path falls through to allowing the call. Model it on
 `guard_project_files.py` and extend `tests/packaging/plugin-hooks.test.ts`, which
 runs the real script. Then run **`make hook-smoke`** (§9.1): `plugin-hooks.test.ts`
 proves the script *decides* correctly, and nothing else proves a runtime *binds*
-it — which, because the script must never raise, fails silently.
+it — which, because the script must never raise, fails silently. `hook-smoke`
+probes `PreToolUse` binding only; a `UserPromptSubmit` hook is shown binding by a hosted
+replay with `GENEALOGY_HOSTED_PLANE` unset whose transcript carries its text. Whether its
+`additionalContext` reaches the model in Cowork is unmeasured.
 
 > A plugin hook binds in Cowork and the hosted path and in **neither harness**.
 > All three of the unit harness, the e2e harness, and the hosted control plane
@@ -1464,10 +1521,10 @@ trustworthy rather than merely present:
 | Location | What |
 |---|---|
 | `results/.staging/<uuid>.json` | a search response staged by its producer, pending `research_log_append` finalizing it; or an acquisition read (`record_read`, `image_transcribe`, `person_read`), which no shipped flow logs; `project_create` reads the `person_read` one. 24h TTL. |
-| `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. No TTL. |
-| `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail. |
+| `results/.scores/<sha256(record_id)>.json` | the `same_person` attestation: every score the tool actually computed, keyed by (record, assertion, tree person), so a `match_score` on a link can be checked against a call that happened. Each entry names its `scorer` (`familysearch` or `service`) and `model`. No TTL. |
+| `images/`, `results/match-scores.jsonl` | retained page scans; `rank_search_matches`' append-only calibration trail, each line naming its `scorer` and `model`. |
 | `results/image-browse.jsonl` | the image cap's log: one line per distinct `imageId` first read through `image_read`, `image_transcribe` or `volume_bisect`, so the 20-per-group cap survives a restart (`image-transcribe-tool-spec.md` §5.8). Append-only, best-effort, no TTL. |
-| `external-collections.json` (project root) | FamilySearch's curated external collections per place, written by `external_links_search` given a `projectPath`, read back by `research_query` (`external_collections`) and `project_context`, and shown in the viewer's Collections section (Electron `project:collections-updated`; hosted and proto `document_updated` named for the file). At the root rather than in `research.json`, because the hosted viewer re-sends `research.json` whole on every write. Not schema-validated (API data); raw writes denied like the two project documents (`external-links-search-tool-spec.md`, "Stored list"). |
+| `external-collections.json` (project root) | FamilySearch's curated external collections per place, written by `external_links_search` given a `projectPath`, read back by `research_query` (`external_collections`) and `project_context`, enforced by `research_append`, `build_external_search_url` and `research_log_append` (each refuses a collection it does not hold), and shown in the viewer's Collections section (Electron `project:collections-updated`; hosted and proto `document_updated` named for the file). At the root rather than in `research.json`, because the hosted viewer re-sends `research.json` whole on every write. Not schema-validated (API data); raw writes denied like the two project documents (`external-links-search-tool-spec.md`, "Stored list"). |
 
 **The dot-directories are load-bearing, not cosmetic.** The validator's orphan
 check lists `results/` non-recursively and errors on any top-level `*.json` no
@@ -1504,7 +1561,8 @@ tool and it belongs in that module**, so there is no second copy to drift.
 
 ### 6.2 Writes go only through validating writer tools
 
-`research_append` (and its lane-scoped variant `extraction_append`, §5.3),
+`research_append` (and its lane-scoped variants `extraction_append` and
+`evaluation_append`, §5.3),
 `research_log_append`, `tree_edit`, `tree_correct`, `merge_tree_persons`,
 `tree_forget`, and `materialize_facts` each **validate the whole project in
 memory and block only on errors the call itself introduces** — pre-existing
@@ -1803,8 +1861,9 @@ it costs nothing at runtime, and **it is not a gap and no decision waits on it.*
   control plane sets the outer limit: `/connect` gives a session more than 72 h
   past `projects.created` only a read-only connection (`SESSION_MAX_AGE` in
   `app/sessions.py`), because its sandbox still runs the agent code it was created
-  with. The chat replays and the client shows no composer; read-only is
-  client-enforced. `/resume` and the read endpoints stay open, so an ended
+  with. The chat replays and the client shows no composer, and the credential
+  proxy refuses the session's Claude calls, because reading it resumes its
+  sandbox. `/resume` and the read endpoints stay open, so an ended
   session's research can still be read.
   **A turn cannot run through the cap, though.** `set_timeout` cannot push a
   running sandbox's end time past its hour: five minutes after create,
@@ -2038,8 +2097,8 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make eval-skill SKILL=<name> STORE=pg` + `make unit-pg-parity` | the same suite with every live tool call on `PgS3ProjectStore` (U15; non-releasable, logged to `eval/runlogs/unit-pg/`), and its parity with the newest file-store log: outcome flips and any live response that reads as a store fault | a fixture-backed tool's I/O (only live tools touch the store); the hosted worker's per-request binding and claim fence; anything after 2026-10-12 — no job re-runs it, so it is a dated measurement, not a check |
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: per-test pass rates are `make eval-health`'s job. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
-| `make matcher-accuracy` | the **matcher's ranking** over the record-hint fixtures whose `fixture.json` `hint.identity` is `same` or `different`, each pair scored through `scorePair` (`packages/engine/mcp-server/src/utils/match-engine.ts`, the function `same_person` calls): the AUC, the confusion table at the person-evidence bands (score > 0.7 and > 0.4), and the pairs those bands misrank. Needs a FamilySearch login (`make e2e-login`), so no CI job runs it. Exits non-zero when the AUC falls below `MIN_AUC` (default 0.65), and when nothing was scored, a class is empty or a labelled fixture could not be scored (e2e spec §3.6.2) | `unresolved`, `null` and draft hints — listed as skipped, never scored; the inputs `rank_search_matches` hands `scorePair` (a staged search hit, not a `record_read` of the hinted persona); FamilySearch's own hint ranking; whether an agent acts on the score. A floor, not a pinned value: a matcher change that lowers the AUC but stays above `MIN_AUC` passes |
-| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first, that no research job started, and that the expected source or log entry was saved — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE and nudges any stop not preceded by `research_delivered` (the `delivered` column shows that risk but does not gate); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
+| `make matcher-accuracy` | the **matcher's ranking** over the record-hint fixtures whose `fixture.json` `hint.identity` is `same` or `different`, each pair scored through `matchPairs` (`packages/engine/mcp-server/src/utils/matcher.ts`, the call `same_person` and ranking make, so it measures whichever matcher config.json names): the AUC, the confusion table at the person-evidence bands (score > 0.7 and > 0.4), and the pairs those bands misrank. Needs a FamilySearch login (`make e2e-login`), so no CI job runs it. Exits non-zero when the AUC falls below `MIN_AUC` (default 0.65), and when nothing was scored, a class is empty or a labelled fixture could not be scored (e2e spec §3.6.2) | `unresolved`, `null` and draft hints — listed as skipped, never scored; the inputs `rank_search_matches` hands the matcher (a staged search hit, not a `record_read` of the hinted persona); FamilySearch's own hint ranking; whether an agent acts on the score. A floor, not a pinned value: a matcher change that lowers the AUC but stays above `MIN_AUC` passes |
+| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first (or that none did), that no research job started, that the expected source or log entry was saved (or, for an "answer already attached" ask, that none was), and that named tools were or were not called — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE (it no longer nudges a stop: step mode's phase 2 deleted the Stop veto); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
 
 ### 9.2 The lint layer
 
@@ -2408,24 +2467,15 @@ answered — is where an unsettled question waits. `/fill-ready` § "Above the j
 pools" owns the split, and `/make-decisions` drains the `needs-decision` queue
 daily; `/find-big-wins` reads it as evidence but never removes the label.
 
-Two are stated **where they bind**, because each one will stop a change you might
+One is stated **where it binds**, because it will stop a change you might
 otherwise make:
 
-- **The `same_person` write boundary** (§5.3). The direction is settled and a
-  fourth discriminator ships in shadow; what is open is its graduation to a deny.
-  **Read [ADR-0009](adrs/ADR-0009-refuted-agent-design-claims.md) before
-  proposing a fifth** — three failed adversarial review and the ledger names the
-  six constraints a candidate has to satisfy.
 - **Whether a compliance detector follows the router's paraphrase or the owning
-  skill's contract.** The owning skill wins, and the §8 `same_person` provenance
-  check is the worked case: it now narrows on whether a **record persona is
-  reachable** — image-, external-site-, PDF- and full-text-sourced links and
-  sidecar-less searches are exempt and counted, `record_read`-sourced links stay
-  flagged — rather than on the null `record_persona_id` the older reading
-  exempted on. What stays open is that these detectors remain uncalibrated, which
-  is why §9.4 says not to quote a violation rate.
+  skill's contract.** The owning skill wins. What stays open is that these
+  detectors remain uncalibrated, which is why §9.4 says not to quote a violation
+  rate.
 
-Before adding a third, check it is not already refuted — ADR-0009 is a ledger of
+Before adding another, check it is not already refuted — ADR-0009 is a ledger of
 questions that only look open.
 
 ---

@@ -1,0 +1,5299 @@
+{
+ "source": "Hosted feedback bundle feedback-2026-10-15T15-11-52-453422Z.zip: volume_search Freeborn, Minnesota, United States 1870-1900, no filter, page 1 of a 163-volume result. The tool answer was 99,517 characters. Reverse-mapped to the RMS response shape (issue #3611).",
+ "query": {
+  "standardPlace": "Freeborn, Minnesota, United States",
+  "startYear": 1870,
+  "endYear": 1900
+ },
+ "response": {
+  "groups": [
+   {
+    "id": "DGS-007580977_001_M99G-5K4",
+    "groupName": "007580977_001_M99G-5K4",
+    "childCount": 1120,
+    "indexedChildCount": 750,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007580977_007_M99G-5K6",
+    "groupName": "007580977_007_M99G-5K6",
+    "childCount": 30,
+    "indexedChildCount": 25,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007580977_005_M99G-5K8",
+    "groupName": "007580977_005_M99G-5K8",
+    "childCount": 29,
+    "indexedChildCount": 24,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007580977_003_M99G-5KC",
+    "groupName": "007580977_003_M99G-5KC",
+    "childCount": 39,
+    "indexedChildCount": 32,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007580977_006_M99G-5KD",
+    "groupName": "007580977_006_M99G-5KD",
+    "childCount": 17,
+    "indexedChildCount": 7,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007580977_002_M99G-5KH",
+    "groupName": "007580977_002_M99G-5KH",
+    "childCount": 52,
+    "indexedChildCount": 25,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007580977_004_M99G-5KZ",
+    "groupName": "007580977_004_M99G-5KZ",
+    "childCount": 167,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1917",
+      "recordTypeOrig": "Military records",
+      "recordTypeConceptId": 124133,
+      "fromdateString": "1917-01-01T00:00:00",
+      "todateString": "1917-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1938-1940",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1938-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minnesota, United States",
+      "datesOrig": "1928",
+      "recordTypeOrig": "Societies",
+      "recordTypeConceptId": 124384,
+      "fromdateString": "1928-01-01T00:00:00",
+      "todateString": "1928-12-31T23:59:59.999"
+     },
+     {
+      "place": "Stillwater, Washington, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Minneapolis, Hennepin, Minnesota, United States",
+      "datesOrig": "1899-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1880-1890",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1880-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Saint Paul, Ramsey, Minnesota, United States",
+      "datesOrig": "1881-1884",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1881-01-01T00:00:00",
+      "todateString": "1884-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1883-1891",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1883-01-01T00:00:00",
+      "todateString": "1891-12-31T23:59:59.999"
+     },
+     {
+      "place": "Spring Valley, Fillmore, Minnesota, United States",
+      "datesOrig": "1882-1901",
+      "recordTypeOrig": "Muster rolls",
+      "recordTypeConceptId": 124159,
+      "fromdateString": "1882-01-01T00:00:00",
+      "todateString": "1901-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004257579_002_M9C6-G3W",
+    "groupName": "004257579_002_M9C6-G3W",
+    "childCount": 226,
+    "indexedChildCount": 156,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1870",
+      "recordTypeOrig": "Statistics",
+      "recordTypeConceptId": 124397,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1870-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004344707_002_M9CJ-KVS",
+    "groupName": "004344707_002_M9CJ-KVS",
+    "childCount": 562,
+    "indexedChildCount": 556,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1895",
+      "recordTypeOrig": "Census",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1895-01-01T00:00:00",
+      "todateString": "1895-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004225262_002_M9DH-J38",
+    "groupName": "004225262_002_M9DH-J38",
+    "childCount": 368,
+    "indexedChildCount": 184,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1900",
+      "recordTypeOrig": "Death records",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1900-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004120275_001_M9KP-YQB",
+    "groupName": "004120275_001_M9KP-YQB",
+    "childCount": 471,
+    "indexedChildCount": 452,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "title": "12th Census of Population 1900",
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1900",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1900-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004539639_002_M9S4-NL6",
+    "groupName": "004539639_002_M9S4-NL6",
+    "childCount": 620,
+    "indexedChildCount": 620,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1870–1959",
+      "recordTypeOrig": "Death Record Indexes",
+      "recordTypeConceptId": 123860,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1959-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004679086",
+    "groupName": "004679086",
+    "childCount": 860,
+    "indexedChildCount": 843,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Martin, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Lyon, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Redwood, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Rock, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Mower, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Murray, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Steele, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Pipestone, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Olmsted, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nicollet, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nobles, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Brown, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Blue Earth, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Dodge, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Fillmore, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Faribault, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Cottonwood, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Jackson, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Watonwan, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Winona, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Houston, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Waseca, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Lincoln, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Lac qui Parle, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     },
+     {
+      "place": "Yellow Medicine, Minnesota, United States",
+      "datesOrig": "1890",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1890-01-01T00:00:00",
+      "todateString": "1890-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004539637",
+    "groupName": "004539637",
+    "childCount": 613,
+    "indexedChildCount": 613,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "Dec 1899–Oct 1909",
+      "recordTypeOrig": "Marriage Records",
+      "recordTypeConceptId": 104727,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1909-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "Apr 1889–Dec 1899",
+      "recordTypeOrig": "Marriage Records",
+      "recordTypeConceptId": 104727,
+      "fromdateString": "1889-01-01T00:00:00",
+      "todateString": "1899-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004539636",
+    "groupName": "004539636",
+    "childCount": 556,
+    "indexedChildCount": 556,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "Jan 1876–Mar 1889",
+      "recordTypeOrig": "Marriage record",
+      "recordTypeConceptId": 104727,
+      "fromdateString": "1876-01-01T00:00:00",
+      "todateString": "1889-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "Sep 1857–Jun 1877",
+      "recordTypeOrig": "Marriage Certificates",
+      "recordTypeConceptId": 127549,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1877-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004859981",
+    "groupName": "004859981",
+    "childCount": 674,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "v. A"
+    ],
+    "coverages": [
+     {
+      "place": "Alden Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1874-1981",
+      "recordTypeOrig": "delayed birth records",
+      "recordTypeConceptId": 104929,
+      "fromdateString": "1874-01-01T00:00:00",
+      "todateString": "1981-12-31T23:59:59.999"
+     },
+     {
+      "place": "Alden Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1889-1907",
+      "recordTypeOrig": "Birth and death records",
+      "recordTypeConceptId": 103979,
+      "fromdateString": "1889-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Alden Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1870-1921",
+      "recordTypeOrig": "Birth index",
+      "recordTypeConceptId": 123841,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1921-12-31T23:59:59.999"
+     },
+     {
+      "place": "Alden Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1916",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1916-12-31T23:59:59.999"
+     },
+     {
+      "place": "Alden Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1889-1907",
+      "recordTypeOrig": "Birth and death records",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1889-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004859984",
+    "groupName": "004859984",
+    "childCount": 655,
+    "indexedChildCount": 216,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Albert Lea Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeman Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1911",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1911-12-31T23:59:59.999"
+     },
+     {
+      "place": "Shell Rock Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1949",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1949-12-31T23:59:59.999"
+     },
+     {
+      "place": "Riceland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1949",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1949-12-31T23:59:59.999"
+     },
+     {
+      "place": "Pickerel Lake Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1903-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1903-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Oakland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1949",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1949-12-31T23:59:59.999"
+     },
+     {
+      "place": "Oakland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1903-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1903-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1903-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1903-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeman Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1949",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1949-12-31T23:59:59.999"
+     },
+     {
+      "place": "Shell Rock Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1903-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1903-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Riceland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1911",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1911-12-31T23:59:59.999"
+     },
+     {
+      "place": "Glenville, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1940",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Oakland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1911",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1911-12-31T23:59:59.999"
+     },
+     {
+      "place": "Shell Rock Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1911",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1911-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1911",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1911-12-31T23:59:59.999"
+     },
+     {
+      "place": "Pickerel Lake Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1949",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1949-12-31T23:59:59.999"
+     },
+     {
+      "place": "Riceland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1949",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1949-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1949",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1949-12-31T23:59:59.999"
+     },
+     {
+      "place": "Glenville, Freeborn, Minnesota, United States",
+      "datesOrig": "1903-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1903-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1903-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1903-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Glenville, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Riceland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1940",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1940",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Albert Lea Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Riceland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Glenville, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1911",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1911-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeman Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Glenville, Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1949",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1949-12-31T23:59:59.999"
+     },
+     {
+      "place": "Riceland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1903-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1903-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Glenville, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Shell Rock Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1940",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Oakland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1940",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeman Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1903-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1903-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Oakland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Oakland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Pickerel Lake Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1911",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1911-12-31T23:59:59.999"
+     },
+     {
+      "place": "Pickerel Lake Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1940",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Pickerel Lake Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Shell Rock Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1913",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Pickerel Lake Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Shell Rock Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1911",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1911-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeman Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1940",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeman Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1940",
+      "recordTypeOrig": "death",
+      "recordTypeConceptId": 104898,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1940-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004859983",
+    "groupName": "004859983",
+    "childCount": 708,
+    "indexedChildCount": 170,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Mansfield Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hayward Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1870-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hayward Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Moscow Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Newry Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1914",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1914-12-31T23:59:59.999"
+     },
+     {
+      "place": "Manchester Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "London Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1914",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1914-12-31T23:59:59.999"
+     },
+     {
+      "place": "London Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1870-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Moscow Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hayward Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1914",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1914-12-31T23:59:59.999"
+     },
+     {
+      "place": "Manchester Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Newry Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1870-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Moscow Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1914",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1914-12-31T23:59:59.999"
+     },
+     {
+      "place": "Newry Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Mansfield Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Mansfield Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Mansfield Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1870-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Manchester Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1870-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "London Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hayward Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1870-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Manchester Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Newry Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Manchester Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Mansfield Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Nunda Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1914",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1914-12-31T23:59:59.999"
+     },
+     {
+      "place": "Moscow Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "London Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "London Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Newry Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hayward Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Newry Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Moscow Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1870-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Moscow Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1953",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1953-12-31T23:59:59.999"
+     },
+     {
+      "place": "Mansfield Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1914",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1914-12-31T23:59:59.999"
+     },
+     {
+      "place": "London Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hayward Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Manchester Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1914",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1914-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004859982",
+    "groupName": "004859982",
+    "childCount": 998,
+    "indexedChildCount": 180,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Emmons, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1916",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1916-12-31T23:59:59.999"
+     },
+     {
+      "place": "Geneva Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1873-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1873-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Alden, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1927",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1927-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bancroft Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1927",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1927-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hartland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1916",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1916-12-31T23:59:59.999"
+     },
+     {
+      "place": "Emmons, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1927",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1927-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bancroft Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1873-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1873-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Alden, Freeborn, Minnesota, United States",
+      "datesOrig": "1873-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1873-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Geneva Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1927",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1927-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bath Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1927",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1927-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hartland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1873-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1873-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bancroft Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Emmons, Freeborn, Minnesota, United States",
+      "datesOrig": "1873-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1873-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Emmons, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hartland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Carlston Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1873-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1873-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Carlston Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bancroft Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1916",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1916-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bath Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Emmons, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Carlston Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1927",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1927-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bath Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bath Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1916",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1916-12-31T23:59:59.999"
+     },
+     {
+      "place": "Alden, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Geneva Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bancroft Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Alden, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1912",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1912-12-31T23:59:59.999"
+     },
+     {
+      "place": "Carlston Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1916",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1916-12-31T23:59:59.999"
+     },
+     {
+      "place": "Geneva Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1916",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1916-12-31T23:59:59.999"
+     },
+     {
+      "place": "Geneva Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Carlston Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     },
+     {
+      "place": "Bath Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1873-1913",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1873-01-01T00:00:00",
+      "todateString": "1913-12-31T23:59:59.999"
+     },
+     {
+      "place": "Alden, Freeborn, Minnesota, United States",
+      "datesOrig": "1900-1916",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1900-01-01T00:00:00",
+      "todateString": "1916-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hartland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1927",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1927-12-31T23:59:59.999"
+     },
+     {
+      "place": "Hartland Township, Freeborn, Minnesota, United States",
+      "datesOrig": "1872-1907",
+      "recordTypeOrig": "Vital records",
+      "recordTypeConceptId": 124443,
+      "fromdateString": "1872-01-01T00:00:00",
+      "todateString": "1907-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004437200",
+    "groupName": "004437200",
+    "childCount": 812,
+    "indexedChildCount": 633,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1885",
+      "recordTypeOrig": "Census",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1885-01-01T00:00:00",
+      "todateString": "1885-12-31T23:59:59.999"
+     },
+     {
+      "place": "Goodhue, Minnesota, United States",
+      "datesOrig": "1885",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1885-01-01T00:00:00",
+      "todateString": "1885-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004406587",
+    "groupName": "004406587",
+    "childCount": 273,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "v. [A], p. 228-498"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1902",
+      "recordTypeOrig": "Wills",
+      "recordTypeConceptId": 124457,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1902-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004406597",
+    "groupName": "004406597",
+    "childCount": 278,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "v. B, p. 1-228"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1909",
+      "recordTypeOrig": "Wills",
+      "recordTypeConceptId": 124457,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1909-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004406605",
+    "groupName": "004406605",
+    "childCount": 277,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "v. [B], p. 229-563"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1899-1909",
+      "recordTypeOrig": "Wills",
+      "recordTypeConceptId": 124457,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1909-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004406579",
+    "groupName": "004406579",
+    "childCount": 273,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "v. A, p. 1-227"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1902",
+      "recordTypeOrig": "Wills",
+      "recordTypeConceptId": 124457,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1902-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-004482155",
+    "groupName": "004482155",
+    "childCount": 685,
+    "indexedChildCount": 555,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1875",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1875-01-01T00:00:00",
+      "todateString": "1875-12-31T23:59:59.999"
+     },
+     {
+      "place": "Fillmore, Minnesota, United States",
+      "datesOrig": "1875",
+      "recordTypeOrig": "Census",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1875-01-01T00:00:00",
+      "todateString": "1875-12-31T23:59:59.999"
+     },
+     {
+      "place": "Goodhue, Minnesota, United States",
+      "datesOrig": "1875",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1875-01-01T00:00:00",
+      "todateString": "1875-12-31T23:59:59.999"
+     },
+     {
+      "place": "Grant, Minnesota, United States",
+      "datesOrig": "1875",
+      "recordTypeOrig": "Census Records",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1875-01-01T00:00:00",
+      "todateString": "1875-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-008920261",
+    "groupName": "008920261",
+    "childCount": 688,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "title": "Population schedules of the ninth census of the United States, 1870",
+    "volumes": [
+     "Minnesota: Fillmore and Freeborn Counties"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1870",
+      "recordTypeOrig": "Census",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1870-12-31T23:59:59.999"
+     },
+     {
+      "place": "United States",
+      "datesOrig": "1870",
+      "recordTypeOrig": "Census",
+      "recordTypeConceptId": 123363,
+      "fromdateString": "1870-01-01T00:00:00",
+      "todateString": "1870-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-100881834",
+    "groupName": "100881834",
+    "childCount": 520,
+    "indexedChildCount": 177,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en",
+     "no"
+    ],
+    "volumes": [
+     "Hayward, LeRoy, Chester, Ostrander, Minnesota"
+    ],
+    "coverages": [
+     {
+      "place": "Hayward, Freeborn, Minnesota, United States",
+      "datesOrig": "1802–1956",
+      "recordTypeOrig": "Church records",
+      "recordTypeConceptId": 123402,
+      "fromdateString": "1802-01-01T00:00:00",
+      "todateString": "1956-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-100881835",
+    "groupName": "100881835",
+    "childCount": 569,
+    "indexedChildCount": 307,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en",
+     "no"
+    ],
+    "volumes": [
+     "Clarks Grove, Minnesota"
+    ],
+    "coverages": [
+     {
+      "place": "Clarks Grove, Freeborn, Minnesota, United States",
+      "datesOrig": "1865–1955",
+      "recordTypeOrig": "Church records",
+      "recordTypeConceptId": 123402,
+      "fromdateString": "1865-01-01T00:00:00",
+      "todateString": "1955-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-100890959",
+    "groupName": "100890959",
+    "childCount": 607,
+    "indexedChildCount": 243,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en",
+     "no"
+    ],
+    "volumes": [
+     "Emmons, Minnesota"
+    ],
+    "coverages": [
+     {
+      "place": "Emmons, Freeborn, Minnesota, United States",
+      "datesOrig": "1828–1995",
+      "recordTypeOrig": "Church records",
+      "recordTypeConceptId": 123402,
+      "fromdateString": "1828-01-01T00:00:00",
+      "todateString": "1995-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-100890960",
+    "groupName": "100890960",
+    "childCount": 481,
+    "indexedChildCount": 240,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en",
+     "no"
+    ],
+    "volumes": [
+     "Albert Lea, Minnesota"
+    ],
+    "coverages": [
+     {
+      "place": "Albert Lea, Freeborn, Minnesota, United States",
+      "datesOrig": "1805–1997",
+      "recordTypeOrig": "Church records",
+      "recordTypeConceptId": 123402,
+      "fromdateString": "1805-01-01T00:00:00",
+      "todateString": "1997-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-100890977",
+    "groupName": "100890977",
+    "childCount": 728,
+    "indexedChildCount": 313,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en",
+     "no"
+    ],
+    "volumes": [
+     "Freeborn and Mitchell, Minnesota and Iowa"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1839–1982",
+      "recordTypeOrig": "Church records",
+      "recordTypeConceptId": 123402,
+      "fromdateString": "1839-01-01T00:00:00",
+      "todateString": "1982-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007665590",
+    "groupName": "007665590",
+    "childCount": 1786,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-239 thru A-254"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666136",
+    "groupName": "007666136",
+    "childCount": 2075,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-329 thru C-351"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666040",
+    "groupName": "007666040",
+    "childCount": 2032,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-522 (cont.) thru C-563 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666042",
+    "groupName": "007666042",
+    "childCount": 2005,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-592 (cont.) thru D-621 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666041",
+    "groupName": "007666041",
+    "childCount": 1944,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-563 (cont.) thru C-592 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666039",
+    "groupName": "007666039",
+    "childCount": 2004,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-489 thru C-522 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666043",
+    "groupName": "007666043",
+    "childCount": 2020,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. D-621 (cont.) thru D-655"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666038",
+    "groupName": "007666038",
+    "childCount": 2021,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-453 thru C-488"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666044",
+    "groupName": "007666044",
+    "childCount": 2013,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. D-656 thru D-683"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666045",
+    "groupName": "007666045",
+    "childCount": 1911,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. D-684 thru D-716"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666046",
+    "groupName": "007666046",
+    "childCount": 2042,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. D-717 thru D-736"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666047",
+    "groupName": "007666047",
+    "childCount": 1981,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. D-737 thru D-773"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666035",
+    "groupName": "007666035",
+    "childCount": 1964,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-352 thru C-395 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666036",
+    "groupName": "007666036",
+    "childCount": 1966,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-395 (cont.) thru C-422 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666037",
+    "groupName": "007666037",
+    "childCount": 1967,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-422 (cont.) thru C-452"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Estate Case Files",
+      "recordTypeConceptId": 126785,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666958",
+    "groupName": "007666958",
+    "childCount": 579,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "v. B"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1899–1915",
+      "recordTypeOrig": "Will Records",
+      "recordTypeConceptId": 124457,
+      "fromdateString": "1899-01-01T00:00:00",
+      "todateString": "1915-12-31T23:59:59.999"
+     },
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1905–1925",
+      "recordTypeOrig": "Will Records",
+      "recordTypeConceptId": 124457,
+      "fromdateString": "1905-01-01T00:00:00",
+      "todateString": "1925-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007666959",
+    "groupName": "007666959",
+    "childCount": 354,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "v. A (Clerical error 349,350)"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1858–1902",
+      "recordTypeOrig": "Will Records",
+      "recordTypeConceptId": 124457,
+      "fromdateString": "1858-01-01T00:00:00",
+      "todateString": "1902-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669250",
+    "groupName": "007669250",
+    "childCount": 1788,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-317 thru A-335 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Records",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669245",
+    "groupName": "007669245",
+    "childCount": 1759,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-199 (cont.) thru A-221 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669249",
+    "groupName": "007669249",
+    "childCount": 1711,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-298 (cont.) thru A-316"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Records",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669248",
+    "groupName": "007669248",
+    "childCount": 1750,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-283 thru A-298 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669260",
+    "groupName": "007669260",
+    "childCount": 1806,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-77 thru B-99 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669251",
+    "groupName": "007669251",
+    "childCount": 1888,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-335 (cont.) thru A-357 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Records",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669247",
+    "groupName": "007669247",
+    "childCount": 1752,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-255 thru A-282"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669246",
+    "groupName": "007669246",
+    "childCount": 1727,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-221 (cont.) thru A-238"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669252",
+    "groupName": "007669252",
+    "childCount": 1865,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-357 (cont.) thru A-374 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Records",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669267",
+    "groupName": "007669267",
+    "childCount": 1690,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-244 (cont.) thru B-272"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Records",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669270",
+    "groupName": "007669270",
+    "childCount": 1796,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-325 (cont.) thru B-355"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669266",
+    "groupName": "007669266",
+    "childCount": 1821,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-219 thru B-244 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669241",
+    "groupName": "007669241",
+    "childCount": 1792,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-62 thru A-113 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669272",
+    "groupName": "007669272",
+    "childCount": 1762,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-383 (cont.) thru B-410"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669261",
+    "groupName": "007669261",
+    "childCount": 1771,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-99 (cont.) thru B-131"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669268",
+    "groupName": "007669268",
+    "childCount": 1812,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-273 thru B-300 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669271",
+    "groupName": "007669271",
+    "childCount": 1782,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-356 thru B-383 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669273",
+    "groupName": "007669273",
+    "childCount": 1788,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-411 thru B-434 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669321",
+    "groupName": "007669321",
+    "childCount": 1785,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-93 (cont.) thru C-125"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669244",
+    "groupName": "007669244",
+    "childCount": 1585,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-179 thru A-199 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669240",
+    "groupName": "007669240",
+    "childCount": 1846,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-1 thru A-61"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669319",
+    "groupName": "007669319",
+    "childCount": 1836,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-148 thru C-174 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669320",
+    "groupName": "007669320",
+    "childCount": 1895,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-126 thru C-147"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669318",
+    "groupName": "007669318",
+    "childCount": 1873,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-174 (cont.) thru C-192"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669322",
+    "groupName": "007669322",
+    "childCount": 1694,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-68 (cont.) thru C-93 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669242",
+    "groupName": "007669242",
+    "childCount": 1780,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-113 (cont.) thru A-149"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669274",
+    "groupName": "007669274",
+    "childCount": 1725,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-434 (cont.) thru B-472 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669325",
+    "groupName": "007669325",
+    "childCount": 1708,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-8 thru C-34 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669269",
+    "groupName": "007669269",
+    "childCount": 1785,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-300 (cont.) thru B-325 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669275",
+    "groupName": "007669275",
+    "childCount": 1639,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-472 (cont.) thru B-498"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669254",
+    "groupName": "007669254",
+    "childCount": 1773,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-397 thru A-423"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Records",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669253",
+    "groupName": "007669253",
+    "childCount": 1839,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-374 (cont.) thru A-396"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Records",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669317",
+    "groupName": "007669317",
+    "childCount": 1965,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-193 thru C-215 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669262",
+    "groupName": "007669262",
+    "childCount": 1755,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-132 thru B-160 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669276",
+    "groupName": "007669276",
+    "childCount": 1819,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-499 thru B-519"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669313",
+    "groupName": "007669313",
+    "childCount": 2009,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-296 thru C-328"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669316",
+    "groupName": "007669316",
+    "childCount": 1889,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-215 (cont.) thru C-232"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669311",
+    "groupName": "007669311",
+    "childCount": 1977,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. D-818 thru D-850"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669259",
+    "groupName": "007669259",
+    "childCount": 1820,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-49 (cont.) thru B-76"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669338",
+    "groupName": "007669338",
+    "childCount": 1509,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. E-1139 thru E-1147"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669315",
+    "groupName": "007669315",
+    "childCount": 1889,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-233 thru C-267 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669323",
+    "groupName": "007669323",
+    "childCount": 1706,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-55 thru C-68 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669243",
+    "groupName": "007669243",
+    "childCount": 1683,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-150 thru A-179"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669312",
+    "groupName": "007669312",
+    "childCount": 1946,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. D-774 thru D-817"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669314",
+    "groupName": "007669314",
+    "childCount": 2011,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-267 (cont.) thru C-295"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669329",
+    "groupName": "007669329",
+    "childCount": 1981,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. D-903 thru D-928 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669339",
+    "groupName": "007669339",
+    "childCount": 703,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Index",
+      "recordTypeConceptId": 123963,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669324",
+    "groupName": "007669324",
+    "childCount": 1711,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. C-34 (cont.) thru C-54"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669327",
+    "groupName": "007669327",
+    "childCount": 1717,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-543 thru B-577"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669255",
+    "groupName": "007669255",
+    "childCount": 2064,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. A-424 thru A-455"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Records",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669258",
+    "groupName": "007669258",
+    "childCount": 1927,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-17 (cont.) thru B-49 (to be cont"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate Records",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   },
+   {
+    "id": "DGS-007669328",
+    "groupName": "007669328",
+    "childCount": 1362,
+    "indexedChildCount": 0,
+    "noIndexableDataChildCount": 0,
+    "languages": [
+     "en"
+    ],
+    "volumes": [
+     "no. B-520 thru B-542"
+    ],
+    "coverages": [
+     {
+      "place": "Freeborn, Minnesota, United States",
+      "datesOrig": "1857-1910",
+      "recordTypeOrig": "Probate case files",
+      "recordTypeConceptId": 124277,
+      "fromdateString": "1857-01-01T00:00:00",
+      "todateString": "1910-12-31T23:59:59.999"
+     }
+    ]
+   }
+  ],
+  "numberReturned": 100,
+  "totalCount": 163
+ },
+ "fulltextIds": [
+  "007580977_001_M99G-5K4",
+  "007580977_007_M99G-5K6",
+  "007580977_005_M99G-5K8",
+  "007580977_003_M99G-5KC",
+  "007580977_006_M99G-5KD",
+  "007580977_002_M99G-5KH",
+  "007580977_004_M99G-5KZ",
+  "004225262_002_M9DH-J38",
+  "004539639_002_M9S4-NL6",
+  "004539637",
+  "004539636",
+  "004859981",
+  "004859984",
+  "004859983",
+  "004859982",
+  "004406587",
+  "004406597",
+  "004406605",
+  "004406579",
+  "007665590",
+  "007666136",
+  "007666040",
+  "007666042",
+  "007666041",
+  "007666039",
+  "007666043",
+  "007666038",
+  "007666044",
+  "007666045",
+  "007666046",
+  "007666047",
+  "007666035",
+  "007666036",
+  "007666037",
+  "007666958",
+  "007666959",
+  "007669250",
+  "007669245",
+  "007669249",
+  "007669248",
+  "007669260",
+  "007669251",
+  "007669247",
+  "007669246",
+  "007669252",
+  "007669267",
+  "007669270",
+  "007669266",
+  "007669241",
+  "007669272",
+  "007669261",
+  "007669268",
+  "007669271",
+  "007669273",
+  "007669321",
+  "007669244",
+  "007669240",
+  "007669319",
+  "007669320",
+  "007669318",
+  "007669322",
+  "007669242",
+  "007669274",
+  "007669325",
+  "007669269",
+  "007669275",
+  "007669254",
+  "007669253",
+  "007669317",
+  "007669262",
+  "007669276",
+  "007669313",
+  "007669316",
+  "007669311",
+  "007669259",
+  "007669338",
+  "007669315",
+  "007669323",
+  "007669243",
+  "007669312",
+  "007669314",
+  "007669329",
+  "007669339",
+  "007669324",
+  "007669327",
+  "007669255",
+  "007669258",
+  "007669328"
+ ]
+}

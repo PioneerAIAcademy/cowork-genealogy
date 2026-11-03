@@ -296,12 +296,17 @@ text is already serialized in the sidecar). The remaining flat fields
 (`names`, `places`, `dates`, `highlightTerms`, `title`, `recordType`,
 `recordPlace`, `recordDate`) are the triage stubs the agent works from. Note
 `record_read` cannot re-read a fulltext sidecar (it matches on `recordId` +
-`gedcomx`, which a fulltext result has neither of), so **no MCP tool** reads a
-staged fulltext result's transcript back. It is still on disk at
-`staged.resultsRef` — staging serializes the response before the strip runs —
-and `Read` is not gated, so an agent can open it. Doing so pulls the whole page
-(79–136 KB) back into context, which is the reason to triage from the stubs and
-verify against the original image, not an inability to reach it.
+`gedcomx`, which a fulltext result has neither of). `sidecar_read` reads the
+transcript back one hit at a time, from the staged or the finalized sidecar
+(staging serializes the response before the strip runs): `<resultsRef>#hits`
+lists the hits as JSON Lines (`hitIndex`, `hitId`, `title`, `recordDate`,
+`recordPlace`, `hasTranscript`, `ref`), with no transcript text, and
+`<resultsRef>#<hit id>` returns that hit's `textDocument`, paged. A bare
+fulltext ref is refused (`sidecar-read-tool-spec.md`). A broad result set's response
+ran 79–136 KB before the strip, which is the reason to triage from the stubs and read only the hits worth
+extracting. `extraction_append` extracts a hit from the same `textDocument`,
+cited to the logged `fulltext_search` entry (`research-append-tool-spec.md`
+§11.7).
 
 `projectPath` is not forwarded to the upstream API; it only drives staging.
 

@@ -8,21 +8,21 @@
     "query": {
       "standardPlace": "Pennsylvania, United States",
       "startYear": 1870,
-      "endYear": 1900
+      "endYear": 1900,
+      "pageSize": 50
     },
     "totalResults": 23,
     "nextPageToken": "PA_COAL_REGION_PAGE_2",
     "results": [
       {
         "imageGroupNumber": "002240015",
-        "imageGroupPrefix": "002240015",
         "imageCount": 410,
         "recordSearchablePercent": 95,
         "fulltextSearchable": true,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Schuylkill, Pennsylvania, United States",
+            "places": ["Schuylkill, Pennsylvania, United States"],
             "dateRange": "1870-1900",
             "recordType": "Mine Worker Employment Cards"
           }
@@ -30,14 +30,13 @@
       },
       {
         "imageGroupNumber": "002240016",
-        "imageGroupPrefix": "002240016",
         "imageCount": 287,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Luzerne, Pennsylvania, United States",
+            "places": ["Luzerne, Pennsylvania, United States"],
             "dateRange": "1870-1895",
             "recordType": "Mine Accident Reports"
           }
@@ -45,14 +44,13 @@
       },
       {
         "imageGroupNumber": "002240017",
-        "imageGroupPrefix": "002240017",
         "imageCount": 199,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Lackawanna, Pennsylvania, United States",
+            "places": ["Lackawanna, Pennsylvania, United States"],
             "dateRange": "1878-1900",
             "recordType": "Colliery Payroll Ledgers"
           }

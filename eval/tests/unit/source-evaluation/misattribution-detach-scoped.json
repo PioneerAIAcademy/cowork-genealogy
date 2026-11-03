@@ -11,12 +11,16 @@
       "misattribution",
       "regression",
       "census-variance-trap",
-      "direct-arm"
+      "direct-arm",
+      "finding-links"
     ]
   },
   "input": {
     "delegation": "Go through the sources attached to Christian P. Hole (KD96-TV2) and tell me which of them actually belong on his profile.\n\nprojectPath: <workspace>",
     "scenario": "christian-hole-quality"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 600
   },
   "mcp_fixtures": [
     "person-read-hole-attached-sources",

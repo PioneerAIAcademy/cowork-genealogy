@@ -40,10 +40,11 @@ def test_tree_is_denied_and_routed_to_project_context():
     assert "project_context" in reason
 
 
-def test_results_sidecar_is_denied_and_routed_to_record_read():
+def test_results_sidecar_is_denied_and_routed_to_record_read_or_sidecar_read_hits():
     reason = denied("Read", {"file_path": f"{ROOT}/results/log-7.json"})
     assert reason is not None
-    assert "record_read({recordId, resultsRef})" in reason
+    assert "record_read({recordId, resultsRef}) for a record or search sidecar" in reason
+    assert "sidecar_read({projectPath, ref: '<ref>#hits'}) for a fulltext_search sidecar" in reason
 
 
 def test_evaluations_is_denied_and_routed_to_sidecar_read():

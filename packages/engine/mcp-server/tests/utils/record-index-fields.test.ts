@@ -99,9 +99,36 @@ describe("personaIndexFields", () => {
   });
 
   it("survives malformed input without throwing", () => {
-    for (const bad of [null, undefined, 42, "x", { fields: "no" }, { fields: [null] }]) {
+    for (const bad of [null, undefined, 42, "x", { fields: "no" }, { fields: [null] }, { facts: "no" }, { facts: [null, { place: null }] }]) {
       expect(() => personaIndexFields(bad)).not.toThrow();
     }
+  });
+
+  it("lifts the place of the persona's first census fact as FamilySearch sends it (X975-557's 1920 census)", () => {
+    const p = {
+      ...census1880Person,
+      facts: [
+        { type: "http://gedcomx.org/Birth", place: { original: "Puerto Rico" } },
+        { type: "http://gedcomx.org/Census", place: { original: "Hormigueros, Puerto Rico, United States" } },
+        { type: "http://gedcomx.org/Census", place: { original: "Mayagüez, Puerto Rico, United States" } },
+      ],
+    };
+    expect(personaIndexFields(p)!.censusPlace).toBe("Hormigueros, Puerto Rico, United States");
+  });
+
+  it("lifts a census place from a persona with no index labels, and none from a blank or missing one", () => {
+    const census = (place?: object) => ({ id: "p_1", facts: [{ type: "http://gedcomx.org/Census", ...(place ? { place } : {}) }] });
+    expect(personaIndexFields(census({ original: "Kenmore, Killin, Perthshire, Scotland" }))).toEqual({
+      censusPlace: "Kenmore, Killin, Perthshire, Scotland",
+    });
+    // As sent: not trimmed.
+    expect(personaIndexFields(census({ original: " Kenmore, Killin, Perthshire, Scotland " }))?.censusPlace).toBe(
+      " Kenmore, Killin, Perthshire, Scotland ",
+    );
+    expect(personaIndexFields(census({ original: "  " }))).toBeUndefined();
+    expect(personaIndexFields(census({ original: 1871 }))).toBeUndefined();
+    expect(personaIndexFields(census())).toBeUndefined();
+    expect(personaIndexFields({ id: "p_1", facts: [{ type: "http://gedcomx.org/Residence", place: { original: "Elgin" } }] })).toBeUndefined();
   });
 });
 

@@ -247,7 +247,8 @@ BUILTIN_ARG_TRUNCATE = 200
 #
 # The direct-agent arm (#2246) also reads this field: its verbatim assertion
 # `test_direct_delegation_relayed_verbatim` compares the recorded prompt against
-# the test's `input.delegation`, so a cut here is a false red on a run that
+# the test's `input.delegation` (with `<workspace>` replaced by the run's
+# folder), so a cut here is a false red on a run that
 # relayed perfectly.
 _UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
 
@@ -631,6 +632,50 @@ def strip_agent_return_trailer(text: str) -> str:
     return text.strip()
 
 
+def normalize(text: str) -> str:
+    """Canonical form for comparing a relay with a return.
+
+    An ORDERED, exact list, because "normalize dashes" alone is ambiguous
+    enough to move the headline: collapsing runs of `-` as well scores 16 where
+    this scores 13, and both are faithful readings of a looser rule.
+
+    Runs of `-` are deliberately NOT collapsed -- agents write an em dash as
+    `--` and relays render it as a single character, so collapsing would make
+    `--` and `-` interchangeable and over-count survival.
+    """
+    out = text.replace("*", "")
+    for src, dst in (("“", '"'), ("”", '"'), ("‘", "'"), ("’", "'")):
+        out = out.replace(src, dst)
+    for src in ("—", "–", "−"):
+        out = out.replace(src, "-")
+    return " ".join(out.split()).strip()
+
+
+def tail_after_final_rule(text: str) -> str:
+    """The text after the return's final `---` line, or "" if it has none.
+
+    A line whose STRIPPED content is exactly `---`, after the runtime trailers
+    are removed and fenced blocks dropped -- a `---` inside a code fence would
+    otherwise move what counts as "final".
+    """
+    lines = strip_agent_return_trailer(text or "").splitlines()
+    last = None
+    in_fence = False
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence and line.strip() == "---":
+            last = i
+    if last is None:
+        return ""
+    # Sliced from the ORIGINAL lines, never the fence-stripped ones: the tail
+    # is matched against an unstripped `text_response`, so returning a
+    # fence-stripped tail made a summary containing a code block impossible to
+    # match even when relayed verbatim.
+    return "\n".join(lines[last + 1 :]).strip()
+
+
 def agent_return_text(agent_returns: list[dict[str, Any]] | None, agent: str) -> str:
     """Every return `agent` made this run, joined -- the text a direct test grades.
 
@@ -894,6 +939,10 @@ class SkillRunResult:
     # derives `spawned_agents` and `spawn_prompts` from those records, and two
     # gating universal validators read them, so this field now decides outcomes.
     builtin_tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    # A direct test's delegation as the main thread was handed it, with
+    # `<workspace>` replaced by the run's folder; None on a routed test. The
+    # verbatim-relay validator and the judge read this, not the raw test text.
+    delegation_sent: str | None = None
     # What each spawned subagent RETURNED, as {"subagent_type", "text"}, in call
     # order. Empty when the agent under test returned nothing. A ROUTED run
     # CAN spawn agents (`ut_timeline_008` spawns `record-extractor`), so a
@@ -1244,8 +1293,8 @@ async def run_skill(
             # canned text all win over the default (#3568).
             return denial
         # Per-context tool policy: deny a subagent-only tool (see
-        # context_policy.SUBAGENT_ONLY_TOOLS — image_read; `extraction_append`
-        # left the set in issue #2937) on
+        # context_policy.SUBAGENT_ONLY_TOOLS — image_read and the shipped hook's
+        # AGENT_ONLY_TOOLS; `extraction_append` left the set in issue #2937) on
         # the main thread UNLESS this skill declared it itself. That exemption is
         # now REACHED rather than theoretical: record-extraction declares
         # `extraction_append` and calls it from the main thread. Checked BEFORE

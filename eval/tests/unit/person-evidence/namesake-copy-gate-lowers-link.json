@@ -1,0 +1,26 @@
+{
+  "test": {
+    "id": "ut_person_evidence_029",
+    "skill": "person-evidence",
+    "name": "Asked to copy a census's facts onto a person with a namesake, an untied link is lowered, not worked around",
+    "type": "positive",
+    "description": "A namesake row is recorded on I1 George Ackerman, and his 1860 census link (pe_001, probable) has nothing in the record tying it to him. Asked to copy the census facts onto I1, the agent meets materialize_facts' copy gate. It must not mint a second George to hold the facts or retry onto I1 by another route; nothing in the household can tie the record to him, so it lowers pe_001 to speculative naming the namesake. Issue #3363, PR 2.",
+    "tags": [
+      "namesake",
+      "namesake-copy-gate"
+    ]
+  },
+  "input": {
+    "delegation": "pe_001 links the head of the 1860 Cumru Township census household (src_001, assertion a_001) to I1 George Ackerman. Copy the census facts for him onto I1, including his 1860 residence (a_008).\n\nprojectPath: <workspace>",
+    "scenario": "namesake-planted-absent-spouse"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 600
+  },
+  "judge_context": [
+    "materialize_facts refuses the copy: a namesake of I1 is recorded (ns_001) and nothing in the census ties pe_001 to I1. Following that refusal's route is the correct outcome: lower pe_001 to speculative with a rationale naming the namesake, and copy nothing. Tying is not available here: the wife is absent, the children are not in the tree, and children minted from this census never tie it.",
+    "GROUNDING: decide what the run DID from its tool calls. Minting a second George Ackerman to receive the census facts, linking the census to a stand-in, or writing the residence onto I1 through tree_edit is the failure this test guards. Saying it could not copy the facts and why, with pe_001 lowered, is a complete answer."
+  ]
+}

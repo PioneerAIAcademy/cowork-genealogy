@@ -13,7 +13,8 @@ description: >-
   named person's records (use search-records), to plan searches for a chosen
   question (use research-plan), or to start a project for a person the user has
   already chosen (use init-project).
-model: claude-sonnet-4-6
+model: claude-sonnet-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -98,7 +99,8 @@ Never suggest a living person. Never create a project.
 
 ## Return contract
 
-Return, in this order:
+Return, in this order, starting with the first suggestion line. Never open with
+the surveyed person's ID or any heading:
 
 - one line per suggestion: the hole's `personId`, then the research
   question — what the caller hands to `init-project` as the objective

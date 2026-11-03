@@ -20,16 +20,25 @@ from test_search_hints import (  # noqa: E402
     test_extracted_unlinked_hint_is_triaged as check_unlinked,
     test_hint_already_in_the_project_is_named as check_in_project,
     test_hint_list_asks_for_pending_only as check_pending,
+    test_hints_item_ends_as_tagged as check_ending,
     test_image_read_before_reject as check_image,
     test_record_mode_logs_each_verdict as check_record,
     test_thin_hint_is_not_enough_information as check_thin,
-    test_triage_writes_nothing as check_writes,
+    test_triage_writes_only_item_status as check_writes,
 )
 
 TRIAGE = {"type": "positive", "tags": ["triage", "pending-only", "writes-nothing"], "delegation": "x"}
+TRIAGE_HELD = {
+    "type": "positive", "tags": ["triage", "writes-nothing"],
+    "delegation": "Review the hints.\n\npersonId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002",
+}
 IMAGE = {"type": "positive", "tags": ["triage", "image-before-reject"], "delegation": "x"}
 THIN = {"type": "positive", "tags": ["triage", "not-enough-information"], "delegation": "x"}
 RECORD = {"type": "positive", "tags": ["record-mode", "already-in-project-accept"], "delegation": "x"}
+RECORD_HELD = {
+    "type": "positive", "tags": ["record-mode"],
+    "delegation": "Record their verdicts.\n\npersonId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002",
+}
 IN_PROJECT = {"type": "positive", "tags": ["triage", "already-in-project"], "delegation": "x"}
 UNLINKED = {"type": "positive", "tags": ["triage", "extracted-not-linked"], "delegation": "x"}
 M80C_ARK = "https://familysearch.org/ark:/61903/1:1:M80C"
@@ -77,20 +86,48 @@ def test_pending_ignores_a_record_mode_run_with_no_listing():
     check_pending([], RECORD)
 
 
-# --- triage writes nothing ----------------------------------------------
+# --- triage writes only its item's status -------------------------------
 
 def test_writes_passes_a_read_only_triage():
     check_writes(_state([]), _state([]), [_call("record_read", recordId="MABC")], TRIAGE)
 
 
-def test_writes_fails_a_log_call():
+def test_writes_passes_a_plan_items_status_update():
+    check_writes(_state([]), _state([]), [_call("research_append", section="plan_items", op="update")], TRIAGE_HELD)
+
+
+def test_writes_passes_a_single_negative_log_entry():
+    check_writes(_state([]), _state([{"id": "log_006", "outcome": "negative"}]), [], TRIAGE_HELD)
+
+
+def test_writes_fails_an_evidence_write():
+    with pytest.raises(AssertionError, match="plan_items"):
+        check_writes(_state([]), _state([]), [_call("research_append", section="evidence")], TRIAGE_HELD)
+
+
+def test_writes_fails_two_log_entries():
+    with pytest.raises(AssertionError, match="at most one"):
+        check_writes(_state([]), _state([{"id": "log_006"}, {"id": "log_007"}]), [], TRIAGE_HELD)
+
+
+def test_writes_fails_a_positive_log_entry():
+    with pytest.raises(AssertionError, match="negative"):
+        check_writes(_state([]), _state([{"id": "log_006", "outcome": "positive"}]), [], TRIAGE_HELD)
+
+
+def test_writes_fails_a_negative_log_entry_with_no_item_held():
     with pytest.raises(AssertionError, match="must write nothing"):
-        check_writes(_state([]), _state([]), [_call("research_log_append", tool="person_record_matches")], TRIAGE)
+        check_writes(_state([]), _state([{"id": "log_006", "outcome": "negative"}]), [], TRIAGE)
 
 
-def test_writes_fails_a_new_log_entry():
-    with pytest.raises(AssertionError, match="added a log entry"):
-        check_writes(_state([]), _state([{"id": "log_006"}]), [], TRIAGE)
+def test_writes_fails_a_status_write_with_no_item_held():
+    with pytest.raises(AssertionError, match="must write nothing"):
+        check_writes(_state([]), _state([]), [_call("research_append", section="plan_items", op="update")], TRIAGE)
+
+
+def test_writes_fails_a_log_call_with_no_item_held():
+    with pytest.raises(AssertionError, match="must write nothing"):
+        check_writes(_state([]), _state([]), [_call("research_log_append", outcome="negative")], TRIAGE)
 
 
 # --- image before reject ------------------------------------------------
@@ -289,15 +326,130 @@ def test_record_fails_the_wrong_tool():
         check_record(_state([]), _state(log), _returns("log_006"), "", RECORD)
 
 
-def test_record_fails_a_plan_item_on_an_ad_hoc_review():
-    log = [_entry("log_006", "M70C", "positive", pli="pli_003"), _GOOD[1]]
+def test_record_fails_a_plan_item_when_none_was_handed_over():
+    log = [_entry("log_006", "M70C", "positive", pli="pli_007"), _GOOD[1]]
     with pytest.raises(AssertionError, match="plan_item_id should be null"):
         check_record(_state([]), _state(log), _returns("log_006"), "", RECORD)
+
+
+def _plans(status):
+    return [{"id": "pl_002", "items": [{"id": "pli_007", "record_type": "fs_hints", "status": status}]}]
+
+
+def _held_state(log, status):
+    return {"research_json": {"log": log, "plans": _plans(status)}}
+
+
+_HELD = [_entry("log_006", "M70C", "positive", pli="pli_007"), _entry("log_007", "M80C", "negative", pli="pli_007")]
+
+
+def test_record_passes_held_item_named_and_completed():
+    check_record(_held_state([], "in_progress"), _held_state(_HELD, "completed"), _returns("log_006"), "", RECORD_HELD)
+
+
+def test_record_reads_a_backticked_or_quoted_plan_item_id():
+    for delegation in ("planItemId: `pli_007`", 'planItemId: "pli_007"', '{"planItemId": "pli_007"}'):
+        test = {**RECORD_HELD, "delegation": delegation}
+        check_record(_held_state([], "in_progress"), _held_state(_HELD, "completed"), _returns("log_006"), "", test)
+
+
+def test_record_fails_a_null_plan_item():
+    # A verdict entry that names no plan item leaves the fs_hints item with no
+    # log naming it, so record mode cannot complete it (issue #3153).
+    log = [_entry("log_006", "M70C", "positive"), _HELD[1]]
+    with pytest.raises(AssertionError, match="must name its fs_hints plan item"):
+        check_record(_held_state([], "in_progress"), _held_state(log, "completed"), _returns("log_006"), "", RECORD_HELD)
+
+
+def test_record_fails_some_other_plan_item():
+    log = [_entry("log_006", "M70C", "positive", pli="pli_006"), _HELD[1]]
+    with pytest.raises(AssertionError, match="must name its fs_hints plan item"):
+        check_record(_held_state([], "in_progress"), _held_state(log, "completed"), _returns("log_006"), "", RECORD_HELD)
+
+
+def test_record_fails_a_held_item_left_open():
+    with pytest.raises(AssertionError, match="not completed"):
+        check_record(_held_state([], "in_progress"), _held_state(_HELD, "in_progress"), _returns("log_006"), "", RECORD_HELD)
 
 
 def test_record_fails_a_return_without_the_accepted_log_id():
     with pytest.raises(AssertionError, match="does not give the accepted hint's log id"):
         check_record(_state([]), _state(_GOOD), _returns("M70C accepted, M80C rejected."), "", RECORD)
+
+
+# --- how triage leaves the hints item -------------------------------------
+
+_DELEGATION = "personId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002\nprojectPath: <workspace>"
+
+
+def _ends(status):
+    return {"type": "positive", "tags": ["triage", f"item-ends:{status}"], "delegation": _DELEGATION}
+
+
+def _item_state(log, status, **fields):
+    return {"research_json": {"log": log, "plans": [{"id": "pl_002", "items": [
+        {"id": "pli_007", "record_type": "fs_hints", "status": status, **fields}]}]}}
+
+
+_NO_HINTS_LOG = [{"id": "log_006", "plan_item_id": "pli_007", "outcome": "negative"}]
+
+
+def test_ending_passes_no_hints_completed_through_a_negative_entry():
+    check_ending(_item_state([], "planned"), _item_state(_NO_HINTS_LOG, "completed"), _ends("completed"))
+
+
+def test_ending_fails_completed_with_no_entry_naming_it():
+    with pytest.raises(AssertionError, match="one negative log entry"):
+        check_ending(_item_state([], "planned"), _item_state([], "completed"), _ends("completed"))
+
+
+def test_ending_fails_no_hints_logged_positive():
+    log = [{**_NO_HINTS_LOG[0], "outcome": "positive"}]
+    with pytest.raises(AssertionError, match="one negative log entry"):
+        check_ending(_item_state([], "planned"), _item_state(log, "completed"), _ends("completed"))
+
+
+def test_ending_passes_hints_found_waiting():
+    check_ending(_item_state([], "planned"), _item_state([], "in_progress"), _ends("in_progress"))
+
+
+def test_ending_fails_hints_found_left_planned():
+    # A `planned` hints item is what the router routes to search-hints, so
+    # leaving it there re-runs triage every turn.
+    with pytest.raises(AssertionError, match="ended 'planned'"):
+        check_ending(_item_state([], "planned"), _item_state([], "planned"), _ends("in_progress"))
+
+
+def test_ending_fails_hints_found_with_an_entry_naming_the_item():
+    log = [{"id": "log_006", "plan_item_id": "pli_007", "outcome": "positive"}]
+    with pytest.raises(AssertionError, match="nothing logged"):
+        check_ending(_item_state([], "planned"), _item_state(log, "in_progress"), _ends("in_progress"))
+
+
+def test_ending_passes_skipped_inaccessible():
+    after = _item_state([], "skipped", skip_category="inaccessible", skip_reason="3 pending hints, no researcher")
+    check_ending(_item_state([], "planned"), after, _ends("skipped"))
+
+
+def test_ending_fails_skipped_for_another_reason():
+    after = _item_state([], "skipped", skip_category="not_applicable")
+    with pytest.raises(AssertionError, match="skipped as inaccessible"):
+        check_ending(_item_state([], "planned"), after, _ends("skipped"))
+
+
+def test_ending_fails_completed_when_skipped_is_forced():
+    with pytest.raises(AssertionError, match="ended 'completed'"):
+        check_ending(_item_state([], "planned"), _item_state(_NO_HINTS_LOG, "completed"), _ends("skipped"))
+
+
+def test_ending_fails_a_test_with_no_plan_item_handed_over():
+    with pytest.raises(AssertionError, match="must hand over a planItemId"):
+        check_ending(_item_state([], "planned"), _item_state([], "in_progress"), {**_ends("in_progress"), "delegation": "x"})
+
+
+def test_ending_skips_other_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_ending(_state([]), _state([]), TRIAGE)
 
 
 # --- the router stops after a hint triage (research suite) ---------------
@@ -332,3 +484,80 @@ def test_router_fails_logging_the_hints_itself():
 def test_router_fails_never_spawning():
     with pytest.raises(AssertionError, match="handed off 0 time"):
         check_router_stops([], [], [], STOPS)
+
+
+# --- the router relays the agent's tail verbatim (research suite, issue #3862) --
+
+import json  # noqa: E402
+
+from test_research import (  # noqa: E402
+    test_relays_the_agents_tail_verbatim as check_relays_tail,
+)
+
+_HINT_REVIEW = json.loads(
+    (Path(__file__).resolve().parents[3] / "tests" / "unit" / "research" / "route-hint-review.json")
+    .read_text(encoding="utf-8")
+)
+RELAYS = {"tags": _HINT_REVIEW["test"]["tags"], "execution": _HINT_REVIEW["execution"]}
+
+# ut_research_zfp's reply in research v34_2026-10-26_10-10-00.json: the router
+# rewrote the triage in its own words and dropped the agent's summary.
+_V34_REPLY = (
+    "Starting with hint review on Patrick Flynn (LZNY-BRF) as requested — spawning the hints agent now.\n\n"
+    "Here's what FamilySearch has pending for Patrick Flynn (LZNY-BRF):\n\n---\n\n"
+    "**Hint 1 — 1870 US Federal Census** (FamilySearch confidence: 3 of 5)\n`ark:/61903/1:1:M70C`\n"
+    "Patrick Flynn, age 25, born Ireland, appearing in **Thomas Flynn's household**, Schuylkill County, Pennsylvania.\n"
+    "→ **Triage recommendation: Accept** — fits age, birthplace, and surname.\n\n---\n\n"
+    "**Your call:** Do you want to accept, reject, or hold on either or both of the two census hints?"
+)
+
+_TAIL_PARAGRAPH = (
+    "Three records FamilySearch suggests for Patrick were looked at. The 1870 census, which FamilySearch "
+    "rates a moderate match, shows him at 25 in his father Thomas's household, and is recommended. The 1880 "
+    "census, a weaker match on FamilySearch's scale, was indexed under the wrong surname, but the page itself "
+    "reads Flynn and fits him, so it is recommended too. His 1908 death certificate is already part of this research."
+)
+_TAIL_LAST = "You decide which of these suggestions to accept."
+
+
+def test_relay_fails_the_v34_reply_that_rewrote_the_triage():
+    with pytest.raises(AssertionError, match="did not relay search-hints"):
+        check_relays_tail(_V34_REPLY, RELAYS)
+
+
+def test_relay_passes_a_verbatim_tail_reflowed_with_curly_quotes():
+    reflowed = _TAIL_PARAGRAPH.replace("'", "’").replace(". ", ".\n")
+    reply = f"Checking the hints now.\n\n{reflowed}\n\n**{_TAIL_LAST}**\n\nNext I'll wait for your verdicts."
+    check_relays_tail(reply, RELAYS)
+
+
+def test_relay_fails_keeping_only_the_last_sentence():
+    with pytest.raises(AssertionError, match="did not relay search-hints"):
+        check_relays_tail(f"{_V34_REPLY}\n\n{_TAIL_LAST}", RELAYS)
+
+
+def test_relay_skips_a_test_without_the_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_relays_tail("", {**RELAYS, "tags": ["routing", "routes-to:search-hints"]})
+
+
+def test_relay_refuses_a_tag_with_no_routes_to_callee():
+    with pytest.raises(AssertionError, match="needs a routes-to"):
+        check_relays_tail(_V34_REPLY, {**RELAYS, "tags": ["relays-agent-tail"]})
+
+
+def test_relay_passes_carrying_the_last_sentence_into_the_ask():
+    # ut_research_zfp's reply in a 2026-11-02 scratch run: every word relayed, the
+    # final "." replaced by the router's own ask for verdicts.
+    reply = (
+        f"Spawning search-hints now.\n\n{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST[:-1]} — let me know your "
+        "verdict on the 1870 and 1880 census hints (accept / reject / not enough information "
+        "for each) and I'll record them and carry on."
+    )
+    check_relays_tail(reply, RELAYS)
+
+
+def test_relay_fails_rewording_the_last_sentence():
+    reply = f"{_TAIL_PARAGRAPH}\n\nWhat are your verdicts on the two census hints?"
+    with pytest.raises(AssertionError, match="did not relay search-hints"):
+        check_relays_tail(reply, RELAYS)

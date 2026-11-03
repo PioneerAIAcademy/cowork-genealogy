@@ -1,9 +1,7 @@
 import type { Principal } from "../auth/principal.js";
-import { mapWithConcurrency, withRetry } from "../utils/place-resolver.js";
 import { selectRelativePairs } from "../utils/relatives.js";
-import { scorePair } from "../utils/match-engine.js";
-// scorePair (with its anchoring + FS-id mint) lives in the shared match-engine
-// so rank_search_matches can reuse it; this tool's public contract is unchanged.
+import { matchPairs } from "../utils/matcher.js";
+import type { MatcherBackend, MatchPair } from "../types/matcher.js";
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import {
   isProjectForm,
@@ -35,14 +33,17 @@ import {
   projectRecordPersonas,
   projectedRecordDocument,
   recordPartyKeyer,
+  sameRecord,
   type RecordPersonaGroup,
 } from "../utils/record-persona.js";
 import { recordMatchScore, type RecordedMatchScore } from "../utils/match-scores.js";
 import { Mob } from "../utils/mob.js";
 import { preferredName } from "../utils/name-helpers.js";
-import { arkToBareId, toArk } from "../utils/ark.js";
+import { arkToBareId } from "../utils/ark.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
-/** Concurrency cap for the relatives-mode fan-out of per-pair FS calls. */
+/** Concurrency cap for FamilySearch's per-pair calls in relatives mode. */
 const PAIR_CONCURRENCY = 5;
 /** Stable role order for sorting the relatives-mode matches list. */
 const ROLE_ORDER: Record<SamePersonRelativeMatch["role"], number> = {
@@ -69,13 +70,20 @@ export async function samePerson(
     );
   }
 
-  return scorePair(
-    input.gedcomx1,
-    input.primaryId1,
-    input.gedcomx2,
-    input.primaryId2,
+  const call = await matchPairs(
+    [{
+      kind: "record_record",
+      rec: input.gedcomx1,
+      personaId: input.primaryId1,
+      rec2: input.gedcomx2,
+      personaId2: input.primaryId2,
+    }],
     principal,
+    { concurrency: 1, retry: false },
   );
+  const [scored] = call.results;
+  if (scored.score === null) throw scored.error;
+  return { score: scored.score, ...scored.familysearch };
 }
 
 // ─── Project-relative arm (issue #1731 step 1) ───────────────────────────────
@@ -109,17 +117,6 @@ function cacheFor(): Map<string, SimplifiedGedcomX> {
     recordDocCache.set(store, m);
   }
   return m;
-}
-
-/** Same-record test that tolerates the stored id spellings (resolver URL, bare
- *  `ark:`, type-prefixed), which the corpus carries all of.
- *
- *  Compares the CANONICAL ARK, not `arkToBareId`: dropping the `n:n:` type
- *  segment would pool the assertions of `1:1:X` (a persona), `1:2:X` (a source)
- *  and `3:1:X` (an image) into one projected record. See `scoresRef`. */
-function sameRecord(a: unknown, b: unknown): boolean {
-  if (typeof a !== "string" || typeof b !== "string") return false;
-  return toArk(a).toLowerCase() === toArk(b).toLowerCase();
 }
 
 function personNames(p: SimplifiedPerson): string[] {
@@ -336,6 +333,12 @@ async function samePersonFromProject(
       `same_person: no assertion '${assertionId}' in this project's research.json.`,
     );
   }
+  if (!isLiveAssertion(assertion)) {
+    throw new SamePersonInputError(
+      `same_person: assertion '${assertionId}' was retired by a re-extraction (superseded_by ` +
+        `${assertion.superseded_by}), so it is not evidence to score: score its replacement instead.`,
+    );
+  }
   const recordId = String(assertion.record_id ?? "");
   if (recordId === "") {
     throw new SamePersonInputError(
@@ -357,6 +360,7 @@ async function samePersonFromProject(
     );
   }
   const gedcomx2 = withoutRecordSourced(mob.matchSubset().gedcomx, research, recordId);
+  const wholeTree = withoutRecordSourced(tree, research, recordId);
 
   // ── the record side: fetch first, derive second ──
   const resolved = await resolveRecordSide(input, research, assertion, recordId, role, principal);
@@ -375,10 +379,24 @@ async function samePersonFromProject(
           "explicitly if you have it.",
       };
     }
-    return matchRelatives(gedcomx1, primaryId1, gedcomx2, treePersonId, principal);
+    return matchRelatives(gedcomx1, primaryId1, gedcomx2, treePersonId, principal, wholeTree);
   }
 
-  const result = await scorePair(gedcomx1, primaryId1, gedcomx2, treePersonId, principal);
+  const call = await matchPairs(
+    [{
+      kind: "tree_record",
+      tree: wholeTree,
+      pid: treePersonId,
+      rec: gedcomx1,
+      personaId: primaryId1,
+      familysearchTree: gedcomx2,
+    }],
+    principal,
+    { concurrency: 1, retry: false },
+  );
+  const [scored] = call.results;
+  if (scored.score === null) throw scored.error;
+  const score = scored.score;
 
   // ── step 2: record what was computed ──
   let recorded = false;
@@ -390,7 +408,8 @@ async function samePersonFromProject(
       // builder exists so the eval harness writes the same shape on a
       // fixture-served call rather than restating the rule.
       const derived = buildRecordedScore(
-        research, assertionId, treePersonId, role, result, input.recordPersonaId,
+        research, assertionId, treePersonId, role,
+        { score, scorer: call.scorer, model: call.model }, input.recordPersonaId,
       );
       if (derived !== null) {
         await recordMatchScore(projectPath, {
@@ -410,17 +429,15 @@ async function samePersonFromProject(
     recorded = false;
   }
 
-  // Built field by field, not spread from `result`: the spread carried the API's
-  // framing of the request (`queryArk`, `candidateArk`, `apiTitle`, `updated`)
-  // into every project-arm answer, and the answer should name whom it scored.
+  // Built field by field: FamilySearch's framing of the request (`queryArk`,
+  // `candidateArk`, `apiTitle`, `updated`) stays out of every project-arm
+  // answer, which names whom it scored instead.
   const treePerson: ScoredTreePerson = {
     id: treePersonId,
     name: displayName((tree.persons ?? []).find((p) => p.id === treePersonId)),
   };
   return {
-    matched: result.matched,
-    ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
-    score: result.score,
+    score,
     recordSource,
     recorded,
     recordPersona,
@@ -515,7 +532,7 @@ function otherRoleAsked(assertion: any, role: unknown): string | undefined {
  *  id is compared as `sameRecord` does, which tolerates the stored spellings. */
 function recordAssertionsOf(research: any, assertion: any): any[] {
   return (Array.isArray(research?.assertions) ? research.assertions : []).filter((a: any) =>
-    sameRecord(a?.record_id, assertion?.record_id),
+    isLiveAssertion(a) && sameRecord(a?.record_id, assertion?.record_id),
   );
 }
 
@@ -703,7 +720,7 @@ export function buildRecordedScore(
   assertionId: string,
   treePersonId: string,
   role: string | undefined,
-  result: { score: number; confidence?: number; matched: boolean },
+  result: { score: number; scorer: MatcherBackend; model: string | null },
   recordPersonaId?: string,
 ): RecordedMatchScore | null {
   const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
@@ -728,11 +745,12 @@ export function buildRecordedScore(
     record_role: attestedRole(research, assertion, role, recordPersonaId),
     tree_person_id: treePersonId,
     score: result.score,
-    ...(result.confidence !== undefined ? { confidence: result.confidence } : {}),
-    matched: result.matched,
+    scorer: result.scorer,
+    model: result.model,
     assertion_id: assertionId,
     record_source: fetchable ? "record_read" : "projection",
     computed: new Date().toISOString(),
+    party_resolved: true,
   };
 }
 
@@ -832,7 +850,8 @@ async function resolveRecordSide(
       const read = await recordReadTool({ recordId, resultsRef, projectPath }, principal);
       doc = read as unknown as SimplifiedGedcomX;
       cache.set(cacheKey, doc);
-    } catch {
+    } catch (err) {
+      if (isFsBudgetExhausted(err)) throw err;
       doc = undefined; // fall through to the projection
     }
   }
@@ -853,7 +872,7 @@ async function resolveRecordSide(
 
   // Route 2 — project the record's parties out of its own assertions.
   const own = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
-    (a: any) => sameRecord(a?.record_id, recordId),
+    (a: any) => isLiveAssertion(a) && sameRecord(a?.record_id, recordId),
   );
   const groups = projectRecordPersonas(own, recordId);
   if (groups.length === 0) {
@@ -1100,12 +1119,19 @@ function pickFetchedParty(
 
 // ─── Relatives mode ──────────────────────────────────────────────────────────
 
+/**
+ * Pair the two focus persons' relatives and score each pair. With `wholeTree`
+ * (the project arm) the tree side is a tree, and the service is sent each tree
+ * relative cut from the whole tree with its own family; FamilySearch is still
+ * sent `gedcomx2`, the subject's family cut. Without it both sides are records.
+ */
 async function matchRelatives(
   gedcomx1: SimplifiedGedcomX,
   primaryId1: string,
   gedcomx2: SimplifiedGedcomX,
   primaryId2: string,
   principal: Principal,
+  wholeTree?: SimplifiedGedcomX,
 ): Promise<SamePersonRelativesResult> {
   const { pairs, droppedForCap } = selectRelativePairs(
     gedcomx1,
@@ -1113,39 +1139,34 @@ async function matchRelatives(
     gedcomx2,
     primaryId2,
   );
+  if (pairs.length === 0) return { matchRelatives: true, matches: [] };
 
-  // Fan out one FS call per surviving pair, bounded + retried. A pair whose
-  // call keeps failing is omitted from the result — one bad pair must not fail
-  // the whole batch.
-  const results = await mapWithConcurrency(pairs, PAIR_CONCURRENCY, async (pair) => {
-    let result: SamePersonResult;
-    try {
-      result = await withRetry(() =>
-        scorePair(
-          gedcomx1,
-          pair.target.id as string,
-          gedcomx2,
-          pair.candidate.id as string,
-          principal,
-        ),
-      );
-    } catch {
-      return null;
-    }
-    const match: SamePersonRelativeMatch = {
+  // One matching call for every surviving pair. A pair the matcher could not
+  // score is omitted from the result — one bad pair must not fail the batch.
+  const call = await matchPairs(
+    pairs.map((pair): MatchPair => {
+      const target = pair.target.id as string;
+      const candidate = pair.candidate.id as string;
+      return wholeTree
+        ? { kind: "tree_record", tree: wholeTree, pid: candidate, rec: gedcomx1, personaId: target, familysearchTree: gedcomx2 }
+        : { kind: "record_record", rec: gedcomx1, personaId: target, rec2: gedcomx2, personaId2: candidate };
+    }),
+    principal,
+    { concurrency: PAIR_CONCURRENCY, retry: true },
+  );
+
+  const matches: SamePersonRelativeMatch[] = [];
+  pairs.forEach((pair, i) => {
+    const { score } = call.results[i];
+    if (score === null) return;
+    matches.push({
       role: pair.role,
       targetId: pair.target.id as string,
       candidateId: pair.candidate.id as string,
-      score: result.score,
+      score,
       preScore: pair.preScore,
-    };
-    if (result.confidence !== undefined) match.confidence = result.confidence;
-    return match;
+    });
   });
-
-  const matches = results.filter(
-    (m): m is SamePersonRelativeMatch => m !== null,
-  );
   matches.sort(
     (a, b) => ROLE_ORDER[a.role] - ROLE_ORDER[b.role] || b.score - a.score,
   );
@@ -1214,16 +1235,14 @@ export const samePersonSchema = {
     "`gedcomx2`/`primaryId2`. Do NOT hand-build the gedcomx from the flat " +
     "summary fields — that drops the record ARK and the comparison fails.\n" +
     "\n" +
-    "Returns a match decision with confidence (integer 1-5, omitted on " +
-    "no-match) and score (float 0-1). Returns `matched: false` when the API " +
-    "doesn't recognize a real match (confidence omitted, score near zero).\n" +
+    "Returns `score` (float 0-1).\n" +
     "\n" +
     "Set `matchRelatives: true` to instead match the two focus persons' " +
     "RELATIVES (parents, spouses, children) — useful when attaching a " +
     "household record (head + spouse + children) to the tree and you need to " +
     "know which record-relative is which tree-relative. In that mode the result " +
     "shape is DIFFERENT: it has `matchRelatives: true` and a `matches` array of " +
-    "`{ role, targetId, candidateId, score, confidence?, preScore }` triples " +
+    "`{ role, targetId, candidateId, score, preScore }` triples " +
     "(targetId is a persons[].id in gedcomx1, candidateId in gedcomx2). It uses " +
     "local name/date heuristics to avoid scoring every possible pair.",
   inputSchema: {

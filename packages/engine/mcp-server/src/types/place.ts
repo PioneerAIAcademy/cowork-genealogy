@@ -112,4 +112,8 @@ export interface PlaceSearchToolResponse {
   // query. Must stay OPTIONAL: mcp-fixture-shape.test.ts fails a new required
   // field across the eval/fixtures/mcp files.
   matchType?: "fuzzy";
+  // `place_search` only: the standard_place the writers store for the query
+  // text on a fact that cites no record, or null, and why. Optional for the
+  // same reason.
+  verdict?: { standardPlace: string | null; reason: string };
 }

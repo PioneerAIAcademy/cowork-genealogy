@@ -101,10 +101,10 @@ function truncatedImageKey(projectPath: string, imageRef: string): string {
  *  output-token cap. Add-only (#2457 rulings, C 2026-09-21): a whole read
  *  (`!truncated`) records nothing, so once an image is in the set it stays —
  *  stickiness by construction, expressing the invariant that nothing moves from
- *  partial to whole. The cap bounds output tokens and the OCR prompt varies with
- *  `lookingFor`, so a second, narrower read of the same image can come back
- *  uncapped; that whole read must not clear the earlier partial, and here it
- *  simply doesn't try to. */
+ *  partial to whole. The OCR prompt is fixed (`lookingFor` no longer varies it —
+ *  issue #3718), but the provider is not deterministic even at temperature 0, so
+ *  a later read of the same image can still come back uncapped; that whole read
+ *  must not clear the earlier partial, and here it simply doesn't try to. */
 export function recordImageReadCap(
   projectPath: string,
   imageRef: string,

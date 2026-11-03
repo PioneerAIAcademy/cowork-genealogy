@@ -90,7 +90,9 @@ requires `projectPath` and refuses a call without one.
 **Inline-payload strip (overflow protection).** Once a producer has staged its
 full payload, it drops the heavy per-result field from the *inline* copy so a
 broad search can't overflow the model's token cap — the bulk lives in the
-sidecar, which `record_read` and `rank_search_matches` read host-side. Each
+sidecar, which `record_read` and `rank_search_matches` read host-side, and
+`sidecar_read` serves one full-text hit's `textDocument` from it
+(`results/<file>#<hit id>`). Each
 producer strips its own heavy field: `record_search` drops `gedcomx`,
 and `fulltext_search` drops `textDocument` (the AI-transcribed page). Both strips
 are unconditional once staged (so the protection can't be forgotten) and never
@@ -184,7 +186,9 @@ part of `staged`.
 - `image_transcribe` — `payload: { query: { imageId | ark | memoryArtifactUrl | file, lookingFor? },
   results: [ { id, source, content_type, size_bytes, model, transcription, truncated?, found?, image_ref? } ] }`,
   where `id` is the FamilySearch identifier or `capture:<basename>` for an uploaded file (the
-  extraction id convention, as `record-structurer` uses it). The tool also returns a `digest` beside the handle.
+  extraction id convention, as `record-structurer` uses it), and `source` is the query's input
+  plus, for an `imageId` or `ark`, `place`: the image group's coverage place
+  (`image-transcribe-tool-spec.md` §5.5.1). The tool also returns a `digest` beside the handle.
 - `record_read` — `payload: { query: { recordId }, results: [ { recordId, gedcomx, indexFields? } ] }`:
   `record_search`'s element shape plus one field, so `record_read({ recordId, resultsRef })` still
   reads it back unchanged.
@@ -192,8 +196,11 @@ part of `staged`.
   `indexFields` maps each persona's `gedcomx.persons[].id` to the per-person index values the raw
   FamilySearch body carries in `fields[]` and `toSimplified` drops — `relationshipToHead`,
   `sortKey`, `personNbr`, `lineNbr`, `householdId`, `age`, `fatherBirthPlace`, `motherBirthPlace`,
-  each optional. It is omitted entirely when no persona carries any, so a record type with no
-  index data stages what it always did.
+  each optional — plus `censusPlace`, the `place.original` of the persona's first census fact,
+  which the census relationship-column decision reads because `record_read` may give that fact
+  an as-written `place` and an English `standard_place` that name the jurisdiction differently.
+  It is omitted entirely when no persona carries any, so a record type with no index data stages
+  what it always did.
 
   **Only `record_read` stages it, and that asymmetry is the point.** A `record_search` response
   populates `fields[]` for the searched persona alone; every co-resident arrives with names and
@@ -224,6 +231,10 @@ names, then runs its own checks on that canonical ref.
 - **Exactly one candidate** is used. Zero or several, a ref naming any other
   directory, or a ref containing `..`, is left unchanged and refused by the
   consumer's own check as before — the resolver never guesses.
+- A ref containing `#` is never corrected: it carries a full-text hit selector
+  (`results/<file>#<hit id>`), which only `sidecar_read` and `extraction_append`'s
+  `transcriptionRef` read. `readStagedResults` and
+  `checkStagedResults` refuse it, naming the ref without the selector.
 - A writing consumer reports each correction in `validation.warnings`
   (`<field> '<given>' matched no staged file; used '<canonical>', ...`); the
   read-only `readStagedResults` reads through without persisting anything.
@@ -347,8 +358,9 @@ same ground truth production does.
   staged result against the tree subject) and `record_read` in **sidecar mode**
   (`record_read({ recordId, resultsRef, projectPath })` returns one record's
   gedcomx from the staged/finalized sidecar — no live FS fetch — returning the
-  search stage's standardized places as-is (a live read uses pure `toSimplified`,
-  keeping only the record's own normalized places, never resolver-derived ones);
+  search stage's standardized places as-is (a live read uses `recordReadDocument`,
+  keeping only the record's own standardized places, named by their place ids,
+  never resolver-derived ones);
   used by search-records to avoid re-fetching a record it already searched;
   `extraction_append` does not use it — it always reads the record live). Both share
   the dual-location read helper `readStagedResults` (staged handle OR finalized
@@ -419,5 +431,7 @@ output change.
 - `image-transcribe-tool-spec.md` §5.4/§5.5, `record_read` and `person-read-tool-spec.md` — the three acquisition producers. **Ownership boundary:** this spec and those tools own the writer, the envelope
   and finalize. *Reading a staged transcription's full text back* is the consumer's design —
   the `document-capture` agent returns `{ recordId, logId, resultsRef, digest }` and decides
-  whether extraction reads the text host-side or through a paged reader; `sidecar_read`
-  deliberately does not serve `results/` (its spec §7), so no reader was added here.
+  whether extraction reads the text host-side or through a paged reader. `sidecar_read` is
+  that paged reader: it serves a transcription's `transcription`, and one full-text hit's
+  `textDocument` through `results/<file>#<hit id>` (`#hits` lists the hits), and refuses
+  every other `results/` sidecar (its spec §7), so no reader was added here.

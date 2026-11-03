@@ -189,13 +189,15 @@ def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
     opts = real_agent.build_options(tmp_path)
 
     matchers = opts.hooks["PreToolUse"]
-    # Since 1d there are TWO PreToolUse matchers: an unscoped counter for the Stop hook's
-    # no-progress arm, and the deny hook on its own narrow matcher. Identity is the wrong
+    # There are several PreToolUse matchers: an unscoped counter (the delivered and
+    # pending-message halts), and the deny hook on its own narrow matcher. Identity is the wrong
     # assertion now, but "the deny still fires" is not -- this hook is the session's only
     # restraint under bypassPermissions, so a refactor that stopped it reaching the write
     # lockdown would let every raw write onto research.json through with this test green.
     registered = [h for m in matchers for h in m.hooks]
-    assert len(registered) == 2
+    # A third since #3542 lead 1: the completion halt's status read, scoped to delegations,
+    # which never denies (the verdicts below hold it to that).
+    assert len(registered) == 3
     verdicts = [
         asyncio.run(h({"tool_name": "Write",
                        "tool_input": {"file_path": str(tmp_path / "research.json")}}, None, None))
@@ -210,11 +212,11 @@ def test_build_options_registers_the_pretool_hook(tmp_path, monkeypatch):
     # unanswered callback took down `ToolSearch` too (issue #1915). The counter beside it
     # is deliberately unscoped and is exempt from that reasoning: it is a dict increment
     # with no I/O, no await, and no way to go unanswered.
-    assert [m.matcher for m in matchers] == [None, real_agent._PRETOOL_MATCHER]
-    deny_matchers = [m for m in matchers if m.matcher]
+    assert [m.matcher for m in matchers] == [None, real_agent._PRETOOL_MATCHER, real_agent._DELEGATION_MATCHER]
+    deny_matchers = [m for m in matchers if real_agent._pretool_hook in m.hooks]
     assert len(deny_matchers) == 1 and deny_matchers[0].matcher == real_agent._PRETOOL_MATCHER
     # Explicitly set, so the effective bound is not whichever CLI default applies.
-    assert [m.timeout for m in matchers] == [real_agent._PRETOOL_TIMEOUT_S] * 2
+    assert [m.timeout for m in matchers] == [real_agent._PRETOOL_TIMEOUT_S] * 3
     assert 0 < real_agent._PRETOOL_TIMEOUT_S <= 60
 
 
@@ -618,12 +620,12 @@ def test_the_matcher_binds_under_both_readings(tool_name):
 
 # ── delegations run in the foreground (issue #2813, feedback #3156 and #3159) ──
 #
-# The Stop hook cannot see that a turn is waiting on its own background subagent
-# -- it reads `project.status` and its own counters -- so it nudges, and the
-# model answers the nudge by spawning a DUPLICATE of the agent still running.
-# Measured twice on the alpha: duplicate q_001/q_002 from two question-selection
-# spawns, and four record-extractors relaunched synchronously while the
-# background copies kept going. The prototype has forced the foreground since
+# A background delegation leaves the turn running while its agent works, and the
+# (since deleted) Stop hook nudged such a turn, so the model spawned a DUPLICATE of
+# the agent still running. Measured twice on the alpha: duplicate q_001/q_002 from
+# two question-selection spawns, and four record-extractors relaunched synchronously
+# while the background copies kept going. The rewrite stays after the veto went
+# (decision 26): a turn must not end while its own agent is still running. The prototype has forced the foreground since
 # the 2026-09-23 lead ruling; this is that arm on the hosted plane.
 
 async def test_a_delegation_is_rewritten_to_run_in_the_foreground():

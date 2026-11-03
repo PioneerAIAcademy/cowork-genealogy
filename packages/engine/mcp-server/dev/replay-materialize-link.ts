@@ -106,7 +106,7 @@ function rebuiltScores(file: string, assertions: any[]): Map<string, MatchScoreF
     const f: MatchScoreFile = out.get(a.record_id) ?? { record_id: a.record_id, scores: {} };
     f.scores[scoreKey(aid, pid)] = {
       record_id: a.record_id, record_persona_id: null, record_role: role ?? null, tree_person_id: pid, score: 0,
-      matched: true, assertion_id: aid, record_source: "record_read", computed: "",
+      scorer: "familysearch", model: null, assertion_id: aid, record_source: "record_read", computed: "",
     };
     out.set(a.record_id, f);
   }
@@ -171,7 +171,7 @@ for (const file of runFiles) {
         if (!named) continue;
         const refusal = namedPartyTargetRefusal(tree, research, named, String(op.relatedRole ?? ""), personId, op.gender, starting, op.name);
         if (refusal !== null) t.fires.namedParty.push({ run: file, detail: `${personId} <- ${op.assertionId} (${op.relatedRole})` });
-        else if (namedPartyTargetRefusal(tree, research, named, String(op.relatedRole ?? ""), personId, op.gender, starting, op.name, tree, scores) !== null) {
+        else if (namedPartyTargetRefusal(tree, research, named, String(op.relatedRole ?? ""), personId, op.gender, starting, op.name, tree, {}, scores) !== null) {
           t.fires.scored.push({ run: file, detail: `named ${personId} <- ${op.assertionId} (${op.relatedRole})` });
         }
         continue;
@@ -181,7 +181,7 @@ for (const file of runFiles) {
       t.examined.persona++;
       if (batched) t.examined.batched++;
       if (personaTargetRefusal(tree, research, op, starting) === null) {
-        if (personaTargetRefusal(tree, research, op, starting, tree, scores) !== null) {
+        if (personaTargetRefusal(tree, research, op, starting, tree, {}, scores) !== null) {
           t.fires.scored.push({ run: file, detail: `persona ${personId} <- ${op.recordId} ${op.recordRole}` });
         }
         continue;

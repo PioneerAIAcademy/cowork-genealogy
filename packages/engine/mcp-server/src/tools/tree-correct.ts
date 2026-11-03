@@ -17,12 +17,11 @@ import {
   type TreeEditInput,
   type TreeEditResult,
 } from "./tree-edit.js";
+import { treeCorrectRejection } from "../utils/tool-hint-messages.js";
 
 const CORRECT_GATE: OpGate = {
   allowed: new Set<string>(CORRECT_OPERATIONS),
-  rejection: (operation) =>
-    `tree_correct only corrects or removes — '${operation}' is an additive op; ` +
-    "additions live in tree_edit",
+  rejection: treeCorrectRejection,
 };
 
 export type TreeCorrectInput = TreeEditInput;
@@ -134,7 +133,7 @@ export const treeCorrectSchema = {
       ark: { type: "string", description: "update_person: the FamilySearch ARK to set." },
       resolveStandardPlace: {
         type: "boolean",
-        description: "Default true: auto-resolve standard_place when a fact place is set. Pass false to skip the lookup.",
+        description: "Default true: auto-resolve standard_place when a fact's place is set or changed; a place sent back unchanged keeps its standard_place. Pass false to skip the lookup.",
       },
       ops: {
         type: "array",

@@ -6,20 +6,20 @@
   },
   "response": {
     "query": {
-      "standardPlace": "Schuylkill, Pennsylvania, United States"
+      "standardPlace": "Schuylkill, Pennsylvania, United States",
+      "pageSize": 50
     },
     "totalResults": 1,
     "results": [
       {
         "imageGroupNumber": "004221199",
-        "imageGroupPrefix": "004221199",
         "imageCount": 318,
         "recordSearchablePercent": 95,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Schuylkill, Pennsylvania, United States",
+            "places": ["Schuylkill, Pennsylvania, United States"],
             "dateRange": "1885–1950",
             "recordType": "Marriage Records"
           }

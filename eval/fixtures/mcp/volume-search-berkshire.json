@@ -8,20 +8,20 @@
     "query": {
       "standardPlace": "Berkshire, Massachusetts, United States",
       "startYear": 1820,
-      "endYear": 1850
+      "endYear": 1850,
+      "pageSize": 50
     },
     "totalResults": 2,
     "results": [
       {
         "imageGroupNumber": "004500891",
-        "imageGroupPrefix": "004500891",
         "imageCount": 512,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Berkshire, Massachusetts, United States",
+            "places": ["Berkshire, Massachusetts, United States"],
             "dateRange": "1761-1850",
             "recordType": "Town Clerk Vital and Town Records"
           }
@@ -29,14 +29,13 @@
       },
       {
         "imageGroupNumber": "004500892",
-        "imageGroupPrefix": "004500892",
         "imageCount": 274,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Pittsfield, Berkshire, Massachusetts, United States",
+            "places": ["Pittsfield, Berkshire, Massachusetts, United States"],
             "dateRange": "1791-1850",
             "recordType": "Church Records (Congregational)"
           }

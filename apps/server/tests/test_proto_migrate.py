@@ -39,6 +39,9 @@ PINNED = {
     # Phase 2. Renumbered FOUR times on main merges -- 008, 010, 012, 013 -- each taken
     # while this sat on the branch. Same file at its fifth name; the digest is the
     # file's, so it does not change with the number.
+    "016_users_beta.sql": "4c85ef7d3c17416db1d9313fb9aaf16d3cc37168a9f9c3bf93fefcba709bee3a",
+    "017_connector_auth.sql": "d4fe1eadadce03860523c8d6f8ca870a98c96e6e777e67a6c14df28cf833a419",
+    "018_spend_correction.sql": "acc2cd40dbab36d17d6a0aa1a12f95a241bdaf0b945b2576bee34e8aa083e754",
 }
 
 
@@ -344,3 +347,110 @@ def test_the_cli_loads_the_files_before_it_reads_the_dsn(monkeypatch, tmp_path, 
     monkeypatch.setattr(migrate, "migrate", lambda *a, **kw: pytest.fail("ran with no files"))
     assert migrate.main([]) == 2
     assert "no schema files" in capsys.readouterr().err
+
+
+# ── U29: credentials from SAS ────────────────────────────────────────────────────
+
+
+def test_the_cli_refuses_both_credential_variables(monkeypatch, capsys):
+    monkeypatch.setenv("MIGRATE_PG_DSN", "postgresql://x@127.0.0.1:1/p")
+    monkeypatch.setenv("MIGRATE_PG_SAS_OBJECT", "fch-db")
+    monkeypatch.setattr(migrate.pg_credentials, "sas_installed", lambda: True)
+    monkeypatch.setattr(migrate, "migrate", lambda *a, **kw: pytest.fail("ran with both variables"))
+    assert migrate.main([]) == 2
+    assert "ev=migrate error=config detail=both MIGRATE_PG_DSN and MIGRATE_PG_SAS_OBJECT are set" \
+        in capsys.readouterr().err
+
+
+def test_the_cli_refuses_sas_without_the_client(monkeypatch, capsys):
+    monkeypatch.delenv("MIGRATE_PG_DSN", raising=False)
+    monkeypatch.setenv("MIGRATE_PG_SAS_OBJECT", "fch-db")
+    monkeypatch.setattr(migrate.pg_credentials, "sas_installed", lambda: False)
+    monkeypatch.setattr(migrate, "migrate", lambda *a, **kw: pytest.fail("ran with no SAS client"))
+    assert migrate.main(["--status"]) == 2
+    assert "MIGRATE_PG_SAS_OBJECT is set but the sas_client package is not installed" in capsys.readouterr().err
+
+
+def test_the_cli_refuses_a_malformed_sas_object(monkeypatch, capsys):
+    monkeypatch.delenv("MIGRATE_PG_DSN", raising=False)
+    monkeypatch.setenv("MIGRATE_PG_SAS_OBJECT", "fch-db")
+    monkeypatch.setattr(migrate.pg_credentials, "sas_installed", lambda: True)
+    monkeypatch.setattr(migrate.pg_credentials, "_fetch_sas_object",
+                        lambda name: {"fchUser": "owner", "fchPassword": "zz-owner-pw"})
+    monkeypatch.setattr(migrate.psycopg, "connect", lambda *a, **kw: pytest.fail("connected"))
+    assert migrate.main([]) == 2
+    err = capsys.readouterr().err
+    assert "ev=migrate error=config detail=the SAS object has no fchDbConnectUrl" in err and "zz-owner-pw" not in err
+
+
+def test_migrate_retries_reach_sas_after_a_blip(monkeypatch):
+    """One SAS failure, then SAS answers: migrate's backoff (15 s in all) is shorter than the
+    30 s refresh interval, so each attempt must still be allowed its own fetch."""
+    now = [0.0]
+    fetched: list[float] = []
+
+    def fetch(name):
+        fetched.append(now[0])
+        if len(fetched) == 1:
+            raise TimeoutError("sas blip")
+        return {"fchUser": "owner", "fchPassword": "zz-pw", "fchDbConnectUrl": "jdbc:postgresql://db:5432/proto"}
+
+    class Connected(Exception):
+        pass
+
+    def connect(dsn, **kw):
+        raise Connected
+
+    creds = migrate.pg_credentials.PgCredentials(mode="sas", sas_object="fch-owner", fetch=fetch,
+                                                 clock=lambda: now[0])
+    monkeypatch.setattr(migrate, "_sleep", lambda s: now.__setitem__(0, now[0] + s))
+    monkeypatch.setattr(migrate.psycopg, "connect", connect)
+    with pytest.raises(Connected):
+        migrate.migrate(creds)
+    assert fetched == [0.0, 1.0], "attempt 2 fetched after the first 1 s backoff"
+
+
+def test_the_cli_reresolves_a_rotated_sas_password(monkeypatch, capsys):
+    """The first connect fails authentication, SAS hands out the rotated password, the run goes on."""
+    objects = iter([("owner", "zz-old-pw"), ("owner", "zz-new-pw")])
+    fetched: list[str] = []
+
+    def fetch(name):
+        fetched.append(name)
+        user, password = next(objects)
+        return {"fchUser": user, "fchPassword": password,
+                "fchDbConnectUrl": "jdbc:postgresql://db.example.org:5432/proto?sslmode=require"}
+
+    dsns: list[str] = []
+
+    class Conn(SimpleNamespace):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+    def connect(dsn, **kw):
+        dsns.append(dsn)
+        assert kw["application_name"] == "genealogy-migrate" and kw["prepare_threshold"] is None
+        if "zz-old-pw" in dsn:
+            raise psycopg.OperationalError('connection failed: FATAL:  password authentication failed for user "owner"')
+        return Conn(close=lambda: None, rollback=lambda: None, isolation_level=None)
+
+    shipped = migrate.load()
+    monkeypatch.delenv("MIGRATE_PG_DSN", raising=False)
+    monkeypatch.setenv("MIGRATE_PG_SAS_OBJECT", "fch-owner")
+    monkeypatch.setattr(migrate.pg_credentials, "sas_installed", lambda: True)
+    monkeypatch.setattr(migrate.pg_credentials, "_fetch_sas_object", fetch)
+    monkeypatch.setattr(migrate.pg_credentials, "MIN_REFRESH_INTERVAL_S", 0)
+    monkeypatch.setattr(migrate.psycopg, "connect", connect)
+    monkeypatch.setattr(migrate, "migrate_on", lambda conn, **kw: ["018_spend_correction.sql"])
+    monkeypatch.setattr(migrate, "read_ledger", lambda conn: {m.name: m.digest for m in shipped})
+    monkeypatch.setattr(migrate, "_sleep", lambda s: pytest.fail("backed off instead of re-resolving"))
+    assert migrate.main([]) == 0
+    out = capsys.readouterr()
+    assert "applied=['018_spend_correction.sql']" in out.out
+    assert fetched == ["fch-owner", "fch-owner"]
+    assert ["zz-old-pw" in d for d in dsns] == [True, False, False], "one retry, then the cached DSN"
+    assert all("sslmode" not in d for d in dsns)
+    assert "zz-" not in out.out + out.err

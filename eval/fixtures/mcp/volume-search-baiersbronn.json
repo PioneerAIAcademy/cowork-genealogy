@@ -6,7 +6,8 @@
   },
   "response": {
     "query": {
-      "standardPlace": "Baiersbronn, Freudenstadt, Baden-Württemberg, Germany"
+      "standardPlace": "Baiersbronn, Freudenstadt, Baden-Württemberg, Germany",
+      "pageSize": 50
     },
     "totalResults": 0,
     "results": []

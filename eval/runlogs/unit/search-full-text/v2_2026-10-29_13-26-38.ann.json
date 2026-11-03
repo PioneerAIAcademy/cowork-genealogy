@@ -1,0 +1,286 @@
+{
+  "run_log": "v2_2026-10-29_13-26-38.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both parents are right. The grandparents, the 1834 burial naming Francisco and Valentina, and the hedged note on the 1843 marriage all match the transcripts."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Ran the search, logged it, named both parents from three records, gave each record its # ref, and left the plan item in progress."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "+Naveda +Somarriba with no collectionId, both required wiki pages fetched, and the log matches what was sent."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": " The co-occurrence query is right, but the grading notes say it MUST also search \"de la Somarriba\" and \"Navedas\". It ran one query and only noticed Navedas in a hit."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " A direct search for the subject's parents, run correctly."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The search returned three hits, so there was no nil."
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Judged each hit from the names and places, put the 1834 burial first, and sent all three on for extraction."
+    },
+    {
+      "test_id": "ut_search_full_text_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The 1879 deed is reported correctly. But it says the 1881 deed is missing from full-text search because its ARK starts with 3:1. That is wrong: full-text hits are page images with 3:1 ARKs too, so the prefix says nothing about the index."
+    },
+    {
+      "test_id": "ut_search_full_text_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both searches logged, the new deed handed back with its # ref, and the missing 1881 deed flagged."
+    },
+    {
+      "test_id": "ut_search_full_text_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both searches well formed, and the collectionId came from the first call's facets. The first log call missed resultsExamined, but it fixed that straight away."
+    },
+    {
+      "test_id": "ut_search_full_text_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " +Thomas +Flynn with the place and years from the request, then the facet collectionId with the year filter removed."
+    },
+    {
+      "test_id": "ut_search_full_text_014",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " A direct search for Thomas Flynn himself, run correctly."
+    },
+    {
+      "test_id": "ut_search_full_text_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Both searches returned the deed, so there was no nil."
+    },
+    {
+      "test_id": "ut_search_full_text_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Saw Thomas as the grantor from the title and names, checked the place and date, and left the details to extraction."
+    },
+    {
+      "test_id": "ut_search_full_text_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The 1881 Michael Flynn estate, Branch Township, the four names and the \"heir\" highlight all match. The transcript does name Thomas and Patrick as heirs."
+    },
+    {
+      "test_id": "ut_search_full_text_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Logged the three nils and the hit, gave the hit its # ref, and left the plan items alone."
+    },
+    {
+      "test_id": "ut_search_full_text_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Every call well formed, and each log entry matches what was sent."
+    },
+    {
+      "test_id": "ut_search_full_text_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Keywords with filters, then unfiltered, then Thos, then the name field: the path the test expects."
+    },
+    {
+      "test_id": "ut_search_full_text_015",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The direct subject search asked for, run correctly."
+    },
+    {
+      "test_id": "ut_search_full_text_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three nils logged with the query, the filters and why the next try followed."
+    },
+    {
+      "test_id": "ut_search_full_text_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Judged from the names and the heir highlight, and left the exact roles to extraction."
+    },
+    {
+      "test_id": "ut_search_full_text_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The three Branch Township records and their dates are right, and the witness role is offered only as a likely reading."
+    },
+    {
+      "test_id": "ut_search_full_text_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Both searches logged, and three records ranked for extraction, each with its # ref."
+    },
+    {
+      "test_id": "ut_search_full_text_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "includeFacets on the broad call, and the collectionId came from its facets. The logs match what was sent."
+    },
+    {
+      "test_id": "ut_search_full_text_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "847 results narrowed with the facet collectionId to 12, which is the ladder the test wants."
+    },
+    {
+      "test_id": "ut_search_full_text_016",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " A direct search for Thomas Flynn, run correctly."
+    },
+    {
+      "test_id": "ut_search_full_text_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Both searches returned results, so there was no nil."
+    },
+    {
+      "test_id": "ut_search_full_text_016",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Separated the records naming Thomas from the mortgage that names only Patrick, using the names and highlights."
+    },
+    {
+      "test_id": "ut_search_full_text_017",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": " The deed and the witnesses are right. But it says 1878 is \"six years before\" the 1881 will (it is three). It also claims the county's probate records are not in the index, when four Flynn searches only show that no Flynn will turned up."
+    },
+    {
+      "test_id": "ut_search_full_text_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Four searches logged, the deed handed back with its # ref, and a next step for the probate item."
+    },
+    {
+      "test_id": "ut_search_full_text_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " All calls well formed, and the logs match what was sent. It tagged the logs pli_006 without being given it, but the search fits that item."
+    },
+    {
+      "test_id": "ut_search_full_text_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Keywords first found the witness deed, which the grading notes say passes. The extra will and Thos queries were sensible."
+    },
+    {
+      "test_id": "ut_search_full_text_017",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "A direct search, and it still flagged the deed naming both Flynns."
+    },
+    {
+      "test_id": "ut_search_full_text_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Every search returned the deed, so there was no nil."
+    },
+    {
+      "test_id": "ut_search_full_text_017",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Saw it was a land deed, not probate, used the witness highlights, and sent it to extraction."
+    }
+  ]
+}

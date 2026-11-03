@@ -424,6 +424,18 @@ function projectable(a: any): boolean {
 
 const nonEmpty = (v: unknown): string | null => (typeof v === "string" && v !== "" ? v : null);
 
+/** Same-record test that tolerates the stored id spellings (resolver URL, bare
+ *  `ark:`, type-prefixed), which the corpus carries all of.
+ *
+ *  Compares the CANONICAL ARK, not `arkToBareId`: dropping the `n:n:` type
+ *  segment would pool the assertions of `1:1:X` (a persona), `1:2:X` (a source)
+ *  and `3:1:X` (an image) into one projected record. See `scoresRef`. Shared by
+ *  `same_person` and research_append's score gate, so both read one record. */
+export function sameRecord(a: unknown, b: unknown): boolean {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  return toArk(a).toLowerCase() === toArk(b).toLowerCase();
+}
+
 /**
  * persona id -> the distinct roles the assertions of ONE record give it, in the
  * order they first appear. Pass every assertion of that record.

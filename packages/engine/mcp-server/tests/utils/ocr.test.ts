@@ -3,7 +3,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-import { runOcr, type OcrRequest } from "../../src/utils/ocr.js";
+import {
+  runOcr,
+  runFoundCheck,
+  FOUND_CHECK_MAX_TOKENS,
+  type OcrRequest,
+} from "../../src/utils/ocr.js";
 
 const STATUS_TEXT: Record<number, string> = {
   200: "OK",
@@ -128,5 +133,55 @@ describe("runOcr — 429 and 503 backoff", () => {
     const r = await settle(runOcr(REQ));
     expect(failure(r)).toBe("OpenRouter OCR failed: 500 Internal Server Error — upstream boom");
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("runFoundCheck — the text-only found check (issue #3718)", () => {
+  const CHECK = {
+    transcription: "Row 7: Almada, Claudia, 8",
+    lookingFor: "Claudia Almada",
+    apiKey: "test-key",
+    model: "test-model",
+  };
+
+  it("sends a text-only request (no image part) carrying the transcription and the key, and parses the marker", async () => {
+    mockFetch.mockResolvedValueOnce(read("FOUND"));
+    const r = await settle(runFoundCheck(CHECK));
+    expect(r).toMatchObject({ status: "fulfilled", value: "FOUND" });
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body as string);
+    const parts = body.messages[0].content as Array<{ type: string; text?: string }>;
+    expect(parts).toHaveLength(1);
+    expect(parts[0].type).toBe("text");
+    expect(parts[0].text).toContain('"Claudia Almada"');
+    expect(parts[0].text).toContain("Row 7: Almada, Claudia, 8");
+    expect(body.max_tokens).toBe(FOUND_CHECK_MAX_TOKENS);
+    expect(body.temperature).toBe(0);
+    expect(body.provider).toEqual({ data_collection: "deny" });
+  });
+
+  it("returns undefined on a reply with no parseable marker", async () => {
+    mockFetch.mockResolvedValueOnce(read("The page clearly mentions her."));
+    const r = await settle(runFoundCheck(CHECK));
+    expect(r).toMatchObject({ status: "fulfilled", value: undefined });
+  });
+
+  it("retries a 429 like the OCR read (shared transport)", async () => {
+    mockFetch.mockResolvedValueOnce(reply(429)).mockResolvedValueOnce(read("NOT FOUND"));
+    const r = await settle(runFoundCheck(CHECK));
+    expect(r).toMatchObject({ status: "fulfilled", value: "NOT FOUND" });
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not wait past the remainder budget the tool hands it", async () => {
+    mockFetch.mockResolvedValueOnce(reply(429, { retryAfter: "6" })).mockResolvedValueOnce(read("too late"));
+    const r = await settle(runFoundCheck({ ...CHECK, timeoutMs: 5_000 }));
+    expect(failure(r)).toMatch(/^OpenRouter OCR failed: 429/);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws on a non-retryable status — the tool catches and omits found", async () => {
+    mockFetch.mockResolvedValue(reply(500, { body: "boom" }));
+    const r = await settle(runFoundCheck(CHECK));
+    expect(failure(r)).toBe("OpenRouter OCR failed: 500 Internal Server Error — boom");
   });
 });

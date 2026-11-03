@@ -8,21 +8,21 @@
     "query": {
       "standardPlace": "California, United States",
       "startYear": 1848,
-      "endYear": 1860
+      "endYear": 1860,
+      "pageSize": 50
     },
     "totalResults": 14,
     "nextPageToken": "CAL_GOLD_RUSH_PAGE_2",
     "results": [
       {
         "imageGroupNumber": "006601001",
-        "imageGroupPrefix": "006601001",
         "imageCount": 522,
         "recordSearchablePercent": 88,
         "fulltextSearchable": true,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "California, United States",
+            "places": ["California, United States"],
             "dateRange": "1850-1852",
             "recordType": "California State Census"
           }
@@ -30,14 +30,13 @@
       },
       {
         "imageGroupNumber": "006601002",
-        "imageGroupPrefix": "006601002",
         "imageCount": 340,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "San Francisco, California, United States",
+            "places": ["San Francisco, California, United States"],
             "dateRange": "1849-1855",
             "recordType": "Mining Claim Registers"
           }
@@ -45,14 +44,13 @@
       },
       {
         "imageGroupNumber": "006601003",
-        "imageGroupPrefix": "006601003",
         "imageCount": 298,
         "recordSearchablePercent": 0,
         "fulltextSearchable": false,
         "languages": ["en"],
         "coverages": [
           {
-            "place": "Sacramento, California, United States",
+            "places": ["Sacramento, California, United States"],
             "dateRange": "1849-1858",
             "recordType": "Port Arrival Registers"
           }

@@ -1,0 +1,40 @@
+{
+  "test": {
+    "id": "ut_search_hints_008",
+    "skill": "search-hints",
+    "name": "Hints found with the researcher present: the hints item is left in_progress, waiting on verdicts, with nothing logged",
+    "type": "positive",
+    "description": "The router hands search-hints the planned hints item pli_007 for Patrick Flynn (LZNY-BRF), with no userPresent, which means the researcher is there. Three hints are pending. Triage recommends a verdict for each and moves pli_007 to in_progress, where it waits for the researcher's verdicts. It logs nothing: a positive entry would read as evidence waiting for extraction, and an entry naming the item would read as the item executed (issue #3153).",
+    "tags": [
+      "triage",
+      "pending-only",
+      "writes-nothing",
+      "item-ends:in_progress",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Review the pending FamilySearch hints on Patrick Flynn for plan item pli_007.\n\npersonId: LZNY-BRF\nplanItemId: pli_007\nplanId: pl_002\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn-hints-item"
+  },
+  "mcp_fixtures": [
+    "person-record-matches-flynn-pending",
+    "person-record-matches-flynn",
+    "record-read-flynn-hint-1870-census-m70c",
+    "record-read-flynn-hint-1880-census-m80c",
+    "record-read-flynn-hint-death-cert-mdef",
+    "record-read-flynn-hint-1860-census-mabc",
+    "image-transcribe-flynn-1880-census-m80c",
+    "image-transcribe-any",
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "The three pending hints are the 1870 census (M70C, confidence 3), the 1880 census (M80C, confidence 2) and the 1908 death certificate (MDEF, confidence 2). The death certificate is already linked: extracted as src_004 and linked to Patrick by pe_005",
+    "The 1880 census index has the surname as 'Glynn'; its image reads 'Flynn, Patrick', so that hint is not recommended for rejection",
+    "The hints item pli_007 ends in_progress, set through research_append on plan_items; that is the only write. No log entry is written",
+    "The return ends with the line asking for the researcher's verdicts, and the researcher-facing paragraph says the researcher decides on each suggested record"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 420
+  }
+}

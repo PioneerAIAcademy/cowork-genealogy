@@ -13,9 +13,8 @@ import { classifyProjectPath } from "../utils/project-io.js";
 import {
   collectionKey,
   EXTERNAL_COLLECTIONS_FILE,
+  loadStoredCollectionUrls,
   namesCollection,
-  readExternalCollections,
-  storedCollectionKeys,
 } from "../utils/external-collections-store.js";
 
 export type ExternalSearchSite =
@@ -1428,12 +1427,11 @@ async function uncuratedBaseUrlError(projectPath: string, baseUrl: string): Prom
   const ways =
     "Omit baseUrl for a site-wide search, or use a stored collection's url from " +
     "research_query({section: \"external_collections\", place, recordType}).";
-  let keys: Set<string>;
-  try {
-    keys = storedCollectionKeys(await readExternalCollections(projectPath));
-  } catch (e) {
-    return `baseUrl cannot be checked: ${EXTERNAL_COLLECTIONS_FILE} could not be read (${e instanceof Error ? e.message : String(e)}). ${ways}`;
+  const stored = await loadStoredCollectionUrls(projectPath);
+  if ("error" in stored) {
+    return `baseUrl cannot be checked: ${EXTERNAL_COLLECTIONS_FILE} could not be read (${stored.error}). ${ways}`;
   }
+  const keys = stored.keys;
   if (keys.has(collectionKey(baseUrl))) return undefined;
   return keys.size === 0
     ? `baseUrl ${baseUrl} names a collection, and nothing is stored in ${EXTERNAL_COLLECTIONS_FILE} yet. ` +

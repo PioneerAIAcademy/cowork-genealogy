@@ -259,6 +259,9 @@ def test_refusal_reaches_stderr_under_the_deploy_entrypoint(tmp_path):
         "PUBLIC_URL": "https://example.fly.dev",  # the https production discriminant
         "DATABASE_URL": "",
         "DATA_DIR": str(tmp_path),  # get_settings() mkdirs under this
+        # The child's stderr is decoded as utf-8 below; on Windows it would write
+        # cp1252 (an em dash is 0x97) and the reader thread would die (issue #4043).
+        "PYTHONUTF8": "1",
         **{f.upper(): Settings.model_fields[f].default for f in _DEFAULTED_SECRET_FIELDS},
     }
 

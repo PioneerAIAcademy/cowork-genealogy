@@ -27,6 +27,7 @@ from app.config import get_settings
 from app.db import get_engine, init_db
 from app.main import app
 from app.models import ApiCall, Project, utcnow
+from app.sessions import _EXPIRED_DETAIL, SESSION_MAX_AGE
 
 
 # ── token derivation ────────────────────────────────────────────
@@ -448,6 +449,41 @@ def test_a_failing_meter_never_reaches_the_relay(send, monkeypatch):
     resp = send(_streamed(_STREAM))
     assert resp.status_code == 200 and resp.content == _STREAM
     assert _recorded() == []
+
+
+# ── sessions past SESSION_MAX_AGE ──────────────────────────────
+
+
+def _aged(age: timedelta) -> None:
+    """Make the `send` fixture's session `age` old."""
+    with Session(get_engine()) as s:
+        project = s.get(Project, "prj_meter")
+        project.created = utcnow() - age
+        s.add(project)
+        s.commit()
+
+
+def test_a_session_past_max_age_is_refused_before_upstream(send):
+    """Viewing an old session resumes its sandbox, where a turn left running would carry on
+    and spend. Past SESSION_MAX_AGE the call stops here: never forwarded, never recorded."""
+    _aged(SESSION_MAX_AGE + timedelta(minutes=1))
+    upstream = []
+
+    def respond(req):
+        upstream.append(req)
+        return httpx.Response(200, content=_STREAM, headers={"content-type": "text/event-stream"})
+
+    resp = send(respond)
+    assert resp.status_code == 403
+    assert resp.json()["error"] == {"type": "permission_error", "message": _EXPIRED_DETAIL}
+    assert upstream == [] and _recorded() == []
+
+
+def test_a_session_a_minute_short_of_max_age_is_still_relayed(send):
+    _aged(SESSION_MAX_AGE - timedelta(minutes=1))
+    resp = send(_streamed(_STREAM))
+    assert resp.status_code == 200 and resp.content == _STREAM
+    assert len(_recorded()) == 1
 
 
 # ── the agent behind each call ─────────────────────────────────

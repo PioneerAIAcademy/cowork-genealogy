@@ -4,17 +4,17 @@
     "skill": "research",
     "name": "Routes an uncovered independent part of the objective to question-selection instead of completing",
     "type": "positive",
-    "description": "The objective asks two independent things (a birthplace and a parentage) and only the birthplace was ever framed. That question is resolved at probable and its fact is in the tree, so the tree-encoding gate on the 'all questions resolved' row holds. The router must see that the objective still has an unframed part and hand off to question-selection, not proceed to the completion write or stop. Mined from a Cowork run that concluded the birthplace and left parentage unresearched.",
+    "description": "The objective asks two independent things (a birthplace and a parentage) and only the birthplace was ever framed. That question is resolved at probable and its fact is in the tree, so the tree-encoding gate on the 'all questions resolved' row holds. Under step mode the router hands nothing off this turn: it names the unframed part as the next question and offers it with \"Continue with setting up the project?\". It must not head for the completion write. Mined from a Cowork run that concluded the birthplace and left parentage unresearched. The message asks what comes next rather than saying to keep going: \"Keep researching\" would accept the offer in the same message, and then running question-selection is the step.",
     "tags": [
       "from-cowork",
       "compound-objective-part-unframed",
       "re-invoke-safe",
       "routing",
-      "routes-to:question-selection"
+      "routes-to:stop"
     ]
   },
   "input": {
-    "user_message": "Keep researching this project — drive the workflow forward.",
+    "user_message": "/research What should we work on next?",
     "scenario": "compound-objective-part-unframed"
   },
   "execution": {
@@ -38,13 +38,13 @@
     ]
   },
   "judge_context": [
-    "This is a ROUTING test. A deterministic validator (test_routes_to_expected_skill) asserts the router's first hand-off is question-selection (an Agent spawn of `@plugin:question-selection`). Do not grade the routing decision yourself.",
+    "This is a ROUTING test. A deterministic validator (test_routes_to_expected_skill, `routes-to:stop`) asserts the router hands off to nothing this turn. Do not grade the routing decision yourself.",
     "An objective can hold more than one independent fact. A question being `resolved` closes that question, not the objective: when a part of the objective has no question covering it, the project is not answered, whatever the status of the questions that do exist. Statements in the project such as a proof saying a fact 'needs its own research question', or a question's rationale naming a later fact it unblocks, are evidence that a part is still open.",
     "An unproven relationship already present in the tree (for example imported from an online family tree) does not make that part of the objective answered. Only a resolved question with a proof summary does.",
-    "COMPLIANT: the router reads the objective against `questions[]`, notices that an independent part has no question, says so, and hands that part to question-selection to frame.",
+    "COMPLIANT: the router reads the objective against `questions[]`, notices that an independent part (the parentage) has no question, names it as the next question to research, and ends with the line \"Continue with setting up the project?\".",
     "NON-COMPLIANT: the router treats 'all questions resolved' as 'objective answered' and heads for the completion write (proof-conclusion) or stops, saying the research is done while a part of the objective was never researched.",
-    "The run ends at the router's first hand-off by design (execution.stop_at_stub). The transcript ends at that hand-off, with no closing summary. Do not mark a summary as missing. Grade the narration up to the hand-off.",
-    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records -- ground truth the harness calls out precisely because a transcript can be misread. You cannot see those records. Do NOT score Correctness or Completeness on whether the router reached the right callee, on the order of skills_invoked, or on which entry is 'first': the skill under test appears in that list under its own name, so the first DELEGATED skill is the second entry, and reading it as the first has already failed a run whose routing the validator confirmed correct. Grade only the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation and gap explanation are sound."
+    "The router ends its turn with that offer by design; nothing is handed off, so there is no callee output to grade. Grade the reply.",
+    "Grade only the router's own work: whether its reply names the unframed part, whether its state derivation and gap explanation are sound, and whether it ends with the offer line. Saying the research is done, or that the project is complete, is the failure."
   ],
   "judge_reads_files": true
 }

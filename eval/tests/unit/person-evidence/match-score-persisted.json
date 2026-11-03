@@ -15,6 +15,9 @@
     "delegation": "Link assertion a_001 — the 1850 census Patrick Flynn — to the right person in the tree.\n\nprojectPath: <workspace>",
     "scenario": "flynn-record-matching"
   },
+  "execution": {
+    "sdk_message_silence_seconds": 300
+  },
   "mcp_fixtures": [
     "same-person-flynn-strong",
     "same-person-flynn-weak"

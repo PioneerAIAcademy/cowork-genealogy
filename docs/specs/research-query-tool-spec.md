@@ -64,6 +64,10 @@ research_query({
   // pagination (NOT a filter): skip the first `offset` matches, then return up
   // to 50. Applies to every section; absent ⇒ 0. See §2.2.
   offset?: number,
+  // assertions only (NOT a filter): true also returns assertions a re-extraction
+  // retired (non-null `superseded_by`, research-schema-spec.md §5.6). Absent ⇒
+  // they are left out, since they are not evidence. Not a boolean ⇒ refused.
+  includeSuperseded?: boolean,
 })
 ```
 
@@ -356,7 +360,9 @@ so that rule would be accepted and match nothing, ever.
 - **Plural ids, not plural sections (2026-10-14, T2.3; ruling 2026-10-10,
   Promise).** `section` stays one string — a call that bundles sections makes
   the answer's shape depend on the arguments, the reason T2.1's nested
-  `include` was rejected — and the `sections` near-miss message is unchanged.
+  `include` was rejected — and the `sections` near-miss message is unchanged
+  (`SECTIONS_NEAR_MISS`; over MCP `server.ts`'s unknown-argument guard answers
+  it before the handler, a direct call gets it from the handler).
   What is plural is the id: `personId`, `assertionId`, `sourceId`, `recordId`.
   - *The demand.* All 11 recorded plural attempts (1 in the e2e corpus, 10 in
     unit logs, counted for the T2.3 plan) asked for several **sections** and
@@ -388,8 +394,8 @@ so that rule would be accepted and match nothing, ever.
     items, and because without it the replay cannot tell a pre-T2.3 build's
     silent `count: 0` from a right empty answer on 45 of 146 groups. Per-id
     counts can sum above `count` on `contains` sections (§2.2).
-  - *Non-strings are now rejected.* The server does not validate
-    `inputSchema`, and `matches()` compared with `===`, so before this a list —
+  - *Non-strings are now rejected.* The server checks argument names, not
+    types, and `matches()` compared with `===`, so before this a list —
     real or stringified — answered `ok: true, count: 0`, and `planItemId: null`
     matched every log entry with a null plan item (21 on anders-monsen's
     2026-09-16 final notes), which §4 never documented. Every non-string,

@@ -1,0 +1,99 @@
+{
+  "tool": "record_search",
+  "description": "record_search for a Flynn probate in Schuylkill County returns ONLY the estate file of a different Patrick Flynn: born about 1838 in Ireland, died 14 May 1882 at Pottsville, widow Bridget. Same name and county as the subject (Patrick Flynn, b. ~1845 Ireland, d. 12 March 1908 Schuylkill), but he died 26 years before the subject did. Feeds ut_search_records_028 (a namesake row and the warning it draws). primaryId P1 matches rank-search-matches-flynn-1882-estate. Matched on surname alone so any Flynn query sees it; record-search-flynn-any-variant-no-results follows it in the test's list for the variant spellings.",
+  "args": {
+    "surname": "~Flynn"
+  },
+  "response": {
+    "query": {
+      "surname": "Flynn"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "L4XK-2PQ",
+        "recordId": "L4XK-2PQ",
+        "personName": "Patrick Flynn",
+        "score": 0.81,
+        "sex": "Male",
+        "birthDate": "1838",
+        "birthPlace": "Ireland",
+        "events": [
+          {
+            "type": "Death",
+            "date": "14 May 1882",
+            "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+          },
+          {
+            "type": "Probate",
+            "date": "1882",
+            "place": "Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:L4XK-2PQ",
+        "collectionId": "1999196",
+        "collectionTitle": "Pennsylvania, Probate Records, 1683-1994",
+        "recordTitle": "Estate of Patrick Flynn, deceased",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Patrick",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Death",
+                  "date": "14 May 1882",
+                  "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Probate",
+                  "date": "1882",
+                  "place": "Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Bridget",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

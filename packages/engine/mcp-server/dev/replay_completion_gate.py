@@ -112,7 +112,7 @@ def main() -> int:
         } - {None}
         # For the ADR-0011 limit 2 inspection: each summary's claimed tier and the
         # sources it rests on. `conflictedSourceInvariants` refuses any tier other
-        # than `not_proved`/`disproved` when a non-resolved conflict disputes a
+        # than `not_proved`/`disproved` when an unresolved conflict disputes a
         # source that summary relies on — so this says whether a refused document
         # was already invalid before this gate ever saw it.
         #

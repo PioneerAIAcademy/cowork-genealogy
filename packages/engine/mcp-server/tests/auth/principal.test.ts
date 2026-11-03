@@ -24,6 +24,7 @@ import {
   getWikiApiUrl,
   getOpenRouterApiKey,
   getOpenRouterModel,
+  HOSTED_LOGIN_UNAVAILABLE,
   HOSTED_REAUTH_INSTRUCTION,
   HOSTED_SESSION_MANAGED_MESSAGE,
   REJECTED_TOKEN_MESSAGE,
@@ -88,7 +89,7 @@ describe("bearer principal", () => {
   it("the desktop session tools answer without a token file", async () => {
     expect(await loginTool({}, bearer)).toEqual({
       success: false,
-      message: HOSTED_REAUTH_INSTRUCTION,
+      message: HOSTED_LOGIN_UNAVAILABLE,
     });
     expect(await logoutTool({}, bearer)).toEqual({
       success: false,

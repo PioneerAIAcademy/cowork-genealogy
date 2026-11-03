@@ -87,14 +87,18 @@ def test_remote_devices_spelling_is_also_blocked_on_main():
 
 
 def test_other_mcp_tools_on_main_are_not_blocked():
-    """Ordinary research tools must pass through untouched. `image_read` is the
-    whole guarded set — see the per-member test below. `extraction_append` is in
-    this list deliberately: since issue #2937 it is an ordinary main-thread
-    call."""
+    """Main-thread tools must pass through untouched: the ones a skill declares,
+    and the ones only agents hold that the hook's MAIN_THREAD_OK keeps callable.
+    `record_search` left this list in issue #3528 — only agents hold it, and the
+    per-member test below covers it. `extraction_append` is in this list
+    deliberately: since issue #2937 it is an ordinary main-thread call."""
     for name in (
         "mcp__genealogy__record_read",
         "mcp__genealogy__research_append",
-        "mcp__genealogy__record_search",
+        "mcp__genealogy__research_log_append",
+        "mcp__genealogy__image_transcribe",
+        "mcp__genealogy__sidecar_read",
+        "mcp__genealogy__person_read",
         "mcp__genealogy__extraction_append",
     ):
         assert is_main_thread_subagent_only_tool(_main(name)) is False
@@ -649,7 +653,8 @@ def test_exhaustive_declaration_claim_is_blocked(payload, label):
         ),
         # The vector a section-scoped route breaks, and a presence-keyed field
         # route breaks too: question-selection creating a question. The schema
-        # makes the field required, so EVERY creation carries it.
+        # makes the field required, so EVERY creation carries it. From the
+        # agent: since issue #3548 a main-thread append is routed to it.
         (
             _owned(
                 section="questions",
@@ -658,6 +663,8 @@ def test_exhaustive_declaration_claim_is_blocked(payload, label):
                     "question": "Who were the parents?",
                     "search_stop": {"stopped_because": None, "log_entry_ids": [], "stop_criteria": None, "not_reached": []},
                 },
+                agent_id="a1",
+                agent_type="genealogy-research:question-selection",
             ),
             "question-selection creating a question (stopped_because: null)",
         ),
@@ -695,6 +702,17 @@ def test_owned_field_deny_uses_the_shipped_hooks_own_words():
     assert "@plugin:proof-conclusion" in reason
     # It must say what is NOT routed, or a reader concludes the whole section is.
     assert "updated" in reason
+
+
+def test_owned_append_deny_uses_the_shipped_hooks_own_words():
+    from harness.context_policy import owned_section_denial
+
+    reason = owned_section_denial(("questions", "owned_append", ""))[
+        "hookSpecificOutput"
+    ]["permissionDecisionReason"]
+    assert "@plugin:question-selection" in reason
+    # It must say what is NOT routed, or a reader concludes the whole section is.
+    assert "updating an existing entry is unaffected" in reason
 
 
 def test_declaration_deny_uses_the_shipped_hooks_own_words():
@@ -889,6 +907,60 @@ def test_project_status_narration_is_field_scoped_not_out_of_lane(tmp_path, monk
     # section as outside the caller's lane.
     assert "status" in text, text
     assert "proof-conclusion" in text, text
+    assert "outside this agent's lane" not in text, text
+
+
+def test_question_append_narration_is_append_scoped_not_out_of_lane(tmp_path, monkeypatch):
+    """Drives the ORCHESTRATOR's own `owned_append` narration branch, for the
+    same reason as the `owned_field` test above: only `_run_agent`'s
+    `pretool_hook` executes it."""
+    from harness.auth import AuthConfig
+
+    monkeypatch.setattr(
+        orchestrator,
+        "resolve_auth",
+        lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
+    )
+    sink: dict = {}
+
+    def fake_query(**kw):
+        hook = kw["options"].hooks["PreToolUse"][0].hooks[0]
+        inputs = [
+            (
+                "status",
+                {
+                    "tool_name": "mcp__genealogy__research_append",
+                    "tool_input": {
+                        "section": "questions",
+                        "op": "append",
+                        "entry": {"question": "Who were Ann's parents?"},
+                    },
+                },
+            ),
+        ]
+        return _HookDrivingAgent(
+            hook,
+            inputs,
+            [SystemMessage(subtype="init", data={"session_id": "S1"}), _result()],
+            sink,
+        )
+
+    monkeypatch.setattr(orchestrator, "open_query", fake_query)
+    result = asyncio.run(
+        _run_agent(fixture=_fixture(tmp_path), workspace=tmp_path, mcp_server_entry=Path("dummy"))
+    )
+    narration = result[1]
+    blocked_context_calls = result[6]
+
+    assert sink["status"]["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert len(blocked_context_calls) == 1
+    assert blocked_context_calls[0]["tool"] == "research_append"
+
+    blocked = [n for n in narration if n.get("kind") == "blocked"]
+    assert len(blocked) == 1, narration
+    text = blocked[0]["text"]
+    assert "question-selection" in text, text
+    assert "Updating an existing entry is unaffected" in text, text
     assert "outside this agent's lane" not in text, text
 
 

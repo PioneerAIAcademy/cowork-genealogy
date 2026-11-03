@@ -554,10 +554,9 @@ ungraded run, not evidence of the declared defect. One that **passes** warns, as
 a stale-marker signal.
 
 Rule 6 grades the log the PR **added**, resolved from the AR diff, not the one
-`latest_full_skill_runlog` returns: that helper prefers any released `v{N}.json`
-over every candidate regardless of date, so a PR adding a red `v2_<ts>.json`
-beside a clean released `v1.json` would read as clean. `init-project` has exactly
-that shape. A PR that adds no run log — annotation-only, or SKILL.md-only — is
+`latest_full_skill_runlog` returns: that helper reads the newest run on disk, and
+on CI's merge checkout a clean run `main` wrote after the PR's red one would be
+read in its place. A PR that adds no run log — annotation-only, or SKILL.md-only — is
 not accountable for the committed baseline and is not graded here; without that,
 a skill carrying reds could satisfy neither rule 3 nor rule 6, and its
 annotations could never land.

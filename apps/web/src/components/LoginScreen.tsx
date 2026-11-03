@@ -41,7 +41,7 @@ export default function LoginScreen(): React.JSX.Element {
         </p>
 
         {config?.familysearch && (
-          <a className="btnPrimary block" href="/auth/familysearch/login">
+          <a className="btnPrimary block" href="auth/familysearch/login">
             Sign in with FamilySearch
           </a>
         )}

@@ -1,0 +1,16 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false",
+    "f3": "true"
+  },
+  "proof_quality_score": null,
+  "notes": {
+    "f1": "L8GW-R6Y's Death fact has no date and no place at all in the final tree -- unchanged from the starting tree. The run reached tool_calls[34] (catalog_search, returning at 239.5s into the initial locality-guide survey of El Salvador record availability) and then received no further SDK message for 600s, so the harness stopped it (stop_reason: inactivity, duration_ms 844609). The wiki calls (tool_calls[21]-[26], [28]-[33]) and the Pop Stats call ([15]) had already failed with ENOTFOUND -- a DNS failure on the machine that ran it -- in under a second each, well before the stall, and the locality guide kept working after them; the stall is not attributable to those failures. The judge's own APIConnectionError on this same run points the same way: a connection problem on the run machine is the likely cause, not an outage of the wiki/Pop Stats services. Re-graded 2026-11-01 against the fixture as amended for issue #3964 (f1 now accepts 20, 21, 22 or 23 September 1916, or September 1916); the label is unchanged because the death fact still has no date or place.",
+    "f2": "No parent relationships exist for L8GW-R6Y in the tree. The run never reached record search for the death question, so parentage was never investigated.",
+    "f3": "The tree carries no 1906 death, no Santos Lopez, and no separate Inocente Lopez person with a death -- which is the fixture's own pass condition for this avoid finding (absent, or present only as a rejected hypothesis). Graded true per the avoid-finding rule: why the candidate is absent is not part of the label. For context: the run never reached the stage where it would have encountered the false 1906 hint record, so this is an incidental correct absence rather than an evaluated-and-rejected hypothesis -- but that reasoning belongs in this note, not the label."
+  },
+  "annotator": "itacollins333@gmail.com",
+  "findings_hash": "75111ed3573cb0595eadf10a73018d28870936f6e74c7dfa4b6bb991560a19a7",
+  "blind_bundle_digest": "377778c8c23d0288d6dd44a47dd2b8e07898b2b07fe10ce6f8a530ce9b2d4d0d"
+}

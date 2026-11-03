@@ -11,6 +11,7 @@ import type {
 } from "../types/place.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "./http.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 
 /** Per-request timeout for a Places call; omitted, the http.ts default applies. */
 export interface PlaceFetchOptions {
@@ -30,6 +31,8 @@ interface FSPlaceLookupEntry {
   place?: { resource?: string; resourceId?: string };
   identifiers?: Record<string, string[]>;
   display?: { name: string; fullName: string; type: string };
+  temporalDescription?: { formal?: string };
+  names?: ({ lang?: string; value?: string } | null)[];
 }
 
 interface FSPlaceLookupResponse {
@@ -389,7 +392,9 @@ export async function getPlaceWikipediaUrl(
       (a) => a.type?.code === "WIKIPEDIA_LINK" && !!a.url
     );
     return wiki?.url ?? null;
-  } catch {
+  } catch (err) {
+    // Not "no Wikipedia link" -- the server is rate-limited.
+    if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
 }
@@ -448,18 +453,32 @@ export async function getPlaceCandidateNames(
   return [...singleWord, ...multiWord];
 }
 
+/** One representation of a place, as the place's own listing gives it. */
+export interface PlaceRep {
+  placeRepId: string;
+  /** The English full name; absent when the listing gives none. */
+  fullName?: string;
+  /** When the representation is valid: FamilySearch's formal range ("+1830/",
+   *  "/+1795"); absent when it is valid at every date. */
+  dateRange?: string;
+  /** Its own name in every language the listing gives (Florence's "Firenze",
+   *  "Florenz", "Florence"). */
+  names: string[];
+}
+
 /**
- * Get every place representation ID for a Primary place ID via the
- * Place_resource endpoint (GET /platform/places/{pid}). The response lists the
- * bare place entry (id === pid, no `display`) followed by its representation
- * entries, each with `place.resourceId === pid`. We collect those rep IDs.
+ * Get every representation of a Primary place ID, with its English full name,
+ * date range and names, via the Place_resource endpoint (GET
+ * /platform/places/{pid}). The response lists the bare place entry (id === pid,
+ * no `display`) followed by its representation entries, each with
+ * `place.resourceId === pid`.
  *
  * Public (no auth) — the places endpoints accept anonymous requests.
  */
-export async function getPlaceRepIds(
+export async function getPlaceReps(
   pid: string,
   opts: PlaceFetchOptions = {},
-): Promise<string[]> {
+): Promise<PlaceRep[]> {
   const url = `${FS_API_BASE}/${encodeURIComponent(pid)}`;
 
   const response = await fetchWithRetry(url, {
@@ -473,15 +492,29 @@ export async function getPlaceRepIds(
   }
 
   const data = (await response.json()) as FSPlaceLookupResponse;
-  const reps = (data.places ?? []).filter((p) => p.place?.resourceId === pid);
-
-  const ids: string[] = [];
+  const reps: PlaceRep[] = [];
   const seen = new Set<string>();
-  for (const rep of reps) {
-    if (rep.id && !seen.has(rep.id)) {
-      seen.add(rep.id);
-      ids.push(rep.id);
-    }
+  for (const entry of data.places ?? []) {
+    if (entry.place?.resourceId !== pid || !entry.id || seen.has(entry.id)) continue;
+    seen.add(entry.id);
+    const fullName = entry.display?.fullName;
+    const dateRange = entry.temporalDescription?.formal;
+    reps.push({
+      placeRepId: entry.id,
+      ...(fullName ? { fullName } : {}),
+      ...(dateRange ? { dateRange } : {}),
+      names: (Array.isArray(entry.names) ? entry.names : [])
+        .map((n) => n?.value)
+        .filter((value): value is string => typeof value === "string"),
+    });
   }
-  return ids;
+  return reps;
+}
+
+/** `getPlaceReps`' representation ids, in order. */
+export async function getPlaceRepIds(
+  pid: string,
+  opts: PlaceFetchOptions = {},
+): Promise<string[]> {
+  return (await getPlaceReps(pid, opts)).map((rep) => rep.placeRepId);
 }

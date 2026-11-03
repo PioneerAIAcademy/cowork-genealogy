@@ -1,0 +1,603 @@
+{
+  "tool": "record_search",
+  "description": "record_search that DROPS birthPlace and anchors on fatherSurname=Silva (or similar parents + recordCountry) returns ALL 7 Silva-González children, including Zulema de Jesús (ark Q2S2-PCBW) who is indexed under Pichilemu, Petorca, Aconcagua — unreachable by any place-pinned search. The place-carrying fixture (record-search-silva-birth-with-place) is ordered FIRST and siphons any query with birthPlace set, so this fixture fires only for the doctrine-correct place-free parent search. Matched on fatherSurname~Silva with no birthPlace field.",
+  "args": {
+    "fatherSurname": "~Silva"
+  },
+  "response": {
+    "query": {
+      "fatherSurname": "Silva",
+      "motherSurname": "González",
+      "recordCountry": "Chile",
+      "collectionId": "1630787"
+    },
+    "totalMatches": 7,
+    "paginationCappedAt": 100,
+    "returned": 7,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "Q2S2-LKD1",
+        "recordId": "Q2S2-LKD1",
+        "personName": "Alfredo Silva González",
+        "score": 0.88,
+        "sex": "Male",
+        "birthDate": "14 March 1892",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q2S2-LKD1",
+        "collectionId": "1630787",
+        "collectionTitle": "Chile, Civil Registration, 1880-1933",
+        "recordTitle": "Birth of Alfredo Silva González",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Alfredo",
+                  "surname": "Silva González",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "14 March 1892",
+                  "place": "Nancagua, Colchagua, Chile"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Benjamín",
+                  "surname": "Silva Díaz",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Clara",
+                  "surname": "González Pimienta",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "Q2S2-LKD2",
+        "recordId": "Q2S2-LKD2",
+        "personName": "Rosa Silva González",
+        "score": 0.86,
+        "sex": "Female",
+        "birthDate": "5 August 1893",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q2S2-LKD2",
+        "collectionId": "1630787",
+        "collectionTitle": "Chile, Civil Registration, 1880-1933",
+        "recordTitle": "Birth of Rosa Silva González",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Rosa",
+                  "surname": "Silva González",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "5 August 1893",
+                  "place": "Nancagua, Colchagua, Chile"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Benjamín",
+                  "surname": "Silva Díaz",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Clara",
+                  "surname": "González Pimienta",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "Q2S2-LKD3",
+        "recordId": "Q2S2-LKD3",
+        "personName": "Luis Silva González",
+        "score": 0.85,
+        "sex": "Male",
+        "birthDate": "20 February 1895",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q2S2-LKD3",
+        "collectionId": "1630787",
+        "collectionTitle": "Chile, Civil Registration, 1880-1933",
+        "recordTitle": "Birth of Luis Silva González",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Luis",
+                  "surname": "Silva González",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "20 February 1895",
+                  "place": "Nancagua, Colchagua, Chile"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Benjamín",
+                  "surname": "Silva Díaz",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Clara",
+                  "surname": "González Pimienta",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "Q2S2-LKD4",
+        "recordId": "Q2S2-LKD4",
+        "personName": "Ana Silva González",
+        "score": 0.84,
+        "sex": "Female",
+        "birthDate": "11 October 1896",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q2S2-LKD4",
+        "collectionId": "1630787",
+        "collectionTitle": "Chile, Civil Registration, 1880-1933",
+        "recordTitle": "Birth of Ana Silva González",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Ana",
+                  "surname": "Silva González",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "11 October 1896",
+                  "place": "Nancagua, Colchagua, Chile"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Benjamín",
+                  "surname": "Silva Díaz",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Clara",
+                  "surname": "González Pimienta",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "Q2S2-PCBW",
+        "recordId": "Q2S2-PCBW",
+        "personName": "Zulema de Jesús Silva González",
+        "score": 0.83,
+        "sex": "Female",
+        "birthDate": "12 November 1897",
+        "birthPlace": "Pichilemu, Petorca, Aconcagua, Chile",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q2S2-PCBW",
+        "collectionId": "1630787",
+        "collectionTitle": "Chile, Civil Registration, 1880-1933",
+        "recordTitle": "Birth of Zulema de Jesús Silva González",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Zulema de Jesús",
+                  "surname": "Silva González",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "12 November 1897",
+                  "place": "Pichilemu, Petorca, Aconcagua, Chile"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Benjamín",
+                  "surname": "Silva Díaz",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Clara",
+                  "surname": "González Pimienta",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "Q2S2-LKD5",
+        "recordId": "Q2S2-LKD5",
+        "personName": "Carlos Silva González",
+        "score": 0.82,
+        "sex": "Male",
+        "birthDate": "3 July 1899",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q2S2-LKD5",
+        "collectionId": "1630787",
+        "collectionTitle": "Chile, Civil Registration, 1880-1933",
+        "recordTitle": "Birth of Carlos Silva González",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Carlos",
+                  "surname": "Silva González",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "3 July 1899",
+                  "place": "Nancagua, Colchagua, Chile"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Benjamín",
+                  "surname": "Silva Díaz",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Clara",
+                  "surname": "González Pimienta",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "Q2S2-LKD6",
+        "recordId": "Q2S2-LKD6",
+        "personName": "Elena Silva González",
+        "score": 0.80,
+        "sex": "Female",
+        "birthDate": "22 January 1902",
+        "birthPlace": "Nancagua, Colchagua, Chile",
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q2S2-LKD6",
+        "collectionId": "1630787",
+        "collectionTitle": "Chile, Civil Registration, 1880-1933",
+        "recordTitle": "Birth of Elena Silva González",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Elena",
+                  "surname": "Silva González",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "22 January 1902",
+                  "place": "Nancagua, Colchagua, Chile"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Benjamín",
+                  "surname": "Silva Díaz",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Clara",
+                  "surname": "González Pimienta",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

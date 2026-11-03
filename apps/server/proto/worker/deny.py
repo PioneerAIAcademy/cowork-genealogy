@@ -82,7 +82,10 @@ def read_target(tool_name: str, tool_input: dict | None, *, cwd: str) -> str | N
 def read_route(target: str, root: str) -> str:
     """The MCP tool that replaces a direct read of ``target`` under ``root``."""
     if _under(target, root + "/results"):
-        return "record_read({recordId, resultsRef})"
+        return (
+            "record_read({recordId, resultsRef}) for a record or search sidecar, or "
+            "sidecar_read({projectPath, ref: '<ref>#hits'}) for a fulltext_search sidecar"
+        )
     if _under(target, root + "/evaluations") or _under(target, root + "/uploads"):
         return "sidecar_read({projectPath, ref})"
     if _basename(target) == "research.json":

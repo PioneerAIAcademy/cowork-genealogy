@@ -10,7 +10,7 @@ topology exists to make, so a well-meaning edit cannot quietly undo one:
   set it, read here off the interpolation's default -- and only the
   ceiling override lowers it;
 - elasticmq's visibility timeout sits above every ceiling the shim can run at -- the
-  compose default and the one proto-demo-auto exports -- and there is NO redrive
+  compose default and any a recipe exports -- and there is NO redrive
   policy -- ChangeMessageVisibility never resets the receive count, so any
   maxReceiveCount would dead-letter a legitimately long turn;
 - U5's interim sqsd values (proto/eb-worker/README.md): the Beanstalk template
@@ -48,8 +48,6 @@ from urllib.parse import urlparse
 import pytest
 import yaml
 
-from proto.web import app
-
 ROOT = Path(__file__).resolve().parents[3]
 PROTO = Path(__file__).resolve().parents[1] / "proto"
 REPO = Path(__file__).resolve().parents[3]
@@ -85,6 +83,10 @@ EXPECTED_TABLES = frozenset({
     "users",
     "allowed_emails",
     "familysearch_tokens",
+    # 016/017 (S1): the beta's sign-in.
+    "connector_tokens",
+    "authorization_codes",
+    "signin_states",
 })
 
 _CREATE_TABLE = re.compile(r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?\"?(\w+)\"?", re.IGNORECASE)
@@ -279,7 +281,14 @@ def test_tools_and_worker_read_one_store():
     assert set(tools) == {
         "GENEALOGY_PG_DSN", "GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_BUCKET",
         "GENEALOGY_S3_ACCESS_KEY", "GENEALOGY_S3_SECRET_KEY", "GENEALOGY_ANCHOR_PATH",
-    }, "the five store variables plus the anchor, and no GENEALOGY_PROJECT_ID: the id is per request"
+        # The two process-wide limits (self-hosted beta E4, issue #3979). Passed
+        # through from the shell and EMPTY by default, which readLimitsEnv reads
+        # as off -- so compose behaves as it always has unless an operator sets
+        # one. They are listed here rather than exempted from the set: this
+        # assertion is what would catch a GENEALOGY_PROJECT_ID being added, and
+        # that only works while the set stays closed.
+        "GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS",
+    }, "the five store variables, the anchor and the two E4 limits, and no GENEALOGY_PROJECT_ID: the id is per request"
 
 
 def test_compose_runs_the_worker_with_dev_paths_and_names_its_tool_server():
@@ -375,7 +384,7 @@ def test_only_the_recipes_that_wait_for_tools_can_run_a_real_turn():
             if f"$(MAKE) {other} " in "\n".join(body)
         )
 
-    for target in ("proto-up", "proto-turn", "proto-demo", "proto-kill", "proto-demo-auto"):
+    for target in ("proto-up", "proto-turn", "proto-demo", "proto-kill"):
         assert brings_tools_up(target), \
             f"{target} runs a real turn: it must wait for `tools` or delegate to one that does"
     # The exception, with its reason: the D3 smoke's stub arms never build worker options.
@@ -384,12 +393,12 @@ def test_only_the_recipes_that_wait_for_tools_can_run_a_real_turn():
 
 def test_shim_read_timeout_is_the_step_ceiling():
     """The compose default is the pinned 1800 s, and the variable an `up` environment
-    overrides it through is the one proto-demo-auto exports -- so a renamed interpolation
-    would leave an override silently ignored."""
+    overrides it through is READ_TIMEOUT_S -- so a renamed interpolation would leave an
+    override silently ignored."""
     env = _env(_service(_load(COMPOSE), "shim"))
     var, default = _compose_default(env["READ_TIMEOUT_S"])
     assert int(default) == STEP_CEILING_S
-    assert var == "READ_TIMEOUT_S", "proto-demo-auto exports READ_TIMEOUT_S; the interpolation must read that name"
+    assert var == "READ_TIMEOUT_S", "an `up` environment sets READ_TIMEOUT_S; the interpolation must read that name"
 
 
 def test_compose_default_reads_the_interpolation_or_the_literal():
@@ -412,28 +421,45 @@ def test_ceiling_override_lowers_read_timeout_and_nothing_else():
 # ── queue ───────────────────────────────────────────────────────────────────────
 
 
-# proto-demo-auto's `export READ_TIMEOUT_S="${READ_TIMEOUT_S:-1800}"` in raw make text ($$
-# is the shell's $); either default form, since this reads the number only.
-_EXPORTED_CEILING = re.compile(r'export READ_TIMEOUT_S="\$\$\{READ_TIMEOUT_S:?-(\d+)\}"')
+# A recipe's `export READ_TIMEOUT_S="${READ_TIMEOUT_S:-1800}"` in raw make text ($$ is the
+# shell's $); either default form, since this reads the number only. None exports one
+# today; a recipe that adds one is a ceiling the shim can run at.
+# Any assignment a recipe can make: `export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-N}"`, the
+# same unquoted or as a plain number, or an inline `READ_TIMEOUT_S=N cmd`.
+_EXPORTED_CEILING = re.compile(
+    r'\bREAD_TIMEOUT_S\s*[:?]?=\s*["\']?(?:\$\$\{READ_TIMEOUT_S:?-)?(\d+)'
+)
 
 
-def _exported_ceiling_s() -> int:
-    match = _EXPORTED_CEILING.search("\n".join(_recipe("proto-demo-auto")))
-    assert match, "proto-demo-auto no longer exports READ_TIMEOUT_S; re-derive the largest ceiling here"
-    return int(match.group(1))
+def _exported_ceilings_s(text: str | None = None) -> list[int]:
+    if text is None:
+        text = MAKEFILE.read_text(encoding="utf-8")
+    return [int(n) for n in _EXPORTED_CEILING.findall(text)]
+
+
+def test_the_ceiling_reader_sees_each_spelling_of_an_export():
+    for line in (
+        'export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-7200}"',
+        "export READ_TIMEOUT_S=$${READ_TIMEOUT_S:-7200};",
+        "export READ_TIMEOUT_S=7200;",
+        "READ_TIMEOUT_S=7200 $(PYTHON) -m proto.shim",
+        "export READ_TIMEOUT_S := 7200",
+    ):
+        assert _exported_ceilings_s(line) == [7200], line
+    assert _exported_ceilings_s("export READ_TIMEOUT_SECONDS_NOTE=7200") == []
+    assert _exported_ceilings_s("echo $$READ_TIMEOUT_S") == []
 
 
 def test_elasticmq_visibility_timeout_exceeds_the_ceiling():
     """The shim never extends a message's visibility while its POST is in flight, so an
     attempt longer than the visibility timeout is redelivered mid-flight and the worker
     runs the same turn twice at once on one SDK session. The literal must therefore top
-    every ceiling the shim can run at -- the compose default and the one proto-demo-auto
-    exports. Both are 1800 s since PR #2870 item 0b, but this still takes the LARGER
-    of the two, so raising either one again without raising the literal reds this test."""
+    every ceiling the shim can run at -- the compose default and any a recipe exports --
+    so raising one without raising the literal reds this test."""
     match = _DURATION.search(_turns_block())
     assert match, "turns needs a defaultVisibilityTimeout with a seconds/minutes unit"
     seconds = int(match.group(1)) * _UNIT_S[match.group(2)]
-    ceiling = max(STEP_CEILING_S, _exported_ceiling_s())
+    ceiling = max([STEP_CEILING_S, *_exported_ceilings_s()])
     assert seconds > ceiling, f"visibility timeout {seconds}s must exceed the largest step ceiling, {ceiling}s"
     # ...and not wastefully above it. `> ceiling` alone is satisfied by the stale 7500 s
     # this was before 0b, which is why reverting the change to 2100 broke no test. The
@@ -446,81 +472,14 @@ def test_elasticmq_visibility_timeout_exceeds_the_ceiling():
     )
 
 
-# ── 1a: the nudge cap the web tier stamps ────────────────────────────────────────
-
-RUNLOGS_E2E = REPO / "eval" / "runlogs" / "e2e"
-_STEP_TOOLS = {"Skill", "Task", "Agent"}
+# ── the deleted Stop veto ───────────────────────────────────────────────────────
 
 
-def _steps_per_run() -> list[int]:
-    """Skill/Task/Agent calls per committed e2e run -- the STEP count the nudge cap is
-    sized on. A run that yields at every step boundary needs one nudge per step, which is
-    the worst case the cap has to clear; the nudge HISTOGRAM cannot answer this because
-    every committed run was produced under a harness that forbids yielding."""
-    steps = []
-    for path in sorted(RUNLOGS_E2E.glob("*/run-*.json")):
-        if path.name.endswith((".ann.json", ".final-research.json", ".final-tree.gedcomx.json")):
-            continue
-        try:
-            calls = json.loads(path.read_text(encoding="utf-8")).get("tool_calls") or []
-        except (ValueError, OSError):
-            continue
-        if isinstance(calls, list):
-            steps.append(sum(1 for c in calls
-                             if isinstance(c, dict) and (c.get("tool") or c.get("name")) in _STEP_TOOLS))
-    return sorted(steps)
-
-
-def test_the_web_tiers_nudge_cap_is_zero_and_compose_agrees():
-    """Under step mode the cap is 0, and the p99 derivation that sized it is retired.
-
-    This test used to DERIVE the number: measured 2026-09-23 over 189 runs (median 15,
-    p90 25, p99 51, max 76), the shipped 60 cleared p99, and re-deriving it here meant a
-    corpus growing past the cap reddened this instead of silently truncating runs. It also
-    held a floor of 30.
-
-    Both rest on a premise decision 25 removed. They protected a CONTINUOUS run from being
-    truncated by too small a cap; there is no continuous run now. Every turn is one step,
-    and a turn that stops has finished it, so a nudge would re-open a turn that ended on
-    purpose. Sizing a cap against a step-count corpus answers a question nobody asks any
-    more.
-
-    What survives is the half that is still true at any value: compose and the tier's own
-    fallback must agree, or an unset variable changes behaviour. Plus a pin at 0, so
-    raising it is a decision made here on purpose -- the role the old floor played."""
-    default = _compose_default(_env(_service(_load(COMPOSE), "web"))["AUTONOMOUS_MAX_NUDGES"])[1]
-    assert int(default) == app.DEFAULT_MAX_NUDGES, \
-        "compose and the tier's own fallback must agree, or an unset variable changes behaviour"
-    assert app.DEFAULT_MAX_NUDGES == 0, \
-        "step mode ships no Stop veto; raising this is a decision, not a test fix"
-
-
-def test_the_cap_is_not_read_off_the_request():
-    """This tier has no auth. A field on MessageBody would let any client set its own
-    nudge budget, which is the one thing bounding how long an unattended run works for."""
-    assert "max_nudges" not in app.MessageBody.model_fields, "the cap must not be a request field"
-    assert app.MessageBody(text="hi", max_nudges=999).model_dump() == {"text": "hi"}, \
-        "an extra field on the request is dropped, never carried through to the queue body"
-
-
-@pytest.mark.parametrize("env, expected", [
-    ({}, app.DEFAULT_MAX_NUDGES),
-    ({"AUTONOMOUS_MAX_NUDGES": ""}, app.DEFAULT_MAX_NUDGES),
-    ({"AUTONOMOUS_MAX_NUDGES": "  "}, app.DEFAULT_MAX_NUDGES),
-    ({"AUTONOMOUS_MAX_NUDGES": "nonsense"}, app.DEFAULT_MAX_NUDGES),
-    ({"AUTONOMOUS_MAX_NUDGES": "0"}, 0),
-    ({"AUTONOMOUS_MAX_NUDGES": "40"}, 40),
-    ({"AUTONOMOUS_MAX_NUDGES": " 7 "}, 7),
-    ({"AUTONOMOUS_MAX_NUDGES": "-3"}, 0),
-])
-def test_max_nudges_reads_the_environment_and_never_silently_disables_itself(env, expected):
-    """Unset, blank and malformed all take the DEFAULT rather than guessing a value.
-
-    The DEFAULT is itself 0 under step mode (decision 25), so this no longer protects a
-    non-zero cap -- it protects the rule that a malformed value never silently becomes
-    something the operator did not write. A negative is still clamped to 0, and an
-    explicit 0 is still honoured."""
-    assert app.max_nudges(env) == expected
+def test_no_service_is_given_the_deleted_nudge_cap():
+    """Step mode phase 2 deleted the Stop veto, so nothing reads AUTONOMOUS_MAX_NUDGES. A
+    service still given it would read as a live setting."""
+    services = _load(COMPOSE)["services"]
+    assert [n for n, svc in services.items() if "AUTONOMOUS_MAX_NUDGES" in _env(svc)] == []
 
 
 SPEND_PY = ROOT / "apps" / "server" / "app" / "agent" / "spend.py"
@@ -836,6 +795,51 @@ def test_008_is_idempotent_and_owner_is_nullable():
     [tokens] = [s for s in statements if re.search(r"CREATE TABLE IF NOT EXISTS familysearch_tokens\b", s, re.I)]
     assert re.search(r"\buser_id text PRIMARY KEY\b", tokens), "one grant row per patron: U3 locks it"
     assert re.search(r"\bgranted_at timestamptz NOT NULL\b", tokens), "the sign-in time"
+
+
+def test_016_is_idempotent_and_its_columns_are_nullable():
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    016 must be a no-op the second time. S1 adds nullable user columns without a backfill
+    and makes FamilySearch ids unique while leaving dev-login users with NULL ids alone."""
+    statements = _statements(SQL_DIR / "016_users_beta.sql")
+    assert statements, "016_users_beta.sql has no statements"
+    for stmt in statements:
+        assert re.match(r"(CREATE TABLE IF NOT EXISTS|CREATE UNIQUE INDEX IF NOT EXISTS|CREATE INDEX IF NOT EXISTS|"
+                        r"ALTER TABLE \w+ ADD COLUMN IF NOT EXISTS) ", stmt, re.I), f"not idempotent: {stmt}"
+    assert "CREATE UNIQUE INDEX IF NOT EXISTS users_familysearch_id_key ON users (familysearch_id)" in statements
+    for name in ("terms_accepted_at", "blocked_at", "openrouter_key_enc"):
+        [column] = [s for s in statements if re.search(rf"ADD COLUMN IF NOT EXISTS {name}\b", s, re.I)]
+        assert column.upper().startswith("ALTER TABLE USERS "), column
+        assert "NOT NULL" not in column.upper(), f"users.{name} must be nullable: {column}"
+
+
+def test_017_is_idempotent_and_keyed_by_hash():
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    017 must be a no-op the second time. S1 stores hashes of tokens, codes and sign-in
+    state; tokens and codes belong to a user and expire by Postgres's clock."""
+    statements = _statements(SQL_DIR / "017_connector_auth.sql")
+    assert statements, "017_connector_auth.sql has no statements"
+    for stmt in statements:
+        assert re.match(r"(CREATE TABLE IF NOT EXISTS|CREATE UNIQUE INDEX IF NOT EXISTS|CREATE INDEX IF NOT EXISTS|"
+                        r"ALTER TABLE \w+ ADD COLUMN IF NOT EXISTS) ", stmt, re.I), f"not idempotent: {stmt}"
+    for name, key in (("connector_tokens", "token"), ("authorization_codes", "code"), ("signin_states", "state")):
+        [table] = [s for s in statements if re.search(rf"CREATE TABLE IF NOT EXISTS {name}\b", s, re.I)]
+        assert re.search(rf"\b{key}_sha256 text PRIMARY KEY\b", table), table
+        if name != "signin_states":
+            assert re.search(r"\buser_id text NOT NULL REFERENCES users\(id\) ON DELETE CASCADE\b", table), table
+            assert re.search(r"\bscopes text\[\] NOT NULL\b", table), table
+            assert re.search(r"\bexpires_at timestamptz NOT NULL\b", table), table
+    assert "CREATE INDEX IF NOT EXISTS connector_tokens_user_idx ON connector_tokens (user_id)" in statements
+
+
+def test_018_adds_an_idempotent_spend_correction_column_that_reads_zero_and_its_join_index():
+    """An unledgered database re-runs every sql/*.sql once (migrate.py's baseline, U9), so
+    018 must be a no-op the second time. The column is summed into the spend cap, so a
+    turn written before it must read 0 -- what the cap counted for it then -- not NULL."""
+    assert _statements(SQL_DIR / "018_spend_correction.sql") == [
+        "ALTER TABLE turns ADD COLUMN IF NOT EXISTS spend_correction_usd double precision NOT NULL DEFAULT 0",
+        "CREATE INDEX IF NOT EXISTS sessions_sdk_session_idx ON sessions (sdk_session_id)",
+    ], "the cap's per-tool-call join reaches turns through sessions.sdk_session_id: it needs the index"
 
 
 # U9: a shipped file runs once and is never edited, so a later file may only add. Read off the

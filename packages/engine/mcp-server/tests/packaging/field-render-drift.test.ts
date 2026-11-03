@@ -72,6 +72,8 @@ const COMPONENTS = join(
 const NOT_RENDERED: Record<string, string> = {
   "conflict.weighed_log_entry_ids":
     "Bookkeeping for the ladder, not a finding: which of the question's log entries conflict-resolution has already weighed, so a second pass can tell new evidence from evidence it has seen. The researcher reads the analysis fields and the resolution, never this list of ids.",
+  "namesake.record_persona_ids":
+    "Tool-stamped persona ids kept only to measure a later rule; meaningless to a researcher, and the raw-data view still shows them.",
   "researcher_profile.experience_level":
     "init-project writes a fixed `novice` on every project, so the label tells the researcher nothing, and a tester read it as a judgment about them.",
   "researcher_profile.narration_guidance":

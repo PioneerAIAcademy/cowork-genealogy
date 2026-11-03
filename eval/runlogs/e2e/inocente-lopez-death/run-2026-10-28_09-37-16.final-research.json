@@ -1,0 +1,49 @@
+{
+  "project": {
+    "id": "rp_inocente_lopez_death",
+    "objective": "When and where did Inocente Lopez, born 11 June 1860 in Oratorio de Concepci\u00f3n, Cuscatl\u00e1n, El Salvador, and married to Virginia Mendoza in 1885, die?",
+    "subject_person_ids": [
+      "L8GW-R6Y"
+    ],
+    "status": "active",
+    "created": "2026-10-12",
+    "updated": "2026-10-12"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "subscriptions": [],
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Inocente Lopez, born 11 June 1860 in Oratorio de Concepci\u00f3n, Cuscatl\u00e1n, El Salvador, and married to Virginia Mendoza in 1885, die?",
+      "rationale": "The tree records a Death fact for Inocente Lopez with no date or place. El Salvador civil registration (Registro Civil, 1704\u20132001) and parish records (registros parroquiales y diocesanos, 1655\u20131977) cover the likely death period and are already indexed on FamilySearch; children's records in those same collections frequently name a deceased father and give the death date, providing an additional avenue. This is the sole fact the objective seeks.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-10-28"
+    }
+  ],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

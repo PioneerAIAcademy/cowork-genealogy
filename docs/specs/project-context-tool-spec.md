@@ -59,6 +59,8 @@ repo's identifier-casing rule):
   projectStatus: string | null,          // research.project.status
   objective: string | null,              // research.project.objective, verbatim
   subjectPersonIds: string[],            // research.project.subject_person_ids; [] when absent
+  narrationGuidance: string | null,      // researcher_profile.narration_guidance, verbatim
+  subscriptions: string[],               // researcher_profile.subscriptions; [] when absent
   openQuestions: [{
     id: string,                          // q_*
     question: string,                    // truncated to ≤140 chars (139 + "…")
@@ -107,9 +109,23 @@ repo's identifier-casing rule):
     planItemId: string | null,
     performed: string | null,
   }],
+  exhaustedImageGroups: [{               // films whose browse cap is spent — §2.5
+    imageGroup: string,                  // film number, e.g. "008230326"
+    imagesRead: number,                  // distinct images counted, >= 20
+    planItemIds: string[],               // open plan items with an image_search log entry on it
+  }],
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
+  sectionCounts: { [section: string]: number | null },  // entries per research_query section — §2.6
+  unregisteredDisagreementCount: number,         // what research_query's conflicts adds — §2.6
+  uploads?: [{                           // the user's uploads, newest first; absent when none — §2.7
+    name: string,
+    uploaded: string,                    // ISO, from the store's mtime
+    hasText: boolean,                    // uploads/<name>.txt exists
+  }],
+  projectUrl?: string,                   // viewer page; only with webPublicUrl and a store id — §2.7
+  uploadUrl?: string,                    // upload page; only when uploadsEnabled too — §2.7
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -156,6 +172,12 @@ Projection rules:
   only surface that returns the objective: `research_query` serves array sections only, so without it a
   cold-started agent sees the objective — and any doubt it states about its own premise — only by reading
   `research.json` whole.
+- **`narrationGuidance`** / **`subscriptions`** — `researcher_profile.narration_guidance`
+  (verbatim; `null` when absent or not a string) and `researcher_profile.subscriptions` (strings
+  only; `[]` when absent). Every skill's Narration line and `search-external-sites` read these;
+  no other tool returns them, and Cowork's VM cannot `Read` `research.json`. Tree
+  facts are not here: `tree_query` serves them, so this projection does not grow for callers
+  that never need them.
 - **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only, `[]` when absent. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.
@@ -189,22 +211,59 @@ replacement is itself present and satisfies the join; if nothing replaced it, th
 critique no longer stands.
 
 `nextStep` orders by what blocks what: **an unsettled conflict that has weighed
-everything** outranks an unresolved conflict, which outranks a question
+everything** outranks **a conflict that wants evidence already planned**, which
+outranks an unresolved conflict, which outranks a question
 with no linked assertion, which outranks an unregistered disagreement, which
 outranks competing parent sets, which outrank **the researcher's choice**, which
 outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
 
 **An unsettled conflict that has weighed everything ends the research** (step
-mode, section E; decision 12). When every open conflict carries an
-`independence_analysis` and a `weighed_log_entry_ids` covering every log entry
-the question owns (the same coverage set as the researcher's choice below), and
+mode, section E; decision 12). When the question is unresolved and every open
+conflict carries an `independence_analysis` and a `weighed_log_entry_ids` (present
+only once conflict-resolution has declared nothing left to search) covering every
+log entry the question owns (the same coverage set as the researcher's choice below), and
 no `planned` or `in_progress` item is left (one waiting only on an upload aside),
 `nextStep` is `proof-conclusion — unsettled conflict …`: re-running
 conflict-resolution there would weigh the same evidence again. Once the question
-has a `not_proved` summary with `shortfall: "conflict"`, `nextStep` is null — the
-research ended on the conflict. One log entry the weighed list does not cover is
+has a summary with `shortfall: "conflict"`, at whatever tier the evidence reached,
+whose `updated` is not older than the question's latest log entry, `nextStep` is null — the research ended
+on the conflict. An older one predates the evidence just weighed, so
+proof-conclusion refreshes it. One log entry the weighed list does not cover is
 new evidence and routes back to conflict-resolution.
+
+**A conflict that wants evidence already planned routes to the search** (step
+mode, section E). conflict-resolution sends a conflict needing new evidence to
+research-plan, which writes plan items on the SAME question rather than opening
+a helper one; hypothesis-tracking, timeline and proof-conclusion gain the same
+route in their own PRs.
+
+**Nothing acts on this rung until the router follows `nextStep`.** The field is
+advisory, and the router's conflict row still sends any conflict straight to
+conflict-resolution until step mode's PR 2 lands. Until then this rung and the
+router disagree, which `make e2e-routing-agreement` counts. When every open conflict carries an `independence_analysis` and
+the question's active plan still has an open item (one waiting only on an
+upload aside), `nextStep` names that item's search — `search-records`, or
+`search-external-sites — <pli> (<repo>)` when its repository is not
+FamilySearch. Without this rung the conflict rung below fires on every pass and
+the items those agents just asked for never run.
+
+`independence_analysis` is the marker because conflict-resolution fills it on
+every analysis, resolved or not — non-blank, so a whitespace value is not an
+analysis. A conflict not yet analysed still goes to conflict-resolution first,
+even beside an analysed one. Once the items close, the rung above decides
+whether anything is left to weigh.
+
+**It reads neither the conflict's type nor which item was planned for it.** An
+identity conflict routes to the search like any other, and any open item on the
+active plan satisfies it, not only one planned for the conflict. Both are
+deliberate: the rung's job is to stop the conflict rung firing while work is
+outstanding, not to choose the work. A record found by an item still open and
+not yet extracted outranks the search — re-running the search that found it
+would find it again. An uncited entry on a closed item does not: inconclusive
+`partial`s and link lists stay uncited for good, and `extraction_append` cites
+the read, not the search that found the record. An item waiting only on the
+researcher's upload is skipped, as it is everywhere else in this ladder.
 
 **The researcher's choice is the one rung that names no step** (step mode,
 section B). When a question's search stopped on `resources_spent`, it has no
@@ -249,7 +308,9 @@ scenario questions. The only `research` routing test among those scenarios is
 assertion cites by `log_entry_id` reports extraction. An external-site entry whose
 capture has not come back does not count, because it is an open hand-off. Otherwise
 the lowest-sequence `planned` or `in_progress` item on a plan that is still active
-decides. A repository naming FamilySearch, or none at all, reports `search-records`.
+decides, skipping any item that waits only on the researcher's upload — the same
+skip the rest of this ladder applies, so a question whose only open item is waiting
+names no search. A repository naming FamilySearch, or none at all, reports `search-records`.
 Any other repository reports `search-external-sites — <item id> (<repository>)`,
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.
@@ -428,6 +489,94 @@ its values can sum past `total`. Places and record types are sorted. The field i
 absent when no list is stored, and also when the file cannot be read: a broken
 cache file must never fail the whole projection.
 
+### 2.5 `exhaustedImageGroups` — films whose browse cap is spent
+
+The image cap (`image-transcribe-tool-spec.md` §5.8) allows 20 distinct images per
+film per project, and nothing resets it. A cap refusal only reaches the agent that
+hit it, so a router that re-spawns `search-images` for the same plan item pays for
+an agent that is refused on its first page (2 of 4 browse spawns in one hosted
+session of 2026-10-14). This field lets the router see the spent film before it spawns.
+
+Computed at read time from `results/image-browse.jsonl`, the cap's own log
+(`exhaustedImageGroups` in `src/utils/browse-budget.ts`, which shares its line
+parser with the cap check): every film with at least 20 distinct `image_id`s, sorted
+by film. Nothing is persisted. `planItemIds` are the distinct `plan_item_id`s of
+`research.json` `log` entries with `tool: "image_search"` whose
+`query.imageGroupNumber` belongs to that film (its part before the first `_`), so
+the router can match the plan item it is about to delegate (plan items carry no
+image group). Only `image_search` entries count: that is the tool `search-images`
+logs a browse under, and a `fulltext_search` entry scoped to the same film is not a
+browse. Only items still `planned` or `in_progress` on an `active` plan are listed:
+once `research-plan` disposes of an item it drops off, so the router does not send it
+back on the next pass; the film itself stays listed while its cap is spent. `[]` when
+no film is spent, and when the log is absent or unreadable — like
+the cap itself, the field never fails a call. Reads that named no project are
+counted in memory only and are not visible here.
+
+The description tells the router never to delegate a browse of a listed film and to
+send its `planItemIds` to `research-plan` to dispose of (lead, 2026-10-28); the
+`research` router's `search-images` row says the same.
+
+### 2.6 `sectionCounts` — which sections a query would find empty
+
+```typescript
+sectionCounts: { [section: string]: number | null }   // every research.json section research_query serves
+unregisteredDisagreementCount: number
+```
+
+One key per section in `research_query`'s `RESEARCH_QUERY_SECTIONS` except
+`external_collections` (counted by §2.4), each the length of that research.json
+array. An absent section in `RESEARCH_QUERY_OPTIONAL_SECTIONS` counts 0, as
+`research_query` answers it; a section `research_query` would refuse — a required
+one absent, or any one present but not an array — is `null`. The contract is that
+a 0 matches the `count` an unfiltered `research_query` of that section would
+return, so a consumer may treat the 0 as having read the section and skip the
+call, and may never treat a `null` that way. The disagreement count comes from
+`research_query`'s own `disagreementsInScope`, so the two cannot drift.
+
+`conflicts` is the one section whose query returns more than its items: it also
+reports `unregisteredDisagreements`, project-wide when no `questionId` is given.
+`unregisteredDisagreementCount` is that list's length, so `conflicts: 0` with a
+non-zero count still needs the query.
+
+Why: question-selection reads several sections before it picks a question. In
+the October 2026 e2e corpus 98 of 98 of those reads came back empty; in two
+hosted sessions of 2026-10-05/06, 12 of 21 did. The reads were issued in
+parallel, so the counts save tokens and calls more than wall-clock time.
+
+### 2.7 `uploads`, `projectUrl`, `uploadUrl` — the self-hosted beta's web tier
+
+```typescript
+uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
+projectUrl?: string   // `${webPublicUrl}/#/p/${projectId}`
+uploadUrl?: string    // `${projectUrl}/upload`
+```
+
+`uploads` lists the store's `uploads/` entries, newest first, ties by name. An
+entry `X.txt` whose `X` is also an entry is X's **text layer**, not an upload: it
+sets X's `hasText` and is not listed. A `notes.txt` with no `notes` beside it is
+an upload. A dotfile is not an upload. `<name>` is the full basename with its extension (`census.pdf` →
+`census.pdf.txt`), the name `upload_key()` gives an upload
+(`apps/server/proto/web/project_blobs.py`); the web tier's text-layer writer
+must use that name. `uploads` is **omitted** when there are none, so
+every desktop and harness response is unchanged, and when the listing fails.
+
+The links come from `projectLinks(principal)` (`src/utils/project-links.ts`):
+`projectUrl` only when the per-user config has `webPublicUrl` (trailing slashes
+stripped) **and** the bound store has a `projectId`; `uploadUrl` only when
+`uploadsEnabled` is also `true`. The id is the store's, never derived from
+`projectPath`: on the hosted path every project arrives under the same anchor
+path, `/project`. The file store has no id, so the desktop gets no link. On the
+hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
+`UPLOADS_ENABLED` (`src/hosted-config-env.ts`); a switch other than
+`true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no
+`#`, `?`, credentials, backslash, space or control character, refuses start-up
+with exit 2. The tool takes the principal as its last parameter because the
+links read the per-user config.
+
+What nothing checks: that the web tier writes the text layer under the name
+this side reads. Each side is tested against its own fixture.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** One fixed shape, no field
@@ -454,10 +603,12 @@ was still deferred and arrived through ToolSearch, description included):
 > progress", "what have we found?") or reopens a project, call this and answer
 > from it in exactly ONE plain-language paragraph and nothing else: the
 > objective, what is established, what is open or waiting on the researcher,
-> and the next step, stated rather than asked. No lead-in line ("Here's where
-> things stand:"), no line breaks, headings, tables, lists or bold, no closing
-> question, and no identifiers, file names, tool names or field names:
-> say "the proof summary" or "the parentage question", never q_001 or ps_001.
+> and the next step, stated rather than asked, as the paragraph's last
+> sentence. This shape overrides narrationGuidance for this answer. No lead-in
+> line ("Here's where things stand:"), no line breaks, headings, tables, lists
+> or bold, no closing question, and no identifiers, file names, tool names or
+> field names: say "the conclusion" or "the parentage question", never q_001
+> or ps_001.
 > nextStep values name ids and agents; restate them in plain words. Do not
 > read the project files and do not delegate.
 
@@ -468,6 +619,15 @@ the third quoting `ps_001`. With the worked examples, 3 of 3 scratch runs and
 0 of 1 in the full suite; with the `nextStep` sentence added, 4 of 5. Every
 miss quoted `ps_001`, which `questionStatuses[].nextStep` hands over verbatim
 ("gps-mentor (proof-critique) — ps_001").
+
+Once `narrationGuidance` came back in the same result, the house
+guidance's "what was found, in one paragraph, and what happens next in one
+sentence" competed with the one-paragraph rule: on 2026-10-30 (Windows, scratch
+runs) 10 of 17 replies put "The immediate next step is …" on a line of its own,
+and the clause's own example "the proof summary" put a word the house guidance
+bans into the reply. Naming the next step as the paragraph's last sentence,
+saying this shape overrides `narrationGuidance`, and giving "the conclusion" as
+the example: 10 of 10 single-paragraph replies, 9 of 10 passing the judge.
 
 The shape half is checked too: the validator fails a reply with more than one
 paragraph, a heading, list or table line, bold, or a closing question. Before
@@ -512,7 +672,13 @@ untouched.
   filtering; preferred-name rendering; `sourceRefs` unioned (distinct) across
   person/fact/name references; per-source `recordIds` (distinct, verbatim)
   and `assertionCount`; `projectStatus` echoed.
-- **empty project** — empty arrays, `ok: true`.
+- **empty project** — empty arrays, every `sectionCounts` value 0, `ok: true`.
+- **`sectionCounts`** — for every section, equal to the unfiltered
+  `research_query` `count`; `unregisteredDisagreementCount` equal to that
+  query's `conflicts` `unregisteredDisagreements` length, including on a project
+  where `conflicts` counts 0 and one disagreement is unregistered; an absent
+  optional section counts 0; an absent required section, or one that is not an
+  array, is `null` and `research_query` refuses it.
 - **truncation** — a 200-char question comes back at 140 chars ending in `…`;
   a 140-char question is untouched.
 - **missing file** — `{ ok: false, errors }`, when the folder holds the other
@@ -527,6 +693,21 @@ untouched.
   a capture on a different URL closes nothing; an earlier capture does not
   close a later hand-off; a `positive` entry with `capture_received: false`
   never lists; a non-`external_site` entry never lists.
+- **uploads and links** — `X` and `X.txt` list once with `hasText: true`, a lone
+  `notes.txt` lists as an upload; newest first, ties by name (seeded with `fs`,
+  so `make engine-test-pg` runs it on Postgres/S3); no uploads → key absent.
+  With a project-id store: both links with both settings, no `uploadUrl` while
+  uploads are off or unset, neither link without `webPublicUrl` or without a
+  store id; a failing listing omits `uploads` and still answers.
+  `tests/http/http-server.test.ts` 2d drives both links, with both settings on,
+  through `startHttpServer`'s `baseConfig`.
+- **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan
+  items of its `image_search` entries, across sub-volumes of the film, and not those
+  of a `fulltext_search` entry on it; 19 images plus a re-read does not list; a torn
+  log line is skipped; a spent film with no `image_search` entry lists with
+  `planItemIds: []`; an empty project gives `[]`; a `completed` or `skipped` item,
+  and an item on a `superseded` plan, drop off while `planned` and `in_progress`
+  items on the active plan stay.
 
 ## 6. Consumers / wiring
 

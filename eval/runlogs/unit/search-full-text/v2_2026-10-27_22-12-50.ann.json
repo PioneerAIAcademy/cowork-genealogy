@@ -1,0 +1,286 @@
+{
+  "run_log": "v2_2026-10-27_22-12-50.json",
+  "annotator": "edmondoware70@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_009",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": " Run 1 failed because it skipped the required wiki_read of the Spanish word list and built the query from memory. The three retries fetched the page and passed, so the 3s stand. The run 1 judge still gave Tool Arguments a 3; only the validator caught the missing fetch."
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Query construction",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Negative result handling",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

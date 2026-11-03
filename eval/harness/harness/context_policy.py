@@ -35,16 +35,16 @@ One scope limit (plan §4.1):
   members that no skill declared; issue #2937 changed that. `research` and
   `search-records` declare `extraction_append` in their own `allowed-tools` and
   call it from the main thread as their ordinary route, and `extraction_append` accordingly left
-  `SUBAGENT_ONLY_TOOLS` (see the set's own comment for what that retires). The
-  one remaining member, `image_read`, is still declared by no skill and no agent
-  — pages are read with `image_transcribe`, and the image-reader agents are
-  retired (issue #2013, #2490) — so for that member
-  `agent_id` presence alone still decides. Pinned by
+  `SUBAGENT_ONLY_TOOLS` (see the set's own comment for what that retires).
+  `image_read` is still declared by no skill and no agent — pages are read with
+  `image_transcribe`, and the image-reader agents are retired (issue #2013,
+  #2490) — and the hook's AGENT_ONLY_TOOLS are declared by no skill by
+  definition, so for every member `agent_id` presence alone still decides. Pinned by
   `tests/unit/test_context_policy.py`.
 
-e2e enforcement covers **every member of `SUBAGENT_ONLY_TOOLS`** — today just
-`image_read` (#1273), since `extraction_append` (#942) left the set in issue
-#2937. Because no skill declares the remaining member, `agent_id`
+e2e enforcement covers **every member of `SUBAGENT_ONLY_TOOLS`** — `image_read`
+(#1273) and, since issue #3528, the shipped hook's AGENT_ONLY_TOOLS, the tools
+only agents hold. Because no skill declares any member, `agent_id`
 presence alone discriminates a legitimate subagent call from a router
 substitution, which is all e2e can see — its sub-skills run in the same session
 via the `Skill` tool with no `agent_id` to attribute them. The e2e block is
@@ -97,9 +97,15 @@ from typing import Any
 # The declared-tools exemption below is NO LONGER unreachable: `research` and
 # `search-records` declare `extraction_append`, which is exactly the case condition 3 describes.
 #
-# Keep this a plain set, not a policy engine — one entry certainly does not
-# justify machinery. Matched on the bare name, so it is transport-agnostic.
-SUBAGENT_ONLY_TOOLS = frozenset({"image_read"})
+# The rest of the set is the shipped hook's AGENT_ONLY_TOOLS (issue #3528): the
+# tools only agents hold, which the plugin hook denies the main thread in
+# Cowork and the hosted path. Imported rather than copied, so a production deny
+# is a harness deny ("Denies production genuinely has stay too", CLAUDE.md).
+# `SUBAGENT_ONLY_TOOLS` is therefore assigned below, once the hook is loaded.
+#
+# Keep this a plain set, not a policy engine. Matched on the bare name, so it is
+# transport-agnostic.
+_HARNESS_ONLY_SUBAGENT_TOOLS = frozenset({"image_read"})
 
 
 def bare_tool_name(tool_name: str) -> str:
@@ -145,9 +151,9 @@ def subagent_only_violation(
     3. The skill did **not** declare the tool in its own `allowed-tools`
        (`declared_tools`, from `allowed_tools.declared_skill_tools`). A skill
        that claimed the tool for itself may call it directly; a skill that
-       holds it only through the agent-union may not. No skill declares either
-       guarded tool today — pages are read with `image_transcribe` — so this
-       exemption is currently unreachable, and `agent_id` presence alone decides (see
+       holds it only through the agent-union may not. No skill declares a
+       guarded tool today — AGENT_ONLY_TOOLS is by definition declared by none —
+       so this exemption is currently unreachable, and `agent_id` presence alone decides (see
        `e2e/orchestrator.py` and e2e-test-spec §6.1.1).
 
     `declared_tools=None` means "unknown", and is treated as **declaring
@@ -201,9 +207,14 @@ def subagent_only_denial(bare: str) -> dict[str, Any]:
     Deliberately returns no `stopReason`: a denied call is a recoverable
     mistake, not a fatal one. The run continues so the router can pivot —
     matching how the e2e tree-read block behaves. The reason text is the
-    model's only feedback here, so it names the fix per tool (`_DENIAL_REASONS`).
+    model's only feedback here, so it names the fix per tool: the shipped
+    hook's own text for an agent-only tool, so the harness denies with what the
+    agent meets in Cowork, and `_DENIAL_REASONS` for the harness-only rest.
     """
-    reason = _DENIAL_REASONS.get(bare, _DENIAL_REASON_FALLBACK.format(bare=bare))
+    if bare in _guard.AGENT_ONLY_TOOLS:
+        reason = _guard.agent_only_reason(bare)
+    else:
+        reason = _DENIAL_REASONS.get(bare, _DENIAL_REASON_FALLBACK.format(bare=bare))
     return {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
@@ -264,6 +275,15 @@ def _load_guard():
 
 _guard = _load_guard()
 
+#: Tool -> the agents that hold it, for the tools only agents hold. The shipped
+#: hook's map, not a copy.
+AGENT_ONLY_TOOLS = _guard.AGENT_ONLY_TOOLS
+
+#: Tools the main thread may not call: the harness-only `image_read` deny plus
+#: the shipped hook's AGENT_ONLY_TOOLS. Same import-don't-copy discipline as
+#: OWNED_SECTIONS below.
+SUBAGENT_ONLY_TOOLS = _HARNESS_ONLY_SUBAGENT_TOOLS | frozenset(AGENT_ONLY_TOOLS)
+
 
 #: research.json sections the shipped hook routes to a named agent, mapped to
 #: that agent's bare name. Reached through `_guard` so there is exactly ONE
@@ -285,6 +305,10 @@ OWNED_FIELDS = _guard.OWNED_FIELDS
 #: status)`, routed on a conflict's analytical product. Same discipline.
 OWNED_CLAIMS = _guard.OWNED_CLAIMS
 
+#: The op-scoped map: `section -> owning agent`, routed on `op: "append"` only.
+#: Same discipline.
+OWNED_APPENDS = _guard.OWNED_APPENDS
+
 #: The shipped hook's own ownership predicate, re-exported rather than
 #: reimplemented. `e2e/orchestrator.py` carried a second copy of the rule until
 #: 2026-08-23 — it imported the map above and the reason text below, so the two
@@ -300,54 +324,17 @@ def owned_section_denial(denied: tuple[str, str, str]) -> dict[str, Any]:
     Takes `owner_denied`'s `(section, rule, caller)` triple directly, so there is
     no second shape to keep in step.
 
-    Built from the SHIPPED hook's own reason strings and maps, the same
-    import-don't-copy discipline `protected_file_denial` below follows, so the
-    harness denies with the text the agent meets in Cowork.
-
-    **Branch on `rule`, never on the shape of the first element.** A
-    `declaration` or `owned_field` denial carries a dotted `section.field` that
-    is a key in neither owner map, so an unconditional lookup raises `KeyError`
-    on exactly the arms this function was extended to serve. The `else` arm
-    indexes `AGENT_WRITABLE_SECTIONS[caller]`, and `caller` is `""` on the main
-    thread, so a new rule tag left to fall through there raises rather than
-    denying.
+    The text is the SHIPPED hook's own `deny_reason`, not a copy of its
+    rule-to-reason switch, so the harness denies with the text the agent meets
+    in Cowork and a new rule tag is added in one place.
 
     It cannot reuse `subagent_only_denial`: that one says the TOOL is reserved
     for a subagent, which is true of `image_read` and flatly false of
     `research_append` — the general writer, called from the main thread
-    constantly for plans, questions, conflicts and the log. An agent told
+    constantly for plans, conflicts and the log. An agent told
     otherwise stops writing all of them. Only the section is routed.
     """
-    section, rule, caller = denied
-
-    if rule == "routed":
-        reason = _guard.OWNER_REASON.format(
-            section=section, agent=_guard.OWNED_SECTIONS[section]
-        )
-    elif rule == "declaration":
-        owned_section, _, field = section.partition(".")
-        reason = _guard.DECLARATION_REASON.format(
-            section=owned_section,
-            field=field,
-            agent=_guard.OWNED_DECLARATIONS[(owned_section, field)],
-        )
-    elif rule == "owned_field":
-        owned_section, _, field = section.partition(".")
-        reason = _guard.OWNED_FIELD_REASON.format(
-            section=owned_section,
-            field=field,
-            agent=_guard.OWNED_FIELDS[(owned_section, field)],
-        )
-    elif rule == "claim":
-        owner, claim_fields, _status = _guard.OWNED_CLAIMS[section]
-        reason = _guard.CLAIM_REASON.format(
-            section=section,
-            fields=", ".join(f"`{f}`" for f in claim_fields),
-            agent=owner,
-        )
-    else:
-        allowed = ", ".join(f"`{s}`" for s in sorted(_guard.AGENT_WRITABLE_SECTIONS[caller]))
-        reason = _guard.OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
+    reason = _guard.deny_reason(denied)
 
     return {
         "hookSpecificOutput": {

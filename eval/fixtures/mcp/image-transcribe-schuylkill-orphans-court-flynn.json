@@ -1,0 +1,16 @@
+{
+  "tool": "image_transcribe",
+  "description": "Image 004528134_00821, image 10 of item 5 (image-search-item-schuylkill-orphans-court): the Orphans' Court docket entry for the estate of Thomas Flynn, 1889. Film-anchored full id. Invented text; the record series is real.",
+  "args": {
+    "imageId": "~004528134_00821"
+  },
+  "response": {
+    "transcription": "Orphans' Court Docket, Schuylkill County, Vol. 14, p. 233.\n\nEstate of THOMAS FLYNN, late of the Borough of Minersville, deceased.\nApril 2, 1889. Will proved; letters testamentary granted to Margaret Flynn and James Connell, executors.\nJune 10, 1889. Inventory and appraisement filed, $1,240.50.\nMarch 3, 1890. First and final account of the executors filed and confirmed nisi.",
+    "found": "FOUND — the docket entry for the estate of Thomas Flynn, 1889",
+    "metadata": {
+      "imageId": "004528134_00821",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1590118
+    }
+  }
+}
