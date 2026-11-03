@@ -25,17 +25,11 @@ def queue_body(
     project_id: str,
     text: str,
     enqueued_at: str,
-    nudges: int,
     *,
     auto: bool = False,
 ) -> dict[str, Any]:
     """The turn message the worker receives. One definition, so a test driving a fake
     store still asserts the shape production enqueues.
-
-    ``nudges`` is 1a's carrier: the worker prefers it over its own
-    ``AUTONOMOUS_MAX_NUDGES`` because one worker serves the browser and
-    ``make proto-demo`` and cannot tell them apart. It comes from the enqueuing
-    tier's environment and never from the request.
 
     ``auto`` marks the host's own reply. The key is absent on a patron's message
     rather than present and false, so an older body and a typed one are the same
@@ -47,7 +41,6 @@ def queue_body(
         "project_id": project_id,
         "text": text,
         "enqueued_at": enqueued_at,
-        "max_nudges": nudges,
     }
     if auto:
         body[AUTO_KEY] = True

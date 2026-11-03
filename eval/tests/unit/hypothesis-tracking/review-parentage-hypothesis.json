@@ -15,6 +15,7 @@
   "judge_context": [
     "Should cite the three supporting assertions (a_004 from 1850 co-residence, a_010 from 1860 household co-residence, a_013 from death certificate) and explain why each supports the hypothesis with reference to its evidence type",
     "Should note that `contradicting_assertion_ids` is empty — no evidence currently refutes the parentage claim",
-    "Should identify probate as the most likely next source of corroborating evidence (or refutation), since pli_006 is still in_progress"
+    "Should identify probate as the most likely next source of corroborating evidence (or refutation), since pli_006 is still in_progress",
+    "Saying no contradicting evidence is linked (for example 'Contradicting evidence: none linked' or 'no evidence has been found against this idea') meets the second point; the reply need not explain why the absence matters. Naming Thomas Flynn's probate as an outstanding source that could confirm or challenge the link meets the third point; the words 'most likely' are not required. Neither must reduce Completeness."
   ]
 }

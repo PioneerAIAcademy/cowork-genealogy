@@ -322,8 +322,9 @@ def test_a_truthful_completion_is_not_a_false_completion():
 
 
 def test_hand_back_key_is_a_counter_key_and_nothing_else():
-    """No class carries a reply any more: the hook answers every vetoed stop with the
-    worker's CONTINUE_REASON (U17). A tuple coming back here is the old "Yes." branch."""
+    """No class carries a reply any more: the hook answers every vetoed stop with one
+    fixed text (U17), once the worker's CONTINUE_REASON. A tuple coming back here is the
+    old "Yes." branch."""
     assert hand_back_key("step", project_is_completed=False) == "step"
     assert hand_back_key("silent", project_is_completed=False) == "silent"
 

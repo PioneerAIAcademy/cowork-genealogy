@@ -138,11 +138,50 @@ describe("build/http.js store environment", () => {
     expect(r.stderr).toMatch(/invalid value.*GENEALOGY_S3_FORCE_PATH_STYLE/);
   }, TEST_TIMEOUT_MS);
 
+  it.each([
+    ["TRANSCRIPTION_ENABLED", "off", /invalid value: TRANSCRIPTION_ENABLED must be true or false/],
+    ["UPLOADS_ENABLED", "1", /invalid value: UPLOADS_ENABLED must be true or false/],
+    ["WEB_PUBLIC_URL", "beta.example.org", /invalid value: WEB_PUBLIC_URL must be an http\(s\) URL/],
+  ])("exits 2 naming %s when it is set to %j", async (name, value, message) => {
+    const r = await runHttp({ ...BASE, [name]: value });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toMatch(message);
+    // Refused before the store is built, as the other environment checks are.
+    expect(r.stderr).not.toMatch(/s3 credentials:/);
+  }, TEST_TIMEOUT_MS);
+
   it("exits 2 naming an orphan sweep grace under its floor", async () => {
     const r = await runHttp({ ...BASE, GENEALOGY_ORPHAN_GRACE_S: "60" });
     expect(r.code, r.stderr).toBe(2);
     expect(r.stderr).toMatch(/invalid value: GENEALOGY_ORPHAN_GRACE_S .*at least 3600/);
   }, TEST_TIMEOUT_MS);
+
+  // The two process-wide limits (self-hosted beta E4). These cases are what
+  // stops a PR shipping a fully unit-tested parser that src/http.ts never
+  // merges into its exit branch and never hands to either module -- every
+  // other test would still be green.
+  it("exits 2 naming a limit set to a value it may not take", async () => {
+    const zero = await runHttp({ ...BASE, GENEALOGY_FS_CALLS_PER_MINUTE: "0" });
+    expect(zero.code, zero.stderr).toBe(2);
+    expect(zero.stderr).toMatch(/invalid value: GENEALOGY_FS_CALLS_PER_MINUTE/);
+
+    const words = await runHttp({ ...BASE, GENEALOGY_MAX_TRANSCRIPTIONS: "abc" });
+    expect(words.code, words.stderr).toBe(2);
+    expect(words.stderr).toMatch(/invalid value: GENEALOGY_MAX_TRANSCRIPTIONS/);
+  }, TEST_TIMEOUT_MS * 2);
+
+  it("names both limits on start-up, and says when each is off", async () => {
+    const off = await runHttp(BASE, /listening on .*\n/);
+    expect(off.stderr).toMatch(/fs budget: off\n/);
+    expect(off.stderr).toMatch(/transcription cap: off\n/);
+
+    const on = await runHttp(
+      { ...BASE, GENEALOGY_FS_CALLS_PER_MINUTE: "120", GENEALOGY_MAX_TRANSCRIPTIONS: "4" },
+      /listening on .*\n/,
+    );
+    expect(on.stderr).toMatch(/fs budget: 120 calls\/min\n/);
+    expect(on.stderr).toMatch(/transcription cap: 4 at a time\n/);
+  }, (START_TIMEOUT_MS + TEST_TIMEOUT_MS) * 2);
 
   it("names the orphan sweep's schedule on start-up, and says when it is off", async () => {
     const on = await runHttp(BASE, /listening on .*\n/);

@@ -87,25 +87,25 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:CRYM-V53Z and relayed the tool's summary verbatim. The summary correctly describes a burial record from Vine Street Hill Cemetery in Cincinnati, Ohio, with details about John Becker (deceased) and Anna. No fabricated material or unsupported claims are present. The tool call succeeded with ok: true and the response accurately reflects the extracted record data."
+            "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:CRYM-V53Z and relayed the summary verbatim from the tool response. The summary accurately describes a burial record for John Becker from Cincinnati, Ohio, with spouse Anna noted. No fabricated material or unsupported claims are present. The tool call succeeded with ok: true and the response was accurately conveyed."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:CRYM-V53Z). The skill made one extraction_append call with that exact record id and relayed the complete summary returned by the tool. All required work was addressed; nothing the input state required was omitted."
+            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:CRYM-V53Z). The skill made the extraction_append call with that record id and relayed the complete summary returned by the tool. All required work was completed; nothing the input state required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The skill made one extraction_append call with projectPath and recordIds array containing the exact record id named in the user message: ark:/61903/1:1:CRYM-V53Z. The call matched the expected pattern for this skill. No critical arguments were wrong, and the call succeeded (matched.kind == 'live', ok: true)."
+            "rationale": "The extraction_append call passed the correct projectPath and recordIds array containing the exact record id named in the user message (ark:/61903/1:1:CRYM-V53Z). The call matched the expected behavior for this skill. No critical arguments were wrong, and the call succeeded with matched.kind == 'live'."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call. The recordIds array holds the FamilySearch record id (ark:/61903/1:1:CRYM-V53Z) that the message named, in order. No questionIds or absentPersons were required by the message, so their absence is correct. The call structure matches the pass criteria."
+            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array holds 'ark:/61903/1:1:CRYM-V53Z' in order. No question ids or absent persons were named in the message, so those fields were correctly omitted. The call structure matches the pass criteria."
           },
           {
             "source": "rubric",
@@ -117,7 +117,7 @@
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes were left entirely to the tool."
+            "rationale": "The only write to the project was the single extraction_append call made by the skill. No other writers (research_append, research_log_append, tree_edit, etc.) were invoked, and no unnecessary reads were made before the extraction. The skill left all writes to the tool as required."
           }
         ],
         "review_dimensions": [
@@ -125,25 +125,25 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:CRYM-V53Z and relayed the tool's summary verbatim. The summary correctly describes a burial record from Vine Street Hill Cemetery in Cincinnati, Ohio, with details about John Becker (deceased) and Anna. No fabricated material or unsupported claims are present. The tool call succeeded with ok: true and the response accurately reflects the extracted record data."
+            "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:CRYM-V53Z and relayed the summary verbatim from the tool response. The summary accurately describes a burial record for John Becker from Cincinnati, Ohio, with spouse Anna noted. No fabricated material or unsupported claims are present. The tool call succeeded with ok: true and the response was accurately conveyed."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:CRYM-V53Z). The skill made one extraction_append call with that exact record id and relayed the complete summary returned by the tool. All required work was addressed; nothing the input state required was omitted."
+            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:CRYM-V53Z). The skill made the extraction_append call with that record id and relayed the complete summary returned by the tool. All required work was completed; nothing the input state required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The skill made one extraction_append call with projectPath and recordIds array containing the exact record id named in the user message: ark:/61903/1:1:CRYM-V53Z. The call matched the expected pattern for this skill. No critical arguments were wrong, and the call succeeded (matched.kind == 'live', ok: true)."
+            "rationale": "The extraction_append call passed the correct projectPath and recordIds array containing the exact record id named in the user message (ark:/61903/1:1:CRYM-V53Z). The call matched the expected behavior for this skill. No critical arguments were wrong, and the call succeeded with matched.kind == 'live'."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call. The recordIds array holds the FamilySearch record id (ark:/61903/1:1:CRYM-V53Z) that the message named, in order. No questionIds or absentPersons were required by the message, so their absence is correct. The call structure matches the pass criteria."
+            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array holds 'ark:/61903/1:1:CRYM-V53Z' in order. No question ids or absent persons were named in the message, so those fields were correctly omitted. The call structure matches the pass criteria."
           },
           {
             "source": "rubric",
@@ -155,7 +155,7 @@
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes were left entirely to the tool."
+            "rationale": "The only write to the project was the single extraction_append call made by the skill. No other writers (research_append, research_log_append, tree_edit, etc.) were invoked, and no unnecessary reads were made before the extraction. The skill left all writes to the tool as required."
           }
         ]
       },
@@ -749,25 +749,25 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:CRYM-V53Z and relayed the tool's summary verbatim. The summary correctly describes a burial record from Vine Street Hill Cemetery in Cincinnati, Ohio, with details about John Becker (deceased) and Anna. No fabricated material or unsupported claims are present. The tool call succeeded with ok: true and the response accurately reflects the extracted record data."
+                "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:CRYM-V53Z and relayed the summary verbatim from the tool response. The summary accurately describes a burial record for John Becker from Cincinnati, Ohio, with spouse Anna noted. No fabricated material or unsupported claims are present. The tool call succeeded with ok: true and the response was accurately conveyed."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:CRYM-V53Z). The skill made one extraction_append call with that exact record id and relayed the complete summary returned by the tool. All required work was addressed; nothing the input state required was omitted."
+                "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:CRYM-V53Z). The skill made the extraction_append call with that record id and relayed the complete summary returned by the tool. All required work was completed; nothing the input state required was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The skill made one extraction_append call with projectPath and recordIds array containing the exact record id named in the user message: ark:/61903/1:1:CRYM-V53Z. The call matched the expected pattern for this skill. No critical arguments were wrong, and the call succeeded (matched.kind == 'live', ok: true)."
+                "rationale": "The extraction_append call passed the correct projectPath and recordIds array containing the exact record id named in the user message (ark:/61903/1:1:CRYM-V53Z). The call matched the expected behavior for this skill. No critical arguments were wrong, and the call succeeded with matched.kind == 'live'."
               },
               {
                 "source": "rubric",
                 "name": "The call",
                 "score": 3,
-                "rationale": "The skill made exactly one extraction_append call. The recordIds array holds the FamilySearch record id (ark:/61903/1:1:CRYM-V53Z) that the message named, in order. No questionIds or absentPersons were required by the message, so their absence is correct. The call structure matches the pass criteria."
+                "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array holds 'ark:/61903/1:1:CRYM-V53Z' in order. No question ids or absent persons were named in the message, so those fields were correctly omitted. The call structure matches the pass criteria."
               },
               {
                 "source": "rubric",
@@ -779,15 +779,15 @@
                 "source": "rubric",
                 "name": "No self-authored writes",
                 "score": 3,
-                "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes were left entirely to the tool."
+                "rationale": "The only write to the project was the single extraction_append call made by the skill. No other writers (research_append, research_log_append, tree_edit, etc.) were invoked, and no unnecessary reads were made before the extraction. The skill left all writes to the tool as required."
               }
             ],
-            "judge_cost_usd": 0.010689,
+            "judge_cost_usd": 0.010599,
             "duration_ms": 8771.625078996294,
             "error": null,
             "input_tokens": 7124,
             "cached_input_tokens": 0,
-            "output_tokens": 713
+            "output_tokens": 695
           },
           "started_at": 1792055472.124727,
           "ended_at": 1792055501.8220081
@@ -815,37 +815,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill extracted the correct FamilySearch record (ark:/61903/1:1:CRY7-D9T2) and relayed the tool's summary verbatim without fabrication or unsupported claims. The response accurately reflects the burial record for Louise Becker with all relationships and dates as returned by the tool."
+            "rationale": "The skill extracted the correct FamilySearch record (ark:/61903/1:1:CRY7-D9T2) and relayed the tool's summary verbatim without fabrication or unsupported claims. The summary accurately describes a burial record from Vine Street Hill Cemetery with details about Louise Becker and her parents. No factual errors or contradictions with the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request completely: it extracted the single named record and relayed its summary. No omissions of required work; the user message named one record and the skill processed exactly that record."
+            "rationale": "The user message requested extraction of a single FamilySearch record by ARK. The skill completed this task fully by making the extraction_append call with the correct record ID and relaying the complete summary returned by the tool. Nothing required by the input state was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed the correct recordId (ark:/61903/1:1:CRY7-D9T2) in the recordIds array, matching the user's message exactly. The projectPath was correctly set. No extraneous or incorrect arguments; the call matched what was expected."
+            "rationale": "The extraction_append call passed the correct recordIds array containing the exact ARK identifier named in the user message: ark:/61903/1:1:CRY7-D9T2. The projectPath was correctly set. No critical arguments were missing or incorrect, and the call matched what was expected."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named (ark:/61903/1:1:CRY7-D9T2) in recordIds. No question ids or absent persons were named in the message, so none needed to be included. The call structure is correct."
+            "rationale": "The skill made exactly one extraction_append call carrying the record ID the message named. The recordIds array contains the single ARK (ark:/61903/1:1:CRY7-D9T2) in the correct order. No absent persons or question IDs were relevant to this request, so their omission is appropriate."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "The skill's response is the tool's summary verbatim, with no added framing, analysis, or commentary. The text matches exactly what the tool returned in the response_summary field, presented as-is without modification."
+            "rationale": "The skill's text response is the summary returned by the tool, presented verbatim with no rewordings, omissions, or additions. The entire summary from the response_summary field appears in Claude's full text response without modification or framing."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill made no additional writes (no research_append, research_log_append, tree_edit, or other writers), and made no unnecessary reads before the extraction."
+            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any additional writes via research_append, research_log_append, tree_edit, or other writers. No unnecessary reads were made before the extraction call."
           }
         ],
         "review_dimensions": [
@@ -853,37 +853,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill extracted the correct FamilySearch record (ark:/61903/1:1:CRY7-D9T2) and relayed the tool's summary verbatim without fabrication or unsupported claims. The response accurately reflects the burial record for Louise Becker with all relationships and dates as returned by the tool."
+            "rationale": "The skill extracted the correct FamilySearch record (ark:/61903/1:1:CRY7-D9T2) and relayed the tool's summary verbatim without fabrication or unsupported claims. The summary accurately describes a burial record from Vine Street Hill Cemetery with details about Louise Becker and her parents. No factual errors or contradictions with the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request completely: it extracted the single named record and relayed its summary. No omissions of required work; the user message named one record and the skill processed exactly that record."
+            "rationale": "The user message requested extraction of a single FamilySearch record by ARK. The skill completed this task fully by making the extraction_append call with the correct record ID and relaying the complete summary returned by the tool. Nothing required by the input state was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed the correct recordId (ark:/61903/1:1:CRY7-D9T2) in the recordIds array, matching the user's message exactly. The projectPath was correctly set. No extraneous or incorrect arguments; the call matched what was expected."
+            "rationale": "The extraction_append call passed the correct recordIds array containing the exact ARK identifier named in the user message: ark:/61903/1:1:CRY7-D9T2. The projectPath was correctly set. No critical arguments were missing or incorrect, and the call matched what was expected."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named (ark:/61903/1:1:CRY7-D9T2) in recordIds. No question ids or absent persons were named in the message, so none needed to be included. The call structure is correct."
+            "rationale": "The skill made exactly one extraction_append call carrying the record ID the message named. The recordIds array contains the single ARK (ark:/61903/1:1:CRY7-D9T2) in the correct order. No absent persons or question IDs were relevant to this request, so their omission is appropriate."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "The skill's response is the tool's summary verbatim, with no added framing, analysis, or commentary. The text matches exactly what the tool returned in the response_summary field, presented as-is without modification."
+            "rationale": "The skill's text response is the summary returned by the tool, presented verbatim with no rewordings, omissions, or additions. The entire summary from the response_summary field appears in Claude's full text response without modification or framing."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill made no additional writes (no research_append, research_log_append, tree_edit, or other writers), and made no unnecessary reads before the extraction."
+            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any additional writes via research_append, research_log_append, tree_edit, or other writers. No unnecessary reads were made before the extraction call."
           }
         ]
       },
@@ -1553,45 +1553,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill extracted the correct FamilySearch record (ark:/61903/1:1:CRY7-D9T2) and relayed the tool's summary verbatim without fabrication or unsupported claims. The response accurately reflects the burial record for Louise Becker with all relationships and dates as returned by the tool."
+                "rationale": "The skill extracted the correct FamilySearch record (ark:/61903/1:1:CRY7-D9T2) and relayed the tool's summary verbatim without fabrication or unsupported claims. The summary accurately describes a burial record from Vine Street Hill Cemetery with details about Louise Becker and her parents. No factual errors or contradictions with the tool response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed the user's request completely: it extracted the single named record and relayed its summary. No omissions of required work; the user message named one record and the skill processed exactly that record."
+                "rationale": "The user message requested extraction of a single FamilySearch record by ARK. The skill completed this task fully by making the extraction_append call with the correct record ID and relaying the complete summary returned by the tool. Nothing required by the input state was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed the correct recordId (ark:/61903/1:1:CRY7-D9T2) in the recordIds array, matching the user's message exactly. The projectPath was correctly set. No extraneous or incorrect arguments; the call matched what was expected."
+                "rationale": "The extraction_append call passed the correct recordIds array containing the exact ARK identifier named in the user message: ark:/61903/1:1:CRY7-D9T2. The projectPath was correctly set. No critical arguments were missing or incorrect, and the call matched what was expected."
               },
               {
                 "source": "rubric",
                 "name": "The call",
                 "score": 3,
-                "rationale": "The skill made exactly one extraction_append call carrying the record id the message named (ark:/61903/1:1:CRY7-D9T2) in recordIds. No question ids or absent persons were named in the message, so none needed to be included. The call structure is correct."
+                "rationale": "The skill made exactly one extraction_append call carrying the record ID the message named. The recordIds array contains the single ARK (ark:/61903/1:1:CRY7-D9T2) in the correct order. No absent persons or question IDs were relevant to this request, so their omission is appropriate."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "The skill's response is the tool's summary verbatim, with no added framing, analysis, or commentary. The text matches exactly what the tool returned in the response_summary field, presented as-is without modification."
+                "rationale": "The skill's text response is the summary returned by the tool, presented verbatim with no rewordings, omissions, or additions. The entire summary from the response_summary field appears in Claude's full text response without modification or framing."
               },
               {
                 "source": "rubric",
                 "name": "No self-authored writes",
                 "score": 3,
-                "rationale": "The only write to the project was the single extraction_append call. The skill made no additional writes (no research_append, research_log_append, tree_edit, or other writers), and made no unnecessary reads before the extraction."
+                "rationale": "The only write to the project was the single extraction_append call. The skill did not make any additional writes via research_append, research_log_append, tree_edit, or other writers. No unnecessary reads were made before the extraction call."
               }
             ],
-            "judge_cost_usd": 0.01025,
+            "judge_cost_usd": 0.010450000000000001,
             "duration_ms": 11857.214341012877,
             "error": null,
             "input_tokens": 7185,
             "cached_input_tokens": 0,
-            "output_tokens": 613
+            "output_tokens": 653
           },
           "started_at": 1792055620.438876,
           "ended_at": 1792055657.0778623
@@ -5819,37 +5819,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:M62F-BST and relayed the tool's summary verbatim. The summary matches the response_summary from the extraction_append call exactly, including all eight household members with their roles, ages, birthplaces, and computed birth years. No fabricated material or unsupported claims are present."
+            "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:M62F-BST and relayed the tool's summary verbatim. The summary describes a United States Census 1870 record from Cincinnati, Ohio with eight household members (John Baker and family). All details match the tool's response_summary exactly. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:M62F-BST). The skill completed this task by making the extraction_append call with the correct record id and relaying the full summary. All required work was addressed."
+            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:M62F-BST). The skill completed this task by making the extraction_append call with the correct record id and relaying the full summary returned by the tool. Nothing the input state required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed the correct projectPath and recordIds array containing the exact ARK identifier the user named: ark:/61903/1:1:M62F-BST. The call matched the fixture's expected behavior. No critical arguments were wrong, and the call succeeded with matched.kind == 'live'."
+            "rationale": "The extraction_append call passed the correct projectPath and recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:M62F-BST) that the user message named. The call matched the expected behavior for this skill. No fixture_not_found errors occurred; the call succeeded with matched.kind == 'live'."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array holds the single FamilySearch ARK (ark:/61903/1:1:M62F-BST) in the correct order. No question ids or absent persons were relevant to this scenario, so their omission is appropriate."
+            "rationale": "The skill made exactly one extraction_append call. The recordIds array holds the single FamilySearch record id (ark:/61903/1:1:M62F-BST) that the message named. No questionIds or absentPersons were needed since the message named only a record id. The call structure is correct."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "The skill's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The response reproduces the record title, all eight household members with their roles, ages, birthplaces, and computed birth years exactly as the tool returned them in response_summary."
+            "rationale": "The skill's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The summary appears exactly as returned in the response_summary, including all eight household members with their roles, ages, birth places, and computed birth years. No framing or commentary was added."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes were left entirely to the tool."
+            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes remain solely the tool's responsibility."
           }
         ],
         "review_dimensions": [
@@ -5857,37 +5857,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:M62F-BST and relayed the tool's summary verbatim. The summary matches the response_summary from the extraction_append call exactly, including all eight household members with their roles, ages, birthplaces, and computed birth years. No fabricated material or unsupported claims are present."
+            "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:M62F-BST and relayed the tool's summary verbatim. The summary describes a United States Census 1870 record from Cincinnati, Ohio with eight household members (John Baker and family). All details match the tool's response_summary exactly. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:M62F-BST). The skill completed this task by making the extraction_append call with the correct record id and relaying the full summary. All required work was addressed."
+            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:M62F-BST). The skill completed this task by making the extraction_append call with the correct record id and relaying the full summary returned by the tool. Nothing the input state required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed the correct projectPath and recordIds array containing the exact ARK identifier the user named: ark:/61903/1:1:M62F-BST. The call matched the fixture's expected behavior. No critical arguments were wrong, and the call succeeded with matched.kind == 'live'."
+            "rationale": "The extraction_append call passed the correct projectPath and recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:M62F-BST) that the user message named. The call matched the expected behavior for this skill. No fixture_not_found errors occurred; the call succeeded with matched.kind == 'live'."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array holds the single FamilySearch ARK (ark:/61903/1:1:M62F-BST) in the correct order. No question ids or absent persons were relevant to this scenario, so their omission is appropriate."
+            "rationale": "The skill made exactly one extraction_append call. The recordIds array holds the single FamilySearch record id (ark:/61903/1:1:M62F-BST) that the message named. No questionIds or absentPersons were needed since the message named only a record id. The call structure is correct."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "The skill's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The response reproduces the record title, all eight household members with their roles, ages, birthplaces, and computed birth years exactly as the tool returned them in response_summary."
+            "rationale": "The skill's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The summary appears exactly as returned in the response_summary, including all eight household members with their roles, ages, birth places, and computed birth years. No framing or commentary was added."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes were left entirely to the tool."
+            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes remain solely the tool's responsibility."
           }
         ]
       },
@@ -7218,45 +7218,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:M62F-BST and relayed the tool's summary verbatim. The summary matches the response_summary from the extraction_append call exactly, including all eight household members with their roles, ages, birthplaces, and computed birth years. No fabricated material or unsupported claims are present."
+                "rationale": "The skill extracted the FamilySearch record ark:/61903/1:1:M62F-BST and relayed the tool's summary verbatim. The summary describes a United States Census 1870 record from Cincinnati, Ohio with eight household members (John Baker and family). All details match the tool's response_summary exactly. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:M62F-BST). The skill completed this task by making the extraction_append call with the correct record id and relaying the full summary. All required work was addressed."
+                "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:M62F-BST). The skill completed this task by making the extraction_append call with the correct record id and relaying the full summary returned by the tool. Nothing the input state required was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed the correct projectPath and recordIds array containing the exact ARK identifier the user named: ark:/61903/1:1:M62F-BST. The call matched the fixture's expected behavior. No critical arguments were wrong, and the call succeeded with matched.kind == 'live'."
+                "rationale": "The extraction_append call passed the correct projectPath and recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:M62F-BST) that the user message named. The call matched the expected behavior for this skill. No fixture_not_found errors occurred; the call succeeded with matched.kind == 'live'."
               },
               {
                 "source": "rubric",
                 "name": "The call",
                 "score": 3,
-                "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array holds the single FamilySearch ARK (ark:/61903/1:1:M62F-BST) in the correct order. No question ids or absent persons were relevant to this scenario, so their omission is appropriate."
+                "rationale": "The skill made exactly one extraction_append call. The recordIds array holds the single FamilySearch record id (ark:/61903/1:1:M62F-BST) that the message named. No questionIds or absentPersons were needed since the message named only a record id. The call structure is correct."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "The skill's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The response reproduces the record title, all eight household members with their roles, ages, birthplaces, and computed birth years exactly as the tool returned them in response_summary."
+                "rationale": "The skill's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The summary appears exactly as returned in the response_summary, including all eight household members with their roles, ages, birth places, and computed birth years. No framing or commentary was added."
               },
               {
                 "source": "rubric",
                 "name": "No self-authored writes",
                 "score": 3,
-                "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes were left entirely to the tool."
+                "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes remain solely the tool's responsibility."
               }
             ],
-            "judge_cost_usd": 0.011388,
+            "judge_cost_usd": 0.011483,
             "duration_ms": 9762.426250003045,
             "error": null,
             "input_tokens": 7993,
             "cached_input_tokens": 0,
-            "output_tokens": 679
+            "output_tokens": 698
           },
           "started_at": 1792055428.7547097,
           "ended_at": 1792055468.8378098
@@ -11920,25 +11920,25 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed the correct recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the user message named. The projectPath was correctly set. The call matched the expected behavior: one call with the named record ID in the recordIds field. No critical arguments were wrong, and no fixture_not_found errors occurred."
+            "rationale": "The extraction_append call passed the correct recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the user message named. The projectPath was correctly set. The call matched the expected behavior: one call with the named record ID in order. No critical arguments were wrong, and the call succeeded with matched.kind == 'live'."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the message named, in order. No questionIds or absentPersons were needed since the message named only a record ID. The call structure matches the pass criteria."
+            "rationale": "The skill made exactly one extraction_append call. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the user message named, in order. No question IDs or absent persons were mentioned in the message, so their omission is correct. The call structure matches the pass criteria."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "The skill's text response is the summary returned by the tool, presented verbatim with no modifications, rewordings, or additions. The summary appears exactly as it was returned in the response_summary field, with no framing, analysis, or commentary added before or after it."
+            "rationale": "The skill's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The summary appears exactly as returned in the response_summary field, including all four person entries (Patrick Flynn, Thomas Flynn, Mary Brennan, Mary Flynn) and all details. No framing, commentary, or next steps were added."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The file changes summary shows that only the extraction_append call was made as a write operation. The skill did not invoke any other writers (research_append, research_log_append, tree_edit, etc.). The only modifications to research.json and tree.gedcomx.json were those performed by the extraction_append tool itself, not by additional skill-authored writes."
+            "rationale": "The file changes summary shows that only the extraction_append call wrote to the project (research.json and tree.gedcomx.json were modified by that single tool call). The skill made no other writer calls (no research_append, research_log_append, tree_edit, or other writes). No unnecessary read calls preceded the extraction."
           }
         ],
         "review_dimensions": [
@@ -11958,25 +11958,25 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed the correct recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the user message named. The projectPath was correctly set. The call matched the expected behavior: one call with the named record ID in the recordIds field. No critical arguments were wrong, and no fixture_not_found errors occurred."
+            "rationale": "The extraction_append call passed the correct recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the user message named. The projectPath was correctly set. The call matched the expected behavior: one call with the named record ID in order. No critical arguments were wrong, and the call succeeded with matched.kind == 'live'."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the message named, in order. No questionIds or absentPersons were needed since the message named only a record ID. The call structure matches the pass criteria."
+            "rationale": "The skill made exactly one extraction_append call. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the user message named, in order. No question IDs or absent persons were mentioned in the message, so their omission is correct. The call structure matches the pass criteria."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "The skill's text response is the summary returned by the tool, presented verbatim with no modifications, rewordings, or additions. The summary appears exactly as it was returned in the response_summary field, with no framing, analysis, or commentary added before or after it."
+            "rationale": "The skill's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The summary appears exactly as returned in the response_summary field, including all four person entries (Patrick Flynn, Thomas Flynn, Mary Brennan, Mary Flynn) and all details. No framing, commentary, or next steps were added."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The file changes summary shows that only the extraction_append call was made as a write operation. The skill did not invoke any other writers (research_append, research_log_append, tree_edit, etc.). The only modifications to research.json and tree.gedcomx.json were those performed by the extraction_append tool itself, not by additional skill-authored writes."
+            "rationale": "The file changes summary shows that only the extraction_append call wrote to the project (research.json and tree.gedcomx.json were modified by that single tool call). The skill made no other writer calls (no research_append, research_log_append, tree_edit, or other writes). No unnecessary read calls preceded the extraction."
           }
         ]
       },
@@ -12850,33 +12850,33 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed the correct recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the user message named. The projectPath was correctly set. The call matched the expected behavior: one call with the named record ID in the recordIds field. No critical arguments were wrong, and no fixture_not_found errors occurred."
+                "rationale": "The extraction_append call passed the correct recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the user message named. The projectPath was correctly set. The call matched the expected behavior: one call with the named record ID in order. No critical arguments were wrong, and the call succeeded with matched.kind == 'live'."
               },
               {
                 "source": "rubric",
                 "name": "The call",
                 "score": 3,
-                "rationale": "The skill made exactly one extraction_append call. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the message named, in order. No questionIds or absentPersons were needed since the message named only a record ID. The call structure matches the pass criteria."
+                "rationale": "The skill made exactly one extraction_append call. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:J6W2-KPT) that the user message named, in order. No question IDs or absent persons were mentioned in the message, so their omission is correct. The call structure matches the pass criteria."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "The skill's text response is the summary returned by the tool, presented verbatim with no modifications, rewordings, or additions. The summary appears exactly as it was returned in the response_summary field, with no framing, analysis, or commentary added before or after it."
+                "rationale": "The skill's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The summary appears exactly as returned in the response_summary field, including all four person entries (Patrick Flynn, Thomas Flynn, Mary Brennan, Mary Flynn) and all details. No framing, commentary, or next steps were added."
               },
               {
                 "source": "rubric",
                 "name": "No self-authored writes",
                 "score": 3,
-                "rationale": "The file changes summary shows that only the extraction_append call was made as a write operation. The skill did not invoke any other writers (research_append, research_log_append, tree_edit, etc.). The only modifications to research.json and tree.gedcomx.json were those performed by the extraction_append tool itself, not by additional skill-authored writes."
+                "rationale": "The file changes summary shows that only the extraction_append call wrote to the project (research.json and tree.gedcomx.json were modified by that single tool call). The skill made no other writer calls (no research_append, research_log_append, tree_edit, or other writes). No unnecessary read calls preceded the extraction."
               }
             ],
-            "judge_cost_usd": 0.011052,
+            "judge_cost_usd": 0.011107,
             "duration_ms": 9220.948849993874,
             "error": null,
             "input_tokens": 7332,
             "cached_input_tokens": 0,
-            "output_tokens": 744
+            "output_tokens": 755
           },
           "started_at": 1792055428.7539177,
           "ended_at": 1792055466.7083502
@@ -14639,31 +14639,31 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:XZYQ-VYD). The skill made one extraction_append call with that exact record id and relayed the complete summary returned by the tool. All required work was addressed: the record was extracted and its summary was provided in full."
+            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:XZYQ-VYD). The skill completed this task fully by making the extraction_append call with the correct record id and relaying the complete summary returned by the tool. No portions of the requested work were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed the correct recordIds array containing the exact ARK the user named: ark:/61903/1:1:XZYQ-VYD. The projectPath was correctly set. No extraneous arguments were added. The call matched what was expected and succeeded with matched.kind == 'live'."
+            "rationale": "The extraction_append call passed the correct recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:XZYQ-VYD) that the user message named. The projectPath was correctly set. No extraneous arguments were added. The call matched what was expected and succeeded with matched.kind == 'live'."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:XZYQ-VYD) in the correct order. No questionIds or absentPersons were needed since the message named only a record, not questions or absent persons."
+            "rationale": "The skill made exactly one extraction_append call. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:XZYQ-VYD) that the message named, in order. No questionIds or absentPersons were needed since the message named only a record id. The call structure matches the pass criteria."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "Claude's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The summary appears exactly as returned in the response_summary field, containing all person details, relationships, dates, and locations without modification or omission."
+            "rationale": "The skill's text response is the summary returned by the tool, presented verbatim with no modifications, rewordings, or additions. The summary appears exactly as it was returned in the response_summary, with no framing, analysis, or commentary added before or after it."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The file changes (assertions, log, sources) were all written by the tool, not by Claude."
+            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes remain solely the tool's responsibility."
           }
         ],
         "review_dimensions": [
@@ -14677,31 +14677,31 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:XZYQ-VYD). The skill made one extraction_append call with that exact record id and relayed the complete summary returned by the tool. All required work was addressed: the record was extracted and its summary was provided in full."
+            "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:XZYQ-VYD). The skill completed this task fully by making the extraction_append call with the correct record id and relaying the complete summary returned by the tool. No portions of the requested work were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed the correct recordIds array containing the exact ARK the user named: ark:/61903/1:1:XZYQ-VYD. The projectPath was correctly set. No extraneous arguments were added. The call matched what was expected and succeeded with matched.kind == 'live'."
+            "rationale": "The extraction_append call passed the correct recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:XZYQ-VYD) that the user message named. The projectPath was correctly set. No extraneous arguments were added. The call matched what was expected and succeeded with matched.kind == 'live'."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:XZYQ-VYD) in the correct order. No questionIds or absentPersons were needed since the message named only a record, not questions or absent persons."
+            "rationale": "The skill made exactly one extraction_append call. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:XZYQ-VYD) that the message named, in order. No questionIds or absentPersons were needed since the message named only a record id. The call structure matches the pass criteria."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "Claude's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The summary appears exactly as returned in the response_summary field, containing all person details, relationships, dates, and locations without modification or omission."
+            "rationale": "The skill's text response is the summary returned by the tool, presented verbatim with no modifications, rewordings, or additions. The summary appears exactly as it was returned in the response_summary, with no framing, analysis, or commentary added before or after it."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The file changes (assertions, log, sources) were all written by the tool, not by Claude."
+            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes remain solely the tool's responsibility."
           }
         ]
       },
@@ -15589,39 +15589,39 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:XZYQ-VYD). The skill made one extraction_append call with that exact record id and relayed the complete summary returned by the tool. All required work was addressed: the record was extracted and its summary was provided in full."
+                "rationale": "The user message requested extraction of a single FamilySearch record (ark:/61903/1:1:XZYQ-VYD). The skill completed this task fully by making the extraction_append call with the correct record id and relaying the complete summary returned by the tool. No portions of the requested work were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed the correct recordIds array containing the exact ARK the user named: ark:/61903/1:1:XZYQ-VYD. The projectPath was correctly set. No extraneous arguments were added. The call matched what was expected and succeeded with matched.kind == 'live'."
+                "rationale": "The extraction_append call passed the correct recordIds array containing the exact FamilySearch ARK (ark:/61903/1:1:XZYQ-VYD) that the user message named. The projectPath was correctly set. No extraneous arguments were added. The call matched what was expected and succeeded with matched.kind == 'live'."
               },
               {
                 "source": "rubric",
                 "name": "The call",
                 "score": 3,
-                "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:XZYQ-VYD) in the correct order. No questionIds or absentPersons were needed since the message named only a record, not questions or absent persons."
+                "rationale": "The skill made exactly one extraction_append call. The recordIds array contains the single FamilySearch ARK (ark:/61903/1:1:XZYQ-VYD) that the message named, in order. No questionIds or absentPersons were needed since the message named only a record id. The call structure matches the pass criteria."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "Claude's text response is the tool's summary verbatim, with no additions, rewording, or analysis. The summary appears exactly as returned in the response_summary field, containing all person details, relationships, dates, and locations without modification or omission."
+                "rationale": "The skill's text response is the summary returned by the tool, presented verbatim with no modifications, rewordings, or additions. The summary appears exactly as it was returned in the response_summary, with no framing, analysis, or commentary added before or after it."
               },
               {
                 "source": "rubric",
                 "name": "No self-authored writes",
                 "score": 3,
-                "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The file changes (assertions, log, sources) were all written by the tool, not by Claude."
+                "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (research_append, research_log_append, tree_edit, etc.) and did not make unnecessary reader calls before the extraction. The project's writes remain solely the tool's responsibility."
               }
             ],
-            "judge_cost_usd": 0.010936999999999999,
+            "judge_cost_usd": 0.010922,
             "duration_ms": 11501.461666994146,
             "error": null,
             "input_tokens": 7342,
             "cached_input_tokens": 0,
-            "output_tokens": 719
+            "output_tokens": 716
           },
           "started_at": 1792055501.8753061,
           "ended_at": 1792055538.8925033
@@ -15667,19 +15667,19 @@
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array contains 'ark:/61903/1:1:XZR4-K7Q' in order, matching the user's request. No question ids or absent persons were named in the message, so their omission is correct. The call structure is exactly as required."
+            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array contains 'ark:/61903/1:1:XZR4-K7Q' in order, matching the user's request. No question ids or absent persons were named in the message, so their omission is correct. The call structure matches the pass criteria."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "Claude's full text response is the summary returned by the tool, reproduced verbatim with no additions, omissions, rewording, or analysis. The summary begins with 'Ohio, County Marriages, 1789-2016...' and ends with '- Jacob Lang (witness_1).' matching exactly what the tool's response_summary field contains. No framing, commentary, or next steps were added."
+            "rationale": "Claude's text response is the summary returned by the tool, presented verbatim with no additions, omissions, rewording, or analysis. The response contains exactly the summary text from the tool's response_summary field, nothing more and nothing less, satisfying the pass criteria."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (no research_append, research_log_append, tree_edit, or other modifications). The file changes (research.json and tree.gedcomx.json modifications) were produced by the extraction_append tool itself, not by self-authored writes from the skill."
+            "rationale": "The file changes summary shows that research.json and tree.gedcomx.json were modified only through the single extraction_append call (assertions +15, log +1, sources +1 added). The skill made no other writer calls (no research_append, research_log_append, tree_edit, etc.) and no unnecessary reader calls before the extraction. Only the one required write occurred."
           }
         ],
         "review_dimensions": [
@@ -15705,19 +15705,19 @@
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array contains 'ark:/61903/1:1:XZR4-K7Q' in order, matching the user's request. No question ids or absent persons were named in the message, so their omission is correct. The call structure is exactly as required."
+            "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array contains 'ark:/61903/1:1:XZR4-K7Q' in order, matching the user's request. No question ids or absent persons were named in the message, so their omission is correct. The call structure matches the pass criteria."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "Claude's full text response is the summary returned by the tool, reproduced verbatim with no additions, omissions, rewording, or analysis. The summary begins with 'Ohio, County Marriages, 1789-2016...' and ends with '- Jacob Lang (witness_1).' matching exactly what the tool's response_summary field contains. No framing, commentary, or next steps were added."
+            "rationale": "Claude's text response is the summary returned by the tool, presented verbatim with no additions, omissions, rewording, or analysis. The response contains exactly the summary text from the tool's response_summary field, nothing more and nothing less, satisfying the pass criteria."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (no research_append, research_log_append, tree_edit, or other modifications). The file changes (research.json and tree.gedcomx.json modifications) were produced by the extraction_append tool itself, not by self-authored writes from the skill."
+            "rationale": "The file changes summary shows that research.json and tree.gedcomx.json were modified only through the single extraction_append call (assertions +15, log +1, sources +1 added). The skill made no other writer calls (no research_append, research_log_append, tree_edit, etc.) and no unnecessary reader calls before the extraction. Only the one required write occurred."
           }
         ]
       },
@@ -16442,27 +16442,27 @@
                 "source": "rubric",
                 "name": "The call",
                 "score": 3,
-                "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array contains 'ark:/61903/1:1:XZR4-K7Q' in order, matching the user's request. No question ids or absent persons were named in the message, so their omission is correct. The call structure is exactly as required."
+                "rationale": "The skill made exactly one extraction_append call carrying the record id the message named. The recordIds array contains 'ark:/61903/1:1:XZR4-K7Q' in order, matching the user's request. No question ids or absent persons were named in the message, so their omission is correct. The call structure matches the pass criteria."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "Claude's full text response is the summary returned by the tool, reproduced verbatim with no additions, omissions, rewording, or analysis. The summary begins with 'Ohio, County Marriages, 1789-2016...' and ends with '- Jacob Lang (witness_1).' matching exactly what the tool's response_summary field contains. No framing, commentary, or next steps were added."
+                "rationale": "Claude's text response is the summary returned by the tool, presented verbatim with no additions, omissions, rewording, or analysis. The response contains exactly the summary text from the tool's response_summary field, nothing more and nothing less, satisfying the pass criteria."
               },
               {
                 "source": "rubric",
                 "name": "No self-authored writes",
                 "score": 3,
-                "rationale": "The only write to the project was the single extraction_append call. The skill did not make any other writer calls (no research_append, research_log_append, tree_edit, or other modifications). The file changes (research.json and tree.gedcomx.json modifications) were produced by the extraction_append tool itself, not by self-authored writes from the skill."
+                "rationale": "The file changes summary shows that research.json and tree.gedcomx.json were modified only through the single extraction_append call (assertions +15, log +1, sources +1 added). The skill made no other writer calls (no research_append, research_log_append, tree_edit, etc.) and no unnecessary reader calls before the extraction. Only the one required write occurred."
               }
             ],
-            "judge_cost_usd": 0.011108,
+            "judge_cost_usd": 0.010968,
             "duration_ms": 10443.030352005735,
             "error": null,
             "input_tokens": 7188,
             "cached_input_tokens": 0,
-            "output_tokens": 784
+            "output_tokens": 756
           },
           "started_at": 1792055657.3151643,
           "ended_at": 1792055683.7118652
@@ -18998,37 +18998,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly recorded the absence of Patrick Flynn in the 1870 census for Schuylkill, Pennsylvania as negative evidence. The extraction_append call properly cited log_006 (the nil search log entry) in the absences array. The response accurately reflects what the tool returned: a single record with status 'extracted' documenting the negative search result. No fabricated material or unsupported claims are present."
+            "rationale": "The skill correctly recorded the absence of Patrick Flynn in the 1870 census for Schuylkill, Pennsylvania as negative evidence. The extraction_append call properly cited log_006 (the nil search log entry) in the absences array. The summary returned by the tool accurately reflects the search outcome: 'searched without a match. Recorded as negative evidence: Patrick Flynn expected and not present.' No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's request to record the absence of Patrick Flynn in the 1870 census as negative evidence. The extraction_append call included all required information: the collection name ('United States, Census, 1870'), the person's name ('Patrick Flynn'), the place ('Schuylkill, Pennsylvania'), and the log entry ID ('log_006'). The response relayed the tool's summary verbatim, completing the task as specified."
+            "rationale": "The skill addressed everything the user message required. The user asked to record the absence of Patrick Flynn from the 1870 census search (logged as log_006) as negative evidence. The skill made the extraction_append call with the correct absences entry citing log_006, and relayed the summary. No required elements were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed correct arguments matching the fixture's expectations. The absences array contained one entry with collection, name, place, and logEntryId fields all correctly populated. The call appropriately used absences (not recordIds) since this was a nil search with no matching record. The arguments semantically match what was expected for recording negative evidence from a search log entry."
+            "rationale": "The extraction_append call passed correct arguments. The absences array contained one entry with collection='United States, Census, 1870', name='Patrick Flynn', place='Schuylkill, Pennsylvania', and logEntryId='log_006'. These match the user's message exactly: the search was of the 1870 census for Patrick Flynn in Schuylkill, Pennsylvania, and it was logged as log_006. The call structure is semantically correct for a nil search scenario."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying what the message named. The absences array correctly cited log_006 (the search log entry for the 1870 census search) and included the person name 'Patrick Flynn' and place 'Schuylkill, Pennsylvania'. For a nil search with no record, the call properly used absences citing the search's log entry instead of recordIds, exactly as the rubric specifies."
+            "rationale": "The skill made exactly one extraction_append call. Since this is a nil search with no record found, the call correctly used absences (not recordIds) and cited the search's log entry (log_006) as required by the rubric. The absence entry includes all necessary fields: collection, name, place, and logEntryId."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "The skill's text response is the verbatim summary returned by the tool: 'United States, Census, 1870 (Schuylkill, Pennsylvania): searched without a match. Recorded as negative evidence: Patrick Flynn expected and not present.' No rewordings, abbreviations, or additions appear. The relay is exact and contains nothing else."
+            "rationale": "The skill's text response is the summary returned by the tool: 'United States, Census, 1870 (Schuylkill, Pennsylvania): searched without a match. Recorded as negative evidence: Patrick Flynn expected and not present.' This is relayed verbatim with no reworded, shortened, or merged content, and no added analysis or commentary."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write is the single extraction_append call. The skill made no other writes (no research_append, research_log_append, tree_edit, or other writers). No unnecessary reads preceded the write. The project's writes are entirely delegated to the tool, as required."
+            "rationale": "The only write to the project is the single extraction_append call. The skill made no other writes (no research_append, research_log_append, tree_edit, or other writers) and made no unnecessary reads before the call. The write is entirely delegated to the tool."
           }
         ],
         "review_dimensions": [
@@ -19036,37 +19036,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly recorded the absence of Patrick Flynn in the 1870 census for Schuylkill, Pennsylvania as negative evidence. The extraction_append call properly cited log_006 (the nil search log entry) in the absences array. The response accurately reflects what the tool returned: a single record with status 'extracted' documenting the negative search result. No fabricated material or unsupported claims are present."
+            "rationale": "The skill correctly recorded the absence of Patrick Flynn in the 1870 census for Schuylkill, Pennsylvania as negative evidence. The extraction_append call properly cited log_006 (the nil search log entry) in the absences array. The summary returned by the tool accurately reflects the search outcome: 'searched without a match. Recorded as negative evidence: Patrick Flynn expected and not present.' No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's request to record the absence of Patrick Flynn in the 1870 census as negative evidence. The extraction_append call included all required information: the collection name ('United States, Census, 1870'), the person's name ('Patrick Flynn'), the place ('Schuylkill, Pennsylvania'), and the log entry ID ('log_006'). The response relayed the tool's summary verbatim, completing the task as specified."
+            "rationale": "The skill addressed everything the user message required. The user asked to record the absence of Patrick Flynn from the 1870 census search (logged as log_006) as negative evidence. The skill made the extraction_append call with the correct absences entry citing log_006, and relayed the summary. No required elements were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The extraction_append call passed correct arguments matching the fixture's expectations. The absences array contained one entry with collection, name, place, and logEntryId fields all correctly populated. The call appropriately used absences (not recordIds) since this was a nil search with no matching record. The arguments semantically match what was expected for recording negative evidence from a search log entry."
+            "rationale": "The extraction_append call passed correct arguments. The absences array contained one entry with collection='United States, Census, 1870', name='Patrick Flynn', place='Schuylkill, Pennsylvania', and logEntryId='log_006'. These match the user's message exactly: the search was of the 1870 census for Patrick Flynn in Schuylkill, Pennsylvania, and it was logged as log_006. The call structure is semantically correct for a nil search scenario."
           },
           {
             "source": "rubric",
             "name": "The call",
             "score": 3,
-            "rationale": "The skill made exactly one extraction_append call carrying what the message named. The absences array correctly cited log_006 (the search log entry for the 1870 census search) and included the person name 'Patrick Flynn' and place 'Schuylkill, Pennsylvania'. For a nil search with no record, the call properly used absences citing the search's log entry instead of recordIds, exactly as the rubric specifies."
+            "rationale": "The skill made exactly one extraction_append call. Since this is a nil search with no record found, the call correctly used absences (not recordIds) and cited the search's log entry (log_006) as required by the rubric. The absence entry includes all necessary fields: collection, name, place, and logEntryId."
           },
           {
             "source": "rubric",
             "name": "Verbatim relay",
             "score": 3,
-            "rationale": "The skill's text response is the verbatim summary returned by the tool: 'United States, Census, 1870 (Schuylkill, Pennsylvania): searched without a match. Recorded as negative evidence: Patrick Flynn expected and not present.' No rewordings, abbreviations, or additions appear. The relay is exact and contains nothing else."
+            "rationale": "The skill's text response is the summary returned by the tool: 'United States, Census, 1870 (Schuylkill, Pennsylvania): searched without a match. Recorded as negative evidence: Patrick Flynn expected and not present.' This is relayed verbatim with no reworded, shortened, or merged content, and no added analysis or commentary."
           },
           {
             "source": "rubric",
             "name": "No self-authored writes",
             "score": 3,
-            "rationale": "The only write is the single extraction_append call. The skill made no other writes (no research_append, research_log_append, tree_edit, or other writers). No unnecessary reads preceded the write. The project's writes are entirely delegated to the tool, as required."
+            "rationale": "The only write to the project is the single extraction_append call. The skill made no other writes (no research_append, research_log_append, tree_edit, or other writers) and made no unnecessary reads before the call. The write is entirely delegated to the tool."
           }
         ]
       },
@@ -19526,45 +19526,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly recorded the absence of Patrick Flynn in the 1870 census for Schuylkill, Pennsylvania as negative evidence. The extraction_append call properly cited log_006 (the nil search log entry) in the absences array. The response accurately reflects what the tool returned: a single record with status 'extracted' documenting the negative search result. No fabricated material or unsupported claims are present."
+                "rationale": "The skill correctly recorded the absence of Patrick Flynn in the 1870 census for Schuylkill, Pennsylvania as negative evidence. The extraction_append call properly cited log_006 (the nil search log entry) in the absences array. The summary returned by the tool accurately reflects the search outcome: 'searched without a match. Recorded as negative evidence: Patrick Flynn expected and not present.' No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the user's request to record the absence of Patrick Flynn in the 1870 census as negative evidence. The extraction_append call included all required information: the collection name ('United States, Census, 1870'), the person's name ('Patrick Flynn'), the place ('Schuylkill, Pennsylvania'), and the log entry ID ('log_006'). The response relayed the tool's summary verbatim, completing the task as specified."
+                "rationale": "The skill addressed everything the user message required. The user asked to record the absence of Patrick Flynn from the 1870 census search (logged as log_006) as negative evidence. The skill made the extraction_append call with the correct absences entry citing log_006, and relayed the summary. No required elements were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The extraction_append call passed correct arguments matching the fixture's expectations. The absences array contained one entry with collection, name, place, and logEntryId fields all correctly populated. The call appropriately used absences (not recordIds) since this was a nil search with no matching record. The arguments semantically match what was expected for recording negative evidence from a search log entry."
+                "rationale": "The extraction_append call passed correct arguments. The absences array contained one entry with collection='United States, Census, 1870', name='Patrick Flynn', place='Schuylkill, Pennsylvania', and logEntryId='log_006'. These match the user's message exactly: the search was of the 1870 census for Patrick Flynn in Schuylkill, Pennsylvania, and it was logged as log_006. The call structure is semantically correct for a nil search scenario."
               },
               {
                 "source": "rubric",
                 "name": "The call",
                 "score": 3,
-                "rationale": "The skill made exactly one extraction_append call carrying what the message named. The absences array correctly cited log_006 (the search log entry for the 1870 census search) and included the person name 'Patrick Flynn' and place 'Schuylkill, Pennsylvania'. For a nil search with no record, the call properly used absences citing the search's log entry instead of recordIds, exactly as the rubric specifies."
+                "rationale": "The skill made exactly one extraction_append call. Since this is a nil search with no record found, the call correctly used absences (not recordIds) and cited the search's log entry (log_006) as required by the rubric. The absence entry includes all necessary fields: collection, name, place, and logEntryId."
               },
               {
                 "source": "rubric",
                 "name": "Verbatim relay",
                 "score": 3,
-                "rationale": "The skill's text response is the verbatim summary returned by the tool: 'United States, Census, 1870 (Schuylkill, Pennsylvania): searched without a match. Recorded as negative evidence: Patrick Flynn expected and not present.' No rewordings, abbreviations, or additions appear. The relay is exact and contains nothing else."
+                "rationale": "The skill's text response is the summary returned by the tool: 'United States, Census, 1870 (Schuylkill, Pennsylvania): searched without a match. Recorded as negative evidence: Patrick Flynn expected and not present.' This is relayed verbatim with no reworded, shortened, or merged content, and no added analysis or commentary."
               },
               {
                 "source": "rubric",
                 "name": "No self-authored writes",
                 "score": 3,
-                "rationale": "The only write is the single extraction_append call. The skill made no other writes (no research_append, research_log_append, tree_edit, or other writers). No unnecessary reads preceded the write. The project's writes are entirely delegated to the tool, as required."
+                "rationale": "The only write to the project is the single extraction_append call. The skill made no other writes (no research_append, research_log_append, tree_edit, or other writers) and made no unnecessary reads before the call. The write is entirely delegated to the tool."
               }
             ],
-            "judge_cost_usd": 0.01603,
+            "judge_cost_usd": 0.015955,
             "duration_ms": 17100.49441299634,
             "error": null,
             "input_tokens": 12175,
             "cached_input_tokens": 0,
-            "output_tokens": 771
+            "output_tokens": 756
           },
           "started_at": 1792055538.987145,
           "ended_at": 1792055588.7025106
@@ -21160,5 +21160,6 @@
     ],
     "seed": 2750
   },
-  "tool_search": true
+  "tool_search": true,
+  "judge_render_hash": "87d458173e4cd34a626222fac36b1c3cc622954eab42ac21b2eb01b7546624e1"
 }

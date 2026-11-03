@@ -85,7 +85,7 @@
 - **Re-run 1:** criterion 2 failed: a triple write (the tool server ignored the MCP abort; the CLI's MCP timeout retried). PR #2850 refuses a repeat under the same log entry and rolls back disconnected writes. Voided by a token refresh.
 - **Re-run 2:** criterion 2 held across two ceiling kills; stopped by hand.
 - **Background delegations die at every turn end, kill or not** (2026-09-23). The worker forces every delegation to the foreground (PR #2852): **the design** (lead ruling 2026-09-23, reaffirmed 2026-09-29). Since the handoff PR that includes a call with no flag, which CLI 2.1.220 backgrounds by default (handoff U27).
-- **After:** PR #2870's `make proto-demo-auto` (2026-09-24, PR branch, Anthropic API, 1,800 s): one message, 150 min, 6 attempts, 5 clean crossings, completed, judge recall 1.00. Judge only, n=1, no mid-delegation kill.
+- **After:** PR #2870's autonomous demo arm, `proto-demo-auto` (retired in step mode's phase 2) (2026-09-24, PR branch, Anthropic API, 1,800 s): one message, 150 min, 6 attempts, 5 clean crossings, completed, judge recall 1.00. Judge only, n=1, no mid-delegation kill.
 
 ### The validated grain
 

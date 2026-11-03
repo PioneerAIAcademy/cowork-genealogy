@@ -11,8 +11,8 @@ by ``tests/test_continue_policy_parity.py``, which evaluates its module-level co
 with nothing else in scope -- so a constant that is a function CALL rather than a literal
 turns that test into a collection error. ``PRICE_PER_MTOK`` is exactly that (four
 ``env_float`` calls). Keeping spend here also keeps the parity module to what it is
-actually pinned against: the predicate the harness's ``stop_checker`` mirrors, which has
-no opinion about money.
+actually pinned against: ``project_completed``, which the harness's ``stop_checker``
+mirrors and which has no opinion about money.
 
 ``eval/harness/e2e/pricing.py`` stays a second, genuinely separate copy -- the worker image
 carries no ``eval/`` -- pinned against this one by
@@ -72,8 +72,9 @@ PRICE_PER_MTOK = {
 # `test_the_spend_cap_clears_the_costliest_run_in_the_corpus` re-derives that.
 #
 # It exists because continuous work removes the human who used to end a run by not
-# clicking Continue. The nudge cap does not replace them: it is consulted only at a
-# voluntary yield, 31% of runs never yield, and it resets on every attempt. There is
+# clicking Continue. The nudge cap never replaced them: it was consulted only at a
+# voluntary yield, 31% of runs never yielded, and it reset on every attempt (it was
+# deleted in step mode phase 2). There is
 # deliberately no in-session grant flow: a session at the bound stops, and the way on is a
 # new session on the same project. 0 switches the cap off.
 #

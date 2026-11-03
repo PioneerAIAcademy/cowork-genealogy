@@ -542,15 +542,10 @@ proto-grant: ## U3: sign in on the dev key and store the dev-login patron's gran
 	cd apps/server && uv run python proto/grant.py $(if $(EMAIL),--email '$(EMAIL)',) --pg-dsn $(PROTO_PG_DSN)
 
 # D9–10 acceptance, billed (two short Sonnet turns). Same `up` as proto-up (env.sh);
-# refuses to run without a model key. The Stop hook is off (AUTONOMOUS_MAX_NUDGES=0,
-# unless the caller sets it non-empty). A lookup on a project-less session used to be
-# vetoed and end no_progress; a session with no research.json is no longer nudged (issue
-# #3274), but the pin stays because lifting it changes what a paid probe run does. `:-0`,
-# not `-0`: an empty value would reach compose's `:-60` on the web tier and turn it on.
+# refuses to run without a model key.
 .PHONY: proto-turn
 proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tier → queue → shim → worker, the second resuming the first (needs ANTHROPIC_API_KEY or eval/.env)
-	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
-	  . apps/server/proto/env.sh && \
+	. apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-turn: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
@@ -564,8 +559,7 @@ proto-turn: $(ENGINE_DEPS) ## D9–10 acceptance: two real turns through web tie
 .PHONY: proto-prefix-check
 proto-prefix-check: $(ENGINE_DEPS) ## U28: sign-in, a turn and a 60 s idle stream through a path-prefix edge on 127.0.0.1:8090 (needs proto-grant; billed, one short turn)
 	pnpm --filter cowork-genealogy-eval-app exec playwright install chromium
-	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
-	  . apps/server/proto/env.sh && \
+	. apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-prefix-check: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --build && \
 	  $(PROTO_COMPOSE) -f apps/server/proto/docker-compose.prefix.yml up -d --wait postgres minio elasticmq worker shim web tools && \
@@ -583,7 +577,7 @@ proto-prefix-check: $(ENGINE_DEPS) ## U28: sign-in, a turn and a 60 s idle strea
 # Billed, one turn.
 .PHONY: proto-kill
 proto-kill: ## D14: one real turn killed at its first place_search call (docker kill + start), redelivered and resumed; SESSION=<id> to use a seeded session, ARGS="--kill-on <tool> --kill-after-s <n> --text-file <path>" to time it inside a delegation
-	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-0}" $(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
+	$(MAKE) proto-turn ARGS="--kill $(if $(SESSION),--session $(SESSION),) $(ARGS)"
 
 # PR #2870 item 0a: the resume probe the guard was gated on, now proto-bounds' probe_resume
 # case (U23). The worker foregrounds every delegation, so a selector on the model's
@@ -591,27 +585,26 @@ proto-kill: ## D14: one real turn killed at its first place_search call (docker 
 # KILL_AFTER_S (5-20, default 10) after the turn's first SUBAGENT tool_calls row
 # (agent_id IS NOT NULL) and records whether session_entries still holds the model's
 # original Agent input. It needs a delegation, so a seeded project (proto-seed first), the
-# message that provokes two (proto/probes/background-delegation.txt, named in bounds.py)
-# and AUTONOMOUS_MAX_NUDGES > 0 -- passed here as 40, which proto-bounds keeps over its 3.
+# message that provokes two (proto/probes/background-delegation.txt, named in bounds.py).
+# Its long turn comes from that open-ended message: probe_resume resumed with the nudge arm
+# off (U13, 2026-10-10), and the Stop veto is gone (step mode phase 2).
 # Billed, roughly an hour a try.
 .PHONY: proto-probe-resume
 proto-probe-resume: ## 0a probe: kill a real turn inside a delegation and watch the resume (proto-bounds CASE=probe_resume) — SESSION=<id> (proto-seed first); billed, ~1 h
 	@test -n "$(SESSION)" || { echo "proto-probe-resume: SESSION=<id> is required (make proto-seed FIXTURE=... first)" >&2; exit 2; }
-	AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}" $(MAKE) proto-bounds CASE=probe_resume SESSION="$(SESSION)" \
+	$(MAKE) proto-bounds CASE=probe_resume SESSION="$(SESSION)" \
 	  ARGS="--kill-after-s $${KILL_AFTER_S-10} --deadline-s $${DEADLINE_S-2400} $(ARGS)"
 
 # U23: one live bound on compose per run -- Stop, the held-message release, the spend cap,
 # each mid-delegation and under a store outage, and the resume probe; the case list is
 # proto/bounds.py's docstring. Same `up` as proto-turn; refuses without a model key or a
-# CASE. The Stop hook is ON at 3 nudges (`:-3`), so SDK Q1 -- does a halt still dispatch
-# Stop? -- is observable without an hour-long run. SESSION_SPEND_CAP_USD reaches the
+# CASE. SESSION_SPEND_CAP_USD reaches the
 # worker through compose (`:-35`, its default; CASE=cap_main_real wants it lowered, e.g.
 # 1). Every case POSTs /interrupt before it gives up on a turn. Billed, except CASE=precli.
 .PHONY: proto-bounds
 proto-bounds: $(ENGINE_DEPS) ## U23: record one live bound on compose — CASE=<case> [SESSION=<id>] [ARGS=…]; billed except CASE=precli (cases: proto/bounds.py)
 	@test -n "$(CASE)" || { echo "proto-bounds: CASE=<case> is required (cases: apps/server/proto/bounds.py)" >&2; exit 2; }
-	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-3}"; \
-	  export SESSION_SPEND_CAP_USD="$${SESSION_SPEND_CAP_USD:-35}"; \
+	export SESSION_SPEND_CAP_USD="$${SESSION_SPEND_CAP_USD:-35}"; \
 	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-bounds: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
@@ -682,42 +675,14 @@ proto-audit: ## Acceptance criteria 3 and 4 over a session's tool_calls rows —
 # the harness's tree-read block (BLOCKED_TOOLS; `BLOCKED_TOOLS= make proto-demo` lifts it),
 # since every e2e fixture's answer still sits in the live tree. On a docker-compose-only
 # machine: make proto-demo PROTO_COMPOSE="docker-compose -f apps/server/proto/docker-compose.yml"
-# The Stop hook is off unless the caller sets AUTONOMOUS_MAX_NUDGES non-empty -- `:-0`, as
-# in proto-turn, since an empty value would reach compose's `:-60` on the web tier.
 .PHONY: proto-demo
 proto-demo: $(ENGINE_DEPS) ## D19 demo: seed FIXTURE (default bagley-father-1884), run one real research turn to turn_done with the tree-read block, print the acceptance queries; ARGS="--prompt '…' | --session <id>"
 	export BLOCKED_TOOLS="$${BLOCKED_TOOLS-person_read,person_search,person_ancestors,person_record_matches,person_person_matches,person_quality,project_create}"; \
-	  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \
 	  . apps/server/proto/env.sh && \
 	  if [ -z "$$ANTHROPIC_API_KEY" ]; then echo "proto-demo: no ANTHROPIC_API_KEY in the environment or eval/.env" >&2; exit 2; fi; \
 	  $(PROTO_COMPOSE) up -d --build && \
 	  $(PROTO_COMPOSE) up -d --wait postgres minio elasticmq worker shim web tools && \
 	  cd apps/server && uv run python proto/demo.py $(if $(FIXTURE),--fixture '$(FIXTURE)',) $(ARGS)
-
-# D18: the autonomous arm of proto-demo. One queue message is one model turn, and an
-# autonomous /research run yields after each sub-skill step; the worker's Stop hook
-# (AUTONOMOUS_MAX_NUDGES > 0) vetoes that yield the way the e2e harness's does, bounded by
-# the harness's cap (max_continue_nudges, 40) and its no-progress check, so the fixture
-# ran to project.status == "completed" in one turn. Under step mode it cannot:
-# a turn is one step, and the keep-going driver the plan owes is not built yet. `AUTONOMOUS_MAX_NUDGES=5 make
-# proto-demo-auto` lowers the cap; proto-demo itself stays a one-turn run. One message
-# is now a whole run, so the run spans SEVERAL attempts rather than fitting in one. The
-# per-attempt ceiling is the pinned 1800 s -- the 7200 s override of 2026-09-20 was a
-# symptom of the D17/0a resume defect, not a capacity finding, and came back down with it
-# (PR #2870 item 0b; "the step ceiling: 1,800 s, no test exception"). The export stays
-# because the next line sizes --deadline-s off the name and POSIX arithmetic reads an
-# unset name as 0 -- deleting it gives a 300 s deadline on an hour-long billed run.
-# The deadline spans SIX attempts, not one resume: re-measured 2026-09-23 over the 139
-# committed e2e runs that reached `completed`, the median is 53.6 min and 33% exceed
-# 2 * 1800 + 300,
-# which demo.py turns into a hard TimeoutError and a FAIL; the longest in the corpus
-# needed six. elasticmq's visibility timeout (2100 s) must stay above this export, or an
-# attempt at the ceiling is redelivered mid-flight; test_proto_config.py compares the two.
-.PHONY: proto-demo-auto
-proto-demo-auto: ## D18: proto-demo with the continue-nudge Stop hook (AUTONOMOUS_MAX_NUDGES, default 40) at the pinned 1800 s per-attempt ceiling (READ_TIMEOUT_S), waiting out the six attempts a whole run may take; FIXTURE=… ARGS=…
-	export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-40}"; \
-	  export READ_TIMEOUT_S="$${READ_TIMEOUT_S:-1800}"; \
-	  $(MAKE) proto-demo FIXTURE="$(FIXTURE)" ARGS="--deadline-s $$((6 * READ_TIMEOUT_S + 300)) $(ARGS)"
 
 # D18: a session's project out of the store into files -- research.json, tree.gedcomx.json,
 # results/ and images/ under OUT/<project_id>/ (OUT default apps/server/proto/exports,
@@ -1132,7 +1097,6 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	#   EFFORT_LEVEL       low|medium|high|xhigh|max   (default high, matches Cowork)
 	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
 	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
-	#   PERSON_EVIDENCE_GUARD  shadow|deny              (default shadow; issue #1231)
 	#   DENY_SHELL         1                             (default off; P2 — deny Bash/PowerShell)
 	#   DENY_PROJECT_READS 1                             (default off; P2 — deny Read/Grep/Glob of the project folder)
 	#   CONTEXT_1M         1                             (default off; ask for the 1M context window)
@@ -1146,13 +1110,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# (check subagents[].runaway_thinking; if it is empty, read
 	# subagent_capture_status before reading that as 'no runaway').
 	# e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
-	# PERSON_EVIDENCE_GUARD=deny blocks a person_evidence link for an unscored
-	# new person instead of only recording it. For gathering recovery evidence on
-	# ONE fixture: it fires in ~80% of runs that link a person, and a deny-mode
-	# run's `compliance` is not comparable to a shadow run's (the blocked write
-	# never lands, so the post-run check passes vacuously).
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(PERSON_EVIDENCE_GUARD),--person-evidence-guard $(PERSON_EVIDENCE_GUARD),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
 
 .PHONY: e2e-single-ask
 e2e-single-ask: $(ENGINE_BUILD) ## Run the single-ask e2e panel — one ordinary turn per fixture, graded on which unit ran and what was saved (live, billed): make e2e-single-ask [TEST=<slug>]
@@ -1208,7 +1167,7 @@ eval-health: ## Weekly: unit tests below the 95% pass bar, and consistently-part
 	cd eval/harness && uv run python -m eval_health_report $(if $(SKILL),--skill $(SKILL),) $(if $(WINDOW),--window $(WINDOW),)
 
 .PHONY: judge-regrade
-judge-regrade: ## Regrade committed unit run logs against the current judge prompt (satisfies rule 2b): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
+judge-regrade: ## Regrade committed unit run logs against the current judge prompt AND render code (satisfies rule 2b, both halves): make judge-regrade | SKILL=<name> | DRY=1 | SCRATCH=<dir> [SCENARIO="a b"] [SLOT=readme]
 	# Issue #2479 PR 1. Rule 2b blocks on a judge-prompt-only PR; this target
 	# is the cheap satisfaction path (~$5 of judge-only spend vs ~$95 to re-run).
 	# DRY=1 renders + hashes every eligible prompt with NO model call — used by
@@ -1351,10 +1310,8 @@ e2e-guardrail-shadow: ## Replay the §7 shadow window + the §8/§7.5 post-hoc +
 	# WINDOWS= compares are for reading the
 	# signal, not for choosing a value to ship.
 	# REPLAY=1 additionally RECOMPUTES the shadow families instead of only reading
-	# what runs stored: the seven post-hoc families (the §8 person_evidence
-	# provenance check from tool_calls + each fixture's committed seed tree, and the
-	# six §7/§7.5 checks from each run's committed final-research / final-tree
-	# sidecars) and the §11 unnamed-delegate check (issue #980) from tool_calls,
+	# what runs stored: the six §7/§7.5 post-hoc families from each run's committed
+	# final-research / final-tree sidecars, and the §11 unnamed-delegate check (issue #980) from tool_calls,
 	# which is the only half that reflects a later detector change such as the
 	# namespaced-agent_type tolerance. The §11 count always prints its attribution
 	# denominator — how many runs carry any caller attribution to fire on at all.
@@ -1457,7 +1414,7 @@ e2e-wiki-failures: ## Why wiki/pop-stats calls fail, over committed e2e runs (is
 	  $(if $(SINCE),--since $(SINCE),)
 
 .PHONY: e2e-detector-diff
-e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm|same-person-provenance|direct-spawn-credit | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
+e2e-detector-diff: ## Old-vs-new replay of a detector correction over committed e2e runs (issue #1569): make e2e-detector-diff DETECTOR=lane-check|proof-conclusion-arm|person-evidence-arm|direct-spawn-credit | TEST=<slug> | SINCE=all|N|YYYY-MM-DD
 	# Pure analysis, no API. Reusable across detector corrections: runs a locally-
 	# defined pre-fix replica and the real, current implementation over every
 	# applicable committed run, and reports every run where the two disagree.
@@ -1699,6 +1656,10 @@ mcpb: ## Build the .mcpb desktop extension
 .PHONY: plugin
 plugin: ## Build the Cowork plugin .zip
 	node scripts/package-plugin.mjs
+
+.PHONY: plugin-connector
+plugin-connector: ## Build the plugin's connector release into releases/plugin-marketplace/ and releases/genealogy-plugin-connector.zip: make plugin-connector VERSION=x.y.z MARKETPLACE=<name>
+	node scripts/package-plugin.mjs --connector --version '$(VERSION)' --marketplace '$(MARKETPLACE)'
 
 .PHONY: cowork-install
 cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-path (Windows: eval\CoworkInstall.bat)

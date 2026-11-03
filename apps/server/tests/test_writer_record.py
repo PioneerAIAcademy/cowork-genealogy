@@ -155,6 +155,14 @@ def test_extraction_append_records_its_own_section():
     assert out["section"] == "extractions"
 
 
+def test_evaluation_append_records_evaluations_even_unnamed():
+    """`evaluation_append` can only write `evaluations`, so a call or an op that
+    does not restate the section is still attributed to it."""
+    out = writer_record("mcp__genealogy__evaluation_append",
+                        {"projectPath": "/project", "op": "append", "entry": {"focus": "on-demand"}})
+    assert out["section"] == "evaluations" and out["op"] == "append"
+
+
 def test_no_writer_in_the_capture_falls_through_to_none():
     """The regression this file exists for: every writer tool the captured session
     used must characterise, whatever its input shape."""

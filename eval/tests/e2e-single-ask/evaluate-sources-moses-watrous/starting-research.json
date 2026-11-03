@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_evaluate_sources_moses_watrous",
+    "objective": "Resolve the birth place of Moses Fish Watrous (GM5J-6WX) and whether he served in the Civil War.",
+    "subject_person_ids": [
+      "GM5J-6WX"
+    ],
+    "status": "active",
+    "created": "2026-11-02",
+    "updated": "2026-11-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

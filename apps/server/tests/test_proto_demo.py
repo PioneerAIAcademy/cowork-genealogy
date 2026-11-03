@@ -6,9 +6,7 @@ from __future__ import annotations
 import argparse
 import ast
 import contextlib
-import os
 import re
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -16,7 +14,7 @@ import pytest
 import httpx
 
 from proto import bounds, demo, turn
-from tests.test_proto_config import COMPOSE, MAKEFILE, STEP_CEILING_S, _env, _load, _recipe, _service
+from tests.test_proto_config import MAKEFILE, STEP_CEILING_S, _recipe
 
 PROTO = MAKEFILE.parent / "apps" / "server" / "proto"
 
@@ -52,11 +50,9 @@ def test_acceptance_queries_cover_the_criteria_and_bind_only_their_ids():
         assert sql.lstrip().upper().startswith("SELECT"), label
         assert sql.count("%s") == len(params), label
         assert set(params) <= set(IDS), label
-    # criterion 1 reads the redelivery counter D17 judges receive_count >= 2 from, and the
-    # D18 arm's veto count
+    # criterion 1 reads the redelivery counter D17 judges receive_count >= 2 from
     c1 = next(sql for label, sql, _ in qs if label.startswith("criterion 1"))
     assert "receive_count" in c1 and "completed_at" in c1 and "FROM turns" in c1
-    assert re.search(r"\bnudges\b", c1), "the turns row shows whether the Stop hook vetoed anything"
     # the token query names every column turn.py sums
     tok = next(sql for label, sql, _ in qs if label.startswith("tokens"))
     assert all(c in tok for c in turn.TOKEN_COLUMNS)
@@ -91,12 +87,6 @@ def test_render_query_says_no_rows_rather_than_nothing():
     assert out.splitlines()[-1].strip() == "(no rows)"
 
 
-def test_nudges_line_shows_the_rows_count_and_the_cap_or_off():
-    assert demo.nudges_line(3, "20") == "nudges      3  (cap 20)"
-    assert demo.nudges_line(0, None) == "nudges      0  (cap off)"
-    assert demo.nudges_line(0, "0") == "nudges      0  (cap off)", "AUTONOMOUS_MAX_NUDGES=0 is off"
-    assert demo.nudges_line(0, " ") == "nudges      0  (cap off)"
-    assert demo.nudges_line(None, "20") == "nudges      ?  (cap 20)", "a row with no count (a turn that never completed)"
 
 
 # ── verdict ─────────────────────────────────────────────────────────────────────────
@@ -112,30 +102,8 @@ def test_verdict(done, c3, reauth, code):
     assert demo.verdict(done, c3, reauth) == code
 
 
-@pytest.mark.parametrize("autonomous, completed, code", [
-    # The 2026-09-20 run: the Stop hook was never consulted, the project never completed,
-    # and the arm said PASS. On the autonomous arm an unfinished project is a FAIL.
-    (True, False, 1),
-    (True, True, 0),
-    # One turn of proto-demo is not expected to finish a project.
-    (False, False, 0),
-    (False, True, 0),
-])
-def test_verdict_requires_a_completed_project_on_the_autonomous_arm_only(autonomous, completed, code):
-    assert demo.verdict(True, True, False, autonomous=autonomous, completed=completed) == code
-    # The other three clauses still bind on either arm.
-    for done, c3, reauth in ((False, True, False), (True, False, False), (True, True, True)):
-        assert demo.verdict(done, c3, reauth, autonomous=autonomous, completed=completed) == 1
 
 
-def test_autonomous_arm_reads_the_cap_the_way_the_nudges_line_does():
-    for cap in ("40", "1", " 40 "):
-        assert demo.autonomous_arm(cap), cap
-    for cap in (None, "", " ", "0"):
-        assert not demo.autonomous_arm(cap), cap
-    # One definition: the verdict and the printed line cannot disagree about which arm ran.
-    assert demo.nudges_line(0, "0").endswith("(cap off)") and not demo.autonomous_arm("0")
-    assert demo.nudges_line(2, "40").endswith("(cap 40)") and demo.autonomous_arm("40")
 
 
 def test_project_status_is_read_by_the_same_sql_the_evidence_block_prints():
@@ -312,181 +280,39 @@ def _harness_constant(name: str):
     raise AssertionError(f"orchestrator.py has no module-level {name}")
 
 
-def test_proto_demo_auto_exports_the_harness_cap_and_delegates_to_proto_demo():
-    body = "\n".join(_recipe("proto-demo-auto"))
-    # raw make text: $$ is the shell's $. `:-`, not `-`: proto-demo now resolves an empty
-    # value to 0, so a `-40` here would hand it "" and the auto arm would run with the hook off.
-    cap = re.search(r'export AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES:-(\d+)\}"', body)
-    assert cap, body
-    harness = re.search(r"^\s*max_continue_nudges: int = (\d+)", ORCHESTRATOR.read_text(encoding="utf-8"), re.M)
-    # The literal is the tripwire, not the invariant: the arm's default IS the harness's
-    # cap, and pinning the number too means a harness change lands here for a person to
-    # read rather than silently widening the arm (it moved 20 -> 40 on 2026-09-20).
-    assert harness and cap.group(1) == harness.group(1) == "40", \
-        "the arm's default cap is the harness's max_continue_nudges: re-sync both, and the plan's D18 note"
-    # `make help` prints the rule line's `##` text, which no recipe read reaches -- so it is
-    # where the number went stale when the harness moved 20 -> 40 on 2026-09-20.
-    rule = re.search(r"^proto-demo-auto:.*?##(.*)$", MAKEFILE.read_text(encoding="utf-8"), re.M)
-    assert rule, "proto-demo-auto lost its ## help text: `make help` would stop listing it"
-    assert f"default {cap.group(1)}" in rule.group(1), \
-        f"`make help` says {rule.group(1).strip()!r}, which no longer matches the exported cap"
-    assert re.search(r'\$\(MAKE\) proto-demo FIXTURE="\$\(FIXTURE\)" ARGS="[^"]*\$\(ARGS\)"', body), body
-    # proto-demo keeps pinning its own 0. It is now the same value the compose default
-    # carries, so the pin is belt-and-braces rather than load-bearing -- but it is what
-    # keeps proto-demo a one-turn run if the default is ever raised again.
-    assert _pins_nudges_before_compose_up(_recipe("proto-demo")), \
-        "proto-demo pins 0 itself so it stays a one-turn run whatever the compose default is"
-    web_default = _env(_service(_load(COMPOSE), "web")).get("AUTONOMOUS_MAX_NUDGES", "")
-    assert web_default.startswith("${AUTONOMOUS_MAX_NUDGES:-"), \
-        "the web tier carries the cap (1a); proto-demo's pin is only meaningful against it"
-    # **This assertion inverted** (step mode, decision 25). It used to forbid `:-0`,
-    # because a 0 default "would ship the stop-every-step behaviour the plan exists to
-    # remove". Stopping at each step IS the behaviour now: every turn runs one step and
-    # ends with "Continue with X?", so a nudge past that re-opens a turn that ended on
-    # purpose. proto-demo-auto still exports its own 40 to exercise the hook, which is
-    # what the first half of this test checks, so the hook keeps a live test either way.
-    assert web_default == "${AUTONOMOUS_MAX_NUDGES:-0}", \
-        "step mode ships no Stop veto by default; an operator raises it explicitly"
 
 
-def test_proto_kill_pins_a_one_turn_run_unless_the_caller_sets_nudges():
-    """The web tier stamps its own cap on every message (1a, default 60), so a kill turn
-    left on that default is nudged as an autonomous run on its redelivery and, with no
-    project, ends no_progress -- the kill check then FAILs on a resume that worked
-    (2026-09-30, the U5 SIGTERM run). proto-probe-resume still passes its own 40, now to
-    proto-bounds (U23)."""
-    kill = "\n".join(_recipe("proto-kill"))
-    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES:?-0\}" \$\(MAKE\) proto-turn', kill), kill
-    probe = "\n".join(_recipe("proto-probe-resume"))
-    assert re.search(r'AUTONOMOUS_MAX_NUDGES="\$\$\{AUTONOMOUS_MAX_NUDGES:-40\}" \$\(MAKE\) proto-bounds', probe), probe
 
 
-_PIN = re.compile(r"""^export AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:?-0\}\1$""")
-_COMPOSE_UP = re.compile(r"^\$\(PROTO_COMPOSE\)\s+up\b")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def _recipe_commands(body: list[str]) -> list[str]:
+    """A recipe's shell commands, split on ``&&``, ``;`` and ``||``, so a reflowed or
+    re-indented recipe reads the same (test_proto_bounds reads recipes with it too)."""
     return [c.strip() for line in body for c in re.split(r"&&|;|\|\|", line) if c.strip()]
 
 
-def _pins_nudges_before_compose_up(body: list[str]) -> bool:
-    """Whether a recipe exports AUTONOMOUS_MAX_NUDGES with a 0 default (an outer setting
-    wins) as its own shell command before its first `$(PROTO_COMPOSE) up`, which is where
-    the web and worker containers take their environment -- read command by command, so a
-    reflowed or re-indented recipe still reads the same. env.sh never touches the name, so
-    where the pin sits relative to it does not matter."""
-    commands = _recipe_commands(body)
-    pin = next((i for i, c in enumerate(commands) if _PIN.match(c)), None)
-    up = next((i for i, c in enumerate(commands) if _COMPOSE_UP.match(c)), None)
-    return pin is not None and up is not None and pin < up
-
-
-def test_proto_turn_pins_the_stop_hook_off_before_compose_up():
-    """The web tier stamps its own cap (default 60) on every message and the worker prefers
-    it, so a proto-turn left on that default runs with the Stop hook on. The pin went in
-    because a lookup on a project-less session was vetoed and ended no_progress; a session
-    with no research.json is no longer nudged (issue #3274), and the pin stays because
-    lifting it changes what a paid probe run does. proto-kill's own pin covers only the
-    --kill arm."""
-    assert _pins_nudges_before_compose_up(_recipe("proto-turn")), "\n".join(_recipe("proto-turn"))
-    assert "AUTONOMOUS_MAX_NUDGES" not in (PROTO / "env.sh").read_text(encoding="utf-8"), \
-        "env.sh now touches AUTONOMOUS_MAX_NUDGES: the pin's place relative to it matters again"
-
-
-_CAP_DEFAULT = re.compile(r"""AUTONOMOUS_MAX_NUDGES=(["']?)\$\$\{AUTONOMOUS_MAX_NUDGES:?-\d+\}\1""")
-_DELEGATES = re.compile(r"\$\(MAKE\) (proto-[\w-]+)")
-
-
-def _sh_resolve(assignment: str, caller: str | None) -> str:
-    """What sh makes of a recipe's ``AUTONOMOUS_MAX_NUDGES=…`` given the caller's value
-    (None: unset)."""
-    env = {k: v for k, v in os.environ.items() if k != "AUTONOMOUS_MAX_NUDGES"}
-    if caller is not None:
-        env["AUTONOMOUS_MAX_NUDGES"] = caller
-    script = "export " + assignment.replace("$$", "$") + '; printf %s "$AUTONOMOUS_MAX_NUDGES"'
-    out = subprocess.run(["sh", "-c", script], env=env, capture_output=True, text=True,
-                         encoding="utf-8", check=True)
-    return out.stdout
-
-
-def _cap_reaching_compose(target: str, caller: str | None) -> str:
-    """The AUTONOMOUS_MAX_NUDGES a `make <target>` hands compose: each recipe's own
-    default evaluated by sh, then the target its `$(MAKE)` delegates to, until one that
-    runs compose itself."""
-    value = caller
-    for _ in range(5):
-        body = "\n".join(_recipe(target))
-        cap = _CAP_DEFAULT.search(body)
-        assert cap, f"{target} sets no AUTONOMOUS_MAX_NUDGES default"
-        value = _sh_resolve(cap.group(0), value)
-        delegate = _DELEGATES.search(body)
-        if delegate is None:
-            return value
-        target = delegate.group(1)
-    raise AssertionError("delegation deeper than five targets")
-
-
-@pytest.mark.parametrize("target, default", [
-    ("proto-turn", "0"), ("proto-kill", "0"), ("proto-demo", "0"),
-    ("proto-demo-auto", "40"), ("proto-probe-resume", "40"), ("proto-bounds", "3"),
-])
-@pytest.mark.parametrize("caller", [None, "", "7"])
-def test_every_proto_target_resolves_unset_and_empty_to_its_default_and_keeps_a_callers_value(
-    target, default, caller,
-):
-    """An empty value is the hole `-0` leaves: it survives the pin, compose's `:-60` turns
-    it into 60 on the web tier, and a one-turn run ends no_progress. Followed through the
-    delegation, because proto-kill's `-0` hands "" on to proto-turn (whose `:-0` makes it
-    0), and a `-40` on an arm that needs the hook ON would hand "" to a `:-0` and run it
-    off -- an hour of billed proto-probe-resume that cannot fire."""
-    assert _cap_reaching_compose(target, caller) == (caller or default)
-
-
-@pytest.mark.parametrize("body, expected", [
-    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; . apps/server/proto/env.sh && \\',
-      "\t  $(PROTO_COMPOSE) up -d --build"], True),
-    (["\texport AUTONOMOUS_MAX_NUDGES=$${AUTONOMOUS_MAX_NUDGES-0} && \\", "\t$(PROTO_COMPOSE)  up -d"], True),
-    (["\t. apps/server/proto/env.sh && \\", '\t  export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; \\',
-      "\t  $(PROTO_COMPOSE) up -d --build"], True),
-    (["\t$(PROTO_COMPOSE) up -d --build && \\", '\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"'], False),
-    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-60}"; $(PROTO_COMPOSE) up -d'], False),
-    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES-60}"; $(PROTO_COMPOSE) up -d'], False),
-    (['\t# export AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"', "\t$(PROTO_COMPOSE) up -d"], False),
-    (['\texport AUTONOMOUS_MAX_NUDGES="$${AUTONOMOUS_MAX_NUDGES:-0}"; . apps/server/proto/env.sh'], False),
-    (["\t$(PROTO_COMPOSE) up -d --build"], False),
-])
-def test_the_nudge_pin_reader_accepts_a_reflow_and_rejects_a_misplaced_or_wrong_pin(body, expected):
-    assert _pins_nudges_before_compose_up(body) is expected
-
-
-def test_proto_demo_auto_pins_the_step_ceiling_and_waits_out_six_attempts():
-    """One message is a whole run on this arm, but the per-attempt ceiling is the SAME
-    pinned 1800 s every other target runs at -- the 7200 s override of 2026-09-20 was a
-    symptom of the resume defect, not a capacity finding, and came back down with it
-    (PR #2870 item 0b, "the step ceiling: 1,800 s, no test exception").
-
-    So the arm no longer buys a longer attempt; it waits out MORE of them. The export
-    stays because --deadline-s is sized off the name and POSIX arithmetic reads an unset
-    name as 0 -- deleting the line would give `--deadline-s 300` on an hour-long billed
-    run, which is why that is asserted here and not merely commented."""
-    body = "\n".join(_recipe("proto-demo-auto"))
-    # `:-` on both sides, so an explicitly empty READ_TIMEOUT_S takes the default here as
-    # it does in compose's fallback -- never sh arithmetic reading "" as 0.
-    ceiling = re.search(r'export READ_TIMEOUT_S="\$\$\{READ_TIMEOUT_S:-(\d+)\}"', body)
-    assert ceiling, "proto-demo-auto must keep exporting READ_TIMEOUT_S: --deadline-s is sized off the name"
-    assert int(ceiling.group(1)) == STEP_CEILING_S, \
-        f"the ruling is {STEP_CEILING_S} s with no exception; this arm exports {ceiling.group(1)}"
-    assert _env(_service(_load(COMPOSE), "shim"))["READ_TIMEOUT_S"].startswith("${READ_TIMEOUT_S:-"), \
-        "compose must fall back on an empty READ_TIMEOUT_S too"
-    # Six attempts, not one resume: 32% of the 134 completed e2e runs exceed 2 * 1800 + 300,
-    # and the longest in the corpus needed six -- demo.py turns the shortfall into a FAIL.
-    assert re.search(r'ARGS="--deadline-s \$\$\(\(6 \* READ_TIMEOUT_S \+ 300\)\) \$\(ARGS\)"', body), body
-    for target in ("proto-demo", "proto-turn", "proto-kill"):
-        assert "READ_TIMEOUT_S" not in "\n".join(_recipe(target)), f"{target} keeps the pinned 1800 s ceiling"
-
-
-def test_the_resume_probe_target_wires_all_three_missing_pieces():
-    """0a's probe fires only if all three line up, and any one missing looks identical to
+def test_the_resume_probe_target_wires_both_missing_pieces():
+    """0a's probe fires only if both line up (the nudge cap that was a third went with the
+    Stop veto, step mode phase 2), and either one missing looks identical to
     "the model never delegated" -- an hour of billed run, no kill, no finding. So the
     recipe is asserted rather than left to whoever types the command. U23 moved it onto
     proto-bounds' probe_resume case: the worker foregrounds every delegation, so the old
@@ -503,10 +329,6 @@ def test_the_resume_probe_target_wires_all_three_missing_pieces():
     #    file that does not exist reds this instead of failing an hour into a billed run.
     assert bounds.RESUME_TEXT.is_file(), f"{bounds.RESUME_TEXT} is not in the repo"
     assert bounds.RESUME_TEXT.read_text(encoding="utf-8").strip(), f"{bounds.RESUME_TEXT} is empty"
-    # 3. the nudge cap: at 0 the run ends before it ever reaches a delegation -- including
-    #    when the caller left it set but empty, and through proto-bounds' own `:-3`.
-    for caller in (None, ""):
-        assert _cap_reaching_compose("proto-probe-resume", caller) == "40", body
     assert re.search(r'test -n "\$\(SESSION\)"', body), "refuse without SESSION rather than probe a fresh project"
     assert re.search(r'SESSION="\$\(SESSION\)"', body), "the session must reach proto-bounds"
     rule = re.search(r"^proto-probe-resume:.*?##(.*)$", MAKEFILE.read_text(encoding="utf-8"), re.M)
@@ -521,10 +343,10 @@ def test_proto_export_target_requires_a_session_and_runs_the_script():
         "OUT is resolved against the repo root before the cd into apps/server"
 
 
-# ── run(): the verdict is wired to the env and the row, not just correct in isolation ──
+# ── run(): the verdict is wired to the row, not just correct in isolation ──
 
 
-def _fake_stack(monkeypatch, status: str | None, *, nudges: int = 0):
+def _fake_stack(monkeypatch, status: str | None):
     """Every side effect of demo.run() answered from memory: a seeded session, a posted turn
     that reaches turn_done, a clean audit, no reauth hit, and `status` as the project's."""
     monkeypatch.setattr(demo, "preflight", lambda base, dsn: None)
@@ -539,8 +361,6 @@ def _fake_stack(monkeypatch, status: str | None, *, nudges: int = 0):
     def rows(dsn, sql, params):
         if sql == demo.PROJECT_STATUS_SQL:
             return [(status,)] if status is not None else []
-        if "SELECT nudges FROM turns" in sql:
-            return [(nudges,)]
         return []
 
     monkeypatch.setattr(demo, "rows", rows)
@@ -554,22 +374,6 @@ def _args(**over):
     return argparse.Namespace(**base)
 
 
-@pytest.mark.parametrize("cap, status, code", [
-    ("40", "active", 1),     # the 2026-09-20 run: the hook never bit, and the arm used to say PASS
-    ("40", "completed", 0),
-    ("40", None, 1),         # no research.json row at all
-    ("0", "active", 0),      # proto-demo: one turn, not expected to finish the project
-    (None, "active", 0),
-])
-def test_run_fails_the_autonomous_arm_on_an_unfinished_project(monkeypatch, capsys, cap, status, code):
-    _fake_stack(monkeypatch, status)
-    monkeypatch.delenv("AUTONOMOUS_MAX_NUDGES", raising=False)
-    if cap is not None:
-        monkeypatch.setenv("AUTONOMOUS_MAX_NUDGES", cap)
-    assert demo.run(_args()) == code
-    out = capsys.readouterr().out
-    assert f"project.status={status}" in out, "the value the verdict used must be printed"
-    assert ("PASS" if code == 0 else "FAIL") in out.splitlines()[-1]
 
 
 # ── seed_session: who creates the project ──
@@ -603,6 +407,24 @@ def _seed_fakes(monkeypatch, calls: list):
 def _seed_args(**over):
     return argparse.Namespace(**{"fixture": "bagley-father-1884", "project_id": None, "title": None,
                                  "base": "http://t", "email": "e@x", "pg_dsn": "dsn", "s3_endpoint": "s3", **over})
+
+
+@pytest.mark.parametrize("status", ["active", "completed", None])
+def test_run_passes_one_turn_whatever_the_projects_status(monkeypatch, capsys, status):
+    """One turn of proto-demo is one step; it is not expected to finish a project."""
+    _fake_stack(monkeypatch, status)
+    assert demo.run(_args()) == 0
+    out = capsys.readouterr().out
+    assert f"project.status={status}" in out, "the value the run read must be printed"
+    assert "PASS" in out.splitlines()[-1]
+
+
+def test_no_proto_target_sets_the_deleted_nudge_cap():
+    """The Stop veto is deleted (step mode phase 2), so no recipe exports its cap, and
+    proto-demo-auto, the arm that existed to exercise it, is retired."""
+    text = MAKEFILE.read_text(encoding="utf-8")
+    assert "AUTONOMOUS_MAX_NUDGES" not in text
+    assert not re.search(r"^proto-demo-auto:", text, re.M)
 
 
 def test_seed_session_under_dev_login_seeds_the_chosen_id_then_claims_it(monkeypatch):

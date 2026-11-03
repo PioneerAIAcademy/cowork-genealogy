@@ -81,11 +81,6 @@
       "reason": "shadow (section 11), before the case-file rule; revisit only if a second attributed run flags"
     },
     {
-      "detector": "find_person_evidence_missing_same_person",
-      "kind": "PERSON_EVIDENCE_DENY_KIND",
-      "reason": "the section 8 provenance check: post-run hard detector, a live pre-write shadow hook, and since 2026-09-24 a research_append refusal — two planes before the case-file rule, cases still per-plane"
-    },
-    {
       "detector": "find_effects_without_invocation",
       "kind": null,
       "reason": "section 8 post-run compliance detector, enforcing (fails the run) before the case-file rule"

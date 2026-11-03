@@ -3,7 +3,8 @@
 ``api_calls`` holds every Messages API call the credential proxy relayed, so its daily
 total is the whole bill and should match the Anthropic Console. ``turn_costs`` holds what
 each sandbox reported after a turn; only sandboxes from the 2026-10-12 build on report,
-but only they know their build and the Stop hook's continuations.
+but only they know their build and the Stop hook's continuations (always 0 since step
+mode phase 2 deleted the Stop hook).
 
 Run on the control plane, which holds DATABASE_URL: ``make alpha-costs`` (``DAYS=N``).
 Locally it reads whatever database ``get_settings`` points at.
