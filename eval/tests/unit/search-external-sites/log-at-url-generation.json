@@ -31,6 +31,7 @@
   "judge_context": [
     "The same turn that presents the Ancestry URL must also append the research-log entry — outcome partial, capture_received false, results_examined 0, with the generated URL recorded in external_site.url_generated",
     "The response is incomplete if it presents the URL and says it will log after the user returns results — logging is part of the URL-generation step, not the capture step",
-    "Log query should capture the search parameters used (name Patrick Flynn, 1880 census, Pennsylvania/Schuylkill)"
+    "Log query should capture the search parameters used (name Patrick Flynn, 1880 census, Pennsylvania/Schuylkill)",
+    "The birthplace conflict is resolved in favour of Ireland, and the request names no birthplace. Encoding Ireland or leaving birthplace out are both correct: the agent body says to include only parameters it is confident about, and the rubric makes an omitted field a partial only when a plan item specified it. A one-line reason for the choice is enough. Correctness grades whether the reply's statements are true against the tool results; wording that could be clearer is not a Correctness defect."
   ]
 }
