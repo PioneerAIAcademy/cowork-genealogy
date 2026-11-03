@@ -12,7 +12,6 @@ The agent's project lives at PROJECT_DIR; per-connect secrets at SECRETS_PATH.
 from __future__ import annotations
 
 import asyncio
-import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
@@ -38,23 +37,18 @@ SANDBOX_WS_PORT = 8080
 #: Agent-runner variables a sandbox gets only when the operator sets them. Unset means
 #: absent -- never "" -- so the runner's own default applies; LocalProvider also strips
 #: them from the `**os.environ` it spreads, so a developer's shell value cannot leak in.
-OPTIONAL_AGENT_ENV = ("ORCHESTRATOR_EFFORT", "SUBAGENT_EFFORT", "SUBAGENT_EFFORT_BY_AGENT",
-                      "CLAUDE_CODE_PROMPT_CACHE_TTL")
-#: Also stripped from LocalProvider's inherited environment, never stamped: each would move
-#: cache TTLs for threads `prompt_cache_ttl_main` deliberately leaves at 5 minutes.
-NEVER_INHERITED_AGENT_ENV = ("CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL", "ENABLE_PROMPT_CACHING_1H")
+OPTIONAL_AGENT_ENV = ("CLAUDE_CODE_PROMPT_CACHE_TTL",)
+#: Also stripped from LocalProvider's inherited environment, never stamped: the first two
+#: would move cache TTLs for threads `prompt_cache_ttl_main` deliberately leaves at 5
+#: minutes, and CLAUDE_CODE_EFFORT_LEVEL would outrank main-thread.json and every agent's
+#: own `effort:`.
+NEVER_INHERITED_AGENT_ENV = ("CLAUDE_CODE_SUBAGENT_PROMPT_CACHE_TTL", "ENABLE_PROMPT_CACHING_1H",
+                             "CLAUDE_CODE_EFFORT_LEVEL")
 
 
 def optional_agent_env(settings) -> dict[str, str]:
     """The set ones of OPTIONAL_AGENT_ENV, as both providers pass them at create()."""
     env: dict[str, str] = {}
-    if settings.orchestrator_effort:
-        env["ORCHESTRATOR_EFFORT"] = settings.orchestrator_effort
-    if settings.subagent_effort:
-        env["SUBAGENT_EFFORT"] = settings.subagent_effort
-    if settings.subagent_effort_by_agent:
-        env["SUBAGENT_EFFORT_BY_AGENT"] = json.dumps(
-            settings.subagent_effort_by_agent, sort_keys=True)
     if settings.prompt_cache_ttl_main:
         env["CLAUDE_CODE_PROMPT_CACHE_TTL"] = settings.prompt_cache_ttl_main
     return env
