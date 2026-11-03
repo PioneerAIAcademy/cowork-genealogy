@@ -132,6 +132,36 @@ def test_escalation_passes_on_a_named_hand_back_and_fails_without_one():
         mod.test_escalates_to_external_sites_after_fs_exhaustion([], "", {"tags": []})
 
 
+NO_SOLE = {"tags": ["no-sole-repository-claim"]}
+
+
+@pytest.mark.parametrize("text", [
+    "| **NY State 1825, 1835, 1845** | **Not on FamilySearch** (held at NY State Library only) |",
+    "The 1835 census is only available at the NYSL.",
+    "Status: in_progress\n---\nThese early state censuses are not available elsewhere.",
+    "The 1845 returns are held exclusively at the State Library.",
+])
+def test_sole_repository_claim_fails(text):
+    with pytest.raises(AssertionError):
+        _validators("test_search_records").test_no_sole_repository_claim(_return(text), "", NO_SOLE)
+
+
+@pytest.mark.parametrize("text", [
+    "1825, 1835, 1845: not on FamilySearch.\nHand-back: search-external-sites — NY state census, Clinton and Essex Counties, 1825/1835/1845; FamilySearch holds no collection for these years",
+    "The wiki lists the 1892 census on Ancestry and FamilySearch.",
+    "Only 1855-1875 are indexed on FamilySearch; the New York State Library holds a county list.",
+])
+def test_sole_repository_claim_passes_a_legitimate_return(text):
+    _validators("test_search_records").test_no_sole_repository_claim(_return(text), "", NO_SOLE)
+
+
+def test_sole_repository_claim_is_tag_gated():
+    with pytest.raises(pytest.skip.Exception):
+        _validators("test_search_records").test_no_sole_repository_claim(
+            _return("held at NY State Library only"), "", {"tags": []}
+        )
+
+
 # --- Warning gate (issue #2840): replaced check-warnings hand-off tests --------
 # The engine gate now refuses unjustified warnings at write time, so the
 # validators no longer check for check-warnings hand-offs. No eval validator
