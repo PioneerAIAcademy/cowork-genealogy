@@ -22,6 +22,7 @@ import type {
   MetadataRmsCoverageEntry,
 } from "../types/volume-search.js";
 import { rejectedTokenMessage } from "../auth/config.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
 const RMS_SEARCH_URL =
   "https://sg30p0.familysearch.org/service/records/rms/group-service/group/search";
@@ -122,6 +123,10 @@ async function callGroupSearch(
       body: JSON.stringify(body),
     });
   } catch (error) {
+    // The budget refusal must reach the caller marked: rewrapping it here
+    // destroys the marker and every isFsBudgetExhausted guard downstream
+    // silently stops firing (same reason as match-engine.ts).
+    if (isFsBudgetExhausted(error)) throw error;
     throw new Error(
       `Could not reach FamilySearch volume search API: ${describeFetchError(error)}.`
     );

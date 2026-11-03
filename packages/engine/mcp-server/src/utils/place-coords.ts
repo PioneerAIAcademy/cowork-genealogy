@@ -2,6 +2,7 @@
 // (birth far from the parents' residence), research_append (the
 // contradicted-birthplace cap) and timeline_build.
 import { mapWithConcurrency, type PlaceCoords } from "./place-resolver.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 
 const PLACE_LOOKUP_CONCURRENCY = 4;
 
@@ -37,7 +38,11 @@ export async function lookupWithin<T>(
     let found: T | null = null;
     try {
       found = await resolver(name);
-    } catch {
+    } catch (err) {
+      // A budget refusal is not an answer: returning null here tells the
+      // agent the place has no coordinates when the truth is that the
+      // server is rate-limited. Rethrow so the cause reaches the caller.
+      if (isFsBudgetExhausted(err)) throw err;
       found = null;
     }
     if (!expired) answers.set(name, found);
