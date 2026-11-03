@@ -472,11 +472,26 @@ def _download_tmp_dir() -> str | None:
     return DOWNLOAD_TMP_DIR if os.path.isdir(DOWNLOAD_TMP_DIR) else None
 
 
-def _build_project_zip(out: Any, files: list[feedback.ProjectFile], get: Callable[[str], bytes]) -> int:
+def _download_files(
+    docs: Any, index: list[tuple[str, str, int]]
+) -> tuple[list[feedback.ProjectFile], list[str]]:
+    """``feedback.project_files`` plus what it left out that a patron would miss: stale copies
+    and files over its 25 MiB cap. Paths with a dot segment (the engine's staging) are
+    internal and not named."""
+    files, _stale = feedback.project_files(docs, index)
+    kept = {f.rel for f in files}
+    left_out = sorted({rel for rel in [*docs, *(key for key, _s3, _n in index)]
+                       if rel not in kept and not any(p.startswith(".") or not p for p in rel.split("/"))})
+    return files, left_out
+
+
+def _build_project_zip(out: Any, files: list[feedback.ProjectFile], get: Callable[[str], bytes],
+                       left_out: list[str] = ()) -> int:
     """Write ``files`` into a zip on ``out``, fetching one blob at a time and dropping it
-    once written. Returns the zip's size and leaves ``out`` at offset 0. Synchronous
+    once written; ``left_out`` and any blob that cannot be read are named in
+    ``MISSING.txt``. Returns the zip's size and leaves ``out`` at offset 0. Synchronous
     (``get`` is a blocking S3 read): run it in a thread."""
-    missing: list[str] = []
+    missing: list[str] = list(left_out)
     with zipfile.ZipFile(out, "w", allowZip64=True) as zf:
         for f in files:
             data = f.data
@@ -491,7 +506,8 @@ def _build_project_zip(out: Any, files: list[feedback.ProjectFile], get: Callabl
             zf.writestr(f.rel, data, compress_type=zipfile.ZIP_DEFLATED if deflate else zipfile.ZIP_STORED)
             del data
         if missing:
-            note = "These files could not be read and are not in this download:\n" + "".join(
+            note = ("These files are not in this download (a stale copy, over 25 MiB, or "
+                    "could not be read):\n") + "".join(
                 f"{rel}\n" for rel in missing)
             zf.writestr("MISSING.txt", note, compress_type=zipfile.ZIP_DEFLATED)
     size = out.tell()
@@ -2419,6 +2435,10 @@ def create_app(
 
     async def _store_project_upload(request: Request, project_id: str) -> dict:
         too_big = "the file and its text together are larger than 25 MB"
+        # Before the body is spooled: a tier with no store cannot keep it anyway.
+        blobs = request.app.state.blobs
+        if blobs is None:
+            raise HTTPException(status_code=503, detail="no blob store configured")
         try:
             form = await request.form(max_part_size=UPLOAD_MAX_BYTES)
         except Exception:
@@ -2454,9 +2474,6 @@ def create_app(
             raise HTTPException(status_code=422, detail=(
                 "a PDF of more than one page needs its text layer; upload it from the browser app, "
                 "or one page at a time"))
-        blobs = request.app.state.blobs
-        if blobs is None:
-            raise HTTPException(status_code=503, detail="no blob store configured")
         key, tkey = upload_key(name), text_key(name)
 
         def _write() -> int:
@@ -2480,9 +2497,10 @@ def create_app(
         filename="<project_id>.zip"``, with ``Content-Length``.
 
         Every file ``feedback.project_files`` returns -- the documents and every blob, minus
-        dot paths, stale copies and any blob over 25 MiB (no upload is) -- with no redaction:
-        it is the owner's own project. A blob that cannot be read is left out and named in
-        ``MISSING.txt``. 404 for a missing or foreign project and with no blob store; 429 with
+        dot paths, stale copies and any file over 25 MiB (no upload is) -- with no redaction:
+        it is the owner's own project. A stale copy or oversize file left out by that walk,
+        and a blob that cannot be read, is named in ``MISSING.txt``; dot paths (the engine's
+        own staging) are not. 404 for a missing or foreign project and with no blob store; 429 with
         ``Retry-After`` while a download is in progress.
 
         Built one object at a time into a temporary file under ``DOWNLOAD_TMP_DIR``, then
@@ -2502,10 +2520,11 @@ def create_app(
         tmp = None
         try:
             store = _store(request)
-            files, _stale = feedback.project_files(await store.documents(project_id),
-                                                   await store.blob_index(project_id))
+            docs, index = await store.documents(project_id), await store.blob_index(project_id)
+            # Off the loop: project_files pretty-prints every document.
+            files, left_out = await asyncio.to_thread(_download_files, docs, index)
             tmp = tempfile.TemporaryFile(dir=_download_tmp_dir())
-            size = await asyncio.to_thread(_build_project_zip, tmp, files, blobs.get)
+            size = await asyncio.to_thread(_build_project_zip, tmp, files, blobs.get, left_out)
         except BaseException:
             if tmp is not None:
                 tmp.close()

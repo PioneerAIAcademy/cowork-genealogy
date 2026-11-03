@@ -2870,6 +2870,21 @@ async def test_a_foreign_project_is_404_before_the_body_is_read(uploads_on):
         assert bool(pulled) is expect_pulled, (project, pulled)
 
 
+async def test_an_upload_with_no_blob_store_is_503_before_the_body_is_read(uploads_on):
+    store, db, _blobs = uploads_on
+    pulled = []
+
+    async def body():
+        pulled.append(True)
+        yield b'--x\r\nContent-Disposition: form-data; name="file"; filename="a.jpg"\r\n\r\n'
+        yield JPEG + b"\r\n--x--\r\n"
+
+    async with make_client(store, FakeQueue(), blobs=None) as c:
+        r = await c.post("/api/projects/proj_a/files", content=body(),
+                         headers={"content-type": "multipart/form-data; boundary=x"})
+    assert r.status_code == 503 and not pulled and db.rows == {}, r.text
+
+
 @pytest.mark.parametrize("setting", [None, "false", "FALSE"])
 async def test_the_upload_route_is_404_unless_uploads_are_enabled(monkeypatch, setting, uploads_on):
     store, db, blobs = uploads_on
@@ -2994,7 +3009,8 @@ async def test_the_download_zips_what_the_project_walk_returns_unredacted(downlo
     blobs.fail.add("s/gone")
     store.blob_rows = {"proj_a": [("uploads/deed.pdf", "s/deed", 13), ("uploads/deed.pdf.txt", "s/txt", 9),
                                   ("results/.staging/q.json", "s/stage", 1), ("tree.gedcomx.json.bak", "s/bak", 1),
-                                  ("uploads/gone.jpg", "s/gone", 1)]}
+                                  ("uploads/gone.jpg", "s/gone", 1),
+                                  ("images/huge.jpg", "s/huge", 30 * 1024 * 1024)]}
     application = create_app(store, FakeQueue(), blobs=blobs)
     status, headers, total, body = await _download(application, "proj_a", keep=True)
     assert status == 200, body[:200]
@@ -3005,7 +3021,9 @@ async def test_the_download_zips_what_the_project_walk_returns_unredacted(downlo
     assert sorted(zf.namelist()) == ["MISSING.txt", "research.json", "tree.gedcomx.json",
                                      "uploads/deed.pdf", "uploads/deed.pdf.txt"]
     assert zf.read("uploads/deed.pdf") == b"%PDF-1.4 deed"
-    assert "uploads/gone.jpg" in zf.read("MISSING.txt").decode()
+    # Unreadable, stale and oversize files are named; the engine's dot-path staging is not.
+    missing = zf.read("MISSING.txt").decode().splitlines()[1:]
+    assert missing == ["images/huge.jpg", "tree.gedcomx.json.bak", "uploads/gone.jpg"], missing
     # No redaction: the owner's own living person comes back as written.
     assert json.loads(zf.read("tree.gedcomx.json"))["persons"][0]["names"][0]["given"] == "Ada"
 
