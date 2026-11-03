@@ -254,8 +254,8 @@ Correctness. One exception: where the harness cut the record, text that could
 have come from the cut part cannot be attributed either way. That is a
 `response_summary` string carrying `[truncated by harness for prompt size; …]`,
 a `{"_truncated_for_depth": true, …}` value, or a calls list preceded by a
-`(_dropped_for_size: N earliest tool calls dropped …)` line, which means the
-earliest calls were dropped whole. After that truncation marker, a
+`(_dropped_for_size: N tool calls dropped …)` line, which means N calls,
+mostly the earliest, were dropped whole. After that truncation marker, a
 `[harness excerpt at char N of M] ...text...` line is the tool's own text from
 the cut part, copied verbatim; text between excerpts is still cut.
 

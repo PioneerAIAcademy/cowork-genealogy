@@ -2061,6 +2061,34 @@ def test_excerpts_go_before_live_args_are_omitted():
     assert "[args omitted by harness" not in rendered
 
 
+def test_size_guard_drops_uncited_calls_before_the_cited_page():
+    """locality-guide v6 `k9d`: the guard dropped the church-records page, the
+    oldest call, so the judge saw neither its head nor any excerpt."""
+    page_call = _wiki_page_call(_page_with(_ROOTS_URL, 6_118))
+    filler = [
+        {
+            "tool": f"mcp__genealogy__tool_{i}",
+            "args": {"q": f"call-{i}"},
+            "matched": {"kind": "predicate", "index": None},
+            "response": {"data": "x" * 1_500},
+        }
+        for i in range(40)
+    ]
+    calls = [page_call] + filler
+    assert '"title": "Ireland Church Records"' not in (
+        judge._render_tool_calls_with_size_guard(calls)
+    )
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert rendered.startswith("(_dropped_for_size: ")
+    assert '"title": "Ireland Church Records"' in rendered
+    assert "[harness excerpt at char 6118 of 20000]" in rendered
+    # The kept calls stay in their original order: the page first.
+    assert rendered.index("Ireland Church Records") < rendered.index("tool_39")
+    assert '"tool": "mcp__genealogy__tool_0"' not in rendered
+
+
 def test_needle_inside_the_head_adds_no_excerpt():
     calls = [_wiki_page_call(_page_with(_ROOTS_URL, 500))]
     rendered = judge._render_tool_calls_with_size_guard(

@@ -322,6 +322,20 @@ def _excerpts_past_cut(text: str, needles: tuple[str, ...]) -> str:
     )
 
 
+def _response_holds(response: Any, needles: tuple[str, ...]) -> bool:
+    """Whether any string anywhere in `response` contains a needle."""
+    if not needles:
+        return False
+    if isinstance(response, dict):
+        return any(_response_holds(v, needles) for v in response.values())
+    if isinstance(response, list):
+        return any(_response_holds(v, needles) for v in response)
+    if isinstance(response, str):
+        lowered = response.lower()
+        return any(n in lowered for n in needles)
+    return False
+
+
 def _with_excerpts(original: Any, summarized: Any, needles: tuple[str, ...]) -> Any:
     """`summarized` with excerpts appended to each string the cut hid a needle in.
 
@@ -696,8 +710,10 @@ def _render_tool_calls_with_size_guard(
         )
         if dropped:
             return (
-                f"(_dropped_for_size: {dropped} earliest tool calls "
-                f"dropped to keep tool calls under {_TOOL_CALLS_MAX_CHARS} chars, "
+                f"(_dropped_for_size: {dropped} tool calls dropped, oldest "
+                f"first but keeping any whose response holds a URL or host "
+                f"the agent cited, to keep tool calls under "
+                f"{_TOOL_CALLS_MAX_CHARS} chars, "
                 f"not counting live calls' args, a refused writer's "
                 f"omitted args, or harness excerpts)\n"
                 + body
@@ -705,10 +721,16 @@ def _render_tool_calls_with_size_guard(
         return body
 
     calls = list(tool_calls)
+    cited = [_response_holds(c.get("response"), needles) for c in calls]
     dropped = 0
     view = _render(calls, dropped, _live_args_omitted)
     while len(calls) > 1 and len(view) > _TOOL_CALLS_MAX_CHARS:
-        calls.pop(0)
+        # Oldest first, but a call holding text the agent cited goes last: in
+        # locality-guide v6 `k9d` the guard dropped the church-records page
+        # every excerpt came from, and the judge saw neither head nor excerpt.
+        victim = cited.index(False) if False in cited else 0
+        calls.pop(victim)
+        cited.pop(victim)
         dropped += 1
         view = _render(calls, dropped, _live_args_omitted)
 
@@ -882,9 +904,12 @@ def _create_message_with_retry(
         sampling_kwargs["extra_body"] = {"temperature": temperature}
         sampling_kwargs["extra_headers"] = {"anthropic-version": LEGACY_SAMPLING_API_VERSION}
 
+    import sys
+
     delay = 2.0
     last_error: Exception | None = None
     for attempt in range(_attempts):
+        started = _time.monotonic()
         try:
             return client.messages.create(
                 model=model,
@@ -916,6 +941,13 @@ def _create_message_with_retry(
                 e, anthropic.APIConnectionError
             ):
                 raise JudgeError(f"judge API call failed: {e}") from e
+            # Retries were silent, so a suite that spent half an hour in them
+            # looked hung (issue #4054's regrade).
+            print(
+                f"judge: attempt {attempt + 1}/{_attempts} failed after "
+                f"{_time.monotonic() - started:.0f}s: {type(e).__name__}: {e}",
+                file=sys.stderr,
+            )
             if attempt + 1 >= _attempts:
                 break
             _time.sleep(delay)
