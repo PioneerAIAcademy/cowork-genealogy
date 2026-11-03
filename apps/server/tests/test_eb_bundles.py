@@ -520,6 +520,30 @@ def test_verifier_dry_runs_pip_once_per_arch_and_reports_a_failure(tmp_path, mon
     assert got == ["offline pip dry-run fails for aarch64: ERROR: No matching distribution for foo"]
 
 
+@pytest.mark.parametrize("info, want", [
+    ({"arches": ["x86_64"]}, ["manylinux_2_34_x86_64"]),
+    ({"arches": ["aarch64"]}, ["manylinux_2_34_aarch64"]),
+    ({"arches": []}, ["manylinux_2_34_x86_64", "manylinux_2_34_aarch64"]),
+    ({"arches": ["riscv"]}, ["manylinux_2_34_x86_64", "manylinux_2_34_aarch64"]),
+    ({}, ["manylinux_2_34_x86_64", "manylinux_2_34_aarch64"]),
+])
+def test_verifier_dry_runs_the_arches_the_bundle_was_built_for(tmp_path, monkeypatch, info, want):
+    """An --arch x86_64 build has no aarch64 wheels, so a default verify must not ask for them."""
+    calls = []
+
+    def fake_run(cmd, **kw):
+        calls.append(cmd[cmd.index("--platform") + 1])
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(verify.subprocess, "run", fake_run)
+    entries = {**good("worker"), "BUILD-INFO.json": (json.dumps(info).encode(), 0o644)}
+    assert verify.verify(zip_of(tmp_path, "worker", entries)) == []
+    assert calls == want
+    calls.clear()
+    assert verify.verify(zip_of(tmp_path, "worker", entries), arches=("aarch64",)) == []
+    assert calls == ["manylinux_2_34_aarch64"], "an explicit --arch still wins"
+
+
 def test_verifier_cli_exit_codes(tmp_path, capsys):
     ok = zip_of(tmp_path, "tools", good("tools"))
     assert verify.main(["--no-pip", str(ok)]) == 0
