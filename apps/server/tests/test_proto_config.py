@@ -1101,6 +1101,8 @@ def test_committed_requirements_are_the_uv_export(tier):
         ("web", "fastapi", None),
         ("web", "uvicorn", None),
         ("web", "psycopg-binary", None),
+        # #3980: imported only with PG_POOL_MAX_SIZE set, so no other test would miss it.
+        ("web", "psycopg-pool", None),
         ("worker", "claude-agent-sdk", "0.2.172"),
         ("worker", "psycopg-binary", None),
         ("worker", "botocore", None),
