@@ -21,8 +21,9 @@
 // touches no store, so a load balancer whose check gates a deploy (Blueprint's
 // `elb_options.health_check`) can pass before the database exists.
 import http, { type IncomingHttpHeaders, type RequestListener } from "node:http";
+import { createHash } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { bearerPrincipal, type Principal } from "./auth/principal.js";
+import { bearerPrincipal, connectorPrincipal, type Principal } from "./auth/principal.js";
 import type { AppConfig } from "./types/auth.js";
 import { allToolSchemas } from "./tool-schemas.js";
 import { createServer } from "./server.js";
@@ -197,6 +198,87 @@ export type AuthorizeRefusal = "no_fence" | "empty_bearer" | "no_match";
 
 export type AuthorizeResult = { ok: true } | { ok: false; reason: AuthorizeRefusal };
 
+/**
+ * A connector project path, and the ONLY shape the door admits from one
+ * (self-hosted beta E1; E2/#3991 lists the same shape). The project id is this
+ * path with the leading `/` removed, which is also the store's anchor — every
+ * tool call's `projectPath` must equal that anchor exactly (`assertAnchor`),
+ * and `PROJECT_ID_RE` rejects an id containing `/`.
+ */
+export const CONNECTOR_PROJECT_RE = /^\/proj_[0-9a-f]{16}$/;
+
+/**
+ * The largest request body the door reads, for EVERY path.
+ *
+ * The body must be read before any tool runs, to refuse a batch, so this binds
+ * the worker's writes too — a cap set too low 413s production writes with every
+ * unit test green. Measured, not guessed: the largest tool-call arguments in
+ * the whole run-log corpus are 53,329 bytes (a `research_append` in
+ * `young-marriage-1828`, across 46,249 calls in 927 logs). 1 MiB is ~20x that,
+ * and still refuses an abusive body long before it reaches a tool.
+ */
+export const MAX_BODY_BYTES = 1024 * 1024;
+
+const BODY_TOO_LARGE = {
+  jsonrpc: "2.0",
+  error: { code: -32600, message: `Request body is larger than ${MAX_BODY_BYTES} bytes.` },
+  id: null,
+};
+
+const BATCH_NOT_SUPPORTED = {
+  jsonrpc: "2.0",
+  error: { code: -32600, message: "A JSON-RPC batch is not supported; send one call per request." },
+  id: null,
+};
+
+const MALFORMED_BODY = {
+  jsonrpc: "2.0",
+  error: { code: -32700, message: "Request body is not JSON." },
+  id: null,
+};
+
+/** The same body for every connector refusal, so a caller learns nothing about
+ *  which check failed: no such token, expired, ended grant, blocked user, or a
+ *  FamilySearch token that will not decrypt. */
+const UNAUTHORIZED = {
+  jsonrpc: "2.0",
+  error: { code: -32600, message: "Not authenticated. Sign in again to reconnect." },
+  id: null,
+};
+
+const INVALID_CONNECTOR_PROJECT = {
+  jsonrpc: "2.0",
+  error: {
+    code: -32600,
+    message: "projectPath must be /proj_ followed by 16 lowercase hex characters.",
+  },
+  id: null,
+};
+
+/** The same body whether the project belongs to someone else or to nobody. */
+const NOT_YOUR_PROJECT = {
+  jsonrpc: "2.0",
+  error: { code: -32600, message: "This project is not yours." },
+  id: null,
+};
+
+/** What `lookupConnector` returns for an admitted connector token. */
+export interface ConnectorCaller {
+  /** `users.id`. */
+  userId: string;
+  /** The DECRYPTED FamilySearch access token — never the connector token. */
+  familySearchToken: string;
+  /** The decrypted OpenRouter key, or null until W3/#3988 links one. */
+  openRouterApiKey: string | null;
+}
+
+/** What `projectOwner` reports. A project with no row is free; one with a NULL
+ *  owner is NOT — a connector never claims an ownerless project. */
+export interface ProjectOwnerReport {
+  exists: boolean;
+  ownerId: string | null;
+}
+
 export interface ToolServerOptions {
   /** The process-wide config (~/.familysearch-mcp/config.json or the hosted
    *  equivalent) every request's bearer principal is built over. */
@@ -206,12 +288,44 @@ export interface ToolServerOptions {
    *  that writes transactionally rolls back rather than commit after it.
    *  `fence` is the request's claim (U6), absent on an unfenced request; a
    *  store given one commits only while that claim is current. */
-  bindStore: (projectId: string, signal: AbortSignal, fence?: ClaimFence) => ProjectStore;
+  bindStore: (
+    projectId: string,
+    signal: AbortSignal,
+    fence?: ClaimFence,
+    /**
+     * Connector requests only (E1). `anchorPath` is the caller's
+     * `/proj_<16 hex>` path, which every tool call's `projectPath` must equal
+     * exactly — without it the store anchors at the worker's
+     * GENEALOGY_ANCHOR_PATH and every connector read reads nothing while every
+     * write throws. `ownerId` is who `touchProject` records on a fresh id.
+     */
+    opts?: { anchorPath?: string; ownerId?: string },
+  ) => ProjectStore;
   /** Whether this request's bearer may act on the project it names (U4). Called
    *  for every request with a project header, before `bindStore`; never for one
    *  without. Required, so no caller can leave the door open by omission; a
    *  throw is answered 503. */
   authorize: (req: AuthorizeRequest) => Promise<AuthorizeResult>;
+  /**
+   * Look up a connector token by the lowercase hex sha256 of its value, or
+   * `null` for anything not admitted (self-hosted beta E1). Injected, not
+   * imported, for the same reason as `authorize`: this module loads no backend,
+   * so the unit test supplies a double and never pulls in `pg`.
+   */
+  lookupConnector: (tokenSha256: string) => Promise<ConnectorCaller | null>;
+  /**
+   * Who owns a project id, for a connector request naming one. Called after the
+   * token is admitted and before `bindStore`; never on the worker path, which
+   * has its own `authorize`.
+   */
+  projectOwner: (projectId: string) => Promise<ProjectOwnerReport>;
+  /**
+   * The web tier's OAuth issuer, byte for byte. The protected-resource metadata
+   * and the `WWW-Authenticate: resource_metadata=` URL are built from it, NEVER
+   * from the request's `Host`, which a caller controls. Absent, the metadata
+   * route answers 404 and a 401 carries a bare `Bearer`.
+   */
+  issuer?: string;
   /** Whether the stores behind `bindStore` can serve a call. Absent, `/healthz`
    *  answers 200 without `checks`. */
   checkReady?: () => Promise<ReadyReport>;
@@ -245,6 +359,80 @@ async function handleHealthz(res: http.ServerResponse, options: ToolServerOption
   sendJson(res, report.ok ? 200 : 503, { ok: report.ok, tools, checks: report.checks });
 }
 
+/** The sha256 a connector token is looked up by, matching `turns.bearer_sha256`
+ *  and `connector_tokens.token_sha256`: lowercase hex of the UTF-8 value. */
+function sha256Hex(value: string): string {
+  return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+type BodyRead =
+  | { kind: "ok"; value: unknown }
+  | { kind: "too_large" }
+  | { kind: "malformed" };
+
+/**
+ * Read the body ONCE, under the cap, and parse it.
+ *
+ * Once, because a stream already consumed cannot be read again — the parsed
+ * value is handed to `transport.handleRequest(req, res, parsedBody)`, which the
+ * SDK substitutes for its own read. Under the cap because this runs before any
+ * tool, on every path.
+ */
+async function readBody(req: http.IncomingMessage): Promise<BodyRead> {
+  const chunks: Buffer[] = [];
+  let total = 0;
+  for await (const chunk of req) {
+    const buf = chunk as Buffer;
+    total += buf.length;
+    // Checked as it arrives, not after: the point is to stop reading, not to
+    // buffer an abusive body and then complain about it.
+    if (total > MAX_BODY_BYTES) return { kind: "too_large" };
+    chunks.push(buf);
+  }
+  const text = Buffer.concat(chunks).toString("utf8");
+  if (text.trim() === "") return { kind: "ok", value: undefined };
+  try {
+    return { kind: "ok", value: JSON.parse(text) };
+  } catch {
+    return { kind: "malformed" };
+  }
+}
+
+/** The one call's `arguments.projectPath`, when the body is a single
+ *  `tools/call` that sent one as a string. Anything else: null. */
+function connectorProjectPath(body: unknown): string | null {
+  if (typeof body !== "object" || body === null) return null;
+  const msg = body as { method?: unknown; params?: unknown };
+  if (msg.method !== "tools/call") return null;
+  const params = msg.params as { arguments?: unknown } | undefined;
+  const args = params?.arguments as { projectPath?: unknown } | undefined;
+  return typeof args?.projectPath === "string" ? args.projectPath : null;
+}
+
+/** The tool a body names, for the log line only. `-` when it names none. */
+function toolNameOf(body: unknown): string {
+  if (typeof body !== "object" || body === null) return "-";
+  const msg = body as { method?: unknown; params?: unknown };
+  if (msg.method !== "tools/call") return typeof msg.method === "string" ? msg.method : "-";
+  const name = (msg.params as { name?: unknown } | undefined)?.name;
+  return typeof name === "string" ? name : "-";
+}
+
+/** `<issuer>/.well-known/oauth-protected-resource/mcp`, the URL a 401 names. */
+function resourceMetadataUrl(issuer: string): string {
+  return `${issuer.replace(/\/$/, "")}/.well-known/oauth-protected-resource${MCP_PATH}`;
+}
+
+/** 401 with `WWW-Authenticate`. With no issuer configured the challenge is a
+ *  bare `Bearer`, since there is no metadata document to point at. */
+function sendUnauthorized(res: http.ServerResponse, options: ToolServerOptions): void {
+  const challenge = options.issuer
+    ? `Bearer resource_metadata="${resourceMetadataUrl(options.issuer)}"`
+    : "Bearer";
+  res.writeHead(401, { "Content-Type": "application/json", "WWW-Authenticate": challenge });
+  res.end(JSON.stringify(UNAUTHORIZED));
+}
+
 async function handleMcpPost(
   req: http.IncomingMessage,
   res: http.ServerResponse,
@@ -263,7 +451,31 @@ async function handleMcpPost(
     sendJson(res, 400, INVALID_CLAIM_FENCE);
     return;
   }
-  if (projectId.kind === "present") {
+
+  // Read ONCE, under the cap, before either path: a batch has to be refused
+  // before any tool runs, and that means parsing the body here. The parsed
+  // value is handed to the transport below, which uses it instead of reading
+  // the stream again.
+  const body = await readBody(req);
+  if (body.kind === "too_large") {
+    sendJson(res, 413, BODY_TOO_LARGE);
+    return;
+  }
+  if (body.kind === "malformed") {
+    sendJson(res, 400, MALFORMED_BODY);
+    return;
+  }
+  if (Array.isArray(body.value)) {
+    sendJson(res, 400, BATCH_NOT_SUPPORTED);
+    return;
+  }
+
+  // Which door. A request carrying the project header is the WORKER path and
+  // keeps every rule it had (U4/U6, 403 on refusal). Everything else needs a
+  // connector token (E1).
+  const isWorkerPath = projectId.kind === "present";
+
+  if (isWorkerPath) {
     const fence = claim.kind === "present" ? claim.fence : undefined;
     let verdict: AuthorizeResult;
     try {
@@ -283,6 +495,7 @@ async function handleMcpPost(
       return;
     }
   }
+
   // A killed worker closes its socket but sends nothing; without this its
   // in-flight write would commit after the caller that could read the result
   // is gone, and the resumed turn would write the same thing again.
@@ -290,16 +503,96 @@ async function handleMcpPost(
   res.on("close", () => {
     if (!res.writableEnded) disconnected.abort();
   });
-  const store =
-    projectId.kind === "present"
-      ? options.bindStore(
-          projectId.id,
-          disconnected.signal,
-          claim.kind === "present" ? claim.fence : undefined,
-        )
-      : unboundProjectStore(NO_PROJECT_BOUND_MESSAGE);
 
-  const server = createServer(principalFromHeaders(req.headers, options.baseConfig));
+  let principal: Principal;
+  let store: ProjectStore;
+  let logUserId = "-";
+  let familySearchStatus: number | null = null;
+
+  if (isWorkerPath) {
+    principal = principalFromHeaders(req.headers, options.baseConfig);
+    store = options.bindStore(
+      projectId.id,
+      disconnected.signal,
+      claim.kind === "present" ? claim.fence : undefined,
+    );
+  } else {
+    const bearer = bearerFromHeaders(req.headers);
+    let caller: ConnectorCaller | null = null;
+    if (bearer !== "") {
+      try {
+        caller = await options.lookupConnector(sha256Hex(bearer));
+      } catch (error) {
+        const err = error as { code?: unknown; name?: unknown };
+        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
+        // Never an admission, exactly as an `authorize` that throws is not.
+        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
+        sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+        return;
+      }
+    }
+    if (!caller) {
+      // One body for every reason: no token, expired, ended grant, blocked
+      // user, or a FamilySearch token that will not decrypt.
+      process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
+      sendUnauthorized(res, options);
+      return;
+    }
+    logUserId = caller.userId;
+
+    const projectPath = connectorProjectPath(body.value);
+    if (projectPath === null) {
+      // `initialize`, `tools/list`, notifications, and any call that sent no
+      // projectPath: store-less, but still only for an admitted token.
+      store = unboundProjectStore(NO_PROJECT_BOUND_MESSAGE);
+    } else {
+      if (!CONNECTOR_PROJECT_RE.test(projectPath)) {
+        sendJson(res, 400, INVALID_CONNECTOR_PROJECT);
+        return;
+      }
+      // The id is the path without its slash; the path itself is the anchor,
+      // which every tool call's projectPath must equal exactly.
+      const connectorProjectId = projectPath.slice(1);
+      let owner: ProjectOwnerReport;
+      try {
+        owner = await options.projectOwner(connectorProjectId);
+      } catch (error) {
+        const err = error as { code?: unknown; name?: unknown };
+        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
+        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
+        sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+        return;
+      }
+      // A NULL owner is refused with the rest: a connector never claims an
+      // ownerless project, unlike the web tier's may_create_or_claim. An
+      // absent row is free -- the first write decides (touchProject).
+      if (owner.exists && owner.ownerId !== caller.userId) {
+        process.stderr.write(
+          `ev=tool_refused reason=not_owner surface=connector user_id=${caller.userId}\n`,
+        );
+        sendJson(res, 403, NOT_YOUR_PROJECT);
+        return;
+      }
+      store = options.bindStore(connectorProjectId, disconnected.signal, undefined, {
+        anchorPath: projectPath,
+        ownerId: caller.userId,
+      });
+    }
+
+    principal = connectorPrincipal({
+      accessToken: caller.familySearchToken,
+      userId: caller.userId,
+      config: {
+        ...options.baseConfig,
+        ...(caller.openRouterApiKey ? { openRouterApiKey: caller.openRouterApiKey } : {}),
+      },
+      recordFamilySearchStatus: (status) => {
+        familySearchStatus = status;
+      },
+    });
+  }
+
+  const server = createServer(principal);
   // Stateless: the SDK refuses to reuse a transport across requests, and one
   // Server per POST is what binds the principal to exactly this request.
   const transport = new StreamableHTTPServerTransport({
@@ -311,10 +604,18 @@ async function handleMcpPost(
     // onmessage → Promise.then(handler) chain included — resolves to `store`.
     await runWithProjectStore(store, async () => {
       await server.connect(transport);
-      await transport.handleRequest(req, res);
+      // The pre-read body, since the stream is already consumed.
+      await transport.handleRequest(req, res, body.value);
     });
   } finally {
     await server.close();
+    // One line per call (E1): the user, the tool, and any FamilySearch status.
+    // Never the token or its hash.
+    const toolName = toolNameOf(body.value);
+    process.stderr.write(
+      `ev=tool_call surface=${isWorkerPath ? "worker" : "connector"} user_id=${logUserId} ` +
+        `tool=${toolName} fs_status=${familySearchStatus ?? "-"}\n`,
+    );
   }
 }
 
@@ -374,6 +675,9 @@ export function startHttpServer(options: StartHttpServerOptions): Promise<http.S
         baseConfig: options.baseConfig,
         bindStore: options.bindStore,
         authorize: options.authorize,
+        lookupConnector: options.lookupConnector,
+        projectOwner: options.projectOwner,
+        issuer: options.issuer,
         checkReady: options.checkReady,
       }),
     );

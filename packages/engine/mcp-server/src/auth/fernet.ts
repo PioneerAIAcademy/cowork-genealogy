@@ -17,6 +17,16 @@
 
 import { createDecipheriv, createCipheriv, createHmac, createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
+/**
+ * The development key, byte for byte the same string as
+ * `apps/server/proto/grants.py`'s `DEV_FS_TOKEN_ENC_KEY`. Compose passes
+ * `\${FS_TOKEN_ENC_KEY:-}` to web and worker, so every tier must fall back to
+ * the SAME value or they encrypt under different keys and read each other as
+ * undecryptable. Public in this repository on purpose, which is why an https
+ * issuer refuses to start on it (`src/http.ts`).
+ */
+export const DEV_FS_TOKEN_ENC_KEY = "dev-insecure-fs-token-key-change-me";
+
 /** 0x80. The only version `cryptography.fernet` writes or accepts. */
 const VERSION = 0x80;
 const VERSION_LEN = 1;

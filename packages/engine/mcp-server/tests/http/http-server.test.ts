@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -38,6 +39,7 @@ import {
   claimFenceFromHeaders,
   HEALTHZ_TIMEOUT_MS,
   PROJECT_ID_HEADER,
+  MAX_BODY_BYTES,
   startHttpServer,
   TURN_ID_HEADER,
   type AuthorizeRequest,
@@ -58,8 +60,13 @@ let base: string;
 let root: string;
 // Every id the server bound a store for, in order — the store half's oracle.
 const bindStore = vi.fn(
-  (projectId: string, _signal: AbortSignal, _fence?: ClaimFence): ProjectStore =>
-    new ScopedFsStore(root, projectId),
+  (
+    projectId: string,
+    _signal: AbortSignal,
+    _fence?: ClaimFence,
+    // E1: a connector request names its own anchor and owner.
+    _opts?: { anchorPath?: string; ownerId?: string },
+  ): ProjectStore => new ScopedFsStore(root, projectId),
 );
 // Allow-all unless a case says otherwise: the project check itself is U4's
 // section below and tests/http/http-server-pg.test.ts.
@@ -68,10 +75,16 @@ const clients: Client[] = [];
 // Every HTTP exchange the SDK client made, so item 1 can show the 405 arrived.
 const exchanges: Array<{ method: string; path: string; status: number }> = [];
 
+/**
+ * A client. With no headers it presents the TEST CONNECTOR TOKEN, because a
+ * request with no project header now takes the connector door and one with
+ * neither a project header nor a connector token is a 401 (E1). Pass headers to
+ * override; pass {} for a genuinely anonymous client.
+ */
 async function connect(headers?: Record<string, string>, url: string = base): Promise<Client> {
   const client = new Client({ name: "http-server-test", version: "0" });
   const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`), {
-    requestInit: headers ? { headers } : undefined,
+    requestInit: { headers: headers ?? connectorHeaders() },
     fetch: async (url, init) => {
       const res = await fetch(url, init);
       exchanges.push({
@@ -94,9 +107,56 @@ function textOf(result: Awaited<ReturnType<Client["callTool"]>>): string {
     .join("");
 }
 
+// Connector doubles (self-hosted beta E1). This module loads no backend, so
+// these stand in for the Postgres lookups the entrypoint wires -- the same
+// reason `authorize` and `bindStore` are injected.
+//
+// Every case that sends NO project header now takes the connector path, so it
+// must present this token; a request with neither a project header nor a
+// connector token is a 401, which is the point.
+export const TEST_CONNECTOR_TOKEN = "connector-token-for-tests";
+const TEST_USER_ID = "u_test";
+
+/** Connector tokens this double admits, each mapping to its own user AND its
+ *  own decrypted FamilySearch token. Two of them, so item 4 can show the
+ *  per-request principal is built from the LOOKUP, not from the header. */
+const CONNECTOR_USERS: Record<string, { userId: string; familySearchToken: string }> = {
+  [TEST_CONNECTOR_TOKEN]: { userId: TEST_USER_ID, familySearchToken: "fs-access-token" },
+  "connector-token-A": { userId: "u_A", familySearchToken: "fs-tok-A" },
+  "connector-token-B": { userId: "u_B", familySearchToken: "fs-tok-B" },
+};
+const lookupConnector = vi.fn(async (tokenSha256: string) => {
+  for (const [token, who] of Object.entries(CONNECTOR_USERS)) {
+    if (createHash("sha256").update(token, "utf8").digest("hex") === tokenSha256) {
+      return { ...who, openRouterApiKey: null };
+    }
+  }
+  return null;
+});
+/** No row: a fresh id, free for the first write to claim. */
+const projectOwner = vi.fn(
+  async (_projectId: string): Promise<{ exists: boolean; ownerId: string | null }> => ({
+    exists: false,
+    ownerId: null,
+  }),
+);
+
+/** The headers a connector request carries. */
+function connectorHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return { Authorization: `Bearer ${TEST_CONNECTOR_TOKEN}`, ...extra };
+}
+
 beforeAll(async () => {
   root = await mkdtemp(join(tmpdir(), "http-server-test-"));
-  server = await startHttpServer({ host: "127.0.0.1", port: 0, baseConfig: {}, bindStore, authorize });
+  server = await startHttpServer({
+    host: "127.0.0.1",
+    port: 0,
+    baseConfig: {},
+    bindStore,
+    authorize,
+    lookupConnector,
+    projectOwner,
+  });
   const address = server.address();
   if (!address || typeof address !== "object") throw new Error("server did not bind a port");
   base = `http://127.0.0.1:${address.port}`;
@@ -194,13 +254,42 @@ describe("tool server over Streamable HTTP", () => {
     }
   });
 
-  it("2b. a request with no project header gets an error naming the header from project_create, and convert_calendar still answers", async () => {
+  it("2b. a connector call whose projectPath is not a /proj_ path is refused at the door, before any tool", async () => {
+    // Was: "no project header -> the tool names the header". A request with no
+    // project header is now the CONNECTOR door (E1), and SCOPED_ANCHOR is the
+    // worker's anchor, not a connector path -- so this is refused before a
+    // store or a tool exists, which is a better refusal than the old one.
     bindStore.mockClear();
     authorize.mockClear();
+    const res = await fetch(`${base}/mcp`, {
+      method: "POST",
+      headers: {
+        ...connectorHeaders(),
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "project_create", arguments: createArgs("Nobody") },
+      }),
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.message).toMatch(/proj_ followed by 16 lowercase hex/);
+    expect(bindStore).not.toHaveBeenCalled();
+    expect(authorize).not.toHaveBeenCalled();
+  });
+
+  it("2b2. a connector call to a store tool with NO projectPath runs store-less and says so, and convert_calendar still answers", async () => {
+    // The other half of the old 2b, and the half whose meaning survives: a
+    // connector that names no project at all gets the unbound store, while a
+    // store-less tool answers normally.
+    bindStore.mockClear();
     const client = await connect();
-    const created = await client.callTool({ name: "project_create", arguments: createArgs("Nobody") });
+    const { projectPath: _omit, ...noPath } = createArgs("Nobody");
+    const created = await client.callTool({ name: "project_create", arguments: noPath });
     expect(created.isError).toBe(true);
-    expect(textOf(created)).toContain(PROJECT_HEADER);
 
     const converted = await client.callTool({
       name: "convert_calendar",
@@ -210,9 +299,7 @@ describe("tool server over Streamable HTTP", () => {
     expect(JSON.parse(textOf(converted))).toMatchObject({ ok: true, converted: { year: 1751 } });
 
     expect(bindStore).not.toHaveBeenCalled();
-    expect(authorize).not.toHaveBeenCalled();
-    // Nothing reached the file backend either: the root holds only the
-    // directories item 2 wrote.
+    // Nothing reached the file backend either.
     const dirs = (await readdir(root)).filter((d) => d !== "__missing__");
     expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
   });
@@ -224,6 +311,8 @@ describe("tool server over Streamable HTTP", () => {
       baseConfig: { webPublicUrl: "https://beta.example/", uploadsEnabled: true },
       bindStore,
       authorize,
+      lookupConnector,
+      projectOwner
     });
     const address = linked.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
@@ -501,7 +590,27 @@ describe("tool server over Streamable HTTP", () => {
 
     it("a request with no project header never calls authorize; a malformed one is a 400 first", async () => {
       authorize.mockClear();
-      const store = await post([["Authorization", `Bearer ${BEARER}`]]);
+      // No project header is now the CONNECTOR door, so this presents a
+      // connector token (without one it is a 401) and names NO project --
+      // `post` sends the worker's anchor, which the connector door refuses as
+      // not a /proj_ path.
+      const store = await fetch(`${base}/mcp`, {
+        method: "POST",
+        headers: {
+          ...connectorHeaders(),
+          "Content-Type": "application/json",
+          Accept: "application/json, text/event-stream",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: {
+            name: "convert_calendar",
+            arguments: { date: { year: 1750, month: 2, day: 10 }, corrections: { osNsYear: true } },
+          },
+        }),
+      });
       expect(store.status).toBe(200);
       await store.text();
       const malformed = await post([[PROJECT_HEADER, "p/q"]]);
@@ -527,11 +636,16 @@ describe("tool server over Streamable HTTP", () => {
     expect(body.error).not.toContain("not logged in");
   });
 
-  it("4. two concurrent calls with different bearers each reach upstream with their own token", async () => {
+  it("4. two concurrent connector calls each reach upstream with their OWN FamilySearch token, never the connector token", async () => {
+    // Was: the header's bearer reaches upstream. On the connector door the
+    // header carries the CONNECTOR token, which authenticates the caller to us
+    // and means nothing to FamilySearch -- the token that goes upstream is the
+    // decrypted one the lookup returned. So this now proves two things at once:
+    // the principal is per request, and the connector token never leaves.
     upstream.calls.length = 0;
     const [a, b] = await Promise.all([
-      connect({ Authorization: "Bearer tok-A" }),
-      connect({ Authorization: "Bearer tok-B" }),
+      connect({ Authorization: "Bearer connector-token-A" }),
+      connect({ Authorization: "Bearer connector-token-B" }),
     ]);
     const [ra, rb] = await Promise.all([
       a.callTool({ name: "record_read", arguments: { recordId: "QVS9-DHDB" } }),
@@ -542,9 +656,11 @@ describe("tool server over Streamable HTTP", () => {
     expect(ra.isError).toBe(true);
     expect(rb.isError).toBe(true);
     const seen = upstream.calls.map((c) => c.authorization);
-    expect(seen.filter((h) => h === "Bearer tok-A")).toHaveLength(1);
-    expect(seen.filter((h) => h === "Bearer tok-B")).toHaveLength(1);
+    expect(seen.filter((h) => h === "Bearer fs-tok-A")).toHaveLength(1);
+    expect(seen.filter((h) => h === "Bearer fs-tok-B")).toHaveLength(1);
     expect(seen).toHaveLength(2);
+    // The thing that must never happen.
+    expect(seen.some((h) => h?.includes("connector-token"))).toBe(false);
     for (const call of upstream.calls) {
       expect(call.url).toMatch(/familysearch\.org/);
     }
@@ -587,6 +703,124 @@ describe("tool server over Streamable HTTP", () => {
     expect(textOf(bareB)).not.toMatch(/Image cap reached/);
   });
 
+  describe("E1. the connector door", () => {
+    const rpc = (body: unknown, headers: Record<string, string> = {}) =>
+      fetch(`${base}/mcp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...headers },
+        body: JSON.stringify(body),
+      });
+    const call = (name: string, args: Record<string, unknown>) => ({
+      jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args },
+    });
+
+    it("no bearer at all is a 401 carrying WWW-Authenticate, not a 403", async () => {
+      const res = await rpc(call("convert_calendar", {}));
+      expect(res.status).toBe(401);
+      // No issuer is configured on this server, so the challenge is bare.
+      expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
+      await res.text();
+    });
+
+    it("an unknown connector token is a 401 with the SAME body as no token", async () => {
+      const [none, unknown] = await Promise.all([
+        rpc(call("convert_calendar", {})),
+        rpc(call("convert_calendar", {}), { Authorization: "Bearer nope-not-a-token" }),
+      ]);
+      expect(unknown.status).toBe(401);
+      // One body for every reason, so a caller learns nothing about which
+      // check failed -- expired, ended, blocked and undecryptable included.
+      expect(await unknown.json()).toEqual(await none.json());
+    });
+
+    it("a JSON-RPC batch is refused before any tool runs", async () => {
+      bindStore.mockClear();
+      const res = await rpc([call("convert_calendar", {}), call("convert_calendar", {})], connectorHeaders());
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.message).toMatch(/batch is not supported/);
+      expect(bindStore).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["the worker's anchor", "/project"],
+      ["no leading slash", "proj_0123456789abcdef"],
+      ["uppercase hex", "/proj_0123456789ABCDEF"],
+      ["too short", "/proj_0123456789abcde"],
+      ["a traversal", "/proj_0123456789abcdef/../other"],
+    ])("refuses a projectPath that is %s, before bindStore", async (_label, projectPath) => {
+      bindStore.mockClear();
+      const res = await rpc(call("project_context", { projectPath }), connectorHeaders());
+      expect(res.status).toBe(400);
+      expect(bindStore).not.toHaveBeenCalled();
+      await res.text();
+    });
+
+    it("binds the store at the CALLER'S path, not the worker's anchor", async () => {
+      // The whole point: PgS3ProjectStore checks every call's projectPath
+      // against its anchor, so a store anchored at GENEALOGY_ANCHOR_PATH makes
+      // every connector read read nothing and every write throw.
+      bindStore.mockClear();
+      const projectPath = "/proj_0123456789abcdef";
+      const res = await rpc(call("project_context", { projectPath }), connectorHeaders());
+      await res.text();
+      expect(bindStore).toHaveBeenCalledTimes(1);
+      const [projectId, , fence, opts] = bindStore.mock.calls[0]!;
+      expect(projectId).toBe("proj_0123456789abcdef"); // the path minus its slash
+      expect(fence).toBeUndefined(); // a connector never carries the worker's claim
+      expect(opts).toMatchObject({ anchorPath: projectPath, ownerId: TEST_USER_ID });
+    });
+
+    it("refuses a project owned by someone else, and one owned by NOBODY", async () => {
+      for (const ownerId of ["u_someone_else", null]) {
+        bindStore.mockClear();
+        projectOwner.mockResolvedValueOnce({ exists: true, ownerId });
+        const res = await rpc(
+          call("project_context", { projectPath: "/proj_00112233445566aa" }),
+          connectorHeaders(),
+        );
+        expect(res.status, `ownerId=${ownerId}`).toBe(403);
+        // A NULL owner is refused with the rest: a connector never claims an
+        // ownerless project, unlike the web tier's may_create_or_claim.
+        expect(bindStore).not.toHaveBeenCalled();
+        await res.text();
+      }
+    });
+
+    it("admits a project the caller owns", async () => {
+      bindStore.mockClear();
+      projectOwner.mockResolvedValueOnce({ exists: true, ownerId: TEST_USER_ID });
+      const res = await rpc(
+        call("project_context", { projectPath: "/proj_00112233445566bb" }),
+        connectorHeaders(),
+      );
+      expect(res.status).toBe(200);
+      expect(bindStore).toHaveBeenCalledTimes(1);
+      await res.text();
+    });
+
+    it("a body over the cap is 413, and one at the largest the worker sends is admitted", async () => {
+      // Both directions: a cap set too low 413s production worker writes with
+      // every other test green. The measured largest real body is 53,329 bytes.
+      const overCap = await rpc(
+        call("convert_calendar", { pad: "x".repeat(MAX_BODY_BYTES + 1) }),
+        connectorHeaders(),
+      );
+      expect(overCap.status).toBe(413);
+      await overCap.text();
+
+      const realistic = await rpc(call("convert_calendar", { pad: "x".repeat(60_000) }), connectorHeaders());
+      expect(realistic.status).toBe(200);
+      await realistic.text();
+    });
+
+    it("a lookup that throws is a 503, never an admission", async () => {
+      lookupConnector.mockRejectedValueOnce(new Error("pool is down"));
+      const res = await rpc(call("convert_calendar", {}), connectorHeaders());
+      expect(res.status).toBe(503);
+      await res.text();
+    });
+  });
+
   it("5. /healthz is 200 with the tool count; GET (SSE accept) and DELETE on /mcp are 405 with Allow: POST", async () => {
     const health = await fetch(`${base}/healthz`);
     expect(health.status).toBe(200);
@@ -626,6 +860,8 @@ describe("tool server over Streamable HTTP", () => {
       bindStore,
       authorize,
       checkReady: () => probe(),
+      lookupConnector,
+      projectOwner
     });
     const address = ready.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");

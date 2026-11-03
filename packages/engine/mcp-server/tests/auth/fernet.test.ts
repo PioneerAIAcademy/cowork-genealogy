@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
-import { decrypt, encrypt } from "../../src/auth/fernet.js";
+import { decrypt, encrypt, DEV_FS_TOKEN_ENC_KEY } from "../../src/auth/fernet.js";
 
 // The shared vector. `apps/server/tests/test_proto_grants.py` reads this same
 // file and decrypts it with `grants.decrypt`; this file decrypts it with
@@ -105,5 +105,23 @@ describe("fernet encrypt (tests and dev/ only)", () => {
     const raw = Buffer.from(encrypt("seeded-token", VECTOR.key), "base64url");
     expect(raw[0]).toBe(0x80);
     expect(raw.length).toBeGreaterThanOrEqual(57);
+  });
+});
+
+
+describe("the development key agrees with the Python tier", () => {
+  // compose passes ${FS_TOKEN_ENC_KEY:-} to web, worker AND tools, so when it
+  // is unset every tier falls back to its own default. If these two strings
+  // ever differ, the tiers encrypt under different keys and each reads the
+  // other's tokens as undecryptable -- which looks exactly like an expired
+  // session, with nothing pointing at the cause.
+  it("is byte for byte grants.py's DEV_FS_TOKEN_ENC_KEY", () => {
+    const py = readFileSync(
+      join(import.meta.dirname, "../../../../../apps/server/proto/grants.py"),
+      "utf-8",
+    );
+    const m = py.match(/^DEV_FS_TOKEN_ENC_KEY = "([^"]+)"/m);
+    expect(m, "grants.py no longer declares DEV_FS_TOKEN_ENC_KEY at the top level").not.toBeNull();
+    expect(DEV_FS_TOKEN_ENC_KEY).toBe(m![1]);
   });
 });

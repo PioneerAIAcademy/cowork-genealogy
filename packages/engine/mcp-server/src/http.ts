@@ -55,7 +55,10 @@ import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
 import { startHttpServer, MCP_PATH } from "./http-server.js";
-import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore, readyLabel } from "./store/pg-s3-project-store.js";
+import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore, readyLabel,
+  lookupConnectorToken,
+  projectOwnerOf,
+} from "./store/pg-s3-project-store.js";
 import { readLimitsEnv } from "./store/limits-env.js";
 import { configureFsBudget } from "./utils/fs-budget.js";
 import { configureTranscriptionCap } from "./utils/ocr.js";
@@ -63,6 +66,7 @@ import { readPgS3Env } from "./store/pg-s3-env.js";
 import { loadSasClient, SasClientMissing, SasObjectInvalid, SasPgCredentials } from "./store/pg-credentials.js";
 import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
+import { decrypt, DEV_FS_TOKEN_ENC_KEY } from "./auth/fernet.js";
 import { configFromEnv } from "./hosted-config-env.js";
 import type { AppConfig } from "./types/auth.js";
 import { debugHoldStartupLine } from "./debug-holds.js";
@@ -162,6 +166,33 @@ process.stderr.write(
     ? `transcription cap: ${maxTranscriptions} at a time\n`
     : "transcription cap: off\n",
 );
+// The connector door's two settings (self-hosted beta E1), read once here the
+// way readPgS3Env is; no getter reads process.env.
+//
+// FS_TOKEN_ENC_KEY falls back to the SAME development default as
+// apps/server/proto/grants.py, because compose passes ${FS_TOKEN_ENC_KEY:-} to
+// web and worker and all tiers must agree byte for byte -- without the fallback
+// a --connector smoke on a plain `make proto-up` decrypts nothing.
+const fsTokenEncKey = (process.env.FS_TOKEN_ENC_KEY ?? "").trim() || DEV_FS_TOKEN_ENC_KEY;
+// The web tier's issuer, printed byte for byte. Unset, the metadata route 404s
+// and a 401 carries a bare `Bearer`.
+const issuer = (process.env.OAUTH_ISSUER ?? "").trim() || undefined;
+
+// A development key on an https issuer is a real deployment with a key anyone
+// can derive, so refuse to start -- the same call apps/server/proto/web/auth.py
+// makes. On http (compose, a local run) the default is the point.
+if (fsTokenEncKey === DEV_FS_TOKEN_ENC_KEY && issuer?.startsWith("https://")) {
+  process.stderr.write(
+    "http: FS_TOKEN_ENC_KEY is unset with an https OAUTH_ISSUER, so every stored " +
+      "FamilySearch token would be encrypted under a key that is public in this " +
+      "repository. Set FS_TOKEN_ENC_KEY to the value the web and worker tiers use.\n",
+  );
+  process.exit(2);
+}
+process.stderr.write(
+  `connector door: issuer=${issuer ?? "unset"} fs-token-key=${fsTokenEncKey === DEV_FS_TOKEN_ENC_KEY ? "default" : "set"}\n`,
+);
+
 const holdLine = debugHoldStartupLine(process.env);
 if (holdLine) process.stderr.write(holdLine);
 
@@ -183,9 +214,22 @@ const server = await startHttpServer({
   host: values.host as string,
   port,
   baseConfig,
-  bindStore: (projectId, signal, fence) =>
-    new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal, fence }),
+  bindStore: (projectId, signal, fence, opts) =>
+    new PgS3ProjectStore(backend, {
+      projectId,
+      // A connector names its own project path, and the store's anchor MUST be
+      // that path: every tool call's projectPath is checked against it exactly.
+      // The worker keeps GENEALOGY_ANCHOR_PATH.
+      anchorPath: opts?.anchorPath ?? storeEnv.anchorPath,
+      signal,
+      fence,
+      ownerId: opts?.ownerId,
+    }),
   authorize: (req) => authorizeAttempt(backend, req),
+  lookupConnector: (tokenSha256) =>
+    lookupConnectorToken(backend, tokenSha256, (ciphertext) => decrypt(ciphertext, fsTokenEncKey)),
+  projectOwner: (projectId) => projectOwnerOf(backend, projectId),
+  issuer,
   checkReady: () => backend.checkReady(),
 });
 

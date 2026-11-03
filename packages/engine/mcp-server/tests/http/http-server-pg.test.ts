@@ -1,3 +1,5 @@
+import { decrypt, encrypt } from "../../src/auth/fernet.js";
+const TEST_ENC_KEY = "http-server-pg-test-key";
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
 import { randomUUID } from "node:crypto";
@@ -10,6 +12,8 @@ import {
   createPgS3Backend,
   PgS3ProjectStore,
   type PgS3Backend,
+  lookupConnectorToken,
+  projectOwnerOf,
 } from "../../src/store/pg-s3-project-store.js";
 import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
 import { protoBackendOptions } from "../store/pg-s3-test-env.js";
@@ -243,6 +247,9 @@ if (!DSN || !ENDPOINT) {
         baseConfig: {},
         bindStore,
         authorize: (req) => authorizeAttempt(backend, req),
+        lookupConnector: (sha) =>
+          lookupConnectorToken(backend, sha, (c) => decrypt(c, TEST_ENC_KEY)),
+        projectOwner: (projectId) => projectOwnerOf(backend, projectId),
         checkReady: () => backend.checkReady(),
       });
       const address = server.address();
@@ -447,6 +454,11 @@ if (!DSN || !ENDPOINT) {
             baseConfig: {},
             bindStore,
             authorize: (req) => authorizeAttempt(unmigrated, req),
+            // This door runs against a database with no connector tables, so
+            // the lookups would throw; the cases here never present a connector
+            // token, and a throw is a 503, never an admission.
+            lookupConnector: async () => null,
+            projectOwner: async () => ({ exists: false, ownerId: null }),
             checkReady: () => unmigrated.checkReady(),
           });
           const address = door.address();
