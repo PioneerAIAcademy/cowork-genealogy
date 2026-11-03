@@ -46,9 +46,9 @@ class Settings(BaseSettings):
     # create(), so a session keeps the levels it was born with and an existing project
     # never changes mid-life (read an old session's effort as its creation-time setting).
     #   ORCHESTRATOR_EFFORT       the main thread's level (`ClaudeAgentOptions.effort`).
-    #                             Alone, it also pins every helper to the level a helper
-    #                             runs at with nothing set (real_agent.HELPER_DEFAULT_EFFORT),
-    #                             so only the orchestrator moves.
+    #                             Alone, each helper runs at its own agent file's
+    #                             `effort:`, or real_agent.HELPER_DEFAULT_EFFORT when it
+    #                             names none, as in the eval harnesses.
     #   SUBAGENT_EFFORT           one level for every delegation.
     #   SUBAGENT_EFFORT_BY_AGENT  JSON {"agent-name": level}, overriding SUBAGENT_EFFORT.
     # The helper levels are written onto each Agent call by the PreToolUse hook (the call's

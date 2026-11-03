@@ -143,7 +143,7 @@ def test_build_options_sets_effort_only_when_asked(monkeypatch, tmp_path, capsys
     assert real_agent.build_options(tmp_path).effort is None
     monkeypatch.setenv("ORCHESTRATOR_EFFORT", "medium")
     assert real_agent.build_options(tmp_path).effort == "medium"
-    assert "effort requested: orchestrator=medium subagents=pinned high" in capsys.readouterr().err
+    assert "effort requested: orchestrator=medium subagents=agent file, else high" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize("level", ["low", "medium", "high", "xhigh", "max"])
@@ -230,10 +230,61 @@ def test_the_map_outranks_the_flat_level_and_the_operator_outranks_the_model(mon
     assert out["hookSpecificOutput"]["updatedInput"]["effort"] == "low"
 
 
-def test_orchestrator_alone_pins_helpers_to_their_default(monkeypatch):
-    monkeypatch.setenv("ORCHESTRATOR_EFFORT", "medium")
-    out = _hook({"subagent_type": "question-selection"})
-    assert out["hookSpecificOutput"]["updatedInput"]["effort"] == real_agent.HELPER_DEFAULT_EFFORT
+def _plugin(monkeypatch, tmp_path, **agents):
+    """A plugin dir whose agents/<name>.md carry the given frontmatter lines."""
+    (tmp_path / "agents").mkdir()
+    for name, fm in agents.items():
+        (tmp_path / "agents" / f"{name}.md").write_text(
+            f"---\nname: {name}\ndescription: x\n{fm}---\nbody\neffort: max\n", encoding="utf-8")
+    monkeypatch.setattr(real_agent, "_PLUGIN_DIR", str(tmp_path))
+
+
+def test_orchestrator_alone_spawns_each_agent_at_its_own_files_effort(monkeypatch, tmp_path):
+    _plugin(monkeypatch, tmp_path, tuned="model: m\neffort: medium\n", untuned="model: m\n",
+            quoted='effort: "low"  # swept\n')
+    monkeypatch.setenv("ORCHESTRATOR_EFFORT", "low")
+    assert _hook({"subagent_type": "tuned"})["hookSpecificOutput"]["updatedInput"]["effort"] == "medium"
+    assert real_agent.spawn_effort("Agent", {"subagent_type": f"{real_agent.PLUGIN_NAME}:tuned"}) == "medium"
+    assert real_agent.spawn_effort("Agent", {"subagent_type": "quoted"}) == "low"
+    for agent in ("untuned", "general-purpose", "../tuned", ""):
+        assert real_agent.spawn_effort("Agent", {"subagent_type": agent}) == real_agent.HELPER_DEFAULT_EFFORT
+
+
+def test_an_agent_files_bad_level_falls_back_rather_than_denying_the_spawn(monkeypatch, tmp_path):
+    _plugin(monkeypatch, tmp_path, typo="effort: medum\n")
+    monkeypatch.setenv("ORCHESTRATOR_EFFORT", "low")
+    assert real_agent.spawn_effort("Agent", {"subagent_type": "typo"}) == real_agent.HELPER_DEFAULT_EFFORT
+    assert any("typo.md declares effort 'medum'" in m for m in real_agent._effort_warned)
+
+
+def test_operator_helper_levels_still_outrank_the_agent_file(monkeypatch, tmp_path):
+    _plugin(monkeypatch, tmp_path, tuned="effort: medium\n")
+    monkeypatch.setenv("ORCHESTRATOR_EFFORT", "low")
+    monkeypatch.setenv("SUBAGENT_EFFORT", "xhigh")
+    assert real_agent.spawn_effort("Agent", {"subagent_type": "tuned"}) == "xhigh"
+    monkeypatch.setenv("SUBAGENT_EFFORT_BY_AGENT", '{"tuned": "max"}')
+    assert real_agent.spawn_effort("Agent", {"subagent_type": "tuned"}) == "max"
+    monkeypatch.delenv("ORCHESTRATOR_EFFORT")
+    monkeypatch.delenv("SUBAGENT_EFFORT")
+    monkeypatch.delenv("SUBAGENT_EFFORT_BY_AGENT")
+    assert real_agent.spawn_effort("Agent", {"subagent_type": "tuned"}) is None
+
+
+def test_every_shipped_agent_spawns_at_the_effort_the_harnesses_give_it(monkeypatch):
+    """The harnesses run each agent at its file's `effort:`, else `high`. The beta worker's
+    full frontmatter parser is the reference for what each file says."""
+    from proto.worker.plugin_agents import parse_frontmatter
+
+    monkeypatch.setattr(real_agent, "_PLUGIN_DIR", str(REPO / "packages/engine/plugin"))
+    monkeypatch.setenv("ORCHESTRATOR_EFFORT", "low")
+    agents = sorted((REPO / "packages/engine/plugin/agents").glob("*.md"))
+    declared = 0
+    for md in agents:
+        fm, _ = parse_frontmatter(md.read_text(encoding="utf-8"))
+        want = fm.get("effort") or real_agent.HELPER_DEFAULT_EFFORT
+        declared += bool(fm.get("effort"))
+        assert real_agent.spawn_effort("Agent", {"subagent_type": md.stem}) == want, md.name
+    assert declared and declared < len(agents)
 
 
 def test_the_hook_reads_the_setting_at_call_time_not_import(monkeypatch):

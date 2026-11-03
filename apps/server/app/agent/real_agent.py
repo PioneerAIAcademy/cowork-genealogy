@@ -37,6 +37,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import shutil
 import sys
 import urllib.request
@@ -427,8 +428,9 @@ def credential_read_denied(tool_name: str, tool_input) -> str | None:
 # SUBAGENT_EFFORT and SUBAGENT_EFFORT_BY_AGENT (JSON {agent: level}) are written into
 # each Agent/Task call's `effort` by `_pretool_hook`. The per-spawn field exists from
 # CLI 2.1.294; it outranks the agent definition's `effort:` and stops the CLI's
-# flag-driven lowering of an unpinned subagent, so setting the orchestrator alone
-# also pins every helper to HELPER_DEFAULT_EFFORT and only the main thread moves.
+# flag-driven lowering of an unpinned subagent. So with the orchestrator set alone, the
+# hook writes each agent's own `effort:` from its file, or HELPER_DEFAULT_EFFORT when
+# the file names none: what the eval harnesses run, and only the main thread moves.
 # Read on every call, never cached, so a probe or test that sets the variable after
 # import is honoured. `CLAUDE_CODE_EFFORT_LEVEL` is deliberately not the channel: it
 # outranks every pin and removes `effort` from the Agent tool's schema.
@@ -441,8 +443,8 @@ try:
 except Exception:  # noqa: BLE001 - mock mode runs without the SDK installed
     EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
 #: What a helper ran at on 2.1.294 with nothing set (`dev/probe_effort_capture.py`, arm
-#: `a-none`, 2026-10-20: `high`). Pinning to it keeps an orchestrator-only arm changing one
-#: thing. Re-measure when the CLI moves: 2.1.294 can lower an unpinned helper by remote flag.
+#: `a-none`, 2026-10-20: `high`), and so the level for an agent whose file names no effort,
+#: as in the harnesses. Re-measure when the CLI moves: 2.1.294 can lower an unpinned helper by remote flag.
 HELPER_DEFAULT_EFFORT = "high"
 
 
@@ -517,7 +519,36 @@ def spawn_effort(tool_name: str, tool_input, env=None) -> str | None:
     if subagent is not None:
         return subagent
     if orchestrator is not None:
-        return HELPER_DEFAULT_EFFORT
+        return agent_file_effort(bare) or HELPER_DEFAULT_EFFORT
+    return None
+
+
+_AGENT_NAME_RE = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
+def agent_file_effort(agent: str) -> str | None:
+    """The `effort:` a plugin agent's own file declares, or None when there is no such
+    file, it names no effort, or it names a level the SDK would refuse (the CLI denies a
+    delegation whose `effort` is outside `EffortLevel`)."""
+    if not _AGENT_NAME_RE.match(agent):
+        return None
+    try:
+        text = (Path(_PLUGIN_DIR) / "agents" / f"{agent}.md").read_text(encoding="utf-8")
+    except OSError:
+        return None
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return None
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        if line.startswith("effort:"):
+            value = line[len("effort:"):].split("#", 1)[0].strip().strip("'\"")
+            if value in EFFORT_LEVELS:
+                return value
+            _warn_once(f"[agent] {agent}.md declares effort {value!r}, not one of "
+                       f"{list(EFFORT_LEVELS)}; spawning it at {HELPER_DEFAULT_EFFORT}")
+            return None
     return None
 
 
@@ -987,7 +1018,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
     if orchestrator is not None:
         kwargs["effort"] = orchestrator
     _log(f"[agent] effort requested: orchestrator={orchestrator or 'cli-default'} "
-         f"subagents={subagent or ('pinned ' + HELPER_DEFAULT_EFFORT if orchestrator else 'unset')} "
+         f"subagents={subagent or ('agent file, else ' + HELPER_DEFAULT_EFFORT if orchestrator else 'unset')} "
          f"by_agent={json.dumps(by_agent, sort_keys=True)}")
     if by_agent:
         known = {p.stem for p in (Path(project_dir) / ".claude" / "agents").glob("*.md")}
