@@ -28,11 +28,56 @@
 #
 #   https://malachi.taild68f1b.ts.net/wiki        -> 127.0.0.1:8008  wiki-query-api
 #   https://malachi.taild68f1b.ts.net/pop-stats   -> 127.0.0.1:8005  pop-stats-api
-#   https://malachi.taild68f1b.ts.net:8443/       -> 127.0.0.1:8006  connector probe
+#   https://malachi.taild68f1b.ts.net/            -> 127.0.0.1:8006  (reserved)
 #
-# The first two are durable. The third is temporary -- the issue #3529 connector
-# probe, on its own port because connector sign-in needs the host root and /wiki
-# already occupies the 443 root. It is NOT applied by default; pass --with-probe.
+# The first two are durable. The third is a reserved slot, held for a test MCP
+# server not yet deployed. The #3529 connector probe occupied it until
+# 2026-11-03 and is retired; its own `:8443` mapping is gone (see RETIRED).
+#
+# THE RESERVED SLOT: WHY IT IS THE BARE ROOT
+#
+# `/` is a catch-all: every path not matched by a more specific mapping goes to
+# 8006. That looks untidy beside `--set-path=/mcp`, and is nonetheless the
+# correct shape for an MCP server, for the reason in 1. 2 is a measured trap.
+#
+# 1. An MCP server's sign-in does not live under /mcp. OAuth discovery is at
+#    host-root paths -- /.well-known/oauth-protected-resource,
+#    /.well-known/oauth-authorization-server -- plus, when the server is its
+#    own authorization server, /authorize and /token. A /mcp-only mapping
+#    routes none of them, so sign-in cannot complete.
+#
+# 2. `--set-path` strips the mount prefix before forwarding. Measured on this
+#    host, against a target carrying no path of its own:
+#        curl localhost:8005/openapi.json            -> 200  (the real route)
+#        curl localhost:8005/pop-stats/openapi.json  -> 404  (no such route)
+#        curl $HOST/pop-stats/openapi.json           -> 200  (works anyway)
+#    All three hold only if Tailscale removes `/pop-stats` and forwards
+#    `/openapi.json`. So `--set-path=/mcp` with a bare target delivers `/` to
+#    the server; put the path on the target (`http://127.0.0.1:8006/mcp`) to
+#    keep it, since the stripped remainder is appended to the target's own path
+#    (Tailscale's serve.go, via Go's documented SetURL behaviour -- read, not
+#    measured here). That is a trap, not a reason: 1 alone rules out /mcp.
+#
+# More specific paths still win, so /wiki and /pop-stats are unaffected by the
+# catch-all -- verified: both answer 200 with `/` mapped.
+#
+# CONSEQUENCE, worth knowing before binding that port: anything listening on
+# 127.0.0.1:8006 is published to the public internet at the host root the
+# moment it starts, with no further action and no warning. 8005 and 8008 are
+# occupied right beside it, so 8006 is a plausible port for an unrelated dev
+# process to grab. If the eventual test server wants isolation instead, give it
+# its own Funnel port (8443 or 10000) with a root mapping on that port, and set
+# the server's advertised public URL to include the port -- see RETIRED.
+#
+# RETIRED: the :8443 mapping
+#
+# The probe first ran at `…ts.net:8443/`, on the theory that a service needing
+# the host root could not share 443 with /wiki. That theory was wrong -- `/`
+# coexists with /wiki and /pop-stats fine. The port also caused a real failure:
+# the server advertises one public URL, and with that URL set to the 443 form,
+# a client arriving on :8443 sent `resource=…:8443/mcp` and was refused with
+# `invalid_target`. A dedicated port is viable, but only if the advertised URL
+# carries the port. Turned off 2026-11-03: `tailscale funnel --https=8443 off`.
 #
 # THE SERVICES BEHIND IT (not managed here)
 #
@@ -48,28 +93,27 @@
 # Both are Type=simple, Restart=always, RestartSec=3, After/Wants
 # network-online.target, running as the host user.
 #
-# The probe has deliberately NO unit: its OAuth tokens live in memory, so a
-# restart invalidates every issued token in a way a client cannot distinguish
-# from expiry. Restart=always would silently break the measurements it exists
-# to take. It is run in the foreground for as long as a test needs it.
+# Nothing occupies the reserved slot today. When the test MCP server lands,
+# note that the #3529 probe deliberately had no unit: its OAuth tokens lived in
+# memory, so a restart invalidated every issued token in a way a client cannot
+# distinguish from expiry, and Restart=always would have silently broken the
+# measurements it existed to take. Whether that applies to the real server
+# depends on where it keeps its tokens.
 #
 # A NOTE ON PORTS
 #
 # Funnel is only available on 443, 8443 and 10000 (`tailscale status --json`,
-# Self.Capabilities: "funnel-ports?ports=443,8443,10000"). That is why the two
-# durable services share 443 by path prefix rather than taking a port each, and
-# why a service needing the host root has to go to 8443.
+# Self.Capabilities: "funnel-ports?ports=443,8443,10000"). That is why the
+# services here share 443 by path prefix rather than taking a port each. A
+# service needing the host root does NOT have to take its own port -- the bare
+# `/` on 443 coexists with the prefixed mappings; see THE RESERVED SLOT above.
 #
 # USAGE
 #
-#   ./scripts/tailscale-services.sh status           show the live mappings
-#   ./scripts/tailscale-services.sh check            probe the durable two over HTTPS
-#   ./scripts/tailscale-services.sh check --with-probe   ... and the #3529 probe
-#   ./scripts/tailscale-services.sh apply            (re)create the durable two
-#   ./scripts/tailscale-services.sh apply --with-probe   ... and the probe on 8443
-#   ./scripts/tailscale-services.sh reset            remove ALL serve/funnel config
-#
-# Pass --with-probe only while the #3529 probe is running.
+#   ./scripts/tailscale-services.sh status   show the live mappings
+#   ./scripts/tailscale-services.sh check    probe the durable two and the empty slot
+#   ./scripts/tailscale-services.sh apply    (re)create all three mappings
+#   ./scripts/tailscale-services.sh reset    remove ALL serve/funnel config
 #
 # `apply` is idempotent: it sets the mapping to the stated target rather than
 # appending, so re-running changes nothing. It needs `tailscale` already logged
@@ -80,8 +124,9 @@ HOST_FQDN="malachi.taild68f1b.ts.net"
 
 WIKI_PORT=8008
 POP_STATS_PORT=8005
-PROBE_PORT=8006
-PROBE_PUBLIC_PORT=8443
+# The reserved slot's local port. Served at the bare `/` on 443, so whatever
+# binds it is public at the host root immediately.
+RESERVED_PORT=8006
 
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
@@ -97,8 +142,12 @@ cmd_status() {
 # Each service's cheapest unauthenticated proof of life. The two APIs have no
 # route at their own root, so a bare /wiki or /pop-stats answers 404 from the
 # app itself -- correct, but indistinguishable from a broken mapping. openapi.json
-# is a real route, so a 200 proves the whole path end to end. The probe answers
-# /livez, and its /mcp must answer 401: that is auth being enforced, not a fault.
+# is a real route, so a 200 proves the whole path end to end.
+#
+# The reserved slot must answer 502: nothing is meant to be listening on 8006.
+# 404 means the mapping is gone; anything else means a process bound 8006 and
+# is now public -- the hazard the header warns about, which nothing else
+# detects. When the test server lands, probe its liveness route instead.
 cmd_check() {
   local fail=0
   _probe() { # label expected url
@@ -117,26 +166,19 @@ cmd_check() {
   printf 'checking https://%s\n' "$HOST_FQDN"
   _probe "wiki"            200 "https://${HOST_FQDN}/wiki/openapi.json"
   _probe "pop-stats"       200 "https://${HOST_FQDN}/pop-stats/openapi.json"
-  # Only on request, mirroring `apply`. The probe is a measurement that ends, so
-  # a bare `check` has to keep meaning "are the two durable mappings up?" --
-  # otherwise, once #3529 is done, every run exits 1 and a genuine wiki or
-  # pop-stats outage is indistinguishable from the probe simply being gone.
-  if [[ "${1:-}" == "--with-probe" ]]; then
-    _probe "probe /livez"    200 "https://${HOST_FQDN}:${PROBE_PUBLIC_PORT}/livez"
-    _probe "probe /mcp (401)" 401 "https://${HOST_FQDN}:${PROBE_PUBLIC_PORT}/mcp"
-  fi
+  _probe "reserved / (502)" 502 "https://${HOST_FQDN}/"
   if (( fail )); then
     printf '\nA probe failure is either the mapping or the service behind it.\n'
     printf 'Check both: ./scripts/tailscale-services.sh status\n'
     printf '            systemctl status wiki-query-api pop-stats-api\n'
+    printf 'If the reserved slot did not answer 502, something bound 8006 and is\n'
+    printf 'now public at the host root: ss -ltnp | grep :8006\n'
     return 1
   fi
 }
 
 cmd_apply() {
   require_tailscale
-  local with_probe=0
-  [[ "${1:-}" == "--with-probe" ]] && with_probe=1
 
   # --bg detaches (the mapping outlives this shell and survives reboot, since
   # tailscaled holds it); --yes skips the interactive confirmation so the script
@@ -147,12 +189,11 @@ cmd_apply() {
   echo "serving /pop-stats -> 127.0.0.1:${POP_STATS_PORT}"
   tailscale funnel --bg --yes --set-path=/pop-stats "http://127.0.0.1:${POP_STATS_PORT}"
 
-  if (( with_probe )); then
-    echo "serving :${PROBE_PUBLIC_PORT}/ -> 127.0.0.1:${PROBE_PORT} (temporary, #3529)"
-    tailscale funnel --bg --yes --https="${PROBE_PUBLIC_PORT}" "http://127.0.0.1:${PROBE_PORT}"
-  else
-    echo "skipping the #3529 probe on :${PROBE_PUBLIC_PORT} (pass --with-probe to add it)"
-  fi
+  # The reserved slot. Applied unconditionally: it is part of the recorded
+  # configuration, and a bare `/` with nothing behind it answers 502 -- which
+  # leaks nothing and is the honest state of an unoccupied slot.
+  echo "serving / -> 127.0.0.1:${RESERVED_PORT} (reserved; 502 until something binds it)"
+  tailscale funnel --bg --yes "http://127.0.0.1:${RESERVED_PORT}"
 
   echo
   cmd_status
@@ -170,8 +211,8 @@ cmd_reset() {
 
 case "${1:-}" in
   status) cmd_status ;;
-  check)  shift; cmd_check "${1:-}" ;;
-  apply)  shift; cmd_apply "${1:-}" ;;
+  check)  cmd_check ;;
+  apply)  cmd_apply ;;
   reset)  cmd_reset ;;
   *)
     sed -n '/^# USAGE$/,/^set -euo/p' "$0" | sed 's/^# \{0,1\}//; $d'

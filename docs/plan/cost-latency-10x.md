@@ -342,18 +342,10 @@ the first time it is pulled.
 
 **Gating Wave 4 only:**
 
-- **~~Production cannot set effort.~~ Done in code (T4.1, 2026-10-20), off by default.**
-  `ORCHESTRATOR_EFFORT`, `SUBAGENT_EFFORT` and `SUBAGENT_EFFORT_BY_AGENT` on the control
-  plane (`config.Settings`) reach a sandbox at create through `sandbox.base.optional_agent_env`
-  (both `E2BProvider._agent_env` and `LocalProvider.ensure_server`, which also strips a host
-  value; `SandboxSpec` was not needed). `build_options` passes the orchestrator level as
-  `effort=`, and `_pretool_hook` writes the helper level onto each Agent call (CLI 2.1.294's
-  per-spawn `effort`). Measured locally on 2.1.294 (`dev/probe_effort_capture.py`): main
-  `medium` with the helper held at `high`; a per-agent `low` reaching `person-evidence`
-  under both its bare and namespaced names. The lead set the alpha's main thread to `low` on
-  2026-10-21 (`ORCHESTRATOR_EFFORT` in `deploy/fly.toml`), and fresh sandboxes picked it up:
-  the proxy logged 574 main-thread calls at `low` in the 14 days to 2026-10-25
-  (`make alpha-costs`). The helpers' level is still the lead's call.
+- **~~Production cannot set effort.~~ Done.** The main thread's model and effort are set in
+  `packages/engine/plugin/main-thread.json`, which the hosted alpha and beta and both
+  harnesses read and pass as `--model` / `--effort`; each agent's are in its own file. The
+  control-plane settings and per-spawn hook that came first (T4.1) are removed.
 - **`EFFORT_LEVEL` is not wired into `eval/RunE2E.bat`** — it threads `DENY_SHELL`
   and `DENY_PROJECT_READS` only, so the Windows genealogists cannot run an arm.
   **Wire it with a paired CI guard** (`check_added_runlogs_effort_high`, modelled on

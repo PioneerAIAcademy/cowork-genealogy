@@ -141,7 +141,7 @@ Test metadata.
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
 | `tags` | object | yes | See §4 |
-| `model.agent` | string | yes | Pinned agent model |
+| `model.agent` | string | no | Not read. The main thread runs `packages/engine/plugin/main-thread.json`'s model and effort, and each agent its own. Older fixtures keep the field because `fixture.json` is part of the grading digest; new fixtures omit it |
 | `model.judge` | string | yes | Pinned judge model |
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
@@ -729,7 +729,9 @@ the `max_cost_usd` note in §6 step 5.
      by §6.1.**
    - Real MCP server (not the mock used by unit evals). FS auth
      comes from `~/.familysearch-mcp/tokens.json` on the host.
-   - Models pinned per `fixture.json::model.agent`.
+   - The main thread runs `packages/engine/plugin/main-thread.json`'s model and
+     effort (`--agent-model` / `--effort-level` override them); each agent runs
+     its own file's.
 4. Harness monitors the SDK message stream and periodically reads
    `research.json` to detect the completion signal.
 5. Stops on whichever fires first:
@@ -2715,7 +2717,7 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
 | `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
-| `model.agent`, `blocked_tools` | no | as for autonomous fixtures (§3.1, §6.1) |
+| `blocked_tools` | no | as for autonomous fixtures (§6.1) |
 
 The loader refuses an unknown key (in `fixture.json` or a save alternative), a tool
 name that is not a bare name from `manifest.json` or a built-in, and a save list that

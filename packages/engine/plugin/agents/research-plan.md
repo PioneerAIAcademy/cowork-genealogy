@@ -16,6 +16,7 @@ description: >-
   a search comes back empty, to judge whether research is done ("are we done",
   "what's the next step" → research-exhaustiveness).
 model: claude-sonnet-4-6
+effort: high
 tools:
   - Read
   - mcp__genealogy__collections_search

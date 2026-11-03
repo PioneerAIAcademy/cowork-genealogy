@@ -23,7 +23,8 @@
     "place-search-schuylkill-by-name",
     "place-search-schuylkill-by-place",
     "external-links-search-schuylkill",
-    "collections-search-schuylkill"
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania"
   ],
   "judge_context": [
     "The URL must be built by build_external_search_url with site digital_newspaper_archive and the baseUrl the user supplied (genealogybank.com), not hand-composed and not redirected to a different site — that site has no fixed site-wide URL, so a caller-supplied baseUrl is the only way to reach it",

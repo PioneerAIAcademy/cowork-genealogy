@@ -16,6 +16,7 @@ description: >-
   extraction_append), build a timeline (use timeline), or write a conclusion (use
   proof-conclusion).
 model: claude-sonnet-4-6
+effort: high
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
