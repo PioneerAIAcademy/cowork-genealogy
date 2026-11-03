@@ -198,6 +198,30 @@ def test_an_e2e_run_is_a_job_run_unless_told_otherwise(tmp_path, monkeypatch):
     assert calls[1]["step_mode"] == "step"
 
 
+def test_run_e2e_test_defaults_to_a_job_run_too():
+    """A caller that skips the CLI gets the same default as `run_e2e`."""
+    import inspect
+
+    from e2e.orchestrator import run_e2e_test
+
+    params = inspect.signature(run_e2e_test).parameters
+    assert params["step_mode"].default == "job"
+    assert "resume_on_stall" not in params
+
+
+@pytest.mark.parametrize("flag", ["--resume-on-stall", "--no-resume-on-stall"])
+def test_the_resume_flag_is_gone(tmp_path, monkeypatch, flag):
+    """A step run ends on a stall rather than resuming, so the flag could never act."""
+    from tests.unit.test_e2e_tool_search_switch import _argv, _record_run
+
+    calls = _record_run(monkeypatch)
+    from e2e import run_e2e
+
+    with pytest.raises(SystemExit):
+        run_e2e.main(_argv(tmp_path, flag))
+    assert not calls
+
+
 def test_each_turn_runs_under_the_mode_of_the_message_that_started_it():
     boundary = orchestrator_boundary()
     assert _e2e.step_turn_mode(boundary, "job", _Turn(index=0, sent="Find her parents.")) == "job"
