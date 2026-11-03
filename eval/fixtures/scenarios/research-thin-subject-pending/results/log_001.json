@@ -17,6 +17,7 @@
     "returned": 1,
     "offset": 0,
     "hasMore": false,
+    "subjectTooThin": true,
     "results": [
       {
         "personId": "M9TB-7QX",

@@ -7,8 +7,9 @@
 - **Questions:** 1 — q_001 (`in_progress`).
 - **Plans:** 1 — pl_001 (`active`); pli_001 (1900 census, Bedford County) `in_progress`.
 - **Log:** 1 — log_001, `record_search`, `positive`, `results_ref: results/log_001.json`.
-- **Sidecar:** `results/log_001.json` — the search's payload, whose echoed `query` carries
-  `subjectId: "I1"` as `record_search` stages it, listing record M9TB-7QX.
+- **Sidecar:** `results/log_001.json` — the search's payload as `record_search` stages it:
+  the echoed `query` carries `subjectId: "I1"`, `subjectTooThin: true` records that I1 was
+  thin when the search ran, and the results list record M9TB-7QX.
 - **Sources / assertions / person evidence:** 0.
 - **GedcomX persons:** I1 (William Brown) — Birth `1872`, Virginia. No relationships.
 
