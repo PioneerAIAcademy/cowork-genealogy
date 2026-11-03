@@ -646,10 +646,6 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     hydrate: 2,
   }),
 
-  // Pure signal: no network, no token, no project state. The hosted PreToolUse hook
-  // ends the turn on its NAME before it executes, so this exercises the arm that
-  // runs only where no hook binds (Cowork, the e2e harness, the unit harness).
-
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },
   // Not a title: the summary lookup 404s and the article is found through search.

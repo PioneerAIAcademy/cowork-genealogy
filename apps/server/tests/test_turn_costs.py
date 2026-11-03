@@ -119,7 +119,7 @@ async def test_each_turn_reports_its_own_cost_not_the_session_total(tmp_path, mo
     monkeypatch.setattr(real_agent, "_post_turn_cost", capture)
     monkeypatch.setattr(real_agent, "_sandbox_build", lambda: "abc123+dirty")
     agent = real_agent.RealAgent(tmp_path)
-    agent._hook_counter = counter = {"delivered": False, "continuations": 0}
+    agent._hook_counter = counter = {"continuations": 0}
 
     def two_overridden_stops():
         counter["continuations"] += 2

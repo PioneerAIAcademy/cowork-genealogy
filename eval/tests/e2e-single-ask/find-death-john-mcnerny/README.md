@@ -16,7 +16,7 @@ Not graded: "no search for a record already attached to KP9Y-74L" (printed as `m
 PASS. Measured 2026-11-02:
 
 ```
-PASS find-death-john-mcnerny  expected=search-records  first=search-records  save=ok  delivered=yes  stop=clean
+PASS find-death-john-mcnerny  expected=search-records  first=search-records  save=ok  stop=clean
     units: research > search-records  extraction_append=1
 ```
 

@@ -56,7 +56,7 @@ The other three #2813 items are deliberately NOT here:
 
 - **Item 2** (end a bounded turn at its deliverable) **SHIPPED** in PR #3147, merged
   2026-10-05 as `39a1c7ac7`. The `delivered` exit, `research_delivered` and
-  `DELIVERY_GUIDANCE` are on `main`.
+  `DELIVERY_GUIDANCE` were on `main` until step mode phase 2 deleted them (PR #4148).
 - **Item 5** (save what the turn finds) is **dropped for THREE of its four clauses, which are
   already built elsewhere. The fourth is not built anywhere** — see below.
   `search-records` already owns this: it **holds `research_log_append`** in its own

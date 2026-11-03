@@ -23,7 +23,7 @@ row but will almost always fail `forbidden_tools`, since that agent searches wit
 PASS. Measured 2026-11-02:
 
 ```
-PASS death-attached-susan-cornwell  expected=none|search-records  first=none  save=ok  delivered=yes  stop=clean
+PASS death-attached-susan-cornwell  expected=none|search-records  first=none  save=ok  stop=clean
     units: research  extraction_append=0
 ```
 
