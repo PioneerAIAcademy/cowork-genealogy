@@ -1,0 +1,174 @@
+{
+  "run_log": "v42_2026-11-03_13-25-18.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It took \"Continue.\" as accepting the offer and went straight to record-structurer for hit 9. It didn't judge the hit again or re-run the review. The run ends at the stubbed hand-off by design, so a missing closing summary isn't a fault."
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments, then project_context on the right folder. Both are correct, and no call missed the fixture."
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "The hand-off is right and nothing it says is false, but the narration shows internal ids to the user: \"log_017\", \"record 3Q9M-CSK3-ZSLR\" and \"question q_002\". The test's notes say the narration must be \"free of internal ids shown to the user\". The judge didn't check that. Down one point, not two, because the reply is otherwise accurate."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "I checked each fact against the project. Thomas is Patrick's father, and Mary and James are also Thomas's children. There are 13 assertions across 9 source entries; the judge said 4 sources, but the reply says 9, which is right. The proof summary needs redoing, and the second question is resolved with no proof summary. \"Born around 1845 in Pennsylvania\" repeats the project's own objective, so it isn't a new claim."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One plain paragraph covering the goal, what's established, what's open (the proof summary to redo) and the next step, stated rather than asked. No ids, file names or tool names."
+    },
+    {
+      "test_id": "ut_research_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One project_context call on the right folder, which is all this test needs."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All 11 verdicts are relayed exactly as the stub returned them: Match, new info, not extracted. The test's notes say relaying the canned Match is correct. It judged nothing from the hit list itself and extracted nothing."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All 11 hits were evaluated in batches of at most 5, and it ends with \"Continue with extracting the 11 Matches?\". Unlike last run, it reported no results between batches, only progress lines (\"Now evaluating hits 6–10\"). The judge praised \"reporting between batches as required\", but the test says reporting between batches is the failure. The router didn't do it, so 3 stands for the right reason."
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments first (required, since no project was named), project_context on the right folder, sidecar_read on log_017's hit list, and research_delivered with an accurate summary. No fixture misses."
+    },
+    {
+      "test_id": "ut_research_hv3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three verdicts (hits 2, 4 and 7) are relayed exactly as the stub returned them: Match, new info, not extracted. The record titles it shows match log_008's hit list. It doesn't say from any title whether the hit is Iram. Hit 7 is a 1664 English will, and the test's notes say relaying its Match without comment is correct."
+    },
+    {
+      "test_id": "ut_research_hv3",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All three named hits were evaluated and listed, and it ends with \"Continue with extracting the 3 Matches?\". It extracted nothing in this turn, which is correct."
+    },
+    {
+      "test_id": "ut_research_hv3",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments first (required, since no project was named), project_context on the right folder, and sidecar_read on log_008's hit list. All correct, no fixture misses."
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The state it reports is right: 13 assertions for the first question and 5 for the second, none linked to a person yet, which I checked against the project. It hands them to person-evidence and never says which baptism (Hutton Rudby 1719 or Edinburgh 1716) is William's, which the test's notes require."
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It reports what's waiting for both questions, explains that linking has to come before the two baptisms can be weighed and a conclusion written, and offers \"Continue with linking the records?\"."
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Its first research_query passed a filters argument the tool doesn't have, and the tool refused it. It corrected the call straight away. One refused call that it then fixed is a 2 under the recovery policy. The judge counted three calls; there are four."
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The folder is empty and the message names no person, so it surveyed the tree. It relays the stubbed suggestions (Hannah Pruitt with no parents; Ruth Ashby and Frank Ellery with no children) without adding anything. The test's notes say relaying them is correct."
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two suggestions in plain language, each with its reason, then it stops for the researcher to pick one. It didn't start a project with a person nobody chose."
+    },
+    {
+      "test_id": "ut_research_tsv",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments, then project_context on the folder. Both are correct, and no call missed the fixture."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "This time the router catches the contradiction: if Robert died in 1861, h_002's claim that he married Margaret Rucker in 1870 \"would be impossible\". It sends that to hypothesis-tracking to register. The judge marked it down for \"perhaps a son or nephew\", but the reply offers that as \"one possibility\", and the test's notes say \"Inferences are fine when labelled as inferences to be tested.\" The judge also says it didn't consider that the 1870 groom might be a different Robert, yet that's exactly what the \"one possibility\" sentence says. It adds nothing to the reported record (death, county, year, birth year, parents)."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "project_list with no arguments, project_context on the right folder, and research_query on hypotheses and on conflicts. Four calls, all correct; the judge counted three."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "It asks for the death record's link or source before going further. The test's notes say asking for the record's identifier \"is a legitimate first step and counts as following the lead\"; the failure they describe is going straight to wrap-up on the existing question, which it doesn't do. The notes also say not to grade whether it ends by asking the researcher."
+    }
+  ]
+}
