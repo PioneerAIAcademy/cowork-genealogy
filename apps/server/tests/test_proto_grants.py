@@ -127,12 +127,13 @@ def test_lock_namespaces_are_distinct_int4():
     call casts the namespace, so the overload never depends on how the driver types a Python
     int (psycopg 3 sends these as smallint today; an int8 would find no (bigint, integer)
     form)."""
-    namespaces = (grants.ATTEMPT_LOCK_NS, grants.WRITE_LOCK_NS, grants.QUEUE_LOCK_NS)
+    namespaces = (grants.ATTEMPT_LOCK_NS, grants.WRITE_LOCK_NS, grants.QUEUE_LOCK_NS, grants.ADMISSION_LOCK_NS)
     for ns in namespaces:
         assert isinstance(ns, int) and 0 < ns < 2**31
     assert len(set(namespaces)) == len(namespaces)
     for sql in (grants.ATTEMPT_LOCK_SQL, grants.ATTEMPT_UNLOCK_SQL, grants.TRY_LOCK_SQL,
-                grants.WRITE_XACT_LOCK_SQL, grants.ATTEMPT_LOCK_HELD_SQL, grants.QUEUE_LOCK_SQL):
+                grants.WRITE_XACT_LOCK_SQL, grants.ATTEMPT_LOCK_HELD_SQL, grants.QUEUE_LOCK_SQL,
+                grants.ADMISSION_LOCK_SQL):
         assert "%s::int4" in sql, sql
     for sql in (grants.ATTEMPT_LOCK_SQL, grants.ATTEMPT_UNLOCK_SQL, grants.TRY_LOCK_SQL, grants.WRITE_XACT_LOCK_SQL,
                 grants.QUEUE_LOCK_SQL):
