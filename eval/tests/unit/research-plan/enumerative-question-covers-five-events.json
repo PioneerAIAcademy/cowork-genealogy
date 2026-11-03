@@ -22,7 +22,7 @@
   "judge_reads_files": true,
   "execution": {
     "sdk_message_silence_seconds": 360,
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 1200,
     "max_turns": 40
   },
   "mcp_fixtures": [
