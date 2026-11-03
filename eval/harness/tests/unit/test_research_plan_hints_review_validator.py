@@ -77,6 +77,11 @@ def test_hints_item_after_a_census_fails():
         _check([_item(1, "census"), _item(2, "fs_hints", HINTS)])
 
 
+def test_item_before_the_hints_item_fails():
+    with pytest.raises(AssertionError, match="sequence 0"):
+        _check([_item(1, "census", seq=0), _item(2, "fs_hints", HINTS, seq=1)])
+
+
 @pytest.mark.parametrize("seq", [2, 0])
 def test_only_hints_item_off_sequence_one_fails(seq):
     with pytest.raises(AssertionError, match=f"sequence {seq}"):
