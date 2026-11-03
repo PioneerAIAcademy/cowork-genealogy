@@ -1567,8 +1567,10 @@ describe("extraction_append: personId extracts and links a person's attachments"
       [S1, src("S2", "MZGS-1BW")],
       [{ id: "R5", type: "Couple", person1: "I3", person2: "I4", sources: [{ ref: "S2" }] }],
     );
-    await run("I1");
+    const r = await run("I1");
     expect(await linksTo("p_260900946")).toEqual([]);
+    expect(r.relationshipRecords).toBeUndefined();
+    expect(r.unselected).toBeUndefined();
   });
 
   it("(f) writes each household pair once when the person attaches two entries of one record", async () => {
