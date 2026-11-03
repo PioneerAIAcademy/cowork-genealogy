@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "init-project",
   "version": 20,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-11-03_11-03-18",
@@ -67,13 +67,13 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both tool calls passed correct arguments. project_context was called with the correct projectPath and returned the expected 'no_project' response (not a failure, but the guard condition). project_create was called with personId 'MKVT-7XR', objective 'Identify the origins of Thomas Doyle.', title 'Origins of Thomas Doyle', and subjectPersonIds ['MKVT-7XR'] \u2014 all matching the user message and expected behavior."
+            "rationale": "Both tool calls passed correct arguments. project_context was called with the correct projectPath and returned the expected 'no_project' response (not a failure, but the guard condition). project_create was called with personId 'MKVT-7XR', objective 'Identify the origins of Thomas Doyle.', title 'Origins of Thomas Doyle', and subjectPersonIds ['MKVT-7XR'] — all matching the user message and expected behavior."
           },
           {
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "All four persons have known fields populated (names, genders, dates, places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 throughout. Local I person IDs (I1\u2013I4) are used consistently. No placeholder stubs or fabricated names/dates/places. The tree faithfully represents the read data without invention."
+            "rationale": "All four persons have known fields populated (names, genders, dates, places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 throughout. Local I person IDs (I1–I4) are used consistently. No placeholder stubs or fabricated names/dates/places. The tree faithfully represents the read data without invention."
           },
           {
             "source": "rubric",
@@ -85,7 +85,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The objective was not defaulted \u2014 it was extracted from the user message and stored as stated. The skill did not ask the user about themselves (experience_level, narration_guidance, subscriptions, or site access), which is correct per the fixed profile rule. No profile fields were persisted in the response, as expected for init-project."
+            "rationale": "The objective was not defaulted — it was extracted from the user message and stored as stated. The skill did not ask the user about themselves (experience_level, narration_guidance, subscriptions, or site access), which is correct per the fixed profile rule. No profile fields were persisted in the response, as expected for init-project."
           },
           {
             "source": "rubric",
@@ -111,13 +111,13 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both tool calls passed correct arguments. project_context was called with the correct projectPath and returned the expected 'no_project' response (not a failure, but the guard condition). project_create was called with personId 'MKVT-7XR', objective 'Identify the origins of Thomas Doyle.', title 'Origins of Thomas Doyle', and subjectPersonIds ['MKVT-7XR'] \u2014 all matching the user message and expected behavior."
+            "rationale": "Both tool calls passed correct arguments. project_context was called with the correct projectPath and returned the expected 'no_project' response (not a failure, but the guard condition). project_create was called with personId 'MKVT-7XR', objective 'Identify the origins of Thomas Doyle.', title 'Origins of Thomas Doyle', and subjectPersonIds ['MKVT-7XR'] — all matching the user message and expected behavior."
           },
           {
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "All four persons have known fields populated (names, genders, dates, places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 throughout. Local I person IDs (I1\u2013I4) are used consistently. No placeholder stubs or fabricated names/dates/places. The tree faithfully represents the read data without invention."
+            "rationale": "All four persons have known fields populated (names, genders, dates, places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 throughout. Local I person IDs (I1–I4) are used consistently. No placeholder stubs or fabricated names/dates/places. The tree faithfully represents the read data without invention."
           },
           {
             "source": "rubric",
@@ -129,7 +129,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The objective was not defaulted \u2014 it was extracted from the user message and stored as stated. The skill did not ask the user about themselves (experience_level, narration_guidance, subscriptions, or site access), which is correct per the fixed profile rule. No profile fields were persisted in the response, as expected for init-project."
+            "rationale": "The objective was not defaulted — it was extracted from the user message and stored as stated. The skill did not ask the user about themselves (experience_level, narration_guidance, subscriptions, or site access), which is correct per the fixed profile rule. No profile fields were persisted in the response, as expected for init-project."
           },
           {
             "source": "rubric",
@@ -141,7 +141,7 @@
       },
       "totals": {
         "duration_ms": 113812.04786899616,
-        "duration_api_ms": 28756.0,
+        "duration_api_ms": 28756,
         "judge_duration_ms": 12953.185259975726,
         "wall_clock_ms": 201388.00048828125,
         "num_turns": 2,
@@ -164,7 +164,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 113812.04786899616,
-          "duration_api_ms": 28756.0,
+          "duration_api_ms": 28756,
           "num_turns": 2,
           "skill_attempts": 2,
           "input_tokens": 1507,
@@ -256,7 +256,7 @@
           },
           "skill_cost_usd": 0.1407228,
           "output": {
-            "text_response": "The project has been created successfully. Here's a summary of what the **init-project** agent did:\n\n**Project Created** at `/tmp/eval-ut_init_project_q7b-0-1-3mr6k3fi`\n\n- **Subject:** Thomas Doyle (born ~1830 in Ireland; died 1895, Northumberland County, Pennsylvania)\n- **FamilySearch ID:** MKVT-7XR\n- **Objective stored:** \"Identify the origins of Thomas Doyle.\"\n\n**Imported from FamilySearch:**\n- **4 persons:** Thomas Doyle, his wife Bridget, and their children John and Kate\n- **5 relationships** and **3 sources**\n\n**Key finding:** FamilySearch lists no parents for Thomas Doyle \u2014 consistent with the research need. No scanned documents or memories were available on his profile.\n\n**Next step:** Select the first research question \u2014 the specific fact to pursue first in identifying Thomas's Irish origins (county, parish, etc.). Would you like to proceed with question selection or planning?",
+            "text_response": "The project has been created successfully. Here's a summary of what the **init-project** agent did:\n\n**Project Created** at `/tmp/eval-ut_init_project_q7b-0-1-3mr6k3fi`\n\n- **Subject:** Thomas Doyle (born ~1830 in Ireland; died 1895, Northumberland County, Pennsylvania)\n- **FamilySearch ID:** MKVT-7XR\n- **Objective stored:** \"Identify the origins of Thomas Doyle.\"\n\n**Imported from FamilySearch:**\n- **4 persons:** Thomas Doyle, his wife Bridget, and their children John and Kate\n- **5 relationships** and **3 sources**\n\n**Key finding:** FamilySearch lists no parents for Thomas Doyle — consistent with the research need. No scanned documents or memories were available on his profile.\n\n**Next step:** Select the first research question — the specific fact to pursue first in identifying Thomas's Irish origins (county, parish, etc.). Would you like to proceed with question selection or planning?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -275,7 +275,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -971,13 +971,13 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both tool calls passed correct arguments. project_context was called with the correct projectPath and returned the expected 'no_project' response (not a failure, but the guard condition). project_create was called with personId 'MKVT-7XR', objective 'Identify the origins of Thomas Doyle.', title 'Origins of Thomas Doyle', and subjectPersonIds ['MKVT-7XR'] \u2014 all matching the user message and expected behavior."
+                "rationale": "Both tool calls passed correct arguments. project_context was called with the correct projectPath and returned the expected 'no_project' response (not a failure, but the guard condition). project_create was called with personId 'MKVT-7XR', objective 'Identify the origins of Thomas Doyle.', title 'Origins of Thomas Doyle', and subjectPersonIds ['MKVT-7XR'] — all matching the user message and expected behavior."
               },
               {
                 "source": "rubric",
                 "name": "Stub & tree fidelity",
                 "score": 3,
-                "rationale": "All four persons have known fields populated (names, genders, dates, places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 throughout. Local I person IDs (I1\u2013I4) are used consistently. No placeholder stubs or fabricated names/dates/places. The tree faithfully represents the read data without invention."
+                "rationale": "All four persons have known fields populated (names, genders, dates, places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 throughout. Local I person IDs (I1–I4) are used consistently. No placeholder stubs or fabricated names/dates/places. The tree faithfully represents the read data without invention."
               },
               {
                 "source": "rubric",
@@ -989,7 +989,7 @@
                 "source": "rubric",
                 "name": "Researcher profile",
                 "score": 3,
-                "rationale": "The objective was not defaulted \u2014 it was extracted from the user message and stored as stated. The skill did not ask the user about themselves (experience_level, narration_guidance, subscriptions, or site access), which is correct per the fixed profile rule. No profile fields were persisted in the response, as expected for init-project."
+                "rationale": "The objective was not defaulted — it was extracted from the user message and stored as stated. The skill did not ask the user about themselves (experience_level, narration_guidance, subscriptions, or site access), which is correct per the fixed profile rule. No profile fields were persisted in the response, as expected for init-project."
               },
               {
                 "source": "rubric",
@@ -1055,13 +1055,13 @@
             "source": "rubric",
             "name": "Project section seeding & schema validity",
             "score": 3,
-            "rationale": "research.json project block is complete: id (rp_001), objective (generic default verbatim), title ('Patrick Flynn general research' \u2014 concise, not a full sentence), subject_person_ids ([I1]), status (active), created and updated (both 2026-11-03). All required sections are present. The written file conforms to schema: correct types, no extraneous fields. The title is appropriately brief, not the full objective sentence verbatim."
+            "rationale": "research.json project block is complete: id (rp_001), objective (generic default verbatim), title ('Patrick Flynn general research' — concise, not a full sentence), subject_person_ids ([I1]), status (active), created and updated (both 2026-11-03). All required sections are present. The written file conforms to schema: correct types, no extraneous fields. The title is appropriately brief, not the full objective sentence verbatim."
           },
           {
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The skill did not ask about experience_level, narration_guidance, subscriptions, or site access \u2014 all correctly omitted per the fixed profile ruling. The objective was defaulted to the generic string (not hallucinated from the person's birthplace). The response asks 'Tell me what you most want to learn' in a fixed sentence, which the deterministic validator confirms. subscriptions is absent from the persisted profile (not written as ['none'] or []), which is correct since the user stated no access. The skill resisted the caller's emigration steer and stored the default."
+            "rationale": "The skill did not ask about experience_level, narration_guidance, subscriptions, or site access — all correctly omitted per the fixed profile ruling. The objective was defaulted to the generic string (not hallucinated from the person's birthplace). The response asks 'Tell me what you most want to learn' in a fixed sentence, which the deterministic validator confirms. subscriptions is absent from the persisted profile (not written as ['none'] or []), which is correct since the user stated no access. The skill resisted the caller's emigration steer and stored the default."
           },
           {
             "source": "rubric",
@@ -1099,13 +1099,13 @@
             "source": "rubric",
             "name": "Project section seeding & schema validity",
             "score": 3,
-            "rationale": "research.json project block is complete: id (rp_001), objective (generic default verbatim), title ('Patrick Flynn general research' \u2014 concise, not a full sentence), subject_person_ids ([I1]), status (active), created and updated (both 2026-11-03). All required sections are present. The written file conforms to schema: correct types, no extraneous fields. The title is appropriately brief, not the full objective sentence verbatim."
+            "rationale": "research.json project block is complete: id (rp_001), objective (generic default verbatim), title ('Patrick Flynn general research' — concise, not a full sentence), subject_person_ids ([I1]), status (active), created and updated (both 2026-11-03). All required sections are present. The written file conforms to schema: correct types, no extraneous fields. The title is appropriately brief, not the full objective sentence verbatim."
           },
           {
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The skill did not ask about experience_level, narration_guidance, subscriptions, or site access \u2014 all correctly omitted per the fixed profile ruling. The objective was defaulted to the generic string (not hallucinated from the person's birthplace). The response asks 'Tell me what you most want to learn' in a fixed sentence, which the deterministic validator confirms. subscriptions is absent from the persisted profile (not written as ['none'] or []), which is correct since the user stated no access. The skill resisted the caller's emigration steer and stored the default."
+            "rationale": "The skill did not ask about experience_level, narration_guidance, subscriptions, or site access — all correctly omitted per the fixed profile ruling. The objective was defaulted to the generic string (not hallucinated from the person's birthplace). The response asks 'Tell me what you most want to learn' in a fixed sentence, which the deterministic validator confirms. subscriptions is absent from the persisted profile (not written as ['none'] or []), which is correct since the user stated no access. The skill resisted the caller's emigration steer and stored the default."
           },
           {
             "source": "rubric",
@@ -1117,7 +1117,7 @@
       },
       "totals": {
         "duration_ms": 103854.26399001153,
-        "duration_api_ms": 27259.0,
+        "duration_api_ms": 27259,
         "judge_duration_ms": 14657.794131024275,
         "wall_clock_ms": 125812.22987174988,
         "num_turns": 2,
@@ -1140,7 +1140,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 103854.26399001153,
-          "duration_api_ms": 27259.0,
+          "duration_api_ms": 27259,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1512,
@@ -1232,7 +1232,7 @@
           },
           "skill_cost_usd": 0.14111890000000002,
           "output": {
-            "text_response": "The project for **Patrick Flynn** (FamilySearch ID: LZNY-BRF) has been created at `/tmp/eval-ut_init_project_k8d-0-0-9k7e5qnc`.\n\nHere's a summary of what was set up:\n\n- **Person imported:** Patrick Flynn \u2014 born circa 1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania.\n- **Relationships imported:** None \u2014 FamilySearch currently lists no relatives for him.\n- **Project objective:** General research \u2014 build out the tree and identify gaps and next steps. *(The emigration-focused objective was not set, as it was not stated by you directly.)*\n\n**Next step:** Let me know what you most want to learn about Patrick Flynn \u2014 for example, tracing his emigration from Ireland to Schuylkill County, identifying his parents, finding a marriage record, etc. \u2014 and the research will focus there.",
+            "text_response": "The project for **Patrick Flynn** (FamilySearch ID: LZNY-BRF) has been created at `/tmp/eval-ut_init_project_k8d-0-0-9k7e5qnc`.\n\nHere's a summary of what was set up:\n\n- **Person imported:** Patrick Flynn — born circa 1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania.\n- **Relationships imported:** None — FamilySearch currently lists no relatives for him.\n- **Project objective:** General research — build out the tree and identify gaps and next steps. *(The emigration-focused objective was not set, as it was not stated by you directly.)*\n\n**Next step:** Let me know what you most want to learn about Patrick Flynn — for example, tracing his emigration from Ireland to Schuylkill County, identifying his parents, finding a marriage record, etc. — and the research will focus there.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1251,7 +1251,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -1731,13 +1731,13 @@
                 "source": "rubric",
                 "name": "Project section seeding & schema validity",
                 "score": 3,
-                "rationale": "research.json project block is complete: id (rp_001), objective (generic default verbatim), title ('Patrick Flynn general research' \u2014 concise, not a full sentence), subject_person_ids ([I1]), status (active), created and updated (both 2026-11-03). All required sections are present. The written file conforms to schema: correct types, no extraneous fields. The title is appropriately brief, not the full objective sentence verbatim."
+                "rationale": "research.json project block is complete: id (rp_001), objective (generic default verbatim), title ('Patrick Flynn general research' — concise, not a full sentence), subject_person_ids ([I1]), status (active), created and updated (both 2026-11-03). All required sections are present. The written file conforms to schema: correct types, no extraneous fields. The title is appropriately brief, not the full objective sentence verbatim."
               },
               {
                 "source": "rubric",
                 "name": "Researcher profile",
                 "score": 3,
-                "rationale": "The skill did not ask about experience_level, narration_guidance, subscriptions, or site access \u2014 all correctly omitted per the fixed profile ruling. The objective was defaulted to the generic string (not hallucinated from the person's birthplace). The response asks 'Tell me what you most want to learn' in a fixed sentence, which the deterministic validator confirms. subscriptions is absent from the persisted profile (not written as ['none'] or []), which is correct since the user stated no access. The skill resisted the caller's emigration steer and stored the default."
+                "rationale": "The skill did not ask about experience_level, narration_guidance, subscriptions, or site access — all correctly omitted per the fixed profile ruling. The objective was defaulted to the generic string (not hallucinated from the person's birthplace). The response asks 'Tell me what you most want to learn' in a fixed sentence, which the deterministic validator confirms. subscriptions is absent from the persisted profile (not written as ['none'] or []), which is correct since the user stated no access. The skill resisted the caller's emigration steer and stored the default."
               },
               {
                 "source": "rubric",
@@ -1779,7 +1779,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly imported Patrick Flynn (LZNY-BRF) and built a complete tree with all known facts from FamilySearch: birth (~1845, Ireland) and death (1908, Schuylkill County, Pennsylvania). All facts are sourced to S1 at quality 1. The objective was preserved as stated by the user ('Re-derive his death details from records for Patrick Flynn'), not defaulted. The skill correctly understood that the complete tree\u2014including the death fact\u2014must be built now, with forgetting as a separate later step. No fabrication or unsupported claims."
+            "rationale": "The skill correctly imported Patrick Flynn (LZNY-BRF) and built a complete tree with all known facts from FamilySearch: birth (~1845, Ireland) and death (1908, Schuylkill County, Pennsylvania). All facts are sourced to S1 at quality 1. The objective was preserved as stated by the user ('Re-derive his death details from records for Patrick Flynn'), not defaulted. The skill correctly understood that the complete tree—including the death fact—must be built now, with forgetting as a separate later step. No fabrication or unsupported claims."
           },
           {
             "source": "base",
@@ -1809,7 +1809,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The objective was not defaulted\u2014it was preserved exactly as the user stated it ('Re-derive his death details from records for Patrick Flynn'). The skill did not ask for or store experience_level, narration_guidance, or subscriptions, which is correct: the per-test context and lead rulings indicate these are fixed defaults (novice, house-style string) never asked and never persisted from user input. No profile fields were invented or hallucinated."
+            "rationale": "The objective was not defaulted—it was preserved exactly as the user stated it ('Re-derive his death details from records for Patrick Flynn'). The skill did not ask for or store experience_level, narration_guidance, or subscriptions, which is correct: the per-test context and lead rulings indicate these are fixed defaults (novice, house-style string) never asked and never persisted from user input. No profile fields were invented or hallucinated."
           },
           {
             "source": "rubric",
@@ -1823,7 +1823,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly imported Patrick Flynn (LZNY-BRF) and built a complete tree with all known facts from FamilySearch: birth (~1845, Ireland) and death (1908, Schuylkill County, Pennsylvania). All facts are sourced to S1 at quality 1. The objective was preserved as stated by the user ('Re-derive his death details from records for Patrick Flynn'), not defaulted. The skill correctly understood that the complete tree\u2014including the death fact\u2014must be built now, with forgetting as a separate later step. No fabrication or unsupported claims."
+            "rationale": "The skill correctly imported Patrick Flynn (LZNY-BRF) and built a complete tree with all known facts from FamilySearch: birth (~1845, Ireland) and death (1908, Schuylkill County, Pennsylvania). All facts are sourced to S1 at quality 1. The objective was preserved as stated by the user ('Re-derive his death details from records for Patrick Flynn'), not defaulted. The skill correctly understood that the complete tree—including the death fact—must be built now, with forgetting as a separate later step. No fabrication or unsupported claims."
           },
           {
             "source": "base",
@@ -1853,7 +1853,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The objective was not defaulted\u2014it was preserved exactly as the user stated it ('Re-derive his death details from records for Patrick Flynn'). The skill did not ask for or store experience_level, narration_guidance, or subscriptions, which is correct: the per-test context and lead rulings indicate these are fixed defaults (novice, house-style string) never asked and never persisted from user input. No profile fields were invented or hallucinated."
+            "rationale": "The objective was not defaulted—it was preserved exactly as the user stated it ('Re-derive his death details from records for Patrick Flynn'). The skill did not ask for or store experience_level, narration_guidance, or subscriptions, which is correct: the per-test context and lead rulings indicate these are fixed defaults (novice, house-style string) never asked and never persisted from user input. No profile fields were invented or hallucinated."
           },
           {
             "source": "rubric",
@@ -1865,7 +1865,7 @@
       },
       "totals": {
         "duration_ms": 128794.87407501438,
-        "duration_api_ms": 36594.0,
+        "duration_api_ms": 36594,
         "judge_duration_ms": 12453.904841997428,
         "wall_clock_ms": 142900.38347244263,
         "num_turns": 2,
@@ -1888,7 +1888,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 128794.87407501438,
-          "duration_api_ms": 36594.0,
+          "duration_api_ms": 36594,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1516,
@@ -1980,7 +1980,7 @@
           },
           "skill_cost_usd": 0.1419367,
           "output": {
-            "text_response": "The project for **Patrick Flynn (LZNY-BRF)** is now set up at `/tmp/eval-ut_init_project_011-0-0-4e3rxm75`.\n\nHere's what was done:\n\n- **1 person imported** into `tree.gedcomx.json`; no relatives were found on FamilySearch, so he stands alone.\n- **1 source** was attached from FamilySearch.\n- **Objective stored**: *\"Re-derive his death details from records for Patrick Flynn.\"*\n- FamilySearch currently records his death as **1908 in Schuylkill County, Pennsylvania** \u2014 that information is still in the tree intentionally; it will be hidden when you run the forget-and-rederive step.\n\n**Next step:** Run the forgetting step to hide/clear the death details from the tree, then kick off the first research question to re-derive them from records.",
+            "text_response": "The project for **Patrick Flynn (LZNY-BRF)** is now set up at `/tmp/eval-ut_init_project_011-0-0-4e3rxm75`.\n\nHere's what was done:\n\n- **1 person imported** into `tree.gedcomx.json`; no relatives were found on FamilySearch, so he stands alone.\n- **1 source** was attached from FamilySearch.\n- **Objective stored**: *\"Re-derive his death details from records for Patrick Flynn.\"*\n- FamilySearch currently records his death as **1908 in Schuylkill County, Pennsylvania** — that information is still in the tree intentionally; it will be hidden when you run the forget-and-rederive step.\n\n**Next step:** Run the forgetting step to hide/clear the death details from the tree, then kick off the first research question to re-derive them from records.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1999,7 +1999,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -2064,7 +2064,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Init genealogy project for Patrick Flynn",
-                  "prompt": "Set up a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF, so I can run a forget-and-rederive exercise on his death \u2014 I want to test whether you can re-derive his death details from records. Get the project set up the right way for that exercise.\n\nprojectPath: /tmp/eval-ut_init_project_011-0-0-4e3rxm75",
+                  "prompt": "Set up a new research project for Patrick Flynn, FamilySearch ID LZNY-BRF, so I can run a forget-and-rederive exercise on his death — I want to test whether you can re-derive his death details from records. Get the project set up the right way for that exercise.\n\nprojectPath: /tmp/eval-ut_init_project_011-0-0-4e3rxm75",
                   "subagent_type": "init-project",
                   "run_in_background": "False"
                 }
@@ -2462,7 +2462,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly imported Patrick Flynn (LZNY-BRF) and built a complete tree with all known facts from FamilySearch: birth (~1845, Ireland) and death (1908, Schuylkill County, Pennsylvania). All facts are sourced to S1 at quality 1. The objective was preserved as stated by the user ('Re-derive his death details from records for Patrick Flynn'), not defaulted. The skill correctly understood that the complete tree\u2014including the death fact\u2014must be built now, with forgetting as a separate later step. No fabrication or unsupported claims."
+                "rationale": "The skill correctly imported Patrick Flynn (LZNY-BRF) and built a complete tree with all known facts from FamilySearch: birth (~1845, Ireland) and death (1908, Schuylkill County, Pennsylvania). All facts are sourced to S1 at quality 1. The objective was preserved as stated by the user ('Re-derive his death details from records for Patrick Flynn'), not defaulted. The skill correctly understood that the complete tree—including the death fact—must be built now, with forgetting as a separate later step. No fabrication or unsupported claims."
               },
               {
                 "source": "base",
@@ -2492,7 +2492,7 @@
                 "source": "rubric",
                 "name": "Researcher profile",
                 "score": 3,
-                "rationale": "The objective was not defaulted\u2014it was preserved exactly as the user stated it ('Re-derive his death details from records for Patrick Flynn'). The skill did not ask for or store experience_level, narration_guidance, or subscriptions, which is correct: the per-test context and lead rulings indicate these are fixed defaults (novice, house-style string) never asked and never persisted from user input. No profile fields were invented or hallucinated."
+                "rationale": "The objective was not defaulted—it was preserved exactly as the user stated it ('Re-derive his death details from records for Patrick Flynn'). The skill did not ask for or store experience_level, narration_guidance, or subscriptions, which is correct: the per-test context and lead rulings indicate these are fixed defaults (novice, house-style string) never asked and never persisted from user input. No profile fields were invented or hallucinated."
               },
               {
                 "source": "rubric",
@@ -2534,7 +2534,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly created the project with Patrick Flynn from FamilySearch (LZNY-BRF), accurately capturing his birth (~1845, Ireland) and death (1908, Schuylkill County, PA) facts. The objective was not defaulted\u2014it was provided by the user. The skill correctly did not record the volunteered death certificate or aunt's family history as sources, as instructed. All persisted facts match the tool response and fixture expectations."
+            "rationale": "The skill correctly created the project with Patrick Flynn from FamilySearch (LZNY-BRF), accurately capturing his birth (~1845, Ireland) and death (1908, Schuylkill County, PA) facts. The objective was not defaulted—it was provided by the user. The skill correctly did not record the volunteered death certificate or aunt's family history as sources, as instructed. All persisted facts match the tool response and fixture expectations."
           },
           {
             "source": "base",
@@ -2578,7 +2578,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly created the project with Patrick Flynn from FamilySearch (LZNY-BRF), accurately capturing his birth (~1845, Ireland) and death (1908, Schuylkill County, PA) facts. The objective was not defaulted\u2014it was provided by the user. The skill correctly did not record the volunteered death certificate or aunt's family history as sources, as instructed. All persisted facts match the tool response and fixture expectations."
+            "rationale": "The skill correctly created the project with Patrick Flynn from FamilySearch (LZNY-BRF), accurately capturing his birth (~1845, Ireland) and death (1908, Schuylkill County, PA) facts. The objective was not defaulted—it was provided by the user. The skill correctly did not record the volunteered death certificate or aunt's family history as sources, as instructed. All persisted facts match the tool response and fixture expectations."
           },
           {
             "source": "base",
@@ -2620,7 +2620,7 @@
       },
       "totals": {
         "duration_ms": 103296.42899899045,
-        "duration_api_ms": 25377.0,
+        "duration_api_ms": 25377,
         "judge_duration_ms": 12599.500554002589,
         "wall_clock_ms": 117933.52723121643,
         "num_turns": 2,
@@ -2643,7 +2643,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 103296.42899899045,
-          "duration_api_ms": 25377.0,
+          "duration_api_ms": 25377,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1530,
@@ -2735,7 +2735,7 @@
           },
           "skill_cost_usd": 0.14062219999999997,
           "output": {
-            "text_response": "The project has been created. Here's a summary of what was set up:\n\n**Project created** at `/tmp/eval-ut_init_project_005-0-0-geibnaud`\n\n- **Subject:** Patrick Flynn (FamilySearch ID: LZNY-BRF)\n- **Known details:** Born ~1845 in Ireland; died 1908 in Schuylkill County, Pennsylvania\n- **Objective:** Identify the parents of Patrick Flynn\n- **Tree imported:** Patrick Flynn as a single person \u2014 FamilySearch shows no parents, spouse, children, or siblings on file\n\n**Your two holdings were noted but not yet recorded:**\n- His **death certificate** (which you're confident about) \u2014 available to bring in as a source\n- Your **aunt's typed family history** (uncertainty noted) \u2014 also available to add later\n\nThe next step would be to define the first research question and build a search plan. Would you like to proceed with that, or start by bringing in one of those sources you already have?",
+            "text_response": "The project has been created. Here's a summary of what was set up:\n\n**Project created** at `/tmp/eval-ut_init_project_005-0-0-geibnaud`\n\n- **Subject:** Patrick Flynn (FamilySearch ID: LZNY-BRF)\n- **Known details:** Born ~1845 in Ireland; died 1908 in Schuylkill County, Pennsylvania\n- **Objective:** Identify the parents of Patrick Flynn\n- **Tree imported:** Patrick Flynn as a single person — FamilySearch shows no parents, spouse, children, or siblings on file\n\n**Your two holdings were noted but not yet recorded:**\n- His **death certificate** (which you're confident about) — available to bring in as a source\n- Your **aunt's typed family history** (uncertainty noted) — also available to add later\n\nThe next step would be to define the first research question and build a search plan. Would you like to proceed with that, or start by bringing in one of those sources you already have?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2754,7 +2754,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -2819,7 +2819,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Initialize genealogy project for Patrick Flynn",
-                  "prompt": "init-project: Start a new research project to identify the parents of Patrick Flynn. His FamilySearch person ID is LZNY-BRF. A few things I already have on hand: his death certificate, which I'm confident about, and my aunt's typed family history that mentions his parents \u2014 though I'm not sure how accurate that one is.\n\nprojectPath: /tmp/eval-ut_init_project_005-0-0-geibnaud",
+                  "prompt": "init-project: Start a new research project to identify the parents of Patrick Flynn. His FamilySearch person ID is LZNY-BRF. A few things I already have on hand: his death certificate, which I'm confident about, and my aunt's typed family history that mentions his parents — though I'm not sure how accurate that one is.\n\nprojectPath: /tmp/eval-ut_init_project_005-0-0-geibnaud",
                   "subagent_type": "init-project",
                   "run_in_background": "False"
                 }
@@ -3210,7 +3210,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly created the project with Patrick Flynn from FamilySearch (LZNY-BRF), accurately capturing his birth (~1845, Ireland) and death (1908, Schuylkill County, PA) facts. The objective was not defaulted\u2014it was provided by the user. The skill correctly did not record the volunteered death certificate or aunt's family history as sources, as instructed. All persisted facts match the tool response and fixture expectations."
+                "rationale": "The skill correctly created the project with Patrick Flynn from FamilySearch (LZNY-BRF), accurately capturing his birth (~1845, Ireland) and death (1908, Schuylkill County, PA) facts. The objective was not defaulted—it was provided by the user. The skill correctly did not record the volunteered death certificate or aunt's family history as sources, as instructed. All persisted facts match the tool response and fixture expectations."
               },
               {
                 "source": "base",
@@ -3280,7 +3280,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that a project already exists and declined to initialize a new one. The response accurately reflects the project state: objective (identify Patrick Flynn's parents), existing persons (Patrick, Thomas, Mary, James), open questions (q_001 in progress, q_002 resolved), and unworked sources (src_005\u2013src_009). The claim that 'a written conclusion exists for the parentage question, but the question is still marked in progress' is supported by the tool response showing q_001 state as 'concluded' but storedStatus as 'in_progress' with nextStep 're-conclude ps_001'. All factual assertions are grounded in the project_context response."
+            "rationale": "Claude correctly identified that a project already exists and declined to initialize a new one. The response accurately reflects the project state: objective (identify Patrick Flynn's parents), existing persons (Patrick, Thomas, Mary, James), open questions (q_001 in progress, q_002 resolved), and unworked sources (src_005–src_009). The claim that 'a written conclusion exists for the parentage question, but the question is still marked in progress' is supported by the tool response showing q_001 state as 'concluded' but storedStatus as 'in_progress' with nextStep 're-conclude ps_001'. All factual assertions are grounded in the project_context response."
           },
           {
             "source": "base",
@@ -3300,7 +3300,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that a project already exists and declined to initialize a new one. The response accurately reflects the project state: objective (identify Patrick Flynn's parents), existing persons (Patrick, Thomas, Mary, James), open questions (q_001 in progress, q_002 resolved), and unworked sources (src_005\u2013src_009). The claim that 'a written conclusion exists for the parentage question, but the question is still marked in progress' is supported by the tool response showing q_001 state as 'concluded' but storedStatus as 'in_progress' with nextStep 're-conclude ps_001'. All factual assertions are grounded in the project_context response."
+            "rationale": "Claude correctly identified that a project already exists and declined to initialize a new one. The response accurately reflects the project state: objective (identify Patrick Flynn's parents), existing persons (Patrick, Thomas, Mary, James), open questions (q_001 in progress, q_002 resolved), and unworked sources (src_005–src_009). The claim that 'a written conclusion exists for the parentage question, but the question is still marked in progress' is supported by the tool response showing q_001 state as 'concluded' but storedStatus as 'in_progress' with nextStep 're-conclude ps_001'. All factual assertions are grounded in the project_context response."
           },
           {
             "source": "base",
@@ -3318,7 +3318,7 @@
       },
       "totals": {
         "duration_ms": 86354.8565589881,
-        "duration_api_ms": 28600.0,
+        "duration_api_ms": 28600,
         "judge_duration_ms": 7024.859016994014,
         "wall_clock_ms": 100774.28841590881,
         "num_turns": 2,
@@ -3341,7 +3341,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 86354.8565589881,
-          "duration_api_ms": 28600.0,
+          "duration_api_ms": 28600,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1446,
@@ -3430,7 +3430,7 @@
           },
           "skill_cost_usd": 0.1366028,
           "output": {
-            "text_response": "A project already exists in that folder, so the init-project agent did not start a new one. Here's the summary of where things stand:\n\n**Project:** Identify the parents of Patrick Flynn, born ~1845 in Pennsylvania, died 1908 in Schuylkill County.\n\n**Current tree state:**\n- Thomas Flynn is recorded as his father, with Mary and James Flynn as siblings.\n- No mother or spouse is recorded for Patrick.\n- Thomas Flynn has no recorded parents.\n\n**Research status:**\n- A parentage question exists but is still marked *in progress* \u2014 a written conclusion exists but needs to be redone.\n- A second question is marked resolved but has no written conclusion behind it.\n- Several sources are listed with no records extracted from them yet.\n\n**Recommended next steps:**\n1. Redo the proof conclusion on Patrick's parentage.\n2. Then select the next research question, likely focused on identifying his mother.\n\nWould you like to proceed with redoing the conclusion, choosing the next question, or something else?",
+            "text_response": "A project already exists in that folder, so the init-project agent did not start a new one. Here's the summary of where things stand:\n\n**Project:** Identify the parents of Patrick Flynn, born ~1845 in Pennsylvania, died 1908 in Schuylkill County.\n\n**Current tree state:**\n- Thomas Flynn is recorded as his father, with Mary and James Flynn as siblings.\n- No mother or spouse is recorded for Patrick.\n- Thomas Flynn has no recorded parents.\n\n**Research status:**\n- A parentage question exists but is still marked *in progress* — a written conclusion exists but needs to be redone.\n- A second question is marked resolved but has no written conclusion behind it.\n- Several sources are listed with no records extracted from them yet.\n\n**Recommended next steps:**\n1. Redo the proof conclusion on Patrick's parentage.\n2. Then select the next research question, likely focused on identifying his mother.\n\nWould you like to proceed with redoing the conclusion, choosing the next question, or something else?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3465,7 +3465,7 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_001",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -3474,7 +3474,7 @@
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved",
                       "unregisteredDisagreements": [],
@@ -3638,7 +3638,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Init genealogy research project",
-                  "prompt": "Start research on this project \u2014 where do things stand and what should I work on next?\n\nprojectPath: /tmp/eval-ut_init_project_009-0-0-v3olhntu",
+                  "prompt": "Start research on this project — where do things stand and what should I work on next?\n\nprojectPath: /tmp/eval-ut_init_project_009-0-0-v3olhntu",
                   "subagent_type": "init-project"
                 }
               }
@@ -3646,7 +3646,7 @@
             "agent_returns": [
               {
                 "subagent_type": "init-project",
-                "text": "A project already exists here, so I did not start a new one.\n\nHand-back: question-selection \u2014 a project already exists here\n\nThis folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question.\n\n---\n\nThe project's objective is to identify the parents of Patrick Flynn, born around 1845 in Pennsylvania and died in 1908 in Schuylkill County. The tree names Thomas Flynn as his father, with Mary and James Flynn as siblings. It has no mother and no spouse for Patrick, and Thomas has no recorded parents. A written conclusion exists for the parentage question, but the question is still marked in progress and the conclusion needs to be redone. A second question is marked resolved but has no written conclusion behind it. Several sources are listed with no records extracted from them yet. The next step is to redo the conclusion on Patrick's parentage and then choose the next research question, starting with his mother."
+                "text": "A project already exists here, so I did not start a new one.\n\nHand-back: question-selection — a project already exists here\n\nThis folder already holds a research project, so I did not start a new one. I can review where it stands or choose the next research question.\n\n---\n\nThe project's objective is to identify the parents of Patrick Flynn, born around 1845 in Pennsylvania and died in 1908 in Schuylkill County. The tree names Thomas Flynn as his father, with Mary and James Flynn as siblings. It has no mother and no spouse for Patrick, and Thomas has no recorded parents. A written conclusion exists for the parentage question, but the question is still marked in progress and the conclusion needs to be redone. A second question is marked resolved but has no written conclusion behind it. Several sources are listed with no records extracted from them yet. The next step is to redo the conclusion on Patrick's parentage and then choose the next research question, starting with his mother."
               }
             ],
             "warnings": [
@@ -3669,7 +3669,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -3735,7 +3735,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3771,7 +3771,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3789,13 +3789,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -3939,7 +3939,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that a project already exists and declined to initialize a new one. The response accurately reflects the project state: objective (identify Patrick Flynn's parents), existing persons (Patrick, Thomas, Mary, James), open questions (q_001 in progress, q_002 resolved), and unworked sources (src_005\u2013src_009). The claim that 'a written conclusion exists for the parentage question, but the question is still marked in progress' is supported by the tool response showing q_001 state as 'concluded' but storedStatus as 'in_progress' with nextStep 're-conclude ps_001'. All factual assertions are grounded in the project_context response."
+                "rationale": "Claude correctly identified that a project already exists and declined to initialize a new one. The response accurately reflects the project state: objective (identify Patrick Flynn's parents), existing persons (Patrick, Thomas, Mary, James), open questions (q_001 in progress, q_002 resolved), and unworked sources (src_005–src_009). The claim that 'a written conclusion exists for the parentage question, but the question is still marked in progress' is supported by the tool response showing q_001 state as 'concluded' but storedStatus as 'in_progress' with nextStep 're-conclude ps_001'. All factual assertions are grounded in the project_context response."
               },
               {
                 "source": "base",
@@ -4071,7 +4071,7 @@
       },
       "totals": {
         "duration_ms": 69291.95409099339,
-        "duration_api_ms": 23239.0,
+        "duration_api_ms": 23239,
         "judge_duration_ms": 9455.010579986265,
         "wall_clock_ms": 79374.7866153717,
         "num_turns": 2,
@@ -4094,7 +4094,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 69291.95409099339,
-          "duration_api_ms": 23239.0,
+          "duration_api_ms": 23239,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1500,
@@ -4183,7 +4183,7 @@
           },
           "skill_cost_usd": 0.1314101,
           "output": {
-            "text_response": "No project was created because a **FamilySearch person ID** is required to get started. Searching by name alone isn't supported for project initialization.\n\nTo proceed, please provide Patrick Flynn's FamilySearch person ID \u2014 it's a short alphanumeric code like **KWCJ-RN4** that appears on his person page in the FamilySearch tree at [FamilySearch.org](https://www.familysearch.org).\n\nOnce you have it, share it here and the project will be set up right away with the objective of finding his parents.",
+            "text_response": "No project was created because a **FamilySearch person ID** is required to get started. Searching by name alone isn't supported for project initialization.\n\nTo proceed, please provide Patrick Flynn's FamilySearch person ID — it's a short alphanumeric code like **KWCJ-RN4** that appears on his person page in the FamilySearch tree at [FamilySearch.org](https://www.familysearch.org).\n\nOnce you have it, share it here and the project will be set up right away with the objective of finding his parents.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4202,7 +4202,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -4593,13 +4593,13 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP calls passed correct arguments. The project_context call correctly checked the empty folder (returned no_project as expected, not a failure). The project_create call passed personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] \u2014 all matching the fixture's expected shape. No extraneous or incorrect arguments."
+            "rationale": "Both MCP calls passed correct arguments. The project_context call correctly checked the empty folder (returned no_project as expected, not a failure). The project_create call passed personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] — all matching the fixture's expected shape. No extraneous or incorrect arguments."
           },
           {
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "All 6 persons carry only known fields (name, gender, birth/death facts with dates and places); unknown fields are omitted. FamilySearch-derived facts are sourced to S1 at quality 1. Local I IDs (I1\u2013I6) are used throughout, not FamilySearch PIDs. The 7 relationships (1 Couple, 6 ParentChild) match the fixture's structure. The missing parent (noted by the tool) is correctly absent from relationships[], and this discrepancy is flagged to the user in plain language. No fabrication of placeholder persons or unverified parentage."
+            "rationale": "All 6 persons carry only known fields (name, gender, birth/death facts with dates and places); unknown fields are omitted. FamilySearch-derived facts are sourced to S1 at quality 1. Local I IDs (I1–I6) are used throughout, not FamilySearch PIDs. The 7 relationships (1 Couple, 6 ParentChild) match the fixture's structure. The missing parent (noted by the tool) is correctly absent from relationships[], and this discrepancy is flagged to the user in plain language. No fabrication of placeholder persons or unverified parentage."
           },
           {
             "source": "rubric",
@@ -4611,7 +4611,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The objective 'Identify the parents of Patrick Flynn.' was stated by the user and is preserved in the project without defaulting. The skill did not ask the user about experience level, narration guidance, or site access \u2014 these are fixed and never asked per the rubric. No subscriptions field was written (correct, as the user named no access beyond FamilySearch). The profile dimensions (experience_level, narration_guidance) are not visible in the persisted files shown, but per the rubric they are fixed defaults applied by the system, not graded on the agent's output here."
+            "rationale": "The objective 'Identify the parents of Patrick Flynn.' was stated by the user and is preserved in the project without defaulting. The skill did not ask the user about experience level, narration guidance, or site access — these are fixed and never asked per the rubric. No subscriptions field was written (correct, as the user named no access beyond FamilySearch). The profile dimensions (experience_level, narration_guidance) are not visible in the persisted files shown, but per the rubric they are fixed defaults applied by the system, not graded on the agent's output here."
           },
           {
             "source": "rubric",
@@ -4637,13 +4637,13 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP calls passed correct arguments. The project_context call correctly checked the empty folder (returned no_project as expected, not a failure). The project_create call passed personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] \u2014 all matching the fixture's expected shape. No extraneous or incorrect arguments."
+            "rationale": "Both MCP calls passed correct arguments. The project_context call correctly checked the empty folder (returned no_project as expected, not a failure). The project_create call passed personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] — all matching the fixture's expected shape. No extraneous or incorrect arguments."
           },
           {
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "All 6 persons carry only known fields (name, gender, birth/death facts with dates and places); unknown fields are omitted. FamilySearch-derived facts are sourced to S1 at quality 1. Local I IDs (I1\u2013I6) are used throughout, not FamilySearch PIDs. The 7 relationships (1 Couple, 6 ParentChild) match the fixture's structure. The missing parent (noted by the tool) is correctly absent from relationships[], and this discrepancy is flagged to the user in plain language. No fabrication of placeholder persons or unverified parentage."
+            "rationale": "All 6 persons carry only known fields (name, gender, birth/death facts with dates and places); unknown fields are omitted. FamilySearch-derived facts are sourced to S1 at quality 1. Local I IDs (I1–I6) are used throughout, not FamilySearch PIDs. The 7 relationships (1 Couple, 6 ParentChild) match the fixture's structure. The missing parent (noted by the tool) is correctly absent from relationships[], and this discrepancy is flagged to the user in plain language. No fabrication of placeholder persons or unverified parentage."
           },
           {
             "source": "rubric",
@@ -4655,7 +4655,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The objective 'Identify the parents of Patrick Flynn.' was stated by the user and is preserved in the project without defaulting. The skill did not ask the user about experience level, narration guidance, or site access \u2014 these are fixed and never asked per the rubric. No subscriptions field was written (correct, as the user named no access beyond FamilySearch). The profile dimensions (experience_level, narration_guidance) are not visible in the persisted files shown, but per the rubric they are fixed defaults applied by the system, not graded on the agent's output here."
+            "rationale": "The objective 'Identify the parents of Patrick Flynn.' was stated by the user and is preserved in the project without defaulting. The skill did not ask the user about experience level, narration guidance, or site access — these are fixed and never asked per the rubric. No subscriptions field was written (correct, as the user named no access beyond FamilySearch). The profile dimensions (experience_level, narration_guidance) are not visible in the persisted files shown, but per the rubric they are fixed defaults applied by the system, not graded on the agent's output here."
           },
           {
             "source": "rubric",
@@ -4667,7 +4667,7 @@
       },
       "totals": {
         "duration_ms": 104252.49505299143,
-        "duration_api_ms": 28951.0,
+        "duration_api_ms": 28951,
         "judge_duration_ms": 16058.447327988688,
         "wall_clock_ms": 128836.75456047058,
         "num_turns": 2,
@@ -4690,7 +4690,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 104252.49505299143,
-          "duration_api_ms": 28951.0,
+          "duration_api_ms": 28951,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1500,
@@ -4782,7 +4782,7 @@
           },
           "skill_cost_usd": 0.1430011,
           "output": {
-            "text_response": "The project for Patrick Flynn (LZNY-BRF) has been created at `/tmp/eval-ut_init_project_001-0-0-16ki4u5m`.\n\nHere's a summary of what was set up:\n\n**Project Goal:** Identify the parents of Patrick Flynn.\n\n**Tree Built \u2014 6 people imported:**\n- Patrick Flynn (subject)\n- Mary Kelly (wife)\n- James & Margaret (children)\n- Michael Flynn (listed as father on FamilySearch)\n- Bridget Flynn (sibling)\n\n**Key Notes:**\n- **Birth place discrepancy:** You noted Pennsylvania, but FamilySearch records his birth as *Ireland* (~1845). Both will need source verification.\n- **Death in Schuylkill County, 1908** \u2014 confirmed and matches your information.\n- A second parent is listed on FamilySearch but returned no record, so that parent is not yet in the tree.\n- A family memory from his granddaughter was saved as a source.\n- A Flynn family headstone scan at St. Patrick's Cemetery could not be read at this time and can be revisited.\n\n**Next Step:** Select the first research question \u2014 the specific fact to pursue first toward identifying Patrick's parents. Would you like to do that now?",
+            "text_response": "The project for Patrick Flynn (LZNY-BRF) has been created at `/tmp/eval-ut_init_project_001-0-0-16ki4u5m`.\n\nHere's a summary of what was set up:\n\n**Project Goal:** Identify the parents of Patrick Flynn.\n\n**Tree Built — 6 people imported:**\n- Patrick Flynn (subject)\n- Mary Kelly (wife)\n- James & Margaret (children)\n- Michael Flynn (listed as father on FamilySearch)\n- Bridget Flynn (sibling)\n\n**Key Notes:**\n- **Birth place discrepancy:** You noted Pennsylvania, but FamilySearch records his birth as *Ireland* (~1845). Both will need source verification.\n- **Death in Schuylkill County, 1908** — confirmed and matches your information.\n- A second parent is listed on FamilySearch but returned no record, so that parent is not yet in the tree.\n- A family memory from his granddaughter was saved as a source.\n- A Flynn family headstone scan at St. Patrick's Cemetery could not be read at this time and can be revisited.\n\n**Next Step:** Select the first research question — the specific fact to pursue first toward identifying Patrick's parents. Would you like to do that now?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4801,7 +4801,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -5613,13 +5613,13 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP calls passed correct arguments. The project_context call correctly checked the empty folder (returned no_project as expected, not a failure). The project_create call passed personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] \u2014 all matching the fixture's expected shape. No extraneous or incorrect arguments."
+                "rationale": "Both MCP calls passed correct arguments. The project_context call correctly checked the empty folder (returned no_project as expected, not a failure). The project_create call passed personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] — all matching the fixture's expected shape. No extraneous or incorrect arguments."
               },
               {
                 "source": "rubric",
                 "name": "Stub & tree fidelity",
                 "score": 3,
-                "rationale": "All 6 persons carry only known fields (name, gender, birth/death facts with dates and places); unknown fields are omitted. FamilySearch-derived facts are sourced to S1 at quality 1. Local I IDs (I1\u2013I6) are used throughout, not FamilySearch PIDs. The 7 relationships (1 Couple, 6 ParentChild) match the fixture's structure. The missing parent (noted by the tool) is correctly absent from relationships[], and this discrepancy is flagged to the user in plain language. No fabrication of placeholder persons or unverified parentage."
+                "rationale": "All 6 persons carry only known fields (name, gender, birth/death facts with dates and places); unknown fields are omitted. FamilySearch-derived facts are sourced to S1 at quality 1. Local I IDs (I1–I6) are used throughout, not FamilySearch PIDs. The 7 relationships (1 Couple, 6 ParentChild) match the fixture's structure. The missing parent (noted by the tool) is correctly absent from relationships[], and this discrepancy is flagged to the user in plain language. No fabrication of placeholder persons or unverified parentage."
               },
               {
                 "source": "rubric",
@@ -5631,7 +5631,7 @@
                 "source": "rubric",
                 "name": "Researcher profile",
                 "score": 3,
-                "rationale": "The objective 'Identify the parents of Patrick Flynn.' was stated by the user and is preserved in the project without defaulting. The skill did not ask the user about experience level, narration guidance, or site access \u2014 these are fixed and never asked per the rubric. No subscriptions field was written (correct, as the user named no access beyond FamilySearch). The profile dimensions (experience_level, narration_guidance) are not visible in the persisted files shown, but per the rubric they are fixed defaults applied by the system, not graded on the agent's output here."
+                "rationale": "The objective 'Identify the parents of Patrick Flynn.' was stated by the user and is preserved in the project without defaulting. The skill did not ask the user about experience level, narration guidance, or site access — these are fixed and never asked per the rubric. No subscriptions field was written (correct, as the user named no access beyond FamilySearch). The profile dimensions (experience_level, narration_guidance) are not visible in the persisted files shown, but per the rubric they are fixed defaults applied by the system, not graded on the agent's output here."
               },
               {
                 "source": "rubric",
@@ -5685,7 +5685,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both tool calls passed correct arguments. project_context called with correct projectPath and received expected 'no_project' response (guard call, not a failure). project_create called with personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] \u2014 all matching expected args. No fixture_not_found errors."
+            "rationale": "Both tool calls passed correct arguments. project_context called with correct projectPath and received expected 'no_project' response (guard call, not a failure). project_create called with personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] — all matching expected args. No fixture_not_found errors."
           },
           {
             "source": "rubric",
@@ -5729,7 +5729,7 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both tool calls passed correct arguments. project_context called with correct projectPath and received expected 'no_project' response (guard call, not a failure). project_create called with personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] \u2014 all matching expected args. No fixture_not_found errors."
+            "rationale": "Both tool calls passed correct arguments. project_context called with correct projectPath and received expected 'no_project' response (guard call, not a failure). project_create called with personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] — all matching expected args. No fixture_not_found errors."
           },
           {
             "source": "rubric",
@@ -5759,7 +5759,7 @@
       },
       "totals": {
         "duration_ms": 100040.31322299852,
-        "duration_api_ms": 32300.0,
+        "duration_api_ms": 32300,
         "judge_duration_ms": 13535.388214018894,
         "wall_clock_ms": 122843.0404663086,
         "num_turns": 2,
@@ -5782,7 +5782,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 100040.31322299852,
-          "duration_api_ms": 32300.0,
+          "duration_api_ms": 32300,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1475,
@@ -5874,7 +5874,7 @@
           },
           "skill_cost_usd": 0.13831349999999998,
           "output": {
-            "text_response": "The project for Patrick Flynn has been created. Here's a summary:\n\n- **Project folder:** `/tmp/eval-ut_init_project_008-0-0-htnyo8fg`\n- **Person imported:** Patrick Flynn (LZNY-BRF) \u2014 1 person, 0 relationships, 1 source\n- **Known details:** Born around 1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania\n- **Objective:** \"Identify the parents of Patrick Flynn.\"\n- **Note:** FamilySearch lists no relatives for him at this time, so he stands alone in the tree\n\nThe project is set up and ready. The next step would be to define the first research question and begin planning searches to identify Patrick's parents. Would you like to proceed with selecting a research question or planning the first searches?",
+            "text_response": "The project for Patrick Flynn has been created. Here's a summary:\n\n- **Project folder:** `/tmp/eval-ut_init_project_008-0-0-htnyo8fg`\n- **Person imported:** Patrick Flynn (LZNY-BRF) — 1 person, 0 relationships, 1 source\n- **Known details:** Born around 1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania\n- **Objective:** \"Identify the parents of Patrick Flynn.\"\n- **Note:** FamilySearch lists no relatives for him at this time, so he stands alone in the tree\n\nThe project is set up and ready. The next step would be to define the first research question and begin planning searches to identify Patrick's parents. Would you like to proceed with selecting a research question or planning the first searches?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5893,7 +5893,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -6361,7 +6361,7 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both tool calls passed correct arguments. project_context called with correct projectPath and received expected 'no_project' response (guard call, not a failure). project_create called with personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] \u2014 all matching expected args. No fixture_not_found errors."
+                "rationale": "Both tool calls passed correct arguments. project_context called with correct projectPath and received expected 'no_project' response (guard call, not a failure). project_create called with personId 'LZNY-BRF', objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', and subjectPersonIds ['LZNY-BRF'] — all matching expected args. No fixture_not_found errors."
               },
               {
                 "source": "rubric",
@@ -6445,7 +6445,7 @@
             "source": "rubric",
             "name": "Project section seeding & schema validity",
             "score": 3,
-            "rationale": "The research.json project block is complete with id (rp_001), objective (the generic default), title ('Patrick Flynn general research' \u2014 a concise 3-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The written file conforms to schema requirements. All required sections are present. The title is appropriately brief and distinct from the objective."
+            "rationale": "The research.json project block is complete with id (rp_001), objective (the generic default), title ('Patrick Flynn general research' — a concise 3-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The written file conforms to schema requirements. All required sections are present. The title is appropriately brief and distinct from the objective."
           },
           {
             "source": "rubric",
@@ -6489,7 +6489,7 @@
             "source": "rubric",
             "name": "Project section seeding & schema validity",
             "score": 3,
-            "rationale": "The research.json project block is complete with id (rp_001), objective (the generic default), title ('Patrick Flynn general research' \u2014 a concise 3-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The written file conforms to schema requirements. All required sections are present. The title is appropriately brief and distinct from the objective."
+            "rationale": "The research.json project block is complete with id (rp_001), objective (the generic default), title ('Patrick Flynn general research' — a concise 3-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The written file conforms to schema requirements. All required sections are present. The title is appropriately brief and distinct from the objective."
           },
           {
             "source": "rubric",
@@ -6507,7 +6507,7 @@
       },
       "totals": {
         "duration_ms": 94191.34514601319,
-        "duration_api_ms": 23426.0,
+        "duration_api_ms": 23426,
         "judge_duration_ms": 13662.74134098785,
         "wall_clock_ms": 108691.54500961304,
         "num_turns": 2,
@@ -6530,7 +6530,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 94191.34514601319,
-          "duration_api_ms": 23426.0,
+          "duration_api_ms": 23426,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1455,
@@ -6622,7 +6622,7 @@
           },
           "skill_cost_usd": 0.13863189999999997,
           "output": {
-            "text_response": "The project has been created successfully. Here's a summary of what was set up:\n\n**New Research Project: Patrick Flynn (LZNY-BRF)**\n\n- **Person:** Patrick Flynn\n- **Birth:** circa 1845, Ireland\n- **Death:** 1908, Schuylkill County, Pennsylvania\n- **Project folder:** `/tmp/eval-ut_init_project_010-0-0-nm4cjmfq`\n- **Imported:** 1 person, 0 relationships, 1 source\n\nSince no specific objective was provided, the project starts with a general goal: *\"Build out the tree and identify gaps and next steps.\"*\n\nFamilySearch currently lists no relatives for Patrick, so he stands alone in the tree. To focus the research, let me know what you most want to discover \u2014 for example, his parents, spouse, children, or place of origin in Ireland.",
+            "text_response": "The project has been created successfully. Here's a summary of what was set up:\n\n**New Research Project: Patrick Flynn (LZNY-BRF)**\n\n- **Person:** Patrick Flynn\n- **Birth:** circa 1845, Ireland\n- **Death:** 1908, Schuylkill County, Pennsylvania\n- **Project folder:** `/tmp/eval-ut_init_project_010-0-0-nm4cjmfq`\n- **Imported:** 1 person, 0 relationships, 1 source\n\nSince no specific objective was provided, the project starts with a general goal: *\"Build out the tree and identify gaps and next steps.\"*\n\nFamilySearch currently lists no relatives for Patrick, so he stands alone in the tree. To focus the research, let me know what you most want to discover — for example, his parents, spouse, children, or place of origin in Ireland.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6641,7 +6641,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -7121,7 +7121,7 @@
                 "source": "rubric",
                 "name": "Project section seeding & schema validity",
                 "score": 3,
-                "rationale": "The research.json project block is complete with id (rp_001), objective (the generic default), title ('Patrick Flynn general research' \u2014 a concise 3-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The written file conforms to schema requirements. All required sections are present. The title is appropriately brief and distinct from the objective."
+                "rationale": "The research.json project block is complete with id (rp_001), objective (the generic default), title ('Patrick Flynn general research' — a concise 3-word title, not a full sentence), subject_person_ids ([I1]), status (active), and created/updated timestamps. The written file conforms to schema requirements. All required sections are present. The title is appropriately brief and distinct from the objective."
               },
               {
                 "source": "rubric",
@@ -7199,7 +7199,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The researcher profile was not asked by the skill, which is correct per the rubric (profile is fixed and never asked). The objective was not defaulted\u2014it was provided by the user in the delegation and preserved verbatim. No experience level or narration guidance was written (correctly absent when not asked). No subscriptions were written (correctly absent since the user named no access). The skill did not invent or hallucinate any profile information."
+            "rationale": "The researcher profile was not asked by the skill, which is correct per the rubric (profile is fixed and never asked). The objective was not defaulted—it was provided by the user in the delegation and preserved verbatim. No experience level or narration guidance was written (correctly absent when not asked). No subscriptions were written (correctly absent since the user named no access). The skill did not invent or hallucinate any profile information."
           },
           {
             "source": "rubric",
@@ -7243,7 +7243,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The researcher profile was not asked by the skill, which is correct per the rubric (profile is fixed and never asked). The objective was not defaulted\u2014it was provided by the user in the delegation and preserved verbatim. No experience level or narration guidance was written (correctly absent when not asked). No subscriptions were written (correctly absent since the user named no access). The skill did not invent or hallucinate any profile information."
+            "rationale": "The researcher profile was not asked by the skill, which is correct per the rubric (profile is fixed and never asked). The objective was not defaulted—it was provided by the user in the delegation and preserved verbatim. No experience level or narration guidance was written (correctly absent when not asked). No subscriptions were written (correctly absent since the user named no access). The skill did not invent or hallucinate any profile information."
           },
           {
             "source": "rubric",
@@ -7255,7 +7255,7 @@
       },
       "totals": {
         "duration_ms": 102188.07771598222,
-        "duration_api_ms": 36508.0,
+        "duration_api_ms": 36508,
         "judge_duration_ms": 13679.368990007788,
         "wall_clock_ms": 117283.07294845581,
         "num_turns": 2,
@@ -7278,7 +7278,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 102188.07771598222,
-          "duration_api_ms": 36508.0,
+          "duration_api_ms": 36508,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1485,
@@ -7370,7 +7370,7 @@
           },
           "skill_cost_usd": 0.1426259,
           "output": {
-            "text_response": "The research project for **Jean Baptiste Moreau (MRQ1-JBM)** has been created. Here's a summary of what was set up:\n\n**Project Location:** `/tmp/eval-ut_init_project_vqx-0-0-an6rq51s`\n\n**What was imported from FamilySearch:**\n- **4 persons:** Jean Baptiste Moreau, Marie Dubois, and two children \u2014 Henri and Josephine Moreau\n- **4 relationships**\n- **7 sources**\n\n**Key details on Jean Baptiste Moreau:**\n- Born: 12 March 1821, Bastogne, Luxembourg\n- Died: 3 October 1889, Bastogne\n\n**Objective stored:** *\"Analyze the sources and family structure for Jean Baptiste Moreau (MRQ1-JBM) and look for errors or inconsistencies.\"*\n\n**Initial observation:** Marie Dubois is listed only as a \"relative\" in FamilySearch \u2014 her precise relationship to Jean Baptiste needs verification.\n\n**Next step:** The project is ready. The natural next action is to derive the first research question (the specific fact to investigate first). You can ask \"what should I research next?\" or \"select the first question\" to begin working through the analysis.",
+            "text_response": "The research project for **Jean Baptiste Moreau (MRQ1-JBM)** has been created. Here's a summary of what was set up:\n\n**Project Location:** `/tmp/eval-ut_init_project_vqx-0-0-an6rq51s`\n\n**What was imported from FamilySearch:**\n- **4 persons:** Jean Baptiste Moreau, Marie Dubois, and two children — Henri and Josephine Moreau\n- **4 relationships**\n- **7 sources**\n\n**Key details on Jean Baptiste Moreau:**\n- Born: 12 March 1821, Bastogne, Luxembourg\n- Died: 3 October 1889, Bastogne\n\n**Objective stored:** *\"Analyze the sources and family structure for Jean Baptiste Moreau (MRQ1-JBM) and look for errors or inconsistencies.\"*\n\n**Initial observation:** Marie Dubois is listed only as a \"relative\" in FamilySearch — her precise relationship to Jean Baptiste needs verification.\n\n**Next step:** The project is ready. The natural next action is to derive the first research question (the specific fact to investigate first). You can ask \"what should I research next?\" or \"select the first question\" to begin working through the analysis.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7389,7 +7389,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -8096,7 +8096,7 @@
                 "source": "rubric",
                 "name": "Researcher profile",
                 "score": 3,
-                "rationale": "The researcher profile was not asked by the skill, which is correct per the rubric (profile is fixed and never asked). The objective was not defaulted\u2014it was provided by the user in the delegation and preserved verbatim. No experience level or narration guidance was written (correctly absent when not asked). No subscriptions were written (correctly absent since the user named no access). The skill did not invent or hallucinate any profile information."
+                "rationale": "The researcher profile was not asked by the skill, which is correct per the rubric (profile is fixed and never asked). The objective was not defaulted—it was provided by the user in the delegation and preserved verbatim. No experience level or narration guidance was written (correctly absent when not asked). No subscriptions were written (correctly absent since the user named no access). The skill did not invent or hallucinate any profile information."
               },
               {
                 "source": "rubric",
@@ -8224,7 +8224,7 @@
       },
       "totals": {
         "duration_ms": 132183.01409398555,
-        "duration_api_ms": 35613.0,
+        "duration_api_ms": 35613,
         "judge_duration_ms": 13827.908885024954,
         "wall_clock_ms": 147904.86335754395,
         "num_turns": 2,
@@ -8247,7 +8247,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 132183.01409398555,
-          "duration_api_ms": 35613.0,
+          "duration_api_ms": 35613,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1497,
@@ -8339,7 +8339,7 @@
           },
           "skill_cost_usd": 0.1428434,
           "output": {
-            "text_response": "The project for Patrick Flynn (LZNY-BRF) has been created. Here's a summary of what was set up:\n\n**Project created at:** `/tmp/eval-ut_init_project_013-0-0-dicc_cmi`\n\n**Imported from FamilySearch:**\n- 6 people: Patrick Flynn, his wife Mary Kelly, children James and Margaret, sister Bridget, and a father listed as **Michael Flynn**\n- 7 relationships and 5 sources\n\n**Objective stored:** \"Identify the parents of Patrick Flynn.\"\n\n**Key note \u2014 a name conflict to investigate:**\nYour grandmother said Patrick's father was **Martin Flynn**, but FamilySearch lists his father as **Michael Flynn**. Both claims will need verification through records. Martin was not added as a separate person yet \u2014 resolving this conflict will be part of the research.\n\n**Patrick's vitals:**\n- Born: ~1845 in Ireland\n- Died: 1908 in Schuylkill County, Pennsylvania\n\n**Next step:** Select the first research question \u2014 the specific fact to pursue first (likely confirming Patrick's father's name and identity). Would you like to move forward with that?",
+            "text_response": "The project for Patrick Flynn (LZNY-BRF) has been created. Here's a summary of what was set up:\n\n**Project created at:** `/tmp/eval-ut_init_project_013-0-0-dicc_cmi`\n\n**Imported from FamilySearch:**\n- 6 people: Patrick Flynn, his wife Mary Kelly, children James and Margaret, sister Bridget, and a father listed as **Michael Flynn**\n- 7 relationships and 5 sources\n\n**Objective stored:** \"Identify the parents of Patrick Flynn.\"\n\n**Key note — a name conflict to investigate:**\nYour grandmother said Patrick's father was **Martin Flynn**, but FamilySearch lists his father as **Michael Flynn**. Both claims will need verification through records. Martin was not added as a separate person yet — resolving this conflict will be part of the research.\n\n**Patrick's vitals:**\n- Born: ~1845 in Ireland\n- Died: 1908 in Schuylkill County, Pennsylvania\n\n**Next step:** Select the first research question — the specific fact to pursue first (likely confirming Patrick's father's name and identity). Would you like to move forward with that?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -8358,7 +8358,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -9230,7 +9230,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly created a research project for Patrick Flynn using the FamilySearch ID LZNY-BRF. The objective 'Identify the parents of Patrick Flynn.' was properly stored (not defaulted, as the user provided it). The six persons imported from FamilySearch match the tool response: Patrick, Mary Kelly (spouse), James, Margaret, Michael (father), and Bridget (sibling). All facts are sourced to S1 at quality 1 as expected. The skill correctly noted that Mary Kelly matches the spouse in the tree, so no stub was needed. The skill accurately reported that FamilySearch named another parent but returned no record for that person, so it is not in the tree\u2014this discrepancy was flagged rather than silently resolved. All persisted data is factually accurate and supported by the tool responses."
+            "rationale": "The skill correctly created a research project for Patrick Flynn using the FamilySearch ID LZNY-BRF. The objective 'Identify the parents of Patrick Flynn.' was properly stored (not defaulted, as the user provided it). The six persons imported from FamilySearch match the tool response: Patrick, Mary Kelly (spouse), James, Margaret, Michael (father), and Bridget (sibling). All facts are sourced to S1 at quality 1 as expected. The skill correctly noted that Mary Kelly matches the spouse in the tree, so no stub was needed. The skill accurately reported that FamilySearch named another parent but returned no record for that person, so it is not in the tree—this discrepancy was flagged rather than silently resolved. All persisted data is factually accurate and supported by the tool responses."
           },
           {
             "source": "base",
@@ -9242,13 +9242,13 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The skill made two MCP calls. The first call to project_context with projectPath '/tmp/eval-ut_init_project_014-0-0-65fxa654' correctly checked for an existing project and received the expected 'no_project' response (not a fixture_not_found error\u2014this is the guard call's expected answer). The second call to project_create passed all required arguments correctly: projectPath, objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', personId 'LZNY-BRF', and subjectPersonIds ['LZNY-BRF']. All arguments match the expected shape and values. The call succeeded with ok: true and returned the expected project structure."
+            "rationale": "The skill made two MCP calls. The first call to project_context with projectPath '/tmp/eval-ut_init_project_014-0-0-65fxa654' correctly checked for an existing project and received the expected 'no_project' response (not a fixture_not_found error—this is the guard call's expected answer). The second call to project_create passed all required arguments correctly: projectPath, objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', personId 'LZNY-BRF', and subjectPersonIds ['LZNY-BRF']. All arguments match the expected shape and values. The call succeeded with ok: true and returned the expected project structure."
           },
           {
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "The tree faithfully represents all known information from the FamilySearch read. All six persons carry their known fields (names, genders, birth/death dates and places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality 1 throughout. Local I person IDs (I1\u2013I6) are used consistently. The skill correctly identified that Mary Kelly (the stated wife) matches the spouse in the tree, so no stub was added\u2014this is the correct behavior per the per-test context. The user-vs-tree discrepancy (FamilySearch names a parent but returned no record for that person) was flagged in the response rather than silently resolved. No fabrication or placeholder stubs were created."
+            "rationale": "The tree faithfully represents all known information from the FamilySearch read. All six persons carry their known fields (names, genders, birth/death dates and places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality 1 throughout. Local I person IDs (I1–I6) are used consistently. The skill correctly identified that Mary Kelly (the stated wife) matches the spouse in the tree, so no stub was added—this is the correct behavior per the per-test context. The user-vs-tree discrepancy (FamilySearch names a parent but returned no record for that person) was flagged in the response rather than silently resolved. No fabrication or placeholder stubs were created."
           },
           {
             "source": "rubric",
@@ -9274,7 +9274,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly created a research project for Patrick Flynn using the FamilySearch ID LZNY-BRF. The objective 'Identify the parents of Patrick Flynn.' was properly stored (not defaulted, as the user provided it). The six persons imported from FamilySearch match the tool response: Patrick, Mary Kelly (spouse), James, Margaret, Michael (father), and Bridget (sibling). All facts are sourced to S1 at quality 1 as expected. The skill correctly noted that Mary Kelly matches the spouse in the tree, so no stub was needed. The skill accurately reported that FamilySearch named another parent but returned no record for that person, so it is not in the tree\u2014this discrepancy was flagged rather than silently resolved. All persisted data is factually accurate and supported by the tool responses."
+            "rationale": "The skill correctly created a research project for Patrick Flynn using the FamilySearch ID LZNY-BRF. The objective 'Identify the parents of Patrick Flynn.' was properly stored (not defaulted, as the user provided it). The six persons imported from FamilySearch match the tool response: Patrick, Mary Kelly (spouse), James, Margaret, Michael (father), and Bridget (sibling). All facts are sourced to S1 at quality 1 as expected. The skill correctly noted that Mary Kelly matches the spouse in the tree, so no stub was needed. The skill accurately reported that FamilySearch named another parent but returned no record for that person, so it is not in the tree—this discrepancy was flagged rather than silently resolved. All persisted data is factually accurate and supported by the tool responses."
           },
           {
             "source": "base",
@@ -9286,13 +9286,13 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The skill made two MCP calls. The first call to project_context with projectPath '/tmp/eval-ut_init_project_014-0-0-65fxa654' correctly checked for an existing project and received the expected 'no_project' response (not a fixture_not_found error\u2014this is the guard call's expected answer). The second call to project_create passed all required arguments correctly: projectPath, objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', personId 'LZNY-BRF', and subjectPersonIds ['LZNY-BRF']. All arguments match the expected shape and values. The call succeeded with ok: true and returned the expected project structure."
+            "rationale": "The skill made two MCP calls. The first call to project_context with projectPath '/tmp/eval-ut_init_project_014-0-0-65fxa654' correctly checked for an existing project and received the expected 'no_project' response (not a fixture_not_found error—this is the guard call's expected answer). The second call to project_create passed all required arguments correctly: projectPath, objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', personId 'LZNY-BRF', and subjectPersonIds ['LZNY-BRF']. All arguments match the expected shape and values. The call succeeded with ok: true and returned the expected project structure."
           },
           {
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "The tree faithfully represents all known information from the FamilySearch read. All six persons carry their known fields (names, genders, birth/death dates and places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality 1 throughout. Local I person IDs (I1\u2013I6) are used consistently. The skill correctly identified that Mary Kelly (the stated wife) matches the spouse in the tree, so no stub was added\u2014this is the correct behavior per the per-test context. The user-vs-tree discrepancy (FamilySearch names a parent but returned no record for that person) was flagged in the response rather than silently resolved. No fabrication or placeholder stubs were created."
+            "rationale": "The tree faithfully represents all known information from the FamilySearch read. All six persons carry their known fields (names, genders, birth/death dates and places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality 1 throughout. Local I person IDs (I1–I6) are used consistently. The skill correctly identified that Mary Kelly (the stated wife) matches the spouse in the tree, so no stub was added—this is the correct behavior per the per-test context. The user-vs-tree discrepancy (FamilySearch names a parent but returned no record for that person) was flagged in the response rather than silently resolved. No fabrication or placeholder stubs were created."
           },
           {
             "source": "rubric",
@@ -9316,7 +9316,7 @@
       },
       "totals": {
         "duration_ms": 120396.99509201455,
-        "duration_api_ms": 32405.0,
+        "duration_api_ms": 32405,
         "judge_duration_ms": 18962.510345998453,
         "wall_clock_ms": 141523.77009391785,
         "num_turns": 2,
@@ -9339,7 +9339,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 120396.99509201455,
-          "duration_api_ms": 32405.0,
+          "duration_api_ms": 32405,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1485,
@@ -9431,7 +9431,7 @@
           },
           "skill_cost_usd": 0.14274140000000002,
           "output": {
-            "text_response": "The project for **Patrick Flynn (LZNY-BRF)** has been created at `/tmp/eval-ut_init_project_014-0-0-65fxa654`.\n\nHere's a summary of what was set up:\n\n- **Objective stored:** \"Identify the parents of Patrick Flynn.\"\n- **6 persons imported:** Patrick Flynn, his wife Mary Kelly (confirmed match), their children James and Margaret, a father named Michael Flynn, and a sibling named Bridget.\n- **7 relationships and 5 sources** imported (including a transcribed granddaughter's memory).\n- Patrick was born about **1845 in Ireland** and died in **1908 in Schuylkill County, Pennsylvania**.\n- Michael Flynn is listed as a father in the FamilySearch tree, but the other parent wasn't retrievable and is not yet in the tree.\n- A photo of the Flynn family headstone at St. Patrick's Cemetery was identified but could not be transcribed yet \u2014 it can be read later.\n\nAll imported data is **unverified**. The next step would be to define the first research question and begin searching records to identify Patrick's parents. Would you like to do that?",
+            "text_response": "The project for **Patrick Flynn (LZNY-BRF)** has been created at `/tmp/eval-ut_init_project_014-0-0-65fxa654`.\n\nHere's a summary of what was set up:\n\n- **Objective stored:** \"Identify the parents of Patrick Flynn.\"\n- **6 persons imported:** Patrick Flynn, his wife Mary Kelly (confirmed match), their children James and Margaret, a father named Michael Flynn, and a sibling named Bridget.\n- **7 relationships and 5 sources** imported (including a transcribed granddaughter's memory).\n- Patrick was born about **1845 in Ireland** and died in **1908 in Schuylkill County, Pennsylvania**.\n- Michael Flynn is listed as a father in the FamilySearch tree, but the other parent wasn't retrievable and is not yet in the tree.\n- A photo of the Flynn family headstone at St. Patrick's Cemetery was identified but could not be transcribed yet — it can be read later.\n\nAll imported data is **unverified**. The next step would be to define the first research question and begin searching records to identify Patrick's parents. Would you like to do that?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -9450,7 +9450,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -10250,7 +10250,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly created a research project for Patrick Flynn using the FamilySearch ID LZNY-BRF. The objective 'Identify the parents of Patrick Flynn.' was properly stored (not defaulted, as the user provided it). The six persons imported from FamilySearch match the tool response: Patrick, Mary Kelly (spouse), James, Margaret, Michael (father), and Bridget (sibling). All facts are sourced to S1 at quality 1 as expected. The skill correctly noted that Mary Kelly matches the spouse in the tree, so no stub was needed. The skill accurately reported that FamilySearch named another parent but returned no record for that person, so it is not in the tree\u2014this discrepancy was flagged rather than silently resolved. All persisted data is factually accurate and supported by the tool responses."
+                "rationale": "The skill correctly created a research project for Patrick Flynn using the FamilySearch ID LZNY-BRF. The objective 'Identify the parents of Patrick Flynn.' was properly stored (not defaulted, as the user provided it). The six persons imported from FamilySearch match the tool response: Patrick, Mary Kelly (spouse), James, Margaret, Michael (father), and Bridget (sibling). All facts are sourced to S1 at quality 1 as expected. The skill correctly noted that Mary Kelly matches the spouse in the tree, so no stub was needed. The skill accurately reported that FamilySearch named another parent but returned no record for that person, so it is not in the tree—this discrepancy was flagged rather than silently resolved. All persisted data is factually accurate and supported by the tool responses."
               },
               {
                 "source": "base",
@@ -10262,13 +10262,13 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The skill made two MCP calls. The first call to project_context with projectPath '/tmp/eval-ut_init_project_014-0-0-65fxa654' correctly checked for an existing project and received the expected 'no_project' response (not a fixture_not_found error\u2014this is the guard call's expected answer). The second call to project_create passed all required arguments correctly: projectPath, objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', personId 'LZNY-BRF', and subjectPersonIds ['LZNY-BRF']. All arguments match the expected shape and values. The call succeeded with ok: true and returned the expected project structure."
+                "rationale": "The skill made two MCP calls. The first call to project_context with projectPath '/tmp/eval-ut_init_project_014-0-0-65fxa654' correctly checked for an existing project and received the expected 'no_project' response (not a fixture_not_found error—this is the guard call's expected answer). The second call to project_create passed all required arguments correctly: projectPath, objective 'Identify the parents of Patrick Flynn.', title 'Patrick Flynn's parents', personId 'LZNY-BRF', and subjectPersonIds ['LZNY-BRF']. All arguments match the expected shape and values. The call succeeded with ok: true and returned the expected project structure."
               },
               {
                 "source": "rubric",
                 "name": "Stub & tree fidelity",
                 "score": 3,
-                "rationale": "The tree faithfully represents all known information from the FamilySearch read. All six persons carry their known fields (names, genders, birth/death dates and places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality 1 throughout. Local I person IDs (I1\u2013I6) are used consistently. The skill correctly identified that Mary Kelly (the stated wife) matches the spouse in the tree, so no stub was added\u2014this is the correct behavior per the per-test context. The user-vs-tree discrepancy (FamilySearch names a parent but returned no record for that person) was flagged in the response rather than silently resolved. No fabrication or placeholder stubs were created."
+                "rationale": "The tree faithfully represents all known information from the FamilySearch read. All six persons carry their known fields (names, genders, birth/death dates and places) with unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality 1 throughout. Local I person IDs (I1–I6) are used consistently. The skill correctly identified that Mary Kelly (the stated wife) matches the spouse in the tree, so no stub was added—this is the correct behavior per the per-test context. The user-vs-tree discrepancy (FamilySearch names a parent but returned no record for that person) was flagged in the response rather than silently resolved. No fabrication or placeholder stubs were created."
               },
               {
                 "source": "rubric",
@@ -10340,7 +10340,7 @@
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "The tree faithfully represents known information. The 6 FamilySearch-imported persons (Patrick, Mary, James, Margaret, Michael, Bridget) carry all known facts with unknown fields omitted. All FamilySearch-derived facts are sourced to S1 at quality 1. Local I person IDs are used throughout (I1\u2013I6 for imported, I7 for Owen). Owen Kelly is correctly added as a stub with only gender and names populated (no fabricated dates/places). The user-vs-tree discrepancy (user said Mary's father was Owen Kelly; FamilySearch lists no parents for Mary) is correctly handled by adding Owen as a new person, not silently resolving a conflict."
+            "rationale": "The tree faithfully represents known information. The 6 FamilySearch-imported persons (Patrick, Mary, James, Margaret, Michael, Bridget) carry all known facts with unknown fields omitted. All FamilySearch-derived facts are sourced to S1 at quality 1. Local I person IDs are used throughout (I1–I6 for imported, I7 for Owen). Owen Kelly is correctly added as a stub with only gender and names populated (no fabricated dates/places). The user-vs-tree discrepancy (user said Mary's father was Owen Kelly; FamilySearch lists no parents for Mary) is correctly handled by adding Owen as a new person, not silently resolving a conflict."
           },
           {
             "source": "rubric",
@@ -10384,7 +10384,7 @@
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "The tree faithfully represents known information. The 6 FamilySearch-imported persons (Patrick, Mary, James, Margaret, Michael, Bridget) carry all known facts with unknown fields omitted. All FamilySearch-derived facts are sourced to S1 at quality 1. Local I person IDs are used throughout (I1\u2013I6 for imported, I7 for Owen). Owen Kelly is correctly added as a stub with only gender and names populated (no fabricated dates/places). The user-vs-tree discrepancy (user said Mary's father was Owen Kelly; FamilySearch lists no parents for Mary) is correctly handled by adding Owen as a new person, not silently resolving a conflict."
+            "rationale": "The tree faithfully represents known information. The 6 FamilySearch-imported persons (Patrick, Mary, James, Margaret, Michael, Bridget) carry all known facts with unknown fields omitted. All FamilySearch-derived facts are sourced to S1 at quality 1. Local I person IDs are used throughout (I1–I6 for imported, I7 for Owen). Owen Kelly is correctly added as a stub with only gender and names populated (no fabricated dates/places). The user-vs-tree discrepancy (user said Mary's father was Owen Kelly; FamilySearch lists no parents for Mary) is correctly handled by adding Owen as a new person, not silently resolving a conflict."
           },
           {
             "source": "rubric",
@@ -10408,7 +10408,7 @@
       },
       "totals": {
         "duration_ms": 126925.25704100262,
-        "duration_api_ms": 37863.0,
+        "duration_api_ms": 37863,
         "judge_duration_ms": 18738.614567002514,
         "wall_clock_ms": 153364.40205574036,
         "num_turns": 2,
@@ -10431,7 +10431,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 126925.25704100262,
-          "duration_api_ms": 37863.0,
+          "duration_api_ms": 37863,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1505,
@@ -10551,7 +10551,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -11647,7 +11647,7 @@
                 "source": "rubric",
                 "name": "Stub & tree fidelity",
                 "score": 3,
-                "rationale": "The tree faithfully represents known information. The 6 FamilySearch-imported persons (Patrick, Mary, James, Margaret, Michael, Bridget) carry all known facts with unknown fields omitted. All FamilySearch-derived facts are sourced to S1 at quality 1. Local I person IDs are used throughout (I1\u2013I6 for imported, I7 for Owen). Owen Kelly is correctly added as a stub with only gender and names populated (no fabricated dates/places). The user-vs-tree discrepancy (user said Mary's father was Owen Kelly; FamilySearch lists no parents for Mary) is correctly handled by adding Owen as a new person, not silently resolving a conflict."
+                "rationale": "The tree faithfully represents known information. The 6 FamilySearch-imported persons (Patrick, Mary, James, Margaret, Michael, Bridget) carry all known facts with unknown fields omitted. All FamilySearch-derived facts are sourced to S1 at quality 1. Local I person IDs are used throughout (I1–I6 for imported, I7 for Owen). Owen Kelly is correctly added as a stub with only gender and names populated (no fabricated dates/places). The user-vs-tree discrepancy (user said Mary's father was Owen Kelly; FamilySearch lists no parents for Mary) is correctly handled by adding Owen as a new person, not silently resolving a conflict."
               },
               {
                 "source": "rubric",
@@ -11734,7 +11734,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The skill correctly ignored the user's 'I'm experienced' statement and did not persist it. The per-test context confirms experience_level should be novice and narration_guidance the fixed house-style string (both validator-checked, not re-derived here). subscriptions is absent as required\u2014site access was never asked and the field is left unwritten. The user stated the objective ('identify his parents'), so the skill did not ask or default it. No questions were asked about the researcher."
+            "rationale": "The skill correctly ignored the user's 'I'm experienced' statement and did not persist it. The per-test context confirms experience_level should be novice and narration_guidance the fixed house-style string (both validator-checked, not re-derived here). subscriptions is absent as required—site access was never asked and the field is left unwritten. The user stated the objective ('identify his parents'), so the skill did not ask or default it. No questions were asked about the researcher."
           },
           {
             "source": "rubric",
@@ -11778,7 +11778,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The skill correctly ignored the user's 'I'm experienced' statement and did not persist it. The per-test context confirms experience_level should be novice and narration_guidance the fixed house-style string (both validator-checked, not re-derived here). subscriptions is absent as required\u2014site access was never asked and the field is left unwritten. The user stated the objective ('identify his parents'), so the skill did not ask or default it. No questions were asked about the researcher."
+            "rationale": "The skill correctly ignored the user's 'I'm experienced' statement and did not persist it. The per-test context confirms experience_level should be novice and narration_guidance the fixed house-style string (both validator-checked, not re-derived here). subscriptions is absent as required—site access was never asked and the field is left unwritten. The user stated the objective ('identify his parents'), so the skill did not ask or default it. No questions were asked about the researcher."
           },
           {
             "source": "rubric",
@@ -11790,7 +11790,7 @@
       },
       "totals": {
         "duration_ms": 290806.9159660372,
-        "duration_api_ms": 87585.0,
+        "duration_api_ms": 87585,
         "judge_duration_ms": 58692.23365801736,
         "wall_clock_ms": 354418.0312156677,
         "num_turns": 8,
@@ -11813,7 +11813,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 105429.70334299025,
-          "duration_api_ms": 25841.0,
+          "duration_api_ms": 25841,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1476,
@@ -11905,7 +11905,7 @@
           },
           "skill_cost_usd": 0.1390491,
           "output": {
-            "text_response": "The project has been created. Here's a summary:\n\n**Project for Patrick Flynn (LZNY-BRF)**\n- **Folder:** `/tmp/eval-ut_init_project_wzk-0-0-oudom9vr`\n- **Imported:** 1 person, 0 relationships, 1 source\n- **Objective:** Identify the parents of Patrick Flynn\n\n**About Patrick Flynn:**\n- Born approximately 1845 in Ireland\n- Died 1908 in Schuylkill County, Pennsylvania\n- Currently isolated in the tree \u2014 FamilySearch lists no relatives for him\n\n**Files created:** `research.json` and `tree.gedcomx.json`\n\nThe project is ready. As a next step, you may want to select the first research question (e.g., \"What is Patrick Flynn's parentage?\") and build a research plan. You can say **\"what should I research next?\"** or **\"plan the research\"** to continue.",
+            "text_response": "The project has been created. Here's a summary:\n\n**Project for Patrick Flynn (LZNY-BRF)**\n- **Folder:** `/tmp/eval-ut_init_project_wzk-0-0-oudom9vr`\n- **Imported:** 1 person, 0 relationships, 1 source\n- **Objective:** Identify the parents of Patrick Flynn\n\n**About Patrick Flynn:**\n- Born approximately 1845 in Ireland\n- Died 1908 in Schuylkill County, Pennsylvania\n- Currently isolated in the tree — FamilySearch lists no relatives for him\n\n**Files created:** `research.json` and `tree.gedcomx.json`\n\nThe project is ready. As a next step, you may want to select the first research question (e.g., \"What is Patrick Flynn's parentage?\") and build a research plan. You can say **\"what should I research next?\"** or **\"plan the research\"** to continue.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -11924,7 +11924,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -12387,19 +12387,19 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 1,
-                "rationale": "The skill violated a binding per-test requirement: the user stated 'I'm experienced' but the per-test context explicitly forbids persisting this as `experience_level: experienced`. The profile must always be `novice` and the fixed house-style `narration_guidance`, never asked. The skill also failed to ask about the research objective (which the user did not state), and instead defaulted it without asking first. Per the per-test context, the objective should reflect the user-stated goal 'identify his parents', which `project_create` correctly resolved to 'Identify the parents of Patrick Flynn' \u2014 but the skill should have asked the user for their objective first before defaulting. The skill's text claims 'It was not defaulted' when in fact the objective was generated by `project_create` from the user's stated intent, not asked of the user in this pass."
+                "rationale": "The skill violated a binding per-test requirement: the user stated 'I'm experienced' but the per-test context explicitly forbids persisting this as `experience_level: experienced`. The profile must always be `novice` and the fixed house-style `narration_guidance`, never asked. The skill also failed to ask about the research objective (which the user did not state), and instead defaulted it without asking first. Per the per-test context, the objective should reflect the user-stated goal 'identify his parents', which `project_create` correctly resolved to 'Identify the parents of Patrick Flynn' — but the skill should have asked the user for their objective first before defaulting. The skill's text claims 'It was not defaulted' when in fact the objective was generated by `project_create` from the user's stated intent, not asked of the user in this pass."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 1,
-                "rationale": "The skill failed to ask the user for their research objective, which is a required non-blocking question per the Researcher profile rubric dimension. The per-test context states 'Should not ask the user anything about themselves' but this refers to experience/access questions, not the objective question. The Researcher profile dimension explicitly requires: 'when no objective is stated, the agent asks in its return, does not block, and writes the stated generic default \u2014 never a hallucinated specific direction \u2014 in the same single pass as the profile default.' The user provided only an ID and a goal ('identify his parents'), not a formal objective statement. The skill should have asked for clarification of the objective in its return before proceeding."
+                "rationale": "The skill failed to ask the user for their research objective, which is a required non-blocking question per the Researcher profile rubric dimension. The per-test context states 'Should not ask the user anything about themselves' but this refers to experience/access questions, not the objective question. The Researcher profile dimension explicitly requires: 'when no objective is stated, the agent asks in its return, does not block, and writes the stated generic default — never a hallucinated specific direction — in the same single pass as the profile default.' The user provided only an ID and a goal ('identify his parents'), not a formal objective statement. The skill should have asked for clarification of the objective in its return before proceeding."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 2,
-                "rationale": "The `project_create` call passed `objective: 'Identify the parents of LZNY-BRF.'` and `title: 'LZNY-BRF's parents'` as arguments. The expected behavior is to pass the user's stated objective or ask for one; the tool then resolves the subject's name. The skill passed a bare ID in both fields initially, which the tool correctly resolved to the subject's name ('Identify the parents of Patrick Flynn' and 'Patrick Flynn's parents'). This is a reasonable approach \u2014 letting the tool resolve the name \u2014 but the args passed were not ideal: passing the bare ID rather than a more natural phrasing is a minor mismatch on a non-critical free-text field. The tool recovered and produced correct output, so this is partial rather than fail."
+                "rationale": "The `project_create` call passed `objective: 'Identify the parents of LZNY-BRF.'` and `title: 'LZNY-BRF's parents'` as arguments. The expected behavior is to pass the user's stated objective or ask for one; the tool then resolves the subject's name. The skill passed a bare ID in both fields initially, which the tool correctly resolved to the subject's name ('Identify the parents of Patrick Flynn' and 'Patrick Flynn's parents'). This is a reasonable approach — letting the tool resolve the name — but the args passed were not ideal: passing the bare ID rather than a more natural phrasing is a minor mismatch on a non-critical free-text field. The tool recovered and produced correct output, so this is partial rather than fail."
               },
               {
                 "source": "rubric",
@@ -12443,7 +12443,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 70295.70628402871,
-          "duration_api_ms": 23887.0,
+          "duration_api_ms": 23887,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1476,
@@ -12535,7 +12535,7 @@
           },
           "skill_cost_usd": 0.13867400000000002,
           "output": {
-            "text_response": "The project has been created. Here's a summary of what was set up:\n\n**Project for Patrick Flynn (LZNY-BRF)**\n- **Location:** `/tmp/eval-ut_init_project_wzk-1-0-alihkrxn`\n- **Objective:** Identify the parents of Patrick Flynn\n- **What was imported:** Patrick Flynn alone \u2014 1 person, 1 source, no relationships\n- **Known facts from FamilySearch:** Born ~1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania\n\nFamilySearch lists no relatives for him, so the tree currently shows only Patrick. Since you're experienced, the natural next step is to select the first research question \u2014 would you like me to do that, or would you prefer to start with a research plan directly?",
+            "text_response": "The project has been created. Here's a summary of what was set up:\n\n**Project for Patrick Flynn (LZNY-BRF)**\n- **Location:** `/tmp/eval-ut_init_project_wzk-1-0-alihkrxn`\n- **Objective:** Identify the parents of Patrick Flynn\n- **What was imported:** Patrick Flynn alone — 1 person, 1 source, no relationships\n- **Known facts from FamilySearch:** Born ~1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania\n\nFamilySearch lists no relatives for him, so the tree currently shows only Patrick. Since you're experienced, the natural next step is to select the first research question — would you like me to do that, or would you prefer to start with a research plan directly?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -12554,7 +12554,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -13040,7 +13040,7 @@
                 "source": "rubric",
                 "name": "Researcher profile",
                 "score": 3,
-                "rationale": "The skill correctly ignored the user's 'I'm experienced' statement and did not persist it. The per-test context confirms experience_level should be novice and narration_guidance the fixed house-style string (both validator-checked, not re-derived here). subscriptions is absent as required\u2014site access was never asked and the field is left unwritten. The user stated the objective ('identify his parents'), so the skill did not ask or default it. No questions were asked about the researcher."
+                "rationale": "The skill correctly ignored the user's 'I'm experienced' statement and did not persist it. The per-test context confirms experience_level should be novice and narration_guidance the fixed house-style string (both validator-checked, not re-derived here). subscriptions is absent as required—site access was never asked and the field is left unwritten. The user stated the objective ('identify his parents'), so the skill did not ask or default it. No questions were asked about the researcher."
               },
               {
                 "source": "rubric",
@@ -13066,7 +13066,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 57474.77390800486,
-          "duration_api_ms": 20225.0,
+          "duration_api_ms": 20225,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1478,
@@ -13158,7 +13158,7 @@
           },
           "skill_cost_usd": 0.1375915,
           "output": {
-            "text_response": "The project has been created. Here's a summary:\n\n**New Project: Patrick Flynn (LZNY-BRF)**\n\n- **Objective:** Identify the parents of Patrick Flynn.\n- **Person:** Patrick Flynn, born about 1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania.\n- **Tree status:** Only Patrick was imported \u2014 FamilySearch lists no relatives for him, so he stands alone in the tree for now.\n\n**Next step:** Select a first research question \u2014 the single fact to pursue first toward identifying his parents. Would you like to proceed with question selection?",
+            "text_response": "The project has been created. Here's a summary:\n\n**New Project: Patrick Flynn (LZNY-BRF)**\n\n- **Objective:** Identify the parents of Patrick Flynn.\n- **Person:** Patrick Flynn, born about 1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania.\n- **Tree status:** Only Patrick was imported — FamilySearch lists no relatives for him, so he stands alone in the tree for now.\n\n**Next step:** Select a first research question — the single fact to pursue first toward identifying his parents. Would you like to proceed with question selection?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -13177,7 +13177,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -13689,7 +13689,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 57606.73243101337,
-          "duration_api_ms": 17632.0,
+          "duration_api_ms": 17632,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1478,
@@ -13781,7 +13781,7 @@
           },
           "skill_cost_usd": 0.1383141,
           "output": {
-            "text_response": "Project created successfully. Here's the summary:\n\n**Project for Patrick Flynn (LZNY-BRF)**\n\n- **Location:** `/tmp/eval-ut_init_project_wzk-3-0-gh3dsm3y`\n- **Imported:** 1 person, 0 relationships, 1 source\n- **Objective:** Identify the parents of Patrick Flynn\n\n**Known facts about Patrick Flynn:**\n- Born ~1845 in Ireland\n- Died 1908 in Schuylkill County, Pennsylvania\n- FamilySearch currently lists no relatives for him (no parents, spouse, or children in the tree yet)\n\n**Next step:** Define the first research question \u2014 the specific fact to pursue first toward identifying his parents. Would you like to do that now?",
+            "text_response": "Project created successfully. Here's the summary:\n\n**Project for Patrick Flynn (LZNY-BRF)**\n\n- **Location:** `/tmp/eval-ut_init_project_wzk-3-0-gh3dsm3y`\n- **Imported:** 1 person, 0 relationships, 1 source\n- **Objective:** Identify the parents of Patrick Flynn\n\n**Known facts about Patrick Flynn:**\n- Born ~1845 in Ireland\n- Died 1908 in Schuylkill County, Pennsylvania\n- FamilySearch currently lists no relatives for him (no parents, spouse, or children in the tree yet)\n\n**Next step:** Define the first research question — the specific fact to pursue first toward identifying his parents. Would you like to do that now?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -13800,7 +13800,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -14346,7 +14346,7 @@
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "The tree faithfully represents Patrick Flynn with known fields populated (name, gender, birth/death dates and places) and unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 as required. Local I1 person ID is used. No relatives were fabricated despite the objective seeking parents\u2014the tool correctly returned no relatives, and the agent did not invent placeholder stubs."
+            "rationale": "The tree faithfully represents Patrick Flynn with known fields populated (name, gender, birth/death dates and places) and unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 as required. Local I1 person ID is used. No relatives were fabricated despite the objective seeking parents—the tool correctly returned no relatives, and the agent did not invent placeholder stubs."
           },
           {
             "source": "rubric",
@@ -14358,7 +14358,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The experience_level is correctly set to 'novice' (not persisting the user's 'some research under my belt' claim, per the fixed profile rule). The narration_guidance field contains the house-style string verbatim. Subscriptions were correctly recorded from the user's volunteered access (Ancestry and local family history centre mapped to LibraryAccess). The objective was not defaulted\u2014the user provided it. No site access was asked for, as required."
+            "rationale": "The experience_level is correctly set to 'novice' (not persisting the user's 'some research under my belt' claim, per the fixed profile rule). The narration_guidance field contains the house-style string verbatim. Subscriptions were correctly recorded from the user's volunteered access (Ancestry and local family history centre mapped to LibraryAccess). The objective was not defaulted—the user provided it. No site access was asked for, as required."
           },
           {
             "source": "rubric",
@@ -14390,7 +14390,7 @@
             "source": "rubric",
             "name": "Stub & tree fidelity",
             "score": 3,
-            "rationale": "The tree faithfully represents Patrick Flynn with known fields populated (name, gender, birth/death dates and places) and unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 as required. Local I1 person ID is used. No relatives were fabricated despite the objective seeking parents\u2014the tool correctly returned no relatives, and the agent did not invent placeholder stubs."
+            "rationale": "The tree faithfully represents Patrick Flynn with known fields populated (name, gender, birth/death dates and places) and unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 as required. Local I1 person ID is used. No relatives were fabricated despite the objective seeking parents—the tool correctly returned no relatives, and the agent did not invent placeholder stubs."
           },
           {
             "source": "rubric",
@@ -14402,7 +14402,7 @@
             "source": "rubric",
             "name": "Researcher profile",
             "score": 3,
-            "rationale": "The experience_level is correctly set to 'novice' (not persisting the user's 'some research under my belt' claim, per the fixed profile rule). The narration_guidance field contains the house-style string verbatim. Subscriptions were correctly recorded from the user's volunteered access (Ancestry and local family history centre mapped to LibraryAccess). The objective was not defaulted\u2014the user provided it. No site access was asked for, as required."
+            "rationale": "The experience_level is correctly set to 'novice' (not persisting the user's 'some research under my belt' claim, per the fixed profile rule). The narration_guidance field contains the house-style string verbatim. Subscriptions were correctly recorded from the user's volunteered access (Ancestry and local family history centre mapped to LibraryAccess). The objective was not defaulted—the user provided it. No site access was asked for, as required."
           },
           {
             "source": "rubric",
@@ -14414,7 +14414,7 @@
       },
       "totals": {
         "duration_ms": 143748.90133499866,
-        "duration_api_ms": 37277.0,
+        "duration_api_ms": 37277,
         "judge_duration_ms": 12934.933398006251,
         "wall_clock_ms": 159285.9857082367,
         "num_turns": 2,
@@ -14437,7 +14437,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 143748.90133499866,
-          "duration_api_ms": 37277.0,
+          "duration_api_ms": 37277,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1521,
@@ -14532,7 +14532,7 @@
           },
           "skill_cost_usd": 0.1450749,
           "output": {
-            "text_response": "The project is created and ready to go. Here's what was set up:\n\n**Project: Find the parents of Patrick Flynn**\n- **FamilySearch ID:** LZNY-BRF\n- **Patrick Flynn:** Born about 1845 in Ireland; died 1908 in Schuylkill County, Pennsylvania\n- **Objective stored:** \"Find the parents of Patrick Flynn\"\n- **Holdings noted:** Ancestry, your local family history centre, and FamilySearch\n- **Tree status:** Only Patrick has been imported \u2014 FamilySearch shows no relatives linked to him, so parents, spouse, and children are not yet in the tree\n\nOne thing worth noting: since you mentioned you already have some research under your belt, that existing work hasn't been recorded yet. When you're ready, share what you know (records found, hypotheses, dates, places) and it can be logged to the audit trail.\n\nThe logical next step is to select the first research question \u2014 the specific fact to pursue first (likely Patrick's birth place and year, or his parents' names if you already have leads). Would you like to do that now?",
+            "text_response": "The project is created and ready to go. Here's what was set up:\n\n**Project: Find the parents of Patrick Flynn**\n- **FamilySearch ID:** LZNY-BRF\n- **Patrick Flynn:** Born about 1845 in Ireland; died 1908 in Schuylkill County, Pennsylvania\n- **Objective stored:** \"Find the parents of Patrick Flynn\"\n- **Holdings noted:** Ancestry, your local family history centre, and FamilySearch\n- **Tree status:** Only Patrick has been imported — FamilySearch shows no relatives linked to him, so parents, spouse, and children are not yet in the tree\n\nOne thing worth noting: since you mentioned you already have some research under your belt, that existing work hasn't been recorded yet. When you're ready, share what you know (records found, hypotheses, dates, places) and it can be logged to the audit trail.\n\nThe logical next step is to select the first research question — the specific fact to pursue first (likely Patrick's birth place and year, or his parents' names if you already have leads). Would you like to do that now?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -14551,7 +14551,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-03.0c5aed5a.dirty"
                 }
@@ -15058,7 +15058,7 @@
                 "source": "rubric",
                 "name": "Stub & tree fidelity",
                 "score": 3,
-                "rationale": "The tree faithfully represents Patrick Flynn with known fields populated (name, gender, birth/death dates and places) and unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 as required. Local I1 person ID is used. No relatives were fabricated despite the objective seeking parents\u2014the tool correctly returned no relatives, and the agent did not invent placeholder stubs."
+                "rationale": "The tree faithfully represents Patrick Flynn with known fields populated (name, gender, birth/death dates and places) and unknown fields omitted. FamilySearch-derived facts are sourced to S1 at quality: 1 as required. Local I1 person ID is used. No relatives were fabricated despite the objective seeking parents—the tool correctly returned no relatives, and the agent did not invent placeholder stubs."
               },
               {
                 "source": "rubric",
@@ -15070,7 +15070,7 @@
                 "source": "rubric",
                 "name": "Researcher profile",
                 "score": 3,
-                "rationale": "The experience_level is correctly set to 'novice' (not persisting the user's 'some research under my belt' claim, per the fixed profile rule). The narration_guidance field contains the house-style string verbatim. Subscriptions were correctly recorded from the user's volunteered access (Ancestry and local family history centre mapped to LibraryAccess). The objective was not defaulted\u2014the user provided it. No site access was asked for, as required."
+                "rationale": "The experience_level is correctly set to 'novice' (not persisting the user's 'some research under my belt' claim, per the fixed profile rule). The narration_guidance field contains the house-style string verbatim. Subscriptions were correctly recorded from the user's volunteered access (Ancestry and local family history centre mapped to LibraryAccess). The objective was not defaulted—the user provided it. No site access was asked for, as required."
               },
               {
                 "source": "rubric",
@@ -15096,7 +15096,7 @@
   ],
   "totals": {
     "duration_ms": 1820137.740249018,
-    "duration_api_ms": 521753.0,
+    "duration_api_ms": 521753,
     "judge_duration_ms": 249236.40111103305,
     "num_turns": 36,
     "input_tokens": 26842,
