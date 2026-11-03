@@ -66,7 +66,11 @@ function runHttp(
 }
 
 /** Start `build/http.js` and resolve with the child and its port once it prints the listening line. */
-function startHttp(storeEnv: Record<string, string>): Promise<{ child: ChildProcess; port: number }> {
+function startHttp(
+  storeEnv: Record<string, string>,
+  // `stderr()` is everything the child has written so far, for the cases that
+  // assert on a START-UP line rather than on an exit code.
+): Promise<{ child: ChildProcess; port: number; stderr: () => string }> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(process.execPath, [HTTP_JS, "--port", "0"], {
       env: childEnv(storeEnv),
@@ -83,7 +87,7 @@ function startHttp(storeEnv: Record<string, string>): Promise<{ child: ChildProc
       const m = /listening on http:\/\/[^:]+:(\d+)\//.exec(stderr);
       if (m) {
         clearTimeout(timer);
-        resolvePromise({ child, port: Number(m[1]) });
+        resolvePromise({ child, port: Number(m[1]), stderr: () => stderr });
       }
     });
     child.on("error", (e) => {
@@ -122,6 +126,48 @@ describe("build/http.js readiness", () => {
       await new Promise((r) => setTimeout(r, 200));
       expect(child.exitCode).toBeNull();
       expect(child.signalCode).toBeNull();
+    } finally {
+      child.kill("SIGKILL");
+    }
+  }, TEST_TIMEOUT_MS);
+});
+
+describe("build/http.js connector door environment (E1, issue #3984)", () => {
+  // The development key is public in this repository, so a real deployment
+  // running on it would have every stored FamilySearch token encrypted under a
+  // key anyone can derive. An https issuer is what says "real deployment", the
+  // same call apps/server/proto/web/auth.py makes.
+  it("exits 2 when an https OAUTH_ISSUER is set with no FS_TOKEN_ENC_KEY", async () => {
+    const r = await runHttp({ ...BASE, OAUTH_ISSUER: "https://beta.example" });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toMatch(/FS_TOKEN_ENC_KEY is unset with an https OAUTH_ISSUER/);
+    // The refusal must not print the key it is complaining about.
+    expect(r.stderr).not.toMatch(/dev-insecure-fs-token-key/);
+  }, TEST_TIMEOUT_MS);
+
+  // The other direction, so this guard cannot quietly become one that refuses
+  // every local run: on http the default IS the point -- compose passes
+  // ${FS_TOKEN_ENC_KEY:-} and all three tiers fall back to the same value.
+  it("starts on an http issuer with no FS_TOKEN_ENC_KEY, and says the key is the default", async () => {
+    const { child, stderr } = await startHttp({ ...BASE, OAUTH_ISSUER: "http://127.0.0.1:8080" });
+    try {
+      expect(child.exitCode).toBeNull();
+      expect(stderr()).toMatch(/connector door: issuer=http:\/\/127\.0\.0\.1:8080 fs-token-key=default/);
+    } finally {
+      child.kill("SIGKILL");
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("starts on an https issuer once FS_TOKEN_ENC_KEY is set, and never prints it", async () => {
+    const { child, stderr } = await startHttp({
+      ...BASE,
+      OAUTH_ISSUER: "https://beta.example",
+      FS_TOKEN_ENC_KEY: "a-real-key-sentinel",
+    });
+    try {
+      expect(child.exitCode).toBeNull();
+      expect(stderr()).toMatch(/fs-token-key=set/);
+      expect(stderr()).not.toMatch(/a-real-key-sentinel/);
     } finally {
       child.kill("SIGKILL");
     }

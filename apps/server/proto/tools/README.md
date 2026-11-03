@@ -42,7 +42,30 @@ run on a laptop with `~/.aws` signs with the developer's profile); `GENEALOGY_S3
 required variable, exactly one of the two keys, or a path-style value other than
 `true`/`false` is one stderr line and exit 2 before `listen`; otherwise one stderr line names
 the credential mode (`static keys` or `SDK default chain`), the region and the endpoint. The
-process also reads two limits, each off unless set (`readLimitsEnv`, self-hosted beta E4): `GENEALOGY_FS_CALLS_PER_MINUTE`, a sliding-60s FamilySearch request budget for the whole process, and `GENEALOGY_MAX_TRANSCRIPTIONS`, a cap on concurrent transcriptions (set it at 5 or above — `person_read` transcribes five memories at a time). Either set to anything but a whole number above 0 is exit 2 before `listen`, on the same line as the store variables; otherwise one stderr line names each, or says `off`. The
+process also reads two limits, each off unless set (`readLimitsEnv`, self-hosted beta E4): `GENEALOGY_FS_CALLS_PER_MINUTE`, a sliding-60s FamilySearch request budget for the whole process, and `GENEALOGY_MAX_TRANSCRIPTIONS`, a cap on concurrent transcriptions (set it at 5 or above — `person_read` transcribes five memories at a time). Either set to anything but a whole number above 0 is exit 2 before `listen`, on the same line as the store variables; otherwise one stderr line names each, or says `off`.
+
+The connector door (self-hosted beta E1) reads two more, neither
+`GENEALOGY_`-prefixed. `FS_TOKEN_ENC_KEY` decrypts the FamilySearch token and
+OpenRouter key the web tier wrote; unset or blank it falls back to the same
+development default as `apps/server/proto/grants.py`, because compose passes
+`${FS_TOKEN_ENC_KEY:-}` to web, worker and tools and **all three must agree byte
+for byte** — a tier on a different key reads the others' tokens as
+undecryptable, which looks exactly like an expired session. That default is
+public in this repository, so an `https://` `OAUTH_ISSUER` with no key set is
+exit 2 before `listen`. `OAUTH_ISSUER` is the web tier's issuer, printed byte
+for byte as the protected-resource metadata's `authorization_servers[0]` and in
+the `WWW-Authenticate: resource_metadata=` URL, never derived from the request's
+`Host`; unset, that metadata route answers 404 and a 401 carries a bare
+`Bearer`. One stderr line names both (`connector door: issuer=… fs-token-key=default|set`)
+and never the key itself.
+
+The door reads each request body once, capped at **1 MiB**, and answers 413 past
+it. The cap binds the worker's writes too, because the body must be read to
+refuse a JSON-RPC batch before any tool runs; it is sized from the largest
+tool-call arguments in the run-log corpus, 53,329 bytes across 46,249 calls in
+927 logs, so it is ~20x the largest real body.
+
+The
 same process runs the S3 orphan sweep (`src/store/s3-orphan-sweep.ts`, U19), which deletes an
 object no `blobs` or `staging` row points at once it is older than `GENEALOGY_ORPHAN_GRACE_S`
 (default 86400, at least 3600), every `GENEALOGY_ORPHAN_SWEEP_INTERVAL_S` (default 3600, `0` off, at most 2147483: Node's
