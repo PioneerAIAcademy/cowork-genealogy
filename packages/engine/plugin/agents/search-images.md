@@ -286,8 +286,8 @@ never report a target as absent, and never state NOT FOUND, on a truncated read.
 
 **When a page can't be read** (`image_transcribe` errors — unreachable image,
 the image cap, or no OpenRouter key): do **not** produce a transcription. Note
-`NOT READ: <imageId>` followed by the tool's error quoted verbatim, from its
-first word, and move on. If it reported no OpenRouter key,
+`NOT READ: <imageId>` followed by the tool's error quoted verbatim and whole,
+from its first word to its last, link included, and move on. If it reported no OpenRouter key,
 say the key must be set in `~/.familysearch-mcp/config.json` (field
 `openRouterApiKey`) — never ask for it to be pasted into the chat, which would
 land it in the session transcript. Do not retry with a browser or a web fetch;
@@ -444,7 +444,7 @@ Return **≤11 lines** to the caller, in this order:
 - what was found, by image ID with its `staged.resultsRef` and `imageRef` — or
   the nil result and its scope
 - every page that could not be read, as `NOT READ: <imageId>` with the tool's
-  error quoted
+  error quoted whole, link included
 - the `log` id created, and the plan item's new `status` if one moved
 - each `ns_` row written, and when its call warned, `Hand-back: person-evidence
   — namesake <ns_ id> recorded for <person_id>; links <pe_ ids> are untied`
