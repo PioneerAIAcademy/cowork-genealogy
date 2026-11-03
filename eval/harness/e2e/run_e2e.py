@@ -277,17 +277,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--effort-level",
         choices=["low", "medium", "high", "xhigh", "max"],
-        default="high",
+        default=None,
         help=(
-            "Pin the run's reasoning effort via a project-level setting "
-            "(.claude/settings.json effortLevel). Session-wide. Default: high "
-            "(matches Cowork). setting_sources=['project'] already isolates from "
-            "the user's effortLevel, and CLAUDE_EFFORT is output-only. This is "
-            "not the only lever — ClaudeAgentOptions.effort also works, and both "
-            "reached subagents on CLI 2.1.215/2.1.220/2.1.294 (probe_effort_capture.py; "
-            "this harness runs the hosted 2.1.294). Vary it to test whether a "
-            "runaway-thinking subagent freeze clears (see "
-            "subagents[].runaway_thinking; if empty, read subagent_capture_status)."
+            "Override the main thread's reasoning effort (the session's --effort). "
+            "Default: packages/engine/plugin/main-thread.json's, which every platform "
+            "runs. Agents keep their own `effort:`, which outranks the session's."
         ),
     )
     parser.add_argument(

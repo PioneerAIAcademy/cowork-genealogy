@@ -50,6 +50,8 @@ COPY apps/server/proto/turn_message.py /opt/genealogy/server/proto/turn_message.
 # U9: the one schema applier. compose's one-shot `migrate` service runs it from this image
 # (`python3 proto/migrate.py` in WORKDIR); the worker imports it read-only for the ledger.
 COPY apps/server/proto/migrate.py  /opt/genealogy/server/proto/migrate.py
+# U29: the Postgres credentials holder (PG_DSN, or a SAS object) the worker and migrate.py share.
+COPY apps/server/proto/pg_credentials.py /opt/genealogy/server/proto/pg_credentials.py
 COPY apps/server/proto/worker      /opt/genealogy/server/proto/worker
 
 ENV PYTHONPATH=/opt/genealogy/server

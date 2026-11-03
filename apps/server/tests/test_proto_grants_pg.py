@@ -46,7 +46,7 @@ def pg_dsn():
 @pytest.fixture(autouse=True)
 def _env(monkeypatch, pg_dsn):
     monkeypatch.setenv("FS_TOKEN_ENC_KEY", KEY)
-    monkeypatch.setattr(worker, "PG_DSN", pg_dsn)
+    monkeypatch.setattr(worker, "PG", worker.pg_credentials.PgCredentials.fixed(pg_dsn))
     monkeypatch.setattr(worker, "log", lambda **f: None)
 
 

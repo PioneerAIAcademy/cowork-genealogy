@@ -272,9 +272,10 @@ def test_the_evidence_block_names_the_call_the_probe_actually_waited_for(monkeyp
 def test_the_kill_check_fails_only_on_a_resume_that_did_nothing():
     """1c made turns.outcome say HOW a run ended, so the old `== "ok"` literal would have
     failed the resume probe on a run that WORKED. `budget` is the case that makes the
-    point: proto-probe-resume runs a narrow message with the Stop hook on, so exhausting
-    the nudge cap without finishing the project is its ORDINARY shape -- and the resume
-    still worked, which is the only thing this probe measures.
+    point: proto-probe-resume ran a narrow message with the Stop hook on (deleted in step
+    mode phase 2), so exhausting the nudge cap without finishing the project was its
+    ORDINARY shape -- and the resume still worked, which is the only thing this probe
+    measures.
 
     Stated as a failure set, so a terminal value added later reads as "the resume worked"
     unless someone decides otherwise."""

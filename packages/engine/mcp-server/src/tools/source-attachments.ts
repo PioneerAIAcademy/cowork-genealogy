@@ -11,6 +11,7 @@ import type {
   AttachedPerson,
 } from "../types/source-attachments.js";
 import { rejectedTokenMessage } from "../auth/config.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
 const URL =
   "https://www.familysearch.org/service/tree/links/sources/attachments";
@@ -40,6 +41,10 @@ async function fetchAttachmentMap(
       body: JSON.stringify({ uris: apiUris }),
     });
   } catch (err) {
+    // The budget refusal must reach the caller marked: rewrapping it here
+    // destroys the marker and every isFsBudgetExhausted guard downstream
+    // silently stops firing (same reason as match-engine.ts).
+    if (isFsBudgetExhausted(err)) throw err;
     throw new Error(
       `Could not reach FamilySearch attachments API: ${describeFetchError(err)}.`,
     );

@@ -17,6 +17,7 @@ description: >-
   research-exhaustiveness), or to select the next question (use
   question-selection).
 model: claude-sonnet-4-6
+effort: high
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append

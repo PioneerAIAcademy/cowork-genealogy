@@ -11,6 +11,7 @@ import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "./fs-fetch.js";
 import { fetchWithRetry } from "./http.js";
 import { isMemoryArtifactUrl } from "./fs-image-fetch.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 
 const API_BASE = "https://api.familysearch.org/platform/tree/persons";
 /** Single-memory lookup. Distinct from API_BASE, which is the *tree persons*
@@ -307,7 +308,10 @@ export async function fetchStoryText(m: Memory): Promise<string | null> {
     if (res.status !== 200) return null;
     const text = (await res.text()).trim();
     return text.length > 0 ? text : null;
-  } catch {
+  } catch (err) {
+    // Not "this story has no text" -- the server is rate-limited. Found by
+    // sweeping for catches whose try wraps a fetch; not in the review's list.
+    if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
 }

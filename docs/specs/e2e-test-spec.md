@@ -141,7 +141,7 @@ Test metadata.
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
 | `tags` | object | yes | See §4 |
-| `model.agent` | string | yes | Pinned agent model |
+| `model.agent` | string | no | Not read. The main thread runs `packages/engine/plugin/main-thread.json`'s model and effort, and each agent its own. Older fixtures keep the field because `fixture.json` is part of the grading digest; new fixtures omit it |
 | `model.judge` | string | yes | Pinned judge model |
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
@@ -729,7 +729,9 @@ the `max_cost_usd` note in §6 step 5.
      by §6.1.**
    - Real MCP server (not the mock used by unit evals). FS auth
      comes from `~/.familysearch-mcp/tokens.json` on the host.
-   - Models pinned per `fixture.json::model.agent`.
+   - The main thread runs `packages/engine/plugin/main-thread.json`'s model and
+     effort (`--agent-model` / `--effort-level` override them); each agent runs
+     its own file's.
 4. Harness monitors the SDK message stream and periodically reads
    `research.json` to detect the completion signal.
 5. Stops on whichever fires first:
@@ -876,11 +878,10 @@ the `max_cost_usd` note in §6 step 5.
 
    **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
    `project.status == "completed"`. A `Stop` hook vetoes every voluntary yield before
-   that (except on a session with no `research.json`) with **one** reply, the prototype
-   worker's `CONTINUE_REASON`
-   (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
-   two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
-   the copy). The hosted planes' completion halt is NOT emulated: they end the turn at the
+   that (except on a session with no `research.json`) with **one** reply, a fixed continue
+   text (`stop_checker.py`). The hosted planes no longer veto a stop (step mode phase 2),
+   so a paired grade no longer compares one Stop policy; the e2e half of phase 2 deletes
+   this veto. Nothing pins the text. The hosted planes' completion halt is NOT emulated: they end the turn at the
    PostToolUse of the proof-conclusion call that completes the project
    (`completion_halt_summary`), so a completed e2e run still pays the closing relay call
    those planes no longer make, and its cost overstates a hosted one by that call. Before replying, the hook classifies the agent's closing words
@@ -2716,7 +2717,7 @@ would need an exclusion in every reader and breaks the first time one is missed.
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
 | `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
-| `model.agent`, `blocked_tools` | no | as for autonomous fixtures (§3.1, §6.1) |
+| `blocked_tools` | no | as for autonomous fixtures (§6.1) |
 
 The loader refuses an unknown key (in `fixture.json` or a save alternative), a tool
 name that is not a bare name from `manifest.json` or a built-in, and a save list that
@@ -2780,9 +2781,9 @@ A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 ### 16.5 What a pass does not show
 
 A pass here is **not** a pass on today's hosted alpha. That plane appends
-DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`) and nudges any stop not
-preceded by `research_delivered`; a single ask that ends without it would be
-pushed on into more work. The `delivered` column is what shows that risk.
+DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`). It no longer nudges a stop
+(step mode's phase 2 deleted the Stop veto), so a single ask that ends without
+`research_delivered` simply ends; the `delivered` column shows which did.
 
 ### 16.6 Cost
 

@@ -169,7 +169,7 @@ alarms would page; on the rehearsal none does. `up --phase alarms` applies the f
 |---|---|
 | `dlq_depth` | Sends the worker queue a message naming no turn row. The worker answers it 400 and sqsd dead-letters it after `MaxRetries` receives, so hold `probe --case maxretries_1` (and `fast_errors`) to make that one. |
 | `message_age` | Puts the alarm back with threshold 60 s, polls, then puts the file's threshold back in `finally` (on success, timeout or Ctrl-C). A turn must run longer than 60 s meanwhile: an in-flight message counts (U19, 2026-10-13, n=1). |
-| `reauth`, `spend_cap`, `long_agent`, `no_progress` | Prints the file's `trip` recipe and only polls. The operator does the rest: `reauth`, the refresh token made undecryptable and the session backdated on the database, then a message; `spend_cap`, `probe --case cap_1usd` and a research turn; `long_agent`, `up --phase worker --env worker:LONG_AGENT_CALL_S=60` and a delegating turn (a later `up` without the `--env` removes it); `no_progress`, a turn asked to reply without tools. |
+| `reauth`, `spend_cap`, `long_agent`, `no_progress` | Prints the file's `trip` recipe and only polls. The operator does the rest: `reauth`, the refresh token made undecryptable and the session backdated on the database, then a message; `spend_cap`, `probe --case cap_1usd` and a research turn; `long_agent`, `up --phase worker --env worker:LONG_AGENT_CALL_S=60` and a delegating turn (a later `up` without the `--env` removes it); `no_progress`, a redelivery that does no work `ZERO_PROGRESS_CAP` times running (the file's `trip` says how). |
 
 The custom metrics' data cannot be deleted. It ages out of CloudWatch on its own, at no cost
 once nothing publishes, so `down` deletes the filters and alarms and leaves the metrics.
@@ -199,8 +199,6 @@ goes to `--options-to-remove`, so the bundle's template value (if any) applies a
 | `debug_hold` | `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS=20000` on tools | The hold acceptance step 4 kills the worker within |
 | `refresh_age_0` | `FS_GRANT_REFRESH_AGE_S=0` on web | A FamilySearch grant refresh on every turn |
 | `cap_1usd` | `SESSION_SPEND_CAP_USD=1` on the worker | That the session spend cap stops a turn |
-| `nudges_0` | `AUTONOMOUS_MAX_NUDGES=0` on web, so the worker runs no Stop hook (removed on restore) | A case measured with nudges off, as compose's kill recipes run it (`probe_resume`) |
-| `nudges_3` | `AUTONOMOUS_MAX_NUDGES=3` on web (the template's 0 applies again on restore) | Whether a kill case's `no_progress` close comes from web's nudge cap: the same case at compose's 3 |
 | `no_telemetry` | `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1` on the worker (kept for the CLI by `CLI_ENV_KEEP_PREFIXES`) | The CLI's egress with its nonessential traffic (the Datadog intake) off |
 | `idle_session_60s` | The parameter group's `idle_session_timeout=60000`. It waits for `in-sync`, then restores with `reset-db-parameter-group`. Never during the acceptance turn. | What a Postgres idle-session timeout does to the tiers' pools |
 | `slots_4`, `slots_8` | sqsd `HttpConnections` 4 or 8 and `WORKER_TURN_USERS` the first 4 or 8 of the hook's `genealogy-turn-0` … `-7`, in one update (a configuration deploy: the worker and sqsd restart). The restore sets `HttpConnections` back to 2 and removes `WORKER_TURN_USERS`, so `02-worker.config`'s two names apply again. Queue idle; deploy the Part A worker bundle first, since its hook creates the eight users. | Worker CPU, memory and Postgres connections at 4 and 8 concurrent turns (U18) |
