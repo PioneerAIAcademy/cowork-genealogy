@@ -1,6 +1,6 @@
 {
   "tool": "image_transcribe",
-  "description": "image_transcribe response for image 007936749_00012 of the unindexed Schuylkill County probate volume: an estate docket page holding the 1882 administration of a Patrick Flynn of Pottsville (died 14 May 1882, intestate, widow Bridget). The subject Patrick Flynn (I1) died 12 March 1908, so the page shows a different man of his name: the Heydöcker shape of issue #3363 (a namesake ruled out in a browse). Feeds ut_search_images_012. Anchored to the full film id, as image-transcribe-schuylkill-probate-flynn-will is; pair it with image-transcribe-any, ordered last.",
+  "description": "image_transcribe response for image 007936749_00012 of the unindexed Schuylkill County probate volume: an estate docket page holding the 1882 administration of a Patrick Flynn of Pottsville (died 14 May 1882, intestate, widow Bridget). The subject Patrick Flynn (I1) died 12 March 1908, so the page shows a different man of his name: the Heydöcker shape of issue #3363 (a namesake ruled out in a browse). Feeds ut_search_images_013. Anchored to the full film id, as image-transcribe-schuylkill-probate-flynn-will is; pair it with image-transcribe-any, ordered last.",
   "args": {
     "imageId": "~007936749_00012"
   },

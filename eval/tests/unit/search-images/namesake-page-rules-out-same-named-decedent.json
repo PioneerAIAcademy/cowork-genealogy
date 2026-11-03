@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_search_images_012",
+    "id": "ut_search_images_013",
     "skill": "search-images",
     "name": "A page showing a same-named man the browse rules out is recorded as a namesake, and the untied links it warns about go to person-evidence",
     "type": "positive",
