@@ -1,14 +1,18 @@
 {
-  "id": "tree_001",
   "persons": [
     {
       "id": "I1",
-      "extracted": false,
-      "living": false,
-      "names": [{"value": "Person A", "type": "BirthName"}],
-      "facts": []
+      "gender": "Unknown",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Person",
+          "surname": "A"
+        }
+      ]
     }
   ],
   "relationships": [],
-  "source_descriptions": []
+  "sources": []
 }
