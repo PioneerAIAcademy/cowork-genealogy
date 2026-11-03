@@ -68,9 +68,9 @@ const clients: Client[] = [];
 // Every HTTP exchange the SDK client made, so item 1 can show the 405 arrived.
 const exchanges: Array<{ method: string; path: string; status: number }> = [];
 
-async function connect(headers?: Record<string, string>): Promise<Client> {
+async function connect(headers?: Record<string, string>, url: string = base): Promise<Client> {
   const client = new Client({ name: "http-server-test", version: "0" });
-  const transport = new StreamableHTTPClientTransport(new URL(`${base}/mcp`), {
+  const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`), {
     requestInit: headers ? { headers } : undefined,
     fetch: async (url, init) => {
       const res = await fetch(url, init);
@@ -215,6 +215,33 @@ describe("tool server over Streamable HTTP", () => {
     // directories item 2 wrote.
     const dirs = (await readdir(root)).filter((d) => d !== "__missing__");
     expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
+  });
+
+  it("2d. baseConfig's public URL reaches project_create and project_context as links built from the header's project id", async () => {
+    const linked = await startHttpServer({
+      host: "127.0.0.1",
+      port: 0,
+      baseConfig: { webPublicUrl: "https://beta.example/", uploadsEnabled: true },
+      bindStore,
+      authorize,
+    });
+    const address = linked.address();
+    if (!address || typeof address !== "object") throw new Error("server did not bind a port");
+    try {
+      const id = `linked-${randomUUID()}`;
+      const client = await connect({ [PROJECT_HEADER]: id }, `http://127.0.0.1:${address.port}`);
+      const created = JSON.parse(textOf(await client.callTool({ name: "project_create", arguments: createArgs("Linked") })));
+      expect(created.ok, JSON.stringify(created)).toBe(true);
+      expect(created.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      const ctx = JSON.parse(
+        textOf(await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } })),
+      );
+      expect(ctx.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      expect(ctx.uploadUrl).toBe(`https://beta.example/#/p/${id}/upload`);
+    } finally {
+      linked.closeAllConnections();
+      await new Promise<void>((resolve) => linked.close(() => resolve()));
+    }
   });
 
   it("2c. a malformed project id is a 400 before any tool runs", async () => {

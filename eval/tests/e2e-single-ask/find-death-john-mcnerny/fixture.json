@@ -1,0 +1,29 @@
+{
+  "id": "find-death-john-mcnerny",
+  "message": "I can't find John Mcnerny after the 1880 US Census. Can you find his death record near Venango County Pennsylvania?",
+  "expected_owner": "search-records",
+  "expected_save": [
+    {
+      "section": "sources"
+    },
+    {
+      "section": "log",
+      "tool": "record_search",
+      "outcome": "negative"
+    }
+  ],
+  "is_plan_ask": false,
+  "setup_units": [],
+  "must_not": "No `question-selection`; no research job; no search for a record already attached to KP9Y-74L",
+  "model": {
+    "agent": "claude-sonnet-4-6"
+  },
+  "caps": {
+    "wall_clock_seconds": 1200,
+    "inactivity_seconds": 600,
+    "progress_stall_seconds": 600,
+    "tool_calls": 60,
+    "max_turns": 60,
+    "max_cost_usd": 3.0
+  }
+}

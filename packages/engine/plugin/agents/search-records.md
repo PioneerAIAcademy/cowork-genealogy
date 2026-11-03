@@ -58,6 +58,8 @@ tools:
   - mcp__genealogy__catalog_search
   - mcp__remote-devices__Genealogy_Research__catalog_search
   - mcp__Genealogy_Research__catalog_search
+model: claude-sonnet-4-6
+effort: high
 ---
 
 # Search Records

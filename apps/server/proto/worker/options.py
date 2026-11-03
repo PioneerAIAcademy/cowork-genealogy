@@ -1,7 +1,7 @@
 """The worker's ``ClaudeAgentOptions`` and its hooks: ``PreToolUse`` (deny and log),
 ``PostToolUse`` / ``PostToolUseFailure`` (stamp the call's duration, and end the turn when a
-proof-conclusion call completes the project) and, on the D18
-autonomous arm only, ``Stop`` (veto the model's voluntary yield, ``make_stop_hook``).
+proof-conclusion call completes the project). No ``Stop`` hook: a step-mode turn ends at
+its boundary on purpose (docs/plan/research-step-mode.md, Phase 2).
 
 This is the prototype option set (plan: "Container layout", "Removing the shell",
 D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
@@ -29,8 +29,9 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 - the SDK session id is the worker's choice: ``session_id=`` on a fresh session,
   ``resume=`` when the store holds entries -- exactly one, never both (the SDK's own
   rule without ``fork_session``).
-- the model is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
-  ``anthropic`` is ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the
+- the main thread's model and effort come from the plugin's ``main-thread.json``; the
+  provider is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
+  ``anthropic`` sends that model on ``ANTHROPIC_API_KEY``; ``gateway`` points the
   CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
   every agent (``gateway_agent_models``, and ``gateway_plugin_copy`` for the plugin's own
   namespaced registration of them), since a gateway passes unmapped ids through.
@@ -67,7 +68,6 @@ from app.agent.continue_policy import (
     DELIVERY_GUIDANCE,
     HOSTED_PLANE_ENV,
     DELIVERED_TOOL,
-    CONTINUE_REASON,
     env_float,
     env_int,
     TERMINAL_BUDGET,
@@ -75,16 +75,14 @@ from app.agent.continue_policy import (
     TERMINAL_DECISION,
     TERMINAL_DELIVERED,
     TERMINAL_MCP_UNAVAILABLE,
-    TERMINAL_NO_PROGRESS,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
     completion_halt_summary,
     project_completed,
-    should_continue_run,
     status_before_call,
-    terminal_reason,
     wants_status_before,
 )
+from app.agent.main_thread import MainThread, load_main_thread
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
@@ -95,10 +93,11 @@ from proto.worker.writer_record import writer_record
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
 DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
-ANTHROPIC_MODEL = "claude-sonnet-4-6"
-# [1m]: the CLI strips it, sends context-1m-2025-08-07 and sizes its window (and so its
-# compaction) at 1M; without it a gateway session gets 200k (plan P3j).
-GATEWAY_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
+# The main thread's model and effort come from the plugin's main-thread.json
+# (`app.agent.main_thread`). A gateway gets its Bedrock id from GATEWAY_AGENT_MODELS plus
+# [1m]: the CLI strips that suffix, sends context-1m-2025-08-07 and sizes its window (and
+# so its compaction) at 1M; without it a gateway session gets 200k (plan P3j).
+GATEWAY_MAIN_SUFFIX = "[1m]"
 GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 # Bare ids the plugin's agents declare -> the Bedrock ids a gateway must receive. The
 # CLI sends an agent's model verbatim, and a gateway without a matching alias answers
@@ -272,19 +271,22 @@ def model_provider(worker_env: Mapping[str, str]) -> str:
     return provider
 
 
-def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
+def provider_env(worker_env: Mapping[str, str], main: MainThread) -> tuple[str | None, dict[str, str]]:
     """``(model, env)`` for ``MODEL_PROVIDER``: the CLI ``--model`` and the variables
-    that pin the provider. The gateway's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
-    suffix is read off that string), so ``model`` is None there."""
+    that pin the provider, for the main thread's model ``main.model``. The gateway's model
+    travels as ``ANTHROPIC_MODEL`` (the ``[1m]`` suffix is read off that string), so
+    ``model`` is None there; a model the gateway has no Bedrock id for raises."""
     if model_provider(worker_env) == "anthropic":
-        return ANTHROPIC_MODEL, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
+        return main.model, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
+    if main.model not in GATEWAY_AGENT_MODELS:
+        raise ValueError(f"main-thread.json model {main.model!r} has no Bedrock id in GATEWAY_AGENT_MODELS")
     return None, {
         "ANTHROPIC_BASE_URL": worker_env["GATEWAY_BASE_URL"].strip(),
         "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
         # Blank, not absent: the CLI inherits the worker's environment, and an
         # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
         "ANTHROPIC_API_KEY": "",
-        "ANTHROPIC_MODEL": GATEWAY_MODEL,
+        "ANTHROPIC_MODEL": GATEWAY_AGENT_MODELS[main.model] + GATEWAY_MAIN_SUFFIX,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
         # On by default (Richard, 2026-10-31): TAP's EKS gateway runs agentgateway
         # 1.6.0, and tool search held through kills, resumes, compactions and Sonnet 5
@@ -624,7 +626,7 @@ def make_pretool_hook(
                     reason=stop_now)
             return _halt(stop_now)
 
-        # A bounded request that is met must not run on to the proof, the nudge cap or the
+        # A bounded request that is met must not run on to the proof or the
         # spend bound. It sits AFTER the halt check, so the researcher's own stop still
         # outranks it.
         #
@@ -854,19 +856,8 @@ def make_posttool_hook(
     return _posttool
 
 
-# -- the Stop hook (D18) ----------------------------------------------------------
-#
-# One queue message is one model turn, and an autonomous /research run yields after
-# each sub-skill step ("handing off to research-plan"). The e2e harness keeps its
-# --autonomous runs going with a Stop hook that vetoes the voluntary yield
-# (eval/harness/e2e/orchestrator.py stop_hook), bounded by
-# eval/harness/e2e/stop_checker.py should_continue_run. Both are ported here like
-# deny.py's predicate -- the worker image carries no eval/ -- with the harness's reason
-# text verbatim, so the prototype's autonomous arm and the harness apply one rule.
-
 # The one continue prompt a redelivered attempt sends when its first result carried no
-# model turn (worker.run_turn's resume rule, D17). Not the Stop hook's veto: that one
-# answers a model that yielded voluntarily mid-run, this one answers a CLI that returned
+# model turn (worker.run_turn's resume rule, D17). It answers a CLI that returned
 # a synthetic result without ever reading the worker's prompt. It names the interruption
 # so the model does not re-plan from scratch, and forbids a question because nobody is
 # watching an autonomous run.
@@ -876,95 +867,6 @@ RESUME_CONTINUE_TEXT = (
     "task from where it stopped; do not start over. Finish the step that was running "
     "and end with its \"Continue with ...?\" line, as the step would have."
 )
-
-
-# 1b/1c/1e: the predicate and its terminal vocabulary live in ONE place that both planes
-# import -- ``apps/server/app/agent/continue_policy.py``. The worker already depends on
-# this package (``direct_project_file_write`` above, ``map_message`` in worker.py), so the
-# hosted alpha and the prototype share a copy rather than drifting. ``eval/harness`` keeps
-# its own, deliberately: the worker image carries no ``eval/``, and a test asserts those
-# two trees never import each other. Imported at the TOP of this module rather than
-# redefined, so every existing caller and test keeps reading
-# ``options.should_continue_run``.
-
-
-def make_stop_hook(
-    *,
-    turn_id: str,
-    max_nudges: int,
-    research: Callable[[], Mapping[str, Any] | None],
-    tool_count: Callable[[], int],
-    on_nudge: Callable[[int], None],
-    log: Callable[..., None] | None = None,
-    stopped: Callable[[], bool] | None = None,
-    pending_user_message: Callable[[], bool] | None = None,
-    pending_decision: Callable[[], bool] | None = None,
-    on_allow: Callable[[str], None] | None = None,
-    nudges_used: int = 0,
-):
-    """The worker's ``Stop`` callback: ``research()`` is the project's research.json (or
-    None) and ``tool_count()`` the turn's tool-call count so far, both read at each stop;
-    ``on_nudge(n)`` is called on each veto. Never raises: any exception allows the stop.
-    Bound with ``PRETOOL_TIMEOUT_S``; the harness's matcher has no timeout -- a timed-out
-    hook allows the stop, like ``stop_hook_failed``.
-
-    ``stopped`` / ``pending_user_message`` / ``pending_decision`` are the three injectable
-    predicates of 1b and 1c, each read on the turn's own Postgres connection at every
-    stop, and each one clause in ``should_continue_run``. Omitted means "never", which is
-    what keeps this a faithful port of the harness's hook for anyone reading both.
-
-    ``on_allow(reason)`` fires when the hook ALLOWS a stop, with ``terminal_reason``'s
-    verdict, so the turn can record WHY it ended. Without it ``complete()`` writes 'ok'
-    for every ending and a budget-capped run is indistinguishable from a finished one --
-    which a genealogist reads as "nothing more was found".
-
-    ``nudges_used`` seeds the counter on a redelivery. The hook's state is created inside
-    ``run_turn``, one per ATTEMPT, while the tool counter spans attempts -- and since 0b
-    makes resume the normal path (median two attempts, longest six in the corpus), an
-    unseeded cap of 60 is 60 PER ATTEMPT. The caller passes ``turns.nudges``."""
-    state = {"nudges_used": max(0, int(nudges_used)), "tool_count_at_last_nudge": -1}
-    ask = lambda f: bool(f()) if f is not None else False  # noqa: E731 - one line, three callers
-
-    async def _stop(_input_data: Any, _tool_use_id: str | None, _context: Any) -> dict[str, Any]:
-        try:
-            # `stopped` is should_continue_run's first clause, so it is asked first: a
-            # halted turn (U23: one whose store is down among them) allows the stop
-            # without the two reads below.
-            if ask(stopped):
-                if on_allow is not None:
-                    on_allow(TERMINAL_STOPPED)
-                return {}
-            count = int(tool_count())
-            verdict = dict(
-                research=research(),
-                nudges_used=state["nudges_used"],
-                max_nudges=max_nudges,
-                stopped=False,
-                pending_user_message=ask(pending_user_message),
-                pending_decision=ask(pending_decision),
-            )
-            if not should_continue_run(
-                tool_count=count,
-                tool_count_at_last_nudge=state["tool_count_at_last_nudge"],
-                **verdict,
-            ):
-                if on_allow is not None:
-                    # `verdict` is built above from the state keys only; the two count
-                    # arguments are passed separately to should_continue_run and are
-                    # never in it. An earlier filter here stripped a key that cannot be
-                    # present, which reads as though it sometimes is.
-                    on_allow(terminal_reason(**verdict))
-                return {}
-            state["nudges_used"] += 1
-            state["tool_count_at_last_nudge"] = count
-            on_nudge(state["nudges_used"])
-        except Exception as exc:  # noqa: BLE001 - a hook that raises ends the turn in error
-            if log is not None:
-                log(ev="stop_hook_failed", turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
-            return {}
-        return {"decision": "block", "reason": CONTINUE_REASON}
-
-    return _stop
 
 
 def check_registration(
@@ -1007,16 +909,10 @@ def build_worker_options(
     claim_epoch: int,
     worker_env: Mapping[str, str] | None = None,
     stderr: Callable[[str], None] | None = None,
-    stop_hook: Callable[..., Any] | None = None,
     turn_user: str | None = None,
     turn_home: str | None = None,
 ):
-    """``stop_hook`` (D18, ``make_stop_hook``) binds a ``Stop`` matcher only when given.
-    The web tier stamps a nudge cap on every browser message, so when that cap is above
-    0 (the default is 60) every browser turn passes one and a yield to ask the user is
-    vetoed like any other.
-
-    ``turn_user`` (U3) is the slot user the CLI runs as; ``turn_home``, a directory that user
+    """``turn_user`` (U3) is the slot user the CLI runs as; ``turn_home``, a directory that user
     owns, is the CLI's ``HOME``, ``TMPDIR`` and ``CLAUDE_CODE_TMPDIR`` (the CLI's own temp dir,
     else a ``/tmp/claude-<uid>`` every later patron on the slot would share).
 
@@ -1027,7 +923,8 @@ def build_worker_options(
     if resume and session_id:
         raise ValueError("resume and session_id are mutually exclusive: pass exactly one")
     env_in = os.environ if worker_env is None else worker_env
-    model, model_env = provider_env(env_in)
+    main = load_main_thread(plugin_dir)
+    model, model_env = provider_env(env_in, main)
     if model_provider(env_in) == "gateway":
         agents = gateway_agent_models(agents)
     project_note = (
@@ -1066,8 +963,6 @@ def build_worker_options(
         "PostToolUse": [HookMatcher(matcher=None, hooks=[posttool_hook], timeout=PRETOOL_TIMEOUT_S)],
         "PostToolUseFailure": [HookMatcher(matcher=None, hooks=[posttool_hook], timeout=PRETOOL_TIMEOUT_S)],
     }
-    if stop_hook is not None:
-        hooks["Stop"] = [HookMatcher(matcher=None, hooks=[stop_hook], timeout=PRETOOL_TIMEOUT_S)]
     kwargs: dict[str, Any] = dict(
         cwd=cwd,
         permission_mode="bypassPermissions",
@@ -1089,6 +984,7 @@ def build_worker_options(
         include_partial_messages=True,
         max_buffer_size=MAX_BUFFER_BYTES,
         env=env,
+        effort=main.effort,
     )
     if model is not None:
         kwargs["model"] = model

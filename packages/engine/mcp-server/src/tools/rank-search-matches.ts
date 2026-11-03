@@ -19,6 +19,7 @@ import type {
   RankSearchMatchesResult,
   RankedMatch,
 } from "../types/rank-search-matches.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
 /** FamilySearch's match-score fan-out concurrency (deliberately higher than
  *  same_person's conservative PAIR_CONCURRENCY=5; confirmed with the
@@ -111,6 +112,15 @@ export async function rankSearchMatches(
     principal,
     { concurrency: SCORE_CONCURRENCY, retry: true },
   );
+  // A spent budget is a refusal, not "unscoreable". Counting it as a scoring
+  // error answers "20 of the 20 candidates could not be scored" and drops the
+  // one thing the agent can act on -- "try again in about N seconds".
+  // same_person already rethrows `scored.error` for the same reason
+  // (same-person.ts:85); without this the two tools disagree on the same
+  // matcher result. Per-pair failures stay fail-soft, as before.
+  const refused = call.results.find((r) => isFsBudgetExhausted(r.error));
+  if (refused) throw refused.error;
+
   sendable.forEach((s, i) => {
     s.matchScore = call.results[i].score;
     s.errored = s.matchScore === null;
@@ -1008,7 +1018,8 @@ async function applyAttachments(
       stub.attachedToSubject = persons.some((p) => p.personId === subjectId);
       stub.attachedToOther = persons.some((p) => p.personId !== subjectId);
     }
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     // Best-effort: an attachments failure must not fail the rank. Leave the
     // attachedTo* fields unset rather than asserting a wrong answer.
   }

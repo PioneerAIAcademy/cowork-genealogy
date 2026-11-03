@@ -141,7 +141,7 @@ Test metadata.
 | `captured` | string (YYYY-MM-DD) | yes | Date the snapshot was taken |
 | `researcher_question` | string | yes | Natural-language question that becomes the `/research` user message |
 | `tags` | object | yes | See §4 |
-| `model.agent` | string | yes | Pinned agent model |
+| `model.agent` | string | no | Not read. The main thread runs `packages/engine/plugin/main-thread.json`'s model and effort, and each agent its own. Older fixtures keep the field because `fixture.json` is part of the grading digest; new fixtures omit it |
 | `model.judge` | string | yes | Pinned judge model |
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
@@ -729,7 +729,9 @@ the `max_cost_usd` note in §6 step 5.
      by §6.1.**
    - Real MCP server (not the mock used by unit evals). FS auth
      comes from `~/.familysearch-mcp/tokens.json` on the host.
-   - Models pinned per `fixture.json::model.agent`.
+   - The main thread runs `packages/engine/plugin/main-thread.json`'s model and
+     effort (`--agent-model` / `--effort-level` override them); each agent runs
+     its own file's.
 4. Harness monitors the SDK message stream and periodically reads
    `research.json` to detect the completion signal.
 5. Stops on whichever fires first:
@@ -876,11 +878,10 @@ the `max_cost_usd` note in §6 step 5.
 
    **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
    `project.status == "completed"`. A `Stop` hook vetoes every voluntary yield before
-   that (except on a session with no `research.json`) with **one** reply, the prototype
-   worker's `CONTINUE_REASON`
-   (`apps/server/app/agent/continue_policy.py`) verbatim, so a paired grade compares
-   two stacks under one Stop policy (handoff U17; `test_continue_policy_parity.py` pins
-   the copy). The hosted planes' completion halt is NOT emulated: they end the turn at the
+   that (except on a session with no `research.json`) with **one** reply, a fixed continue
+   text (`stop_checker.py`). The hosted planes no longer veto a stop (step mode phase 2),
+   so a paired grade no longer compares one Stop policy; the e2e half of phase 2 deletes
+   this veto. Nothing pins the text. The hosted planes' completion halt is NOT emulated: they end the turn at the
    PostToolUse of the proof-conclusion call that completes the project
    (`completion_halt_summary`), so a completed e2e run still pays the closing relay call
    those planes no longer make, and its cost overstates a hosted one by that call. Before replying, the hook classifies the agent's closing words
@@ -2708,13 +2709,19 @@ would need an exclusion in every reader and breaks the first time one is missed.
 |---|---|---|
 | `id` | yes | the directory name (the loader refuses a mismatch) |
 | `message` | yes | sent verbatim |
-| `expected_owner` | yes | the agent or skill name that should answer |
-| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` or `{"section": "sources"}` |
+| `expected_owner` | yes | the agent or skill name that should answer, or a list of them where `null` means the main thread answered with no unit |
+| `expected_save` | yes | `{"section": "log", "tool": "<log tool value>"}` (optionally with `"outcome"`), `{"section": "sources"}`, or `{"section": <s>, "absent": true}` for "no new entry in s". A list of these passes when any one holds |
+| `forbidden_tools` | no (`[]`) | bare tool names that must not be called, on any thread |
+| `required_tools` | no (`[]`) | bare tool names that must be called without error, on any thread. Required when any `expected_save` alternative is `absent`: otherwise an empty turn passes |
 | `is_plan_ask` | no (false) | allows `research-plan` and a new `plans` entry |
 | `setup_units` | no (`[]`) | units skipped when finding the owner, e.g. `["init-project"]` for a new-folder ask |
 | `must_not` | no | free text; printed, not graded |
 | `caps` | no | the keys of `FixtureCaps` (§6). Set `wall_clock_seconds` and `tool_calls` low and give the reason in the README; they are what end a runaway turn (`max_cost_usd` only labels one) |
-| `model.agent`, `blocked_tools` | no | as for autonomous fixtures (§3.1, §6.1) |
+| `blocked_tools` | no | as for autonomous fixtures (§6.1) |
+
+The loader refuses an unknown key (in `fixture.json` or a save alternative), a tool
+name that is not a bare name from `manifest.json` or a built-in, and a save list that
+names one section both `absent` and present (it could never fail).
 
 Plus `starting-research.json` and `starting-tree.gedcomx.json`, named as for
 autonomous fixtures. Every fixture starts from an existing project: with no
@@ -2741,36 +2748,42 @@ There is no `expected-findings.json` and no judge.
 
 ### 16.4 Grade
 
-Deterministic, in `e2e/single_ask_grade.py`. PASS only if all four hold (`expected_owner` and `setup_units` may carry a plugin
+Deterministic, in `e2e/single_ask_grade.py`. PASS only if all six hold (`expected_owner` and `setup_units` may carry a plugin
 namespace; it is stripped, as it is from spawned names):
 
 1. **`owner`** — the first **main-thread** `Agent`/`Task`/`Skill` spawn, skipping the
-   `research` router and any `setup_units`, is `expected_owner`. A spawn inside a
+   `research` router and any `setup_units`, is `expected_owner` (or in its list;
+   `null` there matches a turn with no such spawn). A spawn inside a
    subagent is recorded but never the owner. The thread comes from the SDK's
    `parent_tool_use_id` (the `thread` field on each `tool_calls` entry).
 2. **`no_research_job`** — no `question-selection` spawn and, unless `is_plan_ask`,
    no `research-plan` spawn, on any thread; and no new `questions` entry, nor,
    unless `is_plan_ask`, a new `plans` entry.
-3. **`save`** — a new `sources` entry, or a new `log` entry whose `tool` is the
-   expected value. "New" means its id is in the final `research.json` and not in
-   `starting-research.json`.
-4. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
+3. **`save`** — any one `expected_save` alternative holds: a new `sources` entry,
+   a new `log` entry whose `tool` (and `outcome`, when given) is the expected
+   value, or, with `absent`, no new entry in that section. "New" means its id is
+   in the final `research.json` and not in `starting-research.json`.
+4. **`forbidden_tools`** — no call to any of them, on any thread, matched by
+   bare name.
+5. **`required_tools`** — at least one call to each that did not error.
+6. **`stop`** — the turn ended on its own. A turn a cap or watchdog cut off fails
    here even if it saved: the patron never got the answer. `cost_cap` is not a
    cut-off (§6: it only labels a finished run), so it does not fail this check.
 
 Printed, not graded: whether the main thread called `research_delivered`, every
 unit in order (nested ones in parentheses), the `extraction_append` count, how the
 turn stopped (`stop=clean` or the abort reason), the whole-run cost estimate, and
-any background spawn ("Async agent launched"), whose save can land after the grade
-reads `research.json`.
+any background spawn ("Async agent launched"), whose calls and saves can land after
+the grade reads `research.json`. Beside one, a `forbidden_tools` pass or an `absent`
+save pass is turned into a FAIL: an absence cannot be confirmed.
 A turn that ended on `host_slept` is printed `UNGRADED` and counts as a failure.
 
 ### 16.5 What a pass does not show
 
 A pass here is **not** a pass on today's hosted alpha. That plane appends
-DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`) and nudges any stop not
-preceded by `research_delivered`; a single ask that ends without it would be
-pushed on into more work. The `delivered` column is what shows that risk.
+DELIVERY_GUIDANCE (`apps/server/app/agent/real_agent.py`). It no longer nudges a stop
+(step mode's phase 2 deleted the Stop veto), so a single ask that ends without
+`research_delivered` simply ends; the `delivered` column shows which did.
 
 ### 16.6 Cost
 
