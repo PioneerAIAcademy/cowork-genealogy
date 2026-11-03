@@ -303,7 +303,21 @@ try {
   const run = await runPlan(
     (tool, args) => callViaClient(projectClient, tool, args),
     ctx,
-    { offlineOnly },
+    {
+      offlineOnly,
+      // A FamilySearch row needs a FamilySearch token. Without one the stamped
+      // bearer is a random value, which is NOT empty -- so getValidToken hands
+      // it upstream rather than raising the reauth instruction, and the rows
+      // that answer a bad bearer with something other than a 401
+      // (`image_search`'s "could not resolve", `record_record_matches`'s
+      // anonymous empty result) cannot be judged at all. Skipping with the
+      // reason printed is honest; judging them against a token we do not have
+      // is not.
+      skip: (_tool, step) =>
+        step.familySearch && ctx.mode === "no-bearer"
+          ? "no FamilySearch token on this host"
+          : null,
+    },
   );
   calls = run.calls;
   failures = failures.concat(run.failures);
@@ -318,7 +332,10 @@ try {
     stage = "connector plan";
     const connectorCtx: SmokeCtx = {
       ...ctx,
-      mode: "bearer",
+      // NOT hardcoded "bearer": the seeded FamilySearch token is a placeholder
+      // when this host has none, and claiming bearer mode makes every
+      // expectation demand success against it.
+      mode: ctx.mode,
       projectPath: connectorProjectPath,
       // A SECOND well-formed connector path that nothing has written. Not
       // `${connectorProjectPath}/nope`: that is malformed, so the door refuses

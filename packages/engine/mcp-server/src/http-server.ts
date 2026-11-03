@@ -281,6 +281,13 @@ const NOT_YOUR_PROJECT = {
   id: null,
 };
 
+/** The connector door's version of NO_PROJECT_BOUND_MESSAGE. Reaches the model
+ *  as a tool error it can act on, so it names the argument, not a header. */
+const NO_CONNECTOR_PROJECT_MESSAGE =
+  "This call named no project, so no project is bound: project tools cannot run. " +
+  "Pass projectPath: \"/proj_<16 lowercase hex>\" — one of the paths project_list " +
+  "returns. Tools that take no projectPath still work.";
+
 /** What `lookupConnector` returns for an admitted connector token. */
 export interface ConnectorCaller {
   /** `users.id`. */
@@ -419,13 +426,58 @@ async function readBody(req: http.IncomingMessage): Promise<BodyRead> {
 
 /** The one call's `arguments.projectPath`, when the body is a single
  *  `tools/call` that sent one as a string. Anything else: null. */
-function connectorProjectPath(body: unknown): string | null {
-  if (typeof body !== "object" || body === null) return null;
+type ConnectorProject =
+  /** No project named: `initialize`, `tools/list`, or a call that passes none. */
+  | { kind: "absent" }
+  /** A string, still to be checked against CONNECTOR_PROJECT_RE. */
+  | { kind: "named"; projectPath: string }
+  /** Present but not a string — an array, a number, null. Refused, never
+   *  treated as "named no project": that would bind the unbound store and tell
+   *  the caller to send a header instead of to fix the argument. */
+  | { kind: "not_a_string" };
+
+function connectorProjectPath(body: unknown): ConnectorProject {
+  if (typeof body !== "object" || body === null) return { kind: "absent" };
   const msg = body as { method?: unknown; params?: unknown };
-  if (msg.method !== "tools/call") return null;
+  if (msg.method !== "tools/call") return { kind: "absent" };
   const params = msg.params as { arguments?: unknown } | undefined;
   const args = params?.arguments as { projectPath?: unknown } | undefined;
-  return typeof args?.projectPath === "string" ? args.projectPath : null;
+  if (args === undefined || args === null || !("projectPath" in args)) return { kind: "absent" };
+  if (typeof args.projectPath !== "string") return { kind: "not_a_string" };
+  return { kind: "named", projectPath: args.projectPath };
+}
+
+/**
+ * The config a connector caller acts under.
+ *
+ * Built from an explicit ALLOW-LIST of operator settings, never by spreading
+ * `baseConfig`. Spreading leaks the tools tier's own per-user secrets to every
+ * patron: `hosted-config-env.ts` puts the operator's `OPENROUTER_API_KEY` on
+ * `baseConfig.openRouterApiKey`, and a caller whose own key is null — which is
+ * every patron until W3/#3988 links accounts — would silently inherit it and
+ * bill `image_transcribe` and `volume_bisect` to the operator's account.
+ *
+ * The line is: settings that describe the DEPLOYMENT are shared; a credential
+ * that identifies a PERSON is not. `matcherApiKey` and `matcherUrl` are on the
+ * shared side deliberately — they are this server's own credential to a
+ * sibling service, like `wikiApiUrl`, not anything belonging to the caller.
+ */
+export function connectorConfig(baseConfig: AppConfig, caller: ConnectorCaller): AppConfig {
+  return {
+    // Deployment-level, shared by every caller.
+    hosted: true,
+    wikiApiUrl: baseConfig.wikiApiUrl,
+    popStatsUrl: baseConfig.popStatsUrl,
+    openRouterModel: baseConfig.openRouterModel,
+    webPublicUrl: baseConfig.webPublicUrl,
+    uploadsEnabled: baseConfig.uploadsEnabled,
+    transcriptionEnabled: baseConfig.transcriptionEnabled,
+    matcher: baseConfig.matcher,
+    matcherUrl: baseConfig.matcherUrl,
+    matcherApiKey: baseConfig.matcherApiKey,
+    // Per-person. Absent unless THIS caller linked one; never the operator's.
+    ...(caller.openRouterApiKey ? { openRouterApiKey: caller.openRouterApiKey } : {}),
+  };
 }
 
 /** The tool a body names, for the log line only. `-` when it names none. */
@@ -559,11 +611,20 @@ async function handleMcpPost(
     }
     logUserId = caller.userId;
 
-    const projectPath = connectorProjectPath(body.value);
+    const named = connectorProjectPath(body.value);
+    if (named.kind === "not_a_string") {
+      sendJson(res, 400, INVALID_CONNECTOR_PROJECT);
+      return;
+    }
+    const projectPath = named.kind === "named" ? named.projectPath : null;
     if (projectPath === null) {
       // `initialize`, `tools/list`, notifications, and any call that sent no
       // projectPath: store-less, but still only for an admitted token.
-      store = unboundProjectStore(NO_PROJECT_BOUND_MESSAGE);
+      // NOT the worker's message: it says to send X-Genealogy-Project-Id, a
+      // header a connector cannot send — and if it did, the request would
+      // route to the worker door and be refused 403. Name the remedy that
+      // exists on THIS door.
+      store = unboundProjectStore(NO_CONNECTOR_PROJECT_MESSAGE);
     } else {
       if (!CONNECTOR_PROJECT_RE.test(projectPath)) {
         sendJson(res, 400, INVALID_CONNECTOR_PROJECT);
@@ -601,10 +662,7 @@ async function handleMcpPost(
     principal = connectorPrincipal({
       accessToken: caller.familySearchToken,
       userId: caller.userId,
-      config: {
-        ...options.baseConfig,
-        ...(caller.openRouterApiKey ? { openRouterApiKey: caller.openRouterApiKey } : {}),
-      },
+      config: connectorConfig(options.baseConfig, caller),
       recordFamilySearchStatus: (status) => {
         familySearchStatus = status;
       },

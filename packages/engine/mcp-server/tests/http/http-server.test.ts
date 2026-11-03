@@ -40,6 +40,7 @@ import {
   HEALTHZ_TIMEOUT_MS,
   PROJECT_ID_HEADER,
   MAX_BODY_BYTES,
+  connectorConfig,
   PRM_PATH,
   startHttpServer,
   TURN_ID_HEADER,
@@ -903,6 +904,66 @@ describe("tool server over Streamable HTTP", () => {
       expect(line).not.toContain(
         createHash("sha256").update(TEST_CONNECTOR_TOKEN, "utf8").digest("hex"),
       );
+    });
+
+    it("never hands the operator's per-person credentials to a connector caller", () => {
+      // baseConfig carries the TOOLS TIER's own OPENROUTER_API_KEY. Spreading
+      // it into the connector principal would bill every patron's
+      // transcriptions to the operator's account — and openrouter_key_enc is
+      // null for every patron until W3/#3988 links one, so that is not an edge
+      // case, it is the default path.
+      const base = {
+        openRouterApiKey: "operator-key-sentinel",
+        wikiApiUrl: "https://wiki.example",
+        matcherUrl: "https://matcher.example",
+        matcherApiKey: "matcher-key",
+        openRouterModel: "a/model",
+      };
+      const noKey = connectorConfig(base, {
+        userId: "u_1",
+        familySearchToken: "fs",
+        openRouterApiKey: null,
+      });
+      expect(noKey.openRouterApiKey).toBeUndefined();
+      expect(JSON.stringify(noKey)).not.toContain("operator-key-sentinel");
+      // Deployment-level settings ARE shared: this server's own credential to
+      // a sibling service is not the caller's, like wikiApiUrl.
+      expect(noKey.wikiApiUrl).toBe("https://wiki.example");
+      expect(noKey.matcherApiKey).toBe("matcher-key");
+      expect(noKey.openRouterModel).toBe("a/model");
+      expect(noKey.hosted).toBe(true);
+
+      // A caller who HAS linked one gets their own, never the operator's.
+      const own = connectorConfig(base, {
+        userId: "u_2",
+        familySearchToken: "fs",
+        openRouterApiKey: "patron-key",
+      });
+      expect(own.openRouterApiKey).toBe("patron-key");
+    });
+
+    it.each([
+      ["an array", ["/proj_0123456789abcdef"]],
+      ["a number", 42],
+      ["null", null],
+      ["an object", { path: "/proj_0123456789abcdef" }],
+    ])("refuses a projectPath that is %s, rather than binding nothing", async (_label, projectPath) => {
+      bindStore.mockClear();
+      const res = await rpc(call("project_context", { projectPath }), connectorHeaders());
+      // Was a 200 carrying "send X-Genealogy-Project-Id" — the caller told to
+      // fix the wrong thing, on a door where that header cannot help.
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.message).toMatch(/proj_ followed by 16 lowercase hex/);
+      expect(bindStore).not.toHaveBeenCalled();
+    });
+
+    it("tells a connector naming no project to pass projectPath, never to send a header", async () => {
+      const res = await rpc(call("project_context", {}), connectorHeaders());
+      expect(res.status).toBe(200);
+      const text = await res.text();
+      expect(text).toMatch(/proj_<16 lowercase hex>|projectPath/);
+      // The worker's remedy would route this caller to the other door and a 403.
+      expect(text).not.toContain("X-Genealogy-Project-Id");
     });
 
     it("a lookup that throws is a 503, never an admission", async () => {

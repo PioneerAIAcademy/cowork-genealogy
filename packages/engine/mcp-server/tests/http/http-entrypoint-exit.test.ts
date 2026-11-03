@@ -26,11 +26,26 @@ const START_TIMEOUT_MS = 15_000;
 // A test's own budget: one child start plus 5s for what follows it.
 const TEST_TIMEOUT_MS = START_TIMEOUT_MS + 5_000;
 
-/** The environment `build/http.js` sees: the inherited one minus every GENEALOGY_* variable, plus `storeEnv`. */
+/**
+ * The environment `build/http.js` sees: the inherited one minus every variable
+ * the entrypoint reads, plus `storeEnv`.
+ *
+ * The prefix test alone was not enough once E1 added two settings that are NOT
+ * `GENEALOGY_`-prefixed. The Makefile's `engine-smoke-http` recipe passes
+ * `FS_TOKEN_ENC_KEY`, and `apps/server/proto/tools/README.md` tells developers
+ * to export both — so a developer's own shell would leak them in and flip
+ * cases here: an inherited `FS_TOKEN_ENC_KEY` makes the dev-key refusal start
+ * instead of exiting 2, and an inherited `OAUTH_ISSUER` kills every unrelated
+ * case in this file.
+ */
+const UNPREFIXED_ENTRYPOINT_ENV = ["FS_TOKEN_ENC_KEY", "OAUTH_ISSUER"];
+
 function childEnv(storeEnv: Record<string, string>): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
   for (const [name, value] of Object.entries(process.env)) {
-    if (!name.startsWith("GENEALOGY_")) env[name] = value;
+    if (name.startsWith("GENEALOGY_")) continue;
+    if (UNPREFIXED_ENTRYPOINT_ENV.includes(name)) continue;
+    env[name] = value;
   }
   return Object.assign(env, storeEnv);
 }
@@ -137,12 +152,34 @@ describe("build/http.js connector door environment (E1, issue #3984)", () => {
   // running on it would have every stored FamilySearch token encrypted under a
   // key anyone can derive. An https issuer is what says "real deployment", the
   // same call apps/server/proto/web/auth.py makes.
-  it("exits 2 when an https OAUTH_ISSUER is set with no FS_TOKEN_ENC_KEY", async () => {
-    const r = await runHttp({ ...BASE, OAUTH_ISSUER: "https://beta.example" });
+  // Every non-loopback issuer, not just a lowercase `https://` one. The first
+  // version of this guard tested `startsWith("https://")`, which is
+  // case-sensitive against a scheme that is not, and left every non-loopback
+  // `http://` issuer starting on the publicly-known development key.
+  it.each([
+    ["https", "https://beta.example"],
+    ["HTTPS (schemes are case-insensitive)", "HTTPS://beta.example"],
+    ["non-loopback http", "http://beta.example"],
+  ])("exits 2 on a %s OAUTH_ISSUER with no FS_TOKEN_ENC_KEY", async (_label, OAUTH_ISSUER) => {
+    const r = await runHttp({ ...BASE, OAUTH_ISSUER });
     expect(r.code, r.stderr).toBe(2);
-    expect(r.stderr).toMatch(/FS_TOKEN_ENC_KEY is unset with an https OAUTH_ISSUER/);
+    expect(r.stderr).toMatch(/FS_TOKEN_ENC_KEY is unset while OAUTH_ISSUER names a non-loopback/);
     // The refusal must not print the key it is complaining about.
     expect(r.stderr).not.toMatch(/dev-insecure-fs-token-key/);
+  }, TEST_TIMEOUT_MS);
+
+  // It is interpolated into a WWW-Authenticate header value, so a control
+  // character would make writeHead throw and turn every 401 into a 500 with no
+  // challenge at all. Same shape check WEB_PUBLIC_URL already has.
+  it.each([
+    ["a CRLF header injection", "https://beta.example\r\nX-Injected: 1"],
+    ["a quote that breaks the challenge", 'https://beta.example" , evil="x'],
+    ["credentials", "https://user:pw@beta.example"],
+    ["not a URL at all", "beta.example"],
+  ])("exits 2 on an OAUTH_ISSUER with %s", async (_label, OAUTH_ISSUER) => {
+    const r = await runHttp({ ...BASE, OAUTH_ISSUER, FS_TOKEN_ENC_KEY: "a-real-key" });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toMatch(/OAUTH_ISSUER must be a plain http\(s\) URL/);
   }, TEST_TIMEOUT_MS);
 
   // The other direction, so this guard cannot quietly become one that refuses

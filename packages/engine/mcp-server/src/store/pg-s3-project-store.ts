@@ -105,7 +105,18 @@ export const S3_REQUEST_TIMEOUT_MS = 90_000;
 export const READY_TIMEOUT_MS = 1_500;
 /** The tables every store method queries; a missing one fails readiness.
  *  `turns` is the claim fence's (U6): a fenced store cannot commit without it. */
-export const STORE_TABLES = ["documents", "blobs", "staging", "projects", "turns"] as const;
+// `connector_tokens` is here for the same reason `turns` is: the door READS it
+// on every connector request (migration 017). Without it a tier deployed one
+// migration behind answers /healthz 200, passes the load balancer's check, and
+// then 503s every connector call with `error=42P01`.
+export const STORE_TABLES = [
+  "documents",
+  "blobs",
+  "staging",
+  "projects",
+  "turns",
+  "connector_tokens",
+] as const;
 /** The `turns` column the tool server's door reads (U4, migration 012); a
  *  database without it fails readiness. */
 const STAMP_COLUMN = "bearer_sha256";
@@ -196,9 +207,21 @@ export async function lookupConnectorToken(
   const row = rows.rows[0];
   if (!row) return null;
   if (row.blocked_at !== null) return null;
+  // Two different states, and only one of them is a refusal.
+  //
+  // NO ROW (access_token_enc null) is a user who never linked FamilySearch —
+  // 016_users_beta.sql keeps those alive on purpose, and compose runs with
+  // FamilySearch sign-in off. Refusing them 401s `initialize`, `tools/list`
+  // and every tool that needs no FamilySearch token at all. They are admitted
+  // with an EMPTY token, which `getValidToken` turns into the per-tool reauth
+  // instruction — a message naming the one thing the user can do.
+  //
+  // A row that will NOT DECRYPT is a refusal: it was written under another
+  // key, so it is not a token, and sending it would put gibberish on the wire.
+  if (row.access_token_enc === null) {
+    return { userId: row.user_id, familySearchToken: "", openRouterApiKey: decryptWithKey(row.openrouter_key_enc) };
+  }
   const familySearchToken = decryptWithKey(row.access_token_enc);
-  // Undecryptable is refused, never passed on: a value written under another
-  // key is not a token, and using it would send gibberish to FamilySearch.
   if (!familySearchToken) return null;
   return {
     userId: row.user_id,

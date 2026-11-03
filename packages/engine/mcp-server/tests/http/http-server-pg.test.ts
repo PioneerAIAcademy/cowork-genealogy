@@ -669,6 +669,10 @@ if (!DSN || !ENDPOINT) {
             await unmigrated.pool.query(`CREATE TABLE ${table} (project_id text)`);
           }
           await unmigrated.pool.query("CREATE TABLE turns (turn_id text, project_id text, claim_epoch bigint)");
+          // Present so this case isolates the missing COLUMN. The connector
+          // door reads this table too (017), so STORE_TABLES covers it — and
+          // without it readiness would fail here for a different reason.
+          await unmigrated.pool.query("CREATE TABLE connector_tokens (token_sha256 text)");
           door = await startHttpServer({
             host: "127.0.0.1",
             port: 0,

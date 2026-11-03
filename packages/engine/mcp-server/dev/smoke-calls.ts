@@ -230,6 +230,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     // with a real token the read reaches an id FamilySearch does not hold.
     tool: "project_create",
     label: "project_create (personId reaches the token)",
+    // Reaches FamilySearch with the caller's token, like every tokenStep, but
+    // carries its own expectation rather than `reauth`.
+    familySearch: true,
     args: (ctx) => ({
       projectPath: ctx.projectPath,
       objective: "Does a personId create reach the principal?",
@@ -619,6 +622,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   {
     // Beta host: with a bearer, accept success or an explicit upstream error.
     tool: "person_quality",
+    // Reaches FamilySearch with the caller's token, like every tokenStep, but
+    // carries its own expectation rather than `reauth`.
+    familySearch: true,
     args: () => ({ personId: FS_PID }),
     expect: (res, ctx) => {
       if (ctx.mode === "no-bearer") return reauth(res, ctx);
@@ -632,6 +638,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     // required (#2490): without it the call stops at the project check and
     // never reaches the key or the token this row exists to smoke.
     tool: "image_transcribe",
+    // Reaches FamilySearch with the caller's token, like every tokenStep, but
+    // carries its own expectation rather than `reauth`.
+    familySearch: true,
     args: (ctx) => ({ imageId: REAL_IMAGE_ID, projectPath: ctx.projectPath }),
     expect: (res, ctx) => {
       if (ctx.openRouterKeyConfigured === false) return keyMissing(res);

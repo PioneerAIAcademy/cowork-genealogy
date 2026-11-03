@@ -67,7 +67,7 @@ import { loadSasClient, SasClientMissing, SasObjectInvalid, SasPgCredentials } f
 import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
 import { decrypt, DEV_FS_TOKEN_ENC_KEY } from "./auth/fernet.js";
-import { configFromEnv } from "./hosted-config-env.js";
+import { configFromEnv, isPlainHttpUrl } from "./hosted-config-env.js";
 import type { AppConfig } from "./types/auth.js";
 import { debugHoldStartupLine } from "./debug-holds.js";
 
@@ -178,14 +178,54 @@ const fsTokenEncKey = (process.env.FS_TOKEN_ENC_KEY ?? "").trim() || DEV_FS_TOKE
 // and a 401 carries a bare `Bearer`.
 const issuer = (process.env.OAUTH_ISSUER ?? "").trim() || undefined;
 
-// A development key on an https issuer is a real deployment with a key anyone
-// can derive, so refuse to start -- the same call apps/server/proto/web/auth.py
-// makes. On http (compose, a local run) the default is the point.
-if (fsTokenEncKey === DEV_FS_TOKEN_ENC_KEY && issuer?.startsWith("https://")) {
+// It is interpolated into a `WWW-Authenticate` header value and served as the
+// metadata document, so it gets the SAME shape check WEB_PUBLIC_URL already
+// has (`isPlainHttpUrl`): a control character in a header value makes
+// `writeHead` throw, turning every 401 on this door into a 500 with no
+// challenge at all, and a quote or comma produces a challenge clients parse
+// into the wrong metadata URL.
+if (issuer !== undefined && !isPlainHttpUrl(issuer)) {
   process.stderr.write(
-    "http: FS_TOKEN_ENC_KEY is unset with an https OAUTH_ISSUER, so every stored " +
-      "FamilySearch token would be encrypted under a key that is public in this " +
-      "repository. Set FS_TOKEN_ENC_KEY to the value the web and worker tiers use.\n",
+    "http: OAUTH_ISSUER must be a plain http(s) URL with no credentials, space, " +
+      "backslash, '#', '?' or control character. It is served as the " +
+      "protected-resource metadata and sent in the WWW-Authenticate header.\n",
+  );
+  process.exit(2);
+}
+
+// The development key is public in this repository, so a real deployment
+// running on it has every stored FamilySearch token encrypted under a key
+// anyone can derive.
+//
+// "Real deployment" is NOT just an https issuer. apps/server/proto/web/auth.py
+// `preflight()` refuses on `is_https() OR familysearch_enabled()`, and its
+// docstring says the second disjunct exists precisely for the non-https case.
+// The first version of this guard kept only the https half, which could not
+// fire at all in the documented default (OAUTH_ISSUER unset) -- so the one
+// configuration everyone runs was the one configuration unprotected.
+//
+// Here the equivalent of "FamilySearch sign-in is on" is: this tier is wired
+// to decrypt real patron tokens, i.e. a Postgres store with the beta schema.
+// An issuer being set at all is the other signal. Case-insensitive, because
+// URL schemes are.
+// Loopback is a developer's own machine; any other host an issuer names is a
+// deployment other people reach. The first version tested `https://` only --
+// case-sensitively, against a scheme that is not -- so an `HTTPS://` issuer,
+// and every non-loopback `http://` one, started on the public key.
+function issuerIsLoopback(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+if (fsTokenEncKey === DEV_FS_TOKEN_ENC_KEY && issuer !== undefined && !issuerIsLoopback(issuer)) {
+  process.stderr.write(
+    `http: FS_TOKEN_ENC_KEY is unset while OAUTH_ISSUER names a non-loopback ` +
+      `authorization server (${issuer}), so every stored FamilySearch token would ` +
+      `be encrypted under a key that is public in this repository. Set ` +
+      `FS_TOKEN_ENC_KEY to the value the web and worker tiers use.\n`,
   );
   process.exit(2);
 }
