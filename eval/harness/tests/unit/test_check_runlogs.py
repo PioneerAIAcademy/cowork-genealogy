@@ -4455,3 +4455,39 @@ def test_rule3_regrade_warns_rather_than_blocking_on_an_unreadable_base(
     assert rc == 0
     assert "::warning" in out
     assert "NOT compared" in out
+
+
+# --- Tag-gated snapshot inputs (snapshot.TAG_INPUTS) -------------------------
+
+
+def _tagged_suites_tree(tmp_path, monkeypatch, tags_by_suite):
+    monkeypatch.setattr(check_runlogs, "PLUGIN_SKILLS_DIR", tmp_path / "skills")
+    tests_unit = tmp_path / "tests-unit"
+    for suite, tags in tags_by_suite.items():
+        (tests_unit / suite).mkdir(parents=True)
+        (tests_unit / suite / "t.json").write_text(
+            json.dumps({"test": {"id": f"ut_{suite}", "tags": tags}}), encoding="utf-8"
+        )
+    monkeypatch.setattr(check_runlogs, "TESTS_UNIT_DIR", tests_unit)
+    return tests_unit
+
+
+def test_a_touched_tag_input_gates_the_suites_carrying_its_tag(monkeypatch, capsys, tmp_path):
+    """The hook file sits outside every skill and test tree, yet it is in the snapshot
+    of each suite whose tests carry its tag; an edit to it must gate that suite."""
+    tag, rel = next(iter(check_runlogs.TAG_INPUTS.items()))
+    _tagged_suites_tree(tmp_path, monkeypatch, {"tagged": [tag], "plain": ["routing"]})
+    _patch_diffs(monkeypatch, [rel])
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "tagged" in out and "no run logs" in out
+    assert "plain" not in out
+
+
+def test_tag_input_arm_gates_nothing_when_untouched_or_untagged(tmp_path, monkeypatch):
+    tag, rel = next(iter(check_runlogs.TAG_INPUTS.items()))
+    tests_unit = _tagged_suites_tree(tmp_path, monkeypatch, {"tagged": [tag], "plain": []})
+    assert check_runlogs.suites_gated_by_tag_inputs({rel}, tests_unit) == {"tagged"}
+    assert check_runlogs.suites_gated_by_tag_inputs({"README.md"}, tests_unit) == set()
+    assert check_runlogs.suites_gated_by_tag_inputs({rel}, tmp_path / "missing") == set()

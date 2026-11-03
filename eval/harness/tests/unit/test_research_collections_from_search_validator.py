@@ -153,3 +153,51 @@ def test_a_returned_or_unmarked_work_passes(reply, calls):
 def test_the_works_check_skips_an_untagged_test():
     with pytest.raises(pytest.skip.Exception):
         check_works(f"*{AYLING}*", EMPTY, {"skill": "research", "tags": ["routing"]})
+
+
+# Code-review fixes on the PR: prose that only looks like a title, typographic quotes,
+# a title that wraps a line in the tool result, a title the reply labels unconfirmed,
+# and a non-dict response. Each passes, and its near miss still fires.
+@pytest.mark.parametrize(
+    ("reply", "calls"),
+    [
+        ("In Kenya, church registers survive from 1900–1960 at the missions.", EMPTY),
+        ("In Kenya, civil registration of deaths ran 1904–1967.", EMPTY),
+        (f"Search {ARKANSAS.replace(chr(39), '’')} next.", [_search(ARKANSAS)]),
+        (f"{KENYA_DEATHS} may exist, but it is unconfirmed.", EMPTY),
+        ("Nothing is indexed for Kenya.", [{"tool": "collections_search", "response": [{"title": "x"}]}]),
+    ],
+    ids=["prose-after-comma", "prose-civil-lowercase", "curly-apostrophe", "labelled-unconfirmed", "list-response"],
+)
+def test_a_review_fix_passes(reply, calls):
+    check(reply, calls, TAGGED)
+
+
+def test_unconfirmed_on_another_line_does_not_excuse_a_title():
+    reply = f"Start with {KENYA_DEATHS}.\nThe court records are unconfirmed."
+    with pytest.raises(AssertionError, match="no collections_search result returned"):
+        check(reply, EMPTY, TAGGED)
+
+
+def test_a_capitalised_second_field_still_fires():
+    with pytest.raises(AssertionError, match="no collections_search result returned"):
+        check("In Kenya, Civil Registration, Deaths, 1904–1967 is the place to start.", EMPTY, TAGGED)
+
+
+@pytest.mark.parametrize(
+    ("reply", "calls"),
+    [
+        ("See *Provincial and State Papers of New Hampshire*.", [_wiki("Provincial and State\nPapers of New Hampshire")]),
+        ("See *The Freedmen’s Papers of New Hampshire*.", [_wiki("The Freedmen's Papers of New Hampshire")]),
+        ('See *Provincial and State Papers of New Hampshire*.', [{"tool": "wiki_read", "response": '{"markdown": "Provincial and State\nPapers of New Hampshire"}'}]),
+        (f"*{AYLING}* (unconfirmed: no tool returned it).", EMPTY),
+    ],
+    ids=["wrapped-in-result", "curly-apostrophe", "json-string-response", "labelled-unconfirmed"],
+)
+def test_a_review_fix_work_passes(reply, calls):
+    check_works(reply, calls, TAGGED)
+
+
+def test_a_work_absent_from_every_result_still_fires():
+    with pytest.raises(AssertionError, match="no tool result in the session contains"):
+        check_works("See *Provincial and State Papers of Vermont*.", [_wiki("Provincial and State\nPapers of New Hampshire")], TAGGED)

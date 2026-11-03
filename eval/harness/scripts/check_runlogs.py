@@ -95,6 +95,7 @@ from harness.snapshot import (  # noqa: E402
     hash_file,
     normalize,
     router_suites,
+    TAG_INPUTS,
 )
 from harness.review_sample import review_dimensions, zero_dimension_test_ids  # noqa: E402
 from harness.versioning import (  # noqa: E402
@@ -1023,6 +1024,20 @@ def _harness_imports_moved(path: str, validators_dir: Path) -> bool:
     return validator_harness_imports(name, base, validators_dir) != validator_harness_imports(
         name, head, validators_dir
     )
+
+
+def suites_gated_by_tag_inputs(touched_paths, tests_unit_dir: Path) -> set[str]:
+    """Suites whose snapshot embeds a touched `TAG_INPUTS` file: every suite with a
+    test carrying that file's tag. Such a file sits outside every skill and test tree,
+    so no other arm sees an edit to it."""
+    tags = {tag for tag, rel in TAG_INPUTS.items() if rel in touched_paths}
+    if not tags or not tests_unit_dir.is_dir():
+        return set()
+    return {
+        d.name
+        for d in tests_unit_dir.iterdir()
+        if d.is_dir() and tags & collect_refs(d, None)["tags"]
+    }
 
 
 def instrument_touched_suites(touched_paths: set[str], all_suites: set[str]) -> set[str]:
@@ -2539,6 +2554,10 @@ def main() -> int:
     # suites an agent edit reaches.
     if touched_agents:
         touched_skills |= suites_gated_by_touched_agents(touched_agents, added_by_skill)
+
+    # A tag-gated input (`snapshot.TAG_INPUTS`) is in the snapshot of every suite
+    # whose tests carry its tag, so an edit to it gates those suites like a skill edit.
+    touched_skills |= suites_gated_by_tag_inputs(set(touched_paths), TESTS_UNIT_DIR)
 
     # A touched shared fixture gates every skill whose tests reference it — the
     # fixture is embedded in those skills' run-log snapshots, so editing it

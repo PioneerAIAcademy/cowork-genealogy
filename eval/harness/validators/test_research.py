@@ -1247,6 +1247,23 @@ _PLACE_CONNECTORS = frozenset(
 )
 
 
+_STRAIGHT_QUOTES = str.maketrans("‘’“”", "''\"\"")
+_UNCONFIRMED = re.compile(
+    r"\b(unconfirmed|unverified|not (been )?(confirmed|verified)|could(n't| not) (confirm|verify))\b",
+    re.IGNORECASE,
+)
+
+
+def _marked_unconfirmed(reply: str, title: str) -> bool:
+    """True when a line of the reply holding `title` also says it is unconfirmed, which
+    the sources sentence allows ("otherwise say it is unconfirmed")."""
+    wanted = _normalised_title(title)
+    return any(
+        wanted in _normalised_title(line) and _UNCONFIRMED.search(line)
+        for line in re.sub(r"[*_`]", "", _MD_LINK.sub(r"\1", reply)).splitlines()
+    )
+
+
 def _title_start(first_field: str) -> str:
     """The trailing run of a title's first field that reads as a place or title: words
     that start with a capital, a digit or an apostrophe-led capital, joined by
@@ -1264,7 +1281,7 @@ def _title_start(first_field: str) -> str:
 
 
 def _normalised_title(text: str) -> str:
-    text = re.sub(r"[–—]", "-", text.casefold())
+    text = re.sub(r"[–—]", "-", text.casefold()).translate(_STRAIGHT_QUOTES)
     return re.sub(r"\s*-\s*", "-", re.sub(r"\s+", " ", text)).strip(" ,")
 
 
@@ -1291,7 +1308,8 @@ def _collection_title_candidates(reply: str) -> list[str]:
             continue
         first, rest = run.split(",", 1)
         first = _title_start(first)
-        if not first:
+        second = rest.strip()[:1]
+        if not first or not (second.isupper() or second.isdigit()):
             continue
         run = f"{first},{rest}"
         if not _RECORD_WORD.search(run) or _REPOSITORY_WORD.search(first):
@@ -1313,7 +1331,9 @@ def _returned_collection_titles(tool_calls) -> list[str]:
                 response = json.loads(response)
             except ValueError:
                 continue
-        for result in (response or {}).get("results") or []:
+        if not isinstance(response, dict):
+            continue
+        for result in response.get("results") or []:
             if isinstance(result, dict) and result.get("title"):
                 titles.append(result["title"])
     return titles
@@ -1335,7 +1355,8 @@ def test_names_collections_only_from_search(text_response, tool_calls, test):
     unreturned = [
         candidate
         for candidate in _collection_title_candidates(text_response or "")
-        if not any(
+        if not _marked_unconfirmed(text_response or "", candidate)
+        and not any(
             _normalised_title(candidate).endswith(title) or title.endswith(_normalised_title(candidate))
             for title in returned
         )
@@ -1361,8 +1382,24 @@ def _italic_titles(reply: str) -> list[str]:
     return titles
 
 
+def _strings(value) -> list[str]:
+    """Every string leaf of a tool response, unescaped, so a title that wraps a line or
+    holds a quote in the result still matches. A string response holding JSON is parsed."""
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except ValueError:
+            return [value]
+        return [parsed] if isinstance(parsed, str) else _strings(parsed)
+    if isinstance(value, dict):
+        return [s for v in value.values() for s in _strings(v)]
+    if isinstance(value, list):
+        return [s for v in value for s in _strings(v)]
+    return [] if value is None else [str(value)]
+
+
 def _tool_result_text(tool_calls) -> str:
-    return _normalised_title(" ".join(json.dumps(call.get("response"), ensure_ascii=False, default=str) for call in tool_calls or []))
+    return _normalised_title(" ".join(s for call in tool_calls or [] for s in _strings(call.get("response"))))
 
 
 def test_names_works_only_from_tool_results(text_response, tool_calls, test):
@@ -1379,7 +1416,11 @@ def test_names_works_only_from_tool_results(text_response, tool_calls, test):
     if "names-collections-only-from-search" not in test.get("tags", []):
         pytest.skip("not a names-collections-only-from-search test")
     returned = _tool_result_text(tool_calls)
-    unreturned = [t for t in _italic_titles(text_response or "") if _normalised_title(t) not in returned]
+    unreturned = [
+        t
+        for t in _italic_titles(text_response or "")
+        if _normalised_title(t) not in returned and not _marked_unconfirmed(text_response or "", t)
+    ]
     assert not unreturned, (
         f"the reply names work(s) no tool result in the session contains: {unreturned}. "
         "Name a source, collection, book or citation only if a tool result returned it, "

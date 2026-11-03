@@ -56,16 +56,20 @@ SOURCES_NOTE = (
 )
 
 
-def decision(payload: dict, env: dict) -> dict:
-    if env.get(HOSTED_PLANE_ENV):
-        return {}
+def is_researcher_prompt(payload: dict) -> bool:
+    """False for a subagent's hand-back; both harnesses' hook calls this too."""
     prompt = payload.get("prompt")
-    if not isinstance(prompt, str) or prompt.lstrip().startswith("<agent-message"):
+    return isinstance(prompt, str) and not prompt.lstrip().startswith("<agent-message")
+
+
+def decision(payload: dict, env: dict) -> dict:
+    if env.get(HOSTED_PLANE_ENV) or not is_researcher_prompt(payload):
         return {}
+    # Its own paragraph, so it does not read as part of CONTEXT's no-project condition.
     return {
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": f"{CONTEXT} {SOURCES_NOTE}",
+            "additionalContext": f"{CONTEXT}\n\n{SOURCES_NOTE}",
         }
     }
 

@@ -297,14 +297,14 @@ def _load_route_hook():
 #: way Cowork does, as context on each user message (`sources_note_hook`). Passed
 #: as the whole system prompt instead it read as an identity and broke routing
 #: (ut_research_027 1 of 5, against 4 of 5 without it). The hook's text, not a copy.
-SOURCES_NOTE = _load_route_hook().SOURCES_NOTE
+_route = _load_route_hook()
+SOURCES_NOTE = _route.SOURCES_NOTE
 
 
 async def sources_note_hook(input_data, tool_use_id, context):
-    """UserPromptSubmit: add `SOURCES_NOTE`, skipping a subagent hand-back as the
-    shipped hook does."""
-    prompt = (input_data or {}).get("prompt")
-    if not isinstance(prompt, str) or prompt.lstrip().startswith("<agent-message"):
+    """UserPromptSubmit: add `SOURCES_NOTE`, skipping a subagent hand-back by the
+    shipped hook's own test."""
+    if not _route.is_researcher_prompt(input_data or {}):
         return {}
     return {
         "hookSpecificOutput": {
