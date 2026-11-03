@@ -98,7 +98,9 @@ import {
   NARRATIVE_WORD_BUDGET,
   planItemSearchedSkipInvariants,
   planItemCompletionRecordTypeInvariants,
+  recordDocumentArk,
 } from "../../src/tools/research-append.js";
+import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
@@ -10200,6 +10202,92 @@ describe("research_append (composite persist + enforcement)", () => {
     const persisted = (await readResearch()).assertions[1];
     expect(persisted.record_persona_id).toBe("p_1"); // auto-filled, never silently null
     expect(persisted.record_id).toBe("ark:/61903/1:1:ABCD-123"); // canonicalized
+  });
+
+  // ── The document stamp (record_document_id, #2537) ──
+
+  describe("record_document_id", () => {
+    const appendFrom = async (record: any, extra: Record<string, unknown> = {}) => {
+      await writeProject(sidecarResearch());
+      await writeSidecar([record]);
+      const { source_id: _s, ...a } = noId(validAssertion("x"));
+      return researchAppend({
+        projectPath: dir,
+        ops: [
+          {
+            section: "assertions",
+            op: "append",
+            entry: { ...a, source_id: "src_001", record_id: "ark:/61903/1:1:ABCD-123", log_entry_id: "log_001", ...extra },
+          },
+        ],
+      });
+    };
+    const stamped = async () => (await readResearch()).assertions[1].record_document_id;
+
+    it("stamps record_search's 1:2 recordArk, over a caller's value", async () => {
+      const r = await appendFrom(
+        { ...sidecarRecord(), recordArk: "ark:/61903/1:2:DOCS-001" },
+        { record_document_id: "ark:/61903/1:2:MADE-UP" },
+      );
+      expect(r.ok).toBe(true);
+      expect(await stamped()).toBe("ark:/61903/1:2:DOCS-001");
+    });
+
+    it("falls back to the record's own Record source, as record_read stages it", async () => {
+      const record = sidecarRecord() as any;
+      record.gedcomx.sources = [
+        { id: "src_c", resource_type: "Collection", url: "https://www.familysearch.org/ark:/61903/1:2:NOTI-TTHS" },
+        { id: "src_r", resource_type: "Record", url: "https://www.familysearch.org/ark:/61903/1:2:DOCS-002" },
+      ];
+      expect((await appendFrom(record)).ok).toBe(true);
+      expect(await stamped()).toBe("ark:/61903/1:2:DOCS-002");
+    });
+
+    it("stamps nothing, and keeps no caller value, when the sidecar names no 1:2 document", async () => {
+      const r = await appendFrom(
+        { ...sidecarRecord(), recordArk: "ark:/61903/1:1:ABCD-123" },
+        { record_document_id: "ark:/61903/1:2:MADE-UP" },
+      );
+      expect(r.ok).toBe(true);
+      expect(await stamped()).toBeUndefined();
+    });
+
+    it("refuses an update that sets it, and drops it when record_id changes", async () => {
+      await appendFrom({ ...sidecarRecord(), recordArk: "ark:/61903/1:2:DOCS-001" });
+      const set = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_002",
+        fields: { record_document_id: "ark:/61903/1:2:OTHR-001" },
+      });
+      expect(set.ok).toBe(false);
+      expect((errorsOf(set) ?? []).join(" ")).toContain("record_document_id is not updatable");
+      expect(await stamped()).toBe("ark:/61903/1:2:DOCS-001");
+
+      await writeSidecar([
+        { ...sidecarRecord(), recordArk: "ark:/61903/1:2:DOCS-001" },
+        { ...sidecarRecord(), recordId: "ark:/61903/1:1:WXYZ-999", recordArk: "ark:/61903/1:2:DOCS-009" },
+      ]);
+      const moved = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_002",
+        fields: { record_id: "ark:/61903/1:1:WXYZ-999" },
+      });
+      expect(moved.ok).toBe(true);
+      expect(await stamped()).toBeUndefined();
+    });
+
+    it("reads a live record_read's Record source (6J8F-6678), and not a 1:1 one (baker M62F-BST)", async () => {
+      const raw = JSON.parse(await readFile(resolve(__dirname, "../fixtures/record-read/6J8F-6678.recapi.json"), "utf-8"));
+      expect(recordDocumentArk({ gedcomx: toSimplified(raw) })).toBe("ark:/61903/1:2:H9BP-G4TW");
+      const baker = JSON.parse(
+        await readFile(resolve(__dirname, "../../../../../eval/fixtures/mcp/record-read-baker-1870-m62f-bst.json"), "utf-8"),
+      );
+      expect(recordDocumentArk({ gedcomx: baker.response })).toBeNull();
+    });
   });
 
   // ── D2: non-persona producers (fulltext_search / legacy external_links_search) ──

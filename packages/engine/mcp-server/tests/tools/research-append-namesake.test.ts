@@ -1857,3 +1857,70 @@ describe("tree-derived namesake pairs (#3681)", () => {
     });
   });
 });
+
+describe("a source holding two documents (#2537 case 2)", () => {
+  const DOC_1802 = "ark:/61903/1:2:DOC9-1802";
+  const DOC_1862 = "ark:/61903/1:2:DOC9-1862";
+  const R1802 = "ark:/61903/1:1:BUR9-1802";
+  const R1862 = "ark:/61903/1:1:BUR9-1862";
+  const doc = (d: string) => ({ record_document_id: d });
+
+  /** John's 1802 burial and his son William's 1862 burial under one source,
+   *  each linked to its person: mikkel-blyeberg-father's src_004. */
+  function burials(keyed: { a1802: boolean; a1862: boolean }): Record<string, any> {
+    return research({
+      sources: [...research().sources, source("src_009", "S9")],
+      assertions: [
+        ...baseAssertions(),
+        assertion("a_201", "src_009", R1802, "deceased", "name", "John Smith", keyed.a1802 ? doc(DOC_1802) : {}),
+        assertion("a_202", "src_009", R1862, "deceased", "name", "William Smith", keyed.a1862 ? doc(DOC_1862) : {}),
+      ],
+      person_evidence: [standing("pe_201", "a_201", P), standing("pe_202", "a_202", C)],
+    });
+  }
+
+  it("does not tie a link through a party of the source's other document", () => {
+    const v = namesakeVerdicts(P, burials({ a1802: true, a1862: true }), tree())!.verdicts.get("pe_201")!;
+    expect(v.allowed).toBe(false);
+    expect(v.source).toBe("src_009");
+    expect(v.reasons.join(" ")).toContain(`No other party of document '${DOC_1802}' of source 'src_009'`);
+  });
+
+  it("reads the source as one record while any of its assertions names no document", () => {
+    const v = namesakeVerdicts(P, burials({ a1802: true, a1862: false }), tree())!.verdicts.get("pe_201")!;
+    expect(v.allowed).toBe(true);
+    expect(v.ties).toEqual([expect.objectContaining({ kind: "a", relative: C })]);
+  });
+
+  it("keeps the co-resident exclusion source-wide: a same-named party on the other document", () => {
+    const r = research({
+      sources: [...research().sources, source("src_009", "S9")],
+      assertions: [
+        ...baseAssertions(),
+        assertion("a_201", "src_009", R1802, "head", "name", "John Smith", doc(DOC_1802)),
+        assertion("a_203", "src_009", R1802, "head", "occupation", "Clerk", doc(DOC_1802)),
+        assertion("a_204", "src_009", R1862, "head", "name", "John Smith", doc(DOC_1862)),
+      ],
+      person_evidence: [standing("pe_201", "a_201", P), standing("pe_010", "a_011", P)],
+    });
+    const v = namesakeVerdicts(P, r, tree())!.verdicts.get("pe_201")!;
+    expect(v.allowed).toBe(false);
+    expect(v.reasons.join(" ")).toContain("its record lists another 'John Smith'");
+  });
+
+  it("keeps tie (b)'s same-source skip source-wide: the other document does not vouch", () => {
+    const r = research({
+      sources: [...research().sources, source("src_009", "S9")],
+      assertions: [
+        ...baseAssertions(),
+        assertion("a_201", "src_009", R1802, "head", "name", "John Smith", doc(DOC_1802)),
+        assertion("a_203", "src_009", R1802, "head", "occupation", "Clerk", doc(DOC_1802)),
+        assertion("a_206", "src_009", R1862, "head", "occupation", "Clerk", doc(DOC_1862)),
+      ],
+      person_evidence: [standing("pe_201", "a_201", P), standing("pe_206", "a_206", P)],
+    });
+    const v = namesakeVerdicts(P, r, tree())!.verdicts.get("pe_201")!;
+    expect(v.allowed).toBe(false);
+    expect(v.reasons.join(" ")).not.toContain("its voucher");
+  });
+});
