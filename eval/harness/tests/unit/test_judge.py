@@ -1955,15 +1955,110 @@ def test_nothing_cited_renders_todays_truncation_exactly():
     assert "rootsireland" not in rendered
 
 
+def _guide_file_changes(guide_markdown: str) -> str:
+    """The summary the judge gets for a persisted guide under
+    `judge_reads_files`: built by the real `_summarize_changes`, which
+    JSON-dumps the entry, so line breaks arrive as the two characters `\\n`."""
+    from harness.orchestrator import _summarize_changes
+
+    changes = {
+        "research.json": {
+            "sections_modified": ["localities"],
+            "diff": {
+                "localities": {
+                    "added": [{"id": "loc_001", "guide_markdown": guide_markdown}],
+                    "modified": [],
+                    "deleted": [],
+                }
+            },
+        }
+    }
+    return _summarize_changes(changes, [], include_content=True)
+
+
 def test_needle_only_in_file_changes_is_excerpted():
     """A skill that persists its deliverable cites in the file changes; the
-    reply is only an id (PR #3500)."""
+    reply is only an id (PR #3500). Bullet-list URLs end a line, so the dumped
+    `\\n` must not glue onto them."""
+    summary = _guide_file_changes(
+        "## Repositories\n- https://www.ancestryireland.com/\n"
+        "www.nidirect.gov.uk\n- Done"
+    )
+    page = list(_page_with("http://www.ancestryireland.com/", 11_632))
+    page[14_000 : 14_000 + len("www.nidirect.gov.uk")] = "www.nidirect.gov.uk"
     out = _minimal_prompt(
         text_response="Saved loc_001.",
-        file_changes_summary="guide_markdown: ... see ancestryireland.com ...",
-        tool_calls=[_wiki_page_call(_page_with("ancestryireland.com", 11_632))],
+        file_changes_summary=summary,
+        tool_calls=[_wiki_page_call("".join(page))],
     )
-    assert "[harness excerpt at char 11632 of 20000]" in out
+    # The page says http://, the guide https://: matched on the bare host.
+    assert "[harness excerpt at char 11643 of 20000]" in out
+    assert "[harness excerpt at char 14000 of 20000]" in out
+
+
+def test_citation_matches_the_page_in_any_case_and_keeps_its_case():
+    """Wiki pages are mixed case and needles are lower-cased; the excerpt must
+    show the page's own spelling, not a lowered copy."""
+    url = "https://www.FamilySearch.org/en/wiki/Ireland_Census"
+    page = _page_with(url, 9_000)
+    out = judge._with_excerpts(
+        page,
+        judge._summarize_response(page),
+        judge._citation_needles(url.lower() + " and " + url.upper(), ""),
+    )
+    assert "[harness excerpt at char 9000 of 20000]" in out
+    assert url in out.split("[harness excerpt", 1)[1]
+
+
+def test_excerpt_offsets_survive_text_whose_lowering_changes_length():
+    page = "İ" * 400 + _page_with(_ROOTS_URL, 6_000)[400:]
+    out = judge._with_excerpts(
+        page, judge._summarize_response(page), judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert "[harness excerpt at char 6000 of" in out
+    assert "rootsireland.ie" in out.split("[harness excerpt", 1)[1]
+
+
+def test_citation_differing_only_in_scheme_or_www_still_matches():
+    page = _page_with("http://rootsireland.ie/search", 7_000)
+    out = judge._with_excerpts(
+        page,
+        judge._summarize_response(page),
+        judge._citation_needles("https://www.rootsireland.ie/", ""),
+    )
+    assert "[harness excerpt at char 7007 of 20000]" in out
+
+
+def _excerpt_heavy_calls(n_pages: int = 18):
+    """Cut pages each citing 16 hosts past the cut, enough that their excerpts
+    push a render past _TOOL_CALLS_HARD_MAX_CHARS."""
+    hosts = [f"site{i:02d}.org" for i in range(judge._EXCERPTS_PER_STRING_MAX)]
+    page = "p" * 3_000 + "".join(h + "y" * 600 for h in hosts)
+    return [_wiki_page_call(page) for _ in range(n_pages)], " ".join(hosts)
+
+
+def test_excerpts_survive_when_live_args_must_be_capped():
+    """Rung 2: a huge live write forces the args cap; excerpts still render."""
+    calls, cited = _excerpt_heavy_calls(n_pages=2)
+    calls.append(_live_write_call({"entry": {"guide_markdown": "G" * 120_000}}))
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(cited, "")
+    )
+    assert "G" * 120_000 not in rendered
+    assert "G" * 2_000 in rendered
+    assert "[harness excerpt at char" in rendered
+
+
+def test_excerpts_go_before_live_args_are_omitted():
+    """Rung 3: when excerpts alone break the hard max, they are dropped and the
+    live args stay capped rather than falling to the measured view's marker."""
+    calls, cited = _excerpt_heavy_calls()
+    calls.append(_live_write_call({"entry": {"guide_markdown": "G" * 3_000}}))
+    needles = judge._citation_needles(cited, "")
+    rendered = judge._render_tool_calls_with_size_guard(calls, needles)
+    assert "[harness excerpt" not in rendered
+    assert "G" * 2_000 in rendered
+    assert "[args omitted by harness" not in rendered
 
 
 def test_needle_inside_the_head_adds_no_excerpt():
@@ -2096,10 +2191,13 @@ def test_citation_needles_skip_file_names_and_strip_url_punctuation():
     )
     assert needles == (
         "ancestryireland.com",
+        "familysearch.org",
         "http://www.rootsireland.ie",
         "https://familysearch.org/ark:/61903/1:1:qv9n-ys37",
         "https://www.proni.gov.uk",
         "nidirect.gov.uk",
+        "proni.gov.uk",
+        "rootsireland.ie",
     )
 
 

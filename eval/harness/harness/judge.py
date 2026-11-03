@@ -253,7 +253,11 @@ def _summarize_response(
 _EXCERPT_RADIUS = 150
 _EXCERPTS_PER_STRING_MAX = 16
 
-_URL_RE = re.compile(r"https?://[^\s<>\"'()\[\]{}`|]+", re.IGNORECASE)
+_URL_RE = re.compile(r"https?://[^\s<>\"'()\[\]{}`|\\]+", re.IGNORECASE)
+# `file_changes_summary` is JSON-dumped content: a guide's line break arrives as
+# the two characters `\n`, which would glue `n-` onto a bullet-list URL and
+# hide a line-initial hostname behind the `n`.
+_JSON_ESCAPE_RE = re.compile(r"\\[nrt\"\\/]")
 _HOSTNAME_RE = re.compile(
     r"(?<![\w@./-])(?:[a-z0-9-]+\.)+([a-z]{2,6})(?![\w-])(?!\.\w)", re.IGNORECASE
 )
@@ -265,15 +269,22 @@ _NOT_A_TLD = frozenset({"md", "py", "js", "ts", "sh", "gz"})
 
 
 def _citation_needles(*texts: str) -> tuple[str, ...]:
-    """The URLs and bare hostnames in what the agent wrote, lower-cased."""
+    """The URLs and bare hostnames in what the agent wrote, lower-cased.
+
+    Each URL also yields its host without `www.`, so a citation that differs
+    from the page only in scheme or `www.` still finds it.
+    """
     needles: set[str] = set()
     for text in texts:
         if not text:
             continue
+        text = _JSON_ESCAPE_RE.sub(" ", text)
         for m in _URL_RE.finditer(text):
             url = m.group(0).rstrip(".,;:!?*_").rstrip("/").lower()
             if len(url) > len("https://"):
                 needles.add(url)
+                host = url.split("://", 1)[1].split("/", 1)[0]
+                needles.add(host.removeprefix("www."))
         for m in _HOSTNAME_RE.finditer(text):
             tld = m.group(1).lower()
             if (len(tld) == 2 and tld not in _NOT_A_TLD) or tld in _GENERIC_TLDS:
@@ -287,12 +298,13 @@ def _excerpts_past_cut(text: str, needles: tuple[str, ...]) -> str:
     Each window is at most 2 * _EXCERPT_RADIUS + the needle: a hit inside an
     earlier window is already shown and opens none of its own.
     """
-    lowered = text.lower()
     hits: list[tuple[int, int]] = []
     for needle in needles:
-        start = lowered.find(needle)
-        if start != -1 and start + len(needle) > _RESPONSE_STRING_MAX:
-            hits.append((start, start + len(needle)))
+        # Searched case-insensitively in `text` itself, not in `text.lower()`,
+        # whose offsets drift wherever lowering changes a length ("İ").
+        m = re.search(re.escape(needle), text, re.IGNORECASE)
+        if m and m.end() > _RESPONSE_STRING_MAX:
+            hits.append(m.span())
     windows: list[tuple[int, int, int]] = []
     for hit_start, hit_end in sorted(hits):
         if windows and hit_end <= windows[-1][2]:
@@ -413,8 +425,9 @@ def render_prompt_parts(
         else "(none)"
     )
     skills_text = ", ".join(skills_invoked) if skills_invoked else "(none)"
-    # Needles come from everything the agent wrote: a skill that persists its
-    # deliverable (locality-guide inside a project) cites in the file changes.
+    # Needles come from everything the judge sees the agent wrote. A persisted
+    # deliverable's citations are in `file_changes_summary` only when the test
+    # sets `judge_reads_files`; otherwise it carries counts and adds none.
     tool_calls_text = _render_tool_calls_with_size_guard(
         tool_calls, _citation_needles(text_response, file_changes_summary)
     )
