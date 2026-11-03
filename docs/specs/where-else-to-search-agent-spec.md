@@ -116,10 +116,11 @@ appear more than once, with different collections.
   fixed opening and closing in place, a committed run on `medium` still failed
   `_001` and `_002` in 4 of 8 tries on validator-caught defects (a curated
   `baseUrl` with its trailing `/` dropped, a Findmypast URL from memory, a
-  missing closing, an added MyHeritage sentence). `claude-haiku-4-5` had been tried (2026-10-26)
-  and rejected: it altered a curated `baseUrl` (a trailing `/`; the validators now accept
-  that change on an Ancestry collection, because the engine's `collectionKey` treats
-  the two as one collection), gave undated
+  missing closing, an added MyHeritage sentence). The validators now accept a
+  trailing-`/` change on an Ancestry collection, because the engine's
+  `collectionKey` treats the two as one collection, so that defect no longer
+  counts against either model. `claude-haiku-4-5` had been tried (2026-10-26)
+  and rejected: it altered a curated `baseUrl` (a trailing `/`), gave undated
   rows a span read from their title, and was not reliably faster (80 s and 154 s
   on the same test). Neither model meets one
   minute: the time is model generation, not tool round-trips, so the batch form
