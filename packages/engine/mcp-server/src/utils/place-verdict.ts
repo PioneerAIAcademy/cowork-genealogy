@@ -35,6 +35,7 @@ import {
   textNamesPlace,
 } from "./place-resolver.js";
 import { oneWordListPlace } from "./one-word-places.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 
 /** A place text as the rule compares it: case, accents and spacing aside. */
 export function placeTextKey(place: string): string {
@@ -113,7 +114,16 @@ export async function placeAnswer(
       reason: `FamilySearch standardized it differently on the record it cites (${fromRecords.join("; ")})`,
     };
   }
-  const answer = fromRecords[0] ?? (await lookup().catch(() => null));
+  const answer =
+    fromRecords[0] ??
+    (await lookup().catch((err: unknown) => {
+      // A spent budget is a refusal, not "no such place". Swallowing it here
+      // writes the wrong cause INTO THE TREE: the fact saves with no
+      // standard_place and a warning blaming the lookup. Any other error still
+      // falls back, so a plain failure stays a miss.
+      if (isFsBudgetExhausted(err)) throw err;
+      return null;
+    }));
   if (!answer) {
     return {
       standardPlace: null,

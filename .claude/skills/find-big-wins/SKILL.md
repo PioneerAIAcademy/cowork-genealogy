@@ -55,17 +55,14 @@ paid run at all.
 
 **Run this after `/audit-board`, and consume its pass rather than repeating
 it.** That pass is the expensive one — it reads every open body — and it leaves
-two durable artifacts you can read directly:
+a durable artifact you can read directly:
 
 ```sh
 gh label list --repo PioneerAIAcademy/cowork-genealogy --limit 100 | grep '^cluster:'
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 100 \
-  --label "cluster:next-run" --json number,title -q '.[] | "\(.number)\t\(.title)"'
 ```
 
 Each `cluster:*` label is a scheduling constraint someone already found and
-named. Each `next run: <skill>` issue is a queue that exists only because of the
-paid-run tax — both are *symptoms already localized for you*.
+named — a *symptom already localized for you*.
 
 The **paid-run tax table** lives only in `/audit-board`'s report, not on disk.
 If the lead has this week's output to hand, take the table from it. If not,
@@ -130,7 +127,7 @@ unwritten doctrine, which is a recurring cost like the four below.
 
 Read it for one thing: **recurring cost**. Four shapes, all cheap:
 
-**Cluster labels and the `next run:` issues** — above. A cluster is a
+**Cluster labels** — above. A cluster is a
 scheduling constraint someone hit repeatedly.
 
 **The same undone thing re-filed three times.** The tell is a repeated

@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_find_death_john_mcnerny",
+    "objective": "Find the death record of John McNerny (KP9Y-74L), last seen in the 1880 US Census, near Venango County, Pennsylvania.",
+    "subject_person_ids": [
+      "KP9Y-74L"
+    ],
+    "status": "active",
+    "created": "2026-11-02",
+    "updated": "2026-11-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

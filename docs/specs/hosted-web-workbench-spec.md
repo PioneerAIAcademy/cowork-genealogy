@@ -700,8 +700,9 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >   turn. The sandbox POSTs each turn's cost to `/api/turn-cost`, authenticated by its
 >   Anthropic proxy token; no foreign keys, so a deleted session's spend stays. Only
 >   production (proxy active) reports. `build` is the sandbox image's own commit, so a
->   sandbox that outlives a deploy is billed to the code it runs; `continuations` counts
->   the stops the Stop hook overrode that turn. `create_all` never alters a live table, so
+>   sandbox that outlives a deploy is billed to the code it runs; `continuations` counted
+>   the stops the Stop hook overrode that turn; the hook was deleted in step mode's phase 2,
+>   so every turn since reports 0 and the column holds only older rows' counts. `create_all` never alters a live table, so
 >   `init_db` adds any nullable column the model has and the table lacks
 >   (`db.add_missing_columns`). Only sandboxes built from 2026-10-12 on report, so it
 >   misses every older session still in use.

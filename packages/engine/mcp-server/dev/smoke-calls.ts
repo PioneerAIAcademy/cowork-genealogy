@@ -130,6 +130,19 @@ function carries(res: CallResult, msg: string): boolean {
 
 const noError = (res: CallResult): Expectation => ({ ok: !res.isError, detail: brief(res) });
 
+/** No link when the server has no WEB_PUBLIC_URL (the default); when a developer's
+ *  exported one reaches compose, a viewer link, and an upload link only beside it. It does
+ *  not read `process.env.WEB_PUBLIC_URL`: compose can take it from a `.env` file this
+ *  process never sees. */
+const linksWellFormed = (body: any): boolean => {
+  const { projectUrl, uploadUrl } = body;
+  if (projectUrl === undefined) return uploadUrl === undefined;
+  return (
+    /^https?:\/\/[^/#?\s@]+[^#?\s]*\/#\/p\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(projectUrl) &&
+    (uploadUrl === undefined || uploadUrl === `${projectUrl}/upload`)
+  );
+};
+
 const okTrue = (res: CallResult): Expectation => ({
   ok: !res.isError && res.body?.ok === true,
   detail: brief(res),
@@ -219,7 +232,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       tree: SEED_TREE,
     }),
     expect: (res) => ({
-      ok: !res.isError && res.body?.ok === true,
+      ok: !res.isError && res.body?.ok === true && linksWellFormed(res.body),
       detail: res.body?.ok === true ? `wrote ${res.body.filesWritten.join(", ")}` : brief(res, 300),
     }),
   },
@@ -233,7 +246,10 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     tool: "project_context",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath }),
-    expect: noError,
+    expect: (res) => ({
+      ok: !res.isError && linksWellFormed(res.body ?? {}),
+      detail: brief(res, 300),
+    }),
   },
   {
     tool: "tree_query",
@@ -350,6 +366,31 @@ export const CALL_PLAN: readonly SmokeStep[] = [
         superseded_by: null,
       },
       verdict: { summary: "transport smoke" },
+    }),
+    expect: okTrue,
+  },
+  {
+    tool: "evaluation_append",
+    label: "evaluation_append (evaluations + verdict)",
+    offline: true,
+    // research_append scoped to `evaluations` by tool identity (ADR-0006). The
+    // narrow tool takes the same single-op shape and forces the lane.
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      section: "evaluations",
+      op: "append",
+      // Its own timestamp: the sidecar is named focus-target-<second>, so without
+      // it this step, run in the same second as the research_append one above,
+      // would overwrite that step's sidecar and prove nothing about its own.
+      entry: {
+        focus: "on-demand",
+        target_id: "project",
+        target_type: "project",
+        verdict: "looks_solid",
+        timestamp: "2026-01-01T00:00:01Z",
+        superseded_by: null,
+      },
+      verdict: { summary: "narrow-tool transport smoke" },
     }),
     expect: okTrue,
   },

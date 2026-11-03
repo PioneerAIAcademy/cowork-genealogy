@@ -32,6 +32,7 @@ from types import SimpleNamespace
 import pytest
 
 from harness import judge
+from harness.judge_render import judge_render_hash
 from harness import orchestrator as _orchestrator
 from harness import validator_runner
 from harness.scenario_brief import load_scenario_brief
@@ -118,7 +119,7 @@ def _minimal_run_log(skill: str = "demo", scenario: str | None = None) -> dict:
                 ],
             }
         ],
-        "totals": {},
+        "totals": dict.fromkeys(_TOTALS_KEYS, 0),
     }
 
 
@@ -316,15 +317,85 @@ def test_collect_refuses_skill_side_stale(disk_tree):
     assert "skill-side" in t.reason_refused
 
 
-def test_collect_skips_logs_already_on_current_prompt(disk_tree):
+def _render_hash_log(**envelope) -> dict:
+    """A minimal run log with the given envelope fields set."""
     log = _minimal_run_log(scenario="demo-scenario")
-    log["judge_prompt_hash"] = judge.judge_prompt_hash()  # current
-    log_path = disk_tree["runlogs"] / "v1_2026-10-09_00-00-00.json"
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-    log_path.write_text(json.dumps(log), encoding="utf-8")
+    log.update(envelope)
+    return log
 
+
+def test_collect_skips_logs_already_on_current_prompt(disk_tree):
+    """Current on BOTH fingerprints — rule 2b has nothing to clear."""
+    _write_log(
+        disk_tree,
+        _render_hash_log(
+            judge_prompt_hash=judge.judge_prompt_hash(),
+            judge_render_hash=judge_render_hash(),
+        ),
+    )
+    assert judge_regrade.collect_regradeable_logs(disk_tree["runlogs"].parent) == []
+
+
+def test_collect_takes_a_log_with_no_render_hash(disk_tree):
+    """A log written before the field is eligible: this regrade is what stamps
+    it, and rule 2b only warns until one is present."""
+    _write_log(disk_tree, _render_hash_log(judge_prompt_hash=judge.judge_prompt_hash()))
     targets = judge_regrade.collect_regradeable_logs(disk_tree["runlogs"].parent)
-    assert targets == []
+    assert len(targets) == 1
+    assert targets[0].reason_refused is None
+
+
+def test_regrade_stamps_both_fingerprints_and_clears_rule_2b(disk_tree, monkeypatch):
+    """The stamp half of the regrade contract.
+
+    This card traded the live `make judge-regrade` break row for this
+    assertion, so without it the one line that writes `judge_render_hash` has
+    no test at all: deleting it leaves the suite green (verified).
+
+    A log with no `tests[]` reaches the envelope stamp without a judge call,
+    which is what keeps this free.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _minimal_run_log(scenario="demo-scenario")
+    log["tests"] = []
+    log["judge_render_hash"] = "0" * 64  # stale on purpose
+    # `_minimal_run_log` carries `totals: {}`, which no other test notices
+    # because none of them writes through the regrade's pre-write schema
+    # validation. This one does, and `totals` has ten required fields.
+    log["totals"] = {
+        k: 0
+        for k in (
+            "duration_ms", "input_tokens", "cached_input_tokens", "output_tokens",
+            "judge_input_tokens", "judge_cached_input_tokens", "judge_output_tokens",
+            "skill_cost_usd", "judge_cost_usd", "total_cost_usd",
+        )
+    }
+    path = _write_log(disk_tree, log)
+
+    judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert written["judge_prompt_hash"] == judge.judge_prompt_hash()
+    assert written["judge_render_hash"] == judge_render_hash()
+    # That the refreshed hash then CLEARS the gate is the paired assertion in
+    # test_check_runlogs.py::test_rule2b_render_passes_when_touched_but_hash_unchanged
+    # — `check_runlogs` is a script loaded by importlib there, not a module to
+    # import here.
+
+
+def test_collect_takes_a_log_whose_render_hash_is_stale(disk_tree):
+    """The prompt is current and only the render code moved — still eligible,
+    which is the whole point of the render half."""
+    _write_log(
+        disk_tree,
+        _render_hash_log(
+            judge_prompt_hash=judge.judge_prompt_hash(),
+            judge_render_hash="0" * 64,
+        ),
+    )
+    targets = judge_regrade.collect_regradeable_logs(disk_tree["runlogs"].parent)
+    assert len(targets) == 1
+    assert targets[0].reason_refused is None
 
 
 # --- Warning dedupe (S3) ---------------------------------------------------
@@ -539,7 +610,7 @@ def _log_with(skill: str, test_spec: dict, run_entry: dict) -> dict:
                 "runs": [run_entry],
             }
         ],
-        "totals": {},
+        "totals": dict.fromkeys(_TOTALS_KEYS, 0),
     }
 
 
@@ -922,3 +993,258 @@ def test_before_snapshot_is_staged_once_per_scenario_and_again_after_an_edit(dis
     snap = judge_regrade._load_before_snapshot("demo-scenario")
     assert staged == ["demo-scenario", "demo-scenario"]
     assert snap["research_json"]["sources"][0]["id"] == "src_009"
+
+
+def _stale_log(skill: str = "demo") -> dict:
+    """A log in the shape a regrade used to leave behind.
+
+    `outcome` and `runs[]` carry the fresh grading; the summary still describes
+    the grading it replaced.
+    """
+    dim = lambda score: [  # noqa: E731
+        {"source": "base", "name": "Correctness", "score": score, "rationale": "x"}
+    ]
+    return {
+        "schema_version": 3,
+        "skill": skill,
+        "version": 1,
+        "released": False,
+        "releasable": True,
+        "invocation": "skill",
+        "timestamp": "2026-10-09_00-00-00",
+        "harness_version": "0.1.0",
+        "model": "claude-sonnet-4-5",
+        "judge_prompt_hash": "a" * 64,
+        "judge_render_hash": "b" * 64,
+        "snapshot": {},
+        "tests": [
+            {
+                "test_id": "ut_demo_001",
+                "test_type": "positive",
+                "expected_outcome": "pass",
+                "scenario": "demo-scenario",
+                "mcp_fixtures": [],
+                "outcome": "fail",
+                "flaky": False,
+                "outcome_summary": {
+                    "per_run_outcomes": ["pass"],
+                    "aggregated_dimensions": dim(3),
+                    "review_dimensions": dim(3),
+                },
+                "totals": {"duration_ms": 0, "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0, "judge_input_tokens": 0, "judge_cached_input_tokens": 0, "judge_output_tokens": 0, "skill_cost_usd": 0.0, "judge_cost_usd": 0.0, "total_cost_usd": 0.0},
+                "runs": [
+                    {
+                        "run_index": 0,
+                        "run_id": "r0",
+                        "outcome": "fail",
+                        "aborted_reason": None,
+                        "duration_ms": 0,
+                        "input_tokens": 0,
+                        "cached_input_tokens": 0,
+                        "output_tokens": 0,
+                        "skill_cost_usd": 0.0,
+                        "output": {
+                            "text_response": "",
+                            "activated": True,
+                            "skills_invoked": [],
+                            "tool_calls": [],
+                            "files_created": [],
+                        },
+                        "validators": {"passed": True, "results": []},
+                        "judge": {
+                            "skipped": False,
+                            "dimensions": dim(1),
+                            "judge_cost_usd": 0.0,
+                        },
+                    }
+                ],
+            }
+        ],
+        "totals": {"duration_ms": 0, "input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0, "judge_input_tokens": 0, "judge_cached_input_tokens": 0, "judge_output_tokens": 0, "skill_cost_usd": 0.0, "judge_cost_usd": 0.0, "total_cost_usd": 0.0},
+    }
+
+
+def test_reaggregate_repairs_a_stale_summary_without_touching_the_envelope(tmp_path):
+    """The repair path: no model call, and no fingerprint is stamped.
+
+    Stamping `judge_render_hash` here would certify a suite as graded by the
+    current render code when nothing re-graded it, and would un-refuse a suite
+    rule 2 is deliberately holding stale.
+    """
+    path = tmp_path / "v1_2026-10-09_00-00-00.json"
+    path.write_text(json.dumps(_stale_log()), encoding="utf-8")
+
+    changed, _ = judge_regrade.reaggregate_log(path)
+
+    assert changed == ["ut_demo_001"]
+    out = json.loads(path.read_text(encoding="utf-8"))
+    entry = out["tests"][0]
+    assert entry["outcome_summary"]["per_run_outcomes"] == ["fail"]
+    assert entry["outcome_summary"]["aggregated_dimensions"][0]["score"] == 1
+    # The envelope is exactly as it was.
+    assert out["judge_render_hash"] == "b" * 64
+    assert out["judge_prompt_hash"] == "a" * 64
+
+
+def test_reaggregate_leaves_a_consistent_log_unwritten(tmp_path):
+    """The other direction: a log that already agrees is not rewritten.
+
+    A repair that rewrote every log each pass would churn the whole corpus and
+    make a real repair indistinguishable from noise in a diff.
+    """
+    log = _stale_log()
+    entry = log["tests"][0]
+    entry["outcome_summary"] = {
+        "per_run_outcomes": ["fail"],
+        "aggregated_dimensions": entry["runs"][0]["judge"]["dimensions"],
+        "review_dimensions": entry["runs"][0]["judge"]["dimensions"],
+    }
+    path = tmp_path / "v1_2026-10-09_00-00-00.json"
+    path.write_text(json.dumps(log), encoding="utf-8")
+    before = path.read_text(encoding="utf-8")
+
+    assert judge_regrade.reaggregate_log(path) == ([], [])
+    assert path.read_text(encoding="utf-8") == before
+
+
+_TOTALS_KEYS = (
+    "duration_ms", "input_tokens", "cached_input_tokens", "output_tokens",
+    "judge_input_tokens", "judge_cached_input_tokens", "judge_output_tokens",
+    "skill_cost_usd", "judge_cost_usd", "total_cost_usd",
+)
+
+
+def _mandatory_log(*, outcome="partial", score=2, sample=None):
+    """A schema-valid log whose single test is gradeable and mandatory.
+
+    `test_id` is `ut_demo_999`, which has no spec in the `disk_tree` corpus, so
+    `regrade_run_log`'s loop `continue`s past it and no judge call is made. The
+    sample refresh runs over `log["tests"]` afterwards, so it still sees it.
+
+    `_minimal_run_log` is not schema-valid on its own — nothing else in this
+    file writes through `validate_run_log` — so the per-entry and per-run
+    required fields are filled in here.
+    """
+    log = _minimal_run_log(scenario="demo-scenario")
+    dims = [{"source": "rubric", "name": "Confidence calibration",
+             "score": score, "rationale": "x"}]
+    entry = log["tests"][0]
+    entry.update({
+        "test_id": "ut_demo_999",
+        "test_type": "positive",
+        "expected_outcome": "pass",
+        "scenario": "demo-scenario",
+        "mcp_fixtures": [],
+        "flaky": False,
+        "totals": dict.fromkeys(_TOTALS_KEYS, 0),
+        "outcome": outcome,
+        "outcome_summary": {
+            "per_run_outcomes": [outcome],
+            "aggregated_dimensions": dims,
+            "review_dimensions": dims,
+        },
+    })
+    for i, run in enumerate(entry["runs"]):
+        run.pop("judge_skipped", None)
+        run.update({
+            "run_id": f"r{i}", "duration_ms": 0, "input_tokens": 0,
+            "cached_input_tokens": 0, "output_tokens": 0, "skill_cost_usd": 0.0,
+        })
+        run.setdefault("validators", {"passed": True, "results": []})
+        run.setdefault("judge", {"skipped": False, "dimensions": dims,
+                                 "judge_cost_usd": 0.0})
+        run["output"]["file_changes"] = None
+        run["output"].setdefault("files_created", [])
+    log["totals"] = dict.fromkeys(_TOTALS_KEYS, 0)
+    if sample is not None:
+        log["review_sample"] = {"tests": list(sample), "cursor": [], "seed": 1}
+    return log
+
+
+def test_regrade_adds_a_newly_mandatory_test_to_the_review_sample(
+    disk_tree, monkeypatch
+):
+    """A regrade that moves a test into `is_mandatory` owes it a sample slot.
+
+    `review_sample` is derived from the runs, exactly as `outcome` and the
+    dimension summaries are, so a regrade that refreshes those and not this one
+    shrinks the annotation debt it just created: rule 3 iterates the STORED
+    sample, so a test the regrade scored a 2 on is gradeable, mandatory, and
+    owed by nobody. Found on `person-evidence` v5, where the regrade moved
+    `ut_person_evidence_n7v` pass -> partial with Confidence calibration at 2 —
+    the only such case across 38 regraded logs, which is why nothing caught it.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _mandatory_log(sample=["ut_demo_other"])
+    path = _write_log(disk_tree, log)
+
+    result = judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert "ut_demo_999" in written["review_sample"]["tests"]
+    # Union, never re-select: a test a human has already annotated must not be
+    # dropped, which would strand those corrections.
+    assert "ut_demo_other" in written["review_sample"]["tests"]
+    # The rotation state is not ours to touch.
+    assert written["review_sample"]["seed"] == 1
+    assert written["review_sample"]["cursor"] == []
+    # And the operator is told what debt the regrade created.
+    assert result.review_sample_added == ["ut_demo_999"]
+
+
+def test_regrade_leaves_an_already_complete_review_sample_alone(
+    disk_tree, monkeypatch
+):
+    """The other direction: a sample that already lists the test is untouched.
+
+    Without this the fix could "pass" by rewriting the key every run, which
+    would churn every regraded log and make a real addition unreadable in a
+    diff.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _mandatory_log(sample=["ut_demo_999"])
+    path = _write_log(disk_tree, log)
+
+    result = judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert written["review_sample"]["tests"] == ["ut_demo_999"]
+    assert result.review_sample_added == []
+
+
+def test_regrade_leaves_a_non_mandatory_test_out_of_the_sample(
+    disk_tree, monkeypatch
+):
+    """A clean pass is not mandatory, so it must not be added.
+
+    The guard that keeps this from degenerating into "sample every test",
+    which would owe a correction for every dimension of every run and make the
+    sampling mechanism pointless.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _mandatory_log(outcome="pass", score=3, sample=["ut_demo_other"])
+    path = _write_log(disk_tree, log)
+
+    result = judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert written["review_sample"]["tests"] == ["ut_demo_other"]
+    assert result.review_sample_added == []
+
+
+def test_regrade_without_a_review_sample_adds_no_key(disk_tree, monkeypatch):
+    """A log written before sampling shipped must not GAIN a `review_sample`.
+
+    Rule 3 already demands every dimension of every test from such a log. A
+    synthesized sample would silently NARROW that to the mandatory few, which
+    is the opposite of the debt this fix exists to preserve.
+    """
+    monkeypatch.setattr(judge_regrade, "resolve_auth", lambda *a, **k: None)
+    log = _mandatory_log(sample=None)
+    log.pop("review_sample", None)
+    path = _write_log(disk_tree, log)
+
+    judge_regrade.regrade_run_log(path)
+
+    written = json.loads(path.read_text(encoding="utf-8"))
+    assert "review_sample" not in written

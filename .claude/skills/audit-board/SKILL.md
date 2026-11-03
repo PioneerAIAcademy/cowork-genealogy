@@ -1,6 +1,6 @@
 ---
 name: audit-board
-description: Use when the lead wants the whole board looked at as a system rather than item by item — "audit the board", "review all the issues", "are any issues stale", "where are the clusters", "weekly board review", or a bare "/audit-board". Run it weekly and AFTER /merge-issues has merged the pool down, and before /fill-ready. Sets its own close-or-obsolete target from the week's inflow and reports the gap when it falls short. Reads every open issue in Backlog, Ready, In Progress and Review and answers three questions across the pool: which are obsolete against the current repo, where the clusters of related work are, and what cross-cutting handling would beat the per-issue plan each body carries. Merging is NOT this pass — `/merge-issues` owns merge doctrine and the eval-slot queues; this pass hands it what it finds. Maintains `cluster:*` labels and the standing per-skill `next run:` issues, and re-checks each cluster's named next action against the date it was named. Also reports board hygiene — closed issues in active columns, open issues on no column, unlabeled items, and stalled work. Verifies every claim against the repo before repeating it. Proposes first and applies only what the lead approves; never starts the work.
+description: Use when the lead wants the whole board looked at as a system rather than item by item — "audit the board", "review all the issues", "are any issues stale", "where are the clusters", "weekly board review", or a bare "/audit-board". Run it weekly and AFTER /merge-issues has merged the pool down, and before /fill-ready. Sets its own close-or-obsolete target from the week's inflow and reports the gap when it falls short. Reads every open issue in Backlog, Ready, In Progress and Review and answers three questions across the pool: which are obsolete against the current repo, where the clusters of related work are, and what cross-cutting handling would beat the per-issue plan each body carries. Merging is NOT this pass — `/merge-issues` owns merge doctrine and the eval-slot queues; this pass hands it what it finds. Maintains `cluster:*` labels and re-checks each cluster's named next action against the date it was named. Also reports board hygiene — closed issues in active columns, open issues on no column, unlabeled items, and stalled work. Verifies every claim against the repo before repeating it. Proposes first and applies only what the lead approves; never starts the work.
 allowed-tools:
   - Agent
   - Read
@@ -414,8 +414,7 @@ cd eval/harness && uv run python ../../.claude/skills/audit-board/runlog_state.p
 
 A suite whose newer candidate is active while its released log is stale is
 `promote` in the script's output: it owes a promotion in the CRUD UI, not a paid
-run. Name the same newest log
-on the suite's `next run:` card.
+run.
 
 Order matters within a queue: some issues are gated on a free harness-side change
 that should land first so the authoring only happens once. #1108 before #995 is
@@ -472,32 +471,6 @@ by the re-run.
 Do **not** reach for `eval-cosmetic-skip` to squeeze a second edit past the gate.
 It is for behavior-neutral changes only, and a gate too expensive to satisfy
 trains people to bypass it on exactly the edits that are not neutral.
-
-### The standing "next run" issue
-
-Give each mature skill with a real queue **one open issue** — titled
-`next run: <skill>`, labelled `cluster:next-run` plus the skill's lane — listing
-the Backlog issues on that skill's snapshot, in the order they should land, one line each.
-
-It is the queue made visible. Without it, an issue meant to ride along with the
-next run looks identical to one nobody wants, and the person who filed it has no way
-to see which. It holds pointers only — `#N — one clause` — never content.
-
-Rules that keep it from becoming a queue file:
-
-- **It holds pointers, never content.** Each line is `#N — one clause`. The work,
-  the reasoning and the acceptance criteria stay in the real issue. If someone
-  starts describing work here, that is the smell.
-- **One per skill, and only for skills that actually have a backlog.** Do not
-  pre-create twenty-five.
-- **It closes when the run lands**, and a fresh one opens only when a second edit
-  queues up. An empty `next run:` issue sitting open is the same rot.
-- **This audit is the only writer.** Others add by filing a normal issue; you
-  add the pointer here.
-
-When a skill's list is long enough to justify a run, that becomes the cluster's
-**next action** on that cluster, with a doer and a date — not a standing
-intention.
 
 Skills that are *already* stale cost a run before any new work lands. They are the
 `stale` rows of `runlog_state.py` above. `check_runlogs.py` grades one PR's diff
@@ -631,8 +604,7 @@ things that change what happens this week. Then:
 2. **Clusters** — one block each: members, what binds them, decision pending, next
    action, doer, and **Since**. Lead with any next action that has not moved since
    a previous audit.
-3. **The paid-run tax** — the table, which run to schedule this week, and any
-   `next run:` issue that needs opening or closing.
+3. **The paid-run tax** — the table and which run to schedule this week.
 4. **Hand to `/merge-issues`** — merge candidates this pass turned up and did not
    act on: re-filed cluster decisions, queues that grew since that pass ran, and
    any survivor reason this read contradicts. One line each, naming the issue

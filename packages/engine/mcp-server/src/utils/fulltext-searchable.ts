@@ -2,6 +2,7 @@ import type { Principal } from "../auth/principal.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fsFetch } from "./fs-fetch.js";
 import type { FulltextGroupNumberResponse } from "../types/volume-search.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 
 const FULLTEXT_GROUP_URL =
   "https://sg30p0.familysearch.org/service/search/fulltext/search/groupNumber";
@@ -41,7 +42,9 @@ export async function fetchFulltextSearchable(
     if (!response.ok) return null;
     const data = (await response.json()) as FulltextGroupNumberResponse;
     return new Set(data.ids ?? []);
-  } catch {
+  } catch (err) {
+    // Not "nothing is full-text searchable" -- the server is rate-limited.
+    if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
 }

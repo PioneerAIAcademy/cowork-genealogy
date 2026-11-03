@@ -273,6 +273,16 @@ none). One resolution is listed once, in the spelling first met, however else
 the same place was written (trimmed, case-folded, spaces collapsed), so the
 caller can tell the researcher which places it standardized without being asked.
 
+**`projectUrl`, on either success.** The project's page in the self-hosted
+beta's web app, `<webPublicUrl>/#/p/<projectId>`, present only when the per-user
+config has `webPublicUrl` and the bound store has a `projectId`
+(`projectLinks(principal)`, `src/utils/project-links.ts`; the same helper and
+rules as `project_context`'s, its spec §2.7). That id is the store's, so it is
+**not** the `projectId: "rp_001"` this result also carries, which is the
+research project's id inside `research.json`. On the `personId` summary it is
+built inside the 2,000-character cap. The desktop's file store has no id, so the
+desktop never gets one.
+
 **Naming the subject.** A caller that has only the FamilySearch ID writes the
 objective and title before the read, so it can name the subject only by that ID.
 With `personId`, each mention of the requested ID or the read's resolved ID —

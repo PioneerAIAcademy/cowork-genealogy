@@ -23,6 +23,7 @@ import type {
   TreeGapsResult,
 } from "../types/tree-gaps.js";
 import { rejectedTokenMessage } from "../auth/config.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
 const API = "https://api.familysearch.org/platform";
 const ACCEPT = "application/x-fs-v1+json";
@@ -220,7 +221,8 @@ async function loadCatalog(principal: Principal): Promise<FSCollectionEntry[] | 
     const token = await getValidToken(principal);
     const data = await fetchAllCollections(token, principal);
     return data.entries ?? [];
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
 }
@@ -320,7 +322,8 @@ async function readHints(
         id,
         res.matches.map((m) => ({ ark: m.ark, events: hintEvents(m.title), years: hintYears(m.title) })),
       );
-    } catch {
+    } catch (err) {
+      if (isFsBudgetExhausted(err)) throw err;
       // Unread: counted with the people skipped for time by scoreHints.
     }
   });
