@@ -80,7 +80,8 @@ Otherwise → proceed.
    `truncated` is true, call again with `offset: nextOffset`. Read no other ref:
    never `#hits`, never another hit. If the read fails, return its error
    verbatim and write nothing.
-3. **Read the tree.** One `tree_query({ projectPath, personIds: [target, ...spouseIds, ...parentIds, ...childIds] })`,
+3. **Read the tree, on every hit, before any verdict**, even when the hit plainly
+   names someone else. One `tree_query({ projectPath, personIds: [target, ...spouseIds, ...parentIds, ...childIds] })`,
    with no `factTypes`.
 4. **The verdict.** Find who in the hit could be the target. Weigh every fact
    on both sides (names, dates, places, residences, occupations), the

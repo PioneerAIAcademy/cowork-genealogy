@@ -41,7 +41,8 @@ extracts each Match from the hit's own transcript.
    (`sidecar-read-tool-spec.md`). It pages while `truncated`, and reads no other
    ref.
 4. **One `tree_query`** on the target and its one-hop family, with **no
-   `factTypes`**. A verdict needs residences and other place facts, which a
+   `factTypes`**, on every hit and before any verdict, even when the hit plainly
+   names someone else. A verdict needs residences and other place facts, which a
    vital-only filter drops.
 5. **The verdict**, from every fact on both sides, the relatives, and the
    titles of the sources the tree cites:
