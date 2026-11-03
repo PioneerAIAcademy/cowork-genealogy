@@ -61,6 +61,7 @@ from harness.context_policy import (
     subagent_only_violation,
 )
 from harness.delegation import foreground_rewrite
+from harness.main_thread import MAIN_THREAD
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import stub_denial
@@ -100,7 +101,8 @@ BASELINE_ALLOWED = [
 ]
 DISALLOWED_BACKSTOP = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
 
-DEFAULT_MODEL = "claude-sonnet-4-6"
+DEFAULT_MODEL = MAIN_THREAD.model
+DEFAULT_EFFORT = MAIN_THREAD.effort
 DEFAULT_MAX_TURNS = 20
 DEFAULT_MAX_WALL_CLOCK_SECONDS = 300
 DEFAULT_MAX_TOOL_CALLS = 50
@@ -989,6 +991,7 @@ async def run_skill(
     fixtures_dir: Path,
     auth: AuthConfig,
     model: str = DEFAULT_MODEL,
+    effort: str = DEFAULT_EFFORT,
     max_turns: int = DEFAULT_MAX_TURNS,
     max_wall_clock_seconds: int = DEFAULT_MAX_WALL_CLOCK_SECONDS,
     max_tool_calls: int = DEFAULT_MAX_TOOL_CALLS,
@@ -1425,6 +1428,7 @@ async def run_skill(
         # path-level approval prompts that Write/Edit require.
         permission_mode="bypassPermissions",
         model=model,
+        effort=effort,
         max_turns=max_turns,
         env=env_for_sdk(auth, tool_search=tool_search),
         hooks={

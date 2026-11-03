@@ -238,34 +238,16 @@ def test_workspace_isolated_per_call(tmp_path):
     assert not (ws2 / "marker.txt").exists()
 
 
-def test_build_workspace_pins_effort_level_by_default(tmp_path):
-    """Unpinned runs inherit the launching session's effort — grades then depend
-    on who ran them. The pin is a project-level setting the SDK reads via
-    setting_sources=["project"]; CLAUDE_EFFORT does not work (output-only)."""
+def test_build_workspace_sets_no_effort(tmp_path):
+    """The session's effort is `ClaudeAgentOptions.effort` from main-thread.json, the
+    one channel every platform shares; a project `effortLevel` would be a second one."""
     build_workspace(None, SCENARIOS, PLUGIN_SKILLS, tmp_path)
-
-    settings = tmp_path / ".claude" / "settings.json"
-    assert settings.exists()
-    assert json.loads(settings.read_text(encoding="utf-8")) == {"effortLevel": "high"}
-
-
-def test_build_workspace_effort_level_is_overridable(tmp_path):
-    """The A/B lever: vary effort without touching the default."""
-    build_workspace(None, SCENARIOS, PLUGIN_SKILLS, tmp_path, effort_level="medium")
-
-    settings = tmp_path / ".claude" / "settings.json"
-    assert json.loads(settings.read_text(encoding="utf-8")) == {"effortLevel": "medium"}
-
-
-def test_build_workspace_effort_level_none_writes_no_settings(tmp_path):
-    """Explicit opt-out: inherit whatever launched the run."""
-    build_workspace(None, SCENARIOS, PLUGIN_SKILLS, tmp_path, effort_level=None)
 
     assert not (tmp_path / ".claude" / "settings.json").exists()
 
 
-def test_effort_settings_stay_out_of_the_snapshot(tmp_path):
-    """.claude/ is harness scaffolding — pinning effort must not churn run-log
+def test_harness_scaffolding_stays_out_of_the_snapshot(tmp_path):
+    """.claude/ is harness scaffolding — staging it must not churn run-log
     snapshots or flip every skill's active state."""
     build_workspace(None, SCENARIOS, PLUGIN_SKILLS, tmp_path)
 

@@ -189,7 +189,7 @@ def test_a_materialized_resume_is_owned_by_the_options_user_before_it_returns(mo
 
 def _opts(tmp_path, worker_env, **kw):
     return options.build_worker_options(
-        project_id="proj-1", cwd="/project", plugin_dir="/opt/genealogy/plugin", agents={},
+        project_id="proj-1", cwd="/project", plugin_dir=str(Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin"), agents={},
         store=object(), config_dir=str(tmp_path), pretool_hook=lambda *a: {},
         posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token", turn_id="turn-1",
         claim_epoch=1, **kw,

@@ -13,6 +13,7 @@ description: >-
   research-exhaustiveness), or wants to search records (use search-records
   or search-external-sites).
 model: claude-sonnet-4-6
+effort: high
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append

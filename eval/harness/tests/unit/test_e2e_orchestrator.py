@@ -76,7 +76,7 @@ def test_load_fixture_reads_all_required_fields(tmp_path: Path):
     assert fixture.id == "test-fixture"
     assert fixture.researcher_question == "Who were John's parents?"
     assert fixture.tags["question_type"] == "parents"
-    assert fixture.agent_model == "claude-sonnet-4-6"
+    assert not hasattr(fixture, "agent_model"), "the main thread's model is main-thread.json's"
     assert fixture.judge_model == "claude-haiku-4-5-20251001"
     assert fixture.expected_findings["findings"][0]["id"] == "f1"
     assert fixture.starting_research_path.exists()
@@ -189,22 +189,9 @@ def test_build_workspace_stages_plugin_agents(tmp_path: Path):
     assert "name: gps-mentor" in staged.read_text(encoding="utf-8")
 
 
-def test_build_workspace_writes_project_effort_level(tmp_path: Path):
-    """effort_level writes a project-level setting the CLI honors (env var doesn't)."""
-    fixture = load_fixture(_make_fixture_dir(tmp_path))
-    skills_dir = tmp_path / "skills"
-    skills_dir.mkdir()
-    workspace = tmp_path / "ws"
-    workspace.mkdir()
-    build_workspace(fixture, workspace, skills_dir, effort_level="medium")
-
-    settings = workspace / ".claude" / "settings.json"
-    assert settings.exists()
-    assert json.loads(settings.read_text(encoding="utf-8")) == {"effortLevel": "medium"}
-
-
-def test_build_workspace_no_settings_when_effort_level_unset(tmp_path: Path):
-    """Default (None) writes no settings.json — preserves the CLI default effort."""
+def test_build_workspace_sets_no_effort(tmp_path: Path):
+    """The session's effort is `ClaudeAgentOptions.effort` from main-thread.json, the one
+    channel every platform shares; a project `effortLevel` would be a second one."""
     fixture = load_fixture(_make_fixture_dir(tmp_path))
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()

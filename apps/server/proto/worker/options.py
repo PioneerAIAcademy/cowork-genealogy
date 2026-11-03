@@ -29,8 +29,9 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 - the SDK session id is the worker's choice: ``session_id=`` on a fresh session,
   ``resume=`` when the store holds entries -- exactly one, never both (the SDK's own
   rule without ``fork_session``).
-- the model is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
-  ``anthropic`` is ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the
+- the main thread's model and effort come from the plugin's ``main-thread.json``; the
+  provider is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
+  ``anthropic`` sends that model on ``ANTHROPIC_API_KEY``; ``gateway`` points the
   CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
   every agent (``gateway_agent_models``, and ``gateway_plugin_copy`` for the plugin's own
   namespaced registration of them), since a gateway passes unmapped ids through.
@@ -82,6 +83,7 @@ from app.agent.continue_policy import (
     status_before_call,
     wants_status_before,
 )
+from app.agent.main_thread import MainThread, load_main_thread
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
@@ -92,10 +94,11 @@ from proto.worker.writer_record import writer_record
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
 DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
-ANTHROPIC_MODEL = "claude-sonnet-4-6"
-# [1m]: the CLI strips it, sends context-1m-2025-08-07 and sizes its window (and so its
-# compaction) at 1M; without it a gateway session gets 200k (plan P3j).
-GATEWAY_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
+# The main thread's model and effort come from the plugin's main-thread.json
+# (`app.agent.main_thread`). A gateway gets its Bedrock id from GATEWAY_AGENT_MODELS plus
+# [1m]: the CLI strips that suffix, sends context-1m-2025-08-07 and sizes its window (and
+# so its compaction) at 1M; without it a gateway session gets 200k (plan P3j).
+GATEWAY_MAIN_SUFFIX = "[1m]"
 GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 # Bare ids the plugin's agents declare -> the Bedrock ids a gateway must receive. The
 # CLI sends an agent's model verbatim, and a gateway without a matching alias answers
@@ -269,19 +272,22 @@ def model_provider(worker_env: Mapping[str, str]) -> str:
     return provider
 
 
-def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
+def provider_env(worker_env: Mapping[str, str], main: MainThread) -> tuple[str | None, dict[str, str]]:
     """``(model, env)`` for ``MODEL_PROVIDER``: the CLI ``--model`` and the variables
-    that pin the provider. The gateway's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
-    suffix is read off that string), so ``model`` is None there."""
+    that pin the provider, for the main thread's model ``main.model``. The gateway's model
+    travels as ``ANTHROPIC_MODEL`` (the ``[1m]`` suffix is read off that string), so
+    ``model`` is None there; a model the gateway has no Bedrock id for raises."""
     if model_provider(worker_env) == "anthropic":
-        return ANTHROPIC_MODEL, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
+        return main.model, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
+    if main.model not in GATEWAY_AGENT_MODELS:
+        raise ValueError(f"main-thread.json model {main.model!r} has no Bedrock id in GATEWAY_AGENT_MODELS")
     return None, {
         "ANTHROPIC_BASE_URL": worker_env["GATEWAY_BASE_URL"].strip(),
         "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
         # Blank, not absent: the CLI inherits the worker's environment, and an
         # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
         "ANTHROPIC_API_KEY": "",
-        "ANTHROPIC_MODEL": GATEWAY_MODEL,
+        "ANTHROPIC_MODEL": GATEWAY_AGENT_MODELS[main.model] + GATEWAY_MAIN_SUFFIX,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
         # On by default (Richard, 2026-10-31): TAP's EKS gateway runs agentgateway
         # 1.6.0, and tool search held through kills, resumes, compactions and Sonnet 5
@@ -918,7 +924,8 @@ def build_worker_options(
     if resume and session_id:
         raise ValueError("resume and session_id are mutually exclusive: pass exactly one")
     env_in = os.environ if worker_env is None else worker_env
-    model, model_env = provider_env(env_in)
+    main = load_main_thread(plugin_dir)
+    model, model_env = provider_env(env_in, main)
     if model_provider(env_in) == "gateway":
         agents = gateway_agent_models(agents)
     project_note = (
@@ -978,6 +985,7 @@ def build_worker_options(
         include_partial_messages=True,
         max_buffer_size=MAX_BUFFER_BYTES,
         env=env,
+        effort=main.effort,
     )
     if model is not None:
         kwargs["model"] = model

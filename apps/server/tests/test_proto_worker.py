@@ -1187,9 +1187,11 @@ WORKER_ENV = {
 
 
 def _options(**overrides):
+    # The checkout's plugin: the worker reads the main thread's model and effort from its
+    # main-thread.json, so the options need a plugin that has one.
     kwargs = dict(
         project_id="proj-1", cwd="/project",
-        plugin_dir="/opt/genealogy/plugin", agents={"gps-mentor": object()}, store=object(),
+        plugin_dir=str(PLUGIN_DIR), agents={"gps-mentor": object()}, store=object(),
         config_dir=tempfile.mkdtemp(prefix="worker-cfg-test-"), pretool_hook=lambda *a: {},
         posttool_hook=lambda *a: {},
         worker_env=WORKER_ENV, bearer="grant-token", turn_id="turn-1", claim_epoch=1,
@@ -1208,7 +1210,9 @@ def test_options_pin_the_prototype_set(tmp_path):
     opts = _options(config_dir=str(tmp_path))
     assert opts.cwd == "/project" and opts.setting_sources == [] and opts.add_dirs == []
     assert opts.permission_mode == "bypassPermissions"
-    assert opts.plugins == [{"type": "local", "path": "/opt/genealogy/plugin"}]
+    assert opts.plugins == [{"type": "local", "path": str(PLUGIN_DIR)}]
+    main = options.load_main_thread(PLUGIN_DIR)
+    assert (opts.model, opts.effort) == (main.model, main.effort), "the main thread runs main-thread.json"
     assert list(opts.agents) == ["gps-mentor"]
     assert opts.disallowed_tools == ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
     assert opts.session_store_flush == "eager" and opts.session_store is not None
@@ -1306,7 +1310,9 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_AUTH_TOKEN"] == "k-1", "TAP reads Authorization, not x-api-key"
     assert opts.env["ANTHROPIC_API_KEY"] == "", "blanked, or the inherited Anthropic key rides to the gateway"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
-    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
+    main = options.load_main_thread(PLUGIN_DIR)
+    assert opts.env["ANTHROPIC_MODEL"] == options.GATEWAY_AGENT_MODELS[main.model] + "[1m]", "the 1M window"
+    assert opts.effort == main.effort
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
@@ -5429,7 +5435,7 @@ def test_model_provider_labels_and_its_two_callers():
             options.model_provider(env)
         assert exc.value.label == label
         with pytest.raises(ValueError):
-            options.provider_env(env)
+            options.provider_env(env, options.MainThread("claude-sonnet-4-6", "medium"))
     with pytest.raises(options.ProviderError):
         _options(worker_env={k: v for k, v in WORKER_ENV.items() if k != "MODEL_PROVIDER"})
     assert not hasattr(options, "LIVE_TREE_ARG_TOOLS"), "an empty table with a dead branch"
