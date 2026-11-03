@@ -148,13 +148,11 @@ interface SectionConfig {
     stampTimestamp?: { field: string; kind: "date" | "datetime" };
     /** Fields that may be SET once and never rewritten — legal while the
      *  current value is absent or empty, refused after. `init-project` fills
-     *  these at creation; nothing else may change them afterwards.
-     *
-     *  **What this constrains is the system, not the researcher.** A human who
-     *  mistyped their objective edits `research.json` directly; the raw-write
-     *  lockdown binds the agent, never a text editor, and preventing a person
-     *  from editing their own files is explicitly not a goal of this layer. So
-     *  this needs no override path — the override is the file itself. */
+     *  these at creation; nothing changes them afterwards, so they are fixed
+     *  for the life of the project. A field a researcher needs to correct does
+     *  not belong here: on the website they have no file access, so a refusal
+     *  that pointed at editing `research.json` named a route that does not
+     *  exist. That is why `objective` left this list (issue #3975). */
     initOnlyFields?: string[];
     /** Create the object when the document has no such section yet, rather than
      *  refusing. Only for sections a project may legitimately lack. */
@@ -215,12 +213,14 @@ const SECTIONS: Record<string, SectionConfig> = {
     prefix: "",
     singleton: {
       // `status` is freely updatable — proof-conclusion flips it to "completed".
-      // The other three are set ONCE, by whoever creates the project, and never
-      // rewritten: the ownership declaration's own statement of the harm is "a
-      // skill rewrites the objective, and every later skill plans against a
-      // changed goal it never agreed to."
+      // `objective` is rewritable so a researcher can correct it; the plugin
+      // hook keeps that write on the main thread (MAIN_THREAD_FIELDS), because
+      // the harm the ownership row names is "a skill rewrites the objective,
+      // and every later skill plans against a changed goal it never agreed
+      // to" (lead ruling 2026-10-29, issue #3975). `title` and
+      // `subject_person_ids` are set ONCE, at creation, and never rewritten.
       allowedFields: ["status", "objective", "title", "subject_person_ids"],
-      initOnlyFields: ["objective", "title", "subject_person_ids"],
+      initOnlyFields: ["title", "subject_person_ids"],
       stampTimestamp: { field: "updated", kind: "date" },
     },
   },
@@ -8019,8 +8019,9 @@ function applyOne(
     if (alreadySet.length > 0) {
       throw new ResearchAppendError(
         `field(s) already set on '${section}' and not rewritable: ${alreadySet.join(", ")}. ` +
-          "These are written once, when the project is created, because every later step " +
-          "plans against them. To change one, edit research.json directly.",
+          "These are written once, when the project is created, and are fixed for the life " +
+          "of the project because every later step plans against them. The objective is " +
+          "not one of them: the main conversation may rewrite it when the user asks.",
       );
     }
     // Completed-gate (GPS Component 4, deterministic): refuse to mark the

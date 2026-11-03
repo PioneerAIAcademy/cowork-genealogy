@@ -2298,6 +2298,14 @@ async def _run_agent(
                     f"`{owned_section}` is unaffected; delegate this field rather "
                     "than setting it here."
                 )
+            elif rule == "main_thread_field":
+                owned_section, _, field = owned.partition(".")
+                text = (
+                    f"`{bare}` denied on `{owned_section}` — setting `{field}` is "
+                    "reserved to the main conversation. Every other write to "
+                    f"`{owned_section}` is unaffected; hand the user's wording back "
+                    "rather than setting it here."
+                )
             elif rule == "claim":
                 agent = OWNED_CLAIM_ROUTES[owned][0]
                 text = (

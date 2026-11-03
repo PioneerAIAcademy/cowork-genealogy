@@ -206,6 +206,9 @@ def test_every_denial_arm_produces_a_reason_the_validator_can_report():
         ("questions.search_stop", "declaration", "proof-conclusion"),
         ("project.status", "owned_field", ""),
         ("questions", "owned_append", ""),
+        # A caller absent from AGENT_WRITABLE_SECTIONS: the KeyError trap if the
+        # tag ever fell through to the `else` arm.
+        ("project.objective", "main_thread_field", "general-purpose"),
     ]
     for denied in arms:
         reason = owned_section_denial(denied)["hookSpecificOutput"][
@@ -320,3 +323,33 @@ def test_the_batch_clause_only_appears_when_ops_were_actually_batched():
     with pytest.raises(AssertionError) as e2:
         check_no_out_of_lane([batched])
     assert "per CALL, not per op" in str(e2.value), str(e2.value)
+
+
+def test_project_objective_is_main_thread_only():
+    """Issue #3975: any subagent is denied, the main thread is not.
+
+    Keyed on `agent_id` membership, never on `caller`, which is "" for a
+    subagent with a null `agent_type` -- the same as the main thread.
+    """
+    def denied(op, **caller):
+        p = {"tool_name": "mcp__genealogy__research_append", "tool_input": op, **caller}
+        return owner_denied(p["tool_name"], p["tool_input"], p)
+
+    obj = {"section": "project", "op": "update", "fields": {"objective": "x"}}
+    for caller in (
+        {"agent_id": "a1", "agent_type": "genealogy-research:init-project"},
+        {"agent_id": "a1", "agent_type": "proof-conclusion"},
+        {"agent_id": "a1", "agent_type": None},
+        {"agent_id": "a1", "agent_type": "gps-mentor"},
+    ):
+        result = denied(obj, **caller)
+        assert result is not None and result[:2] == (
+            "project.objective",
+            "main_thread_field",
+        ), caller
+    assert denied(
+        {"section": "project", "op": "update", "fields": {}, "entry": {"objective": "x"}},
+        agent_id="a1",
+        agent_type="init-project",
+    ) is not None, "an empty `fields` beside a populated `entry` must still deny"
+    assert denied(obj) is None, "the main thread may rewrite the objective"

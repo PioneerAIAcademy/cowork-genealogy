@@ -1308,7 +1308,9 @@ on the delegation tools, and one on the tools only agents hold, which the final
    `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
    or any of its analysis fields set — to `conflict-resolution`, and
    `OWNED_APPENDS` reserves creating a question (`op: "append"` on `questions`)
-   to `question-selection`. The five differ in granularity and key: a whole
+   to `question-selection`; and `MAIN_THREAD_FIELDS` runs the other way,
+   denying `project.objective` to every subagent so only the main thread can
+   rewrite it. The five owner maps differ in granularity and key: a whole
    section, a field at a particular claim value, a field on presence alone, a
    claim spread over several fields of one section, and one op on a section. `project` is co-written — `init-project` authors it and any writer
    may refresh `updated` — so only the one field is routed; `conflicts` is
