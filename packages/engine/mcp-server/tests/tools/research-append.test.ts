@@ -1,4 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  configureFsBudget,
+  consumeFsBudgetSlot,
+  isFsBudgetExhausted,
+  __resetFsBudgetForTests,
+} from "../../src/utils/fs-budget.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
@@ -1435,6 +1441,42 @@ describe("research_append (Phase 1)", () => {
       if (!r.ok) return;
       expect(r.validation.warnings).toContain("could not resolve standard_place for 'Hilperton' (left unset)");
       expect(r.unresolvedPlaces).toEqual(["Hilperton"]);
+    });
+
+    // Same class as the tree_edit case: a spent budget is a refusal, not a
+    // miss. Swallowing it saved the assertion with no standard_place and a
+    // warning blaming the lookup -- the wrong cause, written into
+    // research.json. extraction_append writes through researchAppend, so the
+    // record-extractor reaches this line too.
+    it("on an append with the FamilySearch budget spent, which fails and writes nothing", async () => {
+      await writeProject();
+      const before = JSON.stringify(await readResearch());
+      const FS_URL = "https://www.familysearch.org/service/places/search";
+      try {
+        configureFsBudget({ perMinute: 1 });
+        consumeFsBudgetSlot(FS_URL);
+        // A REJECTED PROMISE, not a sync throw: a sync throw escapes before the
+        // `catch` is reached and would pass against the unfixed code.
+        let refusal: unknown;
+        try {
+          consumeFsBudgetSlot(FS_URL);
+        } catch (e) {
+          refusal = e;
+        }
+        expect(isFsBudgetExhausted(refusal)).toBe(true);
+        vi.mocked(resolveStandardPlace).mockRejectedValueOnce(refusal);
+
+        const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "deathplace", value: "Hilperton" };
+        const err = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a }).then(
+          () => null,
+          (e) => e,
+        );
+        expect(isFsBudgetExhausted(err)).toBe(true);
+        expect(String(err)).toMatch(/try again in about/);
+        expect(JSON.stringify(await readResearch())).toBe(before);
+      } finally {
+        __resetFsBudgetForTests();
+      }
     });
 
     it("on a research_append informant_bias_notes update, which leaves the linked tree fact alone", async () => {

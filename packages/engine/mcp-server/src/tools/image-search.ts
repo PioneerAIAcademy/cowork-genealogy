@@ -15,6 +15,7 @@ import type {
   ChildrenNamesResponse,
 } from "../types/image-search.js";
 import { rejectedTokenMessage } from "../auth/config.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
 const ARTIFACT_BASE =
   "https://sg30p0.familysearch.org/service/records/rms";
@@ -105,7 +106,8 @@ async function fetchImageIds(
       ) {
         best = retry;
       }
-    } catch {
+    } catch (err) {
+      if (isFsBudgetExhausted(err)) throw err;
       // Keep `best` — a failed retry must not lose a usable browse list.
     }
   }
@@ -326,7 +328,8 @@ async function itemLabel(
       return { imageGroupNumber: name, imageGroupNumberFrom: "name", place };
     }
     return { ...composed, place };
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return composed;
   }
 }
