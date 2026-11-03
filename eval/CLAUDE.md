@@ -367,12 +367,13 @@ Each e2e run also leaves a readable `reports/run-<ts>.txt` beside its log (gitig
 
 ## Model Pinning
 
-Which model each thread of a unit run uses (`session_model_for` in `harness/orchestrator.py`, issue #3870):
+Which model and effort each thread of a unit run uses:
 
-- **A `SKILL.md` suite** (`research`, the test-only `eval/skills/extraction-append`): the skill runs on the main thread, so the skill's `model:` frontmatter, when set, is the session model. These are Claude Code's turn-scoped skill-override semantics.
-- **An agent-keyed suite** (every `packages/engine/plugin/agents/<name>.md` suite): the main thread is only the dispatcher (direct tests) or the router, and runs the harness default (`DEFAULT_MODEL`), as production's lead does. The agent runs as a subagent on its own `model:` and `effort:` lines, which the CLI applies. Until 2026-10-26 the agent's `model:` was applied to the whole session, so a helper moved to Haiku got a Haiku dispatcher no production user has. Logs from that window show it in `main_thread.models`.
+- **The main thread** of every suite (a `SKILL.md` suite's skill, an agent-keyed suite's dispatcher or router) runs `packages/engine/plugin/main-thread.json`'s model and effort (`harness/main_thread.py`), passed as `--model` / `--effort`, the same setting the hosted alpha and beta run. A skill cannot set its own. `run_tests.py --model` overrides the model for a run.
+- **An agent** runs as a subagent on its own `model:` and `effort:` lines, which the CLI applies and which outrank the session's effort. Every agent names both (`tests/packaging/agent-model-effort.test.ts`).
+- A shell with `CLAUDE_CODE_EFFORT_LEVEL` set refuses to run (`harness.auth.env_for_sdk`): that variable outranks both.
 
-Activating a run log restores the `model:` field along with the rest of the snapshot. The envelope `model` field is always the harness default. Read `runs[].main_thread.models` / `runs[].subagents[].models` for what ran: `make unit-compare` prints both per test and names a move in either as a differing setting.
+The envelope `model` field is always the harness default. Read `runs[].main_thread.models` / `runs[].subagents[].models` for what ran: `make unit-compare` prints both per test and names a move in either as a differing setting.
 
 `judge_model` is stamped on each run log at the envelope (required by issue #2479). This reverses the earlier "project-global, not per-run-versioned" rule: a judge-model bump is now a dated field on the artifact rather than a date we have to look up elsewhere, so a regrade or a mixed-era comparison can tell which model graded which log. The field is optional on the schema — logs committed before the field was added simply omit it, and the writer emits the key only when non-empty so historical bytes don't gain a stray `null`.
 

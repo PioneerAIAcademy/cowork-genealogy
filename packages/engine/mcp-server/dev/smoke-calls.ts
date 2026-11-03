@@ -628,6 +628,10 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     // network leg, so the smoke never spends a billed OCR probe. The happy path
     // needs a real Natural Group name and is dev/try-volume-bisect.ts's job.
     tool: "volume_bisect",
+    // Offline: the bare image-group prefix is refused by assertSplitGroup in
+    // the exported wrapper, before the transcription slot and before any
+    // network leg, so this row reaches no upstream.
+    offline: true,
     args: () => ({ imageGroupNumber: "004516861", targetYear: 1695 }),
     expect: (res) => ({
       ok: res.isError === true && carries(res, "volume_search"),

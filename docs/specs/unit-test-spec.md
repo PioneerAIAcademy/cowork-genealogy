@@ -2232,9 +2232,8 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 
 | Role | Model | Rationale |
 |------|-------|-----------|
-| Skill execution | Sonnet (pinned version) | Matches what Cowork uses. Needed for genealogical reasoning. |
-| Agent-keyed suite: dispatching main thread | Harness default (`DEFAULT_MODEL`) | The main thread only relays or routes; production's lead runs the default whatever a helper declares. |
-| Agent-keyed suite: the agent | Its own `model:` / `effort:` frontmatter | Applied by the CLI to the subagent. The model matches every surface. The effort matches Cowork, but on the hosted alpha `ORCHESTRATOR_EFFORT` makes `real_agent.spawn_effort` write `high` onto every spawn, which outranks the agent's `effort:`. |
+| Main thread (a skill suite's skill, an agent-keyed suite's dispatcher or router) | `packages/engine/plugin/main-thread.json`'s model and effort, passed as `--model` / `--effort` | The one setting the hosted alpha and beta and both harnesses run. A skill cannot set its own model or effort. |
+| Agent-keyed suite: the agent | Its own `model:` / `effort:` frontmatter | Applied by the CLI to the subagent on every surface, Cowork included, and outranks the session's effort. |
 | LLM judge | Haiku | Grading against a structured rubric is a classification task, not a reasoning task. ~20x cheaper than Sonnet. Upgrade selectively if specific dimensions prove unreliable. |
 
 **Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is ~5x cheaper than Haiku for the judge role. If Google APIs are already in use, Flash is a viable option that reduces judge cost from ~$0.01 per test to ~$0.002. The harness should support configurable judge model selection so the cheapest adequate model can be used.
