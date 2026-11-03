@@ -950,9 +950,12 @@ def _create_message_with_retry(
                 raise JudgeError(f"judge API call failed: {e}") from e
             # Retries were silent, so a suite that spent half an hour in them
             # looked hung (issue #4054's regrade).
+            # The SDK's "Connection error." hides why; name the cause.
+            cause = e.__cause__ or e.__context__
             print(
                 f"judge: attempt {attempt + 1}/{_attempts} failed after "
-                f"{_time.monotonic() - started:.0f}s: {type(e).__name__}: {e}",
+                f"{_time.monotonic() - started:.0f}s: {type(e).__name__}: {e}"
+                + (f" (cause: {type(cause).__name__}: {cause})" if cause else ""),
                 file=sys.stderr,
             )
             if attempt + 1 >= _attempts:
