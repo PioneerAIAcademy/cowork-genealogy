@@ -182,7 +182,7 @@ def nudges_from_narration(doc: dict, run: str) -> list[Nudge]:
         if not m:
             continue
         # The agent's own last words are the nearest preceding assistant entry.
-        # Mirror the orchestrator's selection EXACTLY (orchestrator.py stop_hook):
+        # Mirror the selection the orchestrator's stop_hook used (deleted in step mode phase 2) EXACTLY:
         # the nearest non-harness entry, and only when no tool call landed after it.
         # Sharing classify_hand_back does not by itself make the two agree — 2 of the
         # 74 committed narration nudges have tool calls between the last assistant
