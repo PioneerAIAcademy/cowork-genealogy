@@ -669,6 +669,18 @@ def check_out(state: str) -> dict[str, Any]:
 # after Postgres returns starts a fresh attempt instead of waiting out a long backoff.
 POOL_TIMEOUT_S = 10.0
 POOL_RECONNECT_TIMEOUT_S = 10.0
+# Each hand-out check's own cap, inside POOL_TIMEOUT_S: a connection whose peer went silent
+# (no RST) would otherwise hold the check until the kernel gives up, about 15 minutes.
+POOL_CHECK_TIMEOUT_S = 2.0
+
+
+def _abandon_check(conn: Any, check: asyncio.Future) -> None:
+    """Give up on a hand-out check still running: close the socket, which psycopg would
+    otherwise keep waiting on even to cancel, so the check ends and the pool discards it."""
+    if not check.done():
+        conn.pgconn.finish()
+        check.cancel()
+    check.add_done_callback(lambda f: f.cancelled() or f.exception())
 
 
 def pool_max_size() -> int | None:
@@ -775,19 +787,27 @@ class PgStore:
         A dead one is discarded (the pool replaces it in the background) and the next is
         tried at once. The pool's own ``check=`` would sleep its reconnect backoff (1 s, 2 s,
         4 s...) after each failure, and Neon suspending an idle compute kills every pooled
-        connection together."""
+        connection together. Each check is capped at POOL_CHECK_TIMEOUT_S, for a peer that
+        went silent rather than closing; a cancelled borrow gives its connection back."""
         from psycopg_pool import AsyncConnectionPool, PoolTimeout
 
         pool = self._pool
         deadline = time.monotonic() + POOL_TIMEOUT_S
         for _ in range(pool.max_size + 1):
             conn = await pool.getconn(max(deadline - time.monotonic(), 0.001))
+            check = asyncio.ensure_future(AsyncConnectionPool.check_connection(conn))
             try:
-                await AsyncConnectionPool.check_connection(conn)
-            except Exception:  # noqa: BLE001 - a dead connection; putconn discards it
+                limit = min(POOL_CHECK_TIMEOUT_S, max(deadline - time.monotonic(), 0.001))
+                done, _ = await asyncio.wait({check}, timeout=limit)
+                if not done:
+                    raise TimeoutError(f"the connection check did not answer in {limit:.1f}s")
+                check.result()
+            except Exception:  # noqa: BLE001 - a dead or silent connection; putconn discards it
+                _abandon_check(conn, check)
                 await pool.putconn(conn)
                 continue
             except BaseException:  # cancellation (a closed SSE tab, a timed-out step): give it back
+                _abandon_check(conn, check)
                 await pool.putconn(conn)
                 raise
             try:
@@ -824,7 +844,11 @@ class PgStore:
             "", connection_class=CredentialsConnection, open=False, name="web",
             min_size=0, max_size=self.pool_max_size,
             timeout=POOL_TIMEOUT_S, reconnect_timeout=POOL_RECONNECT_TIMEOUT_S,
-            kwargs={"row_factory": dict_row, "autocommit": True, "connect_timeout": 10},
+            # prepare_threshold=None: psycopg prepares a query server-side after five runs on
+            # one connection, and a pooled one lives long enough; a migration that changes a
+            # result type would then fail that statement until the connection expired.
+            kwargs={"row_factory": dict_row, "autocommit": True, "connect_timeout": 10,
+                    "prepare_threshold": None},
         )
         await self._pool.open(wait=False)
 

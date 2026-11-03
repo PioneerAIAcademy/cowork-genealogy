@@ -12,11 +12,13 @@ pass by skipping. ``make proto-grants-test`` runs it against the compose Postgre
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import sys
 import time
 
 import psycopg
 import pytest
+from psycopg.conninfo import conninfo_to_dict, make_conninfo
 from psycopg_pool import AsyncConnectionPool, PoolTimeout
 
 from tests._proto_pg import PROTO, database, require_base_dsn, sql
@@ -60,6 +62,27 @@ async def test_store_calls_reuse_one_pooled_connection(pg_dsn):
         assert await backend_pid(store) == first, "a pool of one serves every call on one backend"
     finally:
         await store.close_pool()
+
+
+async def test_a_pooled_connection_carries_no_session_state_to_its_next_borrower(pg_dsn):
+    """A capped sign-in sets a lock timeout inside its transaction, and a refused one raises
+    inside it. On a pool of one the next borrower gets that same backend back, so a timeout
+    set for the session rather than the transaction would reach it here."""
+    store = PgStore(pg_dsn, pool_max_size=1)
+    await store.open_pool()
+    try:
+        before = await backend_pid(store)
+        await store.upsert_user("a@example.org", None, max_users=1)
+        with pytest.raises(web_app.AdmissionRefused):
+            await store.upsert_user("b@example.org", None, max_users=1)
+        async with await store._connect() as conn:
+            row = await (await conn.execute(
+                "SELECT pg_backend_pid() AS pid, current_setting('lock_timeout') AS lt")).fetchone()
+            status = conn.info.transaction_status
+    finally:
+        await store.close_pool()
+    assert row["pid"] == before, "the same pooled backend served every call"
+    assert row["lt"] == "0" and status == psycopg.pq.TransactionStatus.IDLE, (row, status)
 
 
 async def test_a_connection_the_server_closed_is_replaced_on_hand_out(pg_dsn):
@@ -123,6 +146,83 @@ async def test_a_borrow_cancelled_mid_check_gives_the_connection_back(pg_dsn, mo
         assert user.email == "c@example.org"
     finally:
         await store.close_pool()
+
+
+class FreezingProxy:
+    """A TCP relay to the test Postgres whose flows can go silent: still open, bytes
+    swallowed, never an RST -- a host that vanished, or a middlebox that dropped the flow."""
+
+    def __init__(self, dsn: str) -> None:
+        info = conninfo_to_dict(dsn)
+        self.target = (info.get("host") or "localhost", int(info.get("port") or 5432))
+        self.flows: list[tuple[asyncio.StreamWriter, asyncio.StreamWriter]] = []
+        self.frozen: set[int] = set()
+
+    async def start(self) -> int:
+        self.server = await asyncio.start_server(self._relay, "127.0.0.1", 0)
+        return self.server.sockets[0].getsockname()[1]
+
+    async def _relay(self, client_r, client_w) -> None:
+        up_r, up_w = await asyncio.open_connection(*self.target)
+        self.flows.append((client_w, up_w))
+
+        async def pump(r, w) -> None:
+            with contextlib.suppress(Exception):
+                while data := await r.read(65536):
+                    if id(client_w) not in self.frozen:
+                        w.write(data)
+                        await w.drain()
+
+        await asyncio.gather(pump(client_r, up_w), pump(up_r, client_w))
+
+    def freeze_existing(self) -> None:
+        self.frozen.update(id(client_w) for client_w, _ in self.flows)
+
+    def abort_all(self) -> None:
+        for client_w, up_w in self.flows:
+            client_w.transport.abort()
+            up_w.transport.abort()
+        self.server.close()
+
+
+async def test_a_connection_whose_peer_went_silent_is_skipped_within_the_check_cap(pg_dsn, monkeypatch):
+    """No RST: the check's query is never answered. The borrow must give up on that
+    connection after POOL_CHECK_TIMEOUT_S and land on a fresh one, not wait for the kernel."""
+    monkeypatch.setattr(web_app, "POOL_CHECK_TIMEOUT_S", 1.0)
+    proxy = FreezingProxy(pg_dsn)
+    port = await proxy.start()
+    store = PgStore(make_conninfo(pg_dsn, host="127.0.0.1", port=port), pool_max_size=1)
+    await store.open_pool()
+    try:
+        silent = await backend_pid(store)
+        proxy.freeze_existing()
+        started = time.monotonic()
+        call = asyncio.ensure_future(store.upsert_user("a@example.org", None))
+        done, _ = await asyncio.wait({call}, timeout=WAIT_S)
+        assert done, "the borrow waited on a silent connection"
+        assert call.result().email == "a@example.org"
+        assert time.monotonic() - started < 1.0 + 2.0
+        assert await backend_pid(store) != silent
+    finally:
+        proxy.abort_all()  # frees anything a regression left waiting on a frozen socket
+        await store.close_pool()
+
+
+async def test_pooled_connections_prepare_no_statements(pg_dsn):
+    """psycopg prepares a query server-side after five runs on one connection. A pooled
+    connection outlives that, and a migration changing a result type would then fail the
+    prepared statement until the connection expired."""
+    store = PgStore(pg_dsn, pool_max_size=1)
+    await store.open_pool()
+    try:
+        for _ in range(8):
+            async with await store._connect() as conn:
+                await (await conn.execute("SELECT email FROM users WHERE email = %s", ("x@example.org",))).fetchall()
+        async with await store._connect() as conn:
+            prepared = (await (await conn.execute("SELECT count(*) AS n FROM pg_prepared_statements")).fetchone())["n"]
+    finally:
+        await store.close_pool()
+    assert prepared == 0
 
 
 async def test_without_the_check_the_closed_connection_reaches_the_query(pg_dsn, monkeypatch):
