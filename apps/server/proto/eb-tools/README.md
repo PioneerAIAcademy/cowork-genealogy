@@ -40,6 +40,9 @@ no logs block, `asg` 1/1, and nginx at 1800 s or more.
 - **Not in the bundle:** `GENEALOGY_PG_DSN`, `GENEALOGY_S3_BUCKET` (both required, or
   `build/http.js` exits 2 before listening), the other `GENEALOGY_S3_*` variables, and the
   config overrides in `../tools/README.md`. Each is an API-level setting.
+- **`GENEALOGY_PG_SAS_OBJECT` (U29), at API level, in place of `GENEALOGY_PG_DSN`.** It needs
+  `@fs/sas-client` in the bundle, which only FamilySearch's build installs; a GitHub-built zip
+  with it set exits 2. Rules and the 28P01 re-read: `../tools/README.md`.
 - **No debug hold in the bundle, and none at API level outside a rehearsal.**
   `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS` and `GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS` are
   test-only (handoff step 9). The template test and `make eb-bundles-verify` refuse any

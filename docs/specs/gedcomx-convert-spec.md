@@ -516,7 +516,12 @@ sibling route never applies and only the list's entries that hold on every
 record do (`research-append-tool-spec.md`, lever B).
 A resolved value is also omitted when `countryConsistency(place, resolved)`
 returns `contradiction`: this is a read path with no warning channel to the
-model, so an unset field is the only honest outcome. Tools
+model, so an unset field is the only honest outcome.
+This guard checks only resolver-filled values; a `standard_place` FamilySearch
+supplies (`pickNormalizedPlace`) is left unchecked and carried through, so the
+`person_warnings` `hasPlaceStandardOtherCountry` tag reports it instead of this
+path silently dropping it — stripping it here would delete the pair that
+warning surfaces and hide FamilySearch's own error from the user. Tools
 that return facts to the model call `toSimplifiedStandardized` (single doc) or
 run `standardizePlaces` over the flattened facts of a multi-result response
 (`record_search` / `person_search`). The pure `toSimplified` remains for
