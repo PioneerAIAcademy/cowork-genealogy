@@ -99,6 +99,18 @@ function guardToolNames(): {
  * moment a field-scoped row lands — which is exactly what happened when
  * `questions` was added.
  */
+/** Sections `MAIN_THREAD_FIELDS` keeps off every subagent. Its rule names no agent. */
+function mainThreadSections(src: string): string[] {
+  const body = src.match(/^MAIN_THREAD_FIELDS\s*=\s*frozenset\(\{([^}]*)\}\)/m)?.[1];
+  if (body === undefined) {
+    throw new Error(
+      `MAIN_THREAD_FIELDS not found in ${GUARD}. If it was renamed, update this ` +
+        `helper — do not hardcode the section names back into the test.`,
+    );
+  }
+  return [...body.matchAll(/\(\s*["']([^"']+)["']\s*,/g)].map((m) => m[1]);
+}
+
 function ownedSections(src: string): string[] {
   const body = src.match(/^OWNED_SECTIONS\s*=\s*\{([^}]*)\}/m)?.[1];
   if (body === undefined) {
@@ -128,6 +140,10 @@ function ownedSections(src: string): string[] {
     );
   }
   for (const [, section] of fieldBody.matchAll(/\(\s*["']([^"']+)["']\s*,/g)) {
+    if (!sections.includes(section)) sections.push(section);
+  }
+
+  for (const section of mainThreadSections(src)) {
     if (!sections.includes(section)) sections.push(section);
   }
 
@@ -346,13 +362,16 @@ describe("plugin hooks are packaged and wired", () => {
     }
     for (const [section, owner] of claimRoutes(src)) add(section, owner);
     for (const [section, owner] of appendRoutes(src)) add(section, owner);
+    const mainOnly = mainThreadSections(src);
     for (const row of manifest.rows) {
       if (!(row.enforceableAt ?? []).includes("hook")) continue;
       const fromManifest = (row.hookCallers ?? [])
         .filter((c: string) => c.startsWith("agent:"))
         .map((c: string) => c.slice("agent:".length));
-      expect(owners[row.section], `${row.section}: the script routes it to no agent`).toBeDefined();
-      for (const owner of owners[row.section]) {
+      if (!mainOnly.includes(row.section)) {
+        expect(owners[row.section], `${row.section}: the script routes it to no agent`).toBeDefined();
+      }
+      for (const owner of owners[row.section] ?? []) {
         expect(fromManifest, `${row.section}: manifest hookCallers omits ${owner}`).toContain(owner);
       }
     }
