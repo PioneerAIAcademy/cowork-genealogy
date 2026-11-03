@@ -787,6 +787,9 @@ class PgStore:
             except Exception:  # noqa: BLE001 - a dead connection; putconn discards it
                 await pool.putconn(conn)
                 continue
+            except BaseException:  # cancellation (a closed SSE tab, a timed-out step): give it back
+                await pool.putconn(conn)
+                raise
             try:
                 async with conn:
                     yield conn

@@ -96,6 +96,35 @@ async def test_connections_that_died_together_are_replaced_without_backoff(pg_ds
         await store.close_pool()
 
 
+async def test_a_borrow_cancelled_mid_check_gives_the_connection_back(pg_dsn, monkeypatch):
+    """A client closing its SSE tab cancels a borrow, often during the check's round trip. The
+    connection must go back to the pool: a pool of one that lost it would refuse every later
+    query while readiness, on its own connection, still answers 200."""
+    real = AsyncConnectionPool.check_connection
+    checking = asyncio.Event()
+
+    async def slow_check(conn) -> None:
+        checking.set()
+        await asyncio.sleep(WAIT_S)
+        await real(conn)
+
+    store = PgStore(pg_dsn, pool_max_size=1)
+    await store.open_pool()
+    try:
+        await store.upsert_user("a@example.org", None)
+        monkeypatch.setattr(AsyncConnectionPool, "check_connection", staticmethod(slow_check))
+        call = asyncio.ensure_future(store.upsert_user("b@example.org", None))
+        await asyncio.wait_for(checking.wait(), WAIT_S)
+        call.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await call
+        monkeypatch.setattr(AsyncConnectionPool, "check_connection", staticmethod(real))
+        user = await asyncio.wait_for(store.upsert_user("c@example.org", None), WAIT_S)
+        assert user.email == "c@example.org"
+    finally:
+        await store.close_pool()
+
+
 async def test_without_the_check_the_closed_connection_reaches_the_query(pg_dsn, monkeypatch):
     """The control for the test above: the check is what replaces the connection."""
     async def no_check(conn) -> None:
