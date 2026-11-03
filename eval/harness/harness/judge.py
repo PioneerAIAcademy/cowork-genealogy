@@ -244,9 +244,11 @@ def _summarize_response(
 #
 # Each needle gets one excerpt, at its first hit, and none if that hit is in
 # the first _RESPONSE_STRING_MAX chars the judge already sees:
-# `www.familysearch.org` recurs every ~100 chars of a wiki page. A v7h guide
-# cites ~20 URLs on one page; radius 150 with 16 slots shows 21-22 of them
-# where 300 with 6 showed 11-13, for about the same chars.
+# `www.familysearch.org` recurs every ~100 chars of a wiki page. On the Ireland
+# church-records page, the v7h guides in locality-guide v5.json and
+# v5_2026-10-26_16-22-37.json cite 24 and 21 URLs found past the cut; radius
+# 150 with 16 slots shows 22 and 21 of them, where 300 with 6 showed 11 and 13,
+# for about the same chars.
 # Excerpts are left out of the size guard's drop budget (see
 # `_render_tool_calls_with_size_guard`): the motivating locality-guide runs sit
 # at 47-50K already, and counting excerpts dropped the very page they came from.

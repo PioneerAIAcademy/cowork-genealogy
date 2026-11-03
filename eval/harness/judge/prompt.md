@@ -252,10 +252,12 @@ as if a tool had said it. This is about attribution, not support: a factual
 claim of Claude's that nothing in this prompt supports is still graded under
 Correctness. One exception: where the harness cut the record, text that could
 have come from the cut part cannot be attributed either way. That is a
-`response_summary` string ending in `[truncated by harness for prompt size; …]`,
+`response_summary` string carrying `[truncated by harness for prompt size; …]`,
 a `{"_truncated_for_depth": true, …}` value, or a calls list preceded by a
 `(_dropped_for_size: N earliest tool calls dropped …)` line, which means the
-earliest calls were dropped whole.
+earliest calls were dropped whole. After that truncation marker, a
+`[harness excerpt at char N of M] ...text...` line is the tool's own text from
+the cut part, copied verbatim; text between excerpts is still cut.
 
 {tool_calls}
 
