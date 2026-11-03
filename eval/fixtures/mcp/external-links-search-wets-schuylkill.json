@@ -6,9 +6,7 @@
   },
   "response": {
     "query": {
-      "standardPlace": "Schuylkill, Pennsylvania, United States",
-      "startYear": 1865,
-      "endYear": 1875
+      "standardPlace": "Schuylkill, Pennsylvania, United States"
     },
     "totalForPlace": 347,
     "returned": 200,
@@ -271,7 +269,7 @@
       },
       {
         "url": "https://www.ancestry.com/search/collections/61877/",
-        "linkText": "Pennsylvania Grand Army of the Republic Membership Records, 1865-1936",
+        "linkText": "Pennsylvania Grand Army of the Republic Membership Records, 1865-1956",
         "startYear": 1865,
         "endYear": 1956
       },
