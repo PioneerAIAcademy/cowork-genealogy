@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from e2e.env import load_env_file, stage_openrouter_key
+from harness.main_thread import MAIN_THREAD
 from e2e.orchestrator import (
     DEFAULT_MCP_SERVER_ENTRY,
     DEFAULT_PLUGIN_SKILLS,
@@ -162,7 +163,6 @@ def load_single_ask_fixture(fixture_dir: Path) -> tuple[Fixture, SingleAskSpec]:
         dir=fixture_dir,
         researcher_question=raw["message"],
         tags=raw.get("tags") or {},
-        agent_model=model.get("agent", "claude-sonnet-4-6"),
         judge_model="",
         caps=load_caps(raw.get("caps") or {}),
         expected_findings={},
@@ -205,8 +205,7 @@ async def run_one(
         prefix=f"e2e-single-ask-{fixture.id}-", ignore_cleanup_errors=True
     ) as tmp:
         workspace = build_workspace(
-            fixture, Path(tmp), DEFAULT_PLUGIN_SKILLS,
-            effort_level=effort_level, agent_model=agent_model,
+            fixture, Path(tmp), DEFAULT_PLUGIN_SKILLS, agent_model=agent_model,
         )
         record = await run_single_ask_turn(
             fixture=fixture,
@@ -214,6 +213,7 @@ async def run_one(
             workspace=workspace,
             mcp_server_entry=mcp_server_entry,
             agent_model=agent_model,
+            effort=effort_level,
         )
         final_research = read_research_json(workspace)
 
@@ -236,8 +236,8 @@ async def run_one(
         json.dumps(
             {
                 "test_id": fixture.id,
-                "effort_level": effort_level,
-                "agent_model": agent_model or fixture.agent_model,
+                "effort_level": effort_level or MAIN_THREAD.effort,
+                "agent_model": agent_model or MAIN_THREAD.model,
                 "grade": None if g is None else {
                     "passed": g.passed,
                     "failed": g.failed,
@@ -278,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--runlog-root", type=Path, default=DEFAULT_SINGLE_ASK_RUNLOGS)
     parser.add_argument("--mcp-server-entry", type=Path, default=DEFAULT_MCP_SERVER_ENTRY)
     parser.add_argument(
-        "--effort-level", default="high",
+        "--effort-level", default=None,
         choices=["low", "medium", "high", "xhigh", "max"],
     )
     parser.add_argument("--agent-model", default=None)

@@ -1108,7 +1108,7 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# Reasoning is pinned so runs are reproducible (see the runlog's usage block:
 	# agent_model / subagent_model_override / effort_level / max_output_tokens / cli_version).
 	# Override:
-	#   EFFORT_LEVEL       low|medium|high|xhigh|max   (default high, matches Cowork)
+	#   EFFORT_LEVEL       low|medium|high|xhigh|max   (main thread; default = packages/engine/plugin/main-thread.json)
 	#   MAX_OUTPUT_TOKENS  e.g. 16000                  (default = CLI default, 32000)
 	#   AGENT_MODEL        e.g. claude-sonnet-4-6       (parent + all subagents; default = each agent's pin)
 	#   DENY_SHELL         1                             (default off; P2 — deny Bash/PowerShell)
@@ -1132,7 +1132,7 @@ e2e-single-ask: $(ENGINE_BUILD) ## Run the single-ask e2e panel — one ordinary
 	# Fixtures: eval/tests/e2e-single-ask/<slug>/. Run logs: eval/runlogs/e2e-single-ask/<slug>/
 	# (siblings of the autonomous trees on purpose — docs/specs/e2e-test-spec.md §16).
 	# No judge and no ANTHROPIC_API_KEY check: the grade is deterministic.
-	# Override: EFFORT_LEVEL (default high), AGENT_MODEL (parent + all subagents).
+	# Override: EFFORT_LEVEL (main thread; default = main-thread.json), AGENT_MODEL (parent + all subagents).
 	cd eval/harness && uv run python -m e2e.run_single_ask $(if $(TEST),--test $(TEST),) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),)
 
 .PHONY: e2e-view

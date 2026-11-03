@@ -5,10 +5,6 @@ import ThemeToggle from './ThemeToggle'
 import TitleEditor from './TitleEditor'
 import { JobStateBadge } from './JobStateBadge'
 
-// Opus is deliberately not offered during the alpha: ~5× the cost, and there is
-// no spend cap in the control plane. Re-add it once a cap exists.
-const MODELS = [{ id: 'claude-sonnet-4-6', label: 'Sonnet 4.6 — fast & economical' }]
-
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()
   const secs = Math.max(0, Math.round((Date.now() - then) / 1000))
@@ -26,7 +22,6 @@ export default function SessionList({
   const { user, logout } = useAuth()
   const [sessions, setSessions] = useState<SessionSummary[]>([])
   const [loading, setLoading] = useState(true)
-  const [model, setModel] = useState(MODELS[0].id)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -49,7 +44,7 @@ export default function SessionList({
     setBusy(true)
     setError(null)
     try {
-      const s = await api.createSession({ sample, model })
+      const s = await api.createSession({ sample })
       // A fresh (non-sample) session auto-starts the init-project onboarding.
       // We don't ask for a name up front — the title is derived server-side from
       // the research objective the agent captures (like Claude naming a chat).
@@ -113,24 +108,6 @@ export default function SessionList({
 
       <main className="listMain">
         <section className="newSessionBar">
-          <div className="newSessionField">
-            <label className="fieldLabel" htmlFor="model">
-              Model
-            </label>
-            <select
-              id="model"
-              className="select"
-              value={model}
-              disabled={busy}
-              onChange={(e) => setModel(e.target.value)}
-            >
-              {MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </div>
           <div className="newSessionActions">
             <button className="btnPrimary" disabled={busy} onClick={() => void create(false)}>
               + New research session

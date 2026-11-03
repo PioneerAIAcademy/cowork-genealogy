@@ -517,7 +517,8 @@ _TAIL_PARAGRAPH = (
     "census, a weaker match on FamilySearch's scale, was indexed under the wrong surname, but the page itself "
     "reads Flynn and fits him, so it is recommended too. His 1908 death certificate is already part of this research."
 )
-_TAIL_LAST = "You decide which of these suggestions to accept."
+_TAIL_LAST = "Which of these suggestions would you like to accept, and which would you like to reject?"
+_PROJECT_URL = "https://genealogy.example.org/#/p/proj_3f9a1c2e7b4d6a80"
 
 
 def test_relay_fails_the_v34_reply_that_rewrote_the_triage():
@@ -527,8 +528,22 @@ def test_relay_fails_the_v34_reply_that_rewrote_the_triage():
 
 def test_relay_passes_a_verbatim_tail_reflowed_with_curly_quotes():
     reflowed = _TAIL_PARAGRAPH.replace("'", "’").replace(". ", ".\n")
-    reply = f"Checking the hints now.\n\n{reflowed}\n\n**{_TAIL_LAST}**\n\nNext I'll wait for your verdicts."
+    reply = f"Checking the hints now.\n\n{reflowed}\n\n**{_TAIL_LAST}**"
     check_relays_tail(reply, RELAYS)
+
+
+def test_relay_passes_the_project_link_as_the_last_line():
+    """The skill ends a hosted turn with the project's link; that line is not added text."""
+    check_relays_tail(f"{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST}\n\n{_PROJECT_URL}", RELAYS)
+    check_relays_tail(f"{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST}\n\n<{_PROJECT_URL}>", RELAYS)
+
+
+def test_relay_fails_anything_after_the_tail():
+    for added in ("Next I'll wait for your verdicts.",
+                  "| Hint | Record |\n|---|---|\n| M70C | 1870 census |",
+                  f"{_PROJECT_URL}\n\nAnything else?"):
+        with pytest.raises(AssertionError, match="added text after search-hints"):
+            check_relays_tail(f"{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST}\n\n{added}", RELAYS)
 
 
 def test_relay_fails_keeping_only_the_last_sentence():
@@ -546,15 +561,15 @@ def test_relay_refuses_a_tag_with_no_routes_to_callee():
         check_relays_tail(_V34_REPLY, {**RELAYS, "tags": ["relays-agent-tail"]})
 
 
-def test_relay_passes_carrying_the_last_sentence_into_the_ask():
-    # ut_research_zfp's reply in a 2026-11-02 scratch run: every word relayed, the
-    # final "." replaced by the router's own ask for verdicts.
+def test_relay_fails_carrying_the_last_sentence_into_its_own_ask():
+    # The shape medium effort wrote on 2026-11-03: every word relayed, then the router's
+    # own ask for verdicts. The agent's question already asks; the skill forbids adding one.
     reply = (
         f"Spawning search-hints now.\n\n{_TAIL_PARAGRAPH}\n\n{_TAIL_LAST[:-1]} — let me know your "
-        "verdict on the 1870 and 1880 census hints (accept / reject / not enough information "
-        "for each) and I'll record them and carry on."
+        "verdict on the 1870 and 1880 census hints and I'll record them."
     )
-    check_relays_tail(reply, RELAYS)
+    with pytest.raises(AssertionError, match="added text after search-hints"):
+        check_relays_tail(reply, RELAYS)
 
 
 def test_relay_fails_rewording_the_last_sentence():
