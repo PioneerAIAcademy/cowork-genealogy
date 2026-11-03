@@ -1505,7 +1505,7 @@ replay with `GENEALOGY_HOSTED_PLANE` unset whose transcript carries its text. Wh
 > They do **not** add the hook's routing sentence. It is message context rather than the
 > system prompt because, as the harnesses' whole (otherwise empty) system prompt, it read as
 > an identity and broke routing: `ut_research_027` passed 1 of 5 that way, 4 of 5 without it
-> (issue #4011, 2026-11-02).
+> (measured 2026-11-02).
 
 ---
 
