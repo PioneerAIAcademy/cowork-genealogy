@@ -252,7 +252,9 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
 - Done when:
   - `make engine-test`, `make engine-test-pg`, `make typecheck`, `make harness-test` and `make server-test` are green;
   - `make hook-smoke` (live and billed) has run after the hook-comment edit;
-  - `make engine-smoke-http` has run once for the new smoke row. No CI job runs it.
+  - `make engine-smoke-http` has run once for the new smoke row. CI runs its
+    `offline` subset (the `engine-smoke-http` job); a row that needs the network
+    or a credential still runs only here.
 
   No paid unit run is owed.
 

@@ -24,6 +24,10 @@
 // never a variable); a missing variable, a half-set S3 key pair or an invalid
 // GENEALOGY_S3_FORCE_PATH_STYLE (or orphan sweep variable) is one stderr line
 // and exit 2 before listen.
+// GENEALOGY_PG_SAS_OBJECT (U29) reads the Postgres credentials from that SAS
+// fchDatabase object instead of GENEALOGY_PG_DSN (both set is exit 2). It is
+// resolved before listen: @fs/sas-client absent or an unusable object is exit 2,
+// SAS unreachable after 3 tries is exit 1. A 28P01 re-reads it (pg-credentials.ts).
 // With neither S3 key set the AWS SDK default chain supplies credentials
 // (environment, ~/.aws shared config/SSO, web identity, then instance
 // metadata); one stderr line names the mode, never a key. A set debug hold
@@ -51,11 +55,12 @@ import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
 import { startHttpServer, MCP_PATH } from "./http-server.js";
-import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
+import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore, readyLabel } from "./store/pg-s3-project-store.js";
 import { readLimitsEnv } from "./store/limits-env.js";
 import { configureFsBudget } from "./utils/fs-budget.js";
 import { configureTranscriptionCap } from "./utils/ocr.js";
 import { readPgS3Env } from "./store/pg-s3-env.js";
+import { loadSasClient, SasClientMissing, SasObjectInvalid, SasPgCredentials } from "./store/pg-credentials.js";
 import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
 import { configFromEnv } from "./hosted-config-env.js";
@@ -89,6 +94,7 @@ if (invalidEnv.length > 0) {
     `http: environment set to an invalid value: ${invalidEnv.join(", ")} ` +
       "(GENEALOGY_S3_FORCE_PATH_STYLE takes true or false; the GENEALOGY_ORPHAN_* variables whole seconds, " +
       "the grace at least 3600, the interval at most 2147483; " +
+      "GENEALOGY_PG_SAS_OBJECT and GENEALOGY_PG_DSN are exclusive; " +
       "GENEALOGY_FS_CALLS_PER_MINUTE and GENEALOGY_MAX_TRANSCRIPTIONS whole numbers above 0)\n",
   );
   process.exit(2);
@@ -107,6 +113,31 @@ try {
   process.stderr.write(`http: environment set to an invalid value: ${e instanceof Error ? e.message : String(e)}\n`);
   process.exit(2);
 }
+const { pgSasObject } = storeEnv;
+if (pgSasObject) {
+  let sas;
+  try {
+    sas = loadSasClient();
+  } catch (e) {
+    if (!(e instanceof SasClientMissing)) throw e;
+    process.stderr.write(
+      "http: GENEALOGY_PG_SAS_OBJECT is set but @fs/sas-client is not installed " +
+        "(FamilySearch's build installs it; use GENEALOGY_PG_DSN elsewhere)\n",
+    );
+    process.exit(2);
+  }
+  try {
+    storeEnv.backendOptions.pgCredentials = await SasPgCredentials.resolveAtStart(sas, pgSasObject);
+  } catch (e) {
+    if (e instanceof SasObjectInvalid) {
+      process.stderr.write(`http: SAS object ${pgSasObject} unusable: ${e.message}\n`);
+      process.exit(2);
+    }
+    process.stderr.write(`http: SAS object ${pgSasObject} unavailable (${readyLabel(e)})\n`);
+    process.exit(1);
+  }
+}
+process.stderr.write(`pg credentials: ${pgSasObject ? `SAS object ${pgSasObject}` : "environment DSN"}\n`);
 const s3Options = storeEnv.backendOptions.s3;
 process.stderr.write(
   `s3 credentials: ${s3Options.accessKeyId ? "static keys" : "SDK default chain"}; ` +
