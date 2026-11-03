@@ -2960,7 +2960,12 @@ describe("research_append (Phase 2)", () => {
       const r = await appendConflict({ ...validConflict(), competing_assertion_ids: ["a_002", "a_001"] });
       expect(r.ok).toBe(false);
       if (r.ok) return;
-      expect(r.errors.join(" ")).toMatch(new RegExp(`restates 'c_001' \\(status '${status}'\\).*conflictId 'c_001'`));
+      const errors = r.errors.join(" ");
+      expect(errors).toMatch(new RegExp(`restates 'c_001' \\(status '${status}'\\).*conflictId 'c_001'`));
+      // A settled conflict is reopened, not updated in place, and a cited one is uncited first.
+      expect(errors).toMatch(status === "resolved" ? /clears its resolution.*proof-conclusion/ : /Update 'c_001' instead/);
+      // The worked example is an update of the existing conflict, not another append.
+      expect(errors).not.toMatch(/op: "append"/);
       expect((await readResearch()).conflicts).toHaveLength(1); // nothing written
     });
 
@@ -2975,7 +2980,51 @@ describe("research_append (Phase 2)", () => {
       });
       expect(r.ok).toBe(false);
       if (r.ok) return;
+      // c_001 was never written, so the refusal does not point at it.
+      expect(r.errors.join(" ")).toMatch(/writes the same conflict twice/);
+      expect(r.errors.join(" ")).not.toMatch(/'c_001'/);
+    });
+
+    it("is refused on an update that turns one conflict into another's twin", async () => {
+      const research = phase2Research();
+      research.assertions.push(validAssertion("a_003"));
+      research.conflicts = [
+        { ...validConflict(), id: "c_001" },
+        { ...validConflict(), id: "c_002", competing_assertion_ids: ["a_001", "a_002", "a_003"] },
+      ];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_002",
+        fields: { competing_assertion_ids: ["a_001", "a_002"] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
       expect(r.errors.join(" ")).toMatch(/restates 'c_001'/);
+    });
+
+    it("writes an update that leaves what the conflict is about unchanged", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { competing_assertion_ids: ["a_002", "a_001"] },
+      });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a fact conflict over the same assertions on another attribute", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), disputed_attribute: "birthplace" });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
     });
 
     it("writes a conflict over a different set of assertions", async () => {

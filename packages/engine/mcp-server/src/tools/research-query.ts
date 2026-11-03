@@ -117,7 +117,7 @@ export interface ResearchQueryInput {
   personId?: string | string[];
   assertionId?: string | string[];
   /** conflicts only: the conflict's own id. */
-  conflictId?: string;
+  conflictId?: string | string[];
   planItemId?: string;
   status?: string;
   targetId?: string;
@@ -337,7 +337,49 @@ const FILTER_KEYS: FilterKey[] = [
 
 /** The id keys that take a list as well as one id. Each keeps its per-section
  *  rule; a list matches an item when ANY of its ids would. */
-export const PLURAL_KEYS: readonly FilterKey[] = ["personId", "assertionId", "sourceId", "recordId"];
+export const PLURAL_KEYS: readonly FilterKey[] = ["personId", "assertionId", "sourceId", "recordId", "conflictId"];
+
+/** The id prefix each id filter takes. A known id of another kind matched
+ *  nothing and read as "none exists": on `conflicts`, `assertionId: "c_001"`
+ *  returned 0, and ut_conflict_resolution_008 (v4, run 2) appended a duplicate
+ *  of c_001. */
+const ID_PREFIX: Partial<Record<FilterKey, string>> = {
+  assertionId: "a",
+  conflictId: "c",
+  questionId: "q",
+  sourceId: "src",
+  planItemId: "pli",
+};
+
+/** The research.json id prefixes, each with its kind, as research_append mints them. */
+const ID_KIND: Record<string, string> = {
+  a: "an assertion",
+  c: "a conflict",
+  q: "a question",
+  src: "a source",
+  pli: "a plan item",
+  pl: "a plan",
+  pe: "a person_evidence",
+  rj: "a rejected_links",
+  h: "a hypothesis",
+  t: "a timeline",
+  ps: "a proof summary",
+  ev: "an evaluation",
+  loc: "a locality",
+  ns: "a namesake",
+  log: "a log entry",
+};
+
+/** The first value that is a research.json id of another kind than `key` takes. */
+function wrongKindOfId(key: FilterKey, values: string[]): { value: string; prefix: string } | undefined {
+  const expected = ID_PREFIX[key];
+  if (!expected) return undefined;
+  for (const value of values) {
+    const prefix = /^([a-z]+)_\d+$/.exec(value)?.[1];
+    if (prefix && prefix !== expected && Object.hasOwn(ID_KIND, prefix)) return { value, prefix };
+  }
+  return undefined;
+}
 
 /** One filter's value as the ids to match, and whether the caller sent a list.
  *  Never coerces: a non-string, an empty or mixed list, or a malformed
@@ -536,15 +578,13 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       activeFilters.push(filter);
     }
 
-    // On `conflicts`, `assertionId` matches the competing assertions, so a
-    // conflict's own id there matched nothing and read as "no such conflict":
-    // ut_conflict_resolution_008 (v4, run 2) then appended a duplicate of c_001.
-    const conflictIdAsAssertion =
-      section === "conflicts" ? activeFilters.find((f) => f.key === "assertionId")?.values.find((v) => /^c_\d+$/.test(v)) : undefined;
-    if (conflictIdAsAssertion) {
+    for (const { key, values } of activeFilters) {
+      const wrong = wrongKindOfId(key, values);
+      if (!wrong) continue;
+      const better = (Object.keys(ID_PREFIX) as FilterKey[]).find((k) => ID_PREFIX[k] === wrong.prefix && allowed[k]);
       throw new ResearchQueryError(
-        `'${conflictIdAsAssertion}' is a conflict id, and on section 'conflicts' assertionId matches ` +
-          `competing_assertion_ids. To read that conflict, pass conflictId '${conflictIdAsAssertion}'.`,
+        `'${wrong.value}' is ${ID_KIND[wrong.prefix]} id, but ${key} takes ${ID_PREFIX[key]}_ ids` +
+          (better ? `. To filter by it on '${section}', pass ${better} '${wrong.value}'.` : "."),
       );
     }
 
@@ -696,7 +736,12 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     if (section !== "conflicts" || (input.status !== undefined && input.status !== "unresolved")) {
       return page;
     }
-    const assertionIds = activeFilters.find((f) => f.key === "assertionId")?.values;
+    // A conflictId read is scoped to that conflict's own competing assertions.
+    const assertionIds =
+      activeFilters.find((f) => f.key === "assertionId")?.values ??
+      (activeFilters.some((f) => f.key === "conflictId")
+        ? ordered.flatMap((c: any) => (Array.isArray(c?.competing_assertion_ids) ? c.competing_assertion_ids : []))
+        : undefined);
     return { ...page, unregisteredDisagreements: disagreementsInScope(research, input, assertionIds) };
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult("read");
@@ -742,7 +787,7 @@ export const researchQuerySchema = {
     "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
     "`superseded_by` is null yourself.\n" +
     "\n" +
-    "`personId`, `assertionId`, `sourceId` and `recordId` also take a list (≤50 ids): one call " +
+    "`personId`, `assertionId`, `sourceId`, `recordId` and `conflictId` also take a list (≤50 ids): one call " +
     "returns items matching any, plus `countById` per id.\n" +
     "\n" +
     "Returns `{ section, count, items, truncated }` — `count` is the total match " +
@@ -756,7 +801,8 @@ export const researchQuerySchema = {
     "assertionIds}]`, linked assertions that disagree on a birth or death place or " +
     "year with no conflicts entry naming them. These are evidence conflicts present " +
     "but not yet registered: `count: 0` does not mean the evidence agrees. Scoped to " +
-    "the question's own assertions under `questionId`, narrowed by `assertionId`, " +
+    "the question's own assertions under `questionId`, narrowed by `assertionId` or to a " +
+    "`conflictId` conflict's competing assertions, " +
     "omitted under a `status` other than 'unresolved'.",
   inputSchema: {
     type: "object" as const,
@@ -805,7 +851,11 @@ export const researchQuerySchema = {
           "(contains). hypotheses: matches supporting_assertion_ids OR " +
           "contradicting_assertion_ids (contains either).",
       },
-      conflictId: { type: "string", description: "conflicts: matches the conflict's own id (c_NNN)." },
+      conflictId: {
+        type: ["string", "array"],
+        items: { type: "string" },
+        description: "conflicts: matches the conflict's own id (c_NNN).",
+      },
       planItemId: { type: "string", description: "log: matches plan_item_id." },
       status: {
         type: "string",

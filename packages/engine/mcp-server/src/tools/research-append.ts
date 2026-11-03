@@ -800,30 +800,47 @@ function conflictInvariants(entry: any): string[] {
   return errs;
 }
 
-/** A conflict append that restates one already recorded: the same
- *  `conflict_type` over the same set of `competing_assertion_ids`, at any
- *  status. Same type and same assertions is the same disagreement, so the
- *  existing entry is the one to update, and a resolved or moot one is reopened
- *  by updating its status (research-schema-spec.md, `resolved_conflict_ids`).
- *  A different type over the same assertions is a different question and
- *  writes. Measured 2026-11-03: of the conflict appends in the committed unit
- *  run logs, 2 restate an existing conflict (`ut_conflict_resolution_008`
- *  run 2 over an unresolved one, `ut_research_001` v17 over a resolved one),
- *  both duplicates; the 233 committed e2e final documents hold no such pair. */
-function duplicateConflictInvariants(entry: any, research: any): string[] {
-  const key = (c: any) =>
-    Array.isArray(c?.competing_assertion_ids) ? [...new Set(c.competing_assertion_ids)].sort().join(",") : "";
-  const own = key(entry);
+/** The disagreement a conflict records: its type, the attribute a fact conflict
+ *  disputes, and its set of competing assertions. Two birth assertions can
+ *  disagree on the year and on the place, which are two conflicts with two
+ *  winners; an identity conflict over the same assertions asks one question. */
+function disagreementKey(c: any): string {
+  const ids = Array.isArray(c?.competing_assertion_ids) ? [...new Set(c.competing_assertion_ids)].sort() : [];
+  if (ids.length === 0) return "";
+  const attribute =
+    c.conflict_type === "fact" && typeof c.disputed_attribute === "string" ? c.disputed_attribute.trim().toLowerCase() : "";
+  return `${c.conflict_type}|${attribute}|${ids.join(",")}`;
+}
+
+/** A conflict write that restates one already recorded: the same `disagreementKey`,
+ *  at any status. The existing entry is the one to update. Measured 2026-11-03:
+ *  of the conflict appends in the committed unit run logs, 2 restate an
+ *  existing conflict (`ut_conflict_resolution_008` run 2 over an unresolved
+ *  one, `ut_research_001` v17 over a resolved one), both duplicates; the 233
+ *  committed e2e final documents hold no such pair. */
+function duplicateConflictInvariants(entry: any, research: any, appendedThisBatch?: ReadonlySet<string>): string[] {
+  const own = disagreementKey(entry);
   if (own === "") return [];
   const twin = (Array.isArray(research?.conflicts) ? research.conflicts : []).find(
-    (c: any) => c && c !== entry && c.conflict_type === entry.conflict_type && key(c) === own,
+    (c: any) => c && c !== entry && disagreementKey(c) === own,
   );
   if (!twin) return [];
+  if (appendedThisBatch?.has(twin.id)) {
+    return [
+      "this batch writes the same conflict twice (the same conflict_type, disputed_attribute and " +
+        "competing_assertion_ids); send it once.",
+    ];
+  }
+  const settled = twin.status === "resolved" || twin.status === "moot";
   return [
-    `this conflict restates '${twin.id}' (status '${twin.status}'): the same conflict_type ` +
-      `over the same competing_assertion_ids. Update '${twin.id}' instead of appending; to ` +
-      `reopen a resolved or moot conflict, update its status to 'unresolved'. Read it with ` +
-      `research_query section 'conflicts', conflictId '${twin.id}'.`,
+    `this conflict restates '${twin.id}' (status '${twin.status}'): the same conflict_type, ` +
+      `disputed_attribute and competing_assertion_ids. Read it with research_query section ` +
+      `'conflicts', conflictId '${twin.id}'. ` +
+      (settled
+        ? `It is already settled. To reopen it, conflict-resolution updates '${twin.id}' to status ` +
+          `'unresolved' and clears its resolution and analysis fields; if a proof summary cites it in ` +
+          `resolved_conflict_ids, proof-conclusion removes that citation first, in an earlier call.`
+        : `Update '${twin.id}' instead of writing a second one.`),
   ];
 }
 
@@ -8471,7 +8488,15 @@ function applyOne(
   if (section === "conflicts") {
     invariantErrors.push(...conflictInvariants(resultEntry));
     invariantErrors.push(...resolutionKindInvariants(resultEntry, op));
-    if (op.op === "append") invariantErrors.push(...duplicateConflictInvariants(resultEntry, research));
+    // On append, and on an update that changes what the conflict is about.
+    if (
+      op.op === "append" ||
+      ["conflict_type", "disputed_attribute", "competing_assertion_ids"].some((f) =>
+        Object.prototype.hasOwnProperty.call(op.fields ?? {}, f),
+      )
+    ) {
+      invariantErrors.push(...duplicateConflictInvariants(resultEntry, research, appendedThisBatch));
+    }
     // Place containment: on append, and on an update that (re)sets the pairing.
     // Scoped that way so an unrelated edit to a conflict written before this
     // rule existed is not refused — the freeze #2354 had to design around.
@@ -11227,13 +11252,16 @@ function failedOpHint(op: ResearchAppendOp, errors: readonly string[]): ExampleH
   if (op.section === "proof_summaries" && !errors.some((m) => [...EDITABLE_NARRATIVE_FIELDS].some((f) => m.includes(f)))) {
     fields = fields.filter((f) => !EDITABLE_NARRATIVE_FIELDS.has(f));
   }
+  // A restated conflict is refused in favour of updating the existing one, so
+  // its hint is the update example, not another append.
+  const restated = op.section === "conflicts" && errors.some((m) => m.includes("this conflict restates '"));
   return {
     section: String(op.section),
-    op: op.op === "update" ? "update" : "append",
+    op: op.op === "update" || restated ? "update" : "append",
     // The field names the failing op actually set. The worked example
     // is keyed on these so a caller refused on one field is not handed
     // a payload for another — see exampleFor.
-    fields,
+    fields: restated ? [] : fields,
   };
 }
 

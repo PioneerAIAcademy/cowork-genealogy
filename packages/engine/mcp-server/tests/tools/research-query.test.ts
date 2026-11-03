@@ -635,6 +635,16 @@ describe("research_query — conflicts reports unregistered disagreements", () =
     ]);
   });
 
+  it("scopes to the conflict's own competing assertions under conflictId", async () => {
+    // c_9 registers I2's pair; I3's pair is unregistered and has nothing to do with c_9.
+    const c9 = [{ id: "c_9", conflict_type: "fact", status: "unresolved", competing_assertion_ids: ["a_1", "a_2"] }];
+    expect((await query({}, c9)).unregisteredDisagreements).toEqual([
+      { personId: "I3", fact: "birth place", assertionIds: ["a_3", "a_4"] },
+    ]);
+    expect((await query({ conflictId: "c_9" }, c9)).unregisteredDisagreements).toEqual([]);
+    expect((await query({ conflictId: "c_404" }, c9)).unregisteredDisagreements).toEqual([]);
+  });
+
   it("scopes to the question's own assertions under questionId", async () => {
     const result = await query({ questionId: "q_001" });
     expect(result.unregisteredDisagreements).toEqual([
@@ -1157,7 +1167,7 @@ describe("research_query — plural ids", () => {
     ["external_collections", "place"],
   ])("rejects a list on %s × %s, a key that takes one value", async (section, key) => {
     expect(await rejected({ section, [key]: ["x", "y"] })).toMatch(
-      new RegExp(`'${key}' must be a string; only personId, assertionId, sourceId, recordId take a list`),
+      new RegExp(`'${key}' must be a string; only personId, assertionId, sourceId, recordId, conflictId take a list`),
     );
   });
 
@@ -1178,7 +1188,7 @@ describe("research_query — plural ids", () => {
 
   it("rejects a JSON-array string on a key that takes one value", async () => {
     expect(await rejected({ section: "conflicts", questionId: '["q_1","q_2"]' })).toMatch(
-      /'questionId' must be a string; only personId, assertionId, sourceId, recordId take a list/,
+      /'questionId' must be a string; only personId, assertionId, sourceId, recordId, conflictId take a list/,
     );
   });
 
@@ -1214,6 +1224,8 @@ describe("research_query — conflicts by their own id", () => {
     await writeFile(
       join(dir, "research.json"),
       JSON.stringify({
+        assertions: [],
+        sources: [],
         conflicts: [
           { id: "c_001", conflict_type: "fact", status: "unresolved", competing_assertion_ids: ["a_002", "a_009"] },
           { id: "c_002", conflict_type: "identity", status: "resolved", competing_assertion_ids: ["a_001"] },
@@ -1252,5 +1264,37 @@ describe("research_query — conflicts by their own id", () => {
   it("is not a filter on other sections", async () => {
     const r = await researchQuery({ projectPath: dir, section: "hypotheses", conflictId: "c_001" } as any);
     expect(r.ok).toBe(false);
+  });
+
+  it("takes a list, with a count per id", async () => {
+    const r = await researchQuery({ projectPath: dir, section: "conflicts", conflictId: ["c_001", "c_002", "c_404"] });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.items.map((c: any) => c.id)).toEqual(["c_001", "c_002"]);
+    expect(r.countById).toEqual({ c_001: 1, c_002: 1, c_404: 0 });
+  });
+
+  // The same silent 0 on any id filter sent a known id of another kind.
+  it.each([
+    [{ section: "hypotheses", assertionId: "c_001" }, /'c_001' is a conflict id, but assertionId takes a_ ids\.$/],
+    [{ section: "proof_summaries", assertionId: "q_001" }, /'q_001' is a question id.*pass questionId 'q_001'/],
+    [{ section: "conflicts", conflictId: "a_002" }, /'a_002' is an assertion id.*pass assertionId 'a_002'/],
+    [{ section: "assertions", sourceId: "a_002" }, /'a_002' is an assertion id.*pass assertionId 'a_002'/],
+  ])("refuses %j", async (args, message) => {
+    const r = await researchQuery({ projectPath: dir, ...args } as any);
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(message);
+  });
+
+  it.each([
+    [{ section: "conflicts", assertionId: "a_002" }],
+    [{ section: "conflicts", questionId: "q_001" }],
+    [{ section: "sources", sourceId: "src_001" }],
+    [{ section: "assertions", recordId: "c_001" }],
+    [{ section: "assertions", assertionId: "a_002b" }],
+  ])("accepts %j", async (args) => {
+    const r = await researchQuery({ projectPath: dir, ...args } as any);
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
   });
 });
