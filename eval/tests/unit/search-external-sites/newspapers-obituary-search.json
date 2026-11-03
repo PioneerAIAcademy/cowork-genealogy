@@ -23,11 +23,14 @@
     "place-search-schuylkill-by-name",
     "place-search-schuylkill-by-place",
     "external-links-search-schuylkill",
-    "collections-search-schuylkill"
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania"
   ],
   "judge_context": [
     "Generated URL should target newspapers.com/search/results/ with the name as the query term and the 1880-1905 window and Pennsylvania/Schuylkill place expressed via its own date and place parameters (date-start/date-end and region/county, or equivalent) — not the record-site parameter style (no birthplace/birth= parameters)",
     "Should provide capture-workflow instructions (click, save the results page or clipping as PDF, upload back) and note Newspapers.com is a paid site so a login may be required",
-    "A research-log entry must be written in the same turn the URL is generated: site newspapers, outcome partial, capture_received false, query capturing name + date range + place"
+    "A research-log entry must be written in the same turn the URL is generated: site newspapers, outcome partial, capture_received false, query capturing name + date range + place",
+    "The collections_search result for Schuylkill lists only a church-records collection and Pennsylvania probate records. A statement that FamilySearch's list for this place and period shows no newspaper collection, and so no FamilySearch copy to offer, is grounded in that result: the agent body asks for statements about which collections exist to rest on collections_search. It is not an unsupported claim and must not reduce Correctness.",
+    "Patrick's death is recorded in the project as March 1908, after the requested 1880-1905 window. Running the window the researcher asked for is correct (the agent body says to execute the chosen search, not override it), and pointing out the 1908 death and offering a wider search is a grounded observation, not a misleading one. Neither must reduce Correctness."
   ]
 }
