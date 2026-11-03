@@ -38,7 +38,7 @@
 #
 # `/` is a catch-all: every path not matched by a more specific mapping goes to
 # 8006. That looks untidy beside `--set-path=/mcp`, and is nonetheless the
-# correct shape for an MCP server, for two measured reasons.
+# correct shape for an MCP server, for the reason in 1. 2 is a measured trap.
 #
 # 1. An MCP server's sign-in does not live under /mcp. OAuth discovery is at
 #    host-root paths -- /.well-known/oauth-protected-resource,
@@ -46,13 +46,17 @@
 #    own authorization server, /authorize and /token. A /mcp-only mapping
 #    routes none of them, so sign-in cannot complete.
 #
-# 2. `--set-path` STRIPS the prefix before forwarding. Measured on this host:
+# 2. `--set-path` strips the mount prefix before forwarding. Measured on this
+#    host, against a target carrying no path of its own:
 #        curl localhost:8005/openapi.json            -> 200  (the real route)
 #        curl localhost:8005/pop-stats/openapi.json  -> 404  (no such route)
 #        curl $HOST/pop-stats/openapi.json           -> 200  (works anyway)
 #    All three hold only if Tailscale removes `/pop-stats` and forwards
-#    `/openapi.json`. So `--set-path=/mcp` would deliver `/` to the server, and
-#    a server serving its endpoint at /mcp would 404 on every call.
+#    `/openapi.json`. So `--set-path=/mcp` with a bare target delivers `/` to
+#    the server; put the path on the target (`http://127.0.0.1:8006/mcp`) to
+#    keep it, since the stripped remainder is appended to the target's own path
+#    (Tailscale's serve.go, via Go's documented SetURL behaviour -- read, not
+#    measured here). That is a trap, not a reason: 1 alone rules out /mcp.
 #
 # More specific paths still win, so /wiki and /pop-stats are unaffected by the
 # catch-all -- verified: both answer 200 with `/` mapped.
@@ -107,7 +111,7 @@
 # USAGE
 #
 #   ./scripts/tailscale-services.sh status   show the live mappings
-#   ./scripts/tailscale-services.sh check    probe the two durable services
+#   ./scripts/tailscale-services.sh check    probe the durable two and the empty slot
 #   ./scripts/tailscale-services.sh apply    (re)create all three mappings
 #   ./scripts/tailscale-services.sh reset    remove ALL serve/funnel config
 #
@@ -140,9 +144,10 @@ cmd_status() {
 # app itself -- correct, but indistinguishable from a broken mapping. openapi.json
 # is a real route, so a 200 proves the whole path end to end.
 #
-# The reserved slot is NOT checked: nothing is meant to be listening on 8006,
-# so it answers 502, and a check that fails by design is not a check. When the
-# test server lands, add a probe for whatever liveness route it serves.
+# The reserved slot must answer 502: nothing is meant to be listening on 8006.
+# 404 means the mapping is gone; anything else means a process bound 8006 and
+# is now public -- the hazard the header warns about, which nothing else
+# detects. When the test server lands, probe its liveness route instead.
 cmd_check() {
   local fail=0
   _probe() { # label expected url
@@ -161,10 +166,13 @@ cmd_check() {
   printf 'checking https://%s\n' "$HOST_FQDN"
   _probe "wiki"            200 "https://${HOST_FQDN}/wiki/openapi.json"
   _probe "pop-stats"       200 "https://${HOST_FQDN}/pop-stats/openapi.json"
+  _probe "reserved / (502)" 502 "https://${HOST_FQDN}/"
   if (( fail )); then
     printf '\nA probe failure is either the mapping or the service behind it.\n'
     printf 'Check both: ./scripts/tailscale-services.sh status\n'
     printf '            systemctl status wiki-query-api pop-stats-api\n'
+    printf 'If the reserved slot did not answer 502, something bound 8006 and is\n'
+    printf 'now public at the host root: ss -ltnp | grep :8006\n'
     return 1
   fi
 }
