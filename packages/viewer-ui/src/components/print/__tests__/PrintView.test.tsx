@@ -108,7 +108,7 @@ describe('PrintView', () => {
     }
 
     // Expanded: a card body, every log detail row, the whole transcription.
-    expect(within(root).getByText('His Records')).toBeInTheDocument()
+    expect(within(root).getByText('Records')).toBeInTheDocument()
     expect(within(root).getAllByText('Query')).toHaveLength(patrickFlynnResearch.log.length)
     const transcription = patrickFlynnResearch.sources.find((s) => s.transcription)!.transcription!
     expect(transcription.length).toBeGreaterThan(300)
