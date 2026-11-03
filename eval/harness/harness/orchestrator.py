@@ -1879,7 +1879,9 @@ def _resolved_delegation(spec: TestSpec, workspace: Path | None) -> str:
     A production caller always sends a real absolute path. Left literal, the
     placeholder reads to the agent as "no project", and a Haiku agent hands back
     naming init-project instead of surveying (#3935). Forward slashes, as the
-    mock writes `projectPath`, so a Windows dispatcher relays no backslashes.
+    mock writes `projectPath`. A Windows dispatcher has been measured rewriting
+    some of them to `\\` anyway; the verbatim validator tolerates that inside the
+    `projectPath:` value only.
     """
     delegation = spec.delegation or ""
     if workspace is None:

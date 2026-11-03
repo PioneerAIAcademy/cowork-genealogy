@@ -1639,6 +1639,31 @@ def test_direct_test_spawned_its_agent(test, builtin_tool_calls):
     )
 
 
+_PROJECT_PATH_VALUE = re.compile(r"(projectPath:[ \t]*)([^\r\n]*)")
+
+
+def _delegation_pattern(delegation: str) -> re.Pattern[str]:
+    """`delegation` as a pattern matching it exactly, except that `/` and `\\`
+    are interchangeable inside each `projectPath:` value (to the end of its line).
+
+    The harness sends that value with forward slashes, and a Windows dispatcher
+    has been measured rewriting some of them to `\\` (ut_check_warnings_020,
+    ut_question_selection_015) while delivering the same folder. Nothing else is
+    loosened: the key, every other line, other paths and URLs, and every
+    non-separator character of the path still match literally. A relay that adds
+    CRLF or JSON-escapes the backslashes still fails.
+    """
+    parts, pos = [], 0
+    for m in _PROJECT_PATH_VALUE.finditer(delegation):
+        parts.append(re.escape(delegation[pos : m.start(2)]))
+        parts.append(
+            "".join(r"[/\\]" if ch in "/\\" else re.escape(ch) for ch in m.group(2))
+        )
+        pos = m.end(2)
+    parts.append(re.escape(delegation[pos:]))
+    return re.compile("".join(parts))
+
+
 def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     """The recorded spawn prompt must contain the test's delegation verbatim.
 
@@ -1649,15 +1674,17 @@ def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     was never asked to resist, the agent passes, and the suite reports having
     survived an attack that never arrived.
 
-    `in`, not `==`: a harmless preamble is tolerated, a reword is not. What the
-    substring check permits is reported separately by
-    `report_direct_delegation_extra_text`.
+    A substring search, not `==`: a harmless preamble is tolerated, a reword is
+    not. What the substring check permits is reported separately by
+    `report_direct_delegation_extra_text`. The one character-level allowance is
+    `/` vs `\\` inside the `projectPath:` value (`_delegation_pattern`).
     """
     delegation = test.get("delegation")
     if not delegation:
         pytest.skip("not a direct-agent test")
     _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
-    if any(delegation in p for p in prompts):
+    pattern = _delegation_pattern(delegation)
+    if any(pattern.search(p) for p in prompts):
         return
     from harness.skill_runner import BUILTIN_ARG_TRUNCATE, _UNTRUNCATED_ARGS
 
@@ -1671,7 +1698,8 @@ def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     rendered = "\n---\n".join(prompts) if prompts else "(no spawn prompt recorded)"
     assert False, (
         "the main thread did not relay the delegation verbatim.\n\n"
-        f"EXPECTED to find, as an exact substring:\n{delegation}\n\n"
+        "EXPECTED to find (exact, except '/' and '\\' are interchangeable in the "
+        f"projectPath: value):\n{delegation}\n\n"
         f"ACTUAL spawn prompt(s):\n{rendered}{cut_note}"
     )
 
@@ -1690,11 +1718,13 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
     if not delegation:
         pytest.skip("not a direct-agent test")
     _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
+    pattern = _delegation_pattern(delegation)
     extras = []
     for p in prompts:
-        if delegation not in p:
+        m = pattern.search(p)
+        if not m:
             continue
-        before, _, after = p.partition(delegation)
+        before, after = p[: m.start()], p[m.end() :]
         if before.strip() or after.strip():
             extras.append(
                 f"before={before.strip()[:300]!r} after={after.strip()[:300]!r}"
