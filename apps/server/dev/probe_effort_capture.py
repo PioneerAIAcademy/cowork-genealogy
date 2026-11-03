@@ -47,6 +47,15 @@ in four sessions, present in one (main and subagent alike, at session effort `hi
 15,000,000 -- far above any helper's use). No session showed a smaller budget at `medium`.
 Searched in `system` and `messages`, number or `Infinite`; re-read it before relying on it.
 
+Re-answered 2026-11-03 under agent SDK 0.2.172 / CLI 2.1.308, with `person-evidence`
+declaring `effort: high`:
+
+    arm                 main    person-evidence
+    b-option-medium     medium  high
+    c-settings-medium   medium  high
+
+An agent's own `effort:` outranks the session's level under both levers.
+
 HOW
 
 A local proxy on 127.0.0.1 logs every `/v1/messages` request body (`model`,
@@ -61,24 +70,26 @@ fields reported here (`CLAUDE_CODE_EFFORT_LEVEL` outranks both levers,
 `CLAUDE_CODE_MAX_OUTPUT_TOKENS` changes `max_tokens`, `MAX_THINKING_TOKENS` changes
 `thinking`, `ANTHROPIC_DEFAULT_*_MODEL` changes `model`). Every variable with a
 `SCRUBBED_PREFIXES` prefix or in `SCRUBBED_NAMES` is removed for the run and its NAME
-reported (never its value: the prefix also matches the operator's session tokens). `MODEL` is then set to `Settings.default_model`, the model `_agent_env` hands a hosted
-sandbox unless the deploy (`DEFAULT_MODEL`) or the project overrides it. The main thread is told
+reported (never its value: the prefix also matches the operator's session tokens). The main thread is told
 to delegate one trivial task to `person-evidence`; a request whose system prompt
 carries that agent's body is the subagent's, and the arm ends as soon as one is
 logged.
 
-ARMS (the `d-` arms set T4.1's env; `a-none` and `d-env-orchestrator-medium` read the
-subagent through its SECOND request, where a per-turn `<total_tokens>` budget would appear)
+ARMS (`a-none` and `e-env-cache-1h-main` read the subagent through its SECOND request, where
+a per-turn `<total_tokens>` budget would appear). Every arm but `f-main-thread-file` clears
+the `effort` `build_options` sets from main-thread.json before applying its own lever.
 
-    a-none              nothing set (what hosted runs today)
+    a-none              no effort set: the CLI's own default
     b-option-high       options.effort = "high"
     b-option-medium     options.effort = "medium"      (positive control)
     c-settings-high     <project>/.claude/settings.json {"effortLevel": "high"}
     c-settings-medium   <project>/.claude/settings.json {"effortLevel": "medium"}
-    d-env-orchestrator-medium   ORCHESTRATOR_EFFORT=medium
-    d-env-subagent-map          SUBAGENT_EFFORT_BY_AGENT={"person-evidence": "low"}
-    d-env-namespaced            the same, delegating to genealogy-research:person-evidence
-    e-env-cache-1h-main         CLAUDE_CODE_PROMPT_CACHE_TTL=1h (Settings.prompt_cache_ttl_main)
+    e-env-cache-1h-main CLAUDE_CODE_PROMPT_CACHE_TTL=1h (Settings.prompt_cache_ttl_main)
+    f-main-thread-file  options.effort as build_options sets it: what the hosted planes run
+
+`person-evidence` declares its own `effort:`, which outranks every session lever above; to
+measure a lever reaching an agent that declares none, point QUERY at a copy of the plugin
+whose agent omits it.
 
 The `medium` arms are what make a `high` arm readable. If the default is already
 `high`, an arm setting `high` sends the same body whether or not the lever reached
@@ -138,10 +149,6 @@ SCRUBBED_NAMES = (
     "ANTHROPIC_MODEL",
     "ANTHROPIC_SMALL_FAST_MODEL",
     "MODEL",
-    # T4.1's settings: an operator's shell value would otherwise silently set every arm.
-    "ORCHESTRATOR_EFFORT",
-    "SUBAGENT_EFFORT",
-    "SUBAGENT_EFFORT_BY_AGENT",
 )
 
 QUERY = (
@@ -155,27 +162,21 @@ QUERY_TWO_REQUESTS = (
     "The task text is: 'Call the project_context tool once with projectPath {project}, "
     "then reply with the single word OK.' Do nothing else."
 )
-QUERY_NAMESPACED = QUERY.replace("the person-evidence agent",
-                                 "the agent whose subagent_type is exactly "
-                                 "genealogy-research:person-evidence")
-BY_AGENT_LOW = '{"person-evidence": "low"}'
+FROM_FILE = "file"
 
-# (name, options.effort, settings.json effortLevel, env, query, subagent requests to wait for)
+# (name, options.effort -- None clears it, FROM_FILE keeps build_options' --, settings.json
+# effortLevel, env, query, subagent requests to wait for)
 ARMS = [
     ("a-none", None, None, {}, QUERY_TWO_REQUESTS, 2),
     ("b-option-high", "high", None, {}, QUERY, 1),
     ("b-option-medium", "medium", None, {}, QUERY, 1),
     ("c-settings-high", None, "high", {}, QUERY, 1),
     ("c-settings-medium", None, "medium", {}, QUERY, 1),
-    ("d-env-orchestrator-medium", None, None, {"ORCHESTRATOR_EFFORT": "medium"},
-     QUERY_TWO_REQUESTS, 2),
-    ("d-env-subagent-map", None, None, {"SUBAGENT_EFFORT_BY_AGENT": BY_AGENT_LOW}, QUERY, 1),
-    ("d-env-namespaced", None, None, {"SUBAGENT_EFFORT_BY_AGENT": BY_AGENT_LOW},
-     QUERY_NAMESPACED, 1),
     # The 1-hour main-thread cache switch (`Settings.prompt_cache_ttl_main`): read through the
     # subagent's second request so its first response's usage has landed.
     ("e-env-cache-1h-main", None, None, {"CLAUDE_CODE_PROMPT_CACHE_TTL": "1h"},
      QUERY_TWO_REQUESTS, 2),
+    ("f-main-thread-file", FROM_FILE, None, {}, QUERY, 1),
 ]
 # The CLI writes the budget as a number or as `Infinite`, in the system prompt or after a
 # tool result -- so the whole body is searched and the text kept as found.
@@ -434,7 +435,7 @@ async def run_arm(name: str, option_effort: str | None, settings_effort: str | N
             # one keeps the CLI on this arm's proxy.
             real_agent._SECRETS_PATH = str(tmp / "absent-secrets.json")
             options = real_agent.build_options(project, api_key=key)
-            if option_effort:
+            if option_effort != FROM_FILE:
                 options.effort = option_effort
             if cli:
                 options.cli_path = cli
@@ -521,8 +522,9 @@ async def main() -> None:
                       if k.startswith(SCRUBBED_PREFIXES) or k in SCRUBBED_NAMES)
     for k in scrubbed:
         del os.environ[k]
-    from app.config import Settings
-    os.environ["MODEL"] = Settings.model_fields["default_model"].default
+    from app.agent.main_thread import load_main_thread
+    from app.config import REPO_ROOT
+    os.environ["MODEL"] = load_main_thread(REPO_ROOT / "packages" / "engine" / "plugin").model
     import claude_agent_sdk
     report = {
         "scrubbed_env": scrubbed,

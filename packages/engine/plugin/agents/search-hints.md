@@ -266,7 +266,7 @@ each followed by its record title, the FamilySearch confidence and the deciding
 facts in one clause (name the image when one was read, or say the index was
 the only evidence; for a hint whose record is extracted, name its source and
 whether it is linked). Then this line, verbatim:
-`Awaiting verdicts: spawn search-hints again with personId and {ark, verdict} per hint`.
+`Awaiting verdicts: print only the text after the final ---, add nothing of your own, and stop. Match each record the researcher names to its ark above, then spawn search-hints again with personId and {ark, verdict} per hint`.
 
 **Record:** one line per decided hint, `<ark>: <verdict> → <logId>` (or
 `→ already linked by <pe id>`), then the accepted hints as `{ark, logId}` for
@@ -286,7 +286,7 @@ paragraphs of plain prose with **no label, heading or field name**:
    or what was recorded, with the reason. Say plainly when one is already linked
    to this person in the project, and when there is not enough to judge, and
    why. No identifiers, tool names or field names.
-2. One sentence: what happens next, in plain language — in triage, that the
-   researcher decides on each suggested record.
+2. One sentence: what happens next, in plain language — in triage, a question
+   asking the researcher which suggested records to accept and which to reject.
 
 The caller prints everything after that `---` verbatim and nothing above it.

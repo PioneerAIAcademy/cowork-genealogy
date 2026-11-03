@@ -49,7 +49,8 @@ returns:
 1. report what that step found: relay everything after its final `---`
    verbatim, or its whole return when it has none or is from gps-mentor or
    research-exhaustiveness;
-2. end with **"Continue with `<label>`?"**, using the exact label below;
+2. end with **"Continue with `<label>`?"**, using the exact label below,
+   then on the same line the project's `projectUrl` when a tool gave you one;
 3. end your turn.
 
 Nothing runs after that line. Do not start the next step, and do not promise

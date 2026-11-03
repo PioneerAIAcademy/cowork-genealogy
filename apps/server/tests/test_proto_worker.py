@@ -66,6 +66,7 @@ import contextlib
 import errno
 import http.client
 import inspect
+import itertools
 import json
 import pathlib
 import re
@@ -84,6 +85,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+import psycopg
 import pytest
 import yaml
 
@@ -1185,9 +1187,11 @@ WORKER_ENV = {
 
 
 def _options(**overrides):
+    # The checkout's plugin: the worker reads the main thread's model and effort from its
+    # main-thread.json, so the options need a plugin that has one.
     kwargs = dict(
         project_id="proj-1", cwd="/project",
-        plugin_dir="/opt/genealogy/plugin", agents={"gps-mentor": object()}, store=object(),
+        plugin_dir=str(PLUGIN_DIR), agents={"gps-mentor": object()}, store=object(),
         config_dir=tempfile.mkdtemp(prefix="worker-cfg-test-"), pretool_hook=lambda *a: {},
         posttool_hook=lambda *a: {},
         worker_env=WORKER_ENV, bearer="grant-token", turn_id="turn-1", claim_epoch=1,
@@ -1206,7 +1210,9 @@ def test_options_pin_the_prototype_set(tmp_path):
     opts = _options(config_dir=str(tmp_path))
     assert opts.cwd == "/project" and opts.setting_sources == [] and opts.add_dirs == []
     assert opts.permission_mode == "bypassPermissions"
-    assert opts.plugins == [{"type": "local", "path": "/opt/genealogy/plugin"}]
+    assert opts.plugins == [{"type": "local", "path": str(PLUGIN_DIR)}]
+    main = options.load_main_thread(PLUGIN_DIR)
+    assert (opts.model, opts.effort) == (main.model, main.effort), "the main thread runs main-thread.json"
     assert list(opts.agents) == ["gps-mentor"]
     assert opts.disallowed_tools == ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
     assert opts.session_store_flush == "eager" and opts.session_store is not None
@@ -1304,7 +1310,9 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_AUTH_TOKEN"] == "k-1", "TAP reads Authorization, not x-api-key"
     assert opts.env["ANTHROPIC_API_KEY"] == "", "blanked, or the inherited Anthropic key rides to the gateway"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
-    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
+    main = options.load_main_thread(PLUGIN_DIR)
+    assert opts.env["ANTHROPIC_MODEL"] == options.GATEWAY_AGENT_MODELS[main.model] + "[1m]", "the 1M window"
+    assert opts.effort == main.effort
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
@@ -4247,7 +4255,7 @@ def _ready(monkeypatch, tmp_path, *, postgres_ok: bool = True) -> None:
 
 def test_healthz_is_503_when_postgres_refuses(monkeypatch, tmp_path, refused_pg):
     _ready(monkeypatch, tmp_path, postgres_ok=False)
-    monkeypatch.setattr(worker, "PG_DSN", refused_pg.dsn)
+    monkeypatch.setattr(worker, "PG", worker.pg_credentials.PgCredentials.fixed(refused_pg.dsn))
     logged: list[dict] = []
     monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
     status, body, raw = _healthz()
@@ -4262,7 +4270,7 @@ def test_healthz_is_503_when_postgres_refuses(monkeypatch, tmp_path, refused_pg)
 
 def test_healthz_is_503_within_the_deadline_against_a_silent_postgres(monkeypatch, tmp_path, silent_pg):
     _ready(monkeypatch, tmp_path, postgres_ok=False)
-    monkeypatch.setattr(worker, "PG_DSN", silent_pg.dsn)
+    monkeypatch.setattr(worker, "PG", worker.pg_credentials.PgCredentials.fixed(silent_pg.dsn))
     monkeypatch.setattr(worker, "READY_TIMEOUT_S", 0.3)
     with _serving() as port:
         started = time.monotonic()
@@ -4274,7 +4282,7 @@ def test_healthz_is_503_within_the_deadline_against_a_silent_postgres(monkeypatc
 
 def test_concurrent_healthz_share_one_probe(monkeypatch, tmp_path, silent_pg):
     _ready(monkeypatch, tmp_path, postgres_ok=False)
-    monkeypatch.setattr(worker, "PG_DSN", silent_pg.dsn)
+    monkeypatch.setattr(worker, "PG", worker.pg_credentials.PgCredentials.fixed(silent_pg.dsn))
     monkeypatch.setattr(worker, "READY_TIMEOUT_S", 0.3)
     results: list[tuple[int, dict, str]] = []
     with _serving() as port:
@@ -5419,7 +5427,7 @@ def test_model_provider_labels_and_its_two_callers():
             options.model_provider(env)
         assert exc.value.label == label
         with pytest.raises(ValueError):
-            options.provider_env(env)
+            options.provider_env(env, options.MainThread("claude-sonnet-4-6", "medium"))
     with pytest.raises(options.ProviderError):
         _options(worker_env={k: v for k, v in WORKER_ENV.items() if k != "MODEL_PROVIDER"})
     assert not hasattr(options, "LIVE_TREE_ARG_TOOLS"), "an empty table with a dead branch"
@@ -5681,6 +5689,230 @@ def test_pg_connect_bounds_the_connect_unless_the_caller_does(monkeypatch):
     worker.pg_connect("dsn", **worker.GRANT_CONN_KWARGS)
     assert [k["connect_timeout"] for k in seen] == [10, worker.RELEASE_CONNECT_TIMEOUT_S, 10]
     assert "connect_timeout" not in worker.GRANT_CONN_KWARGS, "pg_connect adds it; the constant is unchanged"
+
+
+# -- U29: Postgres credentials from SAS -------------------------------------------------
+
+_AUTH_FAILED = 'connection failed: FATAL:  password authentication failed for user "app"'
+_NO_HBA = 'connection failed: FATAL:  no pg_hba.conf entry for host "10.0.0.1", user "app", no encryption'
+
+
+def _fch(password: str) -> dict:
+    return {"fchUser": "app", "fchPassword": password,
+            "fchDbConnectUrl": "jdbc:postgresql://db.example:5432/proto?ssl=true"}
+
+
+def _sas_pg(monkeypatch, *objects) -> list[str]:
+    """``worker.PG`` in SAS mode, each fetch returning the next object; a clock that moves
+    a minute per read, so the rate limit never decides. The fetched names are returned."""
+    fetched: list[str] = []
+    queue = iter(objects)
+    ticks = itertools.count(0, 60)
+
+    def fetch(name):
+        fetched.append(name)
+        obj = next(queue)
+        if isinstance(obj, Exception):
+            raise obj
+        return obj
+    pc = worker.pg_credentials
+    monkeypatch.setattr(worker, "PG", pc.PgCredentials(mode="sas", sas_object="fch-db", fetch=fetch,
+                                                       clock=lambda: next(ticks)))
+    return fetched
+
+
+def test_pg_connect_reresolves_once_on_an_invalid_password(monkeypatch):
+    fetched = _sas_pg(monkeypatch, _fch("old-pw"), _fch("new-pw"))
+    tried: list[str] = []
+
+    def connect(dsn, **kw):
+        tried.append(dsn)
+        if "old-pw" in dsn:
+            raise psycopg.OperationalError(_AUTH_FAILED)
+        return "conn"
+    monkeypatch.setattr(worker.psycopg, "connect", connect)
+    assert worker.pg_connect(worker.pg_dsn(), autocommit=True) == "conn"
+    assert [("old-pw" in d, "new-pw" in d) for d in tried] == [(True, False), (False, True)]
+    assert fetched == ["fch-db", "fch-db"]
+    assert worker.pg_dsn() == tried[-1], "every later connect reads the rotated DSN"
+
+
+@pytest.mark.parametrize("message", [_NO_HBA, "connection failed: Connection refused"])
+def test_pg_connect_never_reresolves_any_other_connect_failure(monkeypatch, message):
+    fetched = _sas_pg(monkeypatch, _fch("pw"), _fch("other"))
+    tried: list[str] = []
+
+    def connect(dsn, **kw):
+        tried.append(dsn)
+        raise psycopg.OperationalError(message)
+    monkeypatch.setattr(worker.psycopg, "connect", connect)
+    with pytest.raises(psycopg.OperationalError):
+        worker.pg_connect(worker.pg_dsn())
+    assert len(tried) == 1 and fetched == ["fch-db"]
+
+
+def test_pg_connect_in_env_mode_never_retries(monkeypatch):
+    monkeypatch.setattr(worker, "PG", worker.pg_credentials.PgCredentials.fixed("postgresql://app:pw@h/db"))
+    tried: list[str] = []
+
+    def connect(dsn, **kw):
+        tried.append(dsn)
+        raise psycopg.OperationalError(_AUTH_FAILED)
+    monkeypatch.setattr(worker.psycopg, "connect", connect)
+    with pytest.raises(psycopg.OperationalError):
+        worker.pg_connect(worker.pg_dsn())
+    assert tried == ["postgresql://app:pw@h/db"]
+
+
+def test_the_turn_connection_and_the_store_share_the_credentials(monkeypatch):
+    """A3: the turn's connection goes through pg_connect without a second connect_timeout,
+    and its PgSessionStore holds ``PG`` itself, so a rotation re-points both."""
+    src = inspect.getsource(worker._run_turn)
+    assert 'pg_connect(pg_dsn(), **TURN_CONN_KWARGS, application_name=f"turn:{turn_id}")' in src
+    assert "PgSessionStore(PG, project_id," in src
+    assert "psycopg.connect(" not in src
+
+
+def test_a_sas_outage_is_a_postgres_label_on_healthz_with_no_secret(monkeypatch):
+    fetched = _sas_pg(monkeypatch, RuntimeError("sas said secretpw"))
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    check = worker.probe_postgres(worker.pg_dsn, timeout_s=2)
+    assert check == {"ok": False, "error": "PgCredentialsUnavailable"}
+    assert fetched == ["fch-db"]
+    assert "secretpw" not in json.dumps(logged)
+
+
+def test_redact_scrubs_a_fetched_password(monkeypatch):
+    _sas_pg(monkeypatch, _fch("s3cr:et/pw"))
+    worker.pg_dsn()
+    assert "s3cr" not in worker.redact("FATAL: something echoed s3cr:et/pw and s3cr%3Aet%2Fpw")
+
+
+def test_the_session_store_reresolves_on_an_invalid_password(monkeypatch):
+    from proto.worker.session_store import PgSessionStore
+    fetched = _sas_pg(monkeypatch, _fch("old-pw"), _fch("new-pw"))
+    tried: list[str] = []
+
+    class Cur:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def execute(self, *a, **k):
+            return None
+
+        async def fetchone(self):
+            return (1,)
+
+    class Conn:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        def cursor(self):
+            return Cur()
+
+    async def connect(dsn, **kw):
+        tried.append(dsn)
+        if "old-pw" in dsn:
+            raise psycopg.OperationalError(_AUTH_FAILED)
+        return Conn()
+    monkeypatch.setattr(worker.psycopg.AsyncConnection, "connect", connect)
+    store = PgSessionStore(worker.PG, "proj")
+    assert asyncio.run(store.has_entries("sess")) is True
+    assert [("old-pw" in d, "new-pw" in d) for d in tried] == [(True, False), (False, True)]
+    assert fetched == ["fch-db", "fch-db"] and "new-pw" in store.dsn
+
+
+def test_the_session_store_still_takes_a_dsn_string():
+    from proto.worker.session_store import PgSessionStore
+    assert PgSessionStore("postgresql://u:p@h/db", "proj").dsn == "postgresql://u:p@h/db"
+
+
+@pytest.mark.parametrize("pg_env, installed, refused", [
+    ({"PG_DSN": "postgresql://u:p@h/db", "PG_SAS_OBJECT": "fch-db"}, True, True),
+    ({"PG_SAS_OBJECT": "fch-db"}, False, True),
+    ({"PG_SAS_OBJECT": "fch-db"}, True, False),
+    ({"PG_DSN": "postgresql://u:p@h/db"}, False, False),
+    ({}, False, False),
+])
+def test_start_refuses_a_pg_credentials_misconfiguration(monkeypatch, pg_env, installed, refused):
+    logged = _refusal_env(monkeypatch, PROD_START_ENV)
+    for name in ("PG_DSN", "PG_SAS_OBJECT"):
+        monkeypatch.delenv(name, raising=False)
+    for name, value in pg_env.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setattr(worker.pg_credentials, "sas_installed", lambda: installed)
+    if refused:
+        with pytest.raises(SystemExit) as exc:
+            worker.main()
+        assert exc.value.code == 2
+        [line] = logged
+        assert (line["ev"], line["step"], line["error"]) == ("prepare", "pg_credentials", "config")
+        assert "postgresql://" not in line["detail"]
+    else:
+        with pytest.raises(_PrepareRan):
+            worker.main()
+        assert not [f for f in logged if f.get("ev") == "prepare"], logged
+
+
+def test_start_refuses_a_malformed_sas_object_but_not_an_unreachable_sas(monkeypatch):
+    """D5: an unusable object is configuration (exit 2); SAS down is an outage (listen)."""
+    logged = _refusal_env(monkeypatch, PROD_START_ENV)
+    monkeypatch.delenv("PG_DSN", raising=False)
+    monkeypatch.setenv("PG_SAS_OBJECT", "fch-db")
+    monkeypatch.setattr(worker.pg_credentials, "sas_installed", lambda: True)
+    monkeypatch.setattr(worker.pg_credentials, "_fetch_sas_object",
+                        lambda name: {"fchUser": "app", "fchPassword": "zz-start-pw"})
+    with pytest.raises(SystemExit) as exc:
+        worker.main()
+    assert exc.value.code == 2
+    [line] = logged
+    assert (line["step"], line["error"]) == ("pg_credentials", "config")
+    assert "fchDbConnectUrl" in line["detail"] and "zz-start-pw" not in json.dumps(logged)
+
+    logged.clear()
+
+    def down(name):
+        raise TimeoutError("sas down")
+    monkeypatch.setattr(worker.pg_credentials, "_fetch_sas_object", down)
+    with pytest.raises(_PrepareRan):
+        worker.main()
+    assert not [f for f in logged if f.get("ev") == "prepare"], logged
+
+
+@pytest.mark.parametrize("shutdown", [False, True], ids=["running", "after-shutdown"])
+def test_a_malformed_sas_object_after_start_answers_the_turn(monkeypatch, shutdown):
+    """Past start, an unusable object is store-unreachable: the turn is answered and logged,
+    never an exception out of do_POST with no reply."""
+    monkeypatch.setattr(worker, "SQSD_MAX_RETRIES", 2)
+    _sas_pg(monkeypatch, {"fchUser": "app", "fchPassword": "zz-turn-pw"})
+    logged: list[dict] = []
+    monkeypatch.setattr(worker, "log", lambda **f: logged.append(f))
+    if shutdown:
+        worker.SHUTDOWN.set()
+    status, body = worker.serve_real_turn(TURN, 2, connect=lambda dsn: pytest.fail("connected"),
+                                          run=lambda *a: pytest.fail("ran"))
+    assert status == (503 if shutdown else 500)
+    [line] = [f for f in logged if f.get("ev") == "turn"]
+    assert line["status"] == status and "PgCredentialsUnavailable" in json.dumps(line)
+    assert "zz-turn-pw" not in json.dumps(logged) + json.dumps(body)
+    if not shutdown:
+        assert "fchDbConnectUrl" in body["error"]
+
+
+def test_dev_paths_never_excuses_a_pg_credentials_misconfiguration(monkeypatch):
+    logged = _refusal_env(monkeypatch, {**PROD_START_ENV, "DEV_PATHS": "true"})
+    monkeypatch.setenv("PG_DSN", "postgresql://u:p@h/db")
+    monkeypatch.setenv("PG_SAS_OBJECT", "fch-db")
+    with pytest.raises(SystemExit):
+        worker.main()
+    assert [f["step"] for f in logged] == ["pg_credentials"]
 
 
 @pytest.mark.parametrize("cap, shown", [(35.0, "$35 "), (0.5, "$0.5 "), (12.25, "$12.25 ")])
