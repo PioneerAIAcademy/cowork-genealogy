@@ -261,14 +261,6 @@
     {
       "test_id": "ut_person_evidence_012",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "birthplace conflict correctly flagged but confidence still placed at speculative instead of probable"
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -281,14 +273,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "speculative applied for birthplace conflict; geography cap means probable is correct"
     },
     {
       "test_id": "ut_person_evidence_012",
@@ -409,14 +393,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "correctly flagged pe_005 as single-source but the entry’s stored confidence was not fixed"
     },
     {
       "test_id": "ut_person_evidence_001",
@@ -641,6 +617,30 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent’s first research_append call for a_002 used confident or probable; the tool refused it. After the refusal the agent correctly used speculative. The 2 is for the initial mis-tiered call, not for the speculative outcome."
+    },
+    {
+      "test_id": "ut_person_evidence_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent attempted confident or probable on a_002 first; the tool refused it. The agent then correctly landed at speculative for the cross-country birthplace conflict. The 2 is for attempting the wrong tier before the tool corrected it."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The agent proposed downgrading pe_005 from confident, citing the Pennsylvania/Ireland birthplace conflict. The project documents record c_001 as resolved (Ireland accepted, son-in-law informant’s entry rejected) so the downgrade recommendation was wrong. The 2 is for that incorrect proposal."
     }
   ]
 }
