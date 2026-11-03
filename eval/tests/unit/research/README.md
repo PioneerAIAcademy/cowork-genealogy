@@ -90,8 +90,11 @@ extension gives. `ut_research_hnp` and `ut_research_hsp` instead serve it from
 with one project. They are the hosted pairs of `ut_research_tsi` and
 `ut_research_011`. `uses-new-project-path` and `uses-listed-project` gate the
 validators that read which `projectPath` the router took from that answer. The
-mock serves every project tool from the test's one workspace, whatever path is
-passed, so each test's scenario is the project its route should open.
+mock serves every project tool from the test's one workspace, so each test's
+scenario is the project its route should open. In these two tests it behaves as
+a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the listing does
+not name is refused, and `project_context` at a listed project carries its
+`projectUrl`.
 
 ## Agent dispatch tests (issue #1851)
 

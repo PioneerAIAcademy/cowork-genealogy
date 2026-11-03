@@ -15,6 +15,7 @@ description: >-
   proof conclusion (use proof-conclusion), or to resolve a conflict (use
   conflict-resolution).
 model: claude-sonnet-4-6
+effort: high
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
