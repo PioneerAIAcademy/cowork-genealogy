@@ -352,6 +352,20 @@ since mid-2026 was verified without one. Verification is automated:
    bearer (U4). `BASE=http://127.0.0.1:8787` runs it against the compose `tools`
    service instead. All read `dev/smoke-calls.ts`.
 
+   The `offline` subset of `engine-smoke-http` runs in CI as the
+   `engine-smoke-http` job (`.github/workflows/engine-tests.yml`), on the stack
+   `vitest-pg` starts. A caller bringing its own Postgres + minio sets
+   `SMOKE_STACK_DEP=` (empty) to drop the `proto-up-store` prerequisite,
+   `SMOKE_PG_CONTAINER=<name>` to name its postgres container, and
+   `SMOKE_OFFLINE_ONLY=1` to run only the rows that need no network and no
+   credentials. `SMOKE_PG_CONTAINER` takes a NAME, not an empty value — unlike
+   its two neighbours there is no empty form, and the target says so rather
+   than letting `docker exec` read the next word as the container. The network
+   and credentialed rows run only locally.
+
+   `engine-smoke-stdio`'s offline rows run in CI too, inside the `vitest` job:
+   it needs no Docker, no network and no credentials.
+
 Three guides survive in `docs/testing-guides/`, covering setup paths the
 harness cannot reach: `oauth-tool-testing-guide.md` (how to get a
 FamilySearch token), `mcpb-install-testing-guide.md` (the Claude Desktop
