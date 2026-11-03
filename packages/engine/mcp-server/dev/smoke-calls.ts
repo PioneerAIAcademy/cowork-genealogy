@@ -735,6 +735,9 @@ export function assertCoverage(advertisedNames: readonly string[]): string[] {
 export interface RunPlanOptions {
   /** Run only the steps flagged `offline` (the stdio smoke). */
   offlineOnly?: boolean;
+  /** A reason to skip this tool's rows, or null/undefined to run them. The
+   *  reason is printed and the rows are counted out of `calls`. */
+  skip?: (tool: string) => string | null | undefined;
 }
 
 export interface RunPlanResult {
@@ -746,8 +749,18 @@ export interface RunPlanResult {
 export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions = {}): Promise<RunPlanResult> {
   const steps = opts.offlineOnly ? CALL_PLAN.filter((s) => s.offline) : CALL_PLAN;
   const failures: string[] = [];
+  let skipped = 0;
   for (const step of steps) {
     const label = step.label ?? step.tool;
+    // A row this caller cannot run yet, with the reason PRINTED. Skipping is
+    // not passing: it is counted out of `calls`, so a run that quietly stopped
+    // covering something does not keep reporting the same total.
+    const skipReason = opts.skip?.(step.tool);
+    if (skipReason) {
+      console.log(`skip ${label}: ${skipReason}`);
+      skipped += 1;
+      continue;
+    }
     let verdict: Expectation;
     try {
       if (step.before) await step.before(ctx);
@@ -760,7 +773,7 @@ export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions 
     report(label, verdict.ok, verdict.detail);
     if (!verdict.ok) failures.push(label);
   }
-  return { calls: steps.length, failures };
+  return { calls: steps.length - skipped, failures };
 }
 
 export function report(name: string, ok: boolean, detail: string): void {

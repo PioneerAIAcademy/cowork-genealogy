@@ -40,6 +40,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { parseArgs } from "node:util";
 import pg from "pg";
+import { encrypt, DEV_FS_TOKEN_ENC_KEY } from "../src/auth/fernet.js";
 import {
   anchoredProject,
   assertCoverage,
@@ -65,6 +66,40 @@ const SEED_TURN_SQL =
   "VALUES ($1, $2, $3, '{}'::jsonb, now(), $4, $5)";
 const DELETE_TURN_SQL = "DELETE FROM turns WHERE turn_id = $1";
 
+// ── the connector caller (self-hosted beta E1) ──────────────────────────────
+//
+// Seeded only with `--connector`: a user, their Fernet-encrypted FamilySearch
+// token, and a connector token for the same user. Without the flag the smoke
+// runs against a tools tier with no encryption key, exactly as today.
+
+const SEED_USER_SQL =
+  "INSERT INTO users (id, email) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING";
+const SEED_FS_TOKEN_SQL =
+  "INSERT INTO familysearch_tokens (user_id, access_token_enc, expires_at, granted_at) " +
+  "VALUES ($1, $2, now() + interval '1 hour', now()) " +
+  "ON CONFLICT (user_id) DO UPDATE SET access_token_enc = EXCLUDED.access_token_enc";
+const SEED_CONNECTOR_TOKEN_SQL =
+  "INSERT INTO connector_tokens (token_sha256, user_id, client_id, scopes, expires_at) " +
+  "VALUES ($1, $2, 'smoke', ARRAY['mcp'], now() + interval '1 hour')";
+
+/**
+ * Teardown is ORDERED, and the order is the point.
+ *
+ * `projects.owner_id REFERENCES users(id)` carries NO `ON DELETE`
+ * (008_auth_owner.sql), unlike connector_tokens and familysearch_tokens, which
+ * both CASCADE. The connector client runs the store rows of the plan, so by
+ * exit it owns a project — and deleting the user first raises 23503 on every
+ * single run.
+ */
+const CONNECTOR_TEARDOWN_SQL: ReadonlyArray<[string, "project" | "user"]> = [
+  ["DELETE FROM staging WHERE project_id = $1", "project"],
+  ["DELETE FROM blobs WHERE project_id = $1", "project"],
+  ["DELETE FROM documents WHERE project_id = $1", "project"],
+  ["DELETE FROM projects WHERE project_id = $1", "project"],
+  // Only now: connector_tokens and familysearch_tokens go with it by CASCADE.
+  ["DELETE FROM users WHERE id = $1", "user"],
+];
+
 const { values } = parseArgs({
   options: {
     base: { type: "string", default: "http://127.0.0.1:8787" },
@@ -74,6 +109,7 @@ const { values } = parseArgs({
     bearer: { type: "string" },
     "pg-dsn": { type: "string" },
     "offline-only": { type: "boolean", default: false },
+    connector: { type: "boolean", default: false },
   },
 });
 
@@ -90,6 +126,22 @@ const base = (values.base as string).replace(/\/$/, "");
 const projectId = values["project-id"] ?? `smoke-${randomUUID()}`;
 const hostConfig = values["host-config"] === true;
 const offlineOnly = values["offline-only"] === true;
+
+const connectorEnabled = values.connector === true;
+/**
+ * The connector's OWN project path. Not `--project-path` (which is the worker's
+ * `/project`) and not `smoke_http_id`'s `smoke-<uuid>`: the door admits only
+ * `/proj_<16 lowercase hex>`, so either of those is refused before a store
+ * exists and every connector row fails for the wrong reason.
+ */
+const connectorProjectPath = `/proj_${randomBytes(8).toString("hex")}`;
+const connectorProjectId = connectorProjectPath.slice(1);
+const connectorUserId = `smoke-user-${randomUUID()}`;
+const connectorToken = `smoke-connector-${randomBytes(32).toString("hex")}`;
+const connectorTokenSha256 = createHash("sha256").update(connectorToken).digest("hex");
+/** All tiers agree on this when FS_TOKEN_ENC_KEY is unset (grants.py). */
+const fsTokenEncKey = (process.env.FS_TOKEN_ENC_KEY ?? "").trim() || DEV_FS_TOKEN_ENC_KEY;
+
 const bearer = await detectBearer(values.bearer);
 const project = anchoredProject(values["project-path"] as string);
 const ctx: SmokeCtx = {
@@ -116,22 +168,41 @@ function transportFor(headers: Record<string, string>): StreamableHTTPClientTran
   return new StreamableHTTPClientTransport(new URL(`${base}/mcp`), { requestInit: { headers } });
 }
 
-const plainHeaders: Record<string, string> = {};
-if (bearer) plainHeaders.Authorization = `Bearer ${bearer}`;
+/**
+ * "Client one" — the one that lists tools and reads auth_status. It used to
+ * send no headers at all, which under one front door (E1) is an
+ * unauthenticated connector request and a 401. It now presents an identity:
+ * the connector token when that arm is on, otherwise the stamped turn's
+ * headers, which is the only other door there is.
+ *
+ * A host FamilySearch token, when there is one, still rides along so
+ * auth_status reports what it used to.
+ */
+const plainHeaders: Record<string, string> = connectorEnabled
+  ? { Authorization: `Bearer ${connectorToken}` }
+  : {
+      [PROJECT_ID_HEADER]: projectId,
+      [TURN_ID_HEADER]: turnId,
+      [CLAIM_EPOCH_HEADER]: String(CLAIM_EPOCH),
+      Authorization: `Bearer ${projectBearer}`,
+    };
 const plainClient = new Client({ name: "smoke-http", version: "0" });
 const projectClient = new Client({ name: "smoke-http-project", version: "0" });
+const connectorClient = new Client({ name: "smoke-http-connector", version: "0" });
 
 printHeader("smoke-http", ctx, [
   `base=${base}`,
   `project-id=${projectId}`,
   `turn-id=${turnId}`,
   `host-config=${hostConfig}`,
+  `connector=${connectorEnabled}`,
   `offline-only=${offlineOnly}`,
 ]);
 
 const db = new pg.Client({ connectionString: pgDsn, connectionTimeoutMillis: 10_000 });
 let connected = false;
 let seeded = false;
+let connectorSeeded = false;
 let cleaning: Promise<string | null> | null = null;
 
 /** Delete the seeded row and close Postgres, once; the error message, or null. */
@@ -145,6 +216,18 @@ function cleanup(): Promise<string | null> {
         await db.query(DELETE_TURN_SQL, [turnId]);
       } catch (e) {
         error = describe(e);
+      }
+      if (connectorSeeded) {
+        // In order: the project's rows, then the project, then the user. See
+        // CONNECTOR_TEARDOWN_SQL — the other way round is a foreign-key error
+        // on every run.
+        for (const [sql, keyKind] of CONNECTOR_TEARDOWN_SQL) {
+          try {
+            await db.query(sql, [keyKind === "project" ? connectorProjectId : connectorUserId]);
+          } catch (e) {
+            error ??= describe(e);
+          }
+        }
       }
     }
     await db.end().catch(() => {});
@@ -168,6 +251,20 @@ try {
   await db.query(SEED_TURN_SQL, [turnId, sessionId, projectId, CLAIM_EPOCH, projectBearerSha256]);
   seeded = true;
 
+  if (connectorEnabled) {
+    stage = "seed connector rows";
+    await db.query(SEED_USER_SQL, [connectorUserId, `${connectorUserId}@smoke.invalid`]);
+    // The host's FamilySearch token when there is one, so a connector run can
+    // reach upstream; otherwise a placeholder, which decrypts fine and is
+    // refused by FamilySearch exactly as a bearer-less run is.
+    await db.query(SEED_FS_TOKEN_SQL, [
+      connectorUserId,
+      encrypt(bearer || "no-familysearch-token-on-this-host", fsTokenEncKey),
+    ]);
+    await db.query(SEED_CONNECTOR_TOKEN_SQL, [connectorTokenSha256, connectorUserId]);
+    connectorSeeded = true;
+  }
+
   stage = "client one connect";
   await plainClient.connect(transportFor(plainHeaders));
   const { tools } = await plainClient.listTools();
@@ -185,24 +282,63 @@ try {
     }),
   );
 
-  // A row that passes projectPath reaches the store, so it needs the project
-  // header and the door, as does project_list, which reads the bound store with
-  // no projectPath; every other row must work with no project bound.
+  // EVERY row goes through the stamped-turn client now (E1). It used to split:
+  // rows passing a projectPath went to the project client, everything else to a
+  // client with no headers at all. Under one front door that second client is
+  // an unauthenticated connector request, which is a 401 — correctly so, and
+  // the door refusing it is the feature, not a regression. The plain client
+  // stays only for the no-bearer checks above.
   stage = "plan";
   const run = await runPlan(
-    (tool, args) =>
-      callViaClient("projectPath" in args || tool === "project_list" ? projectClient : plainClient, tool, args),
+    (tool, args) => callViaClient(projectClient, tool, args),
     ctx,
     { offlineOnly },
   );
   calls = run.calls;
   failures = failures.concat(run.failures);
+
+  if (connectorEnabled) {
+    // The same plan through the CONNECTOR door: no project header at all, a
+    // connector token, and the caller's own /proj_ path rewritten over every
+    // row that passes one.
+    stage = "connector client connect";
+    await connectorClient.connect(transportFor({ Authorization: `Bearer ${connectorToken}` }));
+
+    stage = "connector plan";
+    const connectorCtx: SmokeCtx = {
+      ...ctx,
+      mode: "bearer",
+      projectPath: connectorProjectPath,
+      // A SECOND well-formed connector path that nothing has written. Not
+      // `${connectorProjectPath}/nope`: that is malformed, so the door refuses
+      // it at 400 before a store exists and the row fails for the wrong
+      // reason. An unwritten /proj_ path has no projects row, so the door
+      // admits it (the first write would claim it) and the tools see exactly
+      // the "no project there" state this row is about.
+      missingProjectPath: `/proj_${randomBytes(8).toString("hex")}`,
+      values: {},
+    };
+    const connectorRun = await runPlan(
+      (tool, args) => callViaClient(connectorClient, tool, args),
+      connectorCtx,
+      {
+        offlineOnly,
+        // E1 leaves project_list to E2 (#3991): for a connector the door must
+        // bind a store that LISTS the user's projects plus one fresh id, and
+        // nothing builds that yet.
+        skip: (tool) => (tool === "project_list" ? "E2's half (#3991)" : null),
+      },
+    );
+    calls += connectorRun.calls;
+    failures = failures.concat(connectorRun.failures.map((f) => `connector: ${f}`));
+  }
 } catch (error) {
   report(stage, false, describe(error));
   failures.push(stage);
 } finally {
   await plainClient.close().catch(() => {});
   await projectClient.close().catch(() => {});
+  await connectorClient.close().catch(() => {});
   await project.cleanup();
   const cleanupError = await cleanup();
   if (seeded) {
