@@ -2830,12 +2830,12 @@ this section before reopening one.
   under its relaxed tier.
 
   **An empty `fulltext_search` left unlogged, ruled validator-only (lead,
-  2026-11-01, issue #3974).** A nil stages nothing, so `research_log_append`'s
-  guards never see a search the agent ran and did not log, and the write-boundary
-  filtered-nil guard governs only what is logged. The lead chose an eval check over
-  staging empty searches or a `SubagentStop` refusal, with `nilSearchNeedsLog` kept
-  advisory and no engine change: since issue #3528 the main thread cannot call
-  `fulltext_search`, every unlogged empty call in the e2e corpus was a main-thread
+  2026-11-01).** A nil stages nothing, so `research_log_append`'s guards never
+  see a search the agent ran and did not log, and the write-boundary filtered-nil
+  guard governs only what is logged. The lead chose an eval check over staging
+  empty searches or a `SubagentStop` refusal, with `nilSearchNeedsLog` kept
+  advisory and no engine change: the main thread cannot call `fulltext_search`,
+  every unlogged empty call in the e2e corpus was a main-thread
   call, and inside the agent 0 of 28 e2e calls went unlogged. The unit plane is
   `test_every_nil_fulltext_search_is_logged` (`eval/harness/validators/test_search_full_text.py`),
   which reads the new `log[]` entries rather than the call arguments, so a refused
