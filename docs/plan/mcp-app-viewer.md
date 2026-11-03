@@ -126,7 +126,7 @@ auto-permissions from it, and an unannotated tool defaults to "not read-only".
 
 - **`show_project`** — visible to the model. Input (camelCase): optional
   `projectPath`, `show`, and optional `questionId`, `logId`, `personId`,
-  `planItemId`.
+  `planItemId`, `sourceId` (`src_NNN`, for `image` and `transcription`).
   - `show` is one of: `setup`, `plan`, `search`, `link`, `conflict`,
     `hypothesis`, `assess`, `conclusion` (step cards); `search_results`,
     `image`, `transcription`, `log`, `family`, `person`, `timeline`, `proof`,
@@ -189,7 +189,10 @@ evaluations, results index)` to each card's and view's JSON shape. The starting
 tree is read with `readStartingTree`. The results index (record id → the
 `record_search` log entry whose results file holds it, ids compared with
 `arkToBareId` from `src/utils/ark.ts`) is built by the server from the
-`record_search` results files, only for the conclusion and search cards. Evaluation files are read through the store by each
+`record_search` results files, only for the conclusion and search cards.
+
+The reviewer is the evaluation whose `target_id` is the proof and whose
+`superseded_by` is null. Its notes are read through the store from that
 entry's `file_path`, as `sidecar_read` does; a missing file falls back to the
 verdict alone.
 
@@ -203,13 +206,13 @@ verdict alone.
   results examined. An unsettled conflict: the disputed attribute and each
   competing assertion's value, date, place and record. Not searched: each
   `not_reached` entry's kind (labelled), its `description` under the prose rule,
-  and its `wiki_title` when present. Reviewer: the evaluation `verdict`.
+  and its `wiki_title` when present. Reviewer: that evaluation's `verdict`.
 - **The conclusion line** is the paragraph under the narrative's first markdown
   heading, or first line opening with a bold run, whose text contains
   "conclusion" in any case, with or without words after it (`### Conclusion`,
   `**Conclusion (Probable):**`, `## Probable Conclusion`); otherwise the
-  question text with the tier in words. When `claims[]` is
-  present, each claim shows as a row with its label and its own tier.
+  question text with the tier in words. When `claims[]` is present, each claim
+  shows as a row with its label and its own tier.
 - **What the conclusion changed in the tree** comes from `treeDiff` between the
   starting tree and the current tree: persons added and relationships added or
   changed, kept only where they touch a person linked by person-evidence to one
@@ -353,7 +356,7 @@ payload of a requested size, a signed test image, and the request log. Then:
 3. **Cowork**, the same connector, from a task's main thread, after a
    ToolSearch load, and with the variant plugin installed.
 
-Record, in this file, per host:
+Record, in `docs/mcp-app-host-probe.md`, per host:
 - does the card render; the client's declared extensions;
 - **what the model receives:** put different canary strings in `content`, in
   the result's `_meta` and (in one test call) in `structuredContent`, and ask
@@ -392,8 +395,8 @@ pass, each with a stub page HTML:
   cancelled call paints no card;
 - refused: a project outside `--root`, a sibling whose name starts with the
   root's (`<root>-x/proj`), and a symlinked project folder pointing out of
-  `--root`; accepted: the same project reached through an alias of the root
-  (`/tmp/…` versus `/private/tmp/…`);
+  `--root`; accepted: the same project reached through a symlink to the root,
+  which the test creates (CI runs Linux, where `/tmp` is no alias);
 - an omitted `projectPath` resolves to `--root` when it is a project, and
   otherwise is refused with the list of folders;
 - with `--allow-origin`, OPTIONS from that origin gets 204 with the header and
