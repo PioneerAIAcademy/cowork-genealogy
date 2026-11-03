@@ -231,6 +231,112 @@ def _summarize_response(
     return response
 
 
+# Excerpts around what the agent cited, appended to a tool string cut at
+# _RESPONSE_STRING_MAX (issue #4054). A FamilySearch Wiki page runs 20-34K
+# chars, so a URL the agent correctly took from char 6,118 read to the judge as
+# invented. Raising the cap instead was rejected: six timeline tests
+# (`build-patrick-timeline.json` and siblings) each list two ~33K wiki pages,
+# 68K between them, over _TOOL_CALLS_MAX_CHARS -- the size guard would drop
+# whole earlier calls, turning a truncated string into a missing one. Excerpts
+# cost nothing unless the agent cites text past the cut, and are bounded per
+# string however many needles match. Kept out of `_summarize_response`, which
+# the e2e run-log capture also uses.
+#
+# Each needle gets one excerpt, at its first hit, and none if that hit is in
+# the first _RESPONSE_STRING_MAX chars the judge already sees:
+# `www.familysearch.org` recurs every ~100 chars of a wiki page. A v7h guide
+# cites ~20 URLs on one page; radius 150 with 16 slots shows 21-22 of them
+# where 300 with 6 showed 11-13, for about the same chars.
+# Excerpts are left out of the size guard's drop budget (see
+# `_render_tool_calls_with_size_guard`): the motivating locality-guide runs sit
+# at 47-50K already, and counting excerpts dropped the very page they came from.
+_EXCERPT_RADIUS = 150
+_EXCERPTS_PER_STRING_MAX = 16
+
+_URL_RE = re.compile(r"https?://[^\s<>\"'()\[\]{}`|]+", re.IGNORECASE)
+_HOSTNAME_RE = re.compile(
+    r"(?<![\w@./-])(?:[a-z0-9-]+\.)+([a-z]{2,6})(?![\w-])(?!\.\w)", re.IGNORECASE
+)
+# A hostname ends in a two-letter country code or one of these. An open-ended
+# TLD match took `et.birth`, `fn.Josiah` and `project.status` from agent prose.
+_GENERIC_TLDS = frozenset({"com", "org", "net", "gov", "edu", "info", "mil", "int"})
+# Two-letter file extensions that are also country codes.
+_NOT_A_TLD = frozenset({"md", "py", "js", "ts", "sh", "gz"})
+
+
+def _citation_needles(*texts: str) -> tuple[str, ...]:
+    """The URLs and bare hostnames in what the agent wrote, lower-cased."""
+    needles: set[str] = set()
+    for text in texts:
+        if not text:
+            continue
+        for m in _URL_RE.finditer(text):
+            url = m.group(0).rstrip(".,;:!?*_").rstrip("/").lower()
+            if len(url) > len("https://"):
+                needles.add(url)
+        for m in _HOSTNAME_RE.finditer(text):
+            tld = m.group(1).lower()
+            if (len(tld) == 2 and tld not in _NOT_A_TLD) or tld in _GENERIC_TLDS:
+                needles.add(m.group(0).lower())
+    return tuple(sorted(needles))
+
+
+def _excerpts_past_cut(text: str, needles: tuple[str, ...]) -> str:
+    """The excerpt block for one string longer than _RESPONSE_STRING_MAX, or "".
+
+    Each window is at most 2 * _EXCERPT_RADIUS + the needle: a hit inside an
+    earlier window is already shown and opens none of its own.
+    """
+    lowered = text.lower()
+    hits: list[tuple[int, int]] = []
+    for needle in needles:
+        start = lowered.find(needle)
+        if start != -1 and start + len(needle) > _RESPONSE_STRING_MAX:
+            hits.append((start, start + len(needle)))
+    windows: list[tuple[int, int, int]] = []
+    for hit_start, hit_end in sorted(hits):
+        if windows and hit_end <= windows[-1][2]:
+            continue
+        lo = max(0, hit_start - _EXCERPT_RADIUS)
+        hi = min(len(text), hit_end + _EXCERPT_RADIUS)
+        windows.append((hit_start, lo, hi))
+        if len(windows) == _EXCERPTS_PER_STRING_MAX:
+            break
+    return "".join(
+        f"\n[harness excerpt at char {pos} of {len(text)}] ...{text[lo:hi]}..."
+        for pos, lo, hi in windows
+    )
+
+
+def _with_excerpts(original: Any, summarized: Any, needles: tuple[str, ...]) -> Any:
+    """`summarized` with excerpts appended to each string the cut hid a needle in.
+
+    Walks the raw response beside its summary. Lists map one to one because the
+    render passes `array_sample=None`; any other shape mismatch (the depth-cap
+    marker) is returned as is. Returns new values; never mutates either input.
+    """
+    if not needles:
+        return summarized
+    if isinstance(original, dict) and isinstance(summarized, dict):
+        return {
+            k: _with_excerpts(original.get(k), v, needles) if k in original else v
+            for k, v in summarized.items()
+        }
+    if (
+        isinstance(original, list)
+        and isinstance(summarized, list)
+        and len(original) == len(summarized)
+    ):
+        return [_with_excerpts(o, s, needles) for o, s in zip(original, summarized)]
+    if (
+        isinstance(original, str)
+        and isinstance(summarized, str)
+        and len(original) > _RESPONSE_STRING_MAX
+    ):
+        return summarized + _excerpts_past_cut(original, needles)
+    return summarized
+
+
 def render_prompt(
     *,
     rubric: Rubric,
@@ -307,7 +413,11 @@ def render_prompt_parts(
         else "(none)"
     )
     skills_text = ", ".join(skills_invoked) if skills_invoked else "(none)"
-    tool_calls_text = _render_tool_calls_with_size_guard(tool_calls)
+    # Needles come from everything the agent wrote: a skill that persists its
+    # deliverable (locality-guide inside a project) cites in the file changes.
+    tool_calls_text = _render_tool_calls_with_size_guard(
+        tool_calls, _citation_needles(text_response, file_changes_summary)
+    )
     # FAILURES only, never the full validator list. A passing validator list is
     # a *conclusion*, and handing the judge a conclusion is the defect diagnosed
     # across issues #1007, #1330 and #1603 — the test tells the judge what to
@@ -518,7 +628,9 @@ def _args_for_render(call: dict[str, Any], live_args: Callable[[Any], Any]) -> A
     return live_args(call["args"]) if _is_live_call(call) else call["args"]
 
 
-def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
+def _render_tool_calls_with_size_guard(
+    tool_calls: list[dict[str, Any]], needles: tuple[str, ...] = ()
+) -> str:
     """Render the tool_calls slot with a total-size cap.
 
     The drop budget is measured on a view in which each live call's args are
@@ -529,6 +641,11 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
     are rendered with their strings cut to the per-string cap, and if it still
     does, as in the measured view. Worst case (single call still too large),
     keep the most recent one and accept the overage.
+
+    `needles` (from `_citation_needles`) adds excerpts to every cut string that
+    hides one. Like live args, excerpts are left out of the measured view, so
+    they never cost an earlier call its place; they are rendered in every pass
+    after it, and a final pass without them precedes the measured view.
     """
     if not tool_calls:
         return "(none)"
@@ -537,6 +654,7 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
         calls: list[dict[str, Any]],
         dropped: int,
         live_args: Callable[[Any], Any],
+        excerpt_needles: tuple[str, ...] = (),
     ) -> str:
         body = json.dumps(
             [
@@ -551,8 +669,10 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
                     # fabricated when the judge can only see results 1-3 (#1902).
                     # The prompt-size bound is the guard below, which drops
                     # whole oldest calls with a stated marker.
-                    "response_summary": _summarize_response(
-                        c.get("response"), array_sample=None
+                    "response_summary": _with_excerpts(
+                        c.get("response"),
+                        _summarize_response(c.get("response"), array_sample=None),
+                        excerpt_needles,
                     ),
                 }
                 for c in calls
@@ -563,8 +683,8 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
             return (
                 f"(_dropped_for_size: {dropped} earliest tool calls "
                 f"dropped to keep tool calls under {_TOOL_CALLS_MAX_CHARS} chars, "
-                f"not counting live calls' args or a refused writer's "
-                f"omitted args)\n"
+                f"not counting live calls' args, a refused writer's "
+                f"omitted args, or harness excerpts)\n"
                 + body
             )
         return body
@@ -577,8 +697,12 @@ def _render_tool_calls_with_size_guard(tool_calls: list[dict[str, Any]]) -> str:
         dropped += 1
         view = _render(calls, dropped, _live_args_omitted)
 
-    for live_args in (_live_args_as_is, _live_args_string_capped):
-        rendered = _render(calls, dropped, live_args)
+    for live_args, excerpt_needles in (
+        (_live_args_as_is, needles),
+        (_live_args_string_capped, needles),
+        (_live_args_string_capped, ()),
+    ):
+        rendered = _render(calls, dropped, live_args, excerpt_needles)
         if len(rendered) <= _TOOL_CALLS_HARD_MAX_CHARS:
             return rendered
     return view

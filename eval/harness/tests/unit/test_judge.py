@@ -1915,6 +1915,204 @@ def test_tool_calls_size_guard_still_drops_oldest_evidence_beside_a_live_write()
     assert len(rendered) <= judge._TOOL_CALLS_MAX_CHARS + 30_000 + 500
 
 
+# --- excerpts past the per-string cut (issue #4054) ----------------------
+
+_ROOTS_URL = "http://www.rootsireland.ie/"
+
+
+def _wiki_page_call(page: str):
+    return {
+        "tool": "mcp__genealogy__wiki_read",
+        "args": {"title": "Ireland Church Records"},
+        "matched": {"kind": "predicate", "index": None},
+        "response": {"url": "https://www.familysearch.org/wiki", "content": page},
+    }
+
+
+def _page_with(needle: str, at: int, length: int = 20_000) -> str:
+    return "p" * at + needle + "q" * (length - at - len(needle))
+
+
+def test_cited_url_past_the_cut_reaches_the_judge():
+    """ut_locality_guide_v7h: every guide cited RootsIreland at the URL the tool
+    returned, from char 6,118 of the page, and the judge scored it invented."""
+    out = _minimal_prompt(
+        text_response=f"Search RootsIreland at {_ROOTS_URL}.",
+        tool_calls=[_wiki_page_call(_page_with(_ROOTS_URL, 6_118))],
+    )
+    # The reply carries the URL too, so look only past the truncation suffix.
+    after_cut = out.split("[truncated by harness", 1)[1]
+    assert "[harness excerpt at char 6118 of 20000]" in after_cut
+    assert "rootsireland.ie" in after_cut
+
+
+def test_nothing_cited_renders_todays_truncation_exactly():
+    calls = [_wiki_page_call(_page_with(_ROOTS_URL, 6_118))]
+    needles = judge._citation_needles("Nothing linked here.", "")
+    rendered = judge._render_tool_calls_with_size_guard(calls, needles)
+    assert rendered == judge._render_tool_calls_with_size_guard(calls)
+    assert "harness excerpt" not in rendered
+    assert "rootsireland" not in rendered
+
+
+def test_needle_only_in_file_changes_is_excerpted():
+    """A skill that persists its deliverable cites in the file changes; the
+    reply is only an id (PR #3500)."""
+    out = _minimal_prompt(
+        text_response="Saved loc_001.",
+        file_changes_summary="guide_markdown: ... see ancestryireland.com ...",
+        tool_calls=[_wiki_page_call(_page_with("ancestryireland.com", 11_632))],
+    )
+    assert "[harness excerpt at char 11632 of 20000]" in out
+
+
+def test_needle_inside_the_head_adds_no_excerpt():
+    calls = [_wiki_page_call(_page_with(_ROOTS_URL, 500))]
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert "harness excerpt" not in rendered
+    assert "rootsireland.ie" in rendered
+
+
+def test_needle_straddling_the_cut_is_excerpted():
+    at = judge._RESPONSE_STRING_MAX - 5
+    calls = [_wiki_page_call(_page_with(_ROOTS_URL, at))]
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL, "")
+    )
+    assert f"[harness excerpt at char {at} of 20000]" in rendered
+
+
+def _excerpt_bound(page: str, needle: str) -> int:
+    marker = len(f"\n[harness excerpt at char {len(page)} of {len(page)}] ......")
+    per_excerpt = 2 * judge._EXCERPT_RADIUS + len(needle) + marker
+    return judge._EXCERPTS_PER_STRING_MAX * per_excerpt
+
+
+def test_excerpts_are_bounded_however_many_needles_match():
+    hosts = [f"site{i:02d}.org" for i in range(50)]
+    page = "h" * 3_000 + "".join(h + "x" * 1_000 for h in hosts)
+    summary = judge._summarize_response(page)
+    out = judge._with_excerpts(page, summary, judge._citation_needles(" ".join(hosts), ""))
+    assert out.count("[harness excerpt at char") == judge._EXCERPTS_PER_STRING_MAX
+    assert len(out) <= len(summary) + _excerpt_bound(page, "site00.org")
+
+
+def test_a_repeated_needle_gets_one_excerpt():
+    """A wiki page names its host every ~100 chars; excerpting every hit
+    spent all the slots on one site (714 hits across the v7h renders)."""
+    host = "rootsireland.ie"
+    page = "a" * 2_000 + (host + "b" * 85) * 180
+    out = judge._with_excerpts(page, judge._summarize_response(page), (host,))
+    assert out.count("[harness excerpt at char") == 1
+    assert "[harness excerpt at char 2000 of" in out
+
+
+def test_crowded_needles_share_a_window_instead_of_restating_it():
+    hosts = [f"site{i:02d}.org" for i in range(40)]
+    page = "h" * 3_000 + "".join(h + "x" * 50 for h in hosts) + "z" * 3_000
+    needles = judge._citation_needles(" ".join(hosts), "")
+    summary = judge._summarize_response(page)
+    out = judge._with_excerpts(page, summary, needles)
+    positions = [
+        int(n) for n in re.findall(r"\[harness excerpt at char (\d+) of", out)
+    ]
+    assert 1 < len(positions) <= judge._EXCERPTS_PER_STRING_MAX
+    assert all(b - a > judge._EXCERPT_RADIUS for a, b in zip(positions, positions[1:]))
+    assert len(out) <= len(summary) + _excerpt_bound(page, "site00.org")
+    rendered = judge._render_tool_calls_with_size_guard([_wiki_page_call(page)], needles)
+    bare = judge._render_tool_calls_with_size_guard([_wiki_page_call(page)])
+    assert len(rendered) - len(bare) <= _excerpt_bound(page, "site00.org") * 1.1
+
+
+def test_a_needle_visible_in_the_head_does_not_crowd_out_the_cited_site():
+    """Every wiki output cites familysearch.org, and the page names it every
+    ~100 chars. Already visible in the head, it must not take the slots."""
+    page = list(_page_with(_ROOTS_URL, 6_118))
+    for at in range(100, 19_000, 100):
+        if not 5_900 < at < 6_500:
+            page[at : at + 20] = "www.familysearch.org"
+    page = "".join(page)
+    needles = judge._citation_needles(
+        f"See www.familysearch.org and {_ROOTS_URL}", ""
+    )
+    assert "www.familysearch.org" in needles
+    out = judge._with_excerpts(page, judge._summarize_response(page), needles)
+    assert out.count("[harness excerpt at char") == 1
+    assert "[harness excerpt at char 6118 of 20000]" in out
+
+
+def test_excerpts_do_not_cost_an_earlier_call_its_place():
+    """ut_locality_guide_v7h sat at 47-50K before any excerpt; counting
+    excerpts in the drop budget dropped the wiki page they came from."""
+    page = list(_page_with(_ROOTS_URL, 6_118))
+    cited = ["ancestryireland.com", "nidirect.gov.uk", "proni.gov.uk"]
+    for at, host in zip((9_000, 12_000, 15_000), cited):
+        page[at : at + len(host)] = host
+    page = "".join(page)
+    filler = [
+        {
+            "tool": f"mcp__genealogy__tool_{i}",
+            "args": {"q": f"call-{i}"},
+            "matched": {"kind": "predicate", "index": None},
+            "response": {"data": "x" * 1_500},
+        }
+        for i in range(27)
+    ]
+    calls = [_wiki_page_call(page)] + filler
+    bare = judge._render_tool_calls_with_size_guard(calls)
+    assert "_dropped_for_size" not in bare
+    assert len(bare) > judge._TOOL_CALLS_MAX_CHARS - 2_000
+    rendered = judge._render_tool_calls_with_size_guard(
+        calls, judge._citation_needles(_ROOTS_URL + " " + " ".join(cited), "")
+    )
+    # Four excerpts outgrow the headroom, so counting them would drop a call.
+    assert len(rendered) > judge._TOOL_CALLS_MAX_CHARS
+    assert "_dropped_for_size" not in rendered
+    assert "[harness excerpt at char 6118 of 20000]" in rendered
+    assert "[harness excerpt at char 15000 of 20000]" in rendered
+
+
+def test_excerpt_lands_on_the_nested_string_that_hides_the_needle():
+    response = {"hits": [{"title": "a"}, {"body": _page_with(_ROOTS_URL, 6_118)}]}
+    out = judge._with_excerpts(
+        response,
+        judge._summarize_response(response, array_sample=None),
+        judge._citation_needles(_ROOTS_URL, ""),
+    )
+    assert out["hits"][0] == {"title": "a"}
+    assert "[harness excerpt at char 6118 of 20000]" in out["hits"][1]["body"]
+    assert "full length 20000 chars]\n[harness excerpt" in out["hits"][1]["body"]
+    assert response["hits"][1]["body"] == _page_with(_ROOTS_URL, 6_118)
+
+
+def test_citation_needles_skip_file_names_and_strip_url_punctuation():
+    needles = judge._citation_needles(
+        f"See ({_ROOTS_URL}). Wrote research.json, tree.gedcomx.json and "
+        "README.md; also AncestryIreland.com and nidirect.gov.uk.",
+        "Sources: `https://familysearch.org/ark:/61903/1:1:QV9N-YS37`, "
+        "**https://www.proni.gov.uk/**",
+    )
+    assert needles == (
+        "ancestryireland.com",
+        "http://www.rootsireland.ie",
+        "https://familysearch.org/ark:/61903/1:1:qv9n-ys37",
+        "https://www.proni.gov.uk",
+        "nidirect.gov.uk",
+    )
+
+
+def test_citation_needles_ignore_dotted_tokens_in_agent_prose():
+    """Tokens the committed run logs carry most often: field paths, glued
+    sentence ends, query syntax."""
+    text = (
+        "lnmsrs.false et.birth fn.Josiah ln.Flynn project.status "
+        "relativeTerms.spouse agent.Extraction extractor.Logged now.The"
+    )
+    assert judge._citation_needles(text, "") == ()
+
+
 def _prompt_parts_kwargs(sample_rubric):
     return dict(
         rubric=sample_rubric,
