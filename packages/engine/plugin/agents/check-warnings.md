@@ -90,7 +90,7 @@ For each warning, report:
 - **The facts involved — only when the tool named them.** If the warning includes a `facts` array, name each one by its `type` and its `date` **exactly as returned**, with the id in parentheses — "Thomas's Birth, ~1818 (F3)" — never the bare id, which a researcher cannot act on. When a fact's `date` is `null`, name its type and id and say nothing about when it happened: do not call it undated, approximate or unknown, and do not supply a year. If the warning has no `facts` array, **do not read `tree.gedcomx.json` to hunt for them** — report the `message` as-is and don't invent fact ids, dates, or sources the tool didn't return. (Most warnings are about a single constrained event — Birth, Death, Burial — so the `message` alone already makes clear which fact is meant.)
 - A concrete next step, phrased from the tool's `message` (e.g. "verify the recorded death date against the original death record"). Don't cite a specific fact/source id unless the tool provided it.
 
-**Before listing individual warnings, count -- then ask whether one error explains them all.** If 2 or more `severity: "contradiction"` warnings fire on the same person, open the report with a cluster note before the individual warnings. First check whether the contradictions cite the same facts: overlapping `facts` means one wrong fact is a live explanation for the whole cluster -- two symptoms, not two people; disjoint `facts` mean no single fact explains them; no `facts` returned cannot settle it, so keep both readings open. **`hasEventAfterDeath1` cites every fact the person has, so it overlaps everything and can never establish disjointness -- read disjointness off the other contradictions.** Never reason from which direction of date error fires which tag. **When one error would explain the cluster, say so and do not assert a merge:** "2 contradictions plus N implausible warnings on this one person. These may share a single cause -- they all cite the same [fact] -- or they may be records from two different individuals merged into one profile. Verifying [the shared fact] against its original source distinguishes the two." **Only when the contradictions cannot share one cause** is the merge reading the stronger one: "2 contradictions that no single wrong fact explains is a strong signal that records from two different individuals have been merged into one profile." **The recommendation is gated.** When one error would explain the cluster, recommend only that the fact be verified against its original source -- do not also send the user hunting for a split point. Only when no single fact explains the cluster: "I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once we find the split point, we can reassign the records that belong to the other individual." List individual warnings *under* that note, not above it.
+**Before listing individual warnings, count -- then ask whether one correction explains them all.** If 2 or more `severity: "contradiction"` warnings fire on the same person, open the report with a cluster note before the individual warnings. Test the single-cause reading on this cluster's own facts and dates: for each fact the contradictions cite, ask whether correcting that one fact to any date would clear every contradiction at once, working from what each tag measures (Appendix B) and from every date the tool returned, including those on implausible warnings. Report only the test's conclusion and the returned facts it turns on, never a span, age, interval or date you computed. Contradictions with disjoint `facts` fail the test outright, since no one fact is in all of them. **`hasEventAfterDeath1` cites every fact the person has, so sharing a fact with it proves nothing -- a shared fact is a candidate to test, not an answer.** No `facts` returned cannot settle it, so keep both readings open. Never argue in general that one direction of date error fires one tag; the only question is whether this cluster has one correction that clears it. **When one correction would clear the cluster, say so and do not assert a merge:** "2 contradictions plus N implausible warnings on this one person. These may share a single cause -- correcting [the fact] would clear all of them -- or they may be records from two different individuals merged into one profile. Verifying [the fact] against its original source distinguishes the two." **When no single correction clears it** -- including when correcting the shared fact clears one contradiction only by leaving or worsening another -- the merge reading is the stronger one, not an established identity conclusion: "2 contradictions that no single correction explains is a strong signal that records from two different individuals have been merged into one profile -- only the records themselves can show it." **The recommendation is gated.** When one correction would clear the cluster, recommend only that the fact be verified against its original source -- do not also send the user hunting for a split point. Only when no single correction does: recommend verifying the dates the cluster's warnings cite against their original sources first, then: "I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once we find the split point, we can reassign the records that belong to the other individual." List individual warnings *under* that note, not above it.
 
 **Special case -- `missingFactsAndRelatives`:** Report with Implausible severity and add: "Note: this person has limited data, so most warning checks need dates and relatives to fire. Adding more research may surface additional issues currently hidden."
 
@@ -112,11 +112,12 @@ When the cause is ambiguous (the most common case), report the warning, list the
 WARNINGS FOR: Patrick Flynn (I1)
 
     2 contradictions plus 0 implausible warnings on this one
-    person. These may share a single cause -- both
-    contradictions cite the same death fact -- or
-    they may be records from two different individuals merged
-    into one profile. Verifying the recorded death date against
-    the original death record distinguishes the two.
+    person. These may share a single cause or they may be
+    records from two different individuals merged into one
+    profile -- without the facts behind each warning, the
+    warnings alone cannot tell which. Verifying the recorded
+    birth and death dates against their original sources is
+    the first step.
 
 [!]  Contradiction -- Event after death  [hasEventAfterDeath1]
     [Fundamental: people cannot act after their death -- but a
@@ -193,7 +194,7 @@ When the tool returns `warningCount: 0`, report: "No genealogical warnings found
 
 - **Warnings are informational, not gates.** They don't block further work.
 - **Don't auto-correct.** Report the warning; let the user or other skills investigate.
-- **The tool is the arbiter; don't re-derive.** The tool's output is ground truth. Do not read the tree to verify whether the tool's verdict is correct. **Do not perform your own date arithmetic to explain a warning the tool already explained** -- report the span the `message` states and compute none of your own. A warning that cites both a birth and a death hands you both ends of a lifespan; subtracting them and reporting the difference is inventing a number the response did not contain, exactly as "208 years" was. Cite only the `facts`, sources, and persons the tool's response actually mentions, and **name no specific date, event year, source type, or source description the response did not contain** -- the `facts` array carries `id`, `type` and `date` and nothing else, so a place, a source description, or a date for a fact the response did not name could only have come from reading `tree.gedcomx.json`.
+- **The tool is the arbiter; don't re-derive.** The tool's output is ground truth. Do not read the tree to verify whether the tool's verdict is correct. **Do not perform your own date arithmetic to explain a warning the tool already explained** -- report the span the `message` states and compute none of your own. The one exception is the Step 3 cluster test, which checks privately whether correcting one cited fact could clear every contradiction: report only its conclusion and the returned facts it turns on, never a span, age, interval or date it computed. A warning that cites both a birth and a death hands you both ends of a lifespan; subtracting them and reporting the difference is inventing a number the response did not contain, exactly as "208 years" was. Cite only the `facts`, sources, and persons the tool's response actually mentions, and **name no specific date, event year, source type, or source description the response did not contain** -- the `facts` array carries `id`, `type` and `date` and nothing else, so a place, a source description, or a date for a fact the response did not name could only have come from reading `tree.gedcomx.json`.
 - **Don't speculate about the underlying data or how the tool derived a warning.** Do not claim a fact does or does not exist, or narrate how a date was inferred — you cannot see that, and guessing produces self-contradictions (e.g. saying "no death fact is recorded" while explaining a death-based warning). Report the tool's `message`, the facts it cites, and the *general* reason the warning matters (e.g. "a father cannot die more than ~300 days before his child is born — gestation is finite"). Never make a claim about the tree's contents that the tool's response didn't state, and never one that contradicts the warning you're reporting.
 - **Historical exceptions exist.** A 13-year-old bride or a 105-year-old death is unusual by modern standards but documented historically. Present warnings with appropriate context.
 - **Surface tool errors verbatim.** If the tool returns an error (e.g. `personId` not found in `tree.gedcomx.json`), surface it as-is. Do not fall back to manual reasoning -- the whole point is determinism.
@@ -668,25 +669,25 @@ Escalation guidance:
 - 1 `contradiction` on its own: investigate the specific condition
 - 1 `contradiction` + 1+ `implausible`s: likely identity confusion; recommend
   timeline review
-- 2+ `contradiction`s: first ask whether one wrong fact would produce
-  all of them, and settle it from the `facts` the tool returned --
-  contradictions citing overlapping facts are two symptoms of one
-  wrong fact rather than two people; disjoint `facts` mean no single
-  fact explains them. One tag cannot take part in that test:
+- 2+ `contradiction`s: first ask whether one correction would clear
+  all of them -- one cited fact corrected to any date. Work it from
+  every date the tool returned and what each tag measures:
+  `hasEventAfterDeath1` is `latest(any fact) - latest(death-like
+  fact) > 1 year`; `hasAgeRangeGreaterThan120` is `earliestDeath -
+  latestBirth > 120 years`. Disjoint `facts` fail the test outright --
+  `hasChristeningBeforeBirth` (Christening, Birth) and
+  `hasBurialBeforeDeath` (Burial, Death) are disjoint families.
   `hasEventAfterDeath1` builds its `facts` from `selfFactIds(mob,
-  null)`, every typed fact the person has, so it overlaps every other
-  warning by construction. Read disjointness off the narrower-scope
-  contradictions -- `hasChristeningBeforeBirth` (Christening, Birth)
-  and `hasBurialBeforeDeath` (Burial, Death) are disjoint families. Do not infer a shared cause from which
-  direction of date error would fire which tag: `hasEventAfterDeath1`
-  measures `latest(any fact) - latest(death-like fact)` and
-  `hasAgeRangeGreaterThan120` measures `earliestDeath - latestBirth`,
-  so a death date moved earlier fires the first and suppresses the
-  second. If one error explains the cluster,
-  verify that fact against its original source first. If no single
-  error explains it, two people merged is the stronger reading;
-  recommend splitting the profile and rebuilding the record-to-person
-  links from the sources
+  null)`, every typed fact the person has, so sharing a fact with it
+  settles nothing by itself. Do not argue in general from which
+  direction of error fires which tag; apply the measures to this
+  cluster's dates, and report no span, age, interval or date you
+  computed. If one correction clears the cluster, verify that fact
+  against its original source first. If none does, two people merged
+  is the stronger reading, not an established one; recommend
+  verifying the cited dates first, then rebuilding the timeline to
+  find where one person's records end, and only then splitting the
+  profile and rebuilding the record-to-person links from the sources
 - Any `contradiction` involving the death-vs-event sequence
   (`hasEventAfterDeath1`, `hasEventBeforeBirth365_2`): stop and
   investigate immediately regardless of other warning count
