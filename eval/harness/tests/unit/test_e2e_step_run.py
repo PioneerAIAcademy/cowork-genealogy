@@ -139,6 +139,43 @@ def test_a_dead_genealogy_server_aborts_a_step_run_at_init(tmp_path, monkeypatch
     assert client.result[3] == "mcp_unavailable", client.result[3:5]
 
 
+def _results(monkeypatch, **fields):
+    """Every turn's ResultMessage carries `fields` (cost is a running total)."""
+    import sys
+
+    from claude_agent_sdk import ResultMessage
+
+    def _r(session="S1"):
+        return ResultMessage(subtype="result", duration_ms=1, duration_api_ms=1,
+                             is_error=False, session_id=session,
+                             **{"num_turns": 1, **fields})
+
+    monkeypatch.setattr(sys.modules[__name__], "_result", _r)
+
+
+def test_the_host_stops_replying_once_the_cost_cap_fires(tmp_path, monkeypatch):
+    """Open-break on PR B. `cost_cap` used to be a label only, because a one-shot
+    query could not be stopped. A step run can: the host just does not reply. The
+    run used to record `cost_cap` and send "Keep going." anyway."""
+    _results(monkeypatch, total_cost_usd=999.0)
+    client = _drive(tmp_path, monkeypatch, [("research-plan", OFFER)] * 3, step_mode="job")
+    assert client.sent == ["/research --autonomous Who were John's parents?"], client.sent
+    assert client.result[3] == "cost_cap", client.result[3:5]
+
+
+def test_the_turn_cap_bounds_the_whole_run_not_one_step(tmp_path, monkeypatch):
+    """`num_turns` arrives per turn on a persistent session, so the SDK's own
+    `max_turns` stops one step only. The host checks the run's sum."""
+    _results(monkeypatch, num_turns=200)
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
+        step_mode="job",
+    )
+    assert len(client.sent) == 2, client.sent
+    assert client.result[3] == "max_turns", client.result[3:5]
+
+
 def test_the_host_replies_between_turns(tmp_path, monkeypatch):
     """One session, many turns: the first message is the fixture's, and each
     later one is the host's own reply."""

@@ -2536,7 +2536,21 @@ async def _run_agent(
             prototype worker calls, so e2e exercises the mechanism rather than a
             harness-shaped imitation. Everything here is just gathering its
             arguments.
+
+            The caps bound the RUN, and the host is where a step run can stop
+            between steps: no reply once a cap has fired. `total_cost_usd` is
+            already the session's running total, so the cost cap is caught per
+            result; `num_turns` is per turn, so the turn cap is checked here on the
+            run's sum.
             """
+            nonlocal aborted_reason, error
+            run_turns = accumulate_usage(_step_turns[: turn.index + 1]).get("num_turns") or 0
+            if aborted_reason is None and run_turns > fixture.caps.max_turns:
+                aborted_reason = "max_turns"
+                error = f"{run_turns} SDK turns across the run > cap {fixture.caps.max_turns}"
+            if aborted_reason is not None:
+                _emit(f"[host reply] none after turn {turn.index}: {aborted_reason}")
+                return None
             previous = next(
                 (t.step for t in reversed(_step_turns[: turn.index]) if t.step), None
             )
@@ -3445,7 +3459,6 @@ async def run_e2e_test(
     mcp_server_entry: Path = DEFAULT_MCP_SERVER_ENTRY,
     skills_dir: Path = DEFAULT_PLUGIN_SKILLS,
     skip_judge: bool = False,
-    resume_on_stall: bool = False,
     effort_level: str | None = None,
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
@@ -3520,7 +3533,6 @@ async def run_e2e_test(
             fixture=fixture,
             workspace=workspace,
             mcp_server_entry=mcp_server_entry,
-            resume_on_stall=resume_on_stall,
             max_output_tokens=max_output_tokens,
             agent_model=agent_model,
             effort=effort_level,

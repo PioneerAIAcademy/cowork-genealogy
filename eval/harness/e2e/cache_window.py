@@ -86,8 +86,8 @@ A call's time is its first assistant row (the response's arrival). The gap to
 the previous call on the same thread is therefore response-to-response, which
 differs from the request-to-request gap the TTL actually runs on by the
 difference of two adjacent generation times -- small against a 300 s threshold.
-A text-only end of turn followed by a harness continue-nudge merges with the
-next burst (no `tool_result` separates them), which undercounts calls slightly
+A text-only end of turn followed by a harness continue-nudge (on a run before
+step mode phase 2) or a host reply merges with the next burst (no `tool_result` separates them), which undercounts calls slightly
 and never hides a gap.
 
 ## Two ways to price a lost read, both reported

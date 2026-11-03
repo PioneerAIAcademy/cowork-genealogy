@@ -27,6 +27,9 @@ _VETO_NAMES = {
     "should_continue_run", "terminal_reason", "hand_back_key",
     "COUNTED_TERMINAL_REASONS", "max_continue_nudges", "stop_hook",
 }
+#: Matched as an attribute too (`stop_checker.should_continue_run`), except
+#: `terminal_reason`, which is also a field the SDK's ResultMessage carries.
+_VETO_ATTRS = _VETO_NAMES - {"terminal_reason"}
 HARNESS = REPO_ROOT / "eval/harness"
 
 
@@ -35,14 +38,25 @@ def _is_stop(node: ast.AST | None) -> bool:
 
 
 def _binds_a_stop_key(node: ast.AST) -> bool:
-    """A `Stop` hook bound under any name: `{"Stop": ...}`, `hooks["Stop"]` or `dict(Stop=...)`."""
-    if isinstance(node, ast.Dict):
-        return any(_is_stop(k) for k in node.keys)
-    if isinstance(node, ast.Subscript):
-        return _is_stop(node.slice)
+    """A `Stop` hook bound under any spelling. The event's name is matched wherever it
+    appears as a string, not only as a dict key: `hooks.setdefault("Stop", ...)`,
+    `dict([("Stop", ...)])` and `EV = "Stop"` all bind one. No harness module needs
+    the literal for anything else, so any occurrence is an offence. `dict(Stop=...)`
+    is the one spelling with no string in it."""
+    if _is_stop(node):
+        return True
     if isinstance(node, ast.Call):
         return any(k.arg == "Stop" for k in node.keywords)
     return False
+
+
+def _returns_a_block_decision(node: ast.AST) -> bool:
+    """`{"decision": "block", ...}`: what a vetoing hook returns, whatever it is named."""
+    return isinstance(node, ast.Dict) and any(
+        isinstance(k, ast.Constant) and k.value == "decision"
+        and isinstance(v, ast.Constant) and v.value == "block"
+        for k, v in zip(node.keys, node.values)
+    )
 
 
 def _veto_names_in(tree: ast.AST) -> set[str]:
@@ -60,18 +74,33 @@ def _veto_names_in(tree: ast.AST) -> set[str]:
                 found.add(node.target.id)
         elif isinstance(node, ast.ImportFrom):
             found |= {a.name for a in node.names if a.name in _VETO_NAMES}
-        elif _binds_a_stop_key(node):
+        elif isinstance(node, ast.Attribute) and node.attr in _VETO_ATTRS:
+            found.add(node.attr)
+        elif _returns_a_block_decision(node):
+            found.add("decision: block")
+        if _binds_a_stop_key(node):
             found.add("Stop")
     return found
 
 
+def _harness_modules() -> list[Path]:
+    """Every harness module except the tests, which may bind a no-op `Stop` hook to
+    stand in for a CLI (`test_sdk_query_close.py`), and the virtualenv."""
+    return sorted(
+        p for p in HARNESS.rglob("*.py")
+        if not {"tests", ".venv", "__pycache__"} & set(p.relative_to(HARNESS).parts)
+    )
+
+
 def test_no_harness_module_binds_a_stop_hook_or_keeps_the_veto():
+    modules = _harness_modules()
+    assert HARNESS / "e2e" / "orchestrator.py" in modules
+    assert HARNESS / "run_tests.py" in modules
     offenders = {}
-    for root in ("e2e", "harness"):
-        for path in sorted((HARNESS / root).rglob("*.py")):
-            names = _veto_names_in(ast.parse(path.read_text(encoding="utf-8")))
-            if names:
-                offenders[str(path.relative_to(HARNESS))] = names
+    for path in modules:
+        names = _veto_names_in(ast.parse(path.read_text(encoding="utf-8")))
+        if names:
+            offenders[str(path.relative_to(HARNESS))] = names
     assert offenders == {}
 
 
@@ -85,11 +114,18 @@ def test_the_guard_sees_each_shape_of_a_planted_veto():
         "hooks['Stop'] = [matcher]\n",
         "hooks = {'PreToolUse': [m], 'Stop': [matcher]}\n",
         "options = ClaudeAgentOptions(hooks=dict(Stop=[matcher]))\n",
+        # Open-break on PR B: five shapes the first version missed.
+        "EV = 'Stop'\nhooks = {EV: [m]}\n",
+        "hooks.setdefault('Stop', []).append(m)\n",
+        "hooks = dict([('Stop', [m])])\n",
+        "async def on_stop(a, b, c):\n    return {'decision': 'block', 'reason': 'go on'}\n",
+        "if stop_checker.should_continue_run(**kw):\n    pass\n",
     ):
         assert _veto_names_in(ast.parse(planted)), planted
     for legitimate in (
-        "reason = 'Stop'\n",
         "if event == 'StopFailure':\n    pass\n",
+        "return {'permissionDecision': 'deny', 'decision_reason': 'block'}\n",
+        "stop = True\n",
         "stop_reason = derive_stop_reason(sdk_aborted_reason=None, research=None)\n",
         "hooks = {'PreToolUse': [m]}\n",
         "x = message.terminal_reason\n",

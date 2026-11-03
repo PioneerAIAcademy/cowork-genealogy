@@ -321,7 +321,7 @@ def runs_carrying_the_counter(paths: list[Path]) -> list[Path]:
     """The runs that recorded `usage.continue_nudges` at all.
 
     A run made since step mode phase 2 deleted the e2e Stop veto writes no counter,
-    because nothing can nudge it. Reading its absence as 0 would count it as a clean
+    because nothing can nudge it; nor does a run from before the counter shipped. Reading its absence as 0 would count it as a clean
     loop and put its tool calls in the denominator, so it is left out of every figure
     here and the report says how many it left out. Unreadable runs stay in, as before:
     their gap is the one this report already states.
@@ -433,8 +433,8 @@ def main(argv: list[str] | None = None) -> int:
     measured = runs_carrying_the_counter(paths)
     if len(measured) < len(paths):
         print(f"{len(paths) - len(measured)} of {len(paths)} run(s) record no "
-              "usage.continue_nudges (step-mode runs, which nothing can nudge) and are "
-              "left out of every figure below.")
+              "usage.continue_nudges (a step-mode run, which nothing can nudge, or a run "
+              "from before the counter) and are left out of every figure below.")
     if not measured:
         print("No run in the window could be nudged, so there is nothing to report.")
         return 0

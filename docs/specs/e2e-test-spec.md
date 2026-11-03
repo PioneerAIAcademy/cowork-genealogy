@@ -146,7 +146,7 @@ Test metadata.
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
 | `blocked_tools` | array of strings | no | Extra MCP tools (bare advertised names, e.g. `"wiki_search"`) denied for this fixture's runs, beyond the universal §6.1 tree block. For fixtures whose ground truth a specific tool can surface directly — e.g. a fixture built from a public wiki case-study article that names the answer. Document the reason in the fixture README |
-| `caps` | object | no | Per-fixture stop-condition overrides — any of the six keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the seven names above and fills the rest from defaults, and nothing validates the keys inside `caps`, so a typo'd cap looks applied and is not. |
+| `caps` | object | no | Per-fixture stop-condition overrides — any of the six keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the six names above and fills the rest from defaults, and nothing validates the keys inside `caps`, so a typo'd cap looks applied and is not. |
 
 
 ### 3.2 `starting-research.json`
@@ -742,8 +742,8 @@ the `max_cost_usd` note in §6 step 5.
    | Inactivity | `inactivity` | No SDK message at all for `caps.inactivity_seconds` (silence), OR no *progress* — no assistant text and no tool call/result — for `caps.progress_stall_seconds` while the stream stays alive (the **progress watchdog**: a stall can keep emitting non-progress messages, so a plain silence timer misses it) |
    | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls`. The run ends at the first SDK message after the crossing call, and the label outranks a `cost_cap` the final message would set. |
-   | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
-   | Cost cap | `cost_cap` | Final cost (the last CLI process's, on a resumed run) > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
+   | Turn cap | `max_turns` | SDK turn count > `caps.max_turns`. On a step run `num_turns` arrives per turn, so the host sums it across the run and sends no further reply once the sum crosses the cap |
+   | Cost cap | `cost_cap` | Cost (the session's running total) > `caps.max_cost_usd`. **On a step run the host sends no further reply, so the run ends at that step's boundary;** the step in flight still finishes. See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"`: the host sent no reply to the last turn (`next_auto_reply` — no "Continue with …?" line, a finished wrap-up turn, a repeated step, or its reply cap). Runs made before step mode phase 2 reached it after the continue-nudge budget was exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
@@ -837,10 +837,12 @@ the `max_cost_usd` note in §6 step 5.
    SDK loop. **Nothing checks the live behaviour** — no CI job sleeps a Windows
    machine; the guarantee rests on the injected-clock unit tests alone.
 
-   **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
+   **`cost_cap` was a post-hoc label, not an enforced cap, before step mode phase 2.**
+   A step run now stops at the first step boundary after the cap fires, because the
+   host does not reply; what follows explains why it cannot stop earlier. The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
-   the message that arrives once the run has *already finished* and the money
-   is already spent. All **eleven** `cost_cap` runs in the corpus ended with the
+   the message that arrives once the run (now: the step) has *already finished*
+   and the money is already spent. All **eleven** `cost_cap` runs in the corpus ended with the
    SDK's own `end_turn` and `is_error: false`; none was interrupted — spend ran
    to **$15.78–$21.50** (median $16.99) against a $15 cap. Two things block real
    enforcement, so

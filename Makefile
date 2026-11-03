@@ -1124,6 +1124,7 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# subagent_capture_status before reading that as 'no runaway').
 	# e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
+	@test -z "$(RESUME_ON_STALL)" || { echo "ERROR: RESUME_ON_STALL was removed: every e2e run is a step-mode run, which ends on a stall rather than resuming." >&2; exit 1; }
 	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
 
 .PHONY: e2e-single-ask
