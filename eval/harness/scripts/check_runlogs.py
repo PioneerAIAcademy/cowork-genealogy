@@ -2406,6 +2406,25 @@ def rule8_annotation_headers(runlogs_dir: Path) -> int:
     return fails
 
 
+def _committed_runlogs(runlogs_dir: Path):
+    """Yield ``(rel, log)`` for every committed run log under ``runlogs_dir``:
+    released and candidate only (scratch and unrecognized names are gitignored or
+    not ours), ``.ann.json`` excluded. A malformed file is skipped, not reported:
+    JSON validity of a run log is not the corpus rules' contract, and re-running
+    the harness is the only fix anyway. One walk, so rules 9 and 12 cannot
+    disagree about what "the corpus" is."""
+    for path in sorted(runlogs_dir.rglob("*.json")):
+        if path.name.endswith(".ann.json"):
+            continue
+        if classify(path.name).kind not in ("released", "candidate"):
+            continue
+        try:
+            log = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue
+        yield _format_path(path), log
+
+
 def rule9_outcome_enum(runlogs_dir: Path) -> int:
     """Rule 9 (blocking, corpus-wide): every committed run log's aggregate
     ``tests[].outcome`` is in the schema enum (pass/partial/fail/aborted).
@@ -2420,20 +2439,10 @@ def rule9_outcome_enum(runlogs_dir: Path) -> int:
     no check could see (a run log carrying one merged clean on this very PR).
 
     Cheap enough to run unconditionally: a few hundred small files, parse only.
-    Malformed files are skipped, not reported -- JSON validity of a run log is
-    not this rule's contract, and re-running the harness is the only fix anyway.
+    The reach is ``_committed_runlogs``.
     """
     bad = 0
-    for path in sorted(runlogs_dir.rglob("*.json")):
-        if path.name.endswith(".ann.json"):
-            continue
-        if classify(path.name).kind not in ("released", "candidate"):
-            continue  # scratch / unrecognized: gitignored or not ours
-        rel = _format_path(path)
-        try:
-            log = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
-            continue
+    for rel, log in _committed_runlogs(runlogs_dir):
         for test in log.get("tests") or []:
             # Only a PRESENT aggregate outside the enum -- the straggler class is a
             # retired string value (`xfail`/`xpass`), not a missing field. A
@@ -2487,8 +2496,9 @@ def _summary_diffs(stored: dict, derived: dict, include_review: bool) -> list[st
             if a != b:
                 out.append(f"{key} {dim[1]!r} {a!r} (runs give {b!r})")
     if not out:
-        # Same rows and scores in a different order: the predicate is ordered.
-        out.append("dimension rows are in a different order from the rebuild")
+        # Every keyed score agrees, so the tuples differ in row count: a
+        # (source, name) row stored twice, which a dict keyed on it collapses.
+        out.append("a dimension row is duplicated in the stored summary")
     return out
 
 
@@ -2510,20 +2520,15 @@ def rule12_summary_matches_runs(runlogs_dir: Path) -> int:
     compared only when the stored summary has the key; 199 committed entries
     predate it (unit-test-spec.md §10, "Optional").
 
-    Same reach as rule 9: released and candidate logs, unparseable files and
-    entries with no runs skipped.
+    Rows are compared by ``(source, name)``, so a reorder alone passes.
+
+    Unlike rule 9, an entry with runs but no stored ``outcome`` or summary
+    fails: its summary disagrees with its runs as surely as a wrong score does,
+    and no committed entry is in that shape. Same reach as rule 9
+    (``_committed_runlogs``); entries with no runs are skipped.
     """
     bad = 0
-    for path in sorted(runlogs_dir.rglob("*.json")):
-        if path.name.endswith(".ann.json"):
-            continue
-        if classify(path.name).kind not in ("released", "candidate"):
-            continue
-        rel = _format_path(path)
-        try:
-            log = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
-            continue
+    for rel, log in _committed_runlogs(runlogs_dir):
         for test in log.get("tests") or []:
             derived = copy.deepcopy(test)
             if refresh_test_entry_outcome(derived) is None:
@@ -2539,8 +2544,9 @@ def rule12_summary_matches_runs(runlogs_dir: Path) -> int:
                 f"outcome_summary disagrees with its own runs[]: "
                 + "; ".join(diffs)
                 + ". Rebuild the entry from its runs with "
-                "`harness.outcomes.refresh_test_entry_outcome` (a suite's latest "
-                "log: `judge_regrade.py --reaggregate`); never hand-edit scores.",
+                "`harness.outcomes.refresh_test_entry_outcome`, and add any test it "
+                "makes mandatory to `review_sample` (a suite's latest log: "
+                "`judge_regrade.py --reaggregate` does both); never hand-edit scores.",
                 file=rel,
             )
             bad += 1

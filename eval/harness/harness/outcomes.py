@@ -266,20 +266,27 @@ def consequential(
     `check_runlogs.py` rule 12 (what to block). `include_review=False` is for a
     stored entry with no `review_dimensions`, which predates the field and is
     not stale for lacking it.
+
+    Dimension rows are compared in `(source, name)` order, not stored order:
+    every reader looks a row up by that key, and a rebuild can reorder rows
+    whose scores did not move (`ut_citation_008`, #3936).
     """
     summary = entry.get("outcome_summary") or {}
     return (
         entry.get("outcome"),
         bool(entry.get("flaky", False)),
         tuple(summary.get("per_run_outcomes") or []),
-        tuple(
-            (d.get("source", ""), d.get("name", ""), d.get("score"))
-            for d in summary.get("aggregated_dimensions") or []
-        ),
-        tuple(
-            (d.get("source", ""), d.get("name", ""), d.get("score"))
-            for d in summary.get("review_dimensions") or []
+        _scores(summary.get("aggregated_dimensions")),
+        _scores(summary.get("review_dimensions")) if include_review else None,
+    )
+
+
+def _scores(rows: list[dict[str, Any]] | None) -> tuple[tuple[str, str, Any], ...]:
+    # Sorted on the key alone: a score can be None, which does not order
+    # against an int.
+    return tuple(
+        sorted(
+            ((d.get("source", ""), d.get("name", ""), d.get("score")) for d in rows or []),
+            key=lambda t: (t[0], t[1]),
         )
-        if include_review
-        else None,
     )

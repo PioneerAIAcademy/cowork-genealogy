@@ -1924,6 +1924,24 @@ def test_rule12_names_a_reordered_row_by_its_own_dimension(tmp_path, capsys):
     assert "'Alpha'" not in out
 
 
+def test_rule12_accepts_rows_reordered_with_every_score_agreeing(tmp_path):
+    """Readers look a row up by (source, name); order alone is not drift."""
+    entry = _consistent_entry()
+    for key in ("aggregated_dimensions", "review_dimensions"):
+        entry["outcome_summary"][key].reverse()
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_rule12_names_a_duplicated_row(tmp_path, capsys):
+    entry = _consistent_entry()
+    rows = entry["outcome_summary"]["aggregated_dimensions"]
+    rows.append(dict(rows[0]))
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "a dimension row is duplicated" in capsys.readouterr().out
+
+
 def test_rule12_skips_scratch_and_annotation_files(tmp_path, capsys):
     entry = _consistent_entry()
     entry["outcome_summary"]["per_run_outcomes"] = ["pass"]
