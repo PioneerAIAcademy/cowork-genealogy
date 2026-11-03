@@ -46,7 +46,7 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** 28 of the 54 self-checks have a relative-mob variant
+not the anchor alone.** 28 of the 55 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child; the flagged relative is named in
 the warning's `personId`/`personName`. The other 26 run on the anchor only.
@@ -304,7 +304,7 @@ All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
 in which the anchor participates (as parent, spouse, or child); and 28 of
-the 54 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+the 55 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
 The full catalogue of the **83 tags** the tool emits in `issueType` is
@@ -725,7 +725,7 @@ error, a Membership `1803` on a person born `16 Sep 1806`, and
 
 #### Relative-mob mirrors (`implausible`)
 
-28 of the 54 self-checks above have a relative-mob variant that fires the
+28 of the 55 self-checks above have a relative-mob variant that fires the
 same condition on a one-hop relative (parent, spouse, or child) instead of
 the anchor; the other 26 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
