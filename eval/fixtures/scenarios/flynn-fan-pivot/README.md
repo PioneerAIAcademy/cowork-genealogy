@@ -1,6 +1,6 @@
 # flynn-fan-pivot
 
-Patrick Flynn parentage research — all direct evidence searches exhausted, question still unresolved. Built for question-selection tests where FAN pivot (Priority 6) is the correct next step.
+Patrick Flynn parentage research — all direct evidence searches exhausted, question still unresolved. Built for tests where a FAN pivot is the correct next step. Under step mode that pivot is plan items on the question already open, not a second question: the priority list it was written for is retired.
 
 Extends `flynn-census-exhausted` by adding completed negative searches of the 1870, 1880, and 1900 censuses and of Schuylkill County church records. The timeline gap from 1860–1908 has now been fully investigated — Patrick Flynn was not found in any post-1860 census record in Schuylkill County or adjacent Pennsylvania counties. The proof summary remains at `probable`; no additional direct evidence has been located.
 

@@ -237,7 +237,15 @@ materialize_facts({ projectPath, ops: [ <either form>, ... ] })
    `primary`."
    - **Same fact** (`factsEquivalent` **and** equal `value`) → **union** the
      new ref into its `sources[]` (ref-set dedup). Corroboration accumulates
-     as refs.
+     as refs, and fills an attribute the fact lacks. A `standard_place` is
+     filled only when the fact's place is the assertion's own place text (case,
+     accents and spacing aside), or the fact had none and takes the
+     assertion's: a standard place never sits beside another place's text.
+   - **A record in doubt about a place.** When a record's assertions give one
+     place text two or more different `standard_place`s, none of them is
+     copied onto the tree; the fact keeps its `place` with no
+     `standard_place`. Another record's value for the same text does not
+     count.
    - **Incompatible date/place, OR a different `value`** → the facts
      **coexist** as separate facts; the new one carries its ref. A competing
      value is *surfaced* (see §4.4), never overwritten.
@@ -320,8 +328,11 @@ qualify.
   ties it to '<id>' (<reason>).[ Nothing ties '<pe2>', … either.] Route that
   link to person-evidence, which ties
   it (links another party of this record to a spouse, parent or child of
-  '<id>') or lowers it to 'speculative' naming the namesake.", followed by
-  the arm's own suffix. When `personId` is omitted, a person the lookup would
+  '<id>' already in the tree; one made from this record alone does not count)
+  or lowers it to 'speculative' naming the namesake. When the project holds no
+  such tie yet, person-evidence lowers it now: a party still to extract or a
+  record still to find is not a tie, and the link can be raised once the tie
+  is made.", followed by the arm's own suffix. When `personId` is omitted, a person the lookup would
   otherwise reuse is skipped, and the op takes the next eligible person or
   mints one, with a warning: "persona '<role>' of record '<record>' would
   have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'
@@ -336,8 +347,62 @@ qualify.
   passes them over; with rows on the subject alone, 35 of 260 (7 in fixtures
   whose hint is the subject's own record, 8 a namesake's, 20 unlabelled) and 0
   of 1.
+- **Under a namesake in the tree** (a parent, child or sibling of the same first
+  given name, not known to be of the other sex; research-append-tool-spec §5.9):
+  the gate reads it as it reads a row, through `namesakeVerdicts` with
+  `derivedPairs` and the project's starting tree, passed as one options object
+  to `existingPersonLinkRefusal`, `personaTargetRefusal` and
+  `namedPartyTargetRefusal`. A link stands when tie (a) or (b) holds and the
+  record would not tie the namesake as well, the namesake's siblings read among
+  their relatives, or when the record fits the person and rules every partner
+  out, so the gate re-judges on
+  every copy a `probable` link written before its pair existed, which the link
+  cap never re-judges. An explicit `personId` that fails is refused: "'<id>' has
+  a namesake in the tree ('<Q>', '<id>''s <relation> of the same given name), so
+  a record's facts reach '<id>' only through a link the namesake cap allows.
+  '<pe>' ties assertion '<a>' to '<id>' at '<confidence>', but nothing in source
+  '<src>' tells it apart from that namesake (<reason>).[ Nothing tells '<pe2>',
+  … apart either.] Route that link to person-evidence, which lowers it to
+  'speculative' naming the namesake, or ties it with a record that dates either
+  of them (a date read from this record does not count) or another party of
+  this record linked to a spouse, parent or child of '<id>', counted only while
+  no party of this record is linked to a spouse, parent, child or sibling of
+  the namesake.[ If '<id>' and
+  '<Q>' are one person entered twice (the same parents and the same birth
+  year), hand the merge to tree-edit.]", with no suffix offering a new person
+  while the record may be the namesake's, since the namesake is in the tree
+  already. When `personId` is omitted and the lookup would mint after passing
+  over a pair member, row or no row, the op is refused with the same text and no
+  person is made while the record may be the namesake's (`pairJudgement` does
+  not rule every partner out); a new person would duplicate them. When the record rules
+  every partner out, a new person duplicates no one: the lookup makes one, with
+  its warning, and an explicit copy's refusal offers to omit `personId`. When
+  another person is eligible the lookup reuses them, which makes no one new, and
+  its warning says the person it passed over has a namesake in the tree (MP1 to
+  MP7 in `materialize-facts-namesake.test.ts`). A named party has no persona of
+  its own on the record for the pair tests to compare, so its refusal keeps no
+  suffix whenever the person has a namesake in the tree.
 
-Known let-throughs, none with an executed op in the corpus:
+**The recorded party (both arms).** A link whose `same_person` score is on
+record says which party it is about: the score file
+(`results/.scores/`, same-person-tool-spec "The recorded score") keeps the
+`record_role` the call compared, which is the call's `recordRole`, else the
+assertion's own role. An assertion whose recorded score for the target names a
+role other than the one the op writes (the persona's `recordRole`, or the named
+party's `relatedRole`; compared trimmed and case-folded) does not qualify for
+that target, and the refusal names it: "the link of '<a>' to '<id>' does not
+count: its same_person score compared a different party of this record". It does
+not suggest re-scoring: a new score replaces the old one whatever role it names. No score, or one with no role, changes nothing. The tool reads the
+score files of the records the call's ops touch. Measured by the `scored` line
+of `dev/replay-materialize-link.ts`, which rebuilds each run's score files from
+its `same_person` calls: 0 of the corpus's persona and named-party ops change
+verdict (109 of 1,224 calls scored a party other than the assertion's own;
+with every scored link read as another party's, 168 ops would).
+
+Known let-throughs, none with an executed op in the corpus. The first two close
+when the link carries a score that compared the other party; they stay open for
+an unscored link, and for one scored as the assertion's own party, the default
+when `same_person` is called without `recordRole`:
 
 - On the persona arm, a one-party assertion the agent linked to both people
   still carries the persona onto the other one when no other persona of the
@@ -349,7 +414,7 @@ Known let-throughs, none with an executed op in the corpus:
   someone else), the named role's own one-party assertions carry no `probable`
   or `confident` link, and the gender check cannot tell them apart: the op
   passes no gender, the target's gender is `Unknown` (which the op's gender then
-  fills), or the two match. Nothing in the documents says which party the
+  fills), or the two match. Nothing else in the documents says which party the
   naming assertion's link to the target is about.
 - A same-named father's persona still lands on his son's name-only stub made
   from the same record: the stub's name equals the father's, so it traces to
@@ -478,7 +543,9 @@ already-duplicated project, and hands the agent a choice with no rule.
   omitted `personId` skips a person whose link from this persona the cap does
   not tie and goes to another eligible person or makes a new one, with a
   warning (§4.3), so a re-run made after
-  the row was recorded can add a person.
+  the row was recorded can add a person. Under a namesake in the tree it makes
+  no one: a re-run that would mint after passing over a pair member is refused
+  (§4.3).
 - **Conflicts surfaced, not resolved — and only for single-valued types.**
   Conflict surfacing is **gated to single-valued / vital fact types**: reuse
   the existing `VITAL_PRIMARY_TYPES` set (`Birth`, `Death`, `Christening`,
@@ -779,6 +846,11 @@ reserved for hypothesis, oral and manual stubs, and its safety argument is
 A bride in a marriage register is **record-derived**, so she travelled through
 an exemption whose own justification did not cover her, and landed with no
 provenance. This arm closes that.
+
+Both arms read only live assertions (`isLiveAssertion`): an assertion a
+re-extraction retired (`research-schema-spec.md` §5.6) is no persona to mint
+from, and an `assertionId` naming one is refused, so a party is minted from the
+replacement or not at all.
 
 ```
 materialize_facts({ projectPath, assertionId, relatedRole,

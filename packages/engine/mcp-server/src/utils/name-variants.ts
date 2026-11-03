@@ -1,18 +1,11 @@
-import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { bundledDataPath, readBundledText } from "./bundled-data.js";
 import { normalizeString } from "./string-similarity.js";
 
-// Paths resolve to mcp-server/config/*.json in both dev (tsx/vitest running
-// from src/) and prod (compiled JS in build/) — same ../../config pattern as
-// BUNDLED_CLIENT_CONFIG_PATH in auth/config.ts.
-const CONFIG_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "../../config");
-
 /** The table behind image_transcribe's hidden expansion (expandLookingFor). */
-export const GIVEN_NAME_VARIANTS_PATH = resolve(CONFIG_DIR, "given-name-variants.json");
+export const GIVEN_NAME_VARIANTS_PATH = bundledDataPath("given-name-variants.json");
 
 /** The table behind get_name_variants (issue #2325). */
-export const NAME_VARIANTS_GIVEN_PATH = resolve(CONFIG_DIR, "name-variants-given.json");
+export const NAME_VARIANTS_GIVEN_PATH = bundledDataPath("name-variants-given.json");
 
 interface VariantEntry {
   form: string;
@@ -58,7 +51,7 @@ function buildTable(tablePath: string): LoadedTable {
 
   let raw: string;
   try {
-    raw = readFileSync(tablePath, "utf-8");
+    raw = readBundledText(tablePath);
   } catch {
     return { map, error: `name-variant table is missing or unreadable: ${tablePath}` };
   }
@@ -188,7 +181,7 @@ function buildNicknameTable(tablePath: string): LoadedNicknameTable {
 
   let raw: string;
   try {
-    raw = readFileSync(tablePath, "utf-8");
+    raw = readBundledText(tablePath);
   } catch {
     return { map, error: `name-variant table is missing or unreadable: ${tablePath}` };
   }

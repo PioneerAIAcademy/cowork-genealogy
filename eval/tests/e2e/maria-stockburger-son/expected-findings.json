@@ -3,7 +3,7 @@
     {
       "id": "f1",
       "type": "relationship",
-      "description": "Maria Dorothea Stockburger and Johann Georg Mayer had a son, Andreas Mayer, born and baptised 5 September 1812 at Sankt Georgen, Baden; the baptism index also carries a death date of 29 February 1852 for him.",
+      "description": "Maria Dorothea Stockburger and Johann Georg Mayer had a son, Andreas Mayer, born and baptised 5 September 1812 at Sankt Georgen, Baden (the entry places the family at Kirnach); the baptism index also carries a death date of 29 February 1852 for him.",
       "details": {
         "subject_person": "Maria Dorothea Stockburger (9DQM-45L)",
         "relation": "child",
@@ -15,7 +15,7 @@
         "father": "Johann Georg Mayer"
       },
       "supporting_sources": [
-        "Germany, Births and Baptisms, 1558-1898 — baptism entry for Andreas Mayer, 5 Sep 1812, Sankt Georgen, Baden, naming his parents as Johann Georg Mayer and Maria Dorothea Stokburger"
+        "Germany, Births and Baptisms, 1558-1898 — baptism entry for Andreas Mayer, 5 Sep 1812, Sankt Georgen, Baden (Kirnach), naming his parents as Johann Georg Mayer and Maria Dorothea Stokburger (ark:/61903/1:1:NNXZ-4L3; register image ark:/61903/3:1:3Q9M-CS43-L99T-Q, Image 120 of group 3015626, entry 34)"
       ],
       "required": true
     }

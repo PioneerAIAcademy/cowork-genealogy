@@ -1,0 +1,87 @@
+{
+  "test": {
+    "id": "ut_research_si4",
+    "skill": "research",
+    "name": "Routes a browse whose film's image cap is spent to research-plan, never to search-images",
+    "type": "positive",
+    "description": "Routing table row 'A plan item is listed in project_context's exhaustedImageGroups[].planItemIds'. barren-order-books-cap-spent is ut_research_si3's project one browse later: pli_003 (browse-only court order books) is still planned, but log_003 records its image_search browse, and results/image-browse.jsonl holds 20 distinct images of its film, so the cap is spent and project_context lists the film with pli_003. A new search-images spawn would be refused on its first page; nothing resets the cap. The router must send pli_003 to research-plan to dispose of. log_003 is negative, so there is nothing to extract. Mined from hosted session 54c4edd6 (2026-10-14), where 2 of 4 browse spawns were refused on their first page.",
+    "tags": [
+      "routing",
+      "routes-to:research-plan"
+    ]
+  },
+  "input": {
+    "user_message": "Research the next open question on this project — drive the workflow forward.",
+    "scenario": "barren-order-books-cap-spent"
+  },
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 1200,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-external-sites",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-images",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-full-text",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "conflict-resolution",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "hypothesis-tracking",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The only assertion that matters is whether the router's first hand-off is an Agent spawn of research-plan (`@plugin:research-plan`) to dispose of pli_003. A deterministic validator (test_routes_to_expected_skill) owns that check — do not grade the routing decision yourself.",
+    "The project state: q_001 is in_progress. pli_001 and pli_002 are completed, both logged negative. pli_003 is planned: the Barren County court order books, browse-only images. log_003 is its browse (image_search, images 1-20 of film 007757419, negative, cap reached). project_context reports exhaustedImageGroups [{imageGroup: '007757419', imagesRead: 20, planItemIds: ['pli_003']}]: the film's 20-image cap is spent in this project, and no new agent or session resets it.",
+    "Fail the router's own work if it narrates that Nathaniel Coombs left no estate record: 20 pages of a 612-image volume is not absence. Fail it too if it calls extraction_append or spawns record-structurer, because every log entry is negative.",
+    "ROUTING TEST, graded on the hand-off and nothing downstream. The tag is routes-to:research-plan; what is under test is that the router reaches research-plan. Every callee, research-plan included, is in stub_skills, which means the harness DENIES it execution, so no browse log entry, results sidecar or assertion can be persisted in this run by construction. Do not mark Correctness or Completeness down for '(no research.json changes)': the agent that would write was deliberately prevented from running. Do not penalize the router for not completing the research cycle. Grade only whether its narration is honest about what it delegated.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records -- ground truth the harness calls out precisely because a transcript can be misread. You cannot see those records. Do NOT score Correctness or Completeness on whether the router reached the right callee, on the order of skills_invoked, or on which entry is 'first': the skill under test appears in that list under its own name, so the first DELEGATED skill is the second entry, and reading it as the first has already failed a run whose routing the validator confirmed correct. Grade only the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation and gap explanation are sound."
+  ],
+  "judge_reads_files": true
+}

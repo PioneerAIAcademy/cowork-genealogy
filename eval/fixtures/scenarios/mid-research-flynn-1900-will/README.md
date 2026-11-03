@@ -24,7 +24,7 @@ Everything else is inherited from `mid-research-flynn` unchanged.
 
 - **Objective:** Identify the parents of Patrick Flynn (b. ~1845, d. 1908)
 - **Questions:** q_001 (parentage, in_progress), q_002 (1850 census placement, resolved)
-- **Plans:** pl_001 (1850 census, completed), pl_002 (parentage evidence, active — adds pli_004 1900 census, pli_005 will)
+- **Plans:** pl_001 (1850 census, completed), pl_002 (parentage evidence, active — adds pli_007 1900 census, pli_008 will)
 - **Log:** 7 entries (adds log_006 1900 census, log_007 will)
 - **Sources:** 6 (adds src_005 1900 census → S5, src_006 will → S4)
 - **Assertions:** 16 (adds a_014 age=indeterminate, a_015 father's-birthplace=indeterminate→should be secondary, a_016 will-children=indirect→should be negative)

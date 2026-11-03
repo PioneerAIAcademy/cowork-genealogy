@@ -32,13 +32,31 @@ const BARE_PREFIXED_RE = /^\d:\d:[A-Za-z0-9.-]+$/
 const FS_URL_PREFIX_RE = /^https?:\/\/(?:www\.)?familysearch\.org\//i
 
 /**
- * A tree person id as it appears in `/tree/person/<pid>` (e.g. `KW7C-X9P`).
+ * The tree-person id grammar, shared by the bare and pathed forms below.
  *
- * 4-hyphen-3, not `{3,4}`: `ark.ts` calls it "the bare 8-character persona/tree id",
- * and every fixture agrees. Not a host bypass either way — the host is rebuilt from
- * `FS_BASE` regardless — but over-permissive against the documented format.
+ * 4-hyphen-3-or-4, case-insensitive, matching the PRODUCER side of the same
+ * value: `ark.ts`'s `treePidOfArk` uses `[A-Za-z0-9]{4}-[A-Za-z0-9]{3,4}` at
+ * both of its sites.
+ *
+ * The #2049 review narrowed this to `[A-Z0-9]{4}-[A-Z0-9]{3}` on the stated
+ * premise that "`ark.ts` ... spells this 4-hyphen-3". That premise is false and
+ * was false then, so the narrowing is reverted here rather than enforced
+ * against the evidence. What made it newly load-bearing: `record_search` emits
+ * `treeMatches[].treePersonId`, and `parseTreePersonId` applies NO grammar —
+ * it returns the last `:` segment of the hint verbatim — so a stricter pattern
+ * here silently drops the only link such a row can carry, with nothing telling
+ * the user the link was refused.
+ *
+ * Not a host bypass in either spelling: the outbound URL is rebuilt from
+ * `FS_BASE` regardless, and both patterns are `^`/`$` anchored.
  */
-const TREE_PERSON_PATH_RE = /^tree\/person\/[A-Z0-9]{4}-[A-Z0-9]{3}$/
+const TREE_PID_CORE = '[A-Za-z0-9]{4}-[A-Za-z0-9]{3,4}'
+
+/** A bare tree person id (e.g. `KW7C-X9P`), the only form `treeMatches` carries. */
+const BARE_TREE_PID_RE = new RegExp(`^${TREE_PID_CORE}$`)
+
+/** The same id as it appears in `/tree/person/<pid>`. */
+const TREE_PERSON_PATH_RE = new RegExp(`^tree/person/${TREE_PID_CORE}$`)
 
 /**
  * The FamilySearch URL this input denotes, or `null` if it denotes none.
@@ -55,6 +73,7 @@ export function resolveFamilySearchTarget(input: unknown): string | null {
 
   if (ARK_RE.test(value)) return FS_BASE + value
   if (BARE_PREFIXED_RE.test(value)) return `${FS_BASE}ark:/61903/${value}`
+  if (BARE_TREE_PID_RE.test(value)) return `${FS_BASE}tree/person/${value}`
 
   if (FS_URL_PREFIX_RE.test(value)) {
     // Take only the path, and re-validate it. The matched prefix is discarded

@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { readPgS3Env } from "../../src/store/pg-s3-env.js";
 
-// The GENEALOGY_* contract build/http.js starts from: DSN and bucket required,
+// The GENEALOGY_* contract build/http.js starts from: DSN (or the SAS object
+// that replaces it) and bucket required,
 // the S3 keys an optional pair (neither means the SDK default chain), region,
 // endpoint and path style optional. An unset optional value is omitted, never
 // passed on as "".
@@ -15,6 +16,29 @@ describe("readPgS3Env", () => {
       "GENEALOGY_PG_DSN",
       "GENEALOGY_S3_BUCKET",
     ]);
+  });
+
+  it("takes GENEALOGY_PG_SAS_OBJECT in place of the DSN (U29)", () => {
+    const r = readPgS3Env({ GENEALOGY_PG_SAS_OBJECT: "pgobj", GENEALOGY_S3_BUCKET: "projects" });
+    expect(r.missing).toEqual([]);
+    expect(r.invalid).toEqual([]);
+    expect(r.pgSasObject).toBe("pgobj");
+    expect(r.backendOptions.dsn).toBe("");
+  });
+
+  it("refuses GENEALOGY_PG_SAS_OBJECT and GENEALOGY_PG_DSN together", () => {
+    const r = readPgS3Env({ ...BASE, GENEALOGY_PG_SAS_OBJECT: "pgobj" });
+    expect(r.missing).toEqual([]);
+    expect(r.invalid).toEqual(["GENEALOGY_PG_SAS_OBJECT"]);
+  });
+
+  it("has no SAS object when the variable is unset or empty", () => {
+    expect(readPgS3Env(BASE)).not.toHaveProperty("pgSasObject");
+    const r = readPgS3Env({ ...BASE, GENEALOGY_PG_SAS_OBJECT: "" });
+    expect(r).not.toHaveProperty("pgSasObject");
+    expect(r.invalid).toEqual([]);
+    expect(r.backendOptions.dsn).toBe(BASE.GENEALOGY_PG_DSN);
+    expect(readPgS3Env({ GENEALOGY_PG_SAS_OBJECT: "", GENEALOGY_S3_BUCKET: "b" }).missing).toEqual(["GENEALOGY_PG_DSN"]);
   });
 
   it("gives static credentials when both keys are set", () => {

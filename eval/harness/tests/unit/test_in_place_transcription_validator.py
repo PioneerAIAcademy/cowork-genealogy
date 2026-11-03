@@ -72,9 +72,10 @@ def test_a_hand_off_on_a_single_bounded_ask_fails():
         validator(["research", "question-selection"], [], [_transcribe(), _read()], TEST)
 
 
-def test_a_compound_ask_may_hand_off_the_other_deliverable():
-    tagged = dict(TEST, tags=["transcribes-in-place", "delivers:research-plan"])
-    validator(["research", "research-plan"], [], [_transcribe(), _read()], tagged)
+def test_a_compound_ask_handing_off_its_second_deliverable_fails():
+    # Step mode (plan section H): the second deliverable is offered, not spawned.
+    with pytest.raises(AssertionError, match="hands off to nothing"):
+        validator(["research", "research-plan"], [], [_transcribe(), _read()], TEST)
 
 
 def test_an_untagged_test_skips():

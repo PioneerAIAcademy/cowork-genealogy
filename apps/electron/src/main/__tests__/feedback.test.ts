@@ -420,6 +420,21 @@ describe('redactApiKeys', () => {
     const input = '{"type":"user","message":"find John Smith in 1870 census"}\n'
     expect(redactApiKeys(input)).toBe(input)
   })
+
+  it('redacts a matcher key by its field, escaped or not, and keeps the field name and the URL', () => {
+    // 64 hex characters look like any other hex string, so only the field finds it. FAKE.
+    const key = '0f1e2d3c4b5a6978'.repeat(4)
+    const line =
+      '{"type":"user","content":"{\\"matcherUrl\\": \\"https://matcher.example.org\\", ' +
+      `\\"matcherApiKey\\": \\"${key}\\"}"}\n`
+    const out = redactApiKeys(line)
+    expect(out).not.toContain(key)
+    expect(out).toContain('\\"matcherApiKey\\": \\"[REDACTED_API_KEY]\\"')
+    expect(out).toContain('https://matcher.example.org')
+    expect(redactApiKeys(`{"matcherApiKey": "${key}"}`)).toBe(
+      '{"matcherApiKey": "[REDACTED_API_KEY]"}'
+    )
+  })
 })
 
 describe('buildFeedbackZip — living-person redaction', () => {

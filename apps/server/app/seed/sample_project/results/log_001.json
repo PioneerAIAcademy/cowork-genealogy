@@ -67,12 +67,7 @@
           ]
         },
         "treeMatches": [
-          {
-            "personId": "KW7C-X9P",
-            "personName": "Patrick Flynn (Schuylkill County)",
-            "treeId": "KW7C-X9P",
-            "ark": "https://www.familysearch.org/tree/person/KW7C-X9P"
-          }
+          { "treePersonId": "KW7C-X9P", "stars": 5 }
         ]
       }
     ]

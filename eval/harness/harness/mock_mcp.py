@@ -76,8 +76,10 @@ Current live tools:
 - sidecar_read: a paged read of one sidecar text file under the workspace's
   own `evaluations/`, `uploads/` or `results/` — deterministic in workspace
   state like research_query, so a fixture could only drift from what was
-  actually written. gps-mentor reads a prior verdict body through it, and an
-  `image_transcribe` caller the page staged under `results/.staging/`.
+  actually written. gps-mentor reads a prior verdict body through it, an
+  `image_transcribe` caller the page staged under `results/.staging/`, and a
+  full-text caller one hit's transcript from a `fulltext_search` sidecar via
+  `results/<file>#<hit id>` (or the hit list via `results/<file>#hits`).
 - timeline_build: runs the compiled tool against the workspace, so the person
   timeline it writes is computed from the links the run actually made. Its
   Places lookups are answered from the test's own `place_search` fixtures
@@ -118,8 +120,8 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 # read as an error in production and a SUCCESS in every unit eval run.
 #
 # This is `OK_FALSE_IS_FAILURE` from `src/tool-result.ts` intersected with
-# LIVE_TOOLS — the three that are not live here (`merge_tree_persons`,
-# `tree_forget`, `external_links_search`) have no handler to mirror. The drift lint in
+# LIVE_TOOLS — the two that are not live here (`tree_forget`,
+# `external_links_search`) have no handler to mirror. The drift lint in
 # tests/unit/test_mock_mcp.py pins that intersection, so a new tool added
 # on the TypeScript side fails here rather than silently going unmirrored.
 #
@@ -129,11 +131,14 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "research_append",
     "extraction_append",
+    "evaluation_append",
     "research_log_append",
     "tree_edit",
     "tree_correct",
     "materialize_facts",
+    "merge_tree_persons",
     "project_context",
+    "tree_query",
     "research_query",
     # Every `ok: false` but `no_project` (invalid_ref, not_found, not_text) is
     # the read not happening — a failure the agent must see as one.
@@ -302,7 +307,11 @@ def pg_store_faults(workspace: Path) -> list[dict[str, str]]:
 
 
 def _run_node_eval(
-    script: str, input_str: str | None = None, timeout: int = NODE_EVAL_TIMEOUT_DEFAULT
+    script: str,
+    input_str: str | None = None,
+    timeout: int = NODE_EVAL_TIMEOUT_DEFAULT,
+    *,
+    store: bool = True,
 ) -> subprocess.CompletedProcess[str]:
     """Run a Node ESM ``--eval`` script and return the completed process.
 
@@ -316,9 +325,18 @@ def _run_node_eval(
     any non-ASCII byte Node writes to stdout (issue #1399 follow-on). Callers
     keep their own try/except and response-shaping, which differ per tool;
     only the subprocess invocation itself is shared.
+
+    ``store=False`` omits the ``--import`` store prelude. A script that touches
+    no project state does not need it, and under ``--store pg`` loading it means
+    building a Postgres pool and an S3 client per invocation
+    (``pg_store_prelude.mjs`` calls ``createPgS3Backend``). Worse, that prelude
+    THROWS when ``HARNESS_PG_RUN`` or the ``PROTO_*`` env is incomplete, which
+    would turn a pure check into a per-call failure. Pure checks pass
+    ``store=False``; anything that reads or writes the workspace must not.
     """
     return subprocess.run(
-        ["node", *_store_import_args(), "--input-type=module", "--eval", script],
+        ["node", *(_store_import_args() if store else []),
+         "--input-type=module", "--eval", script],
         input=input_str,
         capture_output=True,
         text=True,
@@ -487,24 +505,155 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 # fixture simply gets no hint.
 SURNAME_VARIANT_HINTS_KEY = "surnameVariantHints"
 _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
-_warned_no_surname_hints_module = False
+
+_UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
 
 
-def _surname_hints_module_present() -> bool:
-    """Whether the build carries the module. Warns once when it does not: a build
-    older than #3054 serves every nil with no hint, which reads as the model
-    ignoring one."""
-    global _warned_no_surname_hints_module
-    if _SURNAME_HINTS_JS.exists():
+#: Compiled modules already warned about, so a missing build says so once per
+#: process rather than once per call. Keyed on the path, so a second module
+#: still gets its own warning.
+_warned_missing_modules: set[Path] = set()
+
+
+def _compiled_module_present(path: Path, consequence: str) -> bool:
+    """Whether the build carries `path`. Warns ONCE per module when it does not,
+    naming what the caller will do instead, and returns False.
+
+    Shared by every compiled-module bridge in this file (CLAUDE.md "Code reuse":
+    two near-duplicates is the signal to consolidate). Each bridge used to carry
+    its own `_warned_no_*_module` global and its own copy of this exists/warn/
+    return-False shape, so a change to the build path — the `--import` store
+    prelude, say — had to be made in every copy.
+
+    `consequence` completes "…; <consequence>", and is what makes the warning
+    actionable: a harness fault must never read as the model behaving.
+    """
+    if path.exists():
         return True
-    if not _warned_no_surname_hints_module:
-        _warned_no_surname_hints_module = True
+    if path not in _warned_missing_modules:
+        _warned_missing_modules.add(path)
         warnings.warn(
-            f"{_SURNAME_HINTS_JS} is missing — rebuild packages/engine/mcp-server; "
-            "record_search responses will carry no surnameVariantHints",
+            f"{path} is missing — rebuild packages/engine/mcp-server; {consequence}",
             stacklevel=2,
         )
     return False
+
+
+def _surname_hints_module_present() -> bool:
+    """A build older than #3054 serves every nil with no hint, which reads as the
+    model ignoring one."""
+    return _compiled_module_present(
+        _SURNAME_HINTS_JS,
+        "record_search responses will carry no surnameVariantHints",
+    )
+
+
+def _unknown_args_module_present() -> bool:
+    """Fails OPEN by decision (#3947, review-ready 2026-10-30): one broken node
+    install would otherwise abort every suite. `run_tests.py`'s build-fresh gate
+    already refuses a stale build for real runs, so this path is reached only by
+    a developer running pytest against an unbuilt tree."""
+    return _compiled_module_present(
+        _UNKNOWN_ARGS_JS,
+        "mock tool calls will NOT be checked for non-parameter arguments",
+    )
+
+
+
+
+
+def _reject_unknown_args(tool_name: str, args: Any) -> str | None:
+    """production's refusal for `args` keys that are not parameters of
+    `tool_name`, or None when every key is one.
+
+    Calls the COMPILED `rejectUnknownArgs` (`build/utils/unknown-args.js`), the
+    same function `server.ts` runs at dispatch. The key check is never
+    re-implemented in Python and `ACCEPTED_ALIASES` is never copied here — the
+    lead's 2026-10-29 ruling bars both, because a second implementation is a
+    second thing to drift.
+
+    One node call per MCP call (~0.23 s, measured 2026-10-30). A Python
+    pre-filter on key membership would cut that, and is the re-implementation
+    the ruling bars.
+
+    Node failure fails OPEN with a warning, for the reason in
+    `_unknown_args_module_present`.
+    """
+    if not _unknown_args_module_present():
+        return None
+    script = (
+        f"import {{ rejectUnknownArgs }} from '{_node_module_url(_UNKNOWN_ARGS_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify("
+        " { refusal: rejectUnknownArgs(input.tool, input.args) ?? null }));"
+    )
+    try:
+        # DEFAULT, not LONG: `rejectUnknownArgs` is a pure function over two
+        # arguments — no network, no file I/O, no store. LONG (60s) exists for
+        # writers that may wait on a real backend; using it here would make a
+        # hung node cost 60s on EVERY call rather than 30.
+        proc = _run_node_eval(
+            script,
+            json.dumps({"tool": tool_name, "args": args}),
+            timeout=NODE_EVAL_TIMEOUT_DEFAULT,
+            # `rejectUnknownArgs` reads no project state, so the store prelude is
+            # pure cost here — and under `--store pg` it is a Postgres pool and an
+            # S3 client per argument check, on a prelude that throws when the
+            # PROTO_* env is incomplete.
+            store=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return json.loads(proc.stdout).get("refusal")
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as e:
+        warnings.warn(
+            f"unknown-argument guard failed for {tool_name} ({e}); the call was "
+            "NOT checked. A harness fault must not read as the model behaving.",
+            stacklevel=2,
+        )
+        return None
+
+
+def _guard_unknown_args(tool_name: str, handler, call_log: list[dict[str, Any]]):
+    """Wrap `handler` so a non-parameter argument is refused before it runs.
+
+    WHY AT REGISTRATION, NOT INSIDE THE HANDLER. `tools_by_name[name].handler(...)`
+    is what the pytest suite calls directly, so a check placed inside a fixture
+    handler leaves that whole path unguarded — and the harness's own tests are
+    exactly where a stray key is most likely to be written.
+
+    WHY THE MODEL'S OWN `args`, NEVER THE POST-INJECTION COPY. The compiled-tool
+    handlers add `projectPath` themselves (`_make_compiled_tool_handler` does
+    `input_obj = dict(args)` and injects into the copy). `research_delivered`,
+    `project_list` and `convert_calendar` do not declare `projectPath`, so a
+    check run after that injection would refuse every call to those three.
+
+    On a refusal the handler does NOT run, and the envelope is the one
+    `server.ts` returns for the same refusal.
+    """
+
+    async def guarded(args, _name=tool_name, _handler=handler, _log=call_log):
+        refusal = _reject_unknown_args(_name, args)
+        if refusal is None:
+            return await _handler(args)
+        response = {"error": refusal}
+        _log.append(
+            {
+                "tool": f"mcp__genealogy__{_name}",
+                "args": dict(args) if isinstance(args, dict) else args,
+                "expected_args": None,
+                "matched": {"kind": "unknown_args_refused", "index": None},
+                "response_fixture": None,
+                "response": response,
+            }
+        )
+        return {
+            "content": [{"type": "text", "text": json.dumps(response)}],
+            "is_error": True,
+        }
+
+    return guarded
 
 
 def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> dict[str, Any] | None:
@@ -630,12 +779,8 @@ def _record_match_score(
         "treePersonId": tree_person_id,
         "role": args.get("recordRole"),
         "recordPersonaId": args.get("recordPersonaId"),
-        "result": {
-            "score": score,
-            "matched": bool(response.get("matched")),
-            **({"confidence": response["confidence"]}
-               if isinstance(response.get("confidence"), (int, float)) else {}),
-        },
+        # The fixtures were recorded against FamilySearch's matcher.
+        "result": {"score": score, "scorer": "familysearch", "model": None},
     }
     # `recordMatchScore` is read-modify-write and its docstring requires the
     # caller to hold the project lock. Production takes it in
@@ -1639,7 +1784,9 @@ def create_mock_server(
         description = tool_descriptions.get(
             tool_name, f"Mock {tool_name} — fixture-backed."
         )
-        decorated = tool(tool_name, description, input_schema)(handler)
+        decorated = tool(tool_name, description, input_schema)(
+            _guard_unknown_args(tool_name, handler, call_log)
+        )
         tools.append(decorated)
 
     # --- Live tools ---------------------------------------------------------
@@ -1671,7 +1818,9 @@ def create_mock_server(
             (build_catalog.get(live_tool_name) or {}).get("inputSchema")
             or _PERMISSIVE_SCHEMA
         )
-        decorated = tool(live_tool_name, description, input_schema)(live_handler)
+        decorated = tool(live_tool_name, description, input_schema)(
+            _guard_unknown_args(live_tool_name, live_handler, call_log)
+        )
         tools.append(decorated)
 
     # person_quality: one handler whether or not the test declared fixtures — it
@@ -1687,7 +1836,7 @@ def create_mock_server(
             "person_quality",
             tool_descriptions.get("person_quality", "person_quality — resolves then scores."),
             (build_catalog.get("person_quality") or {}).get("inputSchema") or _PERMISSIVE_SCHEMA,
-        )(pq_handler)
+        )(_guard_unknown_args("person_quality", pq_handler, call_log))
     )
 
     server = create_sdk_mcp_server(name="genealogy", version="1.0.0", tools=tools)
@@ -1707,9 +1856,11 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "tree_correct": ("tree-correct.js", "treeCorrect"),
     "materialize_facts": ("materialize-facts.js", "materializeFacts"),
     "merge_warnings": ("merge-warnings.js", "mergeWarnings"),
+    "merge_tree_persons": ("merge-tree-persons.js", "mergeTreePersons"),
     "person_warnings": ("person-warnings.js", "personWarningsTool"),
     "project_context": ("project-context.js", "projectContext"),
     "research_query": ("research-query.js", "researchQuery"),
+    "tree_query": ("tree-query.js", "treeQuery"),
     "convert_calendar": ("convert-calendar.js", "convertCalendar"),
     "census_children_gap": ("census-children-gap.js", "censusChildrenGapTool"),
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
@@ -1718,7 +1869,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     # Takes only `{summary}`; the handler's injected `projectPath` is the inert
     # extra key convert_calendar already tolerates.
     "research_delivered": ("research-delivered.js", "researchDelivered"),
-    # Takes no input; the injected `projectPath` is ignored the same way.
+    # Takes no input: called as `projectList(LOCAL)` (`_COMPILED_TOOLS_WITHOUT_INPUT`).
     "project_list": ("project-list.js", "projectList"),
 }
 
@@ -1736,7 +1887,10 @@ _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search
 #: handler script below is built from a Python f-string, no typechecker catches
 #: the mismatch. A tool missing from this set calls with one argument and its
 #: `principal` arrives `undefined`.
-_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset()
+_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"project_context", "project_list"})
+
+#: Compiled tools that take no input, so the principal is their only argument.
+_COMPILED_TOOLS_WITHOUT_INPUT: frozenset[str] = frozenset({"project_list"})
 
 #: Extra JS arguments appended after `input` (and LOCAL) for a compiled tool.
 #: `person_warnings` gets a place resolver that resolves nothing, so its
@@ -1765,13 +1919,38 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
+    if tool_name == "evaluation_append":
+        return _make_evaluation_append_handler(workspace, call_log)
     if tool_name == "timeline_build":
         return _make_timeline_build_handler(workspace, call_log, place_predicated or [])
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
-        return _make_compiled_tool_handler(tool_name, js_file, export_name, workspace, call_log)
+        return _make_compiled_tool_handler(
+            tool_name, js_file, export_name, workspace, call_log, hosted=_hosted_store(manifest or {}),
+        )
     raise ValueError(f"No live handler defined for {tool_name!r}")
+
+
+def _hosted_store(manifest: dict[str, Any]) -> dict[str, str | None] | None:
+    """The paths a hosted store answers for, each with its `projectUrl`, when the test
+    serves a hosted `project_list` answer; None for every other test.
+
+    A hosted store has no folder: it is bound to the projects it lists, refuses any
+    other `projectPath` (`PgS3ProjectStore`, "is not this store's project"), and its
+    `project_context` carries the bound project's link (`utils/project-links.ts`). The
+    file store this harness runs does neither, so a hosted test emulates both.
+    """
+    paths: dict[str, str | None] = {}
+    for _args, listing, _src in (manifest.get("project_list") or {}).get("predicated") or []:
+        if not isinstance(listing, dict) or listing.get("mode") != "hosted":
+            continue
+        for project in listing.get("projects") or []:
+            if isinstance(project, dict) and isinstance(project.get("projectPath"), str):
+                paths[project["projectPath"]] = project.get("projectUrl")
+        if isinstance(listing.get("newProjectPath"), str):
+            paths.setdefault(listing["newProjectPath"], None)
+    return paths or None
 
 
 def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str | None]:
@@ -2028,24 +2207,31 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
     return handler
 
 
-def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
-    """Build the live handler for research_append.
+def _make_live_append_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    *,
+    tool: str,
+    module_file: str,
+    export: str,
+):
+    """Build a live handler that runs a compiled research-writer tool.
 
-    Calls the compiled TS tool via `node --input-type=module` against the
-    workspace path. The skill passes its own projectPath arg, but we always
-    override it with workspace (the harness tempdir) to avoid path drift.
+    Calls `export` from `build/tools/<module_file>` via `node --input-type=module`
+    against the workspace path. The skill passes its own projectPath arg, but we
+    always override it with workspace (the harness tempdir) to avoid path drift.
 
     Input is piped via stdin (as JSON) to avoid shell/JS string escaping
     issues with values that may contain quotes, backslashes, or newlines.
     """
-    append_js = _MCP_BUILD / "tools" / "research-append.js"
+    append_js = _MCP_BUILD / "tools" / module_file
 
     async def handler(args, _ws=workspace, _ajs=append_js):
         if _ws is None or not _ajs.exists():
             reason = "workspace not provided" if _ws is None else f"build not found: {_ajs}"
             response: dict[str, Any] = {
                 "ok": False,
-                "errors": [f"research_append: {reason}"],
+                "errors": [f"{tool}: {reason}"],
             }
         else:
             append_url = _node_module_url(_ajs)
@@ -2056,10 +2242,10 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             script = (
-                f"import {{ researchAppendFromCaller as researchAppend }} from '{append_url}';"
+                f"import {{ {export} as run }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                " const r = await researchAppend(input);"
+                " const r = await run(input);"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
@@ -2070,26 +2256,45 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
                     stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
                     response = {
                         "ok": False,
-                        "errors": [f"research_append: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                        "errors": [f"{tool}: node produced no output (exit {proc.returncode}): {stderr_msg}"],
                     }
             except Exception as e:
                 response = {
                     "ok": False,
-                    "errors": [f"research_append: {e}"],
+                    "errors": [f"{tool}: {e}"],
                 }
 
         entry: dict[str, Any] = {
-            "tool": "mcp__genealogy__research_append",
+            "tool": f"mcp__genealogy__{tool}",
             "args": dict(args),
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
-            "response_fixture": "live:research_append",
+            "response_fixture": f"live:{tool}",
             "response": response,
         }
         call_log.append(entry)
-        return _tool_envelope("research_append", response)
+        return _tool_envelope(tool, response)
 
     return handler
+
+
+def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """The live handler for research_append."""
+    return _make_live_append_handler(
+        workspace, call_log,
+        tool="research_append", module_file="research-append.js", export="researchAppendFromCaller",
+    )
+
+
+def _make_evaluation_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """The live handler for evaluation_append. It imports the lane-scoped
+    `evaluationAppend` export, so the mock enforces the same `allowedSections`
+    restriction the server does: a write to any section but `evaluations` is
+    refused."""
+    return _make_live_append_handler(
+        workspace, call_log,
+        tool="evaluation_append", module_file="evaluation-append.js", export="evaluationAppend",
+    )
 
 
 PERSON_QUALITY_REFUSAL = (
@@ -2190,6 +2395,7 @@ def _make_compiled_tool_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
     place_table=None,
+    hosted: dict[str, str | None] | None = None,
 ):
     """Build the live handler for a compiled single-export tool — the tree
     writers (tree_edit / tree_correct) and the read-only project_context all
@@ -2207,7 +2413,13 @@ def _make_compiled_tool_handler(
     tool_js = _MCP_BUILD / "tools" / js_filename
 
     async def handler(args, _ws=workspace, _tjs=tool_js):
-        if _ws is None or not _tjs.exists():
+        sent_path = args.get("projectPath") if isinstance(args, dict) else None
+        if hosted is not None and isinstance(sent_path, str) and sent_path not in hosted:
+            response = {
+                "ok": False,
+                "errors": [f"projectPath '{sent_path}' is not this store's project"],
+            }
+        elif _ws is None or not _tjs.exists():
             reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
             response = {
                 "ok": False,
@@ -2233,6 +2445,8 @@ def _make_compiled_tool_handler(
                 f" import {{ LOCAL }} from '{principal_url}';" if takes_principal else ""
             )
             call_args = "input, LOCAL" if takes_principal else "input"
+            if tool_name in _COMPILED_TOOLS_WITHOUT_INPUT:
+                call_args = "LOCAL"
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 
@@ -2278,6 +2492,9 @@ def _make_compiled_tool_handler(
                     "ok": False,
                     "errors": [f"{tool_name}: {e}"],
                 }
+            link = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+            if tool_name == "project_context" and link and isinstance(response, dict) and response.get("objective"):
+                response = {**response, "projectUrl": link}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",

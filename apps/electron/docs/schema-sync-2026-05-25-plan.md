@@ -874,6 +874,16 @@ re-renders, key new results by index).
 
 ## Tree matches rendering
 
+> **Superseded (#2476).** The shape below was invented by this plan and never
+> matched production: `record_search` has emitted
+> `{ treePersonId, stars }` since the tool shipped — no name, no ark. The
+> rendering and the link channel here are both wrong too. What ships now:
+> the PID in mono, the star count, and a `View →` button routed through
+> `window.api.openFamilySearch(treePersonId)` — the constrained channel
+> (#1018), not `openExternal`. See `SidecarResultCard.tsx` and
+> `record-search-mirror-drift.test.ts`, which now fails on any re-divergence.
+> The rest of this section is kept as the record of what was planned.
+
 The `record_search` payload may include `treeMatches[]` per result: an
 array of `{ personId, personName, treeId, ark }` linking the record to one
 or more FamilySearch family tree persons. Render at the bottom of each

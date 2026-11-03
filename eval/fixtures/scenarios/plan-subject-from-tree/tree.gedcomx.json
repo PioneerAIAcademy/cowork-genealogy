@@ -1,0 +1,106 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "ark:/61903/4:1:ZZKR-BR1",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Bridget",
+          "surname": "Kerrigan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "1871",
+          "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "ark": "ark:/61903/4:1:ZZKR-TH2",
+      "living": false,
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Thomas",
+          "surname": "Kerrigan",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F2",
+          "type": "Birth",
+          "date": "1842",
+          "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+        },
+        {
+          "id": "F3",
+          "type": "Death",
+          "date": "1898",
+          "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "ark": "ark:/61903/4:1:ZZKR-EL3",
+      "living": false,
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Ellen",
+          "surname": "Burke",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "date": "1846",
+          "place": "Ireland"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I3"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1"
+    },
+    {
+      "id": "R3",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1"
+    }
+  ],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "FamilySearch Family Tree — Bridget Kerrigan (ZZKR-BR1) and immediate family",
+      "citation": "FamilySearch Family Tree, person ZZKR-BR1 and relatives, accessed 2026-06-01"
+    }
+  ]
+}

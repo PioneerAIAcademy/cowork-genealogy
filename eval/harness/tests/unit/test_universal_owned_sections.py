@@ -187,7 +187,7 @@ def test_a_main_thread_caller_reads_as_main_thread_not_empty_string():
 
 
 def test_every_denial_arm_produces_a_reason_the_validator_can_report():
-    """All four arms, so a future arm cannot be added with no payload path.
+    """Every arm, so a future arm cannot be added with no payload path.
     `declaration` and `owned_field` are the trap ones: each section is a dotted
     `section.field` that keys neither owner map, so branching on shape rather
     than `rule` raises. `owned_field` is paired with a MAIN-THREAD caller on
@@ -205,6 +205,7 @@ def test_every_denial_arm_produces_a_reason_the_validator_can_report():
         ("conflicts", "out_of_lane", "proof-conclusion"),
         ("questions.search_stop", "declaration", "proof-conclusion"),
         ("project.status", "owned_field", ""),
+        ("questions", "owned_append", ""),
     ]
     for denied in arms:
         reason = owned_section_denial(denied)["hookSpecificOutput"][

@@ -201,7 +201,7 @@ Always present. Each source object:
 | `notes` | string[] | no | User-attached notes. Each entry is the text of one note. Also carries the tool's own note when a memory was not transcribed (see below). Omit when empty. |
 | `text` | string | no | A memory's text: a story's own words, or OCR of a scan. Absent for an ordinary tree source, and absent for a memory that was not transcribed. |
 | `image_ref` | string | no | Project-relative path (`images/<key>.jpg`) of a retained memory scan. Present only when `projectPath` was supplied and the save succeeded. |
-| `artifact_url` | string | no | The memory artifact's bytes URL, present on every memory source. This is the value `image_transcribe`/`image_read` accept as `memoryArtifactUrl`. `image_transcribe` also accepts `url`, the human `/memories/<id>` page, resolving it to this value first; `image_read` does not. Response-only — absent from `TREE_SOURCE_FIELDS`, so a caller copying a memory source into `tree.gedcomx.json` must drop it. |
+| `artifact_url` | string | no | The memory artifact's bytes URL, present on every memory source. This is the value `image_transcribe` accepts as `memoryArtifactUrl`, and it also accepts `url`, the human `/memories/<id>` page, resolving it to this value first. `image_read` takes neither: `server.ts`'s unknown-argument guard refuses `memoryArtifactUrl` there. Response-only — absent from `TREE_SOURCE_FIELDS`, so a caller copying a memory source into `tree.gedcomx.json` must drop it. |
 
 #### Memories are merged into `sources[]`
 

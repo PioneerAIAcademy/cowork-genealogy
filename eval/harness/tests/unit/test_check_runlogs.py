@@ -1882,8 +1882,7 @@ def _clean_log(test_id="ut_ip_1", outcome="pass"):
 
 
 def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
-    """A released `v1.json` beside candidates — the shape `init-project` has on
-    main, and the one `latest_full_skill_runlog` resolves backwards."""
+    """A skill's run-log directory, for released `v{N}.json` beside candidates."""
     runlogs = tmp_path / "runlogs"
     skill_dir = runlogs / skill
     skill_dir.mkdir(parents=True)
@@ -1895,11 +1894,10 @@ def _setup_versioned_skill(tmp_path, monkeypatch, skill="init-project"):
     return skill_dir
 
 
-def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, capsys):
-    """`latest_full_skill_runlog` returns ANY released `v{N}.json` in preference to
-    every candidate, whatever the date. So a PR adding a red candidate beside a
-    clean released log would be read as clean if rule 6 used that resolution.
-    It reads the log the PR ADDED instead."""
+def test_rule6_grades_the_added_log_not_the_newest_one(tmp_path, monkeypatch, capsys):
+    """`latest_full_skill_runlog` reads the newest run on disk, so a clean run main
+    wrote after the PR's red one would be read in its place and the PR would pass.
+    Rule 6 reads the log the PR ADDED instead."""
     skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
     (skill_dir / "v1.json").write_text(json.dumps(_clean_log()), encoding="utf-8")
     _write_ann(skill_dir, "v1.json", [])
@@ -1908,6 +1906,9 @@ def test_rule6_grades_the_added_log_not_the_released_one(tmp_path, monkeypatch, 
         json.dumps(_clean_log("ut_ip_2", "fail")), encoding="utf-8"
     )
     _write_ann(skill_dir, added, [])
+    newer = "v2_2026-09-23_09-00-00.json"
+    (skill_dir / newer).write_text(json.dumps(_clean_log()), encoding="utf-8")
+    _write_ann(skill_dir, newer, [])
     _patch_diffs(monkeypatch, [f"eval/runlogs/unit/init-project/{added}"])
 
     rc = check_runlogs.main()
@@ -1985,9 +1986,9 @@ def test_rule6_ignores_an_added_ann_json_and_a_scratch_log(tmp_path, monkeypatch
 
 # --- Rules 2, 2b and 3 grade the run log the PR adds (#3272) ---------------------
 #
-# `latest_full_skill_runlog` prefers ANY released `v{N}.json` over every candidate, so
-# when main released a log newer than the PR's own candidate, rules 2 and 3 graded main's
-# release and the PR's own run was checked by nothing. These build that shape with a
+# `latest_full_skill_runlog` reads the newest run on disk, so when main released a log
+# newer than the PR's own candidate, rules 2 and 3 graded main's release and the PR's
+# own run was checked by nothing. These build that shape with a
 # snapshot that names a file really on disk: `_clean_log`'s empty snapshot can never be
 # stale, so a test on it would never reach rule 2's comparison.
 
@@ -2066,6 +2067,54 @@ def test_rules_2_and_2b_grade_the_candidate_the_pr_adds_not_a_newer_release(
     assert "v3.json" not in out
 
 
+@pytest.mark.parametrize("pr_edits_the_stale_file", [False, True], ids=["main-had-it", "pr-made-it"])
+def test_rule2_fallback_blocks_only_on_a_file_the_pr_changed(
+    tmp_path, monkeypatch, capsys, pr_edits_the_stale_file
+):
+    """An annotation-only PR on a skill whose latest log main had already left stale
+    (a cosmetic-skip waiver on the PR that made the change) warns. The same PR also
+    editing the stale file owes the re-run, and blocks."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False)
+    paths = [f"{_RUNLOGS_REL}/v3.ann.json"] + ([_TRACKED_REL] if pr_edits_the_stale_file else [])
+    _patch_diffs(monkeypatch, paths)
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    if pr_edits_the_stale_file:
+        assert rc == 1 and _violations(out) == 1
+        assert "`v3.json`" in _only_line(out, "NOT active")
+        assert "none of which this PR changed" not in out
+    else:
+        assert rc == 0
+        warned = _only_line(out, "none of which this PR changed")
+        assert warned.startswith("::warning") and "`v3.json`" in warned
+        assert "NOT active" not in out
+
+
+@pytest.mark.parametrize("pr_adds_the_log", [True, False], ids=["own-log", "main-log"])
+def test_main_compares_rule2c_with_main_only_on_a_log_the_pr_did_not_add(
+    tmp_path, monkeypatch, capsys, pr_adds_the_log
+):
+    """`main` changed the suite's validator before this PR. A log the PR adds must
+    still match the tree it merges into; main's own latest log only warns."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    name = "v3_2026-10-29_10-00-00.json" if pr_adds_the_log else "v3.json"
+    _put_runlog(skill_dir, name, active=True, instrument=_instr())
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: _H["0"])
+    _patch_diffs(monkeypatch, [f"{_RUNLOGS_REL}/{name}" if pr_adds_the_log else f"{_RUNLOGS_REL}/v3.ann.json"])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    if pr_adds_the_log:
+        assert rc == 1 and "validators.suite" in _only_line(out, "::error")
+        assert "already has that change" not in out
+    else:
+        assert rc == 0, out
+        assert "validators.suite" in _only_line(out, "already has that change")
+
+
 def test_rule3_grades_the_annotation_of_the_candidate_the_pr_adds(
     tmp_path, monkeypatch, capsys
 ):
@@ -2108,15 +2157,32 @@ def test_a_pr_that_adds_two_candidates_is_graded_on_the_newer_one(
     assert "rule 6: graded 2 added run log(s)" in out
 
 
-def test_a_pr_that_adds_no_run_log_is_still_graded_on_the_latest_on_disk(
+def test_a_pr_that_adds_no_run_log_is_graded_on_the_newest_run_on_disk(
     tmp_path, monkeypatch, capsys
 ):
-    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, and resolve
-    exactly as before: a released log beats every candidate whatever its version, so the
-    stale `v3.json` is graded and the newer active candidate beside it is not."""
+    """SKILL.md-only, annotation-only and cosmetic-skip PRs add no run log, so they are
+    graded on the run that ran last, released or not: an active candidate newer than a
+    stale release passes. Ranking the release first failed every such PR on a log `main`
+    had already superseded."""
     skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
-    _put_runlog(skill_dir, "v3.json", active=False)
-    candidate = "v4_2026-10-08_10-00-00.json"
+    _put_runlog(skill_dir, "v3.json", active=False, timestamp="2026-10-01_10-00-00")
+    _put_runlog(skill_dir, "v4_2026-10-08_10-00-00.json", active=True)
+    _patch_diffs(monkeypatch, [_TRACKED_REL])
+
+    rc = check_runlogs.main()
+    out = capsys.readouterr().out
+    assert rc == 0, out
+    assert "NOT active" not in out
+
+
+def test_a_pr_that_adds_no_run_log_is_graded_on_a_release_newer_than_a_candidate(
+    tmp_path, monkeypatch, capsys
+):
+    """A candidate left beside the release of its own version line ran before that
+    release, so the release is graded, not the candidate."""
+    skill_dir = _setup_graded_skill(tmp_path, monkeypatch)
+    _put_runlog(skill_dir, "v3.json", active=False, timestamp="2026-10-08_10-00-00")
+    candidate = "v3_2026-10-01_10-00-00.json"
     _put_runlog(skill_dir, candidate, active=True)
     _patch_diffs(monkeypatch, [_TRACKED_REL])
 
@@ -2590,6 +2656,100 @@ def _stub_current_prompt_hash(monkeypatch, hex_digest: str) -> None:
     )
 
 
+# --- rule 2b, render half (issue #3576) ------------------------------------
+# `judge_prompt_hash` covers the prompt TEMPLATE. These cover the code that
+# fills its slots: a change there moved no fingerprint and left every committed
+# log ACTIVE while the judge saw different text.
+
+_ACTIVE_RENDER_LOG = {"snapshot": {}, "judge_render_hash": "a" * 64}
+_STALE_RENDER_LOG = {
+    "snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n"},
+    "judge_render_hash": "a" * 64,
+}
+_NO_RENDER_HASH_LOG = {"snapshot": {}, "judge_prompt_hash": "a" * 64}
+
+
+def _stub_current_render_hash(monkeypatch, hex_digest: str) -> None:
+    monkeypatch.setattr(check_runlogs, "judge_render_hash", lambda: hex_digest)
+
+
+def test_rule2b_render_blocks_when_render_code_moved(monkeypatch, capsys):
+    """Hash differs + active log + a render-graph file touched → BLOCK."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "`make judge-regrade`" in out
+    assert "older judge render code" in out
+
+
+def test_rule2b_render_passes_when_touched_but_hash_unchanged(monkeypatch, capsys):
+    """The load-bearing property: the rule RECOMPUTES rather than blocking on
+    "file touched". An edit to a trigger file outside the render graph leaves
+    the hash alone, so it must pass — otherwise every PR touching
+    orchestrator.py for any reason goes red."""
+    _stub_current_render_hash(monkeypatch, "a" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule2b_render_warns_when_log_is_already_skill_side_stale(monkeypatch, capsys):
+    """Rule 2 blocks for its own reason; a regrade cannot satisfy a log that
+    owes a paid `make eval-skill` run."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _STALE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "cannot satisfy" in out
+
+
+def test_rule2b_render_warns_when_mismatch_without_render_edit(monkeypatch, capsys):
+    """A mixed-era corpus is not this PR's doing — warn, never block."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=False
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+
+
+def test_rule2b_render_warns_when_log_has_no_render_hash(monkeypatch, capsys):
+    """A log written before the field cannot be checked. Warn so the reviewer
+    knows the PR's render change went ungraded against it — never block, which
+    would owe a regrade for every log in the corpus on day one."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _NO_RENDER_HASH_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "carries no" in out
+
+
+def test_rule2b_render_silent_when_no_hash_and_nothing_touched(monkeypatch, capsys):
+    """No field and no render edit — nothing to say."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _NO_RENDER_HASH_LOG, "v1.json", judge_render_touched=False
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
 def test_rule2b_blocks_on_judge_prompt_only_pr(monkeypatch, capsys):
     """Hash mismatch + skill-side-active log + judge_prompt_edited → BLOCK."""
     _stub_current_prompt_hash(monkeypatch, "b" * 64)
@@ -2704,9 +2864,9 @@ def test_main_fires_rule2b_only_when_prompt_in_diff(monkeypatch, capsys, tmp_pat
 
 # --- Rule 2c (instrument fingerprint) — issue #2479 PR 3 ---------------------
 #
-# Blocks on the suite-specific halves (`validators.suite`, `tools.fixture`),
-# warns on the corpus-wide ones (`validators.shared`, `tools.live`,
-# `live_modules`) so no change ever owes a re-run of every suite.
+# Blocks on `validators.suite`. Warns on `tools.fixture` (lead, 2026-10-29) and on
+# the corpus-wide halves (`validators.shared`, `tools.live`, `live_modules`) so no
+# change ever owes a re-run of every suite.
 
 _H = {c: c * 64 for c in "abcdef0123456789"}
 
@@ -2735,33 +2895,26 @@ def test_rule2c_passes_silently_when_nothing_moved(monkeypatch, capsys):
     assert capsys.readouterr().out == ""
 
 
-@pytest.mark.parametrize(
-    "moved, names",
-    [
-        ({"validators__suite": _H["0"]}, "validators.suite"),
-        ({"tools__fixture": _H["0"]}, "tools.fixture"),
-    ],
-    ids=["suite-validator", "fixture-tool"],
-)
-def test_rule2c_blocks_on_a_suite_specific_change(monkeypatch, capsys, moved, names):
-    _stub_current_instrument(monkeypatch, _instr(**moved))
+def test_rule2c_blocks_on_a_suite_validator_change(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 1
     out = capsys.readouterr().out
-    assert "::error" in out and names in out and "skill `demo`" in out
+    assert "::error" in out and "validators.suite" in out and "skill `demo`" in out
     assert "make eval-skill SKILL=demo" in out
 
 
 @pytest.mark.parametrize(
     "moved, names",
     [
+        ({"tools__fixture": _H["0"]}, "tools.fixture"),
         ({"validators__shared": _H["0"]}, "validators.shared"),
         ({"tools__live": _H["0"]}, "tools.live"),
         ({"live_modules__research_append": _H["0"]}, "live_modules (research_append)"),
     ],
-    ids=["shared-validators", "live-tool-schema", "live-module"],
+    ids=["fixture-tool", "shared-validators", "live-tool-schema", "live-module"],
 )
-def test_rule2c_only_warns_on_a_corpus_wide_change(monkeypatch, capsys, moved, names):
+def test_rule2c_only_warns_on_a_change_outside_the_suite_validator(monkeypatch, capsys, moved, names):
     _stub_current_instrument(monkeypatch, _instr(**moved))
     rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
     assert rc == 0
@@ -2808,6 +2961,102 @@ def test_rule2c_blocks_when_the_catalog_cannot_be_read(monkeypatch, capsys):
     assert rc == 1
     out = capsys.readouterr().out
     assert "::error" in out and "tool-schemas.js" in out
+
+
+# A suite validator main already has at its current value was waived or owed on
+# the PR that changed it, so a log this PR did not add only warns on it.
+
+
+def test_rule2c_warns_on_a_suite_validator_main_already_has(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: _H["0"])
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::error" not in out
+    assert "validators.suite" in _only_line(out, "`main` already has that change")
+
+
+@pytest.mark.parametrize(
+    "base", [_H["a"], _H["1"], None], ids=["base-at-stored", "base-elsewhere", "no-base"]
+)
+def test_rule2c_blocks_on_a_suite_validator_this_pr_changed(monkeypatch, capsys, base):
+    """`main` at the stored value, `main` at a third value, or no base to read: the PR
+    changed the validator, or nothing says it did not."""
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(check_runlogs, "base_suite_validators", lambda skill: base)
+    rc = check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json")
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out and "validators.suite" in out
+    assert "already has that change" not in out
+
+
+def test_rule2c_blocks_and_skips_main_when_the_pr_added_the_log(monkeypatch, capsys):
+    """A log the PR adds is its own evidence: it must match the tree it merges into."""
+    _stub_current_instrument(monkeypatch, _instr(validators__suite=_H["0"]))
+    monkeypatch.setattr(
+        check_runlogs, "base_suite_validators", lambda skill: pytest.fail("base read for the PR's own log")
+    )
+    rc = check_runlogs.rule2c_instrument(
+        "demo", {"snapshot": {}, "instrument": _instr()}, "v1.json", compare_base=False
+    )
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule2c_reads_no_base_when_only_a_warn_only_half_moved(monkeypatch, capsys):
+    _stub_current_instrument(monkeypatch, _instr(tools__fixture=_H["0"], tools__live=_H["0"]))
+    monkeypatch.setattr(
+        check_runlogs, "base_suite_validators", lambda skill: pytest.fail("base read for a warn-only half")
+    )
+    assert check_runlogs.rule2c_instrument("demo", {"snapshot": {}, "instrument": _instr()}, "v1.json") == 0
+
+
+def test_base_suite_validators_reads_the_base_checkout(monkeypatch, tmp_path):
+    from harness import instrument as instr_mod
+
+    validators = tmp_path / "eval" / "harness" / "validators"
+    validators.mkdir(parents=True)
+    (validators / "test_demo.py").write_text("def test_demo(ctx):\n    assert ctx\n", encoding="utf-8")
+    monkeypatch.setenv("BASE_TREE", str(tmp_path))
+    got = check_runlogs.base_suite_validators("demo")
+    assert got == instr_mod.validators_fingerprint("demo", validators)["suite"]
+
+    (validators / "test_demo.py").write_text("def test_demo(ctx):\n    assert not ctx\n", encoding="utf-8")
+    assert check_runlogs.base_suite_validators("demo") != got
+
+
+@pytest.mark.parametrize("base_tree", [None, "missing"], ids=["unset", "no-such-dir"])
+def test_base_suite_validators_is_none_with_no_base_checkout(monkeypatch, tmp_path, base_tree):
+    if base_tree is None:
+        monkeypatch.delenv("BASE_TREE", raising=False)
+    else:
+        monkeypatch.setenv("BASE_TREE", str(tmp_path / base_tree))
+    assert check_runlogs.base_suite_validators("demo") is None
+
+
+_SCOUT_REL = "packages/engine/plugin/agents/scout.md"
+
+
+@pytest.mark.parametrize(
+    "key, pr_paths, frontmatter_changed, expected",
+    [
+        (_TRACKED_REL, {_TRACKED_REL}, None, True),
+        (_TRACKED_REL, {"some/other/file.md"}, None, False),
+        (_SCOUT_REL + "#frontmatter", {_SCOUT_REL}, True, True),
+        (_SCOUT_REL + "#frontmatter", {_SCOUT_REL}, False, False),
+        (_SCOUT_REL + "#frontmatter", set(), None, False),
+    ],
+    ids=["changed", "untouched", "frontmatter-changed", "body-only", "agent-untouched"],
+)
+def test_pr_changed_snapshot_key(monkeypatch, key, pr_paths, frontmatter_changed, expected):
+    def _changed(agent):
+        assert agent == "scout" and frontmatter_changed is not None
+        return frontmatter_changed
+
+    monkeypatch.setattr(check_runlogs, "agent_frontmatter_changed", _changed)
+    assert check_runlogs.pr_changed_snapshot_key(key, pr_paths) is expected
 
 
 @pytest.mark.parametrize(
@@ -3152,7 +3401,7 @@ def test_a_non_test_validator_module_marks_every_suite(monkeypatch):
 
 def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeypatch, capsys, tmp_path):
     """A shared MCP fixture's `tool` field feeds `tools.fixture`; changing it is
-    graded on the PR that makes it, not left for the next author of those suites."""
+    reported on the PR that makes it. `tools.fixture` warns (lead, 2026-10-29)."""
     runlogs = tmp_path / "runlogs"
     runlogs.mkdir()
     _seed_instrument_suite(runlogs, monkeypatch, _instr())
@@ -3166,8 +3415,9 @@ def test_a_changed_shared_fixture_opens_rule2c_on_the_suites_that_use_it(monkeyp
     monkeypatch.setattr(check_runlogs, "git_diff_touched_paths", lambda: ["eval/fixtures/mcp/shared-fix.json"])
     rc = check_runlogs.main()
     out = capsys.readouterr().out
-    assert rc == 1, out
-    assert "skill `convert-dates`" in out and "tools.fixture" in out
+    assert rc == 0, out
+    warned = _only_line(out, "tools.fixture")
+    assert warned.startswith("::warning") and "skill `convert-dates`" in warned
 
 
 # --- #3568: a touched agent gates a suite only if its graded log can see it -----
@@ -3419,6 +3669,86 @@ def test_every_embedded_agent_reaches_its_suite_through_the_superset():
     assert not missed, missed
 
 
+def test_trigger_paths_cover_every_module_the_render_graph_reaches():
+    """Finding 6: `JUDGE_RENDER_TRIGGER_PATHS` is hand-written. If the graph
+    grows into a sixth module, a PR editing that module moves the hash but
+    matches no trigger path, so `rule2b_judge_render` takes the
+    "not this PR's doing" branch and WARNS on the PR that caused it.
+
+    Derived from the same walk the hash uses, so this cannot drift.
+    """
+    from harness.judge_render import judge_render_graph_modules
+
+    reached = judge_render_graph_modules()
+    triggers = {
+        "harness." + Path(p).stem for p in check_runlogs.JUDGE_RENDER_TRIGGER_PATHS
+    }
+    assert reached <= triggers, (
+        f"render graph reaches {sorted(reached - triggers)}, which no trigger "
+        f"path covers — a PR editing those would warn instead of blocking"
+    )
+
+
+# --- rule 6, regrade arm (issue #3576) ---------------------------------------
+# Rule 6 proper grades only ADDED logs, deliberately: a prune rewrites committed
+# logs and `eval/CLAUDE.md` says a modified log marks nothing touched. That held
+# until `make judge-regrade` began rewriting GRADES in place. The predicate here
+# is the outcome MOVING, so a prune still passes and only a new red blocks.
+
+def _rule6_regrade(monkeypatch, tmp_path, base_outcomes, head_outcomes):
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"tests": [{"test_id": k, "outcome": v} for k, v in head_outcomes.items()]}),
+        encoding="utf-8",
+    )
+    base = (
+        None
+        if base_outcomes is None
+        else json.dumps({"tests": [{"test_id": k, "outcome": v} for k, v in base_outcomes.items()]})
+    )
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: base)
+    return check_runlogs.rule6_regrade_outcomes("demo", rel)
+
+
+def test_rule6_regrade_blocks_a_newly_red_test(monkeypatch, tmp_path, capsys):
+    rc = _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "pass"}, {"ut_a": "fail"})
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "moved `pass` -> `fail`" in out
+
+
+def test_rule6_regrade_blocks_partial_to_fail(monkeypatch, tmp_path, capsys):
+    """`partial` never blocks on its own, but moving INTO fail does."""
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "partial"}, {"ut_a": "fail"}) == 1
+
+
+def test_rule6_regrade_passes_a_prune(monkeypatch, tmp_path, capsys):
+    """The direction that must keep working: a modified log whose outcomes did
+    not move is a rehash or a prune, and marks nothing touched."""
+    rc = _rule6_regrade(
+        monkeypatch, tmp_path, {"ut_a": "pass", "ut_b": "partial"}, {"ut_a": "pass", "ut_b": "partial"}
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule6_regrade_ignores_a_test_already_red_at_base(monkeypatch, tmp_path, capsys):
+    """Not this PR's doing — it did not author the run."""
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "fail"}, {"ut_a": "fail"}) == 0
+
+
+def test_rule6_regrade_passes_when_the_log_is_new_at_base(monkeypatch, tmp_path, capsys):
+    """Absent at the merge base — rule 6 proper grades it as an ADDED log, and
+    grading it here too would double-report."""
+    assert _rule6_regrade(monkeypatch, tmp_path, None, {"ut_a": "fail"}) == 0
+
+
+def test_rule6_regrade_blocks_a_move_to_aborted(monkeypatch, tmp_path):
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "pass"}, {"ut_a": "aborted"}) == 1
 # Rule 11 (#3691 item 2): a swapped gate tag on a grade_on_invariant test.
 
 _INVARIANTS = ("test_no_new_plan", "test_no_plan_writes_when_resolved", "test_resolved_question_not_reopened")
@@ -3569,17 +3899,6 @@ def test_rule11_aborted_runs_are_ignored_beside_a_completed_one():
 def test_rule11_a_test_with_no_runs_is_left_to_rule_6():
     head = _r11_test(["planning", "stops-for-verdicts"])
     assert _rule11(head_test=head, head_log={"tests": [{"test_id": "ut_research_rpn", "runs": []}]}) == 0
-
-
-def test_newest_full_skill_name_prefers_a_newer_candidate_over_an_older_release():
-    names = ["v1.json", "v1.ann.json", "v2_2026-10-01_00-00-00.json", "v2_2026-10-02_00-00-00.json",
-             "v3_scratch_x.json"]
-    assert check_runlogs.newest_full_skill_name(names) == "v2_2026-10-02_00-00-00.json"
-    assert check_runlogs.newest_full_skill_name(["v2.json", "v1_2026-10-02_00-00-00.json"]) == "v2.json"
-    assert check_runlogs.newest_full_skill_name(["README.md"]) is None
-    # At one version a candidate is the later run: releasing renames one, and
-    # a candidate beside its release was run after it.
-    assert check_runlogs.newest_full_skill_name(["v2.json", "v2_2026-10-03_00-00-00.json"]) == "v2_2026-10-03_00-00-00.json"
 
 
 _R11_VALIDATOR = """import pytest
@@ -3940,3 +4259,199 @@ def test_main_runs_rule11_gate_drift_on_a_validator_edit_for_every_suite_rule11_
     _patch_diffs(monkeypatch, ["eval/tests/unit/research/rpn.json"])
     check_runlogs.main()
     assert calls == []
+
+
+def test_rule6_regrade_announces_an_unreadable_base(monkeypatch, tmp_path, capsys):
+    """Review 2026-10-26: this arm used to `return 0` silently, which reads
+    identically to "compared them, nothing moved" — the invisible pass the
+    rule exists to end. Failing closed is wrong (a shallow clone would block
+    every prune), so it warns and says the comparison did not happen."""
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"tests": []}), encoding="utf-8")
+
+    def _raise(_p):
+        raise check_runlogs.BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", _raise)
+    rc = check_runlogs.rule6_regrade_outcomes("demo", rel)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning" in out, "a skipped read must be announced, not swallowed"
+    assert "NOT compared" in out
+    assert "BASE_SHA/HEAD_SHA unset" in out, "the warning must name the cause"
+
+
+def test_rule6_regrade_announces_an_unparseable_log(monkeypatch, tmp_path, capsys):
+    """Same hole, other cause: a corrupt base or head log also skipped the
+    comparison silently."""
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{not json", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: '{"tests": []}')
+    rc = check_runlogs.rule6_regrade_outcomes("demo", rel)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning" in out and "NOT compared" in out
+
+
+# --- rule 3, regrade arm (issue #3576 round 3) --------------------------------
+# A regrade refreshes `review_sample` from the fresh grades, so a test it moves
+# into `is_mandatory` gains a slot. Rule 3 proper runs only on a TOUCHED skill,
+# and a modified run log touches nothing — so without this arm the regrade PR
+# merges green and the next unrelated PR on that skill inherits the block.
+
+def _rule3_regrade(monkeypatch, tmp_path, base_sample, head_sample, *, ann=None,
+                   base_present=True):
+    """Write a head log + optional annotation, stub the merge-base read, run the arm.
+
+    `*_sample` are the `review_sample.tests` lists (None omits the key entirely,
+    which is what every log written before sampling shipped looks like).
+    """
+    rel = "eval/runlogs/unit/demo/v1_2026-10-09_00-00-00.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    def log_for(sample):
+        doc = {
+            "tests": [
+                {
+                    "test_id": t,
+                    "outcome": "partial",
+                    "outcome_summary": {
+                        "per_run_outcomes": ["partial"],
+                        "aggregated_dimensions": [
+                            {"source": "base", "name": "Correctness", "score": 2}
+                        ],
+                        "review_dimensions": [
+                            {"source": "base", "name": "Correctness", "score": 2}
+                        ],
+                    },
+                }
+                for t in (head_sample or [])
+            ]
+        }
+        if sample is not None:
+            doc["review_sample"] = {"tests": list(sample), "cursor": [], "seed": 1}
+        return doc
+
+    path.write_text(json.dumps(log_for(head_sample)), encoding="utf-8")
+    if ann is not None:
+        (path.parent / "v1_2026-10-09_00-00-00.ann.json").write_text(
+            json.dumps(ann), encoding="utf-8"
+        )
+    base = None if not base_present else json.dumps(log_for(base_sample))
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: base)
+    return check_runlogs.rule3_regrade_sample_growth("demo", rel)
+
+
+def test_rule3_regrade_blocks_a_grown_sample_with_no_annotation(
+    monkeypatch, tmp_path, capsys
+):
+    """The case this arm exists for: the regrade added a test, nobody graded it."""
+    rc = _rule3_regrade(monkeypatch, tmp_path, ["ut_a"], ["ut_a", "ut_b"])
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule3_regrade_passes_when_the_sample_did_not_grow(
+    monkeypatch, tmp_path, capsys
+):
+    """The other direction. A prune or a rehash rewrites the file without
+    touching `review_sample`, and must not be asked for annotations."""
+    rc = _rule3_regrade(monkeypatch, tmp_path, ["ut_a", "ut_b"], ["ut_a", "ut_b"])
+    assert rc == 0
+    assert "::error" not in capsys.readouterr().out
+
+
+def test_rule3_regrade_ignores_a_log_with_no_review_sample(
+    monkeypatch, tmp_path, capsys
+):
+    """A log written before sampling shipped carries no `review_sample` and owes
+    every dimension of every test — which no prune can satisfy. Gating on GROWTH
+    rather than on the file changing is what keeps this arm off it."""
+    rc = _rule3_regrade(monkeypatch, tmp_path, None, None)
+    assert rc == 0
+    assert "::error" not in capsys.readouterr().out
+
+
+def test_rule3_regrade_skips_a_log_absent_at_the_merge_base(
+    monkeypatch, tmp_path, capsys
+):
+    """Absent at the base means this PR ADDED it, where rule 3 proper applies.
+    Grading it here would double-report the same debt."""
+    rc = _rule3_regrade(
+        monkeypatch, tmp_path, None, ["ut_a"], base_present=False
+    )
+    assert rc == 0
+    assert "::error" not in capsys.readouterr().out
+
+
+def _rule3_regrade_main(tmp_path, monkeypatch, touched):
+    """Drive `main()` with one modified research log and the per-rule checks
+    stubbed, recording which logs the regrade arm is asked to grade."""
+    skill_dir = tmp_path / "research"
+    skill_dir.mkdir()
+    for name in ("v1.json", "v2_2026-10-26_00-00-00.json"):
+        (skill_dir / name).write_text(json.dumps({"tests": []}), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    for rule in ("rule2_active", "rule2b_judge_prompt", "rule2b_judge_render",
+                 "rule2c_instrument", "rule3_completeness", "rule11_for_skill",
+                 "rule6_regrade_outcomes"):
+        monkeypatch.setattr(check_runlogs, rule, lambda *a, **k: 0)
+    calls = []
+    monkeypatch.setattr(
+        check_runlogs, "rule3_regrade_sample_growth", lambda *a: calls.append(a) or 1
+    )
+    monkeypatch.setattr(
+        check_runlogs, "modified_runlogs",
+        lambda: [("research", "eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json")],
+    )
+    _patch_diffs(monkeypatch, touched)
+    return check_runlogs.main(), calls
+
+
+def test_main_runs_the_rule3_regrade_arm_on_a_modified_log(tmp_path, monkeypatch):
+    """A regrade-only PR touches no skill, so the arm is the only rule 3 it gets."""
+    rc, calls = _rule3_regrade_main(tmp_path, monkeypatch, [])
+    assert rc == 1
+    assert calls == [("research", "eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json")]
+
+
+def test_main_skips_the_rule3_regrade_arm_on_a_log_rule3_already_graded(
+    tmp_path, monkeypatch
+):
+    """When the skill is also touched, rule 3 proper grades the same latest log;
+    the arm must not report that debt a second time."""
+    rc, calls = _rule3_regrade_main(
+        tmp_path, monkeypatch,
+        ["eval/tests/unit/research/handle-negative-probate-result.json"],
+    )
+    assert calls == []
+
+
+def test_rule3_regrade_warns_rather_than_blocking_on_an_unreadable_base(
+    monkeypatch, tmp_path, capsys
+):
+    """Failing closed would block every prune on a shallow clone. Warn, so an
+    unread base is never mistaken for 'compared them, nothing grew'."""
+    rel = "eval/runlogs/unit/demo/v1_2026-10-09_00-00-00.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"tests": []}), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+
+    def boom(_p):
+        raise check_runlogs.BaseUnreadable("no merge base")
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", boom)
+    rc = check_runlogs.rule3_regrade_sample_growth("demo", rel)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning" in out
+    assert "NOT compared" in out

@@ -25,7 +25,7 @@
 // the caller supplies those. It never writes identity links. It never decides
 // which questions a fact answers; `extracted_for_question_ids` is the caller's.
 
-import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
+import type { SimplifiedFact, SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { PersonaIndexFields } from "./record-index-fields.js";
 import type { DocumentMode } from "./structured-document.js";
 
@@ -817,6 +817,33 @@ function classify(
 const DOCUMENT_ONLY_TYPES: ReadonlySet<RecordType> = new Set(["obituary", "probate", "newspaper_announcement"]);
 
 /**
+ * The deed rows, document mode only (genealogist ruling, 2026-10-27). The roles
+ * are read from `statedRelation` there; on the indexed path they are positional,
+ * so no row is keyed on them. Facts about the transaction are the grantor's own
+ * act; the grantee's residence and every fact beyond the transaction are not.
+ */
+function classifyLandRow(role: string, factType: string): Classification {
+  const grantor = "the grantor";
+  const identity = /^(name|sex|role)$/.test(factType);
+  if (/^witness(_\d+)?$/.test(role) && identity) {
+    return { informant: "the witnesses", informant_proximity: "witness", information_quality: "primary" };
+  }
+  const officer = "the acknowledging officer (justice of the peace or register)";
+  if ((/^(justice_of_the_peace|register|notary(_public)?|clerk)(_\d+)?$/.test(role) && identity) || /^(recorded|recording|acknowledg(ed|ment)|registered|registration)$/.test(factType)) {
+    return { informant: officer, informant_proximity: "official_duty", information_quality: "primary" };
+  }
+  const transaction = /^(conveyance|sale|purchase|transfer|grant|land[_ ]?grant|deed|release|quitclaim|mortgage|lease|land|consideration|role)$/.test(factType);
+  const ownStatement = /^(name|sex|residence|relationship|marital[_ ]status)$/.test(factType);
+  if (transaction || (/^grantor(_\d+)?$/.test(role) && ownStatement) || (!/^grantor(_\d+)?$/.test(role) && /^(name|sex)$/.test(factType))) {
+    return { informant: grantor, informant_proximity: "self", information_quality: "primary" };
+  }
+  if (!/^grantor(_\d+)?$/.test(role) && factType === "residence") {
+    return { informant: grantor, informant_proximity: "self", information_quality: "indeterminate" };
+  }
+  return { informant: grantor, informant_proximity: "family_not_present", information_quality: "secondary" };
+}
+
+/**
  * The obituary, probate and newspaper-announcement rows. All of them are the
  * genealogist's rulings (2026-09-29 and 2026-09-30); spec §11.7 holds the tables.
  * Keyed on role, fact type and, for residences, date, because "recent family
@@ -869,6 +896,8 @@ function classifyDocumentRow(
     }
     return { informant: petitioner, informant_proximity: "household_member", information_quality: "indeterminate" };
   }
+
+  if (recordType === "land") return classifyLandRow(role, factType);
 
   // newspaper_announcement
   const submitter = "the announcement's submitter (usually unnamed family)";
@@ -1017,12 +1046,15 @@ export function extractRecord(
   const statedHouseholds: Party[][] = [];
 
   if (recordType === "census") {
-    // Decide the column from the census fact's place and year, per household.
-    const censusFact = ps
-      .flatMap((p) => p.person.facts ?? [])
-      .find((f) => /census/i.test(String(f.type ?? "")));
+    // Decide the column from the census fact's place and year, per household:
+    // the place as FamilySearch sent it when the staged read carries it.
+    const isCensus = (f: SimplifiedFact) => /census/i.test(String(f.type ?? ""));
+    const censusParty = ps.find((p) => (p.person.facts ?? []).some(isCensus));
+    const censusIndex = censusParty?.person.facts?.findIndex(isCensus) ?? -1;
+    const censusFact = censusParty?.person.facts?.[censusIndex];
+    const censusNote = censusParty ? mode?.factMarks.get(`${censusParty.id}#${censusIndex}`)?.note : undefined;
     const year = Number(String(censusFact?.date ?? "").match(/\d{4}/)?.[0]);
-    const place = censusFact?.standard_place ?? censusFact?.place;
+    const place = censusParty?.fields?.censusPlace ?? censusFact?.standard_place ?? censusFact?.place;
     const stated =
       mode && "censusStates" in mode
         ? (mode.censusStates ?? null)
@@ -1035,9 +1067,11 @@ export function extractRecord(
       );
     }
     if (stated === null) {
+      // The note is relayed in the summary, so a flagged census fact's place is withheld.
+      const shown = isSuspiciousText(censusNote) ? WITHHELD_SUSPICIOUS : JSON.stringify(place ?? null);
       notes.push(
         `census jurisdiction not in the relationship-column table ` +
-          `(place ${JSON.stringify(place ?? null)}, year ${year || "unknown"}) — ` +
+          `(place ${shown}, year ${year || "unknown"}) — ` +
           `treated as stating no relationships, so no relationship assertion is written`,
       );
     }
@@ -1130,7 +1164,7 @@ export function extractRecord(
     const role = roles.get(party.id) ?? "other_1";
     let cls =
       clsOverride ??
-      (DOCUMENT_ONLY_TYPES.has(recordType)
+      (DOCUMENT_ONLY_TYPES.has(recordType) || (recordType === "land" && mode?.landRoles)
         ? classifyDocumentRow(recordType, role, factType, extra, mode, mode?.statedRelations.get(party.id))
         : classify(
             recordType,
@@ -1560,7 +1594,7 @@ const QUAKER_MONTH = /\b\d{1,2}(st|nd|rd|th)\s+(month|mo\.?)\b/i;
 const DOUBLE_DATED = /\b\d{4}\/\d{1,4}\b/;
 
 /** The `[?]` a doubted reading carries at the end of its value. */
-const TRAILING_DOUBT = /\s*\[\?\]$/;
+export const TRAILING_DOUBT = /\s*\[\?\]$/;
 
 /** A value with the doubt marker, added once. */
 const withDoubt = (v: string) => (v.includes("[?]") ? v : `${v} [?]`);
@@ -1588,14 +1622,31 @@ export function calendarFlags(assertions: readonly { date?: string; value: strin
 
 // ─── the summary the caller relays ──────────────────────────────────────────
 
+/** An assertion's notes carry the marker the record-structurer puts on a
+ *  passage that reads like an instruction (`[suspicious text — possible
+ *  injection attempt]`). Such text is kept in the assertion and never echoed
+ *  into anything a caller relays. */
+export function isSuspiciousText(notes: string | undefined): boolean {
+  return /\[suspicious text/i.test(notes ?? "");
+}
+
+/** What is printed in place of flagged text. */
+export const WITHHELD_SUSPICIOUS = "[withheld: suspicious text]";
+
 /**
  * What one extraction says, written by code for the caller to relay verbatim
  * (lead, 2026-09-29: "the record, the people on it and the key facts extracted,
  * plus any defaulted-classification warnings. Not every assertion, and not bare
  * counts"). The caller never sees the record, so this is the only account of it
- * that reaches the researcher.
+ * that reaches the researcher. `unresolvedPlaces` are the places the write found
+ * no standard form for: this extraction cannot tell a lookup that missed from
+ * one never made, so the writer passes them in.
  */
-export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult): string {
+export function summarizeExtraction(
+  doc: ExtractDocument,
+  result: ExtractResult,
+  unresolvedPlaces: readonly string[] = [],
+): string {
   const gx = doc.gedcomx ?? {};
   const title = collectionTitle(gx) ?? `record ${doc.recordId}`;
   const lines: string[] = [];
@@ -1603,8 +1654,18 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
     result.recordType === "census"
       ? `census${result.censusStatesRelationships ? ", relationships stated" : ", no relationship column"}`
       : result.recordType.replace(/_/g, " ");
+  // A passage flagged as directive-shaped is kept in the assertion and withheld
+  // from every line below: this summary is relayed verbatim into the caller's
+  // context, where it would read as an instruction rather than data.
+  const flagged = (a: ExtractedAssertion | undefined) => a !== undefined && isSuspiciousText(a.informant_bias_notes);
+  // A flagged person's name, wherever any line would print it: a relationship's
+  // value names the other person ("son of Thomas Flynn"), and any other text may.
+  const flaggedNames = result.assertions.filter((a) => a.fact_type === "name" && a.value && flagged(a)).map((a) => a.value);
+  const withholdNames = (text: string) => flaggedNames.reduce((t, n) => t.split(n).join(WITHHELD_SUSPICIOUS), text);
   const event = result.assertions.find((a) => a.fact_type === result.recordType && (a.date || a.place));
-  const eventText = event ? `, ${[event.date, event.place].filter(Boolean).join(", ")}` : "";
+  const eventText = !event
+    ? ""
+    : `, ${flagged(event) ? WITHHELD_SUSPICIOUS : [event.date, event.place].filter(Boolean).join(", ")}`;
   lines.push(`${title} (${kind}${eventText}).`);
 
   // People, in the record's own order, each with the facts written about them.
@@ -1621,13 +1682,11 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
       .filter((a) => a.fact_type !== "name" && a.fact_type !== "sex")
       .filter((a) => !(result.recordType === "census" && a.fact_type === "census"))
       .map((a) => {
+        // Not even its type: a document's fact type is free text.
+        if (flagged(a)) return WITHHELD_SUSPICIOUS;
         if (a.fact_type === "relationship") return a.value;
         if (a.fact_type === "age") return `age ${a.value}`;
         const label = a.fact_type.replace(/_/g, " ");
-        // A passage flagged as directive-shaped is kept in the assertion and
-        // withheld here: this summary is relayed verbatim into the caller's
-        // context, where it would read as an instruction rather than data.
-        if (/\[suspicious text/i.test(a.informant_bias_notes ?? "")) return `${label} [withheld: suspicious text]`;
         // A value that is just the date or place (with or without the marker
         // withDoubt added) is not printed again; that marker prints once, at the
         // end, unless the agent already typed one into the date or place.
@@ -1652,27 +1711,31 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
   if (result.recordType === "census") {
     const principal = (gx.persons ?? []).find((p) => p.principal === true);
     const headA = result.assertions.find((a) => a.record_role === "head_of_household" && a.fact_type === "name");
+    const principalNameA = result.assertions.find((a, i) => a.fact_type === "name" && result.personKeys[i] === principal?.id);
     const ps = principal?.names?.[0]?.surname?.replace(TRAILING_DOUBT, "").trim().toLowerCase();
     const hs = (headA?.structured_value?.surname as string | undefined)?.replace(TRAILING_DOUBT, "").trim().toLowerCase();
-    if (ps && hs && ps !== hs) {
+    if (ps && hs && ps !== hs && !flagged(headA) && !flagged(principalNameA)) {
       lines.push(
         `Lead: the head, ${headA!.value}, has a different surname from ${fullName(principal!)}. ` +
           `Possible kin of unstated relationship; worth a hypothesis, not a conclusion.`,
       );
     }
   }
-  const calendar = calendarFlags(result.assertions);
+  // Names withheld before the dates are read, so no date is read out of one.
+  const calendar = calendarFlags(
+    result.assertions.filter((a) => !flagged(a)).map((a) => ({ date: a.date, value: withholdNames(a.value) })),
+  );
   if (calendar.length > 0) {
     lines.push(
       `Calendar: ${calendar.join("; ")} may fall under the Old Style calendar or a ` +
         `double-dated year. Run convert-dates on each, and correct the assertion if it changes.`,
     );
   }
-  const suspicious = result.assertions.filter((a) => /\[suspicious text/i.test(a.informant_bias_notes ?? ""));
+  const suspicious = result.assertions.filter(flagged);
   if (suspicious.length > 0) {
     lines.push(
       `Suspicious text: ${suspicious.length} passage(s) read like instructions and were captured as ` +
-        `record text only (${suspicious.map((a) => `${a.record_role} ${a.fact_type}`).join(", ")}).`,
+        `record text only (${suspicious.map((a) => a.record_role).join(", ")}).`,
     );
   }
   for (const n of result.notes) lines.push(`Note: ${n}.`);
@@ -1682,5 +1745,7 @@ export function summarizeExtraction(doc: ExtractDocument, result: ExtractResult)
         `classification: no table row covers a ${result.recordType.replace(/_/g, " ")} record yet.`,
     );
   }
-  return lines.join("\n");
+  const places = [...new Set(unresolvedPlaces)];
+  if (places.length > 0) lines.push(`Places kept as written, with no standard place found: ${places.join("; ")}.`);
+  return lines.map(withholdNames).join("\n");
 }

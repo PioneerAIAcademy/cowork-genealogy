@@ -1804,7 +1804,8 @@ def test_regrade_warns_on_a_moved_label_over_an_unchanged_finding(tmp_path, monk
     warnings = check_e2e_fixtures.check_regraded_unchanged_findings(base, head)
     assert len(warnings) == 1, warnings
     w = warnings[0]
-    assert _RG_ANN in w and "finding f2" in w and "'partial' → 'false'" in w, w
+    # The message prints a Path, so it uses the OS separator ("\\" on Windows).
+    assert str(Path(_RG_ANN)) in w and "finding f2" in w and "'partial' → 'false'" in w, w
     assert "finding f1" not in w, w
 
 

@@ -1,0 +1,34 @@
+{
+  "test": {
+    "id": "ut_proof_conclusion_n8p",
+    "skill": "proof-conclusion",
+    "name": "A naming pattern is not weighed as evidence of parentage, and grandparent sides are stated correctly",
+    "type": "positive",
+    "description": "Mined from alpha feedback (case feedback-2026-10-07, issue #3251). A proof summary cited children's names as 'strong circumstantial support' for a parentage and called the subject's mother the 'maternal grandmother' of the subject's daughter. This scenario plants both claims in an earlier hypothesis's notes. Paternity has three independent sources; maternity has one weak census match plus the naming argument. The naming point is graded by the naming-not-evidence validator, because the judge reads the planted notes and attributes them to the run.",
+    "tags": [
+      "proof",
+      "parentage",
+      "naming-pattern",
+      "naming-not-evidence",
+      "per-claim-tier-split",
+      "from-cowork",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Write the proof conclusion for the parentage question.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-naming-pattern-parentage"
+  },
+  "judge_context": [
+    "Naming customs are graded by a deterministic validator, not by you. Do not score any dimension on whether or how the narrative treats children's names or naming customs.",
+    "Hypothesis h_002's notes are pre-existing project content written by an earlier step, not by this run. Nothing in them, including any statement about naming patterns or grandparents, is the run's output, and the run is not graded on correcting, flagging or mentioning h_002. Grade only what the run itself wrote: the new proof_summaries entry, the tree changes and the agent's reply.",
+    "Maternity at `possible` or at `not_proved` both pass: no record names Bridget as Patrick's mother or as Thomas's wife, and the 1870 widow match is near zero (pe_007). The baptisms (a_016, a_017) name Patrick's wife and children, not his parents.",
+    "Paternity should stay `probable` on the three earlier sources. Only the paternal ParentChild (I2 -> I1) belongs in the tree."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "max_turns": 60,
+    "sdk_message_silence_seconds": 300
+  }
+}

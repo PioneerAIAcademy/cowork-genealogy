@@ -9,14 +9,25 @@
 // Spec: docs/specs/project-context-tool-spec.md.
 
 import { questionStates, type QuestionStatus } from "../utils/question-state.js";
+import {
+  RESEARCH_QUERY_SECTIONS,
+  RESEARCH_QUERY_OPTIONAL_SECTIONS,
+  EXTERNAL_COLLECTIONS_SECTION,
+  disagreementsInScope,
+} from "./research-query.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import { readExternalCollections } from "../utils/external-collections-store.js";
 import { readBuildInfo } from "../utils/build-info.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 import { collectSourceRefs } from "../utils/tree-person.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
+import { exhaustedImageGroups } from "../utils/browse-budget.js";
+import { projectLinks } from "../utils/project-links.js";
+import { getProjectStore } from "../store/project-store.js";
+import type { Principal } from "../auth/principal.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
@@ -63,6 +74,74 @@ export interface ProjectContextLocality {
 /** An external-site URL handed to the user and not yet answered (spec §2.3). */
 export type ProjectContextAwaitingUser = AwaitingHandOff;
 
+/** A film whose 20-image browse cap is spent in this project (image-transcribe spec §5.8). */
+export interface ProjectContextExhaustedImageGroup {
+  imageGroup: string;
+  imagesRead: number;
+  /** Open plan items with an `image_search` log entry on this film. */
+  planItemIds: string[];
+}
+
+/** Each exhausted film with the open plan items whose `image_search` log
+ *  entries browsed it. Only `image_search` entries: that is what search-images
+ *  logs, and a `fulltext_search` entry scoped to the same film is not a browse.
+ *  Only items still `planned` or `in_progress` on an `active` plan: once an item
+ *  is disposed of it must drop off, or the router sends it back every pass. */
+async function exhaustedGroupsWithPlanItems(
+  projectPath: string,
+  research: any,
+): Promise<ProjectContextExhaustedImageGroup[]> {
+  const groups = await exhaustedImageGroups(projectPath);
+  if (groups.length === 0) return [];
+  const open = new Set<string>();
+  for (const p of Array.isArray(research?.plans) ? research.plans : []) {
+    if (!p || typeof p !== "object" || p.status !== "active") continue;
+    for (const i of Array.isArray(p.items) ? p.items : []) {
+      if (i && typeof i.id === "string" && (i.status === "planned" || i.status === "in_progress")) open.add(i.id);
+    }
+  }
+  const byGroup = new Map<string, string[]>(groups.map((g) => [g.imageGroup, []]));
+  for (const e of Array.isArray(research?.log) ? research.log : []) {
+    if (!e || typeof e !== "object" || e.tool !== "image_search") continue;
+    const num = e.query?.imageGroupNumber;
+    if (typeof num !== "string" || typeof e.plan_item_id !== "string" || !open.has(e.plan_item_id)) continue;
+    const ids = byGroup.get(num.split("_")[0]);
+    if (ids && !ids.includes(e.plan_item_id)) ids.push(e.plan_item_id);
+  }
+  return groups.map((g) => ({ ...g, planItemIds: byGroup.get(g.imageGroup) ?? [] }));
+}
+
+/** One file the user uploaded to the project through the web tier. */
+export interface ProjectContextUpload {
+  name: string;
+  /** ISO time the store recorded for the upload. */
+  uploaded: string;
+  /** Whether the upload's text layer (`uploads/<name>.txt`) exists. */
+  hasText: boolean;
+}
+
+/** The project's uploads, newest first, ties by name. An entry `X.txt` whose `X` is
+ *  also an entry is X's text layer, not an upload; a lone `notes.txt` is an upload.
+ *  The web tier writes the text layer under this name (issue #3987, beside
+ *  `upload_key()` in apps/server/proto/web/project_blobs.py). Never throws: a
+ *  listing failure must not fail the whole projection. */
+async function projectUploads(projectPath: string): Promise<ProjectContextUpload[]> {
+  let entries;
+  try {
+    entries = await getProjectStore().list(projectPath, "uploads");
+  } catch {
+    return [];
+  }
+  // A dotfile (a Finder `.DS_Store`) is not something the user uploaded.
+  entries = entries.filter((e) => !e.name.startsWith("."));
+  const names = new Set(entries.map((e) => e.name));
+  const isTextLayer = (name: string) => name.endsWith(".txt") && names.has(name.slice(0, -".txt".length));
+  return entries
+    .filter((e) => !isTextLayer(e.name))
+    .sort((a, b) => b.mtimeMs - a.mtimeMs || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+    .map((e) => ({ name: e.name, uploaded: new Date(e.mtimeMs).toISOString(), hasText: names.has(`${e.name}.txt`) }));
+}
+
 export interface ProjectContextCollectionCounts {
   total: number;
   byRecordType: Record<string, number>;
@@ -107,6 +186,11 @@ export type ProjectContextResult =
       /** research.project.subject_person_ids verbatim (strings only); [] when absent. The
        *  router has no other way to see who the research is about. */
       subjectPersonIds: string[];
+      /** research.researcher_profile.narration_guidance verbatim; null when absent. Every
+       *  agent's Narration line reads it, and no other tool returns it (#3836). */
+      narrationGuidance: string | null;
+      /** research.researcher_profile.subscriptions, strings only; [] when absent. */
+      subscriptions: string[];
       openQuestions: ProjectContextQuestion[];
       /** Advisory per-question state and next step. Nothing gates on it. */
       questionStatuses: QuestionStatus[];
@@ -115,11 +199,28 @@ export type ProjectContextResult =
       localities: ProjectContextLocality[];
       /** Open external-site hand-offs: the user was sent a URL and nothing has come back. */
       awaitingUser: ProjectContextAwaitingUser[];
+      /** Films whose browse cap is spent in this project; nothing resets it. */
+      exhaustedImageGroups: ProjectContextExhaustedImageGroup[];
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent when no
        *  list is stored or the file cannot be read. */
       externalCollections?: Record<string, ProjectContextCollectionCounts>;
+      /** Entries per research.json section research_query serves, matching that
+       *  query's unfiltered `count`: 0 for an absent optional section, null for a
+       *  section research_query would refuse (a required one absent, or any one
+       *  not an array). A 0 answers that section without a query; a null does not. */
+      sectionCounts: Record<string, number | null>;
+      /** Project-wide count of the unregistered disagreements research_query's
+       *  `conflicts` section reports beside its items — so `conflicts: 0` alone
+       *  does not mean that query would come back empty. */
+      unregisteredDisagreementCount: number;
+      /** The files the user uploaded through the web tier. Absent when there are none. */
+      uploads?: ProjectContextUpload[];
+      /** The project's viewer page, when the server knows its public URL. */
+      projectUrl?: string;
+      /** The project's upload page, when uploads are on. */
+      uploadUrl?: string;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
   // a failure (see noProjectResult). Optional field on the existing arm, NOT a
@@ -142,7 +243,7 @@ export function preferredDisplayName(person: any): string | null {
   return parts.length > 0 ? parts.join(" ") : null;
 }
 
-export async function projectContext(input: ProjectContextInput): Promise<ProjectContextResult> {
+export async function projectContext(input: ProjectContextInput, principal: Principal): Promise<ProjectContextResult> {
   // Primary surface for "which build is this?" — 8 skills call project_context,
   // 0 call auth_status — so it rides on every return branch, no-project included.
   const buildId = readBuildInfo().version;
@@ -190,7 +291,7 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   // first-seen order) + assertion count.
   const bySource = new Map<string, { recordIds: string[]; count: number }>();
   for (const a of Array.isArray(research?.assertions) ? research.assertions : []) {
-    if (!a || typeof a !== "object" || typeof a.source_id !== "string") continue;
+    if (!isLiveAssertion(a) || typeof a.source_id !== "string") continue;
     let bucket = bySource.get(a.source_id);
     if (!bucket) {
       bucket = { recordIds: [], count: 0 };
@@ -265,7 +366,26 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
   const questionStatuses = questionStates(research, tree);
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
+
+  const sectionCounts: Record<string, number | null> = {};
+  for (const section of RESEARCH_QUERY_SECTIONS) {
+    if (section === EXTERNAL_COLLECTIONS_SECTION) continue;
+    const entries = research?.[section];
+    sectionCounts[section] = Array.isArray(entries)
+      ? entries.length
+      : entries === undefined && RESEARCH_QUERY_OPTIONAL_SECTIONS.has(section)
+        ? 0
+        : null;
+  }
+  const unregisteredDisagreementCount = disagreementsInScope(
+    research,
+    { projectPath: input.projectPath, section: "conflicts" },
+    undefined,
+  ).length;
   const externalCollections = await externalCollectionCounts(input.projectPath);
+  const exhausted = await exhaustedGroupsWithPlanItems(input.projectPath, research);
+  const uploads = await projectUploads(input.projectPath);
+  const links = await projectLinks(principal);
 
   return {
     ok: true,
@@ -275,13 +395,26 @@ export async function projectContext(input: ProjectContextInput): Promise<Projec
     subjectPersonIds: (Array.isArray(research?.project?.subject_person_ids) ? research.project.subject_person_ids : []).filter(
       (id: unknown): id is string => typeof id === "string",
     ),
+    narrationGuidance:
+      typeof research?.researcher_profile?.narration_guidance === "string"
+        ? research.researcher_profile.narration_guidance
+        : null,
+    subscriptions: (Array.isArray(research?.researcher_profile?.subscriptions)
+      ? research.researcher_profile.subscriptions
+      : []
+    ).filter((x: unknown): x is string => typeof x === "string"),
     openQuestions,
     questionStatuses,
     persons,
     sources,
     localities,
     awaitingUser,
+    exhaustedImageGroups: exhausted,
     ...(externalCollections ? { externalCollections } : {}),
+    sectionCounts,
+    unregisteredDisagreementCount,
+    ...(uploads.length > 0 ? { uploads } : {}),
+    ...links,
   };
 }
 
@@ -342,10 +475,11 @@ export const projectContextSchema = {
     "progress\", \"what have we found?\") or reopens a project, call this and answer " +
     "from it in exactly ONE plain-language paragraph and nothing else: the objective, " +
     "what is established, what is open or waiting on the researcher, and the next " +
-    "step, stated rather than asked. No lead-in line (\"Here's where things stand:\"), " +
+    "step, stated rather than asked, as the paragraph's last sentence. This shape " +
+    "overrides narrationGuidance for this answer. No lead-in line (\"Here's where things stand:\"), " +
     "no line breaks, headings, tables, lists or bold, no closing question, " +
     "and no identifiers, file names, tool names or field names: " +
-    "say \"the proof summary\" or \"the parentage question\", never q_001 or ps_001. " +
+    "say \"the conclusion\" or \"the parentage question\", never q_001 or ps_001. " +
     "nextStep values name ids and agents; restate them in plain words. " +
     "Do not read the project files and do not delegate. " +
     "Read-only compact projection of the project state — call this INSTEAD of " +
@@ -378,14 +512,28 @@ export const projectContextSchema = {
     "nothing has answered yet — do not raise them again; when the user brings back a " +
     "capture, or says they cannot access the site, log that as the row's closing " +
     "entry with the same urlGenerated. subjectPersonIds are the project's subject " +
-    "persons (research.project.subject_person_ids). externalCollections counts stored curated " +
+    "persons (research.project.subject_person_ids). narrationGuidance is " +
+    "researcher_profile.narration_guidance verbatim (null when absent): the narration " +
+    "style every skill applies; subscriptions is researcher_profile.subscriptions ([] " +
+    "when absent). For tree facts, dates, places, marriages and arks call tree_query. " +
+    "externalCollections counts stored curated " +
     "collections per place by record type (rows: research_query external_collections). " +
+    "sectionCounts gives the entry count of every research.json section research_query " +
+    "serves (null when research_query would refuse the section), and unregisteredDisagreementCount the project-wide count of " +
+    "unregistered disagreements research_query's conflicts section reports — a section " +
+    "counted 0 needs no query, except conflicts while that count is above 0. " +
+    "exhaustedImageGroups [{imageGroup, imagesRead, planItemIds}] lists films whose 20-image " +
+    "browse cap is spent in this project; nothing resets it, not a new agent or session. Never " +
+    "delegate a browse of one: send its planItemIds to research-plan to dispose of. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
     "record); the writer tools handle every mechanical lookup themselves. Also " +
     "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
-    "a problem. Writes nothing.",
+    "a problem. uploads [{name, uploaded, hasText}] (absent when none) lists the files the " +
+    "user uploaded, newest first; hasText says a text layer exists. projectUrl, when present, " +
+    "is the project's page in the web app, and uploadUrl the page where the user uploads a " +
+    "file; give the user uploadUrl when they want to add a document. Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {

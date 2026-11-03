@@ -19,6 +19,7 @@ import {
   isObject,
 } from "./types.js";
 import { isInsideProject } from "../utils/project-io.js";
+import { RETRACTED } from "../utils/assertion-liveness.js";
 import {
   TREE_TOP_LEVEL_FIELDS,
   TREE_PERSON_FIELDS,
@@ -81,6 +82,7 @@ const CLOSED_ENUMS = {
   person_evidence_confidence: new Set(["confident", "probable", "speculative"]),
   project_status: new Set(["active", "paused", "completed"]),
   priority: new Set(["high", "medium", "low"]),
+  question_kind: new Set(["enumerative", "targeted"]),
   informant_proximity: new Set([
     "self", "witness", "household_member",
     "family_not_present", "researcher", "official_duty", "unknown",
@@ -436,6 +438,24 @@ function checkIdPrefix(
   }
 }
 
+// Every reference resolves an id against one set, so two entries sharing an id
+// are indistinguishable to it -- PR #2353 keyed a guard on a conflict id and
+// suppressed a real finding because two same-id entries were two conflicts.
+// Keep the message free of array indexes: `validateIntroduced` matches a
+// pre-existing error by message, so an old duplicate never blocks a write.
+function addUniqueId(
+  seen: Set<any>,
+  objId: any,
+  section: string,
+  path: string,
+  report: ValidationReport
+): void {
+  if (typeof objId === "string" && seen.has(objId)) {
+    addError(report, path, `duplicate ${section} id '${objId}' — ids must be unique; an earlier entry already uses it`);
+  }
+  seen.add(objId);
+}
+
 // The schema gives these id arrays an item pattern (`^q_`); without this check
 // a writer persisted `extracted_for_question_ids: ["flynn-household-origins"]`,
 // which the JSON schema then rejected (ut_search_records_003, issue #2116).
@@ -673,9 +693,9 @@ export const RESEARCH_SHAPES = {
     "experience_level", "subscriptions", "narration_guidance", "intended_audience",
   ]),
   question: new Set([
-    "id", "question", "rationale", "selection_basis", "priority", "status",
-    "depends_on", "unblocks", "created", "resolved",
-    "resolution_assertion_ids", "search_stop",
+    "id", "question", "rationale", "selection_basis", "question_kind",
+    "priority", "status", "depends_on", "unblocks", "created", "resolved",
+    "resolution_assertion_ids", "search_stop", "date_window",
   ]),
   search_stop: new Set([
     "stopped_because", "log_entry_ids", "stop_criteria", "justification", "not_reached",
@@ -716,14 +736,14 @@ export const RESEARCH_SHAPES = {
     "fact_type", "value", "structured_value", "date", "date_certainty",
     "place", "standard_place", "information_quality", "informant",
     "informant_proximity", "informant_bias_notes", "record_basis",
-    "log_entry_id", "extracted_for_question_ids",
+    "log_entry_id", "extracted_for_question_ids", "superseded_by", "superseded_reason",
   ]),
   person_evidence_entry: new Set([
     "id", "assertion_id", "person_id", "confidence", "rationale",
     "core_identifier_conflict", "move_bridge", "match_score", "created", "superseded_by",
   ]),
   rejected_link_entry: new Set([
-    "id", "assertion_id", "person_id", "reason", "created",
+    "id", "assertion_id", "person_id", "reason", "researcher_words", "created",
   ]),
   conflict: new Set([
     "id", "conflict_type", "description", "disputed_attribute",
@@ -776,7 +796,7 @@ export const RESEARCH_SHAPES = {
   ]),
   namesake: new Set([
     "id", "person_id", "name", "place", "time_period", "record_ids",
-    "log_entry_ids", "notes", "created",
+    "log_entry_ids", "record_persona_ids", "notes", "created",
   ]),
 };
 
@@ -898,7 +918,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
 
     if ("id" in q) {
       checkIdPrefix(q.id, ID_PREFIXES.questions, qp, report);
-      ids.questions.add(q.id);
+      addUniqueId(ids.questions, q.id, "question", qp, report);
     }
     if ("status" in q) {
       checkEnum(q.status, "question_status", qp, report);
@@ -906,12 +926,21 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("priority" in q) {
       checkEnum(q.priority, "priority", qp, report);
     }
+    if ("question_kind" in q) {
+      checkEnum(q.question_kind, "question_kind", qp, report);
+    }
     if ("selection_basis" in q && !SELECTION_BASIS_VALUES.has(q.selection_basis)) {
       const sorted = Array.from(SELECTION_BASIS_VALUES).sort();
       addError(report, qp, `'${q.selection_basis}' is not a valid selection_basis (expected one of: ${sorted.join(", ")})`);
     }
     checkIsoDate(q, "created", qp, report);
     checkIsoDate(q, "resolved", qp, report); // nullable — null skipped above
+    if ("date_window" in q) {
+      const m = typeof q.date_window === "string" ? /^(\d{4})-(\d{4})$/.exec(q.date_window) : null;
+      if (!m || Number(m[1]) > Number(m[2])) {
+        addError(report, qp, `date_window must be "YYYY-YYYY" with the start year not after the end year, got ${JSON.stringify(q.date_window)}`);
+      }
+    }
 
     // search_stop (replaces exhaustive_declaration — issue #2539, 2026-10-07)
     const ss = q.search_stop;
@@ -1014,7 +1043,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(pl, RESEARCH_SHAPES.plan, "plans", pp, report);
     if ("id" in pl) {
       checkIdPrefix(pl.id, ID_PREFIXES.plans, pp, report);
-      ids.plans.add(pl.id);
+      addUniqueId(ids.plans, pl.id, "plan", pp, report);
     }
     if ("status" in pl) {
       checkEnum(pl.status, "plan_status", pp, report);
@@ -1073,7 +1102,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkAllowedKeys(item, RESEARCH_SHAPES.plan_item, "plan items", ip, report);
       if ("id" in item) {
         checkIdPrefix(item.id, ID_PREFIXES.plan_items, ip, report);
-        ids.plan_items.add(item.id);
+        addUniqueId(ids.plan_items, item.id, "plan item", ip, report);
       }
       if ("status" in item) {
         checkEnum(item.status, "plan_item_status", ip, report);
@@ -1129,7 +1158,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(entry, RESEARCH_SHAPES.log_entry, "log entries", lp, report);
     if ("id" in entry) {
       checkIdPrefix(entry.id, ID_PREFIXES.log, lp, report);
-      ids.log.add(entry.id);
+      addUniqueId(ids.log, entry.id, "log", lp, report);
     }
     if ("outcome" in entry) {
       checkEnum(entry.outcome, "log_outcome", lp, report);
@@ -1200,7 +1229,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(src, RESEARCH_SHAPES.source, "sources", sp, report);
     if ("id" in src) {
       checkIdPrefix(src.id, ID_PREFIXES.sources, sp, report);
-      ids.sources.add(src.id);
+      addUniqueId(ids.sources, src.id, "source", sp, report);
     }
     if ("source_classification" in src) {
       checkEnum(src.source_classification, "source_classification", sp, report);
@@ -1264,13 +1293,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(a, RESEARCH_SHAPES.assertion, "assertions", ap, report);
     checkStringOrNull(
       a,
-      ["date", "place", "standard_place", "record_persona_id", "informant_bias_notes"],
+      ["date", "place", "standard_place", "record_persona_id", "informant_bias_notes", "superseded_reason"],
       ap,
       report
     );
     if ("id" in a) {
       checkIdPrefix(a.id, ID_PREFIXES.assertions, ap, report);
-      ids.assertions.add(a.id);
+      addUniqueId(ids.assertions, a.id, "assertion", ap, report);
     }
     checkIdPrefixArray(a.extracted_for_question_ids, ID_PREFIXES.questions, `${ap}.extracted_for_question_ids`, report);
     if ("information_quality" in a) {
@@ -1391,6 +1420,27 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       checkRefExists(a.log_entry_id, ids.log, "log entry", ap, report);
     }
   }
+  // A retired assertion (#3678) names its replacement, or is "retracted" with a
+  // reason. Second pass: a replacement may sit later in the array.
+  for (let i = 0; i < assertions.length; i++) {
+    const a = assertions[i];
+    if (!a || typeof a !== "object" || !("superseded_by" in a) || a.superseded_by === null) continue;
+    const ap = `${path}/assertions[${i}]`;
+    const by = a.superseded_by;
+    if (typeof by !== "string") {
+      addError(report, ap, `superseded_by must be a string or null, got ${typeof by}`);
+    } else if (by === RETRACTED) {
+      if (typeof a.superseded_reason !== "string" || a.superseded_reason.trim() === "") {
+        addError(report, ap, `superseded_by "${RETRACTED}" requires a non-empty superseded_reason`);
+      }
+    } else if (!by.startsWith(ID_PREFIXES.assertions)) {
+      addError(report, ap, `superseded_by '${by}' must be an '${ID_PREFIXES.assertions}' id or "${RETRACTED}"`);
+    } else if (by === a.id) {
+      addError(report, ap, `superseded_by '${by}' names the assertion itself`);
+    } else {
+      checkRefExists(by, ids.assertions, "assertion", ap, report);
+    }
+  }
 
   // Rejected links. RESEARCH_SHAPES.rejected_link_entry existed and was referenced
   // NOWHERE, so the section had no shape check at all: a scratch write of
@@ -1398,13 +1448,17 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   // a rejection is kept so a later step cannot silently re-link the same pair -- is
   // only as good as the rows it is read back from.
   const rejectedLinks = Array.isArray(data.rejected_links) ? data.rejected_links : [];
+  const rejectedIds = new Set<any>();
   for (let i = 0; i < rejectedLinks.length; i++) {
     const rj = rejectedLinks[i];
     const rp = `${path}/rejected_links[${i}]`;
     if (!isObjectEntry(rj, rp, report)) continue;
     checkRequired(rj, ["id", "assertion_id", "person_id", "created"], rp, report, NULLABLE_FIELDS);
     checkAllowedKeys(rj, RESEARCH_SHAPES.rejected_link_entry, "rejected_links entries", rp, report);
-    if ("id" in rj) checkIdPrefix(rj.id, ID_PREFIXES.rejected_links, rp, report);
+    if ("id" in rj) {
+      checkIdPrefix(rj.id, ID_PREFIXES.rejected_links, rp, report);
+      addUniqueId(rejectedIds, rj.id, "rejected_links", rp, report);
+    }
     for (const field of ["assertion_id", "person_id"] as const) {
       if (field in rj && typeof rj[field] !== "string") {
         addError(report, rp, `${field} must be a string`);
@@ -1419,6 +1473,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("reason" in rj && rj.reason != null) {
       if (typeof rj.reason !== "string" || rj.reason.trim() === "") {
         addError(report, rp, "reason must be a non-empty string or null");
+      }
+    }
+    // Optional here so a row written before the field existed still loads;
+    // research_append requires it on every append.
+    if ("researcher_words" in rj) {
+      if (typeof rj.researcher_words !== "string" || rj.researcher_words.trim() === "") {
+        addError(report, rp, "researcher_words must be a non-empty string");
       }
     }
     if ("created" in rj) checkIsoDate(rj, "created", rp, report);
@@ -1437,7 +1498,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(pe, RESEARCH_SHAPES.person_evidence_entry, "person_evidence entries", pp, report);
     if ("id" in pe) {
       checkIdPrefix(pe.id, ID_PREFIXES.person_evidence, pp, report);
-      ids.person_evidence.add(pe.id);
+      addUniqueId(ids.person_evidence, pe.id, "person_evidence", pp, report);
     }
     if ("confidence" in pe) {
       checkEnum(pe.confidence, "person_evidence_confidence", pp, report);
@@ -1459,6 +1520,11 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     if ("assertion_id" in pe) {
       checkRefExists(pe.assertion_id, ids.assertions, "assertion", pp, report);
     }
+    // A link a rejection retired names the rejection. Rejected links are read
+    // above, so the id set is complete here.
+    if (typeof pe.superseded_by === "string" && pe.superseded_by.startsWith(ID_PREFIXES.rejected_links)) {
+      checkRefExists(pe.superseded_by, rejectedIds, "rejected link", pp, report);
+    }
     checkIsoDate(pe, "created", pp, report);
   }
 
@@ -1475,7 +1541,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(c, RESEARCH_SHAPES.conflict, "conflicts", cp, report);
     if ("id" in c) {
       checkIdPrefix(c.id, ID_PREFIXES.conflicts, cp, report);
-      ids.conflicts.add(c.id);
+      addUniqueId(ids.conflicts, c.id, "conflict", cp, report);
     }
     checkIdPrefixArray(c.blocks_question_ids, ID_PREFIXES.questions, `${cp}.blocks_question_ids`, report);
     if ("conflict_type" in c) {
@@ -1553,7 +1619,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(h, RESEARCH_SHAPES.hypothesis, "hypotheses", hp, report);
     if ("id" in h) {
       checkIdPrefix(h.id, ID_PREFIXES.hypotheses, hp, report);
-      ids.hypotheses.add(h.id);
+      addUniqueId(ids.hypotheses, h.id, "hypothesis", hp, report);
     }
     checkIdPrefixArray(h.related_question_ids, ID_PREFIXES.questions, `${hp}.related_question_ids`, report);
     if ("status" in h) {
@@ -1576,7 +1642,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(t, RESEARCH_SHAPES.timeline, "timelines", tp, report);
     if ("id" in t) {
       checkIdPrefix(t.id, ID_PREFIXES.timelines, tp, report);
-      ids.timelines.add(t.id);
+      addUniqueId(ids.timelines, t.id, "timeline", tp, report);
     }
 
     // The loops below read a non-array as empty, so an object or string here
@@ -1631,7 +1697,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(ps, RESEARCH_SHAPES.proof_summary, "proof_summaries", psp, report);
     if ("id" in ps) {
       checkIdPrefix(ps.id, ID_PREFIXES.proof_summaries, psp, report);
-      ids.proof_summaries.add(ps.id);
+      addUniqueId(ids.proof_summaries, ps.id, "proof summary", psp, report);
     }
     if ("tier" in ps) {
       checkEnum(ps.tier, "proof_tier", psp, report);
@@ -1889,13 +1955,17 @@ function validateNamesakes(data: any, ids: ResearchIds, path: string, report: Va
     addError(report, `${path}/namesakes`, "namesakes must be an array");
     return;
   }
+  const namesakeIds = new Set<any>();
   for (let i = 0; i < rows.length; i++) {
     const ns = rows[i];
     const np = `${path}/namesakes[${i}]`;
     if (!isObjectEntry(ns, np, report)) continue;
     checkRequired(ns, ["id", "person_id", "name", "place", "record_ids", "created"], np, report, new Set());
     checkAllowedKeys(ns, RESEARCH_SHAPES.namesake, "namesakes entries", np, report);
-    if ("id" in ns && ns.id !== null) checkIdPrefix(ns.id, ID_PREFIXES.namesakes, np, report);
+    if ("id" in ns && ns.id !== null) {
+      checkIdPrefix(ns.id, ID_PREFIXES.namesakes, np, report);
+      addUniqueId(namesakeIds, ns.id, "namesake", np, report);
+    }
     for (const field of ["person_id", "name", "place"]) {
       if (field in ns && ns[field] !== null && (typeof ns[field] !== "string" || ns[field] === "")) {
         addError(report, np, `'${field}' must be a non-empty string`);
@@ -1923,6 +1993,19 @@ function validateNamesakes(data: any, ids: ResearchIds, path: string, report: Va
         });
       }
     }
+    if ("record_persona_ids" in ns) {
+      const stamp = ns.record_persona_ids;
+      if (stamp === null || typeof stamp !== "object" || Array.isArray(stamp)) {
+        addError(report, np, "record_persona_ids must be an object");
+      } else {
+        const listed = new Set(Array.isArray(ns.record_ids) ? ns.record_ids : []);
+        for (const [rid, persona] of Object.entries(stamp)) {
+          const sp = `${np}/record_persona_ids/${rid}`;
+          if (typeof persona !== "string" || persona === "") addError(report, sp, "must be a non-empty string");
+          if (!listed.has(rid)) addError(report, sp, "keys a record not in record_ids");
+        }
+      }
+    }
     checkIsoDate(ns, "created", np, report);
   }
 }
@@ -1943,6 +2026,7 @@ function validateEvaluations(
     }
   }
 
+  const evSeen = new Set<any>();
   for (let i = 0; i < evaluations.length; i++) {
     const ev = evaluations[i];
     const ep = `${path}/evaluations[${i}]`;
@@ -1956,6 +2040,7 @@ function validateEvaluations(
 
     if ("id" in ev) {
       checkIdPrefix(ev.id, ID_PREFIXES.evaluations, ep, report);
+      addUniqueId(evSeen, ev.id, "evaluation", ep, report);
     }
     if ("focus" in ev) {
       checkEnum(ev.focus, "evaluation_focus", ep, report);
@@ -2035,6 +2120,7 @@ function validateLocalities(
   // their required and stray keys are not deep-checked here (same precedent as
   // structured_value).
   const localities = Array.isArray(data.localities) ? data.localities : [];
+  const localityIds = new Set<any>();
   for (let i = 0; i < localities.length; i++) {
     const loc = localities[i];
     const lp = `${path}/localities[${i}]`;
@@ -2049,6 +2135,7 @@ function validateLocalities(
     checkAllowedKeys(loc, RESEARCH_SHAPES.locality, "localities", lp, report);
     if ("id" in loc) {
       checkIdPrefix(loc.id, ID_PREFIXES.localities, lp, report);
+      addUniqueId(localityIds, loc.id, "locality", lp, report);
     }
     if ("created" in loc) checkIsoDate(loc, "created", lp, report);
     if ("updated" in loc && loc.updated != null) checkIsoDate(loc, "updated", lp, report);

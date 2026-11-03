@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_research_026",
+    "skill": "research",
+    "name": "A question about life in a place and era goes straight to the historical-context agent, not research",
+    "type": "negative",
+    "description": "This routing negative asks about life in Dillon, Montana, in the 1940s. The correct first hop is historical-context because historical background is not on research's bounded list. Routing mode passes only on a spawn of that agent with research never activating, so it measures the agent's description directly.",
+    "tags": [
+      "routing"
+    ]
+  },
+  "input": {
+    "user_message": "can you provide information about life in Dillon Montana in the 1940s?",
+    "scenario": "empty-folder-no-project"
+  },
+  "judge_context": [
+    "This is a ROUTING negative. The harness grades it in routing mode: it passes only if the main thread spawns @plugin:historical-context and research never activates. Do not grade the routing decision yourself; your scores are diagnostic only.",
+    "There is no project, and none should be created."
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600
+  },
+  "negative": {
+    "correct_skill": [
+      "historical-context"
+    ],
+    "explanation": "Ruling 2026-10-27: for this message the main thread's correct first hop is the historical-context agent itself, not research. Historical background is not on research's closed bounded list (research/SKILL.md, \"Bounded request or job\"), so research capturing this message would run it as a job. A miss is recorded, never made green by adding grade_on_invariant or widening correct_skill."
+  }
+}

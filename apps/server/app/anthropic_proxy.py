@@ -15,6 +15,9 @@ Each Messages API call's usage is read off the response on its way back
 (``_UsageMeter``) and recorded to ``api_calls``, with the agent that made it read off the
 request's system prompt (``_agent_name``). Recording only: the alpha has no
 spend limit (lead ruling 2026-09-25), so nothing here refuses a call on cost.
+
+A session past ``SESSION_MAX_AGE`` is refused on age instead (403). Viewing one
+resumes its sandbox, and a turn left running there would otherwise carry on.
 """
 from __future__ import annotations
 
@@ -43,6 +46,10 @@ _PROXY_PREFIX = "/api/anthropic-proxy"
 _DROP_REQUEST_HEADERS = frozenset({
     "host", "content-length", "transfer-encoding", "connection", "keep-alive",
     "proxy-connection", "te", "trailer", "upgrade",
+    # httpx must pick the encoding, not the sandbox: its own default is always one it
+    # can decode, and the response's content-encoding is stripped below, so a
+    # forwarded encoding httpx can't decode reaches the client as unlabelled bytes.
+    "accept-encoding",
 })
 _DROP_RESPONSE_HEADERS = frozenset({
     "content-length", "content-encoding", "transfer-encoding", "connection",
@@ -262,6 +269,17 @@ async def anthropic_proxy(path: str, request: Request) -> Response:
             content=_error_json("authentication_error",
                                 "sandbox not found or archived"),
             status_code=401,
+            media_type="application/json",
+        )
+
+    # Imported here: sessions imports agent_secrets, which imports this module.
+    from .sessions import _EXPIRED_DETAIL, _continuable
+
+    if not _continuable(project):
+        log.warning("proxy: sandbox %s refused, session past SESSION_MAX_AGE", sandbox_id)
+        return Response(
+            content=_error_json("permission_error", _EXPIRED_DETAIL),
+            status_code=403,
             media_type="application/json",
         )
 

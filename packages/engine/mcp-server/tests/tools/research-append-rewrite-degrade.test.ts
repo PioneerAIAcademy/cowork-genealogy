@@ -48,6 +48,12 @@ vi.mock("../../src/validation/introduced-errors.js", async (importOriginal) => {
   };
 });
 
+// The place corrections below look the new place up; offline, it resolves to nothing.
+vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/utils/place-resolver.js")>()),
+  resolveStandardPlace: vi.fn(async () => null),
+}));
+
 const { researchAppend } = await import("../../src/tools/research-append.js");
 
 const research = () => ({

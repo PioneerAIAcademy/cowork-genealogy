@@ -12,11 +12,12 @@ network.
 
 ## Why it is a tool and not a sentence
 
-Since continuous work shipped, the Stop hook vetoes every voluntary stop until
-`project.status` is `completed`, except on a session with no `research.json`. So a request
+While continuous work ran, the Stop hook vetoed every voluntary stop until
+`project.status` was `completed`, except on a session with no `research.json`. So a request
 bounded to one deliverable — "create a plan but leave it at that", a single christening
-lookup, "where are we?" — runs on to the proof, the nudge cap or the spend bound. The
-finish line has to belong to the request that named it.
+lookup, "where are we?" — ran on to the proof, the nudge cap or the spend bound. The
+finish line has to belong to the request that named it. Step mode's phase 2 deleted that
+veto from both hosted planes; the halt below is what still ends a delivered turn.
 
 A hook can match a **tool name** exactly. It cannot rely on prose the model may not honour,
 and prose triggering has been measured flipping about half the time.
@@ -39,7 +40,7 @@ tools on purpose.
 {
   "acknowledged": true,
   "summary": "<the summary, trimmed>",
-  "note": "Delivery recorded. Where this run is managed, the turn ends here; otherwise it carries on."
+  "note": "Signal received. This turn's deliverable is done: make no further tool calls and end your turn; the researcher chooses the next step."
 }
 ```
 
@@ -52,8 +53,8 @@ tools on purpose.
 - **The hosted ALPHA (`real_agent.py`).** It now halts on the same signal. The arm lives in
   `count_only` — the `matcher=None` PreToolUse callback that already sees every call — and is
   gated on the main thread (`"agent_id" not in` the payload) so a subagent's delivery cannot
-  strand the orchestrator mid-job. It sets a flag the Stop hook forwards as
-  `should_continue_run(delivered=...)`, so the voluntary exit is allowed instead of nudged.
+  strand the orchestrator mid-job. It sets a flag the (since deleted) Stop hook forwarded as
+  `should_continue_run(delivered=...)`, so the voluntary exit was allowed instead of nudged.
   The halt text is built by the shared `delivered_stop_reason`, so both planes send the model's
   summary first. The alpha does not yet RENDER it: `map_message` has no `ResultMessage`
   branch and nothing under `apps/server/app` reads `stopReason`, so there the sentence
@@ -73,13 +74,14 @@ tools on purpose.
   `DELIVERY_GUIDANCE` moved there too and the alpha now appends it to its own system prompt.
   That half is not optional: the arm fires only on a real call, and nothing calls a tool it
   was never told about — wiring the arm alone ships a dead rule that looks identical to a
-  working one. `test_alpha_stop_hook.py` asserts the prompt carries it, mirroring the
+  working one. `test_alpha_turn_hooks.py` asserts the prompt carries it, mirroring the
   assertion `test_proto_worker.py` already makes for the prototype.
 - **Cowork and the e2e harness.** No such hook binds, and the tool IS advertised (the
   e2e orchestrator binds the real engine server and grants `mcp__genealogy` as a
   server-prefix wildcard). So it must not error and must not claim an effect it did not
-  have: it returns the acknowledgement above and the run genuinely carries on. That inert
-  behaviour is the intended one for these environments, not an oversight.
+  have: it returns the acknowledgement above, which tells the model to make no further tool
+  calls and end its turn. The tool itself still writes nothing and ends nothing; that note is
+  the only stop these environments have.
 - **The unit harness.** Advertised, and inert. That harness binds a mock server which
   registers only fixture-backed tools plus `LIVE_TOOLS` (`eval/harness/harness/mock_mcp.py`);
   this tool is a `LIVE_TOOL` there, so the real implementation runs and the call is
@@ -112,16 +114,73 @@ tool returns its harmless acknowledgement.
 "instruct in the prompt" versus "instruct in the body". It was not. The body already told
 the model what to do at that exact moment — *"end your turn"* — while the prompt told it to
 call this tool. A model following the nearer, more specific instruction ends the turn
-without the call, the hosted arm never halts, and the nudge arm pushes it on into more
-research. The cost of naming it in the body is one inert call per bounded turn in Cowork;
+without the call, the hosted arm never halts, and the nudge arm (since deleted) pushed it
+on into more research. The cost of naming it in the body is one inert call per bounded turn in Cowork;
 the cost of not naming it was the conflict. One skill body names it, not every skill.
 
-It carries two exclusions, both load-bearing:
+It carries three exclusions, all load-bearing:
 
 - **Not when the research objective itself is finished.** That run ends on its own and its
   outcome is `completed`; reporting `delivered` there would mislabel a finished project.
 - **Not in place of asking the researcher a question.** An ask waits for an answer; a
   delivery waits for nothing.
+- **Not while no project exists yet.** A "Research PID X. <question>" first message read
+  as "a single record or lookup": the main thread answered it from one `person_read` and
+  delivered, with no project and no research. A request to research a person is a research
+  job. The exclusion is keyed on the project, not the message: a turn that starts a project
+  and then gives just a plan creates the project first and still delivers.
+
+The tool's own description says the same thing in step mode's terms: call it once this
+turn's deliverable is produced, the only one asked for or the first of several, after naming
+the others and ending on the next one's "Continue with …?" offer, which is not a question to
+the researcher. It used to say "once every one is produced", which contradicted step mode on a
+compound bounded ask: the model either held the call back because the second deliverable was
+not yet produced, or produced both in one turn so that it could call it.
+
+## Ending the turn when a project completes
+
+`research_delivered` is the agent's own end-of-turn signal. A completing project has a
+second, automatic one: when the main thread's call to `proof-conclusion` completes the
+project, the turn ends there and the agent's `summary_for_user` is shown as the final
+message, instead of the main thread's next model call paraphrasing it. That call only
+restated the summary: across the four most recent completed projects it cost between
+$0.28 and $0.43 and about 20 s each.
+
+**The trigger.** A main-thread `Agent` call to `proof-conclusion`, after which
+`project.status` is `completed` when it was not just before the call. Three details:
+
+- The agent name is compared after its last `:`, so the bare name and any prefixed form
+  (such as `genealogy-research:proof-conclusion`) both count, the same way the step
+  boundary compares names.
+- Only `proof-conclusion` can write `project.status`, so a project always completes
+  inside that call.
+- It fires on the change of status, not the state. A follow-up question in a project
+  already completed never ends the turn; a project that was reopened and then completed
+  again does.
+
+**When there is no halt.** In each case the turn runs on as before:
+
+- The call's `summary_for_user` is missing, or does not end on one of the two sentences
+  `proof-conclusion` writes when it completes the project: "This research is finished. If
+  you'd like a second opinion on it, just ask." or, when sources were left unsearched,
+  "This research is finished for now. If you'd like a second opinion on it, just ask."
+- The status could not be read before the call, or there is no `research.json`.
+- On the worker, the store is found down at either read, the one before the call or the
+  one after it. The worker then fails the attempt closed, as it does for any outage.
+- The call came from a subagent.
+
+If the main thread keeps talking after the halt, the summary is not added, and the
+model's own message stays last. Text from a subagent does not count as the main thread
+talking on.
+
+**What the user sees.** The turn ends with the agent's `summary_for_user` as the final
+message, with no further model call. It is shown as an ordinary message, because the
+hook's `stopReason` never reaches the browser. The halted turn offers no next step, so no
+reply buttons appear and no automatic follow-up turn is queued.
+
+**Which planes.** The hosted control plane and the prototype worker, through one shared
+predicate, `completion_halt_summary` in `continue_policy.py`. The worker records the turn
+as `completed` itself, since no plane binds a Stop hook.
 
 ## Outcome precedence
 
@@ -145,6 +204,12 @@ precedence is the hook's ordering, not a clause list:
   (phase 3 is unbuilt), so no path produces it.
 - **A subagent cannot deliver.** The arm requires main-thread identity
   (`"agent_id" not in data`); a subagent's call falls through to the inert tool body.
+- **A completion halt never overrides a reason already set.** It is recorded from the
+  `PostToolUse` hook, after the call. If a halt during the call already set a reason (a
+  Stop, the spend cap, a lost grant lock, a superseded attempt), that reason stands and
+  the summary is not shown.
+- **A subagent cannot trigger a completion halt.** Like delivery, it requires main-thread
+  identity.
 
 The shared `continue_policy` carries `TERMINAL_DELIVERED` as the value's definition and
-nothing more. It GAINED a `delivered` parameter and clause with the hosted-alpha port: the alpha's Stop hook forwards the flag, so a caller now does pass it. The flag is per TURN, cleared at the turn boundary in `RealAgent._begin_turn_hook_state` -- left set, one bounded delivery would authorise a voluntary stop in every later turn of the session, ending the next research job after a single step.
+nothing more. It gained a `delivered` parameter and clause with the hosted-alpha port, and lost both, with `should_continue_run`, when step mode's phase 2 deleted the hosted Stop veto. The flag is per TURN, cleared at the turn boundary in `RealAgent._begin_turn_hook_state` -- left set, one bounded delivery would authorise a voluntary stop in every later turn of the session, ending the next research job after a single step.

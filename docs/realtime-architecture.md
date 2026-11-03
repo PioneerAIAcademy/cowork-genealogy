@@ -209,9 +209,10 @@ one `status: session_expired` frame carrying `readOnly: true`, drops everything
 passed to `send()` from then on, and opens the socket as usual, so the sandbox
 replays the chat. `ChatPane` replaces the composer with "This session is more
 than 72 hours old and can't be continued." and shows "Loading this session's
-chat…" until `chat_ready`. Read-only is enforced by the client only: the browser
-talks straight to the sandbox, which runs its old code and would run a turn sent
-by hand.
+chat…" until `chat_ready`. The client enforces read-only: the browser talks
+straight to the sandbox, which runs its old code and would start a turn sent by
+hand. The credential proxy refuses that turn's Claude calls (403), so it can
+neither work nor spend.
 
 **A 410 from `/connect` is terminal, and it is not `chat_error`.** The control
 plane still answers 410 for an old session when the client does not ask for

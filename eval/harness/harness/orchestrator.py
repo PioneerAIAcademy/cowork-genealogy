@@ -11,6 +11,7 @@ import json
 import sys
 import tempfile
 import time
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -20,9 +21,7 @@ from harness.allowed_tools import (
     format_uncovered_callee_fixtures,
     uncovered_callee_fixtures,
     declared_skill_tools,
-    load_skill_frontmatter,
     load_suite_frontmatter,
-    suite_body_path,
 )
 from harness.auth import AuthConfig
 from harness.fixtures import load_fixtures
@@ -173,53 +172,28 @@ FILE_VALIDITY_VALIDATORS = frozenset(
 )
 
 
-def session_model_for(
-    skill: str,
-    skills_dir: Path,
-    cli_model: str,
-    *,
-    agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
-) -> str:
-    """The model a test session's main thread runs on.
-
-    A `SKILL.md` suite runs its skill on the main thread, so the skill's
-    `model:` wins when set: Claude Code's turn-scoped skill override
-    (code.claude.com/docs/en/skills).
-
-    An agent-keyed suite (issue #1253) never runs its agent on the main
-    thread. A direct test's main thread is the dispatcher and a routed test's
-    is the router; the agent runs as a subagent on its own `model:` and
-    `effort:`, which the CLI applies itself. Production's lead runs the
-    default model whatever a helper declares, so the dispatcher keeps
-    `cli_model`. When the agent's model was applied to the whole session, a
-    Haiku dispatcher refused or reworded delegations no production lead does
-    (issue #3870).
-
-    Kept here, not in `allowed_tools.py`, which is in the validators' import
-    closure: a change there moves rule 2c's `validators.shared` for every suite.
-    """
-    body = suite_body_path(skill, skills_dir, agents_dir=agents_dir)
-    if body.name != "SKILL.md":
-        return cli_model
-    declared = load_skill_frontmatter(body).get("model")
-    if isinstance(declared, str) and declared.strip():
-        return declared.strip()
-    return cli_model
-
-
-def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
-    """True when no gating validator failed.
+def gating_validator_failures(validator_results, *, intentionally_invalid: bool) -> list[str]:
+    """Names of the gating validators that failed, in order.
 
     Tier-2 (reporting_only) results are observations, never gates — they are
     skipped here. When the test's scenario is intentionally invalid, the
-    file-validity validators are expected to fail and are also ignored; every
-    other gating validator still counts.
+    file-validity validators are expected to fail and are also skipped; every
+    other gating validator still counts. The judge is shown this same list, so
+    it is never told about a failure the gate has ruled expected (#3870).
     """
-    return all(
-        r.passed
+    return [
+        r.name
         for r in validator_results
-        if not r.reporting_only  # tier-2 never gates (issue #1749)
+        if not r.passed
+        and not r.reporting_only  # tier-2 never gates (issue #1749)
         and not (intentionally_invalid and r.name in FILE_VALIDITY_VALIDATORS)
+    ]
+
+
+def compute_validators_passed(validator_results, *, intentionally_invalid: bool) -> bool:
+    """True when no gating validator failed (`gating_validator_failures`)."""
+    return not gating_validator_failures(
+        validator_results, intentionally_invalid=intentionally_invalid
     )
 
 
@@ -316,7 +290,6 @@ async def _run_one_test_async(
     skill_frontmatter = load_suite_frontmatter(
         spec.skill, paths.skills_dir, agents_dir=DEFAULT_PLUGIN_AGENTS
     )
-    model = session_model_for(spec.skill, paths.skills_dir, model)
     # The judge reads the scenario's judge-brief.md, falling back to its whole
     # README.md until one is written; each fallback is reported (issue #2478).
     scenario_brief = load_scenario_brief(paths.scenarios_dir, spec.scenario)
@@ -782,7 +755,7 @@ async def _execute_single_run(
             # its validators report "skipped" on the whole population they were
             # written for — the defect behind `refinement_targets` (#2021 F12)
             # and `index_error_source` (#1606), twice.
-            "delegation": spec.delegation,
+            "delegation": getattr(result, "delegation_sent", None) or spec.delegation,
             # Also threaded in: `index_error_source`, the one attached source a
             # doctrine test declares to be an indexing error — deterministic
             # ground truth for
@@ -802,7 +775,8 @@ async def _execute_single_run(
             # A direct-agent test has no user turn (#2246) and its delegation is
             # the only text the run was handed, so it takes that slot — without
             # the fallback a year the delegation supplied reads as invented.
-            "user_message": spec.user_message or (spec.delegation or ""),
+            "user_message": spec.user_message
+            or (getattr(result, "delegation_sent", None) or spec.delegation or ""),
             # Also threaded in: `negative`, so a hand-back validator can read
             # the owner a direct-arm negative names in `correct_skill`
             # (test_check_warnings.test_hand_back_names_its_owner, issue #2118).
@@ -815,11 +789,10 @@ async def _execute_single_run(
     )
 
     # --- Split gating vs reporting validator results (issue #1749) --------
-    # Gating failures (tier 1, test_*): pass r.name — existing behavior.
-    validator_failures = [
-        r.name for r in validator_results
-        if not r.passed and not r.reporting_only
-    ]
+    # Gating failures (tier 1, test_*): pass r.name — the list the gate reads.
+    validator_failures = gating_validator_failures(
+        validator_results, intentionally_invalid=spec.intentionally_invalid
+    )
     # Reporting observations (tier 2, report_*): pass r.error (the
     # observation text), NOT r.name (which is a verdict). The function name
     # goes only to the run log for traceability, never the judge.
@@ -1191,7 +1164,7 @@ async def _execute_skill_with_retry(
                     seed_pg_workspace(workspace)
                     before_snapshot = snapshot_files(workspace)
                     result = await run_skill(
-                        user_message=_prompt_for(spec),
+                        user_message=_prompt_for(spec, workspace),
                         workspace=workspace,
                         fixture_names=spec.mcp_fixtures,
                         fixtures_dir=paths.fixtures_dir,
@@ -1227,6 +1200,8 @@ async def _execute_skill_with_retry(
                     after_snapshot = snapshot_files(workspace)
                     _capture_context_meters(result, workspace)
                     result.pg_store_faults = pg_store_faults(workspace)
+                    if spec.is_direct:
+                        result.delegation_sent = _resolved_delegation(spec, workspace)
                     attempt_completed = True
                 finally:
                     # Always clean up the SDK's session-store entry so long
@@ -1360,16 +1335,79 @@ def _build_warnings(
     # carries the attempted-call detail the abort reason alone can't.
     attempted = attempted_mcp_calls or []
     covered = _predicate_matched_count(tool_calls)
-    if len(attempted) > covered:
+    # A guard-refused call is uncovered by `_predicate_matched_count`, but NO
+    # fixture can ever cover it: the guard runs before any predicate lookup
+    # (#3947). Tallied separately so the advisory a genealogist reads names the
+    # fix that exists — correct the caller's arguments — rather than sending
+    # them to write a fixture that can never match.
+    # `attempted` (skill_runner's attempted_mcp_calls) EXCLUDES post-routing-deny
+    # reaction calls; `tool_calls` (the raw mock call log) includes them. Counting
+    # refusals from `tool_calls` and subtracting from `attempted` would mix two
+    # populations: one refusal in a suppressed turn could cancel out a genuine
+    # fixture_not_found, and the printed "N of M" could go negative. So the
+    # refused set is taken from `attempted` itself.
+    # Taken from `tool_calls` (the only side carrying `matched`) but INTERSECTED
+    # with `attempted` by (tool, args), so a refusal in a suppressed turn is
+    # counted in neither half. Matching on the pair because `attempted` entries
+    # are `{"tool", "args"}` off the message stream and carry no `matched`.
+    _attempted_keys = Counter(
+        (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
+        for c in attempted
+    )
+    refused = []
+    for c in tool_calls:
+        if (c.get("matched") or {}).get("kind") != "unknown_args_refused":
+            continue
+        key = (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
+        if _attempted_keys.get(key):
+            _attempted_keys[key] -= 1
+            refused.append(c)
+    if refused:
+        # Name the key the guard actually refused, not every key on the call.
+        # The engine already composed that sentence and it is on the entry;
+        # printing all three keys of a call with one bad one makes the reader
+        # diff it against the schema by hand.
+        detail = []
+        for c in refused:
+            tool = (c.get("tool") or "").split("__")[-1]
+            err = ((c.get("response") or {}).get("error") or "").strip()
+            detail.append(f"{tool}: {err}" if err else f"{tool}(?)")
+        warnings.append({
+            "kind": "unknown_args_refused",
+            "advisory": (
+                f"{len(refused)} MCP tool call(s) were refused: an argument key "
+                "the tool does not take. Production refuses these the same way, "
+                "so this is the skill's call to fix, NOT a missing fixture — no "
+                "fixture can match a refused call, because the guard runs before "
+                "any predicate lookup. " + " | ".join(sorted(set(detail)))
+            ),
+            "attempted": [c.get("args") for c in refused],
+        })
+    # Refused calls are excluded from BOTH halves: no fixture can cover one, so
+    # counting them here would send a reviewer to write a fixture that cannot
+    # match — the misdirection the warning above exists to replace.
+    _refused_keys = Counter(
+        (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
+        for c in refused
+    )
+    uncovered_attempted = []
+    for c in attempted:
+        key = (c.get("tool"), json.dumps(c.get("args") or {}, sort_keys=True))
+        if _refused_keys.get(key):
+            _refused_keys[key] -= 1
+            continue
+        uncovered_attempted.append(c)
+    if len(uncovered_attempted) > covered:
         warnings.append({
             "kind": "uncovered_tool_call",
             "advisory": (
-                f"{len(attempted) - covered} of {len(attempted)} MCP tool "
+                f"{len(uncovered_attempted) - covered} of "
+                f"{len(uncovered_attempted)} MCP tool "
                 "call(s) matched no fixture predicate — the skill ran against "
                 "a fixture_not_found or denied/unknown-tool error. Add or fix "
                 "an mcp_fixture whose args match the call."
             ),
-            "attempted": attempted,
+            "attempted": uncovered_attempted,
         })
 
     # Tier-2 reporting observations (issue #1749). The function name goes in
@@ -1813,7 +1851,17 @@ def _tool_call_entry(c: dict[str, Any]) -> dict[str, Any]:
     }
     response = c.get("response")
     kind = (c.get("matched") or {}).get("kind")
-    if kind in ("live", "none") or _is_mock_enriched(response):
+    # ONE rule, not a tuple that grows by an entry per kind: keep the response
+    # unless a fixture on disk already holds it. `predicate` is the only kind
+    # where one does — every other kind carries content composed at RUNTIME and
+    # recoverable nowhere else. `live` is the tool's real answer; `none` is the
+    # fixture_not_found; `unknown_args_refused` is the guard's sentence naming
+    # the key, written after the handler was skipped (#3947); and
+    # `staged_ref_refused` is `_staged_ref_error`'s message, which enumerates the
+    # refs that actually existed in that workspace. That last one was dropped for
+    # as long as the tuple was a list of special cases, which is the argument for
+    # stating the rule instead of extending the list.
+    if kind != "predicate" or _is_mock_enriched(response):
         entry["response"] = response
     return entry
 
@@ -1822,7 +1870,24 @@ class MissingPairAgentError(Exception):
     """A direct test names a `skill` with no agent file of the same name."""
 
 
-def _prompt_for(spec: TestSpec) -> str:
+WORKSPACE_PLACEHOLDER = "<workspace>"
+
+
+def _resolved_delegation(spec: TestSpec, workspace: Path | None) -> str:
+    """`input.delegation` with `<workspace>` replaced by the run's folder.
+
+    A production caller always sends a real absolute path. Left literal, the
+    placeholder reads to the agent as "no project", and a Haiku agent hands back
+    naming init-project instead of surveying (#3935). Forward slashes, as the
+    mock writes `projectPath`, so a Windows dispatcher relays no backslashes.
+    """
+    delegation = spec.delegation or ""
+    if workspace is None:
+        return delegation
+    return delegation.replace(WORKSPACE_PLACEHOLDER, workspace.as_posix())
+
+
+def _prompt_for(spec: TestSpec, workspace: Path | None = None) -> str:
     """What the main thread is sent.
 
     A routed test gets its `user_message` unchanged. A direct test gets the
@@ -1845,7 +1910,7 @@ def _prompt_for(spec: TestSpec) -> str:
             f"{spec.skill!r}`; if this pair's agent is named differently, the "
             f"direct arm cannot address it."
         )
-    return direct_dispatch_prompt(spec.skill, spec.delegation or "")
+    return direct_dispatch_prompt(spec.skill, _resolved_delegation(spec, workspace))
 
 
 def grading_mode_for(spec: TestSpec) -> tuple[str, bool]:

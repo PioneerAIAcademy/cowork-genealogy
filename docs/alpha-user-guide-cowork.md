@@ -172,10 +172,10 @@ state, which is how we reproduce it.
 > - **"Include Claude Code session log"** — this captures a Claude Code
 >   session transcript specifically, so it won't have anything to attach for
 >   a Cowork session; leave it as-is.
-> - **"Include media files"** — **ticked by default.** Documents and images you
->   uploaded, so a report about a document arrives with the document. Untick
->   it to leave them out. Very large bundles are trimmed automatically,
->   largest files first.
+> - **"Include media files"** — **ticked by default** unless your media total
+>   more than 15 MB. Documents and images you uploaded, so a report about a
+>   document arrives with the document. Tick or untick it to change that. Very
+>   large bundles are trimmed automatically, largest files first.
 >
 > Everything goes to a private Drive folder only the Pioneer Academy team can
 > read.

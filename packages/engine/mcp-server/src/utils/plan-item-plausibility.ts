@@ -67,10 +67,92 @@ function isInside(item: string, locality: string): boolean {
   );
 }
 
+/** `"1855-1876"` → [1855, 1876]; a single year `"1891"` → [1891, 1891], which the
+ *  corpus writes for a one-census item. Anything else is null. */
 function parseRange(value: string): [number, number] | null {
-  const m = /^\s*(\d{4})\s*-\s*(\d{4})\s*$/.exec(value);
+  const m = /^\s*(\d{4})\s*(?:-\s*(\d{4})\s*)?$/.exec(value);
   if (!m) return null;
-  return [Number(m[1]), Number(m[2])];
+  return [Number(m[1]), Number(m[2] ?? m[1])];
+}
+
+/**
+ * A question's plans that leave most of its `date_window` unsearched (issue #2424).
+ *
+ * The window is the question's own: the years whose records could answer it, stated by
+ * question-selection. The subject's lifetime is not a stand-in — a marriage question
+ * needs the twenties, a death question the end of life — and measured as one it fired on
+ * 145 of 391 committed plan-bearing questions, correct plans included.
+ *
+ * Judged on the SPAN of the question's live items (earliest start to latest end), not
+ * their summed years: a census-only plan of single years 1850…1900 covers a life even
+ * though each item is one year. Items on a superseded plan and skipped items search
+ * nothing, so they are left out. Fires when more than half the window falls outside the
+ * span. No window, a malformed one, or no parseable item: no opinion.
+ *
+ * A flag, never a gate (decided 2026-10-01): a plan can stop short for a reason the
+ * documents do not hold.
+ */
+export function planWindowFlag(question: any, plans: any[]): string | null {
+  const window = typeof question?.date_window === "string" ? parseRange(question.date_window) : null;
+  if (!window || window[0] > window[1]) return null;
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const plan of plans ?? []) {
+    if (plan?.question_id !== question.id || plan?.status === "superseded") continue;
+    for (const item of Array.isArray(plan?.items) ? plan.items : []) {
+      if (item?.status === "skipped" || typeof item?.date_range !== "string") continue;
+      const r = parseRange(item.date_range);
+      if (!r || r[0] > r[1]) continue;
+      lo = Math.min(lo, r[0]);
+      hi = Math.max(hi, r[1]);
+    }
+  }
+  if (lo === Infinity) return null;
+  const [ws, we] = window;
+  const length = we - ws + 1;
+  const outside =
+    Math.min(length, Math.max(0, lo - ws)) + Math.min(length, Math.max(0, we - hi));
+  const uncovered = Math.min(length, outside);
+  if (uncovered * 2 <= length) return null;
+  return (
+    `${question.id}'s plans span ${lo}–${hi} but its date window is ${ws}–${we}: ` +
+    `${uncovered} of its ${length} years fall outside every plan item. Add an item whose ` +
+    `date_range covers the uncovered years, or say in that item's rationale why they ` +
+    `cannot hold the record.`
+  );
+}
+
+const PLACE_JOINER = /\s+(?:and|or|&)\s+|\s*[;/]\s*/i;
+
+/** The refusal for a plan item whose `jurisdiction` joins two or more places, or
+ *  `undefined`. Unlike the flags below this gates: search-records hands the
+ *  jurisdiction to `record_search` as its one `residencePlace`, so "Alabama and
+ *  Texas, United States" is an item no search can run, not a judgment call.
+ *
+ *  Refused only when the string splits on "and", "or", "&", ";" or "/" into two or
+ *  more parts and EVERY part sits inside, or encloses, a locality this project has
+ *  researched. That is what tells two places apart from one place whose name
+ *  holds a joiner: "Lewis and Clark County, Montana" splits into "Lewis", which no
+ *  locality matches, so it is left alone, as is anything in a project with no
+ *  recorded locality. An elided part ("Smith County and Hill County, Texas") is
+ *  not caught, because filling in its tail would also split "Lewis and Clark". */
+export function compoundJurisdictionError(
+  item: PlanItemLike,
+  localities: LocalityLike[]
+): string | undefined {
+  const jurisdiction = typeof item?.jurisdiction === "string" ? item.jurisdiction : "";
+  const parts = jurisdiction.split(PLACE_JOINER).map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return undefined;
+  const places = (localities ?? [])
+    .map((l) => (typeof l?.place === "string" ? l.place : ""))
+    .filter(Boolean);
+  const known = (part: string) => places.some((p) => isInside(part, p) || isInside(p, part));
+  if (!parts.every(known)) return undefined;
+  return (
+    `jurisdiction '${jurisdiction}' names ${parts.length} places (${parts.join("; ")}). ` +
+    `A plan item searches one place: write one item per place, each with its own ` +
+    `place_search standardPlace.`
+  );
 }
 
 export function planItemFlags(

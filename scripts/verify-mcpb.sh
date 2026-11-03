@@ -41,6 +41,7 @@ require build/build-info.json
 require config/familysearch.json
 require config/given-name-variants.json
 require config/name-variants-given.json
+require config/one-word-places.json
 require node_modules/@modelcontextprotocol/sdk
 
 forbid src
@@ -54,6 +55,7 @@ forbid node_modules/@anthropic-ai/mcpb
 forbid node_modules/pg
 forbid node_modules/@aws-sdk/client-s3
 forbid node_modules/@smithy/node-http-handler
+forbid node_modules/@fs/sas-client
 
 if [ "$fail" -ne 0 ]; then
   echo "Bundle content checks FAILED." >&2

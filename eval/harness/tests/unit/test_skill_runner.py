@@ -879,9 +879,11 @@ def test_the_declaration_arm_is_driven_through_the_real_hook(tmp_path, monkeypat
         tmp_path,
         monkeypatch,
         [
+            # question-selection, the one caller the append route lets through,
+            # so the claim is what this exercises.
             _rule_payload(
                 "questions",
-                "proof-conclusion",
+                "question-selection",
                 entry={"search_stop": {"stopped_because": "question_answered", "log_entry_ids": ["log_001"], "stop_criteria": None, "not_reached": []}},
             )
         ],

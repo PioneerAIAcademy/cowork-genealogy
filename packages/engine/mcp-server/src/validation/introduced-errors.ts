@@ -197,7 +197,9 @@ export async function validateIntroduced(
   // carry dozens (the #1476 census was 45 over one call), and a wall of them on
   // the SUCCESS path buries the warnings the agent must act on — retention gaps,
   // place-resolution misses, sanitize notes. This is also #1572's asked-for
-  // "N pre-existing schema errors" wording, without the wall.
+  // "N pre-existing schema errors" wording, without the wall. "not new ones":
+  // validate-schema logs right after validating, and Haiku read a bare pointer
+  // as a second error on top of the ones it had just reported (#3870).
   const preExisting: ValidationWarning[] =
     preExistingCount > 0
       ? [
@@ -205,7 +207,7 @@ export async function validateIntroduced(
             path: "",
             message:
               `this project has ${preExistingCount} pre-existing schema error(s) ` +
-              `not caused by this call; run validate_research_schema for the list`,
+              `not caused by this call; they are among the errors validate_research_schema lists, not new ones`,
           },
         ]
       : [];

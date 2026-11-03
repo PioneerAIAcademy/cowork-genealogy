@@ -645,8 +645,7 @@ def _results_ref_missing(research: dict, assertion: dict) -> bool:
 def _persona_reachable(research: dict, assertion: dict | None) -> bool:
     """Whether a record persona `same_person` could score against is reachable
     for this assertion — the same predicate as
-    `harness/skill_invocation.py::_persona_reachable` and
-    `research-append.ts::personaReachable`, kept in step with both.
+    `research-append.ts::personaReachable`, kept in step with it.
 
     `same_person` takes two GedcomX documents plus a focus id inside each and
     never reads `record_persona_id`; that field points into a retained search
@@ -935,13 +934,8 @@ def test_same_person_called_at_all_when_a_reachable_persona_was_linked(
     cannot predict — while still being unarguable about the case that actually
     occurred: zero calls in a run that wrote reachable links.
 
-    **Scope differs from the harness detector, deliberately.** That one asks only
-    about BRAND-NEW tree persons; this asks about every new `pe_` link with a
-    reachable persona, including one to a pre-existing seed person. The two are a
-    mirrored *predicate* (`_persona_reachable`), not a mirrored population — the
-    harness detector answers "was a new identity asserted unscored", this answers
-    "did a run that owed a score make the call". Harmless in today's suite, and
-    named so the difference is not read as drift.
+    It asks about every new `pe_` link with a reachable persona, including one to
+    a pre-existing seed person.
 
     **What it does NOT assert.** Which pairing was scored, that the score was
     used, or that the RIGHT persona was chosen for a relationship assertion's
@@ -964,8 +958,7 @@ def test_same_person_called_at_all_when_a_reachable_persona_was_linked(
         pytest.skip("no new pe_ entry had a reachable record persona — nothing owed")
 
     # A call that ERRORED is not a score. Without this an upstream failure would
-    # satisfy the check, which is the same success-gating
-    # `same_person_scored_ids` applies in the harness. Latent rather than live
+    # satisfy the check. Latent rather than live
     # today — no committed `same_person` call carries `is_error: true` — so this
     # arm is unexercised by the corpus and is here for the run that first errors.
     if any(
@@ -1491,6 +1484,72 @@ def test_corridor_move_links_confident(before_state, after_state, test):
         f"written to the subject {sorted(subjects)}: "
         f"{[(e.get('id'), e.get('assertion_id'), e.get('confidence')) for e in to_subject] or 'none'}"
     )
+
+
+# --- Namesakes (issue #3363, PR 2) ------------------------------------
+
+
+def _strong_live_links(after_state):
+    research = after_state.get("research_json") or {}
+    return [
+        e for e in (research.get("person_evidence") or [])
+        if not e.get("superseded_by") and e.get("confidence") in ("probable", "confident")
+    ]
+
+
+def test_namesake_capped_records_stay_below_probable(after_state, test):
+    """Tag-gated (`namesake-capped`): with two namesakes recorded on I1 and
+    nothing in either record tying it to him, no assertion of src_001 or
+    src_002 (a_001 to a_014) ends linked to I1 at probable or better."""
+    if "namesake-capped" not in (test.get("tags") or []):
+        pytest.skip("not a namesake-capped test")
+    capped = {f"a_{n:03d}" for n in range(1, 15)}
+    strong = [
+        (e.get("id"), e.get("assertion_id"), e.get("confidence"))
+        for e in _strong_live_links(after_state)
+        if e.get("person_id") == "I1" and e.get("assertion_id") in capped
+    ]
+    assert not strong, f"links from the namesakes' records to I1 stand above speculative: {strong}"
+
+
+def test_namesake_tied_record_links_through_wife(after_state, test):
+    """Tag-gated (`namesake-tied`): the 1913 marriage names I1's wife and
+    daughter, so the father of the bride (a_020) ends linked to I1 at probable
+    or better and the mother (a_021) to I4, the tie the namesake cap reads."""
+    if "namesake-tied" not in (test.get("tags") or []):
+        pytest.skip("not a namesake-tied test")
+    pairs = {(e.get("assertion_id"), e.get("person_id")) for e in _strong_live_links(after_state)}
+    assert ("a_020", "I1") in pairs, (
+        "the marriage ties the father of the bride to I1 through his wife and daughter, "
+        f"but a_020 is not linked to I1 at probable or better; strong links: {sorted(pairs)}"
+    )
+    assert ("a_021", "I4") in pairs, f"the mother of the bride (a_021) is not linked to I4; strong links: {sorted(pairs)}"
+
+
+def test_namesake_copy_gate_lowers_untied_link(before_state, after_state, test):
+    """Tag-gated (`namesake-copy-gate`): with a namesake on I1 and nothing in the
+    census tying it to him, no fact is copied onto I1, no second George Ackerman
+    is minted to hold the facts, and the census head's link to I1 is lowered."""
+    if "namesake-copy-gate" not in (test.get("tags") or []):
+        pytest.skip("not a namesake-copy-gate test")
+    before_tree = before_state.get("tree_gedcomx_json") or {}
+    after_tree = after_state.get("tree_gedcomx_json") or {}
+    before_ids = {p.get("id") for p in before_tree.get("persons") or []}
+    stand_ins = [
+        p.get("id") for p in after_tree.get("persons") or []
+        if p.get("id") not in before_ids
+        and any((n.get("given"), n.get("surname")) == ("George", "Ackerman") for n in p.get("names") or [])
+    ]
+    assert not stand_ins, f"a second George Ackerman was minted to hold the census facts: {stand_ins}"
+    i1_before = next((p for p in before_tree.get("persons") or [] if p.get("id") == "I1"), {})
+    i1_after = next((p for p in after_tree.get("persons") or [] if p.get("id") == "I1"), {})
+    added = [f.get("type") for f in i1_after.get("facts") or [] if f not in (i1_before.get("facts") or [])]
+    assert not added, f"facts were written onto I1 past the copy gate: {added}"
+    strong = [
+        (e.get("id"), e.get("assertion_id")) for e in _strong_live_links(after_state)
+        if e.get("person_id") == "I1" and e.get("assertion_id") in ("a_001", "a_008")
+    ]
+    assert not strong, f"the untied census link to I1 still stands above speculative: {strong}"
 
 
 # --- Identity links follow their persona (#3713) ---

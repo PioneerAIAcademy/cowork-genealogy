@@ -538,10 +538,10 @@ describe("catalog_search — shapes the second review found", () => {
   });
 });
 
-describe("catalog_search — inputs the MCP boundary does not validate", () => {
-  // server.ts casts `arguments` with `as unknown as CatalogSearchInput`, so
-  // inputSchema constrains nothing at runtime and every shape below is a
-  // plausible LLM call.
+describe("catalog_search — input types the MCP boundary does not check", () => {
+  // server.ts refuses unknown argument names but casts `arguments` with
+  // `as unknown as CatalogSearchInput`, so inputSchema's types constrain
+  // nothing at runtime and every shape below is a plausible LLM call.
   it("accepts a film number that arrived unquoted", async () => {
     // The emptiness guard checked presence while buildQuery checked type, so
     // this passed the guard, was dropped by buildQuery, and went out as a

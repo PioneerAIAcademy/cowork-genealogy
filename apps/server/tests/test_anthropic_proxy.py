@@ -27,6 +27,7 @@ from app.config import get_settings
 from app.db import get_engine, init_db
 from app.main import app
 from app.models import ApiCall, Project, utcnow
+from app.sessions import _EXPIRED_DETAIL, SESSION_MAX_AGE
 
 
 # ── token derivation ────────────────────────────────────────────
@@ -292,6 +293,49 @@ def test_proxy_strips_content_encoding_from_gzipped_response(
     assert resp.json()["content"] == "hello"
 
 
+def test_accept_encoding_forwarded_upstream_is_always_decodable(
+    _mock_sandbox_exists, monkeypatch,
+):
+    """Regression (#4063): the sandbox's Claude Code CLI can advertise `br`/`zstd`. If that
+    reached upstream unfiltered, api.anthropic.com could answer compressed in an encoding
+    httpx cannot decode (brotli/zstandard are not installed here — see uv.lock), and since
+    content-encoding is stripped from the response above, the client would get undecoded
+    compressed bytes with nothing telling it so — the stall-then-`JSON Parse error` this
+    issue reports. Asserts the general invariant (every forwarded encoding is one httpx can
+    decode), not a specific header string, so it doesn't go stale if ACCEPT_ENCODING's exact
+    spelling changes."""
+    monkeypatch.setattr(get_settings(), "anthropic_api_key", "sk-ant-real-key")
+    token = proxy_token("test-sandbox")
+
+    captured_headers = {}
+
+    async def _capture(request: httpx.Request):
+        captured_headers.update(dict(request.headers))
+        return httpx.Response(200, json={"ok": True})
+
+    with TestClient(app) as client:
+        saved = app.state.anthropic_proxy_client
+        transport = httpx.MockTransport(_capture)
+        app.state.anthropic_proxy_client = httpx.AsyncClient(transport=transport)
+        try:
+            client.post(
+                f"{_PROXY_PREFIX}/v1/messages",
+                headers={
+                    "x-api-key": token,
+                    "accept-encoding": "gzip, deflate, br, zstd",
+                },
+                json={"model": "test", "messages": []},
+            )
+        finally:
+            app.state.anthropic_proxy_client = saved
+
+    forwarded = captured_headers.get("accept-encoding", "")
+    encodings = [e.strip() for e in forwarded.split(",") if e.strip()]
+    assert encodings, "upstream must receive an Accept-Encoding header"
+    assert all(e in httpx._decoders.SUPPORTED_DECODERS for e in encodings), (
+        f"forwarded an encoding httpx cannot decode: {forwarded!r}")
+
+
 # ── usage metering (api_calls) ──────────────────────────────────
 
 
@@ -448,6 +492,41 @@ def test_a_failing_meter_never_reaches_the_relay(send, monkeypatch):
     resp = send(_streamed(_STREAM))
     assert resp.status_code == 200 and resp.content == _STREAM
     assert _recorded() == []
+
+
+# ── sessions past SESSION_MAX_AGE ──────────────────────────────
+
+
+def _aged(age: timedelta) -> None:
+    """Make the `send` fixture's session `age` old."""
+    with Session(get_engine()) as s:
+        project = s.get(Project, "prj_meter")
+        project.created = utcnow() - age
+        s.add(project)
+        s.commit()
+
+
+def test_a_session_past_max_age_is_refused_before_upstream(send):
+    """Viewing an old session resumes its sandbox, where a turn left running would carry on
+    and spend. Past SESSION_MAX_AGE the call stops here: never forwarded, never recorded."""
+    _aged(SESSION_MAX_AGE + timedelta(minutes=1))
+    upstream = []
+
+    def respond(req):
+        upstream.append(req)
+        return httpx.Response(200, content=_STREAM, headers={"content-type": "text/event-stream"})
+
+    resp = send(respond)
+    assert resp.status_code == 403
+    assert resp.json()["error"] == {"type": "permission_error", "message": _EXPIRED_DETAIL}
+    assert upstream == [] and _recorded() == []
+
+
+def test_a_session_a_minute_short_of_max_age_is_still_relayed(send):
+    _aged(SESSION_MAX_AGE - timedelta(minutes=1))
+    resp = send(_streamed(_STREAM))
+    assert resp.status_code == 200 and resp.content == _STREAM
+    assert len(_recorded()) == 1
 
 
 # ── the agent behind each call ─────────────────────────────────

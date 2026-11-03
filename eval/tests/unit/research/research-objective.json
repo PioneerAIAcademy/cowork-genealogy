@@ -16,8 +16,9 @@
     "scenario": "mid-research-flynn"
   },
   "judge_context": [
-    "Should invoke sub-skills (question-selection, research-plan, search-records, etc.) rather than doing GPS work inline",
-    "Should read research.json state to determine the current routing step"
+    "Should invoke the ONE sub-skill the current state calls for (question-selection, research-plan, search-records, …) rather than doing GPS work inline. Which one depends on the state it reads; running more than one in a turn is the behaviour step mode removed.",
+    "Should read research.json state to determine the current routing step",
+    "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists."
   ],
   "execution": {
     "max_turns": 30,
@@ -59,6 +60,7 @@
         "skill": "gps-mentor",
         "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
       }
-    ]
+    ],
+    "sdk_message_silence_seconds": 360
   }
 }

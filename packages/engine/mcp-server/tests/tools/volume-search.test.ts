@@ -37,6 +37,7 @@ import type {
   MetadataRmsGroup,
 } from "../../src/types/volume-search.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
+import { callTool } from "../helpers/call-tool.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -618,18 +619,19 @@ describe("volumeSearchTool", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("rejects the sibling tools' singular recordType instead of ignoring it", async () => {
-    // record_search and fulltext_search both take `recordType`, and nothing
-    // validates input against the advertised schema, so without this guard the
-    // field is dropped and the search silently returns everything.
-    await expect(
-      volumeSearchTool({
-        standardPlace: EDENSOR_P,
-        recordType: "probate",
-      } as unknown as VolumeSearchInput, LOCAL)
-    ).rejects.toThrow(/filters by recordTypeGroups.*not recordType/s);
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
+  it.each(["recordType", "record_type", "recordTypes"])(
+    "rejects the sibling tools' %s instead of ignoring it",
+    async (alias) => {
+      // record_search and fulltext_search both take `recordType`; without the
+      // dispatch guard the field is dropped and the search returns everything.
+      const r = await callTool("volume_search", { standardPlace: EDENSOR_P, [alias]: "probate" });
+      expect(r.isError).toBe(true);
+      expect(r.text).toContain(
+        `volume_search filters by recordTypeGroups (an array of group names), not ${alias}. Valid groups: `,
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+    }
+  );
 
   it("resends recordTypeGroups unchanged on the paginated follow-up call", async () => {
     // Two real invocations: page 1 returns a cursor, page 2 sends it back. The
@@ -664,8 +666,8 @@ describe("volumeSearchTool", () => {
   });
 
   it("rejects a non-array recordTypeGroups with a readable error", async () => {
-    // The schema's enum is client-advisory — nothing validates input server-side
-    // — so a bare string is a reachable mistake. Without this the tool would
+    // The schema's enum is client-advisory — the server checks argument names,
+    // not values — so a bare string is a reachable mistake. Without this the tool would
     // throw "filter is not a function" from inside validate().
     await expect(
       volumeSearchTool({

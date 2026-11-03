@@ -47,9 +47,7 @@ foreground one resumes cleanly, so tool name alone cannot select it. ``tool_call
 no input column -- 004_worker.sql adds only ``tool_use_id`` -- so the selector reads the
 ``tool_use`` block out of ``session_entries.entry``, the SDK's own transcript. Pair it
 with ``--text-file`` (``probes/background-delegation.txt`` asks for two record
-extractions at once) and ``AUTONOMOUS_MAX_NUDGES > 0``, which ``make proto-kill`` leaves
-at 0 -- the probe needs a turn that can be re-opened, and `proto-probe-resume` exports
-40 for exactly that: ``run_in_background`` is model-chosen, appearing in 19 of 714 committed runs and in
+extractions at once): ``run_in_background`` is model-chosen, appearing in 19 of 714 committed runs and in
 none of the eight ``bagley-father-1884`` runs, so it has to be provoked. The two checks that are about
 the default text (the bearer, Nauvoo) run only with the default text; the rest stay.
 ``--expect-grant-refresh`` (U3, refused with ``--kill-signal term``) proves the resumed
@@ -428,10 +426,8 @@ class KillSpec:
 
 # turns.outcome values that mean the resume FAILED. Before PR #2870 item 1c,
 # complete() hardcoded 'ok' and the check was `outcome == "ok"`; now the column says HOW a
-# run ended, and a kill probe run with the Stop hook on (which proto-probe-resume needs,
-# or the run never reaches a delegation) legitimately lands on `completed` -- or on
-# `budget`, when the probe's narrow message exhausts the nudge cap without finishing the
-# project, which is the ordinary shape of a probe run and not a failure of the RESUME.
+# run ended, and a kill probe run legitimately lands on `completed` -- or on `budget`,
+# when the session's spend cap ends it, which is not a failure of the RESUME either.
 #
 # Stated as the failure set rather than the success set on purpose: a new terminal value
 # added later is then a resume that WORKED unless someone says otherwise, which is the

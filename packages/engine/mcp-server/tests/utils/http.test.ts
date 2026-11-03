@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import * as net from "node:net";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -11,8 +12,12 @@ import {
   retryAfterMs,
   RETRYABLE_STATUS,
   DEFAULT_RETRY_BUDGET_MS,
+  CONNECT_ATTEMPT_TIMEOUT_MS,
+  raiseConnectAttemptTimeout,
 } from "../../src/utils/http.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
+import * as fsBudget from "../../src/utils/fs-budget.js";
+import { configureFsBudget, __resetFsBudgetForTests } from "../../src/utils/fs-budget.js";
 
 beforeEach(() => {
   mockFetch.mockReset();
@@ -451,5 +456,188 @@ describe("describeFetchError", () => {
     const loop = new Error("loop") as Error & { cause?: unknown };
     loop.cause = loop;
     expect(describeFetchError(loop)).toBe("loop");
+  });
+});
+
+// Node abandons an address after 250 ms by default, which is less than the connect time to
+// the wiki host from the machine this was measured on (docs/architecture.md, the bullet on
+// fetchWithRetry). The setting is process-wide, so every test puts it back.
+describe("raiseConnectAttemptTimeout", () => {
+  const original = net.getDefaultAutoSelectFamilyAttemptTimeout();
+  afterEach(() => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(original);
+    vi.doUnmock("node:net");
+    vi.resetModules();
+  });
+
+  it("raises a lower default to the minimum", () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(250);
+    raiseConnectAttemptTimeout(2_000);
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(2_000);
+  });
+
+  it("leaves a higher default alone, such as one set through NODE_OPTIONS", () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(5_000);
+    raiseConnectAttemptTimeout(2_000);
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(5_000);
+  });
+
+  it("leaves a default equal to the minimum as it is", () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(2_000);
+    raiseConnectAttemptTimeout(2_000);
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(2_000);
+  });
+
+  it("is applied when the module loads: a process still on Node's own 250 ms comes out at the constant", async () => {
+    net.setDefaultAutoSelectFamilyAttemptTimeout(250);
+    vi.resetModules();
+    const fresh = await import("../../src/utils/http.js");
+    expect(net.getDefaultAutoSelectFamilyAttemptTimeout()).toBe(fresh.CONNECT_ATTEMPT_TIMEOUT_MS);
+  });
+
+  it("is at least two seconds, the value the live trials passed at", () => {
+    // 20 fresh processes reading a wiki page: 11 connected at Node's 250 ms, all 20 at 2,000 ms.
+    // The slowest of 270 timed connects was 1,230 ms, so a floor of 1,000 would let the constant
+    // fall to a value no trial passed at. The constant checked against itself would pass at 250,
+    // so the floor is a literal.
+    expect(CONNECT_ATTEMPT_TIMEOUT_MS).toBeGreaterThanOrEqual(2_000);
+  });
+
+  it("does nothing, and does not throw at import, on a Node without the setting", async () => {
+    // The .mcpb is declared for Node 18.0 and up; the two calls arrived in 18.18 and 19.8.
+    vi.doMock("node:net", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("node:net")>();
+      return {
+        ...actual,
+        getDefaultAutoSelectFamilyAttemptTimeout: undefined,
+        setDefaultAutoSelectFamilyAttemptTimeout: undefined,
+      };
+    });
+    vi.resetModules();
+    await expect(import("../../src/utils/http.js")).resolves.toHaveProperty("raiseConnectAttemptTimeout");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The process-wide FamilySearch budget (self-hosted beta E4), which lives in
+// fetchWithTimeout -- not fsFetch, because place-api.ts, memories.ts,
+// fs-image-fetch.ts and auth/refresh.ts all reach FamilySearch without it.
+
+describe("the FamilySearch budget inside fetchWithTimeout", () => {
+  const FS = "https://www.familysearch.org/x";
+
+  afterEach(() => {
+    __resetFsBudgetForTests();
+  });
+
+  it("admits a call under the limit, and lets it reach the wire", async () => {
+    configureFsBudget({ perMinute: 2 });
+    mockFetch.mockResolvedValueOnce(mockResponse(200));
+
+    const res = await fetchWithTimeout(FS);
+
+    expect(res.status).toBe(200);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  // The card's own assertion: a refused call never reaches the network.
+  it("refuses past the limit BEFORE any network I/O -- 0 fetch calls", async () => {
+    configureFsBudget({ perMinute: 1 });
+    mockFetch.mockResolvedValue(mockResponse(200));
+    await fetchWithTimeout(FS);
+    mockFetch.mockClear();
+
+    await expect(fetchWithTimeout(FS)).rejects.toThrow(/budget is spent/);
+
+    expect(mockFetch).toHaveBeenCalledTimes(0);
+  });
+
+  it("never counts a non-FamilySearch host, even at a limit of 1", async () => {
+    configureFsBudget({ perMinute: 1 });
+    mockFetch.mockResolvedValue(mockResponse(200));
+    // OpenRouter and the wiki sidecar go through the same wrapper.
+    await fetchWithTimeout("https://openrouter.ai/api/v1/chat/completions");
+    await fetchWithTimeout("https://wiki.example.ts.net/search");
+
+    await expect(fetchWithTimeout(FS)).resolves.toHaveProperty("status", 200);
+  });
+
+  it("does nothing when unconfigured, however many calls are made", async () => {
+    mockFetch.mockResolvedValue(mockResponse(200));
+    for (let i = 0; i < 25; i++) {
+      await expect(fetchWithTimeout(FS)).resolves.toHaveProperty("status", 200);
+    }
+    expect(mockFetch).toHaveBeenCalledTimes(25);
+  });
+});
+
+describe("fetchWithRetry does not retry a budget refusal", () => {
+  const FS = "https://www.familysearch.org/x";
+  const fastOpts = { budgetMs: 5000, baseMs: 1 };
+
+  afterEach(() => {
+    __resetFsBudgetForTests();
+  });
+
+  // The card's "worst plausible wrong PR": a plain Error on refusal, retried
+  // three times. fetchWithRetry's catch treats every throw as a retryable
+  // transport failure, so only the marker keeps one refusal from becoming
+  // three -- each with a backoff sleep -- reported as unreachable.
+  it("rethrows at once: one consume attempt, not three, and 0 fetch calls", async () => {
+    configureFsBudget({ perMinute: 1 });
+    mockFetch.mockResolvedValue(mockResponse(200));
+    await fetchWithRetry(FS, {}, 1000, fastOpts); // spends the one slot
+    mockFetch.mockClear();
+
+    const spy = vi.spyOn(fsBudget, "consumeFsBudgetSlot");
+    await expect(fetchWithRetry(FS, {}, 1000, fastOpts)).rejects.toThrow(/budget is spent/);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(mockFetch).toHaveBeenCalledTimes(0);
+    spy.mockRestore();
+  });
+
+  // The exhaustion contract (http.ts: "return lastResponse so the caller's
+  // !response.ok block can produce an LLM-actionable error") changes here: a
+  // budget refusal throws even with a retryable Response in hand, because
+  // handing back a stale 429 would name the wrong cause.
+  it("throws rather than returning a retryable Response held from an earlier attempt", async () => {
+    configureFsBudget({ perMinute: 2 });
+    // First attempt spends a slot and comes back 429 (retryable); the retry is
+    // then refused by the budget rather than returning that 429.
+    mockFetch.mockResolvedValueOnce(mockResponse(429));
+    mockFetch.mockResolvedValueOnce(mockResponse(429));
+
+    await expect(fetchWithRetry(FS, {}, 1000, fastOpts)).rejects.toThrow(/budget is spent/);
+  });
+
+  // EVERY ATTEMPT counts, retries included -- the budget is what the upstream
+  // sees, not what the caller meant to send. This belongs here and not in
+  // fs-budget.test.ts, which cannot drive a retry: a version of this assertion
+  // written there was three bare consume calls and could not fail.
+  it("spends one slot PER ATTEMPT, so a retried call costs two", async () => {
+    configureFsBudget({ perMinute: 2 });
+    // Attempt 1 fails at the socket (retryable), attempt 2 succeeds. Two
+    // attempts, so both slots are gone.
+    mockFetch.mockRejectedValueOnce(socketFetchFailure());
+    mockFetch.mockResolvedValueOnce(mockResponse(200));
+
+    const res = await fetchWithRetry(FS, {}, 1000, fastOpts);
+    expect(res.status).toBe(200);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+
+    // A third call has no slot left -- which is only true if the FAILED
+    // attempt consumed one.
+    await expect(fetchWithTimeout(FS)).rejects.toThrow(/budget is spent/);
+  });
+
+  it("still retries an ordinary transport failure when the budget is off", async () => {
+    mockFetch.mockRejectedValueOnce(socketFetchFailure());
+    mockFetch.mockResolvedValueOnce(mockResponse(200));
+
+    const res = await fetchWithRetry(FS, {}, 1000, fastOpts);
+
+    expect(res.status).toBe(200);
+    expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 });

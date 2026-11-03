@@ -16,18 +16,33 @@ import {
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
   namesakeTieInvariants,
+  planItemCompletionRecordTypeInvariants,
 } from "../../src/tools/research-append.js";
+import { startingPersonIdsOf } from "../../src/utils/starting-tree.js";
 
 const casesDir = join(dirname(fileURLToPath(import.meta.url)), "..", "guard-cases");
 const registry = JSON.parse(readFileSync(join(casesDir, "registry.json"), "utf-8"));
 
 /** One binding per registered writer guard. A guard added to the registry with a
  *  `writer_guard` and no binding here fails the first test below. */
-const WRITER_GUARDS: Record<string, (entry: any, research: any, tree?: any) => string[]> = {
+const WRITER_GUARDS: Record<string, (entry: any, research: any, tree?: any, startingTree?: any) => string[]> = {
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
-  namesakeTieInvariants,
+  namesakeTieInvariants: (entry, research, tree, startingTree) =>
+    namesakeTieInvariants(entry, research, tree, startingTree ? startingPersonIdsOf(startingTree) : undefined, startingTree),
+  planItemCompletionRecordTypeInvariants,
 };
+
+/** The entry a case is written for, found by `write` id. A proof-summary guard
+ *  judges a `proof_summaries[]` entry; a plan-item guard judges a
+ *  `plans[].items[]` entry. The id prefixes don't collide (`ps_` vs `pli_`), so
+ *  the fallback picks the right one without the case naming its section. */
+function findEntry(research: any, write: string): any {
+  return (
+    (research.proof_summaries ?? []).find((ps: any) => ps?.id === write) ??
+    (research.plans ?? []).flatMap((p: any) => p?.items ?? []).find((it: any) => it?.id === write)
+  );
+}
 
 interface GuardCase {
   id: string;
@@ -35,9 +50,16 @@ interface GuardCase {
   write: string;
   research: any;
   tree?: any;
+  /** The project's starting tree, for a guard that reads one. */
+  starting_tree?: any;
 }
 
-const writerGuards = registry.guards.filter((g: any) => g.writer_guard);
+// Scoped to this file's guards (proof_summary-shaped). The research-log-append
+// guards replay through their own harness (research-log-append-guard-cases.test.ts),
+// which also asserts every registry writer-guard file is one of the two known ones.
+const writerGuards = registry.guards.filter((g: any) =>
+  g.writer_guard?.file.endsWith("/research-append.ts"),
+);
 
 describe("guard case files: writer-tool replay", () => {
   it("binds every registered writer guard", () => {
@@ -54,10 +76,14 @@ describe("guard case files: writer-tool replay", () => {
     const guard = WRITER_GUARDS[g.writer_guard.function];
     describe(g.name, () => {
       it.each((file.cases as GuardCase[]).map((c) => [c.id, c] as const))("%s", (_id, c) => {
-        const section = file.section ?? "proof_summaries";
-        const entry = (c.research[section] ?? []).find((e: any) => e?.id === c.write);
-        expect(entry, `case ${c.id}: no ${section} entry ${c.write} in its research`).toBeDefined();
-        const errors = guard(entry, c.research, c.tree);
+        // A case file may name a flat `section` (e.g. person_evidence); without
+        // one, findEntry locates a proof_summaries OR a nested plans[].items entry.
+        const section = file.section;
+        const entry = section
+          ? (c.research[section] ?? []).find((e: any) => e?.id === c.write)
+          : findEntry(c.research, c.write);
+        expect(entry, `case ${c.id}: no entry ${c.write} in its research`).toBeDefined();
+        const errors = guard(entry, c.research, c.tree, c.starting_tree);
         if (c.expect === "fire") expect(errors, `case ${c.id} should fire`).toHaveLength(1);
         else expect(errors, `case ${c.id} should be silent`).toEqual([]);
       });

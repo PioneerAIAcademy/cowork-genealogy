@@ -11,8 +11,10 @@ import {
   fetchStoryText,
   memoryPageId,
   resolveMemoryArtifactUrl,
+  MEMORY_LOOKUP_FAILED_GUIDANCE,
 } from "../../src/utils/memories.js";
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
+import { HOSTED_REAUTH_INSTRUCTION, REJECTED_TOKEN_MESSAGE } from "../../src/auth/config.js";
 
 // Nothing else in this file reads a token, so mocking the whole module is safe.
 const getValidTokenMock = vi.hoisted(() => vi.fn());
@@ -336,8 +338,9 @@ describe("resolveMemoryPageUrl — a Memories PAGE url is resolved to the bytes 
 
   it("6. throws an actionable error on a 404 and on empty sourceDescriptions", async () => {
     fetchMock.mockResolvedValue(new Response("", { status: 404 }));
-    await expect(resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL)).rejects.toThrow(
-      /Memories lookup failed \(404\).*call the login tool/s,
+    await expect(resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL)).rejects.toHaveProperty(
+      "message",
+      `FamilySearch Memories lookup failed (404) for artifact ${memoryPageId(PAGE)}. ${MEMORY_LOOKUP_FAILED_GUIDANCE}`,
     );
 
     fetchMock.mockReset();
@@ -395,6 +398,35 @@ describe("resolveMemoryPageUrl — a Memories PAGE url is resolved to the bytes 
     expect(authHeaderOf(fetchMock.mock.calls[0]), "first call stays anonymous").toBeNull();
     expect(authHeaderOf(fetchMock.mock.calls[1]), "the retry carries the bearer").toMatch(
       /^Bearer /,
+    );
+  });
+
+  // A restricted memory refused even with the bearer is not a sign-in problem:
+  // the old "call the login tool and retry" sent agents to a login that cannot
+  // help, and matched the prototype's REAUTH_HITS.
+  it("13. a 403 after the bearer retry does not send the agent to login", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 403 }));
+    const err = await resolveMemoryArtifactUrl(memoryPageId(PAGE)!, bearerPrincipal("tok")).then(
+      () => null,
+      (e: Error) => e,
+    );
+    expect(err?.message).toBe(
+      `FamilySearch Memories lookup failed (403) for artifact ${memoryPageId(PAGE)}. ${MEMORY_LOOKUP_FAILED_GUIDANCE}`,
+    );
+    expect(err?.message).not.toMatch(/login tool|Reconnect FamilySearch/i);
+  });
+
+  // A 401 to the bearer is a rejected token, as for an image fetch.
+  it("14. a 401 after the bearer retry is a rejected token", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 401 }));
+    await expect(
+      resolveMemoryArtifactUrl(memoryPageId(PAGE)!, bearerPrincipal("tok")),
+    ).rejects.toThrow(HOSTED_REAUTH_INSTRUCTION);
+
+    fetchMock.mockReset();
+    fetchMock.mockResolvedValue(new Response("", { status: 401 }));
+    await expect(resolveMemoryArtifactUrl(memoryPageId(PAGE)!, LOCAL)).rejects.toThrow(
+      REJECTED_TOKEN_MESSAGE,
     );
   });
 });

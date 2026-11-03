@@ -86,7 +86,9 @@ NEWLY_ENFORCED = {"localities"}
 #: skill. It is an agent now, and SUBJECTS is derived from `agent:` entries in some
 #: row's `callers` -- person-evidence appears in none, so `writer_sets` resolves its
 #: agent owner nowhere. `person_evidence` is the empty set for the same reason.
-ADDED: dict[str, set[str]] = {"rejected_links": set()}
+#: `namesakes` (issue #3363, PR 2) is search-records', which the row lists in its
+#: `callers`, so it resolves.
+ADDED: dict[str, set[str]] = {"rejected_links": set(), "namesakes": {"search-records"}}
 
 #: `questions` gains `proof-conclusion`. The transition it covers —
 #: `status -> resolved` — was owned by nobody: `proof-conclusion`'s body hands
@@ -135,6 +137,11 @@ WIDENED: dict[str, set[str]] = {
     #: Step 4a) with no row naming it; the agent's hook lane makes that write
     #: explicit, so the manifest now says so. A widening cannot newly fail a test.
     "sources": {"init-project"},
+    #: `plans` gains `search-hints` (issue #3153). The agent now sets the status
+    #: of the "review pending hints" plan item it executes, through
+    #: `research_append`'s `plan_items` lane -- the same lane search-records and
+    #: search-images hold. A widening cannot newly fail a test.
+    "plans": {"search-hints"},
 }
 
 #: `assertions` loses `convert-dates`. The grant was dead on arrival: the skill's
@@ -382,7 +389,8 @@ def test_a_unit_plane_agent_caller_is_a_suite_subject():
       authorizes someone.
 
     `evaluations` (`agent:gps-mentor`) stays off the unit plane and is untouched
-    by this: it claims no plane, so it never reaches the filter below.
+    by this: it claims no unit plane (its plane is the hook, issue #3191), so it
+    never reaches the filter below.
 
     Checked across `callers`, `hookCallers`, and `unitCallers` — all three
     fields resolve agent callers through the same `writer_sets` path, so

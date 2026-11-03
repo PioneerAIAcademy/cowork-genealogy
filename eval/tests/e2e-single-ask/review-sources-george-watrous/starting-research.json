@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_review_sources_george_watrous",
+    "objective": "Review the existing sources on George Hugh Watrous (KNDB-F71).",
+    "subject_person_ids": [
+      "KNDB-F71"
+    ],
+    "status": "active",
+    "created": "2026-11-02",
+    "updated": "2026-11-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

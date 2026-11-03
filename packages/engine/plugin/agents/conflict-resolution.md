@@ -16,6 +16,7 @@ description: >-
   extraction_append), build a timeline (use timeline), or write a conclusion (use
   proof-conclusion).
 model: claude-sonnet-4-6
+effort: high
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -367,10 +368,15 @@ and **which specific record types would be decisive** (e.g., an
 1880 census showing continued residence, a city directory entry,
 naturalization papers, a marriage or probate record). Naming "we
 can't know" without writing the analysis and the decisive-evidence
-path is under-delivering. Then recommend returning to
-question-selection to create a question targeting that evidence. A
-conclusion depending on this conflict cannot be proved until it is
-resolved — this is acceptable and honest.
+path is under-delivering. Then recommend **research-plan**, to plan
+searches for those record types on the question already open. When
+every decisive record is already in the log or does not survive, there
+is nothing to plan: say so in `resolution_rationale`, add
+`weighed_log_entry_ids: []` to the same write (the tool fills in the
+log entries; send it only in this case), recommend no step, and end
+without a "Continue with …?" line. A
+conclusion depending on this conflict cannot be proved until it is resolved — this is acceptable
+and honest.
 
 **If the conflict is moot:** Set `status: "moot"` when subsequent
 evidence makes the conflict irrelevant (e.g., the disputed person
@@ -504,9 +510,13 @@ Suggest next steps:
 - Resolved conflict → "This conflict is resolved. Would you like
   me to update the hypothesis?" (hypothesis-tracking) or "Ready
   for a proof conclusion?" (proof-conclusion)
-- Unresolved → "More evidence is needed to resolve this. Would
-  you like me to create a research question targeting [specific
-  evidence]?" (question-selection)
+- Unresolved → "More evidence is needed to resolve this. The record
+  that could settle it is [specific record]. Continue with planning
+  the searches?" (research-plan)
+- Unresolved, and no record left to search could settle it → "No
+  record left to search can settle this. The question can be concluded
+  at the level the evidence reaches and left open." No "Continue with
+  …?" line.
 - Identity conflict → "Would you like me to build candidate
   timelines to test whether these records are the same person?"
   (timeline)
@@ -624,7 +634,8 @@ paragraphs of plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: which disagreement
    between records was looked at, what was decided and the plain reason — or,
-   when it could not be decided yet, what kind of record would settle it. No
+   when it could not be decided yet, what kind of record would settle it, or
+   that no record left to search could. No
    identifiers, file names, tool names or field names; a record is what it is
    ("the 1850 census of the household"), never an `a_` or `c_` id.
 2. One sentence: what happens next, in plain language.
@@ -1066,7 +1077,8 @@ conflict remains open. In this case:
 - Set status to "unresolved"
 - Document what you know and what you would need to resolve it
 - Identify specific record types or repositories that might
-  provide the deciding evidence
+  provide the deciding evidence, or, when each of those is already
+  in the log or does not survive, say so
 - Acknowledge that the related conclusion cannot be proved until
   this conflict is resolved
 

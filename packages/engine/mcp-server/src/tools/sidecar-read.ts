@@ -1,21 +1,34 @@
 // sidecar_read — paged read of one project sidecar text file.
 //
-// Serves the two project-file classes that had no MCP tool: the verdict bodies
-// `evaluations[].file_path` names, and text uploads under `<project>/uploads/`.
-// Nothing else: `results/` is served by record_read / rank_search_matches,
-// images by image_read / image_transcribe, research.json and the tree by
-// research_query / project_context. Spec: docs/specs/sidecar-read-tool-spec.md.
+// Serves the project-file classes no other MCP tool reads back: the verdict
+// bodies `evaluations[].file_path` names, text uploads under `<project>/uploads/`,
+// and two kinds of `results/` text: a staged transcription, and one full-text
+// hit's `textDocument` (`results/<file>#<hit id>`, or `#hits` for the hit list;
+// issue #3522). Record and search sidecars stay with record_read /
+// rank_search_matches, images with image_read / image_transcribe, research.json
+// and the tree with research_query / project_context.
+// Spec: docs/specs/sidecar-read-tool-spec.md.
 //
 // The bound that matters is on the SERIALIZED envelope, not on `content`:
 // `writerToolResult` JSON.stringifies the result, which escapes every `"`, `\`
 // and control character, and the CLI spills any result above 50,000 characters
 // to a file the model must Read back (which, on a resumed turn, is deleted at
-// turn end). So the page is shrunk until its JSON form fits in 40,000
-// characters, whatever the raw text looks like.
+// turn end). So the page is shrunk until its JSON-escaped text fits in `maxChars`
+// (40,000 at most), whatever the raw text looks like.
 
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { getProjectStore } from "../store/project-store.js";
-import { readStagedResults } from "../utils/results-staging.js";
+import {
+  findFulltextHit,
+  HIT_INDEX_FRAGMENT,
+  readResultsEnvelope,
+  readStagedResults,
+  ResultsEnvelopeError,
+  splitHitRef,
+  type ResultsEnvelope,
+} from "../utils/results-staging.js";
+import { arkToBareId } from "../utils/ark.js";
+import { fitPage, requireWholeNumber } from "../utils/text-page.js";
 import {
   classifyProjectPath,
   MISSING_PROJECT_PATH_MESSAGE,
@@ -23,6 +36,10 @@ import {
   NoProjectError,
   noProjectResult,
 } from "../utils/project-io.js";
+
+// `fitPage` lives in utils/text-page.ts, shared with the wiki tools. This module
+// still exports it: its callers and its tests import it from here.
+export { fitPage };
 
 /** Both the default page size and the hard cap on `maxChars`; also the cap on
  *  the JSON-escaped body of `content` — `JSON.stringify(content).length - 2`
@@ -67,6 +84,12 @@ export type SidecarReadResult =
       truncated: boolean;
       /** `offset + content.length` — present only when `truncated`. */
       nextOffset?: number;
+      /** On a `results/<file>#<hit>` read: the hit's id as stored. */
+      hitId?: string;
+      /** On a hit read: its 1-based position in the search's results (the viewer's card order). */
+      hitIndex?: number;
+      /** On a hit read: the finalized sidecar's log entry; null for a staged file. */
+      logId?: string | null;
     }
   | { ok: false; reason: SidecarReadFailureReason; errors: string[] };
 
@@ -100,9 +123,6 @@ function servedElsewhere(ref: string): string | null {
   }
   if (last === "tree.gedcomx.json" || first === "tree.gedcomx.json") {
     return "tree.gedcomx.json is served by `project_context`.";
-  }
-  if (first === "results") {
-    return "results/ sidecars are served by `record_read({recordId, resultsRef})` and `rank_search_matches({resultsRef})`.";
   }
   if (first === "images") {
     return "images/ are served by `image_read` / `image_transcribe`.";
@@ -154,20 +174,6 @@ export function invalidRefMessage(ref: unknown): string | null {
   return null;
 }
 
-/** Reject-not-coerce, the same posture as research_query's `offset`: a
- *  stringified "50" reaches the tool as a string (index.ts passes arguments
- *  through untouched) and would otherwise be silently coerced by `slice`. */
-function requireWholeNumber(name: string, value: unknown, min: number): number {
-  if (!Number.isInteger(value) || (value as number) < min) {
-    const got =
-      typeof value === "number" && !Number.isFinite(value) ? String(value) : JSON.stringify(value);
-    throw new Error(
-      `${name} must be a whole number ≥ ${min} (got ${got}). Send it as a number, not a string.`,
-    );
-  }
-  return value as number;
-}
-
 /** Spec §5: any NUL, or U+FFFD in more than max(1, 1%) of the first 8,192
  *  characters. The floor of one is what keeps the rule from being
  *  zero-tolerance on a short file: below 100 characters, 1% is under one, so
@@ -183,48 +189,106 @@ function looksBinary(text: string): boolean {
   return fffd > Math.max(NOT_TEXT_FFFD_FLOOR, sample.length * NOT_TEXT_FFFD_RATIO);
 }
 
+/** A hit read's extra fields on the result. */
+interface HitFields {
+  hitId: string;
+  hitIndex: number;
+  logId: string | null;
+}
+
+/** Where a bare `results/` ref that is not a staged transcription is read. */
+function notATranscription(base: string, tool: string | null): string {
+  const head = `${base} is not a staged transcription or a full-text hit.`;
+  if (tool === "record_read") return `${head} Read this record sidecar with \`record_read({recordId, resultsRef})\`.`;
+  return (
+    `${head} Record and search sidecars under results/ are served by ` +
+    "`record_read({recordId, resultsRef})` and `rank_search_matches({resultsRef})`."
+  );
+}
+
 /**
- * Spec §4: the page after the serialized-envelope shrink and the surrogate
- * step. Exported so the test can pin the bound on the function itself as
- * well as on the wrapped envelope. Invariant: for `offset < text.length` the
- * page is never empty, so `nextOffset` always advances and a caller paging
- * "until truncated is false" terminates.
+ * The text a `results/` ref names (spec §7): one full-text hit's `textDocument`
+ * (`#<hit id>`), a full-text sidecar's hit list (`#hits`), or a staged
+ * transcription. A bare full-text ref is refused, never answered with the list:
+ * a selector the caller dropped must not read back as different content.
  */
-export function fitPage(text: string, offset: number, maxChars: number): string {
-  let page = text.slice(offset, offset + maxChars);
-  // The bound is on the ESCAPED BODY — JSON.stringify's two wrapping quotes
-  // excluded — so a plain-text page is exactly maxChars. A raw character
-  // serializes to between 1 (plain) and 6 (`\u0001`) characters, so cutting
-  // `ceil(over / 6)` always makes progress and can never overshoot to an empty
-  // page (a single character always fits): with `"` at 2 each, the excess
-  // shrinks by about a third per step and the loop settles in ~25 rounds of a
-  // 40k stringify — microseconds.
-  for (;;) {
-    const over = JSON.stringify(page).length - 2 - SIDECAR_READ_MAX_CHARS;
-    if (over <= 0 || page.length === 0) break;
-    page = page.slice(0, Math.max(0, page.length - Math.max(1, Math.ceil(over / 6))));
+async function resultsText(
+  projectPath: string,
+  base: string,
+  hit: string | undefined,
+): Promise<{ text: string; hit?: HitFields }> {
+  if (hit === "") {
+    throw new SidecarReadFailure(
+      "invalid_ref",
+      `'${base}#' has an empty hit selector. Read '${base}#${HIT_INDEX_FRAGMENT}' for the hits and their refs.`,
+    );
   }
-  // Never split a surrogate PAIR across two pages: when the page ends on a
-  // high surrogate and the very next unit of the text is its low surrogate,
-  // move the boundary. Backwards by one unit normally; forwards by one unit
-  // when the page is that single high surrogate (maxChars: 1, or an offset
-  // landing on the pair), because backing off would leave an empty page with
-  // nextOffset === offset — a paging loop that never terminates. A lone high
-  // surrogate with no low surrogate after it is not a pair and stays put.
-  const lastCode = page.charCodeAt(page.length - 1);
-  const nextCode = text.charCodeAt(offset + page.length);
-  if (isHighSurrogate(lastCode) && isLowSurrogate(nextCode)) {
-    page = page.length > 1 ? page.slice(0, -1) : text.slice(offset, offset + 2);
+  let env: ResultsEnvelope | null = null;
+  try {
+    env = await readResultsEnvelope(projectPath, base);
+  } catch (e) {
+    if (!(e instanceof ResultsEnvelopeError)) throw e;
+    if (hit !== undefined) {
+      throw new SidecarReadFailure(e.kind === "missing" ? "not_found" : "invalid_ref", e.message);
+    }
   }
-  return page;
-}
 
-function isHighSurrogate(code: number): boolean {
-  return code >= 0xd800 && code <= 0xdbff;
-}
+  if (hit === undefined) {
+    if (env?.tool === "fulltext_search") {
+      throw new SidecarReadFailure(
+        "invalid_ref",
+        `${base} holds a full-text search's ${env.results.length} hits; sidecar_read reads one hit ` +
+          `at a time. Read '${base}#${HIT_INDEX_FRAGMENT}' for the hits and their refs, then ` +
+          `'${base}#<hit id>' for one hit's transcript.`,
+      );
+    }
+    const t = await stagedTranscriptionText(projectPath, base);
+    if (t === null) throw new SidecarReadFailure("invalid_ref", notATranscription(base, env?.tool ?? null));
+    return { text: t };
+  }
 
-function isLowSurrogate(code: number): boolean {
-  return code >= 0xdc00 && code <= 0xdfff;
+  if (env!.tool !== "fulltext_search") {
+    throw new SidecarReadFailure(
+      "invalid_ref",
+      `a '#…' hit selector reads one hit of a fulltext_search sidecar; ${base} was written by ` +
+        `${env!.tool ?? "an unknown tool"}. Pass '${base}' without the selector.`,
+    );
+  }
+  const rows = env!.results;
+  if (hit === HIT_INDEX_FRAGMENT) {
+    const lines = rows.map((r, i) => {
+      const row = (r ?? {}) as { id?: unknown; title?: unknown; recordDate?: unknown; recordPlace?: unknown; textDocument?: unknown };
+      const id = typeof row.id === "string" ? row.id : "";
+      return JSON.stringify({
+        hitIndex: i + 1,
+        hitId: id,
+        title: row.title ?? null,
+        recordDate: row.recordDate ?? null,
+        recordPlace: row.recordPlace ?? null,
+        hasTranscript: typeof row.textDocument === "string" && row.textDocument !== "",
+        ref: `${base}#${arkToBareId(id)}`,
+      });
+    });
+    return { text: lines.join("\n") };
+  }
+  const found = findFulltextHit(rows, hit);
+  if (!found) {
+    throw new SidecarReadFailure(
+      "not_found",
+      `${base} has no hit '${hit}'; it holds ${rows.length} hits. Read '${base}#${HIT_INDEX_FRAGMENT}' ` +
+        "for their ids, and copy a hit's `ref` from there.",
+    );
+  }
+  if (typeof found.row.textDocument !== "string" || found.row.textDocument === "") {
+    throw new SidecarReadFailure(
+      "not_found",
+      `hit ${found.hitIndex} of ${base} (${found.row.id}) carries no transcript: FamilySearch returned none for it.`,
+    );
+  }
+  return {
+    text: found.row.textDocument,
+    hit: { hitId: found.row.id, hitIndex: found.hitIndex, logId: env!.logId },
+  };
 }
 
 /** The text of a staged transcription, or null when `ref` holds something else
@@ -268,7 +332,11 @@ export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadR
   );
 
   try {
-    const refError = invalidRefMessage(ref);
+    // A `results/` ref may carry `#<hit>`: split it off before the path rules,
+    // so an ARK's `/` and `:` in the selector never meet them.
+    // A missing or non-string ref falls through to invalidRefMessage's "ref is required".
+    const { base, hit } = typeof ref === "string" ? splitHitRef(ref) : { base: ref, hit: undefined };
+    const refError = invalidRefMessage(base);
     if (refError) throw new SidecarReadFailure("invalid_ref", refError);
 
     // Same classification as readProjectJson, and the same two thrown
@@ -286,16 +354,11 @@ export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadR
     // unreadable verdict would read as missing and the mentor would re-evaluate
     // over a live one. Read, and classify what the read throws.
     let raw: string;
-    if (ref.startsWith("results/")) {
-      const t = await stagedTranscriptionText(projectPath, ref);
-      if (t === null) {
-        throw new SidecarReadFailure(
-          "invalid_ref",
-          `${ref} is not a staged transcription. Record and search sidecars under results/ ` +
-            "are served by `record_read({recordId, resultsRef})` and `rank_search_matches({resultsRef})`.",
-        );
-      }
-      raw = t;
+    let hitFields: HitFields | undefined;
+    if (base.startsWith("results/")) {
+      const read = await resultsText(projectPath, base, hit);
+      raw = read.text;
+      hitFields = read.hit;
     } else try {
       raw = await getProjectStore().readText(projectPath, ref);
     } catch (e: any) {
@@ -340,6 +403,7 @@ export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadR
       content,
       truncated,
       ...(truncated ? { nextOffset: end } : {}),
+      ...(hitFields ?? {}),
     };
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult("read");
@@ -359,9 +423,12 @@ export const sidecarReadSchema = {
     "researcher placed under `uploads/` (a transcription, a CSV, a note). Read-only; writes " +
     "nothing. `ref` is project-relative and must start with `evaluations/` or `uploads/`: " +
     "research.json and the tree are served by `research_query`/`project_context`, `results/` " +
-    "sidecars by `record_read`/`rank_search_matches` (except a staged TRANSCRIPTION, " +
-    "`results/…` from `image_transcribe`, whose text this tool returns), and images by " +
-    "`image_read`/`image_transcribe`, so those refs are rejected with a pointer. Returns " +
+    "sidecars by `record_read`/`rank_search_matches`, and images by `image_read`/" +
+    "`image_transcribe`, so those refs are rejected with a pointer. Two `results/` reads are " +
+    "this tool's: a staged TRANSCRIPTION (`results/…` from `image_transcribe`), and ONE " +
+    "full-text hit's transcript, `results/<file>#<hit id>` (a `fulltext_search` result; " +
+    "`results/<file>#hits` lists its hits, one JSON line each with a ready-made `ref` to copy). " +
+    "A hit read adds `hitId`, `hitIndex` (1-based) and `logId` to the result. Returns " +
     "`{ ref, totalChars, offset, content, truncated, nextOffset? }`: `content` is at most " +
     "40,000 characters (less when the text is heavy with quotes or backslashes, so the " +
     "result never overflows the tool-result limit); when `truncated` is true, call again " +
@@ -380,7 +447,9 @@ export const sidecarReadSchema = {
         description:
           "Project-relative POSIX path of the file, under `evaluations/` or `uploads/` " +
           "(e.g. `evaluations/proof-critique-ps_001-2026-09-14.json`, `uploads/notes.txt`), " +
-          "or a `results/` ref holding a staged transcription. " +
+          "or a `results/` ref holding a staged transcription. For a `fulltext_search` result, " +
+          "append the hit: `results/log_003.json#<hit id>` (any ARK spelling of the hit's `id`), " +
+          "or `#hits` for the list of hits and their refs. " +
           "Forward slashes only; no leading slash, no `..`.",
       },
       refs: {

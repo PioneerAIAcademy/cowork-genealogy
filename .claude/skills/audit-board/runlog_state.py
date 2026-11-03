@@ -5,10 +5,9 @@ eval/tests/unit/<suite>/), reports the newest releasable run log, how many days 
 has sat, and whether any releasable run log is active against the working tree.
 
 Newest is by the log's own timestamp, across released v{N}.json AND candidate
-v{N}_<ts>.json alike. `check_runlogs.latest_full_skill_runlog` prefers any released
-log over every candidate, which is right for rule 2's fallback and wrong here: a
-suite whose released log is stale but whose newer candidate is active owes a
-promotion, not a paid run.
+v{N}_<ts>.json alike, the order `versioning.latest_full_skill_runlog` uses. A suite
+whose released log is stale but whose newer candidate is active owes a promotion,
+not a paid run.
 
 States:
     active   a releasable log is active, and it is released or no released log is stale

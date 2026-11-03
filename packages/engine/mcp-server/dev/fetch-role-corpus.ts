@@ -36,7 +36,7 @@ import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import { fetchRetry, sleep } from "./http-retry.js";
-import { toSimplified } from "../src/utils/gedcomx-convert.js";
+import { recordReadDocument } from "../src/tools/record-read.js";
 import { recordIndexFields } from "../src/utils/record-index-fields.js";
 import type { GedcomX } from "../src/types/gedcomx.js";
 
@@ -91,9 +91,10 @@ function entityId(ark: string): string {
   return m ? m[1] : ark;
 }
 
-/** Keep only what `record-extract.ts` reads. */
-function compact(raw: any) {
-  const simplified = toSimplified(raw as GedcomX);
+/** Keep only what `record-extract.ts` reads, from the document `record_read`
+ *  returns for this body. */
+async function compact(raw: any) {
+  const simplified = await recordReadDocument(raw as GedcomX);
   const indexFields = recordIndexFields(raw);
   const persons = (simplified.persons ?? []).map((p) => ({
     id: p.id,
@@ -187,7 +188,7 @@ async function main(): Promise<void> {
       continue;
     }
     existing[ark] = {
-      ...compact(raw),
+      ...(await compact(raw)),
       // The comparison side, stored beside the record so the scorer is offline.
       modelRoles: Object.fromEntries(modelRoles),
     };

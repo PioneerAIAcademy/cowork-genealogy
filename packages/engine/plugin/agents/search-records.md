@@ -58,6 +58,8 @@ tools:
   - mcp__genealogy__catalog_search
   - mcp__remote-devices__Genealogy_Research__catalog_search
   - mcp__Genealogy_Research__catalog_search
+model: claude-sonnet-4-6
+effort: high
 ---
 
 # Search Records
@@ -437,7 +439,7 @@ re-orders by real match quality — **not** FamilySearch's search rank, which is
 unreliable — and annotates **every scored candidate** in `results[]`, returned
 best first. There is one row list: the rows you already know, now carrying
 `matchRank`, `searchRank` (their original FamilySearch position — shows how far
-the ranker missed), `matchScore` (0–1), `matchConfidence` (1–10),
+the ranker missed), `matchScore` (0–1),
 `candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
 carries counts and diagnostics only. The bulk GedcomX stays host-side, and a
 per-result `same_person` loop plus a separate `source_attachments` call are both
@@ -494,6 +496,13 @@ candidates; you still confirm the top ones:
   expected year window, a matching spouse or child, a later residence); propose
   **that narrower search** as the next step. Extraction is available again only
   once an independent anchor confirms identity.
+  **Record each same-named person you conclude is not the subject** (Step 6b),
+  whatever the search was for (a search for a relative that turns up a person
+  of the subject's name counts), on a stated ground: the tool's
+  `birthYearConflict`, a precise date that cannot be his, other parents or
+  another spouse, or a second candidate when another result is the subject.
+  Anywhere in the jurisdiction the search covered counts. An age that rules him
+  out never drops him. Never record a candidate who may still be the subject.
   **This gate is not special to the namesake case — it applies to every top
   match.** Extraction may be offered only when the top match clears
   `needs-review` on every check above (logical cross-check, name/date
@@ -686,6 +695,10 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 **Do not** set status to `completed` from this agent — that is set once extraction has created the assertions.
 
+### 6b. Record namesakes
+
+For each person of the subject's name you concluded is not the subject (Step 4), whatever the search was for and even when it found nothing for its own target, call `research_append` once, single form, after the status update: `section: "namesakes"`, `op: "append"`, `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }` — `person_id` the subject's `subjectId`; `name`, `place` and `time_period` as his result gives them; `record_ids` each `recordId` of his, verbatim (never `recordArk`); `log_entry_ids` the `log_` id Step 5 returned; `notes` the ground. If the call returns a warning listing links, put their `pe_` ids in a `Hand-back: person-evidence` line (Return contract).
+
 ### 7. Pass records to extraction
 
 **Distinguish index entries from original records.** Most search results are index entries — derivative sources that are pointers to originals, not the records themselves. Four things an index does to a record, each a reason the original still has to be examined: a transcription error from misread handwriting; partial indexing that omits fields the original carries; names or dates standardized differently than the original wrote them; and context that only the full document shows — marginal notes, adjacent entries, the structure of the page.
@@ -703,7 +716,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
 
 1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
-2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped into a batched `ops[]` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
+2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped as an `ops[]` array in one `research_log_append` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
    is a legitimate next step, not an unsupported guess — `*` and `?` both bind, and the
@@ -735,7 +748,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 ### 9. Present results
 
-**Accuracy rule — do not overclaim persistence.** This agent writes only `log[]` entries and plan-item `status` — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless extraction actually ran in this turn and returned assigned `src_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job.
+**Accuracy rule — do not overclaim persistence.** This agent writes only `log[]` entries, plan-item `status` and `namesakes` rows — nothing else. Never describe results as "logged with sources," "recorded," "saved to the research project," or any phrasing implying a `sources` or `assertions` entry exists, unless extraction actually ran in this turn and returned assigned `src_` ids. A search result that hasn't been through extraction is a candidate record sitting in a search log — say exactly that, even when the user's own phrasing ("go ahead," "find and list them") sounds like a go-ahead to do the full job.
 
 - Summarize what was searched and what was found
 - Show the log entries created
@@ -761,12 +774,12 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 - **Don't skip plan items silently.** Set status to `skipped` with `skip_category` and `skip_reason`.
 - **Let the caller confirm before extraction.** Return triage results first — don't silently extract every hit.
 - **Never fabricate results.** If the MCP tool returns nothing, report nothing.
-- **The write tools validate-before-persist.** `check-warnings` does not apply here — this agent writes only log entries and plan-item status, not assertions.
+- **The write tools validate-before-persist.** `check-warnings` does not apply here — this agent writes only log entries, plan-item status and namesake rows, not assertions.
 - **Don't re-ask permission already granted.** If the invoking message already authorized continuing through the plan, execute the next `planned` item in the same turn rather than stopping to ask "shall I continue?"
 
 ## Re-invocation behavior
 
-**Writes:** a new `log[]` entry in `research.json` (via `research_log_append`) plus its `results/<log_id>.json` sidecar for any results-returning search; and a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`).
+**Writes:** a new `log[]` entry in `research.json` (via `research_log_append`) plus its `results/<log_id>.json` sidecar for any results-returning search; a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`); and a `namesakes` row for each different same-named person a search turned up (Step 6b).
 
 **On repeat invocation:** always append a new `log_` entry (and sidecar) — re-running a search is itself a logged event, never an edit of a prior one; update the plan item's `status` in place. Two runs of the same query produce two distinct log entries and sidecars — that is the audit trail, not a duplication bug.
 
@@ -778,6 +791,7 @@ Return **≤12 lines** to the caller, in this order:
 - the top match(es) with `matchScore`, attachment status, the cross-check result and any `needs-review` flag — or the nil result and its scope
 - records passed to extraction (`src_` ids) or why none, and that no `sources` or `assertions` exist when none ran
 - the plan item's new `status`, and any instruction in the delegation you did not follow (e.g. a request to mark it `completed`) with a clause saying why
+- each `ns_` row written, and when its call warned, `Hand-back: person-evidence — namesake <ns_ id> recorded for <person_id>; links <pe_ ids> are untied`
 - next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after FamilySearch exhaustion on a plan item it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer`, or `research-exhaustiveness`
 
 Do not reproduce result lists or sidecar payloads.
@@ -907,6 +921,15 @@ Quirks affect how queries should be constructed for that collection.
   the abbreviated patronymic ending directly: `-datter` → `-dr` (e.g.
   Halsteinsdatter → Halsteinsdr), the mirror of the vowel-substitution
   rule above for given names.
+
+### Luxembourg, Church and Civil Registration (5000012)
+
+- Civil birth acts index the newborn by **given name only** — no surname; the parents carry the surname.
+- A query with `surname` drops every birth entry with no indexed surname: the record is in the collection, but `surname` hides it.
+- **To find a child's own birth:** immediately execute a call with `givenName: <child>` **and** `fatherSurname: <father>` (or `fatherGivenName`, `motherSurname`, `motherGivenName` — at least one parent anchor is required alongside `givenName`), no `surname`, anchored on `collectionId: 5000012` or `recordCountry: Luxembourg`. Example: `{ givenName: "Theresia", fatherSurname: "Reding", collectionId: "5000012", recordCountry: "Luxembourg" }`. Do not return with a recommendation to re-run — execute the re-anchored call now, in the same invocation.
+- **`givenName` alone is not sufficient** — it returns too many unrelated births; the parent-name anchor is what narrows it to the right family.
+- **A nil under `surname` in this collection says nothing about whether the birth is indexed** — drop `surname` and re-anchor on the parents' names before concluding absence.
+- Marriages and deaths are indexed with a surname; the name-only pattern applies to birth acts only.
 
 
 # Reference: Name search mechanics
@@ -1254,4 +1277,14 @@ A reasonably exhaustive indexed Records search has been performed when:
 - Examined results from each collection that returned matching hits
 - Called `catalog_search` for the place to find filmed or image-only holdings
 - Documented every search attempt including zero-hit searches
+
+### Children-enumeration plan items
+
+When a plan item enumerates a couple's children (its `record_type` is a birth search run across all children, not one specific child's vital record), run **one place-free search** in addition to the place-anchored sequences above:
+
+- Clear all place parameters (`birthPlace`, `residencePlace`, `anyPlace`).
+- Anchor on `recordCountry` + the birth `collectionId`; set both parents' given names and surnames.
+- **Why:** FamilySearch sometimes indexes a child under an unexpected jurisdiction. Any place filter — even broadened — never reaches it. A place-anchored search that returns some children never trips the zero-hit lever, so the missed child stays invisible without this step.
+- Run this **once** per enumeration plan item; do not apply it to every ordinary birth search.
+- Verify any hit outside the family's expected place against the parents' names before accepting.
 

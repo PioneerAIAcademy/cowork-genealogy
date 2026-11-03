@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 // (scripts/write-build-info.mjs); the .mcpb stage and the E2B image both carry
 // build/ verbatim, so the same file answers in every artifact. The path resolves
 // to build/build-info.json from the compiled build/utils/ and to the (absent)
-// src/build-info.json under vitest/tsx — same ../ pattern as name-variants.ts.
+// src/build-info.json under vitest/tsx — same ../ pattern as bundled-data.ts.
 //
 // Never throws: a missing or malformed file yields `<base>+dev`, so a dev
 // checkout that has not run the build still boots, it just says so.

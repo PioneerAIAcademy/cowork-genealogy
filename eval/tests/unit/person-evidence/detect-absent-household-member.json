@@ -30,5 +30,8 @@
     "max_turns": 40,
     "max_wall_clock_seconds": 600,
     "sdk_message_silence_seconds": 600
-  }
+  },
+  "mcp_fixtures": [
+    "same-person-ackerman-1860-head"
+  ]
 }

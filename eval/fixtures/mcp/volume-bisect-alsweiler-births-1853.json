@@ -1,0 +1,17 @@
+{
+  "tool": "volume_bisect",
+  "description": "volume_bisect toward 1853 in 008230326_001_M964-RDH, answered in one shot: the mock matcher cannot branch on `readings`, so every call returns the converged result — 1853 begins at position 75 (008230326_00076), after position 74 (1852). `stopped` is the tool's own closedMessage. A real bisect takes ~8 probes to get here; the test grades that the agent bisects before it reads, not how many probes the tool takes.",
+  "args": {
+    "imageGroupNumber": "008230326_001_M964-RDH"
+  },
+  "response": {
+    "bracket": {
+      "lowPosition": 74,
+      "lowYear": 1852,
+      "highPosition": 75,
+      "highYear": 1853
+    },
+    "confidence": "resolved",
+    "stopped": "The target falls between position 74 (1852) and position 75 (1853), which are adjacent — no image lies between them, so no further probe can narrow this. Read those pages."
+  }
+}

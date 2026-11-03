@@ -91,6 +91,9 @@
         "user_directed"
       ]
     },
+    "question_kind": {
+      "enum": ["enumerative", "targeted"]
+    },
     "informant_proximity": {
       "enum": [
         "self",

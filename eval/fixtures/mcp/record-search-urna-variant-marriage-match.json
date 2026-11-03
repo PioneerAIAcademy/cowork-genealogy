@@ -31,7 +31,7 @@
         "collectionTitle": "Norway, Marriages, 1660-1926",
         "recordTitle": "Entry for Anders Monsen and Urna Halsteinsdr, 25 Jun 1786",
         "treeMatches": [
-          { "personId": "LKFW-9XH", "confidence": 5 }
+          { "treePersonId": "LKFW-9XH", "stars": 5 }
         ],
         "primaryId": "p_groom_11820171332",
         "gedcomx": {

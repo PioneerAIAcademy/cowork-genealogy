@@ -58,6 +58,17 @@ export const HOSTED_REAUTH_INSTRUCTION =
   "at the top of the app to sign in again, then ask me to continue. (Do not call " +
   "the login tool: it cannot open a sign-in page from here.)";
 
+/** What hosted `login` answers. It must not claim the session was rejected:
+ *  login is called after an image 403 with a working token, and that claim
+ *  confirmed the wrong diagnosis. It matches neither REAUTH_HITS nor
+ *  REAUTH_ENTRY (apps/server/proto/turn.py), which count as auth failures. */
+export const HOSTED_LOGIN_UNAVAILABLE =
+  "The login tool is not available in the web app, and this answer says " +
+  "nothing about whether the current FamilySearch session works. Only if a " +
+  "FamilySearch tool itself reported a sign-in problem, ask the user to click " +
+  "the Reconnect button at the top of the app, then continue. An image that " +
+  "fails with 403 is most likely restricted, not a sign-in problem.";
+
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
   "No OpenRouter API key is configured. Tell the user to get one at " +
   "https://openrouter.ai/keys and enter it in Claude Desktop under Settings → " +
@@ -190,4 +201,46 @@ export async function getOpenRouterApiKey(principal: Principal): Promise<string>
 export async function getOpenRouterModel(principal: Principal): Promise<string> {
   const config = await loadConfig(principal);
   return config.openRouterModel?.trim() || DEFAULT_OPENROUTER_MODEL;
+}
+
+/** Which matcher scores a pair (`utils/matcher.ts`), and how to reach the service. */
+export type MatcherSettings =
+  | { backend: "familysearch" }
+  | { backend: "service"; url: string; apiKey: string };
+
+const NO_KEY_IN_CHAT = "Do not ask the user to paste a key into the chat.";
+
+export const MATCHER_VALUE_MESSAGE =
+  "The \"matcher\" setting in ~/.familysearch-mcp/config.json must be \"familysearch\" " +
+  "or \"service\". Fix it there, or remove it to score with FamilySearch's matcher. " +
+  NO_KEY_IN_CHAT;
+
+function matcherServiceMissing(key: "matcherUrl" | "matcherApiKey", what: string): string {
+  return (
+    `~/.familysearch-mcp/config.json sets "matcher" to "service" but has no "${key}". ` +
+    `Add ${what} as "${key}" there, or set "matcher" to "familysearch". ${NO_KEY_IN_CHAT}`
+  );
+}
+
+/** The trimmed string at `value`, or "" when it is not a string. */
+function configString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/**
+ * The matcher `principal`'s config names. No `matcher` key is FamilySearch's
+ * matcher; any value but the two throws rather than fall back to either. Config
+ * only, like every getter here: no environment variable is read.
+ */
+export async function getMatcherSettings(principal: Principal): Promise<MatcherSettings> {
+  const config = await loadConfig(principal);
+  if (!Object.hasOwn(config, "matcher") || config.matcher === "familysearch") {
+    return { backend: "familysearch" };
+  }
+  if (config.matcher !== "service") throw new Error(MATCHER_VALUE_MESSAGE);
+  const url = configString(config.matcherUrl).replace(/\/$/, "");
+  if (!url) throw new Error(matcherServiceMissing("matcherUrl", "the matcher service's base URL"));
+  const apiKey = configString(config.matcherApiKey);
+  if (!apiKey) throw new Error(matcherServiceMissing("matcherApiKey", "this caller's matcher key"));
+  return { backend: "service", url, apiKey };
 }

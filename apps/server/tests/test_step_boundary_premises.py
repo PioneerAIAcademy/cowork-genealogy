@@ -48,20 +48,18 @@ if str(PROTO) not in sys.path:
 from worker.options import is_blocked_call, make_pretool_hook  # noqa: E402
 
 
-@pytest.fixture(autouse=True)
-def _effort_settings_unset(monkeypatch):
-    """The premises below are the DEFAULT: with a T4.1 effort setting on, the alpha's hook
-    has a second rewriting arm (see the last test in premise 2)."""
-    for name in real_agent.EFFORT_ENV:
-        monkeypatch.delenv(name, raising=False)
-
-
 def _proto_hook(**kw):
     """The prototype's real hook, with the plumbing a unit test does not care about."""
     kw.setdefault("record", lambda row: None)
     return make_pretool_hook(
         turn_id="t1", session_id="s1", cwd=str(PROTO), config_root=str(PROTO), **kw
     )
+
+
+# A plugin agent's name. The prototype denies a spawn naming none (U14), so the
+# shape cases below name one; `test_only_the_prototype_denies_an_unnamed_spawn` pins
+# that difference.
+NAMED = "record-extractor"
 
 
 async def _both_planes(tool_name, tool_input):
@@ -95,9 +93,18 @@ def test_skill_is_not_a_delegation_tool():
 
 @pytest.mark.parametrize("tool", sorted(DELEGATION_TOOLS))
 async def test_both_planes_foreground_a_bare_delegation(tool):
-    alpha, proto = await _both_planes(tool, {"prompt": "go"})
+    alpha, proto = await _both_planes(tool, {"subagent_type": NAMED, "prompt": "go"})
     assert _is_foregrounded(alpha), alpha
     assert _is_foregrounded(proto), proto
+
+
+@pytest.mark.parametrize("tool", sorted(DELEGATION_TOOLS))
+async def test_only_the_prototype_denies_an_unnamed_spawn(tool):
+    """U14: a spawn naming no agent starts a general-purpose one, without any plugin
+    agent's limits. The prototype denies it; the alpha still foregrounds it."""
+    alpha, proto = await _both_planes(tool, {"prompt": "go"})
+    assert _is_foregrounded(alpha), alpha
+    assert proto["hookSpecificOutput"]["permissionDecision"] == "deny", proto
 
 
 async def test_both_planes_have_no_opinion_on_a_skill_call():
@@ -131,23 +138,10 @@ def test_the_rewrite_declines_a_call_that_is_already_in_the_foreground():
 @pytest.mark.parametrize("tool", sorted(DELEGATION_TOOLS))
 async def test_an_already_foreground_delegation_falls_through_on_both_planes(tool):
     """The other half of the shape-dependence, at the hook level: with the key
-    explicitly False both planes reach their no-opinion fallthrough, because with every
-    effort setting unset the rewrite is the last arm before it."""
-    alpha, proto = await _both_planes(tool, {"prompt": "go", "run_in_background": False})
+    explicitly False both planes reach their no-opinion fallthrough, because the rewrite
+    is the last arm before it."""
+    alpha, proto = await _both_planes(tool, {"subagent_type": NAMED, "prompt": "go", "run_in_background": False})
     assert alpha == {}
-    assert proto == {}
-
-
-@pytest.mark.parametrize("tool", sorted(DELEGATION_TOOLS))
-async def test_with_an_effort_setting_the_alpha_rewrites_the_foreground_shape_too(tool, monkeypatch):
-    """T4.1: with SUBAGENT_EFFORT set, the alpha's effort arm builds its own allow on the
-    explicit-False shape, so the planes differ there by design (the prototype has no such
-    setting). A deny placed after the rewrites is then unreachable on the alpha for BOTH
-    shapes -- the ordering question above changes answer when an operator sets one."""
-    monkeypatch.setenv("SUBAGENT_EFFORT", "low")
-    alpha, proto = await _both_planes(tool, {"prompt": "go", "run_in_background": False})
-    assert alpha["hookSpecificOutput"]["updatedInput"] == {
-        "prompt": "go", "run_in_background": False, "effort": "low"}
     assert proto == {}
 
 
@@ -172,7 +166,7 @@ async def test_blocking_a_delegation_by_name_is_a_no_op_end_to_end(tool):
     not denied. A plan that assumed `blocked={"Agent"}` gives a deny arm would
     have been reading the parameter name rather than the predicate."""
     out = await _proto_hook(blocked=frozenset({tool}))(
-        {"tool_name": tool, "tool_input": {"prompt": "go"}}, "tu_1", None
+        {"tool_name": tool, "tool_input": {"subagent_type": NAMED, "prompt": "go"}}, "tu_1", None
     )
     assert _is_foregrounded(out), out
 

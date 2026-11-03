@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person: the 1850 census child Bridget Flynn (a_005, child_2, age 6) scored against the tree's Patrick Flynn (I1). A different person: a daughter against a son, so a very low score. For ut_person_evidence_021, where checking whether a census child is the absent Patrick before minting is in lane.",
+  "args": {
+    "assertionId": "a_005",
+    "treePersonId": "I1"
+  },
+  "response": {
+    "score": 0.02,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "Bridget Flynn",
+      "role": "child_2"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "Patrick Flynn"
+    }
+  }
+}

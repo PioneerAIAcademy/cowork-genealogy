@@ -277,6 +277,66 @@ which is what makes these toggles useful mainly where a total has to mean
 something, such as an exhaustiveness claim. Measured figures are under
 "What `.exact=on` actually does" in the API reference.
 
+**A period place name and a modern one select different records.** A
+FamilySearch place has a standard name for each era, and the locality guide
+gives the one in force at the record's date: Rieti is "Rieti, Perugia, Umbria,
+Italy" from 1882 to 1923 and "Rieti, Rieti, Lazio, Italy" from 1927. Which name
+finds a record depends on the place its index was standardized to, not on that
+date. One Orvieto death of 14 Jan 1895 is indexed twice in one collection, as
+"Orvieto, Perugia, Umbria" (`78VB-CYMM`) and as "Terni, Umbria" (`QP8Z-23J8`),
+and each name finds one copy. Each row below runs the same surname, collection,
+record type and event year under each place input and compares the record sets
+whole (`packages/engine/mcp-server/dev/probe-period-place.ts`, run from
+`packages/engine/mcp-server`). "Year exact" adds `*YearExact`, which keeps only
+records dated in that year, the records the period name is right for; without
+it the year also admits estimated dates from other eras.
+
+| Case | Period name | Modern name | No place | Target | With `*PlaceExact` | Measured |
+|---|---|---|---|---|---|---|
+| Rieti (province moved in 1927): Marchetti, death 1913, collection 2146202 | 33, all in the modern set. Year exact: 0 | 443, the no-place set itself. Year exact: 12 | 443. Year exact: 12 | `Q2HC-CWMP`: modern only, first | period 0, modern 12 | measured 2026-11-02, `npx tsx dev/probe-period-place.ts rieti` |
+| Orvieto (province of Terni from 1927): Mancini, death 1895, collection 2043538 | 34, of which 25 are in the modern set. Year exact: 1 | 198. Year exact: 3, none in the period set | 207. Year exact: 4 | `QP8Z-23J8`: modern only, first; its second index `78VB-CYMM` is period only | period 1; the modern town 0, its province "Terni, Umbria, Italy" 3 | measured 2026-11-03, `npx tsx dev/probe-period-place.ts orvieto` |
+| Denver (Arapahoe County to 1901): Smith, marriage 1895, collection 1932434 | 20, all in the modern set. Year exact: the same | 30. Year exact: the same | 83 | `KNQW-5GS`: modern only, first | period 16, all in the modern 26 | measured 2026-11-02, `npx tsx dev/probe-period-place.ts denver` |
+| Echaporã ("Bela Vista" 1938-1944): Silva, birth 1940, collection 2765317 | Year exact: 477, the modern set itself | Year exact: 477 | Year exact: 520 | `78K9-CWW2`: both | Year exact: period 9, modern 2, both of the 2 in the 9. Year unqualified: 10 and 2 | measured 2026-11-03, `npx tsx dev/probe-period-place.ts echapora` |
+
+1. **Superset, disjoint or neither: it depends on the place, so no rule holds
+   for all four.** In Rieti and Denver the modern set holds the whole period
+   set, and the target is in the modern set only; in Rieti the modern name
+   filters nothing at all. In Orvieto it is neither, and each name finds
+   records the other misses. Of the four deaths dated 1895, the period name
+   finds one and the modern name the other three; that one is a second index
+   of the target's death. With the year unqualified, 9 of the period name's 34
+   are not in the modern set. They are people named on 8 records, and 8 of the
+   9 are relatives (spouse, father, mother) named on someone else's death. One
+   of the 8 records is the target's second index, and two were checked by hand.
+   Alessandro Mancini's death of 13 Jun 1887 is indexed twice, and a search
+   for it by name finds one copy under each name: the modern town finds
+   `QP51-9757` and the period name `78VY-GVN2` (measured 2026-11-03,
+   `npx tsx dev/try-record-search.ts Mancini Alessandro --collection 2043538
+   --type death --death-year 1887 --death-place "Orvieto, Terni, Umbria,
+   Italy"`, and the same with the period name).
+   Domenica Ciaccio's of 5 Jan 1867 is indexed once, as "Orvieto, Perugia,
+   Umbria" (`78VB-3B6Z`): the period name finds it and the modern town does not
+   (measured 2026-11-03, `npx tsx dev/try-record-search.ts Ciaccio Domenica
+   --collection 2043538 --type death --death-year 1867 --death-place "Orvieto,
+   Terni, Umbria, Italy"`, and the same with the period name). In Echaporã,
+   with the year exact, the two names return the same set.
+2. **`*PlaceExact` changes the counts in every case and the answer in two.**
+   In Rieti and Denver the direction holds. In Orvieto it empties the modern
+   town. With the year exact, the three deaths the modern name finds are
+   indexed to the province, "Terni, Umbria, Italy", and only the province name
+   finds them exactly. In Echaporã, year exact, the exact period name returns 7
+   records the modern name does not, and the place text of every one names
+   another town (Porangaba, Palmital, Garça; the probe prints each id with its
+   place text): "Bela Vista" is the name of more than one place. The two
+   records whose text reads "Bela Vista" are found by both names.
+3. **Outside Italy: yes in the United States, no in Brazil.** Denver behaves
+   like Rieti: the period name misses records the modern name finds. In
+   Echaporã the rename hides no record of the renamed place.
+
+**Not measured:** more than these four collections; Echaporã with the year
+unqualified, whose sets run past the probe's read limit; the 5 Orvieto
+period-only records not checked by hand.
+
 ### Family member fields
 
 | Field | Type | Description |
@@ -385,7 +445,7 @@ reads the record.
 
 When a search ranks, `results` comes back **annotated in place** — each row
 carries `matchRank`, `searchRank`, `matchScore`, and where available
-`matchConfidence`, `candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
+`candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
 birth years differ by more than two, and the `attachedTo*` flags — and the
 list is ordered **best first**. `ranked` carries metadata only (plus
 `subjectTooThin: true` when the subject lacks both a narrow date and a named
@@ -698,7 +758,9 @@ runlogs, **9 of 26** marriage-scoped searches carried no place scope whatsoever,
 this is the common shape, not an edge case.
 
 `subjectResolvable: false` is set by **two** branches of `rank-search-matches.ts`,
-and the hint deliberately fires on both. One is a scoreable subject against a pool
+and the hint deliberately fires on both. Neither sets it while a candidate went
+unscored, since that one might be the subject, so the hint does not fire then
+(`rank-search-matches-tool-spec.md`, **Floors**). One is a scoreable subject against a pool
 that holds no match (a real negative). The other is a subject with no dated or
 placed fact, which cannot be discriminated, so the scores are noise. (That is
 not the `subjectTooThin` flag, which is a separate test: neither strictly
@@ -1862,13 +1924,13 @@ records are added.
 ### `packages/engine/mcp-server/src/types/record-search.ts`
 
 API response types (`FSSearchResponse`, `FSSearchEntry`, `FSPerson`,
-`FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`, `FSField`,
-`FSFieldValue`, `FSRecordRelationship`) and tool I/O types (`RecordSearchInput`,
+`FSDisplay`, `FSFact`, `FSSourceDescription`, `FSHint`,
+`FSRecordRelationship`) and tool I/O types (`RecordSearchInput`,
 `RecordSearchResult`, `RecordSearchEvent`, `TreeMatch`,
 `RecordSearchToolResponse`).
 
-`FSField` / `FSFieldValue` declare the entry-level `fields[]` array that
-`FSGedcomx` now carries — the batch number's home.
+`FSGedcomx` carries the entry-level `fields[]` array — the batch number's
+home — typed with the shared `GedcomXField` from `types/gedcomx.ts`.
 
 `FSRecordRelationship` declares `FSGedcomx.relationships`, read for the
 facts of the persona's Couple rows (mapping rule 7). Endpoints are matched
