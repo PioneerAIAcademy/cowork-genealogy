@@ -1009,9 +1009,9 @@ def test_namesake_warning_handed_to_person_evidence(tool_calls, agent_returns, t
 # The planted record ids are named here, as `I1` is above, because a test file
 # cannot carry them: unit-test.schema.json is closed (additionalProperties false).
 
-#: Two 1845 baptisms of a Patrick Flynn in Schuylkill County, a son of Thomas
-#: (the subject block's parent) and a son of Michael, met on a search for the
-#: subject's parents (record-search-flynn-1845-baptisms-pool).
+#: Two 1845 baptisms of a Patrick Flynn in Aghamore, Mayo, a son of Thomas
+#: (the tree's parent) and a son of Michael, met on a search for the subject's
+#: parents (record-search-flynn-1845-baptisms-pool).
 POOL_BAPTISM_IDS = ("Q7FB-T45", "Q7FB-M45")
 #: Two marriages of a Patrick Flynn, met on a search for his wife
 #: (record-search-flynn-1870-marriages-other-parents): the groom of the first is
