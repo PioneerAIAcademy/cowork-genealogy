@@ -7,13 +7,29 @@
 // `X-Genealogy-Project-Id` header names the project whose store the request
 // runs against, and the `X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch` pair
 // names the worker attempt (U6) whose claim that store fences its commits on.
-// A request that names a project must also pass the caller's `authorize` (U4)
-// before any store or transport exists: the bearer has to be the grant of an
-// open attempt on that project, so the fence is required there (the turn id is
-// the check's key). A refusal is a 403 with one message whatever the reason,
-// and one `ev=tool_refused` stderr line that never carries the bearer; an
-// `authorize` that throws is a 503, never an admission. A request with no
-// project header skips the check and runs store-less tools only. Which backend
+// ONE front door, two paths (self-hosted beta E1).
+//
+// WORKER path — the request carries `X-Genealogy-Project-Id`. It must pass the
+// caller's `authorize` (U4) before any store or transport exists: the bearer
+// has to be the grant of an open attempt on that project, so the fence is
+// required there (the turn id is the check's key). A refusal is a 403 with one
+// message whatever the reason, and one `ev=tool_refused` stderr line that never
+// carries the bearer; an `authorize` that throws is a 503, never an admission.
+//
+// CONNECTOR path — every other request. The bearer is looked up by its sha256
+// through `lookupConnector`, and a refusal is a 401 with `WWW-Authenticate`,
+// one body for every reason so a caller cannot learn which check failed. The
+// project comes from the call's OWN `arguments.projectPath`, which must be
+// `/proj_<16 hex>`; its id is that path minus the slash and the store's anchor
+// is the path itself. `projectOwner` refuses a project owned by anyone else —
+// an absent row is free, and a NULL owner is refused with the rest. A call
+// naming no project runs store-less under the user's principal.
+//
+// The body is read ONCE for both paths, under `MAX_BODY_BYTES`, because a
+// JSON-RPC batch has to be refused before any tool runs; the parsed value is
+// handed to the transport, since a consumed stream cannot be read again.
+// `/healthz`, `/livez` and the protected-resource metadata are answered before
+// any token check. Which backend
 // the store and the check use comes from the caller's `bindStore` and
 // `authorize` — this module imports no backend, so the unit test supplies
 // doubles and never loads `pg`/`@aws-sdk`. Readiness is injected the same way:
@@ -38,6 +54,9 @@ import {
 export const MCP_PATH = "/mcp";
 export const HEALTHZ_PATH = "/healthz";
 export const LIVEZ_PATH = "/livez";
+/** RFC 9728's protected-resource metadata for `/mcp`. Answered BEFORE the token
+ *  check — it is what an unauthenticated client reads to learn where to go. */
+export const PRM_PATH = `/.well-known/oauth-protected-resource${MCP_PATH}`;
 
 /** How long `/healthz` waits on `checkReady` before answering 503 itself: the
  *  backend's own 1.5 s probe deadline (READY_TIMEOUT_MS) plus 500 ms, so a
@@ -627,6 +646,19 @@ async function route(
   const { pathname } = new URL(req.url ?? "/", "http://localhost");
   if (pathname === HEALTHZ_PATH && req.method === "GET") {
     await handleHealthz(res, options);
+    return;
+  }
+  if (pathname === PRM_PATH && req.method === "GET") {
+    // Built from the configured issuer, NEVER from the request's Host, which a
+    // caller controls — a forged Host here would point clients at an
+    // attacker's authorization server. Unset, there is no document to serve
+    // and the 401 carries a bare `Bearer` to match.
+    if (!options.issuer) {
+      sendJson(res, 404, { error: "Not found" });
+      return;
+    }
+    const issuer = options.issuer.replace(/\/$/, "");
+    sendJson(res, 200, { resource: `${issuer}${MCP_PATH}`, authorization_servers: [issuer] });
     return;
   }
   if (pathname === LIVEZ_PATH && req.method === "GET") {

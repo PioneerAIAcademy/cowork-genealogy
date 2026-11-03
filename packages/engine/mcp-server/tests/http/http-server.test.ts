@@ -40,6 +40,7 @@ import {
   HEALTHZ_TIMEOUT_MS,
   PROJECT_ID_HEADER,
   MAX_BODY_BYTES,
+  PRM_PATH,
   startHttpServer,
   TURN_ID_HEADER,
   type AuthorizeRequest,
@@ -115,7 +116,7 @@ function textOf(result: Awaited<ReturnType<Client["callTool"]>>): string {
 // must present this token; a request with neither a project header nor a
 // connector token is a 401, which is the point.
 export const TEST_CONNECTOR_TOKEN = "connector-token-for-tests";
-const TEST_USER_ID = "u_test";
+export const TEST_USER_ID = "u_test";
 
 /** Connector tokens this double admits, each mapping to its own user AND its
  *  own decrypted FamilySearch token. Two of them, so item 4 can show the
@@ -811,6 +812,97 @@ describe("tool server over Streamable HTTP", () => {
       const realistic = await rpc(call("convert_calendar", { pad: "x".repeat(60_000) }), connectorHeaders());
       expect(realistic.status).toBe(200);
       await realistic.text();
+    });
+
+    it("serves no protected-resource metadata with no issuer configured, and the 401 is bare", async () => {
+      const res = await fetch(`${base}${PRM_PATH}`);
+      expect(res.status).toBe(404);
+      await res.text();
+      // The two agree: nothing to point at, so nothing is pointed at.
+      const refused = await rpc(call("convert_calendar", {}));
+      expect(refused.headers.get("WWW-Authenticate")).toBe("Bearer");
+      await refused.text();
+    });
+
+    it("serves the metadata from the ISSUER, not the request's Host, and the 401 points at it", async () => {
+      const issuer = "https://beta.example";
+      const withIssuer = await startHttpServer({
+        host: "127.0.0.1",
+        port: 0,
+        baseConfig: {},
+        bindStore,
+        authorize,
+        lookupConnector,
+        projectOwner,
+        issuer,
+      });
+      const addr = withIssuer.address();
+      if (!addr || typeof addr !== "object") throw new Error("no port");
+      const url = `http://127.0.0.1:${addr.port}`;
+      try {
+        const res = await fetch(`${url}${PRM_PATH}`, {
+          // A forged Host must change nothing: deriving the issuer from it
+          // would let a caller point clients at their own authorization server.
+          headers: { Host: "evil.example" },
+        });
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({
+          resource: `${issuer}/mcp`,
+          authorization_servers: [issuer],
+        });
+
+        const refused = await fetch(`${url}/mcp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+          body: JSON.stringify(call("convert_calendar", {})),
+        });
+        expect(refused.status).toBe(401);
+        // The URL the challenge names is the one just served.
+        expect(refused.headers.get("WWW-Authenticate")).toBe(
+          `Bearer resource_metadata="${issuer}${PRM_PATH}"`,
+        );
+        await refused.text();
+      } finally {
+        withIssuer.closeAllConnections();
+        await new Promise<void>((r) => withIssuer.close(() => r()));
+      }
+    });
+
+    it("logs one line per call with the user, the tool and the FamilySearch status — and no token", async () => {
+      // A recorder that is never wired and one that works produce the SAME
+      // door output: an absent field. This is the only test that reads the
+      // line the door actually writes.
+      const lines: string[] = [];
+      const write = process.stderr.write.bind(process.stderr);
+      const spy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: unknown) => {
+        lines.push(String(chunk));
+        return true;
+      }) as typeof process.stderr.write);
+      let line: string | undefined;
+      try {
+        // record_read reaches FamilySearch; the mocked upstream answers 401.
+        const res = await rpc(call("record_read", { recordId: "QVS9-DHDB" }), connectorHeaders());
+        await res.text();
+        // The door writes this line in handleMcpPost's `finally`, which runs
+        // AFTER the response is sent — so reading it straight after the body
+        // is a race, and restoring the spy there loses the line entirely.
+        await vi.waitFor(() => {
+          line = lines.find((l) => l.startsWith("ev=tool_call"));
+          expect(line, lines.join("")).toBeDefined();
+        });
+      } finally {
+        spy.mockRestore();
+        void write;
+      }
+      expect(line).toContain("surface=connector");
+      expect(line).toContain(`user_id=${TEST_USER_ID}`);
+      expect(line).toContain("tool=record_read");
+      expect(line).toContain("fs_status=401");
+      // Never the bearer or its hash.
+      expect(line).not.toContain(TEST_CONNECTOR_TOKEN);
+      expect(line).not.toContain(
+        createHash("sha256").update(TEST_CONNECTOR_TOKEN, "utf8").digest("hex"),
+      );
     });
 
     it("a lookup that throws is a 503, never an admission", async () => {

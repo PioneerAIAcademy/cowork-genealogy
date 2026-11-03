@@ -138,9 +138,19 @@ describe("surface", () => {
     expect(p.config.hosted).toBe(true);
   });
 
-  it("a connector principal still never touches ~/.familysearch-mcp", async () => {
-    // The bearer rule the module exists for, restated for the new door.
+  it("a connector principal is the BEARER kind, so the no-refresh rule binds it", async () => {
+    // Was an assertion that could not fail for its stated reason: it checked
+    // only `kind === "bearer"` under a name about ~/.familysearch-mcp.
+    // What actually binds is the kind, because every file-touching path in
+    // this module branches on `kind === "local"` — so pin the whole shape.
     const p = connectorPrincipal({ accessToken: "t", userId: "u_1" });
     expect(p.kind).toBe("bearer");
+    if (p.kind !== "bearer") return;
+    expect(p.surface).toBe("connector");
+    // `hosted` is what makes the auth errors point at the web app rather than
+    // the desktop `login` tool.
+    expect(p.config.hosted).toBe(true);
+    // No overlay field exists on a bearer: that is the local kind's.
+    expect("overlay" in p).toBe(false);
   });
 });

@@ -155,7 +155,18 @@ const ctx: SmokeCtx = {
 
 const turnId = randomUUID();
 const sessionId = `smoke-${randomUUID()}`;
-const projectBearer = `smoke-${randomBytes(32).toString("hex")}`;
+/**
+ * The bearer the stamped turn carries, and the one every plan row now presents.
+ *
+ * The HOST'S FamilySearch token when there is one, so a FamilySearch row
+ * actually reaches FamilySearch. A random value when there is none: the turn is
+ * stamped with its hash, the door admits it, and the row is judged by `reauth`,
+ * which accepts the 401 or "login tool" wording FamilySearch's refusal reaches
+ * the tools as. A random bearer is NOT empty, so `getValidToken` hands it
+ * straight to FamilySearch rather than raising the hosted reauth instruction —
+ * which is why `reauth` had to widen with this.
+ */
+const projectBearer = bearer || `smoke-${randomBytes(32).toString("hex")}`;
 const projectBearerSha256 = createHash("sha256").update(projectBearer).digest("hex");
 
 /** An error's message; node's connect AggregateError has an empty one, so fall back to its code. */
@@ -323,10 +334,22 @@ try {
       connectorCtx,
       {
         offlineOnly,
-        // E1 leaves project_list to E2 (#3991): for a connector the door must
-        // bind a store that LISTS the user's projects plus one fresh id, and
-        // nothing builds that yet.
-        skip: (tool) => (tool === "project_list" ? "E2's half (#3991)" : null),
+        // Two exclusions, both from E1 itself.
+        //
+        // project_list is E2's half (#3991): for a connector the door must bind
+        // a store that LISTS the user's projects plus one fresh id, and nothing
+        // builds that yet.
+        //
+        // The FamilySearch rows are excluded by the spec — "the connector
+        // client runs no FamilySearch row" — because a connector's token comes
+        // from the database, not the header, so these would test the seeded
+        // placeholder rather than the door.
+        skip: (tool, step) =>
+          tool === "project_list"
+            ? "E2's half (#3991)"
+            : step.familySearch
+              ? "connector runs no FamilySearch row (E1)"
+              : null,
       },
     );
     calls += connectorRun.calls;

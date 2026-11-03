@@ -64,6 +64,8 @@ export interface SmokeStep {
   label?: string;
   /** Runnable with no network and no credentials (the stdio smoke's subset). */
   offline?: boolean;
+  /** Reaches FamilySearch with the caller's token (every `tokenStep`). */
+  familySearch?: boolean;
   args: (ctx: SmokeCtx) => Record<string, unknown>;
   /** Host-side fixture write before the call; skipped when `hostProjectDir` is null. */
   before?: (ctx: SmokeCtx) => Promise<void>;
@@ -155,8 +157,21 @@ const validTrue = (res: CallResult): Expectation => ({
 
 function reauth(res: CallResult, ctx: SmokeCtx): Expectation {
   if (ctx.mode === "bearer") return noError(res);
-  const ok = res.isError && carries(res, HOSTED_REAUTH_INSTRUCTION);
-  return { ok, detail: ok ? "isError with HOSTED_REAUTH_INSTRUCTION" : brief(res) };
+  // Two shapes are both correct for a run with no host FamilySearch token.
+  //
+  // An EMPTY bearer raises the hosted reauth instruction before any request
+  // leaves. But since E1 every row presents the turn's stamped bearer, which is
+  // a random value when the host has no token — non-empty, so `getValidToken`
+  // hands it to FamilySearch and the refusal comes back as a 401 the tools word
+  // their own way. Demanding only the first shape fails every FamilySearch row
+  // on any host without a token.
+  const ok =
+    res.isError &&
+    (carries(res, HOSTED_REAUTH_INSTRUCTION) || /\b401\b/.test(res.text) || /login tool/i.test(res.text));
+  return {
+    ok,
+    detail: ok ? "isError: hosted reauth, 401, or 'login tool'" : brief(res),
+  };
 }
 
 /** Write a JSON fixture into the project on this host; a no-op for a server-side anchor. */
@@ -178,6 +193,11 @@ const tokenStep = (tool: string, args: Record<string, unknown>): SmokeStep => ({
   tool,
   args: () => args,
   expect: reauth,
+  // Every tokenStep reaches FamilySearch with the caller's token. E1's
+  // connector client runs none of them, and marking them here keeps that
+  // exclusion derived rather than a hand-kept list of tool names that drifts
+  // the moment a row is added.
+  familySearch: true,
 });
 
 export const CALL_PLAN: readonly SmokeStep[] = [
@@ -737,7 +757,7 @@ export interface RunPlanOptions {
   offlineOnly?: boolean;
   /** A reason to skip this tool's rows, or null/undefined to run them. The
    *  reason is printed and the rows are counted out of `calls`. */
-  skip?: (tool: string) => string | null | undefined;
+  skip?: (tool: string, step: SmokeStep) => string | null | undefined;
 }
 
 export interface RunPlanResult {
@@ -755,7 +775,7 @@ export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions 
     // A row this caller cannot run yet, with the reason PRINTED. Skipping is
     // not passing: it is counted out of `calls`, so a run that quietly stopped
     // covering something does not keep reporting the same total.
-    const skipReason = opts.skip?.(step.tool);
+    const skipReason = opts.skip?.(step.tool, step);
     if (skipReason) {
       console.log(`skip ${label}: ${skipReason}`);
       skipped += 1;
