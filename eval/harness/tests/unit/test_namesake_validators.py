@@ -194,8 +194,14 @@ def test_hand_back_passes_when_every_warned_link_is_named(agent, check):
 
 
 @pytest.mark.parametrize("agent, check", CHECKS, ids=[a for a, _ in CHECKS])
-def test_hand_back_fails_with_no_line(agent, check):
-    with pytest.raises(AssertionError, match="no Hand-back: person-evidence line"):
+def test_hand_back_passes_in_prose_with_no_line(agent, check):
+    text = "ns_001 written. The person-evidence agent owns pe_004 and pe_005; it ties them or lowers them."
+    check([WARNED_WRITE], reply(agent, text), "", TAG)
+
+
+@pytest.mark.parametrize("agent, check", CHECKS, ids=[a for a, _ in CHECKS])
+def test_hand_back_fails_when_person_evidence_is_not_named(agent, check):
+    with pytest.raises(AssertionError, match="never names person-evidence"):
         check([WARNED_WRITE], reply(agent, "ns_001 written; pe_004 and pe_005 are untied."), "", TAG)
 
 
@@ -206,9 +212,16 @@ def test_hand_back_fails_when_a_warned_link_is_missing(agent, check):
         check([WARNED_WRITE], reply(agent, text), "", TAG)
 
 
+@pytest.mark.parametrize("agent, check", CHECKS, ids=[a for a, _ in CHECKS])
+def test_hand_back_does_not_count_a_longer_id(agent, check):
+    text = "The person-evidence agent owns pe_0040 and pe_005."
+    with pytest.raises(AssertionError, match=r"omits warned links \['pe_004'\]"):
+        check([WARNED_WRITE], reply(agent, text), "", TAG)
+
+
 def test_hand_back_reads_only_the_named_agents_return():
     text = "Hand-back: person-evidence — namesake ns_001 recorded for I1; links pe_004, pe_005 are untied"
-    with pytest.raises(AssertionError, match="no Hand-back"):
+    with pytest.raises(AssertionError, match="never names person-evidence"):
         images.test_namesake_warning_handed_to_person_evidence([WARNED_WRITE], reply("search-records", text), "", TAG)
 
 

@@ -855,9 +855,12 @@ def assert_namesake_warning_handed_back(
     tool_calls: list, agent_returns: list, text_response: str | None, agent: str
 ) -> None:
     """When a namesakes write warns that links to the subject are untied, the
-    agent's return hands every listed `pe_` id to person-evidence, the only
-    agent that may lower or tie them. Lifted from the search-records suite so
-    its two co-writers are held to the same line."""
+    agent's return names person-evidence, the only agent that may lower or tie
+    them, and every listed `pe_` id. Anywhere in the reply, the way
+    `test_hand_back_names_its_owner` reads an owner: nothing downstream parses
+    the `Hand-back:` wording, so a fixed phrase would fail a correct reply.
+    Lifted from the search-records suite so its two co-writers are held to the
+    same check."""
     from harness.skill_runner import agent_return_text
 
     warned: set[str] = set()
@@ -870,7 +873,8 @@ def assert_namesake_warning_handed_back(
             warned |= set(re.findall(r"\bpe_\d{3,}\b", json.dumps(call.get("response"), default=str)))
     assert warned, "no namesakes write returned a warning naming a link, so the scenario did not reach the hand-back"
     reply = agent_return_text(agent_returns, agent) or (text_response or "")
-    hand_back = re.search(r"hand[- ]?back[^\n]{0,40}`?person-evidence[^\n]*", reply, re.I)
-    assert hand_back, f"the namesakes write warned about {sorted(warned)}, but no Hand-back: person-evidence line: {reply[:600]!r}"
-    missing = sorted(p for p in warned if p not in hand_back.group(0))
-    assert not missing, f"the person-evidence hand-back omits warned links {missing}: {hand_back.group(0)!r}"
+    assert "person-evidence" in reply.lower(), (
+        f"the namesakes write warned about {sorted(warned)}, but the reply never names person-evidence: {reply[:600]!r}"
+    )
+    missing = sorted(p for p in warned if not re.search(rf"\b{re.escape(p)}\b", reply))
+    assert not missing, f"the reply names person-evidence but omits warned links {missing}: {reply[:600]!r}"
