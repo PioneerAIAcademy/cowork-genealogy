@@ -223,7 +223,7 @@ unverified.
 
 ```sh
 cd packages/engine/mcp-server && npx vitest run            # engine
-cd packages/engine/mcp-server && npx tsc --noEmit -p tsconfig.json
+cd packages/engine/mcp-server && npm run typecheck         # src/, dev/ and tests/
 npx turbo test typecheck --force                           # web workspace
 cd eval/harness && uv run --frozen pytest -q               # harness
 cd apps/server && uv run pytest -q                         # control plane
