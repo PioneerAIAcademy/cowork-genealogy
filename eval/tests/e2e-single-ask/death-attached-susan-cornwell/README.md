@@ -23,9 +23,11 @@ row but will almost always fail `forbidden_tools`, since that agent searches wit
 PASS. Measured 2026-11-02:
 
 ```
-PASS death-attached-susan-cornwell  expected=none|search-records  first=none  save=ok  stop=clean
+PASS death-attached-susan-cornwell  expected=none|search-records  first=none  save=ok  delivered=yes  stop=clean
     units: research  extraction_append=0
 ```
+
+The `delivered=` column was retired with `research_delivered` (PR #4148); the line above is the output as measured.
 
 The router ran, then the main thread called `person_read` and `record_read` on the attached index entry
 and answered.

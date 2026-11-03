@@ -18,10 +18,12 @@ Row B1 of Issue #3571's adjudication on issue #3527 (2026-11-02): alpha feedback
 FAIL on `no_research_job`. Measured 2026-11-02:
 
 ```
-FAIL evaluate-sources-moses-watrous  expected=source-evaluation  first=source-evaluation  save=ok  stop=clean  failed=[no_research_job]
+FAIL evaluate-sources-moses-watrous  expected=source-evaluation  first=source-evaluation  save=ok  delivered=no  stop=clean  failed=[no_research_job]
     units: source-evaluation > question-selection > question-selection > research-plan  extraction_append=0
     research job: question-selection, research-plan, new questions entry, new plans entry
 ```
+
+The `delivered=` column was retired with `research_delivered` (PR #4148); the line above is the output as measured.
 
 The main thread never loaded the `research` router: it spawned `source-evaluation` from that agent's own
 description, then ran `question-selection` and `research-plan` in the same turn. The "deliver the first,

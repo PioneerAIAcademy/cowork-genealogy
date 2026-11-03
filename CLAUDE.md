@@ -344,8 +344,8 @@ which one it is** — the hook bound under both, which is the part that matters.
 A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds one conditional
 sentence to each Cowork researcher message (no project → a research request goes to the
 research skill). It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
-the SDK env, so the hosted planes keep their own text-only fix (`project_note`, which
-appends `continue_policy.NO_PROJECT_NOTE`). The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
+the SDK env, so the hosted planes keep their own text-only fix (`project_note`, with
+`continue_policy.NO_PROJECT_NOTE` appended beside it). The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
 `no_project_route.HOSTED_PLANE_ENV`; change both together, and
 `test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ.
 

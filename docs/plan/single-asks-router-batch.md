@@ -122,11 +122,11 @@ identified that a toolless voluntary stop is vetoed and nudged, and concluded th
 works "only because the per-turn `DELIVERY_GUIDANCE` names the tool". The field says it did
 not: alpha reported the agent answering a bounded question and carrying on. "End your turn"
 in the body and "call `research_delivered`" in the prompt competed, and the body won. The
-router's bounded close names the tool now. On the hosted path a toolless voluntary stop is vetoed
+router's bounded close then named the tool, until step mode phase 2 deleted it (PR #4148). On the hosted path a toolless voluntary stop is vetoed
 and nudged with `CONTINUE_REASON` (then "invoke the next GPS sub-skill now"; now
 "invoke the `research` skill now"), which contradicts
-the rule being added mid-run. The pairing works only because the per-turn `DELIVERY_GUIDANCE`
-names the tool; the prototype-worker acceptance bullet is what catches it if the two drift.
+the rule being added mid-run. The pairing worked only because the per-turn `DELIVERY_GUIDANCE`
+named the tool; both the veto and the tool are now deleted (step mode phase 2).
 
 ## The one design question to settle BEFORE writing prose
 

@@ -45,8 +45,9 @@ unchanged.
   Cowork's lever: 10 deeply linked Cowork projects ended with no proof.
 - After an unrecorded answer about a project person, the agent offers in one line to save it as a
   finding. On yes, the light path runs and the finding may stand at `possible`. The research router's
-  bounded routing list names the save as a bounded deliverable (`DELIVERY_GUIDANCE`, which this
-  first named, was deleted in step mode phase 2). When no question matches, proof-conclusion appends one
+  bounded routing list (`research/SKILL.md`, "the message asks for one or more deliverables")
+  has no save item yet; adding one is owed with this plan (`DELIVERY_GUIDANCE`, which this first
+  named, was deleted in step mode phase 2). When no question matches, proof-conclusion appends one
   in the same batch, exempt from `newQuestionWhileSearchInFlightInvariants`.
 - **Decided (2026-10-07): no hosted "Save as finding" button.** The one-line chat offer does the
   same work with no UI. Revisit if fewer than 10 of the 20 sessions in the acceptance check below

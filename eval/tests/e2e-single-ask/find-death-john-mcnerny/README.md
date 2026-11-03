@@ -16,9 +16,11 @@ Not graded: "no search for a record already attached to KP9Y-74L" (printed as `m
 PASS. Measured 2026-11-02:
 
 ```
-PASS find-death-john-mcnerny  expected=search-records  first=search-records  save=ok  stop=clean
+PASS find-death-john-mcnerny  expected=search-records  first=search-records  save=ok  delivered=yes  stop=clean
     units: research > search-records  extraction_append=1
 ```
+
+The `delivered=` column was retired with `research_delivered` (PR #4148); the line above is the output as measured.
 
 The save passed on a source, `src_001`, a GenealogyBank obituary index entry (Oil City, 20 July 1887) that
 the main thread then disproved from its page image; eleven negative `record_search` entries would have

@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. **Phase 2 in flight:** the hosted half of deleting the Stop veto is PR #4146, `research_delivered`'s deletion is PR #4148 (stacked on it), and the e2e half is still owed. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. **Phase 2 in flight:** the hosted half of deleting the Stop veto merged in PR #4146, `research_delivered` is deleted (PR #4148), and the e2e half is still owed. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".

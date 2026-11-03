@@ -21,9 +21,11 @@ The row also calls it a guard for issue #3526's router row. It is not one: with 
 PASS. Measured 2026-11-02:
 
 ```
-PASS review-sources-george-watrous  expected=source-evaluation  first=source-evaluation  save=ok  stop=clean
+PASS review-sources-george-watrous  expected=source-evaluation  first=source-evaluation  save=ok  delivered=no  stop=clean
     units: source-evaluation  extraction_append=0
 ```
+
+The `delivered=` column was retired with `research_delivered` (PR #4148); the line above is the output as measured.
 
 ## Starting state
 
