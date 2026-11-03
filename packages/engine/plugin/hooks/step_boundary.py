@@ -600,7 +600,7 @@ class StepGate:
     deny, so the second halts a model that never ignored anything, and the turn ends
     before it writes its offer. `halt_offer` keeps the step the halt offered, so the
     host can still answer the turn: every plane reads it in place of the turn's last
-    line when the gate halted.
+    line when the gate halted and that line offers nothing.
 
     `steps` is seeded on a REDELIVERY from the turn row, because the hook is rebuilt
     per attempt and redelivery is the normal resume path: without the seed a resumed

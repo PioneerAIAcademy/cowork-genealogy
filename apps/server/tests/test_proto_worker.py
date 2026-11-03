@@ -6707,6 +6707,16 @@ def test_a_step_halt_still_offers_the_step_it_named(turn_env):
     assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going.", "Wrap it up."]
 
 
+def test_a_step_halt_leaves_an_offer_the_model_already_wrote(turn_env):
+    """A model that wrote its own offer before the halted spawn has asked its question;
+    a second one from the halt would ask two, which may disagree."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records?"))
+    texts = _text_events(turn_env["conn"])
+    assert texts[-1] == "Hints done.\n\nContinue with linking the records?"
+    assert "Continue with running the searches?" not in texts
+
+
 def test_a_keep_going_turn_the_step_gate_halted_is_answered(turn_env):
     turn_env["conn"].research = _RESEARCH
     turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}

@@ -2699,7 +2699,7 @@ async def _run_agent(
                 mode,
                 previous,
                 turn.step,
-                turn.halt_offer or _boundary.offered_step(_last_text(turn)),
+                _boundary.offered_step(_last_text(turn)) or turn.halt_offer,
                 outcome,
             )
             _reply_state.clear()
