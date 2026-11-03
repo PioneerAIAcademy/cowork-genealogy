@@ -15,6 +15,7 @@ description: >-
   extracting a new record's contents into assertions to extraction_append (or
   the record-structurer agent for a non-FamilySearch source).
 model: claude-sonnet-4-6
+effort: high
 tools:
   - Read
   - mcp__genealogy__person_read
