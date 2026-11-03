@@ -95,8 +95,9 @@ more, else it is skipped and the row stays held); the server stops, a POST it ac
 meanwhile is waited for and released the same way; and the process exits 0. A POST after
 SHUTDOWN answers 503, except on its last receive, which closes.
 
-Env: PG_DSN, PORT (8080), WORKER_CWD (/project -- created empty if missing, never
-written), ENGINE_PLUGIN_DIR, TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under it),
+Env: PG_DSN or PG_SAS_OBJECT (exclusive: the SAS fchDatabase object, U29), PORT (8080),
+WORKER_CWD (/project -- created empty if missing, never written), ENGINE_PLUGIN_DIR,
+TMPDIR (per-turn CLAUDE_CONFIG_DIRs go under it),
 MODEL_PROVIDER (required: anthropic or gateway) + ANTHROPIC_API_KEY / GATEWAY_BASE_URL,
 GATEWAY_API_KEY and GATEWAY_TOOL_SEARCH, and TOOL_SERVER_URL (required; see options.py);
 FS_TOKEN_ENC_KEY (the web tier's grant key: the worker decrypts the patron's grant; the CLI
@@ -246,11 +247,27 @@ from proto.worker.options import (  # noqa: E402
 from proto import grants  # noqa: E402
 from proto import turn_message  # noqa: E402  (the queue body, shared with the web tier)
 from proto import migrate  # noqa: E402
+from proto import pg_credentials  # noqa: E402
 from proto.worker.plugin_agents import load_agent_definitions  # noqa: E402
 from proto.worker.session_store import PgSessionStore  # noqa: E402
 from proto.worker import turn_users  # noqa: E402
 
-PG_DSN = os.environ.get("PG_DSN", "postgresql://postgres:proto@postgres:5432/proto")
+DEFAULT_PG_DSN = "postgresql://postgres:proto@postgres:5432/proto"
+
+
+def pg_credentials_from(env: Mapping[str, str]) -> pg_credentials.PgCredentials:
+    return pg_credentials.PgCredentials.from_env(
+        dsn_var="PG_DSN", sas_var="PG_SAS_OBJECT", default=DEFAULT_PG_DSN, env=env)
+
+
+# U29: the one credentials holder; every connect reads it through pg_dsn(), per call.
+PG = pg_credentials_from(os.environ)
+
+
+def pg_dsn() -> str:
+    return PG.dsn()
+
+
 # 1b: where a held message goes when the turn that held it ends. The worker is the only
 # component that knows a turn finished -- the web tier is stateless and the browser may
 # be closed -- so the release lives here. Unset means no release, which the D3 stub arms
@@ -1560,7 +1577,7 @@ def release_guarded(connect: Callable[..., Any], session_id: str, turn_id: str) 
     """``release_next_held`` on its own connection, a failure logged and swallowed: the
     reply that follows must not turn into a dead letter because the handover failed."""
     try:
-        with connect(PG_DSN) as conn:
+        with connect(pg_dsn()) as conn:
             release_next_held(conn, session_id)
     except Exception as exc:  # noqa: BLE001 - the web tier's rescue is the fallback
         log(ev="release_failed", session_id=session_id, turn_id=turn_id, error=f"{type(exc).__name__}: {exc}")
@@ -1747,11 +1764,12 @@ def _verify_schema_once(
     this build's level (or ahead of it), else ``ReadyCheckError`` with the verdict's label.
     Every exception goes through: ``schema_loop`` is what retries."""
     shipped = migrate.load(sql_dir)
-    with psycopg.connect(dsn, connect_timeout=connect_timeout, autocommit=True) as conn:
+    with pg_connect(dsn, connect_timeout=connect_timeout, autocommit=True) as conn:
         ledger = migrate.read_ledger(conn)
     found = migrate.verdict(shipped, ledger)
     if found.label is not None:
-        raise ReadyCheckError(found.label, f"{found.label}; run proto/migrate.py with MIGRATE_PG_DSN")
+        raise ReadyCheckError(found.label, f"{found.label}; run proto/migrate.py with MIGRATE_PG_DSN "
+                                           "or MIGRATE_PG_SAS_OBJECT")
     return [m.name for m in shipped]
 
 
@@ -1842,6 +1860,15 @@ def require_start_config(env: Mapping[str, str]) -> str:
         tool_server_url(env)
     except ValueError:
         log(ev="prepare", step="tool_server_url", error="unset")
+        raise SystemExit(2) from None
+    creds = pg_credentials_from(env)
+    if problem := creds.problem:
+        log(ev="prepare", step="pg_credentials", error="config", detail=problem)
+        raise SystemExit(2)
+    try:
+        creds.check_at_start()  # an unusable SAS object refuses; an unreachable or slow SAS does not
+    except pg_credentials.PgCredentialsError as exc:
+        log(ev="prepare", step="pg_credentials", error="config", detail=str(exc))
         raise SystemExit(2) from None
     if dev_paths(env):
         return provider
@@ -1969,12 +1996,18 @@ def registration_problems(info: Any) -> list[str]:
     return check_registration(info, expected_agents=set(EXPECTED_AGENTS), expected_skills=EXPECTED_SKILLS)
 
 
-def pg_connect(*args: Any, **kwargs: Any) -> psycopg.Connection:
+def pg_connect(dsn: str, *args: Any, **kwargs: Any) -> psycopg.Connection:
     """``psycopg.connect``, looked up per call: the ``connect=`` defaults below bind this,
     so replacing ``psycopg.connect`` (test_proto_shutdown's harness) reaches every one.
-    ``connect_timeout`` defaults to ``PG_CONNECT_TIMEOUT_S``; a caller's own wins."""
+    ``connect_timeout`` defaults to ``PG_CONNECT_TIMEOUT_S``; a caller's own wins. An
+    invalid password re-resolves ``PG`` once (a SAS rotation, U29) and retries."""
     kwargs.setdefault("connect_timeout", PG_CONNECT_TIMEOUT_S)
-    return psycopg.connect(*args, **kwargs)
+    try:
+        return psycopg.connect(dsn, *args, **kwargs)
+    except psycopg.OperationalError as exc:
+        if pg_credentials.is_auth_failure(exc) and (new := PG.refresh_after(dsn)):
+            return psycopg.connect(new, *args, **kwargs)
+        raise
 
 
 # -- readiness (U10) -----------------------------------------------------------
@@ -2021,7 +2054,7 @@ def ready_label(exc: BaseException) -> str:
 
 def redact(text: str) -> str:
     """A message for the log, with any ``scheme://user:password@`` taken out."""
-    return _DSN_CREDENTIALS.sub("", text)
+    return pg_credentials.scrub(_DSN_CREDENTIALS.sub("", text))
 
 
 def note_check(name: str, check: dict[str, Any], detail: str = "") -> None:
@@ -2036,9 +2069,9 @@ def note_check(name: str, check: dict[str, Any], detail: str = "") -> None:
 
 def _probe_postgres_once(dsn: str) -> None:
     """A fresh connection (never a turn's), and every worker table and function present."""
-    with psycopg.connect(dsn, connect_timeout=READY_CONNECT_TIMEOUT_S,
-                         options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
-                         **READY_TCP_OPTIONS) as conn:
+    with pg_connect(dsn, connect_timeout=READY_CONNECT_TIMEOUT_S,
+                    options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
+                    **READY_TCP_OPTIONS) as conn:
         with conn.cursor() as cur:
             cur.execute(READY_SQL, (list(WORKER_TABLES), list(WORKER_FUNCTIONS)))
             missing = [str(row[0]) for row in cur.fetchall()]
@@ -2047,12 +2080,13 @@ def _probe_postgres_once(dsn: str) -> None:
         raise ReadyCheckError(f"schema: missing {names}", f"worker tables or functions missing: {names}")
 
 
-def probe_postgres(dsn: str, timeout_s: float | None = None) -> dict[str, Any]:
+def probe_postgres(dsn: str | Callable[[], str], timeout_s: float | None = None) -> dict[str, Any]:
     """The ``postgres`` check, raced against ``timeout_s`` (``READY_TIMEOUT_S``, read per
     call): the probe runs on a daemon thread and a loss reports ``TimeoutError``, the
     loser finishing in the background inside ``READY_TCP_OPTIONS`` and its connect and
     statement timeouts. Every caller shares the one probe until its thread exits, so a
-    stalled host costs one connection however often /healthz is asked."""
+    stalled host costs one connection however often /healthz is asked. ``dsn`` may be a
+    callable, called on the probe thread, so a SAS lookup is inside the race."""
     global _READY_FLIGHT
     timeout_s = READY_TIMEOUT_S if timeout_s is None else timeout_s
     with _READY_LOCK:
@@ -2078,7 +2112,7 @@ def probe_postgres(dsn: str, timeout_s: float | None = None) -> dict[str, Any]:
 
         def target() -> None:
             try:
-                _probe_postgres_once(dsn)
+                _probe_postgres_once(dsn() if callable(dsn) else dsn)
                 box["check"] = {"ok": True}
             except Exception as exc:  # noqa: BLE001 - every failure is a label
                 box["check"] = {"ok": False, "error": ready_label(exc)}
@@ -2125,7 +2159,7 @@ def readiness() -> dict[str, Any]:
     """``/healthz``'s report: ``{ok, checks}``, every ``error`` a label (D2). Not checked:
     the tools service (``proto-up-core`` runs without it), the model key, S3 (the worker
     has no S3 client)."""
-    checks = {"postgres": probe_postgres(PG_DSN)}
+    checks = {"postgres": probe_postgres(pg_dsn)}
     local = {
         "schema": (_SCHEMA_ERROR, ""),
         "agents": (None if _AGENTS is not None else _agents_label(_AGENTS_ERROR), _AGENTS_ERROR or ""),
@@ -2150,12 +2184,11 @@ def schema_loop(dsn: str | None = None) -> None:
     the ledger) sets it to its label and keeps checking: the check is a read, so it heals
     once someone migrates or grants. One log line per change."""
     global _SCHEMA_ERROR
-    dsn = PG_DSN if dsn is None else dsn
     delay = SCHEMA_BACKOFF_FIRST_S
     logged: str | None = None
     while True:
         try:
-            shipped = _verify_schema_once(dsn, connect_timeout=SCHEMA_CONNECT_TIMEOUT_S)
+            shipped = _verify_schema_once(dsn or pg_dsn(), connect_timeout=SCHEMA_CONNECT_TIMEOUT_S)
         except psycopg.OperationalError as exc:
             label = ready_label(exc)
             if label != logged:
@@ -2342,7 +2375,8 @@ def run_deferred_releases(*, connect=pg_connect, deadline: float | None = None) 
     """Release every deferred session whose attempts have finished; one whose attempt is
     still running stays registered for a later round. A release starts only if its capped
     connect, lock wait and send can finish by ``deadline``; past it the session is logged
-    ``deferred_release_skipped`` and left held for the web tier's rescue."""
+    ``deferred_release_skipped`` and left held for the web tier's rescue. The sum leaves no
+    room for a SAS fetch (U29); the cache and the rate limit make one rare here."""
     with _INFLIGHT_LOCK:
         ready = [(sid, turn_id) for sid, (turn_id, waits) in _DEFERRED_RELEASES.items()
                  if all(e.attempt_done.is_set() for e in waits)]
@@ -2354,7 +2388,7 @@ def run_deferred_releases(*, connect=pg_connect, deadline: float | None = None) 
             log(ev="deferred_release_skipped", session_id=session_id, turn_id=turn_id, reason="deadline")
             continue
         try:
-            with connect(PG_DSN, connect_timeout=RELEASE_CONNECT_TIMEOUT_S) as conn:
+            with connect(pg_dsn(), connect_timeout=RELEASE_CONNECT_TIMEOUT_S) as conn:
                 release_next_held(conn, session_id, sqs_timeout=RELEASE_SQS_TIMEOUT_S,
                                   credentials_timeout=RELEASE_CREDENTIALS_TIMEOUT_S,
                                   lock_timeout=RELEASE_LOCK_TIMEOUT_S)
@@ -2524,7 +2558,7 @@ async def acquire_grant(
     ``wait_s``; then raises GrantWaitTimeout. The token never reaches a log line."""
     max_start_age_s = FS_GRANT_MAX_START_AGE_S if max_start_age_s is None else max_start_age_s
     wait_s = FS_GRANT_WAIT_S if wait_s is None else wait_s
-    conn = connect(PG_DSN, **GRANT_CONN_KWARGS)
+    conn = connect(pg_dsn(), **GRANT_CONN_KWARGS)
     held: HeldGrant | None = None
     try:
         with conn.cursor() as cur:
@@ -2603,12 +2637,12 @@ async def _run_turn(
     # Set by a halt that names why the turn ended (1b/1c/1e); None means it just ended.
     terminal: dict[str, Any] = {"reason": None}
     # U6: this attempt's transcript appends land only while its claim epoch holds the turn.
-    store = PgSessionStore(PG_DSN, project_id, turn_id=turn_id, claim_epoch=turn["claim_epoch"])
+    store = PgSessionStore(PG, project_id, turn_id=turn_id, claim_epoch=turn["claim_epoch"])
     config_dir = tempfile.mkdtemp(prefix="worker-cfg-")
     # The directory the CLI really runs in: on a resumed turn the SDK repoints it to its
     # own mkdtemp, which is where the tool-result spill then lands.
     config_root = {"path": config_dir}
-    conn = psycopg.connect(PG_DSN, **TURN_CONN_KWARGS, application_name=f"turn:{turn_id}")
+    conn = pg_connect(pg_dsn(), **TURN_CONN_KWARGS, application_name=f"turn:{turn_id}")
     result = None
     held: HeldGrant | NoGrant | None = None
     slot: turn_users.Slot | None = None
@@ -3216,7 +3250,7 @@ async def _run_turn(
     # or a racing close and this one could each release one.
     released = None
     if seq is not None:
-        with pg_connect(PG_DSN, autocommit=True) as release_conn:
+        with pg_connect(pg_dsn(), autocommit=True) as release_conn:
             released = release_next_held(release_conn, session_id)
 
     summary = {
@@ -3295,7 +3329,7 @@ def close_on_last_receive(
     row's own outcome."""
     turn_id = turn["turn_id"]
     try:
-        with connect(PG_DSN) as conn:
+        with connect(pg_dsn()) as conn:
             seq = close_turn(conn, turn, receive_count, cause=cause, sdk_session_id=sdk_session_id,
                              release=not defer, claim_epoch=turn["claim_epoch"])
             prior = turn_outcome(conn, turn_id) if seq is None else None
@@ -3350,7 +3384,7 @@ def serve_after_shutdown(turn: dict, receive_count: int, *, connect) -> tuple[in
         log(ev="turn", turn_id=turn_id, receive_count=receive_count, status=503, shutdown=True)
         return 503, _shutdown_body(turn_id)
     try:
-        with connect(PG_DSN) as conn:
+        with connect(pg_dsn()) as conn:
             claimed = claim(conn, turn, receive_count)
             if claimed is None:
                 return refuse_unknown_turn(turn, receive_count)
@@ -3385,7 +3419,7 @@ def serve_real_turn(
     if SHUTDOWN.is_set():
         return serve_after_shutdown(turn, receive_count, connect=connect)
     try:
-        with connect(PG_DSN) as conn:
+        with connect(pg_dsn()) as conn:
             claimed = claim(conn, turn, receive_count)
             if claimed is None:
                 return refuse_unknown_turn(turn, receive_count)
@@ -3479,7 +3513,7 @@ def serve_stub_turn(
     if SHUTDOWN.is_set():
         return serve_after_shutdown(turn, receive_count, connect=connect)
     try:
-        with connect(PG_DSN) as conn:
+        with connect(pg_dsn()) as conn:
             claimed = claim(conn, turn, receive_count)
             if claimed is None:
                 return refuse_unknown_turn(turn, receive_count)
@@ -3508,7 +3542,7 @@ def serve_stub_turn(
             raise WorkerShutdown("sleep interrupted by worker shutdown")
         if SHUTDOWN.is_set():
             raise WorkerShutdown("worker shutting down before the stub completed")
-        with connect(PG_DSN) as conn:
+        with connect(pg_dsn()) as conn:
             return complete(conn, turn, receive_count, only_if_open=True, claim_epoch=turn["claim_epoch"])
 
     kind, value = await_attempt(entry, attempt)
@@ -3573,7 +3607,7 @@ def sweep_once(
     visibility_s = SQSD_VISIBILITY_TIMEOUT_S if visibility_s is None else visibility_s
     retention_s = SQSD_RETENTION_PERIOD_S if retention_s is None else retention_s
     closed: list[str] = []
-    with connect(PG_DSN) as conn:
+    with connect(pg_dsn()) as conn:
         for _ in range(SWEEP_BATCH):
             if SHUTDOWN.is_set():
                 break
@@ -3624,7 +3658,7 @@ def start_sweep(
                 log(ev="sweep_failed", error=f"{type(exc).__name__}: {exc}")
             try:
                 if LONG_AGENT_CALL_S > 0 and (turn_ids := inflight_turn_ids()):
-                    with pg_connect(PG_DSN) as conn:
+                    with pg_connect(pg_dsn()) as conn:
                         long_inflight_calls(conn, turn_ids)
             except Exception as exc:  # noqa: BLE001 - the next pass tries again
                 log(ev="long_call_check_failed", error=f"{type(exc).__name__}: {exc}")
@@ -3705,7 +3739,7 @@ def retention_once(*, connect=pg_connect, idle_s: int | None = None) -> dict[str
     idle_s = RETENTION_SESSION_IDLE_S if idle_s is None else idle_s
     result: dict[str, Any] = {"retired": []}
     if idle_s > 0:
-        with connect(PG_DSN) as conn:
+        with connect(pg_dsn()) as conn:
             result["retired"] = retire_sessions(conn, idle_s)
     if result["retired"]:
         log(ev="retention", **result)
@@ -3907,7 +3941,8 @@ def main() -> None:
     start_schema_thread()
     sweeper = start_sweep()
     retainer = start_retention()
-    log(ev="start", port=server.server_address[1], pg_dsn=PG_DSN.split("@")[-1], cwd=WORKER_CWD,
+    log(ev="start", port=server.server_address[1], pg_credentials=PG.description,
+        pg_dsn=(PG.cached() or "").split("@")[-1] or None, cwd=WORKER_CWD,
         provider=provider, dev_paths=dev_paths(os.environ),
         sqsd_max_retries=SQSD_MAX_RETRIES, sqsd_visibility_timeout_s=SQSD_VISIBILITY_TIMEOUT_S,
         sqsd_retention_period_s=SQSD_RETENTION_PERIOD_S, sweep_interval_s=SWEEP_INTERVAL_S,
