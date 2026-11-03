@@ -37,8 +37,8 @@
 // --deny-flag   while this file exists every /mcp call answers 401; default
 //               ./probe-deny-401.flag. `touch` it to start, `rm` it to stop.
 // --host        interface to bind, default 127.0.0.1 (as `src/http.ts`). A
-//               tunnel reaches the probe over loopback; deployment behind a
-//               load balancer needs `--host 0.0.0.0`.
+//               tunnel and Beanstalk's nginx both reach the probe over
+//               loopback; a container or a host with no local proxy needs `--host 0.0.0.0`.
 // Tokens live in memory: a restart makes every token "unknown token", which
 // Claude cannot tell from expiry. Do not restart during the expiry test.
 import http from "node:http";
@@ -86,8 +86,8 @@ if (!Number.isInteger(TOKEN_TTL_S) || TOKEN_TTL_S <= 0) {
 const DENY_FLAG = flag("--deny-flag", "probe-deny-401.flag");
 // Loopback by default, as `src/http.ts`'s `--host` does: a probe reached through
 // a tunnel needs no other interface, and binding them all also publishes it to
-// everything else on the operator's network. P0.3 runs behind a load balancer
-// and passes `--host 0.0.0.0`.
+// everything else on the operator's network. P0.3's Beanstalk nginx also
+// reaches it over loopback, so P0.3 passes no `--host`.
 const HOST = flag("--host", "127.0.0.1");
 
 function log(ev: string, fields: Record<string, unknown> = {}): void {
