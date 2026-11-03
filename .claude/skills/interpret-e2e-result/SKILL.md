@@ -238,10 +238,16 @@ Translate `stop_reason` into something a researcher can act on:
 
 - `completed` — agent set `project.status == "completed"`. Happy path,
   proof-conclusion fired. Look at the final tree to judge quality.
-- `natural_end` — SDK ended the conversation but the agent didn't
-  declare done. Either the agent thought it was done without setting
-  the flag (skill regression), or the conversation drifted to silence.
-  Check the last few `narration` entries.
+- `natural_end` — the run ended with the project not completed. On a
+  step-mode run (`usage.step_mode`, every run since step mode phase 2)
+  this usually means the host sent no reply to the last turn
+  (`next_auto_reply`): the turn made no "Continue with …?" offer, offered
+  wrap-up, repeated a step it had already offered, started a second
+  planning round, or hit the reply cap. Read the last entry of
+  `usage.per_turn` (its step and the reply sent) and the last `narration`
+  entry to tell which. A turn that should have offered a next step and
+  did not is a skill regression; a repeated step or a spent cap is a loop.
+  On an older run it meant the agent stopped without setting the flag.
 - `inactivity` — agent went silent for the inactivity cap window
   (default ~10 min). It's stuck. `tool_calls_before` counts the calls that
   preceded an entry, so for the last call — index `len(tool_calls) - 1` — the
@@ -253,10 +259,12 @@ Translate `stop_reason` into something a researcher can act on:
 - `tool_cap` — agent hit the per-run tool-call cap (default 300).
   Almost always means looping. Read the last 20 tool calls; the loop
   shape is usually obvious.
-- `cost_cap` — spent past the cost threshold. **Not an interruption** — it
-  is a post-hoc label (the cost-cap row of the stop-reason table in
-  `docs/specs/e2e-test-spec.md`), so read `usage.stop_reason` to see how the
-  run actually ended before calling it unfinished.
+- `cost_cap` — spent past the cost threshold. On a step-mode run it **does**
+  stop the run: the host sends no further reply, so the run ends at the
+  boundary of the step that crossed it, unfinished. On an older run it was a
+  post-hoc label only (the cost-cap row of the stop-reason table in
+  `docs/specs/e2e-test-spec.md`), so read `usage.stop_reason` there to see
+  how the run actually ended.
 - `max_turns` — SDK turn limit fired. Rare; usually means a
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
@@ -316,8 +324,9 @@ useful questions are about *this* run:
 - **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
   `tool_cap`. It researched but didn't finish. Pointer: high
   turn/tool counts; check whether `proof-conclusion` was ever reached.
-  (`cost_cap` is deliberately not in this list — it is applied after the
-  run has already ended, so it never cut a run short.)
+  On a step-mode run `cost_cap` belongs in this list too: the host stops
+  replying once it fires. On an older run it was applied after the run had
+  ended and never cut it short.
 - **The evidence wasn't recoverable** — it searched genuinely but the
   finding isn't findable from records (and isn't a `provided-documents/`
   case). The fixture may be unsolvable as authored — a fixture problem,

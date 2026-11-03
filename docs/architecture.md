@@ -904,9 +904,9 @@ There **is** an orchestrator, and it is a skill:
    `docs/plan/research-step-mode.md`): it reports the step and ends with
    "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
    stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
-   enforces that boundary on the FS prototype always, and in the eval harnesses
-   only where a test opts in through `execution.step_mode`, which no test sets
-   today. Cowork and the hosted alpha follow the router's own text with no
+   enforces that boundary on the FS prototype always, on every e2e run (the e2e
+   harness runs `--step-mode job` by default since step mode phase 2), and in the
+   unit harness only where a test opts in through `execution.step_mode`. Cowork and the hosted alpha follow the router's own text with no
    such hook, and in Cowork a "keep going" runs the remaining steps in one turn,
    since no host is there to reply.
 
@@ -2269,10 +2269,10 @@ changes how a correct change is made:
      stops a model starting the next step without asking differs by plane: the FS
      prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get
      router prose and no hook at all**. There is no plugin step hook anywhere.
-     **None of it is built yet.** When it is, the gap will be that PR 1 gives the e2e
-     orchestrator the step check (rider 3) while the plane it tracks, `real_agent`
+     It is built (PR 1), and since step mode phase 2 every e2e run applies the step
+     check (rider 3), while the plane it tracks, `real_agent`
      (`eval/harness/e2e/orchestrator.py`), is the alpha — which enforces nothing. So the
-     suite will enforce a boundary that neither Cowork nor the alpha has, and the one
+     suite enforces a boundary that neither Cowork nor the alpha has, and the one
      plane that DOES enforce it, the prototype worker, goes ungraded. **A green eval
      suite will therefore say nothing about whether the boundary holds where researchers
      actually are.**

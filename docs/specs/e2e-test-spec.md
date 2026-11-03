@@ -937,8 +937,10 @@ the `max_cost_usd` note in §6 step 5.
 
    **Stall-detect + resume.** A step-mode run, which is every `make e2e-run`, ends
    on a stall rather than resuming (lead, 2026-10-26), with the turn named in the
-   error text. Only a run with no step mode can resume, and `run_e2e` no longer starts
-   one (`--resume-on-stall` was deleted with the veto). There the harness closes the
+   error text. The resume path is still in `_run_agent` for a run with no step mode,
+   but no entry point turns it on: `run_e2e` always runs a step mode
+   (`--resume-on-stall` was deleted with the veto) and the single-ask runner
+   passes `resume_on_stall=False`. Only the stall tests drive it. There the harness closes the
    hung stream, waits for its CLI to exit, and only then
    **resumes the same session**
    (`fork_session=False`), bounded to 2 attempts — but only in a provably-safe
