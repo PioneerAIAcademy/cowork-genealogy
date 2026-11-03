@@ -1255,12 +1255,13 @@ _UNCONFIRMED = re.compile(
 
 
 def _marked_unconfirmed(reply: str, title: str) -> bool:
-    """True when a line of the reply holding `title` also says it is unconfirmed, which
-    the sources sentence allows ("otherwise say it is unconfirmed")."""
+    """True when a sentence of the reply holding `title` also says it is unconfirmed, which
+    the sources sentence allows ("otherwise say it is unconfirmed"). A sentence, not a
+    line: a markdown paragraph is one line, and a hedge elsewhere in it is not this one."""
     wanted = _normalised_title(title)
     return any(
-        wanted in _normalised_title(line) and _UNCONFIRMED.search(line)
-        for line in re.sub(r"[*_`]", "", _MD_LINK.sub(r"\1", reply)).splitlines()
+        wanted in _normalised_title(sentence) and _UNCONFIRMED.search(sentence)
+        for sentence in re.split(r"\n|(?<=[.!?])\s+", re.sub(r"[*_`]", "", _MD_LINK.sub(r"\1", reply)))
     )
 
 

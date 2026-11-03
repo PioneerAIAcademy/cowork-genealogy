@@ -173,8 +173,16 @@ def test_a_review_fix_passes(reply, calls):
     check(reply, calls, TAGGED)
 
 
-def test_unconfirmed_on_another_line_does_not_excuse_a_title():
-    reply = f"Start with {KENYA_DEATHS}.\nThe court records are unconfirmed."
+@pytest.mark.parametrize(
+    "reply",
+    [
+        f"Start with {KENYA_DEATHS}.\nThe court records are unconfirmed.",
+        f"These are searchable now: {KENYA_DEATHS} and Kenya, African Court Records, "
+        "1904–1967. I have not verified image counts.",
+    ],
+    ids=["another-line", "another-sentence-same-paragraph"],
+)
+def test_unconfirmed_elsewhere_does_not_excuse_a_title(reply):
     with pytest.raises(AssertionError, match="no collections_search result returned"):
         check(reply, EMPTY, TAGGED)
 
