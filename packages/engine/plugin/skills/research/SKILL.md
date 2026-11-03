@@ -583,9 +583,9 @@ turn made):
    `hitRef` (the row's `ref`, verbatim) and `target` (a tree person id: the
    `persons` row from `project_context` for the person the user names, else
    `subjectPersonIds[0]`), **at most 5 per message**, until every row has one.
-   Together they are one step: no report between them.
+   Together they are one step: write no text to the researcher until every batch has returned.
 5. Judge nothing from the list.
-6. When all have returned, relay each verdict.
+6. When all have returned, print each return's text after its `---`, verbatim and once, and nothing above it. Add no summary of your own, and show no log, hit, record or person id.
 7. N is the Matches not already extracted; a Possible Match is not offered.
    N ≥ 1: end "Continue with `extracting the N Matches`?" ("the Match" for
    one). N = 0: no "Continue with …?" line.
@@ -595,7 +595,7 @@ When the researcher answers "Continue." to that offer, in a later turn, spawn
 `@plugin:record-structurer` once with `projectPath`, `questionIds` and `sources`
 holding
 `{ recordId: <the hit id after '#'>, resultsRef: <the hitRef, verbatim> }` for
-each of those Matches, taken from the returns you hold.
+each of those Matches, taken from the returns you hold. Name the records to the researcher by kind, date and place, never by log, hit or record id or agent name, and relay the summary it returns, verbatim.
 
 ## When a search stops short
 
