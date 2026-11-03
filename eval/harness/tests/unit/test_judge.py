@@ -2814,8 +2814,11 @@ def test_judge_client_times_out_and_leaves_retries_to_call_judge():
     from harness.judge import JUDGE_TIMEOUT_SECONDS, _make_client
 
     client = _make_client(AuthConfig(skill_runner_mode="api_key", api_key="sk-test", detail="t"))
-    assert client.timeout == JUDGE_TIMEOUT_SECONDS
+    assert client.timeout.read == JUDGE_TIMEOUT_SECONDS
     assert JUDGE_TIMEOUT_SECONDS <= 300
+    # A dead upload fails fast; only generation gets the full read limit (#4054).
+    assert client.timeout.write <= 30
+    assert client.timeout.connect <= 30
     assert client.max_retries == 0
 
 

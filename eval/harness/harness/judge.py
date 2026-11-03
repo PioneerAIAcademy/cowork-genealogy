@@ -50,6 +50,13 @@ LEGACY_SAMPLING_API_VERSION = "2023-06-01"
 # minutes. The SDK's own retries are off (`max_retries=0`), so `_call_judge`'s
 # loop, with its backoff, is the only one.
 JUDGE_TIMEOUT_SECONDS = 90.0
+# Sending the request and opening the connection get their own short limits.
+# The #4054 regrade's stalls were uploads, not generation: the server closed
+# the socket mid-request (25 bytes received, the ~70K prompt still in the send
+# queue), and the client sat out the full read limit before retrying. A 70K
+# body uploads in under a second from the same host, so 20 s of no progress
+# is a dead connection; generation keeps the 90 s read limit.
+JUDGE_TIMEOUT = anthropic.Timeout(JUDGE_TIMEOUT_SECONDS, connect=15.0, write=20.0)
 JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
@@ -967,12 +974,12 @@ def _make_client(auth: AuthConfig) -> anthropic.Anthropic:
     the operator never configured one and the judge can't run.
     """
     if auth.api_key:
-        return anthropic.Anthropic(api_key=auth.api_key, timeout=JUDGE_TIMEOUT_SECONDS, max_retries=0)
+        return anthropic.Anthropic(api_key=auth.api_key, timeout=JUDGE_TIMEOUT, max_retries=0)
     import os
     if os.environ.get("ANTHROPIC_API_KEY"):
         # Defensive — should be picked up by resolve_auth, but if the env
         # changed since the AuthConfig was built, use what's there.
-        return anthropic.Anthropic(timeout=JUDGE_TIMEOUT_SECONDS, max_retries=0)
+        return anthropic.Anthropic(timeout=JUDGE_TIMEOUT, max_retries=0)
     raise JudgeError(
         "The judge requires an Anthropic API key. Subscription auth "
         "alone is not enough for the judge layer. Set ANTHROPIC_API_KEY "
