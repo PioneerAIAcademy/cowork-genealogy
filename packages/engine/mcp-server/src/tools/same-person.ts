@@ -41,6 +41,7 @@ import { Mob } from "../utils/mob.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { arkToBareId } from "../utils/ark.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
 /** Concurrency cap for FamilySearch's per-pair calls in relatives mode. */
 const PAIR_CONCURRENCY = 5;
@@ -849,7 +850,8 @@ async function resolveRecordSide(
       const read = await recordReadTool({ recordId, resultsRef, projectPath }, principal);
       doc = read as unknown as SimplifiedGedcomX;
       cache.set(cacheKey, doc);
-    } catch {
+    } catch (err) {
+      if (isFsBudgetExhausted(err)) throw err;
       doc = undefined; // fall through to the projection
     }
   }

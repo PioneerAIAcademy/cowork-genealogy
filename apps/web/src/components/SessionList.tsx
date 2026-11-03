@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api, ApiError, type SessionSummary } from '../api'
 import { useAuth } from '../auth'
 import ThemeToggle from './ThemeToggle'
+import TitleEditor from './TitleEditor'
 import { JobStateBadge } from './JobStateBadge'
 
 // Opus is deliberately not offered during the alpha: ~5× the cost, and there is
@@ -28,6 +29,7 @@ export default function SessionList({
   const [model, setModel] = useState(MODELS[0].id)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -80,6 +82,17 @@ export default function SessionList({
       return
     }
     void load()
+  }
+
+  const rename = async (id: string, title: string): Promise<void> => {
+    try {
+      const renamed = await api.patchSession(id, { title })
+      setSessions((rows) => rows.map((s) => s.id === id ? { ...s, title: renamed.title } : s))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Failed to rename session')
+    } finally {
+      setEditingId(null)
+    }
   }
 
   return (
@@ -145,7 +158,15 @@ export default function SessionList({
           <ul className="sessionGrid">
             {sessions.map((s) => (
               <li key={s.id} className="sessionCard" onClick={() => onOpen(s.id)}>
-                <div className="sessionCardTitle">{s.title}</div>
+                <div className="sessionCardTitle">
+                  {editingId === s.id ? (
+                    <TitleEditor
+                      title={s.title}
+                      onSave={(title) => rename(s.id, title)}
+                      onCancel={() => setEditingId(null)}
+                    />
+                  ) : s.title}
+                </div>
                 <div className="sessionCardMeta">
                   {/* The one thing a returning reader needs: is it working, does it
                       want me, did it finish, or did it stop? */}
@@ -164,6 +185,18 @@ export default function SessionList({
                     Continue in a new session
                   </button>
                 )}
+                <button
+                  className="cardRename"
+                  title="Rename session"
+                  aria-label="Rename session"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setError(null)
+                    setEditingId(s.id)
+                  }}
+                >
+                  ✎
+                </button>
                 <button
                   className="cardDelete"
                   title="Delete session"

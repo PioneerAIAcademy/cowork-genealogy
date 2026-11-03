@@ -1,0 +1,12 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "false"
+  },
+  "notes": {
+    "f2": "Agent built out a Pekár family in the tree (Couple R15: subject + Joannes Pekár, citing S4; 69 assertions from seven Pekár baptism records 1886–1896, of the run's 137) instead of documenting a negative index-bounded conclusion. The correct answer is no identifiable spouse or children for the subject."
+  },
+  "annotator": "EdmondOware",
+  "findings_hash": "7a6b9ec79353f82267cbf344d867ae9c85c2543ae979bcffef38d57256fe6956",
+  "blind_bundle_digest": "f0e43ca704877cd38fef85b468799be9b83d62b8a89ad41cb632a6c03e1d7812"
+}

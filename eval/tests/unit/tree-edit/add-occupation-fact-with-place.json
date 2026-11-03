@@ -22,7 +22,7 @@
     "place-search-schuylkill-county"
   ],
   "judge_context": [
-    "Should call place_search with placeName 'Schuylkill County, Pennsylvania' and copy the first result's standardPlace verbatim into the new fact's standard_place field (per places-guidance.md)",
+    "The new fact needs a standard_place. Two routes are equally correct: call place_search with placeName 'Schuylkill County, Pennsylvania' and pass its standardPlace as the fact's standard_place, or pass the place with no standard_place and let tree_edit fill it in, which it does itself whenever a place is supplied (its resolveStandardPlace defaults to true; the agent body says the tool resolves standard_place). A tree_edit call with no standard_place and no place_search call is correct and must not reduce Correctness, Completeness or Tool Arguments.",
     "Should add a new Occupation fact to person I1 with: a fresh F-prefix id (next available — e.g., F4), type 'Occupation', date '1860', place 'Schuylkill County, Pennsylvania', standard_place matching place_search result, sources [{ ref: 'S2', page: 'dwelling 112' }]",
     "Should NOT mark the new fact `primary: true` unless it's the primary Occupation (and only Occupation) for this person — the SKILL.md primary rule only applies when there are competing facts of the same type",
     "Edit-minimality: no other facts on I1 are changed (F1 Birth and F2 Death stay byte-identical); no other person, relationship, or source is touched; research.json is not modified",

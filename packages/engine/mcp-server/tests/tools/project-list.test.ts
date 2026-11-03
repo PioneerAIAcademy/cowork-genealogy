@@ -6,6 +6,7 @@ import { tmpdir } from "os";
 import { projectList } from "../../src/tools/project-list.js";
 import { runWithProjectStore, unboundProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
+import { LOCAL } from "../../src/auth/principal.js";
 
 describe("project_list", () => {
   let root: string;
@@ -24,7 +25,7 @@ describe("project_list", () => {
   }
 
   it("on the file store says the working folder is the project, with no project list", async () => {
-    const result = await projectList();
+    const result = await projectList(LOCAL);
     expect(result).toEqual({
       mode: "folder",
       message:
@@ -58,7 +59,7 @@ describe("project_list", () => {
         ],
       },
     );
-    const result = await runWithProjectStore(new ScopedFsStore(root, "p1"), () => projectList());
+    const result = await runWithProjectStore(new ScopedFsStore(root, "p1"), () => projectList(LOCAL));
     expect(result).toEqual({
       mode: "hosted",
       projects: [
@@ -78,7 +79,7 @@ describe("project_list", () => {
   });
 
   it("on a bound store with no research.json yet offers the anchor as newProjectPath", async () => {
-    const result = await runWithProjectStore(new ScopedFsStore(root, "empty"), () => projectList());
+    const result = await runWithProjectStore(new ScopedFsStore(root, "empty"), () => projectList(LOCAL));
     expect(result.mode).toBe("hosted");
     expect(result.projects).toEqual([]);
     expect(result.newProjectPath).toBe(SCOPED_ANCHOR);
@@ -89,7 +90,7 @@ describe("project_list", () => {
     const dir = join(root, "bad");
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, "research.json"), "{ not json");
-    const result = await runWithProjectStore(new ScopedFsStore(root, "bad"), () => projectList());
+    const result = await runWithProjectStore(new ScopedFsStore(root, "bad"), () => projectList(LOCAL));
     expect(result.projects).toEqual([
       { projectPath: SCOPED_ANCHOR, objective: null, subjects: [], status: null, updated: null },
     ]);
@@ -97,6 +98,6 @@ describe("project_list", () => {
 
   it("on an unbound store rejects with that store's message", async () => {
     const message = "no project bound: send X-Genealogy-Project-Id";
-    await expect(runWithProjectStore(unboundProjectStore(message), () => projectList())).rejects.toThrow(message);
+    await expect(runWithProjectStore(unboundProjectStore(message), () => projectList(LOCAL))).rejects.toThrow(message);
   });
 });

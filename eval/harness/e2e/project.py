@@ -23,7 +23,9 @@ wipe a debugging session); pass --force / FORCE=1 to start fresh.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
+import stat
 import sys
 from pathlib import Path
 
@@ -71,11 +73,21 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(starting_research, dest_research)
-    shutil.copyfile(starting_tree, out_dir / "tree.gedcomx.json")
-    # The write-once baseline the tree-encoding gate diffs against (issue #1490),
-    # matching what project_create seeds in production.
-    shutil.copyfile(starting_tree, out_dir / "starting-tree.gedcomx.json")
+    # The engine leaves these files read-only (issue #1499), and copyfile opens
+    # its destination for writing, so a FORCE=1 re-seed removes them first.
+    seeds = [
+        (starting_research, dest_research),
+        (starting_tree, out_dir / "tree.gedcomx.json"),
+        # The write-once baseline the tree-encoding gate diffs against (issue
+        # #1490), matching what project_create seeds in production.
+        (starting_tree, out_dir / "starting-tree.gedcomx.json"),
+    ]
+    for src, dest in seeds:
+        if dest.exists():
+            # Windows refuses to unlink a read-only file, so lift the mode first.
+            os.chmod(dest, dest.stat().st_mode | stat.S_IWRITE)
+            dest.unlink()
+        shutil.copyfile(src, dest)
 
     print(f"Seeded an editable project at {out_dir}")
     print()

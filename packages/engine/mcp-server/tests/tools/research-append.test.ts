@@ -1,4 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  configureFsBudget,
+  consumeFsBudgetSlot,
+  isFsBudgetExhausted,
+  __resetFsBudgetForTests,
+} from "../../src/utils/fs-budget.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
@@ -115,6 +121,7 @@ import {
 } from "../../src/utils/place-resolver.js";
 import { callTool } from "../helpers/call-tool.js";
 import { questionStatus } from "../../src/utils/question-state.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 /** Claude Code saves a tool result over this many characters to a file the agent may not be able to
  *  read back, so a refused answer has to stay well under it. */
@@ -274,8 +281,8 @@ describe("research_append (Phase 1)", () => {
   });
 
   async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
 
@@ -1436,6 +1443,42 @@ describe("research_append (Phase 1)", () => {
       expect(r.unresolvedPlaces).toEqual(["Hilperton"]);
     });
 
+    // Same class as the tree_edit case: a spent budget is a refusal, not a
+    // miss. Swallowing it saved the assertion with no standard_place and a
+    // warning blaming the lookup -- the wrong cause, written into
+    // research.json. extraction_append writes through researchAppend, so the
+    // record-extractor reaches this line too.
+    it("on an append with the FamilySearch budget spent, which fails and writes nothing", async () => {
+      await writeProject();
+      const before = JSON.stringify(await readResearch());
+      const FS_URL = "https://www.familysearch.org/service/places/search";
+      try {
+        configureFsBudget({ perMinute: 1 });
+        consumeFsBudgetSlot(FS_URL);
+        // A REJECTED PROMISE, not a sync throw: a sync throw escapes before the
+        // `catch` is reached and would pass against the unfixed code.
+        let refusal: unknown;
+        try {
+          consumeFsBudgetSlot(FS_URL);
+        } catch (e) {
+          refusal = e;
+        }
+        expect(isFsBudgetExhausted(refusal)).toBe(true);
+        vi.mocked(resolveStandardPlace).mockRejectedValueOnce(refusal);
+
+        const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "deathplace", value: "Hilperton" };
+        const err = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a }).then(
+          () => null,
+          (e) => e,
+        );
+        expect(isFsBudgetExhausted(err)).toBe(true);
+        expect(String(err)).toMatch(/try again in about/);
+        expect(JSON.stringify(await readResearch())).toBe(before);
+      } finally {
+        __resetFsBudgetForTests();
+      }
+    });
+
     it("on a research_append informant_bias_notes update, which leaves the linked tree fact alone", async () => {
       const tree = structuredClone(baseTree) as any;
       tree.persons[0].facts = [{ id: "F4", type: "Birthplace", value: WB, assertion_id: "a_001", sources: [{ ref: "SD-001" }] }];
@@ -2108,7 +2151,7 @@ describe("research_append (Phase 2)", () => {
     return r;
   }
   async function writeProject(research: any = phase2Research(), tree: any = baseTree) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
@@ -3287,7 +3330,7 @@ describe("research_append (Phase 3)", () => {
     return r;
   }
   async function writeProject(research: any = phase3Research(), tree: any = baseTree) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
@@ -7340,7 +7383,7 @@ describe("research_append (batch ops)", () => {
     await rm(dir, { recursive: true, force: true });
   });
   async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
@@ -9193,7 +9236,7 @@ describe("research_append (batch ops) — every op's errors", () => {
     await rm(dir, { recursive: true, force: true });
   });
   async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
 
@@ -9873,7 +9916,7 @@ describe("research_append (composite persist + enforcement)", () => {
   });
 
   async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
@@ -12303,7 +12346,7 @@ describe("research_append — detected core-identifier contradiction", () => {
         ...stated,
       },
     ] as any;
-    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
     const tree = JSON.parse(JSON.stringify(baseTree));
     tree.persons[0].facts = [{ id: "F1", type: "Birth", date: "~1845", place: "Ireland", ...treeBirth }];
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
@@ -13598,7 +13641,7 @@ describe("research_append — relationship direction and the sibling value (#253
   });
 
   async function writeProject(research: any = baseResearch(), tree: any = baseTree) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
 
@@ -13932,7 +13975,7 @@ describe("research_append — relationship direction and the sibling value (#253
     );
     const bad = research.assertions.find((a: any) => a.id === id);
     bad.structured_value.relationship_type = "parent";
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
 
     const r = await researchAppend({
       projectPath: dir,
@@ -14784,7 +14827,7 @@ describe("research_append — person_evidence requires a recorded score", () => 
         results_examined: 0, external_site: null, results_ref: null,
       }] as any;
       r.assertions = [{ ...bare, id: "a_001" }] as any;
-      await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+      await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
       await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
       const aOp = { section: "assertions", op: "append", entry: noId(bare) };
       const pOp = { section: "person_evidence", op: "append",
@@ -15082,7 +15125,7 @@ describe("research_append — capture-pending plan item not terminal (#1226, #24
     return r;
   }
   async function writeProject(research: any) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
   }
   // A new skip must carry skip_category (#1830, planItemSkipInvariants) — send it
@@ -16612,7 +16655,7 @@ describe("research_append — a resolve names how it was settled (resolution_kin
     weighing_analysis: "The census is closer to the event.",
   };
   async function writeProject(research: any) {
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
   }
   const resolve = (fields: Record<string, unknown>) =>
@@ -17115,7 +17158,7 @@ describe("research_append — unexplained move, update path", () => {
     // Make it a pre-rule link across the move: point it at I1 behind the tool's back.
     const research = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
     research.person_evidence.find((e: any) => e.id === id).person_id = "I1";
-    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
     expect((await update(id, { rationale: "Name, household and occupation agree." })).ok).toBe(true);
   });
 });
