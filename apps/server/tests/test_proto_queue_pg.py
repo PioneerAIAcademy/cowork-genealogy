@@ -61,7 +61,7 @@ def sent(monkeypatch, pg_dsn) -> list[dict]:
             bodies.append(json.loads(params["MessageBody"]))
             return f"<R><MessageId>m-{len(bodies)}</MessageId></R>"
 
-    monkeypatch.setattr(worker, "PG_DSN", pg_dsn)
+    monkeypatch.setattr(worker, "PG", worker.pg_credentials.PgCredentials.fixed(pg_dsn))
     monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
     monkeypatch.setattr(worker, "log", lambda **f: None)
     monkeypatch.setattr(enqueue, "credentials_ready", lambda timeout=None: True)
