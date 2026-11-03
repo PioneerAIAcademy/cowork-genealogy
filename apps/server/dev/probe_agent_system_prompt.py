@@ -181,9 +181,9 @@ def main() -> int:
                       if k.startswith(SCRUBBED_PREFIXES) or k in SCRUBBED_NAMES)
     for k in scrubbed:
         del os.environ[k]
-    from app.config import Settings
-
-    os.environ["MODEL"] = Settings.model_fields["default_model"].default
+    from app.agent.main_thread import load_main_thread
+    from app.config import REPO_ROOT
+    os.environ["MODEL"] = load_main_thread(REPO_ROOT / "packages" / "engine" / "plugin").model
     import claude_agent_sdk
 
     body, heading = agent_body()

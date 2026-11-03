@@ -16,6 +16,7 @@ description: >-
   mother's 1900 or 1910 US census children-born and children-living counts, it
   also reports which of her children the tree is missing and when each was born.
 model: claude-sonnet-4-6
+effort: high
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and

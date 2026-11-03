@@ -13,6 +13,7 @@ description: >-
   summary ("does my proof meet the GPS", "assess ps_NNN against the GPS
   components") goes through proof-conclusion.
 model: claude-sonnet-5
+effort: high
 tools:
   # Every MCP tool appears under ALL THREE server spellings — `genealogy` (the
   # harnesses, .mcp.json, hosted web), `remote-devices__Genealogy_Research`

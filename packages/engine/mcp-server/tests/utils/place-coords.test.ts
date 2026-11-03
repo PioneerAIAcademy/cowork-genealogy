@@ -1,5 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { lookupWithin } from "../../src/utils/place-coords.js";
+import {
+  configureFsBudget,
+  consumeFsBudgetSlot,
+  isFsBudgetExhausted,
+  __resetFsBudgetForTests,
+} from "../../src/utils/fs-budget.js";
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -41,5 +47,37 @@ describe("lookupWithin onExpired", () => {
     });
     await wait(20);
     expect(calls).toBe(0);
+  });
+});
+
+// Until the resolvers stopped swallowing the refusal, this rethrow could not
+// fire: every production caller passes standardPlaceToCoords or
+// resolveStandardPlace, and both answered null before the error got here.
+describe("lookupWithin and a spent FamilySearch budget", () => {
+  const FS_URL = "https://www.familysearch.org/service/places/search";
+
+  afterEach(() => {
+    __resetFsBudgetForTests();
+  });
+
+  it("propagates the refusal rather than mapping the name to null", async () => {
+    configureFsBudget({ perMinute: 1 });
+    consumeFsBudgetSlot(FS_URL);
+    const err = await lookupWithin<string>(["Lexington"], () => {
+      consumeFsBudgetSlot(FS_URL);
+      throw new Error("unreachable");
+    }, 1000).then(
+      () => null,
+      (e) => e,
+    );
+    expect(isFsBudgetExhausted(err)).toBe(true);
+  });
+
+  it("still maps an ordinary resolver failure to null", async () => {
+    configureFsBudget({ perMinute: 100 });
+    const answers = await lookupWithin<string>(["Lexington"], async () => {
+      throw new Error("502 Bad Gateway");
+    }, 1000);
+    expect(answers.get("Lexington")).toBeNull();
   });
 });

@@ -118,6 +118,7 @@ import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
 import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
@@ -10004,7 +10005,13 @@ async function prepareOps(
             .filter((p) => p !== entry.place);
           const recordCountry = () => recordCountryOf(countryProducer, countryRecord);
           sp = (await resolveStandardPlace(entry.place, { contextPlaces, recordCountry })) ?? null;
-        } catch {
+        } catch (err) {
+          // A spent budget is a refusal, not a miss. Swallowing it saves the
+          // assertion with no standard_place and a warning blaming the lookup
+          // -- the wrong cause, written into research.json. extraction_append
+          // writes through researchAppend, so the record-extractor lands here
+          // too.
+          if (isFsBudgetExhausted(err)) throw err;
           sp = null;
         }
         if (sp) filled = "geocoded";

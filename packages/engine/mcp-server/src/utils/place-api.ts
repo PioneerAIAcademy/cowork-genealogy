@@ -11,6 +11,7 @@ import type {
 } from "../types/place.js";
 import { BROWSER_USER_AGENT } from "../constants.js";
 import { fetchWithRetry } from "./http.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 
 /** Per-request timeout for a Places call; omitted, the http.ts default applies. */
 export interface PlaceFetchOptions {
@@ -391,7 +392,9 @@ export async function getPlaceWikipediaUrl(
       (a) => a.type?.code === "WIKIPEDIA_LINK" && !!a.url
     );
     return wiki?.url ?? null;
-  } catch {
+  } catch (err) {
+    // Not "no Wikipedia link" -- the server is rate-limited.
+    if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
 }
