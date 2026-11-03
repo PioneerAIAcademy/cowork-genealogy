@@ -64,12 +64,9 @@ entry's canned text. On a test that sets `execution.stop_at_stub`, such as
 `ut_research_015` below, a spawn of any stubbed name is denied too and ends the
 run.
 
-A test tagged `relays-agent-tail` also asserts that the router's reply carries,
-verbatim, everything after the final `---` of its `routes-to:` callee's canned
-response (`test_relays_the_agents_tail_verbatim`, issue #3862). The expected text
-is read from the test's own `stub_skills` entry, not from the agent return the
-harness recorded, which wraps it in scaffolding the router must not print.
-`ut_research_zfp` carries it.
+`ut_research_zfp` grades the router's relay of search-hints' summary on meaning,
+through the judge: rewording and added text pass (lead, 2026-11-03, on PR #4148,
+which retired the word-for-word `relays-agent-tail` check of issue #3862).
 
 Every agent spawn in this suite is denied, listed or not, unless the test names
 the agent in `execution.run_agents`. That is how the negative tests whose
