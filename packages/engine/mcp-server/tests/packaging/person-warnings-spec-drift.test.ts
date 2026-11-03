@@ -81,16 +81,16 @@ describe("person-warnings spec catalogue and the shipped tags agree", () => {
   // heading or a broken pattern turns every assertion below into a comparison of
   // empty sets, which passes and reads as coverage.
   it("finds the tags to compare on all three sides", () => {
-    expect(shipped.size, "ALL_WARNING_TAGS is empty or lost entries").toBe(82);
+    expect(shipped.size, "ALL_WARNING_TAGS is empty or lost entries").toBe(83);
     expect(
       catalogueTags().size,
       "no tag rows parsed from the spec's § Tag Catalogue — if its heading or " +
         "table shape changed, fix this parser rather than deleting the test",
-    ).toBe(82);
+    ).toBe(83);
     expect(
       emittedTags().size,
       "no `issueType:` emit sites parsed from person-warnings.ts",
-    ).toBe(82);
+    ).toBe(83);
   });
 
   // (1) Keeps the hand-maintained array honest: it must be exactly the tags the
