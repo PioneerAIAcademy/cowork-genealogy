@@ -86,6 +86,8 @@ COPY --from=web /repo/apps/web/dist /app/server/web-dist
 # AND https disables dev-login, i.e. NO login works. (The rest of the engine is
 # NOT baked into this control-plane image — only this one config file is.)
 COPY packages/engine/mcp-server/config/familysearch.json /packages/engine/mcp-server/config/familysearch.json
+# The main thread's model, which create_project records on each new project.
+COPY packages/engine/plugin/main-thread.json /packages/engine/plugin/main-thread.json
 
 # Build identity, stamped into feedback bundles so triage can date a case and
 # tie it to an exact checkout. `make deploy` fills these from git; they default

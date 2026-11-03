@@ -38,6 +38,8 @@ tools:
   - mcp__genealogy__wiki_read
   - mcp__remote-devices__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__wiki_read
+model: claude-sonnet-4-6
+effort: high
 ---
 
 # Timeline
