@@ -249,3 +249,37 @@ def test_lookingfor_has_no_navigation_phrase(tool_calls, test):
         and _NAVIGATION_PHRASE.search(looking_for)
     ]
     assert not bad, f"lookingFor carries a navigation phrase: {bad}"
+
+
+# --- A browse log entry is never relabelled image_transcribe (#4012) ---------
+
+def test_browse_log_never_labelled_image_transcribe(before_state, after_state, test):
+    """A browse's log entry names the browse tool (image_search, or
+    volume_search when no volume was found) — never image_transcribe. On Haiku
+    low, research_log_append refused to attach a page's staged file to an
+    image_search entry, and the agent relabelled the entry
+    `tool: "image_transcribe"` so the file was accepted — writing the results/
+    sidecar the browse rules forbid and leaving the browse itself unlogged
+    (#4012). In the split shape (a correct image_search entry PLUS a relabelled
+    one) test_positive_appends_browse_log_entry still passes and, when no
+    staged ref was attached, test_no_results_sidecar_written does too — this
+    check is what fails it. The one legitimate image_transcribe label is a cap
+    refusal's partial log, whose tests carry the cap-refusal tag."""
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests perform a browse")
+    if "cap-refusal" in test.get("tags", []):
+        pytest.skip(
+            "a cap refusal stops the browse at a page read, so its partial log "
+            "may name image_transcribe"
+        )
+    relabelled = [
+        entry.get("id")
+        for entry in _new_log_entries(before_state, after_state)
+        if "image_transcribe" in (entry.get("tool") or "")
+    ]
+    assert not relabelled, (
+        "a browse log entry must name the browse tool (image_search or "
+        f"volume_search), never image_transcribe; got entries {relabelled}. "
+        "Relabelling the entry to attach a staged page file writes a results/ "
+        "sidecar and leaves the browse unlogged."
+    )
