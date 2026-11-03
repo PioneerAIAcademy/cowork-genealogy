@@ -429,12 +429,43 @@ def test_parents_question_rejects_one_parent_handed():
         )
 
 
-def test_parents_question_tag_on_a_question_asking_no_parents_is_drift():
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Was Anders Unna the son of Ole Unna?",
+        "Who was Anders Unna's father?",
+        "Was Brita the mother of Anders Unna?",
+        "Was Anders Unna a child of Ole and Brita?",
+        "What was the parentage of Anders Unna?",
+    ],
+    ids=["son-of", "father-only", "mother-yes-no", "child-of", "parentage"],
+)
+def test_parents_question_passes_on_every_wording_that_asks_about_a_parent(question):
+    research.test_delegation_hands_plan_item_verbatim(
+        PTEST, [records_spawn({"subjectId": "I1", "names": NAMES})], before("I2", "I3", question=question)
+    )
+
+
+def test_a_yes_no_father_question_still_rejects_the_tree_parents_handed():
+    with pytest.raises(AssertionError, match="on a search for his parents; leave it out"):
+        research.test_delegation_hands_plan_item_verbatim(
+            PTEST,
+            [records_spawn({"subjectId": "I1", "names": NAMES, "parents": TWO})],
+            before("I2", "I3", question="Was Anders Unna the son of Ole Unna?"),
+        )
+
+
+@pytest.mark.parametrize(
+    "question",
+    ["Whom did Anders Unna marry?", "Who was the godfather of Anders Unna?", "Where did Anders Unna's grandmother live?"],
+    ids=["marriage", "godfather", "grandmother"],
+)
+def test_parents_question_tag_on_a_question_asking_no_parents_is_drift(question):
     with pytest.raises(AssertionError, match="Scenario drift: parents-question is set"):
         research.test_delegation_hands_plan_item_verbatim(
             PTEST,
             [records_spawn({"subjectId": "I1", "names": NAMES})],
-            before("I2", "I3", question="Whom did Anders Unna marry?"),
+            before("I2", "I3", question=question),
         )
 
 

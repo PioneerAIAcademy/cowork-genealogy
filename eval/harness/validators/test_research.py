@@ -1181,9 +1181,9 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
             continue
         if parents_question:
             qid = question_of.get(item["id"])
-            assert "parent" in question_text.get(qid, "").lower(), (
+            assert _ASKS_ABOUT_A_PARENT.search(question_text.get(qid, "")), (
                 f"Scenario drift: {_PARENTS_QUESTION_TAG} is set, but {item['id']} serves "
-                f"{qid!r}, which does not ask for parents: {question_text.get(qid, '')!r}"
+                f"{qid!r}, which does not ask about a parent: {question_text.get(qid, '')!r}"
             )
         problems.extend(_handed_parents_problems(subject, tree, parents_question))
     assert not problems, "; ".join(problems)
@@ -1212,14 +1212,15 @@ def _handed_subject(prompt: str, tree: dict, research: dict) -> tuple[dict | Non
 
 
 _PARENTS_QUESTION_TAG = "parents-question"
+_ASKS_ABOUT_A_PARENT = re.compile(r"\b(?:parents?|parentage|father|mother)\b|\b(?:son|daughter|child) of\b", re.I)
 
 
 def _handed_parents_problems(subject: dict, tree: dict, parents_question: bool = False) -> list[str]:
     """The subject block names the subject's parents in the tree when it has one
     or two, and none when it has more than two (two candidate couples mean the
     parents are themselves in question) or when the search serves a question
-    asking who they are, since there they are what the search tests
-    (research/SKILL.md)."""
+    about his parentage, who a parent was or whether someone was his father or
+    mother, since there they are what the search tests (research/SKILL.md)."""
     sid = subject.get("subjectId")
     if parents_question:
         return [f"subject.parents is handed for {sid} on a search for his parents; leave it out"] if subject.get("parents") else []
