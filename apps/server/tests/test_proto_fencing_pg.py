@@ -387,9 +387,13 @@ def test_a_fenced_batch_never_holds_the_turn_lock_across_an_await(pg_dsn):
             loop = asyncio.get_running_loop()
 
             def sync_hook() -> None:
-                # What record_nudge does from a Stop hook: a blocking same-row write.
+                # A blocking same-row write, as the worker's sync hooks once made (the
+                # Stop hook's `record_nudge`, deleted in step mode phase 2). It always
+                # touches the row (unlike reset_zero_progress, which skips a zero count),
+                # so it always needs the row lock the batch must not hold.
                 try:
-                    worker.record_nudge(hook_conn, row["turn_id"], writes[0])
+                    hook_conn.execute("UPDATE turns SET nudges = COALESCE(nudges, 0) WHERE turn_id = %s",
+                                      (row["turn_id"],))
                     writes[0] += 1
                 except psycopg.errors.LockNotAvailable as exc:
                     wedged.append(str(exc))
@@ -416,7 +420,7 @@ def test_a_sweep_close_fences_the_attempt_it_gave_up_on(pg_dsn, servers, monkeyp
     assert claim(pg_dsn, row, 1).epoch == 1
     stamp(pg_dsn, row, 1)
     sql(pg_dsn, "UPDATE turns SET claimed_at = now() - interval '1 hour' WHERE turn_id = %s", (row["turn_id"],))
-    monkeypatch.setattr(worker, "PG_DSN", pg_dsn)
+    monkeypatch.setattr(worker, "PG", worker.pg_credentials.PgCredentials.fixed(pg_dsn))
     monkeypatch.setattr(worker, "QUEUE_URL", "")
     closed = worker.sweep_once(connect=psycopg.connect, max_retries=1, visibility_s=0, retention_s=0)
     assert row["turn_id"] in closed

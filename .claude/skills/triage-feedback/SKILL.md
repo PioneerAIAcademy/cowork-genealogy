@@ -125,7 +125,8 @@ For each claim, say which it is:
 
 **Record the model and effort.** Each assistant line in the session log carries
 `requestedModel` and `effort`, and each subagent's `.meta.json` carries `effort`.
-Compare them with `deploy/fly.toml` (`DEFAULT_MODEL`, `ORCHESTRATOR_EFFORT`) and
+Compare them with `packages/engine/plugin/main-thread.json` (the main thread) and each
+agent's own `model:` / `effort:` in `packages/engine/plugin/agents/`, at the bundle's build, and
 say in one line whether the session ran as configured. That rules configuration
 in or out before a prompt or a tool is blamed.
 

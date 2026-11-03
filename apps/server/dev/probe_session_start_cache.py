@@ -30,9 +30,6 @@ with a fresh `HOME` and `CLAUDE_CONFIG_DIR`, as a new hosted sandbox starts with
 state. The prompt asks for one `project_context` call and then `OK`, so a session is two
 main-thread requests.
 
-`AUTONOMOUS_MAX_NUDGES=0` keeps the hosted Stop hook from pushing the agent past its `OK`;
-it plays no part before call 2.
-
 `--engine-delay D` starts the engine D seconds late through a wrapper module, which forces
 the case where the MCP server registers after the CLI has sent request 1.
 
@@ -327,11 +324,9 @@ async def main() -> None:
                       if k.startswith(SCRUBBED_PREFIXES) or k in SCRUBBED_NAMES)
     for k in scrubbed:
         del os.environ[k]
-    from app.config import Settings
-    os.environ["MODEL"] = Settings.model_fields["default_model"].default
-    # Read once, at real_agent's import. Left on, the Stop hook nudges the agent past its
-    # `OK` until the session times out, and calls 1 and 2 never get judged.
-    os.environ["AUTONOMOUS_MAX_NUDGES"] = "0"
+    from app.agent.main_thread import load_main_thread
+    from app.config import REPO_ROOT
+    os.environ["MODEL"] = load_main_thread(REPO_ROOT / "packages" / "engine" / "plugin").model
     import claude_agent_sdk
 
     verdicts = []

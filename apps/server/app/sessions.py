@@ -15,8 +15,9 @@ from sqlalchemy import update
 from sqlmodel import Session, select
 
 from . import agent_secrets, fs_oauth
+from .agent.main_thread import load_main_thread
 from .auth import fresh_fs_token, get_current_user
-from .config import get_settings
+from .config import REPO_ROOT, get_settings
 from .db import get_session
 from .models import FamilySearchToken, Project, User, utcnow
 from .sandbox import SandboxProvider, SandboxSpec
@@ -72,7 +73,6 @@ class ProjectOut(BaseModel):
 
 class CreateSessionBody(BaseModel):
     title: str | None = None
-    model: str | None = None
     # Seed a ready-made sample project so the viewer renders immediately
     # (useful before the agent path is wired / for demoing the viewer).
     sample: bool = False
@@ -81,7 +81,6 @@ class CreateSessionBody(BaseModel):
 class PatchSessionBody(BaseModel):
     title: str | None = None
     title_if_default: str | None = None
-    model: str | None = None
 
 
 # A sandbox keeps running the agent code it was created with, so an old one
@@ -255,7 +254,6 @@ async def create_project(
     provider: SandboxProvider,
     user: User,
     title: str | None = None,
-    model: str | None = None,
     sample: bool = False,
 ) -> Project:
     """Provision a sandbox + record the user→sandbox map. Used by the browser
@@ -264,7 +262,7 @@ async def create_project(
     import uuid
 
     settings = get_settings()
-    model = model or settings.default_model
+    model = load_main_thread(REPO_ROOT / "packages" / "engine" / "plugin").model
     sandbox = await provider.create(
         SandboxSpec(template=settings.e2b_template, labels={"user_id": user.id}, model=model)
     )
@@ -327,7 +325,7 @@ async def create_session(
 ) -> ProjectOut:
     project = await create_project(
         session=session, provider=provider, user=user,
-        title=body.title, model=body.model, sample=body.sample,
+        title=body.title, sample=body.sample,
     )
     return ProjectOut.of(project)
 
@@ -352,8 +350,6 @@ def patch_session(
     title = body.title if body.title is not None else body.title_if_default
     if title is not None:
         title = _normalize_title(title)
-    if body.model is not None:
-        project.model = body.model
     if body.title is None and title is not None:
         _set_title_if_default(session, project, title)
     else:

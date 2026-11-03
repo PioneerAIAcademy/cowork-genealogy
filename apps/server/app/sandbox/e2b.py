@@ -241,16 +241,8 @@ class E2BProvider(SandboxProvider):
         s = get_settings()
         env: dict[str, str] = {
             "AGENT_MODE": s.agent_mode,
-            "MODEL": model,
             "AUTO_CONTINUE": "1" if s.auto_continue else "0",
             "AUTO_CONTINUE_MAX_STEPS": str(s.auto_continue_max_steps),
-            # 1d: the SDK Stop hook's cap, read by real_agent INSIDE the sandbox. It has
-            # to be passed explicitly -- commands.run does not inherit the image ENV, and
-            # without it an operator setting this on the control plane changes nothing
-            # while the sandbox quietly keeps its compiled-in default. `auto_continue` is
-            # honoured because that flag already meant "one turn per message": a new
-            # mechanism that ignored it would silently remove an existing kill switch.
-            "AUTONOMOUS_MAX_NUDGES": str(s.autonomous_max_nudges if s.auto_continue else 0),
             **optional_agent_env(s),
         }
         if proxy_active():

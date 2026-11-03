@@ -17,6 +17,11 @@ vi.mock("../../src/utils/http.js", async (orig) => {
 import { matchPairs, FAMILYSEARCH_FLOORS } from "../../src/utils/matcher.js";
 import { scorePair } from "../../src/utils/match-engine.js";
 import { fetchWithRetry } from "../../src/utils/http.js";
+import {
+  configureFsBudget,
+  consumeFsBudgetSlot,
+  __resetFsBudgetForTests,
+} from "../../src/utils/fs-budget.js";
 import { Mob } from "../../src/utils/mob.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 import type { MatchPair } from "../../src/types/matcher.js";
@@ -291,6 +296,33 @@ describe("matchPairs: FamilySearch's matcher", () => {
     });
     expect(FAMILYSEARCH_FLOORS).toEqual({ thinSubject: 0.01, realNegative: 0.01 });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  // A spent FamilySearch budget is a LOCAL refusal: nothing reached the
+  // upstream. withRetry (place-resolver.ts) retries every other throw three
+  // times with backoff sleeps, which would turn one refusal into three and
+  // report it to the LLM as unreachable.
+  it("with retry, does NOT re-score a pair the FamilySearch budget refused", async () => {
+    const refusal = (() => {
+      configureFsBudget({ perMinute: 1 });
+      consumeFsBudgetSlot("https://www.familysearch.org/x", 1_000_000);
+      try {
+        consumeFsBudgetSlot("https://www.familysearch.org/x", 1_000_001);
+      } catch (e) {
+        return e as Error;
+      } finally {
+        __resetFsBudgetForTests();
+      }
+      throw new Error("the budget did not refuse -- test setup is wrong");
+    })();
+
+    scorePairMock.mockRejectedValue(refusal);
+
+    const call = await matchPairs([treePair()], LOCAL, { concurrency: 1, retry: true });
+
+    expect(scorePairMock).toHaveBeenCalledTimes(1);
+    expect(call.results[0].score).toBeNull();
+    expect(call.results[0].error).toBe(refusal);
   });
 
   it("with retry, scores again a pair that failed once", async () => {
