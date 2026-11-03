@@ -7017,23 +7017,40 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("refuses to rewrite an objective that is already set", async () => {
-    // `objective` moved onto allowedFields so init-project can write it once.
-    // The refusal it now hits is the set-once one, not the not-allowed one —
-    // the ownership declaration's stated harm is a skill REWRITING the goal
-    // every later step plans against.
+  it("rewrites an objective that is already set", async () => {
+    // Not set-once since issue #3975: a website user has no file access, so the
+    // researcher's correction has to go through the tool. The plugin hook keeps
+    // the write on the main thread; the tool cannot see the caller.
     await writeProject(); // baseResearch() seeds objective: "Test"
     const r = await researchAppend({
       projectPath: dir,
       section: "project",
       op: "update",
-      fields: { objective: "rewritten" },
+      fields: { objective: "Who were the parents of John Smith?" },
     });
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.project.objective).toBe("Who were the parents of John Smith?");
+  });
+
+  it("refuses to rewrite a title that is already set, naming no file-edit route", async () => {
+    const r0 = baseResearch();
+    r0.project = { ...r0.project, title: "Smith parentage" };
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { title: "rewritten" },
+    } as never);
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/already set on 'project' and not rewritable: objective/);
+    const errors = r.errors.join(" ");
+    expect(errors).toMatch(/already set on 'project' and not rewritable: title/);
+    expect(errors).toMatch(/fixed for the life of the project/);
+    expect(errors).not.toMatch(/research\.json directly/);
     const research = await readResearch();
-    expect(research.project.objective).toBe("Test"); // nothing written
+    expect(research.project.title).toBe("Smith parentage"); // nothing written
   });
 
   it("rejects an invalid status value (whole-project validation)", async () => {
