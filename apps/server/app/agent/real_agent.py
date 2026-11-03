@@ -45,7 +45,6 @@ from pathlib import Path
 
 from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
-    CONTINUE_REASON,
     DELEGATION_TOOLS,
     DELIVERED_REASON,  # noqa: F401 - tests read it off this module
     DELIVERED_TOOL,
@@ -55,10 +54,8 @@ from .continue_policy import (
     DELIVERY_GUIDANCE,
     HOSTED_PLANE_ENV,
     completion_halt_summary,
-    env_int,
     status_before_call,
     read_research_json,
-    should_continue_run,
     wants_status_before,
 )
 from .errors import UNEXPECTED, classify, log_operator
@@ -636,10 +633,9 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
 
     # Run every delegation in the FOREGROUND. Not a deny: the call is allowed and
     # its input rewritten -- with the effort arm below, one of the two arms here that
-    # change a call rather than refusing it. Without it the Stop hook nudges a turn that is waiting on
-    # its own background subagent, and the model answers the nudge by spawning a
-    # duplicate (see DELEGATION_TOOLS). Every call not explicitly False is
-    # rewritten; `foreground_rewrite` says why, and why it outlives the Stop hook.
+    # change a call rather than refusing it. Without it the turn ends while its own
+    # background subagent is still running (decision 26; see DELEGATION_TOOLS). Every
+    # call not explicitly False is rewritten; `foreground_rewrite` says why.
     # Shared with the prototype: one predicate, one rewrite, so a mutation in either
     # fails tests on both planes. Logged because the stated acceptance is a LIVE hosted
     # turn, and this file's own doctrine is that an inert arm looks identical to a
@@ -772,125 +768,43 @@ def _sdk_env(api_key: str | None = None) -> dict[str, str]:
     return env
 
 
-# PR #2870 item 1d. The alpha's veto cap, per SESSION -- `nudges_used` below is created
-# once and never reset at a turn boundary. This said "per turn" until 2026-10-13 and was
-# wrong; the full consequence is written up on `Settings.autonomous_max_nudges`.
-#
-# Sized like the prototype's on STEP count rather than on the nudge histogram. Re-derived
-# 2026-10-13 by `test_proto_config._steps_per_run`'s method over the committed e2e corpus
-# (203 runs that day): median 15, p90 26, p99 48, max 76. 0 turns the hook off.
-#
-#: Matches `Settings.autonomous_max_nudges`, and a test pins them equal. This is the
-#: in-sandbox fallback used when the control plane sets no env var, so leaving it at 60
-#: while the setting moved to 30 would make the two disagree exactly where nobody looks.
-#: 0 under step mode (decision 25): a turn that stops has finished its one step, so
-#: there is nothing to nudge it past. `_build_hooks` binds no Stop hook at 0.
-_DEFAULT_MAX_NUDGES = 0
-
-
-def _max_nudges(env=None) -> int:
-    """``AUTONOMOUS_MAX_NUDGES``, defensively -- see ``env_int``. This module is imported
-    at agent start inside the sandbox AND by the prototype worker
-    (``proto/worker/options.py``), where ``runner._make_agent``'s ``except ImportError``
-    does not catch a ValueError, so a typo'd variable crash-loops the container.
-    ``AutoContinue.from_env`` in runner.py is the third reader of this same variable."""
-    return env_int(
-        "AUTONOMOUS_MAX_NUDGES", _DEFAULT_MAX_NUDGES, env=env,
-        on_error=lambda name, raw, default: _log(
-            f"[agent] {name}={raw!r} is not an integer; using {default}"
-        ),
-    )
-
-
-AUTONOMOUS_MAX_NUDGES = _max_nudges()
-
-
-
-def make_stop_hook(project_dir: Path, *, max_nudges: int, tool_count,
-                   pending_user_message=None, delivered=None):
-    """The alpha's ``Stop`` callback (1d): veto the model's voluntary yield while the
-    project is unfinished, so one user message runs a whole research job.
-
-    The decision itself is ``continue_policy.should_continue_run`` -- the SAME function the
-    prototype worker binds, imported rather than copied. What differs is only where the
-    state comes from: research.json off the sandbox's own disk here, the ``documents`` row
-    on the turn's Postgres connection there.
-
-    Never raises: any exception allows the stop, exactly like the worker's. A Stop hook
-    that raises ends the turn in ERROR, which is strictly worse than letting it end.
-    """
-    state = {"nudges_used": 0, "tool_count_at_last_nudge": -1}
-
-    async def _stop(_input_data, _tool_use_id, _ctx):
-        try:
-            count = int(tool_count())
-            # The shared predicate accepted `pending_user_message` from the start and
-            # this plane passed it not at all, so a message typed mid-turn waited a JOB
-            # boundary rather than a step.
-            if not should_continue_run(
-                research=read_research_json(project_dir),
-                nudges_used=state["nudges_used"],
-                max_nudges=max_nudges,
-                tool_count=count,
-                tool_count_at_last_nudge=state["tool_count_at_last_nudge"],
-                pending_user_message=bool(pending_user_message and pending_user_message()),
-                delivered=bool(delivered and delivered()),
-            ):
-                return {}
-            state["nudges_used"] += 1
-            state["tool_count_at_last_nudge"] = count
-            _log(f"[agent] continue-nudge {state['nudges_used']}/{max_nudges}")
-        except Exception as exc:  # noqa: BLE001 - a raising hook ends the turn in error
-            _log(f"[agent] stop hook failed, allowing the stop: {type(exc).__name__}: {exc}")
-            return {}
-        return {"decision": "block", "reason": CONTINUE_REASON}
-
-    return _stop
-
-
 def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     """The session's hooks. PreToolUse is the only restraint on a bypassPermissions
-    session; ``Stop`` (1d) is what makes one user message run a whole research job;
-    ``PostToolUse`` ends the turn when a proof-conclusion call completes the project.
+    session; ``PostToolUse`` ends the turn when a proof-conclusion call completes the
+    project. No ``Stop`` hook: a step-mode turn ends at its boundary on purpose
+    (docs/plan/research-step-mode.md, Phase 2).
 
-    The tool counter is per SESSION and lives here rather than on a module global, so two
-    sandboxes in one process cannot read each other's progress. It is what
-    ``should_continue_run``'s no-progress arm compares between two stops: without it the
-    second nudge always looks like no progress and the run stops after one."""
+    The counter lives here rather than on a module global, so two sandboxes in one
+    process cannot read each other's state."""
     counter = {
-        "tool_calls": 0, "turn_tool_calls": 0, "delivered": False, "continuations": 0,
+        "turn_tool_calls": 0, "delivered": False, "continuations": 0,
         # The completion halt (#3542 lead 1): the status just before each main-thread
         # proof-conclusion call, by tool_use_id, and the summary to show.
         "status_before": {},
         "completion_summary": None,
     }
-    # Published so `handle_turn` can clear the per-TURN half at the turn boundary.
-    # `tool_calls` is deliberately session-scoped (the no-progress arm compares it
-    # across two stops); `delivered` is not, and the dict outlives the turn because
-    # the SDK client is built once and cached (`if self._client is None`).
+    # Published so `handle_turn` can clear the per-TURN state at the turn boundary. The
+    # dict outlives the turn because the SDK client is built once and cached
+    # (`if self._client is None`).
     if agent is not None:
         agent._hook_counter = counter
 
     async def count_only(_input_data, _tool_use_id, _ctx):
         """Counts, and does nothing else. Bound with ``matcher=None`` because the count
         has to see EVERY call -- ``_PRETOOL_MATCHER`` covers seven tool names (Write, Edit,
-        NotebookEdit, Bash, device_commit_files, Agent, Task) and a research loop runs almost none of
-        them, so counting behind it stays at 0 all run and the Stop hook's no-progress arm
-        ends the job after ONE nudge.
+        NotebookEdit, Bash, device_commit_files, Agent, Task) and a research loop runs almost
+        none of them, so counting behind it would stay at 0 all turn and the pending-message
+        halt's one-call guard below would never open.
 
         ``matcher=None`` is what issue #1915 narrowed the DENY hook away from, and the
         reason was a callback that could go unanswered and time out every tool including
         ToolSearch. That reason does not transfer: this is a dict increment with no I/O,
         no await and no way to block. The deny hook keeps its narrow matcher below.
 
-        **It is also the plane's only halt that fires on every step.** The ``Stop`` hook
-        is consulted at a VOLUNTARY YIELD, which the corpus puts at a median of once per
-        run with 31% of runs never yielding at all -- so a bound carried only there is
-        not a bound. Same reasoning, and the same halt fields (``continue`` /
+        **It is also the plane's only halt that fires on every step.** Same halt fields (``continue`` /
         ``stopReason``, never a permission deny, which the model argues with), as the
         prototype's ``PreToolUse`` halt. Both reads are in-memory, so the no-I/O promise
         above still holds."""
-        counter["tool_calls"] += 1
         counter["turn_tool_calls"] += 1
         data = _input_data or {}
         try:
@@ -924,8 +838,8 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
         # the turn released for the first must do some work on it before handing over to
         # the second -- without the guard it halts at its own first tool call and the
         # first message gets no work at all. Counted per TURN (`turn_tool_calls`, reset in
-        # `_begin_turn_hook_state`): the hooks dict lives for the session, so the
-        # session-wide `tool_calls` would pass the guard on every turn after the first.
+        # `_begin_turn_hook_state`): the hooks dict lives for the session, so a
+        # session-wide count would pass the guard on every turn after the first.
         # This hook counts BEFORE deciding, so the turn's first call sees 1.
         if agent is not None and main_thread and counter["turn_tool_calls"] >= 2:
             try:
@@ -988,25 +902,6 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
             HookMatcher(matcher=_DELEGATION_MATCHER, hooks=[completion_status], timeout=_PRETOOL_TIMEOUT_S),
         ]
     }
-    if AUTONOMOUS_MAX_NUDGES > 0:
-        stop = make_stop_hook(
-            project_dir, max_nudges=AUTONOMOUS_MAX_NUDGES,
-            tool_count=lambda: counter["tool_calls"],
-            pending_user_message=(agent.pending_user_message if agent else None),
-            delivered=lambda: counter["delivered"],
-        )
-
-        async def counted_stop(input_data, tool_use_id, ctx):
-            """Counts the stops it overrides, so each turn's cost report says how much
-            of the turn ran past a stop the model chose."""
-            out = await stop(input_data, tool_use_id, ctx)
-            if out.get("decision") == "block":
-                counter["continuations"] += 1
-            return out
-
-        hooks["Stop"] = [
-            HookMatcher(matcher=None, hooks=[counted_stop], timeout=_PRETOOL_TIMEOUT_S)
-        ]
     return hooks
 
 
@@ -1641,10 +1536,9 @@ class RealAgent:
         first cut cleared on the next tool call instead, and was wrong twice: a turn
         that yields without calling any tool never cleared it, and the clearing was
         not main-thread gated, so a straggler subagent call could clear a
-        main-thread delivery. `continuations` counts THIS turn's overridden stops for
-        the cost report. `turn_tool_calls` is the pending-message halt's one-call guard.
-        `tool_calls` is deliberately NOT reset -- the no-progress arm compares it across
-        two stops.
+        main-thread delivery. `continuations` is the cost report's count of overridden
+        stops, always 0 since the Stop hook was deleted (step mode phase 2). `turn_tool_calls`
+        is the pending-message halt's one-call guard.
         """
         counter = getattr(self, "_hook_counter", None)
         if counter is not None:

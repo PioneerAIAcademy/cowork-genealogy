@@ -24,9 +24,16 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 });
 
 import { treeEdit, checkWarningGate } from "../../src/tools/tree-edit.js";
+import {
+  configureFsBudget,
+  consumeFsBudgetSlot,
+  isFsBudgetExhausted,
+  __resetFsBudgetForTests,
+} from "../../src/utils/fs-budget.js";
 import { treeCorrect } from "../../src/tools/tree-correct.js";
 import { familySearchPlace, resolveStandardPlace, textNamesPlace } from "../../src/utils/place-resolver.js";
 import { validateProject } from "../../src/validation/validator.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 const minimalResearch = {
   project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -54,7 +61,7 @@ describe("tree_edit", () => {
 
   async function writeProject(tree: any, research: any = minimalResearch) {
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
   const exists = async (rel: string) => access(join(dir, rel)).then(() => true, () => false);
@@ -464,6 +471,43 @@ describe("tree_edit", () => {
       expect(r.validation.warnings).toContain("could not resolve standard_place for 'Schuylkill County, Pennsylvania' (left unset)");
       const added = (await readTree()).persons[0].facts.find((f: any) => f.id === single(r).assignedIds?.fact);
       expect(added).not.toHaveProperty("standard_place");
+    });
+
+    // The refusal above is a MISS; this one is not. Swallowing a spent budget
+    // here wrote the wrong cause into the tree: the fact saved with no
+    // standard_place and a warning blaming the lookup, which a later reader
+    // cannot tell from a place FamilySearch genuinely does not have.
+    it("add_fact: a spent FamilySearch budget fails the edit and writes nothing", async () => {
+      await writeProject(onePersonSourced());
+      const before = await readTree();
+      const FS_URL = "https://www.familysearch.org/service/places/search";
+      try {
+        configureFsBudget({ perMinute: 1 });
+        consumeFsBudgetSlot(FS_URL);
+        // A REJECTED PROMISE, not a synchronous throw. resolveStandardPlace is
+        // async, so that is the shape production produces -- and it is the only
+        // shape that reaches the `.catch` this test exists to cover. A sync
+        // throw escapes before `.catch` is attached and passes either way.
+        let refusal: unknown;
+        try {
+          consumeFsBudgetSlot(FS_URL);
+        } catch (e) {
+          refusal = e;
+        }
+        expect(isFsBudgetExhausted(refusal)).toBe(true); // the fixture is a real refusal
+        vi.mocked(resolveStandardPlace).mockRejectedValueOnce(refusal);
+        const err = await addResidence("Schuylkill County, Pennsylvania").then(
+          () => null,
+          (e) => e,
+        );
+        expect(isFsBudgetExhausted(err)).toBe(true);
+        expect(String(err)).toMatch(/try again in about/);
+        // tree_edit rethrows anything that is not a TreeEditError before it
+        // writes, so the tree must be byte-for-byte what it was.
+        expect(await readTree()).toEqual(before);
+      } finally {
+        __resetFsBudgetForTests();
+      }
     });
 
     it("tree_correct update_fact: a corrected place clears the old standard_place, with a warning", async () => {
@@ -2756,7 +2800,7 @@ describe("tree_edit add_relationship: sourceAssertionId resolution", () => {
   });
   async function writeProject(tree: any, research: any) {
     await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2));
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
 

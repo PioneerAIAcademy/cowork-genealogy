@@ -296,13 +296,6 @@ def test_acceptance_queries_add_the_stand_in_and_the_first_receive_checks():
     assert "receive_count = 1" in first and "interval '1800 seconds'" in first
 
 
-def test_the_autonomous_arm_reads_the_turns_own_max_nudges(monkeypatch):
-    monkeypatch.setattr(demo, "rows", lambda dsn, sql, params: [("40",)] if "max_nudges" in sql else [])
-    assert demo.turn_max_nudges("dsn", "t") == "40"
-    monkeypatch.setattr(demo, "rows", lambda dsn, sql, params: [])
-    assert demo.turn_max_nudges("dsn", "t") is None
-
-
 # ── the *-aws recipes ──────────────────────────────────────────────────────────────────
 
 AWS_VARS = ["BASE=http://127.0.0.1:1837", "PG_DSN=host=rds.invalid.test hostaddr=127.0.0.1 port=15432 dbname=g user=u",
@@ -1172,7 +1165,6 @@ def test_concurrent_rss_heavy_passes_a_healthy_worker_start(monkeypatch, events)
 
 
 @pytest.mark.parametrize("probe, over", [
-    ("nudges_0", {"settings": {"web": {"AUTONOMOUS_MAX_NUDGES": "0"}}}),
     ("cap_1usd", {"settings": {"worker": {"SESSION_SPEND_CAP_USD": "1"}}}),
     ("kill_window", {"settings": {"worker": {"SQSD_VISIBILITY_TIMEOUT_S": "1500"}}, "deadline_s": 1200.0}),
     ("debug_hold", {"settings": {"tools": {"GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS": "20000"}}}),
@@ -1399,7 +1391,7 @@ def test_the_probe_values_are_what_rehearse_sets():
     assert bounds.IDLE_TEXT.read_text(encoding="utf-8").count(";") >= 10, "the idle turn must outlast a minute"
     # concurrent_rss_heavy's preflight reads every other case's values off the same table.
     live = {case for case, *_ in bounds.probe_case_values()}
-    assert {"nudges_0", "cap_1usd", "kill_window", "debug_hold", "refresh_age_0"} <= live, live
+    assert {"cap_1usd", "kill_window", "debug_hold", "refresh_age_0"} <= live, live
     assert not {c for c in live if c.startswith("slots_") or c == "worker_xlarge"}
     assert all(value is not rh.REMOVE for *_, value in bounds.probe_case_values())
 

@@ -6,6 +6,7 @@ import { tmpdir } from "os";
 import { treeQuery } from "../../src/tools/tree-query.js";
 import { treeQuerySchema } from "../../src/tools/tree-query.js";
 import { projectContext } from "../../src/tools/project-context.js";
+import { LOCAL } from "../../src/auth/principal.js";
 
 const TREE = {
   persons: [
@@ -193,7 +194,7 @@ describe("project_context profile fields (#3836)", () => {
   async function ctx(research: any) {
     await writeFile(join(dir, "research.json"), JSON.stringify(research));
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons: [] }));
-    const r = await projectContext({ projectPath: dir });
+    const r = await projectContext({ projectPath: dir }, LOCAL);
     if (!r.ok) throw new Error("not ok");
     return r;
   }

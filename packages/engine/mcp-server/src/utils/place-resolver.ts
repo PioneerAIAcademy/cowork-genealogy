@@ -26,6 +26,7 @@ import {
   getPlaceCandidateNames,
   type PlaceRep,
 } from "./place-api.js";
+import { isFsBudgetExhausted } from "./fs-budget.js";
 import { stdDate } from "./date-standardize.js";
 import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "./date-helpers.js";
 import { foldPlaceKey, listedOneWordPlace, oneWordPlaceIsWord, oneWordPlaceNeedsCountry } from "./one-word-places.js";
@@ -299,6 +300,10 @@ export async function withRetry<T>(
     try {
       return await fn();
     } catch (err) {
+      // A spent FamilySearch budget is a local refusal: nothing reached the
+      // upstream, so the next two attempts refuse identically and only add
+      // backoff sleeps. The one exception to the NOTE above.
+      if (isFsBudgetExhausted(err)) throw err;
       lastErr = err;
       if (attempt < attempts - 1) {
         const backoff = baseMs * 2 ** attempt;
@@ -725,7 +730,8 @@ export async function familySearchPlace(name: string): Promise<FamilySearchPlace
   if (entries === undefined) {
     try {
       entries = (await searchPlace(name)).filter((e) => foldPlaceName(e.fullName) === key);
-    } catch {
+    } catch (err) {
+      if (isFsBudgetExhausted(err)) throw err;
       return null;
     }
     familySearchPlacesCache.set(key, entries);
@@ -763,7 +769,8 @@ export async function textNamesPlace(standard: FamilySearchPlace, placeText: str
 async function placeIdOf(name: string): Promise<string | null> {
   try {
     return pickExactOrBest(await getSearchEntries(name), name)?.placeId ?? null;
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
 }
@@ -1010,7 +1017,8 @@ export async function resolveStandardPlace(
   let entries: SearchEntry[];
   try {
     entries = await getSearchEntries(originalText, opts.contextName, year);
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return null; // transient failure after retries — do not cache
   }
 
@@ -1053,7 +1061,8 @@ export async function resolveStandardPlace(
         await getSearchEntries(originalText, opts.contextName),
       )?.fullName;
       if (undated) standardPlace = undated;
-    } catch {
+    } catch (err) {
+      if (isFsBudgetExhausted(err)) throw err;
       // Undated retry failed; keep the dated answer and let the caller's guard
       // decide. No worse than not having tried.
     }
@@ -1124,7 +1133,8 @@ async function checkFirstPlaceOnce(text: string, first: string): Promise<FirstPl
   let all: SearchEntry[];
   try {
     all = await getSearchEntries(text, "");
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return { status: "lookup_failed" };
   }
   const entries = underParent(all, placeSegments(text)[1]);
@@ -1146,7 +1156,8 @@ async function checkFirstPlaceOnce(text: string, first: string): Promise<FirstPl
     let names: string[];
     try {
       names = await getPlaceCandidateNames(e.placeId, {}, { anyLanguage: true });
-    } catch {
+    } catch (err) {
+      if (isFsBudgetExhausted(err)) throw err;
       unchecked = true;
       continue;
     }
@@ -1281,7 +1292,8 @@ export async function standardPlaceToRepId(
   let entries: SearchEntry[];
   try {
     entries = await getSearchEntries(standardPlace, opts.contextName);
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
 
@@ -1307,7 +1319,8 @@ async function getRepInfo(repId: string): Promise<RepInfo | null> {
   let place: Awaited<ReturnType<typeof getPlaceById>>;
   try {
     place = await getPlaceById(repId);
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return null; // transient — do not cache
   }
   const info: RepInfo | null = place
@@ -1577,7 +1590,8 @@ export async function resolveStandardPlaceToPlaceId(
   let entries: SearchEntry[];
   try {
     entries = await getSearchEntries(searchName, opts.contextName);
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return { kind: "unresolved" };
   }
 
@@ -1648,7 +1662,8 @@ async function placeReps(placeId: string): Promise<PlaceRep[]> {
   let reps: PlaceRep[];
   try {
     reps = await getPlaceReps(placeId);
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return [];
   }
   placeRepsCache.set(placeId, reps);
@@ -1675,7 +1690,8 @@ export async function standardPlaceToCoords(
   let entries: SearchEntry[];
   try {
     entries = await getSearchEntries(standardPlace, opts.contextName);
-  } catch {
+  } catch (err) {
+    if (isFsBudgetExhausted(err)) throw err;
     return null;
   }
 

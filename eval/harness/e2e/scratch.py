@@ -34,6 +34,7 @@ import argparse
 import json
 import os
 import shutil
+import stat
 import sys
 from pathlib import Path
 
@@ -51,6 +52,15 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 # the checkout. e.g. /home/me/cowork-genealogy  ->  /home/me/e2e-scratch
 DEFAULT_SCRATCH_DIR = REPO_ROOT.parent / "e2e-scratch"
 
+
+
+def _clear_readonly_and_retry(func, path, exc) -> None:
+    """`rmtree` onexc: a read-only FILE (the engine's protected project files)
+    gets its write bit added and is retried; anything else is re-raised."""
+    if not isinstance(exc, PermissionError) or not os.path.isfile(path):
+        raise exc
+    os.chmod(path, os.stat(path).st_mode | stat.S_IWRITE)
+    func(path)
 
 def write_mcp_config(target: Path, mcp_server_entry: Path) -> None:
     """Write a .mcp.json so Claude Code loads the genealogy MCP server.
@@ -94,7 +104,10 @@ def setup_scratch(
 
     target = scratch_dir / slug
     if target.exists():
-        shutil.rmtree(target)  # throwaway dir — just refresh it
+        # Throwaway dir — just refresh it. The engine leaves the project files
+        # read-only (issue #1499), which Windows refuses to delete, so clear the
+        # mode and retry.
+        shutil.rmtree(target, onexc=_clear_readonly_and_retry)
     target.mkdir(parents=True)
 
     build_workspace(fixture, target, skills_dir)
