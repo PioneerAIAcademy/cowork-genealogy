@@ -589,7 +589,8 @@ The record-extractor edit puts record-extraction under the same rule. Its one ma
 - `src/validation/rule-modes.ts` moves rule T from warn to refuse.
 - It is its own PR (Decision 25), after `conclusion-tree-later.md`'s Part 2 (researcher statements), which gives a value the researcher states its route into the tree.
 - The tree-edit scenarios that add or change a non-import object no claim covers are rewritten to the routes rule T leaves: `add-occupation-fact-with-place.json` (`ut_tree_edit_009`), `couple-marriage-fact-on-relationship.json` (`_013`), `create-sibling-with-parentchild.json` (`_010`), `add-relationship-after-proof.json` (`_002`, whose premise also cites link-time materialization) and `person-merge-stub-into-fs-person.json` (`_006`). `correct-typo-death-date.json` (`_008`) is a legacy value correction, which rule T admits, and stays.
-- `dev/smoke-calls.ts`'s `tree_edit add_name` call on P1, which expects `ok: true`, gets a covering name claim seeded (or moves to an operation rule T admits), so `make engine-smoke-stdio` and `make engine-smoke-http`, which no CI job runs, stay green.
+- `dev/smoke-calls.ts`'s `tree_edit add_name` call on P1, which expects `ok: true`, gets a covering name claim seeded (or moves to an operation rule T admits), so `make engine-smoke-stdio` and `make engine-smoke-http` stay green — CI now runs the
+  `offline` rows of both, so this one reds a PR rather than waiting to be noticed.
 
 **When.** After Part 2 lands and at least 10 e2e runs made on or after Stage 3's merge.
 
