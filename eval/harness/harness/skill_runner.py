@@ -60,6 +60,7 @@ from harness.context_policy import (
     subagent_only_violation,
 )
 from harness.delegation import foreground_rewrite
+from harness.main_thread import MAIN_THREAD
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import stub_denial
@@ -99,7 +100,8 @@ BASELINE_ALLOWED = [
 ]
 DISALLOWED_BACKSTOP = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
 
-DEFAULT_MODEL = "claude-sonnet-4-6"
+DEFAULT_MODEL = MAIN_THREAD.model
+DEFAULT_EFFORT = MAIN_THREAD.effort
 DEFAULT_MAX_TURNS = 20
 DEFAULT_MAX_WALL_CLOCK_SECONDS = 300
 DEFAULT_MAX_TOOL_CALLS = 50
@@ -632,6 +634,50 @@ def strip_agent_return_trailer(text: str) -> str:
     return text.strip()
 
 
+def normalize(text: str) -> str:
+    """Canonical form for comparing a relay with a return.
+
+    An ORDERED, exact list, because "normalize dashes" alone is ambiguous
+    enough to move the headline: collapsing runs of `-` as well scores 16 where
+    this scores 13, and both are faithful readings of a looser rule.
+
+    Runs of `-` are deliberately NOT collapsed -- agents write an em dash as
+    `--` and relays render it as a single character, so collapsing would make
+    `--` and `-` interchangeable and over-count survival.
+    """
+    out = text.replace("*", "")
+    for src, dst in (("“", '"'), ("”", '"'), ("‘", "'"), ("’", "'")):
+        out = out.replace(src, dst)
+    for src in ("—", "–", "−"):
+        out = out.replace(src, "-")
+    return " ".join(out.split()).strip()
+
+
+def tail_after_final_rule(text: str) -> str:
+    """The text after the return's final `---` line, or "" if it has none.
+
+    A line whose STRIPPED content is exactly `---`, after the runtime trailers
+    are removed and fenced blocks dropped -- a `---` inside a code fence would
+    otherwise move what counts as "final".
+    """
+    lines = strip_agent_return_trailer(text or "").splitlines()
+    last = None
+    in_fence = False
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence and line.strip() == "---":
+            last = i
+    if last is None:
+        return ""
+    # Sliced from the ORIGINAL lines, never the fence-stripped ones: the tail
+    # is matched against an unstripped `text_response`, so returning a
+    # fence-stripped tail made a summary containing a code block impossible to
+    # match even when relayed verbatim.
+    return "\n".join(lines[last + 1 :]).strip()
+
+
 def agent_return_text(agent_returns: list[dict[str, Any]] | None, agent: str) -> str:
     """Every return `agent` made this run, joined -- the text a direct test grades.
 
@@ -944,6 +990,7 @@ async def run_skill(
     fixtures_dir: Path,
     auth: AuthConfig,
     model: str = DEFAULT_MODEL,
+    effort: str = DEFAULT_EFFORT,
     max_turns: int = DEFAULT_MAX_TURNS,
     max_wall_clock_seconds: int = DEFAULT_MAX_WALL_CLOCK_SECONDS,
     max_tool_calls: int = DEFAULT_MAX_TOOL_CALLS,
@@ -1380,6 +1427,7 @@ async def run_skill(
         # path-level approval prompts that Write/Edit require.
         permission_mode="bypassPermissions",
         model=model,
+        effort=effort,
         max_turns=max_turns,
         env=env_for_sdk(auth, tool_search=tool_search),
         hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])]},

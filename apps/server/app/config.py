@@ -13,10 +13,6 @@ from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-#: The levels the agent SDK's `EffortLevel` accepts (a test keeps the two equal). Kept
-#: here rather than imported, so the control plane's settings never need the SDK.
-EffortSetting = Literal["low", "medium", "high", "xhigh", "max"]
-
 # Repo root = .../cowork-genealogy (apps/server/app/config.py -> parents[3])
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -29,7 +25,8 @@ class Settings(BaseSettings):
     # "real" → the Claude Agent SDK driving the genealogy skills + MCP server.
     agent_mode: str = "mock"
     anthropic_api_key: str | None = None
-    default_model: str = "claude-sonnet-4-6"
+    # The main thread's model and effort are not settings here: they come from the
+    # plugin's main-thread.json (`agent.main_thread`), and each agent's from its file.
     # Lay mode's auto-continue (issue #2653): the in-sandbox runner answers the
     # hand-back literal `Next: <step>. Continue?` with `Yes.` itself, so a stated
     # objective runs step by step with no click. Both reach the runner as
@@ -40,86 +37,6 @@ class Settings(BaseSettings):
     # with the experience-level user setting (PR #2649).
     auto_continue: bool = True
     auto_continue_max_steps: int = 30
-    # PR #2870 item 1d: the SDK Stop hook's veto cap in the sandbox, which is what makes
-    # one user message run a whole research job. Sized on STEP count, not on the nudge
-    # histogram. 0 turns the hook off, and `auto_continue: false` turns it off too --
-    # that flag already meant "one turn per message", and a new mechanism that ignored
-    # it would take an operator's kill switch away without saying so.
-    #
-    # PER SESSION, NOT PER TURN -- this comment said "per turn" until 2026-10-13 and was
-    # wrong. `nudges_used` is created once in `make_stop_hook`, the hooks dict is built
-    # once per session because the SDK client is cached, and `_begin_turn_hook_state`
-    # resets `delivered` and `continuations` but NOT the nudge count. A normal Stop, a
-    # reconnect and a pause/resume all keep it, so a second job in one sitting starts
-    # with whatever the first left. That matters more at 30 than it did at 60. Pinned by
-    # `test_the_nudge_cap_is_per_session_not_per_turn` so the scope cannot drift
-    # unnoticed; whether it SHOULD reset per turn is a live question, not settled here,
-    # because resetting would multiply the bound by the number of turns in a session.
-    #
-    # LOWERED 60 -> 30 on 2026-10-13, as the cost half of turning continuous work back
-    # on. Re-derived on that date by `test_proto_config._steps_per_run`'s own method
-    # (the method matters: an earlier hand-count of this branch's got p99 wrong by 3):
-    # 203 committed e2e runs, Skill/Task/Agent steps per run median 15, p90 26, p99 48,
-    # max 76. A cap of 30 covers 93.6% of runs against 60's 99.0%, and halves the worst
-    # case. Dated rather than pinned to a run count, which moves every time the corpus
-    # grows.
-    #
-    # Exceeding it is not a kill: the cap is consulted only at a VOLUNTARY yield, so a
-    # run past it simply stops being nudged onward and ends where it chose to stop.
-    #
-    # It therefore bounds nothing for the ~31% of runs that never yield, AND THERE IS NO
-    # SPEND LIMIT BEHIND IT ON THIS PLANE. An earlier draft of this comment said those
-    # runs were "held only by SESSION_SPEND_CAP_USD"; that cap is read only by the
-    # search-agent prototype's worker (`app/agent/spend.py`). The alpha's credential proxy
-    # records what each call cost (`api_calls`) but never stops one (lead ruling
-    # 2026-09-25, pinned by `test_the_alpha_carries_no_spend_limit`). Short of the
-    # researcher or the model ending such a run, its only automatic halt is the E2B
-    # sandbox pausing an hour after it started or last resumed (the Hobby cap,
-    # `_RUNNING_TIMEOUT_S` in `sandbox/e2b.py`), which a reconnect to a running sandbox
-    # does not extend (#3305).
-    #
-    # The prototype's cap moved to 0 WITH this one (step mode, decision 25). This note
-    # used to say the opposite -- that `proto/web/app.py`'s DEFAULT_MAX_NUDGES and the
-    # Beanstalk template stay at 60 on purpose, because the U13 acceptance figures were
-    # measured there at 60 and lowering it would contradict the measurements. That held
-    # while the two planes ran different models of a turn. Under decision 25 the prototype
-    # is the plane that ENFORCES the step boundary, so a nudge cap above 0 there would veto
-    # the very stop the boundary just produced.
-    #
-    # The U13 figures stay true of what they measured; `familysearch-handoff.md` records
-    # that they were taken at 60. One of them already ran the other way: `probe_resume` was
-    # re-run twice WITH THE NUDGE ARM OFF (U13, 2026-10-10) and resumed correctly, so the
-    # resume path is not the part the cap was holding up.
-    #
-    # **0 under step mode** (lead, decision 25, 2026-10-21). Every turn is now ONE
-    # step, so a turn that stops has finished its step and there is nothing for a
-    # veto to push past: the hook would re-open a turn that ended on purpose, which
-    # is the 'it would not stop' the researcher reported. The sizing above is kept
-    # rather than deleted because it is the measurement that justified 30 while
-    # continuous work existed, and it is what a future reader needs if the veto ever
-    # comes back. At 0 `_build_hooks` binds no Stop hook at all.
-    #
-    # An operator can still raise it: the env var is read as before.
-    autonomous_max_nudges: int = 0
-    # T4.1: reasoning effort for hosted sessions. ALL UNSET BY DEFAULT, which passes no
-    # `--effort` and leaves every call at the CLI's own default -- exactly what ran before
-    # these existed. Like MODEL and AUTONOMOUS_MAX_NUDGES they reach a sandbox once, at
-    # create(), so a session keeps the levels it was born with and an existing project
-    # never changes mid-life (read an old session's effort as its creation-time setting).
-    #   ORCHESTRATOR_EFFORT       the main thread's level (`ClaudeAgentOptions.effort`).
-    #                             Alone, it also pins every helper to the level a helper
-    #                             runs at with nothing set (real_agent.HELPER_DEFAULT_EFFORT),
-    #                             so only the orchestrator moves.
-    #   SUBAGENT_EFFORT           one level for every delegation.
-    #   SUBAGENT_EFFORT_BY_AGENT  JSON {"agent-name": level}, overriding SUBAGENT_EFFORT.
-    # The helper levels are written onto each Agent call by the PreToolUse hook (the call's
-    # own `effort`, CLI 2.1.294+), not into the agent files. A bad level fails start-up
-    # here; inside the sandbox the CLI would only warn and ignore it. The lead set the
-    # alpha's main thread to low on 2026-10-21 (`deploy/fly.toml`); the helper levels stay
-    # unset until the lead sets them (cost-latency plan T4.1, Q4).
-    orchestrator_effort: EffortSetting | None = None
-    subagent_effort: EffortSetting | None = None
-    subagent_effort_by_agent: dict[str, EffortSetting] = {}
     # The main thread's prompt-cache lifetime, stamped into a NEW sandbox as
     # CLAUDE_CODE_PROMPT_CACHE_TTL (CLI >= 2.1.294 reads it for the main thread only;
     # helpers and the compaction call keep 5 minutes). UNSET BY DEFAULT = stamp nothing,

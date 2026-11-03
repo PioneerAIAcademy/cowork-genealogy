@@ -44,6 +44,7 @@ from claude_agent_sdk import (
 
 from e2e.mcp_stderr import read_mcp_stderr_lines
 from e2e.turn_loop import Turn as TurnRecord, accumulate_usage, stream_turns
+from harness.main_thread import MAIN_THREAD
 from harness.skill_runner import load_step_boundary  # one loader for both harness planes
 from harness.auth import env_for_sdk, resolve_auth
 from harness.context_policy import (
@@ -756,7 +757,6 @@ class Fixture:
     dir: Path
     researcher_question: str
     tags: dict[str, str]
-    agent_model: str
     judge_model: str
     caps: FixtureCaps
     expected_findings: dict[str, Any]
@@ -804,7 +804,6 @@ def load_fixture(fixture_dir: Path) -> Fixture:
         dir=fixture_dir,
         researcher_question=fixture_json["researcher_question"],
         tags=fixture_json.get("tags") or {},
-        agent_model=model.get("agent", "claude-sonnet-4-6"),
         judge_model=model.get("judge", judge_module.DEFAULT_JUDGE_MODEL),
         caps=caps,
         expected_findings=expected,
@@ -872,7 +871,6 @@ def build_workspace(
     target: Path,
     skills_dir: Path,
     agents_dir: Path = DEFAULT_PLUGIN_AGENTS,
-    effort_level: str | None = None,
     agent_model: str | None = None,
 ) -> Path:
     """Populate a temp dir with fixture starting state + plugin skills + agents.
@@ -918,34 +916,6 @@ def build_workspace(
                     _override_agent_model(agent_file.read_text(encoding="utf-8"), agent_model),
                     encoding="utf-8",
                 )
-
-    # Optionally pin the run's reasoning effort via a PROJECT-level setting.
-    # setting_sources=["project"] reads this file; the CLAUDE_EFFORT env var does
-    # NOT (it's output-only — verified). This is *a* working effort lever, not
-    # the only one: `ClaudeAgentOptions.effort` also works and always has —
-    # the SDK's subprocess transport emits `--effort` unconditionally when the
-    # option is set, at every version this repo has pinned. Both reach
-    # subagents: `apps/server/dev/probe_effort_capture.py` read a person-evidence
-    # subagent's request body carrying `medium` under either lever (CLI 2.1.215 and
-    # 2.1.220, 2026-10-12, issue #3263; 2.1.294, 2026-10-20), and this harness runs
-    # the hosted CLI (tests/unit/test_sdk_pin_matches_hosted.py). Do not restate this as
-    # "the only lever" — that claim shaped a spend decision before it was
-    # checked. Session-wide (parent + every subagent that does not pin its own
-    # `effort:` — agent frontmatter overrides this, verified live in Cowork and
-    # Claude Code on 2026-08-25; no agent pins one today). Left unset, the
-    # run uses the CLI's bare default, which for sonnet-5 resolves to 'high' —
-    # deep enough that the record-extractor subagent can spend its whole output
-    # budget on one thinking turn (stop_reason=max_tokens, no tool call) and
-    # freeze the run; lower it here to A/B whether that clears (read the runlog's
-    # `subagents[].runaway_thinking`; an empty list means read
-    # `subagent_capture_status` before concluding no runaway).
-    # Valid: low | medium | high | xhigh | max.
-    if effort_level is not None:
-        claude_dir = target / ".claude"
-        claude_dir.mkdir(parents=True, exist_ok=True)
-        (claude_dir / "settings.json").write_text(
-            json.dumps({"effortLevel": effort_level}, indent=2) + "\n", encoding="utf-8"
-        )
 
     # Drop bundled captures into the workspace root, where an uploaded PDF
     # would land — the agent reads them by filename like a user upload.
@@ -1866,6 +1836,7 @@ async def _run_agent(
     resume_on_stall: bool = False,
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
+    effort: str | None = None,
     deny_shell: bool = False,
     deny_project_reads: bool = False,
     context_1m: bool = False,
@@ -2490,12 +2461,10 @@ async def _run_agent(
             f"{fixture.caps.max_continue_nudges}] agent yielded "
             f"({counter_key}); resuming"
         )
-        # One reply for every vetoed stop, whatever its class: the worker's
-        # CONTINUE_REASON (apps/server/app/agent/continue_policy.py), verbatim. A
-        # `Next: <step>. Continue?` is the agent asking the patron, which the worker
-        # vetoes with these words too; answering it "Yes." here gave the e2e grade a
-        # Stop policy the prototype does not run (U17). This tree cannot import the
-        # constant, so `test_continue_policy_parity.py` pins the copy.
+        # One reply for every vetoed stop, whatever its class: once the worker's
+        # CONTINUE_REASON verbatim (U17). The hosted planes deleted their veto, and that
+        # constant with it, in step mode phase 2, so this literal is the only copy and
+        # nothing pins it; the e2e half of phase 2 deletes this veto.
         return {
             "decision": "block",
             "reason": (
@@ -2564,9 +2533,11 @@ async def _run_agent(
             **({"CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(max_output_tokens)} if max_output_tokens else {}),
             **env_for_sdk(resolve_auth(), tool_search=tool_search),
         },
-        # Parent model: the --agent-model override (also applied to staged
-        # subagents in build_workspace) or the fixture's default.
-        model=agent_model or fixture.agent_model,
+        # Parent model and effort: the --agent-model / --effort-level overrides
+        # (the model also applied to staged subagents in build_workspace), else
+        # main-thread.json's, as every platform runs.
+        model=agent_model or MAIN_THREAD.model,
+        effort=effort or MAIN_THREAD.effort,
         # Off by default. The corpus runs on a 200k window and auto-compacts at
         # ~85% of it (167-172k across every instrumented run); this asks for 1M.
         # A run with it on is not comparable to one without — different
@@ -3567,6 +3538,7 @@ async def run_single_ask_turn(
     workspace: Path,
     mcp_server_entry: Path = DEFAULT_MCP_SERVER_ENTRY,
     agent_model: str | None = None,
+    effort: str | None = None,
 ) -> dict[str, Any]:
     """Send ONE ordinary user turn into a built workspace and return its record.
 
@@ -3592,6 +3564,7 @@ async def run_single_ask_turn(
         mcp_server_entry=mcp_server_entry,
         resume_on_stall=False,
         agent_model=agent_model,
+        effort=effort,
         single_ask=True,
         user_message=message,
     )
@@ -3623,7 +3596,7 @@ async def run_e2e_test(
     skills_dir: Path = DEFAULT_PLUGIN_SKILLS,
     skip_judge: bool = False,
     resume_on_stall: bool = False,
-    effort_level: str | None = "high",
+    effort_level: str | None = None,
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
     deny_shell: bool = False,
@@ -3637,8 +3610,8 @@ async def run_e2e_test(
 
     Reasoning is pinned deliberately so runs don't inherit the launching Claude
     Code session / shell (which made verdicts non-reproducible):
-    ``effort_level`` (low|medium|high|xhigh|max, default "high" to match Cowork)
-    via a project-level setting; ``max_output_tokens`` (None = CLI default,
+    ``effort_level`` (low|medium|high|xhigh|max; None = main-thread.json's, as every
+    platform runs) as the session's ``effort``; ``max_output_tokens`` (None = CLI default,
     sonnet-5 → 32000) via CLAUDE_CODE_MAX_OUTPUT_TOKENS. ``agent_model`` (None =
     fixture default for the parent + each subagent's own `.md` pin) overrides the
     model for BOTH the parent and every staged subagent — e.g. run the whole flow
@@ -3674,7 +3647,7 @@ async def run_e2e_test(
         prefix=f"e2e-{fixture.id}-", ignore_cleanup_errors=True
     ) as tmp:
         workspace = build_workspace(
-            fixture, Path(tmp), skills_dir, effort_level=effort_level, agent_model=agent_model
+            fixture, Path(tmp), skills_dir, agent_model=agent_model
         )
         # Snapshot BEFORE the agent touches the workspace — build_workspace just
         # copied fixture.starting_tree_path in. Lets the §8 guardrail-effects
@@ -3700,6 +3673,7 @@ async def run_e2e_test(
             resume_on_stall=resume_on_stall,
             max_output_tokens=max_output_tokens,
             agent_model=agent_model,
+            effort=effort_level,
             deny_shell=deny_shell,
             deny_project_reads=deny_project_reads,
             context_1m=context_1m,
@@ -3872,9 +3846,9 @@ async def run_e2e_test(
             # pin (record-extractor's default is sonnet-4-6); null means each
             # subagent used its pin. `max_output_tokens` / `cli_version` come from
             # _run_agent.
-            "agent_model": agent_model or fixture.agent_model,
+            "agent_model": agent_model or MAIN_THREAD.model,
             "subagent_model_override": agent_model,
-            "effort_level": effort_level,
+            "effort_level": effort_level or MAIN_THREAD.effort,
             # P2 — the two filesystem denials, off by default. Recorded because
             # a run made with either on is not comparable to one without: its
             # reads were rerouted through the MCP tools, and every refused

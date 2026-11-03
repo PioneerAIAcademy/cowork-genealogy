@@ -867,6 +867,31 @@ ARK to its group is deliberately out of scope.
 surfaces the link), and how often production researchers are refused
 (`docs/architecture.md` §9.4). The unit tests prove only that the refusal fires.
 
+### 5.8a Concurrent-transcription cap (process-wide, off unless set)
+
+A hosted tool server shared by many patrons can set
+`GENEALOGY_MAX_TRANSCRIPTIONS` (self-hosted beta E4). While that many
+transcriptions are already in flight across the **process**, a further
+`image_transcribe` call is refused at once with an LLM-actionable message
+naming the limit — **refused, never queued**: a queued call would hold its tool
+call open for as long as the busiest transcription takes, and the agent would
+get no signal to do something else meanwhile.
+
+The slot is taken on `imageTranscribeTool` itself, so it covers every caller —
+`person_read`'s memories phase included, which calls that function directly
+rather than through the MCP wrapper. It is held across the whole call,
+including the image download and the second OpenRouter call (`runFoundCheck`),
+and released in `finally`, so a failed transcription cannot leak it.
+
+`person_read` transcribes its memories with `OCR_CONCURRENCY = 5`, so one
+`person_read` may hold up to five slots. A cap below 5 therefore degrades some
+of its memories to metadata-only entries — which is its documented fail-soft
+behaviour, not a failure — so set the cap at 5 or above unless that degradation
+is wanted.
+
+Unset (the `.mcpb`, the harnesses, the Fly sandbox), there is no cap and
+behaviour is exactly as it was.
+
 ### 5.9 Runtime failure: one transport retry, and a backoff on 429/503
 
 **The measurement.** Over the committed e2e corpus, 30 of 175 classifiable

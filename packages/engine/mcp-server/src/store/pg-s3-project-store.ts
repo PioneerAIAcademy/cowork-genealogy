@@ -80,6 +80,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { NodeHttpHandler } from "@smithy/node-http-handler";
 import { AsyncMutex } from "./async-mutex.js";
+import { isAuthFailure, SasPool, type SasPgCredentials } from "./pg-credentials.js";
 import { assertRelativeRef } from "./paths.js";
 import { PROJECT_ID_RE } from "./project-id.js";
 import type {
@@ -220,8 +221,11 @@ function withDeadline(work: Promise<void>, ms: number, what: string): Promise<vo
 // ─── Backend: the shared connections ─────────────────────────────────────────
 
 export interface PgS3BackendOptions {
-  /** Postgres connection string, e.g. `postgresql://postgres:proto@localhost:5434/proto`. */
+  /** Postgres connection string, e.g. `postgresql://postgres:proto@localhost:5434/proto`.
+   *  Ignored when `pgCredentials` is set. */
   dsn: string;
+  /** Credentials from a SAS object (U29), in place of `dsn`. */
+  pgCredentials?: SasPgCredentials;
   s3: {
     /** An S3-compatible endpoint such as MinIO. Absent (or empty): the SDK's
      *  regional AWS endpoint for `region`. */
@@ -292,9 +296,14 @@ export class PgS3Backend {
     readonly pool: Pool,
     readonly s3: S3Client,
     readonly bucket: string,
-    /** What readiness needs beyond the shared clients: the DSN its own
-     *  `pg.Client` connects with, and a one-attempt S3 client. */
-    private readonly probe: { dsn: string; s3: S3Client },
+    /** What readiness needs beyond the shared clients: the config its own
+     *  `pg.Client` connects with (and what to do when that fails 28P01), and a
+     *  one-attempt S3 client. */
+    private readonly probe: {
+      clientConfig: () => pg.ClientConfig;
+      onAuthFailure?: (used: pg.ClientConfig) => void;
+      s3: S3Client;
+    },
   ) {}
 
   queue(projectId: string): AsyncMutex {
@@ -368,16 +377,19 @@ export class PgS3Backend {
   }
 
   private async checkPostgres(timeoutMs: number): Promise<void> {
-    const client = new pg.Client({
-      connectionString: this.probe.dsn,
-      connectionTimeoutMillis: timeoutMs,
-      query_timeout: timeoutMs,
-    });
+    const config = this.probe.clientConfig();
+    const client = new pg.Client({ ...config, connectionTimeoutMillis: timeoutMs, query_timeout: timeoutMs });
     // A socket that dies after connect emits 'error' as well as rejecting the
     // query; unheard, that emit is an uncaught exception.
     client.on("error", () => {});
     try {
-      await client.connect();
+      try {
+        await client.connect();
+      } catch (e) {
+        // No retry inside the deadline: the next probe uses the new password.
+        if (isAuthFailure(e)) this.probe.onAuthFailure?.(config);
+        throw e;
+      }
       const missing = await client.query<{ t: string }>(
         "SELECT t FROM unnest($1::text[]) t WHERE to_regclass(t) IS NULL",
         [STORE_TABLES],
@@ -421,7 +433,10 @@ export function createPgS3Backend(options: PgS3BackendOptions): PgS3Backend {
   if (!accessKeyId !== !secretAccessKey) {
     throw new Error("createPgS3Backend: accessKeyId and secretAccessKey must be set together or not at all");
   }
-  const pool = new pg.Pool({ connectionString: options.dsn, connectionTimeoutMillis: connectMs });
+  const creds = options.pgCredentials;
+  const pool = creds
+    ? new SasPool(creds, { connectionTimeoutMillis: connectMs })
+    : new pg.Pool({ connectionString: options.dsn, connectionTimeoutMillis: connectMs });
   // pg discards a pooled client whose idle connection dies and emits 'error' on
   // the pool; unheard, that emit would take the process down with the database.
   pool.on("error", (e) => {
@@ -458,7 +473,14 @@ export function createPgS3Backend(options: PgS3BackendOptions): PgS3Backend {
     maxAttempts: 1,
     credentials: s3.config.credentials,
   });
-  return new PgS3Backend(pool, s3, options.s3.bucket, { dsn: options.dsn, s3: probeS3 });
+  const probe = creds
+    ? {
+        clientConfig: (): pg.ClientConfig => ({ ...creds.params(), password: creds.currentPassword() }),
+        onAuthFailure: (used: pg.ClientConfig) => void creds.refreshAfterAuthFailure(String(used.password)),
+        s3: probeS3,
+      }
+    : { clientConfig: (): pg.ClientConfig => ({ connectionString: options.dsn }), s3: probeS3 };
+  return new PgS3Backend(pool, s3, options.s3.bucket, probe);
 }
 
 // ─── Ref routing ─────────────────────────────────────────────────────────────

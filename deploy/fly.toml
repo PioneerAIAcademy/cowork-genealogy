@@ -35,17 +35,8 @@ primary_region = "iad"
   # connects to directly via /connect (sandbox-as-server; config.py has no such
   # field). Ably was dropped. See docs/realtime-architecture.md.
   FAMILYSEARCH_WEB_ENABLED = "true"
-  DEFAULT_MODEL = "claude-sonnet-4-6"
-  # Reasoning effort (T4.1). Unset = the CLI's own default, today `high` everywhere.
-  # Create-time only: a sandbox keeps the levels it was born with. Levels: low, medium,
-  # high, xhigh, max. The lead set the main thread to low on 2026-10-21; agents keep the
-  # default until the lead sets theirs.
-  ORCHESTRATOR_EFFORT = "low"
-  # SUBAGENT_EFFORT = "high"
-  # SUBAGENT_EFFORT_BY_AGENT = '{"question-selection": "low"}'
-  # Stop veto (`config.py` autonomous_max_nudges): 0 binds no Stop hook, as step mode's
-  # PR 1 does in code; drop this line once that ships. Create-time only.
-  AUTONOMOUS_MAX_NUDGES = "0"
+  # The main thread's model and effort are set in packages/engine/plugin/main-thread.json,
+  # and each agent's in its own agents/<name>.md; nothing here sets either.
   # Main-thread prompt-cache lifetime (`config.py` prompt_cache_ttl_main): 1h since
   # 2026-10-25. Alpha only; create-time only.
   PROMPT_CACHE_TTL_MAIN = "1h"

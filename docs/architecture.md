@@ -562,26 +562,20 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation` → `claude-haiku-5-5`; `search-records`, `timeline` declare none and inherit the session's; every other agent → `claude-sonnet-4-6` |
-| **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation` → `low`; `survey-surname`, `search-images` → `medium`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
-| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220, 2.1.294 and 2.1.308 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12, 2026-10-20 and 2026-10-22; the harnesses run the hosted CLI, 2.1.308). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
-| **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
+| **Main thread** `model` + `effort` | hosted alpha and beta, both harnesses — not Cowork | `packages/engine/plugin/main-thread.json`: `claude-sonnet-4-6` at `medium`. Read by `apps/server/app/agent/main_thread.py` (the alpha's runner and control plane, the beta worker) and `eval/harness/harness/main_thread.py` (both harnesses), and passed as `ClaudeAgentOptions(model=, effort=)`, the `--model` / `--effort` flags. Nothing else sets either: no `fly.toml` key, no environment variable, no per-project model. The control-plane image copies the file (`deploy/Dockerfile`); the Cowork zip leaves it out |
+| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Skill `model:` / `effort:`** | nowhere | a skill cannot set either, and none declares one |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites` → `low`; `survey-surname`, `search-images`, `search-hints` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
+| **Per-spawn effort** (CLI 2.1.294+) | the `Agent` call's own `effort` field, which outranks the agent's `effort:` | nothing sets it, and the model set it on none of ~7,000 recorded spawns (committed e2e and unit run logs, and medium and low runs, 2026-11-03). The alpha logs a per-turn count of spawns that carry one; `api_calls.effort` records each request's `output_config.effort`, and `make alpha-costs` splits the by-agent table on it |
 
-> **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
-> unit harness (`session_model_for` in `harness/orchestrator.py` honours it for a
-> `SKILL.md` suite, falling back to `DEFAULT_MODEL`; an agent-keyed suite's main
-> thread always runs `DEFAULT_MODEL`), but nothing uses it: 26 skills pinned `claude-sonnet-4-6` —
-> the harness default — and were deleted, because a pin that changes nothing
-> makes per-step routing look like it exists. To route a step to a different
-> model, delegate it to a plugin agent.
+> **A skill cannot set its model or effort.** To route a step to a different
+> model or level, delegate it to a plugin agent and set both in its file.
 >
 > **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
 > property of the agent *definition*. From CLI 2.1.294 the `Agent` tool's call also
 > takes an `effort`, which overrides the definition's (the field is withdrawn from the
 > schema when `CLAUDE_CODE_EFFORT_LEVEL` is set, which is why the hosted settings never
-> use that variable). The model is told to set it only when asked; the hosted hook sets
-> it from the operator's settings. 2.1.294 also carries two flag-driven mechanisms —
+> use that variable). The model is told to set it only when asked, and nothing else sets it. 2.1.294 also carries two flag-driven mechanisms —
 > lowering an *unpinned* subagent's effort, and a per-subagent `<total_tokens>` budget
 > keyed on the session's effort. On the hosted path's API key on 2026-10-20 the first
 > did not fire (helper at `high` unpinned), and the second was unstable: no
@@ -659,7 +653,15 @@ Architecturally:
   handler reads but the schema omits is unreachable over MCP while every
   handler-level test stays green. Advertise it, or, for a deliberate unadvertised
   alias, add it to `ACCEPTED_ALIASES` there with its reason (a snapshot test pins
-  that list). The unit harness calls handlers directly and never runs the guard.
+  that list). The unit harness applies that same compiled guard before each mock tool
+  call, so an eval refuses the argument keys production refuses instead of
+  silently dropping them — though it fails OPEN, with a warning, when the build
+  is missing or node faults, so it narrows the gap rather than closing it.
+  **The reverse gap is the one still caught by nothing:** a key the handler
+  READS that is on neither the schema nor `ACCEPTED_ALIASES` is unreachable over
+  MCP while every handler-level test stays green. That stays unguarded by ruling
+  (lead, 2026-10-29): closing it needs TypeScript-type parsing, for the
+  lower-severity half of the pair.
 - **Four sites, and the drift test covers three of them.**
   `tests/packaging/manifest.test.ts` asserts `manifest.json`'s `tools` array ↔
   `allToolSchemas`, **and** parses `src/server.ts` for the dispatch chain —
@@ -1247,6 +1249,12 @@ a person's attached records as unchecked candidates. Code composes each op whole
 as it does the `extracted_for_question_ids` growth a re-found record gets, so no
 input field reaches any of them (ADR-0006, amended 2026-10-20).
 
+`evaluation_append` is the second variant: `research_append` restricted to the
+single `evaluations` section, held only by the `gps-mentor` agent — the most
+prompt-exposed agent in the system. Unlike `extraction_append` it has no bespoke
+input surface; the mentor supplies an ordinary `evaluations` append and the lane
+gate forces the section (`research-append-tool-spec.md` §12).
+
 The pattern comes from an observed failure: a delegation message prompted the
 extractor past its prose lane and it fabricated a match score. The analysis:
 
@@ -1547,7 +1555,8 @@ tool and it belongs in that module**, so there is no second copy to drift.
 
 ### 6.2 Writes go only through validating writer tools
 
-`research_append` (and its lane-scoped variant `extraction_append`, §5.3),
+`research_append` (and its lane-scoped variants `extraction_append` and
+`evaluation_append`, §5.3),
 `research_log_append`, `tree_edit`, `tree_correct`, `merge_tree_persons`,
 `tree_forget`, and `materialize_facts` each **validate the whole project in
 memory and block only on errors the call itself introduces** — pre-existing
@@ -2083,7 +2092,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: per-test pass rates are `make eval-health`'s job. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
 | `make matcher-accuracy` | the **matcher's ranking** over the record-hint fixtures whose `fixture.json` `hint.identity` is `same` or `different`, each pair scored through `matchPairs` (`packages/engine/mcp-server/src/utils/matcher.ts`, the call `same_person` and ranking make, so it measures whichever matcher config.json names): the AUC, the confusion table at the person-evidence bands (score > 0.7 and > 0.4), and the pairs those bands misrank. Needs a FamilySearch login (`make e2e-login`), so no CI job runs it. Exits non-zero when the AUC falls below `MIN_AUC` (default 0.65), and when nothing was scored, a class is empty or a labelled fixture could not be scored (e2e spec §3.6.2) | `unresolved`, `null` and draft hints — listed as skipped, never scored; the inputs `rank_search_matches` hands the matcher (a staged search hit, not a `record_read` of the hinted persona); FamilySearch's own hint ranking; whether an agent acts on the score. A floor, not a pinned value: a matcher change that lowers the AUC but stays above `MIN_AUC` passes |
-| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first, that no research job started, and that the expected source or log entry was saved — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE and nudges any stop not preceded by `research_delivered` (the `delivered` column shows that risk but does not gate); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
+| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first (or that none did), that no research job started, that the expected source or log entry was saved (or, for an "answer already attached" ask, that none was), and that named tools were or were not called — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE (it no longer nudges a stop: step mode's phase 2 deleted the Stop veto); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
 
 ### 9.2 The lint layer
 

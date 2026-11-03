@@ -1,4 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import {
+  configureFsBudget,
+  consumeFsBudgetSlot,
+  isFsBudgetExhausted,
+  __resetFsBudgetForTests,
+} from "../../src/utils/fs-budget.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import { singleOk, failure, errorsOf } from "../helpers/narrow.js";
 import { fileStoreOnly } from "../helpers/store-backend.js";
@@ -1435,6 +1441,42 @@ describe("research_append (Phase 1)", () => {
       if (!r.ok) return;
       expect(r.validation.warnings).toContain("could not resolve standard_place for 'Hilperton' (left unset)");
       expect(r.unresolvedPlaces).toEqual(["Hilperton"]);
+    });
+
+    // Same class as the tree_edit case: a spent budget is a refusal, not a
+    // miss. Swallowing it saved the assertion with no standard_place and a
+    // warning blaming the lookup -- the wrong cause, written into
+    // research.json. extraction_append writes through researchAppend, so the
+    // record-extractor reaches this line too.
+    it("on an append with the FamilySearch budget spent, which fails and writes nothing", async () => {
+      await writeProject();
+      const before = JSON.stringify(await readResearch());
+      const FS_URL = "https://www.familysearch.org/service/places/search";
+      try {
+        configureFsBudget({ perMinute: 1 });
+        consumeFsBudgetSlot(FS_URL);
+        // A REJECTED PROMISE, not a sync throw: a sync throw escapes before the
+        // `catch` is reached and would pass against the unfixed code.
+        let refusal: unknown;
+        try {
+          consumeFsBudgetSlot(FS_URL);
+        } catch (e) {
+          refusal = e;
+        }
+        expect(isFsBudgetExhausted(refusal)).toBe(true);
+        vi.mocked(resolveStandardPlace).mockRejectedValueOnce(refusal);
+
+        const { id: _omit, ...a } = { ...validAssertion("x", "src_001"), fact_type: "deathplace", value: "Hilperton" };
+        const err = await researchAppend({ projectPath: dir, section: "assertions", op: "append", entry: a }).then(
+          () => null,
+          (e) => e,
+        );
+        expect(isFsBudgetExhausted(err)).toBe(true);
+        expect(String(err)).toMatch(/try again in about/);
+        expect(JSON.stringify(await readResearch())).toBe(before);
+      } finally {
+        __resetFsBudgetForTests();
+      }
     });
 
     it("on a research_append informant_bias_notes update, which leaves the linked tree fact alone", async () => {
@@ -2889,6 +2931,123 @@ describe("research_append (Phase 2)", () => {
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/resolution_rationale/);
     expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
+  });
+
+  // The same conflict_type over the same competing assertions is the conflict
+  // already recorded: ut_conflict_resolution_008 appended a twin of an unresolved
+  // c_001, and ut_research_001 one of a resolved c_001.
+  describe("a conflict append that restates an existing conflict", () => {
+    const appendConflict = (entry: any) =>
+      researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry });
+
+    it.each([
+      ["unresolved", {}],
+      [
+        "resolved",
+        {
+          status: "resolved",
+          resolution_kind: "competitor",
+          preferred_assertion_id: "a_001",
+          independence_analysis: "Independent informants.",
+          weighing_analysis: "The earlier record is closer to the event.",
+          resolution_rationale: "a_001 is preferred over a_002.",
+        },
+      ],
+    ])("is refused when the existing one is %s, naming it", async (status, settled) => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), ...settled, id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), competing_assertion_ids: ["a_002", "a_001"] });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const errors = r.errors.join(" ");
+      expect(errors).toMatch(new RegExp(`restates 'c_001' \\(status '${status}'\\).*conflictId 'c_001'`));
+      // A settled conflict is reopened, not updated in place, and a cited one is uncited first.
+      expect(errors).toMatch(status === "resolved" ? /clears its resolution.*proof-conclusion/ : /Update 'c_001' instead/);
+      // The worked example is an update of the existing conflict, not another append.
+      expect(errors).not.toMatch(/op: "append"/);
+      expect((await readResearch()).conflicts).toHaveLength(1); // nothing written
+    });
+
+    it("is refused when the same batch appends it twice", async () => {
+      await writeProject(phase2Research());
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "conflicts", op: "append", entry: validConflict() },
+          { section: "conflicts", op: "append", entry: validConflict() },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      // c_001 was never written, so the refusal does not point at it.
+      expect(r.errors.join(" ")).toMatch(/writes the same conflict twice/);
+      expect(r.errors.join(" ")).not.toMatch(/'c_001'/);
+    });
+
+    it("is refused on an update that turns one conflict into another's twin", async () => {
+      const research = phase2Research();
+      research.assertions.push(validAssertion("a_003"));
+      research.conflicts = [
+        { ...validConflict(), id: "c_001" },
+        { ...validConflict(), id: "c_002", competing_assertion_ids: ["a_001", "a_002", "a_003"] },
+      ];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_002",
+        fields: { competing_assertion_ids: ["a_001", "a_002"] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/restates 'c_001'/);
+    });
+
+    it("writes an update that leaves what the conflict is about unchanged", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { competing_assertion_ids: ["a_002", "a_001"] },
+      });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a fact conflict over the same assertions on another attribute", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), disputed_attribute: "birthplace" });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a conflict over a different set of assertions", async () => {
+      const research = phase2Research();
+      research.assertions.push(validAssertion("a_003"));
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), competing_assertion_ids: ["a_001", "a_002", "a_003"] });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a conflict of another type over the same assertions", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({
+        ...validConflict(),
+        conflict_type: "identity",
+        disputed_attribute: null,
+        identity_question: "Are the persons in a_001 and a_002 the same man?",
+      });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
   });
 
   it("rejects resolving a conflict whose analysis fields are whitespace only", async () => {
@@ -16714,8 +16873,10 @@ describe("research_append — a resolve names how it was settled (resolution_kin
     if (kind === "synthesis") expect(c.resolved_value).toBe("about 1844");
   });
 
+  // No conflict in the starting state: appending state()'s own conflict again
+  // would be refused as a restatement of it.
   it("accepts an append that lands resolved with a kind", async () => {
-    await writeProject(state());
+    await writeProject({ ...state(), conflicts: [] });
     const { id: _id, ...entry } = conflict({
       ...ANALYSES,
       status: "resolved",
@@ -16728,7 +16889,7 @@ describe("research_append — a resolve names how it was settled (resolution_kin
   });
 
   it("refuses an append that lands resolved with no kind", async () => {
-    await writeProject(state());
+    await writeProject({ ...state(), conflicts: [] });
     const { id: _id, ...entry } = conflict({
       ...ANALYSES,
       status: "resolved",

@@ -1821,6 +1821,138 @@ def test_rule9_skips_scratch_and_annotation_files(tmp_path, capsys):
     assert capsys.readouterr().out == ""
 
 
+# --- rule 12: a summary's scores match its own runs, corpus-wide (#3936) --------
+
+
+def _dim(name, score, rationale="r"):
+    return {"source": "rubric", "name": name, "score": score, "rationale": rationale}
+
+
+def _consistent_entry(test_id="ut_s_001"):
+    """One run, scored 2 and 3: summary exactly what `refresh_test_entry_outcome`
+    derives from it."""
+    dims = [_dim("Alpha", 2, "run says alpha"), _dim("Beta", 3, "run says beta")]
+    return {
+        "test_id": test_id,
+        "outcome": "partial",
+        "flaky": False,
+        "outcome_summary": {
+            "per_run_outcomes": ["partial"],
+            "aggregated_dimensions": [dict(d) for d in dims],
+            "review_dimensions": [dict(d) for d in dims],
+        },
+        "runs": [{
+            "outcome": "partial",
+            "validators": {"passed": True},
+            "judge": {"skipped": False, "dimensions": dims},
+        }],
+    }
+
+
+def _write_entries(dir_path, filename, entries):
+    d = dir_path / "some-skill"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / filename).write_text(json.dumps({"tests": entries}), encoding="utf-8")
+
+
+def test_rule12_blocks_a_summary_score_the_runs_do_not_give(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["outcome_summary"]["aggregated_dimensions"][0]["score"] = 3
+    _write_entries(tmp_path, "v1_2026-09-24_10-59-36.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert "::error file=" in out
+    assert "v1_2026-09-24_10-59-36.json" in out and "ut_s_001" in out
+    assert "'Alpha' 3 (runs give 2)" in out
+
+
+def test_rule12_blocks_stale_per_run_outcomes(tmp_path, capsys):
+    """`ut_search_wiki_011`'s shape: the summary says the one run passed."""
+    entry = _consistent_entry()
+    entry["outcome_summary"]["per_run_outcomes"] = ["pass"]
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "per_run_outcomes ['pass'] (runs give ['partial'])" in capsys.readouterr().out
+
+
+def test_rule12_blocks_a_stale_review_dimensions_score(tmp_path, capsys):
+    """The review arm is compared when the key is present, not merely skipped
+    when it is absent."""
+    entry = _consistent_entry()
+    entry["outcome_summary"]["review_dimensions"][1]["score"] = 1
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "review_dimensions 'Beta' 1 (runs give 3)" in capsys.readouterr().out
+
+
+def test_rule12_accepts_a_consistent_log(tmp_path, capsys):
+    _write_entries(tmp_path, "v1.json", [_consistent_entry(), _consistent_entry("ut_s_002")])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule12_accepts_stale_prose_when_every_score_agrees(tmp_path):
+    """Older logs keep their stale representative rationale by ruling
+    (2026-10-29); only scores are compared."""
+    entry = _consistent_entry()
+    for key in ("aggregated_dimensions", "review_dimensions"):
+        for d in entry["outcome_summary"][key]:
+            d["rationale"] = "what the replaced grading said"
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_rule12_accepts_a_summary_written_before_review_dimensions(tmp_path):
+    """199 committed entries predate the optional field; lacking it is not drift."""
+    entry = _consistent_entry()
+    del entry["outcome_summary"]["review_dimensions"]
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_rule12_names_a_reordered_row_by_its_own_dimension(tmp_path, capsys):
+    """A rebuild can reorder rows (`ut_citation_008`). The message must not blame
+    the dimension that merely moved."""
+    entry = _consistent_entry()
+    rows = entry["outcome_summary"]["aggregated_dimensions"]
+    rows.reverse()
+    rows[0]["score"] = 1  # Beta, now first
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert "aggregated_dimensions 'Beta' 1 (runs give 3)" in out
+    assert "'Alpha'" not in out
+
+
+def test_rule12_accepts_rows_reordered_with_every_score_agreeing(tmp_path):
+    """Readers look a row up by (source, name); order alone is not drift."""
+    entry = _consistent_entry()
+    for key in ("aggregated_dimensions", "review_dimensions"):
+        entry["outcome_summary"][key].reverse()
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_rule12_names_a_duplicated_row(tmp_path, capsys):
+    entry = _consistent_entry()
+    rows = entry["outcome_summary"]["aggregated_dimensions"]
+    rows.append(dict(rows[0]))
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "a dimension row is duplicated" in capsys.readouterr().out
+
+
+def test_rule12_skips_scratch_and_annotation_files(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["outcome_summary"]["per_run_outcomes"] = ["pass"]
+    _write_entries(tmp_path, "scratch_2026-09-28_10-00-00.json", [entry])
+    (tmp_path / "some-skill" / "v1.ann.json").write_text(
+        json.dumps({"tests": [entry]}), encoding="utf-8"
+    )
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+    assert capsys.readouterr().out == ""
+
+
 # --- marker owners, read from the committed test corpus --------------------------
 
 
@@ -1874,9 +2006,14 @@ def test_rule10_only_warns_under_the_skills_cosmetic_skip_label(tmp_path, capsys
 
 
 def _clean_log(test_id="ut_ip_1", outcome="pass"):
+    # The summary is what its one run derives, so rule 12 has nothing to say.
     return {
         "snapshot": {},
         "tests": [{"test_id": test_id, "expected_outcome": "pass",
+                   "outcome": outcome, "flaky": False,
+                   "outcome_summary": {"per_run_outcomes": [outcome],
+                                       "aggregated_dimensions": [],
+                                       "review_dimensions": []},
                    "runs": [{"outcome": outcome}]}],
     }
 
@@ -2654,6 +2791,100 @@ def _stub_current_prompt_hash(monkeypatch, hex_digest: str) -> None:
         "hash_file",
         lambda _label, _path: hex_digest,
     )
+
+
+# --- rule 2b, render half (issue #3576) ------------------------------------
+# `judge_prompt_hash` covers the prompt TEMPLATE. These cover the code that
+# fills its slots: a change there moved no fingerprint and left every committed
+# log ACTIVE while the judge saw different text.
+
+_ACTIVE_RENDER_LOG = {"snapshot": {}, "judge_render_hash": "a" * 64}
+_STALE_RENDER_LOG = {
+    "snapshot": {"eval/__no_such_cosmetic_test__/x.md": "expected\n"},
+    "judge_render_hash": "a" * 64,
+}
+_NO_RENDER_HASH_LOG = {"snapshot": {}, "judge_prompt_hash": "a" * 64}
+
+
+def _stub_current_render_hash(monkeypatch, hex_digest: str) -> None:
+    monkeypatch.setattr(check_runlogs, "judge_render_hash", lambda: hex_digest)
+
+
+def test_rule2b_render_blocks_when_render_code_moved(monkeypatch, capsys):
+    """Hash differs + active log + a render-graph file touched → BLOCK."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "`make judge-regrade`" in out
+    assert "older judge render code" in out
+
+
+def test_rule2b_render_passes_when_touched_but_hash_unchanged(monkeypatch, capsys):
+    """The load-bearing property: the rule RECOMPUTES rather than blocking on
+    "file touched". An edit to a trigger file outside the render graph leaves
+    the hash alone, so it must pass — otherwise every PR touching
+    orchestrator.py for any reason goes red."""
+    _stub_current_render_hash(monkeypatch, "a" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule2b_render_warns_when_log_is_already_skill_side_stale(monkeypatch, capsys):
+    """Rule 2 blocks for its own reason; a regrade cannot satisfy a log that
+    owes a paid `make eval-skill` run."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _STALE_RENDER_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "cannot satisfy" in out
+
+
+def test_rule2b_render_warns_when_mismatch_without_render_edit(monkeypatch, capsys):
+    """A mixed-era corpus is not this PR's doing — warn, never block."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _ACTIVE_RENDER_LOG, "v1.json", judge_render_touched=False
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+
+
+def test_rule2b_render_warns_when_log_has_no_render_hash(monkeypatch, capsys):
+    """A log written before the field cannot be checked. Warn so the reviewer
+    knows the PR's render change went ungraded against it — never block, which
+    would owe a regrade for every log in the corpus on day one."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _NO_RENDER_HASH_LOG, "v1.json", judge_render_touched=True
+    )
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "::warning" in out
+    assert "::error" not in out
+    assert "carries no" in out
+
+
+def test_rule2b_render_silent_when_no_hash_and_nothing_touched(monkeypatch, capsys):
+    """No field and no render edit — nothing to say."""
+    _stub_current_render_hash(monkeypatch, "b" * 64)
+    rc = check_runlogs.rule2b_judge_render(
+        "demo", _NO_RENDER_HASH_LOG, "v1.json", judge_render_touched=False
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
 
 
 def test_rule2b_blocks_on_judge_prompt_only_pr(monkeypatch, capsys):
@@ -3575,6 +3806,86 @@ def test_every_embedded_agent_reaches_its_suite_through_the_superset():
     assert not missed, missed
 
 
+def test_trigger_paths_cover_every_module_the_render_graph_reaches():
+    """Finding 6: `JUDGE_RENDER_TRIGGER_PATHS` is hand-written. If the graph
+    grows into a sixth module, a PR editing that module moves the hash but
+    matches no trigger path, so `rule2b_judge_render` takes the
+    "not this PR's doing" branch and WARNS on the PR that caused it.
+
+    Derived from the same walk the hash uses, so this cannot drift.
+    """
+    from harness.judge_render import judge_render_graph_modules
+
+    reached = judge_render_graph_modules()
+    triggers = {
+        "harness." + Path(p).stem for p in check_runlogs.JUDGE_RENDER_TRIGGER_PATHS
+    }
+    assert reached <= triggers, (
+        f"render graph reaches {sorted(reached - triggers)}, which no trigger "
+        f"path covers — a PR editing those would warn instead of blocking"
+    )
+
+
+# --- rule 6, regrade arm (issue #3576) ---------------------------------------
+# Rule 6 proper grades only ADDED logs, deliberately: a prune rewrites committed
+# logs and `eval/CLAUDE.md` says a modified log marks nothing touched. That held
+# until `make judge-regrade` began rewriting GRADES in place. The predicate here
+# is the outcome MOVING, so a prune still passes and only a new red blocks.
+
+def _rule6_regrade(monkeypatch, tmp_path, base_outcomes, head_outcomes):
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"tests": [{"test_id": k, "outcome": v} for k, v in head_outcomes.items()]}),
+        encoding="utf-8",
+    )
+    base = (
+        None
+        if base_outcomes is None
+        else json.dumps({"tests": [{"test_id": k, "outcome": v} for k, v in base_outcomes.items()]})
+    )
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: base)
+    return check_runlogs.rule6_regrade_outcomes("demo", rel)
+
+
+def test_rule6_regrade_blocks_a_newly_red_test(monkeypatch, tmp_path, capsys):
+    rc = _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "pass"}, {"ut_a": "fail"})
+    assert rc == 1
+    out = capsys.readouterr().out
+    assert "::error" in out
+    assert "moved `pass` -> `fail`" in out
+
+
+def test_rule6_regrade_blocks_partial_to_fail(monkeypatch, tmp_path, capsys):
+    """`partial` never blocks on its own, but moving INTO fail does."""
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "partial"}, {"ut_a": "fail"}) == 1
+
+
+def test_rule6_regrade_passes_a_prune(monkeypatch, tmp_path, capsys):
+    """The direction that must keep working: a modified log whose outcomes did
+    not move is a rehash or a prune, and marks nothing touched."""
+    rc = _rule6_regrade(
+        monkeypatch, tmp_path, {"ut_a": "pass", "ut_b": "partial"}, {"ut_a": "pass", "ut_b": "partial"}
+    )
+    assert rc == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule6_regrade_ignores_a_test_already_red_at_base(monkeypatch, tmp_path, capsys):
+    """Not this PR's doing — it did not author the run."""
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "fail"}, {"ut_a": "fail"}) == 0
+
+
+def test_rule6_regrade_passes_when_the_log_is_new_at_base(monkeypatch, tmp_path, capsys):
+    """Absent at the merge base — rule 6 proper grades it as an ADDED log, and
+    grading it here too would double-report."""
+    assert _rule6_regrade(monkeypatch, tmp_path, None, {"ut_a": "fail"}) == 0
+
+
+def test_rule6_regrade_blocks_a_move_to_aborted(monkeypatch, tmp_path):
+    assert _rule6_regrade(monkeypatch, tmp_path, {"ut_a": "pass"}, {"ut_a": "aborted"}) == 1
 # Rule 11 (#3691 item 2): a swapped gate tag on a grade_on_invariant test.
 
 _INVARIANTS = ("test_no_new_plan", "test_no_plan_writes_when_resolved", "test_resolved_question_not_reopened")
@@ -4085,3 +4396,233 @@ def test_main_runs_rule11_gate_drift_on_a_validator_edit_for_every_suite_rule11_
     _patch_diffs(monkeypatch, ["eval/tests/unit/research/rpn.json"])
     check_runlogs.main()
     assert calls == []
+
+
+def test_rule6_regrade_announces_an_unreadable_base(monkeypatch, tmp_path, capsys):
+    """Review 2026-10-26: this arm used to `return 0` silently, which reads
+    identically to "compared them, nothing moved" — the invisible pass the
+    rule exists to end. Failing closed is wrong (a shallow clone would block
+    every prune), so it warns and says the comparison did not happen."""
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"tests": []}), encoding="utf-8")
+
+    def _raise(_p):
+        raise check_runlogs.BaseUnreadable("BASE_SHA/HEAD_SHA unset")
+
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", _raise)
+    rc = check_runlogs.rule6_regrade_outcomes("demo", rel)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning" in out, "a skipped read must be announced, not swallowed"
+    assert "NOT compared" in out
+    assert "BASE_SHA/HEAD_SHA unset" in out, "the warning must name the cause"
+
+
+def test_rule6_regrade_announces_an_unparseable_log(monkeypatch, tmp_path, capsys):
+    """Same hole, other cause: a corrupt base or head log also skipped the
+    comparison silently."""
+    rel = "eval/runlogs/unit/demo/v1.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{not json", encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: '{"tests": []}')
+    rc = check_runlogs.rule6_regrade_outcomes("demo", rel)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning" in out and "NOT compared" in out
+
+
+# --- rule 3, regrade arm (issue #3576 round 3) --------------------------------
+# A regrade refreshes `review_sample` from the fresh grades, so a test it moves
+# into `is_mandatory` gains a slot. Rule 3 proper runs only on a TOUCHED skill,
+# and a modified run log touches nothing — so without this arm the regrade PR
+# merges green and the next unrelated PR on that skill inherits the block.
+
+def _rule3_regrade(monkeypatch, tmp_path, base_sample, head_sample, *, ann=None,
+                   base_present=True):
+    """Write a head log + optional annotation, stub the merge-base read, run the arm.
+
+    `*_sample` are the `review_sample.tests` lists (None omits the key entirely,
+    which is what every log written before sampling shipped looks like).
+    """
+    rel = "eval/runlogs/unit/demo/v1_2026-10-09_00-00-00.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    def log_for(sample):
+        doc = {
+            "tests": [
+                {
+                    "test_id": t,
+                    "outcome": "partial",
+                    "outcome_summary": {
+                        "per_run_outcomes": ["partial"],
+                        "aggregated_dimensions": [
+                            {"source": "base", "name": "Correctness", "score": 2}
+                        ],
+                        "review_dimensions": [
+                            {"source": "base", "name": "Correctness", "score": 2}
+                        ],
+                    },
+                }
+                for t in (head_sample or [])
+            ]
+        }
+        if sample is not None:
+            doc["review_sample"] = {"tests": list(sample), "cursor": [], "seed": 1}
+        return doc
+
+    path.write_text(json.dumps(log_for(head_sample)), encoding="utf-8")
+    if ann is not None:
+        (path.parent / "v1_2026-10-09_00-00-00.ann.json").write_text(
+            json.dumps(ann), encoding="utf-8"
+        )
+    base = None if not base_present else json.dumps(log_for(base_sample))
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", lambda _p: base)
+    return check_runlogs.rule3_regrade_sample_growth("demo", rel)
+
+
+def test_rule3_regrade_blocks_a_grown_sample_with_no_annotation(
+    monkeypatch, tmp_path, capsys
+):
+    """The case this arm exists for: the regrade added a test, nobody graded it."""
+    rc = _rule3_regrade(monkeypatch, tmp_path, ["ut_a"], ["ut_a", "ut_b"])
+    assert rc == 1
+    assert "::error" in capsys.readouterr().out
+
+
+def test_rule3_regrade_passes_when_the_sample_did_not_grow(
+    monkeypatch, tmp_path, capsys
+):
+    """The other direction. A prune or a rehash rewrites the file without
+    touching `review_sample`, and must not be asked for annotations."""
+    rc = _rule3_regrade(monkeypatch, tmp_path, ["ut_a", "ut_b"], ["ut_a", "ut_b"])
+    assert rc == 0
+    assert "::error" not in capsys.readouterr().out
+
+
+def test_rule3_regrade_ignores_a_log_with_no_review_sample(
+    monkeypatch, tmp_path, capsys
+):
+    """A log written before sampling shipped carries no `review_sample` and owes
+    every dimension of every test — which no prune can satisfy. Gating on GROWTH
+    rather than on the file changing is what keeps this arm off it."""
+    rc = _rule3_regrade(monkeypatch, tmp_path, None, None)
+    assert rc == 0
+    assert "::error" not in capsys.readouterr().out
+
+
+def test_rule3_regrade_skips_a_log_absent_at_the_merge_base(
+    monkeypatch, tmp_path, capsys
+):
+    """Absent at the base means this PR ADDED it, where rule 3 proper applies.
+    Grading it here would double-report the same debt."""
+    rc = _rule3_regrade(
+        monkeypatch, tmp_path, None, ["ut_a"], base_present=False
+    )
+    assert rc == 0
+    assert "::error" not in capsys.readouterr().out
+
+
+def _rule3_regrade_main(tmp_path, monkeypatch, touched):
+    """Drive `main()` with one modified research log and the per-rule checks
+    stubbed, recording which logs the regrade arm is asked to grade."""
+    skill_dir = tmp_path / "research"
+    skill_dir.mkdir()
+    for name in ("v1.json", "v2_2026-10-26_00-00-00.json"):
+        (skill_dir / name).write_text(json.dumps({"tests": []}), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "RUNLOGS_DIR", tmp_path)
+    for rule in ("rule2_active", "rule2b_judge_prompt", "rule2b_judge_render",
+                 "rule2c_instrument", "rule3_completeness", "rule11_for_skill",
+                 "rule6_regrade_outcomes"):
+        monkeypatch.setattr(check_runlogs, rule, lambda *a, **k: 0)
+    calls = []
+    monkeypatch.setattr(
+        check_runlogs, "rule3_regrade_sample_growth", lambda *a: calls.append(a) or 1
+    )
+    monkeypatch.setattr(
+        check_runlogs, "modified_runlogs",
+        lambda: [("research", "eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json")],
+    )
+    _patch_diffs(monkeypatch, touched)
+    return check_runlogs.main(), calls
+
+
+def test_main_runs_the_rule3_regrade_arm_on_a_modified_log(tmp_path, monkeypatch):
+    """A regrade-only PR touches no skill, so the arm is the only rule 3 it gets."""
+    rc, calls = _rule3_regrade_main(tmp_path, monkeypatch, [])
+    assert rc == 1
+    assert calls == [("research", "eval/runlogs/unit/research/v2_2026-10-26_00-00-00.json")]
+
+
+def test_main_skips_the_rule3_regrade_arm_on_a_log_rule3_already_graded(
+    tmp_path, monkeypatch
+):
+    """When the skill is also touched, rule 3 proper grades the same latest log;
+    the arm must not report that debt a second time."""
+    rc, calls = _rule3_regrade_main(
+        tmp_path, monkeypatch,
+        ["eval/tests/unit/research/handle-negative-probate-result.json"],
+    )
+    assert calls == []
+
+
+def test_rule3_regrade_warns_rather_than_blocking_on_an_unreadable_base(
+    monkeypatch, tmp_path, capsys
+):
+    """Failing closed would block every prune on a shallow clone. Warn, so an
+    unread base is never mistaken for 'compared them, nothing grew'."""
+    rel = "eval/runlogs/unit/demo/v1_2026-10-09_00-00-00.json"
+    path = tmp_path / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"tests": []}), encoding="utf-8")
+    monkeypatch.setattr(check_runlogs, "REPO_ROOT", tmp_path)
+
+    def boom(_p):
+        raise check_runlogs.BaseUnreadable("no merge base")
+
+    monkeypatch.setattr(check_runlogs, "git_show_at_merge_base", boom)
+    rc = check_runlogs.rule3_regrade_sample_growth("demo", rel)
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "::warning" in out
+    assert "NOT compared" in out
+
+
+def test_rule12_blocks_a_stale_outcome(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["outcome"] = "pass"
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "outcome 'pass' (runs give 'partial')" in capsys.readouterr().out
+
+
+def test_rule12_blocks_a_stale_flaky(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["flaky"] = True
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "flaky True (runs give False)" in capsys.readouterr().out
+
+
+def test_rule12_reads_an_absent_flaky_as_false(tmp_path):
+    entry = _consistent_entry()
+    del entry["flaky"]
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_main_runs_rule12(tmp_path, monkeypatch, capsys):
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    log = _clean_log()
+    log["tests"][0]["outcome_summary"]["per_run_outcomes"] = ["fail"]
+    (skill_dir / "v1.json").write_text(json.dumps(log), encoding="utf-8")
+    _write_ann(skill_dir, "v1.json", [])
+    _patch_diffs(monkeypatch, [])
+    assert check_runlogs.main() == 1
+    assert "per_run_outcomes ['fail'] (runs give ['pass'])" in capsys.readouterr().out

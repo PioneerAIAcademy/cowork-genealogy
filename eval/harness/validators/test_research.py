@@ -348,6 +348,43 @@ def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_
     )
 
 
+def test_relays_the_agents_tail_verbatim(text_response, test):
+    """The router prints a stubbed agent's tail -- everything after its final
+    ``---`` -- verbatim, compared under the e2e relay-fidelity normalization
+    (issue #3862).
+
+    Tag-gated on ``relays-agent-tail``; the agent is the ``routes-to:`` callee.
+    The tail is read from the test's own canned response, never from
+    ``agent_returns``: there it is wrapped in harness scaffolding the router is
+    told never to print. The tail must also END the reply: a router that adds its
+    own table, list or question after it has printed more than the agent said,
+    and the skill forbids that. A last line holding only the project's link is
+    allowed, since the skill puts the hosted `projectUrl` there.
+    """
+    from harness.skill_runner import normalize, tail_after_final_rule
+    from harness.skill_stubs import parse_stub_skills
+
+    if "relays-agent-tail" not in (test.get("tags") or []):
+        pytest.skip("not a relay-fidelity test")
+    agent = _expected_skill(test)
+    assert agent, "relays-agent-tail needs a routes-to:<agent> tag naming the relayed agent"
+    tail = tail_after_final_rule(parse_stub_skills(test.get("execution")).get(agent) or "")
+    assert tail, f"relays-agent-tail needs a stubbed {agent} response with a `---` tail"
+    expected = normalize(tail).strip().rstrip(".!?")
+    lines = (text_response or "").strip().splitlines()
+    if len(lines) > 1 and re.fullmatch(r"<?https?://\S+>?", lines[-1].strip()):
+        lines = lines[:-1]
+    reply = normalize("\n".join(lines)).strip().rstrip(".!?")
+    assert expected in reply, (
+        f"the router did not relay {agent}'s summary verbatim; expected, after "
+        f"normalization:\n{tail}"
+    )
+    assert reply.endswith(expected), (
+        f"the router added text after {agent}'s summary; it must end the reply. "
+        f"Added:\n{reply[reply.find(expected) + len(expected):].strip()}"
+    )
+
+
 # The search steps a bounded request must not reach when the answer is already
 # attached. MCP side and delegation side are listed separately because the rule
 # is defeated by either: an inline `record_search` and a hand-off to
@@ -552,13 +589,13 @@ _DELIVERED_TOOL = "research_delivered"
 def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
     """Tag-gated (``ends-with-delivery``). Issue #2813 item 1, the enforcement half.
 
-    The skill body telling the model to "end your turn" is not what ends it. On the
-    hosted plane an SDK Stop hook VETOES a voluntary stop while the project objective
-    is incomplete and nudges the agent onward; the only arm that lets a bounded turn
-    stop is `delivered`, set when the model calls `research_delivered`
-    (`apps/server/app/agent/real_agent.py`, `should_continue_run`). A bounded turn that
-    ends without the call is answered and then nudged back into more research -- the
-    alpha report behind this test.
+    The skill body telling the model to "end your turn" was not what ended it. On the
+    hosted plane an SDK Stop hook VETOED a voluntary stop while the project objective
+    was incomplete and nudged the agent onward; the only arm that let a bounded turn
+    stop was `delivered`, set when the model called `research_delivered`. A bounded
+    turn that ended without the call was answered and then nudged back into more
+    research -- the alpha report behind this test. Step mode phase 2 deleted that Stop
+    hook (and `should_continue_run` with it).
 
     Gated on its own tag, NOT on `bounded-request`: `ut_research_023` carries that tag
     and is the `--autonomous` carve-out, where the router must run the job and must NOT
