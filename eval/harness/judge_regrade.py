@@ -835,10 +835,12 @@ def reaggregate_log(path: Path) -> tuple[list[str], list[str]]:
             # picks the first dim carrying the modal score, so the prose
             # follows run order and drifts whenever an earlier regrade left a
             # summary behind — on suites this pass never graded, and years of
-            # them. Nothing reads it: `skill_gate` takes `score` alone, and
-            # `review_sample` reads the runs. Rewriting it anyway would churn
-            # thousands of lines across suites nothing re-judged and bury the
-            # repair that matters, so the stored entry stands.
+            # them. Row order alone lands here too: `consequential` keys rows
+            # by (source, name). The prose is shown only on the eval UI
+            # annotation screen; `skill_gate` reads `score` alone, and no score
+            # moved. Rewriting it anyway would churn thousands of lines across
+            # suites nothing re-judged and bury the repair that matters, so the
+            # stored entry stands.
             test_entry.clear()
             test_entry.update(snapshot)
             continue

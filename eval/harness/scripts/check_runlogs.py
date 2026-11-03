@@ -2541,7 +2541,7 @@ def rule12_summary_matches_runs(runlogs_dir: Path) -> int:
             diffs = _summary_diffs(test, derived, include_review)
             gh_error(
                 f"run log `{rel}` test `{test.get('test_id', '<no id>')}`: its "
-                f"outcome_summary disagrees with its own runs[]: "
+                f"outcome or summary disagrees with its own runs[]: "
                 + "; ".join(diffs)
                 + ". Rebuild the entry from its runs with "
                 "`harness.outcomes.refresh_test_entry_outcome`, and add any test it "

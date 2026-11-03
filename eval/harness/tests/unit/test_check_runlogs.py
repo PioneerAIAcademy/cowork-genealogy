@@ -4592,3 +4592,37 @@ def test_rule3_regrade_warns_rather_than_blocking_on_an_unreadable_base(
     assert rc == 0
     assert "::warning" in out
     assert "NOT compared" in out
+
+
+def test_rule12_blocks_a_stale_outcome(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["outcome"] = "pass"
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "outcome 'pass' (runs give 'partial')" in capsys.readouterr().out
+
+
+def test_rule12_blocks_a_stale_flaky(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["flaky"] = True
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "flaky True (runs give False)" in capsys.readouterr().out
+
+
+def test_rule12_reads_an_absent_flaky_as_false(tmp_path):
+    entry = _consistent_entry()
+    del entry["flaky"]
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_main_runs_rule12(tmp_path, monkeypatch, capsys):
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    log = _clean_log()
+    log["tests"][0]["outcome_summary"]["per_run_outcomes"] = ["fail"]
+    (skill_dir / "v1.json").write_text(json.dumps(log), encoding="utf-8")
+    _write_ann(skill_dir, "v1.json", [])
+    _patch_diffs(monkeypatch, [])
+    assert check_runlogs.main() == 1
+    assert "per_run_outcomes ['fail'] (runs give ['pass'])" in capsys.readouterr().out

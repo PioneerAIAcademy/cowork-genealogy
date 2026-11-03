@@ -51,7 +51,6 @@ from .outcomes import (  # noqa: E402,F401
     _DIMENSION_RANK,
     _modal_with_tiebreak_down,
     _OUTCOME_RANK,
-    _RunView,
     aggregate_dimensions,
     aggregate_per_run_outcome,
     consequential,

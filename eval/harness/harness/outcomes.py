@@ -1,4 +1,8 @@
-"""Outcome aggregation — the runs[] -> test rule from unit-test-spec.md §7.
+"""Outcome aggregation — rebuilding a test entry's outcome and summary from its runs[].
+
+The §7 runs[] -> test rule (unit-test-spec.md), the dimension aggregation, and
+`consequential`, the one definition of "this summary disagrees with its runs"
+that `judge_regrade --reaggregate` and `check_runlogs.py` rule 12 share.
 
 **Stdlib only, and that is the whole reason this module exists.** It was lifted
 out of `runlog.py` for issue #2684's rule 6: `scripts/check_runlogs.py` promises
@@ -13,8 +17,10 @@ have reded every PR in the repo with a ModuleNotFoundError.
 present and loads the script in-process. The failure only appears on a bare
 interpreter, which is the one place CI uses.
 
-`runlog.py` re-exports every name here, so there is still exactly one definition
-and existing `from harness.runlog import ...` call sites are unaffected.
+`runlog.py` re-exports the names its callers import, so there is still exactly
+one definition and existing `from harness.runlog import ...` call sites are
+unaffected. The private views (`_RunView`, `_JudgeView`, `_ValidatorsView`) and
+`_scores` are not re-exported.
 """
 
 from __future__ import annotations
