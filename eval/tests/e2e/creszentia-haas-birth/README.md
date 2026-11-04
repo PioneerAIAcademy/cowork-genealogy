@@ -1,4 +1,4 @@
-# Creszentia Haas — birth and christening (May 1830, Durbach, Baden)
+# Creszentia Haas — birth (May 1830, Durbach, Baden)
 
 **Source PID:** `9DZX-B29`
 **Creszentia Haas is deceased.** (FamilySearch ToS requires
