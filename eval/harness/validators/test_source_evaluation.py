@@ -1372,7 +1372,21 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
     """
     text = _unemphasised(reply)
     lines = text.splitlines()
+    raw_lines = reply.splitlines()
     flagged: list[str] = []
+
+    # The agent names its columns by its own short labels ("VT Death-A") and defines
+    # them in a key table (label | title | collection | url); resolve a label to the
+    # age-derived source its row describes.
+    aliases: dict[str, list[str]] = {}
+    for line in lines:
+        if not _AGE_ROW_RE.match(line):
+            continue
+        cells = _age_table_cells(line)
+        if len(cells) >= 3 and 0 < len(cells[0]) <= 24:
+            alias_hits = _age_source_hits(" ".join(cells[1:]), sources)
+            if alias_hits:
+                aliases.setdefault(cells[0].lower(), alias_hits)
 
     header: list[str] = []
     for i, line in enumerate(lines):
@@ -1391,17 +1405,21 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
             if _age_flag_text(cell):
                 label = header[j] if j < len(header) else ""
                 flagged += _age_source_hits(f"{label} {cell}", sources)
+                flagged += aliases.get(label.lower(), [])
 
     in_birth_block = False
     prev_blank = True
-    for line in lines:
+    for li, line in enumerate(lines):
         if _AGE_ROW_RE.match(line):
             continue
         stripped = line.strip()
         if not stripped:
             prev_blank = True
             continue
-        if _AGE_FINDING_HEAD_RE.match(line) or (prev_blank and _age_is_heading(stripped)):
+        # A line that is entirely bold is a heading even when it ends in a full stop.
+        raw = raw_lines[li] if len(raw_lines) == len(lines) else ""
+        bold_heading = bool(re.fullmatch(r"\s*\*\*[^*]+\*\*\s*", raw))
+        if _AGE_FINDING_HEAD_RE.match(line) or (prev_blank and (_age_is_heading(stripped) or bold_heading)):
             in_birth_block = bool(
                 re.search(r"\bbirth\b", stripped, re.IGNORECASE)
                 and re.search(_AGE_BLOCK_WORDS, stripped, re.IGNORECASE)

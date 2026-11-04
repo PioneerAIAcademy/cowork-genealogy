@@ -2011,3 +2011,46 @@ def test_a_long_parenthetical_does_not_hide_a_flag():
             "consistent with nothing.\n\n"
             "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
         )
+
+
+_KEY_TABLE = (
+    "Label       | Source Title                    | Collection                          | FamilySearch URL\n"
+    "------------+---------------------------------+-------------------------------------+-----------------\n"
+    "VT Death-A  | Vermont death record            | Vermont, Vital Records, 1760-1954   | ark:/61903/1:1:2V7M-JMY\n"
+    "VT D&B      | Edward Mollman                  | Vermont, Deaths and Burials, 1871-1965 | ark:/61903/1:1:F8R4-RYM\n"
+    "Tombstone   | Whallon's Bay Cemetery          | Artifact                            | art:7349489\n\n"
+)
+_ALIAS_HEADER = "Fact        | Profile Value | VT Death-A | VT D&B | Tombstone\n" "------------+---------------+------------+--------+----------\n"
+
+
+def test_a_column_named_by_a_key_table_label_is_resolved_to_its_source():
+    """Replay of a live run: the agent labelled the Vermont indexes `VT Death-A` and `VT D&B`."""
+    row = "Birth date  | 30 Nov 1838   | Indexed yr: 1839 [CONFLICT] | Indexed yr: 1839 [CONFLICT] | 31 Jan 1839 [CONFLICT]\n"
+    with pytest.raises(AssertionError, match="Vermont"):
+        _age_check(_KEY_TABLE + _ALIAS_HEADER + row + "\nThe tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n")
+
+
+def test_a_key_table_label_with_a_clean_cell_is_not_a_flag():
+    """The other direction: the same labels with the range stated and no conflict pass."""
+    row = "Birth date  | 30 Nov 1838   | birthRange 1838-1839 | birthRange 1838-1839 | 31 Jan 1839 [CONFLICT]\n"
+    _age_check(_KEY_TABLE + _ALIAS_HEADER + row + "\nThe tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n")
+
+
+def test_a_bold_heading_ending_in_a_full_stop_closes_the_birth_block():
+    """Replay of a live run: a mother's-name finding after a birth finding is not a birth flag."""
+    _age_check(
+        "The profile records 30 November 1838 as Edward's birth date. Three independent sources directly conflict with this:\n"
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n\n"
+        "**Mother's given name — partial conflict with 1850 census.**\n\n"
+        "The 1850 census names the wife of Joseph Tollman as Hannah Tollman.\n"
+    )
+
+
+def test_the_same_paragraph_without_a_heading_still_flags_the_census():
+    """The other direction: an age-derived census named inside the birth block is still a flag."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The profile records 30 November 1838 as Edward's birth date. Three independent sources directly conflict with this:\n"
+            "The 1850 census gives 1839.\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
