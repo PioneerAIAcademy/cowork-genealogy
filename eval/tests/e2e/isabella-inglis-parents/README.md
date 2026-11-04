@@ -1,4 +1,4 @@
-# Isabella Inglis — parents Thomas Inglis and Jane Borthwick, and an 1867 Scottish marriage
+# Isabella Inglis — parents Thomas Inglis and Jane Borthwick
 
 **Source PID:** `KHL9-LKF`
 **Isabella Inglis is deceased.** (FamilySearch ToS requires
@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) No vital dates recorde
 
 ## Research question
 
-> Who were the parents of Isabella Inglis, wife of David Young of Edinburgh, and when did the couple marry?
+> Who were the parents of Isabella Inglis, wife of David Young of Edinburgh?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,14 @@ medium — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question asked
+two independent facts (her parents, and the marriage date): "Who were the
+parents of Isabella Inglis, wife of David Young of Edinburgh, and when did the
+couple marry?" Reworded `researcher_question` to the parents only; demoted
+`f2` (the marriage date) to `required: false`, so a run that recovers it
+anyway still gets credit. No finding wording changed, and this fixture has no
+committed runs to re-grade.
 
 **Resolved 2026-09-24: TRUE MATCH, with one drafted value corrected.**
 

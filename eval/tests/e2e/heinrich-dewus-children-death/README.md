@@ -1,4 +1,4 @@
-# Heinrich Dewus — death date and additional children (Milwaukee, 1936)
+# Heinrich Dewus — additional children (Milwaukee, 1936)
 
 **Source PID:** `9VX4-1C3`
 **Heinrich Dewus is deceased.** (FamilySearch ToS requires
@@ -8,9 +8,9 @@ about 1850); the tree carries an undated Death fact.
 
 ## Research question
 
-> When did Heinrich Dewus of Milwaukee, Wisconsin (born about 1850 in
-> Pommerania, Germany) die, and did he and his wife Augusta have
-> children besides the four already in the tree?
+> Did Heinrich Dewus of Milwaukee, Wisconsin (born about 1850 in
+> Pommerania, Germany) and his wife Augusta have children besides the
+> four already in the tree?
 
 ## Bundled captures (`provided-documents/`)
 
@@ -54,6 +54,18 @@ children indexed as Dewes/Downs), children appear under married names
 genuinely new children from the four it already has.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question asked
+two independent facts (his death date, and additional children): "When did
+Heinrich Dewus of Milwaukee, Wisconsin (born about 1850 in Pommerania,
+Germany) die, and did he and his wife Augusta have children besides the four
+already in the tree?" Reworded `researcher_question` to the children only —
+two of the three required findings (`f2`, `f3`) are about the undocumented
+children, against one (`f1`) about the death date — and demoted `f1` (death
+date) to `required: false`, so a run that recovers it anyway still gets
+credit. No finding wording changed, and this fixture has no committed runs to
+re-grade (its two annotations carry neither `findings_hash` nor
+`blind_bundle_digest`).
 
 **RESOLVED — true match** (adjudicated 2026-08-04). The 1936 obituary
 (`ark:/61903/1:1:Q5SZ-SH29`) genuinely belongs to tree person Heinrich
