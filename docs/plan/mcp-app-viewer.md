@@ -64,13 +64,14 @@ adoption.
   conversation. Fullscreen covers the transcript, and MCP Apps have no side-panel
   mode (the modes are inline, fullscreen and picture-in-picture), so side-by-side
   work happens inside the file, in its right-hand pane.
-- **An artifact beside the task** is the fallback, used only if cards do not
-  render in Cowork. Claude's help centre says an artifact opens beside the
-  conversation and can use custom connectors, and its page can read a connector's
-  read-only tools as the viewer. Its limits: it does not arrive with the connector,
-  a connected artifact can be shared inside the organization but not by link, and
-  nothing documents how one opens in a Cowork task. In that case the case file runs
-  as an artifact, the same page with a second way to call the tools.
+- **An artifact beside the task** is the only true side panel, and M0 tests it
+  either way. Claude's help centre says an artifact opens beside the conversation
+  and can use custom connectors, and its page can read a connector's read-only
+  tools as the viewer. Its limits: it does not arrive with the connector, a
+  connected artifact can be shared inside the organization but not by link, and
+  nothing documents how one opens in a Cowork task. If cards do not render, the case
+  file runs as an artifact, the same page with a second way to call the tools. If
+  they do, using one as well is a separate decision after M0.
 
 ## The case file
 
@@ -79,7 +80,9 @@ file. Clicking a person, record or source opens it in a right-hand pane without
 leaving the page, so a researcher can compare without losing their place.
 
 - **The case** (the default): one question read top to bottom as a proof.
-  - The conclusion, its rating in words, and what it changed in the tree.
+  - The conclusion, its rating in words, and what it changed in the tree. Until
+    there is a conclusion, **So far** takes its place: the records kept, the searches
+    done and still open, and the step the research is on, all from the documents.
   - The reviewer's verdict and notes.
   - **What each record says:** the evidence grid. Rows are the facts at issue;
     columns are the tree before the research and then each supporting record in
@@ -87,17 +90,33 @@ leaving the page, so a researcher can compare without losing their place.
     hold the record's own words. A cell that differs from its row is tinted; the
     grid does not say which is right.
   - Conflicts and competing identities, settled or not, side by side.
-  - **What was searched:** the plan as a checklist with what each item found,
-    then what was not searched and why.
+  - **What was searched:** the plan as a checklist with what each item found.
+  - **Leads:** what is still worth trying, each with why it was not searched and
+    "needs you" when only the researcher can reach it, under the recorded overturn
+    risk ("could change the answer") when there is one.
+- **Compare with FamilySearch:** by person, what this research adds to the tree as
+  it stood when the project started. The page shows that date, because the viewer
+  makes no FamilySearch calls. Each finding is tagged New (the person had no such
+  fact) or Differs (they had one with another value, shown beside it), and names
+  its record with the link strength of each person on it. Its link opens the record
+  on FamilySearch, where the researcher can attach it; nothing here writes to the
+  tree. A research-added person with no `confident` link is listed as a possible
+  relative.
 - **People:** the family drawn as parents, couple and children, with
-  research-added people marked. A person's page is their life in time order, each
-  fact with the evidence behind it and how strongly it is linked, the gaps, and any
+  research-added people marked, each labelled by relationship to the question's
+  subject ("Mary's son"). A person's page is their life in time order, each fact
+  with the evidence behind it and how strongly it is linked, the gaps, and any
   namesakes they are not.
-- **Sources:** every source with its full citation and classification. The pane
-  shows the page image beside its transcription, and what was drawn from it.
+- **Sources,** in three groups:
+  - **Direct mentions:** every record with its full citation and classification,
+    and a chip per person with their link strength. There is no confidence badge per
+    source: the same register can be confident for the child and speculative for the
+    mother. The pane shows the page image beside its transcription, then the record's
+    findings as labelled facts.
+  - **Leads:** the list from The case.
+  - **Background:** the locality guides and outside collections.
 - **Log:** every search in time order in plain words, filterable by question and
   outcome, opening its results.
-- **Places:** the locality guides and outside collections.
 
 Every one of today's 15 sections has a home here. Gone: the schema-order
 sidebar, collapsed cards, raw ids, enum text, empty tabs, the researcher-profile
@@ -170,22 +189,23 @@ from it, and an unannotated tool defaults to "not read-only".
 - **`show_project`** — visible to the model. Input (camelCase): optional
   `projectPath`; `show`, one of `setup`, `plan`, `search`, `link`, `conflict`,
   `hypothesis`, `assess`, `conclusion`, `latest` (the newest step card, for "where
-  are we") or `file`; and optional `page` (`case`, `people`, `sources`, `log`,
-  `places`), `questionId`, `logId`, `personId`, `planItemId`, `sourceId`.
+  are we") or `file`; and optional `page` (`case`, `compare`, `people`, `sources`,
+  `log`), `questionId`, `logId`, `personId`, `planItemId`, `sourceId`.
   - `_meta.ui.resourceUri: "ui://genealogy/viewer.html"`. The description tells
     the model that the researcher sees the card and it must not restate it.
   - **Result shape.** Claude Code, and so Cowork, gives the model a result's
     `structuredContent` in place of its `content`, so `structuredContent` is
     omitted and `content` is one line for the model. The result's `_meta` under
-    `genealogy/project` carries `research`, `tree`, `collections` and `derived`.
-    A card is therefore a true snapshot of the project at that step.
+    `genealogy/project` carries `research`, `tree`, `startingTree`, `collections`
+    and `derived`. A card is therefore a true snapshot of the project at that step.
   - **`derived`** is what only the engine can compute: question states
     (`questionStatus`), unregistered disagreements, hand-offs awaiting the
     researcher, the tree changes from `treeDiff` against the starting tree, and the
     live evaluation's notes.
 - **`read_project_view`** — `_meta.ui.visibility: ["app"]`, so the model never
   sees it. The card calls it with the same project rule and `part`, `id`:
-  - `document`: the current `research`, `tree`, `collections` and `derived`;
+  - `document`: the current `research`, `tree`, `startingTree`, `collections` and
+    `derived`;
   - `results`: one results file by log id;
   - `image`: `id` is a source's `image_filename` ref (`images/<name>.jpg`), signed
     only if it matches `^images/[A-Za-z0-9._-]+\.jpg$` (Electron's
@@ -259,8 +279,13 @@ from it, and an unannotated tool defaults to "not read-only".
     each claim shows as a row with its label and its own tier.
   - **The reviewer** is the evaluation whose `target_id` is the proof and whose
     `superseded_by` is null. A missing notes file falls back to the verdict alone.
-  - **Not searched:** each `not_reached` entry's kind (labelled), its `description`
-    under the prose rule, and its `wiki_title` when present.
+  - **Retired rows never show:** assertions and person-evidence links with a
+    non-null `superseded_by` are left out everywhere.
+  - **Link strength** is the stored `confidence` in words, per person, never per
+    source.
+  - **Leads:** each `not_reached` entry's kind (labelled), its `description` under
+    the prose rule, and its `wiki_title` when present; the overturn risk is the
+    opening line of `search_stop.justification`.
   - **What the conclusion changed:** `derived`'s tree changes, kept only where they
     touch a person linked by person-evidence to one of the proof's supporting
     assertions. With no starting tree, the line is omitted.
@@ -300,6 +325,10 @@ call `show_project` with the step, then the reply. The tool is found by bare nam
 - **Under Decision 3's fallback:** lines only for setup, search, conflict,
   hypothesis and conclusion, plus a link line only when the link step ends on a
   question for the researcher (no "Continue with …?" line).
+- **A readable report** is one more line in the router's bounded-request list:
+  "write this up" produces a Word or PDF file in Cowork from the proof summary, the
+  family and the sources. It adds no claims and keeps the rating, the reviewer's
+  verdict, what does not fit and what was not searched. No viewer code.
 
 ## Local testing
 
@@ -327,8 +356,10 @@ before pushing, with no tunnel and no connector.
 - **Tests:** the McAndrew capture (`docs/captures/2026-09-29-mcandrew-children`)
   and the committed e2e end states
   (`eval/runlogs/e2e/<fixture>/run-*.final-research.json` with its
-  `.final-tree.gedcomx.json`). They have no `results/`, `images/` or
-  `evaluations/`. The reviewer's notes are tested over the three fixtures that pair
+  `.final-tree.gedcomx.json`), with `eval/tests/e2e/<fixture>/starting-tree.gedcomx.json`
+  as the starting tree. The McAndrew capture and `william-ferber-ancestry` have
+  none, so Compare and the tree-change line are omitted for them. They have no
+  `results/`, `images/` or `evaluations/`. The reviewer's notes are tested over the three fixtures that pair
   a research.json with an evaluation file:
   `eval/fixtures/scenarios/compound-objective-fully-covered`,
   `compound-objective-part-unframed` and `flynn-prior-craft-verdict`.
@@ -359,8 +390,7 @@ is the everyday development loop. Then, in a Cowork task:
    installed.
 2. **Local:** the same server over stdio as a local server, to see whether a local
    card renders in Cowork today.
-3. **Artifact,** only if the connector leg's card does not render: a small
-   artifact calling the connector's read tool.
+3. **Artifact:** a small artifact calling the connector's read tool.
 
 Record, in `docs/mcp-app-host-probe.md`:
 - does a card render on each route; the client's declared extensions;
@@ -380,8 +410,8 @@ Record, in `docs/mcp-app-host-probe.md`:
 - is `ui/update-model-context` available;
 - can a connector be turned off for one Cowork task (the help centre documents a
   per-conversation toggle);
-- if the artifact leg runs: does it open beside a Cowork task, can it call the
-  connector's read tool, and can it reach a `visibility: ["app"]` tool;
+- does an artifact open beside a Cowork task, can it call the connector's read
+  tool, and can it reach a `visibility: ["app"]` tool;
 - is the `projectPath` the model passes in Cowork readable on the Mac.
 
 **Done when:** every item above has a recorded answer, and the server's tests
@@ -404,18 +434,20 @@ pass, each with a stub page HTML:
 - with `--local`, the page is served at `/<secret>/` and nowhere else, and without
   it that path is 404.
 
-### M1 — The designer demo (12–14 days)
+### M1 — The designer demo (14–16 days)
 
-- The **setup, search and conclusion cards**, plus `latest`.
-- The case file's shell, right-hand pane and search box; **The case** page with
-  the evidence grid; a record's search results and its page image with
-  transcription in the pane.
+- The **setup, search and conclusion cards**, plus `latest`. The conclusion card's
+  two actions are "Open the case file" and "Compare with FamilySearch".
+- The case file's shell, right-hand pane and search box; **The case** with So far,
+  the evidence grid and Leads; **Compare with FamilySearch**; a record's search
+  results, and its page image with transcription and findings, in the pane.
 - The display rules, including FamilySearch links.
 - **The demo script,** in a Cowork task, with the server's `--root` at the demo
   project: "Where does the research stand?" → the conclusion card with its recorded
   doubt → open the case file → the evidence grid → click an indexed record's column
   → the search that returned it, in the pane → click the browsed record's column →
-  its page image beside the transcription. Light and dark. Then a live run with the
+  its page image beside the transcription → Compare with FamilySearch. Light and
+  dark. Then a live run with the
   variant plugin calling the three cards. If M0 shows cards do not render in Cowork
   but an artifact does, the case file runs as an artifact and the cards are shown
   in Desktop chat.
@@ -427,8 +459,9 @@ pass, each with a stub page HTML:
   `transcription`, and at least one supporting assertion's `record_id` appears in
   the results file of a `record_search` log entry under `results/`;
 - the demo script runs end to end on the demo project;
-- the three cards and The case render over the McAndrew capture and every
-  committed e2e end state without error;
+- the three cards, The case and Compare render over the McAndrew capture and every
+  committed e2e end state without error, The case shows So far on a project with no
+  proof summary, and a planted retired assertion and retired link appear nowhere;
 - the id check passes on all of that rendered text, and is shown failing on planted
   shapes (`S28` in a citation, `I19` in a name, an internal id inside a sentence, a
   raw `ark:/61903/…`, a bare tree person id) and passing names and dates that
@@ -444,26 +477,29 @@ pass, each with a stub page HTML:
 
 Plan, link (with the identity question side by side when it asks one), conflict,
 hypothesis, assess. The variant plugin gains the remaining router lines, or under
-Decision 3's fallback only conflict, hypothesis and the conditional link line.
+Decision 3's fallback only conflict, hypothesis and the conditional link line, and
+the report line.
 
-**Done when:** each card renders over the end states that reach that step, and all
-eight show in a live Cowork run, or under the fallback the run shows the cards it
-calls and a typed `show_project` shows plan and assess.
+**Done when:** each card renders over the end states that reach that step, all
+eight show in a live Cowork run (under the fallback, the run shows the cards it
+calls and a typed `show_project` shows plan and assess), and "write this up" on the
+demo project produces a file that carries the rating and the reviewer's verdict.
 
 ### M3 — The rest of the case file (8–10 days)
 
-People, Sources, Log and Places, and `show_project` opening each page by id.
+People, Sources and Log, and `show_project` opening each page by id.
 
 **Done when:** each page renders over the committed end states without error and
 on the demo project, every one of today's 15 sections has its content reachable,
 and the reviewer's notes show on the three evaluation fixtures and the verdict
 alone where the file is absent.
 
-**Total:** roughly 6–7 weeks of the lead's time, M0 through M3.
+**Total:** roughly 7 weeks of the lead's time, M0 through M3.
 
 ## Later
 
-Fetching unsaved page images from FamilySearch; a "Looks odd" check (better as an
+Fetching unsaved page images from FamilySearch; people labelled by relationship to
+the signed-in user ("your great-grandfather"); a "Looks odd" check (better as an
 engine check the agents also see); posting buttons of any kind.
 
 ## If adopted
