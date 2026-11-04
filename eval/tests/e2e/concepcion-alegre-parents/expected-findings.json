@@ -14,7 +14,7 @@
         "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera (ark:/61903/1:1:X9PK-5YNN)",
         "San Lorenzo de Altos parish marriage register, folio 222-223, act of 11 May 1940 (ark:/61903/3:1:33SQ-GRG8-9G8C)"
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f2",
@@ -30,7 +30,7 @@
         "Paraguay, Catholic Church Records, 1754-2015 — marriage entry, 11 May 1940, San Lorenzo, Altos, Cordillera (ark:/61903/1:1:X9PK-5YNN)",
         "San Lorenzo de Altos parish marriage register, folio 222-223, act of 11 May 1940 (ark:/61903/3:1:33SQ-GRG8-9G8C)"
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f3",

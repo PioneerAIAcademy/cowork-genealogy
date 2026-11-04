@@ -36,7 +36,7 @@
         "Norway, Church Books, 1797-1958 — burial entry for Christian Frederik Birkeland, 31 Dec 1883",
         "Norway, Burials, 1666-1927 — Christian Frederick H. Birkeland, 1883"
       ],
-      "required": true
+      "required": false
     }
   ]
 }
