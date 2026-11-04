@@ -1967,19 +1967,26 @@ an **anchor**. Anchors are the persons the project did not mint:
   (`pidOrStartingPerson`);
 - a person carrying an attachment link (`isAttachmentLink`);
 - a `project.subject_person_ids` entry;
-- a person `timelines`, `proof_summaries` claims or `namesakes` name.
+- a person `timelines`, `proof_summaries` claims, `namesakes` or
+  `warning_justifications` name;
+- a person whose `person_evidence` links are the last proof-gate links
+  (`countsForProofGate`) behind a proof summary above `not_proved`. Without it,
+  `unlinkedProofInvariants` would refuse every later write to that summary, and
+  person-evidence could not relink a person that no longer exists.
 
 With the removed persons go every relationship touching one, and every
 `person_evidence` and `rejected_links` entry naming one, so no reference
-dangles. Sources, assertions and log entries stay. With no anchor among the tree
+dangles: the 2026-09-30 "keep the rejection memory" rule does not outlive the
+person it names. Sources, assertions and log entries stay. With no anchor among the tree
 persons, nothing is removed: every person would read as minted. The tool result
-carries one `validation.warnings` line naming the removed persons and counting
-the relationships and links, so the agent can tell the researcher. There is no
+carries one `validation.warnings` line naming each removed person by id and
+name and counting the relationships and links, so the agent can tell the researcher. There is no
 undo field; restoring a person means re-adding it from its record.
 
 Code: `src/utils/unanchored-persons.ts`, called from `researchAppend` before
-validation, so the removal is validated and written with the call
-(`closesLastOpenQuestion`). Decided by the lead, 2026-11-04. Measured on the 31
+the namesake judgement and validation, so both read the documents the call
+writes, and the removal is written with the call (`closesLastOpenQuestion`). A
+fact-rewrite rollback (§4) does not drop it. Decided by the lead, 2026-11-04. Measured on the 31
 e2e runs dated October 2026 (final tree and research, these anchor rules): 15
 ended with every question resolved, and in 6 of them the rule removes 17
 persons. The only `research.json` entries naming those persons are 91

@@ -6086,14 +6086,14 @@ export function closesLastOpenQuestion(before: any, after: any): boolean {
 /** The result line naming what the removal took, so the agent can tell the
  *  researcher. */
 function unanchoredRemovalMessage(removed: UnanchoredRemoval): string {
-  const parts = [`${removed.personIds.length} person(s) (${removed.personIds.join(", ")})`];
-  if (removed.relationshipIds.length > 0) parts.push(`${removed.relationshipIds.length} relationship(s)`);
-  if (removed.personEvidenceIds.length > 0) parts.push(`${removed.personEvidenceIds.length} person_evidence link(s)`);
-  if (removed.rejectedLinkIds.length > 0) parts.push(`${removed.rejectedLinkIds.length} rejected_links entr(ies)`);
+  const parts = [`${removed.persons.length} person(s): ${removed.persons.map((p) => `${p.id} ${p.name}`.trim()).join(", ")}`];
+  if (removed.relationshipCount > 0) parts.push(`${removed.relationshipCount} relationship(s)`);
+  if (removed.personEvidenceCount > 0) parts.push(`${removed.personEvidenceCount} person_evidence link(s)`);
+  if (removed.rejectedLinkCount > 0) parts.push(`${removed.rejectedLinkCount} rejected_links entr(ies)`);
   return (
     `the last open question is resolved, so the minted persons no relationship connects to an ` +
-    `imported person were removed from the tree: ${parts.join(", ")}. Tell the researcher which ` +
-    `persons were removed.`
+    `imported person were removed from the tree: ${parts.join("; ")}. Tell the researcher, by ` +
+    `name, which persons were removed.`
   );
 }
 
@@ -11077,6 +11077,20 @@ export async function researchAppend(
 
     await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(readSidecar));
 
+    // When this call resolves the project's last open question, the minted
+    // persons no edge connects to an imported person go, with the links that
+    // name them (lead ruling, 2026-11-04, issue #3032). Before the namesake
+    // judgement, so it reads the documents this call writes.
+    const removalWarnings: string[] = [];
+    let removedPersons = false;
+    if (closesLastOpenQuestion(beforeResearch, research)) {
+      const unanchored = unanchoredMintedPersonIds(tree, research, (id) => pidOrStartingPerson(id, prep.startingPersonIds));
+      if (unanchored.length > 0) {
+        removalWarnings.push(unanchoredRemovalMessage(removeUnanchoredPersons(tree, research, unanchored)));
+        removedPersons = true;
+      }
+    }
+
     // The namesake cap (issue #3363), judged once on the call's end state, so op
     // order cannot matter: a link and the row, assertion or tie it depends on
     // may arrive in any order within the call.
@@ -11086,21 +11100,9 @@ export async function researchAppend(
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.
-    let treeMutated = prep.treeMutated || rewrite.mutated || retire.mutated;
+    let treeMutated = prep.treeMutated || rewrite.mutated || retire.mutated || removedPersons;
     let rewriteWarnings = [...rewrite.warnings, ...rewrite.mutationWarnings];
 
-    // When this call resolves the project's last open question, the minted
-    // persons no edge connects to an imported person go, with the links that
-    // name them (lead ruling, 2026-11-04, issue #3032).
-    const removalWarnings: string[] = [];
-    if (closesLastOpenQuestion(beforeResearch, research)) {
-      const unanchored = unanchoredMintedPersonIds(tree, research, (id) => pidOrStartingPerson(id, prep.startingPersonIds));
-      if (unanchored.length > 0) {
-        const removed = removeUnanchoredPersons(tree, research, unanchored);
-        treeMutated = true;
-        removalWarnings.push(unanchoredRemovalMessage(removed));
-      }
-    }
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
     // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
@@ -11190,7 +11192,7 @@ export async function researchAppend(
         const retry = await validateIntroduced({ research: beforeResearch, tree: beforeTree }, { research, tree }, { projectPath });
         if (retry.valid) {
           validation = retry;
-          treeMutated = prep.treeMutated || retire.mutated;
+          treeMutated = prep.treeMutated || retire.mutated || removedPersons;
           // The mutation half described a tree change that no longer exists.
           rewriteWarnings = [
             ...rewrite.warnings,

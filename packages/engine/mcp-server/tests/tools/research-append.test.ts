@@ -7441,7 +7441,7 @@ describe("research_append (project singleton section)", () => {
       const after = await readResearch();
       expect(after.person_evidence.map((pe: any) => pe.id)).toEqual(["pe_001"]);
       expect(after.questions[0].status).toBe("resolved");
-      expect(r.validation.warnings.join("\n")).toMatch(/2 person\(s\) \(I3, I4\), 1 relationship\(s\), 2 person_evidence link\(s\)/);
+      expect(r.validation.warnings.join("\n")).toMatch(/2 person\(s\): I3 Josef Smith, I4 Marie Smith; 1 relationship\(s\); 2 person_evidence link\(s\)/);
     });
 
     it("anchors on a FamilySearch id with no starting tree", async () => {
