@@ -1962,3 +1962,11 @@ def test_the_exact_date_sources_alone_are_not_flagged():
         "Find a Grave independently lists 31 January 1839. The profile's 30 November 1838 disagrees.\n"
     )
     assert _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES) == []
+
+
+def test_a_sentence_reporting_the_ranges_is_not_a_flag():
+    text = (
+        "Birth date - conflicts\n\n"
+        "- The 1850, 1865, and 1910 censuses all produce birthRanges of 1838-1839 from the recorded age.\n"
+    )
+    assert _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES) == []

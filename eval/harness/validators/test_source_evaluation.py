@@ -1311,6 +1311,8 @@ _AGE_DENIED_RE = re.compile(
     r"|ordinary (?:census )?variance|\(cd\)|census drift",
     re.IGNORECASE,
 )
+# A prose clause that merely reports the age-derived range is not a flag.
+_AGE_RANGE_RE = re.compile(r"birth ?ranges?|bet(?:ween)? 1838|1838\s*[-–—]\s*1839", re.IGNORECASE)
 _AGE_BLOCK_WORDS = r"conflict|discrepan|error|finding|disagree|mismatch|inconsisten"
 # Reports that fault the profile's year against "every source" without naming the
 # census or index: the claim is about all of them, the age-derived ones included.
@@ -1411,6 +1413,8 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
                 # A parenthetical right after the source belongs to it.
                 scope = clause + " " + (clauses[ci + 1] if ci + 1 < len(clauses) else "")
                 if not hits or _AGE_DENIED_RE.search(scope):
+                    continue
+                if _AGE_RANGE_RE.search(clause) and not re.search(r'\[\s*conf', clause, re.IGNORECASE):
                     continue
                 about_birth = re.search(r"\bbirth\b", sentence, re.IGNORECASE)
                 if (about_birth and _AGE_CONFLICT_WORD_RE.search(sentence)) or (
