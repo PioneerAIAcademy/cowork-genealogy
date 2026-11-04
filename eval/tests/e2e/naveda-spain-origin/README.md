@@ -1,4 +1,4 @@
-# Francisco Naveda Somarriba — Spanish origin
+# Francisco Naveda Somarriba — parents
 
 **Source PID:** `PID-TODO`
 **Francisco Naveda Somarriba is deceased.** (FamilySearch ToS requires
@@ -6,7 +6,8 @@ all committed e2e fixtures to be about deceased persons.)
 
 ## Research question
 
-> Where in Spain was Francisco Naveda Somarriba born or baptized?
+> Who were the parents of Francisco Naveda Somarriba, a native of Spain
+> living in Papantla, Veracruz, Mexico circa 1862?
 
 ## What was removed from the starting tree
 
@@ -51,15 +52,23 @@ Santillana del Mar) is image-only with incomplete indexing.
 **2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
 two independent facts (his birthplace/baptism, and his parents): "Where in
 Spain was Francisco Naveda Somarriba born or baptized, and who were his
-parents?" Reworded `researcher_question` to the baptism/birthplace only;
-demoted `f2` and `f3` (his two parents, one fact) to `required: false`, so a
-run that recovers them anyway still gets credit. No finding wording changed.
-This fixture's one annotation carries no `findings_hash`, so it is
-grandfathered and needs no re-grading.
+parents?" First reworded to the baptism/birthplace only; corrected on review
+(EdmondOware, 2026-11-04) to the parents instead, matching
+`tags.question_type` ("parents") and the 2-of-3 majority of required findings
+on main (f2, f3 for the parents against f1 for the baptism) — the same two
+signals already used to pick the primary fact on `cruz-corona-ancestry` and
+`elena-asmundsdotter-origin` in #4235/#4143 point here to parents, not
+baptism. Reworded `researcher_question` to "Who were the parents of Francisco
+Naveda Somarriba, a native of Spain living in Papantla, Veracruz, Mexico circa
+1862?", keeping the Papantla/1862 detail that identifies which Francisco is
+meant. Demoted `f1` (baptism) to `required: false` instead; `f2`/`f3` (his
+parents) are required again. No finding wording changed. This fixture's one
+annotation carries no `findings_hash`, so it is grandfathered and needs no
+re-grading.
 
-One required finding now: the baptism place/date in Limpias (f1). Four bonus
-findings: the father Juan de Naveda (f2, required:false), the mother Maria
-Somarriba Gonzalez (f3, required:false), the sister Balentina/Valentina (f4,
+Required findings now: the father Juan de Naveda (f2) and the mother Maria
+Somarriba Gonzalez (f3). Three bonus findings: the baptism place/date in
+Limpias (f1, required:false), the sister Balentina/Valentina (f4,
 required:false), and the paternal grandparents Luis de Naveda and Maria Cruz
 Somarriba (f5, required:false). Grade on recovered facts; the agent may cite
 the sister's baptism or marriage record as the evidence path rather than
