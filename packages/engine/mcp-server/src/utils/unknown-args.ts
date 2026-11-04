@@ -10,6 +10,7 @@ import { allToolSchemas } from "../tool-schemas.js";
 import { RECORD_TYPE_GROUP_NAMES } from "./record-type-groups.js";
 import {
   PERSON_READ_REF_REMOVED,
+  PROJECT_TREE_REMOVED,
   RETIRED_EXTRACTION_KEYS,
   retiredExtractionMessage,
   SECTIONS_NEAR_MISS,
@@ -113,10 +114,15 @@ const HINTS: Readonly<Record<string, Hint>> = {
   // `update_fact`): the redirect, not a nearest-parameter line per key.
   tree_edit: (unknown, args) => crossToolOp(unknown, args, "tree_correct", treeEditRejection),
   tree_correct: (unknown, args) => crossToolOp(unknown, args, "tree_edit", treeCorrectRejection),
-  project_create: (unknown) =>
-    unknown.some(([k]) => k === "personReadRef")
-      ? { message: PERSON_READ_REF_REMOVED, covers: ["personReadRef"] }
-      : null,
+  project_create: (unknown) => {
+    const removed = unknown.map(([k]) => k).filter((k) => k === "personReadRef" || k === "tree");
+    if (removed.length === 0) return null;
+    const message = [
+      ...(removed.includes("tree") ? [PROJECT_TREE_REMOVED] : []),
+      ...(removed.includes("personReadRef") ? [PERSON_READ_REF_REMOVED] : []),
+    ].join(" ");
+    return { message, covers: removed };
+  },
   research_query: (unknown) =>
     unknown.some(([k]) => k === "sections")
       ? { message: `research_query has no parameter \`sections\`. ${SECTIONS_NEAR_MISS}`, covers: ["sections"] }

@@ -13,6 +13,7 @@ import {
 } from "../../src/store/pg-s3-project-store.js";
 import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
 import { protoBackendOptions } from "../store/pg-s3-test-env.js";
+import { logArgs, seedProject } from "../helpers/seed-project.js";
 
 // The HTTP server with the real per-request store and the real project check —
 // the factories build/http.js installs — against the compose postgres + minio:
@@ -133,26 +134,9 @@ if (!DSN || !ENDPOINT) {
       .join("");
   }
 
-  function createArgs(given: string): Record<string, unknown> {
-    return {
-      projectPath: ANCHOR,
-      objective: "Does the project header reach Postgres?",
-      title: `pg ${given}`,
-      subjectPersonIds: ["P1"],
-      tree: {
-        persons: [
-          {
-            id: "P1",
-            gender: "Male",
-            names: [{ id: "N1", preferred: true, given, surname: "Person", type: "BirthName" }],
-            facts: [{ id: "F1", type: "Birth", primary: true, date: "1850", place: "Nowhere" }],
-          },
-        ],
-        relationships: [],
-        sources: [],
-      },
-    };
-  }
+  /** Seed project `id` through the store the server binds for it. */
+  const seed = (id: string, given: string) =>
+    seedProject(new PgS3ProjectStore(backend, { projectId: id, anchorPath: ANCHOR }), ANCHOR, given);
 
   async function personNames(client: Client): Promise<string[]> {
     const result = await client.callTool({ name: "project_context", arguments: { projectPath: ANCHOR } });
@@ -272,16 +256,18 @@ if (!DSN || !ENDPOINT) {
       const tokA = `tok-${randomUUID()}`;
       const tokB = `tok-${randomUUID()}`;
       const [turnA, turnB] = await Promise.all([seedTurn(idA, tokA), seedTurn(idB, tokB)]);
+      await Promise.all([seed(idA, "Alpha"), seed(idB, "Beta")]);
+      bindStore.mockClear();
       const [a, b] = await Promise.all([
         connect({ projectId: idA, turnId: turnA, bearer: tokA }),
         connect({ projectId: idB, turnId: turnB, bearer: tokB }),
       ]);
-      const [createdA, createdB] = await Promise.all([
-        a.callTool({ name: "project_create", arguments: createArgs("Alpha") }),
-        b.callTool({ name: "project_create", arguments: createArgs("Beta") }),
+      const [loggedA, loggedB] = await Promise.all([
+        a.callTool({ name: "research_log_append", arguments: logArgs(ANCHOR, "Alpha") }),
+        b.callTool({ name: "research_log_append", arguments: logArgs(ANCHOR, "Beta") }),
       ]);
-      expect(createdA.isError, textOf(createdA)).not.toBe(true);
-      expect(createdB.isError, textOf(createdB)).not.toBe(true);
+      expect(loggedA.isError, textOf(loggedA)).not.toBe(true);
+      expect(loggedB.isError, textOf(loggedB)).not.toBe(true);
 
       const [namesA, namesB] = await Promise.all([personNames(a), personNames(b)]);
       expect(namesA.some((n) => n.includes("Alpha"))).toBe(true);
@@ -291,8 +277,9 @@ if (!DSN || !ENDPOINT) {
 
       expect(new Set(bindStore.mock.calls.map(([id]) => id))).toEqual(new Set([idA, idB]));
 
-      // project_create writes three refs; every .json ref outside the blob
-      // roots routes to `documents`, so each id owns exactly these three rows.
+      // The seed wrote three refs and the log write rewrote one; every .json ref
+      // outside the blob roots routes to `documents`, so each id owns exactly
+      // these three rows.
       for (const id of [idA, idB]) {
         const rows = await backend.pool.query("SELECT name FROM documents WHERE project_id = $1 ORDER BY name", [
           id,
@@ -302,11 +289,11 @@ if (!DSN || !ENDPOINT) {
           "starting-tree.gedcomx.json",
           "tree.gedcomx.json",
         ]);
-        const tree = await backend.pool.query(
-          "SELECT doc FROM documents WHERE project_id = $1 AND name = 'tree.gedcomx.json'",
+        const research = await backend.pool.query(
+          "SELECT doc FROM documents WHERE project_id = $1 AND name = 'research.json'",
           [id],
         );
-        expect(tree.rows[0].doc.persons[0].names[0].given).toBe(id === idA ? "Alpha" : "Beta");
+        expect(research.rows[0].doc.log.map((e: any) => e.query.givenName)).toEqual([id === idA ? "Alpha" : "Beta"]);
       }
     });
 
@@ -324,6 +311,7 @@ if (!DSN || !ENDPOINT) {
         idB = newProject();
         turnA = await seedTurn(idA, tokA);
         turnB = await seedTurn(idB, tokB);
+        await seed(idA, "Owner");
         // B already holds a document, a blob and a staged result.
         const storeB = new PgS3ProjectStore(backend, { projectId: idB, anchorPath: ANCHOR });
         await storeB.writeJson(ANCHOR, "notes.json", { owner: "B" });
@@ -335,7 +323,7 @@ if (!DSN || !ENDPOINT) {
         const before = await rowCounts(idB);
         expect(before).toEqual({ documents: 1, blobs: 1, staging: 1 });
         bindStore.mockClear();
-        const r = await call({ projectId: idB, turnId: turnA, bearer: tokA }, "project_create", createArgs("Intruder"));
+        const r = await call({ projectId: idB, turnId: turnA, bearer: tokA }, "research_log_append", logArgs(ANCHOR, "Intruder"));
         expect(r.status, r.text).toBe(403);
         expect(JSON.parse(r.text)).toEqual(FORBIDDEN_ATTEMPT);
         expect(r.text).not.toContain(tokA);
@@ -347,21 +335,21 @@ if (!DSN || !ENDPOINT) {
       // write and B's project.
       it("A's bearer on B's turn and B's project: 403, and nothing is written", async () => {
         const before = await rowCounts(idB);
-        const r = await call({ projectId: idB, turnId: turnB, bearer: tokA }, "project_create", createArgs("Intruder"));
+        const r = await call({ projectId: idB, turnId: turnB, bearer: tokA }, "research_log_append", logArgs(ANCHOR, "Intruder"));
         expect(r.status, r.text).toBe(403);
         expect(JSON.parse(r.text)).toEqual(FORBIDDEN_ATTEMPT);
         expect(await rowCounts(idB)).toEqual(before);
       });
 
       it("A on A: 200, and the write lands", async () => {
-        const r = await call({ projectId: idA, turnId: turnA, bearer: tokA }, "project_create", createArgs("Owner"));
+        const r = await call({ projectId: idA, turnId: turnA, bearer: tokA }, "research_log_append", logArgs(ANCHOR, "Owner"));
         expect(r.status, r.text).toBe(200);
         expect(r.text).not.toContain('"isError":true');
-        const tree = await backend.pool.query(
-          "SELECT doc FROM documents WHERE project_id = $1 AND name = 'tree.gedcomx.json'",
+        const research = await backend.pool.query(
+          "SELECT doc FROM documents WHERE project_id = $1 AND name = 'research.json'",
           [idA],
         );
-        expect(tree.rows[0]?.doc.persons[0].names[0].given).toBe("Owner");
+        expect(research.rows[0]?.doc.log.map((e: any) => e.query.givenName)).toEqual(["Owner"]);
       });
 
       it("an unknown bearer: 403", async () => {

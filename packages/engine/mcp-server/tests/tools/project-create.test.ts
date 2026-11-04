@@ -20,17 +20,36 @@ import { tmpdir } from "os";
 import {
   HOUSE_RESEARCHER_PROFILE,
   nameForId,
-  projectCreate as projectCreateAs,
   runProjectCreate,
   type ProjectCreateDeps,
 } from "../../src/tools/project-create.js";
+import { PERSON_ID_REQUIRED, PROJECT_TREE_REMOVED } from "../../src/utils/tool-hint-messages.js";
 import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
 import { runWithProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 
-/** The hand-built path never reads FamilySearch; `LOCAL` is the principal it is
- *  given, as the stdio dispatcher binds it. */
-const projectCreate = (input: Record<string, unknown>) => projectCreateAs(input as never, LOCAL);
+/** A one-person read of KWCJ-RN4, as `readPerson` returns it. */
+const ONE_PERSON = {
+  persons: [{ id: "KWCJ-RN4", gender: "Male", names: [{ preferred: true, given: "Patrick", surname: "Flynn" }] }],
+  relationships: [] as unknown[],
+  sources: [] as unknown[],
+};
+/** How many reads the module's `projectCreate` made. */
+let oneReads = 0;
+/** `project_create` served `read` (default `ONE_PERSON`) as the FamilySearch
+ *  read, with `personId` KWCJ-RN4 unless the input names another. `LOCAL` is
+ *  the principal, as the stdio dispatcher binds it. */
+const projectCreate = (input: Record<string, unknown>, read: unknown = ONE_PERSON) =>
+  runProjectCreate(
+    { personId: "KWCJ-RN4", ...input } as never,
+    {
+      readPerson: async (id) => {
+        oneReads++;
+        return { result: structuredClone(read) as never, resolvedId: id.toUpperCase(), memoryKinds: {} };
+      },
+    },
+    LOCAL,
+  );
 
 /**
  * `project_create` is the only route by which a project comes into existence.
@@ -45,12 +64,12 @@ const projectCreate = (input: Record<string, unknown>) => projectCreateAs(input 
  * overwrite one that exists, and does a rejected create leave nothing behind.
  */
 
-const SUBJECT = {
-  id: "I1",
-  gender: "Male",
-  names: [{ id: "N1", preferred: true, given: "Patrick", surname: "Flynn" }],
-};
-const TREE_SOURCE = { id: "S1", title: "FamilySearch Family Tree" };
+/** ONE_PERSON with `facts` on Patrick, and `more` added to the read. */
+const readWith = (facts: unknown[], more: { persons?: unknown[]; relationships?: unknown[] } = {}) => ({
+  persons: [{ ...ONE_PERSON.persons[0], facts }, ...(more.persons ?? [])],
+  relationships: more.relationships ?? [],
+  sources: [],
+});
 
 describe("project_create", () => {
   let dir: string;
@@ -72,31 +91,23 @@ describe("project_create", () => {
 
   // ── The headline case ────────────────────────────────────────────────────
 
-  it("refuses a starting tree carrying a forged assertion_id (#2472)", async () => {
-    // This tool copies the caller's tree verbatim and the document validator
-    // type-checks `assertion_id` without knowing it was forged, so it was the
-    // one unguarded fact write path. A forged backlink would persist into BOTH
-    // tree.gedcomx.json and the write-once starting-tree baseline, after which
-    // research_append rewrites a hand-entered fact from an assertion it never
-    // came from. `tree_edit` refuses the same thing on its four paths.
+  it("refuses a read carrying a forged assertion_id (#2472)", async () => {
+    // This tool copies the read's facts as given, and the document validator
+    // type-checks `assertion_id` without knowing it was forged. A forged
+    // backlink would persist into BOTH tree.gedcomx.json and the write-once
+    // starting-tree baseline, after which research_append rewrites a fact from
+    // an assertion it never came from. `tree_edit` refuses the same thing.
     for (const holderKey of ["persons", "relationships"] as const) {
-      const fact = { id: "F1", type: "Birth", date: "1850", assertion_id: "a_011" };
-      const tree =
+      const fact = { type: "Birth", date: "1850", assertion_id: "a_011" };
+      const read =
         holderKey === "persons"
-          ? { persons: [{ ...SUBJECT, facts: [fact] }], relationships: [], sources: [TREE_SOURCE] }
-          : {
-              persons: [SUBJECT, { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Doyle" }] }],
-              relationships: [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [{ ...fact, type: "Marriage" }] }],
-              sources: [TREE_SOURCE],
-            };
+          ? readWith([fact])
+          : readWith([], {
+              persons: [{ id: "KWCJ-RN5", gender: "Female", names: [{ given: "Mary", surname: "Doyle" }] }],
+              relationships: [{ type: "Couple", person1: "KWCJ-RN4", person2: "KWCJ-RN5", facts: [{ ...fact, type: "Marriage" }] }],
+            });
 
-      const r = await projectCreate({
-        projectPath: dir,
-        objective: "Identify the parents of Patrick Flynn",
-        title: "Patrick Flynn's parents",
-        subjectPersonIds: ["I1"],
-        tree,
-      } as never);
+      const r: any = await projectCreate({ projectPath: dir, objective: "Identify the parents of Patrick Flynn" }, read);
 
       expect(r.ok, holderKey).toBe(false);
       expect(JSON.stringify(r), holderKey).toMatch(/`assertion_id` on a fact of/);
@@ -105,18 +116,11 @@ describe("project_create", () => {
     }
   });
 
-  it("still accepts a starting tree whose facts carry no backlink", async () => {
-    const r = await projectCreate({
-      projectPath: dir,
-      objective: "Identify the parents of Patrick Flynn",
-      title: "Patrick Flynn's parents",
-      subjectPersonIds: ["I1"],
-      tree: {
-        persons: [{ ...SUBJECT, facts: [{ id: "F1", type: "Birth", date: "1850" }] }],
-        relationships: [],
-        sources: [TREE_SOURCE],
-      },
-    } as never);
+  it("still accepts a read whose facts carry no backlink", async () => {
+    const r = await projectCreate(
+      { projectPath: dir, objective: "Identify the parents of Patrick Flynn" },
+      readWith([{ type: "Birth", date: "1850" }]),
+    );
     expect(r.ok).toBe(true);
   });
 
@@ -125,8 +129,6 @@ describe("project_create", () => {
       projectPath: dir,
       objective: "Identify the parents of Patrick Flynn",
       title: "Patrick Flynn's parents",
-      subjectPersonIds: ["I1"],
-      tree: { persons: [SUBJECT], relationships: [], sources: [TREE_SOURCE] },
     });
 
     expect(r.ok).toBe(true);
@@ -136,7 +138,7 @@ describe("project_create", () => {
       "research.json",
       "starting-tree.gedcomx.json",
     ]);
-    expect(r.counts).toEqual({ persons: 1, relationships: 0, sources: 1 });
+    expect(r.counts).toEqual({ persons: 1, relationships: 0, sources: 1, memorySources: 0 });
 
     const research = await readResearch();
     expect(research.project.objective).toBe("Identify the parents of Patrick Flynn");
@@ -157,12 +159,7 @@ describe("project_create", () => {
     // against this baseline. It must be written, and it must equal the opening
     // tree byte-for-byte content — not a re-derived or empty document — or the
     // gate would compare against the wrong starting point.
-    await projectCreate({
-      projectPath: dir,
-      objective: "Identify the parents of Patrick Flynn",
-      subjectPersonIds: ["I1"],
-      tree: { persons: [SUBJECT], relationships: [], sources: [TREE_SOURCE] },
-    });
+    await projectCreate({ projectPath: dir, objective: "Identify the parents of Patrick Flynn" });
     expect(await exists("starting-tree.gedcomx.json")).toBe(true);
     const baseline = JSON.parse(
       await readFile(join(dir, "starting-tree.gedcomx.json"), "utf-8"),
@@ -200,12 +197,44 @@ describe("project_create", () => {
     expect(research.researcher_profile.subscriptions).toBeUndefined();
   });
 
-  it("creates a valid empty tree when none is supplied", async () => {
-    const r = await projectCreate({ projectPath: dir, objective: "Who were John's parents?" });
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.counts).toEqual({ persons: 0, relationships: 0, sources: 0 });
-    expect(await readTree()).toEqual({ persons: [], relationships: [], sources: [] });
+  // ── A project always starts from a FamilySearch person (lead, 2026-11-02) ──
+
+  it.each([
+    ["absent", undefined],
+    ["null", null],
+    ["empty", ""],
+    ["whitespace", " \n "],
+  ])("refuses a %s personId before reading anyone, and writes nothing", async (_label, personId) => {
+    oneReads = 0;
+    const r: any = await projectCreate({ projectPath: dir, objective: "Who were John's parents?", personId });
+    expect(r.ok).toBe(false);
+    expect(r.errors).toEqual([PERSON_ID_REQUIRED]);
+    expect(r.errors[0]).toMatch(/FamilySearch person ID/);
+    expect(r.errors[0]).toMatch(/survey-surname agent with no projectPath/);
+    expect(oneReads).toBe(0);
+    expect(await exists("research.json")).toBe(false);
+    expect(await exists("tree.gedcomx.json")).toBe(false);
+  });
+
+  it("refuses a personId that is not a string, saying what one looks like", async () => {
+    const r: any = await projectCreate({ projectPath: dir, objective: "x", personId: 42 });
+    expect(r.ok).toBe(false);
+    expect(r.errors.join(" ")).toMatch(/personId must be a FamilySearch person ID such as "KWCJ-RN4"; got 42/);
+    expect(r.errors.join(" ")).toMatch(/Ask the researcher/);
+  });
+
+  it.each([
+    // Issue #4133's route: a general-purpose agent sent an empty tree and no personId.
+    ["with no personId", { personId: undefined, tree: { persons: [], relationships: [] } }],
+    ["beside a personId", { tree: { persons: [{ id: "I1" }] } }],
+    ["even as null", { tree: null }],
+  ])("refuses a tree %s by name, before reading anyone", async (_label, extra) => {
+    oneReads = 0;
+    const r: any = await projectCreate({ projectPath: dir, objective: "x", ...extra });
+    expect(r.ok).toBe(false);
+    expect(r.errors).toEqual([PROJECT_TREE_REMOVED]);
+    expect(oneReads).toBe(0);
+    expect(await exists("tree.gedcomx.json")).toBe(false);
   });
 
   // ── Create, never upsert ─────────────────────────────────────────────────
@@ -364,7 +393,7 @@ describe("project_create", () => {
   // ── The pair is validated together ───────────────────────────────────────
 
   it("refuses a subject person the tree does not contain, and writes NEITHER file", async () => {
-    // This is why the tool takes the tree rather than creating an empty one and
+    // This is why the tool writes the tree rather than creating an empty one and
     // leaving the caller to add persons afterwards: a dangling
     // subject_person_ids is a hard validator error, so a header-first create
     // would impose an ordering constraint that has to be got right every time.
@@ -372,7 +401,6 @@ describe("project_create", () => {
       projectPath: dir,
       objective: "Identify the parents of Patrick Flynn",
       subjectPersonIds: ["I9"],
-      tree: { persons: [SUBJECT], relationships: [], sources: [TREE_SOURCE] },
     });
     expect(r.ok).toBe(false);
     if (r.ok) return;
@@ -381,26 +409,25 @@ describe("project_create", () => {
     expect(await exists("tree.gedcomx.json")).toBe(false);
   });
 
-  it("refuses a malformed tree, and writes NEITHER file", async () => {
-    const r = await projectCreate({
-      projectPath: dir,
-      objective: "Identify the parents of Patrick Flynn",
-      tree: { persons: [{ id: "I1", gender: "Martian" }], relationships: [], sources: [] },
-    });
+  it("refuses a read the validator rejects, and writes NEITHER file", async () => {
+    const r = await projectCreate(
+      { projectPath: dir, objective: "Identify the parents of Patrick Flynn" },
+      { ...ONE_PERSON, persons: [{ ...ONE_PERSON.persons[0], gender: "Martian" }] },
+    );
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(await exists("research.json")).toBe(false);
     expect(await exists("tree.gedcomx.json")).toBe(false);
   });
 
-  it("accepts a subject person that IS in the tree", async () => {
+  it("accepts a subject person that IS in the read", async () => {
     const r = await projectCreate({
       projectPath: dir,
       objective: "Identify the parents of Patrick Flynn",
-      subjectPersonIds: ["I1"],
-      tree: { persons: [SUBJECT], relationships: [], sources: [TREE_SOURCE] },
+      subjectPersonIds: ["KWCJ-RN4"],
     });
     expect(r.ok).toBe(true);
+    expect((await readResearch()).project.subject_person_ids).toEqual(["I1"]);
   });
 
   // ── Argument hygiene ─────────────────────────────────────────────────────
@@ -410,11 +437,9 @@ describe("project_create", () => {
     expect((await readResearch()).project.title).toBeUndefined();
   });
 
-  it("defaults subject_person_ids to an empty array", async () => {
-    // Empty, not absent: the schema types it as an array, and the set-once
-    // predicate on research_append treats [] as unset, so it stays fillable.
+  it("defaults subject_person_ids to the person read", async () => {
     await projectCreate({ projectPath: dir, objective: "Who were John's parents?" });
-    expect((await readResearch()).project.subject_person_ids).toEqual([]);
+    expect((await readResearch()).project.subject_person_ids).toEqual(["I1"]);
   });
 
   it("requires a projectPath", async () => {
@@ -625,44 +650,6 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     }
   });
 
-  it("refuses a tree whose persons is not an array, rather than dropping it, before any read", async () => {
-    reads = 0;
-    const result: any = await create({ projectPath: dir, objective: "x", personId: "OLDX-001", tree: { persons: STUB } as any });
-    expect(result.ok).toBe(false);
-    expect(result.errors.join(" ")).toMatch(/tree\.persons must be an array of objects/);
-    expect(reads).toBe(0);
-    expect(await exists("tree.gedcomx.json")).toBe(false);
-  });
-
-  it.each([
-    ["a tree URL whose query names a staged ark", "https://www.familysearch.org/tree/person/details/NEWP-ERS?from=4:1:LZNY-K2M"],
-    ["a 4:1: substring inside unrelated text", "note 14:1:LZNY-K2M"],
-    ["a record ark whose query names a staged tree ark", "https://www.familysearch.org/ark:/61903/1:1:QVJ5-ABCD?treeref=ark:/61903/4:1:LZNY-K2M"],
-  ])("does not read %s as a staged person", async (_l, ark) => {
-    const ref = await stageFamily();
-    const result: any = await create({ projectPath: dir, objective: "x", personId: ref, tree: { persons: [{ ...STUB, ark }] } });
-    expect(result.errors?.join(" ") ?? "").not.toMatch(/carries the ark of LZNY-K2M/);
-  });
-
-  it("does not read two non-FamilySearch URLs as one tree person", async () => {
-    const ref = await stageFamily();
-    const ark = "https://example.com/tree/person/john-doe";
-    const result: any = await create({
-      projectPath: dir, objective: "x", personId: ref,
-      tree: { persons: [{ ...STUB, ark }, { ...STUB, id: "A2", ark }] },
-    });
-    expect(result.errors?.join(" ") ?? "").not.toMatch(/same person/);
-  });
-
-  it("does not treat a record-persona ark on an addition as a staged tree person", async () => {
-    const ref = await stageFamily();
-    const result: any = await create({
-      projectPath: dir, objective: "x", personId: ref,
-      tree: { persons: [{ ...STUB, ark: "ark:/61903/1:1:LZNY-K2M" }] },
-    });
-    expect(result.errors?.join(" ") ?? "").not.toMatch(/carries the ark/);
-  });
-
   it("refuses rather than overwrites when another create lands while places are filled", async () => {
     const resolver = vi.mocked(resolveStandardPlace);
     const result = structuredClone(FAMILY);
@@ -765,8 +752,8 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
       await writeFile(join(dir, "tree.gedcomx.json"), "{}");
     }, { objective: "x" }, /already exist/],
     ["no objective", async () => {}, { objective: " " }, /objective is required/],
-    ["a tree beside personId", async () => {}, { objective: "x", tree: { persons: [STUB] } }, /tree cannot be passed with personId/],
-    ["a blank personId", async () => {}, { objective: "x", personId: " " }, /personId must be a FamilySearch person ID/],
+    ["a tree beside personId", async () => {}, { objective: "x", tree: { persons: [STUB] } }, /tree is no longer accepted/],
+    ["a blank personId", async () => {}, { objective: "x", personId: " " }, /personId is required/],
   ])("refuses %s before reading anyone", async (_l, setup, extra, message) => {
     await setup();
     reads = 0;
@@ -984,430 +971,4 @@ describe("nameForId", () => {
     expect(nameForId("of LZNY-BRF", ids, "Unknown")).toBe("of LZNY-BRF");
     expect(nameForId("of LZNY-BRF", ids, "")).toBe("of LZNY-BRF");
   });
-});
-
-describe("project_create — hand-built tree (no personReadRef)", () => {
-  let dir: string;
-  beforeEach(async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-10-01T12:00:00Z"));
-    dir = await mkdtemp(join(tmpdir(), "project-create-hand-"));
-  });
-  afterEach(async () => {
-    vi.useRealTimers();
-    await rm(dir, { recursive: true, force: true });
-  });
-
-  it.each([
-    ["a non-object person entry", { persons: ["I1"] }, /persons\[0\]/],
-    ["a non-object relationship entry", { relationships: [42] }, /relationships\[0\]/],
-    ["a fact citation given as one object", { persons: [{ id: "I1", gender: "Male", names: [{ given: "P", surname: "F" }], facts: [{ type: "Birth", sources: { ref: "S1" } }] }], sources: [{ id: "S1", title: "t" }] }, /sources/],
-    ["a relationship citation given as a string", { persons: [{ id: "I1", gender: "Male", names: [{ given: "P", surname: "F" }] }, { id: "I2", gender: "Male", names: [{ given: "Q", surname: "F" }] }], relationships: [{ type: "ParentChild", parent: "I1", child: "I2", sources: "S1" }], sources: [{ id: "S1", title: "t" }] }, /sources/],
-  ])("refuses %s rather than dropping or re-citing it", async (_l, tree, message) => {
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: tree as any });
-    expect(result.ok).toBe(false);
-    expect(result.errors.join(" ")).toMatch(message);
-    expect(await access(join(dir, "tree.gedcomx.json")).then(() => true, () => false)).toBe(false);
-  });
-
-  const P = (id?: unknown) => ({ ...(id === undefined ? {} : { id }), gender: "Male", names: [{ given: "P", surname: "F" }] });
-  it.each([
-    ["a fact citing a source that does not exist, beside an unsourced fact", { persons: [{ ...P("I1"), facts: [{ type: "Birth", sources: [{ ref: "S1" }] }, { type: "Death" }] }] }, undefined, /'S1'/],
-    ["a fact citing S1 beside an id-less source", { persons: [{ ...P("I1"), facts: [{ type: "Birth", sources: [{ ref: "S1" }] }] }], sources: [{ title: "Unrelated" }] }, undefined, /'S1'/],
-    ["a relationship naming I2 beside an id-less person", { persons: [P("I1"), P()], relationships: [{ type: "Couple", person1: "I1", person2: "I2" }] }, undefined, /'I2'/],
-    ["subjectPersonIds naming I1 beside an id-less person", { persons: [P()] }, ["I1"], /I1/],
-  ])("does not let a minted id bind %s", async (_l, tree, subjects, message) => {
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: tree as any, subjectPersonIds: subjects as any });
-    expect(result.ok).toBe(false);
-    expect(result.errors.join(" ")).toMatch(message);
-  });
-
-  it("keeps a non-string id the caller referenced, for the validator to judge", async () => {
-    const result: any = await projectCreate({
-      projectPath: dir, objective: "x",
-      tree: { persons: [P(5), P("I2")], relationships: [{ type: "Couple", person1: 5, person2: "I2" }] } as any,
-    });
-    expect(result.errors?.join(" ") ?? "").not.toMatch(/'5' not found/);
-  });
-
-  it("reads a null collection as none, like an absent one", async () => {
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: { persons: null, relationships: null, sources: null } as any });
-    expect(result.ok).toBe(true);
-  });
-
-  it.each([["a string", "abc"], ["an array", [1]]])("refuses a tree that is %s", async (_l, tree) => {
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: tree as any });
-    expect(result.ok).toBe(false);
-    expect(result.errors.join(" ")).toMatch(/tree must be an object/);
-  });
-
-  it("refuses a tree collection that is not an array rather than writing it as empty", async () => {
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: { persons: { id: "I1" } } as any });
-    expect(result.ok).toBe(false);
-    expect(result.errors.join(" ")).toMatch(/tree\.persons must be an array of objects/);
-  });
-
-  it("keeps the model's ids, mints only missing ones, and cites unsourced facts and relationships to the researcher's statement", async () => {
-    const result: any = await projectCreate({
-      projectPath: dir,
-      objective: "Find Sarah's grandmother",
-      subjectPersonIds: ["I1"],
-      tree: {
-        persons: [
-          { id: "I1", gender: "Female", names: [{ id: "N1", given: "Sarah", surname: "Hennessy" }], facts: [{ type: "Birth", date: "~1920" }] },
-          { id: "I2", gender: "Unknown", names: [{ given: "", surname: "Donovan" }] },
-        ],
-        relationships: [{ type: "ParentChild", parent: "I2", child: "I1" }],
-      },
-    });
-    expect(result.ok).toBe(true);
-    const tree = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
-    expect(tree.persons.map((p: any) => p.id)).toEqual(["I1", "I2"]);
-    expect(tree.persons[1].names[0].id).toBe("N2");
-    expect(tree.persons[0].facts[0]).toEqual({ id: "F1", type: "Birth", date: "~1920", sources: [{ ref: "S1", quality: 1 }] });
-    expect(tree.relationships[0]).toEqual({ id: "R1", type: "ParentChild", parent: "I2", child: "I1", sources: [{ ref: "S1", quality: 1 }] });
-    expect(tree.sources).toEqual([
-      { id: "S1", title: "Researcher's statement", citation: "Statement by the researcher when the project was created, 1 October 2026." },
-    ]);
-  });
-
-  it("leaves an already-sourced hand-built tree exactly as given", async () => {
-    const tree = {
-      persons: [{ ...SUBJECT, facts: [{ id: "F1", type: "Birth", sources: [{ ref: "S1", quality: 1 }] }] }],
-      relationships: [],
-      sources: [TREE_SOURCE],
-    };
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: structuredClone(tree) });
-    expect(result.ok).toBe(true);
-    expect(JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"))).toEqual(tree);
-  });
-});
-
-describe("project_create — the old-extension message init-project keys on (#2944)", () => {
-  it("is produced only by a build that ignores personReadRef, never by this one", async () => {
-    // agents/init-project.md tells the model that this exact refusal means the
-    // extension predates personReadRef. A build that ignores the ref sees an
-    // empty tree and a PID subject, so it produces it:
-    const dir = await mkdtemp(join(tmpdir(), "project-create-skew-"));
-    try {
-      const old: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["LZNY-BRF"] });
-      expect(old.ok).toBe(false);
-      expect(old.errors.join(" ")).toMatch(/subject_person_ids contains 'LZNY-BRF' which is not in tree\.gedcomx\.json persons/);
-    } finally {
-      await rm(dir, { recursive: true, force: true });
-    }
-  });
-});
-
-describe("project_create — hand-entered places are standardized by the tool", () => {
-  let dir: string;
-  const resolver = vi.mocked(resolveStandardPlace);
-  beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "project-create-places-"));
-    resolver.mockImplementation(async (place: string) =>
-      /^boston/i.test(place) ? "Boston, Suffolk, Massachusetts, United States" : null,
-    );
-  });
-  afterEach(async () => {
-    resolver.mockImplementation(async () => null);
-    await rm(dir, { recursive: true, force: true });
-  });
-  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
-  const person = (facts: unknown[]) => ({
-    id: "I1", gender: "Male", names: [{ id: "N1", given: "Michael", surname: "Brennan" }], facts,
-  });
-
-  it("replaces a standard_place the caller typed with the resolver's, and says so", async () => {
-    const tree = {
-      persons: [person([{ id: "F1", type: "Birth", date: "~1850", place: "Boston, Massachusetts", standard_place: "Boston, Massachusetts, United States" }])],
-      relationships: [], sources: [],
-    };
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
-    expect(result.ok).toBe(true);
-    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
-    expect(result.validation.warnings.join(" ")).toContain(
-      "standard_place \"Boston, Massachusetts, United States\" for 'Boston, Massachusetts' was replaced by 'Boston, Suffolk, Massachusetts, United States'",
-    );
-  });
-
-  it("replaces even a typed FamilySearch standard place with the resolver's, searching FamilySearch for no typed value", async () => {
-    const search = vi.mocked(searchPlace);
-    search.mockClear();
-    search.mockResolvedValue([{ fullName: "Massachusetts, United States", placeRepId: "33", placeId: "P33", type: "State" }] as never);
-    try {
-      const tree = {
-        persons: [person([{ id: "F1", type: "Birth", place: "Boston, Massachusetts", standard_place: "Massachusetts, United States" }])],
-        relationships: [], sources: [],
-      };
-      const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
-      expect(result.ok).toBe(true);
-      expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
-      expect(result.validation.warnings).toContain(
-        "standard_place \"Massachusetts, United States\" for 'Boston, Massachusetts' was replaced by " +
-          "'Boston, Suffolk, Massachusetts, United States': project_create standardizes hand-entered places itself",
-      );
-      expect(search).not.toHaveBeenCalled();
-    } finally {
-      search.mockResolvedValue([]);
-    }
-  });
-
-  it("keeps a standard_place the caller typed when it is the engine's own, and says nothing", async () => {
-    const tree = {
-      persons: [person([{ id: "F1", type: "Birth", place: "Boston, Massachusetts", standard_place: "Boston, Suffolk, Massachusetts, United States" }])],
-      relationships: [], sources: [],
-    };
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
-    expect(result.ok).toBe(true);
-    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
-    expect(result.validation.warnings.join(" ")).not.toMatch(/standard_place/);
-  });
-
-  it("fills a hand-entered place the caller left unstandardized, and reports it", async () => {
-    const tree = { persons: [person([{ id: "F1", type: "Birth", place: "Boston" }])], relationships: [], sources: [] };
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
-    expect(result.ok).toBe(true);
-    expect((await readTree()).persons[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
-    expect(result.placesFilled).toEqual([{ place: "Boston", standardPlace: "Boston, Suffolk, Massachusetts, United States" }]);
-    expect(result.unresolvedPlaces).toBeUndefined();
-  });
-
-  it("reports, once each, the hand-entered places it could not standardize", async () => {
-    const tree = {
-      persons: [
-        person([
-          { id: "F1", type: "Birth", place: "Boston" },
-          { id: "F2", type: "Death", place: "Ballyowen" },
-          { id: "F3", type: "Burial", place: "ballyowen " },
-          { id: "F4", type: "Residence", place: "Same House" },
-          { id: "F5", type: "Christening", place: "  " },
-        ]),
-      ],
-      relationships: [],
-      sources: [],
-    };
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
-    expect(result.ok).toBe(true);
-    expect(result.unresolvedPlaces).toEqual(["Ballyowen"]);
-    expect(result.validation.warnings).toContain("Places kept as written, with no standard place found: Ballyowen.");
-    expect(result.placesFilled).toEqual([{ place: "Boston", standardPlace: "Boston, Suffolk, Massachusetts, United States" }]);
-  });
-
-  it("drops a typed standard_place the resolver cannot confirm, and says so", async () => {
-    const tree = { persons: [person([{ id: "F1", type: "Birth", place: "Ballyowen", standard_place: "Ballyowen, Ireland" }])], relationships: [], sources: [] };
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
-    expect(result.ok).toBe(true);
-    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
-    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Ballyowen, Ireland\" for 'Ballyowen' was not kept");
-  });
-
-  it("standardizes a relationship's own fact too", async () => {
-    const tree = {
-      persons: [person([]), { id: "I2", gender: "Female", names: [{ id: "N2", given: "Mary", surname: "Kelly" }] }],
-      relationships: [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", facts: [{ id: "F2", type: "Marriage", place: "Boston, Massachusetts" }] }],
-      sources: [],
-    };
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
-    expect(result.ok).toBe(true);
-    expect((await readTree()).relationships[0].facts[0].standard_place).toBe("Boston, Suffolk, Massachusetts, United States");
-  });
-
-  it("leaves a malformed person or facts entry for the validator to refuse, not a crash", async () => {
-    for (const persons of [[null], [{ ...person([]), facts: { type: "Birth", place: "Boston" } }], [person([null, "x"])]]) {
-      const result: any = await projectCreate({ projectPath: dir, objective: "x", tree: { persons, relationships: [null], sources: [] } as any });
-      expect(result.ok).toBe(false);
-      expect(result.errors.join(" ")).not.toMatch(/Cannot read properties|is not iterable|TypeError/);
-    }
-  });
-
-  it("drops a typed standard_place on a fact with no place, and says so", async () => {
-    const result: any = await projectCreate({
-      projectPath: dir,
-      objective: "x",
-      subjectPersonIds: ["I1"],
-      tree: { persons: [{ ...person([]), facts: [{ type: "Birth", date: "1850", standard_place: "Atlantis" }] }], relationships: [], sources: [] } as any,
-    });
-    expect(result.ok).toBe(true);
-    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
-    expect(result.validation.warnings.join(" ")).toContain("standard_place \"Atlantis\" on a Birth fact with no place was not kept");
-  });
-
-  it("treats an explicit null standard_place as none supplied, with no warning", async () => {
-    const tree = { persons: [person([{ type: "Birth", place: "Ballyowen", standard_place: null }])], relationships: [], sources: [] };
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: tree as any });
-    expect(result.ok).toBe(true);
-    expect((await readTree()).persons[0].facts[0].standard_place).toBeUndefined();
-    expect(result.validation.warnings.join(" ")).not.toContain("standard_place null");
-  });
-
-});
-
-// ─── Issue #3384: a guessed personReadRef, and citations on evidence ─────────
-
-import { getProjectStore } from "../../src/store/project-store.js";
-
-describe("project_create — a hand-entered fact or relationship cites the FamilySearch Family Tree only when a staged read holds it (#3384)", () => {
-  let dir: string;
-  beforeEach(async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-10-01T12:00:00Z"));
-    dir = await mkdtemp(join(tmpdir(), "project-create-evidence-"));
-  });
-  afterEach(async () => {
-    vi.useRealTimers();
-    vi.restoreAllMocks();
-    await rm(dir, { recursive: true, force: true });
-  });
-  const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
-  const titleOf = (tree: any, refs: any[]) =>
-    refs.map((r) => tree.sources.find((s: any) => s.id === r.ref)?.title);
-  const ark = (pid: string) => `ark:/61903/4:1:${pid}`;
-  const SCHUYLKILL = "Schuylkill County, Pennsylvania, United States";
-
-  /** The stub path: the model typed the read's people by hand, arks included. */
-  const handTree = (subjectArk = ark("LZNY-BRF")) => ({
-    persons: [
-      {
-        id: "I1", ark: subjectArk, gender: "Male", names: [{ given: "Patrick", surname: "Flynn" }],
-        facts: [
-          { type: "Birth", date: "~1845", place: "ireland" },
-          { type: "Residence", date: "1880", place: "Boston" },
-        ],
-      },
-      { id: "I2", ark: ark("LZNY-K2M"), gender: "Female", names: [{ given: "Mary", surname: "Kelly" }] },
-      { id: "I3", gender: "Unknown", names: [{ given: "", surname: "Kelly" }] },
-      { id: "I4", ark: ark("ZZZZ-999"), gender: "Male", names: [{ given: "Owen", surname: "Kelly" }], facts: [{ type: "Birth", date: "1820" }] },
-    ],
-    relationships: [
-      {
-        type: "Couple", person1: "I2", person2: "I1",
-        facts: [
-          { type: "Marriage", date: "1869", place: SCHUYLKILL },
-          { type: "Marriage", date: "1870", place: SCHUYLKILL },
-        ],
-      },
-      { type: "ParentChild", parent: "I1", child: "I2" },
-      { type: "ParentChild", parent: "I3", child: "I2" },
-    ],
-    sources: [],
-  });
-
-  it("cites what a staged read holds to the Family Tree and everything else to the researcher", async () => {
-    await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: handTree() as any });
-    expect(result.ok).toBe(true);
-    const tree = await readTree();
-    const [p1, , , p4] = tree.persons;
-    expect(titleOf(tree, p1.facts[0].sources)).toEqual(["FamilySearch Family Tree"]);
-    expect(titleOf(tree, p1.facts[1].sources)).toEqual(["Researcher's statement"]);
-    expect(titleOf(tree, p4.facts[0].sources)).toEqual(["Researcher's statement"]);
-    const [couple, notHeld, stubEdge] = tree.relationships;
-    expect(titleOf(tree, couple.sources)).toEqual(["FamilySearch Family Tree"]);
-    expect(titleOf(tree, couple.facts[0].sources)).toEqual(["FamilySearch Family Tree"]);
-    expect(titleOf(tree, couple.facts[1].sources)).toEqual(["Researcher's statement"]);
-    expect(titleOf(tree, notHeld.sources)).toEqual(["Researcher's statement"]);
-    expect(titleOf(tree, stubEdge.sources)).toEqual(["Researcher's statement"]);
-    const fsTree = tree.sources.find((s: any) => s.title === "FamilySearch Family Tree");
-    expect(fsTree).toEqual({
-      id: fsTree.id,
-      title: "FamilySearch Family Tree",
-      citation: "FamilySearch Family Tree (https://www.familysearch.org/tree : accessed 1 October 2026).",
-      url: "https://www.familysearch.org/tree",
-    });
-    expect(result.idMap.familySearchTreeSource).toBe(fsTree.id);
-    expect(result.validation.warnings).toContain(
-      `2 fact(s) and 1 relationship(s) with no source were cited to ${fsTree.id}, the FamilySearch Family Tree: a staged person_read holds each of them exactly.`,
-    );
-  });
-
-  it("matches a merged person's ark by the id it was read under", async () => {
-    await stagePersonRead({ projectPath: dir, input: { personId: "OLDX-001" }, resolvedId: "LZNY-BRF", result: structuredClone(FAMILY) });
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: handTree(ark("OLDX-001")) as any });
-    expect(result.ok).toBe(true);
-    const tree = await readTree();
-    expect(titleOf(tree, tree.relationships[0].sources)).toEqual(["FamilySearch Family Tree"]);
-    expect(titleOf(tree, tree.persons[0].facts[0].sources)).toEqual(["FamilySearch Family Tree"]);
-  });
-
-  it("with nothing staged, cites everything to the researcher and claims no Family Tree citation", async () => {
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: handTree() as any });
-    expect(result.ok).toBe(true);
-    const tree = await readTree();
-    expect(tree.sources.map((s: any) => s.title)).toEqual(["Researcher's statement"]);
-    expect(result.idMap.familySearchTreeSource).toBeUndefined();
-    expect(result.validation.warnings.join(" ")).not.toMatch(/FamilySearch Family Tree/);
-  });
-
-  it("never opens a staged read already past the TTL by its write time", async () => {
-    fileStoreOnly("sets a file's mtime, which a Postgres row has no equivalent of");
-    const { utimes } = await import("fs/promises");
-    const { staged } = await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
-    const old = staged!.resultsRef;
-    const past = new Date(Date.now() - 25 * 60 * 60 * 1000);
-    await utimes(join(dir, old), past, past);
-    const readText = vi.spyOn(getProjectStore(), "readText");
-    const result: any = await projectCreate({ projectPath: dir, objective: "x", subjectPersonIds: ["I1"], tree: handTree() as any });
-    expect(result.ok).toBe(true);
-    expect(readText.mock.calls.map((c) => c[1])).not.toContain(old);
-    // Not held, so the copied fact is the researcher's statement.
-    const tree = await readTree();
-    expect(titleOf(tree, tree.persons[0].facts[0].sources)).toEqual(["Researcher's statement"]);
-  });
-
-  it("an objective-only build, with no ark, never lists the staging folder", async () => {
-    const list = vi.spyOn(getProjectStore(), "list");
-    const result: any = await projectCreate({
-      projectPath: dir, objective: "x", subjectPersonIds: ["I1"],
-      tree: { persons: [{ id: "I1", gender: "Female", names: [{ given: "Sarah", surname: "Hennessy" }], facts: [{ type: "Birth", date: "~1920" }] }] },
-    });
-    expect(result.ok).toBe(true);
-    expect(list.mock.calls.filter((c) => String(c[1]).includes(".staging"))).toEqual([]);
-  });
-
-  it.each([
-    ["a Step edge where the read holds only an untyped one", "Step", undefined, "Researcher's statement"],
-    ["a Step edge where the read holds a Biological one", "Step", "Biological", "Researcher's statement"],
-    ["an untyped edge where the read holds a Biological one", undefined, "Biological", "FamilySearch Family Tree"],
-    ["a Biological edge where the read holds a Biological one", "Biological", "Biological", "FamilySearch Family Tree"],
-  ])("cites %s", async (_l, given, heldSubtype, title) => {
-    const read = structuredClone(FAMILY);
-    const edge = read.relationships.find((r: any) => r.parent === "LZNY-M3F" && r.child === "LZNY-BRF");
-    if (heldSubtype === undefined) delete edge.subtype;
-    else edge.subtype = heldSubtype;
-    await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: read });
-    const result: any = await projectCreate({
-      projectPath: dir, objective: "x", subjectPersonIds: ["I1"],
-      tree: {
-        persons: [
-          { id: "I1", ark: ark("LZNY-BRF"), gender: "Male", names: [{ given: "Patrick", surname: "Flynn" }] },
-          { id: "I2", ark: ark("LZNY-M3F"), gender: "Male", names: [{ given: "Michael", surname: "Flynn" }] },
-        ],
-        relationships: [{ type: "ParentChild", parent: "I2", child: "I1", ...(given ? { subtype: given } : {}) }],
-      } as any,
-    });
-    expect(result.ok).toBe(true);
-    const tree = await readTree();
-    expect(titleOf(tree, tree.relationships[0].sources)).toEqual([title]);
-  });
-
-  it.each([
-    ["the read's own standard_date", "Abt 1845", "FamilySearch Family Tree"],
-    ["no standard_date", undefined, "FamilySearch Family Tree"],
-    ["a standard_date the read does not hold", "1850", "Researcher's statement"],
-  ])("cites a copied fact carrying %s", async (_l, standardDate, title) => {
-    await stagePersonRead({ projectPath: dir, input: { personId: "LZNY-BRF" }, result: structuredClone(FAMILY) });
-    const result: any = await projectCreate({
-      projectPath: dir, objective: "x", subjectPersonIds: ["I1"],
-      tree: {
-        persons: [{
-          id: "I1", ark: ark("LZNY-BRF"), gender: "Male", names: [{ given: "Patrick", surname: "Flynn" }],
-          facts: [{ type: "Birth", date: "~1845", place: "Ireland", ...(standardDate ? { standard_date: standardDate } : {}) }],
-        }],
-      } as any,
-    });
-    expect(result.ok).toBe(true);
-    const tree = await readTree();
-    expect(titleOf(tree, tree.persons[0].facts[0].sources)).toEqual([title]);
-  });
-
 });

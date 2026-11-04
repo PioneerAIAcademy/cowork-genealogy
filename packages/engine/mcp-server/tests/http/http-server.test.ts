@@ -48,6 +48,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
 import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
+import { logArgs, seedProject } from "../helpers/seed-project.js";
 
 // The wire spelling; node:http lower-cases it to PROJECT_ID_HEADER on arrival.
 const PROJECT_HEADER = "X-Genealogy-Project-Id";
@@ -109,27 +110,19 @@ afterAll(async () => {
   await rm(root, { recursive: true, force: true });
 });
 
-/** A `project_create` payload whose one tree person is given-named `given`. */
+/** A valid `project_create` payload. Offline it can never succeed (the read
+ *  needs FamilySearch), so a test that needs a project seeds one instead. */
 function createArgs(given: string): Record<string, unknown> {
   return {
     projectPath: SCOPED_ANCHOR,
     objective: "Does the HTTP transport bind a store per request?",
     title: `http ${given}`,
-    subjectPersonIds: ["P1"],
-    tree: {
-      persons: [
-        {
-          id: "P1",
-          gender: "Male",
-          names: [{ id: "N1", preferred: true, given, surname: "Person", type: "BirthName" }],
-          facts: [{ id: "F1", type: "Birth", primary: true, date: "1850", place: "Nowhere" }],
-        },
-      ],
-      relationships: [],
-      sources: [],
-    },
+    personId: "KWCJ-RN4",
   };
 }
+
+/** Seed project `id` in the double's directory for it, as the server binds it. */
+const seed = (id: string, given: string) => seedProject(new ScopedFsStore(root, id), SCOPED_ANCHOR, given);
 
 /** `persons[].name` from `project_context` under one client. */
 async function personNames(client: Client): Promise<string[]> {
@@ -157,22 +150,21 @@ describe("tool server over Streamable HTTP", () => {
     expect(again.tools.length).toBe(allToolSchemas.length);
   });
 
-  it("2. two concurrent requests with different X-Genealogy-Project-Id headers cannot read each other's documents", async () => {
-    bindStore.mockClear();
+  it("2. two concurrent requests with different X-Genealogy-Project-Id headers cannot read or write each other's documents", async () => {
     const idA = `alpha-${randomUUID()}`;
     const idB = `beta-${randomUUID()}`;
+    await Promise.all([seed(idA, "Alpha"), seed(idB, "Beta")]);
+    bindStore.mockClear();
     const [a, b] = await Promise.all([
       connect({ [PROJECT_HEADER]: idA }),
       connect({ [PROJECT_HEADER]: idB }),
     ]);
-    const [createdA, createdB] = await Promise.all([
-      a.callTool({ name: "project_create", arguments: createArgs("Alpha") }),
-      b.callTool({ name: "project_create", arguments: createArgs("Beta") }),
+    const [loggedA, loggedB] = await Promise.all([
+      a.callTool({ name: "research_log_append", arguments: logArgs(SCOPED_ANCHOR, "Alpha") }),
+      b.callTool({ name: "research_log_append", arguments: logArgs(SCOPED_ANCHOR, "Beta") }),
     ]);
-    expect(createdA.isError, textOf(createdA)).not.toBe(true);
-    expect(createdB.isError, textOf(createdB)).not.toBe(true);
-    expect(JSON.parse(textOf(createdA)).ok).toBe(true);
-    expect(JSON.parse(textOf(createdB)).ok).toBe(true);
+    expect(loggedA.isError, textOf(loggedA)).not.toBe(true);
+    expect(loggedB.isError, textOf(loggedB)).not.toBe(true);
 
     const [namesA, namesB] = await Promise.all([personNames(a), personNames(b)]);
     expect(namesA.some((n) => n.includes("Alpha"))).toBe(true);
@@ -186,11 +178,11 @@ describe("tool server over Streamable HTTP", () => {
     expect(new Set(bound)).toEqual(new Set([idA, idB]));
     for (const id of [idA, idB]) expect(bound.filter((b) => b === id).length).toBeGreaterThan(0);
 
-    // And the double put them in two directories, so the isolation was the
+    // And each write landed in its own directory, so the isolation was the
     // header's doing rather than the same document read twice.
     for (const id of [idA, idB]) {
-      const tree = JSON.parse(await readFile(join(root, id, "tree.gedcomx.json"), "utf-8"));
-      expect(tree.persons[0].names[0].given).toBe(id === idA ? "Alpha" : "Beta");
+      const research = JSON.parse(await readFile(join(root, id, "research.json"), "utf-8"));
+      expect(research.log.map((e: any) => e.query.givenName)).toEqual([id === idA ? "Alpha" : "Beta"]);
     }
   });
 
@@ -217,7 +209,7 @@ describe("tool server over Streamable HTTP", () => {
     expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
   });
 
-  it("2d. baseConfig's public URL reaches project_create and project_context as links built from the header's project id", async () => {
+  it("2d. baseConfig's public URL reaches project_context as links built from the header's project id", async () => {
     const linked = await startHttpServer({
       host: "127.0.0.1",
       port: 0,
@@ -229,10 +221,8 @@ describe("tool server over Streamable HTTP", () => {
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
     try {
       const id = `linked-${randomUUID()}`;
+      await seed(id, "Linked");
       const client = await connect({ [PROJECT_HEADER]: id }, `http://127.0.0.1:${address.port}`);
-      const created = JSON.parse(textOf(await client.callTool({ name: "project_create", arguments: createArgs("Linked") })));
-      expect(created.ok, JSON.stringify(created)).toBe(true);
-      expect(created.projectUrl).toBe(`https://beta.example/#/p/${id}`);
       const ctx = JSON.parse(
         textOf(await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } })),
       );
@@ -557,10 +547,7 @@ describe("tool server over Streamable HTTP", () => {
       connect({ [PROJECT_HEADER]: idA, Authorization: "Bearer tok-A" }),
       connect({ [PROJECT_HEADER]: idB, Authorization: "Bearer tok-B" }),
     ]);
-    for (const [client, given] of [[a, "Alpha"], [b, "Beta"]] as const) {
-      const created = await client.callTool({ name: "project_create", arguments: createArgs(given) });
-      expect(created.isError, textOf(created)).not.toBe(true);
-    }
+    await Promise.all([seed(idA, "Alpha"), seed(idB, "Beta")]);
     // A has already read 20 distinct images from the group, in its own log.
     const group = "004261111";
     const lines = Array.from({ length: 20 }, (_, i) =>
