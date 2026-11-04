@@ -135,13 +135,11 @@ disagree.
   `127.0.0.1`; reached through a public HTTPS tunnel. A stdio entry exists only
   for M0's local leg.
 - **Command line:** `--secret <random> --root <dir> --public-url <https origin>
-  [--port 8090] [--allow-origin <origin>]`.
+  [--port 8090] [--local]`.
   - `--public-url` is the tunnel's origin. The CSP entry and every image link are
     built from it, never from the Host header.
-  - `--allow-origin` is off by default. For local iteration with ext-apps'
-    browser-based `basic-host`, pass `http://localhost:8080`: OPTIONS on the MCP
-    route then answers 204 with the CORS headers, and every response from that
-    route carries `Access-Control-Allow-Origin` and `Vary: Origin`.
+  - `--local` also serves the page at `/<secret>/`, so it opens in a normal browser
+    tab from the same origin as the server (see "Local testing").
   - The server factory takes the page's HTML as a parameter. Only the CLI entry
     reads `viewer/page/viewer.html`, and it refuses to start, naming
     `make mcp-viewer-build`, when the file is missing.
@@ -241,8 +239,8 @@ from it, and an unannotated tool defaults to "not read-only".
     https URL; `openFamilySearch` opens only what resolves;
   - `submitFeedback` rejects with "not available here"; `selectFolder` and
     `getFeedbackContext` are absent; `subscribe` delivers nothing.
-  - All tool calls go through one `call(tool, args)` function, so the page can run
-    as an artifact with a different one.
+  - All tool calls go through one `call(tool, args)` function, so the page can also
+    run in a browser tab (a plain POST to the server) or as an artifact.
 - **Display rules,** applied to cards and the file alike:
   - **Ids in fields are resolved; internal ids in prose are dropped.** `S1`, `I19`,
     `q_001`, `a_003`, `pe_060` in a field become the person, source, question or
@@ -303,6 +301,27 @@ call `show_project` with the step, then the reply. The tool is found by bare nam
   hypothesis and conclusion, plus a link line only when the link step ends on a
   question for the researcher (no "Continue with …?" line).
 
+## Local testing
+
+Anyone changing the server, the page, the skills or the agents tests their branch
+before pushing, with no tunnel and no connector.
+
+- **The research:** `make cowork-install` builds the `.mcpb` and the plugin zip
+  from the branch, and they install as they do today. Turn the organization's
+  connector off for that task, so Cowork does not hold two copies of every tool.
+  Once folded in, the `.mcpb` carries the tools and the page; a card renders in that
+  task only if M0's local leg does.
+- **The cards and the case file:** `make viewer PROJECT=<folder>` (Windows: a
+  `.bat` beside `CoworkInstall.bat`) generates a secret, runs the branch's server
+  on `127.0.0.1` with `--local`, and opens the page in a browser tab, reading the
+  same folder the Cowork task writes. The tab shows every step card and the whole
+  case file; reloading picks up the latest.
+- **A card inline in a Cowork task.** Members cannot add connectors, so a tester's
+  only route is the local install. If M0's local leg does not render, testers see
+  cards in the browser tab, which runs the same page, and anything that depends on
+  Claude as the host (fullscreen, theme, link confirmation) is checked on the lead's
+  connector.
+
 ## Data
 
 - **Tests:** the McAndrew capture (`docs/captures/2026-09-29-mcandrew-children`)
@@ -328,14 +347,12 @@ call `show_project` with the step, then the reply. The tool is found by bare nam
 Each is one or more small PRs merged to main. Nothing calls the second server, so
 merging changes nothing for anyone else.
 
-### M0 — Skeleton, which is also the go/no-go (3 days)
+### M0 — Skeleton, which is also the go/no-go (4 days)
 
 The server with the page resource, `show_project` returning a hello card that
 echoes its input and takes a `pad` size, `read_project_view` returning a payload
-of a requested size, a signed test image, and the request log. Local iteration
-uses ext-apps' `basic-host` with `--allow-origin`; it falls back to the list
-entry's CSP, so a local image load does not prove the CSP placement. Then, in a
-Cowork task:
+of a requested size, a signed test image, the request log, and `make viewer`, which
+is the everyday development loop. Then, in a Cowork task:
 
 1. **Connector:** the server through the tunnel as an organization connector,
    from the main thread, after a ToolSearch load, and with the variant plugin
@@ -361,6 +378,8 @@ Record, in `docs/mcp-app-host-probe.md`:
 - does the image load from the declared host;
 - does `ui/open-link` show Claude's confirmation each time;
 - is `ui/update-model-context` available;
+- can a connector be turned off for one Cowork task (the help centre documents a
+  per-conversation toggle);
 - if the artifact leg runs: does it open beside a Cowork task, can it call the
   connector's read tool, and can it reach a `visibility: ["app"]` tool;
 - is the `projectPath` the model passes in Cowork readable on the Mac.
@@ -382,8 +401,8 @@ pass, each with a stub page HTML:
   creates (CI runs Linux, where `/tmp` is no alias);
 - an omitted `projectPath` resolves to `--root` when it is a project, and
   otherwise is refused with the list of folders;
-- with `--allow-origin`, OPTIONS from that origin gets 204 with the header and
-  from any other origin does not.
+- with `--local`, the page is served at `/<secret>/` and nowhere else, and without
+  it that path is 404.
 
 ### M1 — The designer demo (12–14 days)
 
@@ -457,8 +476,8 @@ engine check the agents also see); posting buttons of any kind.
   through without a project on a valid token; bind `read_project_view` by
   `projectPath` like any call; serve the image route.
 - **The router lines on main,** with one paid `research` eval run.
-- **Packaging:** build the page into `eb-tools.zip`; the release smoke checks
-  `resources/read`.
+- **Packaging:** build the page into `eb-tools.zip` and the `.mcpb`; the release
+  smoke and `scripts/verify-mcpb.sh` check `resources/read`.
 - **The beta plan's viewer items** (W3's viewer routes, W4's viewer, polling and
   print view, D4 step 5, acceptance 2.2 and 2.6) change to the card.
 - **Feedback becomes a flag.** On the remote server the whole project is already
@@ -467,9 +486,7 @@ engine check the agents also see); posting buttons of any kind.
   (W3's feedback route, D5); `/triage-feedback` reads a flagged project from the
   database.
 - **Drop Electron and the web viewer:**
-  - **Local folders.** A connector reaches one machine, so Electron stays until
-    testers' research moves to the remote connector, or until M0's local leg shows
-    cards render from a local server.
-  - **`make e2e-view`:** the viewer server with `--root` at the e2e folder, opened
-    in `basic-host`.
+  - **Local folders:** `make viewer` covers anyone testing a branch, and everyone
+    else is on the remote connector.
+  - **`make e2e-view`** becomes `make viewer PROJECT=eval/e2e-view`.
   - **Print and GEDCOM export** go with them. The card's sandbox allows neither.
