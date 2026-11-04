@@ -1,6 +1,6 @@
 {
   "tool": "external_links_search",
-  "description": "External genealogy links for Yorkshire, England — includes yorkshirebmd.org.uk as a regional transcription site for Yorkshire BMD registration. Predicate matches ~Yorkshire.",
+  "description": "external_links_search for Yorkshire, England - 122 curated links, including http://www.yorkshirebmd.org.uk/ ('Yorkshire Births Marriages & Deaths Indexes') and https://www.freebmd.org.uk/search. Measured live 2026-11-04 with externalLinksSearchTool({ standardPlace: 'Yorkshire, England' }), no projectPath. Predicate matches ~Yorkshire.",
   "args": {
     "standardPlace": "~Yorkshire"
   },
@@ -8,28 +8,680 @@
     "query": {
       "standardPlace": "Yorkshire, England"
     },
-    "totalForPlace": 5,
-    "returned": 5,
+    "totalForPlace": 122,
+    "returned": 122,
     "results": [
       {
-        "url": "https://www.yorkshirebmd.org.uk/",
-        "linkText": "Yorkshire BMD — Free transcriptions of Yorkshire births, marriages and deaths from civil registration"
+        "url": "http://search.ancestry.co.uk/search/db.aspx?dbid=1351",
+        "linkText": "England and Wales Christening Records, 1530-1906",
+        "startYear": 1530,
+        "endYear": 1906
       },
       {
-        "url": "https://www.freebmd.org.uk/",
-        "linkText": "FreeBMD — Free transcriptions of England & Wales civil registration indexes"
+        "url": "http://search.ancestry.co.uk/search/db.aspx?dbid=1352",
+        "linkText": "England & Wales Marriages, 1538-1940",
+        "startYear": 1538,
+        "endYear": 1940
       },
       {
-        "url": "https://www.ancestry.co.uk/search/collections/england-wales-civil-registration/",
-        "linkText": "Ancestry — England & Wales Civil Registration records"
+        "url": "https://www.ancestry.com/search/collections/1904",
+        "linkText": "England & Wales, National Probate Calendar (Index of Wills and Administrations), 1858-1995",
+        "startYear": 1858,
+        "endYear": 1995
       },
       {
-        "url": "https://www.findmypast.co.uk/research/bmd/deaths",
-        "linkText": "Findmypast — England & Wales death records"
+        "url": "https://www.ancestry.com/search/collections/2252",
+        "linkText": "West Yorkshire, England, Church of England Births and Baptisms, 1813-1910",
+        "startYear": 1813,
+        "endYear": 1910
       },
       {
-        "url": "https://www.gro.gov.uk/gro/content/certificates/",
-        "linkText": "GRO — General Register Office certificate ordering (England & Wales)"
+        "url": "https://www.ancestry.com/search/collections/2253",
+        "linkText": "West Yorkshire, England, Church of England Marriages and Banns, 1813-1935",
+        "startYear": 1813,
+        "endYear": 1935
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2254",
+        "linkText": "West Yorkshire, England, Church of England Deaths and Burials, 1813-1985",
+        "startYear": 1813,
+        "endYear": 1985
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2255",
+        "linkText": "West Yorkshire, England, Church of England Confirmations, 1859-1915",
+        "startYear": 1859,
+        "endYear": 1915
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2256",
+        "linkText": "West Yorkshire, England, Church of England Baptisms, Marriages and Burials, 1512-1812",
+        "startYear": 1512,
+        "endYear": 1812
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2268",
+        "linkText": "West Yorkshire, Non-Conformist Records, 1646-1985",
+        "startYear": 1646,
+        "endYear": 1985
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2563",
+        "linkText": "West Yorkshire, England Alehouse Licences, 1771-1962",
+        "startYear": 1771,
+        "endYear": 1962
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/2582",
+        "linkText": "West Yorkshire, England Bastardy Records, 1690-1914",
+        "startYear": 1690,
+        "endYear": 1914
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/3057",
+        "linkText": "West Yorkshire, England, Electoral Registers, 1840-1962",
+        "startYear": 1840,
+        "endYear": 1962
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/34590",
+        "linkText": "Abstracts of Yorkshire Wills in the Time of the Commonwealth, at Somerset House, London, 1665-1666",
+        "startYear": 1665,
+        "endYear": 1666
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/3667",
+        "linkText": "Yorkshire, England Selected Church of England Parish Registers, 1594-1800",
+        "startYear": 1594,
+        "endYear": 1800
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5085",
+        "linkText": "West Yorkshire, England Prison Records, 1801-1914",
+        "startYear": 1801,
+        "endYear": 1914
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5105",
+        "linkText": "West Yorkshire, England Police Records, 1833-1914",
+        "startYear": 1833,
+        "endYear": 1914
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5108",
+        "linkText": "West Yorkshire, England, Select Land Tax Records, 1704-1932",
+        "startYear": 1704,
+        "endYear": 1932
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/5246",
+        "linkText": "Yorkshire, England, Probate Records, 1521-1858",
+        "startYear": 1521,
+        "endYear": 1858
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/6066",
+        "linkText": "West Yorkshire, England Tax Valuation, 1910",
+        "startYear": 1910,
+        "endYear": 1910
+      },
+      {
+        "url": "https://search.ancestry.co.uk/search/db.aspx?dbid=61518",
+        "linkText": "Yorkshire, England Extracted Church of England Parish Records, 1538-1837",
+        "startYear": 1538,
+        "endYear": 1837
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62228",
+        "linkText": "North Yorkshire, England, Church of England Baptisms, Marriages and Burials, 1558-1812",
+        "startYear": 1558,
+        "endYear": 1812
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62236",
+        "linkText": "North Yorkshire, England, Church of England Births and Baptisms, 1813-1921",
+        "startYear": 1813,
+        "endYear": 1921
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62237",
+        "linkText": "North Yorkshire, England, Church of England Marriages and Banns, 1754-1937",
+        "startYear": 1754,
+        "endYear": 1937
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62238",
+        "linkText": "North Yorkshire, England, Church of England Deaths and Burials, 1813-1995",
+        "startYear": 1813,
+        "endYear": 1995
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/62461/",
+        "linkText": "North Yorkshire, Electoral Registers, 1832-1971",
+        "startYear": 1832,
+        "endYear": 1971
+      },
+      {
+        "url": "https://search.ancestry.co.uk/search/db.aspx?dbid=8000",
+        "linkText": "Durham, Northumberland, and Yorkshire Royal National Commercial Directory, 1855",
+        "startYear": 1855,
+        "endYear": 1855
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/8633",
+        "linkText": "West Yorkshire, England, Reformatory School Records, 1856-1914",
+        "startYear": 1856,
+        "endYear": 1914
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9011",
+        "linkText": "West Yorkshire, England, Occupation Records, 1793-1930",
+        "startYear": 1793,
+        "endYear": 1930
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9012",
+        "linkText": "West Yorkshire, England Estate Rentals, 1380-1932",
+        "startYear": 1380,
+        "endYear": 1932
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9014",
+        "linkText": "West Yorkshire, England Select Apprenticeship Records, 1627-1894",
+        "startYear": 1627,
+        "endYear": 1894
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9015",
+        "linkText": "West Yorkshire, England Select Removal and Settlement Records, 1689-1866",
+        "startYear": 1689,
+        "endYear": 1866
+      },
+      {
+        "url": "https://search.ancestry.co.uk/search/db.aspx?dbid=9016",
+        "linkText": "West Yorkshire, England, Select Rate Books, Accounts and Censuses, 1705-1893",
+        "startYear": 1705,
+        "endYear": 1893
+      },
+      {
+        "url": "https://www.ancestry.com/search/collections/9017",
+        "linkText": "West Yorkshire, England Select Poor Law and Township Records, 1663-1914",
+        "startYear": 1663,
+        "endYear": 1914
+      },
+      {
+        "url": "http://archive.org/details/westridingelect01ridigoog",
+        "linkText": "West-riding Election Poll, York County, 1841",
+        "startYear": 1841,
+        "endYear": 1841
+      },
+      {
+        "url": "http://archive.org/stream/yorkshirearchae04socigoog#page/n238/mode/2up",
+        "linkText": "Part XIII Vol. 14, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "http://archive.org/stream/yorkshirearchae12socigoog#page/n26/mode/2up",
+        "linkText": "Part XV Vol. 16, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "http://archive.org/stream/yorkshirearchae14socigoog#page/n384/mode/2up",
+        "linkText": "The Yorkshire Archaeological Journal, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "http://archive.org/stream/yorkshirearchae14socigoog#page/n78/mode/2up",
+        "linkText": "Part II Vol. 9, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "http://archive.org/stream/yorkshirearchae22socigoog#page/n204/mode/2up",
+        "linkText": "Part XVI Vol. 17, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "http://joinermarriageindex.co.uk/",
+        "linkText": "Marriage Record Search, Yorkshire, Pre-1837",
+        "startYear": 1837,
+        "endYear": 1837
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-united-kingdom-records-in-birth-marriage-death-and-parish-records",
+        "linkText": "National Burial Index"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/south-yorkshire-asylum-admission-records",
+        "linkText": "South Yorkshire Asylum Admission Records, 1872-1910",
+        "startYear": 1872,
+        "endYear": 1910
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/york-peculiars-probate-index-1383-1883?_ga=1.19087288.141134231.1415381737",
+        "linkText": "York Peculiars Probate Index 1383 – 1883"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-baptisms",
+        "linkText": "Yorkshire Baptisms Online"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-burials",
+        "linkText": "Yorkshire Burials"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-marriages",
+        "linkText": "Yorkshire Marriages"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-memorial-inscriptions",
+        "linkText": "Yorkshire Monumental Inscriptions"
+      },
+      {
+        "url": "http://search.findmypast.co.uk/search-world-Records/yorkshire-parish-registers-and-bishops-transcripts-browse",
+        "linkText": "Yorkshire Parish Registers and Bishop's Transcripts"
+      },
+      {
+        "url": "http://specialcollections.le.ac.uk/digital/collection/p16445coll4/search/searchterm/Yorkshire/field/place/mode/exact/conn/and/order/nosort",
+        "linkText": "Historical Directories of England & Wales, 1850-1909",
+        "startYear": 1850,
+        "endYear": 1909
+      },
+      {
+        "url": "http://web.archive.org/web/20101214095040/http://www.origins.net/help/aboutbo-bmi-parish-YOR.aspx",
+        "linkText": "229 Yorkshire Parishes Indexed in Coverage"
+      },
+      {
+        "url": "http://www.ancestry.co.uk",
+        "linkText": "Yorkshire Parish Registers"
+      },
+      {
+        "url": "http://www.findmypast.co.uk/national-burial-index-coverage-counties.action",
+        "linkText": "Articles on Life Events (BMDs)"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/YKS",
+        "linkText": "GENUKI: Yorkshire"
+      },
+      {
+        "url": "http://www.genuki.org.uk/big/eng/YKS/",
+        "linkText": "Yorkshire Records"
+      },
+      {
+        "url": "http://www.teesvalley-indexes.co.uk/search_records.php",
+        "linkText": "Tees Valley Indexes"
+      },
+      {
+        "url": "http://www.ukbmdsearch.org.uk/",
+        "linkText": "UKBMD Multi-Region Search"
+      },
+      {
+        "url": "http://www.york.ac.uk/borthwick/",
+        "linkText": "Borthwick Institute for Archives, University of York"
+      },
+      {
+        "url": "http://www.yorkcastleprison.org.uk/home.html",
+        "linkText": "York Castle Prison"
+      },
+      {
+        "url": "http://www.yorkshirebmd.org.uk/",
+        "linkText": "Yorkshire Births Marriages & Deaths Indexes"
+      },
+      {
+        "url": "https://archive.org/search.php?query=Yorkshire%20parish%20registers",
+        "linkText": "Yorkshire Parish Registers, 1833-1922",
+        "startYear": 1833,
+        "endYear": 1922
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae00socigoog#page/n222/mode/2up",
+        "linkText": "Part VII Vol. 11, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae02socigoog#page/n416/mode/2up",
+        "linkText": "Part XII Vol. 13, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae04socigoog#page/n480/mode/2up",
+        "linkText": "Part XIV Vol. 14, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae05socigoog#page/n185/mode/2up",
+        "linkText": "Part V Vol. 10, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae05socigoog#page/n461/mode/2up",
+        "linkText": "Part VI Vol. 10, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae05socigoog#page/n51/mode/2up",
+        "linkText": "Part IV Vol. 10, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae11socigoog#page/n134/mode/2up",
+        "linkText": "Part VIII Vol. 12, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae11socigoog#page/n160/mode/2up",
+        "linkText": "Part IX Vol. 12, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae11socigoog#page/n284/mode/2up",
+        "linkText": "Part X Vol. 12, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://archive.org/stream/yorkshirearchae16socigoog#page/n321/mode/2up",
+        "linkText": "Paver's Marriage Licenses Part 1, Vol 7, 1567-1630",
+        "startYear": 1567,
+        "endYear": 1630
+      },
+      {
+        "url": "https://babel.hathitrust.org/cgi/pt?id=mdp.39015011269282;view=1up;seq=15Yorkshire",
+        "linkText": "Yorkshire Deeds"
+      },
+      {
+        "url": "https://exploreyork.org.uk/archives/",
+        "linkText": "Archives and Local History"
+      },
+      {
+        "url": "https://quod.lib.umich.edu/cgi/t/text/text-idx?sid=dc439c6f96f7bc37d167b7f8c11fabd6&c=moa&idno=AHE1867.0001.001&view=toc",
+        "linkText": "The Visitation of the County of Yorke, 1665",
+        "startYear": 1665,
+        "endYear": 1665
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/britain-marriage-licences",
+        "linkText": "British Marriage Licences, 1115-1906",
+        "startYear": 1115,
+        "endYear": 1906
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/durham-diocese-bishops-transcripts-1639-1919-image-browse",
+        "linkText": "Durham Diocese Bishops Transcripts, 1639-1919",
+        "startYear": 1639,
+        "endYear": 1919
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/durham-diocese-calendar-of-marriage-bonds-and-allegations-1594-1815-image-browse",
+        "linkText": "Durham Diocese, Calendar Of Marriage Bonds & Allegations 1594-1815",
+        "startYear": 1594,
+        "endYear": 1815
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/yorkshire-bishops-transcripts-of-baptisms",
+        "linkText": "Yorkshire Bishops Transcripts of Baptisms"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-Records/yorkshire-school-logs",
+        "linkText": "Yorkshire School Logs, various dates"
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-records/england-and-wales-government-probate-death-index-1858-2019",
+        "linkText": "England & Wales Government Probate Death Index 1858-2019",
+        "startYear": 1858,
+        "endYear": 2019
+      },
+      {
+        "url": "https://search.findmypast.com/search-world-records/yorkshire-parish-registers-and-bishops-transcripts-browse",
+        "linkText": "Yorkshire Parish Registers and Bishop's Transcripts Browse"
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/armley-and-wortley-news",
+        "linkText": "Armley and Wortley News, 1889-1899",
+        "startYear": 1889,
+        "endYear": 1899
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/barnoldswick-earby-times",
+        "linkText": "Barnoldswick & Earby Times, 1940-1989",
+        "startYear": 1940,
+        "endYear": 1989
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/brighouse-echo",
+        "linkText": "Brighouse & Rastrick Gazette, 1879-1899",
+        "startYear": 1879,
+        "endYear": 1899
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/colne-valley-guardian",
+        "linkText": "Colne Valley Guardian Newspaper Archives, 1896-1906",
+        "startYear": 1896,
+        "endYear": 1906
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/east-riding-telegraph",
+        "linkText": "East Riding Telegraph Newspaper Archives, 1895-1903",
+        "startYear": 1895,
+        "endYear": 1903
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/eastern-morning-news",
+        "linkText": "Eastern Morning News Newspaper Archives, 1872-1899",
+        "startYear": 1872,
+        "endYear": 1899
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/farmers-friend-and-freemans-journal",
+        "linkText": "Farmer's Friend and Freeman's Journal, 1850-1855",
+        "startYear": 1850,
+        "endYear": 1855
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/holmes-brewing-trade-gazette",
+        "linkText": "Holmes' Brewing Trade Gazette, 1878-1886",
+        "startYear": 1878,
+        "endYear": 1886
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/huddersfield-and-holmfirth-examiner",
+        "linkText": "Huddersfield and Holmfirth Examiner, 1851-1982",
+        "startYear": 1851,
+        "endYear": 1982
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/ilkley-gazette-and-wharfedale-advertiser",
+        "linkText": "Ilkley Gazette and Wharfedale Advertiser, 1868-1891",
+        "startYear": 1868,
+        "endYear": 1891
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/midland-northern-coal-iron-trades-gazette",
+        "linkText": "Midland & Northern Coal & Iron Trades Gazette, 1875-1886",
+        "startYear": 1875,
+        "endYear": 1886
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/national-independent-and-peoples-advocate",
+        "linkText": "National Independent and People's Advocate, 1878-1889",
+        "startYear": 1878,
+        "endYear": 1889
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/penistone-stocksbridge-and-hoyland-express",
+        "linkText": "Penistone, Stocksbridge and Hoyland Express, 1898-1940",
+        "startYear": 1898,
+        "endYear": 1940
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/pontefract-advertiser",
+        "linkText": "Pontefract & Castleford Express, 1889-1911",
+        "startYear": 1889,
+        "endYear": 1911
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/pudsey-stanningley-news",
+        "linkText": "Pudsey & Stanningley News, 1881-1903",
+        "startYear": 1881,
+        "endYear": 1903
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/redcar-and-saltburn-news",
+        "linkText": "Redcar and Saltburn-by-the-Sea Gazette, 1869-1900",
+        "startYear": 1869,
+        "endYear": 1900
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/richmond-and-twickenham-times",
+        "linkText": "Richmond & Ripon Chronicle, 1855-1894",
+        "startYear": 1855,
+        "endYear": 1894
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/south-bank-express",
+        "linkText": "South Bank Express Newspaper Archives, 1909-1948",
+        "startYear": 1909,
+        "endYear": 1948
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/south-yorkshire-times-and-mexborough-swinton-times",
+        "linkText": "South Yorkshire Times and Mexborough & Swinton Times, 1877-1983",
+        "startYear": 1877,
+        "endYear": 1983
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/star-green-un",
+        "linkText": "Star Green 'un Newspaper Archives, 1907-1985",
+        "startYear": 1907,
+        "endYear": 1985
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/teesside-weekly-herald",
+        "linkText": "Tees-side Weekly Herald, 1904-1918",
+        "startYear": 1904,
+        "endYear": 1918
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/todmorden-district-news",
+        "linkText": "Todmorden Advertiser and Hebden Bridge Newsletter, 1862-1934",
+        "startYear": 1862,
+        "endYear": 1934
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/yorkshire-early-bird",
+        "linkText": "Yorkshire Early Bird Newspaper Archives, 1910",
+        "startYear": 1910,
+        "endYear": 1910
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/yorkshire-evening-news",
+        "linkText": "Yorkshire Evening News Newspaper Archives, 1907-1914",
+        "startYear": 1907,
+        "endYear": 1914
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/yorkshire-evening-post",
+        "linkText": "Yorkshire Evening Post Newspaper Archives, 1890-1954",
+        "startYear": 1890,
+        "endYear": 1954
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/yorkshire-evening-press",
+        "linkText": "Yorkshire Evening Press Newspaper Archives, 1885-1918",
+        "startYear": 1885,
+        "endYear": 1918
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/yorkshire-factory-times",
+        "linkText": "Yorkshire Factory Times Newspaper Archives, 1889-1926",
+        "startYear": 1889,
+        "endYear": 1926
+      },
+      {
+        "url": "https://www.findmypast.com/newspapers/england/yorkshire-gazette",
+        "linkText": "Yorkshire Gazette Newspaper Archives, 1819-1920",
+        "startYear": 1819,
+        "endYear": 1920
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=britain%2c+marriage+licences&sid=103&county=yorkshire",
+        "linkText": "Britain Marriage Licences"
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=england%20%26%20wales%20births%201837-2006&sid=103&county=yorkshire",
+        "linkText": "England & Wales Births, 1837-2006",
+        "startYear": 1837,
+        "endYear": 2006
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=england+%26+wales+deaths+1837-2007&sid=103&county=yorkshire",
+        "linkText": "England & Wales Deaths, 1837-2007",
+        "startYear": 1837,
+        "endYear": 2007
+      },
+      {
+        "url": "https://www.findmypast.com/search/results?datasetname=england+%26+wales+marriages+1837-2005&sid=103&county=yorkshire",
+        "linkText": "England & Wales Marriages 1837-2005",
+        "startYear": 1837,
+        "endYear": 2008
+      },
+      {
+        "url": "https://www.freebmd.org.uk/search",
+        "linkText": "FreeBMD Search"
+      },
+      {
+        "url": "https://www.genealogycenter.info/persi/",
+        "linkText": "Periodical Source Index - ACPL Genealogy Center"
+      },
+      {
+        "url": "https://www.genuki.org.uk/big/eng/YKS/",
+        "linkText": "Yorkshire Records"
+      },
+      {
+        "url": "https://www.genuki.org.uk/big/eng/YKS/#ProbateRecords",
+        "linkText": "Yorkshire Records, GENUKI"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-50172/bulmers-history-topography-directory-of-east-yorkshire-with-hull",
+        "linkText": "Bulmer's History, Topography and Directory of East Yorkshire"
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-50209/yorkshire-inquisitions",
+        "linkText": "Yorkshire Inquisitions, 1892-1906",
+        "startYear": 1892,
+        "endYear": 1906
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-50273/yorkshire-fines-1486-1625",
+        "linkText": "Yorkshire Fines, 1486-1625",
+        "startYear": 1486,
+        "endYear": 1625
+      },
+      {
+        "url": "https://www.myheritage.com/research/collection-50937/north-yorkshire-1890-history-topography-directory-part-2",
+        "linkText": "North Yorkshire 1890 History, Topography, Directory, Part 2",
+        "startYear": 1890,
+        "endYear": 1890
+      },
+      {
+        "url": "https://www.ukbmd.org.uk/county/yorkshire/parish_records/",
+        "linkText": "Yorkshire Parish Records: Births, Marriages, Deaths"
+      },
+      {
+        "url": "https://www.visionofbritain.org.uk/",
+        "linkText": "A Vision of Britain through Time"
       }
     ]
   }

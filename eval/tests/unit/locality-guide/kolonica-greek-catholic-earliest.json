@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_locality_guide_n8p",
     "skill": "locality-guide",
-    "name": "Reports earliest Greek Catholic record start dates from catalog_search results for Kolonica, Slovakia",
+    "name": "Reports the Kolonica Greek Catholic registers' 1824 start date and catalog entry exactly as catalog_search returns them",
     "type": "positive",
-    "description": "The catalog_search tool returns two Greek Catholic matrika series for Kolonica with start dates of 1783 (catalog 711474) and 1758 (catalog 1162429). The agent gap was settling for an approximate or rounded date (~1824) instead of reading the catalog response and reporting the actual 1783/1758 start dates. This test verifies the skill reads the fixture's start dates and names the catalog entries.",
+    "description": "From issue #3178 row 2273. Live catalog_search (measured 2026-11-04) returns one catalog entry for Kolonica, Slovakia: koha:727653, 'Cirkevná matrika, 1824-1924', the Greek Catholic parish registers, whose notes say the originals were microfilmed at the State Regional Archive in Levoča. The test checks that the guide reports that start date and entry as returned, names the archive the notes name, and does not supply earlier coverage or a different archive from memory.",
     "tags": [
       "from-cowork",
       "kolonica-greek-catholic-earliest",
@@ -39,8 +39,9 @@
     "wiki-place-page-any"
   ],
   "judge_context": [
-    "The skill must report a church-record start date of 1783 or earlier (the catalog fixture returns coverage from 1783 in entry 711474 and from 1758 in entry 1162429). Reporting a start date of ~1824 or any date later than 1783 is the exact failure this test captures and must not pass.",
-    "The skill should name at least one of the FamilySearch catalog entry numbers (711474 or 1162429) returned by catalog_search. A guide that describes Greek Catholic records in general terms without citing either catalog number has not consumed the tool response.",
-    "The skill should identify Kolonica as a Greek Catholic (Ruthenian or Rusyn) village, and note that the State Archive in Prešov (Štátny archív v Prešove) holds the original registers. These are facts the catalog fixture supplies; claiming the village is Roman Catholic or identifying a different repository is a failure."
+    "The catalog_search fixture returns one entry for the Kolonica parish registers: koha:727653, 'Cirkevná matrika, 1824-1924'. The guide must give 1824 as the start of the Greek Catholic registers FamilySearch holds. Claiming registers that start earlier (for example in the 1700s) is a failure: no tool result places any Kolonica register before 1824. Saying that earlier records may exist elsewhere is acceptable only when worded as unconfirmed.",
+    "The guide should name catalog entry 727653 (koha:727653) when it cites the registers. A guide that describes Greek Catholic records in general terms without the entry number has not used the tool response.",
+    "The hit's notes say the original registers were microfilmed at the Štátny oblastný archív v Levoči (State Regional Archive in Levoča), and that the registers are in Latin and Hungarian. Naming a different archive, such as the State Archive in Prešov, as the holder of the originals is a failure. So is stating a records language the notes do not give.",
+    "The hit's creator is the Greek Catholic parish office of Kolonica (Snina). Calling the parish Roman Catholic is a failure."
   ]
 }
