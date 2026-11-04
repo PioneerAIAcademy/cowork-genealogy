@@ -1794,7 +1794,10 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         f"{len(calls)} call(s): "
         + ", ".join(c.get("tool", "?") for c in calls)
     )
-    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    # A failed spawn is recorded under the agent's name with `is_error`, and its
+    # runtime text ("Available agents: ...") names every owner (issue #3935).
+    own_returns = [r for r in (agent_returns or []) if not r.get("is_error")]
+    reply = subject_reply_text(own_returns, text_response, test.get("skill") or "", test)
     if not owners:
         assert "hand-back:" in reply.lower(), "the reply carries no `Hand-back:` line"
         return
