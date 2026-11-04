@@ -35,7 +35,7 @@
         "Slovakia, Church and Synagogue Books, 1592-1935 — baptismal entry for Susanna Janeczky, Lisková, Ružomberok: ark:/61903/1:1:KHQN-MSB",
         "The original register page, which supplies the day-level date (27 April 1884, entry 22, house no. 115) and an Observatio note recording the child's death on 5 January 1887 — neither is in the index: ark:/61903/3:1:33SQ-GRQ4-94MT"
       ],
-      "required": true
+      "required": false
     }
   ]
 }

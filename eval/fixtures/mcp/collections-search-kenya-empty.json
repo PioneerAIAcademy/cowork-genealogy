@@ -1,0 +1,11 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search for Kenya — FamilySearch has no record collections for Kenya (the live catalog returns 0 for Kenya; a South Africa control returns 33, issue #4011). Matches any standardPlace containing \"Kenya\". Pair with collections-search-any LAST, so a call for a neighbouring place also comes back empty.",
+  "args": { "standardPlace": "~Kenya" },
+  "response": {
+    "query": { "standardPlace": "Kenya" },
+    "scope": "Kenya",
+    "totalForPlace": 0,
+    "results": []
+  }
+}

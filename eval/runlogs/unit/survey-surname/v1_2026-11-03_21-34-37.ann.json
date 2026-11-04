@@ -1,10 +1,42 @@
 {
-  "run_log": "v1_2026-10-15_17-21-10.json",
-  "annotator": "florencemashipei4@gmail.com",
+  "run_log": "v1_2026-11-03_21-34-37.json",
+  "annotator": "Francisbucci2@gmail.com",
   "corrections": [
     {
       "test_id": "ut_survey_surname_d4",
       "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d5",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d4",
+      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
       "corrected_score": null,
@@ -13,30 +45,6 @@
     {
       "test_id": "ut_survey_surname_d4",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d4",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d5",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d5",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -62,14 +70,6 @@
       "test_id": "ut_survey_surname_d5",
       "dimension_source": "rubric",
       "dimension_name": "Threshold compliance",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d5",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -220,16 +220,8 @@
     },
     {
       "test_id": "ut_survey_surname_d3",
-      "dimension_source": "rubric",
-      "dimension_name": "Place resolution",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_survey_surname_d3",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -245,7 +237,15 @@
     {
       "test_id": "ut_survey_surname_d3",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_survey_surname_d3",
+      "dimension_source": "rubric",
+      "dimension_name": "Place resolution",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
