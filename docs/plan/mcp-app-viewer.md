@@ -9,8 +9,8 @@
    right way to show research: real project data in the Cowork conversation,
    with a case file a senior researcher would choose over today's viewer.
 2. **A build that can be adopted later.** If accepted, it folds into the beta's
-   remote connector and replaces Electron (see "If adopted"). Until then it
-   touches nobody else's work.
+   remote connector and replaces Electron and the web viewer, leaving one viewer to
+   maintain (see "If adopted"). Until then it touches nobody else's work.
 
 ## Decisions (lead, 2026-11-03 and 2026-11-04)
 
@@ -36,8 +36,7 @@
    shortfall, what was not searched, any unsettled conflict, the engine's
    unregistered-disagreement check, and the reviewer's verdict. No heuristics of
    the card's own.
-7. **No live progress in the first version.** Steps will run under five
-   minutes; polling is on the later list.
+7. **No live watching.** Steps will run under five minutes.
 8. **M0 is the go/no-go.** If neither a card nor an artifact renders in a Cowork
    task, the build stops.
 9. **The demo shows page images.** The demo project is run so that the pages
@@ -65,15 +64,13 @@ adoption.
   conversation. Fullscreen covers the transcript, and MCP Apps have no side-panel
   mode (the modes are inline, fullscreen and picture-in-picture), so side-by-side
   work happens inside the file, in its right-hand pane.
-- **An artifact beside the task** is the alternative M0 tests. Claude's help
-  centre says an artifact opens beside the conversation and can use custom
-  connectors. Its page can read a connector's read-only tools as the viewer,
-  refresh about every 30 seconds while visible, and offer a file to save. Its
-  limits: it does not arrive with the connector; a connected artifact can be
-  shared inside the organization but not by link; only its owner can reach a local
-  server (`host:`); and nothing documents how one opens in a Cowork task. If M0
-  shows it works there, the case file is also published as an artifact, the same
-  page with a second way to call the tools.
+- **An artifact beside the task** is the fallback, used only if cards do not
+  render in Cowork. Claude's help centre says an artifact opens beside the
+  conversation and can use custom connectors, and its page can read a connector's
+  read-only tools as the viewer. Its limits: it does not arrive with the connector,
+  a connected artifact can be shared inside the organization but not by link, and
+  nothing documents how one opens in a Cowork task. In that case the case file runs
+  as an artifact, the same page with a second way to call the tools.
 
 ## The case file
 
@@ -345,8 +342,8 @@ Cowork task:
    installed.
 2. **Local:** the same server over stdio as a local server, to see whether a local
    card renders in Cowork today.
-3. **Artifact:** a small artifact calling the connector's read tool, then the
-   local server through `host:`.
+3. **Artifact,** only if the connector leg's card does not render: a small
+   artifact calling the connector's read tool.
 
 Record, in `docs/mcp-app-host-probe.md`:
 - does a card render on each route; the client's declared extensions;
@@ -364,9 +361,8 @@ Record, in `docs/mcp-app-host-probe.md`:
 - does the image load from the declared host;
 - does `ui/open-link` show Claude's confirmation each time;
 - is `ui/update-model-context` available;
-- does an artifact open beside a Cowork task, can it call the connector's read
-  tool and refresh itself, can it reach a `visibility: ["app"]` tool, and does
-  `host:` reach a `.mcpb`;
+- if the artifact leg runs: does it open beside a Cowork task, can it call the
+  connector's read tool, and can it reach a `visibility: ["app"]` tool;
 - is the `projectPath` the model passes in Cowork readable on the Mac.
 
 **Done when:** every item above has a recorded answer, and the server's tests
@@ -448,10 +444,8 @@ alone where the file is absent.
 
 ## Later
 
-Progress polling (the plan ticking while searches run), or an artifact's
-self-refresh if M0 shows it works; fetching unsaved page images from FamilySearch;
-a "Looks odd" check (better as an engine check the agents also see); posting
-buttons of any kind.
+Fetching unsaved page images from FamilySearch; a "Looks odd" check (better as an
+engine check the agents also see); posting buttons of any kind.
 
 ## If adopted
 
@@ -467,13 +461,15 @@ buttons of any kind.
   `resources/read`.
 - **The beta plan's viewer items** (W3's viewer routes, W4's viewer, polling and
   print view, D4 step 5, acceptance 2.2 and 2.6) change to the card.
-- **Drop Electron,** once each of its jobs has a home:
-  - **Local folders.** A connector reaches one machine, so a tester's local folder
-    is served only if M0's local leg renders, or an artifact's `host:` route works
-    for each tester, or their research moves to the remote connector.
-  - **Feedback.** Electron is Cowork's only feedback channel today.
+- **Feedback becomes a flag.** On the remote server the whole project is already
+  in the database, so one small tool flags the project and stores the tester's
+  words. That replaces Electron's bundle and the beta's bundler and Apps Script copy
+  (W3's feedback route, D5); `/triage-feedback` reads a flagged project from the
+  database.
+- **Drop Electron and the web viewer:**
+  - **Local folders.** A connector reaches one machine, so Electron stays until
+    testers' research moves to the remote connector, or until M0's local leg shows
+    cards render from a local server.
   - **`make e2e-view`:** the viewer server with `--root` at the e2e folder, opened
     in `basic-host`.
-  - **Print and GEDCOM export:** an artifact's file save, or the web tier's
-    download.
-  - **Live watching:** see "Later".
+  - **Print and GEDCOM export** go with them. The card's sandbox allows neither.
