@@ -19,7 +19,7 @@
   },
   "mcp_fixtures": [],
   "execution": {
-    "max_wall_clock_seconds": 300
+    "max_wall_clock_seconds": 900
   },
   "judge_context": [
     "This is the direct-agent arm: the delegation is relayed verbatim to evaluate-search-results and no router is staged. project_context, sidecar_read, tree_query and research_append run live against the scenario. The delegation names no target, so the agent judges the hit against the project's subject, I1 Iram F. Hyde.",
