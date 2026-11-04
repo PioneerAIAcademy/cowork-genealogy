@@ -50,7 +50,7 @@ research_query({
          | "external_collections",   // reads external-collections.json, not research.json — §2.4
   orderBy?: "review",            // person_evidence only — §2.5
   // well-known filters — only some apply to a given section; see §2.1.
-  // The four id keys also take a list (≤50 ids) — §2.1, "Lists of ids".
+  // personId, assertionId, sourceId, recordId and conflictId also take a list (≤50 ids) — §2.1, "Lists of ids".
   recordId?: string | string[],
   recordRole?: string,
   sourceId?: string | string[],
@@ -433,15 +433,18 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
 
 | Condition | Behavior |
 |---|---|
-| `section` not one of the fourteen supported values | `{ ok: false, errors }` |
+| `section` not one of the supported sections | `{ ok: false, errors }` |
 | `section: "external_collections"` and no `external-collections.json` yet | `{ ok: true, count: 0, items: [], truncated: false }` — nothing has been fetched for this project |
 | `external-collections.json` is invalid JSON, or not an object holding a `places` object | `{ ok: false, errors }` |
 | A supplied filter not in that section's allow-list (§2.1) | `{ ok: false, errors }` naming the filter and the section |
-| A filter value that is neither a string nor (on the four id keys) a list — a number, boolean, object or `null` | `{ ok: false, errors }` (`'<key>' must be a string …`). Before T2.3 these answered `ok: true` with `count: 0`, and `null` matched items whose field was `null` |
+| `filters` or `filter` sent (filter arguments bundled in one object, stringified or not) | Refused by `server.ts`'s unknown-argument guard before the handler runs; the handler would ignore the key and read the whole section. The message says each filter is its own argument beside `section`, lists the filters the requested section takes (read from `SECTION_FILTERS`), and says a key outside that list does not exist there, so with none left the call reads the whole section. A section with no filters says so; with no known `section` it points to the tool description. The value is never unwrapped and run |
+| `entryId` sent | Refused by the guard before the handler runs. On a section with a filter on an entry's own id (`questionId`, `sourceId`, `assertionId`, `conflictId`) the message names that filter; on any other section it says to drop `entryId` and read the section; with no known `section` it lists the sections that read one entry by its id. It never names a writer tool, where `entryId` is a parameter |
+| `sections` sent | Refused by the guard before the handler runs, with `SECTIONS_NEAR_MISS`; a direct call gets the same text from the handler |
+| A filter value that is neither a string nor (on the id keys that take one) a list — a number, boolean, object or `null` | `{ ok: false, errors }` (`'<key>' must be a string …`). Before T2.3 these answered `ok: true` with `count: 0`, and `null` matched items whose field was `null` |
 | `planItemId: null` | `{ ok: false, errors }` — **changed** in T2.3; it used to return every log entry with a null `plan_item_id`, an undocumented behaviour no recorded call relied on |
-| A list on a key other than `personId`, `assertionId`, `sourceId`, `recordId` | `{ ok: false, errors }` naming the four keys that take one |
+| A list on a key other than `personId`, `assertionId`, `sourceId`, `recordId`, `conflictId` | `{ ok: false, errors }` naming the keys that take one |
 | An empty list (`[]` or `"[]"`), an element that is not a non-empty string, or more than 50 distinct ids | `{ ok: false, errors }` |
-| A string on one of the four keys that starts with `[` but is not a JSON array of non-empty strings | `{ ok: false, errors }` — never read as one id |
+| A string on one of those keys that starts with `[` but is not a JSON array of non-empty strings | `{ ok: false, errors }` — never read as one id |
 | Two list-valued filters in one call | `{ ok: false, errors }` naming both |
 | A list repeats an id | collapses silently: one `countById` key, each item once |
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
