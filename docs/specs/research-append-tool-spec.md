@@ -103,9 +103,11 @@ research_append({
   section:
     | "sources" | "assertions" | "person_evidence"
     | "questions" | "plans" | "plan_items"
-    | "conflicts" | "hypotheses" | "timelines" | "rejected_links"
+    | "conflicts" | "hypotheses" | "timelines"
+    | "rejected_links" // update limited to its reason, §3.1
     | "proof_summaries" | "evaluations" | "localities"
     | "namesakes"   // namesakes: update limited to its updatableFields, §3.1
+    | "hit_verdicts" // hit checked against its search and folded, §3.10; update limited, §3.1
     | "project",    // project: update-only singleton, §3.1
   op: "append" | "update",
 
@@ -232,11 +234,15 @@ camelCase convenience fields the same way `research_log_append` does.
   singleton's wording:
   `field(s) not updatable on '<section>': <fields> (allowed: <list>)`. An `id`
   equal to the entry's own passes; a different one is refused, as on every
-  section. `namesakes` is the one list section that declares it, with `name`,
+  section. Three list sections declare it. `rejected_links` names only
+  `reason`: a rejection is never re-pointed, and `researcher_words` is a record
+  (§5). `namesakes` names `name`,
   `place`, `time_period`, `record_ids`, `log_entry_ids` and `notes`: a row is
   never re-pointed to another `person_id`, and having no `status` or
-  `superseded_by` it is never retired either. A section without the list keeps
-  the default, every field but `id` updatable.
+  `superseded_by` it is never retired either. `hit_verdicts` names `verdict`,
+  `new_vital_info` and `rationale`: a verdict is never re-pointed to another
+  search, hit or person (§3.10). A section without the list keeps the default,
+  every field but `id` updatable.
 
 ### 3.2 Return value (compact — never echoes the section)
 
@@ -260,6 +266,10 @@ camelCase convenience fields the same way `research_log_append` does.
 }
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
+
+A `hit_verdicts` append that §3.10 folds into an update of an existing row
+returns `op: "update"` and that row's `entryId`, and a warning naming the row; in
+a batch, its `results[i]` carries `op: "update"`.
 
 `validation.warnings` carries non-blocking advisories: `standard_place` that
 could not be resolved (§3.6), tree-heal notes, an already-`exhaustive_declared`
@@ -1118,6 +1128,50 @@ rebuilds the field.
   checked and before any place lookup, because a call that fails here would
   otherwise geocode assertion places for nothing.
 
+### 3.10 `hit_verdicts` — the hit is checked, and stored once per person
+
+A `hit_verdicts` row (`research-schema-spec.md` §5.16) judges one hit of a logged
+full-text search against one tree person. Each `hit_verdicts` **append** is
+checked against that search before anything is applied (`prepareHitVerdicts`,
+inside the §4.1 lock):
+
+- **The search.** `log_id` must name a `log[]` entry whose `tool` is
+  `fulltext_search` and whose `results_ref` is set. Any other entry, a null
+  `results_ref`, an unknown id and an unreadable sidecar are refused.
+- **The hit.** `hit_id` must be a row of that sidecar's `payload.results`,
+  matched by bare id (`findFulltextHit`, the matcher `sidecar_read` and
+  `extraction_append` use), so a bare id, an ARK and a resolver URL all name the
+  same hit. A hit the search did not return is refused, and the refusal names the
+  hit count.
+- **The stored form.** `hit_id` is rewritten to the sidecar row's own `id`, so
+  every row stores one spelling per hit whatever the caller sent.
+- **One row per hit and person.** An append whose (`log_id`, `hit_id`,
+  `person_id`) — `hit_id` compared by bare id — matches an existing row is
+  **folded into an update** of that row: the op becomes
+  `{ op: "update", entryId: <the row's id>, fields }`, where `fields` is the entry
+  without `log_id`, `hit_id`, `person_id` and `created`. An entry that
+  carries an `id` is never folded: it meets the append's own "must not carry an
+  id" refusal, so the fold cannot launder one into an update. **A folded append
+  must carry `verdict`, `new_vital_info` and `rationale`, as a fresh append
+  must**: one that leaves any of them out is refused before the fold, one line per
+  absent field, `missing required field '<field>'` (op-indexed in a batch), and
+  nothing is written, so a re-evaluation never pairs a new verdict with the
+  stored row's flag or rationale. A field present with a bad value (`null`, a
+  blank rationale) reaches the whole-document validator on the merged row, as an
+  update's does. Beyond those three, a key no row may hold reaches the
+  `updatableFields` refusal of §3.1 rather than being dropped. `created` keeps the
+  first write's date. The return
+  says so (§3.2). This is what lets the router evaluate one hit in parallel
+  agents, and re-evaluate it later, without a second row: precedent §3.4.1's
+  `updated_existing`.
+- **Two in one call.** A second append for the same key in the same call is
+  refused: it cannot become an update of an id the call is still creating (§3.3).
+
+An **update** is not re-checked against the search: it cannot set `log_id`,
+`hit_id` or `person_id` (§3.1). The two write-time preconditions on
+`new_vital_info` are in §5; they run on the merged row, after the fold, so a
+folded append meets them as the update it has become.
+
 ---
 
 ## 4. Persistence — validate-before-persist, atomic
@@ -1284,6 +1338,10 @@ audit's recommendation #5):
 | A `plan_items` append, a `plan_items` update that changes `jurisdiction`, or an inline item of a `plans` op whose `jurisdiction` changed | **refused** when the `jurisdiction` splits on "and", "or", "&", ";" or "/" into two or more parts and every part sits inside, or encloses, a recorded `localities[].place` (the same tail match as the locality warning) | search-records hands a plan item's jurisdiction to `record_search` as its one `residencePlace`, so "Alabama and Texas, United States" names no searchable place. Requiring every part to be a researched locality is what leaves a single place with a joiner in its name ("Lewis and Clark County, Montana") alone; an elided part ("Smith County and Hill County, Texas") is not caught. Not applied to an edit that leaves a stored item's jurisdiction unchanged, even one re-sending it, so an item written before the rule stays editable. A two-place jurisdiction with one part the project has not researched ("Alabama and Georgia" where only Alabama is recorded) passes. The message tells the agent to write one item per place. | `compoundJurisdictionError` |
 | any section | a **required-object field** holding a primitive is rejected — `search_stop`, `external_site`, `citation_detail`. Absent and null stay with the required-field check, which already reports them, so the message is never doubled. `search_stop` renamed from `exhaustive_declaration` (2026-10-07) | The three sites opened with `if (typeof X === "object" && X !== null)`, which is right about not crashing and silent about everything else: a primitive skipped the whole block, so `citation_detail: "Schuylkill County registrar, certificate 24601"` validated clean while `research.schema.json` requires the six-key object. **Measured cost, per ADR-0011 limit 2, measured at 9a0eb98e5: 17 of 323 (5.3%), in 4 run-log files across 3 e2e fixtures.** The denominator is stated because it moves with the method: count `sources` ops with `op: "append"` in the `args` of every `tool_calls[]` entry whose tool is **`research_append`**, over the tracked files under `eval/runlogs/` excluding `.ann.json`, and take those whose `entry.citation_detail` is non-null. That gives 323 supplying the field, 306 objects and 17 strings. The primary figure does not depend on the method: it comes out the same under every traversal and op filter tried. A parenthetical here used to give the both-writers total as well, and it is deleted rather than corrected: three people produced three different values for it across three review rounds, one of them mine from a throwaway script, while the 17 never moved. Re-derive it if you need it. All of it sits in the e2e logs; the unit run logs carry no `citation_detail` at all. Nothing teaches the string form — `citation/SKILL.md` and `record-extractor.md` both teach the six keys — so the satisfying shape is the only documented one. Unlike the `stop_criteria` row above, the owning skill running does not prevent this shape: all 17 come from e2e runs that invoked `record-extraction` and ran the `record-extractor` agent, so its `0 of 241 writes made by runs that invoked the owning skill` has no analogue here. The satisfiability argument rests on the 5.3% rate alone. Run granularity: the `tool_calls[]` records carry `tool` and `args` only, so this shows the skill and agent ran, not that the agent made the write |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-append.ts` ("must not carry an id — the tool assigns it"); id immutability: [`research-schema-spec.md` §"3. ID Conventions"](research-schema-spec.md#3-id-conventions) |
+| `hit_verdicts` append | **the hit is a retained hit of a full-text search** — `log_id` names a `fulltext_search` entry with a `results_ref`, and `hit_id` is a row of that sidecar (by bare id). Refused otherwise, naming the entry's tool or the hit count; a second append for one (`log_id`, `hit_id`, `person_id`) in the same call is refused too. An append for a key that already has a row is not refused: it is folded into an update of it (§3.10), and refused, `missing required field '<field>'`, when it leaves out `verdict`, `new_vital_info` or `rationale`, which a fresh append must also carry | `prepareHitVerdicts` in `research-append.ts`; `research-append-hit-verdicts.test.ts` |
+| `hit_verdicts` update | **sets only `verdict`, `new_vital_info` and `rationale`** — `log_id`, `hit_id`, `person_id` and `created` are refused (`updatableFields`, §3.1), so a verdict is never re-pointed | `SECTIONS.hit_verdicts` in `research-append.ts` |
+| `hit_verdicts` append, folded append, or update setting `verdict` or `new_vital_info` | **write-time precondition: `new_vital_info: true` is refused beside `verdict: "not_a_match"`** — a hit that is not the target holds no fact the target lacks. Checked on the merged row from either side, as `declarationStatusInvariants` is: an update that flips the verdict of a row flagged `true` is refused like one that sets the flag | `hitVerdictInvariants` in `research-append.ts` |
+| `hit_verdicts` append, folded append, or update setting `verdict` or `new_vital_info` | **write-time precondition: `new_vital_info: true` is refused on a hit already extracted** — some `research.assertions[].record_id` has the same bare id as `hit_id` (`arkToBareId`; assertions often hold the resolver URL, hit ids the bare ARK). Record-level on purpose, matching `extraction_append`'s resend skip (`sourceIdsForRecordIds`): an extracted hit is never extracted again, so it has no new information left to extract. A write-time check only: a row written `true` stays `true` after its hit is extracted, and an update touching neither field does not re-check it (`research-schema-spec.md` §5.16 says how a reader re-derives "not new") | `hitVerdictInvariants` in `research-append.ts` |
 | `assertions` append | **not a second copy of a fact the same extraction pass already wrote** (§3.4.3): in a batch that re-persists an already-persisted record (§3.4.1 `updated_existing`), refused, op-indexed, when the PRE-CALL document holds an assertion with the same (`source_id`, canonical `record_id`, `log_entry_id`, person — `record_persona_id` when set, else `record_role` — canonical `fact_type`). Batch-internal pairs are never compared; values are ignored; `record_role: "absent"` is exempt. Cost on the committed corpus (189 e2e runs, 4,817 writer calls, replayed by `dev/replay-reextraction-guard.ts`, 2026-09-23): of 145 folding calls it refuses 73, every one a re-send of the same pass (60 verbatim, 13 reworded) and none a call that recorded success; 0 image passes refused; the gate spares 26 calls the ungated key would have hit, the distinct later facts (a second parentage) among them | ADR-0011; D17 live run 2026-09-23 (`docs/plan/search-agent-prototype.md`); lead ruling 2026-09-23 |
 
 The LLM still makes every substantive decision and supplies the fields — the tool
@@ -2150,6 +2208,24 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   stub minted from its record passes, and is refused once another record has been
   materialized onto the stub. Writing one source's links in the pass that mints
   its stub keeps that order out of reach.
+- **hit_verdicts (§3.10, §5)** — `research-append-hit-verdicts.test.ts`, end to
+  end through the caller entry point. `hit_id` stored in the sidecar's form from a
+  bare id and from a resolver URL; refused: a hit the search did not return
+  (nothing written), a blank or empty `hit_id`, a `record_search` entry, a
+  full-text entry with no `results_ref`, an unknown log id, two appends for one key
+  in one call, an append carrying an `id` (also where it would fold), an update
+  setting `log_id`, `hit_id`, `person_id` or `created`, a folding append
+  missing `new_vital_info`, `rationale` or `verdict` (the stored row
+  byte-unchanged; in a batch, one `ops[i]:` line per field). A repeat append
+  carrying all three returns `op: "update"` and the existing id, single and
+  batched, leaving one row whose identity and `created` are unchanged. A second
+  row on one key is a validation error `validateIntroduced` blocks when a write
+  introduces it, and a hand-edited one rides an unrelated append. Must fire: `not_a_match` with
+  `true` on an append, an update flipping a flagged row to `not_a_match`, `true`
+  on an extracted hit by append, update and folded append. Must not fire:
+  `possible_match` and `match` with `true`, `not_a_match` with `false`, `true` on
+  an unextracted hit, a `rationale` update on a stored `true` row whose hit is
+  extracted.
 - **namesake cap (§5)** — `research-append-namesake.test.ts`, end to end through
   `researchAppend`. **U1**: a row appends as `ns_001` with `created` stamped; an
   update setting `person_id`, alone or beside allowed fields, is refused and
@@ -3319,54 +3395,101 @@ such text would read as an instruction.
 ### 11.8 Person mode — a person's attached records, extracted and linked
 
 `extraction_append({ projectPath, personId })` is the baseline step (lead,
-2026-10-19 and 2026-10-20). It extracts every indexed record FamilySearch has
-attached to one tree person, and links each to that person as an unchecked
-candidate. It assumes every attachment is correct: no agent runs, and there is
-no `same_person` gate. Checking the attachments is a separate request.
+2026-10-19, 2026-10-20 and 2026-10-30). It extracts every indexed record
+FamilySearch has attached to one tree person or to a relationship they are an
+endpoint of, and links each persona to the tree person who attaches it as an
+unchecked candidate. It assumes every attachment is correct: no agent runs, and
+there is no `same_person` gate. Checking the attachments is a separate request.
 
 - **`personId`** is a tree id, or a FamilySearch id matched through the
   person's `ark` (`findAnchor`). It is sent alone: with `recordIds`,
   `documents` or `absences` it is refused like any two shapes together.
-- **Which records.** Only the person's own refs count: person-, name- and
-  fact-level (`collectSourceRefs`). Relationship-level refs are excluded,
-  because 32 of 42 in the e2e trees name the other party (decision 11). Each
+- **Which records.** The person's own refs: person-, name- and fact-level
+  (`collectSourceRefs`). And the `sources` refs of every tree relationship the
+  person is `person1`, `person2`, `parent` or `child` of (lead, 2026-10-30); a
+  relationship fact's own refs are not read. A relationship ref naming a record
+  already in the person's own set, or another persona of a record the own set
+  already reaches through its sidecar, is not extracted a second time. Each
   ref's tree source `url` must carry a `1:1:` record id; any other source (a
   memory, an artifact) is counted in `skipped` and named in the summary.
-- **No attachment.** A person with no `1:1:` attachment returns `ok: true` with
-  nothing written, the skipped count, and a summary saying no attached indexed
-  record exists.
+- **No attachment.** A person with no `1:1:` attachment on themselves or their
+  relationships returns `ok: true` with nothing written, the skipped count, and
+  a summary saying no attached indexed record exists on the person or the
+  person's relationships.
 - **Extraction** goes through the record-id path (§11.6), with no
   `questionIds`. Each record's source cites the tree `S` the import already
   made for it (`gedcomx_source_description_id`, matched on the bare `1:1:` id,
   never the URL string), so no second `S` is minted. Reusing that `S` does not
   make `same_person`'s leave-one-out work, because imported facts cite it too.
-- **Links.** For each record, the attached persona is the one whose
-  `persons[].ark` names the attached id, read off the record's sidecar; its
-  `id` (`p_…`) selects the assertions carrying it as `record_persona_id`. Each
-  becomes a `person_evidence` append with `confidence: "speculative"`,
-  `match_score: null` and `ATTACHMENT_LINK_RATIONALE` ("Linked because
-  FamilySearch has this record attached to this person; not verified."), in
-  a call whose lane is `person_evidence` alone, past the score gate on an
-  internal flag (§5). A record is linked only when none of that persona's
+- **Links.** A record group is a record and the other persona entries of the
+  same record its sidecar names (`personaGroups`). Each group gets one claim
+  map from persona (`p_…`, read off the sidecar's `persons[].ark`) to tree
+  person, filled in this order (lead, 2026-10-30):
+  1. **Own.** The persona whose ark the run person's own refs attach is
+     claimed by the run person, unless another tree person's own refs attach
+     the same ark: then nobody claims it (`ambiguous`), since a second
+     attacher is the sign the record was attached to the whole family.
+  2. **Household.** Any other persona whose ark exactly one tree person's own
+     refs attach is claimed by that person. Two attachers claim it for nobody
+     (`ambiguous`). A tree person who reaches the ark only through a
+     relationship ref claims nothing here.
+  3. **Party.** For a record read through a relationship ref, each endpoint of
+     each citing relationship is a party. A party whose own refs attach any
+     persona of the group gets no pick, even one that rule 1 or 2 left to
+     nobody: the set is taken before any party is asked, so the order of the
+     parties cannot change it. For each
+     other party, `selectSubjectPersona` (the
+     party's relationship role and gender against the record's own
+     relationships) picks its persona; a party with no known gender gets no
+     pick, since a lone candidate could be the other parent or partner. An
+     `unscored` selection (`record_unreadable`, `no_gender`,
+     `no_relationship`, `ambiguous`, `edges_disagree`) claims nothing and is
+     counted in `unselected`. A party pick that disagrees with any other
+     claim on the same persona leaves it to nobody (`ambiguous`).
+
+  Last, a tree person left claiming two personas of one record gets neither
+  (`ambiguous`), the run person included. So no persona is ever linked to two
+  tree persons, and no tree person to two personas of one record. Each count
+  is per persona, however many routes contest it.
+
+  Each claimed persona's assertions (`record_persona_id`) become
+  `person_evidence` appends to their claimant with `confidence:
+  "speculative"`, `match_score: null` and `ATTACHMENT_LINK_RATIONALE`
+  ("Linked because FamilySearch has this record attached to this person; not
+  verified."), in a call whose lane is `person_evidence` alone, past the score
+  gate on an internal flag (§5). A household or party link carries the same
+  rationale: "this person" is the claimant, whose own refs or relationship
+  attach the record. A persona is linked only when none of its
   assertions has a live link yet, so a persona someone already decided about
-  is never split across two tree persons; such a record is counted in
-  `alreadyLinked`. A pair `rejected_links` names is never re-linked, and is
-  counted in `rejectedSkipped`. Each record's links are one write, retried one
-  link at a time on a refusal, so one refused pair never sinks the rest. A
-  record whose persona cannot be found (a reused hint, whose entry keeps no
-  sidecar) is extracted and not linked.
+  is never split across two tree persons; it is counted in `alreadyLinked`. A
+  pair `rejected_links` names is never re-linked, and is counted in
+  `rejectedSkipped`. Each group's links are one write, retried one link at a
+  time on a refusal, so one refused pair never sinks the rest; a link still
+  refused is counted in `refused`. A record whose persona cannot be found (a
+  reused hint, whose entry keeps no sidecar) is extracted and not linked.
 - **Afterwards** an attachment link is only ever superseded (§5): raising it is
   a `same_person` score and a new link.
 - **Return:** `{ ok, records, extracted, linked, skipped, alreadyLinked?,
-  rejectedSkipped?, summary }`, with `records` as §11.6 returns them and one
-  code-written `summary` for the whole call, which says checking the
-  attachments is a separate request.
-- **Tool time,** measured 2026-10-20 against live FamilySearch with
-  `dev/try-extraction-append-person.ts` on william-sloan-spouse's subject LHG6-L26,
-  the largest attached set in the committed e2e starting trees (20 indexed
-  records): **19.1 s cold** (20 extracted, 119 assertions linked), **0.14 s** on a
-  re-send (all 20 records left as already linked). Cowork aborts a call at 60 s.
-  46 of 186 e2e subjects have at least one attached indexed record.
+  rejectedSkipped?, relationshipRecords?, ambiguous?, unselected?,
+  refused?, linkedPersons?, summary }`, with `records` as §11.6 returns them. `linked` is
+  the total over every tree person; `linkedPersons` (`{ [treePersonId]: count
+  }`) counts the links made to each tree person other than the run person. The
+  optional counts are present only when non-zero. One code-written `summary`
+  covers the whole call: it names the other persons linked, the
+  relationship-level records and the personas left unlinked as ambiguous or
+  unselected, and says checking the attachments is a separate request.
+- **Tool time,** measured 2026-11-04 against live FamilySearch with
+  `dev/try-extraction-append-person.ts`. Cowork aborts a call at 60 s.
+
+  | Subject (e2e fixture) | Records | Cold | Re-send | Linked | Other persons linked | `unselected` |
+  |---|---|---|---|---|---|---|
+  | LHG6-L26 (william-sloan-spouse), the largest own set | 20 own | 19.7 s | 0.06 s | 338 | 8 | 0 |
+  | LL4N-82C (maria-bracero-marriage), the most relationship refs | 14 own, 8 relationship | 11.6 s | 0.05 s | 244 | 13 | 1 |
+  | KHGX-XWG (thomas-hanrahan-marriage) | 3 own, 2 relationship | 5.0 s | 0.01 s | 81 | 5 | 0 |
+
+  No record group is read twice: LL4N-82C's 22 attached records are 15
+  extractions. Its `ambiguous: 2` is one tree person claiming two personas of
+  one record, so neither is linked. 46 of 186 e2e subjects have at least one attached indexed record.
 
 ## 12. `evaluation_append` — the second lane-scoped variant
 

@@ -11,6 +11,7 @@
       "extraction",
       "tree-edit-noop",
       "hand-back",
+      "reads-before-hand-back",
       "direct-arm"
     ]
   },
