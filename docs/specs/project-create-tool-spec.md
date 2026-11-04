@@ -139,6 +139,33 @@ count, not time.
   `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level and
   relationship-level `sources` refs are re-pointed at their `S` ids.
 - **Relationships** get `R` ids, with every endpoint rewritten to `I` ids.
+- **Loops:** a ParentChild loop in the read (a person recorded as their own
+  ancestor, directly or through a chain) is a FamilySearch data error, and the
+  validator refuses any tree that holds one, so the build breaks it rather than
+  fail the create. Each person first gets a generation, by a breadth-first walk
+  from the subject (0) over every relationship in the read's order except the
+  ParentChild edges that lie on a loop: a parent is its child's generation + 1,
+  a child its parent's − 1, a Couple partner the same, and the first value
+  assigned wins. Loop edges are left out of the walk so that the wrong edge
+  cannot set the generations it is then scored by; otherwise a subject who is
+  on the loop can reach the other loop person through the wrong edge first and
+  drop the right one. Then, while a loop remains, the loop
+  edge with the smallest `generation(parent) − generation(child)` is dropped;
+  when two or more loop edges share that smallest score, the one latest in the
+  read's `relationships` order goes, and when a person on the loop has no
+  generation (the subject cannot reach them off the loop), the loop edge latest
+  in that order goes. On both loops seen in real reads, where a spouse and a child of the
+  subject are each recorded as the other's parent, this drops the child as the
+  spouse's parent. Each dropped edge is reported as one plain sentence, first in
+  the summary's `notes` and also in `validation.warnings`, worded by the loop's
+  size: a person recorded as their own parent; a pair ("FamilySearch records A
+  as B's parent and B as A's; the first link was left out of the tree, since a
+  person cannot be their own ancestor."); or a longer chain ("…records A as B's
+  parent, but also records B as A's ancestor; that link was left out…"). A
+  person with no name is named by FamilySearch ID ("the person with
+  FamilySearch ID …"), never by the tree's own `I` id. Only
+  this path heals: a hand-built `tree` holding a loop is refused, as every
+  writer refuses one.
 - **Places** a fact from the read carries with no `standard_place` go through
   the same resolver `person_read` uses, once more (`standardizePlaces`): the
   read leaves a place unresolved after a transient failure or past its
@@ -253,8 +280,9 @@ has them), `objective` and `title` as stored, `relatives` (each other person's `
 the subject — `spouse`; `father` / `mother` for a parent recorded Male / Female,
 `parent` when the sex is unknown; `child`, `sibling`, or `relative`), `counts` (`persons`,
 `relationships`, `sources`, `memorySources`), `memories` (the titles of the
-subject's memories that were and were not transcribed), the read's own `notes`,
-and `validation.warnings`. Over the cap, whole entries are dropped, the last
+subject's memories that were and were not transcribed), `notes` (a sentence per
+loop the build broke, first, then the read's own notes), and
+`validation.warnings`. Over the cap, whole entries are dropped, the last
 first, in this order: `warnings`, `notes`, the untranscribed titles, the
 transcribed titles, then relatives, and among relatives only a child, sibling or
 other relative. A parent or a spouse is never dropped, since those are the slots
@@ -418,7 +446,11 @@ the write ahead of the validation and watching two cases go red.
 > only in the direction the read supports, a supplied `standard_date` the read
 > does not hold, a reworded marriage date, a merged person's ark, nothing staged,
 > a staged read past the TTL by write time never opened, and that a build with no
-> ark never lists staging).
+> ark never lists staging); and a read holding a ParentChild loop (the create
+> succeeds without the loop-closing edge, the loop sentence is first in `notes`
+> and in `validation.warnings`, a longer loop's wording claims no reciprocal
+> link, a loop-free read adds no note) while a hand-built tree with the same loop
+> is still refused.
 
 > `packages/engine/mcp-server/tests/tools/person-read.test.ts` — `readPerson`
 > behind `person_read`; a merged parent's redirect is not followed once the read's
@@ -431,7 +463,13 @@ the write ahead of the validation and watching two cases go red.
 
 > `packages/engine/mcp-server/tests/utils/person-read-tree.test.ts` — the place
 > retry, its no-op when nothing needs it, that a refusal never waits on it, that
-> it touches only the read's facts, and the access-date form.
+> it touches only the read's facts, and the access-date form; and the loop rule
+> on both fixture shapes (salvador-choc-daughter, isabel-carvajal-daughter), the
+> same decision with the wrong edge listed first, the same decision seeded from
+> the child on the loop in both orders, a tie in both orders, a loop the subject
+> cannot reach, a three-person loop with and without an anchor off the loop, a
+> self-parent, and pedigree
+> collapse and a loop-free read left unchanged.
 
 > `eval/harness/tests/unit/test_init_project_provenance_validators.py` — the
 > compiled build's tree passes the init-project validators written to grade the

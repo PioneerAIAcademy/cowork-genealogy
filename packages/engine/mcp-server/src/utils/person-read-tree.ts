@@ -64,10 +64,28 @@ export interface TreeCited {
   relationships: number;
 }
 
+/** A ParentChild edge the build left out because it closed an ancestry loop
+ *  (`breakAncestryLoops`). Ids are the tree's `I` ids. */
+export interface DroppedLoopEdge {
+  relationshipId: string;
+  parent: string;
+  child: string;
+  parentName: string;
+  childName: string;
+  /** FamilySearch person IDs, named in the note when a person has no name. */
+  parentPid: string;
+  childPid: string;
+  /** Distinct persons on the loop the edge was dropped from: 1 is a person
+   *  recorded as their own parent, 2 a reciprocal pair. */
+  cycleLength: number;
+}
+
 export interface BuiltTree {
   tree: { persons: Obj[]; relationships: Obj[]; sources: Obj[] };
   idMap: IdMap;
   subjectPersonIds: string[];
+  /** ParentChild edges left out to break a loop in the read; `[]` when none. */
+  droppedLoopEdges: DroppedLoopEdge[];
   /** The place retry for the read's facts, plus any `extra` facts in the same
    *  time budget (`budgetMs`, default `PLACE_RETRY_BUDGET_MS`). Not run by the
    *  build: the caller runs it once every refusal of its own has passed, so a
@@ -373,8 +391,10 @@ export async function buildFromStagedRead(args: {
     return out;
   });
 
-  const tree = { persons, relationships, sources };
   const subjectId = idMap.persons[subjectPid];
+  const pidOf = new Map(Object.entries(idMap.persons).map(([pid, id]) => [id as string, pid]));
+  const droppedLoopEdges = breakAncestryLoops(persons, relationships, subjectId, pidOf);
+  const tree = { persons, relationships, sources };
   // The read's facts, for the place retry. It runs LAST, in the caller, so
   // every refusal below is instant.
   const readFacts = collectFacts(tree as never) as SimplifiedFact[];
@@ -404,8 +424,148 @@ export async function buildFromStagedRead(args: {
     tree,
     idMap,
     subjectPersonIds,
+    droppedLoopEdges,
     fillPlaces: (extra = [], budgetMs) => retryUnresolvedPlaces([...readFacts, ...extra], budgetMs),
   };
+}
+
+/**
+ * Break every ParentChild loop in a FamilySearch read (a person recorded as
+ * their own ancestor), which the validator would otherwise refuse, failing the
+ * whole create over a FamilySearch data error. Splices the dropped edges out
+ * of `relationships` and returns them. Rule (project-create-tool-spec §4):
+ *
+ * - Each person gets a generation by a breadth-first walk from the subject
+ *   (0) over every relationship except the ParentChild edges that lie on a
+ *   loop, in `relationships` order: a parent is its child's + 1, a child its
+ *   parent's − 1, a Couple partner the same. The first value assigned wins.
+ *   Loop edges are left out of the walk so the wrong edge cannot set the
+ *   generations it is then scored by.
+ * - While a loop remains, drop the loop edge with the smallest
+ *   gen(parent) − gen(child). When that minimum is shared, or a person on the
+ *   loop has no generation, drop the loop edge latest in `relationships`.
+ *
+ * The loop search is the validator's three-colour DFS (`detectAncestryCycles`),
+ * kept separate because that one reports into a ValidationReport and this one
+ * needs the loop's edges.
+ */
+function breakAncestryLoops(
+  persons: Obj[],
+  relationships: Obj[],
+  subjectId: string,
+  pidOf: Map<string, string>,
+): DroppedLoopEdge[] {
+  const isParentChild = (r: Obj) =>
+    r.type === "ParentChild" && typeof r.parent === "string" && typeof r.child === "string";
+
+  const parentsOfAll = new Map<string, string[]>();
+  for (const r of relationships) {
+    if (!isParentChild(r)) continue;
+    if (!parentsOfAll.has(r.child)) parentsOfAll.set(r.child, []);
+    parentsOfAll.get(r.child)!.push(r.parent);
+  }
+  // An edge parent>child is on a loop when the child is also an ancestor of
+  // the parent.
+  const onLoop = (r: Obj): boolean => {
+    const seenUp = new Set<string>();
+    const stack = [r.parent as string];
+    while (stack.length) {
+      const at = stack.pop()!;
+      if (at === r.child) return true;
+      if (seenUp.has(at)) continue;
+      seenUp.add(at);
+      stack.push(...(parentsOfAll.get(at) ?? []));
+    }
+    return false;
+  };
+
+  const neighbours = new Map<string, Array<[string, number]>>();
+  const link = (from: string, to: string, delta: number) => {
+    if (!neighbours.has(from)) neighbours.set(from, []);
+    neighbours.get(from)!.push([to, delta]);
+  };
+  for (const r of relationships) {
+    if (isParentChild(r)) {
+      if (onLoop(r)) continue;
+      link(r.child, r.parent, 1);
+      link(r.parent, r.child, -1);
+    } else if (r.type === "Couple" && typeof r.person1 === "string" && typeof r.person2 === "string") {
+      link(r.person1, r.person2, 0);
+      link(r.person2, r.person1, 0);
+    }
+  }
+  const generation = new Map<string, number>([[subjectId, 0]]);
+  const queue = [subjectId];
+  for (let i = 0; i < queue.length; i++) {
+    const at = queue[i];
+    for (const [next, delta] of neighbours.get(at) ?? []) {
+      if (generation.has(next)) continue;
+      generation.set(next, generation.get(at)! + delta);
+      queue.push(next);
+    }
+  }
+
+  const findLoop = (): Obj[] | undefined => {
+    const parentsOf = new Map<string, Obj[]>();
+    for (const r of relationships) {
+      if (!isParentChild(r)) continue;
+      if (!parentsOf.has(r.child)) parentsOf.set(r.child, []);
+      parentsOf.get(r.child)!.push(r);
+    }
+    const seen = new Set<string>();
+    const onPath = new Map<string, number>();
+    const edgeChain: Obj[] = [];
+    const visit = (node: string): Obj[] | undefined => {
+      seen.add(node);
+      onPath.set(node, edgeChain.length);
+      for (const edge of parentsOf.get(node) ?? []) {
+        const at = onPath.get(edge.parent);
+        if (at !== undefined) return [...edgeChain.slice(at), edge];
+        if (seen.has(edge.parent)) continue;
+        edgeChain.push(edge);
+        const found = visit(edge.parent);
+        if (found) return found;
+        edgeChain.pop();
+      }
+      onPath.delete(node);
+      return undefined;
+    };
+    const starts = [...persons.map((p) => p.id as string), ...parentsOf.keys()];
+    for (const start of starts) {
+      if (seen.has(start)) continue;
+      const found = visit(start);
+      if (found) return found;
+    }
+    return undefined;
+  };
+
+  const nameOf = new Map(persons.map((p) => [p.id as string, displayName(p)]));
+  const dropped: DroppedLoopEdge[] = [];
+  for (let loop = findLoop(); loop; loop = findLoop()) {
+    const latest = (edges: Obj[]) =>
+      edges.reduce((a, b) => (relationships.indexOf(b) > relationships.indexOf(a) ? b : a));
+    let drop: Obj;
+    if (loop.some((e) => !generation.has(e.parent) || !generation.has(e.child))) {
+      drop = latest(loop);
+    } else {
+      const score = (e: Obj) => generation.get(e.parent)! - generation.get(e.child)!;
+      const min = Math.min(...loop.map(score));
+      const lowest = loop.filter((e) => score(e) === min);
+      drop = lowest.length === 1 ? lowest[0] : latest(lowest);
+    }
+    relationships.splice(relationships.indexOf(drop), 1);
+    dropped.push({
+      relationshipId: drop.id,
+      parent: drop.parent,
+      child: drop.child,
+      parentName: nameOf.get(drop.parent) ?? "Unknown",
+      childName: nameOf.get(drop.child) ?? "Unknown",
+      parentPid: pidOf.get(drop.parent) ?? drop.parent,
+      childPid: pidOf.get(drop.child) ?? drop.child,
+      cycleLength: loop.length,
+    });
+  }
+  return dropped;
 }
 
 /** A place the retry resolved: the fact's raw `place` and what it now carries. */
