@@ -325,6 +325,13 @@ call `show_project` with the step, then the reply. The tool is found by bare nam
 - **Under Decision 3's fallback:** lines only for setup, search, conflict,
   hypothesis and conclusion, plus a link line only when the link step ends on a
   question for the researcher (no "Continue with …?" line).
+- **Named next steps,** a trial for the demo. At the real forks, the "not
+  exhaustive" choice and the conclusion, the variant offers two or three concrete
+  moves through `AskUserQuestion`, taken from the recorded leads, beside the
+  ordinary replies. A tapped move is a steer, which the router already turns into a
+  plan item. Every other stop keeps its one "Continue with …?" line. This does not
+  ship from this plan: after the demo it goes to step mode as an issue, with what
+  the demo showed.
 - **A readable report** is one more line in the router's bounded-request list:
   "write this up" produces a Word or PDF file in Cowork from the proof summary, the
   family and the sources. It adds no claims and keeps the rating, the reviewer's
@@ -410,6 +417,8 @@ Record, in `docs/mcp-app-host-probe.md`:
 - is `ui/update-model-context` available;
 - can a connector be turned off for one Cowork task (the help centre documents a
   per-conversation toggle);
+- how `AskUserQuestion` shows two or three named options in a Cowork task, and
+  whether the chosen text comes back as the researcher's answer;
 - does an artifact open beside a Cowork task, can it call the connector's read
   tool, and can it reach a `visibility: ["app"]` tool;
 - is the `projectPath` the model passes in Cowork readable on the Mac.
@@ -447,10 +456,10 @@ pass, each with a stub page HTML:
   doubt → open the case file → the evidence grid → click an indexed record's column
   → the search that returned it, in the pane → click the browsed record's column →
   its page image beside the transcription → Compare with FamilySearch. Light and
-  dark. Then a live run with the
-  variant plugin calling the three cards. If M0 shows cards do not render in Cowork
-  but an artifact does, the case file runs as an artifact and the cards are shown
-  in Desktop chat.
+  dark. Then a live run with the variant plugin calling the three cards and offering
+  named next steps at the forks. If M0 shows cards do not render in Cowork but an
+  artifact does, the case file runs as an artifact and the cards are shown in
+  Desktop chat.
 - A short screen recording for the designer.
 
 **Done when:**
