@@ -4222,8 +4222,7 @@
     {
       "id": "two-documents-in-one-source",
       "expect": "silent",
-      "known_let_through": true,
-      "why": "A source holding two burials, the father's in 1802 and the son's in 1862, is read as one record, so the son's burial ties the father's (mikkel src_004).",
+      "why": "A source holding two burials, the father's in 1802 and the son's in 1862, whose assertions name no document (every project before #2537): read as one record, so the son's burial ties the father's (mikkel src_004). Fail-open by design.",
       "write": "pe_001",
       "research": {
         "namesakes": [
@@ -4261,6 +4260,150 @@
             "fact_type": "name",
             "value": "William Smith",
             "record_basis": "stated"
+          }
+        ],
+        "person_evidence": [
+          {
+            "id": "pe_001",
+            "assertion_id": "a_001",
+            "person_id": "KWCB-111",
+            "confidence": "probable",
+            "superseded_by": null
+          },
+          {
+            "id": "pe_002",
+            "assertion_id": "a_002",
+            "person_id": "KWCB-444",
+            "confidence": "probable",
+            "superseded_by": null
+          }
+        ]
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "KWCB-111",
+            "names": [
+              {
+                "given": "John",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-222",
+            "names": [
+              {
+                "given": "Mary",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-333",
+            "names": [
+              {
+                "given": "Thomas",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-334",
+            "names": [
+              {
+                "given": "Ann",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-444",
+            "names": [
+              {
+                "given": "William",
+                "surname": "Smith"
+              }
+            ]
+          },
+          {
+            "id": "KWCB-555",
+            "names": [
+              {
+                "given": "Peter",
+                "surname": "Jones"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "type": "Couple",
+            "person1": "KWCB-111",
+            "person2": "KWCB-222"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-333",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-334",
+            "child": "KWCB-111"
+          },
+          {
+            "type": "ParentChild",
+            "parent": "KWCB-111",
+            "child": "KWCB-444"
+          }
+        ]
+      }
+    },
+    {
+      "id": "two-documents-in-one-source-keyed",
+      "expect": "fire",
+      "shape": "co-party-on-another-document",
+      "why": "The same source with each assertion stamped with its document's 1:2 record ARK: the son's 1862 burial is another document, so it does not tie the father's 1802 one (#2537).",
+      "write": "pe_001",
+      "research": {
+        "namesakes": [
+          {
+            "id": "ns_001",
+            "person_id": "KWCB-111",
+            "name": "John Smith",
+            "place": "San Francisco, California, United States",
+            "time_period": "born about 1873",
+            "record_ids": [],
+            "created": "2026-10-01"
+          }
+        ],
+        "sources": [
+          {
+            "id": "src_005",
+            "gedcomx_source_description_id": "S5"
+          }
+        ],
+        "assertions": [
+          {
+            "id": "a_001",
+            "source_id": "src_005",
+            "record_id": "ark:/61903/1:1:REC5-005-1802",
+            "record_role": "deceased",
+            "fact_type": "name",
+            "value": "John Smith",
+            "record_basis": "stated",
+            "record_document_id": "ark:/61903/1:2:DOC5-1802"
+          },
+          {
+            "id": "a_002",
+            "source_id": "src_005",
+            "record_id": "ark:/61903/1:1:REC5-005-1862",
+            "record_role": "deceased",
+            "fact_type": "name",
+            "value": "William Smith",
+            "record_basis": "stated",
+            "record_document_id": "ark:/61903/1:2:DOC5-1862"
           }
         ],
         "person_evidence": [

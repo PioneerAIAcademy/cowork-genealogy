@@ -98,7 +98,9 @@ import {
   NARRATIVE_WORD_BUDGET,
   planItemSearchedSkipInvariants,
   planItemCompletionRecordTypeInvariants,
+  recordDocumentArk,
 } from "../../src/tools/research-append.js";
+import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
@@ -2931,6 +2933,123 @@ describe("research_append (Phase 2)", () => {
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/resolution_rationale/);
     expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
+  });
+
+  // The same conflict_type over the same competing assertions is the conflict
+  // already recorded: ut_conflict_resolution_008 appended a twin of an unresolved
+  // c_001, and ut_research_001 one of a resolved c_001.
+  describe("a conflict append that restates an existing conflict", () => {
+    const appendConflict = (entry: any) =>
+      researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry });
+
+    it.each([
+      ["unresolved", {}],
+      [
+        "resolved",
+        {
+          status: "resolved",
+          resolution_kind: "competitor",
+          preferred_assertion_id: "a_001",
+          independence_analysis: "Independent informants.",
+          weighing_analysis: "The earlier record is closer to the event.",
+          resolution_rationale: "a_001 is preferred over a_002.",
+        },
+      ],
+    ])("is refused when the existing one is %s, naming it", async (status, settled) => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), ...settled, id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), competing_assertion_ids: ["a_002", "a_001"] });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const errors = r.errors.join(" ");
+      expect(errors).toMatch(new RegExp(`restates 'c_001' \\(status '${status}'\\).*conflictId 'c_001'`));
+      // A settled conflict is reopened, not updated in place, and a cited one is uncited first.
+      expect(errors).toMatch(status === "resolved" ? /clears its resolution.*proof-conclusion/ : /Update 'c_001' instead/);
+      // The worked example is an update of the existing conflict, not another append.
+      expect(errors).not.toMatch(/op: "append"/);
+      expect((await readResearch()).conflicts).toHaveLength(1); // nothing written
+    });
+
+    it("is refused when the same batch appends it twice", async () => {
+      await writeProject(phase2Research());
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "conflicts", op: "append", entry: validConflict() },
+          { section: "conflicts", op: "append", entry: validConflict() },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      // c_001 was never written, so the refusal does not point at it.
+      expect(r.errors.join(" ")).toMatch(/writes the same conflict twice/);
+      expect(r.errors.join(" ")).not.toMatch(/'c_001'/);
+    });
+
+    it("is refused on an update that turns one conflict into another's twin", async () => {
+      const research = phase2Research();
+      research.assertions.push(validAssertion("a_003"));
+      research.conflicts = [
+        { ...validConflict(), id: "c_001" },
+        { ...validConflict(), id: "c_002", competing_assertion_ids: ["a_001", "a_002", "a_003"] },
+      ];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_002",
+        fields: { competing_assertion_ids: ["a_001", "a_002"] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/restates 'c_001'/);
+    });
+
+    it("writes an update that leaves what the conflict is about unchanged", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { competing_assertion_ids: ["a_002", "a_001"] },
+      });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a fact conflict over the same assertions on another attribute", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), disputed_attribute: "birthplace" });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a conflict over a different set of assertions", async () => {
+      const research = phase2Research();
+      research.assertions.push(validAssertion("a_003"));
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), competing_assertion_ids: ["a_001", "a_002", "a_003"] });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a conflict of another type over the same assertions", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({
+        ...validConflict(),
+        conflict_type: "identity",
+        disputed_attribute: null,
+        identity_question: "Are the persons in a_001 and a_002 the same man?",
+      });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
   });
 
   it("rejects resolving a conflict whose analysis fields are whitespace only", async () => {
@@ -6898,23 +7017,40 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("refuses to rewrite an objective that is already set", async () => {
-    // `objective` moved onto allowedFields so init-project can write it once.
-    // The refusal it now hits is the set-once one, not the not-allowed one —
-    // the ownership declaration's stated harm is a skill REWRITING the goal
-    // every later step plans against.
+  it("rewrites an objective that is already set", async () => {
+    // Not set-once since issue #3975: a website user has no file access, so the
+    // researcher's correction has to go through the tool. The plugin hook keeps
+    // the write on the main thread; the tool cannot see the caller.
     await writeProject(); // baseResearch() seeds objective: "Test"
     const r = await researchAppend({
       projectPath: dir,
       section: "project",
       op: "update",
-      fields: { objective: "rewritten" },
+      fields: { objective: "Who were the parents of John Smith?" },
     });
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.project.objective).toBe("Who were the parents of John Smith?");
+  });
+
+  it("refuses to rewrite a title that is already set, naming no file-edit route", async () => {
+    const r0 = baseResearch();
+    r0.project = { ...r0.project, title: "Smith parentage" };
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { title: "rewritten" },
+    } as never);
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/already set on 'project' and not rewritable: objective/);
+    const errors = r.errors.join(" ");
+    expect(errors).toMatch(/already set on 'project' and not rewritable: title/);
+    expect(errors).toMatch(/fixed for the life of the project/);
+    expect(errors).not.toMatch(/research\.json directly/);
     const research = await readResearch();
-    expect(research.project.objective).toBe("Test"); // nothing written
+    expect(research.project.title).toBe("Smith parentage"); // nothing written
   });
 
   it("rejects an invalid status value (whole-project validation)", async () => {
@@ -10200,6 +10336,92 @@ describe("research_append (composite persist + enforcement)", () => {
     const persisted = (await readResearch()).assertions[1];
     expect(persisted.record_persona_id).toBe("p_1"); // auto-filled, never silently null
     expect(persisted.record_id).toBe("ark:/61903/1:1:ABCD-123"); // canonicalized
+  });
+
+  // ── The document stamp (record_document_id, #2537) ──
+
+  describe("record_document_id", () => {
+    const appendFrom = async (record: any, extra: Record<string, unknown> = {}) => {
+      await writeProject(sidecarResearch());
+      await writeSidecar([record]);
+      const { source_id: _s, ...a } = noId(validAssertion("x"));
+      return researchAppend({
+        projectPath: dir,
+        ops: [
+          {
+            section: "assertions",
+            op: "append",
+            entry: { ...a, source_id: "src_001", record_id: "ark:/61903/1:1:ABCD-123", log_entry_id: "log_001", ...extra },
+          },
+        ],
+      });
+    };
+    const stamped = async () => (await readResearch()).assertions[1].record_document_id;
+
+    it("stamps record_search's 1:2 recordArk, over a caller's value", async () => {
+      const r = await appendFrom(
+        { ...sidecarRecord(), recordArk: "ark:/61903/1:2:DOCS-001" },
+        { record_document_id: "ark:/61903/1:2:MADE-UP" },
+      );
+      expect(r.ok).toBe(true);
+      expect(await stamped()).toBe("ark:/61903/1:2:DOCS-001");
+    });
+
+    it("falls back to the record's own Record source, as record_read stages it", async () => {
+      const record = sidecarRecord() as any;
+      record.gedcomx.sources = [
+        { id: "src_c", resource_type: "Collection", url: "https://www.familysearch.org/ark:/61903/1:2:NOTI-TTHS" },
+        { id: "src_r", resource_type: "Record", url: "https://www.familysearch.org/ark:/61903/1:2:DOCS-002" },
+      ];
+      expect((await appendFrom(record)).ok).toBe(true);
+      expect(await stamped()).toBe("ark:/61903/1:2:DOCS-002");
+    });
+
+    it("stamps nothing, and keeps no caller value, when the sidecar names no 1:2 document", async () => {
+      const r = await appendFrom(
+        { ...sidecarRecord(), recordArk: "ark:/61903/1:1:ABCD-123" },
+        { record_document_id: "ark:/61903/1:2:MADE-UP" },
+      );
+      expect(r.ok).toBe(true);
+      expect(await stamped()).toBeUndefined();
+    });
+
+    it("refuses an update that sets it, and drops it when record_id changes", async () => {
+      await appendFrom({ ...sidecarRecord(), recordArk: "ark:/61903/1:2:DOCS-001" });
+      const set = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_002",
+        fields: { record_document_id: "ark:/61903/1:2:OTHR-001" },
+      });
+      expect(set.ok).toBe(false);
+      expect((errorsOf(set) ?? []).join(" ")).toContain("record_document_id is not updatable");
+      expect(await stamped()).toBe("ark:/61903/1:2:DOCS-001");
+
+      await writeSidecar([
+        { ...sidecarRecord(), recordArk: "ark:/61903/1:2:DOCS-001" },
+        { ...sidecarRecord(), recordId: "ark:/61903/1:1:WXYZ-999", recordArk: "ark:/61903/1:2:DOCS-009" },
+      ]);
+      const moved = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_002",
+        fields: { record_id: "ark:/61903/1:1:WXYZ-999" },
+      });
+      expect(moved.ok).toBe(true);
+      expect(await stamped()).toBeUndefined();
+    });
+
+    it("reads a live record_read's Record source (6J8F-6678), and not a 1:1 one (baker M62F-BST)", async () => {
+      const raw = JSON.parse(await readFile(resolve(__dirname, "../fixtures/record-read/6J8F-6678.recapi.json"), "utf-8"));
+      expect(recordDocumentArk({ gedcomx: toSimplified(raw) })).toBe("ark:/61903/1:2:H9BP-G4TW");
+      const baker = JSON.parse(
+        await readFile(resolve(__dirname, "../../../../../eval/fixtures/mcp/record-read-baker-1870-m62f-bst.json"), "utf-8"),
+      );
+      expect(recordDocumentArk({ gedcomx: baker.response })).toBeNull();
+    });
   });
 
   // ── D2: non-persona producers (fulltext_search / legacy external_links_search) ──
@@ -16756,8 +16978,10 @@ describe("research_append — a resolve names how it was settled (resolution_kin
     if (kind === "synthesis") expect(c.resolved_value).toBe("about 1844");
   });
 
+  // No conflict in the starting state: appending state()'s own conflict again
+  // would be refused as a restatement of it.
   it("accepts an append that lands resolved with a kind", async () => {
-    await writeProject(state());
+    await writeProject({ ...state(), conflicts: [] });
     const { id: _id, ...entry } = conflict({
       ...ANALYSES,
       status: "resolved",
@@ -16770,7 +16994,7 @@ describe("research_append — a resolve names how it was settled (resolution_kin
   });
 
   it("refuses an append that lands resolved with no kind", async () => {
-    await writeProject(state());
+    await writeProject({ ...state(), conflicts: [] });
     const { id: _id, ...entry } = conflict({
       ...ANALYSES,
       status: "resolved",

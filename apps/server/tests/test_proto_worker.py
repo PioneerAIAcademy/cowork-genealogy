@@ -1187,9 +1187,11 @@ WORKER_ENV = {
 
 
 def _options(**overrides):
+    # The checkout's plugin: the worker reads the main thread's model and effort from its
+    # main-thread.json, so the options need a plugin that has one.
     kwargs = dict(
         project_id="proj-1", cwd="/project",
-        plugin_dir="/opt/genealogy/plugin", agents={"gps-mentor": object()}, store=object(),
+        plugin_dir=str(PLUGIN_DIR), agents={"gps-mentor": object()}, store=object(),
         config_dir=tempfile.mkdtemp(prefix="worker-cfg-test-"), pretool_hook=lambda *a: {},
         posttool_hook=lambda *a: {},
         worker_env=WORKER_ENV, bearer="grant-token", turn_id="turn-1", claim_epoch=1,
@@ -1208,7 +1210,9 @@ def test_options_pin_the_prototype_set(tmp_path):
     opts = _options(config_dir=str(tmp_path))
     assert opts.cwd == "/project" and opts.setting_sources == [] and opts.add_dirs == []
     assert opts.permission_mode == "bypassPermissions"
-    assert opts.plugins == [{"type": "local", "path": "/opt/genealogy/plugin"}]
+    assert opts.plugins == [{"type": "local", "path": str(PLUGIN_DIR)}]
+    main = options.load_main_thread(PLUGIN_DIR)
+    assert (opts.model, opts.effort) == (main.model, main.effort), "the main thread runs main-thread.json"
     assert list(opts.agents) == ["gps-mentor"]
     assert opts.disallowed_tools == ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
     assert opts.session_store_flush == "eager" and opts.session_store is not None
@@ -1306,7 +1310,9 @@ def test_gateway_sends_bedrock_ids_through_the_base_url():
     assert opts.env["ANTHROPIC_AUTH_TOKEN"] == "k-1", "TAP reads Authorization, not x-api-key"
     assert opts.env["ANTHROPIC_API_KEY"] == "", "blanked, or the inherited Anthropic key rides to the gateway"
     assert "CLAUDE_CODE_USE_BEDROCK" not in opts.env
-    assert opts.env["ANTHROPIC_MODEL"] == "us.anthropic.claude-sonnet-4-6[1m]", "the 1M window"
+    main = options.load_main_thread(PLUGIN_DIR)
+    assert opts.env["ANTHROPIC_MODEL"] == options.GATEWAY_AGENT_MODELS[main.model] + "[1m]", "the 1M window"
+    assert opts.effort == main.effort
     assert opts.env["ANTHROPIC_DEFAULT_HAIKU_MODEL"] == "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     assert opts.env["ENABLE_TOOL_SEARCH"] == "true", "on by default: TAP's EKS gateway runs agentgateway 1.6"
     assert opts.env["CLAUDE_CODE_FORK_SUBAGENT"] == "0"
@@ -1662,8 +1668,9 @@ class ToolCall:
     faithfully an attempt that changed nothing."""
 
     def __init__(self, tool_name: str = "mcp__genealogy__research_append",
-                 agent_id: Any = _UNSET) -> None:
+                 agent_id: Any = _UNSET, tool_input: dict | None = None) -> None:
         self.tool_name = tool_name
+        self.tool_input = tool_input or {}
         # _UNSET means the main thread (no `agent_id` key at all); any value given --
         # including None or "" -- makes this a subagent call (#3376).
         self.agent_id = agent_id
@@ -1684,7 +1691,7 @@ class FakeClient:
         hook = ((self.env or {}).get("options") or {}).get("pretool_hook")
         assert hook is not None, "the option set must be captured before the stream runs"
         self.tool_uses += 1
-        data: dict[str, Any] = {"tool_name": call.tool_name, "tool_input": {}}
+        data: dict[str, Any] = {"tool_name": call.tool_name, "tool_input": call.tool_input}
         if call.agent_id is not _UNSET:  # absent key = main thread (#3376)
             data["agent_id"] = call.agent_id
         self.pretool_replies.append(
@@ -5421,7 +5428,7 @@ def test_model_provider_labels_and_its_two_callers():
             options.model_provider(env)
         assert exc.value.label == label
         with pytest.raises(ValueError):
-            options.provider_env(env)
+            options.provider_env(env, options.MainThread("claude-sonnet-4-6", "medium"))
     with pytest.raises(options.ProviderError):
         _options(worker_env={k: v for k, v in WORKER_ENV.items() if k != "MODEL_PROVIDER"})
     assert not hasattr(options, "LIVE_TREE_ARG_TOOLS"), "an empty table with a dead branch"
@@ -6678,6 +6685,58 @@ def test_a_step_turn_the_host_did_not_answer_still_offers_its_options(turn_env):
     _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
     assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going."]
     assert not [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql]
+
+
+def _parallel_spawn_halt(after_hints: str) -> list[Any]:
+    """clark-parents, 2026-11-02: a hints step, then two searches spawned in ONE message.
+    Both reach the gate before the model sees a deny, so the second halts and the turn
+    ends on the model's last text, which offers nothing."""
+    spawn = {"subagent_type": "search-records"}
+    return [_init(), ToolCall("Agent", tool_input={"subagent_type": "search-hints"}),
+            _text(after_hints), ToolCall("Agent", tool_input=spawn), ToolCall("Agent", tool_input=spawn),
+            _result(num_turns=3, text=after_hints)]
+
+
+def test_a_step_halt_still_offers_the_step_it_named(turn_env):
+    """Without the halt's offer the turn closed `ok` with no offer line: no buttons for the
+    researcher, and under "Keep going" no reply, so the run just ended."""
+    turn_env["conn"].research = _RESEARCH
+    summary = _run(turn_env, _parallel_spawn_halt("Now dispatching both searches in parallel."))
+    assert summary["outcome"] == "ok"
+    assert _text_events(turn_env["conn"])[-1] == "Continue with running the searches?"
+    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going.", "Wrap it up."]
+
+
+def test_a_step_halt_leaves_an_offer_the_model_already_wrote(turn_env):
+    """A model that wrote its own offer before the halted spawn has asked its question;
+    a second one from the halt would ask two, which may disagree."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records?"))
+    texts = _text_events(turn_env["conn"])
+    assert texts[-1] == "Hints done.\n\nContinue with linking the records?"
+    assert "Continue with running the searches?" not in texts
+
+
+def test_a_keep_going_turn_the_step_gate_halted_is_answered(turn_env):
+    turn_env["conn"].research = _RESEARCH
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = FakeClient(_parallel_spawn_halt("Now dispatching both searches in parallel."),
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    assert [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql], \
+        "the host should have answered the halted turn's offer"
+
+
+def test_a_turn_the_gate_only_denied_keeps_its_own_last_line(turn_env):
+    """The deny the model obeys is no halt: a step that ends on a question for the
+    researcher must still end the run there, so nothing stands in for its last line."""
+    turn_env["conn"].research = _RESEARCH
+    spawn = {"subagent_type": "search-records"}
+    _run(turn_env, [_init(), ToolCall("Agent", tool_input={"subagent_type": "search-hints"}),
+                    ToolCall("Agent", tool_input=spawn), _text("What was her maiden name?"),
+                    _result(num_turns=3, text="What was her maiden name?")])
+    assert "Continue with running the searches?" not in _text_events(turn_env["conn"])
+    assert "options" not in _turn_done_payload(turn_env["conn"])
 
 
 def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatch):
