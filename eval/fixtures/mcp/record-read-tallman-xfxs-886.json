@@ -1,0 +1,210 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~XFXS-886"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_10581904241",
+        "ark": "ark:/61903/1:1:XFXS-888",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "308885e1-e154-4277-b939-2c21802d7d93",
+            "type": "BirthName",
+            "surname": "Bissonette",
+            "given": "Alfred M."
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10581904242",
+        "ark": "ark:/61903/1:1:XFXS-88D",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "df7edc78-3204-4a4f-8140-b7cb2ca28c29",
+            "type": "BirthName",
+            "surname": "Tolman",
+            "given": "Blanche"
+          }
+        ],
+        "facts": [
+          {
+            "id": "2ac41b91-d70a-4176-a61f-2b5176a8e67c",
+            "type": "Birth",
+            "date": "1873",
+            "standard_date": "1873",
+            "place": "Essex, New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10581904243",
+        "ark": "ark:/61903/1:1:XFXS-886",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "29137c61-25ba-43c6-975c-cc74e6758396",
+            "type": "BirthName",
+            "given": "Edward"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10581904244",
+        "ark": "ark:/61903/1:1:XFXS-88X",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "8c110699-a2cb-45f6-aa88-dfcebe7911ed",
+            "type": "BirthName",
+            "surname": "Wade",
+            "given": "Clarissa"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "f0a38e45-182f-4a9c-b740-5b494ea27afb",
+        "type": "ParentChild",
+        "parent": "p_10581904243",
+        "child": "p_10581904242"
+      },
+      {
+        "id": "16edd778-4bb7-4a2e-b555-729f9c5a9cdb",
+        "type": "Couple",
+        "person1": "p_10581904243",
+        "person2": "p_10581904244"
+      },
+      {
+        "id": "41119652-67fd-4fea-a744-8854d15bc0bb",
+        "type": "Couple",
+        "person1": "p_10581904241",
+        "person2": "p_10581904242",
+        "facts": [
+          {
+            "id": "c36209ee-7cd1-42fe-bf2c-bec2ecd25495",
+            "type": "Marriage",
+            "primary": true,
+            "date": "04 Jan 1893",
+            "standard_date": "4 Jan 1893",
+            "place": "Vermont, United States",
+            "standard_place": "Vermont, United States"
+          }
+        ]
+      },
+      {
+        "id": "dfdc5cf5-7c24-491c-9e5e-60250d6b6763",
+        "type": "ParentChild",
+        "parent": "p_10581904244",
+        "child": "p_10581904242"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_1103444312",
+        "resource_type": "Record",
+        "title": "Entry for Alfred M. Bissonette and Blanche Tolman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-888 : Fri Mar 08 03:25:39 UTC 2024), Entry for Alfred M. Bissonette and Blanche Tolman, 04 Jan 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9FDH-C4S",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_1784223",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-1954",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/1954",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6829-H8X",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "title:1871-1908",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_10581904243",
+        "resource_type": "Person",
+        "title": "Edward, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-886 : Fri Mar 08 03:25:39 UTC 2024), Edward in entry for Alfred M. Bissonette and Blanche Tolman, 04 Jan 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-886"
+      },
+      {
+        "id": "sd_p_10581904241",
+        "resource_type": "Person",
+        "title": "Alfred M. Bissonette, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-888 : Fri Mar 08 03:25:39 UTC 2024), Alfred M. Bissonette and Blanche Tolman, 04 Jan 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-888"
+      },
+      {
+        "id": "sd_p_10581904244",
+        "resource_type": "Person",
+        "title": "Clarissa Wade, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-88X : Fri Mar 08 03:25:39 UTC 2024), Clarissa Wade in entry for Alfred M. Bissonette and Blanche Tolman, 04 Jan 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-88X"
+      },
+      {
+        "id": "sd_p_10581904242",
+        "resource_type": "Person",
+        "title": "Blanche Tolman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-88D : Fri Mar 08 03:25:39 UTC 2024), Alfred M. Bissonette and Blanche Tolman, 04 Jan 1893.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-88D"
+      },
+      {
+        "id": "sd_auto_M9J1-78M",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Births, from 0003 to 2009",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+0003-01-01T00:00:00Z/+2009-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_361"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HT-6829-H8X",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6829-H8X"
+  }
+}

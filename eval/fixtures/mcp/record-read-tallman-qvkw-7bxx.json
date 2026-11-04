@@ -1,0 +1,93 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~QVKW-7BXX"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_101068720634",
+        "ark": "ark:/61903/1:1:QVKW-7BXX",
+        "principal": true,
+        "names": [
+          {
+            "id": "4e9ba543-2088-4239-aed8-16cc195317ca",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Edward"
+          }
+        ],
+        "facts": [
+          {
+            "id": "ae426a4f-fd59-4fd7-bc08-4c37c020efe6",
+            "type": "Burial",
+            "primary": true,
+            "place": "Essex, Essex, New York, United States of America"
+          },
+          {
+            "id": "f610099e-fd71-4d4e-a6db-eb73161c0b85",
+            "type": "Death",
+            "date": "16 Aug 1913",
+            "standard_date": "16 Aug 1913"
+          },
+          {
+            "id": "364c7fad-baff-4e75-b777-6b13438b31bb",
+            "type": "Birth",
+            "date": "31 Jan 1839",
+            "standard_date": "31 Jan 1839"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_102094167734",
+        "resource_type": "Record",
+        "title": "Entry for Edward Tallman, \"Find a Grave Index\"",
+        "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKW-7BXX : Fri Oct 02 14:24:40 UTC 2026), Entry for Edward Tallman.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:Q29D-7XQX",
+        "coverage": {
+          "place_rep_id": "12106035",
+          "date_range": "16 August 1913",
+          "record_type": "Death",
+          "standard_place": "Whallons Bay Cemetery, Essex, Essex, New York, United States"
+        }
+      },
+      {
+        "id": "sd_c_2221801",
+        "resource_type": "Collection",
+        "title": "Find a Grave Index",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "coverage": {
+          "place_rep_id": "324",
+          "date_range": "1500/2013",
+          "record_type": "Death",
+          "standard_place": "World"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=33534608"
+      },
+      {
+        "id": "sd_p_101068720634",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"Find a Grave Index\"",
+        "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVKW-7BXX : Fri Oct 02 14:24:40 UTC 2026), Edward Tallman.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVKW-7BXX"
+      }
+    ],
+    "places": [
+      {
+        "id": "place_12106035"
+      }
+    ]
+  }
+}

@@ -1,0 +1,406 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age. The raw recapi body carried the age (PR_AGE 11), which record_read never returned, so it rides in `indexFields`, where a captured sidecar keeps it; the mock never serves it inline and computes `birthRanges` from it. The age is not in the bundle: it is the age the issue gives (1850: 11, 1865: 26, 1910: 71, and the death indexes 74) or the year the index's bare birth year implies (1870: 29, 1880: 40).",
+  "args": {
+    "recordId": "~MCTB-KBM"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_240533936",
+        "ark": "ark:/61903/1:1:MCTB-KYT",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "9685e8ac-3c9f-4ccb-b842-3618845466b8",
+            "type": "BirthName",
+            "given": "Joseph",
+            "surname": "Tollman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "12d7875e-a8e8-4875-80e6-54cb94ae39fc",
+            "type": "Birth",
+            "date": "1804",
+            "standard_date": "1804",
+            "place": "Canada"
+          },
+          {
+            "id": "ee6ba82a-91f8-4f80-9011-4b3ae291373e",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Au Sable, Clinton, New York, United States",
+            "standard_place": "Au Sable, Clinton, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_240533937",
+        "ark": "ark:/61903/1:1:MCTB-KYY",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "e43dba88-5f75-4247-a107-1a3d36ab2bed",
+            "type": "BirthName",
+            "given": "Hannah",
+            "surname": "Tollman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "6b495727-e6f3-4994-ae43-ecbcc725252c",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Au Sable, Clinton, New York, United States",
+            "standard_place": "Au Sable, Clinton, New York, United States"
+          },
+          {
+            "id": "92273a52-5741-4424-a438-157b9cc43f6d",
+            "type": "Birth",
+            "date": "1812",
+            "standard_date": "1812",
+            "place": "Canada"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_240533938",
+        "ark": "ark:/61903/1:1:MCTB-KYB",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "0831e06c-8c29-4d0b-bf33-5a15905080e6",
+            "type": "BirthName",
+            "given": "David",
+            "surname": "Tollman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "e240829f-cae5-4119-a361-8a23db9324fc",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Au Sable, Clinton, New York, United States"
+          },
+          {
+            "id": "83fa0350-545e-40d4-90cc-0759619956a4",
+            "type": "Birth",
+            "date": "1836",
+            "standard_date": "1836",
+            "place": "New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_240533939",
+        "ark": "ark:/61903/1:1:MCTB-KY1",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "fa787264-6788-45ca-95b3-7ee34fe15251",
+            "type": "BirthName",
+            "given": "Mahaley",
+            "surname": "Tollman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "3ef5dafb-683f-4fdb-bab4-b1731cc2a249",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Au Sable, Clinton, New York, United States",
+            "standard_place": "Au Sable, Clinton, New York, United States"
+          },
+          {
+            "id": "f057557b-14bb-4e73-bd19-b0a0e2bc6e1e",
+            "type": "Birth",
+            "date": "1837",
+            "standard_date": "1837",
+            "place": "New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_240533940",
+        "ark": "ark:/61903/1:1:MCTB-KBM",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "1bf35425-b0c3-46a6-add8-5fb1e517cefc",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tollman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "2d52e869-d4da-4765-91d0-bef1107607fb",
+            "type": "Birth",
+            "date": "1839",
+            "standard_date": "1839",
+            "place": "New York, United States"
+          },
+          {
+            "id": "877cc499-4148-46c1-bf4e-f0db8dacb232",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Au Sable, Clinton, New York, United States",
+            "standard_place": "Au Sable, Clinton, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_240533941",
+        "ark": "ark:/61903/1:1:MCTB-KB9",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "a943c9e3-5e82-4f1e-9ffc-ff45ddffee9c",
+            "type": "BirthName",
+            "given": "James",
+            "surname": "Tollman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "3f062a76-73e2-4547-a18b-9791b63ecf26",
+            "type": "Birth",
+            "date": "1841",
+            "standard_date": "1841",
+            "place": "New York, United States"
+          },
+          {
+            "id": "3cd1292b-1bfa-4ee6-acb4-c36a28382bb1",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Au Sable, Clinton, New York, United States",
+            "standard_place": "Au Sable, Clinton, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_240533942",
+        "ark": "ark:/61903/1:1:MCTB-KBS",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "569c3b2a-2ff8-47b4-ac5b-4e836e958fce",
+            "type": "BirthName",
+            "given": "Jerome",
+            "surname": "Tollman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "8ae36015-a1d1-4592-b8bf-2c8581c9dac9",
+            "type": "Birth",
+            "date": "1844",
+            "standard_date": "1844",
+            "place": "New York, United States"
+          },
+          {
+            "id": "5f7338ce-b4fe-4500-af66-84bd5bb374b6",
+            "type": "Census",
+            "primary": true,
+            "date": "1850",
+            "standard_date": "1850",
+            "place": "Au Sable, Clinton, New York, United States",
+            "standard_place": "Au Sable, Clinton, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_179839975",
+        "resource_type": "Record",
+        "title": "Household of Joseph Tollman, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTB-KYT : Wed Oct 22 00:11:17 UTC 2025), Entry for Joseph Tollman and Hannah Tollman, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:M4DM-G7R",
+        "coverage": {
+          "place_rep_id": "4608891",
+          "date_range": "1850",
+          "record_type": "Census",
+          "standard_place": "Au Sable, Clinton, New York, United States"
+        }
+      },
+      {
+        "id": "sd_c_1401638",
+        "resource_type": "Collection",
+        "title": "United States, Census, 1850",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "1850/1850",
+          "record_type": "Census",
+          "standard_place": "United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6S8W-MZ6",
+        "coverage": {
+          "place_rep_id": "4608891",
+          "date_range": "1850",
+          "record_type": "Census",
+          "standard_place": "Au Sable, Clinton, New York, United States"
+        }
+      },
+      {
+        "id": "sd_p_240533937",
+        "resource_type": "Person",
+        "title": "Hannah Tollman, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTB-KYY : Wed Oct 22 00:11:17 UTC 2025), Hannah Tollman in entry for Joseph Tollman, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MCTB-KYY"
+      },
+      {
+        "id": "sd_p_240533942",
+        "resource_type": "Person",
+        "title": "Jerome Tollman, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTB-KBS : Wed Oct 22 00:11:17 UTC 2025), Jerome Tollman in entry for Joseph Tollman, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MCTB-KBS"
+      },
+      {
+        "id": "sd_p_240533936",
+        "resource_type": "Person",
+        "title": "Joseph Tollman, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTB-KYT : Wed Oct 22 00:11:17 UTC 2025), Joseph Tollman, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MCTB-KYT"
+      },
+      {
+        "id": "sd_p_240533941",
+        "resource_type": "Person",
+        "title": "James Tollman, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTB-KB9 : Wed Oct 22 00:11:17 UTC 2025), James Tollman in entry for Joseph Tollman, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MCTB-KB9"
+      },
+      {
+        "id": "sd_p_240533938",
+        "resource_type": "Person",
+        "title": "David Tollman, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTB-KYB : Wed Oct 22 00:11:17 UTC 2025), David Tollman in entry for Joseph Tollman, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MCTB-KYB"
+      },
+      {
+        "id": "sd_p_240533940",
+        "resource_type": "Person",
+        "title": "Edward Tollman, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTB-KBM : Wed Oct 22 00:11:17 UTC 2025), Edward Tollman in entry for Joseph Tollman, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MCTB-KBM"
+      },
+      {
+        "id": "sd_p_240533939",
+        "resource_type": "Person",
+        "title": "Mahaley Tollman, \"United States, Census, 1850\"",
+        "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTB-KY1 : Wed Oct 22 00:11:17 UTC 2025), Mahaley Tollman in entry for Joseph Tollman, 1850.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MCTB-KY1"
+      },
+      {
+        "id": "sd_auto_M9JT-92D",
+        "resource_type": "auto",
+        "title": "United States, Residences, Census, from 1793 to 1964",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+          "standard_place": "United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_4608891"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HY-6S8W-MZ6",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6S8W-MZ6",
+    "indexFields": {
+      "p_240533940": {
+        "age": "11"
+      }
+    }
+  }
+}
