@@ -195,7 +195,7 @@ describe("extraction_append: documents", () => {
     it("census: a computed attribute is split into its own inferred assertion", async () => {
       const births = (await assertionsFor("capture:census-1850-flynn")).filter((a: any) => a.fact_type === "birth");
       const place = births.find((a: any) => a.place === "Ireland");
-      const year = births.find((a: any) => a.date === "1818");
+      const year = births.find((a: any) => a.date === "Bet 1817 and 1818");
       expect(place.record_basis).toBe("stated");
       expect(year.record_basis).toBe("inferred");
       expect(year.date_certainty).toBe("approximate");
@@ -1010,6 +1010,57 @@ describe("extraction_append: documents", () => {
     expect((await read()).log).toHaveLength(0);
   });
 
+  describe("a stated age gives a birth range on a text source (#4127)", () => {
+    const births = async (id: string) => (await assertionsFor(id)).filter((a: any) => a.fact_type === "birth" && a.date);
+    const census = (birth: Record<string, unknown>[]) => ({
+      recordType: "census",
+      documentForm: "page_image",
+      census: { jurisdiction: "Ohio, United States", year: 1860 },
+      source: { title: "1860 census, Ohio", repository: "NARA" },
+      persons: [{ id: "p1", principal: true, names: [{ given: "Patrick", surname: "Flynn" }], facts: [{ type: "age", value: "42" }, ...birth] }],
+    });
+    const obit = (created?: string, form = "page_image") => ({
+      recordType: "obituary",
+      documentForm: form,
+      source: { title: "Obituary of Bridget Flynn", repository: "Daily News", ...(created ? { created } : {}) },
+      persons: [{ id: "p1", principal: true, names: [{ given: "Bridget", surname: "Flynn" }], facts: [{ type: "age", value: "68" }, { type: "immigration", date: "1849" }] }],
+    });
+
+    it("a census's computed ~1818 in value gives exactly one dated birth, the range", async () => {
+      const r = await run([{ recordId: "capture:c1860", document: census([{ type: "birth", value: "~1818", computed: ["value"] }]) }]);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      const b = await births("capture:c1860");
+      const all = (await assertionsFor("capture:c1860")).filter((a: any) => a.fact_type === "birth");
+      expect(all).toHaveLength(1);
+      expect(b).toHaveLength(1);
+      expect(b[0]).toMatchObject({ date: "Bet 1817 and 1818", record_basis: "inferred" });
+    });
+
+    it("a census birth the text states, not computed, is kept with no range", async () => {
+      await run([{ recordId: "capture:c1860", document: census([{ type: "birth", date: "1818" }]) }]);
+      expect((await births("capture:c1860")).map((a: any) => a.date)).toEqual(["1818"]);
+    });
+
+    it("a census age with no birth fact adds one inferred range", async () => {
+      await run([{ recordId: "capture:c1860", document: census([]) }]);
+      const b = await births("capture:c1860");
+      expect(b).toHaveLength(1);
+      expect(b[0]).toMatchObject({ date: "Bet 1817 and 1818", record_basis: "inferred", date_certainty: "approximate" });
+    });
+
+    it("an obituary counts the age from the page image's created year", async () => {
+      await run([{ recordId: "capture:obit", document: obit("1890-04-12") }]);
+      expect((await births("capture:obit")).map((a: any) => a.date)).toEqual(["Bet 1821 and 1822"]);
+    });
+
+    it("an obituary with no created year, or an abstract's, gets no range, whatever else it dates", async () => {
+      await run([{ recordId: "capture:obit-none", document: obit() }]);
+      await run([{ recordId: "capture:obit-abs", document: obit("1890-04-12", "abstract") }]);
+      expect(await births("capture:obit-none")).toEqual([]);
+      expect(await births("capture:obit-abs")).toEqual([]);
+    });
+  });
+
   describe("a computed entry written as a value (#3543)", () => {
     const death = (birth: Record<string, unknown>) => ({
       recordType: "death",
@@ -1033,7 +1084,7 @@ describe("extraction_append: documents", () => {
       const r = await run([{ recordId: "capture:schreiber", document: death(birth) }]);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       const year = await birthOf("capture:schreiber");
-      expect(year.date).toBe("~1862");
+      expect(year.date).toBe("Bet 1862 and 1863");
       expect(year.record_basis).toBe("inferred");
     });
 

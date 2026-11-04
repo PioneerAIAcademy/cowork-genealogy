@@ -43,10 +43,13 @@ export const recordReadSchema = {
     "image_read or image_transcribe — do not construct an image ARK from " +
     "the record ARK. " +
     "A top-level `birthRanges` maps a persona id to the birth years its " +
-    'stated age implies ("Bet 1838 and 1839"), from the age and the ' +
-    "record's event date; a bare birth year beside the age is " +
-    "FamilySearch's own subtraction, so state the birth from the range. " +
-    "Absent when no persona has one. " +
+    "stated age implies (\"Bet 1838 and 1839\"): the record's event year less " +
+    "the age, less one, to the event year less the age. FamilySearch's bare " +
+    "birth year is usually the age restated, so state the birth from the " +
+    "range. A persona has an entry only when the age is a whole number of " +
+    "years and the record has no full or month-and-year birth date; a bare " +
+    "year outside the range is kept and gets no entry. Absent when no " +
+    "persona has one. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",

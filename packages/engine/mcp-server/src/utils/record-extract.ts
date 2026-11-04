@@ -1024,26 +1024,37 @@ export interface BirthRange {
 }
 
 /**
- * The birth range an age implies: the event year less the age, less one, to the
- * event year less the age (lead, 2026-11-02). Whole-year ages only: "6 months",
- * "74 yrs 6 mos" and "6/12" name a finer span this two-year window would
- * misstate, so they give null. No enumeration-day table: the window already
- * contains the true birth year whichever side of the day the person fell.
+ * The whole years of a stated age: "58 years, 4 months, 12 days" is 58, and a
+ * months-only or days-only age is 0. An approximate age ("about 60") and
+ * anything unreadable give null. Not `ageYears`, which reads "6 months" as 6.
+ */
+export function wholeYearsOfAge(age: unknown): number | null {
+  const text = String(age ?? "").trim().toLowerCase();
+  if (text === "" || /\b(?:about|abt|approx\w*|circa|ca)\b|[~?]|\bc\./.test(text)) return null;
+  if (/^\d{1,3}$/.test(text)) return Number(text);
+  const parts = [...text.matchAll(/(\d+)\s*(years?|yrs?|y|months?|mos?|mo|weeks?|wks?|w|days?|dys?|d)\b/g)];
+  const leftover = text.replace(/(\d+)\s*(years?|yrs?|y|months?|mos?|mo|weeks?|wks?|w|days?|dys?|d)\b/g, "").replace(/[\s,.;and]+/g, "");
+  if (parts.length === 0 || leftover !== "") return null;
+  const years = parts.find((m) => /^y/.test(m[2]));
+  return years ? Number(years[1]) : 0;
+}
+
+/**
+ * The birth range an age implies: event year less the age, less one, to event
+ * year less the age (lead, 2026-11-04). No enumeration-day table: the window
+ * already contains the true birth year whichever side of the day the person fell.
  */
 export function birthRangeFromAge(age: unknown, eventDate: unknown): BirthRange | null {
-  const m = String(age ?? "").match(/^\s*(\d{1,3})\s*(?:y|yr|yrs|year|years)?\.?\s*$/i);
+  const years = wholeYearsOfAge(age);
   const y = String(eventDate ?? "").match(/\b(\d{4})\b/);
-  if (!m || !y) return null;
-  const years = Number(m[1]);
-  if (years > 120) return null;
+  if (years === null || years > 120 || !y) return null;
   const to = Number(y[1]) - years;
   return { from: to - 1, to, date: `Bet ${to - 1} and ${to}` };
 }
 
-/** A birth date that is a bare year (optionally "abt."): the indexer's own
- *  arithmetic. A date with a month or day is written on the record, so it is
- *  stated and gets no range. */
-const BARE_YEAR = /^\s*(?:abt\.?|about|circa|ca?\.)?\s*\d{4}\s*$/i;
+/** A birth that is a bare year, optionally "abt." or "~": the indexer's own
+ *  arithmetic or a reader's estimate. Anything with a month or a day is stated. */
+const BARE_YEAR = /^\s*(?:abt\.?|about|circa|ca?\.|~)?\s*\d{4}\s*$/i;
 
 const EVENT_FACT: Record<string, RegExp> = {
   census: /census/i,
@@ -1054,8 +1065,9 @@ const EVENT_FACT: Record<string, RegExp> = {
   draft_registration: /draft|militaryservice/i,
 };
 
-/** The year of the record's own event for one persona: census day, death,
- *  burial, marriage. The persona's facts first, then the couple's. */
+/** The date of the record's own event for one persona of an INDEXED record:
+ *  census day, death, burial, marriage. The persona's facts first, then the
+ *  couple's. */
 function eventDateFor(
   person: SimplifiedPerson,
   recordType: RecordType,
@@ -1072,27 +1084,70 @@ function eventDateFor(
   return pick ? String(pick.standard_date ?? pick.date) : undefined;
 }
 
+/** What a persona's age does to its birth. `replace` is the index of the Birth
+ *  fact the range displaces; null means no usable Birth fact, so the range is a
+ *  birth assertion of its own. */
+export interface BirthDecision {
+  range: BirthRange;
+  replace: number | null;
+}
+
+/** Text sources (record-structurer documents) pass what an index does not
+ *  carry: the event year the age is counted from, and which facts the text did
+ *  not state but computed. */
+export interface BirthDecisionText {
+  eventYear?: number;
+  isComputed: (factIndex: number) => boolean;
+}
+
 /**
- * The rule for one persona: an age and no full birth date give a birth range,
- * whatever bare year the index carries beside the age. A persona whose Birth
- * fact states a day or a month gets none. Any record type.
+ * THE rule, decided once per persona (lead, 2026-11-04):
+ *
+ *   no birth, or place only            -> add the range
+ *   indexed bare year inside the range -> the range replaces it
+ *   text birth marked computed, bare year inside the range -> replaced
+ *   indexed bare year outside the range, or a text birth not computed -> kept
+ *   a full date, or month and year     -> kept
+ *   the principal's own birth on a birth or christening record -> kept
+ *
+ * Extraction and `record_read` both call this, so every source gets the same
+ * answer. `age` is the stated age; null when the record gives none.
  */
-export function personaBirthRange(
+export function birthDecision(
   person: SimplifiedPerson,
   age: unknown,
   recordType: RecordType,
   gx: SimplifiedGedcomX,
-): BirthRange | null {
-  const statedBirth = (person.facts ?? []).some(
-    (f) => /birth/i.test(String(f.type ?? "")) && f.date && !BARE_YEAR.test(String(f.date)),
-  );
-  if (statedBirth) return null;
-  const event = eventDateFor(person, recordType, gx);
-  return event ? birthRangeFromAge(age, event) : null;
+  text?: BirthDecisionText,
+): BirthDecision | null {
+  if (person.principal === true && (recordType === "birth" || recordType === "christening")) return null;
+  const event = text ? text.eventYear : eventDateFor(person, recordType, gx);
+  const range = event === undefined ? null : birthRangeFromAge(age, event);
+  if (!range) return null;
+
+  const facts = person.facts ?? [];
+  const stated = (f: SimplifiedFact) => String(f.date ?? f.value ?? "").trim();
+  const births = facts
+    .map((f, i) => ({ f, i }))
+    .filter(({ f }) => normalizeFactType(f.type) === "birth" && stated(f) !== "");
+  if (births.length === 0) return { range, replace: null };
+  if (births.some(({ f }) => !BARE_YEAR.test(stated(f)))) return null;
+  for (const { f, i } of births) {
+    const year = Number(stated(f).match(/\d{4}/)![0]);
+    if (year >= range.from && year <= range.to && (!text || text.isComputed(i))) return { range, replace: i };
+  }
+  return null;
 }
 
-/** Persona id → the birth range its indexed age implies (`personaBirthRange`),
- *  or undefined when no persona has one. record_read returns it beside the
+/** The stated age of an indexed persona's index fields, else its `age` fact. */
+function statedAge(person: SimplifiedPerson, fieldAge: string | undefined): string | undefined {
+  if (fieldAge) return fieldAge;
+  const f = (person.facts ?? []).find((x) => normalizeFactType(x.type) === "age");
+  return f?.value ?? f?.date;
+}
+
+/** Persona id -> the birth range its indexed age implies (`birthDecision`), or
+ *  undefined when no persona has one. record_read returns it beside the
  *  document, never inside it; the eval mock calls this same function. */
 export function birthRangesFor(
   doc: SimplifiedGedcomX,
@@ -1102,9 +1157,9 @@ export function birthRangesFor(
   const recordType = detectRecordType(doc);
   const out: Record<string, string> = {};
   for (const p of doc.persons ?? []) {
-    const age = indexFields[p.id ?? ""]?.age;
-    const range = age ? personaBirthRange(p, age, recordType, doc) : null;
-    if (p.id && range) out[p.id] = range.date;
+    const age = statedAge(p, indexFields[p.id ?? ""]?.age);
+    const d = age ? birthDecision(p, age, recordType, doc) : null;
+    if (p.id && d) out[p.id] = d.range.date;
   }
   return Object.keys(out).length > 0 ? out : undefined;
 }
@@ -1337,6 +1392,24 @@ export function extractRecord(
     const age = party.fields?.age;
     if (age) push(party, "age", String(age));
 
+    // What the age does to this person's birth, decided once (lead, 2026-11-04):
+    // the facts loop applies it to the Birth fact it replaces, and a range with
+    // no Birth fact to replace is added after the loop.
+    const computedMark = (i: number) => {
+      const c = mode?.factMarks.get(`${party.id}#${i}`)?.computed ?? [];
+      return c.includes("date") || c.includes("value");
+    };
+    const ageForBirth = statedAge(p, party.fields?.age);
+    const decision = ageForBirth
+      ? birthDecision(p, ageForBirth, recordType, gx, mode ? { eventYear: mode.ageEventYear, isComputed: computedMark } : undefined)
+      : null;
+    const pushRange = () =>
+      push(party, "birth", decision!.range.date, {
+        date: decision!.range.date,
+        record_basis: "inferred",
+        date_certainty: "approximate",
+      });
+
     // Every persona fact.
     for (const [fi, f] of (p.facts ?? []).entries()) {
       const factType = normalizeFactType(f.type);
@@ -1345,8 +1418,10 @@ export function extractRecord(
       if (mode) {
         const marks = mode.factMarks.get(`${party.id}#${fi}`);
         const computed = new Set(marks?.computed ?? []);
+        // The range displaces a computed birth year; the fact's place stays.
+        const replaced = decision?.replace === fi;
         const attrs = (["value", "date", "place"] as const).filter(
-          (k) => f[k] !== undefined && String(f[k]).trim() !== "",
+          (k) => !(replaced && k !== "place") && f[k] !== undefined && String(f[k]).trim() !== "",
         );
         const groups: [readonly ("value" | "date" | "place")[], "stated" | "inferred"][] = [
           [attrs.filter((k) => !computed.has(k)), "stated"],
@@ -1362,6 +1437,7 @@ export function extractRecord(
           const value = String((group.includes("value") ? f.value : group.includes("date") ? f.date : f.place) ?? "");
           push(party, factType, marks?.uncertain ? withDoubt(value) : value, extra);
         }
+        if (replaced) pushRange();
         continue;
       }
 
@@ -1382,47 +1458,49 @@ export function extractRecord(
       // A census date that carries a month was written on the schedule (the
       // 1900 month-and-year column), so it is stated; only a bare year is the
       // indexer's arithmetic (genealogist ruling 2026-09-30).
-      const bareYear = /^\s*(?:abt\.?|about|circa|ca?\.)?\s*\d{4}\s*$/i.test(String(f.date ?? ""));
+      const bareYear = BARE_YEAR.test(String(f.date ?? ""));
       const yearIsDerived =
         factType === "birth" &&
         ((recordType === "census" && bareYear) || recordType === "death" || recordType === "burial") ||
         (factType === "birth" && recordType === "marriage" && bareYear && yearIsMarriageMinusAge(f.date, party.fields?.age));
 
-      // A stated age and no full birth date make the birth a range from the
-      // age, whatever bare year the index carries (lead, 2026-11-02).
-      // A marriage index's bare year the age does NOT explain stays stated
-      // (genealogist ruling 2026-09-30): there the year is not the indexer's
-      // subtraction, so the age does not displace it.
-      const range =
-        factType === "birth" && age && (recordType !== "marriage" || yearIsMarriageMinusAge(f.date, age))
-          ? personaBirthRange(p, age, recordType, gx)
-          : null;
-      const fdate = range ? range.date : f.date;
-      const derived = yearIsDerived || range !== null;
+      // The age's range displaces the indexer's bare year (decided above); the
+      // fact's place stays its own assertion.
+      if (decision?.replace === fi) {
+        if (f.place || f.standard_place) {
+          const placeExtra: Partial<ExtractedAssertion> = { place: f.place };
+          if (f.standard_place) placeExtra.standard_place = f.standard_place;
+          push(party, "birth", String(f.place ?? f.standard_place ?? ""), placeExtra);
+        }
+        pushRange();
+        continue;
+      }
 
-      if (derived && fdate && (f.place || f.standard_place)) {
+      if (yearIsDerived && f.date && (f.place || f.standard_place)) {
         const placeExtra: Partial<ExtractedAssertion> = { place: f.place };
         if (f.standard_place) placeExtra.standard_place = f.standard_place;
         push(party, "birth", String(f.place ?? f.standard_place ?? ""), placeExtra);
-        push(party, "birth", String(fdate), {
-          date: fdate,
+        push(party, "birth", String(f.date), {
+          date: f.date,
           record_basis: "inferred",
           date_certainty: "approximate",
         });
         continue;
       }
 
-      const value = range ? range.date : (f.value ?? f.date ?? f.place ?? "");
+      const value = f.value ?? f.date ?? f.place ?? "";
       const extra: Partial<ExtractedAssertion> = {};
-      if (fdate) extra.date = fdate;
+      if (f.date) extra.date = f.date;
       if (f.place) extra.place = f.place;
       if (f.standard_place) extra.standard_place = f.standard_place;
-      if (derived && fdate) {
+      if (yearIsDerived && f.date) {
         extra.record_basis = "inferred";
         extra.date_certainty = "approximate";
       }
       push(party, factType, String(value), extra);
     }
+
+    if (decision && decision.replace === null) pushRange();
   }
 
   // ── couple events ──

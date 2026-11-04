@@ -886,6 +886,12 @@ describe("marriage birth years — inferred only when they are the marriage year
       (a) => a.record_role === "groom" && a.fact_type === "birth" && a.date,
     );
 
+  it("the captured Ohio bride gets her age and a birth range (SP_AGE)", () => {
+    const as = extractRecord(load("marriage"), { logEntryId: "l_001", questionIds: [] }).assertions.filter((a) => a.record_role === "bride");
+    expect(as.find((a) => a.fact_type === "age")?.value).toBe("21 years");
+    expect(as.find((a) => a.fact_type === "birth" && a.date)?.date).toBe("Bet 1888 and 1889");
+  });
+
   it("the captured Ohio marriage: 1910, age 21 years, birth 1889 -> inferred", () => {
     expect(groomBirth(load("marriage"))?.record_basis).toBe("inferred");
   });
@@ -988,9 +994,20 @@ describe("birthRangeFromAge (issue #4127)", () => {
     expect(birthRangeFromAge("71", "1910")).toMatchObject({ from: 1838, to: 1839 });
   });
 
-  it("gives nothing for an age that is not whole years, or no event year", () => {
-    expect(birthRangeFromAge("6 months", "1850")).toBeNull();
-    expect(birthRangeFromAge("74 yrs 6 mos 16 dys", "1913")).toBeNull();
+  it("reads the whole years of an age", () => {
+    expect(birthRangeFromAge("58 years, 4 months, 12 days", "1900")).toMatchObject({ from: 1841, to: 1842 });
+    expect(birthRangeFromAge("74 yrs 6 mos 16 dys", "1913")).toMatchObject({ from: 1838, to: 1839 });
+  });
+
+  it("reads a months-only or days-only age as 0", () => {
+    expect(birthRangeFromAge("6 months", "1850")).toMatchObject({ from: 1849, to: 1850 });
+    expect(birthRangeFromAge("3 days", "1850")).toMatchObject({ from: 1849, to: 1850 });
+  });
+
+  it("gives nothing for an approximate age, an unreadable one, or no event year", () => {
+    expect(birthRangeFromAge("about 60", "1850")).toBeNull();
+    expect(birthRangeFromAge("abt. 60", "1850")).toBeNull();
+    expect(birthRangeFromAge("6/12", "1850")).toBeNull();
     expect(birthRangeFromAge("11", undefined)).toBeNull();
     expect(birthRangeFromAge(undefined, "1850")).toBeNull();
   });
@@ -1030,9 +1047,25 @@ describe("the code extractor stores an age-derived birth range (issue #4127)", (
     expect(b.date_certainty).toBe("approximate");
   });
 
-  it("gives the same range whatever bare year the index carries", () => {
-    expect(births(censusDoc("1841", "26", "1865"))[0].date).toBe("Bet 1838 and 1839");
-    expect(births(censusDoc("abt. 1840", "71", "1910"))[0].date).toBe("Bet 1838 and 1839");
+  it("keeps an indexed bare year that is outside the range", () => {
+    expect(births(censusDoc("1841", "26", "1865"))[0].date).toBe("1841");
+    expect(births(censusDoc("abt. 1840", "71", "1910"))[0].date).toBe("abt. 1840");
+  });
+
+  it("replaces an abt. year inside the range", () => {
+    expect(births(censusDoc("abt. 1838", "71", "1910"))[0].date).toBe("Bet 1838 and 1839");
+  });
+
+  it("adds one inferred range when the record has an age and no Birth fact", () => {
+    const out = births(censusDoc(undefined, "11", "1850"));
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ date: "Bet 1838 and 1839", record_basis: "inferred", date_certainty: "approximate" });
+  });
+
+  it("keeps the birthplace as its own assertion when the range replaces the year", () => {
+    const all = extractRecord(censusDoc("1839", "11", "1850"), { logEntryId: "l_001", questionIds: [] }).assertions;
+    expect(all.filter((a) => a.fact_type === "birth" && a.place === "Vermont")).toHaveLength(1);
+    expect(all.filter((a) => a.fact_type === "birth" && a.date)).toHaveLength(1);
   });
 
   it("gives no range to a full birth date, so a tombstone stays a finding", () => {
@@ -1047,6 +1080,12 @@ describe("the code extractor stores an age-derived birth range (issue #4127)", (
     const doc = censusDoc("1839", "", "1850");
     (doc as unknown as { indexFields: object }).indexFields = {};
     expect(births(doc)[0].date).toBe("1839");
+  });
+
+  it("keeps the principal's own birth on a birth or christening record", () => {
+    const doc = load("baptism");
+    const before = extractRecord(doc, { logEntryId: "l_001", questionIds: [] }).assertions.filter((a) => a.fact_type === "birth");
+    expect(before.every((a) => !/^Bet /.test(a.date ?? ""))).toBe(true);
   });
 
   it("is a range question-state reads, so it does not pair against 30 Nov 1838", async () => {

@@ -1583,6 +1583,11 @@ describe("recordReadTool — birthRanges from the stated age", () => {
     }
   });
 
+  it("agrees with extraction: a bare year outside the range stays, with no entry", async () => {
+    expect((await read("1840", "71", "1910")).birthRanges).toBeUndefined();
+    expect((await read("1841", "26", "1865")).birthRanges).toBeUndefined();
+  });
+
   it("returns none for a full birth date or a month-and-year date", async () => {
     expect((await read("31 Jan 1839", "74", "1913")).birthRanges).toBeUndefined();
     expect((await read("Jan 1839", "11", "1850")).birthRanges).toBeUndefined();
