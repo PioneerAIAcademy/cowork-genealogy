@@ -36,9 +36,12 @@ const TEST_TIMEOUT_MS = START_TIMEOUT_MS + 5_000;
  * to export both — so a developer's own shell would leak them in and flip
  * cases here: an inherited `FS_TOKEN_ENC_KEY` makes the dev-key refusal start
  * instead of exiting 2, and an inherited `OAUTH_ISSUER` kills every unrelated
- * case in this file.
+ * case in this file. `WEB_PUBLIC_URL` joined them when the dev-key refusal
+ * started reading it: compose takes it from the shell too (`${WEB_PUBLIC_URL:-}`),
+ * and inherited it makes the three "starts on the development key" cases exit 2.
+ * Any future setting this entrypoint reads un-prefixed belongs here as well.
  */
-const UNPREFIXED_ENTRYPOINT_ENV = ["FS_TOKEN_ENC_KEY", "OAUTH_ISSUER"];
+const UNPREFIXED_ENTRYPOINT_ENV = ["FS_TOKEN_ENC_KEY", "OAUTH_ISSUER", "WEB_PUBLIC_URL"];
 
 function childEnv(storeEnv: Record<string, string>): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
