@@ -7,6 +7,14 @@
 // still each handler's job.
 
 import { allToolSchemas } from "../tool-schemas.js";
+// A util importing a tool, deliberately: `../tool-schemas.js` above already loads
+// every tool, so this adds no module and no cycle, and the research_query hints
+// read the section table rather than copying it.
+import {
+  RESEARCH_QUERY_SECTIONS,
+  SECTION_FILTERS,
+  type ResearchQuerySection,
+} from "../tools/research-query.js";
 import { RECORD_TYPE_GROUP_NAMES } from "./record-type-groups.js";
 import {
   PERSON_READ_REF_REMOVED,
@@ -70,6 +78,72 @@ const groupsLine = () => `Valid groups: ${RECORD_TYPE_GROUP_NAMES.join(", ")}.`;
 const firstOf = (unknown: ReadonlyArray<[string, unknown]>, keys: readonly string[]) =>
   unknown.find(([k]) => keys.includes(k))?.[0];
 
+/** The names reached for when a record-type filter is wanted. */
+const RECORD_TYPE_ALIASES = ["recordType", "record_type", "recordTypes", "recordTypeGroup", "recordTypeGroups"];
+
+/** `a`, `a and b`, `a, b and c`. */
+function listOf(items: readonly string[]): string {
+  return items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+const ticked = (keys: readonly string[]) => listOf(keys.map((k) => `\`${k}\``));
+
+/** `value` when it names a research_query section. Never an `in` test or a bare
+ *  index: `"constructor" in SECTION_FILTERS` holds, and an array index is coerced
+ *  to a string, so `["plans"]` would read plans' table. */
+function knownSection(value: unknown): ResearchQuerySection | undefined {
+  return typeof value === "string" && (RESEARCH_QUERY_SECTIONS as readonly string[]).includes(value)
+    ? (value as ResearchQuerySection)
+    : undefined;
+}
+
+/** The filter that reads one entry of `section` by its own id, if it has one. */
+function idFilterOf(section: ResearchQuerySection): string | undefined {
+  return Object.entries(SECTION_FILTERS[section]).find(([, rule]) => rule?.field === "id")?.[0];
+}
+
+/** `filters` / `filter` hold the arguments research_query takes one by one; the
+ *  value is never unwrapped and run (lead ruling on #3947). */
+function filtersSentence(sent: readonly string[], section: ResearchQuerySection | undefined): string {
+  const head = `research_query has no parameter${sent.length > 1 ? "s" : ""} ${ticked(sent)}`;
+  if (section === undefined) {
+    return (
+      `${head}: send each filter as its own argument beside \`section\`; this tool's ` +
+      "description lists the filters each section takes."
+    );
+  }
+  const keys = Object.keys(SECTION_FILTERS[section]);
+  if (keys.length === 0) {
+    return `${head}, and section \`${section}\` takes no filters: drop ${ticked(sent)} to read the whole section.`;
+  }
+  return (
+    `${head}: send each filter as its own argument beside \`section\`. Section \`${section}\` filters only ` +
+    `by ${ticked(keys)}; a filter not in that list does not exist there, so leave it out (with none left, ` +
+    "the call reads the whole section)."
+  );
+}
+
+/** `entryId` is how the writers address one entry; research_query reads one
+ *  through the section's own id filter, which only some sections have. Never
+ *  names a writer: that would send a read to one. */
+function entryIdSentence(section: ResearchQuerySection | undefined): string {
+  if (section === undefined) {
+    const pairs = RESEARCH_QUERY_SECTIONS.flatMap((s) => {
+      const key = idFilterOf(s);
+      return key === undefined ? [] : [`\`${s}\` (\`${key}\`)`];
+    });
+    return (
+      `research_query has no parameter \`entryId\`: only ${listOf(pairs)} read one entry by its own id; ` +
+      "on any other section, drop `entryId` and read the section."
+    );
+  }
+  const key = idFilterOf(section);
+  return key === undefined
+    ? `research_query has no parameter \`entryId\`, and section \`${section}\` has no filter on an entry's ` +
+        "own id: drop `entryId` and read the section."
+    : `research_query has no parameter \`entryId\`: to read one \`${section}\` entry by its id, pass \`${key}\`.`;
+}
+
 const HINTS: Readonly<Record<string, Hint>> = {
   // A key whose name reads as a place in the film was meant to pick one item;
   // one naming the group is a misspelled `imageGroupNumber`, the generic line's.
@@ -94,13 +168,25 @@ const HINTS: Readonly<Record<string, Hint>> = {
     };
   },
   collections_search: (unknown) => {
-    const alias = firstOf(unknown, ["recordType", "record_type", "recordTypes", "recordTypeGroup", "recordTypeGroups"]);
+    const alias = firstOf(unknown, RECORD_TYPE_ALIASES);
     if (alias === undefined) return null;
     return {
       message:
         `collections_search has no record-type filter: it lists every collection for the ` +
         `place, so ${alias} cannot narrow it. To filter by record type, use volume_search's ` +
         `recordTypeGroups (an array of group names). ${groupsLine()}`,
+      covers: [alias],
+    };
+  },
+  // Both agents that call it search by place only, so the hint does not offer
+  // `subject` or `keywords` as a record-type filter.
+  catalog_search: (unknown) => {
+    const alias = firstOf(unknown, RECORD_TYPE_ALIASES);
+    if (alias === undefined) return null;
+    return {
+      message:
+        `catalog_search has no record-type filter, so drop ${alias} and search by place. To list record ` +
+        `volumes by type, use volume_search's recordTypeGroups (an array of group names). ${groupsLine()}`,
       covers: [alias],
     };
   },
@@ -117,10 +203,26 @@ const HINTS: Readonly<Record<string, Hint>> = {
     unknown.some(([k]) => k === "personReadRef")
       ? { message: PERSON_READ_REF_REMOVED, covers: ["personReadRef"] }
       : null,
-  research_query: (unknown) =>
-    unknown.some(([k]) => k === "sections")
-      ? { message: `research_query has no parameter \`sections\`. ${SECTIONS_NEAR_MISS}`, covers: ["sections"] }
-      : null,
+  research_query: (unknown, args) => {
+    const keys = unknown.map(([k]) => k);
+    const section = knownSection(args.section);
+    const sentences: string[] = [];
+    const covers: string[] = [];
+    if (keys.includes("sections")) {
+      sentences.push(`research_query has no parameter \`sections\`. ${SECTIONS_NEAR_MISS}`);
+      covers.push("sections");
+    }
+    const filters = keys.filter((k) => k === "filters" || k === "filter");
+    if (filters.length > 0) {
+      sentences.push(filtersSentence(filters, section));
+      covers.push(...filters);
+    }
+    if (keys.includes("entryId")) {
+      sentences.push(entryIdSentence(section));
+      covers.push("entryId");
+    }
+    return sentences.length === 0 ? null : { message: sentences.join(" "), covers };
+  },
 };
 
 function crossToolOp(

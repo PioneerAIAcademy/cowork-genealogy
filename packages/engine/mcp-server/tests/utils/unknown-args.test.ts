@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { ACCEPTED_ALIASES, nearestParameters, rejectUnknownArgs } from "../../src/utils/unknown-args.js";
+import { SECTION_FILTERS } from "../../src/tools/research-query.js";
 import { callTool } from "../helpers/call-tool.js";
 import {
   PERSON_READ_REF_REMOVED,
@@ -86,6 +87,132 @@ describe("rejectUnknownArgs through the server (#3736)", () => {
     expect(r.isError).toBe(true);
     expect(r.text).toContain("image_read has no parameter `memoryArtifactUrl`");
   });
+});
+
+describe("rejectUnknownArgs: a key that belongs to another tool's shape (#4075)", () => {
+  const ID_READS = Object.entries(SECTION_FILTERS).flatMap(([section, rules]) =>
+    Object.entries(rules)
+      .filter(([, rule]) => rule?.field === "id")
+      .map(([key]) => [section, key] as const),
+  );
+
+  function expectSectionKeys(text: string, section: keyof typeof SECTION_FILTERS) {
+    const keys = Object.keys(SECTION_FILTERS[section]);
+    expect(keys.length).toBeGreaterThan(0);
+    expect(text).toContain(`Section \`${section}\` filters only by`);
+    for (const key of keys) expect(text).toContain(`\`${key}\``);
+    expect(text).toContain("does not exist there, so leave it out");
+  }
+
+  it.each([
+    ["a JSON string", '{"questionId":"q_001"}'],
+    ["an object", { questionId: "q_001" }],
+  ])("answers filters given as %s with the section's own filter arguments", async (_, filters) => {
+    const r = await callTool("research_query", { projectPath: "/p", section: "plans", filters });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("research_query has no parameter `filters`: send each filter as its own argument");
+    expectSectionKeys(r.text, "plans");
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it("names the singular filter as sent, with the section's keys", async () => {
+    const r = await callTool("research_query", { projectPath: "/p", section: "assertions", filter: '{"fact_type":"Christening"}' });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("research_query has no parameter `filter`:");
+    expectSectionKeys(r.text, "assertions");
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it("names filters and filter together, and gives neither the generic line", async () => {
+    const r = await callTool("research_query", { projectPath: "/p", section: "plans", filters: "{}", filter: "{}" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("research_query has no parameters `filters` and `filter`:");
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it("says a section with no filters takes none", async () => {
+    expect(Object.keys(SECTION_FILTERS.localities)).toEqual([]);
+    const r = await callTool("research_query", { projectPath: "/p", section: "localities", filters: "{}" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("section `localities` takes no filters: drop `filters` to read the whole section");
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it.each([
+    ["no section", {}],
+    ["a prototype key", { section: "constructor" }],
+    ["an array", { section: ["plans"] }],
+    ["an unknown section", { section: "no_such_section_x" }],
+  ])("still refuses filters with %s, lists no section's keys and echoes nothing", async (_, extra) => {
+    const r = await callTool("research_query", { projectPath: "/p", ...extra, filters: '{"status":"active"}' });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("this tool's description lists the filters each section takes");
+    expect(r.text).not.toContain("filters only by");
+    expect(r.text).not.toContain("takes no filters");
+    expect(r.text).not.toMatch(/constructor|no_such_section_x|Section `/);
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it("points entryId at the section's id filter, never at a writer", async () => {
+    const r = await callTool("research_query", { projectPath: "/p", section: "conflicts", entryId: "c_002" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("to read one `conflicts` entry by its id, pass `conflictId`.");
+    expect(r.text).not.toMatch(/research_append|evaluation_append/);
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it("tells entryId on a section with no id filter to read the section", async () => {
+    expect(ID_READS.some(([section]) => section === "person_evidence")).toBe(false);
+    const r = await callTool("research_query", { projectPath: "/p", section: "person_evidence", entryId: "pe_001" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("section `person_evidence` has no filter on an entry's own id: drop `entryId` and read the section");
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it.each([
+    ["no section", {}],
+    ["a prototype key", { section: "constructor" }],
+  ])("lists every section that reads one entry by id for entryId with %s", async (_, extra) => {
+    expect(ID_READS).toContainEqual(["conflicts", "conflictId"]);
+    const r = await callTool("research_query", { projectPath: "/p", ...extra, entryId: "c_002" });
+    expect(r.isError).toBe(true);
+    for (const [section, key] of ID_READS) expect(r.text).toContain(`\`${section}\` (\`${key}\`)`);
+    expect(r.text).toContain("on any other section, drop `entryId` and read the section");
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it("answers sections, filters and entryId in one call, each with its own sentence", async () => {
+    const r = await callTool("research_query", {
+      projectPath: "/p",
+      section: "conflicts",
+      sections: ["log"],
+      filters: "{}",
+      entryId: "c_002",
+    });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain(SECTIONS_NEAR_MISS);
+    expectSectionKeys(r.text, "conflicts");
+    expect(r.text).toContain("entry by its id, pass `conflictId`");
+    expect(r.text).not.toContain("the nearest are");
+  });
+
+  it("keeps the nearest-parameter line for a research_query typo", async () => {
+    const r = await callTool("research_query", { projectPath: "/p", section: "plans", surnam: "x" });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain("research_query has no parameter `surnam`; the nearest are");
+  });
+
+  it.each(["recordType", "record_type", "recordTypes", "recordTypeGroup", "recordTypeGroups"])(
+    "tells catalog_search's %s to drop it and names volume_search",
+    async (alias) => {
+      const r = await callTool("catalog_search", { standardPlace: "Škofja Loka, Slovenia", [alias]: "[]" });
+      expect(r.isError).toBe(true);
+      expect(r.text).toContain(`catalog_search has no record-type filter, so drop ${alias} and search by place.`);
+      expect(r.text).toContain("volume_search's recordTypeGroups");
+      expect(r.text).not.toMatch(/subject|keywords/);
+      expect(r.text).not.toContain("the nearest are");
+    },
+  );
 });
 
 describe("rejectUnknownArgs: what it echoes back", () => {
