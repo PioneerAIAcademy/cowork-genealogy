@@ -47,8 +47,8 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "shows log_017, hit 9, record id 3Q9M-CSK3-ZSLR and agent name record-structurer to the researcher"
     },
     {
       "test_id": "ut_research_rpn",
@@ -143,8 +143,8 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "gives closing summary and offer twice; names evaluate-search-results to the researcher"
     },
     {
       "test_id": "ut_research_zfp",
