@@ -12,7 +12,8 @@
       "boundary",
       "I1",
       "terse-delegation",
-      "direct-arm"
+      "direct-arm",
+      "rejected-assertion-id-a_012"
     ]
   },
   "input": {

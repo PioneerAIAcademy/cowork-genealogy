@@ -177,6 +177,25 @@ def test_direct_silent_agent_fails_even_when_the_relay_names_the_owner():
         check_hand_back([], "This belongs to conflict-resolution.", _direct(), [])
 
 
+def test_direct_failed_spawn_does_not_count_as_the_agents_return():
+    error = {
+        "subagent_type": "check-warnings",
+        "text": "Agent type 'check-warnings' not found. Available agents: conflict-resolution, tree-edit",
+        "is_error": True,
+    }
+    with pytest.raises(AssertionError, match="never names conflict-resolution"):
+        check_hand_back([], "", _direct(), [error])
+
+
+def test_direct_failed_spawn_then_a_clean_return_passes():
+    error = {
+        "subagent_type": "check-warnings",
+        "text": "InputValidationError: The required parameter `description` is missing",
+        "is_error": True,
+    }
+    check_hand_back([], "", _direct(), [error, *_returned(AGENT_RETURN)])
+
+
 def test_direct_return_from_another_agent_does_not_count():
     with pytest.raises(AssertionError, match="never names conflict-resolution"):
         check_hand_back(
