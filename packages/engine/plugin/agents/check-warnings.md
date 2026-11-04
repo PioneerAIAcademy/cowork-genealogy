@@ -294,7 +294,7 @@ Always investigate.
   this person.
 
 #### `hasAgeRangeGreaterThan120`
-- Rule: latest possible death year minus latest possible birth
+- Rule: earliest possible death year minus latest possible birth
   year is greater than 120.
 - Cause: wrong birth or death date, or two people merged.
 - Action: verify both vital dates against source documents.
