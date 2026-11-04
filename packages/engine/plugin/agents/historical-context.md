@@ -14,7 +14,7 @@ description: >-
   search-records), wants to translate a non-English record (use translation),
   wants to convert a date between calendar systems (use convert-dates), or wants
   to formally resolve conflicting evidence (use conflict-resolution).
-model: claude-haiku-5-5
+model: claude-sonnet-5-5
 effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,

@@ -19,6 +19,8 @@
     "scenario": null
   },
   "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-all-schuylkill",
     "wiki-search-irish-immigration",
     "wiki-search-schuylkill-coal-mining",
     "wiki-search-irish-catholic-records",
