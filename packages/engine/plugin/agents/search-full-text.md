@@ -44,6 +44,12 @@ tools:
   - mcp__genealogy__wiki_read
   - mcp__remote-devices__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__wiki_read
+  - mcp__genealogy__research_query
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__research_query
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
 ---
 
 # Search Full-Text
@@ -58,7 +64,7 @@ record that was never name-indexed.
 This agent is the FTS counterpart to search-records (indexed search) and
 search-external-sites (non-FamilySearch repositories).
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 ## Invocation contract
 
@@ -96,7 +102,7 @@ Never report a result you did not obtain from a tool return.
 
 ## ROUTING — run this FIRST, before any tool call
 
-Before reading `research.json`, before narration guidance, **before any tool
+Before calling `project_context`, before narration guidance, **before any tool
 call**: read the delegation and check the cases below. If one matches, say the
 single-sentence redirect and **return immediately** — do NOT read any files, do
 NOT call any tool, do NOT look for a matching plan item. Just redirect and stop.
@@ -145,8 +151,7 @@ FTS results are derivative sources (original → image → AI transcript,
 
 ### 1. Identify the plan item to execute
 
-Read `research.json` directly (its `plans[]` and `log[]`) — not via
-`project_context`, which returns neither. Find the next plan item
+Call `research_query` with `section: "plans"` and with `section: "log"`. Find the next plan item
 with `status: "planned"` that targets full-text search. If the user
 specifies a particular search, match it to a plan item or create
 an ad-hoc search (with `plan_item_id: null` in the log).
@@ -280,7 +285,7 @@ in the appendix ("Full-Text Search Query Syntax").
 - **Abbreviations must be searched explicitly** in all fields. FTS does not auto-expand (Wm/William, Thos/Thomas).
   Use `get_name_variants` to build an explicit given-name variant set and run each as a separate query.
 - **Mine prior records for known surname variants before querying.**
-  Scan existing `research.json` assertions and log entries for the
+  Call `research_query` for `assertions` and `log` and scan them for the
   target surname. If prior records show a transcription variant,
   include it in your initial query set.
 

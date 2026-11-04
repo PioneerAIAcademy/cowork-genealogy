@@ -1,4 +1,4 @@
-# Susanna Szljacsan — husband Joannes Janeczky and daughter Susanna
+# Susanna Szljacsan — husband Joannes Janeczky
 
 **Source PID:** `LDK6-6SH`
 **Susanna Szljacsan is deceased.** (FamilySearch ToS requires
@@ -7,7 +7,7 @@ all committed e2e fixtures to be about deceased persons.) Born
 
 ## Research question
 
-> Who did Susanna Szljacsan of Lisková, Ružomberok, Slovakia marry, and did she have a daughter named Susanna, baptized about 1884?
+> Who did Susanna Szljacsan of Lisková, Ružomberok, Slovakia marry?
 
 ## What was removed from the starting tree
 
@@ -28,6 +28,15 @@ medium — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-03 — re-scoped for step mode (issue #4145).** The old question asked
+two independent facts (the husband, and a specific named daughter), which step
+mode now refuses to research in one pass: "Who did Susanna Szljacsan of
+Lisková, Ružomberok, Slovakia marry, and did she have a daughter named
+Susanna, baptized about 1884?" Reworded `researcher_question` to the husband
+only ("Who did Susanna Szljacsan of Lisková, Ružomberok, Slovakia marry?");
+demoted `f2` (daughter Susanna) to `required: false` so a run that recovers it
+anyway still gets credit. No finding wording changed.
 
 **RESOLVED 2026-08-04 — true match.** This fixture came from a hint batch
 (`filtered-list-samples.csv` row 29, flags `adds_spouse`/`adds_daughter`,

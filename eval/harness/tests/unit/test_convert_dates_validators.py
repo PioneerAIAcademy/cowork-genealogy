@@ -147,6 +147,19 @@ def test_only_convert_calendar_still_fires_on_a_foreign_tool():
                       _tags())
 
 
+def test_only_convert_calendar_allows_the_narration_project_context_read():
+    check_only_cc(
+        [{"tool": "mcp__genealogy__project_context", "args": {}}, _convert(year=1900, month=2, day=14)],
+        _tags(),
+    )
+    with pytest.raises(AssertionError, match="only call convert_calendar"):
+        check_only_cc(
+            [{"tool": "mcp__genealogy__project_context", "args": {}},
+             {"tool": "mcp__genealogy__tree_query", "args": {}}],
+            _tags(),
+        )
+
+
 def test_no_spurious_conversion_now_has_a_registered_tool_to_catch():
     """Before #1654 this assertion could not fail: it asserts convert_calendar
     was not called, for a tool registered nowhere, so it was green forever
