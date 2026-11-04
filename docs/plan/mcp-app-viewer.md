@@ -217,7 +217,8 @@ from it, and an unannotated tool defaults to "not read-only".
   The page calls it with the same project rule and `part`, `id`:
   - `document`: the current `research`, `tree`, `startingTree`, `collections` and
     `derived`;
-  - `results`: one results file; `id` must match `^log_[a-zA-Z0-9_-]+$` (Electron's
+  - `results`: one results file, or `{ found: false }` when it is absent, which is
+    not an error; `id` must match `^log_[a-zA-Z0-9_-]+$` (Electron's
     `LOG_ID_PATTERN`), otherwise refused;
   - `recordSearch`: `id` is a record id; returns the `record_search` log id whose
     results file holds it, ids compared by the ARK's bare id, so finding a record's
@@ -256,14 +257,18 @@ from it, and an unannotated tool defaults to "not read-only".
   and `@modelcontextprotocol/ext-apps@1.7.5` for the `App` client.
 - **Three hosts, chosen at boot,** before anything connects, checked in this
   order: an artifact (`typeof window.claude?.use === "function"`), a browser tab
-  (`window.parent === window`), otherwise the MCP App `App`. Each host supplies `call(tool, args)`, `openLink`, fullscreen and its input,
+  (`window.parent === window`), otherwise the MCP App `App`. If `connect` takes over
+  10 seconds or `use("mcp")` resolves null, the page says it cannot reach its host.
+  Each host supplies `call(tool, args)`, `openLink`, fullscreen and its input,
   and a tool failure reaches the page in one shape. In a tab, `show` comes from the
   URL, loading is one `document` call, `openLink` is `window.open`, and the POST
   sends both Accept types. An artifact also loads by one `document` call.
 - **Display modes:** the `App` declares
-  `availableDisplayModes: ["inline", "fullscreen"]`, the layout follows
-  `hostContext.displayMode` and the mode `requestDisplayMode` returns, and the open
-  button is hidden when fullscreen is not offered.
+  `availableDisplayModes: ["inline", "fullscreen"]`. The page keeps one `mode`, set by
+  `hostContext.displayMode` at connect, by a `hostcontextchanged` only when it carries
+  `displayMode`, and by what `requestDisplayMode` returns; the last to arrive wins, and
+  a rejected request leaves it alone. The layout and the open button read `mode`, never
+  `getHostContext()`. The open button is hidden when fullscreen is not offered.
 - **Loading the project in a card, once per mount.** Only the first tool result
   counts. If it carries `_meta["genealogy/project"]`, that is the snapshot. If it is
   `isError`, the card shows its text and fetches nothing. Otherwise, or if no
@@ -282,8 +287,9 @@ from it, and an unannotated tool defaults to "not read-only".
   - `getProjectState` returns the documents; its `label` is the project's title,
     else `derived`'s folder name, never null (a null label shows the welcome
     screen);
-  - `readSidecar` calls `part: "results"`, with a constant `mtime`, resolving null
-    when the id is refused or the file is absent;
+  - `readSidecar` resolves null, with no call, for an id outside `LOG_ID_PATTERN`;
+    otherwise it calls `part: "results"`, with a constant `mtime`, and resolves null on
+    `found: false`. Every other failure rejects, so the drawer offers Try again;
   - `getSourceImage` returns a fresh signed link as the `img` source;
   - `openExternal` and `openFamilySearch` are arrow-function properties, because
     the provider passes them unbound. `openExternal` calls `openLink` only for an
@@ -298,31 +304,53 @@ from it, and an unannotated tool defaults to "not read-only".
     search, evidence-gathered → link, concluded or critiqued → conclusion. No
     question yet: `latest` is setup, and the setup card shows the objective.
   - **The evidence grid's rows** key on the person and the fact type, lower-cased
-    with underscores removed (`marital_status` and `maritalstatus` share a row), and a
-    cell lists every assertion that lands on it. The tree column reads `name` from
-    `names[]`, `sex` from `gender`, `relationship` and `parentage` from the person's
-    relationships, `marriage` from the Couple's `facts[]`, and anything else from
-    `facts[]` by type, keyed the same way. A supporting assertion with no live link
-    gets its own row, labelled by `record_role`.
-  - **Ids in fields are resolved; internal ids in prose are dropped.** `S1`, `I19`,
-    `q_001`, `a_003`, `pe_060` in a field become the person, source, question or
-    record they name. Prose is never rewritten with names: an internal id is
-    removed alone with its separator, and a bracket left empty goes with it. The words
-    beside it stay, because agents put evidence there.
+    with spaces and underscores removed (`marital_status`, `maritalstatus` and `Marital
+    Status` share a row), and a cell lists every assertion that lands on it. The tree
+    column reads `startingTree`, never the current tree: `name` from `names[]`, `sex`
+    from `gender`, `relationship` and `parentage` from the person's relationships,
+    `marriage` from the Couple's `facts[]`, and anything else from `facts[]` by type,
+    keyed the same way. With no starting tree the column is omitted. A supporting
+    assertion with no live link gets its own row, labelled by `record_role`.
+  - **Ids in fields are resolved.** `S1`, `I19`, `q_001`, `a_003`, `pe_060` in a
+    field become the person, source, question or record they name.
+  - **Internal ids in prose are named outside brackets and dropped inside them.** An
+    internal id is a tree `S`, `I`, `R`, `F` or `N` number, or `a_ c_ ev_ h_ loc_ log_
+    ns_ p_ pe_ pl_ pli_ ps_ q_ rj_ rp_ src_ t_` plus digits, and never part of a URL,
+    an ARK or a longer token; a role such as `child_1` is not one. Ids joined by a
+    comma, semicolon, slash, dash, arrow, `+`, `&`, `and`, `or`, `vs` or a space are one
+    run.
+    - Outside brackets a run is a word in the sentence, so it becomes the names of the
+      people and records it holds, keeping any `'s`. A bracket straight after it that
+      only repeats the name goes.
+    - Inside brackets a run is a citation, so it goes. So does a run with no name.
+    - A run that goes takes the space before it and any label directly before that
+      (`see`, `see also`, `assertion(s)`, `source(s)`, `tree person(s)`, `for`, `as`).
+      A separator left at a bracket's edge goes, and so does a bracket left with no
+      letter or digit. The words beside an id stay, because agents put evidence there.
+    - A prototype over the 7,910 proof narratives and link rationales that hold ids
+      left no id behind, with about 38 orphaned `'s` and 138 stranded prepositions,
+      against 530 and 1,268 if every id is removed.
   - **FamilySearch identifiers become named links.** A tree person is their name;
     a record is its title ("1887 birth register"); a page image, collection or wiki
     page is named for what it is.
   - **In prose,** one page function handles every "on FamilySearch" link. A URL is
     parsed with `new URL`, must have the hostname `familysearch.org` or
     `www.familysearch.org` and no credentials, and is rebuilt on
-    `https://www.familysearch.org`. A full ARK or a `\d:\d:<id>` form such as
-    `3:1:3QSQ-G9NW-8ZZC` becomes a link, with trailing punctuation peeled off and any
+    `https://www.familysearch.org`. A URL that fails this test stays whole: nothing
+    inside it, or inside a markdown link's destination, is linked or removed. A full
+    ARK, or a bare `\d:\d:<id>` form such as `3:1:3QSQ-G9NW-8ZZC`, where `<id>` is
+    capitals and digits in two or more hyphenated parts and no letter, digit, `/` or
+    `:` comes before it, becomes a link, with trailing punctuation peeled off and any
     `?…` dropped. A bare token that looks like an id becomes a link only if the
-    project knows it: a tree person's id gets the person page, a record's id gets its
-    ARK. A record's id may come from `sources`, `assertions` or the tree's `sources`
-    (its `id` or its `url`'s ARK). An unknown token with a capital letter in that
-    shape is removed as an internal id is, and anything else, such as `1885-1910` or
-    `Mary-Ann`, stays as text.
+    project knows it. A tree person's `id`, the bare id in their `ark`, or the id in a
+    tree source's `/tree/person/details/<id>` URL gets the person page. A record's id
+    comes from `assertions[].record_id` or the ARK in the `url` of a research or tree
+    source, counts only if that record has an ARK, and gets that ARK, named by the
+    record's title. A person wins over a record. A link is never built from a stored
+    `url`, and a bare token never goes to `resolveFamilySearchTarget`, which reads it
+    as a person. Any other token with a capital letter in that shape is removed as an
+    internal id is, and anything else, such as `1885-1910` or `Mary-Ann`, stays as
+    text.
   - **The conclusion line** is the paragraph under the narrative's first markdown
     heading, or first line opening with a bold run, whose text contains
     "conclusion" in any case (`### Conclusion`, `**Conclusion (Probable):**`);
@@ -430,7 +458,8 @@ before pushing, with no tunnel and no connector.
   (`eval/runlogs/e2e/<fixture>/run-*.final-research.json` with its
   `.final-tree.gedcomx.json`), with `eval/tests/e2e/<fixture>/starting-tree.gedcomx.json`
   as the starting tree. The McAndrew capture and `william-ferber-ancestry` have
-  none, so Compare and the tree-change line are omitted for them. They have no
+  none, nor do the three fixtures below, so Compare, the tree-change line and the
+  grid's tree column are omitted for them. The capture and the end states have no
   `results/`, `images/` or `evaluations/`. The reviewer's notes are tested over the
   three fixtures that pair a research.json with an evaluation file:
   `eval/fixtures/scenarios/compound-objective-fully-covered` and
@@ -438,8 +467,10 @@ before pushing, with no tunnel and no connector.
   `flynn-prior-craft-verdict`, a craft read. `recordSearch` is tested over the two
   compound fixtures, because Flynn has no `results/`.
 - **The sweep:** `make mcp-viewer-sweep` is local, not CI, so a teammate's committed
-  run can never red someone's PR. It stages each end state in a temporary folder,
-  runs the server to dump its `document` payload, and renders the page over each.
+  run can never red someone's PR. It stages each end state, and each of the three
+  evaluation fixtures whole, in a temporary folder, runs the server to dump its
+  `document` payload, renders the page over each, and fails if a compound fixture
+  shows no notes or Flynn shows a verdict.
   Page tests in CI use a small committed fixture; `derived` is tested in
   `tests/viewer/` on a few named states.
 - **The demo:** a fresh project the lead runs in Cowork with the alpha `.mcpb`.
@@ -475,7 +506,11 @@ is the everyday development loop. Then, in a Cowork task:
 Record, in `docs/mcp-app-host-probe.md` (never the connector URL: the repo is
 public):
 - does a card render on each route; the client's declared extensions;
-- does Cowork offer fullscreen (`availableDisplayModes`), can a card opened by a
+- what the page sees on each route: `typeof window.claude`,
+  `typeof window.claude?.use` and `window.parent === window`;
+- does Cowork offer fullscreen (`availableDisplayModes`), does it send
+  `host-context-changed` on entering fullscreen and on the host's own close, can a
+  card opened by a
   typed request go straight to it, does a mode switch remount the frame, and where
   does a typed card land while the file is fullscreen;
 - does "where does the research stand?" call `show_project` with the variant's
@@ -520,8 +555,9 @@ pass, each with a stub page HTML:
 - with `--local`, the page is served at `/<secret>/` with its CSP header and
   nowhere else, and without it that path is 404.
 
-The page's own tests, with a fake `App`: it fetches at most once per mount, and a
-cancelled call paints no card. In a tab, `make viewer` paints a card from a real
+The page's own tests, with a fake `App`: it fetches at most once per mount, a
+cancelled call paints no card, and a host that answers `requestDisplayMode` and never
+notifies keeps the file open through a later resize notification. In a tab, `make viewer` paints a card from a real
 project.
 
 ### M1 — The designer demo (15–17 days)
@@ -562,6 +598,17 @@ project.
   `full-text` render as text with no link, a record id links to its ARK,
   `(X8D9-HL9; parents: Peter Farber + Barbara Wilhelm)` with an unknown id renders as
   `(parents: Peter Farber + Barbara Wilhelm)`, and `(S28, S29)` leaves nothing;
+- `(src_001/S26 and src_003/S28)`, `(pe_045–pe_049)` and
+  `(pli_007 log_027–log_028, pli_010 log_031–log_034)` leave nothing,
+  `(src_001/S26, child_1 role, assertions a_034–a_039)` renders as `(child_1 role)`,
+  `born 1887 (S28).` renders as `born 1887.`, `born to I1 and I2` and `I4's birth fact`
+  render the names, `I4 (John Vincent Mogan)` shows the name once, and the id check
+  also fails on `src_003/` and on a rendered bracket holding no letter or digit;
+- `(KWJ6-RPH)` in the compound proof links to the person page, `1:2:30` renders as
+  text, `https://evil.example/ark:/61903/1:1:QPRC-WPBZ` stays whole with no "on
+  FamilySearch" label, a tree source with an Ancestry url leaves its id removed with no
+  link, and a tree source whose url's ARK ends in a tree person's id leaves that
+  person's link unchanged;
 - `https://familysearch.org.evil.example/en/wiki/X`,
   `https://www.familysearch.org@evil.example/en/wiki/X` and
   `https://evil.example/https://www.familysearch.org/en/wiki/X` get no "on
@@ -571,9 +618,9 @@ project.
   narrative, a Linkify URL in a research-log note, and an "Open in FamilySearch"
   button each produce exactly one `openLink` call with an https URL, none navigates
   the frame, and an `http:` source URL on the Sources button produces none;
-- `McpAppResearchTransport` passes `assertTransportContract` and returns a non-null
-  `label` for a project with no title, and a card from snapshot A opens a file
-  showing document B.
+- `McpAppResearchTransport` passes `assertTransportContract`, its `readSidecar`
+  rejects when the call fails, it returns a non-null `label` for a project with no
+  title, and a card from snapshot A opens a file showing document B.
 
 ### M2 — The other step cards (6–8 days)
 
