@@ -1,7 +1,7 @@
 """One session, many turns: the e2e harness answering its own step boundaries.
 
 Section F. Until step mode the e2e harness ran a fixture as ONE `process_query`
-call kept alive by the Stop hook's nudges. Under step mode a turn runs one step
+call kept alive by the Stop hook's nudges (deleted in step mode phase 2). Under step mode a turn runs one step
 and ends, so a one-shot query would stop after the first step and the run would
 look finished. This drives turn after turn on one `ClaudeSDKClient` session,
 sending the reply production's host would send.
