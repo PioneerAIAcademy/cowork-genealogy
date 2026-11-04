@@ -7,7 +7,7 @@ christened 2 October 1862, Los Andes, Aconcagua, Chile; died 29 May 1908, Santia
 
 ## Research question
 
-> Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried, and does a cemetery record corroborate her recorded death date and birth year?
+> Where and when was Eulojia del Carmen Gatica Alfaro of Santiago, Chile buried?
 
 ## What was removed from the starting tree
 
@@ -28,6 +28,13 @@ easy — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-03 — re-scoped for step mode (issue #4145).** Trimmed the
+corroboration clause ("...and does a cemetery record corroborate her recorded
+death date and birth year?") from `researcher_question` — it isn't an
+independent fact, it's asking the agent to report what the same burial record
+incidentally shows. `f2` was already `required: false`, so no finding
+changed.
 
 **Resolved: TRUE MATCH.** The hint record — Chile, Cemetery Records,
 1701-2021: burial entry, 30 May 1908, Santiago, for Eulogia Gatica Alfaro —

@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "true"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "Right person, right relationship (I1 John W Spriggs, parent of L64C-QQX via R1), corroborated by two independent sources (1910 census + 1898 ELCA baptism) plus the 1898 Spokane marriage record 11 weeks before the birth. Birth recorded only as place=Iowa/date=1872 (year only) — coarser than the fixture's day+township precision, but the identity and parentage are sound, so graded true rather than partial. Proof quality is 2, not 3: the proof narrative describes the 1898 ELCA baptism (src_002) as an \"original church register\" accessed \"as an original church register image\" with the parents as primary informants present at the baptism, and resolves the index's birth/christening date conflict as an indexer transposition on that basis — but the run never called image_read or image_transcribe anywhere in its tool calls, and research.json itself classifies src_002 as derivative. The date \"resolution\" is an inference from the index, not a reading of the record it is credited to.",
+    "f2": "Right person, right relationship, maiden name correctly recovered (I2 Charlotte Spriggs/Westby, parent of L64C-QQX via R4) and independently corroborated by the 1898 marriage record. Birth recorded only as place=Norway/date=1877 (year only, one year off the fixture's 1876 — ordinary census-style imprecision) with no Akershus or 13 June. Core relationship and identity are solid, so graded true."
+  },
+  "annotator": "Milescia",
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda",
+  "blind_bundle_digest": "5ef98170da4fff8a8c980dcad4527f8bf7d5640a92e3b5e078127373f0103f3d"
+}

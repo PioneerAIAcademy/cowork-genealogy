@@ -53,6 +53,7 @@ from claude_agent_sdk import (
 
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
+    sources_note_hook,
     owned_section_denial,
     owner_denied,
     protected_file_denial,
@@ -1431,7 +1432,11 @@ async def run_skill(
         effort=effort,
         max_turns=max_turns,
         env=env_for_sdk(auth, tool_search=tool_search),
-        hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])]},
+        hooks={
+            "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
+            # Issue #4011: the sentence every production path carries, added as Cowork does.
+            "UserPromptSubmit": [HookMatcher(matcher=None, hooks=[sources_note_hook])],
+        },
         # Intercept the CLI subprocess stderr so we can drop teardown noise
         # (see _filter_cli_stderr) instead of letting it flood the console on
         # aborted runs. Setting this is also what makes the SDK pipe stderr.
