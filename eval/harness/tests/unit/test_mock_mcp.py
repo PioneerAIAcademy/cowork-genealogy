@@ -676,6 +676,92 @@ def test_fulltext_search_keeps_textDocument_when_not_staged(tmp_path):
     assert "textDocument" in body["results"][0]
 
 
+# --- fulltext_search serves facets only on includeFacets (#3973) ---------------
+# Production adds `facets` only under `input.includeFacets && data.facets`
+# (fulltext-search.ts) and stages after; a fixture carries them unconditionally.
+
+_FACETS_FIXTURE = "fulltext-search-flynn-broad-with-facets"
+
+
+def _fixture_facets():
+    raw = json.loads((FIXTURES_DIR / f"{_FACETS_FIXTURE}.json").read_text(encoding="utf-8"))
+    assert raw["response"].get("facets"), "test assumes the fixture carries facets"
+    return raw["response"]["facets"]
+
+
+def test_fulltext_search_withholds_facets_without_include_facets(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn"}))
+    assert "error" not in body, body
+    assert body["results"], "the rest of the response is still served"
+    assert "facets" not in body
+
+
+def test_fulltext_search_withholds_facets_when_include_facets_is_false(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn", "includeFacets": False})
+    )
+    assert "facets" not in body
+
+
+def test_fulltext_search_serves_facets_on_include_facets(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn", "includeFacets": True})
+    )
+    assert body["facets"] == _fixture_facets()
+
+
+def test_fulltext_search_withholding_facets_does_not_strip_them_from_the_fixture(tmp_path):
+    """The fixture response is shared across calls: a call without includeFacets
+    must not cost a later includeFacets call its facets."""
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn"})
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn", "includeFacets": True})
+    )
+    assert body["facets"] == _fixture_facets()
+
+
+def test_facets_gate_has_not_drifted_from_the_typescript_source():
+    """The mock's gate restates the tool's condition: it selects the response
+    rather than transforming a staged one, and the tool exports no function for
+    it. A stale copy is silent, so pin the expression and its place before staging."""
+    src = (REPO_ROOT / "packages/engine/mcp-server/src/tools/fulltext-search.ts").read_text(
+        encoding="utf-8"
+    )
+    gate = src.find("if (input.includeFacets && data.facets) {")
+    assert gate != -1, "fulltext-search.ts no longer gates facets on includeFacets; update the mock"
+    assert src.count("out.facets =") == 1, "fulltext-search.ts sets facets somewhere else too"
+    stage = src.find("stageSearchResults(", gate)
+    assert gate < src.find("out.facets =") < stage, "facets are no longer set before staging"
+
+
+@pytest.mark.requires_engine_build
+def test_fulltext_search_stages_no_facets_without_include_facets(tmp_path):
+    """The sidecar records what the search returned, so it lacks them too."""
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn", "projectPath": str(tmp_path)})
+    )
+    assert body.get("staged"), "test assumes staging succeeded — check the build"
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["payload"]["results"], "test assumes the staged payload is the response"
+    assert "facets" not in envelope["payload"]
+    assert "facets" not in body
+
+
 # --- The search response echoes the call's args (mirrors echoQuery) -----------
 
 _ECHO_ARGS = {
