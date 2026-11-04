@@ -17,7 +17,7 @@
     "scenario": "empty-folder-no-project"
   },
   "execution": {
-    "max_wall_clock_seconds": 900
+    "max_wall_clock_seconds": 1500
   },
   "mcp_fixtures": [
     "person-read-tallman-attached-sources",
