@@ -35,6 +35,15 @@ export type RecordReadResult = SimplifiedGedcomX & {
   /** FamilySearch viewer URL for the page image, built from `imageArk`.
    *  Present only when `imageArk` is present (issue #2854). */
   viewerUrl?: string;
+  /** Persona id → the birth years its stated age implies, as standard range
+   *  text ("Bet 1838 and 1839"): the record's event year less the age, less
+   *  one, to the event year less the age. Computed by `personaBirthRange` (the
+   *  helper extraction uses) from the raw index age, whatever bare birth year
+   *  FamilySearch carries beside it. A persona whose Birth fact states a day or
+   *  month, or whose age is not a whole number of years, has no entry. Absent
+   *  when no persona has one. Top level only, never inside the staged gedcomx.
+   *  No verdict: it needs no profile date. */
+  birthRanges?: Record<string, string>;
   /** Present iff `projectPath` was given on a live read: the record retained
    *  as a one-element `results[]` envelope under results/.staging/, readable
    *  back with `record_read({ recordId, resultsRef })` and finalized by

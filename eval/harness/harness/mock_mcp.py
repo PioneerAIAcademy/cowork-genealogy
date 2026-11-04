@@ -1013,6 +1013,38 @@ def _stage_and_compact_search_results(
         return None, response, [], ranked
 
 
+BIRTH_RANGES_KEY = "birthRanges"
+
+_RECORD_EXTRACT_JS = _MCP_BUILD / "utils" / "record-extract.js"
+
+
+def _record_birth_ranges(response: dict[str, Any]) -> dict[str, str] | None:
+    """`birthRanges` for a canned record_read: persona id -> the birth range its
+    indexed age implies, from the compiled `birthRangesFor` (#4127) so the mock
+    cannot drift from production. None when no persona has one, the fixture
+    carries no `indexFields`, or node fails (with a warning)."""
+    index_fields = response.get("indexFields")
+    if not (isinstance(index_fields, dict) and index_fields) or not _RECORD_EXTRACT_JS.exists():
+        return None
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk", BIRTH_RANGES_KEY)}
+    script = (
+        f"import {{ birthRangesFor }} from '{_node_module_url(_RECORD_EXTRACT_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify({ r: birthRangesFor(input.gedcomx, input.indexFields) ?? null }));"
+    )
+    try:
+        proc = _run_node_eval(
+            script,
+            json.dumps({"gedcomx": gedcomx, "indexFields": index_fields}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
+        )
+        return json.loads(proc.stdout.strip()).get("r")
+    except Exception as exc:  # noqa: BLE001 — a harness fault must not look like the model ignoring it
+        warnings.warn(f"mock record_read could not compute birthRanges ({exc})", stacklevel=2)
+        return None
+
+
 def _stage_record_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1028,7 +1060,7 @@ def _stage_record_read(
     and a `stagingError`, matching production's best-effort staging.
     """
     record_id = str(args.get("recordId") or "").strip()
-    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk")}
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk", BIRTH_RANGES_KEY)}
     element: dict[str, Any] = {"recordId": record_id, "gedcomx": gedcomx}
     index_fields = response.get("indexFields")
     if isinstance(index_fields, dict) and index_fields:
@@ -1639,6 +1671,15 @@ def create_mock_server(
             # record in the unit suite fell back to record-extractor, so no
             # committed run could exercise the code path. A read WITH `resultsRef`
             # is a sidecar read and stages nothing, exactly as production.
+            # Production returns `birthRanges` on every record_read (#4127). Computed
+            # by the compiled helper from the fixture's `indexFields`, never written
+            # into a fixture, and added before staging so the staged gedcomx stays
+            # without it.
+            if _name == "record_read" and "error" not in response and isinstance(response.get("persons"), list):
+                _ranges = _record_birth_ranges(response)
+                if _ranges:
+                    response = {**response, BIRTH_RANGES_KEY: _ranges}
+
             if (
                 _name == "record_read"
                 and _workspace is not None

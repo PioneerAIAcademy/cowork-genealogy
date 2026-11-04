@@ -11,6 +11,7 @@ import {
 } from "../utils/place-resolver.js";
 import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
 import { recordIndexFields } from "../utils/record-index-fields.js";
+import { birthRangesFor } from "../utils/record-extract.js";
 import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
 import type { GedcomX, SimplifiedFact, SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -41,6 +42,11 @@ export const recordReadSchema = {
     "`imageArk` field (a 3:1:/3:2: document-image ARK) for use with " +
     "image_read or image_transcribe — do not construct an image ARK from " +
     "the record ARK. " +
+    "A top-level `birthRanges` maps a persona id to the birth years its " +
+    'stated age implies ("Bet 1838 and 1839"), from the age and the ' +
+    "record's event date; a bare birth year beside the age is " +
+    "FamilySearch's own subtraction, so state the birth from the range. " +
+    "Absent when no persona has one. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -160,10 +166,14 @@ export async function recordReadTool(
   const viewerUrl = imageArk
     ? imageViewerUrl({ ark: imageArk }, extractImageContextQuery)
     : undefined;
+  // Off the RAW body's index fields, which carry the age `toSimplified` drops.
+  const indexFields = recordIndexFields(body);
+  const birthRanges = birthRangesFor(simplified, indexFields);
   const withImageArk: RecordReadResult = {
     ...simplified,
     ...(imageArk ? { imageArk } : {}),
     ...(viewerUrl ? { viewerUrl } : {}),
+    ...(birthRanges ? { birthRanges } : {}),
   };
 
   // Stage the fetched record when the caller named the project (issue #2048 /
@@ -172,10 +182,6 @@ export async function recordReadTool(
   // `{ recordId, gedcomx }` shape record_search stages, so `readFromSidecar`
   // above reads it back unchanged and `research_log_append` finalizes it with
   // `tool: "record_read"`. Best-effort: a staging failure never fails the read.
-  // Off the RAW body, not `simplified` — `toSimplified` has already dropped
-  // `fields[]` by this point.
-  const indexFields = recordIndexFields(body);
-
   if (typeof projectPath === "string" && projectPath.trim() !== "") {
     let staged: RecordReadResult["staged"];
     let stagingError: string | undefined;
@@ -352,10 +358,12 @@ async function readFromSidecar(
   const viewerUrl = imageArk
     ? imageViewerUrl({ ark: imageArk }, extractImageContextQuery)
     : undefined;
+  const birthRanges = birthRangesFor(staged, match.indexFields);
   return {
     ...staged,
     ...(imageArk ? { imageArk } : {}),
     ...(viewerUrl ? { viewerUrl } : {}),
+    ...(birthRanges ? { birthRanges } : {}),
   };
 }
 

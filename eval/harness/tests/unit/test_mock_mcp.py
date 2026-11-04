@@ -2796,3 +2796,47 @@ def test_guard_fails_open_and_warns_when_the_build_is_missing(monkeypatch, tmp_p
 
     with pytest.warns(UserWarning, match="rebuild packages/engine/mcp-server"):
         assert mock_mcp._reject_unknown_args("record_search", {"q": "x"}) is None
+
+
+# ── birthRanges on record_read (issue #4127) ─────────────────────────────────
+# The mock calls the compiled `birthRangesFor`, so a fixture never carries one.
+
+_RECORD_EXTRACT_JS = REPO_ROOT / "packages/engine/mcp-server/build/utils/record-extract.js"
+
+
+def _tallman_census(birth, age, year):
+    return {
+        "persons": [
+            {
+                "id": "p1",
+                "names": [{"given": "Edward", "surname": "Tallman"}],
+                "facts": [
+                    {"type": "Birth", "date": birth},
+                    {"type": "Census", "date": year, "place": "Vermont, United States"},
+                ],
+            }
+        ],
+        "indexFields": {"p1": {"age": age}},
+    }
+
+
+def test_record_birth_ranges_comes_from_the_compiled_helper():
+    if not _RECORD_EXTRACT_JS.exists():
+        pytest.skip("compiled MCP build absent")
+    assert mock_mcp._record_birth_ranges(_tallman_census("1839", "11 years", "1850")) == {
+        "p1": "Bet 1838 and 1839"
+    }
+    assert mock_mcp._record_birth_ranges(_tallman_census("31 Jan 1839", "74", "1913")) is None
+    assert mock_mcp._record_birth_ranges({"persons": []}) is None
+
+
+def test_record_birth_ranges_degrades_with_a_warning_on_node_failure(monkeypatch):
+    if not _RECORD_EXTRACT_JS.exists():
+        pytest.skip("compiled MCP build absent")
+
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    monkeypatch.setattr(mock_mcp.subprocess, "run", _boom, raising=False)
+    with pytest.warns(UserWarning, match="birthRanges"):
+        assert mock_mcp._record_birth_ranges(_tallman_census("1839", "11", "1850")) is None
