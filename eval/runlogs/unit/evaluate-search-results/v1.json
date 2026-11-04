@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "evaluate-search-results",
   "version": 1,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-11-04_02-04-07",
@@ -158,7 +158,7 @@
       },
       "totals": {
         "duration_ms": 83552.95433406718,
-        "duration_api_ms": 82705.0,
+        "duration_api_ms": 82705,
         "judge_duration_ms": 10269.77725001052,
         "wall_clock_ms": 93932.77597427368,
         "num_turns": 2,
@@ -181,7 +181,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 83552.95433406718,
-          "duration_api_ms": 82705.0,
+          "duration_api_ms": 82705,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1523,
@@ -282,7 +282,7 @@
                   "ok": true,
                   "buildId": "0.1.0+2026-11-04.95c6e832",
                   "projectStatus": "active",
-                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796\u20131799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
+                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796–1799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
                   "subjectPersonIds": [
                     "I1"
                   ],
@@ -293,7 +293,7 @@
                   "openQuestions": [
                     {
                       "id": "q_002",
-                      "question": "Who were the parents of Iram Hyde (b. c. 1796\u20131798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
+                      "question": "Who were the parents of Iram Hyde (b. c. 1796–1798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
                     }
                   ],
                   "questionStatuses": [
@@ -309,7 +309,7 @@
                     {
                       "id": "q_002",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_002",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_002",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -701,7 +701,7 @@
                     {
                       "id": "S1",
                       "title": "FamilySearch Family Tree, Iram F. Hyde (G9GJ-959)",
-                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798\u20131873), PID G9GJ-959; accessed 9 October 2026.",
+                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798–1873), PID G9GJ-959; accessed 9 October 2026.",
                       "author": "FamilySearch community contributors",
                       "url": "https://www.familysearch.org/tree/person/details/G9GJ-959"
                     },
@@ -1180,7 +1180,7 @@
       },
       "totals": {
         "duration_ms": 60722.223666962236,
-        "duration_api_ms": 60253.0,
+        "duration_api_ms": 60253,
         "judge_duration_ms": 10370.245415950194,
         "wall_clock_ms": 71209.15412902832,
         "num_turns": 2,
@@ -1203,7 +1203,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 60722.223666962236,
-          "duration_api_ms": 60253.0,
+          "duration_api_ms": 60253,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1525,
@@ -1304,7 +1304,7 @@
                   "ok": true,
                   "buildId": "0.1.0+2026-11-04.95c6e832",
                   "projectStatus": "active",
-                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796\u20131799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
+                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796–1799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
                   "subjectPersonIds": [
                     "I1"
                   ],
@@ -1315,7 +1315,7 @@
                   "openQuestions": [
                     {
                       "id": "q_002",
-                      "question": "Who were the parents of Iram Hyde (b. c. 1796\u20131798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
+                      "question": "Who were the parents of Iram Hyde (b. c. 1796–1798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
                     }
                   ],
                   "questionStatuses": [
@@ -1331,7 +1331,7 @@
                     {
                       "id": "q_002",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_002",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_002",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -1722,7 +1722,7 @@
                     {
                       "id": "S1",
                       "title": "FamilySearch Family Tree, Iram F. Hyde (G9GJ-959)",
-                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798\u20131873), PID G9GJ-959; accessed 9 October 2026.",
+                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798–1873), PID G9GJ-959; accessed 9 October 2026.",
                       "author": "FamilySearch community contributors",
                       "url": "https://www.familysearch.org/tree/person/details/G9GJ-959"
                     },
@@ -1784,7 +1784,7 @@
                     "person_id": "I1",
                     "verdict": "match",
                     "new_vital_info": false,
-                    "rationale": "The baptism register entry names 'Hiram Hy[de]' and 'Mary Robertson' as parents of a child being baptized \u2014 Hiram is a known variant of Iram, and Mary Robertson matches the target's wife exactly. The place (Jackson, Washington, NY) agrees with the target's documented residences. The record is already extracted as S7 in the tree, so no new vital information is added."
+                    "rationale": "The baptism register entry names 'Hiram Hy[de]' and 'Mary Robertson' as parents of a child being baptized — Hiram is a known variant of Iram, and Mary Robertson matches the target's wife exactly. The place (Jackson, Washington, NY) agrees with the target's documented residences. The record is already extracted as S7 in the tree, so no new vital information is added."
                   }
                 },
                 "expected_args": null,
@@ -1823,7 +1823,7 @@
             "agent_returns": [
               {
                 "subagent_type": "evaluate-search-results",
-                "text": "hitRef: results/log_017.json#3Q9M-CSK3-ZSLR\nverdict: match\nnewVitalInfo: false\nalreadyExtracted: true\n\n---\nThis is a church baptism register from the Jackson/Cambridge congregation, Washington Co., New York, containing an entry for a child of \"Hiram Hyde\" and \"Mary Robertson\" \u2014 Hiram being a recognized spelling variant of Iram, and Mary Robertson being the target's wife of record. The record is already cited in the tree and contributes no facts the tree lacks."
+                "text": "hitRef: results/log_017.json#3Q9M-CSK3-ZSLR\nverdict: match\nnewVitalInfo: false\nalreadyExtracted: true\n\n---\nThis is a church baptism register from the Jackson/Cambridge congregation, Washington Co., New York, containing an entry for a child of \"Hiram Hyde\" and \"Mary Robertson\" — Hiram being a recognized spelling variant of Iram, and Mary Robertson being the target's wife of record. The record is already cited in the tree and contributes no facts the tree lacks."
               }
             ],
             "file_changes": {
@@ -1841,7 +1841,7 @@
                         "person_id": "I1",
                         "verdict": "match",
                         "new_vital_info": false,
-                        "rationale": "The baptism register entry names 'Hiram Hy[de]' and 'Mary Robertson' as parents of a child being baptized \u2014 Hiram is a known variant of Iram, and Mary Robertson matches the target's wife exactly. The place (Jackson, Washington, NY) agrees with the target's documented residences. The record is already extracted as S7 in the tree, so no new vital information is added.",
+                        "rationale": "The baptism register entry names 'Hiram Hy[de]' and 'Mary Robertson' as parents of a child being baptized — Hiram is a known variant of Iram, and Mary Robertson matches the target's wife exactly. The place (Jackson, Washington, NY) agrees with the target's documented residences. The record is already extracted as S7 in the tree, so no new vital information is added.",
                         "created": "2026-11-04"
                       }
                     ],
@@ -2145,7 +2145,7 @@
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Iram Hyde of the City of Dublin Gentn' swearing an oath as a witness in 1815, with two other Hydes (Frank Hyde, Man. Hyde) in the same record, indicating an Irish Hyde family. From the tree: the target was born c.1797 in New Hampshire, married in New York in 1821, and lived entirely in America with no known Irish connection. The rationale correctly concludes these facts rule out a match\u2014the Irish location, date, and gentleman status are incompatible with the American-born, American-resident target. A Not a Match verdict requires naming the point that rules the person out, which the rationale does: a different man of the same name in a different place and time."
+            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Iram Hyde of the City of Dublin Gentn' swearing an oath as a witness in 1815, with two other Hydes (Frank Hyde, Man. Hyde) in the same record, indicating an Irish Hyde family. From the tree: the target was born c.1797 in New Hampshire, married in New York in 1821, and lived entirely in America with no known Irish connection. The rationale correctly concludes these facts rule out a match—the Irish location, date, and gentleman status are incompatible with the American-born, American-resident target. A Not a Match verdict requires naming the point that rules the person out, which the rationale does: a different man of the same name in a different place and time."
           },
           {
             "source": "rubric",
@@ -2183,7 +2183,7 @@
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Iram Hyde of the City of Dublin Gentn' swearing an oath as a witness in 1815, with two other Hydes (Frank Hyde, Man. Hyde) in the same record, indicating an Irish Hyde family. From the tree: the target was born c.1797 in New Hampshire, married in New York in 1821, and lived entirely in America with no known Irish connection. The rationale correctly concludes these facts rule out a match\u2014the Irish location, date, and gentleman status are incompatible with the American-born, American-resident target. A Not a Match verdict requires naming the point that rules the person out, which the rationale does: a different man of the same name in a different place and time."
+            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Iram Hyde of the City of Dublin Gentn' swearing an oath as a witness in 1815, with two other Hydes (Frank Hyde, Man. Hyde) in the same record, indicating an Irish Hyde family. From the tree: the target was born c.1797 in New Hampshire, married in New York in 1821, and lived entirely in America with no known Irish connection. The rationale correctly concludes these facts rule out a match—the Irish location, date, and gentleman status are incompatible with the American-born, American-resident target. A Not a Match verdict requires naming the point that rules the person out, which the rationale does: a different man of the same name in a different place and time."
           },
           {
             "source": "rubric",
@@ -2201,7 +2201,7 @@
       },
       "totals": {
         "duration_ms": 95275.29204101302,
-        "duration_api_ms": 94188.0,
+        "duration_api_ms": 94188,
         "judge_duration_ms": 13760.766667081043,
         "wall_clock_ms": 109137.23802566528,
         "num_turns": 2,
@@ -2224,7 +2224,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 95275.29204101302,
-          "duration_api_ms": 94188.0,
+          "duration_api_ms": 94188,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1518,
@@ -2306,7 +2306,7 @@
           },
           "skill_cost_usd": 0.24404000000000003,
           "output": {
-            "text_response": "**hitRef:** `results/log_008.json#3Q9M-CSH3-QSQ3-K`\n**Verdict:** Not a Match\n**New vital info:** No\n**Already extracted:** No\n\n---\n\nThis hit is an 1815 deed from Dublin, Ireland in which an \"Iram Hyde of the City of Dublin, Gentleman\" appears as a subscribing witness, alongside two other Hydes suggesting an Irish Hyde family. The target person was born in New Hampshire around 1797, married in New York in 1821, and has no known connection to Ireland. The shared surname alone is insufficient \u2014 this is a different individual.",
+            "text_response": "**hitRef:** `results/log_008.json#3Q9M-CSH3-QSQ3-K`\n**Verdict:** Not a Match\n**New vital info:** No\n**Already extracted:** No\n\n---\n\nThis hit is an 1815 deed from Dublin, Ireland in which an \"Iram Hyde of the City of Dublin, Gentleman\" appears as a subscribing witness, alongside two other Hydes suggesting an Irish Hyde family. The target person was born in New Hampshire around 1797, married in New York in 1821, and has no known connection to Ireland. The shared surname alone is insufficient — this is a different individual.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2325,7 +2325,7 @@
                   "ok": true,
                   "buildId": "0.1.0+2026-11-04.95c6e832",
                   "projectStatus": "active",
-                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796\u20131799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
+                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796–1799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
                   "subjectPersonIds": [
                     "I1"
                   ],
@@ -2336,7 +2336,7 @@
                   "openQuestions": [
                     {
                       "id": "q_002",
-                      "question": "Who were the parents of Iram Hyde (b. c. 1796\u20131798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
+                      "question": "Who were the parents of Iram Hyde (b. c. 1796–1798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
                     }
                   ],
                   "questionStatuses": [
@@ -2352,7 +2352,7 @@
                     {
                       "id": "q_002",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_002",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_002",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -2512,7 +2512,7 @@
                   "ref": "results/log_008.json#3Q9M-CSH3-QSQ3-K",
                   "totalChars": 7597,
                   "offset": 0,
-                  "content": "469 Robert Mayne of Cullentraugh in the Coy of Tyrone farmer Matter Oath & Saith that he is a subscribing witness to the deed of which the above writing is a memo & also to the above memo & saith that he said Deed duly Exed by the above named George Small & Anthoney Berney & the above memo also duly Exed by the sd Anthoney Berney & Saith the name Robt Mayne set & subscribed as a witness to a deed & memo is this Dept proper name & hand writing Robt Mayne Sworn before me at May = quires Bridge in the Coy of Fermanagh the 27th day of October 1814 by virtue of a Comr to me directed for taking affin 8th Coy & know the Dept John Armstrong - True Copy J Butler I To the Regr apply act of Part for Reg Deeds Wills Conveyance & Armstrong Amemo of of an Indented Deed of assignment bearing date the 19 of July 1814 & Made between Willm Armstrong of Colgarion in the of Fermanagh farmer of the one part & John Armstrong of Gledstown in the sd Coy of Fermanagh Gent of the other part whereby after rect as therein is rect the sd deeded nessed that the sd Willm Armstrong for & in Consdr OClock of the sum of Loo St. to him in hand paid by the sd John Armstrong the Receipt & payment whereof he did thereby acknowledge he the sd Will Armstrong did Grant bargain Sell assign transfer & Makoder unto the John Armstrong in his actual poss then being by virtue of the bargain & Sale therein ment all that & those that part of Coolganon Cont . 12 of arable & Pasture together with 2 rood & 20 perches reclaimed by the Acres of Cunagh & 2 acres 1 rood 23 perches of reclaimable log as formerly in the poss of George Armstrong deceased with the rights members & appt hereunto belonging or in any wise appt . & all the Estate right title & Interest of him the sd Willm Armstrong of in to or out of the same together with the sd therein rect Lease & all other Deeds papersevidences  of wrightings touching or conce the same to hold to the sd John Armstrong his heirs & assigns for & during the natural Life or Lives of them this Genard Indine Alexr Irvine & Walter Armstrong or for the Term of - years from the day of May then Last past which ever should last longest or continue subject however to the payment of the rent & duties in therein Rect Pease Contd in sd Deed is Contd other Covt & as to the Exer thereof by the sd Willm Armstrong & John Armstrong is witness by Robt Hall of Maquires Bridge & Sam . Graydon of Gladston both in the Coy of Fermanagh & this memo is also Witnessed by the sd Robt Hall & well Armstrong of Gorton in the Co. of Fermanagh afores John Armstrong Seal Signed Sealed & Exec in presence of Rob . Hall Willm Armstrong the above named Robt Hall of Maguire Bridge in the Coy of Fermanagh Maketh Oath & saith that he is a Subsbul witness to the deed of which the above writing is a memo & also - 7 to the above Memo & saith that he said the sd Deed & memor Duly Exe by the parties thereto & that the name Robt Hall set & subscribed as Witness to deed & memor is this Dept proper name & hand writ Robert Hall Sworn before me at Maguire Bridge & Coy of Fermanaghthis  26th day of Jany 1815 along for taking off in the County & 470854 I know the Dept John Armstrongue Juel Copy Butter To the Regr appd by act of Part for Regg Deeds Leases & & c. Ferguson   Amemo of an Indented Deed of assignment bearing date the 24th Day of Dec. 1814 & Made between Hugh Ferguson of the City of Dublin Boyton Esq . Doctor of phisic of the one part & Will Montgomery Boyton of Jany 1815 the sd City Esq of the other part which rect that John McClean OClock 47085 3 to Armstrong 30th Jany \u00bd past 3 my respectively sign seal and deliver same and 270 McClean of the City of Dublin Esqr by Indenture of Lease bearing date the 13th day of October 1808 did Demise unto Thos Richard Babington of City Esqr all that & those that Lott or piece of Ground on the East side of Fredrick Street Rutland Square in the Coy of Dublin with the dwelling house thereon & the appt sd Ground Cont in front to Fredrick Street aforesd 23 feet in breath in the were also 23 feet & in depth from front to were on the north & South sides thereof resply 20 feet Exclusive of and be the sd several admeasurement, or any of them more or Less together withtwo  small Daults or cellars in the here which sd premises were thereinmore  party ment & described as by a map or perchart thereof thereunto annexed migh more fully appear to hold to the sd Thos Richard Babington his Heirs & assigns from the 29th day of Sept then Last past for & during the natural lives of their Royal Highness George Prince of Wales Fredrick   Duke of York & Willm Henry Duke of Clizerice 1st 2 & 3d sons of his Majesty   King George the 3d & the Surviver & survivers of them & for & during suchother  Life & Lives as should for Ever thereafter be added thereto by virtue of the Covt for perpetual renewal therein after cont at the yearly rent of $ 66 St payable half yearly & rect that the sd George McCleanly another Indenture of Lease bearing date the 13th day of October 1808 did demise unto the sd Thos Richard Babington all that & those that Lott or piece of Ground County on the North side in front to a Lane in the here of the South Side of Ward   Wicke Street 19 feet 4 inches or there about & on the South side in the were adjoining to ground in the poss of John McClean 19 feet 4 inches or there abouts on the East & West side Sept 16 feet 4 inches or there about which sd Lott or piece of Ground is bounded on the north side by the stable Lane leading   in the rece of the South Side of Hardwick Street aforesd towards St Georges Church   son the South & West sides resply by Ground in the poss of John McClean as the same was more particularly described & Delivated in & by a map or survey thereof thereunto annexed all which sd premises are situate lying & being in the here of the holding of James Borbudge or his under tenants on hardwick   Street on the Lordship of Saint Mary abbey in the Coy of Dublin to hold to the sd   Thos Richd Babington his dead or allian from the 29th day of his Last for & during the Term of 900 years at the yearly rent 22.5 St. & after Rects as therein is at the sd Deed of which this is amemo witnessed that the sd Hugh   Ferguson for & in Consd . of the sum of $ 300 St. to him in hand paid by the sd   Bayton the receipt whereof the sd Hugh Ferguson did thereby acknowledge   he the sd Hugh Ferguson did grant bargain sell assign transfer & make over & Confirm unto the sd Willm Montgomery Boyton in his actual poss then being all that & those the herein before therein ment premises to hold to Willm Montgoy Boyton his Exer admr & assigns from thenceforth for & during the rest residue   remainder of the several respective terms for Lives & years by the Leaserespectively  demised & Granted & for & during all & every renewal renewals which should for her thereof be granted there of by virtue of the Covt forperpetual  reneral thereof in one of sd Leases Contin is Cont other Clauses & Cov . which sd Deed & this mem are witnessed by Man . Hyde James Macartney both of the City of Dublin Gent Hugh Ferguson Seal Signed Sealed & Delivered in presence of Frank Hyde Jan. Macartney now the within named Iram Hyde of the City of Dublin Gentn Maketh Oath and saith that he this Dept is a subscribing witness to the Deed of assignment ofwhich  the within writing is a mem & also the within memo & Saith that he dept was present & seen the parties to deed the within named Hugh Ferguson one of the Exet parties to sd Deed duly Execute the within memo & dept saith that the name Ben Hale subscribed as a witness ",
+                  "content": "469 Robert Mayne of Cullentraugh in the Coy of Tyrone farmer Matter Oath & Saith that he is a subscribing witness to the deed of which the above writing is a memo & also to the above memo & saith that he said Deed duly Exed by the above named George Small & Anthoney Berney & the above memo also duly Exed by the sd Anthoney Berney & Saith the name Robt Mayne set & subscribed as a witness to a deed & memo is this Dept proper name & hand writing Robt Mayne Sworn before me at May = quires Bridge in the Coy of Fermanagh the 27th day of October 1814 by virtue of a Comr to me directed for taking affin 8th Coy & know the Dept John Armstrong - True Copy J Butler I To the Regr apply act of Part for Reg Deeds Wills Conveyance & Armstrong Amemo of of an Indented Deed of assignment bearing date the 19 of July 1814 & Made between Willm Armstrong of Colgarion in the of Fermanagh farmer of the one part & John Armstrong of Gledstown in the sd Coy of Fermanagh Gent of the other part whereby after rect as therein is rect the sd deeded nessed that the sd Willm Armstrong for & in Consdr OClock of the sum of Loo St. to him in hand paid by the sd John Armstrong the Receipt & payment whereof he did thereby acknowledge he the sd Will Armstrong did Grant bargain Sell assign transfer & Makoder unto the John Armstrong in his actual poss then being by virtue of the bargain & Sale therein ment all that & those that part of Coolganon Cont . 12 of arable & Pasture together with 2 rood & 20 perches reclaimed by the Acres of Cunagh & 2 acres 1 rood 23 perches of reclaimable log as formerly in the poss of George Armstrong deceased with the rights members & appt hereunto belonging or in any wise appt . & all the Estate right title & Interest of him the sd Willm Armstrong of in to or out of the same together with the sd therein rect Lease & all other Deeds papersevidences  of wrightings touching or conce the same to hold to the sd John Armstrong his heirs & assigns for & during the natural Life or Lives of them this Genard Indine Alexr Irvine & Walter Armstrong or for the Term of - years from the day of May then Last past which ever should last longest or continue subject however to the payment of the rent & duties in therein Rect Pease Contd in sd Deed is Contd other Covt & as to the Exer thereof by the sd Willm Armstrong & John Armstrong is witness by Robt Hall of Maquires Bridge & Sam . Graydon of Gladston both in the Coy of Fermanagh & this memo is also Witnessed by the sd Robt Hall & well Armstrong of Gorton in the Co. of Fermanagh afores John Armstrong Seal Signed Sealed & Exec in presence of Rob . Hall Willm Armstrong the above named Robt Hall of Maguire Bridge in the Coy of Fermanagh Maketh Oath & saith that he is a Subsbul witness to the deed of which the above writing is a memo & also - 7 to the above Memo & saith that he said the sd Deed & memor Duly Exe by the parties thereto & that the name Robt Hall set & subscribed as Witness to deed & memor is this Dept proper name & hand writ Robert Hall Sworn before me at Maguire Bridge & Coy of Fermanaghthis  26th day of Jany 1815 along for taking off in the County & 470854 I know the Dept John Armstrongue Juel Copy Butter To the Regr appd by act of Part for Regg Deeds Leases & & c. Ferguson   Amemo of an Indented Deed of assignment bearing date the 24th Day of Dec. 1814 & Made between Hugh Ferguson of the City of Dublin Boyton Esq . Doctor of phisic of the one part & Will Montgomery Boyton of Jany 1815 the sd City Esq of the other part which rect that John McClean OClock 47085 3 to Armstrong 30th Jany ½ past 3 my respectively sign seal and deliver same and 270 McClean of the City of Dublin Esqr by Indenture of Lease bearing date the 13th day of October 1808 did Demise unto Thos Richard Babington of City Esqr all that & those that Lott or piece of Ground on the East side of Fredrick Street Rutland Square in the Coy of Dublin with the dwelling house thereon & the appt sd Ground Cont in front to Fredrick Street aforesd 23 feet in breath in the were also 23 feet & in depth from front to were on the north & South sides thereof resply 20 feet Exclusive of and be the sd several admeasurement, or any of them more or Less together withtwo  small Daults or cellars in the here which sd premises were thereinmore  party ment & described as by a map or perchart thereof thereunto annexed migh more fully appear to hold to the sd Thos Richard Babington his Heirs & assigns from the 29th day of Sept then Last past for & during the natural lives of their Royal Highness George Prince of Wales Fredrick   Duke of York & Willm Henry Duke of Clizerice 1st 2 & 3d sons of his Majesty   King George the 3d & the Surviver & survivers of them & for & during suchother  Life & Lives as should for Ever thereafter be added thereto by virtue of the Covt for perpetual renewal therein after cont at the yearly rent of $ 66 St payable half yearly & rect that the sd George McCleanly another Indenture of Lease bearing date the 13th day of October 1808 did demise unto the sd Thos Richard Babington all that & those that Lott or piece of Ground County on the North side in front to a Lane in the here of the South Side of Ward   Wicke Street 19 feet 4 inches or there about & on the South side in the were adjoining to ground in the poss of John McClean 19 feet 4 inches or there abouts on the East & West side Sept 16 feet 4 inches or there about which sd Lott or piece of Ground is bounded on the north side by the stable Lane leading   in the rece of the South Side of Hardwick Street aforesd towards St Georges Church   son the South & West sides resply by Ground in the poss of John McClean as the same was more particularly described & Delivated in & by a map or survey thereof thereunto annexed all which sd premises are situate lying & being in the here of the holding of James Borbudge or his under tenants on hardwick   Street on the Lordship of Saint Mary abbey in the Coy of Dublin to hold to the sd   Thos Richd Babington his dead or allian from the 29th day of his Last for & during the Term of 900 years at the yearly rent 22.5 St. & after Rects as therein is at the sd Deed of which this is amemo witnessed that the sd Hugh   Ferguson for & in Consd . of the sum of $ 300 St. to him in hand paid by the sd   Bayton the receipt whereof the sd Hugh Ferguson did thereby acknowledge   he the sd Hugh Ferguson did grant bargain sell assign transfer & make over & Confirm unto the sd Willm Montgomery Boyton in his actual poss then being all that & those the herein before therein ment premises to hold to Willm Montgoy Boyton his Exer admr & assigns from thenceforth for & during the rest residue   remainder of the several respective terms for Lives & years by the Leaserespectively  demised & Granted & for & during all & every renewal renewals which should for her thereof be granted there of by virtue of the Covt forperpetual  reneral thereof in one of sd Leases Contin is Cont other Clauses & Cov . which sd Deed & this mem are witnessed by Man . Hyde James Macartney both of the City of Dublin Gent Hugh Ferguson Seal Signed Sealed & Delivered in presence of Frank Hyde Jan. Macartney now the within named Iram Hyde of the City of Dublin Gentn Maketh Oath and saith that he this Dept is a subscribing witness to the Deed of assignment ofwhich  the within writing is a mem & also the within memo & Saith that he dept was present & seen the parties to deed the within named Hugh Ferguson one of the Exet parties to sd Deed duly Execute the within memo & dept saith that the name Ben Hale subscribed as a witness ",
                   "truncated": false,
                   "hitId": "ark:/61903/3:1:3Q9M-CSH3-QSQ3-K",
                   "hitIndex": 6,
@@ -2744,7 +2744,7 @@
                     {
                       "id": "S1",
                       "title": "FamilySearch Family Tree, Iram F. Hyde (G9GJ-959)",
-                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798\u20131873), PID G9GJ-959; accessed 9 October 2026.",
+                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798–1873), PID G9GJ-959; accessed 9 October 2026.",
                       "author": "FamilySearch community contributors",
                       "url": "https://www.familysearch.org/tree/person/details/G9GJ-959"
                     },
@@ -3103,7 +3103,7 @@
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Iram Hyde of the City of Dublin Gentn' swearing an oath as a witness in 1815, with two other Hydes (Frank Hyde, Man. Hyde) in the same record, indicating an Irish Hyde family. From the tree: the target was born c.1797 in New Hampshire, married in New York in 1821, and lived entirely in America with no known Irish connection. The rationale correctly concludes these facts rule out a match\u2014the Irish location, date, and gentleman status are incompatible with the American-born, American-resident target. A Not a Match verdict requires naming the point that rules the person out, which the rationale does: a different man of the same name in a different place and time."
+                "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Iram Hyde of the City of Dublin Gentn' swearing an oath as a witness in 1815, with two other Hydes (Frank Hyde, Man. Hyde) in the same record, indicating an Irish Hyde family. From the tree: the target was born c.1797 in New Hampshire, married in New York in 1821, and lived entirely in America with no known Irish connection. The rationale correctly concludes these facts rule out a match—the Irish location, date, and gentleman status are incompatible with the American-born, American-resident target. A Not a Match verdict requires naming the point that rules the person out, which the rationale does: a different man of the same name in a different place and time."
               },
               {
                 "source": "rubric",
@@ -3223,7 +3223,7 @@
       },
       "totals": {
         "duration_ms": 77666.2260829471,
-        "duration_api_ms": 77103.0,
+        "duration_api_ms": 77103,
         "judge_duration_ms": 10489.336374914274,
         "wall_clock_ms": 88258.0029964447,
         "num_turns": 2,
@@ -3246,7 +3246,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 77666.2260829471,
-          "duration_api_ms": 77103.0,
+          "duration_api_ms": 77103,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1525,
@@ -3347,7 +3347,7 @@
                   "ok": true,
                   "buildId": "0.1.0+2026-11-04.95c6e832",
                   "projectStatus": "active",
-                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796\u20131799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
+                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796–1799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
                   "subjectPersonIds": [
                     "I1"
                   ],
@@ -3358,7 +3358,7 @@
                   "openQuestions": [
                     {
                       "id": "q_002",
-                      "question": "Who were the parents of Iram Hyde (b. c. 1796\u20131798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
+                      "question": "Who were the parents of Iram Hyde (b. c. 1796–1798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
                     }
                   ],
                   "questionStatuses": [
@@ -3374,7 +3374,7 @@
                     {
                       "id": "q_002",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_002",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_002",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -3534,7 +3534,7 @@
                   "ref": "results/log_003.json#3Q9M-CSZ6-J7JT",
                   "totalChars": 9617,
                   "offset": 0,
-                  "content": "822 BIOGRAPHICAL SKETCHES : being celebrated March 24, 1842 ; his spouse was Lucinda E. Packard, sister of Jonathan and Francis P. She died in 1864 . Two children were born -- Sarah and Francis R. Sarah died at the age of 15 . His second wife was Emily Warner, who died in the spring of 1869, leaving no issue . Nov. 24, 1870, he married Mary P. Packard, who was born Aug. 18, 1836, in this township, daughter of William Packard, born in Plainfield, Mass ., July 23, 1808, whose wife was Mary Smith ; her mother 's maiden name was Mary F. Rude, born in Ashfield, March 19, 1804, all of Massachusetts . Mrs. Shaw 's father resides in Covert, Van Buren Co., Mich . She has but two brothers living -- William O and Alfred S., now of the same county as above . During the early part of Mr. Shaw 's life, he taught school several terms, and employed his time at home on the farm, having bought of his brother a portion of the land he first settled upon, and remained upon this tract until his removal to the Center in 1873, and, with the exception of two years spent in Michigan, after leaving the farm in 1870, has resided in the township forty - six years . His farm, consisting of 100 acres, is now being carried on by Francis R., who was one of the principals in the invention of the telephone, now in operation all through the country . He has been twice married ; first to Eliza A. Parson ; she died, leaving no issue . His present wife was Sarah Garver by her he has three children -- Eva M., William F. and Mary J. Since 1836, Mr. Joshua Shaw has been a consistent member of the Congregational Church . He is a self - made man, and came here without means . ALFRED W. SHAW, farmer and mechanic ; P. O. Chatham Center ; born in Plainfield Township, Berkshire Co., Mass ., May 3, 1827, the third child born to Orrin Shaw, who came West in 1833, locating in this township . Alfred learned the carpenter 's trade of his father, and at the age of 21, started out on his own hook . \" Oct. 1, 1848, he married Mary Packard, who was born in Plainfield, Mass ., Dec. 14, 1824, daughter of Phillip and Hannah Packard . The family came West in 1833, and located near the farm Orrin Shaw settled . To Phillip Packard were born nine children, seven of whom lived to be grown . Phillip Packard was born May 6 . 1790 ; his wife Sept. 17, 1792 . They were married in 1812 . Of the number who grew up, were Jacob, Sallie, Rosina, Austin M. Hannah L. Mary and Aurelia . Jacob now resides in Cameron, Mo . ; Phillip died Feb. 25, 1872 ; his wife Feb. 20, 1833 . Phillip Packard was one of the original members at the organization of the Congregational Church at the Center . Since the marriage of our subject, he has been a constant resident of the farm he now owns . He purchased 51 acres at $ 8 per acre, on what was known as the \" Porter \" tract . This land, at the time of his purchase, was unimproved ; afterward added 25 acres, which cost him $ 25 per acre . Since his occupancy, has been engaged in farming and carrying on his trade . He has a mill on his premises, constructed to do grinding and planing, by steam power . Has but one child, William A., born Jan. 7, 1854, who resides with him, who, in Jan. 5, 1881, was married to Mary E. Hyde . Mr. Shaw has been a member of his father 's church for about forty years, his wife nearly same time . Mr. Shaw is a Republican . E. P. SHAW, farmer, P. O. Chatham Center ; was born on the same farm he now owns . Nov. 8, 1836 ; son of Orrin and Sarah ( Poole ) Shaw . He was born in Plainfield, Mass ., Dec. 16, 1796, son of Thomas, whose birth occurred Dec. 16, 1765 ; his decease occurred in 1827 . His wife was Deborah White, born Sept. 11, 1774 ; she died Sept. 8, 1806 . She was a descendant of Peregrine White, who was born on the Mayflower . Thomas was the father of three children -- Cynthia, Chloe and Orrin . Cynthia married Iram Packard, who settled the farm now owned by George Holbern, of this township ; Chloe married a Catlin . To Orrin were born four children -- Mary, now of Missouri, who married Marshall Shaw ; Orrin S., of Van Buren Co., Mich . ; Alfred W. and E. P. in this township . Orrin Shaw was a carpenter by trade, and came West in 1833 to secure a home . Iram Packard had preceded him, and purchased a tract of land running from the Center road to the river . On the west of him, he purchased a small tract at $ 3 per acre, adding to this at times until he had 100 acres ; worked at his trade, and earned enough to pay for it . Here he remained until his death, July 7, 1877 ; that of his wife, Aug. 26, 1873 . He was one of the first members of the Congregational Church at its organization, and its first Deacon, which office he held up to the time of his death . He was a conscientious and upright man . Edgar P., being the youngest, remained at home, and - CHATHAM TOWNSHIP . co - operated with his father in the management of the farm . He taught school several terms, and, having a love for music, his services were brought into requisition as a teacher of vocal music . April 4, 1861, he married Barbara Hyde, born in this county, daughter of Henry and Sarah ( Johnson ) Hyde . He was born in Cumberland Co., Penn ., Feb. 10, 1815 ; she in Trumbull Co., in August, 1816, a daughter of Austin and Maria ( Oviatt ) Johnson . The father of Henry Hyde was Henry, who married Mary Ashbaugh, to whom were born a family of fifteen children, all of whom lived to maturity . To Henry Hyde and wife were born eight children, seven living, who are Maria, Barbara, Nancy, Melissa, Henry, Anson and Mary . Henry Hyde, the grandfather of Mrs. Shaw, came West to this county and settled in Montville in 1815, they having to pack their effects on horseback to their cabin, as there were no roads cut . After residing here many years, he finally located in Litchfield, where he died July 21, 1877 . His wife is now living in Sullivan, Ashland Co., Ohio . Mr. and Mrs. Shaw have six children -- Edgar B. Clara E., Allison P., Mary B., Howard A. and Emily B. For twenty - eight years, Mr. Shaw has been a member of the Congregational Church, and had charge of the choir, being an able and efficient leader . His farm, consisting of 100 acres, was formerly owned by his father, D. B. SANFORD, farmer, P. O. Chatham Center ; was born June 20, 1813, in Green Township, Chenango Co., N. Y., the third of a family of nine children, whose parents were Beers and Rachel ( Akerly ) Sanford . Beers was a son of Lemuel Sanford, whose children were Beers, Jackson, Daniel, Darius, Hannah and Apha . Rachel was a daughter of Samuel, whose offspring were Rachel, Vina, Polly, Rhoda, Betsey, Conrad and Miller . The Akerlys were originally from Holland, while the Sanfords, so far as known, are descendants of the Puritans . The Sanford family came West in 1832, and located in the northeastern part of Harrisville Township, where Albert Sanford now resides . Here Beers Sanford purchased 60 acres, which cost $ 3.50 per acre . Here he settled, in the woods, and remained on this tract until his decease, which occurred Dec. 7, 1877, in his 84th year . His wife lived until she turned her fourscore and four years ; she died Dec. 23, 1880 . This venerable couple had 823 been members of the M. E. Church for many years . Both died in the triumph of a living faith . The last words he uttered were, \" I know that my Redeemer liveth, \" and soon passed to his rest . Darius B. assisted his father in clearing up his farm . At the age of 21, he began working out by the month, receiving $ 9 per month . He continued in this way until his union with Nancy Rosa, Feb. 28, 1843, who was born Aug. 12, 1825, in Steuben Co., N. Y., daughter of William and Elizabeth ( Davis ) Rosa, the latter of whom was a daughter of Benjamin and Nancy Davis . William Rosa was a soldier in the war of 1812 . To Benjamin Davis were born two sons and six daughters, whose names are Henry, Abram, Elizabeth, Margery, Ph\u0153be, Julia, Nancy and Sarah . To William Rosa were born eleven children, all of whom grew to maturity . Mrs. Sanford had three brothers who took their places in the rank and file of the \" boys in blue . \" William died of disease at Pittsburg Landing . Isaac was taken prisoner, and served many weary and hungry days within the confines of Libby Prison ; he had served all through the war, and was in the prison at the time Richmond was captured . Reubeen after serving his time in the 10th Kan . V. I., and escaping the perils of war, was murdered, after the war, at Baxter Springs, being shot by some unknown party, and his body afterward found in the river . He was last seen driving his team, which was never seen afterward . Soon after Mr. Sanford was married, he set up housekeeping on his father 's place . All the household effects he had to begin with, he could have wheeled upon a barrow . He lived there about eight years, and, during this time, worked out as he could, and managed to save enough, in this time, to make a payment upon a place of his own . His father was unable to assist him, but our worthy subject was energetic, and, having a good wife to assist him, \" gained ground \" every year . His first purchase was in the east part of the township, where he purchased the place which W. Wideman now owns, which was unimproved ; he soon cleared this, and made another purchase near by, which he also cleared up . Since 1872, he has been a resident of the farm he now owns, which was settled by Amasa Packard . Mr. Sanford has done an immense amount of hard labor, and has made all he has by the hardest of work . He has four children -- Delia, Sarah, Jane and Hi - ",
+                  "content": "822 BIOGRAPHICAL SKETCHES : being celebrated March 24, 1842 ; his spouse was Lucinda E. Packard, sister of Jonathan and Francis P. She died in 1864 . Two children were born -- Sarah and Francis R. Sarah died at the age of 15 . His second wife was Emily Warner, who died in the spring of 1869, leaving no issue . Nov. 24, 1870, he married Mary P. Packard, who was born Aug. 18, 1836, in this township, daughter of William Packard, born in Plainfield, Mass ., July 23, 1808, whose wife was Mary Smith ; her mother 's maiden name was Mary F. Rude, born in Ashfield, March 19, 1804, all of Massachusetts . Mrs. Shaw 's father resides in Covert, Van Buren Co., Mich . She has but two brothers living -- William O and Alfred S., now of the same county as above . During the early part of Mr. Shaw 's life, he taught school several terms, and employed his time at home on the farm, having bought of his brother a portion of the land he first settled upon, and remained upon this tract until his removal to the Center in 1873, and, with the exception of two years spent in Michigan, after leaving the farm in 1870, has resided in the township forty - six years . His farm, consisting of 100 acres, is now being carried on by Francis R., who was one of the principals in the invention of the telephone, now in operation all through the country . He has been twice married ; first to Eliza A. Parson ; she died, leaving no issue . His present wife was Sarah Garver by her he has three children -- Eva M., William F. and Mary J. Since 1836, Mr. Joshua Shaw has been a consistent member of the Congregational Church . He is a self - made man, and came here without means . ALFRED W. SHAW, farmer and mechanic ; P. O. Chatham Center ; born in Plainfield Township, Berkshire Co., Mass ., May 3, 1827, the third child born to Orrin Shaw, who came West in 1833, locating in this township . Alfred learned the carpenter 's trade of his father, and at the age of 21, started out on his own hook . \" Oct. 1, 1848, he married Mary Packard, who was born in Plainfield, Mass ., Dec. 14, 1824, daughter of Phillip and Hannah Packard . The family came West in 1833, and located near the farm Orrin Shaw settled . To Phillip Packard were born nine children, seven of whom lived to be grown . Phillip Packard was born May 6 . 1790 ; his wife Sept. 17, 1792 . They were married in 1812 . Of the number who grew up, were Jacob, Sallie, Rosina, Austin M. Hannah L. Mary and Aurelia . Jacob now resides in Cameron, Mo . ; Phillip died Feb. 25, 1872 ; his wife Feb. 20, 1833 . Phillip Packard was one of the original members at the organization of the Congregational Church at the Center . Since the marriage of our subject, he has been a constant resident of the farm he now owns . He purchased 51 acres at $ 8 per acre, on what was known as the \" Porter \" tract . This land, at the time of his purchase, was unimproved ; afterward added 25 acres, which cost him $ 25 per acre . Since his occupancy, has been engaged in farming and carrying on his trade . He has a mill on his premises, constructed to do grinding and planing, by steam power . Has but one child, William A., born Jan. 7, 1854, who resides with him, who, in Jan. 5, 1881, was married to Mary E. Hyde . Mr. Shaw has been a member of his father 's church for about forty years, his wife nearly same time . Mr. Shaw is a Republican . E. P. SHAW, farmer, P. O. Chatham Center ; was born on the same farm he now owns . Nov. 8, 1836 ; son of Orrin and Sarah ( Poole ) Shaw . He was born in Plainfield, Mass ., Dec. 16, 1796, son of Thomas, whose birth occurred Dec. 16, 1765 ; his decease occurred in 1827 . His wife was Deborah White, born Sept. 11, 1774 ; she died Sept. 8, 1806 . She was a descendant of Peregrine White, who was born on the Mayflower . Thomas was the father of three children -- Cynthia, Chloe and Orrin . Cynthia married Iram Packard, who settled the farm now owned by George Holbern, of this township ; Chloe married a Catlin . To Orrin were born four children -- Mary, now of Missouri, who married Marshall Shaw ; Orrin S., of Van Buren Co., Mich . ; Alfred W. and E. P. in this township . Orrin Shaw was a carpenter by trade, and came West in 1833 to secure a home . Iram Packard had preceded him, and purchased a tract of land running from the Center road to the river . On the west of him, he purchased a small tract at $ 3 per acre, adding to this at times until he had 100 acres ; worked at his trade, and earned enough to pay for it . Here he remained until his death, July 7, 1877 ; that of his wife, Aug. 26, 1873 . He was one of the first members of the Congregational Church at its organization, and its first Deacon, which office he held up to the time of his death . He was a conscientious and upright man . Edgar P., being the youngest, remained at home, and - CHATHAM TOWNSHIP . co - operated with his father in the management of the farm . He taught school several terms, and, having a love for music, his services were brought into requisition as a teacher of vocal music . April 4, 1861, he married Barbara Hyde, born in this county, daughter of Henry and Sarah ( Johnson ) Hyde . He was born in Cumberland Co., Penn ., Feb. 10, 1815 ; she in Trumbull Co., in August, 1816, a daughter of Austin and Maria ( Oviatt ) Johnson . The father of Henry Hyde was Henry, who married Mary Ashbaugh, to whom were born a family of fifteen children, all of whom lived to maturity . To Henry Hyde and wife were born eight children, seven living, who are Maria, Barbara, Nancy, Melissa, Henry, Anson and Mary . Henry Hyde, the grandfather of Mrs. Shaw, came West to this county and settled in Montville in 1815, they having to pack their effects on horseback to their cabin, as there were no roads cut . After residing here many years, he finally located in Litchfield, where he died July 21, 1877 . His wife is now living in Sullivan, Ashland Co., Ohio . Mr. and Mrs. Shaw have six children -- Edgar B. Clara E., Allison P., Mary B., Howard A. and Emily B. For twenty - eight years, Mr. Shaw has been a member of the Congregational Church, and had charge of the choir, being an able and efficient leader . His farm, consisting of 100 acres, was formerly owned by his father, D. B. SANFORD, farmer, P. O. Chatham Center ; was born June 20, 1813, in Green Township, Chenango Co., N. Y., the third of a family of nine children, whose parents were Beers and Rachel ( Akerly ) Sanford . Beers was a son of Lemuel Sanford, whose children were Beers, Jackson, Daniel, Darius, Hannah and Apha . Rachel was a daughter of Samuel, whose offspring were Rachel, Vina, Polly, Rhoda, Betsey, Conrad and Miller . The Akerlys were originally from Holland, while the Sanfords, so far as known, are descendants of the Puritans . The Sanford family came West in 1832, and located in the northeastern part of Harrisville Township, where Albert Sanford now resides . Here Beers Sanford purchased 60 acres, which cost $ 3.50 per acre . Here he settled, in the woods, and remained on this tract until his decease, which occurred Dec. 7, 1877, in his 84th year . His wife lived until she turned her fourscore and four years ; she died Dec. 23, 1880 . This venerable couple had 823 been members of the M. E. Church for many years . Both died in the triumph of a living faith . The last words he uttered were, \" I know that my Redeemer liveth, \" and soon passed to his rest . Darius B. assisted his father in clearing up his farm . At the age of 21, he began working out by the month, receiving $ 9 per month . He continued in this way until his union with Nancy Rosa, Feb. 28, 1843, who was born Aug. 12, 1825, in Steuben Co., N. Y., daughter of William and Elizabeth ( Davis ) Rosa, the latter of whom was a daughter of Benjamin and Nancy Davis . William Rosa was a soldier in the war of 1812 . To Benjamin Davis were born two sons and six daughters, whose names are Henry, Abram, Elizabeth, Margery, Phœbe, Julia, Nancy and Sarah . To William Rosa were born eleven children, all of whom grew to maturity . Mrs. Sanford had three brothers who took their places in the rank and file of the \" boys in blue . \" William died of disease at Pittsburg Landing . Isaac was taken prisoner, and served many weary and hungry days within the confines of Libby Prison ; he had served all through the war, and was in the prison at the time Richmond was captured . Reubeen after serving his time in the 10th Kan . V. I., and escaping the perils of war, was murdered, after the war, at Baxter Springs, being shot by some unknown party, and his body afterward found in the river . He was last seen driving his team, which was never seen afterward . Soon after Mr. Sanford was married, he set up housekeeping on his father 's place . All the household effects he had to begin with, he could have wheeled upon a barrow . He lived there about eight years, and, during this time, worked out as he could, and managed to save enough, in this time, to make a payment upon a place of his own . His father was unable to assist him, but our worthy subject was energetic, and, having a good wife to assist him, \" gained ground \" every year . His first purchase was in the east part of the township, where he purchased the place which W. Wideman now owns, which was unimproved ; he soon cleared this, and made another purchase near by, which he also cleared up . Since 1872, he has been a resident of the farm he now owns, which was settled by Amasa Packard . Mr. Sanford has done an immense amount of hard labor, and has made all he has by the hardest of work . He has four children -- Delia, Sarah, Jane and Hi - ",
                   "truncated": false,
                   "hitId": "ark:/61903/3:1:3Q9M-CSZ6-J7JT",
                   "hitIndex": 7,
@@ -3766,7 +3766,7 @@
                     {
                       "id": "S1",
                       "title": "FamilySearch Family Tree, Iram F. Hyde (G9GJ-959)",
-                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798\u20131873), PID G9GJ-959; accessed 9 October 2026.",
+                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798–1873), PID G9GJ-959; accessed 9 October 2026.",
                       "author": "FamilySearch community contributors",
                       "url": "https://www.familysearch.org/tree/person/details/G9GJ-959"
                     },
@@ -4171,7 +4171,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict (possible_match) is correct: the hit shows 'Fran Hyde To Mary Albert Jackson' in a church marriage register, with surname Hyde and place Jackson matching Iram's known location, but given name and bride's surname garbled by transcription. The flag (alreadyExtracted: true) is correct\u2014the project already holds this hit as src_006 with assertion a_019 citing it. The rationale accurately identifies the deciding facts: surname and place match, but given name and bride's surname are garbled, making it possible rather than confirmed. No fabricated material or unsupported claims."
+            "rationale": "The verdict (possible_match) is correct: the hit shows 'Fran Hyde To Mary Albert Jackson' in a church marriage register, with surname Hyde and place Jackson matching Iram's known location, but given name and bride's surname garbled by transcription. The flag (alreadyExtracted: true) is correct—the project already holds this hit as src_006 with assertion a_019 citing it. The rationale accurately identifies the deciding facts: surname and place match, but given name and bride's surname are garbled, making it possible rather than confirmed. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -4201,7 +4201,7 @@
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is one sentence, plain and beginner-readable: 'This is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson \u2014 the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage.' It names the record kind (church marriage register), date (1820), place (Jackson, Washington County, New York), whether it is the person (possible match), the deciding fact (garbled names vs. clear surname and place), and that it holds nothing new (already captured). No labels, field names, or identifiers appear."
+            "rationale": "The summary after the `---` is one sentence, plain and beginner-readable: 'This is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson — the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage.' It names the record kind (church marriage register), date (1820), place (Jackson, Washington County, New York), whether it is the person (possible match), the deciding fact (garbled names vs. clear surname and place), and that it holds nothing new (already captured). No labels, field names, or identifiers appear."
           }
         ],
         "review_dimensions": [
@@ -4209,7 +4209,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict (possible_match) is correct: the hit shows 'Fran Hyde To Mary Albert Jackson' in a church marriage register, with surname Hyde and place Jackson matching Iram's known location, but given name and bride's surname garbled by transcription. The flag (alreadyExtracted: true) is correct\u2014the project already holds this hit as src_006 with assertion a_019 citing it. The rationale accurately identifies the deciding facts: surname and place match, but given name and bride's surname are garbled, making it possible rather than confirmed. No fabricated material or unsupported claims."
+            "rationale": "The verdict (possible_match) is correct: the hit shows 'Fran Hyde To Mary Albert Jackson' in a church marriage register, with surname Hyde and place Jackson matching Iram's known location, but given name and bride's surname garbled by transcription. The flag (alreadyExtracted: true) is correct—the project already holds this hit as src_006 with assertion a_019 citing it. The rationale accurately identifies the deciding facts: surname and place match, but given name and bride's surname are garbled, making it possible rather than confirmed. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -4239,13 +4239,13 @@
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is one sentence, plain and beginner-readable: 'This is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson \u2014 the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage.' It names the record kind (church marriage register), date (1820), place (Jackson, Washington County, New York), whether it is the person (possible match), the deciding fact (garbled names vs. clear surname and place), and that it holds nothing new (already captured). No labels, field names, or identifiers appear."
+            "rationale": "The summary after the `---` is one sentence, plain and beginner-readable: 'This is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson — the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage.' It names the record kind (church marriage register), date (1820), place (Jackson, Washington County, New York), whether it is the person (possible match), the deciding fact (garbled names vs. clear surname and place), and that it holds nothing new (already captured). No labels, field names, or identifiers appear."
           }
         ]
       },
       "totals": {
         "duration_ms": 92427.26866714656,
-        "duration_api_ms": 91817.0,
+        "duration_api_ms": 91817,
         "judge_duration_ms": 12164.63804198429,
         "wall_clock_ms": 104706.43615722656,
         "num_turns": 2,
@@ -4268,7 +4268,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 92427.26866714656,
-          "duration_api_ms": 91817.0,
+          "duration_api_ms": 91817,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1525,
@@ -4350,7 +4350,7 @@
           },
           "skill_cost_usd": 0.23057535,
           "output": {
-            "text_response": "**Evaluation Result**\n\n- **hitRef:** `results/log_017.json#3Q9M-CSK3-ZSH4`\n- **Verdict:** `possible_match`\n- **New Vital Info:** No\n- **Already Extracted:** Yes\n\n---\n\nThis is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson \u2014 the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage.",
+            "text_response": "**Evaluation Result**\n\n- **hitRef:** `results/log_017.json#3Q9M-CSK3-ZSH4`\n- **Verdict:** `possible_match`\n- **New Vital Info:** No\n- **Already Extracted:** Yes\n\n---\n\nThis is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson — the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4369,7 +4369,7 @@
                   "ok": true,
                   "buildId": "0.1.0+2026-11-04.95c6e832",
                   "projectStatus": "active",
-                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796\u20131799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
+                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796–1799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
                   "subjectPersonIds": [
                     "I1"
                   ],
@@ -4380,7 +4380,7 @@
                   "openQuestions": [
                     {
                       "id": "q_002",
-                      "question": "Who were the parents of Iram Hyde (b. c. 1796\u20131798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
+                      "question": "Who were the parents of Iram Hyde (b. c. 1796–1798 New Hampshire; m. Mary Robertson 1821 Jackson, Washington Co., NY)?"
                     }
                   ],
                   "questionStatuses": [
@@ -4396,7 +4396,7 @@
                     {
                       "id": "q_002",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_002",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_002",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -4787,7 +4787,7 @@
                     {
                       "id": "S1",
                       "title": "FamilySearch Family Tree, Iram F. Hyde (G9GJ-959)",
-                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798\u20131873), PID G9GJ-959; accessed 9 October 2026.",
+                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798–1873), PID G9GJ-959; accessed 9 October 2026.",
                       "author": "FamilySearch community contributors",
                       "url": "https://www.familysearch.org/tree/person/details/G9GJ-959"
                     },
@@ -4888,7 +4888,7 @@
             "agent_returns": [
               {
                 "subagent_type": "evaluate-search-results",
-                "text": "hitRef: results/log_017.json#3Q9M-CSK3-ZSH4\nverdict: possible_match\nnewVitalInfo: false\nalreadyExtracted: true\n\n---\nThis is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson \u2014 the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage."
+                "text": "hitRef: results/log_017.json#3Q9M-CSK3-ZSH4\nverdict: possible_match\nnewVitalInfo: false\nalreadyExtracted: true\n\n---\nThis is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson — the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage."
               }
             ],
             "file_changes": {
@@ -5128,7 +5128,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The verdict (possible_match) is correct: the hit shows 'Fran Hyde To Mary Albert Jackson' in a church marriage register, with surname Hyde and place Jackson matching Iram's known location, but given name and bride's surname garbled by transcription. The flag (alreadyExtracted: true) is correct\u2014the project already holds this hit as src_006 with assertion a_019 citing it. The rationale accurately identifies the deciding facts: surname and place match, but given name and bride's surname are garbled, making it possible rather than confirmed. No fabricated material or unsupported claims."
+                "rationale": "The verdict (possible_match) is correct: the hit shows 'Fran Hyde To Mary Albert Jackson' in a church marriage register, with surname Hyde and place Jackson matching Iram's known location, but given name and bride's surname garbled by transcription. The flag (alreadyExtracted: true) is correct—the project already holds this hit as src_006 with assertion a_019 citing it. The rationale accurately identifies the deciding facts: surname and place match, but given name and bride's surname are garbled, making it possible rather than confirmed. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -5158,7 +5158,7 @@
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the `---` is one sentence, plain and beginner-readable: 'This is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson \u2014 the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage.' It names the record kind (church marriage register), date (1820), place (Jackson, Washington County, New York), whether it is the person (possible match), the deciding fact (garbled names vs. clear surname and place), and that it holds nothing new (already captured). No labels, field names, or identifiers appear."
+                "rationale": "The summary after the `---` is one sentence, plain and beginner-readable: 'This is a Washington County, New York church marriage register entry, likely 1820, listing \"Fran Hyde\" marrying \"Mary Albert\" in Jackson — the surname Hyde is clear and the place matches Iram's known location, but the given name and bride's surname are both garbled by the machine transcription, so it is a possible rather than confirmed match, and the record is already captured in the tree as the source for the Hyde-Robertson marriage.' It names the record kind (church marriage register), date (1820), place (Jackson, Washington County, New York), whether it is the person (possible match), the deciding fact (garbled names vs. clear surname and place), and that it holds nothing new (already captured). No labels, field names, or identifiers appear."
               }
             ],
             "judge_cost_usd": 0.019861,
@@ -5192,13 +5192,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to record-structurer with an accurate one-line handback. The response did not read, judge, or record a verdict on the hit\u2014the correct behavior. No fabrication or unsupported claims."
+            "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to record-structurer with an accurate one-line handback. The response did not read, judge, or record a verdict on the hit—the correct behavior. No fabrication or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill provided the required decline and routing decision in the correct format: 'Hand-back: record-structurer \u2014 extract the full-text search hit at results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1.' This is the complete, correct response for a negative test."
+            "rationale": "The skill provided the required decline and routing decision in the correct format: 'Hand-back: record-structurer — extract the full-text search hit at results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1.' This is the complete, correct response for a negative test."
           },
           {
             "source": "base",
@@ -5212,13 +5212,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to record-structurer with an accurate one-line handback. The response did not read, judge, or record a verdict on the hit\u2014the correct behavior. No fabrication or unsupported claims."
+            "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to record-structurer with an accurate one-line handback. The response did not read, judge, or record a verdict on the hit—the correct behavior. No fabrication or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill provided the required decline and routing decision in the correct format: 'Hand-back: record-structurer \u2014 extract the full-text search hit at results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1.' This is the complete, correct response for a negative test."
+            "rationale": "The skill provided the required decline and routing decision in the correct format: 'Hand-back: record-structurer — extract the full-text search hit at results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1.' This is the complete, correct response for a negative test."
           },
           {
             "source": "base",
@@ -5230,7 +5230,7 @@
       },
       "totals": {
         "duration_ms": 18018.412459176034,
-        "duration_api_ms": 17898.0,
+        "duration_api_ms": 17898,
         "judge_duration_ms": 4238.170125056058,
         "wall_clock_ms": 22370.857000350952,
         "num_turns": 3,
@@ -5253,7 +5253,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18018.412459176034,
-          "duration_api_ms": 17898.0,
+          "duration_api_ms": 17898,
           "num_turns": 3,
           "skill_attempts": 1,
           "input_tokens": 1521,
@@ -5324,7 +5324,7 @@
           },
           "skill_cost_usd": 0.1491726,
           "output": {
-            "text_response": "The evaluate-search-results subagent has handed back this task, redirecting it to the **record-structurer** agent. The subagent's response is:\n\n> **Hand-back: record-structurer** \u2014 extract the full-text search hit at `results/log_008.json#3QS7-99WC-KLYK` and add it to the project as a source for person I1.\n\nThis is because the **evaluate-search-results** agent is designed to *judge and label* a search hit (Match / Possible Match / Not a Match) \u2014 it does not extract records or add them as sources. Extracting a hit and adding it as a source is the responsibility of the **record-structurer** agent. If you'd like me to route this to the record-structurer agent to complete the extraction, just let me know.",
+            "text_response": "The evaluate-search-results subagent has handed back this task, redirecting it to the **record-structurer** agent. The subagent's response is:\n\n> **Hand-back: record-structurer** — extract the full-text search hit at `results/log_008.json#3QS7-99WC-KLYK` and add it to the project as a source for person I1.\n\nThis is because the **evaluate-search-results** agent is designed to *judge and label* a search hit (Match / Possible Match / Not a Match) — it does not extract records or add them as sources. Extracting a hit and adding it as a source is the responsibility of the **record-structurer** agent. If you'd like me to route this to the record-structurer agent to complete the extraction, just let me know.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -5348,7 +5348,7 @@
               },
               {
                 "subagent_type": "evaluate-search-results",
-                "text": "Hand-back: record-structurer \u2014 extract the full-text search hit at results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1."
+                "text": "Hand-back: record-structurer — extract the full-text search hit at results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1."
               }
             ]
           },
@@ -5364,7 +5364,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -5430,7 +5430,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -5466,7 +5466,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -5484,13 +5484,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -5556,13 +5556,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to record-structurer with an accurate one-line handback. The response did not read, judge, or record a verdict on the hit\u2014the correct behavior. No fabrication or unsupported claims."
+                "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to record-structurer with an accurate one-line handback. The response did not read, judge, or record a verdict on the hit—the correct behavior. No fabrication or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill provided the required decline and routing decision in the correct format: 'Hand-back: record-structurer \u2014 extract the full-text search hit at results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1.' This is the complete, correct response for a negative test."
+                "rationale": "The skill provided the required decline and routing decision in the correct format: 'Hand-back: record-structurer — extract the full-text search hit at results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1.' This is the complete, correct response for a negative test."
               },
               {
                 "source": "base",
@@ -5608,7 +5608,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill provided the complete correct response for this negative test: a single-line hand-back statement ('Hand-back: no hit ref \u2014 evaluate all hits of log_017 against I1 (Iram Hyde)') that accurately restates the request without performing the evaluation. No additional output was required or expected. The brevity is correct per the test author's notes."
+            "rationale": "The skill provided the complete correct response for this negative test: a single-line hand-back statement ('Hand-back: no hit ref — evaluate all hits of log_017 against I1 (Iram Hyde)') that accurately restates the request without performing the evaluation. No additional output was required or expected. The brevity is correct per the test author's notes."
           },
           {
             "source": "base",
@@ -5628,7 +5628,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill provided the complete correct response for this negative test: a single-line hand-back statement ('Hand-back: no hit ref \u2014 evaluate all hits of log_017 against I1 (Iram Hyde)') that accurately restates the request without performing the evaluation. No additional output was required or expected. The brevity is correct per the test author's notes."
+            "rationale": "The skill provided the complete correct response for this negative test: a single-line hand-back statement ('Hand-back: no hit ref — evaluate all hits of log_017 against I1 (Iram Hyde)') that accurately restates the request without performing the evaluation. No additional output was required or expected. The brevity is correct per the test author's notes."
           },
           {
             "source": "base",
@@ -5640,7 +5640,7 @@
       },
       "totals": {
         "duration_ms": 22780.186041025445,
-        "duration_api_ms": 22558.0,
+        "duration_api_ms": 22558,
         "judge_duration_ms": 4322.0792091451585,
         "wall_clock_ms": 27259.1609954834,
         "num_turns": 2,
@@ -5663,7 +5663,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22780.186041025445,
-          "duration_api_ms": 22558.0,
+          "duration_api_ms": 22558,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1509,
@@ -5734,7 +5734,7 @@
           },
           "skill_cost_usd": 0.1404351,
           "output": {
-            "text_response": "The evaluate-search-results subagent returned a hand-back without completing the task. It noted that it requires a specific **hitRef** for a single hit, rather than a whole-log evaluation request. According to its design, evaluating all hits of a search log (\"evaluate all the hits\") must be routed through the **research** skill, which reads the log, lists each hit, and spawns one evaluate-search-results agent per hit in parallel.\n\nTo proceed, please either:\n1. **Route through the research skill** \u2014 ask to \"evaluate all hits of log_017 for Iram Hyde (I1)\" via the research orchestrator, or\n2. **Provide individual hit refs** (e.g. `results/log_017.json#XXXX-XXXX`) and I can evaluate each one separately.",
+            "text_response": "The evaluate-search-results subagent returned a hand-back without completing the task. It noted that it requires a specific **hitRef** for a single hit, rather than a whole-log evaluation request. According to its design, evaluating all hits of a search log (\"evaluate all the hits\") must be routed through the **research** skill, which reads the log, lists each hit, and spawns one evaluate-search-results agent per hit in parallel.\n\nTo proceed, please either:\n1. **Route through the research skill** — ask to \"evaluate all hits of log_017 for Iram Hyde (I1)\" via the research orchestrator, or\n2. **Provide individual hit refs** (e.g. `results/log_017.json#XXXX-XXXX`) and I can evaluate each one separately.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -5753,7 +5753,7 @@
             "agent_returns": [
               {
                 "subagent_type": "evaluate-search-results",
-                "text": "Hand-back: no hit ref \u2014 evaluate all hits of log_017 against I1 (Iram Hyde)"
+                "text": "Hand-back: no hit ref — evaluate all hits of log_017 against I1 (Iram Hyde)"
               }
             ]
           },
@@ -5769,7 +5769,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -5835,7 +5835,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -5871,7 +5871,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -5889,13 +5889,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -5967,7 +5967,7 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill provided the complete correct response for this negative test: a single-line hand-back statement ('Hand-back: no hit ref \u2014 evaluate all hits of log_017 against I1 (Iram Hyde)') that accurately restates the request without performing the evaluation. No additional output was required or expected. The brevity is correct per the test author's notes."
+                "rationale": "The skill provided the complete correct response for this negative test: a single-line hand-back statement ('Hand-back: no hit ref — evaluate all hits of log_017 against I1 (Iram Hyde)') that accurately restates the request without performing the evaluation. No additional output was required or expected. The brevity is correct per the test author's notes."
               },
               {
                 "source": "base",
@@ -6007,7 +6007,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified the hit as a match: the baptism register names 'Mary Robertson & Hiram Hy[de]' as parents, with Mary Robertson matching Iram's known spouse and Hiram being a standard variant of Iram. The verdict aligns with the gold standard. The new vital information flag is correct\u2014the hit names a child ('Chanty, Hyde') not on Iram's edges, with only Margaret E. Hyde currently recorded. The rationale accurately cites the deciding facts from both the hit and the tree. No fabricated material or unsupported claims."
+            "rationale": "Claude correctly identified the hit as a match: the baptism register names 'Mary Robertson & Hiram Hy[de]' as parents, with Mary Robertson matching Iram's known spouse and Hiram being a standard variant of Iram. The verdict aligns with the gold standard. The new vital information flag is correct—the hit names a child ('Chanty, Hyde') not on Iram's edges, with only Margaret E. Hyde currently recorded. The rationale accurately cites the deciding facts from both the hit and the tree. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -6031,13 +6031,13 @@
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag is correctly set to true. The rationale correctly identifies that the hit names a child ('Chanty, Hyde') not on Iram's edges\u2014his only known child in the tree is Margaret E. Hyde. The rationale explicitly names the child as what is new, following the rule that a child is new when no one on the person's edges matches by name. The flag is not false for any of the exclusion reasons (not a Not a Match, not already extracted, not a relative already on an edge)."
+            "rationale": "The flag is correctly set to true. The rationale correctly identifies that the hit names a child ('Chanty, Hyde') not on Iram's edges—his only known child in the tree is Margaret E. Hyde. The rationale explicitly names the child as what is new, following the rule that a child is new when no one on the person's edges matches by name. The flag is not false for any of the exclusion reasons (not a Not a Match, not already extracted, not a relative already on an edge)."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the '---' is two plain sentences a beginner can read: it identifies the record type (baptism register from Jackson, Washington County, New York, 1834\u20131836), names the parents (Mary Robertson & Hiram Hyde), states the verdict (match, clinched by the wife's name), and notes the new fact (an additional child not yet recorded). No labels, field names, or identifiers appear in the summary; it is accessible and complete."
+            "rationale": "The summary after the '---' is two plain sentences a beginner can read: it identifies the record type (baptism register from Jackson, Washington County, New York, 1834–1836), names the parents (Mary Robertson & Hiram Hyde), states the verdict (match, clinched by the wife's name), and notes the new fact (an additional child not yet recorded). No labels, field names, or identifiers appear in the summary; it is accessible and complete."
           }
         ],
         "review_dimensions": [
@@ -6045,7 +6045,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified the hit as a match: the baptism register names 'Mary Robertson & Hiram Hy[de]' as parents, with Mary Robertson matching Iram's known spouse and Hiram being a standard variant of Iram. The verdict aligns with the gold standard. The new vital information flag is correct\u2014the hit names a child ('Chanty, Hyde') not on Iram's edges, with only Margaret E. Hyde currently recorded. The rationale accurately cites the deciding facts from both the hit and the tree. No fabricated material or unsupported claims."
+            "rationale": "Claude correctly identified the hit as a match: the baptism register names 'Mary Robertson & Hiram Hy[de]' as parents, with Mary Robertson matching Iram's known spouse and Hiram being a standard variant of Iram. The verdict aligns with the gold standard. The new vital information flag is correct—the hit names a child ('Chanty, Hyde') not on Iram's edges, with only Margaret E. Hyde currently recorded. The rationale accurately cites the deciding facts from both the hit and the tree. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -6069,19 +6069,19 @@
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag is correctly set to true. The rationale correctly identifies that the hit names a child ('Chanty, Hyde') not on Iram's edges\u2014his only known child in the tree is Margaret E. Hyde. The rationale explicitly names the child as what is new, following the rule that a child is new when no one on the person's edges matches by name. The flag is not false for any of the exclusion reasons (not a Not a Match, not already extracted, not a relative already on an edge)."
+            "rationale": "The flag is correctly set to true. The rationale correctly identifies that the hit names a child ('Chanty, Hyde') not on Iram's edges—his only known child in the tree is Margaret E. Hyde. The rationale explicitly names the child as what is new, following the rule that a child is new when no one on the person's edges matches by name. The flag is not false for any of the exclusion reasons (not a Not a Match, not already extracted, not a relative already on an edge)."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the '---' is two plain sentences a beginner can read: it identifies the record type (baptism register from Jackson, Washington County, New York, 1834\u20131836), names the parents (Mary Robertson & Hiram Hyde), states the verdict (match, clinched by the wife's name), and notes the new fact (an additional child not yet recorded). No labels, field names, or identifiers appear in the summary; it is accessible and complete."
+            "rationale": "The summary after the '---' is two plain sentences a beginner can read: it identifies the record type (baptism register from Jackson, Washington County, New York, 1834–1836), names the parents (Mary Robertson & Hiram Hyde), states the verdict (match, clinched by the wife's name), and notes the new fact (an additional child not yet recorded). No labels, field names, or identifiers appear in the summary; it is accessible and complete."
           }
         ]
       },
       "totals": {
         "duration_ms": 119328.75454192981,
-        "duration_api_ms": 112089.0,
+        "duration_api_ms": 112089,
         "judge_duration_ms": 10437.480458058417,
         "wall_clock_ms": 130514.06192779541,
         "num_turns": 2,
@@ -6104,7 +6104,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 119328.75454192981,
-          "duration_api_ms": 112089.0,
+          "duration_api_ms": 112089,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1525,
@@ -6186,7 +6186,7 @@
           },
           "skill_cost_usd": 0.3297814500000001,
           "output": {
-            "text_response": "Here is the subagent's evaluation:\n\n**Hit:** `results/log_017.json#3Q9M-CSK3-ZSLR`\n**Verdict:** \u2705 **Match**\n**New Vital Info:** Yes\n**Already Extracted:** No\n\n---\n\nThis hit is a baptism register from Jackson, Washington County, New York (1834\u20131836) listing **\"Mary Robertson & Hiram Hyde\"** as parents of a child being baptized. The wife's name (Mary Robertson) clinches the identification as **Iram F. Hyde (I1)**. The child's name is OCR-garbled in the transcript, but it does not match the tree's only known child, Margaret E. Hyde \u2014 indicating this record documents an **additional child not yet recorded in the tree**.\n\nThis record should be extracted.",
+            "text_response": "Here is the subagent's evaluation:\n\n**Hit:** `results/log_017.json#3Q9M-CSK3-ZSLR`\n**Verdict:** ✅ **Match**\n**New Vital Info:** Yes\n**Already Extracted:** No\n\n---\n\nThis hit is a baptism register from Jackson, Washington County, New York (1834–1836) listing **\"Mary Robertson & Hiram Hyde\"** as parents of a child being baptized. The wife's name (Mary Robertson) clinches the identification as **Iram F. Hyde (I1)**. The child's name is OCR-garbled in the transcript, but it does not match the tree's only known child, Margaret E. Hyde — indicating this record documents an **additional child not yet recorded in the tree**.\n\nThis record should be extracted.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6205,7 +6205,7 @@
                   "ok": true,
                   "buildId": "0.1.0+2026-11-04.95c6e832",
                   "projectStatus": "active",
-                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796\u20131799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
+                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796–1799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
                   "subjectPersonIds": [
                     "I1"
                   ],
@@ -6216,7 +6216,7 @@
                   "openQuestions": [
                     {
                       "id": "q_002",
-                      "question": "Who were the parents of Iram Hyde (b. c. 1796\u20131798 New Hampshire)?"
+                      "question": "Who were the parents of Iram Hyde (b. c. 1796–1798 New Hampshire)?"
                     }
                   ],
                   "questionStatuses": [
@@ -6232,7 +6232,7 @@
                     {
                       "id": "q_002",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_002",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_002",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -6612,7 +6612,7 @@
                     {
                       "id": "S1",
                       "title": "FamilySearch Family Tree, Iram F. Hyde (G9GJ-959)",
-                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798\u20131873), PID G9GJ-959; accessed 9 October 2026.",
+                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798–1873), PID G9GJ-959; accessed 9 October 2026.",
                       "author": "FamilySearch community contributors",
                       "url": "https://www.familysearch.org/tree/person/details/G9GJ-959"
                     },
@@ -6706,7 +6706,7 @@
             "agent_returns": [
               {
                 "subagent_type": "evaluate-search-results",
-                "text": "hitRef: results/log_017.json#3Q9M-CSK3-ZSLR\nverdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\nThis is a baptism register from Jackson, Washington County, New York covering 1834\u20131836, which lists \"Mary Robertson & Hiram Hyde\" as parents of a child being baptized; the wife's name clinches the identification as Iram F. Hyde, and the child's OCR-garbled name does not match the tree's only known child Margaret E. Hyde, pointing to an additional child the tree does not yet record."
+                "text": "hitRef: results/log_017.json#3Q9M-CSK3-ZSLR\nverdict: match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\nThis is a baptism register from Jackson, Washington County, New York covering 1834–1836, which lists \"Mary Robertson & Hiram Hyde\" as parents of a child being baptized; the wife's name clinches the identification as Iram F. Hyde, and the child's OCR-garbled name does not match the tree's only known child Margaret E. Hyde, pointing to an additional child the tree does not yet record."
               }
             ],
             "file_changes": {
@@ -6946,7 +6946,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the hit as a match: the baptism register names 'Mary Robertson & Hiram Hy[de]' as parents, with Mary Robertson matching Iram's known spouse and Hiram being a standard variant of Iram. The verdict aligns with the gold standard. The new vital information flag is correct\u2014the hit names a child ('Chanty, Hyde') not on Iram's edges, with only Margaret E. Hyde currently recorded. The rationale accurately cites the deciding facts from both the hit and the tree. No fabricated material or unsupported claims."
+                "rationale": "Claude correctly identified the hit as a match: the baptism register names 'Mary Robertson & Hiram Hy[de]' as parents, with Mary Robertson matching Iram's known spouse and Hiram being a standard variant of Iram. The verdict aligns with the gold standard. The new vital information flag is correct—the hit names a child ('Chanty, Hyde') not on Iram's edges, with only Margaret E. Hyde currently recorded. The rationale accurately cites the deciding facts from both the hit and the tree. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -6970,13 +6970,13 @@
                 "source": "rubric",
                 "name": "New vital information",
                 "score": 3,
-                "rationale": "The flag is correctly set to true. The rationale correctly identifies that the hit names a child ('Chanty, Hyde') not on Iram's edges\u2014his only known child in the tree is Margaret E. Hyde. The rationale explicitly names the child as what is new, following the rule that a child is new when no one on the person's edges matches by name. The flag is not false for any of the exclusion reasons (not a Not a Match, not already extracted, not a relative already on an edge)."
+                "rationale": "The flag is correctly set to true. The rationale correctly identifies that the hit names a child ('Chanty, Hyde') not on Iram's edges—his only known child in the tree is Margaret E. Hyde. The rationale explicitly names the child as what is new, following the rule that a child is new when no one on the person's edges matches by name. The flag is not false for any of the exclusion reasons (not a Not a Match, not already extracted, not a relative already on an edge)."
               },
               {
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the '---' is two plain sentences a beginner can read: it identifies the record type (baptism register from Jackson, Washington County, New York, 1834\u20131836), names the parents (Mary Robertson & Hiram Hyde), states the verdict (match, clinched by the wife's name), and notes the new fact (an additional child not yet recorded). No labels, field names, or identifiers appear in the summary; it is accessible and complete."
+                "rationale": "The summary after the '---' is two plain sentences a beginner can read: it identifies the record type (baptism register from Jackson, Washington County, New York, 1834–1836), names the parents (Mary Robertson & Hiram Hyde), states the verdict (match, clinched by the wife's name), and notes the new fact (an additional child not yet recorded). No labels, field names, or identifiers appear in the summary; it is accessible and complete."
               }
             ],
             "judge_cost_usd": 0.018982,
@@ -7028,7 +7028,7 @@
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides: from the hit, 'Fran Hyde' (surname matches exactly, given name plausibly garbled), 'Mary Albert' (Mary matches spouse name, Albert does not match Robertson but is plausibly transcription error), and Jackson (matches Iram's 1850\u20131860 residences). From the tree, Iram F. Hyde married to Mary Robertson with no Marriage fact. The rationale correctly explains why this is Possible Match (name and place consistent but given name and bride's surname uncertain) rather than Match (would need one more independent tie)."
+            "rationale": "The rationale names the deciding facts on both sides: from the hit, 'Fran Hyde' (surname matches exactly, given name plausibly garbled), 'Mary Albert' (Mary matches spouse name, Albert does not match Robertson but is plausibly transcription error), and Jackson (matches Iram's 1850–1860 residences). From the tree, Iram F. Hyde married to Mary Robertson with no Marriage fact. The rationale correctly explains why this is Possible Match (name and place consistent but given name and bride's surname uncertain) rather than Match (would need one more independent tie)."
           },
           {
             "source": "rubric",
@@ -7066,7 +7066,7 @@
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides: from the hit, 'Fran Hyde' (surname matches exactly, given name plausibly garbled), 'Mary Albert' (Mary matches spouse name, Albert does not match Robertson but is plausibly transcription error), and Jackson (matches Iram's 1850\u20131860 residences). From the tree, Iram F. Hyde married to Mary Robertson with no Marriage fact. The rationale correctly explains why this is Possible Match (name and place consistent but given name and bride's surname uncertain) rather than Match (would need one more independent tie)."
+            "rationale": "The rationale names the deciding facts on both sides: from the hit, 'Fran Hyde' (surname matches exactly, given name plausibly garbled), 'Mary Albert' (Mary matches spouse name, Albert does not match Robertson but is plausibly transcription error), and Jackson (matches Iram's 1850–1860 residences). From the tree, Iram F. Hyde married to Mary Robertson with no Marriage fact. The rationale correctly explains why this is Possible Match (name and place consistent but given name and bride's surname uncertain) rather than Match (would need one more independent tie)."
           },
           {
             "source": "rubric",
@@ -7084,7 +7084,7 @@
       },
       "totals": {
         "duration_ms": 109479.03083311394,
-        "duration_api_ms": 101697.0,
+        "duration_api_ms": 101697,
         "judge_duration_ms": 12240.55445799604,
         "wall_clock_ms": 122454.62322235107,
         "num_turns": 2,
@@ -7107,7 +7107,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 109479.03083311394,
-          "duration_api_ms": 101697.0,
+          "duration_api_ms": 101697,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1527,
@@ -7189,7 +7189,7 @@
           },
           "skill_cost_usd": 0.31919795000000006,
           "output": {
-            "text_response": "Here is the subagent's response:\n\n**Hit Reference:** `results/log_017.json#3Q9M-CSK3-ZSH4`\n**Verdict:** Possible Match\n**New Vital Info:** Yes\n**Already Extracted:** No\n\n---\n\nThis is a religious/marriage register from Jackson, Washington County, New York, apparently dating to around 1820. It lists \"Fran Hyde To Mary Albert\" at Jackson, which is plausibly Iram F. Hyde marrying Mary (Robertson) \u2014 the surname Hyde and the place match exactly, but the given name appears garbled by machine reading, and the bride's surname reads \"Albert\" rather than \"Robertson,\" leaving the identification uncertain. The tree records no marriage date or place for Iram and Mary, so this register could supply that if confirmed.",
+            "text_response": "Here is the subagent's response:\n\n**Hit Reference:** `results/log_017.json#3Q9M-CSK3-ZSH4`\n**Verdict:** Possible Match\n**New Vital Info:** Yes\n**Already Extracted:** No\n\n---\n\nThis is a religious/marriage register from Jackson, Washington County, New York, apparently dating to around 1820. It lists \"Fran Hyde To Mary Albert\" at Jackson, which is plausibly Iram F. Hyde marrying Mary (Robertson) — the surname Hyde and the place match exactly, but the given name appears garbled by machine reading, and the bride's surname reads \"Albert\" rather than \"Robertson,\" leaving the identification uncertain. The tree records no marriage date or place for Iram and Mary, so this register could supply that if confirmed.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7208,7 +7208,7 @@
                   "ok": true,
                   "buildId": "0.1.0+2026-11-04.95c6e832",
                   "projectStatus": "active",
-                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796\u20131799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
+                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796–1799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
                   "subjectPersonIds": [
                     "I1"
                   ],
@@ -7219,7 +7219,7 @@
                   "openQuestions": [
                     {
                       "id": "q_002",
-                      "question": "Who were the parents of Iram Hyde (b. c. 1796\u20131798 New Hampshire)?"
+                      "question": "Who were the parents of Iram Hyde (b. c. 1796–1798 New Hampshire)?"
                     }
                   ],
                   "questionStatuses": [
@@ -7235,7 +7235,7 @@
                     {
                       "id": "q_002",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_002",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_002",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -7615,7 +7615,7 @@
                     {
                       "id": "S1",
                       "title": "FamilySearch Family Tree, Iram F. Hyde (G9GJ-959)",
-                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798\u20131873), PID G9GJ-959; accessed 9 October 2026.",
+                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798–1873), PID G9GJ-959; accessed 9 October 2026.",
                       "author": "FamilySearch community contributors",
                       "url": "https://www.familysearch.org/tree/person/details/G9GJ-959"
                     },
@@ -7670,7 +7670,7 @@
                     "person_id": "I1",
                     "verdict": "possible_match",
                     "new_vital_info": true,
-                    "rationale": "The surname 'Hyde' matches exactly and the place (Jackson, Washington, NY) aligns perfectly with Iram's known 1850\u20131860 residences; the given name 'Fran' is likely a machine-read garbling of 'Iram F.', making a full name match unconfirmable. The spouse is listed as 'Mary Albert', where 'Mary' agrees with Mary Robertson but 'Albert' does not match 'Robertson' \u2014 plausibly a transcription error in this heavily garbled text, but not confirmable. The tree's Couple carries no Marriage fact with a date or place, so a marriage entry for 'Hyde' at Jackson circa 1820 would supply new vital information."
+                    "rationale": "The surname 'Hyde' matches exactly and the place (Jackson, Washington, NY) aligns perfectly with Iram's known 1850–1860 residences; the given name 'Fran' is likely a machine-read garbling of 'Iram F.', making a full name match unconfirmable. The spouse is listed as 'Mary Albert', where 'Mary' agrees with Mary Robertson but 'Albert' does not match 'Robertson' — plausibly a transcription error in this heavily garbled text, but not confirmable. The tree's Couple carries no Marriage fact with a date or place, so a marriage entry for 'Hyde' at Jackson circa 1820 would supply new vital information."
                   }
                 },
                 "expected_args": null,
@@ -7709,7 +7709,7 @@
             "agent_returns": [
               {
                 "subagent_type": "evaluate-search-results",
-                "text": "hitRef: results/log_017.json#3Q9M-CSK3-ZSH4\nverdict: possible_match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\nThis is a religious/marriage register from Jackson, Washington County, New York, apparently dating to around 1820. It lists \"Fran Hyde To Mary Albert\" at Jackson, which is plausibly Iram F. Hyde marrying Mary (Robertson) \u2014 the surname Hyde and the place match exactly, but the given name appears garbled by machine reading, and the bride's surname reads \"Albert\" rather than \"Robertson,\" leaving the identification uncertain. The tree records no marriage date or place for Iram and Mary, so this register could supply that if confirmed."
+                "text": "hitRef: results/log_017.json#3Q9M-CSK3-ZSH4\nverdict: possible_match\nnewVitalInfo: true\nalreadyExtracted: false\n\n---\nThis is a religious/marriage register from Jackson, Washington County, New York, apparently dating to around 1820. It lists \"Fran Hyde To Mary Albert\" at Jackson, which is plausibly Iram F. Hyde marrying Mary (Robertson) — the surname Hyde and the place match exactly, but the given name appears garbled by machine reading, and the bride's surname reads \"Albert\" rather than \"Robertson,\" leaving the identification uncertain. The tree records no marriage date or place for Iram and Mary, so this register could supply that if confirmed."
               }
             ],
             "file_changes": {
@@ -7727,7 +7727,7 @@
                         "person_id": "I1",
                         "verdict": "possible_match",
                         "new_vital_info": true,
-                        "rationale": "The surname 'Hyde' matches exactly and the place (Jackson, Washington, NY) aligns perfectly with Iram's known 1850\u20131860 residences; the given name 'Fran' is likely a machine-read garbling of 'Iram F.', making a full name match unconfirmable. The spouse is listed as 'Mary Albert', where 'Mary' agrees with Mary Robertson but 'Albert' does not match 'Robertson' \u2014 plausibly a transcription error in this heavily garbled text, but not confirmable. The tree's Couple carries no Marriage fact with a date or place, so a marriage entry for 'Hyde' at Jackson circa 1820 would supply new vital information.",
+                        "rationale": "The surname 'Hyde' matches exactly and the place (Jackson, Washington, NY) aligns perfectly with Iram's known 1850–1860 residences; the given name 'Fran' is likely a machine-read garbling of 'Iram F.', making a full name match unconfirmable. The spouse is listed as 'Mary Albert', where 'Mary' agrees with Mary Robertson but 'Albert' does not match 'Robertson' — plausibly a transcription error in this heavily garbled text, but not confirmable. The tree's Couple carries no Marriage fact with a date or place, so a marriage entry for 'Hyde' at Jackson circa 1820 would supply new vital information.",
                         "created": "2026-11-04"
                       }
                     ],
@@ -7967,7 +7967,7 @@
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "The rationale names the deciding facts on both sides: from the hit, 'Fran Hyde' (surname matches exactly, given name plausibly garbled), 'Mary Albert' (Mary matches spouse name, Albert does not match Robertson but is plausibly transcription error), and Jackson (matches Iram's 1850\u20131860 residences). From the tree, Iram F. Hyde married to Mary Robertson with no Marriage fact. The rationale correctly explains why this is Possible Match (name and place consistent but given name and bride's surname uncertain) rather than Match (would need one more independent tie)."
+                "rationale": "The rationale names the deciding facts on both sides: from the hit, 'Fran Hyde' (surname matches exactly, given name plausibly garbled), 'Mary Albert' (Mary matches spouse name, Albert does not match Robertson but is plausibly transcription error), and Jackson (matches Iram's 1850–1860 residences). From the tree, Iram F. Hyde married to Mary Robertson with no Marriage fact. The rationale correctly explains why this is Possible Match (name and place consistent but given name and bride's surname uncertain) rather than Match (would need one more independent tie)."
               },
               {
                 "source": "rubric",
@@ -8013,7 +8013,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the hit as a Possible Match. The 1828 deed names 'Iram Hyde' as a witness in Jackson, Washington County, New York\u2014matching the target's known residence. The skill correctly applied the rule that name, time, and place alone (without a relative, occupation, or age) constitute a Possible Match, not a Match. The verdict is factually sound and supported by the hit content and tree state."
+            "rationale": "The skill correctly identified the hit as a Possible Match. The 1828 deed names 'Iram Hyde' as a witness in Jackson, Washington County, New York—matching the target's known residence. The skill correctly applied the rule that name, time, and place alone (without a relative, occupation, or age) constitute a Possible Match, not a Match. The verdict is factually sound and supported by the hit content and tree state."
           },
           {
             "source": "base",
@@ -8051,7 +8051,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the hit as a Possible Match. The 1828 deed names 'Iram Hyde' as a witness in Jackson, Washington County, New York\u2014matching the target's known residence. The skill correctly applied the rule that name, time, and place alone (without a relative, occupation, or age) constitute a Possible Match, not a Match. The verdict is factually sound and supported by the hit content and tree state."
+            "rationale": "The skill correctly identified the hit as a Possible Match. The 1828 deed names 'Iram Hyde' as a witness in Jackson, Washington County, New York—matching the target's known residence. The skill correctly applied the rule that name, time, and place alone (without a relative, occupation, or age) constitute a Possible Match, not a Match. The verdict is factually sound and supported by the hit content and tree state."
           },
           {
             "source": "base",
@@ -8087,7 +8087,7 @@
       },
       "totals": {
         "duration_ms": 68746.98579194956,
-        "duration_api_ms": 67809.0,
+        "duration_api_ms": 67809,
         "judge_duration_ms": 10308.367375051603,
         "wall_clock_ms": 79200.42109489441,
         "num_turns": 2,
@@ -8110,7 +8110,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 68746.98579194956,
-          "duration_api_ms": 67809.0,
+          "duration_api_ms": 67809,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1518,
@@ -8192,7 +8192,7 @@
           },
           "skill_cost_usd": 0.21107765000000003,
           "output": {
-            "text_response": "**hitRef:** results/log_022.json#FTXT-JX28\n**Verdict:** Possible Match\n**New Vital Info:** No\n**Already Extracted:** No\n\n---\n\nThis is an 1828 deed from the town of Jackson, Washington County, New York, in which an \"Iram Hyde\" appears as a witness \u2014 a name unusual enough to point to the target, and a place that matches precisely where the tree already places him. Without a named relative, age, or occupation, name and place alone make this a possible match, and the tree's 1826 Jackson mortgage already accounts for his presence there, so the record adds nothing new to what the tree holds.",
+            "text_response": "**hitRef:** results/log_022.json#FTXT-JX28\n**Verdict:** Possible Match\n**New Vital Info:** No\n**Already Extracted:** No\n\n---\n\nThis is an 1828 deed from the town of Jackson, Washington County, New York, in which an \"Iram Hyde\" appears as a witness — a name unusual enough to point to the target, and a place that matches precisely where the tree already places him. Without a named relative, age, or occupation, name and place alone make this a possible match, and the tree's 1826 Jackson mortgage already accounts for his presence there, so the record adds nothing new to what the tree holds.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -8211,7 +8211,7 @@
                   "ok": true,
                   "buildId": "0.1.0+2026-11-04.95c6e832",
                   "projectStatus": "active",
-                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796\u20131799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
+                  "objective": "Determine the birthplace (state) of Iram F. Hyde (G9GJ-959, b. c. 1796–1799, d. 1873 White Co., Indiana), whose census enumerations report differing birth states, and identify his parents.",
                   "subjectPersonIds": [
                     "I1"
                   ],
@@ -8222,7 +8222,7 @@
                   "openQuestions": [
                     {
                       "id": "q_002",
-                      "question": "Who were the parents of Iram Hyde (b. c. 1796\u20131798 New Hampshire)?"
+                      "question": "Who were the parents of Iram Hyde (b. c. 1796–1798 New Hampshire)?"
                     }
                   ],
                   "questionStatuses": [
@@ -8238,7 +8238,7 @@
                     {
                       "id": "q_002",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_002",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_002",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -8619,7 +8619,7 @@
                     {
                       "id": "S1",
                       "title": "FamilySearch Family Tree, Iram F. Hyde (G9GJ-959)",
-                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798\u20131873), PID G9GJ-959; accessed 9 October 2026.",
+                      "citation": "\"Family Tree,\" database, FamilySearch, entry for Iram F. Hyde (1798–1873), PID G9GJ-959; accessed 9 October 2026.",
                       "author": "FamilySearch community contributors",
                       "url": "https://www.familysearch.org/tree/person/details/G9GJ-959"
                     },
@@ -8674,7 +8674,7 @@
                     "person_id": "I1",
                     "verdict": "possible_match",
                     "new_vital_info": false,
-                    "rationale": "The hit names 'Iram Hyde' as a witness to a deed in the town of Jackson, Washington County, New York, on 14 May 1828 \u2014 an exact match to the target's known residence. No spouse, parent, age, or occupation is named, so the connection rests on name plus consistent time and place only. The tree already cites a 1826 Jackson mortgage placing Iram Hyde there, so the 1828 placement adds nothing the tree lacks."
+                    "rationale": "The hit names 'Iram Hyde' as a witness to a deed in the town of Jackson, Washington County, New York, on 14 May 1828 — an exact match to the target's known residence. No spouse, parent, age, or occupation is named, so the connection rests on name plus consistent time and place only. The tree already cites a 1826 Jackson mortgage placing Iram Hyde there, so the 1828 placement adds nothing the tree lacks."
                   }
                 },
                 "expected_args": null,
@@ -8713,7 +8713,7 @@
             "agent_returns": [
               {
                 "subagent_type": "evaluate-search-results",
-                "text": "hitRef: results/log_022.json#FTXT-JX28\nverdict: possible_match\nnewVitalInfo: false\nalreadyExtracted: false\n\n---\nThis is a 1828 deed from the town of Jackson, Washington County, New York, in which an \"Iram Hyde\" appears as a witness \u2014 a name unusual enough to point to the target, and a place that matches precisely where the tree already places him. Without a named relative, age, or occupation, name and place alone make this a possible match, and the tree's 1826 Jackson mortgage already accounts for his presence there, so the record adds nothing new to what the tree holds."
+                "text": "hitRef: results/log_022.json#FTXT-JX28\nverdict: possible_match\nnewVitalInfo: false\nalreadyExtracted: false\n\n---\nThis is a 1828 deed from the town of Jackson, Washington County, New York, in which an \"Iram Hyde\" appears as a witness — a name unusual enough to point to the target, and a place that matches precisely where the tree already places him. Without a named relative, age, or occupation, name and place alone make this a possible match, and the tree's 1826 Jackson mortgage already accounts for his presence there, so the record adds nothing new to what the tree holds."
               }
             ],
             "file_changes": {
@@ -8731,7 +8731,7 @@
                         "person_id": "I1",
                         "verdict": "possible_match",
                         "new_vital_info": false,
-                        "rationale": "The hit names 'Iram Hyde' as a witness to a deed in the town of Jackson, Washington County, New York, on 14 May 1828 \u2014 an exact match to the target's known residence. No spouse, parent, age, or occupation is named, so the connection rests on name plus consistent time and place only. The tree already cites a 1826 Jackson mortgage placing Iram Hyde there, so the 1828 placement adds nothing the tree lacks.",
+                        "rationale": "The hit names 'Iram Hyde' as a witness to a deed in the town of Jackson, Washington County, New York, on 14 May 1828 — an exact match to the target's known residence. No spouse, parent, age, or occupation is named, so the connection rests on name plus consistent time and place only. The tree already cites a 1826 Jackson mortgage placing Iram Hyde there, so the 1828 placement adds nothing the tree lacks.",
                         "created": "2026-11-04"
                       }
                     ],
@@ -8953,7 +8953,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified the hit as a Possible Match. The 1828 deed names 'Iram Hyde' as a witness in Jackson, Washington County, New York\u2014matching the target's known residence. The skill correctly applied the rule that name, time, and place alone (without a relative, occupation, or age) constitute a Possible Match, not a Match. The verdict is factually sound and supported by the hit content and tree state."
+                "rationale": "The skill correctly identified the hit as a Possible Match. The 1828 deed names 'Iram Hyde' as a witness in Jackson, Washington County, New York—matching the target's known residence. The skill correctly applied the rule that name, time, and place alone (without a relative, occupation, or age) constitute a Possible Match, not a Match. The verdict is factually sound and supported by the hit content and tree state."
               },
               {
                 "source": "base",
@@ -9003,7 +9003,7 @@
   ],
   "totals": {
     "duration_ms": 747997.3344593309,
-    "duration_api_ms": 728117.0,
+    "duration_api_ms": 728117,
     "judge_duration_ms": 98601.4153752476,
     "num_turns": 21,
     "input_tokens": 15216,
