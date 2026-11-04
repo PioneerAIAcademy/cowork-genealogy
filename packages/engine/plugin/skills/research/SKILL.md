@@ -135,6 +135,8 @@ destination: take it through "Hint review" below.
 - `mode: "hosted"`, and the message names a person no listed project is about, or none is listed: `newProjectPath`. It holds no `research.json` yet.
 - Otherwise: list each project's subjects, objective and `projectUrl`, ask which one to continue, and stop.
 
+**When `project_context` answers `no_project`, ask the researcher nothing.** With no person and question in the message, spawn `@plugin:tree-survey`. With one, spawn `@plugin:init-project`. The routing table's first two rows give the details.
+
 **If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
 
 **When a tool gave you the project's `projectUrl`, end the reply that ends your turn with it:** after the "Continue with …?" offer, on the same line, when there is one; otherwise as the last line.
