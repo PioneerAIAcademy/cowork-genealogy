@@ -11102,7 +11102,6 @@ export async function researchAppend(
     // degrade path below can take it back.
     let treeMutated = prep.treeMutated || rewrite.mutated || retire.mutated || removedPersons;
     let rewriteWarnings = [...rewrite.warnings, ...rewrite.mutationWarnings];
-
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
     // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
