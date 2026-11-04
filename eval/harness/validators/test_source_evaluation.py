@@ -1286,11 +1286,11 @@ _AGE_DERIVED_SOURCES = [
     {"name": "1910 census", "match": ["1910", "M5W8-LDP"]},
     {
         "name": "Vermont, Vital Records 1760-1954 death index",
-        "match": ["2V7M-JMY", "Vital Records, 1760-1954", "Vital Records 1760-1954", "VT VR 1760-1954"],
+        "match": ["2V7M-JMY", "SMQJ-41H", "Vital Records, 1760-1954", "Vital Records 1760-1954", "VT VR 1760-1954", "Vermont death record"],
     },
     {
         "name": "Vermont, Deaths and Burials 1871-1965 death index",
-        "match": ["F8R4-RYM", "Deaths and Burials", "Deaths & Burials"],
+        "match": ["F8R4-RYM", "SMQJ-46L", "Deaths and Burials", "Deaths & Burials"],
     },
 ]
 _AGE_REQUIRED_CONFLICT = {"date": ["31 Jan", "31 January"], "also": ["30 Nov", "30 November"]}
@@ -1311,6 +1311,24 @@ _AGE_DENIED_RE = re.compile(
     r"|ordinary (?:census )?variance|\(cd\)|census drift",
     re.IGNORECASE,
 )
+_AGE_BLOCK_WORDS = r"conflict|discrepan|error|finding|disagree|mismatch|inconsisten"
+# Reports that fault the profile's year against "every source" without naming the
+# census or index: the claim is about all of them, the age-derived ones included.
+_AGE_UNNAMED_NAME = "unnamed: every source giving a birth year"
+_AGE_UNNAMED_RE = re.compile(
+    r"\b(?:every|all|each|multiple|most|several)\b[^.]{0,60}\bsources?\b[^.]{0,80}\b(?:say|says|give|gives|"
+    r"report|reports|show|shows|indicate|indicates|agree|agrees|record|records)\b[^.]{0,40}\b1839\b"
+    r"|\b(?:inconsistent|conflicts?|disagrees?|contradict\w*)\b[^.]{0,40}\b(?:every|all|each)\b[^.]{0,40}"
+    r"\bsources?\b[^.]{0,60}\bbirth\b",
+    re.IGNORECASE,
+)
+
+
+def _age_is_heading(text: str) -> bool:
+    """A short line that is not a sentence or a list item: a section heading."""
+    return len(text) <= 140 and not re.match(r"^[-*>|]|^\d+[.)]\s", text) and not text.endswith((".", ","))
+
+
 _AGE_FINDING_HEAD_RE = re.compile(r"^\W*finding\s+\d+", re.IGNORECASE)
 # A table row with or without a leading pipe: the agent's own return pads columns
 # ("Birth year   | 1838 | 1839 [CONFLICT] | ..."); a leading-pipe-only match
@@ -1367,23 +1385,40 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
                 label = header[j] if j < len(header) else ""
                 flagged += _age_source_hits(f"{label} {cell}", sources)
 
-    in_birth_finding = False
+    in_birth_block = False
+    prev_blank = True
     for line in lines:
         if _AGE_ROW_RE.match(line):
             continue
-        if _AGE_FINDING_HEAD_RE.match(line):
-            in_birth_finding = bool(re.search(r"\bbirth\b", line, re.IGNORECASE))
+        stripped = line.strip()
+        if not stripped:
+            prev_blank = True
+            continue
+        if _AGE_FINDING_HEAD_RE.match(line) or (prev_blank and _age_is_heading(stripped)):
+            in_birth_block = bool(
+                re.search(r"\bbirth\b", stripped, re.IGNORECASE)
+                and re.search(_AGE_BLOCK_WORDS, stripped, re.IGNORECASE)
+            )
         elif re.match(r"^\W*(?:#{1,6}\s|[-*_]{3,}\s*$)", line):
-            in_birth_finding = False
+            in_birth_block = False
+        prev_blank = False
         for sentence in _SENTENCE_RE.split(line):
-            hits = _age_source_hits(sentence, sources)
-            if not hits or _AGE_DENIED_RE.search(sentence):
-                continue
-            about_birth = re.search(r"\bbirth\b", sentence, re.IGNORECASE)
-            if (about_birth and _AGE_CONFLICT_WORD_RE.search(sentence)) or (
-                in_birth_finding and re.search(r"\b18\d\d\b", sentence)
-            ):
-                flagged += hits
+            # Denial is judged per parenthetical clause, so "... the 1850
+            # census (within ordinary census variance)" clears only the 1850.
+            clauses = re.split(r"[()]", sentence)
+            for ci, clause in enumerate(clauses):
+                hits = _age_source_hits(clause, sources)
+                # A parenthetical right after the source belongs to it.
+                scope = clause + " " + (clauses[ci + 1] if ci + 1 < len(clauses) else "")
+                if not hits or _AGE_DENIED_RE.search(scope):
+                    continue
+                about_birth = re.search(r"\bbirth\b", sentence, re.IGNORECASE)
+                if (about_birth and _AGE_CONFLICT_WORD_RE.search(sentence)) or (
+                    in_birth_block and re.search(r"\b18\d\d\b", clause)
+                ):
+                    flagged += hits
+            if _AGE_UNNAMED_RE.search(sentence) and not _AGE_DENIED_RE.search(sentence):
+                flagged.append(_AGE_UNNAMED_NAME)
     return list(dict.fromkeys(flagged))
 
 
