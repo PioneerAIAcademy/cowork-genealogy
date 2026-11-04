@@ -48,6 +48,10 @@ class Turn:
     #: The step this turn ran, as the caller's step gate saw it. None when the
     #: turn spawned nothing.
     step: str | None = None
+    #: The step the caller's step gate offered when it HALTED this turn, or None.
+    #: A halt ends the turn before the model writes its offer line, so the host
+    #: answers this instead -- as the prototype worker does.
+    halt_offer: str | None = None
     #: The mode the turn RAN under (`step` / `job` / `wrapup`). A wrap-up turn
     #: runs several steps, so the per-step report must keep it out of the step it
     #: opened with -- as `proto/steps.py` does on the prototype side.

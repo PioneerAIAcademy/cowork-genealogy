@@ -15,6 +15,7 @@ description: >-
   wants to convert a date between calendar systems (use convert-dates), or wants
   to formally resolve conflicting evidence (use conflict-resolution).
 model: claude-sonnet-4-6
+effort: high
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -202,7 +203,7 @@ wiki_search({ query: "German immigration Pennsylvania 1840s" })  // FamilySearch
 wiki_read({ url: "<specific FamilySearch wiki page URL>" })       // FamilySearch wiki
 wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })  // Wikipedia
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
-place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
+place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 ```
 
 Resolve the place with `place_search` first and pass the result's

@@ -16,6 +16,7 @@ description: >-
   like migration or why an event happened (use historical-context), or a
   general Wikipedia summary of the place (use search-wikipedia).
 model: claude-sonnet-4-6
+effort: high
 tools:
   - Read
   - mcp__genealogy__wiki_search
@@ -121,7 +122,7 @@ On `No wiki page found`, or a page that returns only generic content, record and
 **All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the main source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. Pass the most specific `standardPlace` for every section. `home` returns the place's own page at any level the wiki has one; for a county, its *Neighboring Counties* table names the adjoining jurisdictions. The other three sections exist only for a state or country: when one returns `No wiki page found` for a smaller place, broaden the `standardPlace` one jurisdiction level and retry before recording `found: false`.
 
 ```
-place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
+place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
 wiki_place_page({ standardPlace: "Schuylkill, Pennsylvania, United States", section: "home" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })

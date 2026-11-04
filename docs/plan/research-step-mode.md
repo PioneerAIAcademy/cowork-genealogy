@@ -1173,7 +1173,11 @@ in parallel with PR 2.
     enforces the boundary, so this list is the prototype plus the harnesses):
     - the worker's `PreToolUse`, with `turns.step`, `turns.mode` and the redelivery seed.
       **Deny first, halt only on a second attempt** — the halt is the BACKSTOP, not the first
-      move, and it denies the call it stops (decision 25). Rider 2: log every halt, because
+      move, and it denies the call it stops (decision 25). A halt still offers the step it
+      named: two spawns in one message both reach the gate before the model reads a deny, so
+      the second halts a turn that never wrote its offer line. The gate keeps that offer
+      (`StepGate.halt_offer`), and the worker and the e2e host answer it as if the model had
+      written it (found by the 2026-11-02 `clark-parents` step-mode check). Rider 2: log every halt, because
       the router prose is identical on both planes, so the rate measures how often Cowork
       runs past a boundary;
     - ~~the alpha's hooks, with the `Skill` coverage~~ — **removed by decision 25: the alpha
