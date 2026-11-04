@@ -165,7 +165,7 @@ search back to it rather than running it yourself.
 - **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
 - **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
 - A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
-- **A state census** takes the state's page instead: `wiki_read({ url: "https://www.familysearch.org/en/wiki/{State}_Census" })`.
+- **A state census** (in the US, a year not ending in 0) takes the state's page instead: `wiki_read({ url: "https://www.familysearch.org/en/wiki/{State}_Census" })`.
 - Never state that a record set is held only at a named repository, or is not available elsewhere. Which outside sites hold it is `search-external-sites`' answer.
 
 **Choose a search strategy:**
@@ -761,7 +761,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
   - Collection mismatch confirmed (Step 5) → State the mismatch plainly and point to a different source or collection filter. Step 5's ban on variant-spelling escalation covers this summary, not just the tool calls you make: do not float a variant spelling as a possible explanation for the gap, or as one option among several next steps, even hedged — that reintroduces the escalation the mismatch protocol forbids, in the one place the user actually reads a recommendation.
   - More plan items, no prior authorization to continue → "Shall I continue with the next search?"
   - All done → "All planned searches are complete. Would you like me to evaluate whether the research is exhaustive?" (research-exhaustiveness)
-  - No results → "FamilySearch is exhausted for this search — shall I generate Ancestry/MyHeritage URLs for it (search-external-sites), or re-plan with different parameters or adjacent jurisdictions (research-plan)?"
+  - No results, outside Step 8 item 7 → "FamilySearch is exhausted for this search — shall I generate Ancestry/MyHeritage URLs for it (search-external-sites), or re-plan with different parameters or adjacent jurisdictions (research-plan)?"
 
 ## Searching multiple repositories
 

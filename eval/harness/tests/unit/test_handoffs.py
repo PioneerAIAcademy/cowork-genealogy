@@ -132,7 +132,7 @@ def test_escalation_passes_on_a_named_hand_back_and_fails_without_one():
         mod.test_escalates_to_external_sites_after_fs_exhaustion([], "", {"tags": []})
 
 
-NO_SOLE = {"tags": ["no-sole-repository-claim"]}
+NO_SOLE = {"tags": ["no-sole-repository-claim"], "delegation": "Find every Tallman family."}
 
 
 @pytest.mark.parametrize("text", [
@@ -140,6 +140,14 @@ NO_SOLE = {"tags": ["no-sole-repository-claim"]}
     "The 1835 census is only available at the NYSL.",
     "Status: in_progress\n---\nThese early state censuses are not available elsewhere.",
     "The 1845 returns are held exclusively at the State Library.",
+    "The 1825 schedules are held only at the New York State Library.",
+    "They are available only at the NYSL.",
+    "These are only at the NY State Library.",
+    "The surviving schedules exist only by the State Library's microfilm.",
+    "Not on FamilySearch (NY State Library only)",
+    "The NYSL is the sole repository for these years.",
+    "No other repository holds them.",
+    "They are not available anywhere else.",
 ])
 def test_sole_repository_claim_fails(text):
     with pytest.raises(AssertionError):
@@ -150,9 +158,20 @@ def test_sole_repository_claim_fails(text):
     "1825, 1835, 1845: not on FamilySearch.\nHand-back: search-external-sites — NY state census, Clinton and Essex Counties, 1825/1835/1845; FamilySearch holds no collection for these years",
     "The wiki lists the 1892 census on Ancestry and FamilySearch.",
     "Only 1855-1875 are indexed on FamilySearch; the New York State Library holds a county list.",
+    "The originals are held at the New York State Library, and only 1855 onward is on FamilySearch.",
+    "Originals held at the NYSL; only county lists survive.",
+    "Hiram Tallman was found only in the 1849 directory.",
+    "| Essex | Keeseville directory (Clinton only) |",
 ])
 def test_sole_repository_claim_passes_a_legitimate_return(text):
     _validators("test_search_records").test_no_sole_repository_claim(_return(text), "", NO_SOLE)
+
+
+def test_sole_repository_claim_grades_the_agent_not_the_relay():
+    # A direct test grades the agent's own return; the dispatcher's relay is not it.
+    _validators("test_search_records").test_no_sole_repository_claim(
+        _return("Not on FamilySearch."), "held at NY State Library only", NO_SOLE
+    )
 
 
 def test_sole_repository_claim_is_tag_gated():
@@ -160,6 +179,19 @@ def test_sole_repository_claim_is_tag_gated():
         _validators("test_search_records").test_no_sole_repository_claim(
             _return("held at NY State Library only"), "", {"tags": []}
         )
+
+
+def test_no_collection_hand_back_needs_a_search_first():
+    mod = _validators("test_search_records")
+    mod.test_searched_before_no_collection_hand_back(
+        [{"tool": "mcp__genealogy__record_search", "args": {"surname": "Tallman"}}], NO_SOLE
+    )
+    with pytest.raises(AssertionError):
+        mod.test_searched_before_no_collection_hand_back(
+            [{"tool": "mcp__genealogy__wiki_read", "args": {"url": "New_York_Census"}}], NO_SOLE
+        )
+    with pytest.raises(pytest.skip.Exception):
+        mod.test_searched_before_no_collection_hand_back([], {"tags": []})
 
 
 # --- Warning gate (issue #2840): replaced check-warnings hand-off tests --------
