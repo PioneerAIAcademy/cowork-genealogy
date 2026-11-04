@@ -191,3 +191,43 @@ def test_tree_edit_hand_back_to_record_extraction():
         _direct("record-extraction", skill="tree-edit"),
         _returned("Hand-back: record-extraction — extract the 1880 census first.", agent="tree-edit"),
     )
+
+
+# --- The read-only allowance (tree-edit, #3836) -------------------------------
+
+TREE_CALL = {"tool": "mcp__genealogy__tree_query", "args": {"projectPath": "/w"}, "response": {"ok": True}}
+
+
+def _reads() -> dict:
+    spec = _spec()
+    spec["tags"] = [*spec["tags"], "reads-before-hand-back"]
+    return spec
+
+
+def test_the_reads_tag_admits_any_number_of_read_only_project_calls():
+    check_hand_back([GUARD_CALL, TREE_CALL, GUARD_CALL], AGENT_RETURN, _reads())
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        [WARNINGS_CALL],
+        [GUARD_CALL, WARNINGS_CALL],
+        [{"tool": "mcp__genealogy__research_append", "args": {}}],
+        [{"tool": "mcp__genealogy__tree_edit", "args": {}}],
+    ],
+    ids=["other-tool", "read-then-work", "research-writer", "tree-writer"],
+)
+def test_the_reads_tag_still_bans_everything_else(calls):
+    with pytest.raises(AssertionError, match="makes no tool call"):
+        check_hand_back(calls, AGENT_RETURN, _reads())
+
+
+def test_without_the_reads_tag_a_tree_query_fails():
+    with pytest.raises(AssertionError, match="makes no tool call"):
+        check_hand_back([TREE_CALL], AGENT_RETURN, _spec())
+
+
+def test_the_reads_tag_does_not_excuse_a_missing_owner():
+    with pytest.raises(AssertionError, match="never names conflict-resolution"):
+        check_hand_back([TREE_CALL], "Hand-back: nothing.", _reads())
