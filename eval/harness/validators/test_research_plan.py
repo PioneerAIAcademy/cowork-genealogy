@@ -1767,3 +1767,59 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
         "pre-register birth planned as if a baptism could be found:\n  - "
         + "\n  - ".join(problems)
     )
+
+
+# --- The pending-hints review leads the plan (issue #3906) --------------------
+
+def test_research_plan_hints_review_first(before_state, after_state, test):
+    """Tag-gated: ``fs-hints-first`` and ``no-fs-hints``.
+
+    `fs-hints-first`: on an identity, parentage, birth, death or marriage
+    question whose person has an `ark`, the new plan's first item is the
+    `fs_hints` review of that person's pending hints — an item at `sequence` 1,
+    none lower, whose rationale names the person's PID. The PIDs are the `ark`
+    tails of the tree persons the open question names (`_question_person_pids`).
+
+    `no-fs-hints`: an enumerative question on an ark-bearing person gets no
+    `fs_hints` item. The scenario must carry such a person, or the arm would
+    pass by construction.
+
+    The lead's 2026-10-29 ruling on #3906 widened the item from identity and
+    parentage questions to birth, death and marriage questions."""
+    tags = test.get("tags") or []
+    positive = "fs-hints-first" in tags
+    negative = "no-fs-hints" in tags
+    if not positive and not negative:
+        pytest.skip("not a hints-review test")
+    research = before_state.get("research_json")
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
+    after = after_state.get("research_json")
+    if research is None or tree is None or after is None:
+        pytest.skip("missing research.json or tree.gedcomx.json for diff")
+    pids = _question_person_pids(research, tree)
+    assert pids, "Scenario drift: no person the open question names has an `ark`."
+    items = [i for p in _new_plans(research, after) for i in (p.get("items") or [])]
+    assert items, "no new plan items were written"
+
+    if negative:
+        hints = [i.get("id") for i in items if i.get("record_type") == "fs_hints"]
+        assert not hints, (
+            f"An enumerative question gets no fs_hints item; the new plan holds {hints}."
+        )
+        return
+
+    def _seq(item: dict) -> float:
+        s = item.get("sequence")
+        return s if isinstance(s, (int, float)) and not isinstance(s, bool) else float("inf")
+
+    lowest = min(_seq(i) for i in items)
+    leads = [i for i in items if _seq(i) == 1 and i.get("record_type") == "fs_hints"]
+    first = sorted(items, key=_seq)[0]
+    assert lowest == 1 and leads, (
+        f"The first item must be the fs_hints review at sequence 1; the lowest item is "
+        f"{first.get('id')} ({first.get('record_type')}, sequence {first.get('sequence')})."
+    )
+    assert any(pid in (i.get("rationale") or "").upper() for i in leads for pid in pids), (
+        f"{leads[0].get('id')}'s rationale names none of {sorted(pids)}: "
+        f"{leads[0].get('rationale')!r}"
+    )

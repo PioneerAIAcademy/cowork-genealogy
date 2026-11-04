@@ -69,11 +69,13 @@ class FakeStepClient:
                             "questions": [{"id": "q_1", "status": "resolved"}]}),
                 encoding="utf-8",
             )
-        if spawn:
+        # A list is several spawns in one turn, fired in order -- the shape of a
+        # parallel dispatch, which reaches the gate before the model sees a deny.
+        for name in (spawn if isinstance(spawn, list) else [spawn] if spawn else []):
             for callback in self._hook("PreToolUse"):
                 self.pretool_returns.append(
                     await callback({"tool_name": "Task",
-                                    "tool_input": {"subagent_type": spawn}}, None, None) or {}
+                                    "tool_input": {"subagent_type": name}}, None, None) or {}
                 )
         yield AssistantMessage(content=[TextBlock(text=text)], model="m")
         yield _result()
@@ -186,6 +188,23 @@ def test_the_host_replies_between_turns(tmp_path, monkeypatch):
     )
     assert len(client.sent) >= 2, client.sent
     assert client.sent[1] == "Keep going.", client.sent
+
+
+def test_the_host_answers_a_turn_the_step_gate_halted(tmp_path, monkeypatch):
+    """clark-parents, 2026-11-02: two searches spawned in one message after a hints step.
+    The second halts, so the turn ends on "Now dispatching..." with no offer line, and
+    the run ended there with nothing searched. The halt named the offer; the host
+    answers that, as the prototype worker does."""
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER),
+         (["search-hints", "search-records", "search-records"], "Now dispatching both searches."),
+         (None, "done.")],
+        step_mode="job",
+    )
+    assert [r.get("continue_") for r in client.pretool_returns][-1] is False, \
+        "the second parallel spawn no longer halts, so this proves nothing"
+    assert len(client.sent) == 3, client.sent
 
 
 def test_each_turn_records_the_step_it_opened_with(tmp_path, monkeypatch):
