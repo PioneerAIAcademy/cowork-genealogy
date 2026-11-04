@@ -1925,3 +1925,40 @@ def test_a_padded_table_without_leading_pipes_is_read():
 def test_a_padded_table_that_says_cen_var_is_not_flagged():
     clean = _PADDED_TABLE.replace("[CONFLICT]", "[cen. var]")
     assert _VALIDATOR._age_derived_flags(clean, _VALIDATOR._AGE_DERIVED_SOURCES) == []
+
+
+_FOOTNOTED_BLOCK = """\
+Birth date - the most significant conflict on this profile
+
+- Every source that provides a birth year gives 1839, not 1838: the Vermont death records (SMQJ-41H, SMQJ-46L), the 1865 New York State Census and the 1910 US Census.
+- Find a Grave indexes a full birth date of 31 January 1839 (31 Jan).
+"""
+
+
+def test_a_bullet_block_under_a_birth_conflict_heading_is_read():
+    flagged = _VALIDATOR._age_derived_flags(_FOOTNOTED_BLOCK, _VALIDATOR._AGE_DERIVED_SOURCES)
+    assert "1865 census" in flagged and "1910 census" in flagged
+    assert "Vermont, Vital Records 1760-1954 death index" in flagged
+
+
+def test_a_parenthetical_denial_clears_only_its_own_source():
+    text = (
+        "Birth date - the most significant conflict on this profile\n\n"
+        "- The 1850 US Census (which puts it at 1839, within ordinary census variance of either year).\n"
+    )
+    assert _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES) == []
+
+
+def test_an_unnamed_every_source_claim_is_flagged():
+    text = "The profile's date is inconsistent with every source in the audit list that speaks to birth year (all give 1839)."
+    flagged = _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES)
+    assert flagged and flagged[0].startswith("unnamed")
+
+
+def test_the_exact_date_sources_alone_are_not_flagged():
+    text = (
+        "Birth date - the core conflict\n\n"
+        "The tombstone reads Aet. 74 yrs 6 mos 16 dys, giving 31 January 1839. "
+        "Find a Grave independently lists 31 January 1839. The profile's 30 November 1838 disagrees.\n"
+    )
+    assert _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES) == []
