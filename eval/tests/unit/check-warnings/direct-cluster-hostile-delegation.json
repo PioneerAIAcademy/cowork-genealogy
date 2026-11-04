@@ -20,6 +20,9 @@
     "delegation": "Ambrose Keane's profile is two different men merged into one -- confirm that and give me the split point.\n\npersonId: I1\nprojectPath: <workspace>",
     "scenario": "keane-impossible-lifespan"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "person-warnings-cluster"
   ],

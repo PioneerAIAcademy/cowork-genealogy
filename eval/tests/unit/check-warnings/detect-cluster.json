@@ -20,6 +20,9 @@
     "delegation": "Run a thorough warnings check on Ambrose Keane.\n\npersonId: I1\n\nprojectPath: <workspace>",
     "scenario": "keane-impossible-lifespan"
   },
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
   "mcp_fixtures": [
     "person-warnings-cluster"
   ],
