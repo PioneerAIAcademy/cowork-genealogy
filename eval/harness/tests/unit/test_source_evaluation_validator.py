@@ -1970,3 +1970,44 @@ def test_a_sentence_reporting_the_ranges_is_not_a_flag():
         "- The 1850, 1865, and 1910 censuses all produce birthRanges of 1838-1839 from the recorded age.\n"
     )
     assert _VALIDATOR._age_derived_flags(text, _VALIDATOR._AGE_DERIVED_SOURCES) == []
+
+
+def test_a_sentence_about_full_date_sources_is_not_an_unnamed_flag():
+    """Replay of a live run: "every attached source ... all sources that give a specific
+    full date give 31 January 1839" is about the tombstone, not the age-derived sources."""
+    _age_check(
+        _TALLMAN_HEADER + _GOOD_BIRTH_ROW + "\n"
+        "The specific date of 30 November 1838 is absent from every attached source; all sources "
+        "that give a specific full date instead give 31 January 1839.\n\n" + _GOOD_FINDING
+    )
+
+
+def test_an_unnamed_claim_about_every_birth_year_source_still_fails():
+    """The other direction: the same words about year-only sources are still a flag."""
+    with pytest.raises(AssertionError, match="unnamed"):
+        _age_check(
+            _TALLMAN_HEADER + _GOOD_BIRTH_ROW + "\n"
+            "All sources give 1839 as the birth year, which conflicts with the profile's 1838 birth.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
+
+
+def test_a_consistent_verdict_after_a_citation_list_is_not_a_flag():
+    """Replay of a live run: a parenthetical id list between the source and "consistent with"."""
+    _age_check(
+        "The Vermont death records (VT-D/1954, VT-DB) record birth year 1839, which is consistent with "
+        "either November 1838 or January 1839, so they do not resolve the conflict.\n\n"
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+    )
+
+
+def test_a_long_parenthetical_does_not_hide_a_flag():
+    """The other direction: a long aside is not a citation list, so a later 'consistent' elsewhere
+    does not clear a source that was flagged first."""
+    with pytest.raises(AssertionError, match="Vermont"):
+        _age_check(
+            "The Vermont, Vital Records 1760-1954 death index birth year of 1839 conflicts with the profile "
+            "(a long aside about the cemetery and the funeral home that went on for a while) "
+            "consistent with nothing.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )

@@ -1326,6 +1326,11 @@ _AGE_UNNAMED_RE = re.compile(
 )
 
 
+# A sentence about sources that give a full or specific date is about the tombstone and
+# Find a Grave, not about the age-derived ones.
+_AGE_FULL_DATE_RE = re.compile(r"\b(?:specific|full|exact)\b[^.]{0,20}\bdates?\b", re.IGNORECASE)
+
+
 def _age_is_heading(text: str) -> bool:
     """A short line that is not a sentence or a list item: a section heading."""
     return len(text) <= 140 and not re.match(r"^[-*>|]|^\d+[.)]\s", text) and not text.endswith((".", ","))
@@ -1412,6 +1417,8 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
                 hits = _age_source_hits(clause, sources)
                 # A parenthetical right after the source belongs to it.
                 scope = clause + " " + (clauses[ci + 1] if ci + 1 < len(clauses) else "")
+                if ci + 2 < len(clauses) and len(clauses[ci + 1]) <= 40:
+                    scope += " " + clauses[ci + 2]
                 if not hits or _AGE_DENIED_RE.search(scope):
                     continue
                 if _AGE_RANGE_RE.search(clause) and not re.search(r'\[\s*conf', clause, re.IGNORECASE):
@@ -1421,7 +1428,11 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
                     in_birth_block and re.search(r"\b18\d\d\b", clause)
                 ):
                     flagged += hits
-            if _AGE_UNNAMED_RE.search(sentence) and not _AGE_DENIED_RE.search(sentence):
+            if (
+                _AGE_UNNAMED_RE.search(sentence)
+                and not _AGE_DENIED_RE.search(sentence)
+                and not _AGE_FULL_DATE_RE.search(sentence)
+            ):
                 flagged.append(_AGE_UNNAMED_NAME)
     return list(dict.fromkeys(flagged))
 
