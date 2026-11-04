@@ -85,7 +85,7 @@ def sniff(head: bytes) -> Sniffed:
     return Sniffed("application/octet-stream")
 
 
-_OBJ_HEADER_RE = re.compile(rb"(\d+)\s+\d+\s+obj\b")
+_OBJ_HEADER_RE = re.compile(rb"(?<![0-9])(\d{1,10})\s{1,16}\d{1,5}\s{1,16}obj\b")
 _PAGE_RE = re.compile(rb"/Type\s*/Page\b")
 
 

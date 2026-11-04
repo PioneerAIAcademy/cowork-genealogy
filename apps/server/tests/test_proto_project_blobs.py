@@ -13,6 +13,7 @@ which is what the viewer renders as "no scan".
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -223,6 +224,15 @@ def test_the_first_bytes_decide_the_type_and_tiff_and_heic_are_refused(head, con
 )
 def test_pages_are_counted_by_distinct_object_number(body, pages):
     assert pdf_page_count(b"%PDF-1.4\n" + body) == pages
+
+
+def test_pdf_page_count_is_linear_on_a_digit_run():
+    """A long digit run made the unbounded object-header regex backtrack quadratically,
+    and `re` holds the GIL, so the scan froze the event loop for every patron."""
+    body = b"%PDF-1.4\n" + b"1" * 50_000
+    t = time.perf_counter()
+    pdf_page_count(body)
+    assert time.perf_counter() - t < 1.0
 
 
 def test_deleting_an_upload_drops_its_row_and_leaves_the_object_to_the_sweep():
