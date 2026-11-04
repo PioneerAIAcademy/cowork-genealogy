@@ -29,9 +29,13 @@ const pluginRoot = join(here, "..", "..", "..", "plugin");
 const skillsRoot = join(pluginRoot, "skills");
 const agentsRoot = join(pluginRoot, "agents");
 
-const READ_VERB = /\b(?:read|reads|reading|re-read|re-reads|open|opens|grep|glob|scan|scans|cat)\b(?!-only)/gi;
+const READ_VERB =
+  /\b(?:read|reads|reading|re-read|re-reads|open|opens|grep|glob|scan|scans|cat|load|loads|loading|parse|parses|parsing|look|looks|looking|check|checks|checking|inspect|inspects|inspecting|consult|consults|view|views)\b(?!-only)/gi;
 const PROJECT_FILE = /(?:research|tree)\.(?:gedcomx\.)?json/;
-const PROHIBITION = /\b(?:never|not|don't|without|instead of|rather than|no need to|replaces)\b/i;
+const NOUN_AMBIGUOUS = /^(?:check|checks|view|views|look|looks)$/i;
+/** A prohibition counts only when it governs the verb: at most two words sit between them. */
+const PROHIBITION =
+  /\b(?:never|do not|does not|don't|must not|should not|cannot|can't|without|instead of|rather than|no need to|replaces)[\s`"'*(]+(?:[\w-]+[\s`"'*(]+){0,2}$/i;
 /** A tool or server describing its own read is not an instruction to the agent. */
 const TOOL_SUBJECT = /\b(?:tool|itself|server|hook)\b/i;
 
@@ -52,6 +56,8 @@ export function directReadViolations(body: string): { line: number; text: string
         const after = sentence.slice(m.index! + m[0].length);
         const before = sentence.slice(0, m.index);
         if (!PROJECT_FILE.test(after.slice(0, 120))) continue;
+        // "…a well-formedness check ("is research.json valid?")": the noun, with the file inside a quoted example.
+        if (NOUN_AMBIGUOUS.test(m[0]) && /^[*\s]*\(\s*["“]/.test(after)) continue;
         if (PROHIBITION.test(before) || TOOL_SUBJECT.test(before)) continue;
         bad = true;
       }
@@ -104,6 +110,13 @@ describe("plugin bodies never instruct a direct read of a project file", () => {
       expect(flagged("Use Grep to scan research.json for the source.")).toBe(true);
       expect(flagged("**Narration:** Read `researcher_profile.narration_guidance` and apply it.")).toBe(true);
       expect(flagged("Step 1 reads research.json to find the plan.")).toBe(true);
+      expect(flagged("Load research.json and find the plan.")).toBe(true);
+      expect(flagged("Parse tree.gedcomx.json for the birth date.")).toBe(true);
+      expect(flagged("Check research.json for an open question.")).toBe(true);
+      expect(flagged("If you do not have the plan, read research.json for it.")).toBe(true);
+      expect(flagged("We are not sure, so open tree.gedcomx.json.")).toBe(true);
+      expect(flagged("Check (briefly) research.json for the plan.")).toBe(true);
+      expect(flagged("Check the \"plans\" section of research.json.")).toBe(true);
       expect(flagged("Default projectPath to the current working directory.")).toBe(true);
     });
 
@@ -118,6 +131,10 @@ describe("plugin bodies never instruct a direct read of a project file", () => {
       expect(flagged("The tool reads `tree.gedcomx.json` itself and returns warnings.")).toBe(false);
       expect(flagged("This path is read-only. tree.gedcomx.json is not uploaded.")).toBe(false);
       expect(flagged("Replaces reading `research.json`.")).toBe(false);
+      expect(flagged("Never `Read` research.json directly.")).toBe(false);
+      expect(flagged("You must not load tree.gedcomx.json yourself.")).toBe(false);
+      expect(flagged("Work without reading research.json.")).toBe(false);
+      expect(flagged("A well-formedness check (\"is research.json valid?\") is validate-schema's.")).toBe(false);
     });
 
     it("only reads a sentence at a time", () => {
