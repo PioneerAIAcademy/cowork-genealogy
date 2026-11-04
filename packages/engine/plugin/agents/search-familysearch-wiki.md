@@ -49,7 +49,7 @@ use a repository. You write no other project state.
 You are reached by a delegation carrying the research question — a bare phrase,
 a quoted user turn, or a labelled parameter. Resolve the question from whatever
 it gives you and ask nothing back. `projectPath`, when given, is the absolute
-project-folder path; absent, use the working folder's absolute path.
+project-folder path; absent, there is no project.
 
 ## Scope — decide it yourself, every time
 

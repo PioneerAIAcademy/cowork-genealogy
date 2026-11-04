@@ -40,10 +40,13 @@ def test_only_logs_translation(tool_calls, test):
         for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
     ]
-    other = [n for n in names if n not in {"research_log_append", "validate_research_schema"}]
+    other = [
+        n for n in names
+        if n not in {"research_log_append", "validate_research_schema", "project_context"}
+    ]
     assert not other, (
         "translation should call no MCP tool other than research_log_append "
-        f"(and validate_research_schema), but called: {other}"
+        f"(and validate_research_schema, project_context), but called: {other}"
     )
     logs = names.count("research_log_append")
     assert logs <= 1, f"translation called research_log_append {logs} times; one translation is one entry"

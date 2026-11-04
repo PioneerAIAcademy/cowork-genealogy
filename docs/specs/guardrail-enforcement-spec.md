@@ -2839,6 +2839,24 @@ this section before reopening one.
   the neutral-wording twins stay; 011 and 012 pass unchanged, and 018 passes
   under its relaxed tier.
 
+  **An empty `fulltext_search` left unlogged, ruled validator-only (lead,
+  2026-11-01).** A nil stages nothing, so `research_log_append`'s guards never
+  see a search the agent ran and did not log, and the write-boundary filtered-nil
+  guard governs only what is logged. The lead chose an eval check over staging
+  empty searches or a `SubagentStop` refusal, with `nilSearchNeedsLog` kept
+  advisory and no engine change: the main thread cannot call `fulltext_search`,
+  every unlogged empty call in the e2e corpus was a main-thread
+  call, and inside the agent 0 of 28 e2e calls went unlogged. The unit plane is
+  `test_every_nil_fulltext_search_is_logged` (`eval/harness/validators/test_search_full_text.py`),
+  which reads the new `log[]` entries rather than the call arguments, so a refused
+  batch does not count, and keys each nil on its search term plus the filter keys
+  sent. Over the six committed `search-full-text` run logs when it landed
+  (`v1.json`, `v1_2026-10-06_14-52-19` to `v2_2026-11-02_15-24-54`; 102 runs) it
+  fires on two runs, both in `v1_2026-10-20_07-55-34`, which ran without the
+  filtered-nil guard; on none since. Re-derive by replaying the check over each
+  run's `tool_calls` and its `file_changes` log additions. **What would reopen this:** an unlogged empty `fulltext_search`
+  inside the agent on an attributed e2e run (`make e2e-advisories SINCE=all`).
+
 - **An ark cross-check on `exhaustive_search_summary`** — "every ark named in a proof
   summary's `exhaustive_search_summary` must appear in some `log[].query`." Proposed
   2026-09-17 against a real defect: in the `pedro-chaves-spouse` run of 2026-09-09, call 182

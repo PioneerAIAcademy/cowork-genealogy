@@ -223,12 +223,6 @@ MAIN_THREAD_OK = {
         "routed per section by owner_denied below, whose reason names the one "
         "agent that owns the section; a tool-level deny would name sixteen"
     ),
-    "tree_query": (
-        "the research router reads a tree person's facts on the main thread "
-        "(ut_research_s59 does in research's v40 run log); a deny would send an "
-        "ordinary tree read to an agent. evaluate-search-results became its only "
-        "agent holder in issue #3522"
-    ),
 }
 
 # A path never contains a newline, and is never longer than the platform allows.
