@@ -17883,3 +17883,88 @@ describe("a searched plan item the record-type check will not complete can be sk
     expect(planItemSearchedSkipInvariants({ ...item, status: "skipped", skip_category: "not_applicable" }, probate)).toHaveLength(1);
   });
 });
+
+// A link to a person this research added with no source ref on any name or fact
+// (`tree_edit add_person`), which nothing ties to a record (#2475, clack391's row).
+describe("research_append — person_evidence to a ref-less added person", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-refless-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const REFUSAL = /added during this research with no source ref/;
+  const named = (id: string, given: string, sourced = false) => ({
+    id,
+    gender: "Male",
+    names: [{ id: `N${id}`, given, surname: "Janeczky", ...(sourced ? { sources: [{ ref: "SD-001" }] } : {}) }],
+  });
+  const tree = {
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] },
+      named("I2", "Joannes"),
+      named("I3", "Josef", true),
+    ],
+    relationships: [],
+    sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
+  };
+  const research = (extra: Record<string, unknown>[] = []) => {
+    const r = baseResearch();
+    r.assertions.push(
+      { ...validAssertion("a_002"), record_id: "rec2", record_role: "father_1", fact_type: "name", value: "Joannes Janeczky" },
+      {
+        ...validAssertion("a_003"), record_id: "rec3", record_role: "absent", record_basis: "absent",
+        fact_type: "residence", value: "Joannes absent from the 1891 household",
+      },
+    );
+    r.person_evidence.push(...extra);
+    return r;
+  };
+  async function write(r: any, withStartingTree = true) {
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
+    if (withStartingTree) {
+      await writeProjectFile(
+        join(dir, "starting-tree.gedcomx.json"),
+        JSON.stringify({ persons: [tree.persons[0]], relationships: [], sources: [] }, null, 2),
+      );
+    }
+  }
+  const link = (person_id: string, assertion_id: string) => ({
+    projectPath: dir,
+    section: "person_evidence" as const,
+    op: "append" as const,
+    entry: { assertion_id, person_id, confidence: "probable", match_score: null, rationale: "named on the record" },
+  });
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+
+  it("refuses a link to an added person with no source ref, naming materialize_facts and the persona", async () => {
+    await write(research());
+    const r = await researchAppend(link("I2", "a_002"));
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(REFUSAL);
+    expect(errorsOf(r)).toMatch(/materialize_facts\(\{ projectPath, personId: 'I2', recordId 'rec2', recordRole 'father_1' \}\)/);
+    expect(JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence).toHaveLength(0);
+  });
+
+  it("refuses an update that moves a link onto such a person", async () => {
+    await write(research([
+      { id: "pe_001", assertion_id: "a_002", person_id: "I3", confidence: "probable", match_score: null, rationale: "x", created: "2026-01-02", superseded_by: null },
+    ]));
+    const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { person_id: "I2" } });
+    expect(errorsOf(r)).toMatch(REFUSAL);
+  });
+
+  it.each([
+    ["a starting-tree person with no ref", "I1", "a_002", true],
+    ["an added person whose name is sourced", "I3", "a_002", true],
+    ["negative evidence, which no persona can materialize", "I2", "a_003", true],
+    ["a project with no starting-tree baseline", "I2", "a_002", false],
+  ])("does not refuse %s", async (_label, personId, assertionId, withStartingTree) => {
+    await write(research(), withStartingTree as boolean);
+    const r = await researchAppend(link(personId as string, assertionId as string));
+    expect(errorsOf(r)).not.toMatch(REFUSAL);
+  });
+});

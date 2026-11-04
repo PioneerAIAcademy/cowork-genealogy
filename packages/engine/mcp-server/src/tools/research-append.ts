@@ -2430,6 +2430,48 @@ export function pidOrStartingPerson(personId: string, startingPersonIds?: Readon
   return FS_PERSON_PID.test(personId) || startingPersonIds?.has(personId) === true;
 }
 
+/** A live link to a person this research added who carries no source ref on any
+ *  name or fact: `tree_edit add_person` made it, so nothing records which record it
+ *  came from, and the link would vouch for it anyway. `materialize_facts` writes the
+ *  persona's sourced name and facts onto it, after which it links. Silent without a
+ *  starting-tree baseline, which cannot tell an imported person from an added one,
+ *  for an attachment link, and for negative evidence, which no record's persona
+ *  can materialize. Measured 2026-11-04 over the e2e final documents: of 4,950
+ *  links since August, 8 point at such a person (3 persons, 2 of them
+ *  record-derived stubs and 1 negative evidence, now exempt); 1,098 of July's 6,014
+ *  did. */
+function refLessAddedPersonInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  startingPersonIds?: ReadonlySet<string>,
+  batchAssertions?: Map<string, any>,
+  attachmentLink = false,
+): string[] {
+  const personId = entry?.person_id;
+  if (typeof personId !== "string" || !startingPersonIds || startingPersonIds.size === 0) return [];
+  if (attachmentLink || isAttachmentLink(entry) || pidOrStartingPerson(personId, startingPersonIds)) return [];
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  if (!person || personSourceRefs(person).size > 0) return [];
+  if (((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))) {
+    return [];
+  }
+  const assertion =
+    batchAssertions?.get(entry.assertion_id) ??
+    ((research?.assertions ?? []) as any[]).find((a: any) => a?.id === entry.assertion_id);
+  if (assertion?.record_role === "absent" || assertion?.record_basis === "absent") return [];
+  const persona =
+    typeof assertion?.record_id === "string" && typeof assertion?.record_role === "string"
+      ? `recordId '${assertion.record_id}', recordRole '${assertion.record_role}'`
+      : "the persona's recordId and recordRole";
+  return [
+    `person_evidence links '${personId}', a person added during this research with no source ref ` +
+      `on any name or fact, so nothing records which record it came from. Write the persona onto it ` +
+      `first with materialize_facts({ projectPath, personId: '${personId}', ${persona} }), which adds ` +
+      `its sourced name and facts, then link it.`,
+  ];
+}
+
 /** Every source ref a tree person carries. Person-level refs count too (#2696):
  *  "only source ref" means every ref the person carries, and person_read
  *  attaches FamilySearch's at this level. */
@@ -8859,6 +8901,11 @@ function applyOne(
       (op.op === "update" && !resultEntry.superseded_by && (pairChanged || wasRetired));
     if (reRaising) {
       invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
+      if (!resultEntry.superseded_by) {
+        invariantErrors.push(
+          ...refLessAddedPersonInvariants(resultEntry, research, tree, startingPersonIds, batchAssertions, attachmentLink),
+        );
+      }
     }
     // An attachment link is only ever superseded. Raising it in place would skip
     // same_person: the score gate checks an update only when it writes
