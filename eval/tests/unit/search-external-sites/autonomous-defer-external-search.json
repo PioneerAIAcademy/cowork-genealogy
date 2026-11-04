@@ -24,7 +24,8 @@
     "place-search-schuylkill-by-name",
     "place-search-schuylkill-by-place",
     "external-links-search-schuylkill",
-    "collections-search-schuylkill"
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania"
   ],
   "judge_context": [
     "This run has NO USER AVAILABLE (the message says so). That INVERTS the normal click-capture-wait expectation: the correct behavior is NOT to present the URL and wait for a user to capture and upload a PDF.",
