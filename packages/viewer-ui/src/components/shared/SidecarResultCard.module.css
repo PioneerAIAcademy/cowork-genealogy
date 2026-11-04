@@ -56,6 +56,85 @@
   width: 10px;
 }
 
+.verdictBadge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.verdictMatch {
+  background: color-mix(in srgb, #2d7a3a 20%, transparent);
+  color: #2d7a3a;
+  border: 1px solid color-mix(in srgb, #2d7a3a 40%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .verdictMatch {
+    background: color-mix(in srgb, #4ade80 15%, transparent);
+    color: #4ade80;
+    border-color: color-mix(in srgb, #4ade80 30%, transparent);
+  }
+}
+
+.verdictPossible {
+  background: color-mix(in srgb, #92610a 20%, transparent);
+  color: #92610a;
+  border: 1px solid color-mix(in srgb, #92610a 40%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .verdictPossible {
+    background: color-mix(in srgb, #fbbf24 15%, transparent);
+    color: #fbbf24;
+    border-color: color-mix(in srgb, #fbbf24 30%, transparent);
+  }
+}
+
+.verdictNo {
+  background: color-mix(in srgb, #8a2f1f 20%, transparent);
+  color: #8a2f1f;
+  border: 1px solid color-mix(in srgb, #8a2f1f 40%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .verdictNo {
+    background: color-mix(in srgb, #f87171 15%, transparent);
+    color: #f87171;
+    border-color: color-mix(in srgb, #f87171 30%, transparent);
+  }
+}
+
+.verdictExtracted {
+  background: color-mix(in srgb, #1e4a8a 20%, transparent);
+  color: #1e4a8a;
+  border: 1px solid color-mix(in srgb, #1e4a8a 40%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .verdictExtracted {
+    background: color-mix(in srgb, #60a5fa 15%, transparent);
+    color: #60a5fa;
+    border-color: color-mix(in srgb, #60a5fa 30%, transparent);
+  }
+}
+
+.verdictNew {
+  background: color-mix(in srgb, #5a3e8a 20%, transparent);
+  color: #5a3e8a;
+  border: 1px solid color-mix(in srgb, #5a3e8a 40%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .verdictNew {
+    background: color-mix(in srgb, #c084fc 15%, transparent);
+    color: #c084fc;
+    border-color: color-mix(in srgb, #c084fc 30%, transparent);
+  }
+}
+
 .subMeta {
   padding: 0 var(--spacing-lg) var(--spacing-xs);
   font-size: 12px;

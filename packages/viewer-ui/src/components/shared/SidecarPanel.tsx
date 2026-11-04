@@ -1,8 +1,14 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import FocusTrap from 'focus-trap-react'
 import { useResearchData } from '../../contexts/ResearchDataContext'
 import ErrorBoundary from '../ErrorBoundary'
-import type { RecordSearchResult, SidecarFile, SidecarTool } from '../../lib/schema'
+import type {
+  RecordSearchResult,
+  SidecarFile,
+  SidecarTool,
+  HitVerdictEntry,
+  FulltextSearchResult
+} from '../../lib/schema'
 import SidecarResultCard, {
   ROUTED_TOOLS,
   type ExternalLinkResult,
@@ -41,13 +47,19 @@ function LoadedBody({
   logId,
   resetKey,
   focusPersonaId,
-  bodyRef
+  bodyRef,
+  hitVerdictsByHitId,
+  extractedHitIds,
+  sendPrompt
 }: {
   payload: SidecarFile
   logId: string
   resetKey: string
   focusPersonaId?: string
   bodyRef: React.Ref<HTMLDivElement>
+  hitVerdictsByHitId?: Map<string, HitVerdictEntry[]>
+  extractedHitIds?: Set<string>
+  sendPrompt?: (prompt: string) => void
 }): React.JSX.Element {
   const results = (payload.payload.results ?? []) as SidecarResult[]
 
@@ -89,37 +101,90 @@ function LoadedBody({
     if (idx >= 0) defaultExpandedIndex = idx
   }
 
+  const isFulltext = payload.tool === 'fulltext_search'
+
   return (
     <div ref={bodyRef} className={styles.body}>
-      {results.map((r, idx) => (
-        <ErrorBoundary
-          key={idx}
-          resetKey={resetKey}
-          label="this result"
-          message={
-            <>
-              This result in <code>{`results/${logId}.json`}</code> could not be displayed.{' '}
-              {results.length > 1
-                ? 'The other results and the Close button still work.'
-                : 'The Close button still works.'}
-            </>
-          }
-        >
-          <SidecarResultCard
-            result={r}
-            tool={payload.tool}
-            focusPersonaId={focusPersonaId}
-            defaultExpanded={idx === defaultExpandedIndex}
-          />
-        </ErrorBoundary>
-      ))}
+      {isFulltext && sendPrompt && (
+        <div className={styles.evaluateStrip}>
+          <button
+            type="button"
+            className={styles.evaluateButton}
+            onClick={() => sendPrompt(`Evaluate the hits from ${logId} against the tree.`)}
+          >
+            Evaluate hits
+          </button>
+        </div>
+      )}
+      {results.map((r, idx) => {
+        const hitId = isFulltext ? (r as FulltextSearchResult).id : undefined
+        const hitVerdicts = hitId ? hitVerdictsByHitId?.get(hitId) : undefined
+        const hitExtracted = hitId ? (extractedHitIds?.has(hitId) ?? false) : undefined
+        return (
+          <ErrorBoundary
+            key={idx}
+            resetKey={resetKey}
+            label="this result"
+            message={
+              <>
+                This result in <code>{`results/${logId}.json`}</code> could not be displayed.{' '}
+                {results.length > 1
+                  ? 'The other results and the Close button still work.'
+                  : 'The Close button still works.'}
+              </>
+            }
+          >
+            <SidecarResultCard
+              result={r}
+              tool={payload.tool}
+              focusPersonaId={focusPersonaId}
+              defaultExpanded={idx === defaultExpandedIndex}
+              hitVerdicts={hitVerdicts}
+              hitExtracted={hitExtracted}
+            />
+          </ErrorBoundary>
+        )
+      })}
     </div>
   )
 }
 
 export default function SidecarPanel(): React.JSX.Element | null {
-  const { sidecar, openSidecar, closeSidecar, clearFocusPersona } = useResearchData()
+  const { sidecar, openSidecar, closeSidecar, clearFocusPersona, research, sendPrompt } = useResearchData()
   const bodyRef = useRef<HTMLDivElement>(null)
+
+  const logId = sidecar.status !== 'closed' ? sidecar.logId : null
+  const isFulltextLoaded =
+    sidecar.status === 'loaded' && sidecar.payload.tool === 'fulltext_search'
+
+  // Build a hit_id → verdicts map for the open fulltext_search sidecar.
+  const hitVerdictsByHitId = useMemo<Map<string, HitVerdictEntry[]> | undefined>(() => {
+    if (!isFulltextLoaded || !logId) return undefined
+    const map = new Map<string, HitVerdictEntry[]>()
+    for (const hv of research?.hit_verdicts ?? []) {
+      if (hv.log_id !== logId) continue
+      const existing = map.get(hv.hit_id) ?? []
+      existing.push(hv)
+      map.set(hv.hit_id, existing)
+    }
+    return map
+  }, [isFulltextLoaded, logId, research?.hit_verdicts])
+
+  // Build the set of hit ids already extracted into the tree (bare-id match).
+  const extractedHitIds = useMemo<Set<string> | undefined>(() => {
+    if (!isFulltextLoaded || !sidecar || sidecar.status !== 'loaded') return undefined
+    const assertionBarIds = new Set<string>()
+    for (const a of research?.assertions ?? []) {
+      if (a.record_id) assertionBarIds.add(a.record_id.split(':').pop() ?? a.record_id)
+    }
+    const extracted = new Set<string>()
+    for (const r of (sidecar.payload.payload.results ?? []) as FulltextSearchResult[]) {
+      if (!r.id) continue
+      const hitBare = r.id.split(':').pop() ?? r.id
+      if (assertionBarIds.has(hitBare)) extracted.add(r.id)
+    }
+    return extracted
+  }, [isFulltextLoaded, sidecar, research?.assertions])
 
   // Auto-scroll to the focused person when the loaded payload first appears
   // for an assertion-triggered openSidecar. role="dialog" + aria-modal +
@@ -246,6 +311,9 @@ export default function SidecarPanel(): React.JSX.Element | null {
                 resetKey={`${sidecar.logId}@${sidecar.lastMtime}`}
                 focusPersonaId={sidecar.focusPersonaId}
                 bodyRef={bodyRef}
+                hitVerdictsByHitId={hitVerdictsByHitId}
+                extractedHitIds={extractedHitIds}
+                sendPrompt={sendPrompt}
               />
             </ErrorBoundary>
           )}
