@@ -225,12 +225,12 @@ function liveLinks(...assertionIds: string[]): Record<string, unknown>[] {
  */
 async function attestPairing(
   dir: string,
-  opts: { recordId?: string; assertionId?: string; personId?: string } = {},
+  opts: { recordId?: string; assertionId?: string; personId?: string; recordRole?: string } = {},
 ): Promise<void> {
   await recordMatchScore(dir, {
     record_id: opts.recordId ?? "rec1",
     record_persona_id: null,
-    record_role: "principal",
+    record_role: opts.recordRole ?? "principal",
     tree_person_id: opts.personId ?? "I1",
     score: 0.9,
     scorer: "familysearch",
@@ -17914,7 +17914,10 @@ describe("research_append — person_evidence to a ref-less added person", () =>
       named("I4", "Jakob"),
     ],
     relationships,
-    sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
+    sources: [
+      { id: "SD-001", title: "1850 U.S. Census" },
+      { id: "SD-002", title: "Baptism of a Janeczky child" },
+    ],
   });
   // I4 is a stub the researcher stated: its source is on the relationship, as
   // init-project writes it, not on its name.
@@ -17923,9 +17926,12 @@ describe("research_append — person_evidence to a ref-less added person", () =>
   ]);
   const research = (extra: Record<string, unknown>[] = []) => {
     const r = baseResearch();
+    // rec2 has a source of its own, as almost every source does, so after
+    // materialize_facts the person's every ref points at that one record.
+    r.sources.push({ ...validSource("src_002"), gedcomx_source_description_id: "SD-002" });
     r.assertions.push(
       {
-        ...validAssertion("a_002"), record_id: "rec2", record_role: "father_1", fact_type: "name",
+        ...validAssertion("a_002", "src_002"), record_id: "rec2", record_role: "father_1", fact_type: "name",
         value: "Joannes Janeczky", structured_value: { given: "Joannes", surname: "Janeczky" },
       },
       {
@@ -17964,20 +17970,32 @@ describe("research_append — person_evidence to a ref-less added person", () =>
     expect(r.ok).toBe(false);
     expect(errorsOf(r)).toMatch(REFUSAL);
     expect(errorsOf(r)).toMatch(
-      /materialize_facts\(\{ projectPath, personId: 'I2', recordId: 'rec2', recordRole: 'father_1' \}\)/,
+      /at 'speculative' with its same_person score.*materialize_facts\(\{ projectPath, personId: 'I2', recordId: 'rec2', recordRole: 'father_1' \}\), then raise the link to 'probable'/,
     );
     expect(JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence).toHaveLength(0);
   });
 
-  it("the refusal's own advice completes: materialize_facts onto the person, then the link writes", async () => {
+  it("the refusal's own advice completes: a scored speculative link, materialize_facts, then the raise", async () => {
     await write(research());
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2", recordRole: "father_1" });
+    const spec = link("I2", "a_002", "speculative");
+    const a = await researchAppend({ ...spec, entry: { ...spec.entry, match_score: 0.9 } });
+    expect(a.ok, errorsOf(a)).toBe(true);
     const m = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "rec2", recordRole: "father_1" } as any);
     expect((m as any).ok, JSON.stringify((m as any).errors ?? m)).toBe(true);
-    // The ordinary next step for any link: same_person's score.
-    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2" });
-    const r = await researchAppend({ ...link("I2", "a_002"), entry: { ...link("I2", "a_002").entry, match_score: 0.9 } });
-    expect(errorsOf(r)).not.toMatch(REFUSAL);
+    const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { confidence: "probable" } });
     expect(r.ok, errorsOf(r)).toBe(true);
+    const stored = JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence;
+    expect(stored[0]).toMatchObject({ person_id: "I2", confidence: "probable", match_score: 0.9 });
+  });
+
+  it("materialize_facts refuses a blank added person no link ties to the record, so the score comes first", async () => {
+    await write(research());
+    const m = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "rec2", recordRole: "father_1" } as any);
+    expect((m as any).ok).toBe(false);
+    expect(JSON.stringify(m)).toMatch(/'speculative' link carrying its same_person score is enough/);
+    const t = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(t.persons.find((p: any) => p.id === "I2").names[0].sources ?? []).toHaveLength(0);
   });
 
   it("refuses an update that moves a probable link onto such a person", async () => {
@@ -17990,7 +18008,7 @@ describe("research_append — person_evidence to a ref-less added person", () =>
 
   it("refuses raising a speculative link on such a person to probable", async () => {
     await write(research());
-    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2" });
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2", recordRole: "father_1" });
     const a = await researchAppend({ ...link("I2", "a_002", "speculative"), entry: { ...link("I2", "a_002", "speculative").entry, match_score: 0.9 } });
     expect(a.ok, errorsOf(a)).toBe(true);
     const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { confidence: "probable" } });

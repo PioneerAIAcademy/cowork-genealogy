@@ -962,10 +962,20 @@ function linkGate(
 ): LinkGate {
   if (!(tree.persons ?? []).some((p) => p?.id === personId)) return { refusal: null };
   // A person this research added with no provenance at all carries nothing a
-  // record's facts could contradict, so writing onto it is a mint, as for a
-  // person that does not exist yet. research_append refuses a probable link to
-  // one until it has been written onto (`blankAddedPerson`).
-  if (blankAddedPerson(personId, research, tree, startingPersonIds)) return { refusal: null };
+  // record's facts could contradict. research_append refuses a probable link to
+  // one until it has been written onto (`blankAddedPerson`), so a live link of
+  // any confidence is enough here: a speculative link has already passed
+  // same_person's score gate, which keeps the identity check ahead of the write.
+  // Without that link, the write would make the person look minted from this
+  // record and the raise after it would need no score.
+  const blank = blankAddedPerson(personId, research, tree, startingPersonIds);
+  if (
+    blank &&
+    ((research?.person_evidence ?? []) as any[]).some(
+      (e) => e && !e.superseded_by && e.person_id === personId && qualifying.has(e.assertion_id),
+    )
+  )
+    return { refusal: null };
   const trace = mintedFromThisRecord(personId, recordId, research, tree, startingPersonIds)
     ? partyTrace(tree, research, personId, recordId, party)
     : null;
@@ -979,10 +989,13 @@ function linkGate(
       qualifying.has(e.assertion_id),
   );
   if (strong.length === 0) {
-    const plain =
-      `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
-      `ties ${what} to them. Write that link with research_append first; a 'speculative' link ` +
-      "does not qualify.";
+    const plain = blank
+      ? `'${personId}' is a person this research added with no source ref, and no person_evidence ` +
+        `link ties ${what} to them. Write that link with research_append first: for this person a ` +
+        `'speculative' link carrying its same_person score is enough, and it is raised after this write.`
+      : `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
+        `ties ${what} to them. Write that link with research_append first; a 'speculative' link ` +
+        "does not qualify.";
     return { refusal: trace === null ? plain : `${notThisPartysStub(personId, recordId, trace)} ${plain}` };
   }
   const cap = namesakeVerdicts(personId, research, namesakeTree, {

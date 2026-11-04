@@ -2461,8 +2461,9 @@ export function blankAddedPerson(
 
 /** A live probable or confident link to a `blankAddedPerson`: nothing records
  *  which record that person came from, and the link would vouch for it anyway.
- *  `materialize_facts` writes the persona onto the person first, which it allows
- *  for a blank person without a link, after which the link writes. A speculative
+ *  The order that keeps `same_person` ahead of the write: a speculative link with
+ *  its score, then `materialize_facts`, which accepts a blank person once any live
+ *  link to it exists, then raise the link. A speculative
  *  link asserts no identity and is not refused, but raising one to probable is
  *  judged like an append. Silent for an attachment link and
  *  for negative evidence, which no record's persona can materialize. Measured
@@ -2501,8 +2502,8 @@ function refLessAddedPersonInvariants(
   return [
     `person_evidence links '${personId}' at ${entry.confidence}, a person added during this research ` +
       `with no source ref on any name, fact or relationship, so nothing records which record it came ` +
-      `from. Write the persona onto it first with ${persona}, which adds its sourced name and facts, ` +
-      `then link it.${named}`,
+      `from. Link it at 'speculative' with its same_person score (a live speculative link to it will ` +
+      `do), write the persona onto it with ${persona}, then raise the link to '${entry.confidence}'.${named}`,
   ];
 }
 
