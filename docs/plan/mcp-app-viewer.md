@@ -18,9 +18,9 @@
    Desktop chat and claude.ai chat get no work; Desktop chat is only a backup
    for the demo recording.
 2. **A card is a picture, never a reply.** Nothing on a card posts a message or
-   runs a step. The reply stays with the platform's own carrier (step mode's
-   `AskUserQuestion`). At a stopping point the order is: the step report, the
-   card, then the reply.
+   runs a step. The reply stays with the platform's own carrier (in Cowork today,
+   the "Continue with …?" line). At a stopping point the order is: the step report,
+   the card, then the reply.
 3. **A step card at every stopping point:** setup, plan, search, link,
    conflict, hypothesis, assess, conclusion. Fallback if Cowork asks for
    approval on every card and "always allow" does not stick: setup, search,
@@ -34,11 +34,11 @@
    researchers and open to everyone. It does not copy the 15 sections.
 6. **The conclusion card shows recorded doubt only:** the rating in words, the
    shortfall, what was not searched, any unsettled conflict, the engine's
-   unregistered-disagreement check, and the reviewer's verdict. No heuristics of
-   the card's own.
+   unregistered-disagreement check, and the reviewer's verdict when there is one.
+   No heuristics of the card's own.
 7. **No live watching.** Steps will run under five minutes.
-8. **M0 is the go/no-go.** If neither a card nor an artifact renders in a Cowork
-   task, the build stops.
+8. **M0 is the go/no-go.** If neither a card nor an artifact can show a project's
+   data in a Cowork task, the build stops.
 9. **The demo shows page images.** The demo project is run so that the pages
    that matter are transcribed and attached (see "Data").
 10. **FamilySearch links replace identifiers.** Wherever the project holds an
@@ -69,9 +69,9 @@ adoption.
   and can use custom connectors, and its page can read a connector's read-only
   tools as the viewer. Its limits: it does not arrive with the connector, a
   connected artifact can be shared inside the organization but not by link, and
-  nothing documents how one opens in a Cowork task. If cards do not render, the case
-  file runs as an artifact, the same page with a second way to call the tools. If
-  they do, using one as well is a separate decision after M0.
+  nothing documents how one opens in a Cowork task. If cards do not render, or Cowork
+  offers no fullscreen, the case file runs as an artifact, the same page on a second
+  host. Otherwise, using one as well is a separate decision after M0.
 
 ## The case file
 
@@ -79,7 +79,8 @@ Five pages, each shown only if it has content, with a search box over the whole
 file. Clicking a person, record or source opens it in a right-hand pane without
 leaving the page, so a researcher can compare without losing their place.
 
-- **The case** (the default): one question read top to bottom as a proof.
+- **The case** (the default): one question read top to bottom as a proof, with a
+  switch when the project has more than one.
   - The conclusion, its rating in words, and what it changed in the tree. Until
     there is a conclusion, **So far** takes its place: the records kept, the searches
     done and still open, and the step the research is on, all from the documents.
@@ -87,21 +88,23 @@ leaving the page, so a researcher can compare without losing their place.
   - **What each record says:** the evidence grid. Rows are the facts at issue;
     columns are the tree before the research and then each supporting record in
     date order, with who said it and what was read (index or original page). Cells
-    hold the record's own words. A cell that differs from its row is tinted; the
-    grid does not say which is right.
+    hold the record's own words. A cell is tinted only when a conflict or the
+    engine's disagreement check names its assertion; the grid does not say which
+    is right.
   - Conflicts and competing identities, settled or not, side by side.
   - **What was searched:** the plan as a checklist with what each item found.
   - **Leads:** what is still worth trying, each with why it was not searched and
-    "needs you" when only the researcher can reach it, under the recorded overturn
-    risk ("could change the answer") when there is one.
+    "needs you" when only the researcher can reach it. A recorded high overturn risk
+    heads the list as "could change the answer".
 - **Compare with FamilySearch:** by person, what this research adds to the tree as
-  it stood when the project started. The page shows that date, because the viewer
-  makes no FamilySearch calls. Each finding is tagged New (the person had no such
-  fact) or Differs (they had one with another value, shown beside it), and names
-  its record with the link strength of each person on it. Its link opens the record
-  on FamilySearch, where the researcher can attach it; nothing here writes to the
-  tree. A research-added person with no `confident` link is listed as a possible
-  relative.
+  it stood when the project started: people, facts and relationships. The page shows
+  that date, because the viewer makes no FamilySearch calls. A birth, christening,
+  death or burial is tagged Differs when the person already had one with another
+  value, shown beside it; every other finding is New. Each finding names its record
+  with the link strength of each person on it, and its link opens the record on
+  FamilySearch, where the researcher can attach it; nothing here writes to the tree.
+  A research-added person shows their link strength in words, and one with only
+  speculative links, or none, is listed as a possible relative.
 - **People:** the family drawn as parents, couple and children, with
   research-added people marked, each labelled by relationship to the question's
   subject ("Mary's son"). A person's page is their life in time order, each fact
@@ -154,11 +157,16 @@ disagree.
   `127.0.0.1`; reached through a public HTTPS tunnel. A stdio entry exists only
   for M0's local leg.
 - **Command line:** `--secret <random> --root <dir> --public-url <https origin>
-  [--port 8090] [--local]`.
+  [--port 8090]`, or `--local --root <dir> [--port 8090]`.
   - `--public-url` is the tunnel's origin. The CSP entry and every image link are
     built from it, never from the Host header.
-  - `--local` also serves the page at `/<secret>/`, so it opens in a normal browser
-    tab from the same origin as the server (see "Local testing").
+  - `--local` generates its own secret with `randomBytes(32)`, uses
+    `http://127.0.0.1:<port>` as the public URL, serves the page at `/<secret>/` and
+    opens the browser there (see "Local testing"). The page response carries
+    `Content-Security-Policy: default-src 'none'; script-src 'unsafe-inline';
+    style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;
+    connect-src 'self'; base-uri 'none'; form-action 'none'`, so agent-written text
+    cannot load a remote image. The server sends no CORS headers in any mode.
   - The server factory takes the page's HTML as a parameter. Only the CLI entry
     reads `viewer/page/viewer.html`, and it refuses to start, naming
     `make mcp-viewer-build`, when the file is missing.
@@ -177,9 +185,11 @@ disagree.
   under `--root`. Omitted: `--root` itself if it holds `research.json`; otherwise
   the call is refused with the list of project folders under `--root`. The tool
   description says all of this. For the demo, start the server with `--root` set to
-  the demo project.
-- **Logging:** one JSON line per request to stdout: method, tool, `clientInfo`,
-  the client's declared extensions, result size. Never the raw path or a token.
+  the demo project; a live run that creates a project needs `--root` at its parent,
+  because a project cannot nest inside another.
+- **Logging:** one JSON line per request to stdout: method, tool, result size, and
+  `clientInfo` and the declared extensions from the `initialize` request body. Never
+  the raw path or a token.
 
 ### Tools
 
@@ -188,8 +198,7 @@ from it, and an unannotated tool defaults to "not read-only".
 
 - **`show_project`** — visible to the model. Input (camelCase): optional
   `projectPath`; `show`, one of `setup`, `plan`, `search`, `link`, `conflict`,
-  `hypothesis`, `assess`, `conclusion`, `latest` (the newest step card, for "where
-  are we") or `file`; and optional `page` (`case`, `compare`, `people`, `sources`,
+  `hypothesis`, `assess`, `conclusion`, `latest` (for "where are we") or `file`; and optional `page` (`case`, `compare`, `people`, `sources`,
   `log`), `questionId`, `logId`, `personId`, `planItemId`, `sourceId`.
   - `_meta.ui.resourceUri: "ui://genealogy/viewer.html"`. The description tells
     the model that the researcher sees the card and it must not restate it.
@@ -200,18 +209,25 @@ from it, and an unannotated tool defaults to "not read-only".
     and `derived`. A card is therefore a true snapshot of the project at that step.
   - **`derived`** is what only the engine can compute: question states
     (`questionStatus`), unregistered disagreements, hand-offs awaiting the
-    researcher, the tree changes from `treeDiff` against the starting tree, and the
-    live evaluation's notes.
+    researcher, the tree changes from `treeDiff` against the starting tree, the
+    reviewer's notes, and the project's folder name.
 - **`read_project_view`** — `_meta.ui.visibility: ["app"]`, so the model never
-  sees it. The card calls it with the same project rule and `part`, `id`:
+  sees it, and its data travels in `structuredContent`, which an artifact can read.
+  The page calls it with the same project rule and `part`, `id`:
   - `document`: the current `research`, `tree`, `startingTree`, `collections` and
     `derived`;
-  - `results`: one results file by log id;
+  - `results`: one results file; `id` must match `^log_[a-zA-Z0-9_-]+$` (Electron's
+    `LOG_ID_PATTERN`), otherwise refused;
+  - `recordSearch`: `id` is a record id; returns the `record_search` log id whose
+    results file holds it, ids compared by the ARK's bare id, so finding a record's
+    search costs one call;
   - `image`: `id` is a source's `image_filename` ref (`images/<name>.jpg`), signed
     only if it matches `^images/[A-Za-z0-9._-]+\.jpg$` (Electron's
     `IMAGE_REF_PATTERN`), otherwise refused; returns one freshly signed link.
 
   Read-only, because the plugin hook almost certainly never sees a card's calls.
+  If M0 shows an artifact cannot reach an app-only tool, its visibility becomes
+  `["model", "app"]` with a description telling the model not to call it.
 - **The page resource:** `ui://genealogy/viewer.html`, MIME
   `text/html;profile=mcp-app`, listed by `resources/list` and served by
   `resources/read`. `_meta.ui.csp.resourceDomains` (the `--public-url` origin, plus
@@ -237,31 +253,48 @@ from it, and an unannotated tool defaults to "not read-only".
 - React 19, Vite and `vite-plugin-singlefile`, so one self-contained HTML file.
   Depends on `@genealogy/viewer-ui` and `@genealogy/schema` (never on the engine),
   and `@modelcontextprotocol/ext-apps@1.7.5` for the `App` client.
-- **Loading the project, once per mount.** Only the first tool result counts. If
-  it carries `_meta["genealogy/project"]`, that is the snapshot. If it is
+- **Three hosts, chosen at boot,** before anything connects: a browser tab
+  (`window.parent === window`), an artifact (`window.claude`), otherwise the MCP App
+  `App`. Each host supplies `call(tool, args)`, `openLink`, fullscreen and its input,
+  and a tool failure reaches the page in one shape. In a tab, `show` comes from the
+  URL, loading is one `document` call, `openLink` is `window.open`, and the POST
+  sends both Accept types. An artifact also loads by one `document` call.
+- **Display modes:** the `App` declares
+  `availableDisplayModes: ["inline", "fullscreen"]`, the layout follows
+  `hostContext.displayMode`, and the open button is hidden when fullscreen is not
+  offered.
+- **Loading the project in a card, once per mount.** Only the first tool result
+  counts. If it carries `_meta["genealogy/project"]`, that is the snapshot. If it is
   `isError`, the card shows its text and fetches nothing. Otherwise, or if no
   result arrives shortly after the tool input (a host need not send one to a card
   mounted after the call finished), it makes one `read_project_view` call
   (`part: "document"`). A cancellation clears the timer and the card says the call
   was stopped. Later tool-input and tool-result events are ignored.
-- **Opening the case file** fetches the current documents once and falls back to
-  the snapshot if that fails, so a card from an early step opens today's file.
+- **Opening the case file** fetches the current documents once and pushes them
+  through `subscribe`'s handlers, so a card from an early step opens today's file; if
+  the fetch fails, the snapshot stays. `startingTree` and `derived` sit in one page
+  context beside the provider, set by the same function.
 - **Reading the documents.** `McpAppResearchTransport`, in
   `apps/mcp-viewer/src/transport/`, feeds viewer-ui's `ResearchDataProvider`, which
   already gives every page `buildIndex` and `getById`. It implements
   `ResearchTransport` without changing it and passes `assertTransportContract`:
   - `getProjectState` returns the documents; its `label` is the project's title,
-    else the folder name, never null (a null label shows the welcome screen);
+    else `derived`'s folder name, never null (a null label shows the welcome
+    screen);
   - `readSidecar` calls `part: "results"`, with a constant `mtime`;
   - `getSourceImage` returns a fresh signed link as the `img` source;
   - `openExternal` and `openFamilySearch` are arrow-function properties, because
     the provider passes them unbound. `openExternal` calls `openLink` only for an
     https URL; `openFamilySearch` opens only what resolves;
   - `submitFeedback` rejects with "not available here"; `selectFolder` and
-    `getFeedbackContext` are absent; `subscribe` delivers nothing.
-  - All tool calls go through one `call(tool, args)` function, so the page can also
-    run in a browser tab (a plain POST to the server) or as an artifact.
+    `getFeedbackContext` are absent; `subscribe` keeps its handlers for the refresh
+    above and delivers nothing else.
 - **Display rules,** applied to cards and the file alike:
+  - **The current question** is `questionId` if passed, else the last unresolved
+    question, else the last with a proof. `latest` picks the card from that
+    question's state in `derived`: framed → setup, planned → plan, searching →
+    search, evidence-gathered → link, concluded or critiqued → conclusion.
+  - **The evidence grid's rows** key on the person and the lower-cased `fact_type`.
   - **Ids in fields are resolved; internal ids in prose are dropped.** `S1`, `I19`,
     `q_001`, `a_003`, `pe_060` in a field become the person, source, question or
     record they name. Prose is never rewritten with names: any bracketed or
@@ -269,30 +302,41 @@ from it, and an unannotated tool defaults to "not read-only".
     bare id with its separator.
   - **FamilySearch identifiers become named links.** A tree person is their name;
     a record is its title ("1887 birth register"); a page image, collection or wiki
-    page is named for what it is. An ARK, tree person id or familysearch.org URL in
-    prose becomes a link labelled "on FamilySearch". Built on viewer-ui's
-    `resolveFamilySearchTarget`, with collection and wiki URLs added in the page.
+    page is named for what it is.
+  - **In prose,** one page function handles every "on FamilySearch" link. A URL is
+    parsed with `new URL`, must have the hostname `familysearch.org` or
+    `www.familysearch.org` and no credentials, and is rebuilt on
+    `https://www.familysearch.org`. A full ARK becomes a link, with trailing
+    punctuation peeled off and any `?…` dropped. A bare token that looks like an id
+    becomes a link only if the project knows it: a tree person's id gets the person
+    page, a record's id gets its ARK. An unknown token with a capital letter in that
+    shape is dropped as an internal id, and anything else, such as `1885-1910` or
+    `Mary-Ann`, stays as text.
   - **The conclusion line** is the paragraph under the narrative's first markdown
     heading, or first line opening with a bold run, whose text contains
     "conclusion" in any case (`### Conclusion`, `**Conclusion (Probable):**`);
     otherwise the question text with the tier in words. When `claims[]` is present,
     each claim shows as a row with its label and its own tier.
   - **The reviewer** is the evaluation whose `target_id` is the proof and whose
-    `superseded_by` is null. A missing notes file falls back to the verdict alone.
+    `superseded_by` is null, else the question's latest live on-demand one. The
+    reviewer runs only when asked, so often there is none. A missing notes file falls
+    back to the verdict alone.
   - **Retired rows never show:** assertions and person-evidence links with a
     non-null `superseded_by` are left out everywhere.
   - **Link strength** is the stored `confidence` in words, per person, never per
     source.
   - **Leads:** each `not_reached` entry's kind (labelled), its `description` under
-    the prose rule, and its `wiki_title` when present; the overturn risk is the
-    opening line of `search_stop.justification`.
+    the prose rule, and its `wiki_title` when present. The overturn risk shows only
+    when `search_stop.justification` opens with `Overturn risk:`, and reads "could
+    change the answer" only when that says high.
   - **What the conclusion changed:** `derived`'s tree changes, kept only where they
     touch a person linked by person-evidence to one of the proof's supporting
     assertions. With no starting tree, the line is omitted.
   - **A record's search** is the source's `log_entry_id` when that entry's tool is
-    `record_search` or `fulltext_search`; otherwise the `record_search` entry whose
-    results file holds the assertion's `record_id`, ids compared by the ARK's bare
-    id. A record whose source has an `image_filename` offers "See the page".
+    `record_search` or `fulltext_search`; otherwise one `recordSearch` call. A record
+    whose source has an `image_filename` offers "See the page".
+  - **A tree finding's record** comes from the fact's `assertion_id`, else its
+    `sources[].ref` matched to a source's `gedcomx_source_description_id`.
   - **Real data is messy:** duplicate person-evidence links collapse to the
     strongest, duplicate `ParentChild` edges dedupe, dates in mixed formats normalize
     for display, and older document shapes are read, never repaired. Labels come
@@ -316,7 +360,8 @@ from it, and an unannotated tool defaults to "not read-only".
 
 One line per stopping point in `skills/research/SKILL.md`: after the step report,
 call `show_project` with the step, then the reply. The tool is found by bare name
-(`+show_project` in ToolSearch).
+(`+show_project` in ToolSearch). The bounded "where the project stands" row gains
+the same call with `show: latest`, after its paragraph.
 
 - **Where they live:** a local branch, `mcp-app-router-variant`, holding only the
   router-line commit, rebased onto the viewer branch whenever the variant zip is
@@ -326,15 +371,16 @@ call `show_project` with the step, then the reply. The tool is found by bare nam
   hypothesis and conclusion, plus a link line only when the link step ends on a
   question for the researcher (no "Continue with …?" line).
 - **Named next steps,** a trial for the demo. At the real forks, the "not
-  exhaustive" choice and the conclusion, the variant offers two or three concrete
-  moves through `AskUserQuestion`, taken from the recorded leads, beside the
-  ordinary replies. A tapped move is a steer, which the router already turns into a
-  plan item. Every other stop keeps its one "Continue with …?" line. This does not
-  ship from this plan: after the demo it goes to step mode as an issue, with what
-  the demo showed.
+  exhaustive" choice and the conclusion, the variant asks through `AskUserQuestion`
+  instead of writing the "Continue with …?" line: up to three concrete moves from the
+  recorded leads plus the offered step, since the tool allows four options and adds
+  "Other" itself. The answer returns inside the turn and is treated as the
+  researcher's reply; a move is a steer, which the router already turns into a plan
+  item. Every other stop keeps its line. This does not ship from this plan: after the
+  demo it goes to step mode as an issue, with what the demo showed.
 - **A readable report** is one more line in the router's bounded-request list:
   "write this up" produces a Word or PDF file in Cowork from the proof summary, the
-  family and the sources. It adds no claims and keeps the rating, the reviewer's
+  family and the sources. It adds no claims and keeps the rating, any reviewer's
   verdict, what does not fit and what was not searched. No viewer code.
 
 ## Local testing
@@ -347,11 +393,10 @@ before pushing, with no tunnel and no connector.
   connector off for that task, so Cowork does not hold two copies of every tool.
   Once folded in, the `.mcpb` carries the tools and the page; a card renders in that
   task only if M0's local leg does.
-- **The cards and the case file:** `make viewer PROJECT=<folder>` (Windows: a
-  `.bat` beside `CoworkInstall.bat`) generates a secret, runs the branch's server
-  on `127.0.0.1` with `--local`, and opens the page in a browser tab, reading the
-  same folder the Cowork task writes. The tab shows every step card and the whole
-  case file; reloading picks up the latest.
+- **The cards and the case file:** `make viewer PROJECT=<folder>` builds the page,
+  runs the branch's server on `127.0.0.1` with `--local`, and opens a browser tab,
+  reading the same folder the Cowork task writes. The tab shows every step card and
+  the whole case file; reloading picks up the latest.
 - **A card inline in a Cowork task.** Members cannot add connectors, so a tester's
   only route is the local install. If M0's local leg does not render, testers see
   cards in the browser tab, which runs the same page, and anything that depends on
@@ -366,10 +411,15 @@ before pushing, with no tunnel and no connector.
   `.final-tree.gedcomx.json`), with `eval/tests/e2e/<fixture>/starting-tree.gedcomx.json`
   as the starting tree. The McAndrew capture and `william-ferber-ancestry` have
   none, so Compare and the tree-change line are omitted for them. They have no
-  `results/`, `images/` or `evaluations/`. The reviewer's notes are tested over the three fixtures that pair
-  a research.json with an evaluation file:
-  `eval/fixtures/scenarios/compound-objective-fully-covered`,
+  `results/`, `images/` or `evaluations/`. The reviewer's notes and `recordSearch`
+  are tested over the three fixtures that pair a research.json with an evaluation
+  file: `eval/fixtures/scenarios/compound-objective-fully-covered`,
   `compound-objective-part-unframed` and `flynn-prior-craft-verdict`.
+- **The sweep:** `make mcp-viewer-sweep` is local, not CI, so a teammate's committed
+  run can never red someone's PR. It stages each end state in a temporary folder,
+  runs the server to dump its `document` payload, and renders the page over each.
+  Page tests in CI use a small committed fixture; `derived` is tested in
+  `tests/viewer/` on a few named states.
 - **The demo:** a fresh project the lead runs in Cowork with the alpha `.mcpb`.
   A page is saved and attached to its record only when the research reads a browsed
   page: search-images, then `image_transcribe` with `projectPath`, then
@@ -378,14 +428,15 @@ before pushing, with no tunnel and no connector.
   transcription afterwards saves the image without attaching it (and the sweep
   removes uncited images after 24 hours). So the demo's objective is chosen so that
   a deciding record comes from a browse-only collection, while others come from
-  indexed searches.
+  indexed searches. Before recording, the lead asks for a second opinion naming the
+  proof, because the reviewer runs only when asked.
 
 ## Milestones
 
 Each is one or more small PRs merged to main. Nothing calls the second server, so
 merging changes nothing for anyone else.
 
-### M0 — Skeleton, which is also the go/no-go (4 days)
+### M0 — Skeleton, which is also the go/no-go (5 days)
 
 The server with the page resource, `show_project` returning a hello card that
 echoes its input and takes a `pad` size, `read_project_view` returning a payload
@@ -397,12 +448,16 @@ is the everyday development loop. Then, in a Cowork task:
    installed.
 2. **Local:** the same server over stdio as a local server, to see whether a local
    card renders in Cowork today.
-3. **Artifact:** a small artifact calling the connector's read tool.
+3. **Artifact:** a small artifact reading a whole document through the connector.
 
-Record, in `docs/mcp-app-host-probe.md`:
+Record, in `docs/mcp-app-host-probe.md` (never the connector URL: the repo is
+public):
 - does a card render on each route; the client's declared extensions;
-- does Cowork offer fullscreen (`availableDisplayModes`), and can a card opened by
-  a typed request go straight to it;
+- does Cowork offer fullscreen (`availableDisplayModes`), can a card opened by a
+  typed request go straight to it, does a mode switch remount the frame, and where
+  does a typed card land while the file is fullscreen;
+- does "where does the research stand?" call `show_project` with the variant's
+  line; if not, the demo opens with "show me the project";
 - **what the model receives:** different canary strings in `content`, in the
   result's `_meta` and (in one test call) in `structuredContent`, asking the model
   to quote each;
@@ -413,14 +468,14 @@ Record, in `docs/mcp-app-host-probe.md`:
   characters), and what happens past it. If the largest project's research.json
   (1.55 MB) does not fit, `document` gains paging;
 - does the image load from the declared host;
-- does `ui/open-link` show Claude's confirmation each time;
 - is `ui/update-model-context` available;
 - can a connector be turned off for one Cowork task (the help centre documents a
   per-conversation toggle);
-- how `AskUserQuestion` shows two or three named options in a Cowork task, and
-  whether the chosen text comes back as the researcher's answer;
-- does an artifact open beside a Cowork task, can it call the connector's read
-  tool, and can it reach a `visibility: ["app"]` tool;
+- how `AskUserQuestion` shows named options in a Cowork task, and whether the
+  chosen text comes back as the researcher's answer;
+- does an artifact open beside a Cowork task, can it reach a `visibility: ["app"]`
+  tool, does its `payload` carry a whole document, and does it load an image from
+  `/img/<token>` (if not, `part: "image"` returns a data URL for it);
 - is the `projectPath` the model passes in Cowork readable on the Mac.
 
 **Done when:** every item above has a recorded answer, and the server's tests
@@ -432,18 +487,22 @@ pass, each with a stub page HTML:
 - every path off the secret gets 404 except `/img/<valid, unexpired token>`; a
   bad or expired token gets 404;
 - `part: "image"` refuses an `id` outside the image-ref pattern
-  (`../research.json`, `research.json`, `images/x.png`);
-- the page fetches at most once per mount, and a cancelled call paints no card;
+  (`../research.json`, `research.json`, `images/x.png`), and `part: "results"` one
+  outside the log-id pattern (`../.tree-before-forget.gedcomx`, `.staging/x`);
 - refused: a project outside `--root`, a sibling whose name starts with the root's
   (`<root>-x/proj`), and a symlinked project folder pointing out of `--root`;
   accepted: the same project reached through a symlink to the root, which the test
   creates (CI runs Linux, where `/tmp` is no alias);
 - an omitted `projectPath` resolves to `--root` when it is a project, and
   otherwise is refused with the list of folders;
-- with `--local`, the page is served at `/<secret>/` and nowhere else, and without
-  it that path is 404.
+- with `--local`, the page is served at `/<secret>/` with its CSP header and
+  nowhere else, and without it that path is 404.
 
-### M1 — The designer demo (14–16 days)
+The page's own tests, with a fake `App`: it fetches at most once per mount, and a
+cancelled call paints no card. In a tab, `make viewer` paints a card from a real
+project.
+
+### M1 — The designer demo (15–17 days)
 
 - The **setup, search and conclusion cards**, plus `latest`. The conclusion card's
   two actions are "Open the case file" and "Compare with FamilySearch".
@@ -457,7 +516,8 @@ pass, each with a stub page HTML:
   → the search that returned it, in the pane → click the browsed record's column →
   its page image beside the transcription → Compare with FamilySearch. Light and
   dark. Then a live run with the variant plugin calling the three cards and offering
-  named next steps at the forks. If M0 shows cards do not render in Cowork but an
+  named next steps at the forks, with the server's `--root` at the project's parent.
+  If M0 shows cards do not render in Cowork but an
   artifact does, the case file runs as an artifact and the cards are shown in
   Desktop chat.
 - A short screen recording for the designer.
@@ -466,21 +526,30 @@ pass, each with a stub page HTML:
 - before recording, in the demo project, at least one supporting assertion's
   source has an `image_filename` that exists under `images/` and a non-empty
   `transcription`, and at least one supporting assertion's `record_id` appears in
-  the results file of a `record_search` log entry under `results/`;
+  the results file of a `record_search` log entry under `results/`, and a live
+  evaluation targets the proof;
 - the demo script runs end to end on the demo project;
-- the three cards, The case and Compare render over the McAndrew capture and every
-  committed e2e end state without error, The case shows So far on a project with no
-  proof summary, and a planted retired assertion and retired link appear nowhere;
+- `make mcp-viewer-sweep` renders the three cards, The case and Compare over the
+  McAndrew capture and every committed e2e end state without error;
+- The case shows So far on a project with no proof summary, and a planted retired
+  assertion and retired link appear nowhere;
 - the id check passes on all of that rendered text, and is shown failing on planted
   shapes (`S28` in a citation, `I19` in a name, an internal id inside a sentence, a
-  raw `ark:/61903/…`, a bare tree person id) and passing names and dates that
-  contain digits;
+  raw `ark:/61903/…`, an unknown id-shaped token) and passing names and dates that
+  contain digits; `1885-1910`, `Mary-Ann` and `full-text` render as text with no
+  link, and a record id links to its ARK;
+- `https://familysearch.org.evil.example/en/wiki/X`,
+  `https://www.familysearch.org@evil.example/en/wiki/X` and
+  `https://evil.example/https://www.familysearch.org/en/wiki/X` get no "on
+  FamilySearch" label, and a planted `![x](https://evil.example/a.png)` loads nothing
+  in a tab;
 - clicking a planted `[x](https://evil.example)` and a bare URL in a proof
   narrative, a Linkify URL in a research-log note, and an "Open in FamilySearch"
   button each produce exactly one `openLink` call with an https URL, none navigates
   the frame, and an `http:` source URL on the Sources button produces none;
 - `McpAppResearchTransport` passes `assertTransportContract` and returns a non-null
-  `label` for a project with no title.
+  `label` for a project with no title, and a card from snapshot A opens a file
+  showing document B.
 
 ### M2 — The other step cards (6–8 days)
 
@@ -489,21 +558,21 @@ hypothesis, assess. The variant plugin gains the remaining router lines, or unde
 Decision 3's fallback only conflict, hypothesis and the conditional link line, and
 the report line.
 
-**Done when:** each card renders over the end states that reach that step, all
-eight show in a live Cowork run (under the fallback, the run shows the cards it
-calls and a typed `show_project` shows plan and assess), and "write this up" on the
-demo project produces a file that carries the rating and the reviewer's verdict.
+**Done when:** the sweep renders each card over the end states that reach that
+step, the live run shows the cards its project reaches and a typed `show_project`
+shows the others on a project that holds them, and "write this up" on the demo
+project produces a file that carries the rating and the reviewer's verdict.
 
 ### M3 — The rest of the case file (8–10 days)
 
 People, Sources and Log, and `show_project` opening each page by id.
 
-**Done when:** each page renders over the committed end states without error and
-on the demo project, every one of today's 15 sections has its content reachable,
+**Done when:** the sweep renders each page without error, each renders on the demo
+project, every one of today's 15 sections has its content reachable,
 and the reviewer's notes show on the three evaluation fixtures and the verdict
 alone where the file is absent.
 
-**Total:** roughly 7 weeks of the lead's time, M0 through M3.
+**Total:** roughly 7–8 weeks of the lead's time, M0 through M3.
 
 ## Later
 
@@ -534,4 +603,6 @@ engine check the agents also see); posting buttons of any kind.
   - **Local folders:** `make viewer` covers anyone testing a branch, and everyone
     else is on the remote connector.
   - **`make e2e-view`** becomes `make viewer PROJECT=eval/e2e-view`.
+  - **Windows:** `eval/Viewer.bat` and `ViewE2E.bat` switch from Electron to the
+    same thing, staying on `EVAL_OWNED` in `windows-wrappers.test.ts`.
   - **Print and GEDCOM export** go with them. The card's sandbox allows neither.
