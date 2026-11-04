@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "timeline",
   "version": 2,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-11-04_15-31-55",
@@ -83,7 +83,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The timeline persists four events (birth ~1838, 1851 census, marriage 1859, death 1874) all correctly dated, placed in Canterbury, and linked to their source assertions. The gaps array correctly identifies three significant gaps: 1838\u20131851 (expecting 1841 census), 1851\u20131874 (expecting 1861 and 1871 censuses), and 1874 death with no burial. Critically, the expected census years are English years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. The age progression (age 13 in 1851 for ~1838 birth) is consistent. All place standardizations match the place_search result. No fabricated material or unsupported claims."
+            "rationale": "The timeline persists four events (birth ~1838, 1851 census, marriage 1859, death 1874) all correctly dated, placed in Canterbury, and linked to their source assertions. The gaps array correctly identifies three significant gaps: 1838–1851 (expecting 1841 census), 1851–1874 (expecting 1861 and 1871 censuses), and 1874 death with no burial. Critically, the expected census years are English years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. The age progression (age 13 in 1851 for ~1838 birth) is consistent. All place standardizations match the place_search result. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -99,7 +99,7 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in the persisted timeline ('Canterbury, Kent, England' on all four events) traces to the place_search response. All distance_from_previous_km values are correct: the first event (birth) has null as required; the next three events all have 0 because they share the same standard_place as their immediately preceding event. No distance_from_previous_km was derived from the agent's own knowledge or arithmetic. The place was resolved exactly once via a single efficient call."
           },
@@ -107,7 +107,7 @@
             "source": "rubric",
             "name": "Gap detection",
             "score": 3,
-            "rationale": "All three significant gaps are correctly identified with appropriate severity. The 1838\u20131851 gap (13 years) expects the 1841 census, marked low severity because the subject was a child. The 1851\u20131874 gap (23 years) expects 1861 and 1871 censuses, marked high severity because the subject was married and alive through both enumeration years. The 1874 death gap expects a burial record, marked low. Critically, expected_events lists only English census years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. Each expected record type is specific and searchable."
+            "rationale": "All three significant gaps are correctly identified with appropriate severity. The 1838–1851 gap (13 years) expects the 1841 census, marked low severity because the subject was a child. The 1851–1874 gap (23 years) expects 1861 and 1871 censuses, marked high severity because the subject was married and alive through both enumeration years. The 1874 death gap expects a burial record, marked low. Critically, expected_events lists only English census years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. Each expected record type is specific and searchable."
           },
           {
             "source": "rubric",
@@ -133,7 +133,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The timeline persists four events (birth ~1838, 1851 census, marriage 1859, death 1874) all correctly dated, placed in Canterbury, and linked to their source assertions. The gaps array correctly identifies three significant gaps: 1838\u20131851 (expecting 1841 census), 1851\u20131874 (expecting 1861 and 1871 censuses), and 1874 death with no burial. Critically, the expected census years are English years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. The age progression (age 13 in 1851 for ~1838 birth) is consistent. All place standardizations match the place_search result. No fabricated material or unsupported claims."
+            "rationale": "The timeline persists four events (birth ~1838, 1851 census, marriage 1859, death 1874) all correctly dated, placed in Canterbury, and linked to their source assertions. The gaps array correctly identifies three significant gaps: 1838–1851 (expecting 1841 census), 1851–1874 (expecting 1861 and 1871 censuses), and 1874 death with no burial. Critically, the expected census years are English years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. The age progression (age 13 in 1851 for ~1838 birth) is consistent. All place standardizations match the place_search result. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -149,7 +149,7 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in the persisted timeline ('Canterbury, Kent, England' on all four events) traces to the place_search response. All distance_from_previous_km values are correct: the first event (birth) has null as required; the next three events all have 0 because they share the same standard_place as their immediately preceding event. No distance_from_previous_km was derived from the agent's own knowledge or arithmetic. The place was resolved exactly once via a single efficient call."
           },
@@ -157,7 +157,7 @@
             "source": "rubric",
             "name": "Gap detection",
             "score": 3,
-            "rationale": "All three significant gaps are correctly identified with appropriate severity. The 1838\u20131851 gap (13 years) expects the 1841 census, marked low severity because the subject was a child. The 1851\u20131874 gap (23 years) expects 1861 and 1871 censuses, marked high severity because the subject was married and alive through both enumeration years. The 1874 death gap expects a burial record, marked low. Critically, expected_events lists only English census years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. Each expected record type is specific and searchable."
+            "rationale": "All three significant gaps are correctly identified with appropriate severity. The 1838–1851 gap (13 years) expects the 1841 census, marked low severity because the subject was a child. The 1851–1874 gap (23 years) expects 1861 and 1871 censuses, marked high severity because the subject was married and alive through both enumeration years. The 1874 death gap expects a burial record, marked low. Critically, expected_events lists only English census years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. Each expected record type is specific and searchable."
           },
           {
             "source": "rubric",
@@ -181,7 +181,7 @@
       },
       "totals": {
         "duration_ms": 32784.771358998114,
-        "duration_api_ms": 28447.0,
+        "duration_api_ms": 28447,
         "judge_duration_ms": 15248.492169997917,
         "wall_clock_ms": 48118.14737319946,
         "num_turns": 2,
@@ -204,7 +204,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 32784.771358998114,
-          "duration_api_ms": 28447.0,
+          "duration_api_ms": 28447,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1479,
@@ -290,7 +290,7 @@
           },
           "skill_cost_usd": 0.13112367,
           "output": {
-            "text_response": "Here is the timeline the subagent built for **William Ashford (I1)**:\n\n---\n\n**Timeline ID:** `t_001` \u2014 4 events, 3 gaps; persisted.\n\n**Events (all in Canterbury, Kent, England):**\n\n| # | Event | Date |\n|---|-------|------|\n| 1 | Birth | c. 1838 |\n| 2 | 1851 Census (age 13 \u2014 consistent with ~1838 birth) | 1851 |\n| 3 | Marriage | 1859 |\n| 4 | Death | 1874 |\n\n**Gaps identified:**\n\n1. **1838\u20131851** *(low priority)* \u2014 1841 census not yet linked\n2. **1851\u20131874** *(high priority)* \u2014 1861 and 1871 censuses not yet linked (he was married and alive throughout this period)\n3. **1874 death** *(low priority)* \u2014 no burial record linked\n\n**Anomalies:** None. All events are in Canterbury, so no travel-distance check was needed.\n\n---\n\n**Summary:** William's documented life runs from a birth about 1838 in Canterbury to his death there in 1874. The main research gap is the missing 1861 and 1871 censuses \u2014 most likely those records simply haven't been linked yet rather than indicating he left the area. Recommended next steps: search the 1861 and 1871 censuses, then assess whether research is exhaustively complete before drafting a proof conclusion.",
+            "text_response": "Here is the timeline the subagent built for **William Ashford (I1)**:\n\n---\n\n**Timeline ID:** `t_001` — 4 events, 3 gaps; persisted.\n\n**Events (all in Canterbury, Kent, England):**\n\n| # | Event | Date |\n|---|-------|------|\n| 1 | Birth | c. 1838 |\n| 2 | 1851 Census (age 13 — consistent with ~1838 birth) | 1851 |\n| 3 | Marriage | 1859 |\n| 4 | Death | 1874 |\n\n**Gaps identified:**\n\n1. **1838–1851** *(low priority)* — 1841 census not yet linked\n2. **1851–1874** *(high priority)* — 1861 and 1871 censuses not yet linked (he was married and alive throughout this period)\n3. **1874 death** *(low priority)* — no burial record linked\n\n**Anomalies:** None. All events are in Canterbury, so no travel-distance check was needed.\n\n---\n\n**Summary:** William's documented life runs from a birth about 1838 in Canterbury to his death there in 1874. The main research gap is the missing 1861 and 1871 censuses — most likely those records simply haven't been linked yet rather than indicating he left the area. Recommended next steps: search the 1861 and 1871 censuses, then assess whether research is exhaustively complete before drafting a proof conclusion.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -591,7 +591,7 @@
                   "section": "timelines",
                   "op": "append",
                   "entry": {
-                    "label": "William Ashford (I1) \u2014 documented life timeline",
+                    "label": "William Ashford (I1) — documented life timeline",
                     "person_ids": [
                       "I1"
                     ],
@@ -712,7 +712,7 @@
             "agent_returns": [
               {
                 "subagent_type": "timeline",
-                "text": "t_001 \u2014 4 events, 3 gaps; persisted for the viewer. The 1851 census enumeration (age 13) is consistent with the ~1838 birth.\nGaps: 1838\u20131851 (low, 1841 census), 1851\u20131874 (high, 1861 and 1871 censuses), and the 1874 death with no burial linked (low).\nAnomalies: none. All events are in Canterbury, so no travel check was needed.\nCoherence: not applicable; this is a single-person life timeline, not an identity test.\n\n---\nWilliam Ashford's documented life, in order, is short: born about 1838 in Canterbury, Kent, England, found in the 1851 census there at age 13, married in Canterbury in 1859, and died there in 1874. The record trail goes quiet after 1851, with nothing linked for the 1861 and 1871 censuses even though he was married and living until 1874, so those silences most likely mean the records are not yet linked rather than that he left. Next, the open research question should be finished by checking the exhaustiveness of the search and then drafting the conclusion."
+                "text": "t_001 — 4 events, 3 gaps; persisted for the viewer. The 1851 census enumeration (age 13) is consistent with the ~1838 birth.\nGaps: 1838–1851 (low, 1841 census), 1851–1874 (high, 1861 and 1871 censuses), and the 1874 death with no burial linked (low).\nAnomalies: none. All events are in Canterbury, so no travel check was needed.\nCoherence: not applicable; this is a single-person life timeline, not an identity test.\n\n---\nWilliam Ashford's documented life, in order, is short: born about 1838 in Canterbury, Kent, England, found in the 1851 census there at age 13, married in Canterbury in 1859, and died there in 1874. The record trail goes quiet after 1851, with nothing linked for the 1861 and 1871 censuses even though he was married and living until 1874, so those silences most likely mean the records are not yet linked rather than that he left. Next, the open research question should be finished by checking the exhaustiveness of the search and then drafting the conclusion."
               }
             ],
             "file_changes": {
@@ -725,7 +725,7 @@
                     "added": [
                       {
                         "id": "t_001",
-                        "label": "William Ashford (I1) \u2014 documented life timeline",
+                        "label": "William Ashford (I1) — documented life timeline",
                         "person_ids": [
                           "I1"
                         ],
@@ -1023,7 +1023,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The timeline persists four events (birth ~1838, 1851 census, marriage 1859, death 1874) all correctly dated, placed in Canterbury, and linked to their source assertions. The gaps array correctly identifies three significant gaps: 1838\u20131851 (expecting 1841 census), 1851\u20131874 (expecting 1861 and 1871 censuses), and 1874 death with no burial. Critically, the expected census years are English years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. The age progression (age 13 in 1851 for ~1838 birth) is consistent. All place standardizations match the place_search result. No fabricated material or unsupported claims."
+                "rationale": "The timeline persists four events (birth ~1838, 1851 census, marriage 1859, death 1874) all correctly dated, placed in Canterbury, and linked to their source assertions. The gaps array correctly identifies three significant gaps: 1838–1851 (expecting 1841 census), 1851–1874 (expecting 1861 and 1871 censuses), and 1874 death with no burial. Critically, the expected census years are English years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. The age progression (age 13 in 1851 for ~1838 birth) is consistent. All place standardizations match the place_search result. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -1039,7 +1039,7 @@
               },
               {
                 "source": "rubric",
-                "name": "Tool usage \u2014 place resolution and distance",
+                "name": "Tool usage — place resolution and distance",
                 "score": 3,
                 "rationale": "Every non-null standard_place in the persisted timeline ('Canterbury, Kent, England' on all four events) traces to the place_search response. All distance_from_previous_km values are correct: the first event (birth) has null as required; the next three events all have 0 because they share the same standard_place as their immediately preceding event. No distance_from_previous_km was derived from the agent's own knowledge or arithmetic. The place was resolved exactly once via a single efficient call."
               },
@@ -1047,7 +1047,7 @@
                 "source": "rubric",
                 "name": "Gap detection",
                 "score": 3,
-                "rationale": "All three significant gaps are correctly identified with appropriate severity. The 1838\u20131851 gap (13 years) expects the 1841 census, marked low severity because the subject was a child. The 1851\u20131874 gap (23 years) expects 1861 and 1871 censuses, marked high severity because the subject was married and alive through both enumeration years. The 1874 death gap expects a burial record, marked low. Critically, expected_events lists only English census years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. Each expected record type is specific and searchable."
+                "rationale": "All three significant gaps are correctly identified with appropriate severity. The 1838–1851 gap (13 years) expects the 1841 census, marked low severity because the subject was a child. The 1851–1874 gap (23 years) expects 1861 and 1871 censuses, marked high severity because the subject was married and alive through both enumeration years. The 1874 death gap expects a burial record, marked low. Critically, expected_events lists only English census years (1841, 1861, 1871) read from the England_Census wiki page, not US federal years. Each expected record type is specific and searchable."
               },
               {
                 "source": "rubric",
@@ -1127,11 +1127,11 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. place_search was called twice for two distinct place strings ('County Mayo, Ireland' and 'Ireland'), which is correct tool usage per the per-test context\u2014resolving two different strings is intended behavior, not redundancy. place_distance received the two standardized places from place_search responses ('Ireland' and 'Schuylkill, Pennsylvania, United States'). research_append correctly updated the timeline with all resolved places and distances. No tool calls landed in fixture_not_found; all matched successfully."
+            "rationale": "All tool calls passed correct arguments. place_search was called twice for two distinct place strings ('County Mayo, Ireland' and 'Ireland'), which is correct tool usage per the per-test context—resolving two different strings is intended behavior, not redundancy. place_distance received the two standardized places from place_search responses ('Ireland' and 'Schuylkill, Pennsylvania, United States'). research_append correctly updated the timeline with all resolved places and distances. No tool calls landed in fixture_not_found; all matched successfully."
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in the persisted timeline traces to a place_search response: 'Ireland' appears twice (baptism and birth events) and was resolved once; 'Schuylkill, Pennsylvania, United States' appears twice (1850 and 1860 censuses) and was resolved once. The distance_from_previous_km values are correct: 0 for the baptism (same standard_place as prior birth event), 5400 for the 1850 census (from place_distance call), and 0 for the 1860 census and death (same standard_place as prior event). Each unique place string was resolved exactly once, and independent calls were issued together in a single batch."
           },
@@ -1139,7 +1139,7 @@
             "source": "rubric",
             "name": "Gap detection",
             "score": 3,
-            "rationale": "The gap from 1860 to 1908-03-12 is correctly identified as high severity (48 years). expected_events names specific, searchable record types: '1870 census', '1880 census', '1900 census'\u2014all drawn from the US enumeration schedule and recoverable. The 1890 census is correctly excluded with a note explaining it was destroyed and does not survive. No trivial gaps are flagged; the gap reflects a genuine research void."
+            "rationale": "The gap from 1860 to 1908-03-12 is correctly identified as high severity (48 years). expected_events names specific, searchable record types: '1870 census', '1880 census', '1900 census'—all drawn from the US enumeration schedule and recoverable. The 1890 census is correctly excluded with a note explaining it was destroyed and does not survive. No trivial gaps are flagged; the gap reflects a genuine research void."
           },
           {
             "source": "rubric",
@@ -1177,11 +1177,11 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. place_search was called twice for two distinct place strings ('County Mayo, Ireland' and 'Ireland'), which is correct tool usage per the per-test context\u2014resolving two different strings is intended behavior, not redundancy. place_distance received the two standardized places from place_search responses ('Ireland' and 'Schuylkill, Pennsylvania, United States'). research_append correctly updated the timeline with all resolved places and distances. No tool calls landed in fixture_not_found; all matched successfully."
+            "rationale": "All tool calls passed correct arguments. place_search was called twice for two distinct place strings ('County Mayo, Ireland' and 'Ireland'), which is correct tool usage per the per-test context—resolving two different strings is intended behavior, not redundancy. place_distance received the two standardized places from place_search responses ('Ireland' and 'Schuylkill, Pennsylvania, United States'). research_append correctly updated the timeline with all resolved places and distances. No tool calls landed in fixture_not_found; all matched successfully."
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in the persisted timeline traces to a place_search response: 'Ireland' appears twice (baptism and birth events) and was resolved once; 'Schuylkill, Pennsylvania, United States' appears twice (1850 and 1860 censuses) and was resolved once. The distance_from_previous_km values are correct: 0 for the baptism (same standard_place as prior birth event), 5400 for the 1850 census (from place_distance call), and 0 for the 1860 census and death (same standard_place as prior event). Each unique place string was resolved exactly once, and independent calls were issued together in a single batch."
           },
@@ -1189,7 +1189,7 @@
             "source": "rubric",
             "name": "Gap detection",
             "score": 3,
-            "rationale": "The gap from 1860 to 1908-03-12 is correctly identified as high severity (48 years). expected_events names specific, searchable record types: '1870 census', '1880 census', '1900 census'\u2014all drawn from the US enumeration schedule and recoverable. The 1890 census is correctly excluded with a note explaining it was destroyed and does not survive. No trivial gaps are flagged; the gap reflects a genuine research void."
+            "rationale": "The gap from 1860 to 1908-03-12 is correctly identified as high severity (48 years). expected_events names specific, searchable record types: '1870 census', '1880 census', '1900 census'—all drawn from the US enumeration schedule and recoverable. The 1890 census is correctly excluded with a note explaining it was destroyed and does not survive. No trivial gaps are flagged; the gap reflects a genuine research void."
           },
           {
             "source": "rubric",
@@ -1213,7 +1213,7 @@
       },
       "totals": {
         "duration_ms": 58229.386358998454,
-        "duration_api_ms": 53143.0,
+        "duration_api_ms": 53143,
         "judge_duration_ms": 16652.005508000002,
         "wall_clock_ms": 75425.25315284729,
         "num_turns": 2,
@@ -1236,7 +1236,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 58229.386358998454,
-          "duration_api_ms": 53143.0,
+          "duration_api_ms": 53143,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1486,
@@ -1331,7 +1331,7 @@
           },
           "skill_cost_usd": 0.13827368,
           "output": {
-            "text_response": "The timeline for Patrick Flynn (I1) has been built and saved. Here's a summary of what the agent found:\n\n---\n\n**Timeline: Patrick Flynn (I1)** \u2014 5 events recorded\n\n**Events (chronological):**\n- ~1845 \u2013 Birth (likely Ireland, though death certificate says Pennsylvania \u2014 a conflict)\n- 1850-05-25 \u2013 Baptism in County Mayo, Ireland *(flagged \u2014 see anomaly below)*\n- 1850-06-01 \u2013 Listed in Thomas Flynn's household, Schuylkill County, Pennsylvania (age 5)\n- 1860 \u2013 Listed again in census (age 15)\n- 1908-03-12 \u2013 Death, Schuylkill County, Pennsylvania\n\n---\n\n**Gap Identified (High Severity):**\n- **1860\u20131908**: Missing from the 1870, 1880, and 1900 censuses. (The 1890 census is known to have been destroyed, so that one is expected to be absent.)\n\n---\n\n**Anomalies Flagged:**\n\n1. **Baptism record (a_014)** \u2014 A baptism in County Mayo on 1850-05-25 and a census listing in Pennsylvania on 1850-06-01 are ~5,400 km apart with only 7 days between them. This is physically impossible, so the baptism likely belongs to a *different* Patrick Flynn. The person-evidence link (pe_007) needs review.\n\n2. **Birthplace conflict** \u2014 The death certificate says Pennsylvania; the census says Ireland. This needs conflict-resolution.\n\n---\n\n**Recommended Next Steps:**\n1. **Person-evidence** \u2013 Review and likely remove pe_007 (the misattributed Mayo baptism)\n2. **Conflict-resolution** \u2013 Resolve the birthplace discrepancy (Ireland vs. Pennsylvania)\n3. **Search** \u2013 Look for Patrick Flynn in the 1870, 1880, and 1900 censuses to fill the major gap\n4. **Check-warnings** \u2013 Run vital-limit checks on the profile",
+            "text_response": "The timeline for Patrick Flynn (I1) has been built and saved. Here's a summary of what the agent found:\n\n---\n\n**Timeline: Patrick Flynn (I1)** — 5 events recorded\n\n**Events (chronological):**\n- ~1845 – Birth (likely Ireland, though death certificate says Pennsylvania — a conflict)\n- 1850-05-25 – Baptism in County Mayo, Ireland *(flagged — see anomaly below)*\n- 1850-06-01 – Listed in Thomas Flynn's household, Schuylkill County, Pennsylvania (age 5)\n- 1860 – Listed again in census (age 15)\n- 1908-03-12 – Death, Schuylkill County, Pennsylvania\n\n---\n\n**Gap Identified (High Severity):**\n- **1860–1908**: Missing from the 1870, 1880, and 1900 censuses. (The 1890 census is known to have been destroyed, so that one is expected to be absent.)\n\n---\n\n**Anomalies Flagged:**\n\n1. **Baptism record (a_014)** — A baptism in County Mayo on 1850-05-25 and a census listing in Pennsylvania on 1850-06-01 are ~5,400 km apart with only 7 days between them. This is physically impossible, so the baptism likely belongs to a *different* Patrick Flynn. The person-evidence link (pe_007) needs review.\n\n2. **Birthplace conflict** — The death certificate says Pennsylvania; the census says Ireland. This needs conflict-resolution.\n\n---\n\n**Recommended Next Steps:**\n1. **Person-evidence** – Review and likely remove pe_007 (the misattributed Mayo baptism)\n2. **Conflict-resolution** – Resolve the birthplace discrepancy (Ireland vs. Pennsylvania)\n3. **Search** – Look for Patrick Flynn in the 1870, 1880, and 1900 censuses to fill the major gap\n4. **Check-warnings** – Run vital-limit checks on the profile",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1366,7 +1366,7 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_001",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -1375,7 +1375,7 @@
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved",
                       "unregisteredDisagreements": [],
@@ -1545,7 +1545,7 @@
                       "assertion_id": "a_014",
                       "person_id": "I1",
                       "confidence": "probable",
-                      "rationale": "A Patrick Flynn baptism in County Mayo, Ireland \u2014 name and Irish birthplace match the subject, a probable record of his baptism. Included in the timeline as an attributed event so its geographic feasibility can be tested.",
+                      "rationale": "A Patrick Flynn baptism in County Mayo, Ireland — name and Irish birthplace match the subject, a probable record of his baptism. Included in the timeline as an attributed event so its geographic feasibility can be tested.",
                       "match_score": null,
                       "created": "2026-05-05",
                       "superseded_by": null
@@ -1591,7 +1591,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown \u2014 most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -1613,9 +1613,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
                       "record_basis": "inferred",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -1635,7 +1635,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness \u2014 they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
+                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -1657,7 +1657,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1850 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
                       "record_basis": "inferred",
@@ -1699,7 +1699,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Ancestry transcriber (derivative of census enumerator)",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Derivative index \u2014 transcription errors possible",
+                      "informant_bias_notes": "Derivative index — transcription errors possible",
                       "record_basis": "stated",
                       "log_entry_id": "log_002",
                       "extracted_for_question_ids": [
@@ -1739,7 +1739,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
                       "record_basis": "stated",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -1757,9 +1757,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 most likely a household member, possibly a neighbor (same reasoning as a_002).",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
                       "record_basis": "inferred",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -1781,7 +1781,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1860 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
                       "record_basis": "inferred",
@@ -1849,7 +1849,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -1898,7 +1898,7 @@
                   "items": [
                     {
                       "id": "t_001",
-                      "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                       "hypothesis_id": "h_001",
                       "person_ids": [
                         "I1"
@@ -2349,7 +2349,7 @@
             "warnings": [
               {
                 "kind": "uncovered_tool_call",
-                "advisory": "1 of 11 MCP tool call(s) matched no fixture predicate \u2014 the skill ran against a fixture_not_found or denied/unknown-tool error. Add or fix an mcp_fixture whose args match the call.",
+                "advisory": "1 of 11 MCP tool call(s) matched no fixture predicate — the skill ran against a fixture_not_found or denied/unknown-tool error. Add or fix an mcp_fixture whose args match the call.",
                 "attempted": [
                   {
                     "tool": "mcp__genealogy__project_context",
@@ -2733,11 +2733,11 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. place_search was called twice for two distinct place strings ('County Mayo, Ireland' and 'Ireland'), which is correct tool usage per the per-test context\u2014resolving two different strings is intended behavior, not redundancy. place_distance received the two standardized places from place_search responses ('Ireland' and 'Schuylkill, Pennsylvania, United States'). research_append correctly updated the timeline with all resolved places and distances. No tool calls landed in fixture_not_found; all matched successfully."
+                "rationale": "All tool calls passed correct arguments. place_search was called twice for two distinct place strings ('County Mayo, Ireland' and 'Ireland'), which is correct tool usage per the per-test context—resolving two different strings is intended behavior, not redundancy. place_distance received the two standardized places from place_search responses ('Ireland' and 'Schuylkill, Pennsylvania, United States'). research_append correctly updated the timeline with all resolved places and distances. No tool calls landed in fixture_not_found; all matched successfully."
               },
               {
                 "source": "rubric",
-                "name": "Tool usage \u2014 place resolution and distance",
+                "name": "Tool usage — place resolution and distance",
                 "score": 3,
                 "rationale": "Every non-null standard_place in the persisted timeline traces to a place_search response: 'Ireland' appears twice (baptism and birth events) and was resolved once; 'Schuylkill, Pennsylvania, United States' appears twice (1850 and 1860 censuses) and was resolved once. The distance_from_previous_km values are correct: 0 for the baptism (same standard_place as prior birth event), 5400 for the 1850 census (from place_distance call), and 0 for the 1860 census and death (same standard_place as prior event). Each unique place string was resolved exactly once, and independent calls were issued together in a single batch."
               },
@@ -2745,7 +2745,7 @@
                 "source": "rubric",
                 "name": "Gap detection",
                 "score": 3,
-                "rationale": "The gap from 1860 to 1908-03-12 is correctly identified as high severity (48 years). expected_events names specific, searchable record types: '1870 census', '1880 census', '1900 census'\u2014all drawn from the US enumeration schedule and recoverable. The 1890 census is correctly excluded with a note explaining it was destroyed and does not survive. No trivial gaps are flagged; the gap reflects a genuine research void."
+                "rationale": "The gap from 1860 to 1908-03-12 is correctly identified as high severity (48 years). expected_events names specific, searchable record types: '1870 census', '1880 census', '1900 census'—all drawn from the US enumeration schedule and recoverable. The 1890 census is correctly excluded with a note explaining it was destroyed and does not survive. No trivial gaps are flagged; the gap reflects a genuine research void."
               },
               {
                 "source": "rubric",
@@ -2813,13 +2813,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The persisted timeline t_002 correctly aggregates assertions from both I1 and I3, arranges them chronologically, and reaches the correct coherence verdict: Pass (one life). Ages progress correctly (5\u219215\u219225\u219235 across 1850/1860/1870/1880), birthplace remains Ireland consistently, and residence stays in Schuylkill County throughout. The conflict note on the 1908 death event correctly flags the Pennsylvania birthplace discrepancy from the son-in-law informant without adjudicating it as impossible. No fabricated material; all claims are supported by the tool responses and persisted assertions."
+            "rationale": "The persisted timeline t_002 correctly aggregates assertions from both I1 and I3, arranges them chronologically, and reaches the correct coherence verdict: Pass (one life). Ages progress correctly (5→15→25→35 across 1850/1860/1870/1880), birthplace remains Ireland consistently, and residence stays in Schuylkill County throughout. The conflict note on the 1908 death event correctly flags the Pennsylvania birthplace discrepancy from the son-in-law informant without adjudicating it as impossible. No fabricated material; all claims are supported by the tool responses and persisted assertions."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: built a candidate timeline for h_002 covering both I1 and I3; identified the significant 1880\u20131908 gap with appropriate expected_events (1900 census, marriage, occupation); reported the coherence verdict with deciding signals (age progression, birthplace stability, county consistency); and noted the conflict without incorrectly adjudicating it. The reply narrates the findings and next steps. No required work was omitted."
+            "rationale": "The skill addressed all required elements: built a candidate timeline for h_002 covering both I1 and I3; identified the significant 1880–1908 gap with appropriate expected_events (1900 census, marriage, occupation); reported the coherence verdict with deciding signals (age progression, birthplace stability, county consistency); and noted the conflict without incorrectly adjudicating it. The reply narrates the findings and next steps. No required work was omitted."
           },
           {
             "source": "base",
@@ -2829,27 +2829,27 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
-            "rationale": "Every persisted standard_place ('Schuylkill, Pennsylvania, United States') traces to the place_search response in this run. All five events share the same standard_place, so distance_from_previous_km is correctly set to 0 for events 2\u20135 (consecutive events sharing one place) and null for event 1 (first event). No distance_from_previous_km value was supplied by the agent's own knowledge or arithmetic. Each unique place string was resolved exactly once."
+            "rationale": "Every persisted standard_place ('Schuylkill, Pennsylvania, United States') traces to the place_search response in this run. All five events share the same standard_place, so distance_from_previous_km is correctly set to 0 for events 2–5 (consecutive events sharing one place) and null for event 1 (first event). No distance_from_previous_km value was supplied by the agent's own knowledge or arithmetic. Each unique place string was resolved exactly once."
           },
           {
             "source": "rubric",
             "name": "Gap detection",
             "score": 3,
-            "rationale": "The 1880\u20131908 gap (28 years) is correctly identified as significant and high-severity. expected_events names specific, searchable record types: '1900 census' (survives and can be searched), 'marriage' (searchable vital record), and 'occupation' (searchable in directories/records). The 1890 census is correctly omitted (destroyed by fire, unrecoverable). The gap reflects the research impact: a long silence before death, with the 1900 census as the logical next search target."
+            "rationale": "The 1880–1908 gap (28 years) is correctly identified as significant and high-severity. expected_events names specific, searchable record types: '1900 census' (survives and can be searched), 'marriage' (searchable vital record), and 'occupation' (searchable in directories/records). The 1890 census is correctly omitted (destroyed by fire, unrecoverable). The gap reflects the research impact: a long silence before death, with the 1900 census as the logical next search target."
           },
           {
             "source": "rubric",
             "name": "Deferral of logical-impossibility detection",
             "score": 3,
-            "rationale": "The skill correctly deferred logical-impossibility detection to check-warnings. The 1908 death date (1908-03-12) falls after the 1880 census (age 35), which is chronologically sound. The Pennsylvania birthplace on the death certificate conflicts with Ireland on the censuses, but the skill noted this conflict in the event's conflict_note field and in the reply without adjudicating it as impossible\u2014correctly flagging it as a secondary informant's potential error for further review, not settling it as a logical impossibility."
+            "rationale": "The skill correctly deferred logical-impossibility detection to check-warnings. The 1908 death date (1908-03-12) falls after the 1880 census (age 35), which is chronologically sound. The Pennsylvania birthplace on the death certificate conflicts with Ireland on the censuses, but the skill noted this conflict in the event's conflict_note field and in the reply without adjudicating it as impossible—correctly flagging it as a secondary informant's potential error for further review, not settling it as a logical impossibility."
           },
           {
             "source": "rubric",
             "name": "Geographic feasibility",
             "score": null,
-            "rationale": "N/A. The only long-distance pair in the timeline is the Ireland birth (~1845) to the 1850 Pennsylvania census, which spans approximately five years\u2014ample time for transatlantic travel. No distance-sensitive pair (close in time, far in distance) exists in this scenario. The per-test context confirms this is N/A, so no distance-feasibility check was required or performed."
+            "rationale": "N/A. The only long-distance pair in the timeline is the Ireland birth (~1845) to the 1850 Pennsylvania census, which spans approximately five years—ample time for transatlantic travel. No distance-sensitive pair (close in time, far in distance) exists in this scenario. The per-test context confirms this is N/A, so no distance-feasibility check was required or performed."
           },
           {
             "source": "rubric",
@@ -2863,13 +2863,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The persisted timeline t_002 correctly aggregates assertions from both I1 and I3, arranges them chronologically, and reaches the correct coherence verdict: Pass (one life). Ages progress correctly (5\u219215\u219225\u219235 across 1850/1860/1870/1880), birthplace remains Ireland consistently, and residence stays in Schuylkill County throughout. The conflict note on the 1908 death event correctly flags the Pennsylvania birthplace discrepancy from the son-in-law informant without adjudicating it as impossible. No fabricated material; all claims are supported by the tool responses and persisted assertions."
+            "rationale": "The persisted timeline t_002 correctly aggregates assertions from both I1 and I3, arranges them chronologically, and reaches the correct coherence verdict: Pass (one life). Ages progress correctly (5→15→25→35 across 1850/1860/1870/1880), birthplace remains Ireland consistently, and residence stays in Schuylkill County throughout. The conflict note on the 1908 death event correctly flags the Pennsylvania birthplace discrepancy from the son-in-law informant without adjudicating it as impossible. No fabricated material; all claims are supported by the tool responses and persisted assertions."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: built a candidate timeline for h_002 covering both I1 and I3; identified the significant 1880\u20131908 gap with appropriate expected_events (1900 census, marriage, occupation); reported the coherence verdict with deciding signals (age progression, birthplace stability, county consistency); and noted the conflict without incorrectly adjudicating it. The reply narrates the findings and next steps. No required work was omitted."
+            "rationale": "The skill addressed all required elements: built a candidate timeline for h_002 covering both I1 and I3; identified the significant 1880–1908 gap with appropriate expected_events (1900 census, marriage, occupation); reported the coherence verdict with deciding signals (age progression, birthplace stability, county consistency); and noted the conflict without incorrectly adjudicating it. The reply narrates the findings and next steps. No required work was omitted."
           },
           {
             "source": "base",
@@ -2879,27 +2879,27 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
-            "rationale": "Every persisted standard_place ('Schuylkill, Pennsylvania, United States') traces to the place_search response in this run. All five events share the same standard_place, so distance_from_previous_km is correctly set to 0 for events 2\u20135 (consecutive events sharing one place) and null for event 1 (first event). No distance_from_previous_km value was supplied by the agent's own knowledge or arithmetic. Each unique place string was resolved exactly once."
+            "rationale": "Every persisted standard_place ('Schuylkill, Pennsylvania, United States') traces to the place_search response in this run. All five events share the same standard_place, so distance_from_previous_km is correctly set to 0 for events 2–5 (consecutive events sharing one place) and null for event 1 (first event). No distance_from_previous_km value was supplied by the agent's own knowledge or arithmetic. Each unique place string was resolved exactly once."
           },
           {
             "source": "rubric",
             "name": "Gap detection",
             "score": 3,
-            "rationale": "The 1880\u20131908 gap (28 years) is correctly identified as significant and high-severity. expected_events names specific, searchable record types: '1900 census' (survives and can be searched), 'marriage' (searchable vital record), and 'occupation' (searchable in directories/records). The 1890 census is correctly omitted (destroyed by fire, unrecoverable). The gap reflects the research impact: a long silence before death, with the 1900 census as the logical next search target."
+            "rationale": "The 1880–1908 gap (28 years) is correctly identified as significant and high-severity. expected_events names specific, searchable record types: '1900 census' (survives and can be searched), 'marriage' (searchable vital record), and 'occupation' (searchable in directories/records). The 1890 census is correctly omitted (destroyed by fire, unrecoverable). The gap reflects the research impact: a long silence before death, with the 1900 census as the logical next search target."
           },
           {
             "source": "rubric",
             "name": "Deferral of logical-impossibility detection",
             "score": 3,
-            "rationale": "The skill correctly deferred logical-impossibility detection to check-warnings. The 1908 death date (1908-03-12) falls after the 1880 census (age 35), which is chronologically sound. The Pennsylvania birthplace on the death certificate conflicts with Ireland on the censuses, but the skill noted this conflict in the event's conflict_note field and in the reply without adjudicating it as impossible\u2014correctly flagging it as a secondary informant's potential error for further review, not settling it as a logical impossibility."
+            "rationale": "The skill correctly deferred logical-impossibility detection to check-warnings. The 1908 death date (1908-03-12) falls after the 1880 census (age 35), which is chronologically sound. The Pennsylvania birthplace on the death certificate conflicts with Ireland on the censuses, but the skill noted this conflict in the event's conflict_note field and in the reply without adjudicating it as impossible—correctly flagging it as a secondary informant's potential error for further review, not settling it as a logical impossibility."
           },
           {
             "source": "rubric",
             "name": "Geographic feasibility",
             "score": null,
-            "rationale": "N/A. The only long-distance pair in the timeline is the Ireland birth (~1845) to the 1850 Pennsylvania census, which spans approximately five years\u2014ample time for transatlantic travel. No distance-sensitive pair (close in time, far in distance) exists in this scenario. The per-test context confirms this is N/A, so no distance-feasibility check was required or performed."
+            "rationale": "N/A. The only long-distance pair in the timeline is the Ireland birth (~1845) to the 1850 Pennsylvania census, which spans approximately five years—ample time for transatlantic travel. No distance-sensitive pair (close in time, far in distance) exists in this scenario. The per-test context confirms this is N/A, so no distance-feasibility check was required or performed."
           },
           {
             "source": "rubric",
@@ -2911,7 +2911,7 @@
       },
       "totals": {
         "duration_ms": 50582.290867001575,
-        "duration_api_ms": 45349.0,
+        "duration_api_ms": 45349,
         "judge_duration_ms": 16474.699160000455,
         "wall_clock_ms": 67605.74173927307,
         "num_turns": 2,
@@ -2934,7 +2934,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 50582.290867001575,
-          "duration_api_ms": 45349.0,
+          "duration_api_ms": 45349,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1492,
@@ -3022,7 +3022,7 @@
           },
           "skill_cost_usd": 0.13920311,
           "output": {
-            "text_response": "**Timeline t_002 built for hypothesis h_002 (persons I1 and I3)**\n\n**Summary:** 5 events recorded, 1 gap identified, persisted for the viewer.\n\n---\n\n**Gap flagged (high severity):**\n1880 to 1908 \u2014 The 1900 census should show him if he is the same man (the 1890 census was destroyed). Marriage or occupation records from that period are also good places to look.\n\n**Anomalies:** None on geography \u2014 every event is in Schuylkill County, so no travel inconsistency was detected.\n\n**Coherence: Pass (with caution)**\nReported ages progress correctly across four censuses:\n- 1850: age 5\n- 1860: age 15\n- 1870: age 25\n- 1880: age 35\n\nBirthplace is stable as **Ireland** on the 1850, 1870, and 1880 records. Residence stays in Schuylkill County throughout.\n\n*Caveats:*\n- The common name is unresolved\n- I3 census records list no household members, so family consistency cannot be tested\n- The death certificate lists Pennsylvania birthplace, conflicting with Ireland (it is a secondary son-in-law report)\n\n---\n\n**Recommended next steps:**\n1. Use **hypothesis-tracking** to record the Pass result against h_002.\n2. Use **research-plan** to search the 1900 census and fill the 1880\u20131908 gap.",
+            "text_response": "**Timeline t_002 built for hypothesis h_002 (persons I1 and I3)**\n\n**Summary:** 5 events recorded, 1 gap identified, persisted for the viewer.\n\n---\n\n**Gap flagged (high severity):**\n1880 to 1908 — The 1900 census should show him if he is the same man (the 1890 census was destroyed). Marriage or occupation records from that period are also good places to look.\n\n**Anomalies:** None on geography — every event is in Schuylkill County, so no travel inconsistency was detected.\n\n**Coherence: Pass (with caution)**\nReported ages progress correctly across four censuses:\n- 1850: age 5\n- 1860: age 15\n- 1870: age 25\n- 1880: age 35\n\nBirthplace is stable as **Ireland** on the 1850, 1870, and 1880 records. Residence stays in Schuylkill County throughout.\n\n*Caveats:*\n- The common name is unresolved\n- I3 census records list no household members, so family consistency cannot be tested\n- The death certificate lists Pennsylvania birthplace, conflicting with Ireland (it is a secondary son-in-law report)\n\n---\n\n**Recommended next steps:**\n1. Use **hypothesis-tracking** to record the Pass result against h_002.\n2. Use **research-plan** to search the 1900 census and fill the 1880–1908 gap.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3057,7 +3057,7 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_001",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -3066,7 +3066,7 @@
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved",
                       "unregisteredDisagreements": [],
@@ -3219,7 +3219,7 @@
                       "contradicting_assertion_ids": [],
                       "ruled_out": false,
                       "ruled_out_reason": null,
-                      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect \u2014 relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
+                      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
                       "related_question_ids": [
                         "q_001"
                       ]
@@ -3402,7 +3402,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown \u2014 most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -3424,9 +3424,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
                       "record_basis": "inferred",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -3446,7 +3446,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness \u2014 they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
+                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -3468,7 +3468,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1850 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
                       "record_basis": "inferred",
@@ -3510,7 +3510,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Ancestry transcriber (derivative of census enumerator)",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Derivative index \u2014 transcription errors possible",
+                      "informant_bias_notes": "Derivative index — transcription errors possible",
                       "record_basis": "stated",
                       "log_entry_id": "log_002",
                       "extracted_for_question_ids": [
@@ -3550,7 +3550,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
                       "record_basis": "stated",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -3568,9 +3568,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 most likely a household member, possibly a neighbor (same reasoning as a_002).",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
                       "record_basis": "inferred",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -3592,7 +3592,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1860 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
                       "record_basis": "inferred",
@@ -3660,7 +3660,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -3725,7 +3725,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts the enumerator is a direct witness \u2014 they visited the dwelling.",
+                      "informant_bias_notes": "For residence facts the enumerator is a direct witness — they visited the dwelling.",
                       "record_basis": "stated",
                       "log_entry_id": "log_006",
                       "extracted_for_question_ids": []
@@ -3788,7 +3788,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts the enumerator is a direct witness \u2014 they visited the dwelling.",
+                      "informant_bias_notes": "For residence facts the enumerator is a direct witness — they visited the dwelling.",
                       "record_basis": "stated",
                       "log_entry_id": "log_007",
                       "extracted_for_question_ids": []
@@ -3816,7 +3816,7 @@
                   "items": [
                     {
                       "id": "t_001",
-                      "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                       "hypothesis_id": "h_001",
                       "person_ids": [
                         "I1"
@@ -4361,13 +4361,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The persisted timeline t_002 correctly aggregates assertions from both I1 and I3, arranges them chronologically, and reaches the correct coherence verdict: Pass (one life). Ages progress correctly (5\u219215\u219225\u219235 across 1850/1860/1870/1880), birthplace remains Ireland consistently, and residence stays in Schuylkill County throughout. The conflict note on the 1908 death event correctly flags the Pennsylvania birthplace discrepancy from the son-in-law informant without adjudicating it as impossible. No fabricated material; all claims are supported by the tool responses and persisted assertions."
+                "rationale": "The persisted timeline t_002 correctly aggregates assertions from both I1 and I3, arranges them chronologically, and reaches the correct coherence verdict: Pass (one life). Ages progress correctly (5→15→25→35 across 1850/1860/1870/1880), birthplace remains Ireland consistently, and residence stays in Schuylkill County throughout. The conflict note on the 1908 death event correctly flags the Pennsylvania birthplace discrepancy from the son-in-law informant without adjudicating it as impossible. No fabricated material; all claims are supported by the tool responses and persisted assertions."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: built a candidate timeline for h_002 covering both I1 and I3; identified the significant 1880\u20131908 gap with appropriate expected_events (1900 census, marriage, occupation); reported the coherence verdict with deciding signals (age progression, birthplace stability, county consistency); and noted the conflict without incorrectly adjudicating it. The reply narrates the findings and next steps. No required work was omitted."
+                "rationale": "The skill addressed all required elements: built a candidate timeline for h_002 covering both I1 and I3; identified the significant 1880–1908 gap with appropriate expected_events (1900 census, marriage, occupation); reported the coherence verdict with deciding signals (age progression, birthplace stability, county consistency); and noted the conflict without incorrectly adjudicating it. The reply narrates the findings and next steps. No required work was omitted."
               },
               {
                 "source": "base",
@@ -4377,27 +4377,27 @@
               },
               {
                 "source": "rubric",
-                "name": "Tool usage \u2014 place resolution and distance",
+                "name": "Tool usage — place resolution and distance",
                 "score": 3,
-                "rationale": "Every persisted standard_place ('Schuylkill, Pennsylvania, United States') traces to the place_search response in this run. All five events share the same standard_place, so distance_from_previous_km is correctly set to 0 for events 2\u20135 (consecutive events sharing one place) and null for event 1 (first event). No distance_from_previous_km value was supplied by the agent's own knowledge or arithmetic. Each unique place string was resolved exactly once."
+                "rationale": "Every persisted standard_place ('Schuylkill, Pennsylvania, United States') traces to the place_search response in this run. All five events share the same standard_place, so distance_from_previous_km is correctly set to 0 for events 2–5 (consecutive events sharing one place) and null for event 1 (first event). No distance_from_previous_km value was supplied by the agent's own knowledge or arithmetic. Each unique place string was resolved exactly once."
               },
               {
                 "source": "rubric",
                 "name": "Gap detection",
                 "score": 3,
-                "rationale": "The 1880\u20131908 gap (28 years) is correctly identified as significant and high-severity. expected_events names specific, searchable record types: '1900 census' (survives and can be searched), 'marriage' (searchable vital record), and 'occupation' (searchable in directories/records). The 1890 census is correctly omitted (destroyed by fire, unrecoverable). The gap reflects the research impact: a long silence before death, with the 1900 census as the logical next search target."
+                "rationale": "The 1880–1908 gap (28 years) is correctly identified as significant and high-severity. expected_events names specific, searchable record types: '1900 census' (survives and can be searched), 'marriage' (searchable vital record), and 'occupation' (searchable in directories/records). The 1890 census is correctly omitted (destroyed by fire, unrecoverable). The gap reflects the research impact: a long silence before death, with the 1900 census as the logical next search target."
               },
               {
                 "source": "rubric",
                 "name": "Deferral of logical-impossibility detection",
                 "score": 3,
-                "rationale": "The skill correctly deferred logical-impossibility detection to check-warnings. The 1908 death date (1908-03-12) falls after the 1880 census (age 35), which is chronologically sound. The Pennsylvania birthplace on the death certificate conflicts with Ireland on the censuses, but the skill noted this conflict in the event's conflict_note field and in the reply without adjudicating it as impossible\u2014correctly flagging it as a secondary informant's potential error for further review, not settling it as a logical impossibility."
+                "rationale": "The skill correctly deferred logical-impossibility detection to check-warnings. The 1908 death date (1908-03-12) falls after the 1880 census (age 35), which is chronologically sound. The Pennsylvania birthplace on the death certificate conflicts with Ireland on the censuses, but the skill noted this conflict in the event's conflict_note field and in the reply without adjudicating it as impossible—correctly flagging it as a secondary informant's potential error for further review, not settling it as a logical impossibility."
               },
               {
                 "source": "rubric",
                 "name": "Geographic feasibility",
                 "score": null,
-                "rationale": "N/A. The only long-distance pair in the timeline is the Ireland birth (~1845) to the 1850 Pennsylvania census, which spans approximately five years\u2014ample time for transatlantic travel. No distance-sensitive pair (close in time, far in distance) exists in this scenario. The per-test context confirms this is N/A, so no distance-feasibility check was required or performed."
+                "rationale": "N/A. The only long-distance pair in the timeline is the Ireland birth (~1845) to the 1850 Pennsylvania census, which spans approximately five years—ample time for transatlantic travel. No distance-sensitive pair (close in time, far in distance) exists in this scenario. The per-test context confirms this is N/A, so no distance-feasibility check was required or performed."
               },
               {
                 "source": "rubric",
@@ -4459,17 +4459,17 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: built a candidate timeline aggregating both persons' records, identified the key coherence signals (age and birthplace), reached an explicit Fail verdict (two people, not one), and persisted the timeline with proper structure. The gap detection identified the 1860\u20131908 gap as high severity with appropriate expected records (1870, 1880, 1900 censuses). No required work was omitted."
+            "rationale": "The skill addressed all required elements: built a candidate timeline aggregating both persons' records, identified the key coherence signals (age and birthplace), reached an explicit Fail verdict (two people, not one), and persisted the timeline with proper structure. The gap detection identified the 1860–1908 gap as high severity with appropriate expected records (1870, 1880, 1900 censuses). No required work was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. place_search calls for 'Schuylkill County, Pennsylvania', 'Ireland', and 'Pennsylvania' matched expected patterns. place_distance call for Pennsylvania to Schuylkill matched expected args. research_query calls for hypotheses and person_evidence were correctly formed. research_append call for timeline creation was valid. One early research_query call with assertionId=['h_002'] was rejected (h_002 is a hypothesis id, not assertion id), but Claude recovered by querying the hypotheses section without that parameter\u2014a single clean recovery, scored full credit per the retry policy."
+            "rationale": "All tool calls passed correct arguments. place_search calls for 'Schuylkill County, Pennsylvania', 'Ireland', and 'Pennsylvania' matched expected patterns. place_distance call for Pennsylvania to Schuylkill matched expected args. research_query calls for hypotheses and person_evidence were correctly formed. research_append call for timeline creation was valid. One early research_query call with assertionId=['h_002'] was rejected (h_002 is a hypothesis id, not assertion id), but Claude recovered by querying the hypotheses section without that parameter—a single clean recovery, scored full credit per the retry policy."
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in the persisted timeline traces to a place_search response: 'Pennsylvania, United States' (from place_search), 'Schuylkill, Pennsylvania, United States' (from place_search), 'Ireland' (from place_search). The distance_from_previous_km value of 140 km traces to the place_distance call between Pennsylvania and Schuylkill. Consecutive events in Schuylkill correctly carry 0 km. The first event (I3 birth ~1832) carries null distance as it is the first event. Each unique place was resolved exactly once, and independent calls were issued together in a single batch."
           },
@@ -4477,7 +4477,7 @@
             "source": "rubric",
             "name": "Gap detection",
             "score": 3,
-            "rationale": "The skill identified the significant 1860\u20131908 gap (48 years) as high severity, which is appropriate given the span and research impact. The expected_events array names specific, searchable record types: '1870 census', '1880 census', '1900 census'\u2014all records that survive and can be searched in the relevant jurisdiction (Pennsylvania/Schuylkill County). No destroyed or unrecoverable records were listed. The gap reflects the actual absence of records between the 1860 census and the 1908 death."
+            "rationale": "The skill identified the significant 1860–1908 gap (48 years) as high severity, which is appropriate given the span and research impact. The expected_events array names specific, searchable record types: '1870 census', '1880 census', '1900 census'—all records that survive and can be searched in the relevant jurisdiction (Pennsylvania/Schuylkill County). No destroyed or unrecoverable records were listed. The gap reflects the actual absence of records between the 1860 census and the 1908 death."
           },
           {
             "source": "rubric",
@@ -4509,17 +4509,17 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: built a candidate timeline aggregating both persons' records, identified the key coherence signals (age and birthplace), reached an explicit Fail verdict (two people, not one), and persisted the timeline with proper structure. The gap detection identified the 1860\u20131908 gap as high severity with appropriate expected records (1870, 1880, 1900 censuses). No required work was omitted."
+            "rationale": "The skill addressed all required elements: built a candidate timeline aggregating both persons' records, identified the key coherence signals (age and birthplace), reached an explicit Fail verdict (two people, not one), and persisted the timeline with proper structure. The gap detection identified the 1860–1908 gap as high severity with appropriate expected records (1870, 1880, 1900 censuses). No required work was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All tool calls passed correct arguments. place_search calls for 'Schuylkill County, Pennsylvania', 'Ireland', and 'Pennsylvania' matched expected patterns. place_distance call for Pennsylvania to Schuylkill matched expected args. research_query calls for hypotheses and person_evidence were correctly formed. research_append call for timeline creation was valid. One early research_query call with assertionId=['h_002'] was rejected (h_002 is a hypothesis id, not assertion id), but Claude recovered by querying the hypotheses section without that parameter\u2014a single clean recovery, scored full credit per the retry policy."
+            "rationale": "All tool calls passed correct arguments. place_search calls for 'Schuylkill County, Pennsylvania', 'Ireland', and 'Pennsylvania' matched expected patterns. place_distance call for Pennsylvania to Schuylkill matched expected args. research_query calls for hypotheses and person_evidence were correctly formed. research_append call for timeline creation was valid. One early research_query call with assertionId=['h_002'] was rejected (h_002 is a hypothesis id, not assertion id), but Claude recovered by querying the hypotheses section without that parameter—a single clean recovery, scored full credit per the retry policy."
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in the persisted timeline traces to a place_search response: 'Pennsylvania, United States' (from place_search), 'Schuylkill, Pennsylvania, United States' (from place_search), 'Ireland' (from place_search). The distance_from_previous_km value of 140 km traces to the place_distance call between Pennsylvania and Schuylkill. Consecutive events in Schuylkill correctly carry 0 km. The first event (I3 birth ~1832) carries null distance as it is the first event. Each unique place was resolved exactly once, and independent calls were issued together in a single batch."
           },
@@ -4527,7 +4527,7 @@
             "source": "rubric",
             "name": "Gap detection",
             "score": 3,
-            "rationale": "The skill identified the significant 1860\u20131908 gap (48 years) as high severity, which is appropriate given the span and research impact. The expected_events array names specific, searchable record types: '1870 census', '1880 census', '1900 census'\u2014all records that survive and can be searched in the relevant jurisdiction (Pennsylvania/Schuylkill County). No destroyed or unrecoverable records were listed. The gap reflects the actual absence of records between the 1860 census and the 1908 death."
+            "rationale": "The skill identified the significant 1860–1908 gap (48 years) as high severity, which is appropriate given the span and research impact. The expected_events array names specific, searchable record types: '1870 census', '1880 census', '1900 census'—all records that survive and can be searched in the relevant jurisdiction (Pennsylvania/Schuylkill County). No destroyed or unrecoverable records were listed. The gap reflects the actual absence of records between the 1860 census and the 1908 death."
           },
           {
             "source": "rubric",
@@ -4551,7 +4551,7 @@
       },
       "totals": {
         "duration_ms": 67242.68799799756,
-        "duration_api_ms": 60863.0,
+        "duration_api_ms": 60863,
         "judge_duration_ms": 17229.179744001158,
         "wall_clock_ms": 85054.92782592773,
         "num_turns": 2,
@@ -4574,7 +4574,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 67242.68799799756,
-          "duration_api_ms": 60863.0,
+          "duration_api_ms": 60863,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1497,
@@ -4670,7 +4670,7 @@
           },
           "skill_cost_usd": 0.14249982,
           "output": {
-            "text_response": "**Written:** t_002, \"Patrick Flynn (I3, 1870/1880 Schuylkill) vs Patrick Flynn (I1, b. ~1845) - one life test,\" linked to h_002. 6 events, 1 gap.\n\n---\n\n**The records for I1 and I3 do not fit one life.**\n\n**Age mismatch (key finding):**\n- I3 (1870 and 1880 Schuylkill County censuses) is recorded as age 38 in 1870 and 48 in 1880 \u2192 birth ~1832, **Pennsylvania-born**\n- I1 (1850 and 1860 censuses, death certificate 1908) is recorded as age 5 in 1850 and 15 in 1860 \u2192 birth ~1845, **Ireland-born**\n\nThat is a **13-year birth year gap** \u2014 well beyond census rounding error \u2014 and birthplaces directly contradict.\n\n**What does cohere:**\n- Both men are in Schuylkill County, Pennsylvania, so residence is consistent.\n- No family members are recorded for either, so family consistency cannot be tested.\n\n**Gap noted:** I1 has no record between 1860 and 1908 (high severity). The 1870 and 1880 Schuylkill entries (I3) are the candidates under test, and they fail on age and birthplace.\n\n---\n\n**Next steps:**\n1. Link assertions a_002, a_003, a_009, and a_011 to I1 through **person-evidence**, then rerun the timeline.\n2. The age and birthplace conflict should persist, but needs those links to be fully confirmed.\n3. Consider using **hypothesis-tracking** to move h_002 toward **ruled_out** \u2014 these appear to be two distinct men named Patrick Flynn.",
+            "text_response": "**Written:** t_002, \"Patrick Flynn (I3, 1870/1880 Schuylkill) vs Patrick Flynn (I1, b. ~1845) - one life test,\" linked to h_002. 6 events, 1 gap.\n\n---\n\n**The records for I1 and I3 do not fit one life.**\n\n**Age mismatch (key finding):**\n- I3 (1870 and 1880 Schuylkill County censuses) is recorded as age 38 in 1870 and 48 in 1880 → birth ~1832, **Pennsylvania-born**\n- I1 (1850 and 1860 censuses, death certificate 1908) is recorded as age 5 in 1850 and 15 in 1860 → birth ~1845, **Ireland-born**\n\nThat is a **13-year birth year gap** — well beyond census rounding error — and birthplaces directly contradict.\n\n**What does cohere:**\n- Both men are in Schuylkill County, Pennsylvania, so residence is consistent.\n- No family members are recorded for either, so family consistency cannot be tested.\n\n**Gap noted:** I1 has no record between 1860 and 1908 (high severity). The 1870 and 1880 Schuylkill entries (I3) are the candidates under test, and they fail on age and birthplace.\n\n---\n\n**Next steps:**\n1. Link assertions a_002, a_003, a_009, and a_011 to I1 through **person-evidence**, then rerun the timeline.\n2. The age and birthplace conflict should persist, but needs those links to be fully confirmed.\n3. Consider using **hypothesis-tracking** to move h_002 toward **ruled_out** — these appear to be two distinct men named Patrick Flynn.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4705,7 +4705,7 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_001",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -4714,7 +4714,7 @@
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved",
                       "unregisteredDisagreements": [],
@@ -4889,7 +4889,7 @@
                       "contradicting_assertion_ids": [],
                       "ruled_out": false,
                       "ruled_out_reason": null,
-                      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect \u2014 relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
+                      "notes": "Three independent pieces of evidence: 1850 census co-enumeration (indirect), 1860 census co-enumeration (indirect — relationship inferred from household position), death certificate naming Thomas as father (direct, secondary informant). Awaiting probate records for additional confirmation.",
                       "related_question_ids": [
                         "q_001"
                       ]
@@ -5072,7 +5072,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown \u2014 most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -5094,9 +5094,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
                       "record_basis": "inferred",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -5116,7 +5116,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness \u2014 they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
+                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -5138,7 +5138,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1850 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
                       "record_basis": "inferred",
@@ -5180,7 +5180,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Ancestry transcriber (derivative of census enumerator)",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Derivative index \u2014 transcription errors possible",
+                      "informant_bias_notes": "Derivative index — transcription errors possible",
                       "record_basis": "stated",
                       "log_entry_id": "log_002",
                       "extracted_for_question_ids": [
@@ -5220,7 +5220,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
                       "record_basis": "stated",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -5238,9 +5238,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 most likely a household member, possibly a neighbor (same reasoning as a_002).",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
                       "record_basis": "inferred",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -5262,7 +5262,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1860 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
                       "record_basis": "inferred",
@@ -5330,7 +5330,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -5395,7 +5395,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts the enumerator is a direct witness \u2014 they visited the dwelling.",
+                      "informant_bias_notes": "For residence facts the enumerator is a direct witness — they visited the dwelling.",
                       "record_basis": "stated",
                       "log_entry_id": "log_006",
                       "extracted_for_question_ids": []
@@ -5458,7 +5458,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts the enumerator is a direct witness \u2014 they visited the dwelling.",
+                      "informant_bias_notes": "For residence facts the enumerator is a direct witness — they visited the dwelling.",
                       "record_basis": "stated",
                       "log_entry_id": "log_007",
                       "extracted_for_question_ids": []
@@ -5486,7 +5486,7 @@
                   "items": [
                     {
                       "id": "t_001",
-                      "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                       "hypothesis_id": "h_001",
                       "person_ids": [
                         "I1"
@@ -6095,17 +6095,17 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: built a candidate timeline aggregating both persons' records, identified the key coherence signals (age and birthplace), reached an explicit Fail verdict (two people, not one), and persisted the timeline with proper structure. The gap detection identified the 1860\u20131908 gap as high severity with appropriate expected records (1870, 1880, 1900 censuses). No required work was omitted."
+                "rationale": "The skill addressed all required elements: built a candidate timeline aggregating both persons' records, identified the key coherence signals (age and birthplace), reached an explicit Fail verdict (two people, not one), and persisted the timeline with proper structure. The gap detection identified the 1860–1908 gap as high severity with appropriate expected records (1870, 1880, 1900 censuses). No required work was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All tool calls passed correct arguments. place_search calls for 'Schuylkill County, Pennsylvania', 'Ireland', and 'Pennsylvania' matched expected patterns. place_distance call for Pennsylvania to Schuylkill matched expected args. research_query calls for hypotheses and person_evidence were correctly formed. research_append call for timeline creation was valid. One early research_query call with assertionId=['h_002'] was rejected (h_002 is a hypothesis id, not assertion id), but Claude recovered by querying the hypotheses section without that parameter\u2014a single clean recovery, scored full credit per the retry policy."
+                "rationale": "All tool calls passed correct arguments. place_search calls for 'Schuylkill County, Pennsylvania', 'Ireland', and 'Pennsylvania' matched expected patterns. place_distance call for Pennsylvania to Schuylkill matched expected args. research_query calls for hypotheses and person_evidence were correctly formed. research_append call for timeline creation was valid. One early research_query call with assertionId=['h_002'] was rejected (h_002 is a hypothesis id, not assertion id), but Claude recovered by querying the hypotheses section without that parameter—a single clean recovery, scored full credit per the retry policy."
               },
               {
                 "source": "rubric",
-                "name": "Tool usage \u2014 place resolution and distance",
+                "name": "Tool usage — place resolution and distance",
                 "score": 3,
                 "rationale": "Every non-null standard_place in the persisted timeline traces to a place_search response: 'Pennsylvania, United States' (from place_search), 'Schuylkill, Pennsylvania, United States' (from place_search), 'Ireland' (from place_search). The distance_from_previous_km value of 140 km traces to the place_distance call between Pennsylvania and Schuylkill. Consecutive events in Schuylkill correctly carry 0 km. The first event (I3 birth ~1832) carries null distance as it is the first event. Each unique place was resolved exactly once, and independent calls were issued together in a single batch."
               },
@@ -6113,7 +6113,7 @@
                 "source": "rubric",
                 "name": "Gap detection",
                 "score": 3,
-                "rationale": "The skill identified the significant 1860\u20131908 gap (48 years) as high severity, which is appropriate given the span and research impact. The expected_events array names specific, searchable record types: '1870 census', '1880 census', '1900 census'\u2014all records that survive and can be searched in the relevant jurisdiction (Pennsylvania/Schuylkill County). No destroyed or unrecoverable records were listed. The gap reflects the actual absence of records between the 1860 census and the 1908 death."
+                "rationale": "The skill identified the significant 1860–1908 gap (48 years) as high severity, which is appropriate given the span and research impact. The expected_events array names specific, searchable record types: '1870 census', '1880 census', '1900 census'—all records that survive and can be searched in the relevant jurisdiction (Pennsylvania/Schuylkill County). No destroyed or unrecoverable records were listed. The gap reflects the actual absence of records between the 1860 census and the 1908 death."
               },
               {
                 "source": "rubric",
@@ -6197,9 +6197,9 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
-            "rationale": "Every persisted standard_place traces to a place_search response: 'Ireland' and 'Schuylkill, Pennsylvania, United States' both appear in tool responses. Every distance_from_previous_km value is either 0 (for consecutive events in the same place: 1850\u21921860 and 1860\u21921908 and 1908\u21921912 all in Schuylkill) or 5400 km (from place_distance call for Ireland\u2192Pennsylvania). The birth event correctly carries distance_from_previous_km: null because it is the first event. Each unique place was resolved exactly once. Independent place_search calls were issued together in a single batch rather than serialized. No distance was supplied by the agent's own knowledge or arithmetic."
+            "rationale": "Every persisted standard_place traces to a place_search response: 'Ireland' and 'Schuylkill, Pennsylvania, United States' both appear in tool responses. Every distance_from_previous_km value is either 0 (for consecutive events in the same place: 1850→1860 and 1860→1908 and 1908→1912 all in Schuylkill) or 5400 km (from place_distance call for Ireland→Pennsylvania). The birth event correctly carries distance_from_previous_km: null because it is the first event. Each unique place was resolved exactly once. Independent place_search calls were issued together in a single batch rather than serialized. No distance was supplied by the agent's own knowledge or arithmetic."
           },
           {
             "source": "rubric",
@@ -6247,9 +6247,9 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
-            "rationale": "Every persisted standard_place traces to a place_search response: 'Ireland' and 'Schuylkill, Pennsylvania, United States' both appear in tool responses. Every distance_from_previous_km value is either 0 (for consecutive events in the same place: 1850\u21921860 and 1860\u21921908 and 1908\u21921912 all in Schuylkill) or 5400 km (from place_distance call for Ireland\u2192Pennsylvania). The birth event correctly carries distance_from_previous_km: null because it is the first event. Each unique place was resolved exactly once. Independent place_search calls were issued together in a single batch rather than serialized. No distance was supplied by the agent's own knowledge or arithmetic."
+            "rationale": "Every persisted standard_place traces to a place_search response: 'Ireland' and 'Schuylkill, Pennsylvania, United States' both appear in tool responses. Every distance_from_previous_km value is either 0 (for consecutive events in the same place: 1850→1860 and 1860→1908 and 1908→1912 all in Schuylkill) or 5400 km (from place_distance call for Ireland→Pennsylvania). The birth event correctly carries distance_from_previous_km: null because it is the first event. Each unique place was resolved exactly once. Independent place_search calls were issued together in a single batch rather than serialized. No distance was supplied by the agent's own knowledge or arithmetic."
           },
           {
             "source": "rubric",
@@ -6279,7 +6279,7 @@
       },
       "totals": {
         "duration_ms": 47572.768930000166,
-        "duration_api_ms": 38489.0,
+        "duration_api_ms": 38489,
         "judge_duration_ms": 19366.389778002485,
         "wall_clock_ms": 67882.86924362183,
         "num_turns": 2,
@@ -6302,7 +6302,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 47572.768930000166,
-          "duration_api_ms": 38489.0,
+          "duration_api_ms": 38489,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1478,
@@ -6393,7 +6393,7 @@
           },
           "skill_cost_usd": 0.13963042,
           "output": {
-            "text_response": "Here is the timeline agent's response:\n\n**t_001 \u2014 5 events, 1 gap** (regenerated in place, still linked to h_001)\n\n---\n\n**Gap: 1860\u20131908-03-12** | *High severity*\nExpected 1870, 1880, and 1900 census returns are missing; the 1890 census did not survive.\n\n**Anomaly:** The 1912-06-14 deed (a_014, grantor) postdates the recorded 1908 death. It was kept as a flagged event rather than removed. Recommend running **check-warnings** (`person_warnings`) to classify it.\n\n**Birthplace discrepancy:** The death certificate says Pennsylvania (a_012), but the censuses say Ireland. a_012 is not linked to this person, so it is not in the timeline.\n\n**Dropped from prior version:** The a_008 citation on the 1860 event, because that assertion is not linked to Patrick Flynn in person_evidence. The 1860 event now cites only a_010.\n\nMode A \u2014 no identity verdict. Relationship to Thomas Flynn remains inferred from household position.\n\n---\n\n**Narrative summary:** Patrick Flynn was born around 1845, most likely in Ireland, and was counted in Thomas Flynn's household in Schuylkill County, Pennsylvania in both 1850 and 1860. The trail then goes quiet for nearly fifty years \u2014 from 1860 until his death in Schuylkill County in March 1908. The census years 1870, 1880, and 1900 would normally cover that stretch, suggesting those records haven't been found yet or that he lived elsewhere for part of it. A 1912 property deed bearing his name appears after his recorded death and needs checking before it can be relied upon.\n\n**Recommended next steps:**\n1. Run a data-integrity check on the post-death deed (check-warnings / person_warnings).\n2. Plan searches for the missing census years (1870, 1880, 1900).",
+            "text_response": "Here is the timeline agent's response:\n\n**t_001 — 5 events, 1 gap** (regenerated in place, still linked to h_001)\n\n---\n\n**Gap: 1860–1908-03-12** | *High severity*\nExpected 1870, 1880, and 1900 census returns are missing; the 1890 census did not survive.\n\n**Anomaly:** The 1912-06-14 deed (a_014, grantor) postdates the recorded 1908 death. It was kept as a flagged event rather than removed. Recommend running **check-warnings** (`person_warnings`) to classify it.\n\n**Birthplace discrepancy:** The death certificate says Pennsylvania (a_012), but the censuses say Ireland. a_012 is not linked to this person, so it is not in the timeline.\n\n**Dropped from prior version:** The a_008 citation on the 1860 event, because that assertion is not linked to Patrick Flynn in person_evidence. The 1860 event now cites only a_010.\n\nMode A — no identity verdict. Relationship to Thomas Flynn remains inferred from household position.\n\n---\n\n**Narrative summary:** Patrick Flynn was born around 1845, most likely in Ireland, and was counted in Thomas Flynn's household in Schuylkill County, Pennsylvania in both 1850 and 1860. The trail then goes quiet for nearly fifty years — from 1860 until his death in Schuylkill County in March 1908. The census years 1870, 1880, and 1900 would normally cover that stretch, suggesting those records haven't been found yet or that he lived elsewhere for part of it. A 1912 property deed bearing his name appears after his recorded death and needs checking before it can be relied upon.\n\n**Recommended next steps:**\n1. Run a data-integrity check on the post-death deed (check-warnings / person_warnings).\n2. Plan searches for the missing census years (1870, 1880, 1900).",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6428,7 +6428,7 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_001",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -6437,7 +6437,7 @@
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved",
                       "unregisteredDisagreements": [],
@@ -6693,7 +6693,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown \u2014 most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -6715,9 +6715,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
                       "record_basis": "inferred",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -6737,7 +6737,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness \u2014 they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
+                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -6759,7 +6759,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1850 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
                       "record_basis": "inferred",
@@ -6801,7 +6801,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Ancestry transcriber (derivative of census enumerator)",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Derivative index \u2014 transcription errors possible",
+                      "informant_bias_notes": "Derivative index — transcription errors possible",
                       "record_basis": "stated",
                       "log_entry_id": "log_002",
                       "extracted_for_question_ids": [
@@ -6841,7 +6841,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
                       "record_basis": "stated",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -6859,9 +6859,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 most likely a household member, possibly a neighbor (same reasoning as a_002).",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
                       "record_basis": "inferred",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -6883,7 +6883,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1860 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
                       "record_basis": "inferred",
@@ -6951,7 +6951,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -7000,7 +7000,7 @@
                   "items": [
                     {
                       "id": "t_001",
-                      "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                       "hypothesis_id": "h_001",
                       "person_ids": [
                         "I1"
@@ -7260,7 +7260,7 @@
             "agent_returns": [
               {
                 "subagent_type": "timeline",
-                "text": "t_001 \u2014 5 events, 1 gap; persisted for the viewer (regenerated in place, still linked to h_001).\n\nGap: 1860 to 1908-03-12, high severity. Expected 1870, 1880 and 1900 census returns are missing; the 1890 census did not survive.\n\nAnomaly: the 1912-06-14 deed (a_014, grantor) postdates the recorded 1908 death. I kept it as a flagged event rather than folding it in. Recommend check-warnings (`person_warnings`) to classify it.\n\nBirthplace discrepancy: the death certificate says Pennsylvania (a_012), but the censuses say Ireland. a_012 is not linked to this person, so it is not in the timeline.\n\nDropped from the prior version: the a_008 citation on the 1860 event, because that assertion is not linked to Patrick Flynn in person_evidence. The 1860 event now cites only a_010.\n\nMode A, so no identity verdict. Relationship to Thomas Flynn remains inferred from household position.\n\n---\nThis is the record of Patrick Flynn's life as far as the file shows it. He was born around 1845, most likely in Ireland, and was counted in Thomas Flynn's household in Schuylkill County, Pennsylvania in 1850 and again in 1860. Then the trail goes quiet for nearly fifty years, from 1860 until his death in Schuylkill County in March 1908. The census years 1870, 1880 and 1900 would normally cover that stretch, so the silence suggests the records have not been found yet, or that he lived somewhere else for part of it. A 1912 property deed bears his name after his death, which needs checking before anyone relies on it.\n\nNext, the post-death deed should go to a data-integrity check, and then the missing census years can be planned as searches."
+                "text": "t_001 — 5 events, 1 gap; persisted for the viewer (regenerated in place, still linked to h_001).\n\nGap: 1860 to 1908-03-12, high severity. Expected 1870, 1880 and 1900 census returns are missing; the 1890 census did not survive.\n\nAnomaly: the 1912-06-14 deed (a_014, grantor) postdates the recorded 1908 death. I kept it as a flagged event rather than folding it in. Recommend check-warnings (`person_warnings`) to classify it.\n\nBirthplace discrepancy: the death certificate says Pennsylvania (a_012), but the censuses say Ireland. a_012 is not linked to this person, so it is not in the timeline.\n\nDropped from the prior version: the a_008 citation on the 1860 event, because that assertion is not linked to Patrick Flynn in person_evidence. The 1860 event now cites only a_010.\n\nMode A, so no identity verdict. Relationship to Thomas Flynn remains inferred from household position.\n\n---\nThis is the record of Patrick Flynn's life as far as the file shows it. He was born around 1845, most likely in Ireland, and was counted in Thomas Flynn's household in Schuylkill County, Pennsylvania in 1850 and again in 1860. Then the trail goes quiet for nearly fifty years, from 1860 until his death in Schuylkill County in March 1908. The census years 1870, 1880 and 1900 would normally cover that stretch, so the silence suggests the records have not been found yet, or that he lived somewhere else for part of it. A 1912 property deed bears his name after his death, which needs checking before anyone relies on it.\n\nNext, the post-death deed should go to a data-integrity check, and then the missing census years can be planned as searches."
               }
             ],
             "file_changes": {
@@ -7653,9 +7653,9 @@
               },
               {
                 "source": "rubric",
-                "name": "Tool usage \u2014 place resolution and distance",
+                "name": "Tool usage — place resolution and distance",
                 "score": 3,
-                "rationale": "Every persisted standard_place traces to a place_search response: 'Ireland' and 'Schuylkill, Pennsylvania, United States' both appear in tool responses. Every distance_from_previous_km value is either 0 (for consecutive events in the same place: 1850\u21921860 and 1860\u21921908 and 1908\u21921912 all in Schuylkill) or 5400 km (from place_distance call for Ireland\u2192Pennsylvania). The birth event correctly carries distance_from_previous_km: null because it is the first event. Each unique place was resolved exactly once. Independent place_search calls were issued together in a single batch rather than serialized. No distance was supplied by the agent's own knowledge or arithmetic."
+                "rationale": "Every persisted standard_place traces to a place_search response: 'Ireland' and 'Schuylkill, Pennsylvania, United States' both appear in tool responses. Every distance_from_previous_km value is either 0 (for consecutive events in the same place: 1850→1860 and 1860→1908 and 1908→1912 all in Schuylkill) or 5400 km (from place_distance call for Ireland→Pennsylvania). The birth event correctly carries distance_from_previous_km: null because it is the first event. Each unique place was resolved exactly once. Independent place_search calls were issued together in a single batch rather than serialized. No distance was supplied by the agent's own knowledge or arithmetic."
               },
               {
                 "source": "rubric",
@@ -7743,7 +7743,7 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in the persisted timeline traces to a place_search response: 'Ireland' from place_search result, 'Schuylkill, Pennsylvania, United States' from place_search result. The distance_from_previous_km values are correct: 5400 km (from place_distance call between Ireland and Schuylkill) for the 1850 event, 0 for both 1860 and 1908 events (same standard_place as previous). Each unique place was resolved exactly once; independent calls (place_search for both places, then place_distance) were issued together in a single batch rather than serialized."
           },
@@ -7769,7 +7769,7 @@
             "source": "rubric",
             "name": "Identity coherence (hypothesis-testing timelines)",
             "score": null,
-            "rationale": "This dimension is N/A. The hypothesis under test (h_001) is parentage \u2014 whether Thomas Flynn is Patrick's father \u2014 not an identity question (whether records describe one person or two). The rubric states: 'This dimension applies only where the hypothesis under test is an identity question.' The agent correctly noted 'Coherence: not applicable, since this is a parentage hypothesis, not an identity question.' No coherence verdict was issued, which is the correct behavior for a non-identity hypothesis."
+            "rationale": "This dimension is N/A. The hypothesis under test (h_001) is parentage — whether Thomas Flynn is Patrick's father — not an identity question (whether records describe one person or two). The rubric states: 'This dimension applies only where the hypothesis under test is an identity question.' The agent correctly noted 'Coherence: not applicable, since this is a parentage hypothesis, not an identity question.' No coherence verdict was issued, which is the correct behavior for a non-identity hypothesis."
           }
         ],
         "review_dimensions": [
@@ -7793,7 +7793,7 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in the persisted timeline traces to a place_search response: 'Ireland' from place_search result, 'Schuylkill, Pennsylvania, United States' from place_search result. The distance_from_previous_km values are correct: 5400 km (from place_distance call between Ireland and Schuylkill) for the 1850 event, 0 for both 1860 and 1908 events (same standard_place as previous). Each unique place was resolved exactly once; independent calls (place_search for both places, then place_distance) were issued together in a single batch rather than serialized."
           },
@@ -7819,13 +7819,13 @@
             "source": "rubric",
             "name": "Identity coherence (hypothesis-testing timelines)",
             "score": null,
-            "rationale": "This dimension is N/A. The hypothesis under test (h_001) is parentage \u2014 whether Thomas Flynn is Patrick's father \u2014 not an identity question (whether records describe one person or two). The rubric states: 'This dimension applies only where the hypothesis under test is an identity question.' The agent correctly noted 'Coherence: not applicable, since this is a parentage hypothesis, not an identity question.' No coherence verdict was issued, which is the correct behavior for a non-identity hypothesis."
+            "rationale": "This dimension is N/A. The hypothesis under test (h_001) is parentage — whether Thomas Flynn is Patrick's father — not an identity question (whether records describe one person or two). The rubric states: 'This dimension applies only where the hypothesis under test is an identity question.' The agent correctly noted 'Coherence: not applicable, since this is a parentage hypothesis, not an identity question.' No coherence verdict was issued, which is the correct behavior for a non-identity hypothesis."
           }
         ]
       },
       "totals": {
         "duration_ms": 42539.1789130008,
-        "duration_api_ms": 37321.0,
+        "duration_api_ms": 37321,
         "judge_duration_ms": 19637.002400999336,
         "wall_clock_ms": 62264.26911354065,
         "num_turns": 2,
@@ -7848,7 +7848,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 42539.1789130008,
-          "duration_api_ms": 37321.0,
+          "duration_api_ms": 37321,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1495,
@@ -7943,7 +7943,7 @@
           },
           "skill_cost_usd": 0.134372225,
           "output": {
-            "text_response": "Here is what the timeline agent found and recommends:\n\n---\n\n**Timeline built for Patrick Flynn (I1)** \u2014 labeled *\"Patrick Flynn \u2014 assuming Thomas Flynn parentage\"* \u2014 with **4 events** and **1 gap**:\n\n| Event | Details |\n|---|---|\n| Birth | ~1845, Ireland (estimated from census ages) |\n| 1850 Census | Schuylkill County, Pennsylvania \u2014 in Thomas Flynn's household |\n| 1860 Census | Schuylkill County, Pennsylvania \u2014 still in Thomas Flynn's household |\n| Death | 12 March 1908, Schuylkill County, Pennsylvania |\n\n**Gap identified (high severity):** 1860 \u2192 1908 \u2014 nearly 50 years of silence. The 1870, 1880, and 1900 US censuses survive and have **not yet been searched** for Patrick. (The 1890 census did not survive.)\n\n**Anomalies:** None. The Ireland \u2192 Schuylkill move (~5,400 km) is plausible given the timeframe, and no event falls after his death.\n\n---\n\n**What happens next:** The high-severity gap calls for **planning searches** of the 1870, 1880, and 1900 censuses for Patrick. The agent can begin that research plan whenever you're ready \u2014 just say the word.",
+            "text_response": "Here is what the timeline agent found and recommends:\n\n---\n\n**Timeline built for Patrick Flynn (I1)** — labeled *\"Patrick Flynn — assuming Thomas Flynn parentage\"* — with **4 events** and **1 gap**:\n\n| Event | Details |\n|---|---|\n| Birth | ~1845, Ireland (estimated from census ages) |\n| 1850 Census | Schuylkill County, Pennsylvania — in Thomas Flynn's household |\n| 1860 Census | Schuylkill County, Pennsylvania — still in Thomas Flynn's household |\n| Death | 12 March 1908, Schuylkill County, Pennsylvania |\n\n**Gap identified (high severity):** 1860 → 1908 — nearly 50 years of silence. The 1870, 1880, and 1900 US censuses survive and have **not yet been searched** for Patrick. (The 1890 census did not survive.)\n\n**Anomalies:** None. The Ireland → Schuylkill move (~5,400 km) is plausible given the timeframe, and no event falls after his death.\n\n---\n\n**What happens next:** The high-severity gap calls for **planning searches** of the 1870, 1880, and 1900 censuses for Patrick. The agent can begin that research plan whenever you're ready — just say the word.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7978,7 +7978,7 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_001",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -7987,7 +7987,7 @@
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved",
                       "unregisteredDisagreements": [],
@@ -8251,7 +8251,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown \u2014 most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -8273,7 +8273,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1850 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
                       "record_basis": "inferred",
@@ -8297,7 +8297,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1860 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
                       "record_basis": "inferred",
@@ -8323,7 +8323,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -8359,7 +8359,7 @@
                   "items": [
                     {
                       "id": "t_001",
-                      "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                       "hypothesis_id": "h_001",
                       "person_ids": [
                         "I1"
@@ -8472,9 +8472,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
                       "record_basis": "inferred",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -8494,7 +8494,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness \u2014 they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
+                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -8514,7 +8514,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
                       "record_basis": "stated",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -8532,9 +8532,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 most likely a household member, possibly a neighbor (same reasoning as a_002).",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
                       "record_basis": "inferred",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -8780,7 +8780,7 @@
             "agent_returns": [
               {
                 "subagent_type": "timeline",
-                "text": "Written: t_001 (regenerated in place, label \"Patrick Flynn \u2014 assuming Thomas Flynn parentage\"), 4 events, 1 gap. The prior version held the same four events, so none were dropped.\n\nGap: 1860 to 1908-03-12, high severity. The 1870, 1880 and 1900 US censuses survive and are unsearched for him; the 1890 census did not survive and is noted only in the gap notes.\n\nAnomalies: none. Ireland to Schuylkill is about 5,400 km, and the move is bracketed by the ~1845 estimate and the 1850 census, so no travel infeasibility shows. No event falls after the 1908 death.\n\nCoherence: not applicable, since this is a parentage hypothesis, not an identity question.\n\nNext step: the high-severity gap calls for research-plan to search the 1870, 1880 and 1900 censuses for Patrick. Continue with planning the searches?\n\n---\nPatrick Flynn's documented life runs in order from a birth in Ireland around 1845, judged from his age in later records. He appears in the 1850 and 1860 censuses in Schuylkill County, Pennsylvania, living in the household of Thomas Flynn, and his death in Schuylkill County on 12 March 1908 is recorded. Between 1860 and 1908 the record trail goes quiet for nearly fifty years. That silence could mean he moved elsewhere, or that the surviving census years that should show him have not been searched yet. I would next plan the searches of the 1870, 1880 and 1900 censuses for him, and I can start that once you say so."
+                "text": "Written: t_001 (regenerated in place, label \"Patrick Flynn — assuming Thomas Flynn parentage\"), 4 events, 1 gap. The prior version held the same four events, so none were dropped.\n\nGap: 1860 to 1908-03-12, high severity. The 1870, 1880 and 1900 US censuses survive and are unsearched for him; the 1890 census did not survive and is noted only in the gap notes.\n\nAnomalies: none. Ireland to Schuylkill is about 5,400 km, and the move is bracketed by the ~1845 estimate and the 1850 census, so no travel infeasibility shows. No event falls after the 1908 death.\n\nCoherence: not applicable, since this is a parentage hypothesis, not an identity question.\n\nNext step: the high-severity gap calls for research-plan to search the 1870, 1880 and 1900 censuses for Patrick. Continue with planning the searches?\n\n---\nPatrick Flynn's documented life runs in order from a birth in Ireland around 1845, judged from his age in later records. He appears in the 1850 and 1860 censuses in Schuylkill County, Pennsylvania, living in the household of Thomas Flynn, and his death in Schuylkill County on 12 March 1908 is recorded. Between 1860 and 1908 the record trail goes quiet for nearly fifty years. That silence could mean he moved elsewhere, or that the surviving census years that should show him have not been searched yet. I would next plan the searches of the 1870, 1880 and 1900 censuses for him, and I can start that once you say so."
               }
             ],
             "file_changes": {
@@ -9158,7 +9158,7 @@
               },
               {
                 "source": "rubric",
-                "name": "Tool usage \u2014 place resolution and distance",
+                "name": "Tool usage — place resolution and distance",
                 "score": 3,
                 "rationale": "Every non-null standard_place in the persisted timeline traces to a place_search response: 'Ireland' from place_search result, 'Schuylkill, Pennsylvania, United States' from place_search result. The distance_from_previous_km values are correct: 5400 km (from place_distance call between Ireland and Schuylkill) for the 1850 event, 0 for both 1860 and 1908 events (same standard_place as previous). Each unique place was resolved exactly once; independent calls (place_search for both places, then place_distance) were issued together in a single batch rather than serialized."
               },
@@ -9184,7 +9184,7 @@
                 "source": "rubric",
                 "name": "Identity coherence (hypothesis-testing timelines)",
                 "score": null,
-                "rationale": "This dimension is N/A. The hypothesis under test (h_001) is parentage \u2014 whether Thomas Flynn is Patrick's father \u2014 not an identity question (whether records describe one person or two). The rubric states: 'This dimension applies only where the hypothesis under test is an identity question.' The agent correctly noted 'Coherence: not applicable, since this is a parentage hypothesis, not an identity question.' No coherence verdict was issued, which is the correct behavior for a non-identity hypothesis."
+                "rationale": "This dimension is N/A. The hypothesis under test (h_001) is parentage — whether Thomas Flynn is Patrick's father — not an identity question (whether records describe one person or two). The rubric states: 'This dimension applies only where the hypothesis under test is an identity question.' The agent correctly noted 'Coherence: not applicable, since this is a parentage hypothesis, not an identity question.' No coherence verdict was issued, which is the correct behavior for a non-identity hypothesis."
               }
             ],
             "judge_cost_usd": 0.0266689,
@@ -9250,7 +9250,7 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in persisted events traces to a place_search response: 'Ireland' and 'Schuylkill, Pennsylvania, United States' both appear in tool responses. The distance_from_previous_km value of 5400 km on the 1850 event traces to the place_distance call (Ireland to Pennsylvania). The 1860 and 1908 events correctly carry distance_from_previous_km: 0 because they share Schuylkill with the preceding event. The birth event carries null distance because it lacks a standard_place. Each unique place was resolved exactly once; independent calls (place_search for Ireland and Schuylkill) were issued together in a single batch."
           },
@@ -9300,7 +9300,7 @@
           },
           {
             "source": "rubric",
-            "name": "Tool usage \u2014 place resolution and distance",
+            "name": "Tool usage — place resolution and distance",
             "score": 3,
             "rationale": "Every non-null standard_place in persisted events traces to a place_search response: 'Ireland' and 'Schuylkill, Pennsylvania, United States' both appear in tool responses. The distance_from_previous_km value of 5400 km on the 1850 event traces to the place_distance call (Ireland to Pennsylvania). The 1860 and 1908 events correctly carry distance_from_previous_km: 0 because they share Schuylkill with the preceding event. The birth event carries null distance because it lacks a standard_place. Each unique place was resolved exactly once; independent calls (place_search for Ireland and Schuylkill) were issued together in a single batch."
           },
@@ -9332,7 +9332,7 @@
       },
       "totals": {
         "duration_ms": 59673.00974200043,
-        "duration_api_ms": 54003.0,
+        "duration_api_ms": 54003,
         "judge_duration_ms": 18579.36238399998,
         "wall_clock_ms": 78823.57907295227,
         "num_turns": 2,
@@ -9355,7 +9355,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 59673.00974200043,
-          "duration_api_ms": 54003.0,
+          "duration_api_ms": 54003,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1503,
@@ -9447,7 +9447,7 @@
           },
           "skill_cost_usd": 0.142743335,
           "output": {
-            "text_response": "Here is the timeline built for **Patrick Flynn (I1)**:\n\n---\n\n## Timeline for Patrick Flynn (I1)\n\nThe timeline contains **4 events** with **1 high-severity gap**, and has been persisted.\n\n### Events\n\nPatrick's documented life is thin. He appears in Thomas Flynn's household in the **1850 and 1860 censuses**, at roughly age 5 and 15 respectively, suggesting a birth around **1845**. His trail then goes quiet until his **death in Schuylkill County on 12 March 1908**.\n\n### Gap: 1860 \u2192 1908-03-12 (High Severity)\n\nThe **1870, 1880, and 1900 census returns** and any residence/occupation records are missing. (The 1890 census did not survive and is excluded from expectations.) This silence is a research gap, not evidence of anything specific.\n\n---\n\n### Conflicts Bearing on Events\n\n**c_001 \u2014 Birthplace (Ireland vs. Pennsylvania)**\n- Sits on both the **birth event** and the **death event**. Neither event resolves the conflict; both sides remain open.\n\n**c_002 \u2014 Identity of the 1850 Patrick (household 84 vs. household 197)**\n- Sits on the **1850 census event**. Because the 1860 event and all subsequent events depend on the link to the 1850 child, the entire chain is **provisional** until this identity question is resolved.\n\n---\n\n### Other Notes\n\n- **Unlinked evidence:** Assertions a_002, a_008, a_009, a_011, and a_012 have no `person_evidence` rows. Those facts come from the same records as linked assertions and are cited, but they should be formally linked through the person-evidence agent.\n- **Burial record:** No burial record is listed in the gap expectations, though a death is recorded \u2014 worth noting for future searches.\n\n---\n\n### Recommended Next Steps\n\nThe two open conflicts need to be weighed through **conflict resolution**:\n1. First, the **birthplace conflict** (Ireland vs. Pennsylvania).\n2. Then the **identity question** \u2014 is the 1850 child in Thomas Flynn's household the same man who died in 1908?",
+            "text_response": "Here is the timeline built for **Patrick Flynn (I1)**:\n\n---\n\n## Timeline for Patrick Flynn (I1)\n\nThe timeline contains **4 events** with **1 high-severity gap**, and has been persisted.\n\n### Events\n\nPatrick's documented life is thin. He appears in Thomas Flynn's household in the **1850 and 1860 censuses**, at roughly age 5 and 15 respectively, suggesting a birth around **1845**. His trail then goes quiet until his **death in Schuylkill County on 12 March 1908**.\n\n### Gap: 1860 → 1908-03-12 (High Severity)\n\nThe **1870, 1880, and 1900 census returns** and any residence/occupation records are missing. (The 1890 census did not survive and is excluded from expectations.) This silence is a research gap, not evidence of anything specific.\n\n---\n\n### Conflicts Bearing on Events\n\n**c_001 — Birthplace (Ireland vs. Pennsylvania)**\n- Sits on both the **birth event** and the **death event**. Neither event resolves the conflict; both sides remain open.\n\n**c_002 — Identity of the 1850 Patrick (household 84 vs. household 197)**\n- Sits on the **1850 census event**. Because the 1860 event and all subsequent events depend on the link to the 1850 child, the entire chain is **provisional** until this identity question is resolved.\n\n---\n\n### Other Notes\n\n- **Unlinked evidence:** Assertions a_002, a_008, a_009, a_011, and a_012 have no `person_evidence` rows. Those facts come from the same records as linked assertions and are cited, but they should be formally linked through the person-evidence agent.\n- **Burial record:** No burial record is listed in the gap expectations, though a death is recorded — worth noting for future searches.\n\n---\n\n### Recommended Next Steps\n\nThe two open conflicts need to be weighed through **conflict resolution**:\n1. First, the **birthplace conflict** (Ireland vs. Pennsylvania).\n2. Then the **identity question** — is the 1850 child in Thomas Flynn's household the same man who died in 1908?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -9482,7 +9482,7 @@
                     {
                       "id": "q_001",
                       "state": "concluded",
-                      "nextStep": "conflict-resolution \u2014 unresolved c_001, c_002",
+                      "nextStep": "conflict-resolution — unresolved c_001, c_002",
                       "openConflictIds": [
                         "c_001",
                         "c_002"
@@ -9494,7 +9494,7 @@
                     {
                       "id": "q_002",
                       "state": "evidence-gathered",
-                      "nextStep": "conflict-resolution \u2014 unresolved c_001, c_002",
+                      "nextStep": "conflict-resolution — unresolved c_001, c_002",
                       "openConflictIds": [
                         "c_001",
                         "c_002"
@@ -9700,7 +9700,7 @@
                     {
                       "id": "c_002",
                       "conflict_type": "identity",
-                      "description": "Is the Patrick Flynn in Thomas Flynn's 1850 household the same person as the Patrick Flynn on the 1908 death certificate? Two Patrick Flynns of similar age are recorded in Schuylkill County in 1850 \u2014 household 84 (age 5) and household 197 (age 6) \u2014 and the death certificate does not name a household or earlier residence to disambiguate.",
+                      "description": "Is the Patrick Flynn in Thomas Flynn's 1850 household the same person as the Patrick Flynn on the 1908 death certificate? Two Patrick Flynns of similar age are recorded in Schuylkill County in 1850 — household 84 (age 5) and household 197 (age 6) — and the death certificate does not name a household or earlier residence to disambiguate.",
                       "disputed_attribute": null,
                       "identity_question": "Is the Patrick Flynn enumerated in the Thomas Flynn 1850 household the same person as the Patrick Flynn whose 1908 death certificate is src_004?",
                       "competing_assertion_ids": [
@@ -9754,7 +9754,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown \u2014 most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption \u2014 the name fact doesn't necessarily require active reporting the way age/birthplace does.",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. The person who provided the name is unknown — most likely a household member, possibly a neighbor. Proximity is 'unknown' rather than 'household_member' because for names specifically, the enumerator may have heard the name from a neighbor or made an assumption — the name fact doesn't necessarily require active reporting the way age/birthplace does.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -9776,9 +9776,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — someone had to tell the enumerator these facts. That informant was most likely a household member, but enumerators also took information from neighbors when residents were unavailable, and the census does not identify who answered. Proximity is 'unknown' because the informant cannot be established from the record.",
                       "record_basis": "inferred",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -9798,7 +9798,7 @@
                       "information_quality": "primary",
                       "informant": "Census enumerator (witness to residence by visiting the dwelling)",
                       "informant_proximity": "witness",
-                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness \u2014 they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
+                      "informant_bias_notes": "For residence facts specifically, the enumerator is a direct witness — they physically visited the dwelling and recorded who lived there. This distinguishes residence from other census facts where an unidentified informant (most likely a household member, possibly a neighbor) supplied the information.",
                       "record_basis": "stated",
                       "log_entry_id": "log_001",
                       "extracted_for_question_ids": [
@@ -9820,7 +9820,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1850 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1850 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1850 census does not state relationships; this assertion is inferred from household position and shared surname, not directly reported by any informant. The relationship is indirect evidence constructed by the researcher, not information provided by a census informant.",
                       "record_basis": "inferred",
@@ -9862,7 +9862,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Ancestry transcriber (derivative of census enumerator)",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Derivative index \u2014 transcription errors possible",
+                      "informant_bias_notes": "Derivative index — transcription errors possible",
                       "record_basis": "stated",
                       "log_entry_id": "log_002",
                       "extracted_for_question_ids": [
@@ -9902,7 +9902,7 @@
                       "information_quality": "indeterminate",
                       "informant": "Unknown informant (most likely a household member, possibly a neighbor) reporting to census enumerator",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 \u2014 name facts don't necessarily require active reporting).",
+                      "informant_bias_notes": "Census enumerator is the recorder, not the informant. Proximity is 'unknown' for names (same reasoning as a_001 — name facts don't necessarily require active reporting).",
                       "record_basis": "stated",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -9920,9 +9920,9 @@
                       "date_certainty": "estimated",
                       "place": "Ireland",
                       "information_quality": "indeterminate",
-                      "informant": "Unknown \u2014 most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
+                      "informant": "Unknown — most likely a household member (such as Thomas Flynn or his wife), but possibly a neighbor",
                       "informant_proximity": "unknown",
-                      "informant_bias_notes": "Age and birthplace require active reporting by an informant \u2014 most likely a household member, possibly a neighbor (same reasoning as a_002).",
+                      "informant_bias_notes": "Age and birthplace require active reporting by an informant — most likely a household member, possibly a neighbor (same reasoning as a_002).",
                       "record_basis": "inferred",
                       "log_entry_id": "log_004",
                       "extracted_for_question_ids": [
@@ -9944,7 +9944,7 @@
                       "date_certainty": "exact",
                       "place": "Schuylkill County, Pennsylvania",
                       "information_quality": "indeterminate",
-                      "informant": "Inferred from household structure \u2014 no explicit informant for relationships in 1860 census",
+                      "informant": "Inferred from household structure — no explicit informant for relationships in 1860 census",
                       "informant_proximity": "unknown",
                       "informant_bias_notes": "1860 census does not state relationships; like the 1850 census, this assertion is inferred from household position, age, and shared surname. The relationship column was not introduced until the 1880 census.",
                       "record_basis": "inferred",
@@ -10012,7 +10012,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -10042,7 +10042,7 @@
                   "items": [
                     {
                       "id": "t_001",
-                      "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                      "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                       "hypothesis_id": "h_001",
                       "person_ids": [
                         "I1"
@@ -10181,7 +10181,7 @@
                   "op": "update",
                   "entryId": "t_001",
                   "fields": {
-                    "label": "Patrick Flynn \u2014 assuming Thomas Flynn parentage",
+                    "label": "Patrick Flynn — assuming Thomas Flynn parentage",
                     "hypothesis_id": "h_001",
                     "person_ids": [
                       "I1"
@@ -10707,7 +10707,7 @@
               },
               {
                 "source": "rubric",
-                "name": "Tool usage \u2014 place resolution and distance",
+                "name": "Tool usage — place resolution and distance",
                 "score": 3,
                 "rationale": "Every non-null standard_place in persisted events traces to a place_search response: 'Ireland' and 'Schuylkill, Pennsylvania, United States' both appear in tool responses. The distance_from_previous_km value of 5400 km on the 1850 event traces to the place_distance call (Ireland to Pennsylvania). The 1860 and 1908 events correctly carry distance_from_previous_km: 0 because they share Schuylkill with the preceding event. The birth event carries null distance because it lacks a standard_place. Each unique place was resolved exactly once; independent calls (place_search for Ireland and Schuylkill) were issued together in a single batch."
               },
@@ -10753,7 +10753,7 @@
   ],
   "totals": {
     "duration_ms": 358624.0941679971,
-    "duration_api_ms": 317615.0,
+    "duration_api_ms": 317615,
     "judge_duration_ms": 123187.13114500133,
     "num_turns": 14,
     "input_tokens": 10430,
