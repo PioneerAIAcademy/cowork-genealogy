@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) The tree carries no bi
 
 ## Research question
 
-> When and where was Katherine Ganden Smith, wife of Richard Henry Cullen and mother of Kate Kingsnorth Cullen (born 1852 in Camberwell, London), born, and who were her parents?
+> When and where was Katherine Ganden Smith, wife of Richard Henry Cullen and mother of Kate Kingsnorth Cullen (born 1852 in Camberwell, London), born?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,15 @@ medium — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (her birth, and her parents): "When and where was
+Katherine Ganden Smith, wife of Richard Henry Cullen and mother of Kate
+Kingsnorth Cullen (born 1852 in Camberwell, London), born, and who were her
+parents?" Reworded `researcher_question` to the birth only; demoted `f2` (her
+parents) to `required: false`, so a run that recovers it anyway still gets
+credit. No finding wording changed, and this fixture has no committed runs to
+re-grade.
 
 **Resolved 2026-10-14: true match.** The hint record (`ark:/61903/1:1:C6B4-MMW2`) is the birth of tree person Katherine Ganden Smith `GLPD-4GL`. Her nonconformist birth entry gives 12 July 1831, New Church Street, Bermondsey, Surrey, and names her parents as James Smith and Mary Ann Hunt. The identity call was made by the assigned genealogist (@Emruthwill). Retrieval was tool-assisted: `packages/engine/mcp-server/dev/try-record-read.ts` and `try-record-search.ts` against live FamilySearch, then the genealogist opened each record on familysearch.org. The call rests on the indexes alone. No page image was read, so the same-page image check did not apply, and `image_basis` is off.
 

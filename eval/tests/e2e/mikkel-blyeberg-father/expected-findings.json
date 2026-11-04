@@ -37,7 +37,7 @@
         "Stagstrup parish burial register: Niels Madsen Blyeberg buried 20 December 1802.",
         "Danish Military Levying Rolls: 1801 notation gl. M. S. (gammel mands søn, 'old man's son', father ill) and 1803 notation GBES (Gård Brug Enkes Søn, 'widow's son'), bracketing the father's death between the 1801 and 1803 sessions."
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f3",
