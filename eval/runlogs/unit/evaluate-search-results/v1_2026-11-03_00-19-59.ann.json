@@ -1,0 +1,246 @@
+{
+  "run_log": "v1_2026-11-03_00-19-59.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Match is right. \"Mary Robertson & Hiram Hy[de]\" names Iram's wife in full as the joint parent, and Hiram is a usual spelling of Iram. The hit is already extracted in this project, so alreadyExtracted true and \"nothing new\" are both right."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It read the hit, read the tree, wrote one verdict row and returned the four contract lines plus a summary. Nothing was left out."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All four calls are correct: project_context, sidecar_read on the hit, tree_query on I1 and his family, and research_append with person_id: I1, verdict match, and new_vital_info false."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It names the deciding tie beyond the name: his wife Mary Robertson, named in full as the other parent. The new rule needs exactly that, a relative in the same relationship."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "False because the hit is already extracted, and the rationale says so. The judge's other point is off: a child not on the tree would count as new, so \"already extracted\" is the real reason, and the agent gives it."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_b7x",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One plain sentence giving the record (an 1834–36 Jackson baptism register), why it's him (his wife named as the other parent, Hiram for Iram), and that it adds nothing new because it's already in the project."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Not a Match is right. The hit is an 1815 Irish deed sworn by \"Iram Hyde of the City of Dublin, Gentleman\". Our Iram was born in New Hampshire about 1797 and married in Jackson, New York in 1821, so he can't be a Dublin gentleman in 1815. Nothing new, as the rule requires for a Not a Match."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It read the hit, read the tree, wrote one verdict row and returned the four contract lines plus a summary. Nothing was left out."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All four calls are correct: project_context, sidecar_read on the hit, tree_query on I1 and his family, and research_append with person_id: I1, verdict not_a_match, and new_vital_info false."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It names what rules him out: a Dublin resident and gentleman in 1815, against Iram's New Hampshire birth and American life. That's a different place in the same years, one of the rubric's own examples."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "False because it's a Not a Match, as the rule requires."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_d9r",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two plain sentences giving the record (an 1815 Irish deed), why it isn't him (a Dublin gentleman, against a New Hampshire-born American who married in New York six years later), and \"a different man of the same unusual name\"."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Not a Match is right. The page is a Medina County, Ohio county history about Henry Hyde's family from Cumberland County, Pennsylvania. Iram F. Hyde isn't named, and the only \"Iram\" on the page is Iram Packard. A small slip: it calls the book an \"1883\" history, but FamilySearch dates it 1833 and the text's latest dates are 1881. That doesn't touch the verdict, so it's not worth a point."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It read the hit, read the tree (the step it skipped in the previous run), wrote one verdict row and returned the four contract lines plus a summary."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All four calls are correct: project_context, sidecar_read on the hit, tree_query on I1 and his family, and research_append with person_id: I1, verdict not_a_match, and new_vital_info false."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It names what rules him out: the Hydes on the page are a different family from Pennsylvania and Ohio, with nothing tying them to Iram's New Hampshire birth, New York years or Indiana death."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "False because it's a Not a Match. The marriage on the page (Cynthia to Iram Packard) belongs to another man."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_p5c",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two plain sentences giving the record (a Medina County, Ohio county history), the family it describes, and why it isn't him. The \"1883\" slip is noted under Correctness."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Match and \"new\" are both right, but it names the wrong child. It says the baptized child is \"Jane Eliza (garbled surname Selmon)\". The child of Mary Robertson and Hiram Hyde is the one transcribed \"Chanty, Hyde\" (Christina): a child of Hiram Hyde would carry the surname Hyde, not Selmon. The project's own search notes also give Christina. That's a factual misreading of the hit, so 2."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It read the hit, read the tree, wrote one verdict row and returned the four contract lines plus a summary. Nothing was left out."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All four calls are correct: project_context, sidecar_read on the hit, tree_query on I1 and his family, and research_append with person_id: I1, verdict match, and new_vital_info true."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The Match rests on the right ties: \"Mary Robertson & Hiram Hy\" names his wife in full as the other parent, and Hiram is a usual spelling of Iram. That's a relative in the same relationship, which the new rule requires. The wrong child name bears on the \"new\" flag, not on the verdict, so it's graded there and under Correctness, not here."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "True is right, because a child of his is on no edge of the tree (his only child there is Margaret). But it names the wrong child (Jane Eliza Selmon) as the new fact, instead of Chanty/Christina Hyde."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two plain sentences giving the record (an 1835–36 Jackson baptism register), why it's him (his wife named as the other parent), and that a child is new. The wrong child name is already counted under Correctness."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Possible Match and \"new\" are both right. In the 1820 Jackson marriage list, \"Fran Hyde To Mary Albert Jackson\" fits Iram and Mary in surname, the bride's first name, the place and the period. \"Fran\" and \"Albert\" are unclear in a garbled transcript, so it can't be a full Match."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It read the hit, read the tree, wrote one verdict row and returned the four contract lines plus a summary. Nothing was left out."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All four calls are correct: project_context, sidecar_read on the hit, tree_query on I1 and his family, and research_append with person_id: I1, verdict possible_match, and new_vital_info true."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "It says what fits (Hyde, Mary, Jackson, about 1820) and what keeps it uncertain (\"Fran\" for Iram, \"Albert\" for Robertson, in a garbled transcript). That's what a Possible Match needs."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "True because the hit dates and places a marriage, and Iram's couple has no Marriage fact. It says so."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_h8v",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two plain sentences this time, within the limit (last run it had three). They give the record (an 1820 Jackson marriage register), why it's only possible (the bride's surname reads Albert), and that it adds a marriage place the tree lacks."
+    }
+  ]
+}
