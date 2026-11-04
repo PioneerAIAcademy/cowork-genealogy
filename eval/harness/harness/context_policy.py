@@ -279,6 +279,40 @@ _guard = _load_guard()
 #: hook's map, not a copy.
 AGENT_ONLY_TOOLS = _guard.AGENT_ONLY_TOOLS
 
+_ROUTE_HOOK_PATH = _GUARD_HOOK_PATH.with_name("no_project_route.py")
+
+
+def _load_route_hook():
+    """Import the shipped `no_project_route.py` by file path; fail-closed like `_load_guard`."""
+    spec = importlib.util.spec_from_file_location("_genealogy_no_project_route", _ROUTE_HOOK_PATH)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load route hook at {_ROUTE_HOOK_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+#: Issue #4011. Every production path carries this sentence to the main thread -- the
+#: hosted planes append it, the Cowork hook adds it -- so both harnesses add it the
+#: way Cowork does, as context on each user message (`sources_note_hook`). Passed
+#: as the whole system prompt instead it read as an identity and broke routing
+#: (ut_research_027 1 of 5, against 4 of 5 without it). The hook's text, not a copy.
+_route = _load_route_hook()
+SOURCES_NOTE = _route.SOURCES_NOTE
+
+
+async def sources_note_hook(input_data, tool_use_id, context):
+    """UserPromptSubmit: add `SOURCES_NOTE`, skipping a subagent hand-back by the
+    shipped hook's own test."""
+    if not _route.is_researcher_prompt(input_data or {}):
+        return {}
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": SOURCES_NOTE,
+        }
+    }
+
 #: Tools the main thread may not call: the harness-only `image_read` deny plus
 #: the shipped hook's AGENT_ONLY_TOOLS. Same import-don't-copy discipline as
 #: OWNED_SECTIONS below.
