@@ -82,6 +82,7 @@ import {
   isRelationshipEstablishing,
 } from "../utils/source-ref-resolver.js";
 import { recordBasisOf } from "../utils/record-basis.js";
+import { findRecordedScore, readMatchScores, type MatchScoreFile } from "../utils/match-scores.js";
 import { placeTextKey } from "../utils/place-verdict.js";
 import { isLiveAssertion } from "../utils/assertion-liveness.js";
 
@@ -122,6 +123,57 @@ interface OpContext {
   startingTree: SimplifiedGedcomX | null;
   beforeTree: SimplifiedGedcomX;
   warnings: string[];
+  /** The `same_person` score files of the records this call's ops touch. */
+  scores: RecordedScores;
+}
+
+/** Score files by record id, as `readMatchScores` returns them. */
+export type RecordedScores = ReadonlyMap<string, MatchScoreFile>;
+
+/** Whether a recorded `same_person` score says the link of `assertionId` to
+ *  `personId` is about a party other than `role`. The score records the party
+ *  it compared, so a link scored as the bride is not the groom's, whatever its
+ *  assertion's role. No score, or one with no role: not known, so false. */
+function scoredAsOtherParty(
+  scores: RecordedScores | undefined,
+  recordId: unknown,
+  assertionId: string,
+  personId: string,
+  role: unknown,
+): boolean {
+  const scored = findRecordedScore(scores?.get(String(recordId)) ?? null, assertionId, personId)?.record_role;
+  if (typeof scored !== "string" || scored.trim() === "") return false;
+  return normNamePart(scored) !== normNamePart(String(role ?? ""));
+}
+
+/** The refusal's note on assertions a score excluded: their link exists, so
+ *  the generic "write that link" advice cannot clear it. Re-scoring is not
+ *  offered: a new score replaces the old one whatever role it names. */
+const scoredOutNote = (ids: readonly string[], personId: string): string =>
+  ids.length === 0
+    ? ""
+    : ` (the link of ${ids.map((id) => `'${id}'`).join(", ")} to '${personId}' does not count: ` +
+      "its same_person score compared a different party of this record)";
+
+/** Read the score files of every record `ops` touch: a persona op's `recordId`,
+ *  a named-party op's assertion's `record_id`. */
+async function readScoresFor(projectPath: string, research: any, ops: readonly any[]): Promise<RecordedScores> {
+  const assertions: any[] = Array.isArray(research?.assertions) ? research.assertions : [];
+  const recordIds = new Set<string>();
+  for (const op of ops) {
+    if (!op || typeof op !== "object") continue;
+    if (typeof op.recordId === "string") recordIds.add(op.recordId);
+    if (typeof op.assertionId === "string") {
+      const rec = assertions.find((a) => a?.id === op.assertionId)?.record_id;
+      if (typeof rec === "string") recordIds.add(rec);
+    }
+  }
+  const out = new Map<string, MatchScoreFile>();
+  for (const id of recordIds) {
+    const file = await readMatchScores(projectPath, id);
+    if (file !== null) out.set(id, file);
+  }
+  return out;
 }
 
 /** How the link gate reads namesakes: `derivedPairs` adds the namesakes in the
@@ -647,6 +699,7 @@ function applyNamedPartyOp(
     const refusal = namedPartyTargetRefusal(
       tree, research, assertion, relatedRole, existingId, op.gender, ctx.startingPersonIds, { given, surname }, ctx.beforeTree,
       { startingTree: ctx.startingTree, derivedPairs: true },
+      ctx.scores,
     );
     if (refusal !== null) throw new MaterializeFactsError(refusal);
   }
@@ -1126,8 +1179,11 @@ function personaQualifying(
   recordId: unknown,
   recordRole: unknown,
   personId: string,
-): { qualifying: Set<string>; heldBy?: string } {
-  const own = ownPersonaAssertionIds(research, recordId, recordRole);
+  scores?: RecordedScores,
+): { qualifying: Set<string>; heldBy?: string; scoredOut: string[] } {
+  const candidates = [...ownPersonaAssertionIds(research, recordId, recordRole)];
+  const scoredOut = candidates.filter((id) => scoredAsOtherParty(scores, recordId, id, personId, recordRole));
+  const own = new Set(candidates.filter((id) => !scoredOut.includes(id)));
   const to = strongLinkTargets(research);
   for (const id of onePartyAssertionIds(research, recordId, (role) => role !== recordRole)) {
     const targets = to.get(id);
@@ -1136,10 +1192,11 @@ function personaQualifying(
       return {
         qualifying: new Set([...own].filter((ownId) => (to.get(ownId)?.size ?? 0) < 2)),
         heldBy: String(holder?.record_role ?? ""),
+        scoredOut,
       };
     }
   }
-  return { qualifying: own };
+  return { qualifying: own, scoredOut };
 }
 
 /** Whether the persona arm writes anything onto a person from this assertion:
@@ -1186,6 +1243,7 @@ export function namedPartyTargetRefusal(
   name: { given?: string; surname?: string } | undefined,
   namesakeTree: SimplifiedGedcomX = tree,
   namesakeOpts: NamesakeGateOptions = {},
+  scores?: RecordedScores,
 ): string | null {
   const recordId = assertion.record_id;
   const roleOf = (role: unknown) => normNamePart(String(role ?? ""));
@@ -1219,7 +1277,9 @@ export function namedPartyTargetRefusal(
 
   const named = onePartyAssertionIds(research, recordId, (role) => roleOf(role) === wanted);
   const namedTo = [...new Set(links.filter((e) => strong(e) && named.has(e.assertion_id)).map((e) => String(e.person_id)))];
-  const qualifying = namedTo.length > 0 ? named : new Set<string>([String(assertion.id), ...named]);
+  const candidates = [...(namedTo.length > 0 ? named : [String(assertion.id), ...named])];
+  const scoredOut = candidates.filter((id) => scoredAsOtherParty(scores, recordId, id, personId, relatedRole));
+  const qualifying = new Set(candidates.filter((id) => !scoredOut.includes(id)));
   const what =
     namedTo.length > 0
       ? `one of the '${relatedRole}' persona's own assertions on record '${recordId}' (they are ` +
@@ -1243,7 +1303,8 @@ export function namedPartyTargetRefusal(
   };
   const party: RecordParty = writesFacts ? namedParty : { ...namedParty, names: [...namedParty.names, opName] };
   const gate = linkGate(
-    tree, research, personId, String(recordId), qualifying, what, startingPersonIds, party, namesakeTree, namesakeOpts,
+    tree, research, personId, String(recordId), qualifying, what + scoredOutNote(scoredOut, personId), startingPersonIds,
+    party, namesakeTree, namesakeOpts,
   );
   if (gate.refusal === null) return null;
   // A pair member's namesake is in the tree already: a new person would duplicate them.
@@ -1262,7 +1323,7 @@ function personaGate(
   tree: SimplifiedGedcomX,
   ctx: OpContext,
 ): LinkGate {
-  const { qualifying } = personaQualifying(research, recordId, recordRole, personId);
+  const { qualifying } = personaQualifying(research, recordId, recordRole, personId, ctx.scores);
   return linkGate(
     tree, research, personId, recordId, qualifying, "this persona", ctx.startingPersonIds,
     personaParty(research, recordId, recordRole), ctx.beforeTree,
@@ -1374,6 +1435,7 @@ export function personaTargetRefusal(
   startingPersonIds?: ReadonlySet<string>,
   namesakeTree: SimplifiedGedcomX = tree,
   namesakeOpts: NamesakeGateOptions = {},
+  scores?: RecordedScores,
 ): string | null {
   const personId = str(op.personId);
   if (personId === undefined) return null;
@@ -1381,20 +1443,21 @@ export function personaTargetRefusal(
     (a: any) => isLiveAssertion(a) && a.record_id === op.recordId && a.record_role === op.recordRole,
   );
   if (!persona.some(writesPersonLevel)) return null;
-  const { qualifying, heldBy } = personaQualifying(research, op.recordId, op.recordRole, personId);
+  const { qualifying, heldBy, scoredOut } = personaQualifying(research, op.recordId, op.recordRole, personId, scores);
   const gate = linkGate(
     tree,
     research,
     personId,
     String(op.recordId),
     qualifying,
-    heldBy === undefined
+    (heldBy === undefined
       ? `one of record '${op.recordId}' role '${op.recordRole}''s own assertions (not one that names a ` +
           "second person too, such as a marriage, relationship or parentage, a parent or a spouse, " +
           "whose link may be about that person)"
       : `one of record '${op.recordId}' role '${op.recordRole}''s own assertions linked to them alone ` +
           `(an assertion of role '${heldBy}' on that record is linked to them alone, so they are that ` +
-          "persona, and a link of this one's that also reaches someone else does not count)",
+          "persona, and a link of this one's that also reaches someone else does not count)") +
+      scoredOutNote(scoredOut, personId),
     startingPersonIds,
     personaParty(research, op.recordId, op.recordRole),
     namesakeTree,
@@ -1417,7 +1480,7 @@ function requireLinkToExistingPerson(
   const refusal = personaTargetRefusal(tree, research, op, ctx.startingPersonIds, ctx.beforeTree, {
     startingTree: ctx.startingTree,
     derivedPairs: true,
-  });
+  }, ctx.scores);
   if (refusal !== null) throw new MaterializeFactsError(refusal);
 }
 
@@ -1465,7 +1528,10 @@ export async function materializeFacts(
     // place): block only on errors THIS call introduces, not pre-existing drift
     // in a section it never touched (#1572).
     const beforeTree = structuredClone(tree);
-    const ctx: OpContext = { startingPersonIds, startingTree, beforeTree, warnings: [] };
+    const scores = await readScoresFor(
+      projectPath, research, Array.isArray(input.ops) ? input.ops : [input],
+    );
+    const ctx: OpContext = { startingPersonIds, startingTree, beforeTree, warnings: [], scores };
 
     // ─── Batch form: apply every op in-memory, then validate + write once ────
     if (input.ops !== undefined) {

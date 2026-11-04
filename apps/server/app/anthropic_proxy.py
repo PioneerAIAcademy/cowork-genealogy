@@ -46,6 +46,10 @@ _PROXY_PREFIX = "/api/anthropic-proxy"
 _DROP_REQUEST_HEADERS = frozenset({
     "host", "content-length", "transfer-encoding", "connection", "keep-alive",
     "proxy-connection", "te", "trailer", "upgrade",
+    # httpx must pick the encoding, not the sandbox: its own default is always one it
+    # can decode, and the response's content-encoding is stripped below, so a
+    # forwarded encoding httpx can't decode reaches the client as unlabelled bytes.
+    "accept-encoding",
 })
 _DROP_RESPONSE_HEADERS = frozenset({
     "content-length", "content-encoding", "transfer-encoding", "connection",

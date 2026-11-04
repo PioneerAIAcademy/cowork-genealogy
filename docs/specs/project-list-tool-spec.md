@@ -62,8 +62,10 @@ project in a folder the caller names. It answers `mode: "folder"` and a message,
 with no `projects` and no `newProjectPath`: an empty list there reads as "no
 project" to a model that has not yet looked at the folder, and the research
 suite's routing tests went red on exactly that reading. The message tells the
-caller to pass the working folder's absolute path as `projectPath` and read what
-it holds with `project_context`.
+caller to pass the working folder's absolute path as `projectPath`, says that it
+does not tell whether the folder holds a project, and has the caller call
+`project_context` with that path before routing. At medium effort the router
+otherwise skipped that read and sent an existing project to `init-project`.
 
 ### 2.3 Hosted mode
 

@@ -37,6 +37,9 @@ START_CHECK_TIMEOUT_S = 5.0
 log = logging.getLogger("pg_credentials")
 
 _JDBC = re.compile(r"^jdbc:postgresql://([^/?,]+)(/[^?]*)?(\?.*)?$")
+# sas-client 0.2.1.16 reports a missing object only in a plain Exception's message:
+# "SAS response error: 404 - <sas ...>" (FS112, 2026-11-03, n=1).
+_SAS_NOT_FOUND = re.compile(r"SAS response error: 404\b")
 _SECRETS: set[str] = set()
 _SECRETS_LOCK = threading.Lock()
 
@@ -68,6 +71,18 @@ def _fetch_sas_object(name: str) -> Mapping[str, str]:
         return run()
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
         return pool.submit(run).result()
+
+
+def sas_not_found(exc: BaseException) -> bool:
+    """True when SAS answered 404 for the object, anywhere in the exception chain."""
+    seen: set[int] = set()
+    cur: BaseException | None = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        if _SAS_NOT_FOUND.search(str(cur)):
+            return True
+        cur = cur.__cause__ or cur.__context__
+    return False
 
 
 def jdbc_to_dsn(obj: Mapping[str, Any]) -> str:
@@ -254,7 +269,10 @@ class PgCredentials:
         except PgCredentialsError as e:
             config = e
         except Exception as e:  # noqa: BLE001 - the SAS client's message may carry the secret
-            failure = type(e).__name__
+            if sas_not_found(e):
+                config = PgCredentialsError(f"SAS has no object {self._sas_object}")
+            else:
+                failure = type(e).__name__
         finally:
             self._last_fetch = self._clock()
         if config is not None:

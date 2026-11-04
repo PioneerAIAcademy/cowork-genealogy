@@ -1821,6 +1821,138 @@ def test_rule9_skips_scratch_and_annotation_files(tmp_path, capsys):
     assert capsys.readouterr().out == ""
 
 
+# --- rule 12: a summary's scores match its own runs, corpus-wide (#3936) --------
+
+
+def _dim(name, score, rationale="r"):
+    return {"source": "rubric", "name": name, "score": score, "rationale": rationale}
+
+
+def _consistent_entry(test_id="ut_s_001"):
+    """One run, scored 2 and 3: summary exactly what `refresh_test_entry_outcome`
+    derives from it."""
+    dims = [_dim("Alpha", 2, "run says alpha"), _dim("Beta", 3, "run says beta")]
+    return {
+        "test_id": test_id,
+        "outcome": "partial",
+        "flaky": False,
+        "outcome_summary": {
+            "per_run_outcomes": ["partial"],
+            "aggregated_dimensions": [dict(d) for d in dims],
+            "review_dimensions": [dict(d) for d in dims],
+        },
+        "runs": [{
+            "outcome": "partial",
+            "validators": {"passed": True},
+            "judge": {"skipped": False, "dimensions": dims},
+        }],
+    }
+
+
+def _write_entries(dir_path, filename, entries):
+    d = dir_path / "some-skill"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / filename).write_text(json.dumps({"tests": entries}), encoding="utf-8")
+
+
+def test_rule12_blocks_a_summary_score_the_runs_do_not_give(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["outcome_summary"]["aggregated_dimensions"][0]["score"] = 3
+    _write_entries(tmp_path, "v1_2026-09-24_10-59-36.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert "::error file=" in out
+    assert "v1_2026-09-24_10-59-36.json" in out and "ut_s_001" in out
+    assert "'Alpha' 3 (runs give 2)" in out
+
+
+def test_rule12_blocks_stale_per_run_outcomes(tmp_path, capsys):
+    """`ut_search_wiki_011`'s shape: the summary says the one run passed."""
+    entry = _consistent_entry()
+    entry["outcome_summary"]["per_run_outcomes"] = ["pass"]
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "per_run_outcomes ['pass'] (runs give ['partial'])" in capsys.readouterr().out
+
+
+def test_rule12_blocks_a_stale_review_dimensions_score(tmp_path, capsys):
+    """The review arm is compared when the key is present, not merely skipped
+    when it is absent."""
+    entry = _consistent_entry()
+    entry["outcome_summary"]["review_dimensions"][1]["score"] = 1
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "review_dimensions 'Beta' 1 (runs give 3)" in capsys.readouterr().out
+
+
+def test_rule12_accepts_a_consistent_log(tmp_path, capsys):
+    _write_entries(tmp_path, "v1.json", [_consistent_entry(), _consistent_entry("ut_s_002")])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_rule12_accepts_stale_prose_when_every_score_agrees(tmp_path):
+    """Older logs keep their stale representative rationale by ruling
+    (2026-10-29); only scores are compared."""
+    entry = _consistent_entry()
+    for key in ("aggregated_dimensions", "review_dimensions"):
+        for d in entry["outcome_summary"][key]:
+            d["rationale"] = "what the replaced grading said"
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_rule12_accepts_a_summary_written_before_review_dimensions(tmp_path):
+    """199 committed entries predate the optional field; lacking it is not drift."""
+    entry = _consistent_entry()
+    del entry["outcome_summary"]["review_dimensions"]
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_rule12_names_a_reordered_row_by_its_own_dimension(tmp_path, capsys):
+    """A rebuild can reorder rows (`ut_citation_008`). The message must not blame
+    the dimension that merely moved."""
+    entry = _consistent_entry()
+    rows = entry["outcome_summary"]["aggregated_dimensions"]
+    rows.reverse()
+    rows[0]["score"] = 1  # Beta, now first
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    out = capsys.readouterr().out
+    assert "aggregated_dimensions 'Beta' 1 (runs give 3)" in out
+    assert "'Alpha'" not in out
+
+
+def test_rule12_accepts_rows_reordered_with_every_score_agreeing(tmp_path):
+    """Readers look a row up by (source, name); order alone is not drift."""
+    entry = _consistent_entry()
+    for key in ("aggregated_dimensions", "review_dimensions"):
+        entry["outcome_summary"][key].reverse()
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_rule12_names_a_duplicated_row(tmp_path, capsys):
+    entry = _consistent_entry()
+    rows = entry["outcome_summary"]["aggregated_dimensions"]
+    rows.append(dict(rows[0]))
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "a dimension row is duplicated" in capsys.readouterr().out
+
+
+def test_rule12_skips_scratch_and_annotation_files(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["outcome_summary"]["per_run_outcomes"] = ["pass"]
+    _write_entries(tmp_path, "scratch_2026-09-28_10-00-00.json", [entry])
+    (tmp_path / "some-skill" / "v1.ann.json").write_text(
+        json.dumps({"tests": [entry]}), encoding="utf-8"
+    )
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+    assert capsys.readouterr().out == ""
+
+
 # --- marker owners, read from the committed test corpus --------------------------
 
 
@@ -1874,9 +2006,14 @@ def test_rule10_only_warns_under_the_skills_cosmetic_skip_label(tmp_path, capsys
 
 
 def _clean_log(test_id="ut_ip_1", outcome="pass"):
+    # The summary is what its one run derives, so rule 12 has nothing to say.
     return {
         "snapshot": {},
         "tests": [{"test_id": test_id, "expected_outcome": "pass",
+                   "outcome": outcome, "flaky": False,
+                   "outcome_summary": {"per_run_outcomes": [outcome],
+                                       "aggregated_dimensions": [],
+                                       "review_dimensions": []},
                    "runs": [{"outcome": outcome}]}],
     }
 
@@ -4455,3 +4592,37 @@ def test_rule3_regrade_warns_rather_than_blocking_on_an_unreadable_base(
     assert rc == 0
     assert "::warning" in out
     assert "NOT compared" in out
+
+
+def test_rule12_blocks_a_stale_outcome(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["outcome"] = "pass"
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "outcome 'pass' (runs give 'partial')" in capsys.readouterr().out
+
+
+def test_rule12_blocks_a_stale_flaky(tmp_path, capsys):
+    entry = _consistent_entry()
+    entry["flaky"] = True
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 1
+    assert "flaky True (runs give False)" in capsys.readouterr().out
+
+
+def test_rule12_reads_an_absent_flaky_as_false(tmp_path):
+    entry = _consistent_entry()
+    del entry["flaky"]
+    _write_entries(tmp_path, "v1.json", [entry])
+    assert check_runlogs.rule12_summary_matches_runs(tmp_path) == 0
+
+
+def test_main_runs_rule12(tmp_path, monkeypatch, capsys):
+    skill_dir = _setup_versioned_skill(tmp_path, monkeypatch)
+    log = _clean_log()
+    log["tests"][0]["outcome_summary"]["per_run_outcomes"] = ["fail"]
+    (skill_dir / "v1.json").write_text(json.dumps(log), encoding="utf-8")
+    _write_ann(skill_dir, "v1.json", [])
+    _patch_diffs(monkeypatch, [])
+    assert check_runlogs.main() == 1
+    assert "per_run_outcomes ['fail'] (runs give ['pass'])" in capsys.readouterr().out

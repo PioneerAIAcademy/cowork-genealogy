@@ -14,7 +14,7 @@ and says in writing why any of the five is absent.
 - **Questions:** q_001 (the couple's other children, in_progress, `question_kind: "enumerative"`, no `search_stop`)
 - **Plans, log, sources, assertions, conflicts, hypotheses, proof summaries:** all empty — this is a first plan
 - **Localities:** loc_001, Greene County, Ohio, 1830–1880
-- **Tree:** seven persons and eleven relationships. Thomas Hale (I1) — born about 1810 in Pennsylvania, died 1868 in Greene County. Sarah Hale (I2), his wife, with no facts. Five children, each born in Greene County and linked to both parents: Mary (I3, about 1836), John (I4, about 1838), Rebecca (I5, about 1841), William (I6, about 1844), Joseph (I7, about 1847). One couple and ten parent-child relationships. No sources.
+- **Tree:** seven persons and eleven relationships. Thomas Hale (I1, ark `ZZHL-TH1`) — born about 1810 in Pennsylvania, died 1868 in Greene County. Sarah Hale (I2, ark `ZZHL-SA2`), his wife, with no facts. Five children, each born in Greene County and linked to both parents: Mary (I3, about 1836), John (I4, about 1838), Rebecca (I5, about 1841), William (I6, about 1844), Joseph (I7, about 1847). One couple and ten parent-child relationships. No sources.
 
 ## The shape under test
 
