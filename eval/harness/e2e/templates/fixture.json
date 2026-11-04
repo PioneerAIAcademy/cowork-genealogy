@@ -10,7 +10,6 @@
     "geography": "{{tag_geography}}"
   },
   "model": {
-    "agent": "claude-sonnet-4-6",
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "{{difficulty}}",

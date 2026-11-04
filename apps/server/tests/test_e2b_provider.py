@@ -154,9 +154,10 @@ async def test_create_maps_to_sdk_exactly(provider):
     assert kw["timeout"] == _RUNNING_TIMEOUT_S          # continuous-running backstop kept
     assert kw["api_key"] == "fake-key"
     assert kw["metadata"] == {"user_id": "u1", "model": "claude-sonnet-4-6"}
-    # envs = spec.env + agent env (AGENT_MODE + MODEL only; key is via secrets file)
+    # envs = spec.env + agent env (key is via secrets file). No MODEL: the runner reads
+    # the main thread's model from the plugin's main-thread.json.
     assert kw["envs"]["FOO"] == "bar"
-    assert kw["envs"]["AGENT_MODE"] == "mock" and kw["envs"]["MODEL"] == "claude-sonnet-4-6"
+    assert kw["envs"]["AGENT_MODE"] == "mock" and "MODEL" not in kw["envs"]
     # the in-sandbox WS server was started with a derived per-sandbox secret
     runs = provider._cache[sb.id].commands.runs
     ws = next(r for r in runs if "app.sandbox_server" in r["cmd"])

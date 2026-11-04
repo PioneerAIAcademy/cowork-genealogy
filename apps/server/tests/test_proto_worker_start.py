@@ -246,7 +246,7 @@ def test_hook_python_child_path_starts_with_the_interpreter_dir(tmp_path, path, 
     if path is not None:
         worker_env["PATH"] = path
     opts = options.build_worker_options(
-        project_id="proj-1", cwd="/project", plugin_dir="/opt/genealogy/plugin", agents={},
+        project_id="proj-1", cwd="/project", plugin_dir=str(Path(__file__).resolve().parents[3] / "packages" / "engine" / "plugin"), agents={},
         store=object(), config_dir=str(tmp_path), pretool_hook=lambda *a: {},
         posttool_hook=lambda *a: {}, worker_env=worker_env, bearer="grant-token", turn_id="turn-1", claim_epoch=1,
     )
