@@ -15,7 +15,7 @@ description: >-
   or an informant is primary or secondary (classification is set in code at
   extraction; a disagreement goes to conflict-resolution).
 model: claude-haiku-5-5
-effort: low
+effort: medium
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
