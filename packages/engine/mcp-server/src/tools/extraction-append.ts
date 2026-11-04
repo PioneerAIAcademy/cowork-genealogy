@@ -737,6 +737,8 @@ async function personIdMode(
 
     // One claim per persona: the run person's own entry first, then each other
     // tree person's own attachment, then each relationship party's pick. A
+    // party who already claims a persona of the record gets no pick; the set is
+    // taken before any party is asked, so party order cannot change it. A
     // persona two tree persons claim links neither, except the run person's own,
     // and a tree person claiming two personas of one record links neither (the
     // run person keeps their own entries and loses any other claim).
@@ -762,6 +764,7 @@ async function personIdMode(
       claims.set(pid, { to: [...who][0], route: "ark" });
     }
     const asked = new Set<string>();
+    const anchored = new Set([...claims.values()].map((c) => c.to));
     for (const b of recordIds) {
       const via = viaRelationship.get(b);
       if (!via) continue;
@@ -770,6 +773,7 @@ async function personIdMode(
         for (const party of [r.person1, r.person2, r.parent, r.child].filter((x): x is string => typeof x === "string")) {
           if (asked.has(`${party}\u0000${b}`)) continue;
           asked.add(`${party}\u0000${b}`);
+          if (anchored.has(party)) continue;
           const sel = selectSubjectPersona(tree, party, { ark: `ark:/61903/1:1:${b}`, source_ids: [...via.sourceIds], level: "relationship" }, record);
           if ("unscored" in sel) {
             unselected++;

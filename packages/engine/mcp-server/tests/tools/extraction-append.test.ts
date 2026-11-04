@@ -1504,8 +1504,9 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(links.length).toBeGreaterThan(0);
     expect(links.every((pe: any) => pe.person_id === "I2")).toBe(true);
     expect(r.linkedPersons).toEqual({ I2: links.length });
-    // The 1870 census states no relationships, so neither party's persona can be chosen by role.
-    expect(r.unselected).toBe(2);
+    // The 1870 census states no relationships, so I1's persona cannot be chosen by role;
+    // I2 already claims its own persona, so it gets no role pick.
+    expect(r.unselected).toBe(1);
   });
 
   // ─── Household linking and relationship-level attachments (lead, 2026-10-30) ───
@@ -1652,6 +1653,18 @@ describe("extraction_append: personId extracts and links a person's attachments"
     const r = await run("I1", reader([MARRIAGE]));
     expect(r.ok, JSON.stringify(r)).toBe(true);
     expect(r.summary).toMatch(/extracted but not linked \(no persona to link\)/);
+  });
+
+  it("(p) gives no role pick to a party who already claims a persona of the record", async () => {
+    await writeTree(
+      [person("I1", { person: ["S8"] }, undefined, "Female"), person("I2", {}, undefined, "Female")],
+      [src("S8", "XXDD-BX8")],
+      [{ id: "R2", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S8" }] }],
+    );
+    const r = await run("I2", reader([element("baptism")]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_10556269631")).toEqual([]);
+    expect(await linksTo("p_10556269633")).toEqual([]);
   });
 
   it("(i) links nothing for a party whose persona cannot be chosen", async () => {
