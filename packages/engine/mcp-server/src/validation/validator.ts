@@ -2013,7 +2013,6 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
             addError(report, clp, `a denied claim stands only at probable or possible, got '${claim.proof_tier}'. A denial at the proof bar is a disproved claim with no polarity.`);
           }
         }
-
       }
       // The scalar answers the question as a whole and may not exceed the
       // strongest claim (research-schema-spec.md §7). Only a scalar at possible or better is

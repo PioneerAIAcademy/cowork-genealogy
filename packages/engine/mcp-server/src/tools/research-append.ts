@@ -5397,16 +5397,18 @@ function affirmedClaimsOf(entry: any): { label: string; asEntry: any }[] {
   return claimsOf(entry).filter((_c, i) => claims[i]?.polarity !== "denied");
 }
 
-/** `entry` with `tier` raised to its strongest affirmed claim when a claim
+/** What the identity and parentage gates read: `entry` with its `denied`
+ *  claims dropped and `tier` raised to its strongest affirmed claim when one
  *  stands above the scalar, so a gate keyed on the tier sees what the summary
- *  concludes anywhere in it. */
-function atStrongestAffirmedTier(entry: any): any {
-  let best = entry?.tier;
+ *  concludes anywhere in it and nothing it denies. */
+export function gatedSummary(entry: any): any {
+  if (!Array.isArray(entry?.claims)) return entry;
+  let best = entry.tier;
   for (const { asEntry } of affirmedClaimsOf(entry)) {
     const rank = PROOF_TIER_RANK.get(asEntry.tier);
     if (rank !== undefined && rank > (PROOF_TIER_RANK.get(best) ?? -1)) best = asEntry.tier;
   }
-  return best === entry?.tier ? entry : { ...entry, tier: best };
+  return { ...entry, tier: best, claims: entry.claims.filter((c: any) => c?.polarity !== "denied") };
 }
 
 function conflictedSourceTierInvariants(entry: any, beforeResearch: any): string[] {
@@ -9062,7 +9064,7 @@ function applyOne(
     invariantErrors.push(...tierWithoutClaimsInvariants(op, resultEntry, preCallResearch));
     // A claim may stand above the scalar, so the identity and parentage gates
     // read the strongest affirmed tier among the scalar and its claims.
-    const gated = atStrongestAffirmedTier(resultEntry);
+    const gated = gatedSummary(resultEntry);
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
     }

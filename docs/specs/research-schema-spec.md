@@ -1023,8 +1023,8 @@ engine accepts.
 **The scalar `tier` may not exceed the strongest claim**, when it stands at
 `possible` or better (see §7 for why). **The tree-encoding gate (proof-conclusion §6)
 reads per claim when `claims` is present, and falls back to the scalar when it
-is absent** — a claim at `possible` stays off the tree even though the scalar
-(the stronger claim) may already read `probable`. Splitting a question into
+is absent** — a claim at `possible` stays off the tree even though the scalar,
+backed by a stronger claim, may already read `probable`. Splitting a question into
 separate paternity/maternity questions remains available, but only when the
 two parents need genuinely different research plans (different jurisdictions,
 different record sets) — not merely different evidence strength, which
