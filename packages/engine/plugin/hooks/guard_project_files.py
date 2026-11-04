@@ -51,6 +51,8 @@ import sys
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); a raw overwrite of it would defeat the gate the
 # same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
+# Lowercase, and matched against a lowercased basename: Windows and macOS file
+# systems treat `Research.JSON` as `research.json`.
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
@@ -634,13 +636,13 @@ def protected_target(tool_name: str, tool_input: dict) -> str | None:
     if tool_name in FILE_WRITE_TOOLS:
         file_path = str((tool_input or {}).get("file_path") or "")
         name = _basename(file_path)
-        return name if name in PROTECTED_PROJECT_FILES else None
+        return name.lower() if name.lower() in PROTECTED_PROJECT_FILES else None
 
     if _basename(tool_name.replace("__", "/")) in DEVICE_WRITE_TOOLS:
         for candidate in _path_like_strings(tool_input or {}):
             name = _basename(candidate)
-            if name in PROTECTED_PROJECT_FILES:
-                return name
+            if name.lower() in PROTECTED_PROJECT_FILES:
+                return name.lower()
         return None
 
     return None

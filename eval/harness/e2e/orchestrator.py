@@ -354,6 +354,8 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # docs/specs/guardrail-enforcement-spec.md §6. starting-tree.gedcomx.json is the
 # write-once baseline the tree-encoding gate diffs against (issue #1490);
 # overwriting it would defeat that gate.
+# Lowercase, and matched against a lowercased basename: Windows and macOS file
+# systems treat `Research.JSON` as `research.json`.
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
 # (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
@@ -427,8 +429,8 @@ def _device_bridge_target(tool_name: str, tool_input) -> str | None:
         return None
     for candidate in _path_like_strings(tool_input or {}):
         name = _basename(candidate)
-        if name in PROTECTED_PROJECT_FILES:
-            return name
+        if name.lower() in PROTECTED_PROJECT_FILES:
+            return name.lower()
     return None
 
 
@@ -453,7 +455,7 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
         return _device_bridge_target(tool_name, tool_input)
     file_path = str((tool_input or {}).get("file_path") or "")
     name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
-    return name if name in PROTECTED_PROJECT_FILES else None
+    return name.lower() if name.lower() in PROTECTED_PROJECT_FILES else None
 
 
 def credential_read_denied(tool_name: str, tool_input) -> str | None:
