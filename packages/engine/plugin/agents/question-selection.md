@@ -103,7 +103,9 @@ and no `planned` or `in_progress` item on an active plan. An item waiting
 only on the researcher's upload does not count as open. That exemption is
 what keeps a question proof-conclusion had to leave open — an identity
 conflict at `not_proved` — from locking the project against every new
-question.
+question. It admits only a question about a part of the objective the
+finished question's own wording does not cover: a question's scope comes
+from how it is worded, not from what its proof summary concluded.
 
 A `resources_spent` stop does **not** unlock it: the "not exhaustive" choice
 writes one, and a new question there would leave the old one unconcluded
