@@ -56,7 +56,7 @@
       "dimension_name": "Correctness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "c"
+      "comment": "project has status 'completed' and q_002 resolved; run produced a 6-item plan (1860 census, death certificate, marriage, baptism, immigration, Thomas Flynn probate) instead of declining and routing to research-exhaustiveness or question-selection"
     },
     {
       "test_id": "ut_research_rpn",
@@ -64,7 +64,7 @@
       "dimension_name": "Completeness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "c"
+      "comment": "run did not decline or route — generated new planning content when it should have recognized completed project state and search_stop already set"
     },
     {
       "test_id": "ut_research_rpn",
@@ -88,7 +88,7 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "c"
+      "comment": "spawned proof-conclusion twice in one turn (q_001 and q_002) instead of one step per turn; no 'Continue with <label>?' offer at end of turn"
     },
     {
       "test_id": "ut_research_001",
@@ -96,7 +96,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "c"
+      "comment": "told researcher Patrick was born in Pennsylvania, contradicting c_001 which resolved his birthplace as Ireland (src_004's Pennsylvania claim rejected as secondary-source error from the son-in-law informant)"
     },
     {
       "test_id": "ut_research_hva",
@@ -176,7 +176,7 @@
       "dimension_name": "Tool Arguments",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "c"
+      "comment": "research_query called with invalid 'filters' parameter (rejected with unknown_args_refused); corrected on the next call using 'status' parameter"
     },
     {
       "test_id": "ut_research_014",
@@ -208,7 +208,7 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "c"
+      "comment": "noted 1861 Pulaski County death but did not flag that it contradicts h_002 (Robert Eastham from 1850–60 censuses married in 1870 — impossible if he died in 1861) and did not propose next steps to research James and Elizabeth Eastham in Pulaski County"
     },
     {
       "test_id": "ut_research_gm4",
