@@ -1668,8 +1668,9 @@ class ToolCall:
     faithfully an attempt that changed nothing."""
 
     def __init__(self, tool_name: str = "mcp__genealogy__research_append",
-                 agent_id: Any = _UNSET) -> None:
+                 agent_id: Any = _UNSET, tool_input: dict | None = None) -> None:
         self.tool_name = tool_name
+        self.tool_input = tool_input or {}
         # _UNSET means the main thread (no `agent_id` key at all); any value given --
         # including None or "" -- makes this a subagent call (#3376).
         self.agent_id = agent_id
@@ -1690,7 +1691,7 @@ class FakeClient:
         hook = ((self.env or {}).get("options") or {}).get("pretool_hook")
         assert hook is not None, "the option set must be captured before the stream runs"
         self.tool_uses += 1
-        data: dict[str, Any] = {"tool_name": call.tool_name, "tool_input": {}}
+        data: dict[str, Any] = {"tool_name": call.tool_name, "tool_input": call.tool_input}
         if call.agent_id is not _UNSET:  # absent key = main thread (#3376)
             data["agent_id"] = call.agent_id
         self.pretool_replies.append(
@@ -6684,6 +6685,58 @@ def test_a_step_turn_the_host_did_not_answer_still_offers_its_options(turn_env):
     _run(turn_env, [_init(), _text("x"), _result(text=f"report\n\n{_CONCLUDE}")])
     assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going."]
     assert not [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql]
+
+
+def _parallel_spawn_halt(after_hints: str) -> list[Any]:
+    """clark-parents, 2026-11-02: a hints step, then two searches spawned in ONE message.
+    Both reach the gate before the model sees a deny, so the second halts and the turn
+    ends on the model's last text, which offers nothing."""
+    spawn = {"subagent_type": "search-records"}
+    return [_init(), ToolCall("Agent", tool_input={"subagent_type": "search-hints"}),
+            _text(after_hints), ToolCall("Agent", tool_input=spawn), ToolCall("Agent", tool_input=spawn),
+            _result(num_turns=3, text=after_hints)]
+
+
+def test_a_step_halt_still_offers_the_step_it_named(turn_env):
+    """Without the halt's offer the turn closed `ok` with no offer line: no buttons for the
+    researcher, and under "Keep going" no reply, so the run just ended."""
+    turn_env["conn"].research = _RESEARCH
+    summary = _run(turn_env, _parallel_spawn_halt("Now dispatching both searches in parallel."))
+    assert summary["outcome"] == "ok"
+    assert _text_events(turn_env["conn"])[-1] == "Continue with running the searches?"
+    assert _turn_done_payload(turn_env["conn"])["options"] == ["Continue.", "Keep going.", "Wrap it up."]
+
+
+def test_a_step_halt_leaves_an_offer_the_model_already_wrote(turn_env):
+    """A model that wrote its own offer before the halted spawn has asked its question;
+    a second one from the halt would ask two, which may disagree."""
+    turn_env["conn"].research = _RESEARCH
+    _run(turn_env, _parallel_spawn_halt("Hints done.\n\nContinue with linking the records?"))
+    texts = _text_events(turn_env["conn"])
+    assert texts[-1] == "Hints done.\n\nContinue with linking the records?"
+    assert "Continue with running the searches?" not in texts
+
+
+def test_a_keep_going_turn_the_step_gate_halted_is_answered(turn_env):
+    turn_env["conn"].research = _RESEARCH
+    turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
+    turn_env["client"] = FakeClient(_parallel_spawn_halt("Now dispatching both searches in parallel."),
+                                    _info(AGENTS, worker.EXPECTED_SKILLS), turn_env)
+    asyncio.run(worker.run_turn(turn, 1, SID, agents={"gps-mentor": object()}))
+    assert [sql for sql, _ in turn_env["conn"].executed if "INSERT INTO turns" in sql], \
+        "the host should have answered the halted turn's offer"
+
+
+def test_a_turn_the_gate_only_denied_keeps_its_own_last_line(turn_env):
+    """The deny the model obeys is no halt: a step that ends on a question for the
+    researcher must still end the run there, so nothing stands in for its last line."""
+    turn_env["conn"].research = _RESEARCH
+    spawn = {"subagent_type": "search-records"}
+    _run(turn_env, [_init(), ToolCall("Agent", tool_input={"subagent_type": "search-hints"}),
+                    ToolCall("Agent", tool_input=spawn), _text("What was her maiden name?"),
+                    _result(num_turns=3, text="What was her maiden name?")])
+    assert "Continue with running the searches?" not in _text_events(turn_env["conn"])
+    assert "options" not in _turn_done_payload(turn_env["conn"])
 
 
 def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatch):
