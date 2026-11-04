@@ -1,10 +1,10 @@
 {
   "id": "john-perry-witbeck-vitals",
-  "name": "John Perry Witbeck's birth, death, and burial",
+  "name": "John Perry Witbeck's birth",
   "genre": "strip",
   "source_pid": "MGRB-VP2",
   "captured": "2026-07-21",
-  "researcher_question": "What are the birth date, death date, and burial date of John Perry Witbeck, and what evidence confirms each event in Schenectady County, New York?",
+  "researcher_question": "What is the birth date of John Perry Witbeck, and what evidence confirms it?",
   "tags": {
     "question_type": "vital_events",
     "era": "1810s",

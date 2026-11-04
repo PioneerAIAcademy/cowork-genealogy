@@ -1,4 +1,4 @@
-# Daniel Cook — wife and sons' 1850 census (1820s–1850s)
+# Daniel Cook — wife (1820s–1850s)
 
 **Source PID:** `KWJT-3ZB`
 **Daniel Cook is deceased** (b. 15 Dec 1798, d. 5 Feb 1875). (FamilySearch ToS requires
@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.)
 
 ## Research question
 
-> Who was Daniel Cook's wife, and what do the family's 1850 census entries show about his sons David and Isaac?
+> Who was Daniel Cook's wife?
 
 ## What was removed from the starting tree
 
@@ -25,6 +25,18 @@ all committed e2e fixtures to be about deceased persons.)
 Medium — the marriage is independently corroborable via a named marriage-record source in the live data ("U.S. and International Marriage Records, 1560-1900"), a reasonably direct path once the agent searches for Daniel Cook's spouse. The two census facts require finding the family's 1850 household in Great Salt Lake, Utah Territory and confirming both sons appear in it — a single census search should surface both if the agent looks at the whole household rather than one person at a time.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question asked
+two independent facts (the wife, and what the sons' 1850 census entries show):
+"Who was Daniel Cook's wife, and what do the family's 1850 census entries show
+about his sons David and Isaac?" Reworded `researcher_question` to the wife
+only; demoted `f2` and `f3` (the two sons' census entries) to
+`required: false`, so a run that recovers them anyway still gets credit. This
+matches the fixture's own stated purpose below — "a pass demonstrates that
+research recovers what a prior removal took, not only the one fact a
+researcher explicitly asked about" — the census facts were always meant to be
+reasserted incidentally, not asked for directly. No finding wording changed,
+and this fixture has no committed runs to re-grade.
 
 Regression fixture for issue #1473 (forget-and-rederive strips relationships and never restores them from the records it then finds). The reported bug: a real forget-and-rederive run on this same PID, asked to forget information before 1850 and re-derive Daniel Cook's birth, over-removed (his wife and children's facts went with it) and under-restored (records found while researching the birth named those same people, but the removals were never reasserted). This fixture reproduces that shape at a scale a benchmark run can grade — the starting tree already reflects the over-broad removal (wife gone, two sons' census facts gone) — and requires ordinary research (not the forget-and-rederive skill itself) to put all three back. A pass demonstrates that research recovers what a prior removal took, not only the one fact a researcher explicitly asked about.
 

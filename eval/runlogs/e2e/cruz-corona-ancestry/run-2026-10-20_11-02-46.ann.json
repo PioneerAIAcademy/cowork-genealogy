@@ -6,8 +6,11 @@
     "f4": "false",
     "f5": "false"
   },
-  "proof_quality_score": 3,
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "Proof quality corrected on re-audit (2026-11-04) from 3 to 1: the narrative states twice that a source was \"read as an image\" (\"original government record... read as an image\"; \"original enumeration (read as an image)\") and reaches a \"proved\" tier on that basis, but research.json's own source_classification marks both underlying sources derivative, and there are zero image_read/image_transcribe calls anywhere in the run. A top-tier conclusion built on a fabricated evidentiary claim is unsound (1), not sound (3) — the most serious instance of this pattern found across this fixture's annotations."
+  },
   "annotator": "mercyokum",
-  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140",
-  "blind_bundle_digest": "52d3752a6a5813f519f02213e1b2ce839d4e7a3c630d49b2da5d90207a05afa2"
+  "findings_hash": "61c97416379af03d0808efd6ffd1148332b4bcff57c7ef1014557045bc1b261a",
+  "blind_bundle_digest": "67e1e57e4b488e98d0938f9b9caff21ad9c9775600d1a15a5aff21f9933b68f8"
 }

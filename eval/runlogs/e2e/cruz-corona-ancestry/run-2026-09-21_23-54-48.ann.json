@@ -10,5 +10,5 @@
     "f3": "Not recovered on the subject, same root cause and same lead ruling as f2. The mother's name (Ma Apolinar Corona / Apolinar Corona) was correctly found in the same marriage file and independently corroborated by a 1930 census household match -- stronger corroboration than f2 had. But the ParentChild edge (R2) again connects I3 to the unmerged stub I1, not to PID-TODO. Same verified cause as f2 -- a decisive same_person non-match followed by two rejected merge_warnings attempts (see f2's note for the exact sequence), not an unresolved call or a skipped step."
   },
   "annotator": "122873616+Cia-3@users.noreply.github.com",
-  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140"
+  "findings_hash": "61c97416379af03d0808efd6ffd1148332b4bcff57c7ef1014557045bc1b261a"
 }

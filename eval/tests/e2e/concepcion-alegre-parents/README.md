@@ -1,4 +1,4 @@
-# Concepción Alegre — birth, marriage and parents (Paraguay)
+# Concepción Alegre — parents (Paraguay)
 
 **Source PID:** `G384-ZCZ`
 **Concepción Alegre is deceased.** (FamilySearch ToS requires
@@ -7,7 +7,7 @@ not recorded in the tree; died not recorded in the tree.
 
 ## Research question
 
-> When and where was Concepción Alegre of Altos, Cordillera, Paraguay born, who were her parents, and when did she marry Vicente Figueredo?
+> Who were the parents of Concepción Alegre of Altos, Cordillera, Paraguay, who married Vicente Figueredo?
 
 ## What was removed from the starting tree
 
@@ -28,6 +28,18 @@ medium — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question asked
+three independent facts (her birth, her parents, and her marriage): "When and
+where was Concepción Alegre of Altos, Cordillera, Paraguay born, who were her
+parents, and when did she marry Vicente Figueredo?" Reworded
+`researcher_question` to the parents only — the fixture's whole point is the
+`f5`/`f6` avoid-guard on the witnesses-mistaken-for-parents indexing error, and
+`tags.question_type` is already `parents` — keeping "who married Vicente
+Figueredo" as identifying context without the exact date, since that date is
+`f2`'s own answer. Demoted `f1` (birth) and `f2` (marriage) to
+`required: false`, so a run that recovers them anyway still gets credit. No
+finding wording changed, and this fixture has no committed runs to re-grade.
 
 **Adjudicated 2026-08-12 (issue #875): the record is the right one, but its
 indexed parent names are wrong.** The hint matched the correct marriage — and
