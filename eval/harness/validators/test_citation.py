@@ -713,10 +713,12 @@ def report_negative_search_quotes_log(before_state, text_response, test):
     violations = []
 
     # Check quoted phrases that claim to be from the log/notes
-    # Pattern: phrases in quotes preceded by log/notes language
+    # Pattern: phrases in quotes preceded by log/notes language, within the same
+    # sentence and line -- an unbounded gap paired "The log ..." with the next
+    # quote anywhere after it ('The search date "1 May 2026"').
     log_quote_re = re.compile(
         r'(?:(?:from|in|per|from the|the)\s+(?:log|notes|research log|search log)'
-        r'[^"]*?"([^"]{8,})")',
+        r'[^"\n.]{0,60}?"([^"]{8,})")',
         re.IGNORECASE,
     )
     for m in log_quote_re.finditer(response):
