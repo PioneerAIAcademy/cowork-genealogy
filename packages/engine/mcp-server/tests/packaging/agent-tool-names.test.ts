@@ -750,6 +750,21 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // New agent (issue #3522), one spawn per full-text hit: it reads the hit with
+  // `sidecar_read`, the target and its one-hop family with `project_context` and
+  // `tree_query`, and writes one `hit_verdicts` row through `research_append`
+  // (its hook lane). A Match is labelled, not extracted (lead, 2026-10-18), so
+  // no `extraction_append`; and no `research_query` and no `Read`.
+  "evaluate-search-results.md": {
+    tools: [
+      "project_context",
+      "research_append",
+      "sidecar_read",
+      "tree_query",
+    ],
+    denies: [],
+  },
+
   // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
   // `person_record_matches` for the pending matches, `research_query` to find a
   // hint the project already extracted, `record_read` per hint,

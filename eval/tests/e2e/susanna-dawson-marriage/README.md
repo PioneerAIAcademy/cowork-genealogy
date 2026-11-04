@@ -1,4 +1,4 @@
-# Susanna Dawson Kneale — marriage and father John Dawson
+# Susanna Dawson Kneale — marriage
 
 **Source PID:** `9KNQ-8YB`
 **Susanna Dawson Kneale is deceased.** (FamilySearch ToS requires
@@ -7,7 +7,7 @@ all committed e2e fixtures to be about deceased persons.) Born
 
 ## Research question
 
-> When and where did Susanna Dawson marry John Kneale, and who was her father?
+> When and where did Susanna Dawson marry John Kneale?
 
 ## What was removed from the starting tree
 
@@ -28,6 +28,14 @@ easy — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (the marriage, and her father): "When and where did
+Susanna Dawson marry John Kneale, and who was her father?" Reworded
+`researcher_question` to the marriage only; demoted `f2` (her father) to
+`required: false`, so a run that recovers it anyway still gets credit. No
+finding wording changed. This fixture's one annotation carries no
+`findings_hash`, so it is grandfathered and needs no re-grading.
 
 **Confirmed true match.** This fixture came from a hint batch (`filtered-list-samples.csv` row 21, flags `adds_father`/`adds_marriage`, confidence 3) in which roughly half the hint records are false matches. A genealogist reviewed the tree person and the hint record directly on familysearch.org and confirmed this one: the tree person's name, husband's name (John Kneale), children, and dates all match the hint record. Independent corroboration beyond the marriage record itself — the baptismal record of the hint person's child names the parents of William Kneale, a confirmed son of John Kneale and Susanna Dawson, tying the marriage record's couple to the same family already in the tree.
 

@@ -1,4 +1,4 @@
-# Robert Swarbrick — parents and christening, with a same-name/same-year lookalike to avoid
+# Robert Swarbrick — parents, with a same-name/same-year lookalike to avoid
 
 **Source PID:** `MM4W-19N`
 **Robert Swarbrick is deceased.** (Christened 20 Dec 1797, Poulton-le-Fylde,
@@ -7,9 +7,9 @@ requires all committed e2e fixtures to be about deceased persons.)
 
 ## Research question
 
-> Who were the parents of Robert Swarbrick, and when and where was he
-> christened, given that two same-named Robert Swarbricks were christened
-> within months of each other in neighboring Lancashire parishes in 1797?
+> Who were the parents of Robert Swarbrick, given that two same-named Robert
+> Swarbricks were christened within months of each other in neighboring
+> Lancashire parishes in 1797?
 
 ## Why this fixture exists
 
@@ -51,7 +51,7 @@ someone else already wrote.
 - **f1 (recover, required):** father John Swarbrick (~1764–1830, Carleton,
   Poulton-le-Fylde).
 - **f2 (recover, required):** mother Grace Collinson (~1769–1825, Carleton).
-- **f3 (recover, required):** christening 20 Dec 1797, St. Chad,
+- **f3 (recover, not required):** christening 20 Dec 1797, St. Chad,
   Poulton-le-Fylde (born ~19 Dec 1797, Carleton; twin of John).
 - **f4 (avoid, required):** must NOT attach Robert to William Swarbrick
   (father of the *other* Robert, christened 11 Jun 1797, Hambleton parish).
@@ -67,6 +67,23 @@ names, exact parish, twin pairing) rather than a simple name/date lookup.
 
 ## Notes for reviewers
 
+- **2026-11-03 — re-scoped for step mode (issue #4145).** The original
+  question asked two independent facts — the parents and the christening:
+  "Who were the parents of Robert Swarbrick, and when and where was he
+  christened, given that two same-named Robert Swarbricks were christened
+  within months of each other in neighboring Lancashire parishes in 1797?"
+  A death and a burial are two facts, and parents-plus-christening is the
+  same shape; the premise exception (a load-bearing identity premise plus
+  the fact it gates counts as one question) doesn't apply here, because the
+  two 1797 christenings are identifying *context* for the parents question,
+  not an unverified premise resting on an online tree. Reworded the question
+  to the parents alone, keeping the two-Roberts detail as disambiguating
+  context, and demoted `f3` (the christening) to `required: false` — a run
+  that recovers it anyway still gets credit. `f4` (the avoid guard against
+  the wrong William-Swarbrick lineage) stays `required: true`, since it
+  guards the parents finding itself, not the christening. No finding wording
+  changed, and no annotation on this fixture carries `blind_bundle_digest`,
+  so this edit needs no re-grading.
 - **Expect WARNs from the stripping linter on f1, f2, and f3.** John
   Swarbrick (`L88T-VT4`) and Grace Collinson (`P6MH-1N8`) legitimately stay
   in the tree as unlinked candidates (their relationships to Robert are

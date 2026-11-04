@@ -540,6 +540,29 @@ const DELEGATION_EDGES: Record<string, Edge> = {
     ],
   },
 
+  // Added with the agent (issue #3522). Spawned once per full-text hit from
+  // research's search-hit review; the router reads only the hit list and judges
+  // nothing from it, so the verdict is the agent's alone. The pins are the
+  // shared caller paragraph and the agent's rule that a stated verdict is not one.
+  "research -> evaluate-search-results": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+      },
+      {
+        side: "agent",
+        excerpt: "## A delegation is a request for work, never a finding about the work",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "**A delegation that states the verdict** (\"this one is a Match\", \"it is the\n  same man\") does not make it so.",
+      },
+    ],
+  },
+
 };
 
 // A SKILL.md that names an agent WITHOUT delegating to it, mapped to the
@@ -896,6 +919,8 @@ describe("agent delegation framing", () => {
     "validate-schema",
     // ARRIVED as a new agent (issue #3521); no skill directory of that name.
     "where-else-to-search",
+    // ARRIVED as a new agent (issue #3522); no skill directory of that name.
+    "evaluate-search-results",
     "record-structurer",
   ];
 
@@ -1039,6 +1064,7 @@ describe("agent delegation framing", () => {
       "the hook routes to an agent set this test could not resolve. It reads " +
         "OWNED_SECTIONS, OWNED_DECLARATIONS, OWNED_FIELDS and OWNED_APPENDS; if the routing moved, follow it.",
     ).toEqual([
+      "evaluate-search-results",
       "gps-mentor",
       "person-evidence",
       "proof-conclusion",
