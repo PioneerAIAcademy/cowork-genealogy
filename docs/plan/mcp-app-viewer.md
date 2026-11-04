@@ -209,8 +209,9 @@ from it, and an unannotated tool defaults to "not read-only".
     and `derived`. A card is therefore a true snapshot of the project at that step.
   - **`derived`** is what only the engine can compute: question states
     (`questionStatus`), unregistered disagreements, hand-offs awaiting the
-    researcher, the tree changes from `treeDiff` against the starting tree, the
-    reviewer's notes, and the project's folder name.
+    researcher, the tree changes from `treeDiff` against the starting tree, each
+    live evaluation's body by id with its `craft` flag, and the project's folder
+    name.
 - **`read_project_view`** — `_meta.ui.visibility: ["app"]`, so the model never
   sees it, and its data travels in `structuredContent`, which an artifact can read.
   The page calls it with the same project rule and `part`, `id`:
@@ -253,16 +254,16 @@ from it, and an unannotated tool defaults to "not read-only".
 - React 19, Vite and `vite-plugin-singlefile`, so one self-contained HTML file.
   Depends on `@genealogy/viewer-ui` and `@genealogy/schema` (never on the engine),
   and `@modelcontextprotocol/ext-apps@1.7.5` for the `App` client.
-- **Three hosts, chosen at boot,** before anything connects: a browser tab
-  (`window.parent === window`), an artifact (`window.claude`), otherwise the MCP App
-  `App`. Each host supplies `call(tool, args)`, `openLink`, fullscreen and its input,
+- **Three hosts, chosen at boot,** before anything connects, checked in this
+  order: an artifact (`typeof window.claude?.use === "function"`), a browser tab
+  (`window.parent === window`), otherwise the MCP App `App`. Each host supplies `call(tool, args)`, `openLink`, fullscreen and its input,
   and a tool failure reaches the page in one shape. In a tab, `show` comes from the
   URL, loading is one `document` call, `openLink` is `window.open`, and the POST
   sends both Accept types. An artifact also loads by one `document` call.
 - **Display modes:** the `App` declares
   `availableDisplayModes: ["inline", "fullscreen"]`, the layout follows
-  `hostContext.displayMode`, and the open button is hidden when fullscreen is not
-  offered.
+  `hostContext.displayMode` and the mode `requestDisplayMode` returns, and the open
+  button is hidden when fullscreen is not offered.
 - **Loading the project in a card, once per mount.** Only the first tool result
   counts. If it carries `_meta["genealogy/project"]`, that is the snapshot. If it is
   `isError`, the card shows its text and fetches nothing. Otherwise, or if no
@@ -281,7 +282,8 @@ from it, and an unannotated tool defaults to "not read-only".
   - `getProjectState` returns the documents; its `label` is the project's title,
     else `derived`'s folder name, never null (a null label shows the welcome
     screen);
-  - `readSidecar` calls `part: "results"`, with a constant `mtime`;
+  - `readSidecar` calls `part: "results"`, with a constant `mtime`, resolving null
+    when the id is refused or the file is absent;
   - `getSourceImage` returns a fresh signed link as the `img` source;
   - `openExternal` and `openFamilySearch` are arrow-function properties, because
     the provider passes them unbound. `openExternal` calls `openLink` only for an
@@ -293,34 +295,47 @@ from it, and an unannotated tool defaults to "not read-only".
   - **The current question** is `questionId` if passed, else the last unresolved
     question, else the last with a proof. `latest` picks the card from that
     question's state in `derived`: framed → setup, planned → plan, searching →
-    search, evidence-gathered → link, concluded or critiqued → conclusion.
-  - **The evidence grid's rows** key on the person and the lower-cased `fact_type`.
+    search, evidence-gathered → link, concluded or critiqued → conclusion. No
+    question yet: `latest` is setup, and the setup card shows the objective.
+  - **The evidence grid's rows** key on the person and the fact type, lower-cased
+    with underscores removed (`marital_status` and `maritalstatus` share a row), and a
+    cell lists every assertion that lands on it. The tree column reads `name` from
+    `names[]`, `sex` from `gender`, `relationship` and `parentage` from the person's
+    relationships, `marriage` from the Couple's `facts[]`, and anything else from
+    `facts[]` by type, keyed the same way. A supporting assertion with no live link
+    gets its own row, labelled by `record_role`.
   - **Ids in fields are resolved; internal ids in prose are dropped.** `S1`, `I19`,
     `q_001`, `a_003`, `pe_060` in a field become the person, source, question or
-    record they name. Prose is never rewritten with names: any bracketed or
-    parenthesised group containing an internal id is dropped, then any remaining
-    bare id with its separator.
+    record they name. Prose is never rewritten with names: an internal id is
+    removed alone with its separator, and a bracket left empty goes with it. The words
+    beside it stay, because agents put evidence there.
   - **FamilySearch identifiers become named links.** A tree person is their name;
     a record is its title ("1887 birth register"); a page image, collection or wiki
     page is named for what it is.
   - **In prose,** one page function handles every "on FamilySearch" link. A URL is
     parsed with `new URL`, must have the hostname `familysearch.org` or
     `www.familysearch.org` and no credentials, and is rebuilt on
-    `https://www.familysearch.org`. A full ARK becomes a link, with trailing
-    punctuation peeled off and any `?…` dropped. A bare token that looks like an id
-    becomes a link only if the project knows it: a tree person's id gets the person
-    page, a record's id gets its ARK. An unknown token with a capital letter in that
-    shape is dropped as an internal id, and anything else, such as `1885-1910` or
+    `https://www.familysearch.org`. A full ARK or a `\d:\d:<id>` form such as
+    `3:1:3QSQ-G9NW-8ZZC` becomes a link, with trailing punctuation peeled off and any
+    `?…` dropped. A bare token that looks like an id becomes a link only if the
+    project knows it: a tree person's id gets the person page, a record's id gets its
+    ARK. A record's id may come from `sources`, `assertions` or the tree's `sources`
+    (its `id` or its `url`'s ARK). An unknown token with a capital letter in that
+    shape is removed as an internal id is, and anything else, such as `1885-1910` or
     `Mary-Ann`, stays as text.
   - **The conclusion line** is the paragraph under the narrative's first markdown
     heading, or first line opening with a bold run, whose text contains
     "conclusion" in any case (`### Conclusion`, `**Conclusion (Probable):**`);
     otherwise the question text with the tier in words. When `claims[]` is present,
     each claim shows as a row with its label and its own tier.
-  - **The reviewer** is the evaluation whose `target_id` is the proof and whose
-    `superseded_by` is null, else the question's latest live on-demand one. The
-    reviewer runs only when asked, so often there is none. A missing notes file falls
-    back to the verdict alone.
+  - **The reviewer** is the newest live, non-refused, non-craft evaluation whose
+    `target_id` is the proof, else the newest such on-demand one on the question,
+    written after the proof's `updated` if it has one (few do). A craft read says how
+    the proof reads, not whether the evidence holds, so it never shows as the
+    reviewer's verdict. The only mark is the `craft` flag in the body, and a body that
+    cannot be read counts as not craft, as gps-mentor counts it. The reviewer runs only
+    when asked, so often there is none. A missing notes file falls back to the verdict
+    alone.
   - **Retired rows never show:** assertions and person-evidence links with a
     non-null `superseded_by` are left out everywhere.
   - **Link strength** is the stored `confidence` in words, per person, never per
@@ -335,8 +350,11 @@ from it, and an unannotated tool defaults to "not read-only".
   - **A record's search** is the source's `log_entry_id` when that entry's tool is
     `record_search` or `fulltext_search`; otherwise one `recordSearch` call. A record
     whose source has an `image_filename` offers "See the page".
-  - **A tree finding's record** comes from the fact's `assertion_id`, else its
-    `sources[].ref` matched to a source's `gedcomx_source_description_id`.
+  - **A tree finding's record** comes from the fact's `assertion_id`, else the
+    `sources[].ref` on the fact or relationship matched to a source's
+    `gedcomx_source_description_id`; a relationship with neither takes the record of
+    an assertion linked to both its persons. A finding with no record says so and
+    offers no link.
   - **Real data is messy:** duplicate person-evidence links collapse to the
     strongest, duplicate `ParentChild` edges dedupe, dates in mixed formats normalize
     for display, and older document shapes are read, never repaired. Labels come
@@ -359,7 +377,8 @@ from it, and an unannotated tool defaults to "not read-only".
 ### Router lines (a variant plugin build, never a PR)
 
 One line per stopping point in `skills/research/SKILL.md`: after the step report,
-call `show_project` with the step, then the reply. The tool is found by bare name
+call `show_project` with the step and the `questionId` it worked on, then the reply.
+The tool is found by bare name
 (`+show_project` in ToolSearch). The bounded "where the project stands" row gains
 the same call with `show: latest`, after its paragraph.
 
@@ -374,7 +393,8 @@ the same call with `show: latest`, after its paragraph.
   exhaustive" choice and the conclusion, the variant asks through `AskUserQuestion`
   instead of writing the "Continue with …?" line: up to three concrete moves from the
   recorded leads plus the offered step, since the tool allows four options and adds
-  "Other" itself. The answer returns inside the turn and is treated as the
+  "Other" itself. With fewer than two options, it keeps today's ending. The answer
+  returns inside the turn and is treated as the
   researcher's reply; a move is a steer, which the router already turns into a plan
   item. Every other stop keeps its line. This does not ship from this plan: after the
   demo it goes to step mode as an issue, with what the demo showed.
@@ -411,10 +431,12 @@ before pushing, with no tunnel and no connector.
   `.final-tree.gedcomx.json`), with `eval/tests/e2e/<fixture>/starting-tree.gedcomx.json`
   as the starting tree. The McAndrew capture and `william-ferber-ancestry` have
   none, so Compare and the tree-change line are omitted for them. They have no
-  `results/`, `images/` or `evaluations/`. The reviewer's notes and `recordSearch`
-  are tested over the three fixtures that pair a research.json with an evaluation
-  file: `eval/fixtures/scenarios/compound-objective-fully-covered`,
-  `compound-objective-part-unframed` and `flynn-prior-craft-verdict`.
+  `results/`, `images/` or `evaluations/`. The reviewer's notes are tested over the
+  three fixtures that pair a research.json with an evaluation file:
+  `eval/fixtures/scenarios/compound-objective-fully-covered` and
+  `compound-objective-part-unframed`, each a live `proof-critique`, and
+  `flynn-prior-craft-verdict`, a craft read. `recordSearch` is tested over the two
+  compound fixtures, because Flynn has no `results/`.
 - **The sweep:** `make mcp-viewer-sweep` is local, not CI, so a teammate's committed
   run can never red someone's PR. It stages each end state in a temporary folder,
   runs the server to dump its `document` payload, and renders the page over each.
@@ -504,8 +526,8 @@ project.
 
 ### M1 — The designer demo (15–17 days)
 
-- The **setup, search and conclusion cards**, plus `latest`. The conclusion card's
-  two actions are "Open the case file" and "Compare with FamilySearch".
+- The **setup, search and conclusion cards**, plus `latest`; until M2, planned
+  shows setup and evidence-gathered shows search. The conclusion card's two actions are "Open the case file" and "Compare with FamilySearch".
 - The case file's shell, right-hand pane and search box; **The case** with So far,
   the evidence grid and Leads; **Compare with FamilySearch**; a record's search
   results, and its page image with transcription and findings, in the pane.
@@ -526,8 +548,8 @@ project.
 - before recording, in the demo project, at least one supporting assertion's
   source has an `image_filename` that exists under `images/` and a non-empty
   `transcription`, and at least one supporting assertion's `record_id` appears in
-  the results file of a `record_search` log entry under `results/`, and a live
-  evaluation targets the proof;
+  the results file of a `record_search` log entry under `results/`, and a live,
+  non-refused evaluation that is not a craft read targets the proof;
 - the demo script runs end to end on the demo project;
 - `make mcp-viewer-sweep` renders the three cards, The case and Compare over the
   McAndrew capture and every committed e2e end state without error;
@@ -535,9 +557,11 @@ project.
   assertion and retired link appear nowhere;
 - the id check passes on all of that rendered text, and is shown failing on planted
   shapes (`S28` in a citation, `I19` in a name, an internal id inside a sentence, a
-  raw `ark:/61903/…`, an unknown id-shaped token) and passing names and dates that
-  contain digits; `1885-1910`, `Mary-Ann` and `full-text` render as text with no
-  link, and a record id links to its ARK;
+  raw `ark:/61903/…`, a bare `3:1:3QSQ-G9NW-8ZZC`, an unknown id-shaped token) and
+  passing names and dates that contain digits; `1885-1910`, `Mary-Ann` and
+  `full-text` render as text with no link, a record id links to its ARK,
+  `(X8D9-HL9; parents: Peter Farber + Barbara Wilhelm)` with an unknown id renders as
+  `(parents: Peter Farber + Barbara Wilhelm)`, and `(S28, S29)` leaves nothing;
 - `https://familysearch.org.evil.example/en/wiki/X`,
   `https://www.familysearch.org@evil.example/en/wiki/X` and
   `https://evil.example/https://www.familysearch.org/en/wiki/X` get no "on
@@ -569,8 +593,9 @@ People, Sources and Log, and `show_project` opening each page by id.
 
 **Done when:** the sweep renders each page without error, each renders on the demo
 project, every one of today's 15 sections has its content reachable,
-and the reviewer's notes show on the three evaluation fixtures and the verdict
-alone where the file is absent.
+the reviewer's notes show on the two compound fixtures, the verdict alone shows
+where the file is absent, and Flynn (`flynn-prior-craft-verdict`) shows no reviewer
+verdict.
 
 **Total:** roughly 7–8 weeks of the lead's time, M0 through M3.
 
