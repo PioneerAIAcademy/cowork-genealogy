@@ -1168,12 +1168,15 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:proof-conclusion");
   });
 
+  // `title`, not `objective`: the objective is main-thread-only since issue
+  // #3975, even inside init-project's lane. A title rewrite is refused by the
+  // tool's set-once rule, not here.
   it.each([
-    ["project (its objective)", { section: "project", op: "update", fields: { objective: "x" } }],
+    ["project (its title)", { section: "project", op: "update", fields: { title: "x" } }],
     ["researcher_profile", { section: "researcher_profile", op: "update", fields: {} }],
     ["both in one batch", {
       ops: [
-        { section: "project", op: "update", fields: { objective: "x" } },
+        { section: "project", op: "update", fields: { title: "x" } },
         { section: "researcher_profile", op: "update", fields: {} },
       ],
     }],
@@ -1184,6 +1187,41 @@ describe("the guard script's decisions", () => {
       agent_id: "agent-1",
       agent_type: IP_AGENT,
     });
+    expect(out).toEqual({});
+  });
+
+  // project.objective is main-thread-only (MAIN_THREAD_FIELDS, issue #3975).
+  const OBJ = { section: "project", op: "update", fields: { objective: "x" } };
+  it.each([
+    ["init-project, namespaced", OBJ, { agent_id: "a1", agent_type: IP_AGENT }],
+    ["init-project, bare", OBJ, { agent_id: "a1", agent_type: "init-project" }],
+    ["proof-conclusion, whose lane holds project", OBJ, { agent_id: "a1", agent_type: OWNER }],
+    // `caller` is "" here, the same as the main thread: only `agent_id`
+    // membership tells them apart.
+    ["agent_id with a null agent_type", OBJ, { agent_id: "a1", agent_type: null }],
+    ["agent_id with no agent_type key", OBJ, { agent_id: "a1" }],
+    ["an agent the lane table does not know", OBJ, { agent_id: "a1", agent_type: "general-purpose" }],
+    // A known agent whose lane lacks `project`: pins the arm before the lane check.
+    ["gps-mentor, whose lane lacks project", OBJ, { agent_id: "a1", agent_type: "gps-mentor" }],
+    ["the ops[] form", { ops: [{ section: "project", op: "update", fields: { updated: "2026-11-03" } }, OBJ] }, { agent_id: "a1", agent_type: IP_AGENT }],
+    ["entry beside an empty fields", { section: "project", op: "update", fields: {}, entry: { objective: "x" } }, { agent_id: "a1", agent_type: IP_AGENT }],
+  ])("denies a subagent research_append on project.objective — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    const reason = out.hookSpecificOutput.permissionDecisionReason;
+    expect(reason).toContain("project.objective");
+    expect(reason).toContain("main conversation");
+    expect(reason).not.toContain("@plugin:");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["the main thread", OBJ, {}],
+    ["the main thread, ops[] form", { ops: [OBJ, { section: "project", op: "update", fields: { updated: "2026-11-03" } }] }, {}],
+    ["a subagent's project write without objective", { section: "project", op: "update", fields: { updated: "2026-11-03" } }, { agent_id: "a1", agent_type: IP_AGENT }],
+    ["proof-conclusion setting status", { section: "project", op: "update", fields: { status: "completed" } }, { agent_id: "a1", agent_type: OWNER }],
+  ])("allows research_append on project.objective's neighbours — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out).toEqual({});
   });
 
@@ -1446,6 +1484,15 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     expect(out.hookSpecificOutput.hookEventName).toBe("UserPromptSubmit");
     expect(out.hookSpecificOutput.additionalContext).toMatch(/no project.*research skill/s);
     expect(out.hookSpecificOutput.additionalContext).toMatch(/In that case, if the message names more than one goal/);
+  });
+
+  it("adds the sources sentence to a researcher's message (#4011)", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "What Kenyan records can I search for him?" }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /Name a source, collection, book or citation only if a tool result in this session returned it/,
+    );
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from collections_search, which locality-guide and research-plan run/);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/pursue first\.\n\nName a source/);
   });
 
   it("stays silent on a subagent hand-back", () => {

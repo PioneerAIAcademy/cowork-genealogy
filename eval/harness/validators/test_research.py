@@ -356,9 +356,10 @@ def test_relays_the_agents_tail_verbatim(text_response, test):
     Tag-gated on ``relays-agent-tail``; the agent is the ``routes-to:`` callee.
     The tail is read from the test's own canned response, never from
     ``agent_returns``: there it is wrapped in harness scaffolding the router is
-    told never to print. The tail's closing punctuation is not required: a router
-    that carries the agent's last sentence on into its own ask for verdicts has
-    still relayed every word.
+    told never to print. The tail must also END the reply: a router that adds its
+    own table, list or question after it has printed more than the agent said,
+    and the skill forbids that. A last line holding only the project's link is
+    allowed, since the skill puts the hosted `projectUrl` there.
     """
     from harness.skill_runner import normalize, tail_after_final_rule
     from harness.skill_stubs import parse_stub_skills
@@ -369,9 +370,18 @@ def test_relays_the_agents_tail_verbatim(text_response, test):
     assert agent, "relays-agent-tail needs a routes-to:<agent> tag naming the relayed agent"
     tail = tail_after_final_rule(parse_stub_skills(test.get("execution")).get(agent) or "")
     assert tail, f"relays-agent-tail needs a stubbed {agent} response with a `---` tail"
-    assert normalize(tail).rstrip(".!?") in normalize(text_response or ""), (
+    expected = normalize(tail).strip().rstrip(".!?")
+    lines = (text_response or "").strip().splitlines()
+    if len(lines) > 1 and re.fullmatch(r"<?https?://\S+>?", lines[-1].strip()):
+        lines = lines[:-1]
+    reply = normalize("\n".join(lines)).strip().rstrip(".!?")
+    assert expected in reply, (
         f"the router did not relay {agent}'s summary verbatim; expected, after "
         f"normalization:\n{tail}"
+    )
+    assert reply.endswith(expected), (
+        f"the router added text after {agent}'s summary; it must end the reply. "
+        f"Added:\n{reply[reply.find(expected) + len(expected):].strip()}"
     )
 
 
@@ -1228,3 +1238,202 @@ def test_hints_item_handoff_carries_its_ids(test, builtin_tool_calls, before_sta
         if not any(re.search(rf"\b{re.escape(value)}\b", p) for p in prompts)
     ]
     assert not missing, f"the search-hints hand-off does not carry {', '.join(missing)}"
+
+
+_MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_SEGMENT_BREAK = re.compile(r"\n|(?<=[.:;!?])\s+|[\"“”()\[\]]")
+_YEAR_RANGE = re.compile(r"\d{4}\s*[-–—]\s*\d{4}(?!\d)")
+_RECORD_WORD = re.compile(
+    r"\b(records?|registrations?|registers?|census(es)?|church|court|births|deaths|"
+    r"marriages|baptisms|christenings|burials|probate|land|tax|military|index|books|"
+    r"parish|civil|vital|immigration|passengers?|naturali[sz]ations?|cemeter(y|ies)|"
+    r"newspapers)\b",
+    re.IGNORECASE,
+)
+_REPOSITORY_WORD = re.compile(r"\b(archives?|library|museum|office|society)\b", re.IGNORECASE)
+_GENERIC_RECORD_WORD = re.compile(r"\b(records?|registers?|index|books)\b", re.IGNORECASE)
+_PLACE_CONNECTORS = frozenset(
+    {"of", "and", "the", "de", "la", "del", "des", "du", "van", "von", "upon", "y", "e", "da", "do", "di"}
+)
+
+
+_STRAIGHT_QUOTES = str.maketrans("‘’“”", "''\"\"")
+_UNCONFIRMED = re.compile(
+    r"\b(unconfirmed|unverified|not (been )?(confirmed|verified)|could(n't| not) (confirm|verify))\b",
+    re.IGNORECASE,
+)
+
+
+def _marked_unconfirmed(reply: str, title: str) -> bool:
+    """True when a sentence of the reply holding `title` also says it is unconfirmed, which
+    the sources sentence allows ("otherwise say it is unconfirmed"). A sentence, not a
+    line: a markdown paragraph is one line, and a hedge elsewhere in it is not this one."""
+    wanted = _normalised_title(title)
+    return any(
+        wanted in _normalised_title(sentence) and _UNCONFIRMED.search(sentence)
+        for sentence in re.split(r"\n|(?<=[.!?])\s+", re.sub(r"[*_`]", "", _MD_LINK.sub(r"\1", reply)))
+    )
+
+
+def _title_start(first_field: str) -> str:
+    """The trailing run of a title's first field that reads as a place or title: words
+    that start with a capital, a digit or an apostrophe-led capital, joined by
+    connectors ("Isle of Man"), with no connector leading. Prose before it is cut, so
+    "Start with Kenya" yields "Kenya" and "…was strengthened over time" yields ""."""
+    kept: list[str] = []
+    for word in reversed(first_field.split()):
+        if word[:1].isupper() or word[:1].isdigit() or word.casefold() in _PLACE_CONNECTORS:
+            kept.append(word)
+        else:
+            break
+    while kept and kept[-1].casefold() in _PLACE_CONNECTORS:
+        kept.pop()
+    return " ".join(reversed(kept))
+
+
+def _normalised_title(text: str) -> str:
+    text = re.sub(r"[–—]", "-", text.casefold()).translate(_STRAIGHT_QUOTES)
+    return re.sub(r"\s*-\s*", "-", re.sub(r"\s+", " ", text)).strip(" ,")
+
+
+def _collection_title_candidates(reply: str) -> list[str]:
+    """Runs of reply text shaped like a FamilySearch collection title: from the
+    segment's first capital, holding a comma and a record word, through a year range.
+    The first field is cut to its title-shaped tail (`_title_start`), so sentence prose
+    before a comma is not read as a title. A run whose first field names a repository
+    (an archive, library, museum, office or society) is a repository recommendation,
+    not a collection, and is dropped. A two-field run ("Kenya Records, 1888–1960") is a
+    heading unless it names a specific record type, not just records or registers."""
+    reply = re.sub(r"[*_`]", "", _MD_LINK.sub(r"\1", reply))
+    found = []
+    for segment in _SEGMENT_BREAK.split(reply):
+        start = re.search(r"[A-Z]", segment)
+        if not start:
+            continue
+        run = segment[start.start():]
+        years = _YEAR_RANGE.search(run)
+        if not years:
+            continue
+        run = run[: years.end()]
+        if "," not in run:
+            continue
+        first, rest = run.split(",", 1)
+        first = _title_start(first)
+        second = rest.strip()[:1]
+        if not first or not (second.isupper() or second.isdigit()):
+            continue
+        run = f"{first},{rest}"
+        if not _RECORD_WORD.search(run) or _REPOSITORY_WORD.search(first):
+            continue
+        if "," not in rest and not _RECORD_WORD.search(_GENERIC_RECORD_WORD.sub("", run)):
+            continue
+        found.append(run)
+    return found
+
+
+def _returned_collection_titles(tool_calls) -> list[str]:
+    titles = []
+    for call in tool_calls or []:
+        if bare_tool_name(str(call.get("tool", ""))) != "collections_search":
+            continue
+        response = call.get("response")
+        if isinstance(response, str):
+            try:
+                response = json.loads(response)
+            except ValueError:
+                continue
+        if not isinstance(response, dict):
+            continue
+        for result in response.get("results") or []:
+            if isinstance(result, dict) and result.get("title"):
+                titles.append(result["title"])
+    return titles
+
+
+def test_names_collections_only_from_search(text_response, tool_calls, test):
+    """Tag-gated (``names-collections-only-from-search``), issue #4011: a reply names a
+    FamilySearch collection only when a ``collections_search`` result in the session
+    returned it. The Kenya alpha session listed "Kenya, Civil Registration, deaths
+    1904–1967" as searchable from memory; FamilySearch has no Kenya collections.
+
+    Precision over recall: a title with no record word, no year range or no comma is not
+    seen, and a non-FamilySearch repository is excluded by its first field. Proven both
+    ways in ``tests/unit/test_research_collections_from_search_validator.py``.
+    """
+    if "names-collections-only-from-search" not in test.get("tags", []):
+        pytest.skip("not a names-collections-only-from-search test")
+    returned = [_normalised_title(t) for t in _returned_collection_titles(tool_calls)]
+    unreturned = [
+        candidate
+        for candidate in _collection_title_candidates(text_response or "")
+        if not _marked_unconfirmed(text_response or "", candidate)
+        and not any(
+            _normalised_title(candidate).endswith(title) or title.endswith(_normalised_title(candidate))
+            for title in returned
+        )
+    ]
+    assert not unreturned, (
+        f"the reply names FamilySearch collection title(s) no collections_search result "
+        f"returned: {unreturned}. Returned titles: {returned or 'none'}. Name a collection "
+        "only from a collections_search result, or say it is unconfirmed."
+    )
+
+
+_ITALIC_SPAN = re.compile(r"(?<![*\w])([*_])(?!\1)([^*_\n]+?)(?<![*_\s])\1(?![*\w])")
+
+
+def _italic_titles(reply: str) -> list[str]:
+    """Italic runs shaped like a work's title: four or more words, three of them
+    capitalised. Bold, and short emphasis such as *unconfirmed* or *not*, are not seen."""
+    titles = []
+    for match in _ITALIC_SPAN.finditer(_MD_LINK.sub(r"\1", reply)):
+        words = match.group(2).split()
+        if len(words) >= 4 and sum(w[:1].isupper() for w in words) >= 3:
+            titles.append(match.group(2).strip())
+    return titles
+
+
+def _strings(value) -> list[str]:
+    """Every string leaf of a tool response, unescaped, so a title that wraps a line or
+    holds a quote in the result still matches. A string response holding JSON is parsed."""
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except ValueError:
+            return [value]
+        return [parsed] if isinstance(parsed, str) else _strings(parsed)
+    if isinstance(value, dict):
+        return [s for v in value.values() for s in _strings(v)]
+    if isinstance(value, list):
+        return [s for v in value for s in _strings(v)]
+    return [] if value is None else [str(value)]
+
+
+def _tool_result_text(tool_calls) -> str:
+    return _normalised_title(" ".join(s for call in tool_calls or [] for s in _strings(call.get("response"))))
+
+
+def test_names_works_only_from_tool_results(text_response, tool_calls, test):
+    """Tag-gated (``names-collections-only-from-search``), issue #4011 as widened by the
+    lead on 2026-11-02 from issue #4125: a reply names a book, register or other cited
+    work only when a tool result in the session contains it. The #4125 reply named
+    Ayling's 1895 *Revised Register…* for the wrong war, and no tool had returned it.
+
+    Sees only titles set in italics, the way a reply cites a work. A title in plain
+    text or quotes, or a footnote naming a work without italics, passes: that half is
+    measured by the hosted replays, not here. Proven both ways in
+    ``tests/unit/test_research_collections_from_search_validator.py``.
+    """
+    if "names-collections-only-from-search" not in test.get("tags", []):
+        pytest.skip("not a names-collections-only-from-search test")
+    returned = _tool_result_text(tool_calls)
+    unreturned = [
+        t
+        for t in _italic_titles(text_response or "")
+        if _normalised_title(t) not in returned and not _marked_unconfirmed(text_response or "", t)
+    ]
+    assert not unreturned, (
+        f"the reply names work(s) no tool result in the session contains: {unreturned}. "
+        "Name a source, collection, book or citation only if a tool result returned it, "
+        "or say it is unconfirmed."
+    )

@@ -31,6 +31,12 @@ Settings are read from the environment at call time, so a test can set them per 
   FAMILYSEARCH_CONFIG        path to the engine's familysearch.json
   DEV_LOGIN                  true to offer dev-login (compose sets it; U11's packaging
                              guard keeps every DEV_ variable out of the templates)
+  GENEALOGY_CHAT             unset or true: the chat (turns queue, grant refresher and every
+                             /api/sessions route); false: none of the three. Anything else
+                             refuses to start
+  GENEALOGY_MAX_USERS        a positive integer: sign-in admits by user cap and ignores
+                             ALLOWED_EMAILS; unset: the allowlist. Anything else refuses to
+                             start
 """
 
 from __future__ import annotations
@@ -163,6 +169,42 @@ def allowed_emails() -> set[str]:
     return {e.lower() for e in re.split(r"[,\s]+", _env("ALLOWED_EMAILS")) if e}
 
 
+def chat_enabled() -> bool:
+    """``GENEALOGY_CHAT``: on when unset, empty or ``true``, off when ``false`` (any case).
+    Any other value raises, so a typo never silently turns the chat off or on."""
+    raw = _env("GENEALOGY_CHAT").lower()
+    if raw in ("", "true"):
+        return True
+    if raw == "false":
+        return False
+    raise RuntimeError(f"GENEALOGY_CHAT is {_env('GENEALOGY_CHAT')!r}: set it to true or false, or leave it unset")
+
+
+def uploads_setting() -> bool | None:
+    """``UPLOADS_ENABLED`` (#3987): None when unset or empty, else ``true``/``false`` in any
+    case. Any other value raises: the tools tier's rule (``envSwitch``,
+    ``hosted-config-env.ts``), so the two tiers cannot read one setting two ways."""
+    raw = _env("UPLOADS_ENABLED").lower()
+    if raw == "":
+        return None
+    if raw in ("true", "false"):
+        return raw == "true"
+    raise RuntimeError(f"UPLOADS_ENABLED is {_env('UPLOADS_ENABLED')!r}: set it to true or false, or leave it unset")
+
+
+def max_users() -> int | None:
+    """``GENEALOGY_MAX_USERS``: the user cap, or None (unset or empty) for the allowlist.
+    Raises unless it is a positive integer, so a typo never falls back to the allowlist."""
+    raw = _env("GENEALOGY_MAX_USERS")
+    if not raw:
+        return None
+    # ASCII digits only: int() would also take "1_000", "+5" and non-ASCII digits.
+    value = int(raw) if re.fullmatch(r"[0-9]+", raw) else 0
+    if value < 1:
+        raise RuntimeError(f"GENEALOGY_MAX_USERS is {raw!r}: set it to a positive integer, or leave it unset")
+    return value
+
+
 def familysearch_enabled() -> bool:
     return _env("FAMILYSEARCH_WEB_ENABLED").lower() in {"1", "true", "yes", "on"}
 
@@ -221,8 +263,12 @@ def preflight() -> None:
       empty SESSION_SECRET forges every session and the OAuth state; a default or empty
       FS_TOKEN_ENC_KEY encrypts every grant under a public string. Only http with
       FamilySearch off (compose's dev-login tier) may start on the defaults.
+    - ``GENEALOGY_CHAT`` other than true/false, or ``GENEALOGY_MAX_USERS`` other than a
+      positive integer, at any scheme.
     """
     base_path()
+    chat_enabled()
+    max_users()
     fs_on = familysearch_enabled()
     if fs_on:
         client_id()

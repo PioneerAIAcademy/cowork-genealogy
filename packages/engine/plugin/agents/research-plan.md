@@ -16,6 +16,7 @@ description: >-
   a search comes back empty, to judge whether research is done ("are we done",
   "what's the next step" → research-exhaustiveness).
 model: claude-sonnet-4-6
+effort: high
 tools:
   - Read
   - mcp__genealogy__collections_search
@@ -546,7 +547,7 @@ table and contextual factors checklist.
 
 ### 4. Sequence the plan items
 
-**On an identity or parentage question whose person has an `ark` in `tree.gedcomx.json`, make the first item a review of that person's pending FamilySearch hints.** Emit one plan item at `sequence: 1` with `record_type: "fs_hints"`, `repository: "FamilySearch"`, and the `rationale` "Review pending FamilySearch hints on <PID> before searching — an attached hint may already answer the question.", where <PID> is the id at the end of that `ark` (e.g. `ZZKR-TH2`). Emit none when the person has no `ark`, and none on any other question.
+**On an identity, parentage, birth, death or marriage question whose person has an `ark` in `tree.gedcomx.json`, make the first item a review of that person's pending FamilySearch hints.** A birth question asks a birth, baptism or christening date or place; a death question a death or burial date or place; a marriage question when or where the person married. Emit one plan item at `sequence: 1` with `record_type: "fs_hints"`, `repository: "FamilySearch"`, and the `rationale` "Review pending FamilySearch hints on <PID> before searching — an attached hint may already answer the question.", where <PID> is the id at the end of that `ark` (e.g. `ZZKR-TH2`). Emit none when the person has no `ark`, none on a question asking who the spouse was, none on an enumerative question (children, siblings), and none on any other question.
 
 Order items for efficient discovery (BCG Standard 15):
 

@@ -29,8 +29,9 @@ describe("project_list", () => {
     expect(result).toEqual({
       mode: "folder",
       message:
-        "The task's working folder is the project: pass its absolute path as projectPath, " +
-        "and read what it holds with project_context.",
+        "The task's working folder is the project: pass its absolute path as projectPath. " +
+        "This answer does not say whether the folder holds a project yet: call project_context " +
+        "with that path before routing, and route on what it returns.",
     });
   });
 
