@@ -1298,7 +1298,8 @@ on the delegation tools, and one on the tools only agents hold, which the final
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
    `proof_summaries` to `proof-conclusion`, `person_evidence` and
-   `rejected_links` to `person-evidence`, `namesakes` to `search-records`,
+   `rejected_links` to `person-evidence`, `namesakes` to `search-records` (with
+   `search-images` and `search-full-text` as its co-writers, `SECTION_CO_WRITERS`),
    `evaluations` to `gps-mentor`, and `hit_verdicts` to
    `evaluate-search-results`, `OWNED_DECLARATIONS` reserves
    `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
