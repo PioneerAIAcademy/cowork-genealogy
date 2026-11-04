@@ -2548,17 +2548,18 @@ async def _run_agent(
             arguments.
 
             The caps bound the RUN, and the host is where a step run can stop
-            between steps: no reply once a cap has fired. `total_cost_usd` is
-            already the session's running total, so the cost cap is caught per
-            result; `num_turns` is per turn, so the turn cap is checked here on the
-            run's sum.
+            between steps: no reply once a cap has fired. `num_turns` is per turn,
+            so the turn cap is checked here on the run's sum. `cost_cap` is the
+            exception: it stays a reporting threshold (spec, "`cost_cap` was a
+            post-hoc label"), so the host keeps replying past it, and the turn cap
+            still fires and outranks it, as the tool cap does.
             """
             nonlocal aborted_reason, error
             run_turns = accumulate_usage(_step_turns[: turn.index + 1]).get("num_turns") or 0
-            if aborted_reason is None and run_turns > fixture.caps.max_turns:
+            if aborted_reason in (None, "cost_cap") and run_turns > fixture.caps.max_turns:
                 aborted_reason = "max_turns"
                 error = f"{run_turns} SDK turns across the run > cap {fixture.caps.max_turns}"
-            if aborted_reason is not None:
+            if aborted_reason not in (None, "cost_cap"):
                 _emit(f"[host reply] none after turn {turn.index}: {aborted_reason}")
                 return None
             previous = next(

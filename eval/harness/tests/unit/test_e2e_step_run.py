@@ -155,14 +155,31 @@ def _results(monkeypatch, **fields):
     monkeypatch.setattr(sys.modules[__name__], "_result", _r)
 
 
-def test_the_host_stops_replying_once_the_cost_cap_fires(tmp_path, monkeypatch):
-    """Open-break on PR B. `cost_cap` used to be a label only, because a one-shot
-    query could not be stopped. A step run can: the host just does not reply. The
-    run used to record `cost_cap` and send "Keep going." anyway."""
+def test_the_cost_cap_is_reported_and_does_not_stop_a_step_run(tmp_path, monkeypatch):
+    """`max_cost_usd` is a reporting threshold (lead, #757; e2e-test-spec.md, the
+    `cost_cap` note). A step run COULD stop at a boundary, but stopping would end
+    the over-budget runs that pass today (hannah-earnest-children, 4 of 4) before
+    proof-conclusion, so the run is labelled `cost_cap` and the host keeps replying."""
     _results(monkeypatch, total_cost_usd=999.0)
-    client = _drive(tmp_path, monkeypatch, [("research-plan", OFFER)] * 3, step_mode="job")
-    assert client.sent == ["/research --autonomous Who were John's parents?"], client.sent
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
+        step_mode="job",
+    )
+    assert len(client.sent) == 3, client.sent
     assert client.result[3] == "cost_cap", client.result[3:5]
+
+
+def test_the_turn_cap_still_stops_a_run_already_over_its_cost_cap(tmp_path, monkeypatch):
+    """A `cost_cap` label set on an early turn must not switch the turn cap off."""
+    _results(monkeypatch, total_cost_usd=999.0, num_turns=200)
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
+        step_mode="job",
+    )
+    assert len(client.sent) == 2, client.sent
+    assert client.result[3] == "max_turns", client.result[3:5]
 
 
 def test_the_turn_cap_bounds_the_whole_run_not_one_step(tmp_path, monkeypatch):

@@ -743,7 +743,7 @@ the `max_cost_usd` note in §6 step 5.
    | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls`. The run ends at the first SDK message after the crossing call, and the label outranks a `cost_cap` the final message would set. |
    | Turn cap | `max_turns` | SDK turn count > `caps.max_turns`. On a step run `num_turns` arrives per turn, so the host sums it across the run and sends no further reply once the sum crosses the cap |
-   | Cost cap | `cost_cap` | Cost (the session's running total) > `caps.max_cost_usd`. **On a step run the host sends no further reply, so the run ends at that step's boundary;** the step in flight still finishes. See note below. |
+   | Cost cap | `cost_cap` | Cost (the session's running total) > `caps.max_cost_usd`. **Label only — this does not stop a run, a step run included: the host keeps replying past it.** A later turn or tool cap still stops the run and replaces the label. See note below. |
    | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"`: the host sent no reply to the last turn (`next_auto_reply` — no "Continue with …?" line, a finished wrap-up turn, a repeated step, or its reply cap). Runs made before step mode phase 2 reached it after the continue-nudge budget was exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
@@ -837,9 +837,12 @@ the `max_cost_usd` note in §6 step 5.
    SDK loop. **Nothing checks the live behaviour** — no CI job sleeps a Windows
    machine; the guarantee rests on the injected-clock unit tests alone.
 
-   **`cost_cap` was a post-hoc label, not an enforced cap, before step mode phase 2.**
-   A step run now stops at the first step boundary after the cap fires, because the
-   host does not reply; what follows explains why it cannot stop earlier. The check reads
+   **`cost_cap` is a post-hoc label, not an enforced cap.** A step run could stop at
+   the first step boundary after the cap fires, by not replying, and deliberately
+   does not: that would reverse the decision at the end of this note, and would have
+   cut short runs that pass today — 19 of the 232 committed runs went past $15
+   (2026-11-04), among them all four `hannah-earnest-children` runs over it, each a
+   pass. Reopening it is the lead's call. The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
    the message that arrives once the run (now: the step) has *already finished*
    and the money is already spent. All **eleven** `cost_cap` runs in the corpus ended with the
