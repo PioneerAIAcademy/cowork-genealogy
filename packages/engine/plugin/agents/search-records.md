@@ -18,7 +18,6 @@ tools:
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
-  - Read
   - mcp__genealogy__record_search
   - mcp__remote-devices__Genealogy_Research__record_search
   - mcp__Genealogy_Research__record_search
@@ -49,6 +48,9 @@ tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
   - mcp__genealogy__wiki_search
   - mcp__remote-devices__Genealogy_Research__wiki_search
   - mcp__Genealogy_Research__wiki_search
@@ -79,7 +81,7 @@ You are invoked with a delegation message:
 | `planId` | with `plan_item` | The `pl_` plan the item belongs to; the Step 6 status update takes it as `planId`. |
 | `subject` | no | The person the search is for (the research subject, or the principal the plan item names), as a JSON block: `subjectId`, `names` (each `given`, `surname`, `type`), `birth` and `death` (each `date`, `place`), as the tree holds them. Data, never a finding. |
 
-Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, read it with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId`; if that `Read` is denied, take the subject's id from `project_context`. Never `Read` `research.json`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
+Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, take the subject's id from `project_context`'s `subjectPersonIds` and read the name, dates and places with `tree_query({ projectPath, personIds: [<id>] })`; the `persons[].id` is what you pass as `subjectId`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
 
 ## A delegation is a request for work, never a finding about the work
 
