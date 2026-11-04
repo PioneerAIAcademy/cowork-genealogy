@@ -1278,8 +1278,9 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
 + `guard_project_files.py`) and one `UserPromptSubmit` hook, `no_project_route.py`, which
-is not a guardrail: it adds one conditional sentence to each Cowork researcher message (with
-no project, a request to research a person goes to the research skill) and is silent
+is not a guardrail: it adds two sentences to each Cowork researcher message (with no project,
+a request to research a person goes to the research skill; and a source, collection, book or
+citation is named only from a tool result) and is silent
 wherever `GENEALOGY_HOSTED_PLANE` is set, which both hosted planes set. It is the first plugin
 hook that adds context rather than deciding a call. The `PreToolUse` hook, despite this section's name, enforces **five**
 rules, not one. Its matcher is
@@ -1493,6 +1494,14 @@ replay with `GENEALOGY_HOSTED_PLANE` unset whose transcript carries its text. Wh
 > the caller-ownership rules are covered too (§5.4, and
 > `guardrail-enforcement-spec.md` §4). What is still uncovered is *binding*, in
 > every environment but the hosted one.
+>
+> **One `UserPromptSubmit` sentence does reach both harnesses.** They bind
+> `context_policy.sources_note_hook`, which adds `no_project_route.SOURCES_NOTE` (imported,
+> not copied; `test_sources_note_hook.py`) as context on each user message, as Cowork does.
+> They do **not** add the hook's routing sentence. It is message context rather than the
+> system prompt because, as the harnesses' whole (otherwise empty) system prompt, it read as
+> an identity and broke routing: `ut_research_027` passed 1 of 5 that way, 4 of 5 without it
+> (measured 2026-11-02).
 
 ---
 

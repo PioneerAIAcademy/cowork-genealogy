@@ -1,0 +1,22 @@
+{
+  "tool": "person_read",
+  "description": "SYNTHETIC FamilySearch tree person for the Kenya collections test (issue #4011): a deceased man in Kenya, 1888–1960, no relatives and no sources. Not the alpha tester's real person (GMNP-3X1), whose tree lists living relatives. Shape follows person-read-tool-spec.md's Output section, with both standardized sidecars on every fact and the person's ark.",
+  "args": { "personId": "GKNY-W88" },
+  "response": {
+    "persons": [
+      {
+        "id": "GKNY-W88",
+        "ark": "ark:/61903/4:1:GKNY-W88",
+        "gender": "Male",
+        "living": false,
+        "names": [{ "preferred": true, "given": "Wadhala", "surname": "Wadhala" }],
+        "facts": [
+          { "type": "Birth", "date": "1888", "standard_date": "1888", "place": "Kisumu, Kenya", "standard_place": "Kisumu, Kenya" },
+          { "type": "Death", "date": "1960", "standard_date": "1960", "place": "Kisumu, Kenya", "standard_place": "Kisumu, Kenya" }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": []
+  }
+}
