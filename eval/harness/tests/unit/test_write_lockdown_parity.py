@@ -250,6 +250,12 @@ VECTORS: list[tuple[str, dict | None, str | None]] = [
     ("Write", {"file_path": "/project/research.json.bak"}, None),
     ("Write", {"file_path": "/project/Research.JSON.bak"}, None),
     ("Write", {"file_path": "/project/research.jsonx"}, None),
+    # One-line file content on the device bridge is not a stream suffix.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": "notes.md", "content": "research.json: project state"}]},
+        None,
+    ),
     ("Write", {"file_path": "/project/my-research.json"}, None),
     ("Write", {"file_path": "/project/notes/tree.gedcomx.json.tmp"}, None),
     # --- degenerate input: must return None, never raise ---

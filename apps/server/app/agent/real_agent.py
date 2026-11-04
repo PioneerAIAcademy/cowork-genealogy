@@ -334,9 +334,15 @@ def _protected_name(path: str) -> str | None:
     suffix (`research.json::$DATA`) and trailing dots and spaces
     (`research.json.`) are dropped, since Windows ignores both. An 8.3 short
     name (`RESEAR~1.JSO`) is not matched: it cannot be told from a real file
-    by name alone.
+    by name alone. A suffix after `:` is a stream only when it holds no
+    whitespace, so one-line file content such as `research.json: notes` on the
+    device bridge is not read as a path.
     """
-    name = _basename(path).split(":", 1)[0].rstrip(". ").casefold()
+    name = _basename(path)
+    head, colon, stream = name.partition(":")
+    if colon and not any(c.isspace() for c in stream):
+        name = head
+    name = name.rstrip(". ").casefold()
     return name if name in PROTECTED_PROJECT_FILES else None
 
 
