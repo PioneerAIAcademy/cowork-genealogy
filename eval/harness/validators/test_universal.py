@@ -488,21 +488,26 @@ def _modified_sections(before: dict, after: dict, sections: list[str]) -> list[s
     return modified
 
 
-def _only_project_updated_changed(before: dict, after: dict) -> bool:
-    """True if `project` differs only in the `updated` audit timestamp.
+# `project` fields any skill may change: `updated`, the per-session activity
+# ping, and `objective`, which the main thread rewrites when the user asks
+# (issue #3975). A subagent's objective write is the plugin hook's to deny, and
+# this plane sees that verdict through test_no_out_of_lane_section_writes.
+_OPEN_PROJECT_FIELDS = frozenset({"updated", "objective"})
 
-    `project.updated` is a per-session activity ping: any skill that
-    successfully modifies research.json may refresh it. Substantive
-    project fields (id, objective, subject_person_ids, status, created)
+
+def _only_open_project_fields_changed(before: dict, after: dict) -> bool:
+    """True if `project` differs only in `_OPEN_PROJECT_FIELDS`.
+
+    The other project fields (id, title, subject_person_ids, status, created)
     remain restricted to the `project` row's declared writers.
     """
     bp = before.get("project")
     ap = after.get("project")
     if not isinstance(bp, dict) or not isinstance(ap, dict):
         return False
-    bp_copy = {k: v for k, v in bp.items() if k != "updated"}
-    ap_copy = {k: v for k, v in ap.items() if k != "updated"}
-    return bp_copy == ap_copy and bp.get("updated") != ap.get("updated")
+    bp_copy = {k: v for k, v in bp.items() if k not in _OPEN_PROJECT_FIELDS}
+    ap_copy = {k: v for k, v in ap.items() if k not in _OPEN_PROJECT_FIELDS}
+    return bp_copy == ap_copy and bp != ap
 
 
 
@@ -905,10 +910,10 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     unauthorized = []
     for section in modified:
         if skill_name not in owners[section]:
-            # `project.updated` is an activity ping any skill may touch.
-            # If the only delta inside `project` is that timestamp, don't
-            # flag it as an ownership violation.
-            if section == "project" and _only_project_updated_changed(before, after):
+            # `project.updated` and `project.objective` are open to any
+            # skill (`_OPEN_PROJECT_FIELDS`). If the only delta inside
+            # `project` is in those, don't flag it as an ownership violation.
+            if section == "project" and _only_open_project_fields_changed(before, after):
                 continue
             # Authorized by tool identity: a declared writer tool ran and the
             # whole delta is that tool's write. Anything the substitution does
@@ -1973,13 +1978,14 @@ def test_no_raw_writes_to_protected_files(blocked_protected_writes):
 def test_no_out_of_lane_section_writes(blocked_owned_section_writes):
     """No `research_append` op reached a section its caller does not own.
 
-    Six rules, all from the SHIPPED hook: `routed` — a section reserved to an
+    Seven rules, all from the SHIPPED hook: `routed` — a section reserved to an
     owning agent, reached by someone else; `out_of_lane` — a known agent reaching
     outside the sections its own skill is a declared caller for; `declaration` —
     a routed claim, field-scoped and keyed on the value; `owned_field` — a routed
     field keyed on presence alone (`project.status`); `claim` — a conflict's
     analytical product; `owned_append` — a `questions` append from anyone but
-    question-selection. This check is rule-agnostic
+    question-selection; `main_thread_field` — `project.objective` written by any
+    subagent. This check is rule-agnostic
     and reports whatever `rule` the predicate returns, so a new arm needs no edit
     here.
 

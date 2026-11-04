@@ -345,3 +345,36 @@ def test_a_person_timeline_without_the_call_still_fails():
     after = research([SURVIVOR], timelines=[HYPOTHESIS, PERSON])
     with pytest.raises(AssertionError):
         check_research(before, after, RESEARCH_SKILL, POSITIVE, tool_calls=[])
+
+
+# ── `project.objective` is open to any skill (issue #3975) ─────────────────
+#
+# Not tool identity, but the same check: the main thread rewrites the objective
+# when the user asks, and `research` is a declared caller of no `project` field.
+# A subagent's objective write is the plugin hook's to deny, not this check's.
+
+RESEARCH = {"name": "research"}
+
+
+def _with_project(state, **fields):
+    state["research_json"]["project"].update(fields)
+    return state
+
+
+def test_an_objective_rewrite_by_a_non_owner_passes():
+    before = research([SURVIVOR])
+    after = _with_project(
+        research([SURVIVOR]), objective="Who were his parents?", updated="2026-11-03"
+    )
+    check_research(before, after, RESEARCH, POSITIVE, tool_calls=[])
+
+
+def test_a_title_rewrite_by_a_non_owner_still_fails():
+    """The other direction: only `objective` and `updated` were opened."""
+    before = _with_project(research([SURVIVOR]), title="Old")
+    after = _with_project(
+        research([SURVIVOR]), title="New", objective="Who were his parents?"
+    )
+    with pytest.raises(AssertionError) as e:
+        check_research(before, after, RESEARCH, POSITIVE, tool_calls=[])
+    assert "project" in str(e.value)

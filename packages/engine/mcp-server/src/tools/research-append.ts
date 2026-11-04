@@ -80,7 +80,7 @@ import { haversineDistance } from "./distance.js";
 import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
-import { arkToBareId } from "../utils/ark.js";
+import { arkToBareId, toArk } from "../utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
@@ -148,13 +148,11 @@ interface SectionConfig {
     stampTimestamp?: { field: string; kind: "date" | "datetime" };
     /** Fields that may be SET once and never rewritten — legal while the
      *  current value is absent or empty, refused after. `init-project` fills
-     *  these at creation; nothing else may change them afterwards.
-     *
-     *  **What this constrains is the system, not the researcher.** A human who
-     *  mistyped their objective edits `research.json` directly; the raw-write
-     *  lockdown binds the agent, never a text editor, and preventing a person
-     *  from editing their own files is explicitly not a goal of this layer. So
-     *  this needs no override path — the override is the file itself. */
+     *  these at creation; nothing changes them afterwards, so they are fixed
+     *  for the life of the project. A field a researcher needs to correct does
+     *  not belong here: on the website they have no file access, so a refusal
+     *  that pointed at editing `research.json` named a route that does not
+     *  exist. That is why `objective` left this list (issue #3975). */
     initOnlyFields?: string[];
     /** Create the object when the document has no such section yet, rather than
      *  refusing. Only for sections a project may legitimately lack. */
@@ -215,12 +213,14 @@ const SECTIONS: Record<string, SectionConfig> = {
     prefix: "",
     singleton: {
       // `status` is freely updatable — proof-conclusion flips it to "completed".
-      // The other three are set ONCE, by whoever creates the project, and never
-      // rewritten: the ownership declaration's own statement of the harm is "a
-      // skill rewrites the objective, and every later skill plans against a
-      // changed goal it never agreed to."
+      // `objective` is rewritable so a researcher can correct it; the plugin
+      // hook keeps that write on the main thread (MAIN_THREAD_FIELDS), because
+      // the harm the ownership row names is "a skill rewrites the objective,
+      // and every later skill plans against a changed goal it never agreed
+      // to" (lead ruling 2026-10-29, issue #3975). `title` and
+      // `subject_person_ids` are set ONCE, at creation, and never rewritten.
       allowedFields: ["status", "objective", "title", "subject_person_ids"],
-      initOnlyFields: ["objective", "title", "subject_person_ids"],
+      initOnlyFields: ["title", "subject_person_ids"],
       stampTimestamp: { field: "updated", kind: "date" },
     },
   },
@@ -2865,6 +2865,38 @@ function capSource(a: any): unknown {
   return typeof a?.source_id === "string" && a.source_id !== "" ? a.source_id : (a?.record_id ?? null);
 }
 
+/** The document a link is judged on for tie (a): its source, split by
+ *  `record_document_id` when every assertion of that source carries one (a
+ *  source can hold two documents, #2537). A source with any assertion that
+ *  names no document keys as `capSource`, as before the field existed. */
+function capDocumentKeyer(assertions: Iterable<any>): (a: any) => unknown {
+  const unsplit = new Set<unknown>();
+  for (const a of assertions) {
+    const doc = a?.record_document_id;
+    if (typeof doc !== "string" || doc === "") unsplit.add(capSource(a));
+  }
+  return (a) => {
+    const s = capSource(a);
+    return unsplit.has(s) || typeof s !== "string" ? s : `${s}\u0000${a.record_document_id}`;
+  };
+}
+
+/** The 1:2 record ARK of the document a staged result came from: record_search's
+ *  `recordArk`, else the record's own `Record` source (record_read stages no
+ *  `recordArk`). Null when neither is a 1:2 ARK. */
+export function recordDocumentArk(result: any): string | null {
+  const is12 = (v: unknown): v is string => typeof v === "string" && /^ark:\/61903\/1:2:/.test(toArk(v));
+  if (is12(result?.recordArk)) return toArk(result.recordArk);
+  const sources = Array.isArray(result?.gedcomx?.sources) ? result.gedcomx.sources : [];
+  const own = sources.find((x: any) => x?.resource_type === "Record" && is12(x?.url));
+  return own ? toArk(own.url) : null;
+}
+
+/** `document`'s record document id, when `capDocumentKeyer` split its source. */
+function splitDocumentOf(document: unknown): string | null {
+  return typeof document === "string" && document.includes("\u0000") ? document.split("\u0000")[1] : null;
+}
+
 /** The sources a call's person_evidence appends link from, each with the op
  *  indices under it. Keyed by `capSource`, so a document that keeps each party
  *  on its own record id is one source; a record id is compared bare and shown
@@ -3531,17 +3563,25 @@ export function namesakeVerdicts(
   if (rows.length === 0 && pairs.length === 0 && !opts.tiesOnly) return null;
 
   const assertionById = new Map<string, any>();
-  const bySource = new Map<unknown, any[]>();
   for (const a of (Array.isArray(research?.assertions) ? research.assertions : []) as any[]) {
-    if (!isLiveAssertion(a) || typeof a.id !== "string") continue;
-    assertionById.set(a.id, a);
-    const s = capSource(a);
-    const list = bySource.get(s);
+    if (isLiveAssertion(a) && typeof a.id === "string") assertionById.set(a.id, a);
+  }
+  // Tie (a) reads a link's document; tie (b)'s same-source skip and the
+  // co-resident exclusion read its whole source, so a split adds no voucher.
+  const capDocument = capDocumentKeyer(assertionById.values());
+  const bySource = new Map<unknown, any[]>();
+  const bySourceId = new Map<unknown, any[]>();
+  const push = (m: Map<unknown, any[]>, k: unknown, a: any) => {
+    const list = m.get(k);
     if (list) list.push(a);
-    else bySource.set(s, [a]);
+    else m.set(k, [a]);
+  };
+  for (const a of assertionById.values()) {
+    push(bySource, capDocument(a), a);
+    push(bySourceId, capSource(a), a);
   }
   const capParty = capPartyKeyer(assertionById.values());
-  const capKeys: PartyKeys = { recordOf: capSource, partyOf: capParty, twoParty: (a) => isTwoParty(a?.fact_type) };
+  const capKeys: PartyKeys = { recordOf: capDocument, partyOf: capParty, twoParty: (a) => isTwoParty(a?.fact_type) };
   const absent = (a: any) => recordBasisOf(a) === "absent";
   const live = (Array.isArray(research?.person_evidence) ? research.person_evidence : []).filter(
     (e: any) => e && !e.superseded_by && typeof e.assertion_id === "string" && typeof e.person_id === "string",
@@ -3574,11 +3614,11 @@ export function namesakeVerdicts(
       if (key) partyName.set(party, { key, shown: String(x.value) });
     }
   }
-  /** The name of another party of `source` that `party` shares, or null. */
-  const sameNamed = (source: unknown, party: string): string | null => {
+  /** The name of another party of source `sourceId` that `party` shares, or null. */
+  const sameNamed = (sourceId: unknown, party: string): string | null => {
     const own = partyName.get(party);
     if (!own) return null;
-    for (const b of bySource.get(source) ?? []) {
+    for (const b of bySourceId.get(sourceId) ?? []) {
       const other = partyName.get(capParty(b));
       if (capParty(b) !== party && other?.key === own.key) return other.shown;
     }
@@ -3657,7 +3697,9 @@ export function namesakeVerdicts(
 
   interface Pending {
     e: any;
+    /** The link's document (`capDocument`); `sourceId` is its source. */
     source: unknown;
+    sourceId: unknown;
     tieA: NamesakeTie[];
     reasons: string[];
     fields: Array<{ field: CapField; value: string; vouchers: string[]; excluded: string[]; sameCall: boolean; sameNamed: string | null }>;
@@ -3675,7 +3717,7 @@ export function namesakeVerdicts(
     const queue = judged.filter((e) => needed!.has(String(e.id)));
     for (let e = queue.pop(); e; e = queue.pop()) {
       const keys = new Set(
-        (bySource.get(capSource(assertionById.get(e.assertion_id))) ?? []).flatMap((b: any) => [...fieldKeys(b)]),
+        (bySource.get(capDocument(assertionById.get(e.assertion_id))) ?? []).flatMap((b: any) => [...fieldKeys(b)]),
       );
       if (keys.size === 0) continue;
       for (const m of judged) {
@@ -3689,7 +3731,8 @@ export function namesakeVerdicts(
   for (const e of judged) {
     if (needed && !needed.has(String(e.id))) continue;
     const a = assertionById.get(e.assertion_id);
-    const source = capSource(a);
+    const source = capDocument(a);
+    const sourceId = capSource(a);
     // The record parties this link speaks for: its own, unless its assertion
     // names a second person and nothing else of that party is linked to this
     // person; then the parties of this source whose own assertions are.
@@ -3699,7 +3742,7 @@ export function namesakeVerdicts(
       for (const l of liveLinks) {
         if (l.person_id !== personId) continue;
         const x = assertionById.get(l.assertion_id);
-        if (x && !isTwoParty(x.fact_type) && capSource(x) === source) speakers.add(capParty(x));
+        if (x && !isTwoParty(x.fact_type) && capDocument(x) === source) speakers.add(capParty(x));
       }
     }
     const speaking = speakers.size > 0 ? speakers : new Set([capParty(a)]);
@@ -3712,7 +3755,7 @@ export function namesakeVerdicts(
     for (const l of live) {
       if (l.person_id === personId) continue;
       const al = assertionById.get(l.assertion_id);
-      if (!al || absent(al) || capSource(al) !== source || speakers.has(capParty(al))) continue;
+      if (!al || absent(al) || capDocument(al) !== source || speakers.has(capParty(al))) continue;
       const rel = relatives.get(l.person_id);
       const who = `'${l.id}' links another party ('${al.record_role ?? "unknown role"}') to '${l.person_id}'`;
       if (!isStrongConfidence(l.confidence)) {
@@ -3722,7 +3765,7 @@ export function namesakeVerdicts(
       strongCoParty = true;
       if (!rel) {
         reasons.push(`${who}, who is not a spouse, parent or child of '${personId}' in the tree.`);
-      } else if (mintedFromThisSource(l.person_id, String(source), research, tree, opts.startingPersonIds)) {
+      } else if (mintedFromThisSource(l.person_id, String(sourceId), research, tree, opts.startingPersonIds)) {
         reasons.push(`${who}, '${personId}''s ${rel.relation}, but '${l.person_id}' was created from this source alone.`);
       } else {
         const named = givenNameProblem(rel.person, tree);
@@ -3739,7 +3782,13 @@ export function namesakeVerdicts(
       }
     }
     if (!strongCoParty) {
-      reasons.unshift("No other party of this source is linked at 'probable' or better to anyone else in the tree.");
+      const doc = splitDocumentOf(source);
+      reasons.unshift(
+        doc === null
+          ? "No other party of this source is linked at 'probable' or better to anyone else in the tree."
+          : `No other party of document '${doc}' of source '${String(sourceId)}' is linked at 'probable' or better ` +
+              "to anyone else in the tree; a party of another document of the source does not tie this one.",
+      );
     }
 
     // Tie (b) candidates: a party the link speaks for has an occupation or
@@ -3753,7 +3802,7 @@ export function namesakeVerdicts(
     }
     const fields: Pending["fields"] = [];
     for (const [key, k] of keys) {
-      const here = sameNamed(source, k.party);
+      const here = sameNamed(sourceId, k.party);
       const vouchers: string[] = [];
       const excluded: string[] = [];
       let shown: string | null = null;
@@ -3761,7 +3810,7 @@ export function namesakeVerdicts(
       for (const m of judged) {
         if (m.id === e.id || !linkFields.get(m.id)!.has(key)) continue;
         const am = assertionById.get(m.assertion_id);
-        if (capSource(am) === source) continue;
+        if (capSource(am) === sourceId) continue;
         if (!voucherPairs.has(pairingKey(m))) {
           sameCall = true;
           continue;
@@ -3779,7 +3828,7 @@ export function namesakeVerdicts(
     // The pair tests say nothing about a stranger, so a row holder is not judged by them.
     const pair =
       pairs.length > 0 && rows.length === 0 ? pairJudgement(personId, a, pairs, research, tree, opts.startingTree) : null;
-    pending.push({ e, source, tieA: ties, reasons, fields, blocked, pair, speaking });
+    pending.push({ e, source, sourceId, tieA: ties, reasons, fields, blocked, pair, speaking });
   }
   /** A link of a person with no row that the pair tests tie: the record fits
    *  them and rules out every partner. */
@@ -3803,7 +3852,7 @@ export function namesakeVerdicts(
         if (
           x.person_id === personId &&
           ax &&
-          capSource(ax) === j.source &&
+          capDocument(ax) === j.source &&
           (isTwoParty(ax.fact_type) || j.speaking.has(capParty(ax)))
         ) {
           carried.add(String(x.id));
@@ -3888,7 +3937,7 @@ export function namesakeVerdicts(
     verdicts.set(j.e.id, {
       allowed,
       ties,
-      source: String(j.source),
+      source: String(j.sourceId),
       reasons: allowed ? [] : reasons,
       blockedBy: allowed ? [] : [...j.blocked].sort(),
     });
@@ -8063,8 +8112,9 @@ function applyOne(
     if (alreadySet.length > 0) {
       throw new ResearchAppendError(
         `field(s) already set on '${section}' and not rewritable: ${alreadySet.join(", ")}. ` +
-          "These are written once, when the project is created, because every later step " +
-          "plans against them. To change one, edit research.json directly.",
+          "These are written once, when the project is created, and are fixed for the life " +
+          "of the project because every later step plans against them. The objective is " +
+          "not one of them: the main conversation may rewrite it when the user asks.",
       );
     }
     // Completed-gate (GPS Component 4, deterministic): refuse to mark the
@@ -8277,6 +8327,11 @@ function applyOne(
         );
       }
     }
+    if (section === "assertions" && "record_document_id" in op.fields) {
+      throw new ResearchAppendError(
+        "record_document_id is not updatable: research_append stamps it from the record's results sidecar on append",
+      );
+    }
     const existingIndex = array.findIndex((e) => e && e.id === op.entryId);
     if (existingIndex === -1) {
       throw new ResearchAppendError(`entryId '${op.entryId}' not found in '${section}'`);
@@ -8358,6 +8413,13 @@ function applyOne(
       }
     }
 
+    // A stamped document belongs to the record and log entry it was read from.
+    if (
+      section === "assertions" &&
+      (["record_id", "log_entry_id"] as const).some((k) => k in op.fields! && op.fields![k] !== existing[k])
+    ) {
+      delete existing.record_document_id;
+    }
     for (const [k, v] of Object.entries(op.fields)) {
       if (k === "id") continue;
       existing[k] = v;
@@ -10116,6 +10178,8 @@ async function prepareOps(
     if (op.section !== "assertions" || op.op !== "append") continue;
     const entry = op.entry as any;
     if (!entry || typeof entry !== "object") continue;
+    // Only the sidecar names the document (stamped below); a caller's value is dropped.
+    delete entry.record_document_id;
 
     // ── D2: persona/record-id matrix against the log entry's sidecar ──
     let matchedRecord: any = null;
@@ -10235,6 +10299,8 @@ async function prepareOps(
             if (typeof canonical === "string" && entry.record_id !== canonical) {
               entry.record_id = canonical;
             }
+            const document = personaBearing ? recordDocumentArk(matchedRecord) : null;
+            if (document !== null) entry.record_document_id = document;
             if (personaBearing) {
               const personaIds: string[] = (
                 Array.isArray(matchedRecord.gedcomx?.persons) ? matchedRecord.gedcomx.persons : []

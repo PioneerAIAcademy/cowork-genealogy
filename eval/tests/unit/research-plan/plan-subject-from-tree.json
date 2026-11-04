@@ -11,6 +11,8 @@
       "research-plan-new-plan-for-q-001",
       "new-plan-items-planned-status",
       "issue-3384",
+      "fs-hints-first",
+      "issue-3906",
       "direct-arm"
     ]
   },
@@ -38,6 +40,7 @@
     "person-read-empty-any"
   ],
   "judge_context": [
+    "The plan's first item, a record_type fs_hints review of the subject's pending FamilySearch hints, is required here and is checked by the deterministic validator test_research_plan_hints_review_first. It is not a defect; do not count it against Record type selection, Completeness or sequencing.",
     "GENERAL RULE UNDER TEST: Bridget Kerrigan (I1) is the project's subject, and the project tree was built from her full FamilySearch read when the project was created. The plan is written from what the project tree records for her: born 1871 in Pottsville, Schuylkill County, Pennsylvania, daughter of Thomas Kerrigan (I2) and Ellen Burke (I3). Re-reading her FamilySearch profile is the defect, and it is checked by a deterministic validator; do not re-derive it.",
     "The plan should target a baptism near her 1871 Pottsville birth, using what the tree gives: the parents' names (Thomas Kerrigan, born 1842 in Pottsville, and Ellen Burke, born in Ireland) and the place point toward Pottsville parish registers, with civil or later records naming her parents as corroboration. A plan that never uses her birth year, place or parents fails Completeness.",
     "Do not penalize the plan for not citing attached sources: the project tree records none for her, and that is what FamilySearch holds too."
