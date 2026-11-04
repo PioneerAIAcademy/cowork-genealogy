@@ -1005,7 +1005,7 @@ _DELEGATES_VERBATIM_TAG = "delegates-verbatim"
 
 
 def _quote_and_space_normal(text: str) -> str:
-    text = text.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    text = text.replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
     return " ".join(text.split())
 
 
@@ -1245,38 +1245,38 @@ def test_hints_item_handoff_carries_its_ids(test, builtin_tool_calls, before_sta
 # `reviews-hits:<log_id>:<hitIndex,...|all>` names the hits the message asks for;
 # `extracts-hit:<hitRef>` names a Match the yes-path extracts. Data tags, like
 # `routes-to:`; each validator is gated on a literal tag beside them.
-_REVIEWS_HITS_PREFIX = “reviews-hits:”
-_EXTRACTS_HIT_PREFIX = “extracts-hit:”
-_HIT_REF_RE = re.compile(r”results/(?P<log>log_\d+)\.json#(?P<hit>[A-Za-z0-9:/_-]+)”)
+_REVIEWS_HITS_PREFIX = "reviews-hits:"
+_EXTRACTS_HIT_PREFIX = "extracts-hit:"
+_HIT_REF_RE = re.compile(r"results/(?P<log>log_\d+)\.json#(?P<hit>[A-Za-z0-9:/_-]+)")
 _COUNT_WORDS = {
-    “one”: 1, “two”: 2, “three”: 3, “four”: 4, “five”: 5,
-    “six”: 6, “seven”: 7, “eight”: 8, “nine”: 9, “ten”: 10,
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
 }
 _EXTRACT_COUNT_RE = re.compile(
-    r”extracting\s+(?:the\s+)?(?:(?P<count>\d+|” + “|”.join(_COUNT_WORDS) + r”)\s+)?”
-    r”match(?P<plural>es)?\b”,
+    r"extracting\s+(?:the\s+)?(?:(?P<count>\d+|" + "|".join(_COUNT_WORDS) + r")\s+)?"
+    r"match(?P<plural>es)?\b",
     re.IGNORECASE,
 )
-_MD_LINK = re.compile(r”\[([^\]]*)\]\([^)]*\)”)
-_SEGMENT_BREAK = re.compile(r”\n|(?<=[.:;!?])\s+|[\”””()\[\]]”)
-_YEAR_RANGE = re.compile(r”\d{4}\s*[-–—]\s*\d{4}(?!\d)”)
+_MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_SEGMENT_BREAK = re.compile(r"\n|(?<=[.:;!?])\s+|[\"“”()\[\]]")
+_YEAR_RANGE = re.compile(r"\d{4}\s*[-–—]\s*\d{4}(?!\d)")
 _RECORD_WORD = re.compile(
-    r”\b(records?|registrations?|registers?|census(es)?|church|court|births|deaths|”
-    r”marriages|baptisms|christenings|burials|probate|land|tax|military|index|books|”
-    r”parish|civil|vital|immigration|passengers?|naturali[sz]ations?|cemeter(y|ies)|”
-    r”newspapers)\b”,
+    r"\b(records?|registrations?|registers?|census(es)?|church|court|births|deaths|"
+    r"marriages|baptisms|christenings|burials|probate|land|tax|military|index|books|"
+    r"parish|civil|vital|immigration|passengers?|naturali[sz]ations?|cemeter(y|ies)|"
+    r"newspapers)\b",
     re.IGNORECASE,
 )
-_REPOSITORY_WORD = re.compile(r”\b(archives?|library|museum|office|society)\b”, re.IGNORECASE)
-_GENERIC_RECORD_WORD = re.compile(r”\b(records?|registers?|index|books)\b”, re.IGNORECASE)
+_REPOSITORY_WORD = re.compile(r"\b(archives?|library|museum|office|society)\b", re.IGNORECASE)
+_GENERIC_RECORD_WORD = re.compile(r"\b(records?|registers?|index|books)\b", re.IGNORECASE)
 _PLACE_CONNECTORS = frozenset(
-    {“of”, “and”, “the”, “de”, “la”, “del”, “des”, “du”, “van”, “von”, “upon”, “y”, “e”, “da”, “do”, “di”}
+    {"of", "and", "the", "de", "la", "del", "des", "du", "van", "von", "upon", "y", "e", "da", "do", "di"}
 )
 
 
-_STRAIGHT_QUOTES = str.maketrans(“’’”””, “’’\”\””)
+_STRAIGHT_QUOTES = str.maketrans("\u2018\u2019\u201c\u201d", "''\"\"")
 _UNCONFIRMED = re.compile(
-    r”\b(unconfirmed|unverified|not (been )?(confirmed|verified)|could(n’t| not) (confirm|verify))\b”,
+    r"\b(unconfirmed|unverified|not (been )?(confirmed|verified)|could(n't| not) (confirm|verify))\b",
     re.IGNORECASE,
 )
 
