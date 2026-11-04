@@ -1593,7 +1593,7 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
   });
 });
 
-describe("imageTranscribeMcpTool — returns a ref, not the page (#2490)", () => {
+describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the page without one (#4136)", () => {
   let dir: string;
   beforeEach(async () => {
     dir = await makeProject();
@@ -1602,8 +1602,8 @@ describe("imageTranscribeMcpTool — returns a ref, not the page (#2490)", () =>
     await rm(dir, { recursive: true, force: true });
   });
 
-  it("requires projectPath on the MCP schema", () => {
-    expect((imageTranscribeToolSchema.inputSchema as { required?: string[] }).required).toEqual(["projectPath"]);
+  it("does not require projectPath on the MCP schema", () => {
+    expect(imageTranscribeToolSchema.inputSchema).not.toHaveProperty("required");
   });
 
   it("drops the inline transcription once staged; the staged file keeps it", async () => {
@@ -1632,24 +1632,53 @@ describe("imageTranscribeMcpTool — returns a ref, not the page (#2490)", () =>
     expect(r.transcription).toBe("still read");
   });
 
-  it("refuses a call with no projectPath before any fetch or OCR", async () => {
-    await expect(imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL)).rejects.toThrow(
-      /projectPath is required/,
-    );
-    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
-    expect(mockFetch).not.toHaveBeenCalled();
+  it("returns the page inline with no projectPath, staging and saving nothing", async () => {
+    mockOpenRouterOk("Moses Dustin, Captain");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.transcription).toBe("Moses Dustin, Captain");
+    for (const key of ["staged", "digest", "imageRef", "stagingError"]) expect(r).not.toHaveProperty(key);
   });
 
-  it("answers a folder that is not a project with the no-project result for an imageId, before any fetch", async () => {
+  it("returns the page inline for a folder that is not a project, writing nothing into it", async () => {
     const empty = await mkdtemp(join(tmpdir(), "imgt-noproj-"));
     try {
+      mockOpenRouterOk("Moses Dustin, Captain");
       const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", projectPath: empty }, LOCAL);
-      expect(r).toMatchObject({ ok: false });
-      expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
+      if ("ok" in r) throw new Error("unexpected no-project answer");
+      expect(r.transcription).toBe("Moses Dustin, Captain");
+      expect(r).not.toHaveProperty("staged");
+      expect(r).not.toHaveProperty("imageRef");
+      expect(await readdir(empty)).toEqual([]);
+    } finally {
+      await rm(empty, { recursive: true, force: true });
+    }
+  });
+
+  it("still answers a `file` on a folder that is not a project with the no-project result", async () => {
+    const empty = await mkdtemp(join(tmpdir(), "imgt-noproj-file-"));
+    try {
+      const r = await imageTranscribeMcpTool({ file: "uploads/scan.jpg", projectPath: empty }, LOCAL);
+      expect(r).toMatchObject({ ok: false, reason: "no_project" });
       expect(mockFetch).not.toHaveBeenCalled();
     } finally {
       await rm(empty, { recursive: true, force: true });
     }
+  });
+
+  it("caps no-project reads at 20 distinct images of one group, refusing the 21st before its fetch", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ choices: [{ message: { content: "page text" } }] }),
+      text: async () => "",
+    });
+    const img = (seq: number) => `004261111_${String(seq).padStart(5, "0")}`;
+    for (let i = 1; i <= 20; i++) await imageTranscribeMcpTool({ imageId: img(i) }, LOCAL);
+    fetchFsImageBytesMock.mockClear();
+    await expect(imageTranscribeMcpTool({ imageId: img(21) }, LOCAL)).rejects.toThrow(/Image cap reached/);
+    expect(fetchFsImageBytesMock).not.toHaveBeenCalled();
   });
 
   it("leaves the shared function's text alone, which person_read's memories leg reads", async () => {

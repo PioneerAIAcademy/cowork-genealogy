@@ -473,30 +473,37 @@ async function imageTranscribeToolInner(
 }
 
 /**
- * The MCP entry point (issue #2490, lead ruling 2026-10-16). `projectPath` is
- * required and the project is classified before anything else, for every input
- * form; the page is staged and the inline `transcription` dropped, so the
- * caller gets `staged.resultsRef`, `digest` and `found`. The text comes back
- * inline only when staging failed.
+ * The MCP entry point. In a project (issue #2490, lead ruling 2026-10-16) the
+ * page is staged and the inline `transcription` dropped, so the caller gets
+ * `staged.resultsRef`, `digest` and `found`; the text comes back inline only
+ * when staging failed.
+ *
+ * With no project — no `projectPath`, or a folder holding neither project file —
+ * a FamilySearch scan or memory is read with `projectPath` removed, so nothing
+ * is saved or staged anywhere and the text comes back inline (issue #4136, lead
+ * ruling 2026-11-02). The read counts under the in-memory no-project image cap
+ * (spec §5.8). A `file` keeps its project-relative path, so it still needs one.
  *
  * person_read calls `imageTranscribeTool` directly and keeps the text; the
  * strip lives here so it cannot reach that leg.
  */
-/** Thrown when the MCP call carries no projectPath. eval/harness/harness/mock_mcp.py
- *  holds a verbatim copy; grep the constant name to find both. */
-export const IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE =
-  "projectPath is required: image_transcribe stages the page under the project's " +
-  "results/ and returns its ref, not the text.";
-
 export async function imageTranscribeMcpTool(
   input: ImageTranscribeInput,
   principal: Principal,
 ): Promise<ImageTranscribeToolResponse | NoProjectResult> {
+  if (input?.file !== undefined) return compactOrPass(await imageTranscribeTool(input, principal));
   const cls = await classifyProjectPath(input?.projectPath);
-  if (cls === "missing_arg") throw new Error(IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE);
   if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
-  if (cls === "no_project") return noProjectResult("read");
-  const out = await imageTranscribeTool(input, principal);
+  if (cls === "missing_arg" || cls === "no_project") {
+    const { projectPath: _dropped, ...unsaved } = input;
+    return imageTranscribeTool(unsaved, principal);
+  }
+  return compactOrPass(await imageTranscribeTool(input, principal));
+}
+
+function compactOrPass(
+  out: ImageTranscribeResult | NoProjectResult,
+): ImageTranscribeToolResponse | NoProjectResult {
   if ("ok" in out) return out;
   return compactStagedImageTranscribe<ImageTranscribeToolResponse>(out);
 }
@@ -504,19 +511,22 @@ export async function imageTranscribeMcpTool(
 export const imageTranscribeToolSchema = {
   name: "image_transcribe",
   description:
-    "OCR a FamilySearch page scan host-side and STAGE the transcription in the " +
-    "project; returns `staged.resultsRef`, a `digest` (length, a 300-character " +
-    "excerpt) and, with lookingFor, `found` — not the page text. Triage on " +
-    "`found`/`digest`; read the page with sidecar_read({ projectPath, ref: " +
-    "staged.resultsRef }) only when you need it, and hand `staged.resultsRef` " +
-    "to the record-structurer agent to extract it. The text comes back inline " +
-    "only when staging failed (`stagingError`). Use this for large scans that " +
+    "OCR a FamilySearch page scan host-side. In a project it STAGES the " +
+    "transcription and returns `staged.resultsRef`, a `digest` (length, a " +
+    "300-character excerpt) and, with lookingFor, `found` — not the page text. " +
+    "Triage on `found`/`digest`; read the page with sidecar_read({ projectPath, " +
+    "ref: staged.resultsRef }) only when you need it, and hand " +
+    "`staged.resultsRef` to the record-structurer agent to extract it; the text " +
+    "comes back inline only when staging failed (`stagingError`). With no " +
+    "project (no projectPath, or a folder holding no research.json) the text " +
+    "comes back inline as `transcription` and nothing is saved; those reads " +
+    "count under a 20-images-per-film cap for this server session. Use this for large scans that " +
     "image_read refuses (over its inline size cap): the image never enters the " +
     "conversation, so there is no size limit. Also transcribes a FamilySearch MEMORY artifact " +
     "(memoryArtifactUrl) — its direct artifact URL or its page URL " +
     "(familysearch.org/photos/artifacts/<id> or /memories/<id>) — " +
     "including a PDF, and an UPLOADED image or PDF already " +
-    "inside the project folder (file, e.g. uploads/scan.jpg, with projectPath). " +
+    "inside a project folder (file, e.g. uploads/scan.jpg, with projectPath). " +
     "Provide exactly one of imageId, ark, memoryArtifactUrl, or file. Requires " +
     "FamilySearch auth (call login) for imageId/ark only; memoryArtifactUrl and " +
     "file need none. Needs an OpenRouter API key (set in " +
@@ -577,12 +587,13 @@ export const imageTranscribeToolSchema = {
       projectPath: {
         type: "string",
         description:
-          "Absolute path to the project folder. Required: the transcription is " +
-          "staged under it (`staged`, `digest`), and a fetched FamilySearch scan is " +
-          "saved under images/ with its project-relative path returned as imageRef, " +
-          "so a retained source can cite it (image_filename) for viewer display.",
+          "Absolute path to the project folder. In a project the transcription " +
+          "is staged under it (`staged`, `digest`), and a fetched FamilySearch scan " +
+          "is saved under images/ with its project-relative path returned as " +
+          "imageRef, so a retained source can cite it (image_filename) for viewer " +
+          "display. Omit it, or pass a folder that is not a project, to get the " +
+          "text inline with nothing saved. Required with `file`.",
       },
     },
-    required: ["projectPath"],
   },
 };
