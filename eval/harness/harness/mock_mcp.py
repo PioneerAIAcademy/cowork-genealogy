@@ -131,6 +131,7 @@ _MCP_BUILD = _REPO_ROOT / "packages" / "engine" / "mcp-server" / "build"
 OK_FALSE_IS_FAILURE_LIVE: set[str] = {
     "research_append",
     "extraction_append",
+    "evaluation_append",
     "research_log_append",
     "tree_edit",
     "tree_correct",
@@ -1882,7 +1883,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     # Takes only `{summary}`; the handler's injected `projectPath` is the inert
     # extra key convert_calendar already tolerates.
     "research_delivered": ("research-delivered.js", "researchDelivered"),
-    # Takes no input; the injected `projectPath` is ignored the same way.
+    # Takes no input: called as `projectList(LOCAL)` (`_COMPILED_TOOLS_WITHOUT_INPUT`).
     "project_list": ("project-list.js", "projectList"),
 }
 
@@ -1900,7 +1901,10 @@ _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search
 #: handler script below is built from a Python f-string, no typechecker catches
 #: the mismatch. A tool missing from this set calls with one argument and its
 #: `principal` arrives `undefined`.
-_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset()
+_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"project_context", "project_list"})
+
+#: Compiled tools that take no input, so the principal is their only argument.
+_COMPILED_TOOLS_WITHOUT_INPUT: frozenset[str] = frozenset({"project_list"})
 
 #: Extra JS arguments appended after `input` (and LOCAL) for a compiled tool.
 #: `person_warnings` gets a place resolver that resolves nothing, so its
@@ -1929,13 +1933,38 @@ def _make_live_handler(
         return _make_log_append_handler(workspace, call_log)
     if tool_name == "research_append":
         return _make_research_append_handler(workspace, call_log)
+    if tool_name == "evaluation_append":
+        return _make_evaluation_append_handler(workspace, call_log)
     if tool_name == "timeline_build":
         return _make_timeline_build_handler(workspace, call_log, place_predicated or [])
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
-        return _make_compiled_tool_handler(tool_name, js_file, export_name, workspace, call_log)
+        return _make_compiled_tool_handler(
+            tool_name, js_file, export_name, workspace, call_log, hosted=_hosted_store(manifest or {}),
+        )
     raise ValueError(f"No live handler defined for {tool_name!r}")
+
+
+def _hosted_store(manifest: dict[str, Any]) -> dict[str, str | None] | None:
+    """The paths a hosted store answers for, each with its `projectUrl`, when the test
+    serves a hosted `project_list` answer; None for every other test.
+
+    A hosted store has no folder: it is bound to the projects it lists, refuses any
+    other `projectPath` (`PgS3ProjectStore`, "is not this store's project"), and its
+    `project_context` carries the bound project's link (`utils/project-links.ts`). The
+    file store this harness runs does neither, so a hosted test emulates both.
+    """
+    paths: dict[str, str | None] = {}
+    for _args, listing, _src in (manifest.get("project_list") or {}).get("predicated") or []:
+        if not isinstance(listing, dict) or listing.get("mode") != "hosted":
+            continue
+        for project in listing.get("projects") or []:
+            if isinstance(project, dict) and isinstance(project.get("projectPath"), str):
+                paths[project["projectPath"]] = project.get("projectUrl")
+        if isinstance(listing.get("newProjectPath"), str):
+            paths.setdefault(listing["newProjectPath"], None)
+    return paths or None
 
 
 def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str | None]:
@@ -2192,24 +2221,31 @@ def _make_log_append_handler(workspace: Path | None, call_log: list[dict[str, An
     return handler
 
 
-def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
-    """Build the live handler for research_append.
+def _make_live_append_handler(
+    workspace: Path | None,
+    call_log: list[dict[str, Any]],
+    *,
+    tool: str,
+    module_file: str,
+    export: str,
+):
+    """Build a live handler that runs a compiled research-writer tool.
 
-    Calls the compiled TS tool via `node --input-type=module` against the
-    workspace path. The skill passes its own projectPath arg, but we always
-    override it with workspace (the harness tempdir) to avoid path drift.
+    Calls `export` from `build/tools/<module_file>` via `node --input-type=module`
+    against the workspace path. The skill passes its own projectPath arg, but we
+    always override it with workspace (the harness tempdir) to avoid path drift.
 
     Input is piped via stdin (as JSON) to avoid shell/JS string escaping
     issues with values that may contain quotes, backslashes, or newlines.
     """
-    append_js = _MCP_BUILD / "tools" / "research-append.js"
+    append_js = _MCP_BUILD / "tools" / module_file
 
     async def handler(args, _ws=workspace, _ajs=append_js):
         if _ws is None or not _ajs.exists():
             reason = "workspace not provided" if _ws is None else f"build not found: {_ajs}"
             response: dict[str, Any] = {
                 "ok": False,
-                "errors": [f"research_append: {reason}"],
+                "errors": [f"{tool}: {reason}"],
             }
         else:
             append_url = _node_module_url(_ajs)
@@ -2220,10 +2256,10 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
             input_obj["projectPath"] = str(_ws).replace("\\", "/")
 
             script = (
-                f"import {{ researchAppendFromCaller as researchAppend }} from '{append_url}';"
+                f"import {{ {export} as run }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                " const r = await researchAppend(input);"
+                " const r = await run(input);"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
@@ -2234,26 +2270,45 @@ def _make_research_append_handler(workspace: Path | None, call_log: list[dict[st
                     stderr_msg = proc.stderr.strip()[:500] if proc.stderr else "no output"
                     response = {
                         "ok": False,
-                        "errors": [f"research_append: node produced no output (exit {proc.returncode}): {stderr_msg}"],
+                        "errors": [f"{tool}: node produced no output (exit {proc.returncode}): {stderr_msg}"],
                     }
             except Exception as e:
                 response = {
                     "ok": False,
-                    "errors": [f"research_append: {e}"],
+                    "errors": [f"{tool}: {e}"],
                 }
 
         entry: dict[str, Any] = {
-            "tool": "mcp__genealogy__research_append",
+            "tool": f"mcp__genealogy__{tool}",
             "args": dict(args),
             "expected_args": None,
             "matched": {"kind": "live", "index": None},
-            "response_fixture": "live:research_append",
+            "response_fixture": f"live:{tool}",
             "response": response,
         }
         call_log.append(entry)
-        return _tool_envelope("research_append", response)
+        return _tool_envelope(tool, response)
 
     return handler
+
+
+def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """The live handler for research_append."""
+    return _make_live_append_handler(
+        workspace, call_log,
+        tool="research_append", module_file="research-append.js", export="researchAppendFromCaller",
+    )
+
+
+def _make_evaluation_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
+    """The live handler for evaluation_append. It imports the lane-scoped
+    `evaluationAppend` export, so the mock enforces the same `allowedSections`
+    restriction the server does: a write to any section but `evaluations` is
+    refused."""
+    return _make_live_append_handler(
+        workspace, call_log,
+        tool="evaluation_append", module_file="evaluation-append.js", export="evaluationAppend",
+    )
 
 
 PERSON_QUALITY_REFUSAL = (
@@ -2354,6 +2409,7 @@ def _make_compiled_tool_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
     place_table=None,
+    hosted: dict[str, str | None] | None = None,
 ):
     """Build the live handler for a compiled single-export tool — the tree
     writers (tree_edit / tree_correct) and the read-only project_context all
@@ -2371,7 +2427,13 @@ def _make_compiled_tool_handler(
     tool_js = _MCP_BUILD / "tools" / js_filename
 
     async def handler(args, _ws=workspace, _tjs=tool_js):
-        if _ws is None or not _tjs.exists():
+        sent_path = args.get("projectPath") if isinstance(args, dict) else None
+        if hosted is not None and isinstance(sent_path, str) and sent_path not in hosted:
+            response = {
+                "ok": False,
+                "errors": [f"projectPath '{sent_path}' is not this store's project"],
+            }
+        elif _ws is None or not _tjs.exists():
             reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
             response = {
                 "ok": False,
@@ -2397,6 +2459,8 @@ def _make_compiled_tool_handler(
                 f" import {{ LOCAL }} from '{principal_url}';" if takes_principal else ""
             )
             call_args = "input, LOCAL" if takes_principal else "input"
+            if tool_name in _COMPILED_TOOLS_WITHOUT_INPUT:
+                call_args = "LOCAL"
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 
@@ -2442,6 +2506,9 @@ def _make_compiled_tool_handler(
                     "ok": False,
                     "errors": [f"{tool_name}: {e}"],
                 }
+            link = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+            if tool_name == "project_context" and link and isinstance(response, dict) and response.get("objective"):
+                response = {**response, "projectUrl": link}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",

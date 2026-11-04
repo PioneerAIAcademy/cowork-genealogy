@@ -71,14 +71,14 @@ export const api = {
   logout: () => req<{ ok: true }>('auth/logout', { method: 'POST' }),
 
   listSessions: () => req<SessionSummary[]>('api/sessions'),
-  createSession: (body: { title?: string; model?: string; sample?: boolean; project_id?: string }) =>
+  createSession: (body: { title?: string; sample?: boolean; project_id?: string }) =>
     req<SessionSummary>('api/sessions', { method: 'POST', body: JSON.stringify(body) }),
   // The prototype backend only: a new session on a retired session's project.
   continueSession: (id: string) =>
     req<SessionSummary>(`api/sessions/${id}/continue`, { method: 'POST' }),
   resumeSession: (id: string) =>
     req<SessionSummary>(`api/sessions/${id}/resume`, { method: 'POST' }),
-  patchSession: (id: string, body: { title?: string; model?: string }) =>
+  patchSession: (id: string, body: { title?: string; title_if_default?: string }) =>
     req<SessionSummary>(`api/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
   deleteSession: (id: string) => req<{ ok: true }>(`api/sessions/${id}`, { method: 'DELETE' }),
   sessionLogs: (id: string) => req<{ ws: string; agent: string }>(`api/sessions/${id}/logs`),

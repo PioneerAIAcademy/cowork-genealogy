@@ -1,0 +1,12 @@
+# The SAS client's closure (U29), for FamilySearch's runner only:
+# make eb-bundles ARGS="--fs-python-requirements apps/server/proto/requirements-fs.txt ..."
+# The first two come only from FamilySearch's registry. A line a tier's requirements.txt already
+# pins at the same version is skipped for that tier; a different version refuses the build.
+sas-client==0.2.1.16
+binding-register-client==0.1.1.14
+boto3==1.43.106
+s3transfer==0.19.2
+requests==2.34.2
+charset-normalizer==3.5.2
+toml==0.10.2
+dotenv==0.9.9

@@ -5,7 +5,7 @@
     "name": "A record-type premise in the question does not narrow a death plan (probate included)",
     "type": "positive",
     "description": "wilkins-first-plan: q_001 asks 'Using Kentucky death certificates, what were the date and place of death of Elijah Wilkins (b. c. 1814)?' — but the locality survey shows statewide Kentucky certificates began 1911 while the subject (last documented 1870) almost certainly died decades earlier, and county registers have 1860s-1870s gaps. A sound first plan searches the presupposed certificate/register collections AND the other primary death record types — probate/estate records above all. Guards the agent body's 'a record type named in the question is a lead, not a scope limit' improvement (issue #657 diagnosis: two headless runs planned certificates only and each attached a different same-named man's certificate).",
-    "tags": ["planning", "death", "kentucky", "record-type-selection", "premise-breadth", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status", "direct-arm"]
+    "tags": ["planning", "death", "kentucky", "record-type-selection", "premise-breadth", "research-plan-new-plan-for-q-001", "new-plan-items-planned-status", "direct-arm", "fs-hints-first", "issue-3906"]
   },
   "input": {
     "delegation": "Create the first research plan for q_001 — using Kentucky death certificates, when and where did Elijah Wilkins die?\n\nquestionId: q_001\nprojectPath: <workspace>",
@@ -31,6 +31,7 @@
     "person-read-empty-any"
   ],
   "judge_context": [
+    "The plan's first item, a record_type fs_hints review of the subject's pending FamilySearch hints, is required here and is checked by the deterministic validator test_research_plan_hints_review_first. It is not a defect; do not count it against Record type selection, Completeness or sequencing.",
     "The plan MUST include at least one plan item targeting probate/estate records (record_type 'probate' — administrator bonds, estate settlements, probate registers at the Muhlenberg County court), alongside any death-certificate/register items. The collections-search fixture surfaces 'Kentucky Probate Records, 1727-1990', the wiki fixtures state probate is the primary death evidence for pre-1911 Kentucky deaths, and volume_search surfaces the browse-only Muhlenberg probate volumes.",
     "Searching the presupposed certificate/register collections (Kentucky Deaths 1911-1967, Deaths and Burials 1843-1970) is expected and is not itself a defect. Whether the plan reaches beyond them to probate/estate records is what Record type selection turns on for this test.",
     "Ideal (grade generously, do not require verbatim): a rationale somewhere in the plan notes the era/coverage mismatch — statewide certificates begin 1911 while the subject was last documented alive in 1870, so the presupposed record type likely cannot cover the death and alternatives are needed.",

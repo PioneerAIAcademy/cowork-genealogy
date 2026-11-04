@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { resolvePython, describePythonCandidates } from "../../../../../scripts/python-interpreter.mjs";
 import { extractList, frontmatterBlock, parseFrontmatter } from "./frontmatter.js";
 import {
-  HOOK_ROUTED_TOOL,
+  HOOK_ROUTED_TOOLS,
   TREE_ROW_VIA,
   agentWritableSections,
   researchAppendReaches,
@@ -77,11 +77,13 @@ function guardToolNames(): {
     deviceWriteTools: tuple("DEVICE_WRITE_TOOLS"),
     delegationTools: tuple("DELEGATION_TOOLS"),
     ownedSections: ownedSections(src),
-    // The caller-routed sections live in a dict, not a tuple, and the tool they
-    // gate is always `research_append` — so what the matcher must cover is that
-    // one name, conditional on the dict being non-empty. Read rather than
-    // assumed, so emptying OWNED_SECTIONS correctly relaxes the requirement.
-    ownerRoutedTools: ownedSections(src).length > 0 ? ["research_append"] : [],
+    // The caller-routed sections live in a dict, not a tuple; the tools that
+    // gate them are the manifest's hook-routed set (`research_append` and
+    // `evaluation_append`, issue #1491) — so what the matcher must cover is
+    // those names, conditional on the dict being non-empty. Read from the
+    // manifest rather than assumed, so emptying OWNED_SECTIONS correctly relaxes
+    // the requirement and adding a routed tool widens it.
+    ownerRoutedTools: ownedSections(src).length > 0 ? [...HOOK_ROUTED_TOOLS] : [],
   };
 }
 
@@ -463,40 +465,49 @@ describe("plugin hooks are packaged and wired", () => {
     ).toEqual([]);
   });
 
-  it("routes by section the one tool the manifest's hookRouting names", () => {
+  it("routes by section exactly the tools the manifest's hookRouting names", () => {
     // `hookRouting.tool` is what the actual-writer guard and the corpus report
-    // treat as the section-routed writer. It must be the tool owner_denied
-    // actually gates, or both read the lanes against the wrong tool.
+    // treat as the section-routed writers. They must be the tools owner_denied
+    // actually gates, or both read the lanes against the wrong tool. The gate is
+    // a `not in (...)` membership test since issue #1491 added a second tool;
+    // the single-tool `!=` form is still parsed so this does not break if it
+    // narrows back to one.
     const src = readFileSync(GUARD, "utf-8");
-    const gated = [...src.matchAll(/_basename\([^)]*\)\)\s*!=\s*["']([a-z_]+)["']/g)].map((m) => m[1]);
+    const inTuple = src.match(/_basename\([^)]*\)\)\s*not in\s*\(([^)]*)\)/);
+    const single = src.match(/_basename\([^)]*\)\)\s*!=\s*["']([a-z_]+)["']/);
+    const gated = inTuple
+      ? [...inTuple[1].matchAll(/["']([a-z_]+)["']/g)].map((m) => m[1])
+      : single
+        ? [single[1]]
+        : [];
     expect(gated.length, "owner_denied's tool gate was not found in the guard script").toBeGreaterThan(0);
-    expect([...new Set(gated)]).toEqual([HOOK_ROUTED_TOOL]);
+    expect(new Set(gated)).toEqual(new Set(HOOK_ROUTED_TOOLS));
   });
 
-  it("gives every agent granted research_append a lane", () => {
-    // Without a lane the hook confines an agent's `research_append` to no
-    // section, so which rows it reaches is not decidable from the shipped files
-    // and the ownership manifest cannot be checked against it.
+  it("gives every agent granted a hook-routed tool a lane", () => {
+    // Without a lane the hook confines an agent's hook-routed write (`research_append`,
+    // or `evaluation_append` scoped to `evaluations`) to no section, so which rows
+    // it reaches is not decidable from the shipped files and the ownership manifest
+    // cannot be checked against it.
     const lanes = agentWritableSections();
     const agentsDir = join(PLUGIN_DIR, "agents");
-    // An agent with no `tools:` key inherits every tool, research_append
+    // An agent with no `tools:` key inherits every tool, the hook-routed ones
     // included — the same reading ownership-manifest.test.ts gives it.
     const holdsRoutedTool = (text: string): boolean => {
       const block = frontmatterBlock(text);
       if (block === null) return false; // reported by ownership-manifest.test.ts
       if (!("tools" in parseFrontmatter(block))) return true;
-      return extractList(text, "tools")
-        .flatMap((e) => grantedTools(e, [HOOK_ROUTED_TOOL]))
-        .includes(HOOK_ROUTED_TOOL);
+      const granted = extractList(text, "tools").flatMap((e) => grantedTools(e, [...HOOK_ROUTED_TOOLS]));
+      return HOOK_ROUTED_TOOLS.some((t) => granted.includes(t));
     };
     const holders = readdirSync(agentsDir)
       .filter((f) => f.endsWith(".md"))
       .filter((f) => holdsRoutedTool(readFileSync(join(agentsDir, f), "utf-8")))
       .map((f) => f.slice(0, -3));
-    expect(holders.length, "no agent holds research_append — the scan read nothing").toBeGreaterThan(0);
+    expect(holders.length, "no agent holds a hook-routed tool — the scan read nothing").toBeGreaterThan(0);
     expect(
       holders.filter((a) => !lanes.has(a)).sort(),
-      "these agents hold research_append and have no AGENT_WRITABLE_SECTIONS lane " +
+      "these agents hold a hook-routed tool and have no AGENT_WRITABLE_SECTIONS lane " +
         "in guard_project_files.py — give each one the sections it writes",
     ).toEqual([]);
   });
@@ -953,12 +964,13 @@ describe("the guard script's decisions", () => {
     ["namespaced agent_type, as production reports it", GM_OWNER],
     ["bare agent_type", "gps-mentor"],
   ])("permits the gps-mentor agent its real call — %s", (_label, agent_type) => {
-    // The shape the agent emits: the verdict body as the top-level `verdict`
-    // argument, the pointer append, and the superseded_by update on the prior
-    // entry for the same focus + target. One call or two (the committed m2r
-    // run splits the update into a second call) — both shapes pass the route.
+    // The shape the agent emits through evaluation_append (issue #1491): the
+    // verdict body as the top-level `verdict` argument, the pointer append, and
+    // the superseded_by update on the prior entry for the same focus + target.
+    // One call or two (the committed m2r run splits the update into a second
+    // call) — both shapes pass the route.
     const out = runGuard({
-      tool_name: "mcp__genealogy__research_append",
+      tool_name: "mcp__genealogy__evaluation_append",
       tool_input: {
         verdict: { focus: "proof-critique", target_id: "ps_001", verdict: "address_first" },
         ops: [
@@ -991,6 +1003,25 @@ describe("the guard script's decisions", () => {
       tool_name: "mcp__genealogy__research_append",
       tool_input: { section: "plan_items", op: "update", entryId: "pli_009", fields: { status: "completed" }, planId: "pl_001" },
     })).toEqual({});
+  });
+
+  // ── caller-routed: evaluations via evaluation_append (issue #1491) ──
+  //
+  // The narrow `evaluation_append` (research_append scoped to `evaluations`) is
+  // gated by owner_denied the same way `research_append` is. Narrowing
+  // owner_denied's gate back to research_append alone turns these green.
+  it.each([
+    ["main thread (no agent_id)", {}],
+    ["agent_type present but agent_id absent", { agent_type: GM_OWNER }],
+    ["a different agent", { agent_id: "a1", agent_type: PE_OWNER }],
+  ])("denies evaluation_append — %s", (_label, extra) => {
+    const out = runGuard({
+      tool_name: "mcp__genealogy__evaluation_append",
+      tool_input: { section: "evaluations", op: "append", entry: {} },
+      ...extra,
+    });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:gps-mentor");
   });
 
   // ── claim-routed: conflicts (issue #1852) ──
@@ -1137,12 +1168,15 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:proof-conclusion");
   });
 
+  // `title`, not `objective`: the objective is main-thread-only since issue
+  // #3975, even inside init-project's lane. A title rewrite is refused by the
+  // tool's set-once rule, not here.
   it.each([
-    ["project (its objective)", { section: "project", op: "update", fields: { objective: "x" } }],
+    ["project (its title)", { section: "project", op: "update", fields: { title: "x" } }],
     ["researcher_profile", { section: "researcher_profile", op: "update", fields: {} }],
     ["both in one batch", {
       ops: [
-        { section: "project", op: "update", fields: { objective: "x" } },
+        { section: "project", op: "update", fields: { title: "x" } },
         { section: "researcher_profile", op: "update", fields: {} },
       ],
     }],
@@ -1153,6 +1187,41 @@ describe("the guard script's decisions", () => {
       agent_id: "agent-1",
       agent_type: IP_AGENT,
     });
+    expect(out).toEqual({});
+  });
+
+  // project.objective is main-thread-only (MAIN_THREAD_FIELDS, issue #3975).
+  const OBJ = { section: "project", op: "update", fields: { objective: "x" } };
+  it.each([
+    ["init-project, namespaced", OBJ, { agent_id: "a1", agent_type: IP_AGENT }],
+    ["init-project, bare", OBJ, { agent_id: "a1", agent_type: "init-project" }],
+    ["proof-conclusion, whose lane holds project", OBJ, { agent_id: "a1", agent_type: OWNER }],
+    // `caller` is "" here, the same as the main thread: only `agent_id`
+    // membership tells them apart.
+    ["agent_id with a null agent_type", OBJ, { agent_id: "a1", agent_type: null }],
+    ["agent_id with no agent_type key", OBJ, { agent_id: "a1" }],
+    ["an agent the lane table does not know", OBJ, { agent_id: "a1", agent_type: "general-purpose" }],
+    // A known agent whose lane lacks `project`: pins the arm before the lane check.
+    ["gps-mentor, whose lane lacks project", OBJ, { agent_id: "a1", agent_type: "gps-mentor" }],
+    ["the ops[] form", { ops: [{ section: "project", op: "update", fields: { updated: "2026-11-03" } }, OBJ] }, { agent_id: "a1", agent_type: IP_AGENT }],
+    ["entry beside an empty fields", { section: "project", op: "update", fields: {}, entry: { objective: "x" } }, { agent_id: "a1", agent_type: IP_AGENT }],
+  ])("denies a subagent research_append on project.objective — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    const reason = out.hookSpecificOutput.permissionDecisionReason;
+    expect(reason).toContain("project.objective");
+    expect(reason).toContain("main conversation");
+    expect(reason).not.toContain("@plugin:");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["the main thread", OBJ, {}],
+    ["the main thread, ops[] form", { ops: [OBJ, { section: "project", op: "update", fields: { updated: "2026-11-03" } }] }, {}],
+    ["a subagent's project write without objective", { section: "project", op: "update", fields: { updated: "2026-11-03" } }, { agent_id: "a1", agent_type: IP_AGENT }],
+    ["proof-conclusion setting status", { section: "project", op: "update", fields: { status: "completed" } }, { agent_id: "a1", agent_type: OWNER }],
+  ])("allows research_append on project.objective's neighbours — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out).toEqual({});
   });
 

@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. Phase 2 can start. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. **Phase 2 in flight:** the hosted half of deleting the Stop veto is PR #4146, `research_delivered`'s deletion is PR #4148 (stacked on it), and the e2e half is still owed. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -130,7 +130,7 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
     running dies mid-search: D17 lost both background extractors that way (the
     `DELEGATION_TOOLS` comment in `continue_policy.py`). The Stop veto never covered this,
     because it cannot see a background agent, and from PR 1 no hosted turn binds it (cap 0,
-    section A). So PR 1 keeps the rewrite bound in the hook it edits (section A's host table),
+    section A; phase 2 deleted it). So PR 1 keeps the rewrite bound in the hook it edits (section A's host table),
     and phase 2 keeps it when it deletes the veto.
 27. **Cowork's agents run in the foreground too, by the router's wording first.** Cowork ships
     no step hook (decision 25). Its plugin hook sees every `Agent` call, to deny forks (PR
@@ -313,45 +313,14 @@ that apply:
     resume or stall prompt is not.
 - **No hosted turn arms the Stop veto.** Every turn is one step, so a turn that stops has  **SUPERSEDED by decision 25**: rider 1 keeps the rule as one step per *boundary*, not one per turn
   finished its step.
-  - **Prototype:** `turn_max_nudges` (`worker.py`) returns 0 for every turn, so the worker binds
-    no Stop hook. The web tier never needs the plugin.
-    - **`proto-demo-auto`** posts the fixture prompt, then "keep going." after its turn. It waits
-      until the session has no open or held turn, and it queries the session's turns rather than
-      the one it posted (`apps/server/proto/demo.py`).
-      `proto-bounds CASE=probe_resume` and `proto-kill` run on one step turn. `turn.py`'s
-      docstring and `bounds.py`'s reading of a 0 cap change with them.
-    - **Other sites:** `test_proto_config.py`'s p99 test; the `turn_max_nudges` cases in
-      `test_proto_worker.py` and the test after them; `apps/server/proto/demo.py`, which reports
-      the stamped `max_nudges` as the cap the worker ran under; `test_proto_target.py`; and
-      U13's figures in `docs/plan/familysearch-handoff.md`.
-  - **Alpha:** the Stop hook binds per session in `_build_hooks` whenever its cap is above 0
-    (`real_agent.py`). Set `Settings.autonomous_max_nudges` (`config.py`, passed in by
-    `sandbox/e2b.py` and `sandbox/local.py`) and `_DEFAULT_MAX_NUDGES` to 0. A test pins the two
-    equal (`test_alpha_stop_hook.py`), and that file's `>= 26` floor and `== 30` pins change with
-    them. Existing alpha sandboxes keep their creation-time code until the 72-hour cutoff
-    (`app/sessions.py`), so step mode reaches the alpha over about three days.
-  - **Deviation recorded (PR 1, review of aa48f22e):** `turn_max_nudges` keeps returning the
-    queue body's stamped value rather than a hardcoded 0. The switch is the WEB tier's
-    `DEFAULT_MAX_NUDGES`, now 0, which is what every real turn carries; the worker honouring
-    what was stamped is the layering the field exists for, and hardcoding 0 would remove the
-    only way to exercise the veto/deny/halt path deliberately. `max_nudges()`'s docstring
-    says so.
-  - **`proto-demo-auto` and `proto-probe-resume` keep exporting 40, deliberately.** That
-    export is what keeps the Stop hook under a live test at all, and `test_proto_demo.py`
-    pins it on purpose. Under step mode such a turn gets veto, deny, then halt, so the
-    recipe does not reach its verdict today. Lowering it to 0 would not fix that: without
-    the keep-going driver below the run is one step, and the verdict wants a completed
-    project either way. Both paths need the driver, so the export stays where its own
-    tests put it.
-  - **Still owed, and NOT in PR 1:** `demo.py`'s keep-going driver — posting "keep going."
-    after each turn and waiting until the session has no open or held turn — with the
-    `bounds.py`, `turn.py` and `test_proto_target.py` changes beside it. Until it lands,
-    `make proto-demo-auto` runs one step and its verdict, which wants a completed project,
-    is not reachable under step mode. It is a live billed recipe, so it is built and run
-    together rather than built blind here.
+  - **Deleted in phase 2 (PR #4146).** Neither hosted plane binds a `Stop` hook now. The
+    prototype's `turn_max_nudges`, the alpha's `autonomous_max_nudges` and
+    `_DEFAULT_MAX_NUDGES`, `CONTINUE_REASON`, the stamped `max_nudges` cap and the
+    `proto-demo-auto` recipe are gone; `turns.nudges` and `turn_costs.continuations` stay and
+    are always 0. `test_no_stop_veto.py` pins that nothing binds one again.
   - **Phase 2 deletes the veto** (see Phases).
 - **Outcomes:**
-  - A step turn ends `ok`, which renders no label: at cap 0 no plane binds the Stop hook.
+  - A step turn ends `ok`, which renders no label: no plane binds a Stop hook (deleted in phase 2).
   - A turn whose step completed the project has no Stop verdict to report that, so the worker
     sets `completed` at turn close from `project_completed(read_research(...))` when no Stop
     verdict was recorded. The honest `completed` label (section C) then shows on step turns
@@ -1204,7 +1173,11 @@ in parallel with PR 2.
     enforces the boundary, so this list is the prototype plus the harnesses):
     - the worker's `PreToolUse`, with `turns.step`, `turns.mode` and the redelivery seed.
       **Deny first, halt only on a second attempt** — the halt is the BACKSTOP, not the first
-      move, and it denies the call it stops (decision 25). Rider 2: log every halt, because
+      move, and it denies the call it stops (decision 25). A halt still offers the step it
+      named: two spawns in one message both reach the gate before the model reads a deny, so
+      the second halts a turn that never wrote its offer line. The gate keeps that offer
+      (`StepGate.halt_offer`), and the worker and the e2e host answer it as if the model had
+      written it (found by the 2026-11-02 `clark-parents` step-mode check). Rider 2: log every halt, because
       the router prose is identical on both planes, so the rate measures how often Cowork
       runs past a boundary;
     - ~~the alpha's hooks, with the `Skill` coverage~~ — **removed by decision 25: the alpha
@@ -1216,8 +1189,9 @@ in parallel with PR 2.
     - the `ctx` read for the prototype and both harnesses. **Not Cowork:** ADR-0005 item 7
       measured that a hook cannot read `research.json` from its working directory, and under
       decision 25 Cowork has no hook to read it from;
-  - **no Stop veto:** `turn_max_nudges` returning 0, the alpha's `autonomous_max_nudges` and
-    `_DEFAULT_MAX_NUDGES` at cap 0 with the tests that pin them, the alpha arming no turn, and
+  - **no Stop veto:** `turn_max_nudges` returning 0 (deleted in phase 2), the alpha's
+    `autonomous_max_nudges` and `_DEFAULT_MAX_NUDGES` at cap 0 (deleted in phase 2) with the
+    tests that pinned them, the alpha arming no turn, and
     the recipe, docstring and test sites (A). The cap-0 change stays here deliberately: the
     lead accepts a few days of uneven stopping on the alpha between the PR 1 and PR 2 deploys
     (2026-10-21);
@@ -1342,7 +1316,7 @@ in parallel with PR 2.
   - **Open, for Praise:** decision 25's prototype halt reuses `_halt`, which a main-thread
     `research_delivered` triggers today (`apps/server/proto/worker/options.py`). Say whether
     this bullet still stands under decision 25, and if it does, what ends a bounded ask.
-- **Delete the Stop veto:** `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
+- **Delete the Stop veto:** **Hosted half done** (the alpha and the prototype: no `Stop` hook binds, the cap and its settings are gone, `proto-demo-auto` retired, `turns.nudges` and `turn_costs.continuations` kept and now always 0). **Owed, in its own PR:** the e2e half — make `--step-mode job` the e2e default, then delete `eval/harness/e2e/stop_checker.py`'s veto and `max_continue_nudges`. The alpha's runner chain and `auto_continue_max_steps` were left in place (Praise, 2026-11-02): the chain matches only the retired `Next: <step>. Continue?` line, so it never starts, and the alpha is being retired. Original scope: `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
   counters, `stop_checker.py`'s veto, and `AUTONOMOUS_MAX_NUDGES` with its compose, Beanstalk
   and bundle settings, and the alpha's `autonomous_max_nudges` and `auto_continue_max_steps`.
   `hand_back.py` and the runner's chain stay; they carry "Keep going". `foreground_rewrite` and
@@ -1385,8 +1359,9 @@ in parallel with PR 2.
    back with `run_in_background: false`, and an out-of-group one gets the deny, not the
    rewrite (decision 26).
 3. **No Stop veto, and "Keep going":**
-   - no hosted turn binds a Stop hook: `turn_max_nudges` returns 0, and the alpha's
-     `_build_hooks` binds no `Stop`;
+   - no hosted turn binds a Stop hook: `test_no_stop_veto.py` and
+     `test_run_turn_binds_no_stop_hook_even_for_a_message_stamped_with_a_cap` pass, and the
+     alpha's `_build_hooks` binds no `Stop`;
    - `next_auto_reply`: "Keep going." for an ordinary offer; "Wrap it up." for a research-plan
      offer after one planning round, including B's high-risk line and E's conflict line; nothing
      for a paraphrased label, a turn closed `stopped`, `budget` or `queued`, a proof-conclusion

@@ -2743,6 +2743,30 @@ def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypa
     assert "image_ref" not in seen[1]
 
 
+def test_principal_sets_match_each_compiled_tools_arity():
+    """The harness calls a compiled tool as `input`, `input, LOCAL` or `LOCAL`, then any
+    `_COMPILED_TOOL_EXTRA_ARGS`, from an f-string no typechecker sees. So each built
+    function's required-parameter count must equal what the harness passes before the
+    extras: a tool that gains a `principal` without joining `_COMPILED_TOOLS_WITH_PRINCIPAL`
+    runs with it undefined."""
+    if not (mock_mcp._MCP_BUILD / "tools").is_dir():
+        pytest.skip("no engine build")
+    tools = mock_mcp._COMPILED_TOOLS
+    script = "const n = {};\n" + "".join(
+        f"n[{json.dumps(tool)}] = (await import({json.dumps((mock_mcp._MCP_BUILD / 'tools' / js).as_uri())}))"
+        f"[{json.dumps(fn)}].length;\n"
+        for tool, (js, fn) in tools.items()
+    ) + "console.log(JSON.stringify(n));"
+    result = mock_mcp._run_node_eval(script)
+    assert result.returncode == 0, result.stderr
+    passed = {
+        tool: (0 if tool in mock_mcp._COMPILED_TOOLS_WITHOUT_INPUT else 1)
+        + (1 if tool in mock_mcp._COMPILED_TOOLS_WITH_PRINCIPAL else 0)
+        for tool in tools
+    }
+    assert json.loads(result.stdout) == passed
+
+
 # --- the unknown-argument guard (issue #3947) --------------------------------
 # `server.ts` refuses any argument key that is not a parameter of the tool. The
 # mock calls handlers directly and never goes through `server.ts`, so every unit

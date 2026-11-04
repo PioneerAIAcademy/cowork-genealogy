@@ -20,7 +20,7 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 57 tools.
+The MCP server exposes 58 tools.
 
 ### FamilySearch records and places
 
@@ -73,6 +73,7 @@ way project state changes.
 | `research_log_append` | Append a research-log entry, including a search's result sidecar | None |
 | `research_delivered` | Signal that a bounded request has been delivered and the turn is stopping on purpose. A pure signal: writes nothing. BOTH hosted planes end the turn on this tool's name via a `PreToolUse` hook, the prototype worker and the hosted alpha; in Cowork and e2e no such hook binds, so it returns an acknowledgement that tells the model to make no further tool calls and end its turn | None |
 | `extraction_append` | Extracts records in code: FamilySearch records by `recordIds` (read, logged and classified from the extraction table), any other source as a structured document from the `record-structurer` agent, a nil search as negative evidence by `absences`, and, by `personId`, every indexed record FamilySearch has attached to one tree person, each linked to that person as an unverified candidate. Classifications are set here and are final | None |
+| `evaluation_append` | Append or update a gps-mentor GPS-review verdict in `research.json`'s `evaluations` section. `research_append` scoped to `evaluations` by tool identity (ADR-0006) — it writes no other section, and only the gps-mentor agent holds it. The structured verdict body is passed as `verdict` and written to a sidecar file; the tool stamps `file_path` and assigns the `ev_NNN` id | None |
 | `materialize_facts` | Project extracted assertions onto tree persons | None |
 | `tree_edit` | Add or amend persons, facts, names and relationships on the local tree | None |
 | `tree_correct` | Correct an existing tree assertion in place | None |
@@ -203,7 +204,7 @@ don't load it explicitly.
 | **search-full-text** | Full-text search of FS AI-transcribed document images. Finds witnesses, neighbors, heirs, and other non-principal mentions. Logs every search for the audit trail. | "Full-text search for Flynn in Schuylkill County deeds" |
 | **search-images** | Browses a digitized FamilySearch volume page by page when the record set is neither indexed nor full-text searchable, and logs the browse. It finds the image groups covering a place and date range, lists the images inside one, and reads each page as text. | "Browse the images" / "page through the film" |
 | **search-external-sites** | Builds pre-filled search URLs for Ancestry, MyHeritage, FindMyPast, FindAGrave, Newspapers.com, the Archion and Matricula church-book sites, and the rest of `build_external_search_url`'s site list; hands each over with exactly what to look for, and triages the capture you bring back. Logs every search, nil results included. | "Search Ancestry for Thomas Flynn" |
-| **search-hints** | Reviews the FamilySearch hints (pending record matches) on one tree person. A first pass recommends accept, reject or not enough information for each hint, discloses FamilySearch's own confidence, and reads the record image before recommending against a hint; it writes nothing but the status of its plan item. Once you decide, a second pass logs your verdict on each hint, so an accepted hint flows on to extraction like any search result. On an identity or parentage question research-plan plans a hints review as the first item, run through this agent. | "Are these hints valid?" / "Accept hint 1, reject hint 2" |
+| **search-hints** | Reviews the FamilySearch hints (pending record matches) on one tree person. A first pass recommends accept, reject or not enough information for each hint, discloses FamilySearch's own confidence, and reads the record image before recommending against a hint; it writes nothing but the status of its plan item. Once you decide, a second pass logs your verdict on each hint, so an accepted hint flows on to extraction like any search result. On an identity, parentage, birth, death or marriage question research-plan plans a hints review as the first item, run through this agent. | "Are these hints valid?" / "Accept hint 1, reject hint 2" |
 | **citation** | Polishes the citations on sources that already exist to Evidence Explained standards (Who/What/When/Where/Where-within), and looks up the office that created a probate record on the FamilySearch wiki rather than carrying one jurisdiction's offices in its prompt. It never creates a source entry: asked to add a record, it declines and routes to extraction (`extraction_append`, or the `record-structurer` agent for a source that is not a FamilySearch record). | "Fix citations" / "Cite this source" |
 | **question-selection** | Picks the highest-value next research question. | "What should I research next?" |
 | **research-plan** | Creates, reviews and revises the sequenced plan for **one** question — which record sets to search, in what order, from which repositories, with fallbacks. | "Plan research for this question" |
