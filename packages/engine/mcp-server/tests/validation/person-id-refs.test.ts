@@ -73,6 +73,35 @@ describe("person-id-refs walker", () => {
     });
   });
 
+  it("a merge remaps Couple, fact-subject, identity, same_as and name persons in claims", () => {
+    const research = {
+      proof_summaries: [
+        {
+          id: "ps_001",
+          claims: [
+            { claim: "marriage", relationship: { type: "Couple", person1: "I1", person2: "I2" } },
+            { claim: "birth", fact: { subject: "I1", fact_type: "Birth" } },
+            { claim: "marriage date", fact: { subject: { person1: "I1", person2: "I2" }, fact_type: "Marriage" } },
+            { claim: "census", identity: { record_id: "rec1", party: "p_1", person: "I1" } },
+            { claim: "one man", identity: { person: "I2", same_as: "I1" } },
+            { claim: "name", name: { person: "I1", given: "John" } },
+            { claim: "none", finding: { finding_type: "absence", statement: "x" } },
+          ],
+        },
+      ],
+    };
+    const refs = [...iteratePersonIdRefs(research)];
+    expect(refs.map((r) => r.pid)).toEqual(["I1", "I2", "I1", "I1", "I2", "I1", "I2", "I1", "I1"]);
+    for (const ref of refs) if (ref.pid === "I1") ref.set("I99");
+    const c = research.proof_summaries[0].claims as any[];
+    expect(c[0].relationship).toEqual({ type: "Couple", person1: "I99", person2: "I2" });
+    expect(c[1].fact.subject).toBe("I99");
+    expect(c[2].fact.subject).toEqual({ person1: "I99", person2: "I2" });
+    expect(c[3].identity.person).toBe("I99");
+    expect(c[4].identity).toEqual({ person: "I2", same_as: "I99" });
+    expect(c[5].name.person).toBe("I99");
+  });
+
   it("`set` re-keys a namesakes row onto the survivor in place", () => {
     const research = researchWithAllFields();
     for (const ref of iteratePersonIdRefs(research)) {

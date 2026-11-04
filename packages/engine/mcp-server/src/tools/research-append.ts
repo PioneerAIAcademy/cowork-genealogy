@@ -23,7 +23,7 @@ import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
-import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
+import { isSettledConflict, PROOF_TIER_RANK, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -5363,6 +5363,53 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
  *  a tier in the same call. `not_proved` is always available — recording the
  *  blocked attempt is the sanctioned move, not silence. */
 function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
+  return [
+    ...conflictedSourceTierInvariants(entry, beforeResearch),
+    ...claimsOf(entry).flatMap(({ label, asEntry }) =>
+      conflictedSourceTierInvariants(asEntry, beforeResearch).map(
+        (m) => `claim '${label}': ${m} For this claim, lower its own proof_tier to not_proved; the summary's tier alone does not settle it.`,
+      ),
+    ),
+  ];
+}
+
+/** Each claim of a summary as a scalar-shaped entry the summary gates read:
+ *  its own tier, shortfall and cited assertions, under the summary's question. */
+function claimsOf(entry: any): { label: string; asEntry: any }[] {
+  return (Array.isArray(entry?.claims) ? entry.claims : [])
+    .filter((c: any) => c && typeof c === "object")
+    .map((c: any, i: number) => ({
+      label: typeof c.claim === "string" ? c.claim : `claims[${i}]`,
+      asEntry: {
+        id: entry?.id,
+        question_id: entry?.question_id,
+        tier: c.proof_tier,
+        shortfall: c.shortfall,
+        supporting_assertion_ids: c.supporting_assertion_ids,
+      },
+    }));
+}
+
+/** The claims that assert their object: a `denied` claim is a grounded "probably
+ *  not", which no identity or parentage gate should read as a conclusion. */
+function affirmedClaimsOf(entry: any): { label: string; asEntry: any }[] {
+  const claims = Array.isArray(entry?.claims) ? entry.claims : [];
+  return claimsOf(entry).filter((_c, i) => claims[i]?.polarity !== "denied");
+}
+
+/** `entry` with `tier` raised to its strongest affirmed claim when a claim
+ *  stands above the scalar, so a gate keyed on the tier sees what the summary
+ *  concludes anywhere in it. */
+function atStrongestAffirmedTier(entry: any): any {
+  let best = entry?.tier;
+  for (const { asEntry } of affirmedClaimsOf(entry)) {
+    const rank = PROOF_TIER_RANK.get(asEntry.tier);
+    if (rank !== undefined && rank > (PROOF_TIER_RANK.get(best) ?? -1)) best = asEntry.tier;
+  }
+  return best === entry?.tier ? entry : { ...entry, tier: best };
+}
+
+function conflictedSourceTierInvariants(entry: any, beforeResearch: any): string[] {
   const tier = entry?.tier;
   if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
   const disputed = disputedSourceIds(beforeResearch);
@@ -6728,6 +6775,51 @@ function proofSummaryInvariants(
     );
   }
   return errors;
+}
+
+/** Each `proved` or `disproved` claim meets the conclusive floor on its own:
+ *  the question's stop gate satisfied before this call. Without it the bound
+ *  (the scalar may not exceed its strongest claim) would accept a lone
+ *  disproved claim under a not_proved scalar, which the scalar floor refuses.
+ *  Skipped when the scalar's own floor runs in this op and refuses for the same
+ *  reason. */
+function claimFloorInvariants(
+  entry: any,
+  preCallExhaustiveDeclared: Map<string, boolean> | undefined,
+  scalarFloorRuns: boolean,
+): string[] {
+  if (preCallExhaustiveDeclared?.get(entry?.question_id) === true) return [];
+  if (scalarFloorRuns && CONCLUSIVE_TIERS.has(entry?.tier)) return [];
+  return claimsOf(entry)
+    .filter(({ asEntry }) => CONCLUSIVE_TIERS.has(asEntry.tier))
+    .map(
+      ({ label, asEntry }) =>
+        `claim '${label}' at '${asEntry.tier}' is a conclusive answer, so question ` +
+        `'${entry?.question_id}' must already have its stop gate satisfied (search_stop.stopped_because ` +
+        `is 'question_answered', 'record_exhausted', or 'nothing_further_reachable') from BEFORE this ` +
+        `call, as a summary at that tier must. Invoke research-exhaustiveness first, in its own call, ` +
+        `or hold the claim at probable or below.`,
+    );
+}
+
+/** A tier change on a summary that holds claims re-states the claims in the
+ *  same op. A tier-only downgrade otherwise leaves a claim standing above the
+ *  answer it serves, on evidence the summary no longer vouches for. */
+function tierWithoutClaimsInvariants(op: any, entry: any, preCallResearch: any): string[] {
+  if (op?.op !== "update") return [];
+  const fields = op.fields ?? {};
+  if (!Object.prototype.hasOwnProperty.call(fields, "tier")) return [];
+  if (Object.prototype.hasOwnProperty.call(fields, "claims")) return [];
+  if (!Array.isArray(entry?.claims) || entry.claims.length === 0) return [];
+  const prior = (Array.isArray(preCallResearch?.proof_summaries) ? preCallResearch.proof_summaries : []).find(
+    (e: any) => e?.id === entry?.id,
+  );
+  if (prior?.tier === fields.tier) return [];
+  return [
+    `proof_summaries ${entry?.id ?? "(entry)"}: tier changes from '${prior?.tier}' to '${fields.tier}' ` +
+      `but claims[] is not in this op. A summary holding claims re-states them with its tier: send ` +
+      `claims in the same update, each at the tier its own evidence supports now.`,
+  ];
 }
 
 /** The most words a narrative should run, by proof vehicle: the budgets in
@@ -8963,12 +9055,25 @@ function applyOne(
   if (section === "proof_summaries") {
     const tierTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "tier");
+    const claimsTouchedThisOp = Object.prototype.hasOwnProperty.call(op.fields ?? {}, "claims");
+    if (tierTouchedThisOp || claimsTouchedThisOp) {
+      invariantErrors.push(...claimFloorInvariants(resultEntry, preCallExhaustiveDeclared, tierTouchedThisOp));
+    }
+    invariantErrors.push(...tierWithoutClaimsInvariants(op, resultEntry, preCallResearch));
+    // A claim may stand above the scalar, so the identity and parentage gates
+    // read the strongest affirmed tier among the scalar and its claims.
+    const gated = atStrongestAffirmedTier(resultEntry);
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
+    }
+    if (tierTouchedThisOp || claimsTouchedThisOp) {
       // Tier-gated like the line above, so a narrative edit to a summary that
       // predates the rule is not refused.
       invariantErrors.push(...unlinkedProofInvariants(resultEntry, preCallResearch));
-      invariantErrors.push(...unlinkedParentProofInvariants(resultEntry, preCallResearch));
+      for (const { label, asEntry } of affirmedClaimsOf(resultEntry)) {
+        invariantErrors.push(...unlinkedProofInvariants(asEntry, preCallResearch).map((m) => `claim '${label}': ${m}`));
+      }
+      invariantErrors.push(...unlinkedParentProofInvariants(gated, preCallResearch));
     }
     // Also on a narrative or claims edit: a parentage can be stated in prose
     // after the tier is already set, by an update that leaves `tier` alone.
@@ -8977,7 +9082,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
       Object.prototype.hasOwnProperty.call(op.fields ?? {}, "claims")
     ) {
-      invariantErrors.push(...unlinkedParentNarrativeInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...unlinkedParentNarrativeInvariants(gated, preCallResearch));
     }
     // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
     // That gate asks "is this op setting the tier"; this rule asks "does the
@@ -9011,7 +9116,7 @@ function applyOne(
     // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
     // does not satisfy this precondition. Gated only on the entry's standing
     // tier (not_proved/disproved pass), not on which fields this op touches.
-    invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
+    invariantErrors.push(...competingParentSetsInvariants(gated, preCallResearch, tree));
     // Judged only when THIS op sets what the budget reads: an append always does,
     // an update when it names the narrative or the vehicle. An unrelated edit to
     // a summary already over budget is not told again, and neither is a narrative

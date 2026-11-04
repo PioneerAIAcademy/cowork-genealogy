@@ -114,6 +114,7 @@ repo's identifier-casing rule):
     imagesRead: number,                  // distinct images counted, >= 20
     planItemIds: string[],               // open plan items with an image_search log entry on it
   }],
+  claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },

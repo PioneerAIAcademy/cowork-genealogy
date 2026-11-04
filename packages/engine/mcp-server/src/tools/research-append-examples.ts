@@ -508,6 +508,7 @@ export function exampleFor(
     question_id: "q_002",
     tier: "probable",
     vehicle: "summary",
+    shortfall: "gap",
     supporting_assertion_ids: ["a_013", "a_025"],
     resolved_conflict_ids: [],
     exhaustive_search_summary: "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
@@ -516,12 +517,14 @@ export function exampleFor(
       {
         claim: "paternity",
         proof_tier: "probable",
+        shortfall: "gap",
         supporting_assertion_ids: ["a_013"],
         relationship: { type: "ParentChild", parent: "I2", child: "I1" }
       },
       {
         claim: "maternity",
         proof_tier: "possible",
+        shortfall: "gap",
         supporting_assertion_ids: ["a_025"],
         relationship: { type: "ParentChild", parent: "I3", child: "I1" }
       }
