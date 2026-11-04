@@ -1551,6 +1551,20 @@ def create_mock_server(
             ):
                 response = _stage_person_read(_workspace, args, response)
 
+            # Production's fulltext_search adds `facets` only when the call sent
+            # `includeFacets` (`if (input.includeFacets && data.facets)`,
+            # fulltext-search.ts), and stages after, so neither the reply nor the
+            # sidecar carries them otherwise. A fixture's canned `facets` served to
+            # a call that never asked handed the agent partition ids it could not
+            # have seen, and it scoped to one (#3973).
+            if (
+                _name == "fulltext_search"
+                and isinstance(response, dict)
+                and "facets" in response
+                and not args.get("includeFacets")
+            ):
+                response = {k: v for k, v in response.items() if k != "facets"}
+
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
             # fixture carries whatever query it was recorded with, and a
@@ -2482,8 +2496,10 @@ _RECORD_TOKEN = re.compile(r"1:1:([A-Z0-9]+(?:-[A-Z0-9]+)+)", re.IGNORECASE)
 def _attached_record_ids(workspace: Path, person_id: str) -> list[str]:
     """The bare `1:1:` ids attached to a tree person (by tree id, or by a
     FamilySearch id their `ark` names), from the person's own, name and fact
-    refs: the set `extraction_append({ personId })` reads. Mirrors
-    `findAnchor` + `collectSourceRefs` closely enough to stage fixtures."""
+    refs and the `sources` of every relationship the person is an endpoint of:
+    the set `extraction_append({ personId })` reads. Mirrors `findAnchor`,
+    `collectSourceRefs` and `personIdMode`'s relationship read closely enough
+    to stage fixtures."""
     try:
         tree = json.loads((workspace / "tree.gedcomx.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -2496,8 +2512,14 @@ def _attached_record_ids(workspace: Path, person_id: str) -> list[str]:
     if person is None:
         return []
     url = {s.get("id"): s.get("url") or "" for s in tree.get("sources") or [] if isinstance(s, dict)}
+    own_id = person.get("id")
+    relationships = [
+        r for r in tree.get("relationships") or []
+        if isinstance(r, dict) and isinstance(own_id, str)
+        and own_id in (r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
+    ]
     out: list[str] = []
-    for holder in [person, *(person.get("names") or []), *(person.get("facts") or [])]:
+    for holder in [person, *(person.get("names") or []), *(person.get("facts") or []), *relationships]:
         for ref in (holder.get("sources") or []) if isinstance(holder, dict) else []:
             sid = (ref.get("ref") or "").lstrip("#") if isinstance(ref, dict) else ""
             m = _RECORD_TOKEN.search(url.get(sid, ""))

@@ -268,8 +268,7 @@ in the appendix ("Full-Text Search Query Syntax").
   two-step: (1) send a call with `includeFacets: true` explicitly and wait
   for its response, (2) use a `filterParam` value from that response's
   `facets` array as the `collectionId` on the follow-up call. You MUST send
-  `includeFacets: true` — the server may return facets without it, but
-  those do not authorize a scoped follow-up. Never submit the scoped
+  `includeFacets: true`. Never submit the scoped
   call in the same parallel batch as the `includeFacets: true` call.**
 - **Decompose a compound surname into co-occurrence, not a phrase.**
   For an Iberian / Latin-American name (`Given Paterno Materno`, e.g.
