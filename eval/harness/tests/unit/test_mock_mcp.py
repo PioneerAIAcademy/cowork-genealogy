@@ -2796,3 +2796,46 @@ def test_guard_fails_open_and_warns_when_the_build_is_missing(monkeypatch, tmp_p
 
     with pytest.warns(UserWarning, match="rebuild packages/engine/mcp-server"):
         assert mock_mcp._reject_unknown_args("record_search", {"q": "x"}) is None
+
+
+def _index_fields_fixture(tmp_path):
+    fx = tmp_path / "fx"
+    fx.mkdir()
+    (fx / "record-read-idxf.json").write_text(
+        json.dumps(
+            {
+                "tool": "record_read",
+                "args": {"recordId": "IDXF-0001"},
+                "response": {
+                    "persons": [{"id": "p1", "names": [{"given": "A", "surname": "B"}], "facts": [{"type": "Birth", "date": "1839"}]}],
+                    "indexFields": {"p1": {"age": "11"}},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return fx
+
+
+@pytest.mark.requires_engine_build
+def test_record_read_never_returns_index_fields_inline(tmp_path):
+    """Production keeps `indexFields` on the staged element only (#4127): a no-project
+    read carries no age, which is what the live agent saw."""
+    fx = _index_fields_fixture(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(["record-read-idxf"], fx, workspace=tmp_path)
+    body = _extract_response_dict(_invoke(tools_by_name, "record_read", {"recordId": "IDXF-0001"}))
+    assert body["persons"] and "indexFields" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_staged_record_read_keeps_index_fields_on_the_element_only(tmp_path):
+    _copy_scenario(tmp_path)
+    fx = _index_fields_fixture(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(["record-read-idxf"], fx, workspace=tmp_path)
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_read", {"recordId": "IDXF-0001", "projectPath": str(tmp_path)})
+    )
+    assert "indexFields" not in body
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    [element] = envelope["payload"]["results"]
+    assert element["indexFields"] == {"p1": {"age": "11"}}

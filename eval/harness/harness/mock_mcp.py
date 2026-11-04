@@ -1649,6 +1649,14 @@ def create_mock_server(
             ):
                 response = _stage_record_read(_workspace, args, response)
 
+            # Production never returns `indexFields` inline: they ride only on the
+            # staged element. A fixture that carries them (a captured sidecar does)
+            # would otherwise hand the agent the age `toSimplified` dropped, which
+            # is the information the live agent lacked (#4127). Last, after every
+            # step that reads them.
+            if _name == "record_read" and isinstance(response, dict) and "indexFields" in response:
+                response = {k: v for k, v in response.items() if k != "indexFields"}
+
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
             # The fixture keeps the full page; this is what production sends.
