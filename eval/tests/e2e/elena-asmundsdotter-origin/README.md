@@ -1,11 +1,11 @@
-# Elena Asmundsdotter — birthplace and parents (Sweden, born c. 1681)
+# Elena Asmundsdotter — parents (Sweden, born c. 1681)
 
 **Source PID:** `PID-TODO`
 
 Elena Asmundsdotter is deceased (died 23 April 1745, Barsebäck parish).
 
-> Where was Elena Asmundsdotter — the mother of Asmund Jönsson (born 11 September
-> 1718 in Barsebäck parish, Malmöhus, Sweden) — born, and who were her parents?
+> Who were the parents of Elena Asmundsdotter — the mother of Asmund Jönsson
+> (born 11 September 1718 in Barsebäck parish, Malmöhus, Sweden)?
 
 ## What was removed from the starting tree
 
@@ -32,6 +32,30 @@ at Henckelstorp, plus the 1712 christening of Elena's illegitimate daughter (whi
 first names her father) and the parents' 1712 marriage in Elena's home parish.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question asked
+two independent facts (her birthplace, and her parents): "Where was Elena
+Asmundsdotter — the mother of Asmund Jönsson (born 11 September 1718 in
+Barsebäck parish, Malmöhus, Sweden) — born, and who were her parents?"
+Reworded `researcher_question` to the parents only (matching
+`tags.question_type`, and the required findings' 2-to-1 majority on parents
+over birthplace); demoted `f1` (birthplace) to `required: false`, so a run
+that recovers it anyway still gets credit. `f4` (the 1712 marriage) stays
+required — it is embedded proof-chain evidence this indirect-evidence case
+needs to establish the parentage, not a fact the question itself asks for. No
+finding wording changed.
+
+**Re-grading the 3 stamped annotations this demotion affects.** `f1`'s own
+content/evidence is unchanged — only its scoring weight — so every existing
+`per_finding` label for `f1` was carried forward rather than re-litigated.
+Before carrying anything forward, all three annotations were independently
+re-audited against their final trees/research.json and this README's own
+per-finding reachability guidance (below): two (`run-2026-08-25_23-41-49`,
+`run-2026-09-01_22-19-45`) held up cleanly. The third
+(`run-2026-09-18_21-35-53`) had an `f2` grade of `partial` resting on a
+fabricated technical claim (no such relationship exists in the tree at all);
+corrected to `false` for consistency with how the 08-25 run's equivalent
+mistake was graded. See each annotation's own notes for the full reasoning.
 
 Documented conclusion from the "Beyond Parish Registers: A Case Study" FamilySearch
 Wiki article (Sweden):

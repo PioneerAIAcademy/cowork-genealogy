@@ -89,9 +89,16 @@ NEWLY_ENFORCED = {"localities"}
 #: `namesakes` (issue #3363, PR 2) is search-records', which the row lists in its
 #: `callers`, so it resolves. PR 3 adds search-images and search-full-text, which
 #: the row lists in `hookCallers` only (the hook's co-writers).
+#: `hit_verdicts` (issue #3522, PR 2) is evaluate-search-results', a new section and
+#: a new agent: one verdict per full-text hit, routed whole to the agent by the hook.
+#: The row claims the unit plane so the agent's own suite checks the section; without
+#: `unit` the section never reaches the union and this entry would redden the freeze.
+#: It can newly fail another suite only if that suite writes the section, which the
+#: hook denies every caller but the agent.
 ADDED: dict[str, set[str]] = {
     "rejected_links": set(),
     "namesakes": {"search-records", "search-images", "search-full-text"},
+    "hit_verdicts": {"evaluate-search-results"},
 }
 
 #: `questions` gains `proof-conclusion`. The transition it covers —
