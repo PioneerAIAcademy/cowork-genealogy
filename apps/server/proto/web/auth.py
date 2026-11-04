@@ -37,6 +37,15 @@ Settings are read from the environment at call time, so a test can set them per 
   GENEALOGY_MAX_USERS        a positive integer: sign-in admits by user cap and ignores
                              ALLOWED_EMAILS; unset: the allowlist. Anything else refuses to
                              start
+  OPENROUTER_LINKING_ENABLED true: serve the /openrouter routes (#3988) and say so in
+                             /auth/config; unset or false: every /openrouter route is a 404.
+                             Anything else refuses to start
+
+OpenRouter linking (#3988) is the second PKCE round-trip here: the patron's own OpenRouter
+key, stored under the same Fernet key as the FamilySearch grant (``encrypt``), which the
+tool server decrypts (issue #3984). Its state cookie has its own name and salt, so a
+FamilySearch state cookie never validates as an OpenRouter one, and it carries the session's
+uid, so a callback finishes only for the user who started it.
 """
 
 from __future__ import annotations
@@ -93,6 +102,16 @@ COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
 FS_OAUTH_COOKIE = "fs_oauth"
 FS_OAUTH_MAX_AGE = 600
 DEV_LOGIN_EMAIL = "dev@localhost"
+# #3988: the OpenRouter link's state cookie. Never FS_OAUTH_COOKIE: the two flows would
+# overwrite each other's verifier.
+OR_OAUTH_COOKIE = "or_oauth"
+OR_OAUTH_MAX_AGE = 600
+
+# OpenRouter's PKCE flow (https://openrouter.ai/docs/use-cases/oauth-pkce). Module
+# constants, not settings: a test fakes the exchange through ``transport=``.
+OPENROUTER_AUTH_URL = "https://openrouter.ai/auth"
+OPENROUTER_KEYS_URL = "https://openrouter.ai/api/v1/auth/keys"
+OPENROUTER_KEY_LABEL = "Genealogy research beta"
 
 # FamilySearch endpoints (packages/engine/mcp-server/src/auth/config.ts).
 FS_AUTHORIZE_URL = "https://ident.familysearch.org/cis-web/oauth2/v3/authorization"
@@ -192,6 +211,20 @@ def uploads_setting() -> bool | None:
     raise RuntimeError(f"UPLOADS_ENABLED is {_env('UPLOADS_ENABLED')!r}: set it to true or false, or leave it unset")
 
 
+def openrouter_linking_enabled() -> bool:
+    """``OPENROUTER_LINKING_ENABLED`` (#3988): off when unset or empty, else ``true``/``false``
+    in any case. Any other value raises, as ``GENEALOGY_CHAT`` and ``UPLOADS_ENABLED`` do."""
+    raw = _env("OPENROUTER_LINKING_ENABLED").lower()
+    if raw in ("", "false"):
+        return False
+    if raw == "true":
+        return True
+    raise RuntimeError(
+        f"OPENROUTER_LINKING_ENABLED is {_env('OPENROUTER_LINKING_ENABLED')!r}: set it to true or false, "
+        "or leave it unset"
+    )
+
+
 def max_users() -> int | None:
     """``GENEALOGY_MAX_USERS``: the user cap, or None (unset or empty) for the allowlist.
     Raises unless it is a positive integer, so a typo never falls back to the allowlist."""
@@ -263,11 +296,12 @@ def preflight() -> None:
       empty SESSION_SECRET forges every session and the OAuth state; a default or empty
       FS_TOKEN_ENC_KEY encrypts every grant under a public string. Only http with
       FamilySearch off (compose's dev-login tier) may start on the defaults.
-    - ``GENEALOGY_CHAT`` other than true/false, or ``GENEALOGY_MAX_USERS`` other than a
-      positive integer, at any scheme.
+    - ``GENEALOGY_CHAT`` or ``OPENROUTER_LINKING_ENABLED`` other than true/false, or
+      ``GENEALOGY_MAX_USERS`` other than a positive integer, at any scheme.
     """
     base_path()
     chat_enabled()
+    openrouter_linking_enabled()
     max_users()
     fs_on = familysearch_enabled()
     if fs_on:
@@ -329,6 +363,33 @@ def read_oauth_state_cookie(token: str | None) -> dict[str, Any] | None:
     except BadSignature:
         return None
     return data if isinstance(data, dict) else None
+
+
+def _openrouter_serializer() -> URLSafeTimedSerializer:
+    # Its own salt: under "fs-oauth" a FamilySearch state cookie would validate here.
+    return URLSafeTimedSerializer(session_secret(), salt="or-oauth")
+
+
+def openrouter_state_cookie(uid: str, verifier: str, state: str, next_route: str | None) -> str:
+    """The OpenRouter link's state: the session's uid, the PKCE verifier and the state the
+    callback URL carries back. ``next`` as for FamilySearch, validated on the way in and out."""
+    payload = {"uid": uid, "verifier": verifier, "state": state}
+    if next_route and SAFE_NEXT_RE.match(next_route):
+        payload["next"] = next_route
+    return _openrouter_serializer().dumps(payload)
+
+
+def read_openrouter_state_cookie(token: str | None) -> dict[str, Any] | None:
+    """The payload, or None for a missing, forged, expired or malformed cookie."""
+    if not token:
+        return None
+    try:
+        data = _openrouter_serializer().loads(token, max_age=OR_OAUTH_MAX_AGE)
+    except BadSignature:
+        return None
+    if not isinstance(data, dict) or not all(isinstance(data.get(k), str) and data[k] for k in ("uid", "verifier", "state")):
+        return None
+    return data
 
 
 def redirect_target(next_route: Any) -> str:
@@ -475,6 +536,58 @@ async def fetch_identity(access_token: str) -> dict[str, Any] | None:
         return None
     users = resp.json().get("users") or []
     return users[0] if users and isinstance(users[0], dict) else None
+
+
+# ── the OpenRouter round-trip (#3988) ────────────────────────────────────────────
+
+
+def openrouter_callback_url(state: str) -> str:
+    """``<PUBLIC_URL>/openrouter/callback?state=<state>``. The state rides in the callback
+    URL's own query string: OpenRouter appends ``code`` to the URL it was given, so this
+    works whether or not it also echoes a separate ``state`` parameter (its docs said it did
+    not when the issue was written, and say it does now)."""
+    from urllib.parse import urlencode
+
+    return f"{public_url()}/openrouter/callback?" + urlencode({"state": state})
+
+
+def openrouter_authorize_url(challenge: str, state: str) -> str:
+    from urllib.parse import urlencode
+
+    return OPENROUTER_AUTH_URL + "?" + urlencode({
+        "callback_url": openrouter_callback_url(state),
+        "code_challenge": challenge,
+        "code_challenge_method": "S256",
+        "key_label": OPENROUTER_KEY_LABEL,
+    })
+
+
+async def exchange_openrouter_code(
+    code: str, verifier: str, *, transport: Any = None
+) -> tuple[str | None, int | None]:
+    """Code + verifier -> ``(key, None)``; ``(None, status)`` on a non-200 or a 200 with no
+    key; ``(None, None)`` when no response came back. Never returns the body: the caller
+    logs the status only. ``transport`` is for tests."""
+    import httpx
+
+    extra: dict[str, Any] = {"transport": transport} if transport is not None else {}
+    try:
+        async with httpx.AsyncClient(timeout=30, **extra) as client:
+            resp = await client.post(
+                OPENROUTER_KEYS_URL,
+                json={"code": code, "code_verifier": verifier, "code_challenge_method": "S256"},
+                headers={"Accept": "application/json"},
+            )
+    except httpx.HTTPError:
+        return None, None
+    if resp.status_code != 200:
+        return None, resp.status_code
+    try:
+        body = resp.json()
+    except ValueError:
+        return None, resp.status_code
+    key = body.get("key") if isinstance(body, dict) else None
+    return (key, None) if isinstance(key, str) and key.strip() else (None, resp.status_code)
 
 
 def expires_at_from(token_json: dict[str, Any]) -> datetime:

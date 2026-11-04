@@ -22,6 +22,9 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /api/projects/{id}/download             the project as a zip, streamed from /var/tmp (#3987)
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
   GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
+  GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
+                                                the patron's own OpenRouter key (#3988; served only
+                                                with OPENROUTER_LINKING_ENABLED=true; cookie needed)
   GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
   GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
   GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
@@ -57,6 +60,7 @@ queue URL, the shim's shape; required with the chat on -- unset or empty refuses
 GENEALOGY_CHAT (unset or true; false serves no /api/sessions route and needs no queue),
 GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user cap does),
 UPLOADS_ENABLED (unset or false: the project upload route answers 404; true or false only),
+OPENROUTER_LINKING_ENABLED (unset or false: no /openrouter route; true or false only),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
@@ -430,6 +434,10 @@ class Store(Protocol):
         self, project_id: str, session_id: str, subpath: str, after: int, limit: int
     ) -> list[tuple[int, Any]]: ...
     async def grant_ciphertexts(self, user_id: str) -> tuple[str | None, str | None]: ...
+    # #3988: the patron's OpenRouter key, CIPHERTEXT only (auth.encrypt), in users.openrouter_key_enc.
+    async def openrouter_key_enc(self, user_id: str) -> str | None: ...
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None: ...
+    async def clear_openrouter_key(self, user_id: str) -> None: ...
 
 
 class Queue(Protocol):
@@ -1377,6 +1385,24 @@ class PgStore:
         async with await self._connect() as conn:
             await conn.execute("UPDATE users SET sessions_revoked_at = now() WHERE id = %s", (user_id,))
 
+    # -- OpenRouter key (#3988, 016) ---------------------------------------------------
+
+    async def openrouter_key_enc(self, user_id: str) -> str | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute("SELECT openrouter_key_enc FROM users WHERE id = %s", (user_id,))
+            row = await cur.fetchone()
+        return row["openrouter_key_enc"] if row else None
+
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None:
+        """Ciphertext only: the route encrypts with ``auth.encrypt`` before the call. A new
+        link replaces the old key."""
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET openrouter_key_enc = %s WHERE id = %s", (key_enc, user_id))
+
+    async def clear_openrouter_key(self, user_id: str) -> None:
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET openrouter_key_enc = NULL WHERE id = %s", (user_id,))
+
     async def store_grant(
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None:
@@ -1786,6 +1812,8 @@ def create_app(
     app.state.chat = auth.chat_enabled()
     # #3987: None (unset), True or False; a bad value refuses here, as GENEALOGY_CHAT does.
     app.state.uploads = auth.uploads_setting()
+    # #3988: off unless true; a bad value refuses here. Off registers no /openrouter route.
+    app.state.openrouter = auth.openrouter_linking_enabled()
     app.state.store = store
     # #3985: a chat-off tier has no queue, even when a caller passes one.
     app.state.queue = queue if app.state.chat else None
@@ -1996,6 +2024,8 @@ def create_app(
         # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
         if app.state.uploads is not None:
             config["uploads"] = app.state.uploads
+        # #3988: always sent, so the browser app (#4001) shows the OpenRouter page only on true.
+        config["openrouter"] = app.state.openrouter
         return config
 
     @app.get("/auth/me")
@@ -2109,6 +2139,73 @@ def create_app(
         )
         resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp
+
+    # -- OpenRouter linking (#3988) ---------------------------------------------------
+    # Registered only with OPENROUTER_LINKING_ENABLED=true, so with it off every /openrouter
+    # route is a 404 before any cookie is read, as /api/sessions is with the chat off. Each
+    # route takes current_user, so a blocked or revoked session is refused on all of them.
+
+    linking = app if app.state.openrouter else APIRouter()
+
+    @linking.get("/openrouter")
+    async def openrouter_status(request: Request, response: Response, user: User = Depends(current_user)) -> dict:
+        """``{linked: bool}`` for the browser app's OpenRouter page (#4001). Never the key."""
+        response.headers["Cache-Control"] = "private, no-store"
+        return {"linked": await _store(request).openrouter_key_enc(user.id) is not None}
+
+    @linking.get("/openrouter/link")
+    async def openrouter_link(next: str | None = None, user: User = Depends(current_user)) -> Response:
+        """Start OpenRouter's PKCE flow: the state cookie (uid, verifier, state), then a
+        redirect to openrouter.ai, whose callback URL carries the state back."""
+        verifier, challenge = auth.pkce()
+        state = secrets.token_urlsafe(16)
+        resp = RedirectResponse(auth.openrouter_authorize_url(challenge, state))
+        resp.set_cookie(
+            auth.OR_OAUTH_COOKIE, auth.openrouter_state_cookie(user.id, verifier, state, next),
+            max_age=auth.OR_OAUTH_MAX_AGE, **auth.cookie_kwargs(),
+        )
+        return resp
+
+    @linking.get("/openrouter/callback")
+    async def openrouter_callback(
+        request: Request, code: str | None = None, state: str | None = None, user: User = Depends(current_user)
+    ) -> Response:
+        """Where openrouter.ai sends the browser back. Refused, writing nothing: a missing or
+        invalid state cookie, a cookie another user's session started, a missing code or a
+        state that does not match, and a failed exchange. Only then is the key encrypted
+        (``auth.encrypt``, the FamilySearch grant's Fernet key) and stored. The state cookie
+        is dropped on every outcome, so it is single-use. The key and the exchange's body
+        are never logged; a failed exchange logs its status only."""
+        fail = "Linking OpenRouter failed; return to the app and try again."
+
+        def page(text: str, status: int) -> HTMLResponse:
+            resp = HTMLResponse(f"{text} {fail}", status_code=status)
+            resp.delete_cookie(auth.OR_OAUTH_COOKIE, path=auth.cookie_path(), samesite="lax", secure=auth.is_https())
+            return resp
+
+        data = auth.read_openrouter_state_cookie(request.cookies.get(auth.OR_OAUTH_COOKIE))
+        if data is None:
+            return page("Missing or invalid link state.", 400)
+        if data["uid"] != user.id:
+            return page("This link was started from another account.", 400)
+        if not code or not state or state != data["state"]:
+            return page("Link state mismatch.", 400)
+        key, status = await auth.exchange_openrouter_code(code, data["verifier"])
+        if key is None:
+            log.warning("ev=openrouter_exchange_failed status=%s", status if status is not None else "no_response")
+            return page("OpenRouter did not issue a key.", 502)
+        await _store(request).set_openrouter_key(user.id, auth.encrypt(key))
+        resp = RedirectResponse(auth.redirect_target(data.get("next")))
+        resp.delete_cookie(auth.OR_OAUTH_COOKIE, path=auth.cookie_path(), samesite="lax", secure=auth.is_https())
+        return resp
+
+    @linking.post("/openrouter/unlink")
+    async def openrouter_unlink(request: Request, user: User = Depends(current_user)) -> dict:
+        """Forget the key: the column goes NULL and nothing is sent to OpenRouter (the page
+        tells the patron to delete the key there, plan W4). POST only: the session cookie is
+        SameSite=Lax, so a GET could be fired from another site."""
+        await _store(request).clear_openrouter_key(user.id)
+        return {"linked": False}
 
     # -- projects -----------------------------------------------------------------
 

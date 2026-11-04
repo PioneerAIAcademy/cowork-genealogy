@@ -107,6 +107,8 @@ class FakeStore:
         # U23: turns a worker has received (a put-back must leave them running), and put-backs.
         self.received: set[str] = set()
         self.put_back: list[str] = []
+        # #3988: users.openrouter_key_enc, as the route passed it (ciphertext).
+        self.openrouter_keys: dict[str, str] = {}
 
     def seed_session(
         self, session_id: str = "sess_1", project_id: str = "proj_1", owner: str | None = USER_A.id
@@ -306,6 +308,15 @@ class FakeStore:
             "writes": old.get("writes", 0) + 1,
         }
 
+    async def openrouter_key_enc(self, user_id: str) -> str | None:
+        return self.openrouter_keys.get(user_id)
+
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None:
+        self.openrouter_keys[user_id] = key_enc
+
+    async def clear_openrouter_key(self, user_id: str) -> None:
+        self.openrouter_keys.pop(user_id, None)
+
 
 class FakeQueue:
     def __init__(self, fail: bool = False) -> None:
@@ -486,7 +497,7 @@ async def test_state_reads_documents_and_the_unserved_routes_say_so():
         # design rests on, so a 501 here is the feature missing, not a gap in the tier.
         assert (await c.post(f"/api/sessions/{row.session_id}/interrupt")).status_code == 202
         config = (await c.get("/auth/config")).json()
-        assert config == {"familysearch": False, "devLogin": True}
+        assert config == {"familysearch": False, "devLogin": True, "openrouter": False}
         assert (await c.get("/auth/me")).json() == {"id": USER_A.id, "email": USER_A.email}
 
 
@@ -1435,7 +1446,7 @@ async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
 
 AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "SESSION_SECRET", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS",
             "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN", "GENEALOGY_CHAT", "GENEALOGY_MAX_USERS",
-            "UPLOADS_ENABLED")
+            "UPLOADS_ENABLED", "OPENROUTER_LINKING_ENABLED")
 
 
 @pytest.fixture(autouse=True)
