@@ -180,14 +180,16 @@ const HINTS: Readonly<Record<string, Hint>> = {
   },
   // Both agents that call it search by place only, so the hint does not offer
   // `subject` or `keywords` as a record-type filter.
+  // Every alias sent is covered: a second one left to the generic line would be
+  // offered `keywords`.
   catalog_search: (unknown) => {
-    const alias = firstOf(unknown, RECORD_TYPE_ALIASES);
-    if (alias === undefined) return null;
+    const aliases = unknown.map(([k]) => k).filter((k) => RECORD_TYPE_ALIASES.includes(k));
+    if (aliases.length === 0) return null;
     return {
       message:
-        `catalog_search has no record-type filter, so drop ${alias} and search by place. To list record ` +
-        `volumes by type, use volume_search's recordTypeGroups (an array of group names). ${groupsLine()}`,
-      covers: [alias],
+        `catalog_search has no record-type filter, so drop ${listOf(aliases)} and search by place. To list ` +
+        `record volumes by type, use volume_search's recordTypeGroups (an array of group names). ${groupsLine()}`,
+      covers: aliases,
     };
   },
   extraction_append: (unknown) => {

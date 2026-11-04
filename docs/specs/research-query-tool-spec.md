@@ -377,7 +377,7 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
   the answer's shape depend on the arguments, the reason T2.1's nested
   `include` was rejected — and the `sections` near-miss message is unchanged
   (`SECTIONS_NEAR_MISS`; over MCP `server.ts`'s unknown-argument guard answers
-  it before the handler, a direct call gets it from the handler).
+  it before the handler, a direct call with no `section` gets it from the handler).
   What is plural is the id: `personId`, `assertionId`, `sourceId`, `recordId`.
   - *The demand.* All 11 recorded plural attempts (1 in the e2e corpus, 10 in
     unit logs, counted for the T2.3 plan) asked for several **sections** and
@@ -439,7 +439,7 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
 | A supplied filter not in that section's allow-list (§2.1) | `{ ok: false, errors }` naming the filter and the section |
 | `filters` or `filter` sent (filter arguments bundled in one object, stringified or not) | Refused by `server.ts`'s unknown-argument guard before the handler runs; the handler would ignore the key and read the whole section. The message says each filter is its own argument beside `section`, lists the filters the requested section takes (read from `SECTION_FILTERS`), and says a key outside that list does not exist there, so with none left the call reads the whole section. A section with no filters says so; with no known `section` it points to the tool description. The value is never unwrapped and run |
 | `entryId` sent | Refused by the guard before the handler runs. On a section with a filter on an entry's own id (`questionId`, `sourceId`, `assertionId`, `conflictId`) the message names that filter; on any other section it says to drop `entryId` and read the section; with no known `section` it lists the sections that read one entry by its id. It never names a writer tool, where `entryId` is a parameter |
-| `sections` sent | Refused by the guard before the handler runs, with `SECTIONS_NEAR_MISS`; a direct call gets the same text from the handler |
+| `sections` sent | Refused by the guard before the handler runs, with `SECTIONS_NEAR_MISS`. A direct call gets the same text from the handler only when `section` is missing; with a valid `section` the handler ignores `sections` |
 | A filter value that is neither a string nor (on the id keys that take one) a list — a number, boolean, object or `null` | `{ ok: false, errors }` (`'<key>' must be a string …`). Before T2.3 these answered `ok: true` with `count: 0`, and `null` matched items whose field was `null` |
 | `planItemId: null` | `{ ok: false, errors }` — **changed** in T2.3; it used to return every log entry with a null `plan_item_id`, an undocumented behaviour no recorded call relied on |
 | A list on a key other than `personId`, `assertionId`, `sourceId`, `recordId`, `conflictId` | `{ ok: false, errors }` naming the keys that take one |
