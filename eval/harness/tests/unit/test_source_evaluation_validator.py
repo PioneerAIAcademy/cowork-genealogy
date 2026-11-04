@@ -1902,3 +1902,26 @@ def test_the_one_death_index_name_conflict_is_not_a_birth_flag():
 def test_the_guard_is_skipped_without_its_tag():
     with pytest.raises(pytest.skip.Exception):
         _age_guard(_TALLMAN_HEADER + _BAD_BIRTH_ROW, {**_AGE_TEST, "tags": []}, agent_returns=None)
+
+
+# The agent's own return pads a plain-text table: no leading pipe, `-+-` rules.
+# The first version read only leading-pipe tables, so the live baseline run that
+# flagged the 1850, 1865 and 1910 censuses passed this guard.
+_PADDED_TABLE = "\n".join(
+    [
+        "Conclusion         | Profile value      | Cen-1850        | Cen-1865        | Cen-1870",
+        "-------------------+--------------------+-----------------+-----------------+----------",
+        "Birth year         | 1838 (30 Nov 1838) | 1839 [CONFLICT] | 1839 [CONFLICT] | 1841 [cen. var]",
+        "Birth month/day    | 30 November        | -               | -               | -",
+    ]
+)
+
+
+def test_a_padded_table_without_leading_pipes_is_read():
+    flagged = _VALIDATOR._age_derived_flags(_PADDED_TABLE, _VALIDATOR._AGE_DERIVED_SOURCES)
+    assert "1850 census" in flagged and "1865 census" in flagged
+
+
+def test_a_padded_table_that_says_cen_var_is_not_flagged():
+    clean = _PADDED_TABLE.replace("[CONFLICT]", "[cen. var]")
+    assert _VALIDATOR._age_derived_flags(clean, _VALIDATOR._AGE_DERIVED_SOURCES) == []

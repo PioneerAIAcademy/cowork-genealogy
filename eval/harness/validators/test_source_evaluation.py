@@ -1312,6 +1312,10 @@ _AGE_DENIED_RE = re.compile(
     re.IGNORECASE,
 )
 _AGE_FINDING_HEAD_RE = re.compile(r"^\W*finding\s+\d+", re.IGNORECASE)
+# A table row with or without a leading pipe: the agent's own return pads columns
+# ("Birth year   | 1838 | 1839 [CONFLICT] | ..."); a leading-pipe-only match
+# read that whole table as prose.
+_AGE_ROW_RE = re.compile(r"^[^|\n]*\|[^|\n]*\||^[-:+ ]*[-:]+[+|][-:+| ]*$")
 
 
 def _age_flag_text(text: str) -> bool:
@@ -1347,11 +1351,11 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
 
     header: list[str] = []
     for i, line in enumerate(lines):
-        if not _TABLE_ROW_RE.match(line):
+        if not _AGE_ROW_RE.match(line):
             header = []
             continue
         cells = _age_table_cells(line)
-        if re.fullmatch(r"[\s:|-]+", line):
+        if re.fullmatch(r"[\s:|+-]+", line):
             continue
         if not header:
             header = cells
@@ -1365,7 +1369,7 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
 
     in_birth_finding = False
     for line in lines:
-        if _TABLE_ROW_RE.match(line):
+        if _AGE_ROW_RE.match(line):
             continue
         if _AGE_FINDING_HEAD_RE.match(line):
             in_birth_finding = bool(re.search(r"\bbirth\b", line, re.IGNORECASE))
