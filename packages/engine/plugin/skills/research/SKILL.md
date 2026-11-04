@@ -184,11 +184,13 @@ person ID, go to `@plugin:search-images` with the message copied verbatim and no
 `projectPath`, even when the message names no images; relay everything after
 its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
 with no hand-off. A transcription you deliver yourself: call
-`image_transcribe({ projectPath, imageId | ark | file })`, show the page from
+`image_transcribe({ projectPath, imageId | ark | file })` — always with
+`projectPath` when the folder holds a `research.json`, however new or empty the
+project — show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
-link. With no project, a transcription is of one named image only: call
-`image_transcribe({ imageId | ark })` with no `projectPath` and show its inline
-`transcription`; finding or reading more pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
+link. Only when the folder holds no `research.json`: one named image, called
+without `projectPath`, its `transcription` shown inline; finding or reading more
+pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
