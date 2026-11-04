@@ -1067,8 +1067,8 @@ mode; lead ruling 2026-09-27).
 > A project also extracts every indexed record attached to its subject
 > before its first question, with no search at all. So a record that an
 > expected finding cites by its `1:1:` ark, and that is attached to a
-> subject person in the starting tree (at person, name or fact level),
-> is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
+> subject person in the starting tree (at person, name or fact level, or
+> on a relationship the subject is an endpoint of), is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
 > lists it for that fixture. The leak check,
 > `test_e2e_attached_evidence.py`, fails on an unlisted one, on a stale
 > entry and on a malformed one. An entry means the record is evidence
@@ -1257,13 +1257,14 @@ entries in the committed corpus. `research_append` writes a named section, and
 
 **This arm is caller-scoped, not main-thread-scoped**, which is the trap: it is
 easy to describe as "the router doing a delegate's job" because that is the
-`routed` rule, and miss that `owner_denied` has **six**. `out_of_lane` fires
+`routed` rule, and miss that `owner_denied` has **seven**. `out_of_lane` fires
 for a **named** subagent reaching outside the lanes `AGENT_WRITABLE_SECTIONS`
 grants it; `declaration` fires on a routed claim, field-scoped rather than
 section-scoped; and `owned_field` fires on a routed field keyed on presence
 rather than on a claim value (`project.status`); `claim` fires on a conflict's
 analytical product; and `owned_append` fires on a `questions` append from
-anyone but question-selection. All reach this array — the append happens before the rule
+anyone but question-selection; and `main_thread_field` fires on a
+`project.objective` write from **any** subagent. All reach this array — the append happens before the rule
 branch — so an entry here does not imply a main-thread caller. Most committed
 entries are `routed`; at least one is `out_of_lane` (6 and 1 of 7 — measured at
 7315364c).

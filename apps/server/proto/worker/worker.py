@@ -31,7 +31,7 @@ The real turn: the SDK session id is CHOSEN by the worker at claim time --
 first transcript append can never land under an id no row names -- and passed as
 ``session_id=`` on a fresh session or ``resume=`` when the session store already holds
 entries for it (a mid-turn kill on either path resumes on redelivery); the options from
-``options.py``; ``get_server_info()`` checked for the thirty bare agent names
+``options.py``; ``get_server_info()`` checked for the thirty-one bare agent names
 (``EXPECTED_AGENTS``, a constant -- never the set that happened to load) and the 2
 ``genealogy-research:<skill>`` commands (``EXPECTED_SKILLS``, a literal -- never a count
 of the directory the SDK loads from) BEFORE the query bills a token (D15) -- a miss
@@ -308,6 +308,7 @@ EXPECTED_AGENTS = frozenset({
     "citation",
     "conflict-resolution",
     "convert-dates",
+    "evaluate-search-results",
     "gps-mentor",
     "historical-context",
     "hypothesis-tracking",
@@ -3143,6 +3144,15 @@ async def _run_turn(
             # host's reply.
             research, offered = close_context(conn, boundary, project_id,
                                               getattr(result, "result", None), log)
+            # A step halt ends the turn before the model writes its offer -- two spawns
+            # in one message are enough -- so when the last line offers nothing, the
+            # offer the halt named stands in for it, shown as the turn's last line so the
+            # buttons have a question to answer.
+            halt_offer = getattr(step_gate, "halt_offer", None)
+            if halt_offer and boundary is not None and not offered:
+                offered = halt_offer
+                write_event(conn, session_id, {"kind": "text", "text": boundary.offer_line(halt_offer)},
+                            TRANSIENT_KINDS, counters)
             outcome = TRANSCRIPT_LOST_OUTCOME if transcript_lost else (
                 terminal["reason"]
                 or (TERMINAL_STOPPED if stop_requested(conn, session_id) else OK_OUTCOME)

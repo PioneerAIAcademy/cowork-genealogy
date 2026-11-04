@@ -1,0 +1,198 @@
+{
+  "run_log": "v1_2026-11-04_08-19-11.json",
+  "annotator": "mbadiweikennaya9@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Deed names \"Iram Hyde of Jackson, Washington County, NY and Mary his wife\" (1829). Match is correct: rare given name, known wife, established location. new_vital_info false: Mary already on the Couple, property deed adds no birth/death/marriage date or place."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All steps done in order: project_context → sidecar_read → tree_query → research_append. Contract lines present (hitRef, verdict, newVitalInfo, alreadyExtracted). Nothing skipped."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "sidecar_read got the right ref; tree_query got I1 plus relatives; research_append had all required fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale). No fixture_not_found, no bad args."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Rationale names the deciding tie: rare given name + known wife Mary Robertson + Jackson location. That's a relative in the right relationship, correct basis for Match per the rules. No point disagrees."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Mary already on the Couple edge — not new. Deed adds no birth/death/marriage date or place. Residence is not a vital fact. Flag false with correct reasoning."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w4k",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two plain sentences, no labels or identifiers. Names the record type, date, and what made it a Match. Notes nothing new for the tree."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Possible Match correct: surname Hyde + bride's first name Mary fit, but \"Fran\" (for Iram) and \"Albert\" (for Robertson) are garbled — transcription error explains it, not a full match. new_vital_info false: already extracted (src_006 cites this record)."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All steps done: project_context → sidecar_read → tree_query → research_append. Summary names the record, the deciding garbled names, and that it's already extracted. Nothing skipped."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "sidecar_read got the right ref (log_017.json#3Q9M-CSK3-ZSH4); tree_query got I1 and relatives; research_append had correct section, op, verdict, flag and rationale. No fixture_not_found."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Rationale names what fits (surname, bride's first name Mary, Jackson, 1820) and what's garbled (Iram → \"Fran\", Robertson → \"Albert\"). Correct basis for Possible Match per the garbled-name rule."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Already-extracted rule correctly applied: src_006 cites this record, tree Couple R1 cites the same source. Flag false with the right reasoning."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_m2q",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two plain sentences, no identifiers. Names the record (church marriage register, Jackson, 1820), explains the garbled names as the deciding factor, and notes it's already extracted. Clean."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_x2e",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Negative test (hand-back). Agent routed to record-structurer without reading, judging, or writing anything. Correct behavior."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_x2e",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Single-line hand-back with the request in one clause, no extra work. That's all that's required on a routing test."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_x2e",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No tool calls made — agent declined before any call. N/A is right."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_n6t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Negative test (no-hit-ref hand-back). Request covered all hits of log_017 instead of a single hitRef. Agent declined correctly with the right explanation. No tool calls, no verdict written."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_n6t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "One-line hand-back naming the constraint (single hit ref required). That's the full required output for this test."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_n6t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "No tool calls — agent declined before any call. N/A correct."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Possible Match correct: 1828 Jackson deed names \"Iram Hyde\" as witness, name + place + time align with I1 (Jackson from 1826). But the hit names no relative, age, or occupation — nothing beyond name/time/place, so Possible Match per the rules. new_vital_info false: witness line adds no birth/death/marriage date or place, no new relative."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "All steps done: project_context → sidecar_read → tree_query → research_append. Verdict, flag, and rationale all recorded. Nothing skipped."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "sidecar_read got the right ref (log_022.json#FTXT-JX28); tree_query got I1 and relatives; research_append had correct section, op, verdict, flag and rationale. No fixture_not_found."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Verdict reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Rationale names the fit (distinctive name, Jackson, 1828) and the gap (no relative, age, or occupation to confirm independently). Correct basis for Possible Match — Match needs one more independent tie, and this hit has none."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Witness line adds no birth/death/marriage date or place, no new relative. Residence not a vital fact. Flag false with correct reasoning."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_w9t",
+      "dimension_source": "rubric",
+      "dimension_name": "Summary for the user",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Two plain sentences, no identifiers. Names the record (1828 deed, Jackson, witness line), explains why Possible Match (name and place fit, nothing else confirms it), notes nothing new for the tree."
+    }
+  ]
+}
