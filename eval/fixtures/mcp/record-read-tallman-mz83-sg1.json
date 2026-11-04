@@ -1,6 +1,6 @@
 {
   "tool": "record_read",
-  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age. The raw recapi body carried the age (PR_AGE 40), which record_read never returned, so it rides in `indexFields`, where a captured sidecar keeps it; the mock never serves it inline and computes `birthRanges` from it. The age is not in the bundle: it is the age the issue gives (1850: 11, 1865: 26, 1910: 71, and the death indexes 74) or the year the index's bare birth year implies (1870: 29, 1880: 40).",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age. The raw recapi body carried the age (PR_AGE 40), which record_read never returned, so it rides in `indexFields`, where a captured sidecar keeps it; the mock never serves it inline and computes `birthRanges` from it. The age is not in the bundle: it is the age the issue gives (1850: 11, 1865: 26, 1910: 71, and the death indexes 74) or the year the index's bare birth year implies (1870: 29, 1880: 40). The one collection-level title was reconciled to the corpus spelling 'United States Census, 1880' (no comma), as the other mock-world census fixtures carry it, so the collection-attribute join holds; the per-person titles and citations keep the bundle's own spelling.",
   "args": {
     "recordId": "~MZ83-SG1"
   },
@@ -405,7 +405,7 @@
       {
         "id": "sd_c_1417683",
         "resource_type": "Collection",
-        "title": "United States, Census, 1880",
+        "title": "United States Census, 1880",
         "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
         "coverage": {
           "place_rep_id": "1",
