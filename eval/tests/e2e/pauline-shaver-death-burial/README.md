@@ -1,21 +1,22 @@
-# Pauline 'Polly' Wilkins Shaver — death and burial (1935)
+# Pauline 'Polly' Wilkins Shaver — death (1935)
 
 **Fixture ID:** `pauline-shaver-death-burial`
 **Subject PID:** 27HB-Z94
-**Research question:** When did Pauline 'Polly' Wilkins Shaver die, and where is she buried?
+**Research question:** When did Pauline 'Polly' Wilkins Shaver die?
 
 ## What the fixture tests
 
-The agent must find the death date and burial place for Pauline "Polly" Wilkins Shaver
+The agent must find the death date for Pauline "Polly" Wilkins Shaver
 (born 9 June 1848, Muhlenberg, Kentucky). Both the death fact and burial fact have been
-stripped from the starting tree. The agent must recover them by searching records.
+stripped from the starting tree. The agent must recover the death by searching records;
+recovering the burial too earns bonus credit.
 
 ## Expected findings
 
 | ID | Required | Finding |
 |----|----------|---------|
 | f1 | yes | Death: 30 November 1935, Muhlenberg, Kentucky |
-| f2 | yes | Burial: Shavers Cemetery, Lynn City, Muhlenberg, Kentucky |
+| f2 | no (bonus) | Burial: Shavers Cemetery, Lynn City, Muhlenberg, Kentucky |
 
 ## Key sources the agent should find
 
@@ -41,3 +42,13 @@ census records anchoring her to Muhlenberg County, Kentucky throughout her life.
 Kentucky death record names her father (Elijah Wilkins), directly confirming identity.
 The cemetery (Shavers Cemetery) shares the family surname, making it memorable and
 distinctive.
+
+## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (death, and burial): "When did Pauline 'Polly' Wilkins
+Shaver die, and where is she buried?" Reworded `researcher_question` to the
+death only; demoted `f2` (burial) to `required: false`, so a run that
+recovers it anyway still gets credit. No finding wording changed, and this
+fixture has no committed runs to re-grade. This is this fixture's first
+"Notes for reviewers" section.
