@@ -656,7 +656,7 @@ const NULLABLE_FIELDS = new Set([
   "ruled_out_reason", "hypothesis_id", "match_score", "superseded_by",
   "date", "date_certainty", "place", "informant_bias_notes",
   "plan_item_id", "notes", "url", "url_archived", "log_entry_id",
-  "structured_value", "fallback_for", "capture_filename", "record_persona_id",
+  "structured_value", "fallback_for", "capture_filename", "record_persona_id", "record_document_id",
   "results_ref", "results_available", "standard_place", "distance_from_previous_km",
   "conflict_ids", "conflict_note", "justification",
   // search_stop fields
@@ -734,7 +734,7 @@ export const RESEARCH_SHAPES = {
     "who", "what", "when_created", "when_accessed", "where", "where_within",
   ]),
   assertion: new Set([
-    "id", "source_id", "record_id", "record_role", "record_persona_id",
+    "id", "source_id", "record_id", "record_role", "record_persona_id", "record_document_id",
     "fact_type", "value", "structured_value", "date", "date_certainty",
     "place", "standard_place", "information_quality", "informant",
     "informant_proximity", "informant_bias_notes", "record_basis",
@@ -1299,7 +1299,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     checkAllowedKeys(a, RESEARCH_SHAPES.assertion, "assertions", ap, report);
     checkStringOrNull(
       a,
-      ["date", "place", "standard_place", "record_persona_id", "informant_bias_notes", "superseded_reason"],
+      ["date", "place", "standard_place", "record_persona_id", "record_document_id", "informant_bias_notes", "superseded_reason"],
       ap,
       report
     );

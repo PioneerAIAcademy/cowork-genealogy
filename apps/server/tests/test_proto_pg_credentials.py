@@ -423,6 +423,52 @@ def test_check_at_start_lets_an_unreachable_sas_through_and_caches_a_good_one():
 
 
 
+# The message sas-client 0.2.1.16 raised for a missing object on FS112 (2026-11-03): a plain
+# Exception, chained from another, with SAS's XML body (Status 404, "Object Not Found").
+SAS_404 = ("SAS response error: 404 - <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+           "<sas xmlns=\"http://www.familysearch.org/sas\"><attributes><attribute name=\"Status\">"
+           "<values><value>NDA0</value></values></attribute></attributes></sas>")
+
+
+def sas_404() -> Exception:
+    try:
+        try:
+            raise Exception(SAS_404)
+        except Exception as inner:
+            raise Exception(f"SAS Error: Failed to get 'fch-db' object from SAS: {inner}") from inner
+    except Exception as outer:
+        return outer
+
+
+def test_check_at_start_refuses_an_object_sas_does_not_have():
+    creds = sas_creds(Sas(sas_404()))
+    with pytest.raises(pc.PgCredentialsError, match="SAS has no object fch-db"):
+        creds.check_at_start()
+
+
+def test_an_object_sas_does_not_have_after_start_is_unusable():
+    with pytest.raises(pc.PgCredentialsUnavailable, match="unusable .*SAS has no object fch-db"):
+        sas_creds(Sas(sas_404())).dsn()
+
+
+@pytest.mark.parametrize("exc", [
+    Exception("SAS response error: 503 - <sas/>"),
+    Exception("SAS response error: 4040 - <sas/>"),
+    TimeoutError("timed out"),
+    Exception("Failed to get 'fch-db': connection reset"),
+])
+def test_a_sas_error_other_than_404_stays_an_outage(exc):
+    assert not pc.sas_not_found(exc)
+    assert sas_creds(Sas(exc)).check_at_start() is None
+
+
+def test_sas_not_found_reads_the_whole_chain():
+    inner = Exception(SAS_404)
+    outer = RuntimeError("wrapped")
+    outer.__cause__ = inner
+    assert pc.sas_not_found(outer) and pc.sas_not_found(sas_404())
+
+
 def test_check_at_start_does_not_wait_out_a_hung_sas(caplog):
     release = threading.Event()
     calls = []

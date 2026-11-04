@@ -33,8 +33,9 @@ export interface ProjectListResult {
 }
 
 const FOLDER_MESSAGE =
-  "The task's working folder is the project: pass its absolute path as projectPath, " +
-  "and read what it holds with project_context.";
+  "The task's working folder is the project: pass its absolute path as projectPath. " +
+  "This answer does not say whether the folder holds a project yet: call project_context " +
+  "with that path before routing, and route on what it returns.";
 
 /** Parsed JSON at `ref`, or null when it is absent, unreadable or not JSON. */
 async function readJson(projectPath: string, ref: string): Promise<any> {
@@ -106,7 +107,8 @@ export const projectListSchema = {
   description:
     "Call first, before any other genealogy tool, when the conversation names no projectPath. " +
     "Returns mode and message. mode \"folder\": the task's working folder is the project; pass " +
-    "its absolute path as projectPath and read it with project_context. mode \"hosted\": projects [{projectPath, " +
+    "its absolute path as projectPath and call project_context with it before routing, since this answer " +
+    "does not say whether a project exists there. mode \"hosted\": projects [{projectPath, " +
     "objective, subjects [{id, name}], status, updated}] are the caller's projects, and " +
     "newProjectPath, when present, is where a new project goes. Writes nothing.",
   inputSchema: {

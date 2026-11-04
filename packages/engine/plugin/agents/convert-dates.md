@@ -16,6 +16,7 @@ description: >-
   where both records used the same calendar (use conflict-resolution), or
   explanations of why a calendar convention existed (use historical-context).
 model: claude-sonnet-4-6
+effort: high
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and

@@ -562,26 +562,20 @@ agents.**
 
 | Surface | Honored where | Today |
 |---|---|---|
-| **Agent `model:`** | Cowork, hosted, both harnesses | `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking` → `claude-haiku-5-5`; `search-records`, `timeline` declare none and inherit the session's; every other agent → `claude-sonnet-4-6` |
-| **Skill `model:`** | **the unit eval harness only** | no skill pins one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites` → `low`; `survey-surname`, `search-images`, `search-hints` → `medium`. On the hosted alpha, `ORCHESTRATOR_EFFORT` pins every spawn to `high` (the per-spawn row below), which outranks it |
-| **Session effort** | `.claude/settings.json` `effortLevel` or `ClaudeAgentOptions.effort` (`--effort`), both reaching unpinned subagents on CLI 2.1.215, 2.1.220, 2.1.294 and 2.1.308 (`apps/server/dev/probe_effort_capture.py`, 2026-10-12, 2026-10-20 and 2026-10-22; the harnesses run the hosted CLI, 2.1.308). Hosted: `ORCHESTRATOR_EFFORT` → `build_options` `effort=`, set at sandbox **create** only (`config.Settings`) | both harnesses pin `high` to match Cowork; hosted sets none by default, and the CLI default sends `output_config.effort: high` on main and `claude-sonnet-4-6` subagent requests (2.1.294, measured) |
-| **Per-spawn effort** (hosted, CLI 2.1.294+) | the `Agent` call's own `effort` field, written by `real_agent._pretool_hook` from `SUBAGENT_EFFORT` / `SUBAGENT_EFFORT_BY_AGENT`; outranks the agent definition's `effort:`; matches bare and `genealogy-research:` names. `ORCHESTRATOR_EFFORT` alone pins every helper to `HELPER_DEFAULT_EFFORT` (`high`) so only the main thread moves — measured 2026-10-20: main `medium`, `person-evidence` `high` | unset — the hook adds nothing. `api_calls.effort` records each request's `output_config.effort`; `make alpha-costs` splits the by-agent table on it |
+| **Main thread** `model` + `effort` | hosted alpha and beta, both harnesses — not Cowork | `packages/engine/plugin/main-thread.json`: `claude-sonnet-4-6` at `medium`. Read by `apps/server/app/agent/main_thread.py` (the alpha's runner and control plane, the beta worker) and `eval/harness/harness/main_thread.py` (both harnesses), and passed as `ClaudeAgentOptions(model=, effort=)`, the `--model` / `--effort` flags. Nothing else sets either: no `fly.toml` key, no environment variable, no per-project model. The control-plane image copies the file (`deploy/Dockerfile`); the Cowork zip leaves it out |
+| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Skill `model:` / `effort:`** | nowhere | a skill cannot set either, and none declares one |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites` → `low`; `survey-surname`, `search-images`, `search-hints` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
+| **Per-spawn effort** (CLI 2.1.294+) | the `Agent` call's own `effort` field, which outranks the agent's `effort:` | nothing sets it, and the model set it on none of ~7,000 recorded spawns (committed e2e and unit run logs, and medium and low runs, 2026-11-03). The alpha logs a per-turn count of spawns that carry one; `api_calls.effort` records each request's `output_config.effort`, and `make alpha-costs` splits the by-agent table on it |
 
-> **Do not add a `model:` pin to a new skill.** The mechanism still exists in the
-> unit harness (`session_model_for` in `harness/orchestrator.py` honours it for a
-> `SKILL.md` suite, falling back to `DEFAULT_MODEL`; an agent-keyed suite's main
-> thread always runs `DEFAULT_MODEL`), but nothing uses it: 26 skills pinned `claude-sonnet-4-6` —
-> the harness default — and were deleted, because a pin that changes nothing
-> makes per-step routing look like it exists. To route a step to a different
-> model, delegate it to a plugin agent.
+> **A skill cannot set its model or effort.** To route a step to a different
+> model or level, delegate it to a plugin agent and set both in its file.
 >
 > **Agent `effort:` takes `low|medium|high|xhigh|max` or an integer**, and is a
 > property of the agent *definition*. From CLI 2.1.294 the `Agent` tool's call also
 > takes an `effort`, which overrides the definition's (the field is withdrawn from the
 > schema when `CLAUDE_CODE_EFFORT_LEVEL` is set, which is why the hosted settings never
-> use that variable). The model is told to set it only when asked; the hosted hook sets
-> it from the operator's settings. 2.1.294 also carries two flag-driven mechanisms —
+> use that variable). The model is told to set it only when asked, and nothing else sets it. 2.1.294 also carries two flag-driven mechanisms —
 > lowering an *unpinned* subagent's effort, and a per-subagent `<total_tokens>` budget
 > keyed on the session's effort. On the hosted path's API key on 2026-10-20 the first
 > did not fire (helper at `high` unpinned), and the second was unstable: no
@@ -1309,7 +1303,9 @@ on the delegation tools, and one on the tools only agents hold, which the final
    `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
    or any of its analysis fields set — to `conflict-resolution`, and
    `OWNED_APPENDS` reserves creating a question (`op: "append"` on `questions`)
-   to `question-selection`. The five differ in granularity and key: a whole
+   to `question-selection`; and `MAIN_THREAD_FIELDS` runs the other way,
+   denying `project.objective` to every subagent so only the main thread can
+   rewrite it. The five owner maps differ in granularity and key: a whole
    section, a field at a particular claim value, a field on presence alone, a
    claim spread over several fields of one section, and one op on a section. `project` is co-written — `init-project` authors it and any writer
    may refresh `updated` — so only the one field is routed; `conflicts` is
