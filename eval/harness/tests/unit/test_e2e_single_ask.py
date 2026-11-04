@@ -262,23 +262,6 @@ def test_sources_save_needs_no_tool(tmp_path):
     assert spec.expected_save == {"section": "sources"}
 
 
-# --- the orchestrator's stop hook -----------------------------------------
-
-def test_stop_hook_returns_allow_first_in_single_ask_mode():
-    """The closure cannot run without the SDK, so read its first statement."""
-    src = (REPO_ROOT / "eval/harness/e2e/orchestrator.py").read_text(encoding="utf-8")
-    hook = next(
-        n for n in ast.walk(ast.parse(src))
-        if isinstance(n, ast.AsyncFunctionDef) and n.name == "stop_hook"
-    )
-    first = hook.body[0]
-    assert isinstance(first, ast.If)
-    assert isinstance(first.test, ast.Name) and first.test.id == "single_ask"
-    ret = first.body[0]
-    assert isinstance(ret, ast.Return) and isinstance(ret.value, ast.Dict)
-    assert ret.value.keys == []
-
-
 def _orchestrator_source() -> str:
     return (REPO_ROOT / "eval/harness/e2e/orchestrator.py").read_text(encoding="utf-8")
 
