@@ -1486,6 +1486,22 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     expect(out.hookSpecificOutput.additionalContext).toMatch(/In that case, if the message names more than one goal/);
   });
 
+  it("adds the sources sentence to a researcher's message (#4011)", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "What Kenyan records can I search for him?" }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /Name a source, collection, book or citation only if a tool result in this session returned it/,
+    );
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from collections_search, which locality-guide and research-plan run/);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/verbatim\.\n\nName a source/);
+  });
+
+  it("routes a no-project, no-PID ask for the names in a record set to search-images (#4136)", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Identify all soldiers in Captain Moses Dustin's Company." }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /no FamilySearch person ID, a request for the names and details\s+recorded in a record set .* goes to the\s+search-images agent with no projectPath/s,
+    );
+  });
+
   it("stays silent on a subagent hand-back", () => {
     expect(runNoProjectRoute(JSON.stringify({ prompt: '<agent-message from="a1">done</agent-message>' }))).toEqual({});
   });

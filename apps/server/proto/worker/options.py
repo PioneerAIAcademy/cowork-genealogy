@@ -65,6 +65,7 @@ from app.agent.continue_policy import (
     DELIVERED_REASON,  # noqa: F401 - tests read it off this module
     delivered_stop_reason,
     foreground_rewrite,
+    SOURCES_GUIDANCE,
     DELIVERY_GUIDANCE,
     HOSTED_PLANE_ENV,
     DELIVERED_TOOL,
@@ -945,7 +946,7 @@ def build_worker_options(
     # Unconditional, on the opening turn too: "start a project on X and just give me a
     # plan" is a legitimate turn-1 bounded request, so gating this on `resume` would
     # exempt the very case it exists for.
-    project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
+    project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{DELIVERY_GUIDANCE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
