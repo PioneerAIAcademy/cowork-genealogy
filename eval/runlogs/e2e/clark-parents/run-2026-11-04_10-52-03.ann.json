@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "true",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f2": "The mother relationship and given name are recovered, but the surname Weber, the only identifying element beyond a given name, is absent and the narrative says so; f1 passed with the same missing vitals because \"Adam Schreck\" was a complete name."
+  },
+  "annotator": "praise",
+  "findings_hash": "9c4149411a0f44d86d9d3c6f9854e12da5eea45ca139458393559c813dc53ed4",
+  "blind_bundle_digest": "725a40a3c1cfea418e18d748a7e3236ec1c3bfe913f72358f90d70b33a801f6c"
+}
