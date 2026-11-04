@@ -197,7 +197,16 @@ def env_for_sdk(auth: AuthConfig, *, tool_search: bool = True) -> dict[str, str]
 
     `CLAUDE_CODE_FORK_SUBAGENT=0` matches the hosted agent (`real_agent._sdk_env`):
     no `subagent_type: "fork"`, which the SDK offers by default from CLI 2.1.302.
+
+    An inherited `CLAUDE_CODE_EFFORT_LEVEL` raises: it outranks main-thread.json and
+    every agent's own `effort:`, so the run would grade levels nothing ships with.
     """
+    if os.environ.get("CLAUDE_CODE_EFFORT_LEVEL"):
+        raise ValueError(
+            "CLAUDE_CODE_EFFORT_LEVEL is set in this shell. It overrides the main thread's "
+            "effort (packages/engine/plugin/main-thread.json) and every agent's own `effort:`, "
+            "so the run would not test what ships. Unset it and run again."
+        )
     env = {
         "ENABLE_TOOL_SEARCH": "true" if tool_search else "false",
         "CLAUDE_CODE_FORK_SUBAGENT": "0",

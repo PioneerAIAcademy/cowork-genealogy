@@ -11,7 +11,12 @@ path, port rule and limit itself -- so a builder bug is caught here instead of b
 agreed with. Same posture as scripts/verify-mcpb.sh for the .mcpb.
 
 The offline pip dry-run resolves requirements.txt against the bundle's wheels/ for each
-architecture, so a dependency with no aarch64 wheel fails on an x86_64 CI runner.
+architecture BUILD-INFO.json says it was built for (both when it names none), so a dependency
+with no aarch64 wheel fails a two-arch build on an x86_64 CI runner, and an `--arch x86_64`
+build is not asked for aarch64 wheels it never fetched. `--arch` overrides it.
+
+A BUILD-INFO.json carrying `fs_extras` (build.py's --fs-* flags, U29) must also carry the
+SAS client it names; without `fs_extras` nothing more is required.
 """
 from __future__ import annotations
 
@@ -44,7 +49,8 @@ BUILD_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+\+(dev|\d{4}-\d{2}-\d{2}\.[0-9a-f]
 COMMON_REQUIRED = ("Procfile", "BUILD-INFO.json", "certs/rds-global-bundle.pem")
 REQUIRED = {
     "web": COMMON_REQUIRED + ("requirements.txt", "web/app.py", "web/auth.py", "web/spa.py", "web/feedback.py",
-                              "web/blobstore.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py", "config/familysearch.json",
+                              "web/blobstore.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py",
+                              "pg_credentials.py", "config/familysearch.json",
                               "web-dist/index.html",
                               # Missing, nginx falls back to 8 KB header lines and a patron's
                               # .familysearch.org cookies can 400 every request, or to a 1 MB body
@@ -53,7 +59,7 @@ REQUIRED = {
                               ".platform/nginx/conf.d/01-web-uploads.conf"),
     "worker": COMMON_REQUIRED + ("requirements.txt", "app/__init__.py", "app/agent/__init__.py",
                                  "app/agent/real_agent.py", "proto/enqueue.py", "proto/grants.py",
-                                   "proto/turn_message.py", "proto/migrate.py",
+                                   "proto/turn_message.py", "proto/migrate.py", "proto/pg_credentials.py",
                                  "proto/worker/worker.py", "proto/worker/options.py",
                                  "plugin/.claude-plugin/plugin.json", "plugin/hooks/hooks.json",
                                  # The step boundary. Missing, the worker logs one
@@ -91,6 +97,8 @@ DEV_VALUES = {"WORKER_TURN_USERS": "none"}
 TOOLS_FORBIDDEN_PREFIXES = ("src/", "dev/", "node_modules/typescript/", "node_modules/vitest/",
                             "node_modules/@anthropic-ai/mcpb/")
 HOOK_DIRS = (".platform/hooks/", ".platform/confighooks/")
+SAS_NODE_PACKAGE_JSON = "node_modules/@fs/sas-client/package.json"
+SAS_WHEEL = re.compile(r"wheels/sas_client-[^/]+\.whl", re.I)
 
 
 def tier_of(path: Path) -> str | None:
@@ -166,7 +174,20 @@ def _check_procfile(tier: str, text: str, env: dict[str, str], findings: list[st
         findings.append(f"Procfile --port {ports[0]} differs from the template's PORT={port}")
 
 
-def verify(path: Path, *, pip: bool = True, allow_dev: bool = False, arches: tuple[str, ...] = ARCHES,
+def built_arches(zf: zipfile.ZipFile, names: list[str]) -> tuple[str, ...]:
+    """The architectures BUILD-INFO.json says the bundle's wheels were fetched for, or every one
+    when it names none or something unknown."""
+    if "BUILD-INFO.json" in names:
+        try:
+            got = json.loads(zf.read("BUILD-INFO.json").decode("utf-8")).get("arches")
+        except (ValueError, AttributeError):
+            got = None
+        if isinstance(got, list) and got and all(a in ARCHES for a in got):
+            return tuple(got)
+    return ARCHES
+
+
+def verify(path: Path, *, pip: bool = True, allow_dev: bool = False, arches: tuple[str, ...] | None = None,
            size_limit: int = SIZE_LIMIT_BYTES, tier: str | None = None) -> list[str]:
     findings: list[str] = []
     tier = tier or tier_of(path)
@@ -202,12 +223,40 @@ def verify(path: Path, *, pip: bool = True, allow_dev: bool = False, arches: tup
                                 "non-executable hook")
 
         if tier in ("web", "worker") and "requirements.txt" in names:
-            _check_requirements(zf, names, findings, pip=pip, arches=arches)
+            _check_requirements(zf, names, findings, pip=pip, arches=arches or built_arches(zf, names))
         if tier == "tools":
             _check_tools(zf, names, findings, allow_dev=allow_dev)
         if tier == "web":
             _check_spa(zf, names, findings)
+        if "BUILD-INFO.json" in names:
+            _check_fs_extras(tier, zf.read("BUILD-INFO.json"), names, findings)
     return findings
+
+
+def _check_fs_extras(tier: str, raw: bytes, names: list[str], findings: list[str]) -> None:
+    try:
+        info = json.loads(raw.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError) as exc:
+        findings.append(f"BUILD-INFO.json is not JSON: {exc}")
+        return
+    extras = info.get("fs_extras") if isinstance(info, dict) else None
+    if extras is None:
+        return
+    if not isinstance(extras, dict):
+        findings.append(f"BUILD-INFO.json fs_extras is not an object: {extras!r}")
+        return
+    if tier == "tools":
+        if not isinstance(extras.get("node"), dict):
+            findings.append("BUILD-INFO.json fs_extras names no node package")
+        if SAS_NODE_PACKAGE_JSON not in names:
+            findings.append(f"BUILD-INFO.json records fs_extras but {SAS_NODE_PACKAGE_JSON} is missing")
+        return
+    pins = extras.get("python")
+    if not isinstance(pins, list) or not any(isinstance(p, str) and p.lower().startswith("sas-client==")
+                                             for p in pins):
+        findings.append(f"BUILD-INFO.json fs_extras.python pins no sas-client: {pins!r}")
+    if not any(SAS_WHEEL.fullmatch(n) for n in names):
+        findings.append("BUILD-INFO.json records fs_extras but wheels/ holds no sas_client wheel")
 
 
 def _check_names(tier: str, names: list[str], findings: list[str]) -> None:
@@ -302,12 +351,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("zips", nargs="+", type=Path)
     ap.add_argument("--no-pip", action="store_true", help="skip the offline pip dry-run")
     ap.add_argument("--allow-dev", action="store_true", help="accept a tools build-info version of +dev")
-    ap.add_argument("--arch", default=",".join(ARCHES), help="architectures the pip dry-run checks")
+    ap.add_argument("--arch", help="architectures the pip dry-run checks "
+                    "(default: those the bundle's BUILD-INFO.json was built for)")
     ap.add_argument("--size-limit", type=int, default=SIZE_LIMIT_BYTES)
     args = ap.parse_args(argv)
-    arches = tuple(a.strip() for a in args.arch.split(",") if a.strip())
-    if not arches or any(a not in ARCHES for a in arches):
-        ap.error(f"--arch must be a comma list of {', '.join(ARCHES)}")
+    arches = None
+    if args.arch is not None:
+        arches = tuple(a.strip() for a in args.arch.split(",") if a.strip())
+        if not arches or any(a not in ARCHES for a in arches):
+            ap.error(f"--arch must be a comma list of {', '.join(ARCHES)}")
 
     failed = 0
     for path in args.zips:

@@ -18,6 +18,21 @@
     "delegation": "Build the timeline for Patrick Flynn (person I1), then say what happens next.\n\nprojectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
+  "mcp_fixtures": [
+    "place-search-ireland",
+    "place-search-ireland-by-name",
+    "place-search-ireland-by-place",
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-name",
+    "place-search-schuylkill-by-place",
+    "place-search-pennsylvania-state",
+    "place-distance-ireland-pennsylvania",
+    "place-distance-pennsylvania-ireland",
+    "place-distance-within-pennsylvania",
+    "wiki-read-united-states-census",
+    "wiki-read-ireland-census",
+    "wiki-read-any"
+  ],
   "judge_context": [
     "The hand-off for the high-severity gap must name **research-plan**, and should say which span the searches would cover so the plan has something to act on.",
     "Naming **question-selection**, or suggesting a new research question, is the failure this test exists for. q_001 is still open, so a second question would compete with the one being worked.",

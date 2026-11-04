@@ -47,6 +47,7 @@ research_query({
   section: "questions" | "plans" | "log" | "sources" | "assertions"
          | "person_evidence" | "rejected_links" | "conflicts" | "hypotheses" | "timelines"
          | "proof_summaries" | "evaluations" | "localities" | "namesakes"
+         | "hit_verdicts"
          | "external_collections",   // reads external-collections.json, not research.json — §2.4
   orderBy?: "review",            // person_evidence only — §2.5
   // well-known filters — only some apply to a given section; see §2.1.
@@ -57,6 +58,7 @@ research_query({
   questionId?: string,
   personId?: string | string[],
   assertionId?: string | string[],
+  conflictId?: string | string[],
   planItemId?: string,
   status?: string,
   targetId?: string,
@@ -95,7 +97,8 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | `person_evidence` | `personId` | `person_id` | exact |
 | | `assertionId` | `assertion_id` | exact |
 | `rejected_links` | — | — | no filters; the whole section is small by construction |
-| `conflicts` | `assertionId` | `competing_assertion_ids` | contains |
+| `conflicts` | `conflictId` | `id` (also a list) | exact |
+| | `assertionId` | `competing_assertion_ids` | contains |
 | | `questionId` | `blocks_question_ids`, OR a `competing_assertion_ids` entry whose assertion's `extracted_for_question_ids` contains the value — the link the completion gate derives; any status, so a resolved conflict (whose `blocks_question_ids` is empty) still answers for its question | via assertions |
 | | `status` | `status` | exact |
 | `hypotheses` | `questionId` | `related_question_ids` | contains |
@@ -108,6 +111,7 @@ inspected; `validate_research_schema` remains the diagnosis tool.
 | | `focus` | `focus` | exact |
 | `localities` | *(none)* | — | — |
 | `namesakes` | `personId` | `person_id` | exact |
+| `hit_verdicts` | `personId` | `person_id` | exact |
 | `external_collections` | `place` | `place` | the place or any enclosing jurisdiction |
 | | `recordType` | `record_types` | case-insensitive substring of any |
 
@@ -129,7 +133,7 @@ call (`'<key>' is not a supported filter for section '<section>'`), not a
 silent no-op — a caller who mistypes or mis-targets a filter gets an
 actionable error, not a confusingly-empty (or confusingly-unfiltered) result.
 
-**Lists of ids.** `personId`, `assertionId`, `sourceId` and `recordId`
+**Lists of ids.** `personId`, `assertionId`, `sourceId`, `recordId` and `conflictId`
 (`PLURAL_KEYS` in `research-query.ts`) take a string **or** a list of strings,
 on every section whose row above names them, with the same field and mode. A
 list matches an item when **any** of its ids would: `exact` becomes "the field
@@ -270,6 +274,19 @@ recorded here rather than discovered.
 
 The field is `id`, never `assertion_id` — an assertion object has no such key,
 so that rule would be accepted and match nothing, ever.
+
+**A conflict is read by its own id with `conflictId`, and an id of the wrong
+kind is refused on every id filter.** On `conflicts`, `assertionId` matches the
+competing assertions, so a conflict's own id there returned `count: 0`, which
+reads as "no such conflict". In `ut_conflict_resolution_008` (conflict-resolution
+`v4`, run 2) the agent read `c_001` that way and appended a duplicate of it.
+`assertionId`, `conflictId`, `questionId`, `sourceId` and `planItemId` each take
+one id prefix (`a_`, `c_`, `q_`, `src_`, `pli_`). A value that is a research.json
+id of another kind (`<prefix>_<digits>` with a prefix `research_append` mints) is
+refused, naming its kind and, when the section has a filter for that kind, the
+filter to pass. Anything else, such as `a_002b`, a record ARK, or a tree person id,
+is matched as before. `conflictId` takes a list like the other id filters, and
+it scopes `unregisteredDisagreements` to the named conflicts' competing assertions.
 
 - **A second tool, not an extension of `project_context`.** `project_context`
   is one fixed, unfiltered projection for one consumer (the record-extractor's
@@ -431,7 +448,7 @@ so that rule would be accepted and match nothing, ever.
 | A list repeats an id | collapses silently: one `countById` key, each item once |
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | `research.json` missing or invalid JSON — with `tree.gedcomx.json` present, i.e. a *broken* project | `{ ok: false, errors }`, loud |
-| An **optional** section (one the schema does not list as `required` — today `localities`, `namesakes` and `rejected_links`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. A project carries `namesakes` only once a namesake is recorded. |
+| An **optional** section (one the schema does not list as `required` — today `localities`, `namesakes`, `rejected_links` and `hit_verdicts`) is absent from a `research.json` that is otherwise a well-formed object | `{ ok: true, count: 0, items: [], truncated: false }` — a legitimate answer. `localities` postdates most projects: 90 of the 102 committed fixtures have no such key, and erroring on those is what stopped an agent re-reading locality findings it had just written. A project carries `namesakes` only once a namesake is recorded, and `hit_verdicts` only once a search hit is evaluated. |
 | A **required** section is missing, or any section is present but not an array, or `research.json` parses to something that is not an object (`null`, an array, a string, a number) | `{ ok: false, errors }` |
 | `log` × `questionId`, `plans` missing or not an array | `{ ok: false, errors }` — `plans` is a required section, so its absence is a corrupt document, never a `count: 0` |
 | `log` × `questionId`, an entry with `plan_item_id: null` | never matches (the walk could not reach it either) |

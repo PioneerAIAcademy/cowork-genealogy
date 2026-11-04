@@ -17,6 +17,9 @@ tools:
   # The table is one research-log entry, written through
   # `research_log_append` so it reaches the hosted ProjectStore; no `Write`,
   # because a loose file in the project folder never does (#3244 option L).
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
   - mcp__genealogy__place_search
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_search
@@ -32,7 +35,7 @@ tools:
 
 You tabulate every household of a surname across a place's US federal censuses and record the results as a markdown table in the project's research log.
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 ## Invocation contract
 

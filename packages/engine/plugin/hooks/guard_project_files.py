@@ -277,6 +277,12 @@ OWNED_SECTIONS = {
     # The agent writes it through the narrow `evaluation_append` (issue #1491);
     # `owner_denied` routes that tool here as well as `research_append`.
     "evaluations": "gps-mentor",
+    # hit_verdicts, 2026-10-29 (issue #3522, lead ruling 2026-10-18). One agent
+    # per full-text hit judges it against the target's tree facts, so the main
+    # thread that ran the search cannot label its own hits from the list.
+    # merge_tree_persons re-keys `person_id` by tool identity and never
+    # reaches this hook.
+    "hit_verdicts": "evaluate-search-results",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -317,6 +323,18 @@ OWNED_DECLARATIONS = {("questions", "search_stop"): "research-exhaustiveness"}
 # any write of it asserts the project's state, so the write IS the claim and
 # presence is the right key.
 OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
+
+# Fields only the MAIN THREAD may write: (section, field), keyed on presence.
+# The reverse of OWNED_FIELDS, which names the one agent that may write a field,
+# so it is not an entry there: an `init-project` owner would deny the main
+# thread, and an empty owner would let through a subagent whose `agent_type` is
+# null. `objective` stopped being set-once so a researcher can correct it, and
+# a website user has no file access to do that any other way. The correction
+# arrives in the main conversation; a subagent rewriting it is the drift the
+# ownership row names, every later step planning against a goal the user never
+# agreed to. Lead ruling 2026-10-29, issue #3975. Accepted risk: the main
+# thread drifting on its own, which nothing here can tell from a user's ask.
+MAIN_THREAD_FIELDS = frozenset({("project", "objective")})
 
 # Op-scoped routing: section -> the BARE agent name that may APPEND to it. Fifth
 # granularity. `questions` is updated by three agents (research-exhaustiveness
@@ -422,6 +440,10 @@ AGENT_WRITABLE_SECTIONS = {
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
     # for agents outside the listed sections).
     "search-full-text": frozenset({"plan_items"}),
+    # evaluate-search-results appends one verdict per hit to `hit_verdicts`, the
+    # section routed to it above, and writes nothing else in research.json. A
+    # Match is extracted by record-structurer on the next turn, never here.
+    "evaluate-search-results": frozenset({"hit_verdicts"}),
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),
@@ -451,7 +473,8 @@ AGENT_WRITABLE_SECTIONS = {
     # project_create, which itself writes the
     # project, the fixed researcher profile and one `sources` entry per
     # transcribed memory (issue #3384). It owns `project` (ownership.json);
-    # `project.status` stays routed to proof-conclusion above. A lane, not a
+    # `project.status` stays routed to proof-conclusion above, and
+    # `project.objective` is main-thread-only (MAIN_THREAD_FIELDS). A lane, not a
     # route: nothing is routed to this agent. It leaves out `questions`, which
     # question-selection owns (issue #2122), and `sources`, which only
     # project_create writes for it.
@@ -511,6 +534,14 @@ OWNED_FIELD_REASON = (
     "`@plugin:{agent}` and let it make the research_append call. Only this "
     "field is routed — every other write to `{section}`, including the "
     "`updated` activity ping, is unaffected."
+)
+
+MAIN_THREAD_FIELD_REASON = (
+    "Setting research.json's `{section}.{field}` from a subagent is disabled — "
+    "only the main conversation may change it, and only when the user asks. "
+    "Return the user's wording to the main conversation in your result and let "
+    "it make the research_append call. Every other write to `{section}` is "
+    "unaffected."
 )
 
 CLAIM_REASON = (
@@ -683,7 +714,11 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     analytical product (a resolve, or any analysis field), reached by anyone
     but its owning agent. A sixth, `owned_append`, returns the bare section of
     an `OWNED_APPENDS` route: an `op: "append"` there, made by anyone but its
-    owning agent.
+    owning agent. A seventh, `main_thread_field`, returns a dotted
+    `section.field` from `MAIN_THREAD_FIELDS`: a field keyed on presence,
+    written by ANY subagent. It is the one rule that keys on `agent_id`
+    membership rather than on `caller`, because a subagent with a null
+    `agent_type` has `caller == ""`, the same as the main thread.
 
     `proof_summaries` is owned by `proof-conclusion`
     (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
@@ -739,7 +774,8 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     if _basename(tool_name.replace("__", "/")) not in ("research_append", "evaluation_append"):
         return None
     caller = ""
-    if "agent_id" in payload:
+    is_subagent = "agent_id" in payload
+    if is_subagent:
         caller = str(payload.get("agent_type") or "").rsplit(":", 1)[-1]
     writable = AGENT_WRITABLE_SECTIONS.get(caller)
     for op in _ops(tool_input):
@@ -799,6 +835,20 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
                 payload_obj = op.get(key)
                 if isinstance(payload_obj, dict) and field in payload_obj:
                     return (f"{section}.{field}", "owned_field", caller)
+        # A main-thread-only FIELD, reached by any subagent. Keyed on
+        # `is_subagent`, never on `caller`, which is "" for a subagent with a
+        # null `agent_type`. Before the lane check, so an agent whose lane lacks
+        # the section is told to hand the wording back rather than that the
+        # section is someone else's. Both payload keys, for the fail-open
+        # reason the loops above give.
+        if is_subagent:
+            for owned_section, field in MAIN_THREAD_FIELDS:
+                if section != owned_section:
+                    continue
+                for key in ("fields", "entry"):
+                    payload_obj = op.get(key)
+                    if isinstance(payload_obj, dict) and field in payload_obj:
+                        return (f"{section}.{field}", "main_thread_field", caller)
         # A known agent reaching outside its own set.
         if writable is not None and section not in writable:
             return (section, "out_of_lane", caller)
@@ -884,6 +934,9 @@ def deny_reason(denied: tuple) -> str:
             field=field,
             agent=OWNED_FIELDS[(owned_section, field)],
         )
+    elif rule == "main_thread_field":
+        owned_section, _, field = section.partition(".")
+        reason = MAIN_THREAD_FIELD_REASON.format(section=owned_section, field=field)
     else:
         allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
         reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)

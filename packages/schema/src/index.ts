@@ -26,7 +26,7 @@ import type {
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
   StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, ResolutionKind,
-  SkipCategory, RegistrationEvent, RegistrationLevel,
+  SkipCategory, RegistrationEvent, RegistrationLevel, HitVerdict,
 } from './enums.generated.js'
 
 // ============================================================
@@ -207,6 +207,7 @@ export interface Assertion {
   record_basis: RecordBasis
   log_entry_id?: string | null
   record_persona_id?: string | null
+  record_document_id?: string | null
   extracted_for_question_ids: string[]
   /** Non-null means retired by a re-extraction: the replacing `a_` id, or "retracted". */
   superseded_by?: string | null
@@ -441,6 +442,24 @@ export interface Namesake {
   created: string
 }
 
+/** One verdict on whether a full-text search hit is about a tree person.
+ *  `hit_verdicts` on research.json; written by the evaluate-search-results agent. */
+export interface HitVerdictEntry {
+  id: string
+  /** The fulltext_search log entry whose retained results hold the hit. */
+  log_id: string
+  /** The hit's id as that search's sidecar stores it. */
+  hit_id: string
+  person_id: string
+  verdict: HitVerdict
+  /** As of the evaluation; a later extraction does not clear it. Treat the hit
+   *  as not new once some assertion's `record_id` has the same bare id (the part
+   *  after the last `:`) as `hit_id`. */
+  new_vital_info: boolean
+  rationale: string
+  created: string
+}
+
 export interface ResearchData {
   project: Project
   researcher_profile?: ResearcherProfile
@@ -463,6 +482,7 @@ export interface ResearchData {
   localities?: Locality[]
   warning_justifications?: WarningJustification[]
   namesakes?: Namesake[]
+  hit_verdicts?: HitVerdictEntry[]
 }
 
 // ============================================================
