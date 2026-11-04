@@ -23,6 +23,7 @@ import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
+import { removeUnanchoredPersons, unanchoredMintedPersonIds, type UnanchoredRemoval } from "../utils/unanchored-persons.js";
 import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
@@ -6074,6 +6075,28 @@ const QUESTION_STILL_OPEN = new Set(
   [...VALIDATOR_ENUMS.question_status].filter((s) => s !== "resolved"),
 );
 
+/** Whether this call takes the project from an open question to none: the
+ *  snapshot held one, and every question now stands resolved. */
+export function closesLastOpenQuestion(before: any, after: any): boolean {
+  const open = (doc: any) =>
+    (Array.isArray(doc?.questions) ? doc.questions : []).filter((q: any) => QUESTION_STILL_OPEN.has(q?.status));
+  return open(before).length > 0 && open(after).length === 0;
+}
+
+/** The result line naming what the removal took, so the agent can tell the
+ *  researcher. */
+function unanchoredRemovalMessage(removed: UnanchoredRemoval): string {
+  const parts = [`${removed.personIds.length} person(s) (${removed.personIds.join(", ")})`];
+  if (removed.relationshipIds.length > 0) parts.push(`${removed.relationshipIds.length} relationship(s)`);
+  if (removed.personEvidenceIds.length > 0) parts.push(`${removed.personEvidenceIds.length} person_evidence link(s)`);
+  if (removed.rejectedLinkIds.length > 0) parts.push(`${removed.rejectedLinkIds.length} rejected_links entr(ies)`);
+  return (
+    `the last open question is resolved, so the minted persons no relationship connects to an ` +
+    `imported person were removed from the tree: ${parts.join(", ")}. Tell the researcher which ` +
+    `persons were removed.`
+  );
+}
+
 /** Plan-item statuses that mean the item is still to do: every one but
  *  `completed` and `skipped`. Derived for the same reason. */
 const PLAN_ITEM_OUTSTANDING = [...VALIDATOR_ENUMS.plan_item_status].filter(
@@ -11065,6 +11088,19 @@ export async function researchAppend(
     // degrade path below can take it back.
     let treeMutated = prep.treeMutated || rewrite.mutated || retire.mutated;
     let rewriteWarnings = [...rewrite.warnings, ...rewrite.mutationWarnings];
+
+    // When this call resolves the project's last open question, the minted
+    // persons no edge connects to an imported person go, with the links that
+    // name them (lead ruling, 2026-11-04, issue #3032).
+    const removalWarnings: string[] = [];
+    if (closesLastOpenQuestion(beforeResearch, research)) {
+      const unanchored = unanchoredMintedPersonIds(tree, research, (id) => pidOrStartingPerson(id, prep.startingPersonIds));
+      if (unanchored.length > 0) {
+        const removed = removeUnanchoredPersons(tree, research, unanchored);
+        treeMutated = true;
+        removalWarnings.push(unanchoredRemovalMessage(removed));
+      }
+    }
     const anyMutation = applied.some((a) => !a.noop) || treeMutated;
 
     // Tree-encoding completion check (issue #1490), shadow → WARNING. Only when
@@ -11227,7 +11263,7 @@ export async function researchAppend(
       : [];
     const validationBlock = {
       valid: true as const,
-      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
+      warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
     const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces"> = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;

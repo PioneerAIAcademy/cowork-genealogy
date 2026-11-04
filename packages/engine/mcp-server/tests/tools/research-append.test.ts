@@ -7394,6 +7394,93 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
   });
 
+  // ── the last open question resolving removes unanchored minted persons ──
+  // Lead ruling 2026-11-04 (issue #3032): when the project's last open question
+  // resolves, every minted person no edge connects to an imported person goes,
+  // in the same write.
+  describe("resolving the last open question removes unanchored minted persons", () => {
+    const person = (id: string, given: string) => ({ id, gender: "Male", names: [{ id: `N_${id}`, given, surname: "Smith" }] });
+    const link = (id: string, personId: string) => ({
+      id, assertion_id: "a_001", person_id: personId, confidence: "probable", rationale: "household match",
+      created: "2026-01-01", superseded_by: null,
+    });
+    // I1 is the imported subject (in the starting tree). I2 is minted and its
+    // father edge reaches I1. I3 and I4 are a minted couple no edge connects to
+    // I1. I5 is minted and unconnected, but a timeline names it.
+    const tree = () => ({
+      persons: [person("I1", "John"), person("I2", "Henry"), person("I3", "Josef"), person("I4", "Marie"), person("I5", "Karl")],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I1", child: "I2" },
+        { id: "R2", type: "Couple", person1: "I3", person2: "I4" },
+      ],
+      sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
+    });
+    const research = (questions: any[]) => {
+      const r = baseResearch();
+      r.questions.push(...questions);
+      r.proof_summaries.push(summary());
+      r.person_evidence.push(link("pe_001", "I2"), link("pe_002", "I3"), link("pe_003", "I4"));
+      r.timelines.push({ id: "t_001", person_ids: ["I5"], events: [] });
+      return r;
+    };
+    const openQuestion = () => ({ ...resolvedQuestion(), status: "open", resolved: null });
+    const resolveQ1 = () =>
+      researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved" } } as never);
+    const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    const writeStartingTree = (t: any) => writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(t));
+
+    it("removes the unconnected minted persons, their edges and their links, and says so", async () => {
+      await writeProject(research([openQuestion()]), tree());
+      await writeStartingTree({ persons: [person("I1", "John")], relationships: [] });
+      const r = await resolveQ1();
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      const t = await readTree();
+      expect(t.persons.map((p: any) => p.id)).toEqual(["I1", "I2", "I5"]);
+      expect(t.relationships.map((e: any) => e.id)).toEqual(["R1"]);
+      const after = await readResearch();
+      expect(after.person_evidence.map((pe: any) => pe.id)).toEqual(["pe_001"]);
+      expect(after.questions[0].status).toBe("resolved");
+      expect(r.validation.warnings.join("\n")).toMatch(/2 person\(s\) \(I3, I4\), 1 relationship\(s\), 2 person_evidence link\(s\)/);
+    });
+
+    it("anchors on a FamilySearch id with no starting tree", async () => {
+      const t = tree();
+      t.persons[0].id = "KWCB-100";
+      t.relationships[0].parent = "KWCB-100";
+      await writeProject(research([openQuestion()]), t);
+      const r = await resolveQ1();
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readTree()).persons.map((p: any) => p.id)).toEqual(["KWCB-100", "I2", "I5"]);
+    });
+
+    it("removes nothing while another question is still open", async () => {
+      await writeProject(research([openQuestion(), { ...openQuestion(), id: "q_002" }]), tree());
+      await writeStartingTree({ persons: [person("I1", "John")], relationships: [] });
+      const r = await resolveQ1();
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readTree()).persons).toHaveLength(5);
+      expect((await readResearch()).person_evidence).toHaveLength(3);
+    });
+
+    it("removes nothing on a write that resolves no question", async () => {
+      await writeProject(research([resolvedQuestion()]), tree());
+      await writeStartingTree({ persons: [person("I1", "John")], relationships: [] });
+      const r = await researchAppend({
+        projectPath: dir, section: "questions", op: "update", entryId: "q_001", fields: { rationale: "Clarified after review." },
+      } as never);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readTree()).persons).toHaveLength(5);
+    });
+
+    it("removes nothing when no person is known to be imported", async () => {
+      await writeProject(research([openQuestion()]), tree());
+      const r = await resolveQ1();
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readTree()).persons).toHaveLength(5);
+    });
+  });
+
   it("a batch cannot resolve its own blocking conflict and complete", async () => {
     // The conflict gate used to read `research.conflicts` LIVE, and applyOne
     // mutates in place per op — so one batch could settle the conflict and
