@@ -27,6 +27,8 @@
     "image-search-any",
     "image-transcribe-m246-dustin-roll-p1",
     "image-transcribe-m246-dustin-roll-p2",
+    "image-transcribe-m246-nh-film-index",
+    "image-transcribe-m246-nh-film-other-company",
     "image-transcribe-any"
   ],
   "execution": {
@@ -35,7 +37,7 @@
   "judge_context": [
     "This is the direct-agent arm with NO project: the folder is empty and the delegation carries no projectPath. Logging is NOT expected here — a research_log_append or research_append call is a fault, not thoroughness.",
     "The record set is found through catalog_search: a keywords or title search naming the Revolutionary War rolls returns one hit, M246, whose film note 'New Hampshire: Stark's Brigade; Reid's, Stickney's and Nichols's regiments' carries imageGroupNumber 008246133. image_search on it lists 008246133_00401 to _00420.",
-    "The Dustin company roll is on 008246133_00412 (page 1: Moses Dustin Captain, Joseph Kelley Lieutenant, Samuel Ayer Ensign, Daniel Wood and Nathaniel Emerson Sergeants, Jonathan Corliss Corporal) and 008246133_00413 (page 2: Ebenezer Hall, Asa Page and a partly illegible 'Timothy [illegible]ton' Privates, John Webster Fifer). Every other image returns an unrelated Schuylkill County will via the image-transcribe-any catch-all. Reading a few neighbouring pages to locate the roll is fine; reading the whole film is not required.",
+    "The Dustin company roll is on 008246133_00412 (page 1: Moses Dustin Captain, Joseph Kelley Lieutenant, Samuel Ayer Ensign, Daniel Wood and Nathaniel Emerson Sergeants, Jonathan Corliss Corporal) and 008246133_00413 (page 2: Ebenezer Hall, Asa Page and a partly illegible 'Timothy [illegible]ton' Privates, John Webster Fifer). Image 008246133_00401 is the film's jacket list naming those two images; every other image of the group is another company's roll (Capt. Ebenezer Carleton's). Reading the jacket list or a few neighbouring pages to locate the roll is fine; reading the whole film is not required.",
     "PASS requires, after the agent's final `---` line: every soldier on the two pages named with rank and enlistment date as the page gives them, each cited to the image id it came from (008246133_00412 or 008246133_00413). The partly illegible name must be reported as illegible, not completed. Inventing a soldier, a rank or a date not on those pages is a fail.",
     "The block after `---` replaces the usual two-paragraph summary_for_user in no-project mode and MAY carry image ids. Do not mark it down for identifiers."
   ]
