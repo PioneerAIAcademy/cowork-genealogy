@@ -396,3 +396,14 @@ def test_collisions_says_the_check_was_skipped_without_origin_main(tmp_path, mon
     out = _run_collisions(tmp_path, capsys, {7: f"**Touches:** {GONE}\n"})
     assert "skipped: origin/main does not resolve" in out
     assert out.splitlines()[-1] == "summary: 0 issue-issue, 0 issue-PR, 0 hubs, 0 broad, 0 deleted"
+
+
+def test_every_tag_input_the_snapshot_embeds_is_in_snapshot():
+    """`build_snapshot` embeds each `TAG_INPUTS` file in the suites carrying its tag, so
+    an issue touching one shares those suites' eval slot."""
+    sys.path.insert(0, os.path.join(_LIVE_ROOT, "eval", "harness"))
+    from harness.snapshot import TAG_INPUTS
+
+    assert TAG_INPUTS
+    for rel in TAG_INPUTS.values():
+        assert touches.in_snapshot(rel), rel
