@@ -33,7 +33,7 @@ async function once(label: string, dir: string): Promise<void> {
   console.log(
     `${label}: ${ms} ms  ok=${r.ok} extracted=${r.extracted} linked=${r.linked} skipped=${r.skipped}` +
       ` alreadyLinked=${r.alreadyLinked ?? 0} rejectedSkipped=${r.rejectedSkipped ?? 0} records=${r.records.length}` +
-      ` relationshipRecords=${r.relationshipRecords ?? 0} ambiguous=${r.ambiguous ?? 0} ownContested=${r.ownContested ?? 0} unselected=${r.unselected ?? 0}` +
+      ` relationshipRecords=${r.relationshipRecords ?? 0} ambiguous=${r.ambiguous ?? 0} unselected=${r.unselected ?? 0}` +
       ` refused=${r.refused ?? 0} linkedPersons=${JSON.stringify(r.linkedPersons ?? {})}`,
   );
   console.log(`  summary: ${r.summary}`);

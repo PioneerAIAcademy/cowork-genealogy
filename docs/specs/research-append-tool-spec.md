@@ -3313,33 +3313,31 @@ there is no `same_person` gate. Checking the attachments is a separate request.
   map from persona (`p_…`, read off the sidecar's `persons[].ark`) to tree
   person, filled in this order (lead, 2026-10-30):
   1. **Own.** The persona whose ark the run person's own refs attach is
-     claimed by the run person, even when another tree person attaches the
-     same ark; that persona is counted in `ownContested` and linked to the
-     run person only.
+     claimed by the run person, unless another tree person's own refs attach
+     the same ark: then nobody claims it (`ambiguous`), since a second
+     attacher is the sign the record was attached to the whole family.
   2. **Household.** Any other persona whose ark exactly one tree person's own
      refs attach is claimed by that person. Two attachers claim it for nobody
      (`ambiguous`). A tree person who reaches the ark only through a
      relationship ref claims nothing here.
   3. **Party.** For a record read through a relationship ref, each endpoint of
-     each citing relationship is a party. A party who already claims a persona
-     of the group under rule 1 or 2 gets no pick: the set is taken before any
-     party is asked, so the order of the parties cannot change it. For each
+     each citing relationship is a party. A party whose own refs attach any
+     persona of the group gets no pick, even one that rule 1 or 2 left to
+     nobody: the set is taken before any party is asked, so the order of the
+     parties cannot change it. For each
      other party, `selectSubjectPersona` (the
      party's relationship role and gender against the record's own
      relationships) picks its persona; a party with no known gender gets no
      pick, since a lone candidate could be the other parent or partner. An
      `unscored` selection (`record_unreadable`, `no_gender`,
      `no_relationship`, `ambiguous`, `edges_disagree`) claims nothing and is
-     counted in `unselected`. A party pick that disagrees with an ark claim
-     or another party pick on the same persona leaves it to nobody
-     (`ambiguous`); one that disagrees with the run person's own claim leaves
-     the own link (`ownContested`).
+     counted in `unselected`. A party pick that disagrees with any other
+     claim on the same persona leaves it to nobody (`ambiguous`).
 
   Last, a tree person left claiming two personas of one record gets neither
-  (`ambiguous`); the run person keeps their own entries and loses any other
-  claim. So no persona is ever linked to two tree persons, and no tree
-  person to two personas of one record, except where the run person's own
-  refs attach both. Each count is per persona, however many routes contest it.
+  (`ambiguous`), the run person included. So no persona is ever linked to two
+  tree persons, and no tree person to two personas of one record. Each count
+  is per persona, however many routes contest it.
 
   Each claimed persona's assertions (`record_persona_id`) become
   `person_evidence` appends to their claimant with `confidence:
@@ -3359,23 +3357,22 @@ there is no `same_person` gate. Checking the attachments is a separate request.
 - **Afterwards** an attachment link is only ever superseded (§5): raising it is
   a `same_person` score and a new link.
 - **Return:** `{ ok, records, extracted, linked, skipped, alreadyLinked?,
-  rejectedSkipped?, relationshipRecords?, ambiguous?, ownContested?,
-  unselected?, refused?, linkedPersons?, summary }`, with `records` as §11.6 returns them. `linked` is
+  rejectedSkipped?, relationshipRecords?, ambiguous?, unselected?,
+  refused?, linkedPersons?, summary }`, with `records` as §11.6 returns them. `linked` is
   the total over every tree person; `linkedPersons` (`{ [treePersonId]: count
   }`) counts the links made to each tree person other than the run person. The
   optional counts are present only when non-zero. One code-written `summary`
   covers the whole call: it names the other persons linked, the
-  relationship-level records, the personas left unlinked as ambiguous or
-  unselected, and the run person's own personas another tree person also
-  claims, and says checking the attachments is a separate request.
+  relationship-level records and the personas left unlinked as ambiguous or
+  unselected, and says checking the attachments is a separate request.
 - **Tool time,** measured 2026-11-04 against live FamilySearch with
   `dev/try-extraction-append-person.ts`. Cowork aborts a call at 60 s.
 
   | Subject (e2e fixture) | Records | Cold | Re-send | Linked | Other persons linked | `unselected` |
   |---|---|---|---|---|---|---|
-  | LHG6-L26 (william-sloan-spouse), the largest own set | 20 own | 17.3 s | 0.16 s | 338 | 8 | 0 |
-  | LL4N-82C (maria-bracero-marriage), the most relationship refs | 14 own, 8 relationship | 15.5 s | 0.11 s | 244 | 13 | 1 |
-  | KHGX-XWG (thomas-hanrahan-marriage) | 3 own, 2 relationship | 4.3 s | 0.02 s | 81 | 5 | 0 |
+  | LHG6-L26 (william-sloan-spouse), the largest own set | 20 own | 19.7 s | 0.06 s | 338 | 8 | 0 |
+  | LL4N-82C (maria-bracero-marriage), the most relationship refs | 14 own, 8 relationship | 11.6 s | 0.05 s | 244 | 13 | 1 |
+  | KHGX-XWG (thomas-hanrahan-marriage) | 3 own, 2 relationship | 5.0 s | 0.01 s | 81 | 5 | 0 |
 
   No record group is read twice: LL4N-82C's 22 attached records are 15
   extractions. Its `ambiguous: 2` is one tree person claiming two personas of

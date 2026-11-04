@@ -250,9 +250,6 @@ export interface ExtractionBatchResult {
   /** Personas left unlinked because their claims conflict: two tree persons
    *  claim one, or one tree person claims two of a record. */
   ambiguous?: number;
-  /** The run person's own personas another tree person or party pick also claims;
-   *  linked to the run person only. */
-  ownContested?: number;
   /** Relationship parties whose persona `selectSubjectPersona` could not choose. */
   unselected?: number;
   /** Links the writer refused. */
@@ -566,13 +563,13 @@ const RECORD_TOKEN = /1:1:([A-Z0-9]+(?:-[A-Z0-9]+)+)/i;
  * the tree S the import made for it, once per record group.
  *
  * Each record group gets one claim map from persona to tree person, from the
- * record's sidecar `persons[].ark`: the run person's own entry wins; another
- * persona goes to the one tree person whose own refs attach its ark (lead,
- * 2026-10-30), and to nobody when two do; a relationship party's persona is
- * chosen by `selectSubjectPersona`, and one that conflicts with an ark claim
- * goes to nobody. A tree person left claiming two personas of one record gets
- * neither, except the run person's own entries. Links carry
- * `confidence: "speculative"`, no score and `ATTACHMENT_LINK_RATIONALE`.
+ * record's sidecar `persons[].ark`: a persona goes to the one tree person whose
+ * own refs attach its ark, the run person included (lead, 2026-10-30), and to
+ * nobody when two do; a relationship party's persona is chosen by
+ * `selectSubjectPersona`, and one that conflicts with another claim goes to
+ * nobody. A tree person left claiming two personas of one record gets neither.
+ * Links carry `confidence: "speculative"`, no score and
+ * `ATTACHMENT_LINK_RATIONALE`.
  * A persona whose assertions already have a live
  * link is left alone, so one someone already decided about is never split
  * across two tree persons, and a rejected pair is never re-linked. Each
@@ -695,7 +692,6 @@ async function personIdMode(
   let rejectedSkipped = 0;
   let unlinkable = 0;
   let ambiguous = 0;
-  let ownContested = 0;
   let unselected = 0;
   let refused = 0;
   const linkedPersons: Record<string, number> = {};
@@ -735,36 +731,27 @@ async function personIdMode(
       }
     }
 
-    // One claim per persona: the run person's own entry first, then each other
-    // tree person's own attachment, then each relationship party's pick. A
-    // party who already claims a persona of the record gets no pick; the set is
-    // taken before any party is asked, so party order cannot change it. A
-    // persona two tree persons claim links neither, except the run person's own,
-    // and a tree person claiming two personas of one record links neither (the
-    // run person keeps their own entries and loses any other claim).
+    // One claim per persona: each tree person's own attachment, the run
+    // person's included, then each relationship party's pick. A party whose
+    // own refs attach any persona of the record gets no pick, even one that
+    // went to nobody; the set is taken before any party is asked, so party
+    // order cannot change it. A persona two tree persons claim links neither,
+    // and a tree person claiming two personas of one record links neither.
     const claims = new Map<string, { to: string; route: "own" | "ark" | "party" }>();
     const blocked = new Set<string>();
-    const contestedOwn = new Set<string>();
     for (const [pid, p] of personas) {
       const b = arkBare(p);
-      if (b && sourceIdByBare.has(b)) {
-        claims.set(pid, { to: person.id, route: "own" });
-        if ((attachers.get(b)?.size ?? 0) > 1) contestedOwn.add(pid);
-      }
-    }
-    for (const [pid, p] of personas) {
-      const b = arkBare(p);
-      if (claims.has(pid) || !b) continue;
-      const who = attachers.get(b);
+      const who = b ? attachers.get(b) : undefined;
       if (!who || who.size === 0) continue;
       if (who.size > 1) {
         blocked.add(pid);
         continue;
       }
-      claims.set(pid, { to: [...who][0], route: "ark" });
+      const to = [...who][0];
+      claims.set(pid, { to, route: to === person.id ? "own" : "ark" });
     }
     const asked = new Set<string>();
-    const anchored = new Set([...claims.values()].map((c) => c.to));
+    const anchored = new Set([...personas.values()].flatMap((p) => [...(attachers.get(arkBare(p) ?? "") ?? [])]));
     for (const b of recordIds) {
       const via = viaRelationship.get(b);
       if (!via) continue;
@@ -787,10 +774,6 @@ async function personIdMode(
             continue;
           }
           if (held.to === party) continue;
-          if (held.route === "own") {
-            contestedOwn.add(pid);
-            continue;
-          }
           claims.delete(pid);
           blocked.add(pid);
         }
@@ -798,19 +781,17 @@ async function personIdMode(
     }
     const byClaimant = new Map<string, string[]>();
     for (const [pid, { to }] of claims) byClaimant.set(to, [...(byClaimant.get(to) ?? []), pid]);
-    for (const [to, pids] of byClaimant) {
+    for (const pids of byClaimant.values()) {
       if (pids.length < 2) continue;
-      const keepOwn = to === person.id && pids.some((pid) => claims.get(pid)!.route === "own");
       for (const pid of pids) {
-        if (keepOwn && claims.get(pid)!.route === "own") continue;
         claims.delete(pid);
         blocked.add(pid);
       }
     }
     ambiguous += blocked.size;
-    ownContested += contestedOwn.size;
+    const isOwn = (pid: string) => sourceIdByBare.has(arkBare(personas.get(pid)) ?? "");
     const ownWithAssertions = [...claims].some(([pid, c]) => c.route === "own" && ofRecord.some((a) => a.record_persona_id === pid));
-    if ([...recordIds].some((b) => sourceIdByBare.has(b)) && !ownWithAssertions) unlinkable++;
+    if ([...recordIds].some((b) => sourceIdByBare.has(b)) && !ownWithAssertions && ![...blocked].some(isOwn)) unlinkable++;
 
     const ops: ResearchAppendOp[] = [];
     for (const [pid, { to }] of claims) {
@@ -872,7 +853,6 @@ async function personIdMode(
   if (alreadyLinked > 0) parts.push(`${plural(alreadyLinked, "persona", "personas")} left as linked already`);
   if (unlinkable > 0) parts.push(`${plural(unlinkable, "record", "records")} extracted but not linked (no persona to link)`);
   if (ambiguous > 0) parts.push(`${plural(ambiguous, "persona", "personas")} not linked, because their claims conflict`);
-  if (ownContested > 0) parts.push(`${plural(ownContested, "own persona", "own personas")} also claimed by another tree person, linked to ${person.id} only`);
   if (unselected > 0) parts.push(`${plural(unselected, "relationship party", "relationship parties")} whose persona in the record could not be chosen`);
   if (rejectedSkipped > 0) parts.push(`${plural(rejectedSkipped, "rejected pair", "rejected pairs")} not re-linked`);
   if (refused > 0) parts.push(`${plural(refused, "link", "links")} refused`);
@@ -886,7 +866,6 @@ async function personIdMode(
     ...(rejectedSkipped > 0 ? { rejectedSkipped } : {}),
     ...(relationshipOnly.length > 0 ? { relationshipRecords: relationshipOnly.length } : {}),
     ...(ambiguous > 0 ? { ambiguous } : {}),
-    ...(ownContested > 0 ? { ownContested } : {}),
     ...(unselected > 0 ? { unselected } : {}),
     ...(refused > 0 ? { refused } : {}),
     ...(others.length > 0 ? { linkedPersons } : {}),

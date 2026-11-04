@@ -1584,15 +1584,14 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(new Set(pairs).size).toBe(pairs.length);
   });
 
-  it("(g) keeps the run person's own entry when another tree person attaches it too", async () => {
+  it("(g) links the run person's own entry to nobody when another tree person attaches it too", async () => {
     await writeTree([person("I1", { person: ["S1"] }), person("I5", { person: ["S1"] })], [S1]);
     const r = await run("I1");
-    const john = await linksTo("p_260900945");
-    expect(john.length).toBeGreaterThan(0);
-    expect(john.every((pe: any) => pe.person_id === "I1")).toBe(true);
-    expect(r.ownContested).toBe(1);
-    expect(r.ambiguous).toBeUndefined();
-    expect(r.summary).toMatch(/also claimed by another tree person, linked to I1 only/);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_260900945")).toEqual([]);
+    expect(r.ambiguous).toBe(1);
+    expect(r.summary).toMatch(/1 persona not linked, because their claims conflict/);
+    expect(r.summary).not.toMatch(/no persona to link/);
   });
 
   it("(g2) still links a single-persona record, which is no persona group", async () => {
@@ -1641,8 +1640,18 @@ describe("extraction_append: personId extracts and links a person's attachments"
     );
     const r = await run("I1", reader([MARRIAGE]));
     expect(r.ok, JSON.stringify(r)).toBe(true);
-    expect((await linksTo("p_226800860000")).every((pe: any) => pe.person_id === "I1")).toBe(true);
-    expect(r.ownContested).toBe(1);
+    expect(await linksTo("p_226800860000")).toEqual([]);
+    expect(r.ambiguous).toBe(1);
+  });
+
+  it("(q) links neither persona when the run person attaches two personas of a record", async () => {
+    await writeTree([person("I1", { person: ["S1", "S3"] })], [S1, src("S3", "MZGS-1B4")]);
+    const r = await run("I1");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_260900945")).toEqual([]);
+    expect(await linksTo("p_260900947")).toEqual([]);
+    expect(r.ambiguous).toBe(2);
+    expect(r.linked).toBe(0);
   });
 
   it("(o) reports a record whose own persona has no assertion to link", async () => {
@@ -1665,6 +1674,31 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(r.ok, JSON.stringify(r)).toBe(true);
     expect(await linksTo("p_10556269631")).toEqual([]);
     expect(await linksTo("p_10556269633")).toEqual([]);
+  });
+
+  it("(r) links neither when a party pick lands on the run person's own persona", async () => {
+    await writeTree(
+      [person("I1", { person: ["S8"] }, undefined, "Female"), person("I3", {}, undefined, "Female")],
+      [src("S8", "XXDD-BX8")],
+      [{ id: "R2", type: "ParentChild", parent: "I1", child: "I3", sources: [{ ref: "S8" }] }],
+    );
+    const r = await run("I1", reader([element("baptism")]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_10556269631")).toEqual([]);
+    expect(r.ambiguous).toBe(1);
+  });
+
+  it("(s) gives no role pick to a party whose attachment went to nobody", async () => {
+    await writeTree(
+      [person("I1", { person: ["S8"] }, undefined, "Female"), person("I2", { person: ["S8"] }, undefined, "Female")],
+      [src("S8", "XXDD-BX8")],
+      [{ id: "R2", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S8" }] }],
+    );
+    const r = await run("I2", reader([element("baptism")]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_10556269631")).toEqual([]);
+    expect(await linksTo("p_10556269633")).toEqual([]);
+    expect(r.ambiguous).toBe(1);
   });
 
   it("(i) links nothing for a party whose persona cannot be chosen", async () => {
