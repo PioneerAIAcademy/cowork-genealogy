@@ -111,7 +111,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema", "where-else-to-search"}
+AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "evaluate-search-results", "gps-mentor", "historical-context", "hypothesis-tracking", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema", "where-else-to-search"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -1099,7 +1099,7 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=6)
 
 
-def test_the_plugin_ships_thirty_agents_and_two_skills():
+def test_the_plugin_ships_thirty_one_agents_and_two_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
@@ -1142,7 +1142,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "twenty-nine agents must not become the expectation"
+    assert agents is None, "thirty agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -1154,7 +1154,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Thirty agents and 2 skills registered: clean. Twenty-nine, or 1: the miss, whatever loaded --
+    # Thirty-one agents and 2 skills registered: clean. Thirty, or 1: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
     assert worker.registration_problems(_info(AGENTS, 2)) == []
@@ -4668,6 +4668,14 @@ def test_the_delivery_instruction_rides_the_same_turn_prompt(tmp_path):
     inert, with nothing instructing the model to call it."""
     opts = _options(config_dir=str(tmp_path))
     assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
+
+
+def test_the_sources_instruction_rides_the_same_turn_prompt(tmp_path):
+    """Issue #4011: the worker names a source, collection, book or citation only from a
+    tool result, the same text the alpha and the Cowork hook carry."""
+    opts = _options(config_dir=str(tmp_path))
+    assert options.SOURCES_GUIDANCE in opts.system_prompt["append"]
+    assert opts.system_prompt["append"].startswith("You are the hosted genealogy research agent")
 
 
 def test_the_instruction_names_the_tool_it_is_about():

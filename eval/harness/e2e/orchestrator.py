@@ -59,6 +59,7 @@ from harness.context_policy import (
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
     AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
+    sources_note_hook,  # adds the SHIPPED hook's sentence, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.delegation import foreground_rewrite
@@ -2426,6 +2427,8 @@ async def _run_agent(
         max_buffer_size=10 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
+            # Issue #4011: the sentence every production path carries, added as Cowork does.
+            "UserPromptSubmit": [HookMatcher(matcher=None, hooks=[sources_note_hook])],
         },
     )
 

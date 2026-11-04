@@ -1,7 +1,7 @@
 {
   "project": {
     "id": "rp_kenneth_quass_death",
-    "objective": "When and where did Kenneth Werner Quass die, and where was he buried?",
+    "objective": "When and where did Kenneth Werner Quass die?",
     "subject_person_ids": ["KNS4-P6W"],
     "status": "active",
     "created": "2026-06-15",
