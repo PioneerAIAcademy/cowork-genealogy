@@ -105,7 +105,7 @@ One row per household: group stubs by `recordArk` (the 1:2: record ARK). Before 
 Every table, even within one year's section, starts with all six columns:
 `| Census year | Place as indexed | Head of household | Members | Record ARK | Ruled out |`
 - Place as indexed: the household's `events[].place` without its state and country, e.g. "Au Sable, Clinton, New York, United States" → "Au Sable, Clinton"; "Clinton, New York, United States" → "Clinton"
-- Head of household: `personName` where `role` is Principal
+- Head of household: `personName` where `role` is Principal, then its `birthDate` and `birthPlace` where the stub has them
 - Members: every other stub sharing the head's `recordArk`, each as given name, `birthDate`, `birthPlace` where the stub has them, separated by semicolons
 - Record ARK: `recordArk`
 

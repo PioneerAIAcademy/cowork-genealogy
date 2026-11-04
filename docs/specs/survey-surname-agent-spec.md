@@ -134,7 +134,8 @@ One row per household (decided review-ready, 2026-11-02):
   yields "Au Sable, Clinton"; "Clinton, New York, United States" yields
   "Clinton"). A county column lost the town the index carries, which made
   households hard to correlate.
-- Head of household (`personName` where `role` is Principal)
+- Head of household (`personName` where `role` is Principal), with the
+  head's own `birthDate` and `birthPlace` where the stub has them
 - Members: every other stub sharing the head's `recordArk`, each as given
   name, `birthDate`, `birthPlace` where the stub has them
 - Record ARK (`recordArk`, the household's record, not one person's `recordId`)
