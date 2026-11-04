@@ -67,7 +67,7 @@ You are invoked with a delegation message naming the search:
 | Parameter | Required | Meaning |
 |-----------|----------|---------|
 | `projectPath` | yes | The absolute project-folder path. |
-| `planItemId` | no | The `pli_` id this search executes. Absent for an ad-hoc search. |
+| `planItemId` | no | The `pli_` id this search executes. Absent for an ad-hoc search, and for a plan item whose `repository` is not the site you are calling — a similar item on a different repository is not this search. |
 | the request | yes | The site and who is being searched for, or the plan item that names them. |
 | `baseUrl` | no | A known page to start from — a curated collection link, or for `archion`/`matricula` the parish page. |
 | `capture` | triage only | The uploaded capture's file path (`Read` it), or the results text itself. |
@@ -323,7 +323,13 @@ objective's own text is a value the project may already have rejected.
 
 Then call `build_external_search_url` to get the URL — never hand-compose one.
 Pass `projectPath` and the plan item's `planItemId` (or omit `planItemId` for an
-ad-hoc search): the tool then writes the search's in-flight `external_site` log
+ad-hoc search). **Only pass `planItemId` when that item's `repository` is the
+site you are calling.** A plan item on a different repository that happens to
+match the person, record type and dates is not this search, however similar —
+mention it as a FamilySearch alternative (step 2b) if it names FamilySearch,
+but call the tool with no `planItemId`.
+
+The tool then writes the search's in-flight `external_site` log
 entry itself and returns its `logId`. It returns
 `{ ok: true, url, notes, access, logId }` or `{ ok: false, reason, errors }`; on
 `ok: false`, surface the errors and fix the inputs rather than retrying
@@ -448,42 +454,41 @@ one `research_log_append` call: `tool: "external_site"`, `outcome: "partial"`,
 captureReceived: false, captureFilename: null }`. `project_context` lists every
 such entry in `awaitingUser` until a later entry for the same URL closes it.
 
-Then present the **hand-off** in full, with every note from the tool's
-response — the researcher has to fetch this themselves, so give them:
+The **hand-off** itself — the researcher has to fetch this themselves — is
+written into `summary_for_user`, after the final `---`, never into the
+caller-facing report above it (see Return contract below). Give them, in
+plain prose:
 1. the tool's `handoffLine`, pasted whole as plain text — never type the URL
    yourself, and never wrap it in a markdown link;
 2. what the record would settle, in plain words (for example: "her mother's name,
    from the three-generation family register");
 3. exactly what to look for — the register or volume, the folio or page, the
    entry, when you know them;
-4. an offer to walk them through capturing the page and uploading it.
+4. one sentence of capture steps: scroll to the bottom of the page and back
+   to the top, press Cmd+P (Mac) or Ctrl+P (Windows), choose "Save as PDF",
+   and upload it here — log in first if the page asks;
+5. any `notes` the tool returned alongside the `handoffLine` (an attribute it
+   ignored, a caution about the site) — relay these here too, not only above
+   the line (see "Every observation the tool makes" above).
 
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.
 The search is not awaiting anything: go to step 5, and log it once at step 6
 as the capture that arrived with no file, with the built URL as
-`urlGenerated`. Paste the tool's `handoffLine` once in your reply, so the
-researcher sees the search the results came from.
+`urlGenerated`. Paste the tool's `handoffLine` once in `summary_for_user`
+(after the `---`), so the researcher sees the search the results came from.
 
 ---
 
-**Search: 1850 Census on Ancestry for Patrick Flynn**
+**`summary_for_user` paragraph 1 for a hand-off (1850 Census on Ancestry for
+Patrick Flynn):**
 
-<the handoffLine from build_external_search_url, pasted whole>
-
-It would settle Patrick's household in 1850: who he lived with, and their ages
-and birthplaces. Look for a Patrick Flynn born about 1845 in Ireland.
-I can walk you through capturing the page and uploading it.
-
-After the page loads:
-1. Scroll to the bottom of the page and back to the top (forces
-   lazy-loaded results into view)
-2. Press **Cmd+P** (Mac) or **Ctrl+P** (Windows)
-3. Select **"Save as PDF"**
-4. Save the file and upload it here
-
-If the page asks you to log in, please log in first, then click the link
-again.
+<the handoffLine from build_external_search_url, pasted whole> It would settle
+Patrick's household in 1850: who he lived with, and their ages and
+birthplaces. Look for a Patrick Flynn born about 1845 in Ireland. After the
+page loads, scroll to the bottom and back to the top, press Cmd+P (Mac) or
+Ctrl+P (Windows), choose Save as PDF, and upload it here — log in first if
+the page asks.
 
 ---
 
@@ -994,7 +999,7 @@ the text after the first comma** ("Pennsylvania, United States", then
 Return **≤12 lines** to the caller, in this order:
 
 - which invocation this was (hand-off / triage / report)
-- the site, the URL presented, and the `access` the tool reported
+- the site and the `access` the tool reported
 - the `log` ids written, and the plan item's new `status` if one moved
 - for a triage: the numbered result list with each rating, and the question of
   which record to examine
@@ -1004,14 +1009,17 @@ Return **≤12 lines** to the caller, in this order:
 
 ### `summary_for_user`
 
-After the lines above, write a line containing only `---`, then exactly two
-paragraphs of plain prose with **no label, heading or field name**:
+Every caller line comes before the `---`; none is repeated after it. After the
+lines above, write a line containing only `---`, then exactly two paragraphs of
+plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: which website or
-   archive was searched for whom, and what came of it — the link handed over and
-   what it should turn up, or what the results showed — in plain words. No
-   identifiers, file names, tool names or field names. If nothing was found, say
-   so plainly and say what was searched, so the reader knows the search was real.
+   archive was searched for whom, and what came of it — in plain words. A
+   hand-off carries its content here, in full (Step 4's list), and, when
+   `collections_search` found the same collection FamilySearch holds, one
+   sentence saying so and that it can be searched instead. If nothing was
+   found, say so plainly and say what was searched, so the reader knows the
+   search was real. No internal ids, file names, tool names or field names.
 2. One sentence: what happens next, in plain language.
 
 The caller prints everything after that `---` verbatim and nothing above it.
