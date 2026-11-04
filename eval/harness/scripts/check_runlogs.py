@@ -54,6 +54,8 @@ docs/plan/eval-runlog-versioning.md §C6:
     Rule 8   every ``LLM: <a> → Junior: <b>`` header inside a unit
              .ann.json comment carries at most one header, and no header
              whose ``<b>`` disagrees with the entry's own corrected_score.
+    Rule 9   every committed run log's aggregate ``tests[].outcome`` is in the
+             schema enum (pass/partial/fail/aborted). Corpus-wide.
     Rule 10  a touched skill's unit tests carry no `expected_outcome: xfail`
              marker (warn-only under that skill's cosmetic-skip label).
     Rule 11  in the run log a touched skill's PR adds, no `grade_on_invariant`
@@ -62,6 +64,9 @@ docs/plan/eval-runlog-versioning.md §C6:
              base — unless the validator is gone or `negative.explanation` was
              edited. A PR that edits a validator file and adds no log for a suite
              is compared on the gate maps instead.
+    Rule 12  every committed run log entry's `outcome_summary` scores, `outcome`,
+             `flaky` and `per_run_outcomes` agree with what its own `runs[]`
+             produce. Scores, not rationale prose. Corpus-wide (#3936).
 
 Run by .github/workflows/check-runlogs.yml. Self-contained — only uses
 stdlib + the harness's own stdlib-only modules (`snapshot`, `versioning`,
@@ -73,6 +78,7 @@ PR (issue #2684).
 
 from __future__ import annotations
 
+import copy
 import functools
 import json
 import os
@@ -107,7 +113,11 @@ from harness.versioning import (  # noqa: E402
     newest_full_skill_runlog,
     prunable_candidates,
 )
-from harness.outcomes import aggregate_per_run_outcome  # noqa: E402
+from harness.outcomes import (  # noqa: E402
+    aggregate_per_run_outcome,
+    consequential,
+    refresh_test_entry_outcome,
+)
 from harness.judge_render import judge_render_hash  # noqa: E402
 from harness.gate_tags import validator_gate_tags  # noqa: E402
 from harness.instrument import (  # noqa: E402
@@ -2411,6 +2421,25 @@ def rule8_annotation_headers(runlogs_dir: Path) -> int:
     return fails
 
 
+def _committed_runlogs(runlogs_dir: Path):
+    """Yield ``(rel, log)`` for every committed run log under ``runlogs_dir``:
+    released and candidate only (scratch and unrecognized names are gitignored or
+    not ours), ``.ann.json`` excluded. A malformed file is skipped, not reported:
+    JSON validity of a run log is not the corpus rules' contract, and re-running
+    the harness is the only fix anyway. One walk, so rules 9 and 12 cannot
+    disagree about what "the corpus" is."""
+    for path in sorted(runlogs_dir.rglob("*.json")):
+        if path.name.endswith(".ann.json"):
+            continue
+        if classify(path.name).kind not in ("released", "candidate"):
+            continue
+        try:
+            log = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            continue
+        yield _format_path(path), log
+
+
 def rule9_outcome_enum(runlogs_dir: Path) -> int:
     """Rule 9 (blocking, corpus-wide): every committed run log's aggregate
     ``tests[].outcome`` is in the schema enum (pass/partial/fail/aborted).
@@ -2425,20 +2454,10 @@ def rule9_outcome_enum(runlogs_dir: Path) -> int:
     no check could see (a run log carrying one merged clean on this very PR).
 
     Cheap enough to run unconditionally: a few hundred small files, parse only.
-    Malformed files are skipped, not reported -- JSON validity of a run log is
-    not this rule's contract, and re-running the harness is the only fix anyway.
+    The reach is ``_committed_runlogs``.
     """
     bad = 0
-    for path in sorted(runlogs_dir.rglob("*.json")):
-        if path.name.endswith(".ann.json"):
-            continue
-        if classify(path.name).kind not in ("released", "candidate"):
-            continue  # scratch / unrecognized: gitignored or not ours
-        rel = _format_path(path)
-        try:
-            log = json.loads(path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
-            continue
+    for rel, log in _committed_runlogs(runlogs_dir):
         for test in log.get("tests") or []:
             # Only a PRESENT aggregate outside the enum -- the straggler class is a
             # retired string value (`xfail`/`xpass`), not a missing field. A
@@ -2460,6 +2479,92 @@ def rule9_outcome_enum(runlogs_dir: Path) -> int:
                     file=rel,
                 )
                 bad += 1
+    return bad
+
+
+def _summary_diffs(stored: dict, derived: dict, include_review: bool) -> list[str]:
+    """Each field where a stored entry disagrees with its rebuild, for the
+    message. Dimensions are matched by `(source, name)`, not position: a
+    rebuild can reorder rows, and a positional diff names the wrong one."""
+    out = []
+    for field in ("outcome", "flaky"):
+        a = bool(stored.get(field, False)) if field == "flaky" else stored.get(field)
+        b = derived.get(field)
+        if a != b:
+            out.append(f"{field} {a!r} (runs give {b!r})")
+    s_sum = stored.get("outcome_summary") or {}
+    d_sum = derived.get("outcome_summary") or {}
+    if list(s_sum.get("per_run_outcomes") or []) != d_sum.get("per_run_outcomes"):
+        out.append(
+            f"per_run_outcomes {s_sum.get('per_run_outcomes')!r} "
+            f"(runs give {d_sum.get('per_run_outcomes')!r})"
+        )
+    keys = ["aggregated_dimensions"] + (["review_dimensions"] if include_review else [])
+    for key in keys:
+        s_rows = {(d.get("source", ""), d.get("name", "")): d.get("score")
+                  for d in s_sum.get(key) or []}
+        d_rows = {(d.get("source", ""), d.get("name", "")): d.get("score")
+                  for d in d_sum.get(key) or []}
+        for dim in sorted(set(s_rows) | set(d_rows)):
+            a = s_rows.get(dim, "<absent>")
+            b = d_rows.get(dim, "<absent>")
+            if a != b:
+                out.append(f"{key} {dim[1]!r} {a!r} (runs give {b!r})")
+    if not out:
+        # Every keyed score agrees, so the tuples differ in row count: a
+        # (source, name) row stored twice, which a dict keyed on it collapses.
+        out.append("a dimension row is duplicated in the stored summary")
+    return out
+
+
+def rule12_summary_matches_runs(runlogs_dir: Path) -> int:
+    """Rule 12 (blocking, corpus-wide): every committed test entry's summary
+    agrees with what its own ``runs[]`` produce (#3936).
+
+    Before PR #3822, ``judge_regrade`` rewrote ``runs[].judge.dimensions`` and
+    refreshed ``outcome`` alone, so a summary could keep the scores of the
+    grading it had just replaced. Those scores are read: ``skill_gate`` builds
+    its baseline from ``aggregated_dimensions[].score`` and the eval UI's trend
+    chart averages them over every log, latest or not.
+
+    The comparison is ``outcomes.consequential`` -- the same tuple
+    ``judge_regrade --reaggregate`` uses to decide what to write -- against the
+    entry rebuilt by ``refresh_test_entry_outcome``. Scores, not rationale: an
+    older log keeps its stale representative prose by ruling (2026-10-29), and
+    ``runs[].judge.dimensions`` is authoritative there. ``review_dimensions`` is
+    compared only when the stored summary has the key; 199 committed entries
+    predate it (unit-test-spec.md §10, "Optional").
+
+    Rows are compared by ``(source, name)``, so a reorder alone passes.
+
+    Unlike rule 9, an entry with runs but no stored ``outcome`` or summary
+    fails: its summary disagrees with its runs as surely as a wrong score does,
+    and no committed entry is in that shape. Same reach as rule 9
+    (``_committed_runlogs``); entries with no runs are skipped.
+    """
+    bad = 0
+    for rel, log in _committed_runlogs(runlogs_dir):
+        for test in log.get("tests") or []:
+            derived = copy.deepcopy(test)
+            if refresh_test_entry_outcome(derived) is None:
+                continue
+            include_review = "review_dimensions" in (test.get("outcome_summary") or {})
+            if consequential(test, include_review=include_review) == consequential(
+                derived, include_review=include_review
+            ):
+                continue
+            diffs = _summary_diffs(test, derived, include_review)
+            gh_error(
+                f"run log `{rel}` test `{test.get('test_id', '<no id>')}`: its "
+                f"outcome or summary disagrees with its own runs[]: "
+                + "; ".join(diffs)
+                + ". Rebuild the entry from its runs with "
+                "`harness.outcomes.refresh_test_entry_outcome`, and add any test it "
+                "makes mandatory to `review_sample` (a suite's latest log: "
+                "`judge_regrade.py --reaggregate` does both); never hand-edit scores.",
+                file=rel,
+            )
+            bad += 1
     return bad
 
 
@@ -2666,6 +2771,11 @@ def main() -> int:
     # schema enum — the straggler class rule 6 (PR-added logs, per-run field)
     # cannot see (#2842).
     fails += rule9_outcome_enum(RUNLOGS_DIR)
+
+    # Rule 12 sweeps the run-log corpus for a summary whose scores its own runs
+    # no longer produce — what a regrade that refreshed `outcome` alone left
+    # behind (#3936).
+    fails += rule12_summary_matches_runs(RUNLOGS_DIR)
 
     # Rule 7 checks that every deleted run log / annotation is a legitimate
     # keep-newest-K prune or a promotion — not a hand-deletion beyond the prune
