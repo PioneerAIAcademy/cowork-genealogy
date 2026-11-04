@@ -2463,11 +2463,12 @@ export function blankAddedPerson(
  *  which record that person came from, and the link would vouch for it anyway.
  *  `materialize_facts` writes the persona onto the person first, which it allows
  *  for a blank person without a link, after which the link writes. A speculative
- *  link asserts no identity and is not refused. Silent for an attachment link and
+ *  link asserts no identity and is not refused, but raising one to probable is
+ *  judged like an append. Silent for an attachment link and
  *  for negative evidence, which no record's persona can materialize. Measured
- *  2026-11-04 over the e2e final documents: of 4,950 links since August, 8 point
+ *  2026-11-04 over the e2e final documents: of 5,061 links since August, 8 point
  *  at a person with no ref on any name or fact (3 persons, 1 of them negative
- *  evidence, now exempt); 1,098 of July's 6,014 did. */
+ *  evidence, now exempt); 1,121 of June and July's 6,113 did. */
 function refLessAddedPersonInvariants(
   entry: any,
   research: any,
@@ -8354,7 +8355,9 @@ function applyOne(
   let priorNarrative: unknown;
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
-  let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
+  let priorPair:
+    | { assertion_id: unknown; person_id: unknown; superseded_by: unknown; confidence: unknown }
+    | undefined;
   let keptCompletedWarning: string | undefined;
 
   if (op.op === "append") {
@@ -8440,6 +8443,7 @@ function applyOne(
       assertion_id: existing?.assertion_id,
       person_id: existing?.person_id,
       superseded_by: existing?.superseded_by,
+      confidence: existing?.confidence,
     };
 
     // Questions: re-declaring exhaustiveness on an already-declared question is
@@ -8934,11 +8938,12 @@ function applyOne(
       (op.op === "update" && !resultEntry.superseded_by && (pairChanged || wasRetired));
     if (reRaising) {
       invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
-      if (!resultEntry.superseded_by) {
-        invariantErrors.push(
-          ...refLessAddedPersonInvariants(resultEntry, research, tree, startingPersonIds, batchAssertions, attachmentLink),
-        );
-      }
+    }
+    const raisedFromSpeculative = op.op === "update" && priorPair?.confidence === "speculative";
+    if ((reRaising || raisedFromSpeculative) && !resultEntry.superseded_by) {
+      invariantErrors.push(
+        ...refLessAddedPersonInvariants(resultEntry, research, tree, startingPersonIds, batchAssertions, attachmentLink),
+      );
     }
     // An attachment link is only ever superseded. Raising it in place would skip
     // same_person: the score gate checks an update only when it writes

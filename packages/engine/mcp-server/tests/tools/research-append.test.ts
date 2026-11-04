@@ -17988,6 +17988,17 @@ describe("research_append — person_evidence to a ref-less added person", () =>
     expect(errorsOf(r)).toMatch(REFUSAL);
   });
 
+  it("refuses raising a speculative link on such a person to probable", async () => {
+    await write(research());
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2" });
+    const a = await researchAppend({ ...link("I2", "a_002", "speculative"), entry: { ...link("I2", "a_002", "speculative").entry, match_score: 0.9 } });
+    expect(a.ok, errorsOf(a)).toBe(true);
+    const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { confidence: "probable" } });
+    expect(errorsOf(r)).toMatch(REFUSAL);
+    const stored = JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence;
+    expect(stored[0].confidence).toBe("speculative");
+  });
+
   it("names the named-party form when the assertion names a second party", async () => {
     await write(research());
     const r = await researchAppend(link("I2", "a_004"));
