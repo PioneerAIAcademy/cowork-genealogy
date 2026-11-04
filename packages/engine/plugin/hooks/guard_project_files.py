@@ -51,8 +51,8 @@ import sys
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); a raw overwrite of it would defeat the gate the
 # same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
-# Lowercase, and matched against a lowercased basename: Windows and macOS file
-# systems treat `Research.JSON` as `research.json`.
+# Lowercase, and matched through `_protected_name`, which folds a name the way
+# Windows and macOS hosts resolve it (`Research.JSON` is `research.json` there).
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
@@ -587,6 +587,20 @@ def _basename(value: str) -> str:
     return value.replace("\\", "/").rsplit("/", 1)[-1]
 
 
+def _protected_name(path: str) -> str | None:
+    """The protected file `path` names, as its canonical lowercase name, or None.
+
+    Folded the way a Windows or macOS host resolves a name: case is folded
+    (`casefold`, so `reſearch.json` matches as APFS matches it), and a stream
+    suffix (`research.json::$DATA`) and trailing dots and spaces
+    (`research.json.`) are dropped, since Windows ignores both. An 8.3 short
+    name (`RESEAR~1.JSO`) is not matched: it cannot be told from a real file
+    by name alone.
+    """
+    name = _basename(path).split(":", 1)[0].rstrip(". ").casefold()
+    return name if name in PROTECTED_PROJECT_FILES else None
+
+
 def _path_like_strings(value, depth: int = 0):
     """Every string in `value` that could be a path, walked structurally.
 
@@ -635,14 +649,13 @@ def protected_target(tool_name: str, tool_input: dict) -> str | None:
     """
     if tool_name in FILE_WRITE_TOOLS:
         file_path = str((tool_input or {}).get("file_path") or "")
-        name = _basename(file_path)
-        return name.lower() if name.lower() in PROTECTED_PROJECT_FILES else None
+        return _protected_name(file_path)
 
     if _basename(tool_name.replace("__", "/")) in DEVICE_WRITE_TOOLS:
         for candidate in _path_like_strings(tool_input or {}):
-            name = _basename(candidate)
-            if name.lower() in PROTECTED_PROJECT_FILES:
-                return name.lower()
+            name = _protected_name(candidate)
+            if name:
+                return name
         return None
 
     return None
