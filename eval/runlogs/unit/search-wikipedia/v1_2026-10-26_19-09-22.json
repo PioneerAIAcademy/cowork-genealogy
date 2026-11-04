@@ -8,7 +8,7 @@
   "timestamp": "2026-10-26_19-09-22",
   "harness_version": "0.1.0",
   "model": "claude-sonnet-4-6",
-  "judge_prompt_hash": "0ec4cfbbfee949ee39d19136867fe47e26cc377bc3697cf58c148f42371468f8",
+  "judge_prompt_hash": "ce5a32f52be690f6ef13643cb3211f0154aae15b6328800ebbe9d635849cb491",
   "snapshot": {
     "packages/engine/plugin/agents/search-wikipedia.md": "0cf17eade05b359ec5e9a74ce8c6eccdafde9ede133545a26d3d58a9ff91879a",
     "eval/tests/unit/search-wikipedia/decline-out-of-scope.json": "ed2e4f0957e526deb34fef6898939559b0e1cfaef3b134130889c5c07180aa58",
@@ -61,19 +61,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly declined to perform the task. The request asks for help writing Python code to parse CSV files, which is outside the scope of genealogy research. Claude's response accurately identifies this mismatch and explains why the request cannot be fulfilled by a genealogy research assistant. No factual errors or unsupported claims are present."
+            "rationale": "Claude correctly declined to perform the task. The request asked for help writing Python code, which is outside the scope of genealogy research. Claude's response accurately identified this mismatch and explained why the request cannot be fulfilled by a genealogy research assistant. No factual errors or unsupported claims were made."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the requirement for this negative test. The correct behavior was to decline without invoking any skill or performing the search-wikipedia task, since the request is out of scope for all genealogy-related skills. Claude did exactly this: declined clearly and did not attempt to route to another skill or perform any genealogy work."
+            "rationale": "Claude fully addressed the negative test requirement: it declined the out-of-scope request without invoking any skill or performing its own task. The response is complete as a decline. The test author notes that brevity is correct and no summary is expected, so the concise decline fully satisfies the completeness requirement."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. Claude correctly declined the request without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A applies here as no tool calls occurred."
+            "rationale": "No MCP tool calls were made. Claude correctly declined without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A applies here as no tool calls occurred."
           }
         ],
         "review_dimensions": [
@@ -81,19 +81,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly declined to perform the task. The request asks for help writing Python code to parse CSV files, which is outside the scope of genealogy research. Claude's response accurately identifies this mismatch and explains why the request cannot be fulfilled by a genealogy research assistant. No factual errors or unsupported claims are present."
+            "rationale": "Claude correctly declined to perform the task. The request asked for help writing Python code, which is outside the scope of genealogy research. Claude's response accurately identified this mismatch and explained why the request cannot be fulfilled by a genealogy research assistant. No factual errors or unsupported claims were made."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed the requirement for this negative test. The correct behavior was to decline without invoking any skill or performing the search-wikipedia task, since the request is out of scope for all genealogy-related skills. Claude did exactly this: declined clearly and did not attempt to route to another skill or perform any genealogy work."
+            "rationale": "Claude fully addressed the negative test requirement: it declined the out-of-scope request without invoking any skill or performing its own task. The response is complete as a decline. The test author notes that brevity is correct and no summary is expected, so the concise decline fully satisfies the completeness requirement."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. Claude correctly declined the request without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A applies here as no tool calls occurred."
+            "rationale": "No MCP tool calls were made. Claude correctly declined without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A applies here as no tool calls occurred."
           }
         ]
       },
@@ -427,27 +427,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly declined to perform the task. The request asks for help writing Python code to parse CSV files, which is outside the scope of genealogy research. Claude's response accurately identifies this mismatch and explains why the request cannot be fulfilled by a genealogy research assistant. No factual errors or unsupported claims are present."
+                "rationale": "Claude correctly declined to perform the task. The request asked for help writing Python code, which is outside the scope of genealogy research. Claude's response accurately identified this mismatch and explained why the request cannot be fulfilled by a genealogy research assistant. No factual errors or unsupported claims were made."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed the requirement for this negative test. The correct behavior was to decline without invoking any skill or performing the search-wikipedia task, since the request is out of scope for all genealogy-related skills. Claude did exactly this: declined clearly and did not attempt to route to another skill or perform any genealogy work."
+                "rationale": "Claude fully addressed the negative test requirement: it declined the out-of-scope request without invoking any skill or performing its own task. The response is complete as a decline. The test author notes that brevity is correct and no summary is expected, so the concise decline fully satisfies the completeness requirement."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. Claude correctly declined the request without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A applies here as no tool calls occurred."
+                "rationale": "No MCP tool calls were made. Claude correctly declined without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A applies here as no tool calls occurred."
               }
             ],
-            "judge_cost_usd": 0.008056,
+            "judge_cost_usd": 0.008065,
             "duration_ms": 4660.763079999015,
             "error": null,
-            "input_tokens": 6416,
+            "input_tokens": 6470,
             "cached_input_tokens": 0,
-            "output_tokens": 328
+            "output_tokens": 319
           },
           "started_at": 1793041762.5341337,
           "ended_at": 1793041780.9038005
@@ -475,37 +475,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with a query targeting the United States census topic, received a valid response, and logged it correctly via research_log_append. The logged entry's notes contain the filled template with the Wikipedia extract and source attribution. No fabricated material or unsupported claims are present. The response accurately reflects what the tool returned."
+            "rationale": "The agent called wikipedia_search with a query targeting the United States census topic, received a valid response, and logged the result with the filled template. The logged notes contain only content from the tool response (title, extract, URL) with no fabricated or unsupported claims. The response accurately reflects what the tool returned."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The delegation asked to save a Wikipedia summary about the United States census. The agent completed this task: it called wikipedia_search with an appropriate query, received the article summary, and logged it to research.json via research_log_append. The log entry was successfully written as confirmed by the file changes summary showing +1 log entry added."
+            "rationale": "The agent completed the full task: it called wikipedia_search with a query derived from the delegation ('the United States census'), received the article summary, and logged it to research.json via research_log_append. The delegation's request to save a Wikipedia summary was fully addressed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call used query 'the United States census', which matches the expected_args pattern '~census' and targets the correct topic. The research_log_append call passed all required arguments correctly: projectPath, query object with both query and title, outcome 'positive', resultsExamined 1, notes with the filled template, and tool 'wikipedia_search'. All critical identifiers and parameters are correct."
+            "rationale": "The wikipedia_search call used query 'the United States census', which matches the expected_args pattern '~census' and targets the correct topic. The research_log_append call included all required fields (projectPath, query, title, outcome, resultsExamined, notes, tool) with correct values. No critical identifiers were wrong and no fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article title as H1, the extract from the tool response, and a source link. The logged content matches what the tool returned without inventing facts or asserting anything unsupported by the response. The reply provides a brief confirmation line as specified."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template (H1 title, extract, and source link). The logged content matches exactly what the tool returned with no invented facts or unsupported assertions. The reply confirms the save without restating the content."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'the United States census' targets the article the delegation named. The returned title 'United States census' is accepted at face value and used in the log entry. The agent did not re-query, override the title, or remark on any discrepancy. The single response was taken correctly as the article's identity."
+            "rationale": "The query 'the United States census' targets the article the delegation named. The returned title 'United States census' is accepted at face value and used in the log entry. The agent did not re-query or override the returned title, following correct redirect-handling behavior."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the specified return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of content appears in the reply. The article content is correctly placed in the log entry's notes, not in the reply."
+            "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no article characterization, no extra sentences appear. The article content is correctly placed in the log entry's notes, not in the reply."
           }
         ],
         "review_dimensions": [
@@ -513,37 +513,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with a query targeting the United States census topic, received a valid response, and logged it correctly via research_log_append. The logged entry's notes contain the filled template with the Wikipedia extract and source attribution. No fabricated material or unsupported claims are present. The response accurately reflects what the tool returned."
+            "rationale": "The agent called wikipedia_search with a query targeting the United States census topic, received a valid response, and logged the result with the filled template. The logged notes contain only content from the tool response (title, extract, URL) with no fabricated or unsupported claims. The response accurately reflects what the tool returned."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The delegation asked to save a Wikipedia summary about the United States census. The agent completed this task: it called wikipedia_search with an appropriate query, received the article summary, and logged it to research.json via research_log_append. The log entry was successfully written as confirmed by the file changes summary showing +1 log entry added."
+            "rationale": "The agent completed the full task: it called wikipedia_search with a query derived from the delegation ('the United States census'), received the article summary, and logged it to research.json via research_log_append. The delegation's request to save a Wikipedia summary was fully addressed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call used query 'the United States census', which matches the expected_args pattern '~census' and targets the correct topic. The research_log_append call passed all required arguments correctly: projectPath, query object with both query and title, outcome 'positive', resultsExamined 1, notes with the filled template, and tool 'wikipedia_search'. All critical identifiers and parameters are correct."
+            "rationale": "The wikipedia_search call used query 'the United States census', which matches the expected_args pattern '~census' and targets the correct topic. The research_log_append call included all required fields (projectPath, query, title, outcome, resultsExamined, notes, tool) with correct values. No critical identifiers were wrong and no fixture_not_found errors occurred."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article title as H1, the extract from the tool response, and a source link. The logged content matches what the tool returned without inventing facts or asserting anything unsupported by the response. The reply provides a brief confirmation line as specified."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template (H1 title, extract, and source link). The logged content matches exactly what the tool returned with no invented facts or unsupported assertions. The reply confirms the save without restating the content."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'the United States census' targets the article the delegation named. The returned title 'United States census' is accepted at face value and used in the log entry. The agent did not re-query, override the title, or remark on any discrepancy. The single response was taken correctly as the article's identity."
+            "rationale": "The query 'the United States census' targets the article the delegation named. The returned title 'United States census' is accepted at face value and used in the log entry. The agent did not re-query or override the returned title, following correct redirect-handling behavior."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the specified return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of content appears in the reply. The article content is correctly placed in the log entry's notes, not in the reply."
+            "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no article characterization, no extra sentences appear. The article content is correctly placed in the log entry's notes, not in the reply."
           }
         ]
       },
@@ -970,45 +970,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with a query targeting the United States census topic, received a valid response, and logged it correctly via research_log_append. The logged entry's notes contain the filled template with the Wikipedia extract and source attribution. No fabricated material or unsupported claims are present. The response accurately reflects what the tool returned."
+                "rationale": "The agent called wikipedia_search with a query targeting the United States census topic, received a valid response, and logged the result with the filled template. The logged notes contain only content from the tool response (title, extract, URL) with no fabricated or unsupported claims. The response accurately reflects what the tool returned."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked to save a Wikipedia summary about the United States census. The agent completed this task: it called wikipedia_search with an appropriate query, received the article summary, and logged it to research.json via research_log_append. The log entry was successfully written as confirmed by the file changes summary showing +1 log entry added."
+                "rationale": "The agent completed the full task: it called wikipedia_search with a query derived from the delegation ('the United States census'), received the article summary, and logged it to research.json via research_log_append. The delegation's request to save a Wikipedia summary was fully addressed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call used query 'the United States census', which matches the expected_args pattern '~census' and targets the correct topic. The research_log_append call passed all required arguments correctly: projectPath, query object with both query and title, outcome 'positive', resultsExamined 1, notes with the filled template, and tool 'wikipedia_search'. All critical identifiers and parameters are correct."
+                "rationale": "The wikipedia_search call used query 'the United States census', which matches the expected_args pattern '~census' and targets the correct topic. The research_log_append call included all required fields (projectPath, query, title, outcome, resultsExamined, notes, tool) with correct values. No critical identifiers were wrong and no fixture_not_found errors occurred."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article title as H1, the extract from the tool response, and a source link. The logged content matches what the tool returned without inventing facts or asserting anything unsupported by the response. The reply provides a brief confirmation line as specified."
+                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template (H1 title, extract, and source link). The logged content matches exactly what the tool returned with no invented facts or unsupported assertions. The reply confirms the save without restating the content."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'the United States census' targets the article the delegation named. The returned title 'United States census' is accepted at face value and used in the log entry. The agent did not re-query, override the title, or remark on any discrepancy. The single response was taken correctly as the article's identity."
+                "rationale": "The query 'the United States census' targets the article the delegation named. The returned title 'United States census' is accepted at face value and used in the log entry. The agent did not re-query or override the returned title, following correct redirect-handling behavior."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the specified return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of content appears in the reply. The article content is correctly placed in the log entry's notes, not in the reply."
+                "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no article characterization, no extra sentences appear. The article content is correctly placed in the log entry's notes, not in the reply."
               }
             ],
-            "judge_cost_usd": 0.007588,
+            "judge_cost_usd": 0.007342,
             "duration_ms": 8911.350929993205,
             "error": null,
-            "input_tokens": 3988,
+            "input_tokens": 4042,
             "cached_input_tokens": 0,
-            "output_tokens": 720
+            "output_tokens": 660
           },
           "started_at": 1793041805.7716599,
           "ended_at": 1793041827.5549083
@@ -1042,13 +1042,13 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed what was required: a clear decline of the search-wikipedia task and an accurate routing decision to historical-context. The response correctly identified the nature of the request (synthesis/narrative rather than encyclopedia lookup) and named the appropriate agent. No required elements were omitted."
+            "rationale": "Claude fully addressed what was required: a clear, accurate decline with proper routing to historical-context. The response correctly identified the mismatch between the request (narrative synthesis) and the skill's scope (encyclopedia article lookup). No required elements of the decline/routing decision were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke search-wikipedia and instead routed the request to historical-context. This is the correct behavior for a negative test, so N/A applies."
+            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke search-wikipedia and instead routed to historical-context. N/A per the base rubric: Tool Arguments may be null only when no MCP tool calls happened, which is the case here."
           }
         ],
         "review_dimensions": [
@@ -1062,13 +1062,13 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude fully addressed what was required: a clear decline of the search-wikipedia task and an accurate routing decision to historical-context. The response correctly identified the nature of the request (synthesis/narrative rather than encyclopedia lookup) and named the appropriate agent. No required elements were omitted."
+            "rationale": "Claude fully addressed what was required: a clear, accurate decline with proper routing to historical-context. The response correctly identified the mismatch between the request (narrative synthesis) and the skill's scope (encyclopedia article lookup). No required elements of the decline/routing decision were omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke search-wikipedia and instead routed the request to historical-context. This is the correct behavior for a negative test, so N/A applies."
+            "rationale": "No MCP tool calls were made. Claude correctly declined to invoke search-wikipedia and instead routed to historical-context. N/A per the base rubric: Tool Arguments may be null only when no MCP tool calls happened, which is the case here."
           }
         ]
       },
@@ -1408,21 +1408,21 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude fully addressed what was required: a clear decline of the search-wikipedia task and an accurate routing decision to historical-context. The response correctly identified the nature of the request (synthesis/narrative rather than encyclopedia lookup) and named the appropriate agent. No required elements were omitted."
+                "rationale": "Claude fully addressed what was required: a clear, accurate decline with proper routing to historical-context. The response correctly identified the mismatch between the request (narrative synthesis) and the skill's scope (encyclopedia article lookup). No required elements of the decline/routing decision were omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. Claude correctly declined to invoke search-wikipedia and instead routed the request to historical-context. This is the correct behavior for a negative test, so N/A applies."
+                "rationale": "No MCP tool calls were made. Claude correctly declined to invoke search-wikipedia and instead routed to historical-context. N/A per the base rubric: Tool Arguments may be null only when no MCP tool calls happened, which is the case here."
               }
             ],
-            "judge_cost_usd": 0.007948,
+            "judge_cost_usd": 0.008062,
             "duration_ms": 4028.1473270006245,
             "error": null,
-            "input_tokens": 6353,
+            "input_tokens": 6407,
             "cached_input_tokens": 0,
-            "output_tokens": 319
+            "output_tokens": 331
           },
           "started_at": 1793041762.529853,
           "ended_at": 1793041780.7219253
@@ -1450,37 +1450,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'the Great Famine in Ireland', received the article 'Great Famine (Ireland)', and logged the response via research_log_append. The logged notes contain the exact extract from the Wikipedia response with proper attribution via URL. No fabricated material or unsupported claims are present. The agent accepted the returned title as the article's identity despite the query-title difference, which is correct redirect-following behavior."
+            "rationale": "The agent called wikipedia_search with the query 'the Great Famine in Ireland', received accurate information about the Great Famine (Ireland), and logged it correctly. The tool response was accepted at face value (the returned title 'Great Famine (Ireland)' differs from the query but this is correct redirect-following behavior). The logged notes contain only facts from the tool response with proper attribution via the Wikipedia URL. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The delegation asked the agent to look up the Great Famine in Ireland on Wikipedia. The agent completed this task: it called wikipedia_search with an appropriate query, received the article, and logged it to the research log via research_log_append. The log entry was successfully written (filesWritten includes research.json). Nothing the delegation required was omitted."
+            "rationale": "The delegation asked the agent to look up the Great Famine in Ireland on Wikipedia. The agent completed this task: it called wikipedia_search with an appropriate query, received the article summary, and logged it to the research log via research_log_append. The work was done and persisted; nothing the delegation required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call used query 'the Great Famine in Ireland', which matches the expected_args pattern '~Great Famine' semantically and targets the correct article. The research_log_append call passed all required arguments correctly: projectPath, query object with query and title, planItemId (null), outcome ('positive'), resultsExamined (1), notes (filled template), and tool ('wikipedia_search'). No critical identifiers were wrong and no fixture_not_found errors occurred."
+            "rationale": "The wikipedia_search call used query 'the Great Famine in Ireland', which matches the expected_args pattern '~Great Famine' semantically and targets the correct article. The research_log_append call included all required fields (projectPath, query, title, outcome, resultsExamined, notes, tool) with correct values. No critical identifiers were wrong, and no calls landed in fixture_not_found. Arguments are well-formed and appropriate."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes are the filled template with the article title as H1, the extract from the tool response, and a source link. The reply contains no facts absent from the tool response. The brief confirmation 'Saved the Wikipedia summary to the research log.' is the ideal caller-facing line per the rubric."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template (H1 title, extract from tool response, source link). The reply does not assert facts absent from the tool response. The brief confirmation 'Saved the Wikipedia summary to the research log.' is the ideal caller-facing line per the rubric. No invented facts or unsupported claims."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'the Great Famine in Ireland' targets the article the delegation named. The returned title 'Great Famine (Ireland)' differs from the query but represents a redirect to the formal article title, which is correct behavior per the rubric. The agent accepted the returned title at face value and proceeded without remarking on the difference as a problem or re-querying."
+            "rationale": "The query 'the Great Famine in Ireland' targets the article the delegation named. The returned title 'Great Famine (Ireland)' is accepted as the article's identity without remarking on the query-versus-title difference as a problem. This is correct redirect-following behavior. The agent proceeded with the response at face value and logged it appropriately."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. The article content is in the log entry's notes, not duplicated in the reply. No mid-workflow narration, characterization of the article, or assertions about genealogical significance appear in the response."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no multi-sentence elaboration, no characterization of the article content, no assertions about genealogical significance. The article content is in the log entry's notes, not duplicated in the reply."
           }
         ],
         "review_dimensions": [
@@ -1488,37 +1488,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'the Great Famine in Ireland', received the article 'Great Famine (Ireland)', and logged the response via research_log_append. The logged notes contain the exact extract from the Wikipedia response with proper attribution via URL. No fabricated material or unsupported claims are present. The agent accepted the returned title as the article's identity despite the query-title difference, which is correct redirect-following behavior."
+            "rationale": "The agent called wikipedia_search with the query 'the Great Famine in Ireland', received accurate information about the Great Famine (Ireland), and logged it correctly. The tool response was accepted at face value (the returned title 'Great Famine (Ireland)' differs from the query but this is correct redirect-following behavior). The logged notes contain only facts from the tool response with proper attribution via the Wikipedia URL. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The delegation asked the agent to look up the Great Famine in Ireland on Wikipedia. The agent completed this task: it called wikipedia_search with an appropriate query, received the article, and logged it to the research log via research_log_append. The log entry was successfully written (filesWritten includes research.json). Nothing the delegation required was omitted."
+            "rationale": "The delegation asked the agent to look up the Great Famine in Ireland on Wikipedia. The agent completed this task: it called wikipedia_search with an appropriate query, received the article summary, and logged it to the research log via research_log_append. The work was done and persisted; nothing the delegation required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call used query 'the Great Famine in Ireland', which matches the expected_args pattern '~Great Famine' semantically and targets the correct article. The research_log_append call passed all required arguments correctly: projectPath, query object with query and title, planItemId (null), outcome ('positive'), resultsExamined (1), notes (filled template), and tool ('wikipedia_search'). No critical identifiers were wrong and no fixture_not_found errors occurred."
+            "rationale": "The wikipedia_search call used query 'the Great Famine in Ireland', which matches the expected_args pattern '~Great Famine' semantically and targets the correct article. The research_log_append call included all required fields (projectPath, query, title, outcome, resultsExamined, notes, tool) with correct values. No critical identifiers were wrong, and no calls landed in fixture_not_found. Arguments are well-formed and appropriate."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes are the filled template with the article title as H1, the extract from the tool response, and a source link. The reply contains no facts absent from the tool response. The brief confirmation 'Saved the Wikipedia summary to the research log.' is the ideal caller-facing line per the rubric."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template (H1 title, extract from tool response, source link). The reply does not assert facts absent from the tool response. The brief confirmation 'Saved the Wikipedia summary to the research log.' is the ideal caller-facing line per the rubric. No invented facts or unsupported claims."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'the Great Famine in Ireland' targets the article the delegation named. The returned title 'Great Famine (Ireland)' differs from the query but represents a redirect to the formal article title, which is correct behavior per the rubric. The agent accepted the returned title at face value and proceeded without remarking on the difference as a problem or re-querying."
+            "rationale": "The query 'the Great Famine in Ireland' targets the article the delegation named. The returned title 'Great Famine (Ireland)' is accepted as the article's identity without remarking on the query-versus-title difference as a problem. This is correct redirect-following behavior. The agent proceeded with the response at face value and logged it appropriately."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. The article content is in the log entry's notes, not duplicated in the reply. No mid-workflow narration, characterization of the article, or assertions about genealogical significance appear in the response."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no multi-sentence elaboration, no characterization of the article content, no assertions about genealogical significance. The article content is in the log entry's notes, not duplicated in the reply."
           }
         ]
       },
@@ -1945,45 +1945,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the query 'the Great Famine in Ireland', received the article 'Great Famine (Ireland)', and logged the response via research_log_append. The logged notes contain the exact extract from the Wikipedia response with proper attribution via URL. No fabricated material or unsupported claims are present. The agent accepted the returned title as the article's identity despite the query-title difference, which is correct redirect-following behavior."
+                "rationale": "The agent called wikipedia_search with the query 'the Great Famine in Ireland', received accurate information about the Great Famine (Ireland), and logged it correctly. The tool response was accepted at face value (the returned title 'Great Famine (Ireland)' differs from the query but this is correct redirect-following behavior). The logged notes contain only facts from the tool response with proper attribution via the Wikipedia URL. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked the agent to look up the Great Famine in Ireland on Wikipedia. The agent completed this task: it called wikipedia_search with an appropriate query, received the article, and logged it to the research log via research_log_append. The log entry was successfully written (filesWritten includes research.json). Nothing the delegation required was omitted."
+                "rationale": "The delegation asked the agent to look up the Great Famine in Ireland on Wikipedia. The agent completed this task: it called wikipedia_search with an appropriate query, received the article summary, and logged it to the research log via research_log_append. The work was done and persisted; nothing the delegation required was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call used query 'the Great Famine in Ireland', which matches the expected_args pattern '~Great Famine' semantically and targets the correct article. The research_log_append call passed all required arguments correctly: projectPath, query object with query and title, planItemId (null), outcome ('positive'), resultsExamined (1), notes (filled template), and tool ('wikipedia_search'). No critical identifiers were wrong and no fixture_not_found errors occurred."
+                "rationale": "The wikipedia_search call used query 'the Great Famine in Ireland', which matches the expected_args pattern '~Great Famine' semantically and targets the correct article. The research_log_append call included all required fields (projectPath, query, title, outcome, resultsExamined, notes, tool) with correct values. No critical identifiers were wrong, and no calls landed in fixture_not_found. Arguments are well-formed and appropriate."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes are the filled template with the article title as H1, the extract from the tool response, and a source link. The reply contains no facts absent from the tool response. The brief confirmation 'Saved the Wikipedia summary to the research log.' is the ideal caller-facing line per the rubric."
+                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template (H1 title, extract from tool response, source link). The reply does not assert facts absent from the tool response. The brief confirmation 'Saved the Wikipedia summary to the research log.' is the ideal caller-facing line per the rubric. No invented facts or unsupported claims."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'the Great Famine in Ireland' targets the article the delegation named. The returned title 'Great Famine (Ireland)' differs from the query but represents a redirect to the formal article title, which is correct behavior per the rubric. The agent accepted the returned title at face value and proceeded without remarking on the difference as a problem or re-querying."
+                "rationale": "The query 'the Great Famine in Ireland' targets the article the delegation named. The returned title 'Great Famine (Ireland)' is accepted as the article's identity without remarking on the query-versus-title difference as a problem. This is correct redirect-following behavior. The agent proceeded with the response at face value and logged it appropriately."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. The article content is in the log entry's notes, not duplicated in the reply. No mid-workflow narration, characterization of the article, or assertions about genealogical significance appear in the response."
+                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no multi-sentence elaboration, no characterization of the article content, no assertions about genealogical significance. The article content is in the log entry's notes, not duplicated in the reply."
               }
             ],
-            "judge_cost_usd": 0.008412,
+            "judge_cost_usd": 0.008426,
             "duration_ms": 10409.278506995179,
             "error": null,
-            "input_tokens": 4005,
+            "input_tokens": 4059,
             "cached_input_tokens": 4770,
-            "output_tokens": 786
+            "output_tokens": 778
           },
           "started_at": 1793041781.5009224,
           "ended_at": 1793041814.105442
@@ -2011,37 +2011,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent correctly reported that the Wikipedia lookup failed with a 503 error and appropriately did not log anything or make a second call. The reply 'The Wikipedia lookup failed; nothing was logged.' accurately reflects the tool's error response and matches the expected behavior for this failure scenario."
+            "rationale": "The agent correctly reported that the Wikipedia lookup failed with a 503 error and that nothing was logged. The response matches the tool's error response exactly and makes no fabricated claims about the topic or the lookup result."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed the correct task for this negative test: it attempted the wikipedia_search call as required, received an error, and properly declined to proceed further. No log entry, no template, and no second call were made\u2014exactly as specified in the per-test context."
+            "rationale": "The agent completed the required behavior for this error scenario: it attempted the wikipedia_search call, received an upstream error, made no second call, logged nothing, and reported the failure to the user. All required actions for this negative outcome were performed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The single wikipedia_search call passed args matching the fixture's expected_args. The query 'Cornish emigration to South Australia' targets the article requested in the delegation and satisfies the expected_args pattern '~Cornish'. The call was well-formed despite the upstream 503 error."
+            "rationale": "The agent called wikipedia_search once with query 'Cornish emigration to South Australia', which matches the expected_args predicate of ~Cornish. The query targets the correct topic as requested in the delegation."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": null,
-            "rationale": "N/A. This is a lookup-failed test where the tool fails with an upstream error. Per the rubric, on this test Template fidelity is N/A because no template was logged and none should have been. The correct outcome is no log entry and no template."
+            "rationale": "N/A \u2014 the tool returned an error (503), so no template was generated or logged. Per the per-test context, no log entry and no template is the correct outcome for this error scenario."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": null,
-            "rationale": "N/A. This is a lookup-failed test where the tool fails with an upstream error before returning article content. Per the rubric, on this test Tool query and response interpretation is N/A because there was no article response to interpret. The agent correctly accepted the error and did not attempt to re-query."
+            "rationale": "N/A \u2014 the tool failed with an upstream error before returning a title or extract. The agent correctly accepted the error response and did not attempt to re-query or override the failure."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The reply is exactly one line: 'The Wikipedia lookup failed; nothing was logged.' This matches the per-test context requirement for the lookup-failed test. The agent did not add narration, did not restate the error, and did not attempt to characterize the topic. The response is appropriately terse and correct."
+            "rationale": "The agent's reply is exactly 'The Wikipedia lookup failed; nothing was logged.' \u2014 the correct one-line response specified in the per-test context for the lookup-failed scenario. No extra narration, no topic characterization, no mid-workflow text."
           }
         ],
         "review_dimensions": [
@@ -2049,37 +2049,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent correctly reported that the Wikipedia lookup failed with a 503 error and appropriately did not log anything or make a second call. The reply 'The Wikipedia lookup failed; nothing was logged.' accurately reflects the tool's error response and matches the expected behavior for this failure scenario."
+            "rationale": "The agent correctly reported that the Wikipedia lookup failed with a 503 error and that nothing was logged. The response matches the tool's error response exactly and makes no fabricated claims about the topic or the lookup result."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed the correct task for this negative test: it attempted the wikipedia_search call as required, received an error, and properly declined to proceed further. No log entry, no template, and no second call were made\u2014exactly as specified in the per-test context."
+            "rationale": "The agent completed the required behavior for this error scenario: it attempted the wikipedia_search call, received an upstream error, made no second call, logged nothing, and reported the failure to the user. All required actions for this negative outcome were performed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The single wikipedia_search call passed args matching the fixture's expected_args. The query 'Cornish emigration to South Australia' targets the article requested in the delegation and satisfies the expected_args pattern '~Cornish'. The call was well-formed despite the upstream 503 error."
+            "rationale": "The agent called wikipedia_search once with query 'Cornish emigration to South Australia', which matches the expected_args predicate of ~Cornish. The query targets the correct topic as requested in the delegation."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": null,
-            "rationale": "N/A. This is a lookup-failed test where the tool fails with an upstream error. Per the rubric, on this test Template fidelity is N/A because no template was logged and none should have been. The correct outcome is no log entry and no template."
+            "rationale": "N/A \u2014 the tool returned an error (503), so no template was generated or logged. Per the per-test context, no log entry and no template is the correct outcome for this error scenario."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": null,
-            "rationale": "N/A. This is a lookup-failed test where the tool fails with an upstream error before returning article content. Per the rubric, on this test Tool query and response interpretation is N/A because there was no article response to interpret. The agent correctly accepted the error and did not attempt to re-query."
+            "rationale": "N/A \u2014 the tool failed with an upstream error before returning a title or extract. The agent correctly accepted the error response and did not attempt to re-query or override the failure."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The reply is exactly one line: 'The Wikipedia lookup failed; nothing was logged.' This matches the per-test context requirement for the lookup-failed test. The agent did not add narration, did not restate the error, and did not attempt to characterize the topic. The response is appropriately terse and correct."
+            "rationale": "The agent's reply is exactly 'The Wikipedia lookup failed; nothing was logged.' \u2014 the correct one-line response specified in the per-test context for the lookup-failed scenario. No extra narration, no topic characterization, no mid-workflow text."
           }
         ]
       },
@@ -2438,45 +2438,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent correctly reported that the Wikipedia lookup failed with a 503 error and appropriately did not log anything or make a second call. The reply 'The Wikipedia lookup failed; nothing was logged.' accurately reflects the tool's error response and matches the expected behavior for this failure scenario."
+                "rationale": "The agent correctly reported that the Wikipedia lookup failed with a 503 error and that nothing was logged. The response matches the tool's error response exactly and makes no fabricated claims about the topic or the lookup result."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent completed the correct task for this negative test: it attempted the wikipedia_search call as required, received an error, and properly declined to proceed further. No log entry, no template, and no second call were made\u2014exactly as specified in the per-test context."
+                "rationale": "The agent completed the required behavior for this error scenario: it attempted the wikipedia_search call, received an upstream error, made no second call, logged nothing, and reported the failure to the user. All required actions for this negative outcome were performed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The single wikipedia_search call passed args matching the fixture's expected_args. The query 'Cornish emigration to South Australia' targets the article requested in the delegation and satisfies the expected_args pattern '~Cornish'. The call was well-formed despite the upstream 503 error."
+                "rationale": "The agent called wikipedia_search once with query 'Cornish emigration to South Australia', which matches the expected_args predicate of ~Cornish. The query targets the correct topic as requested in the delegation."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": null,
-                "rationale": "N/A. This is a lookup-failed test where the tool fails with an upstream error. Per the rubric, on this test Template fidelity is N/A because no template was logged and none should have been. The correct outcome is no log entry and no template."
+                "rationale": "N/A \u2014 the tool returned an error (503), so no template was generated or logged. Per the per-test context, no log entry and no template is the correct outcome for this error scenario."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": null,
-                "rationale": "N/A. This is a lookup-failed test where the tool fails with an upstream error before returning article content. Per the rubric, on this test Tool query and response interpretation is N/A because there was no article response to interpret. The agent correctly accepted the error and did not attempt to re-query."
+                "rationale": "N/A \u2014 the tool failed with an upstream error before returning a title or extract. The agent correctly accepted the error response and did not attempt to re-query or override the failure."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The reply is exactly one line: 'The Wikipedia lookup failed; nothing was logged.' This matches the per-test context requirement for the lookup-failed test. The agent did not add narration, did not restate the error, and did not attempt to characterize the topic. The response is appropriately terse and correct."
+                "rationale": "The agent's reply is exactly 'The Wikipedia lookup failed; nothing was logged.' \u2014 the correct one-line response specified in the per-test context for the lookup-failed scenario. No extra narration, no topic characterization, no mid-workflow text."
               }
             ],
-            "judge_cost_usd": 0.007074,
+            "judge_cost_usd": 0.006653,
             "duration_ms": 7498.972722998587,
             "error": null,
-            "input_tokens": 3397,
+            "input_tokens": 3451,
             "cached_input_tokens": 4770,
-            "output_tokens": 640
+            "output_tokens": 545
           },
           "started_at": 1793041814.141587,
           "ended_at": 1793041833.8354273
@@ -2504,37 +2504,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message 'No Wikipedia article was found for that topic.' No fabricated facts or unsupported claims appear in the reply or log."
+            "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message. No fabricated facts about Hollow Creek Settlement appear in the reply or log."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required actions: called wikipedia_search once with the correct query, logged the negative result with appropriate metadata (outcome negative, resultsExamined 0, notes null), and produced the correct reply. Nothing the input state required was omitted."
+            "rationale": "The agent completed the required task: called wikipedia_search once, logged the negative result with correct parameters (outcome negative, resultsExamined 0, notes null), and produced the correct reply. Nothing required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='Hollow Creek Settlement', which matches the expected_args pattern '~Hollow Creek' semantically. The research_log_append call correctly captured the not-found outcome with all required fields (outcome='negative', resultsExamined=0, notes=null, tool='wikipedia_search'). No critical arguments were wrong."
+            "rationale": "The wikipedia_search call used query='Hollow Creek Settlement', which matches the expected_args pattern '~Hollow Creek' semantically. The research_log_append call correctly passed all required parameters including outcome='negative', resultsExamined=0, notes=null, and tool='wikipedia_search'. Both calls matched their expected signatures."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": null,
-            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on not-found tests no template is logged (notes=null is correct), and Template fidelity does not apply. The agent correctly logged a negative entry without a filled template."
+            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, when wikipedia_search returns no article, no template is logged and Template fidelity does not apply. The agent correctly logged a negative entry with notes=null instead."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
-            "score": 3,
-            "rationale": "The agent sent one wikipedia_search call with query 'Hollow Creek Settlement', targeting the article the delegation named. The tool returned an error (no article found), and the agent accepted this result at face value without re-querying or attempting to override it. The response correctly reflects the tool's negative outcome."
+            "score": null,
+            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on the not-found test there is no article to accept or redirect to interpret. The agent sent a well-aimed query and received the tool's error response, which is the correct outcome."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The reply is exactly one line: 'No Wikipedia article was found for that topic.' This matches the per-test context requirement for the correct reply on a not-found test. No extra narration, no mid-workflow commentary, no article content or genealogical assertions appear."
+            "rationale": "The agent's reply is exactly 'No Wikipedia article was found for that topic.' \u2014 one line as required by the not-found test specification. No extra narration, no article content, no characterization. Correct per the rubric's step-2 line for not-found cases."
           }
         ],
         "review_dimensions": [
@@ -2542,37 +2542,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message 'No Wikipedia article was found for that topic.' No fabricated facts or unsupported claims appear in the reply or log."
+            "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message. No fabricated facts about Hollow Creek Settlement appear in the reply or log."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required actions: called wikipedia_search once with the correct query, logged the negative result with appropriate metadata (outcome negative, resultsExamined 0, notes null), and produced the correct reply. Nothing the input state required was omitted."
+            "rationale": "The agent completed the required task: called wikipedia_search once, logged the negative result with correct parameters (outcome negative, resultsExamined 0, notes null), and produced the correct reply. Nothing required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='Hollow Creek Settlement', which matches the expected_args pattern '~Hollow Creek' semantically. The research_log_append call correctly captured the not-found outcome with all required fields (outcome='negative', resultsExamined=0, notes=null, tool='wikipedia_search'). No critical arguments were wrong."
+            "rationale": "The wikipedia_search call used query='Hollow Creek Settlement', which matches the expected_args pattern '~Hollow Creek' semantically. The research_log_append call correctly passed all required parameters including outcome='negative', resultsExamined=0, notes=null, and tool='wikipedia_search'. Both calls matched their expected signatures."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": null,
-            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on not-found tests no template is logged (notes=null is correct), and Template fidelity does not apply. The agent correctly logged a negative entry without a filled template."
+            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, when wikipedia_search returns no article, no template is logged and Template fidelity does not apply. The agent correctly logged a negative entry with notes=null instead."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
-            "score": 3,
-            "rationale": "The agent sent one wikipedia_search call with query 'Hollow Creek Settlement', targeting the article the delegation named. The tool returned an error (no article found), and the agent accepted this result at face value without re-querying or attempting to override it. The response correctly reflects the tool's negative outcome."
+            "score": null,
+            "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on the not-found test there is no article to accept or redirect to interpret. The agent sent a well-aimed query and received the tool's error response, which is the correct outcome."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The reply is exactly one line: 'No Wikipedia article was found for that topic.' This matches the per-test context requirement for the correct reply on a not-found test. No extra narration, no mid-workflow commentary, no article content or genealogical assertions appear."
+            "rationale": "The agent's reply is exactly 'No Wikipedia article was found for that topic.' \u2014 one line as required by the not-found test specification. No extra narration, no article content, no characterization. Correct per the rubric's step-2 line for not-found cases."
           }
         ]
       },
@@ -2996,45 +2996,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message 'No Wikipedia article was found for that topic.' No fabricated facts or unsupported claims appear in the reply or log."
+                "rationale": "The agent correctly called wikipedia_search for 'Hollow Creek Settlement', received a not-found error, logged a negative entry with outcome='negative' and notes=null, and replied with the exact expected message. No fabricated facts about Hollow Creek Settlement appear in the reply or log."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent completed all required actions: called wikipedia_search once with the correct query, logged the negative result with appropriate metadata (outcome negative, resultsExamined 0, notes null), and produced the correct reply. Nothing the input state required was omitted."
+                "rationale": "The agent completed the required task: called wikipedia_search once, logged the negative result with correct parameters (outcome negative, resultsExamined 0, notes null), and produced the correct reply. Nothing required was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call passed query='Hollow Creek Settlement', which matches the expected_args pattern '~Hollow Creek' semantically. The research_log_append call correctly captured the not-found outcome with all required fields (outcome='negative', resultsExamined=0, notes=null, tool='wikipedia_search'). No critical arguments were wrong."
+                "rationale": "The wikipedia_search call used query='Hollow Creek Settlement', which matches the expected_args pattern '~Hollow Creek' semantically. The research_log_append call correctly passed all required parameters including outcome='negative', resultsExamined=0, notes=null, and tool='wikipedia_search'. Both calls matched their expected signatures."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": null,
-                "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on not-found tests no template is logged (notes=null is correct), and Template fidelity does not apply. The agent correctly logged a negative entry without a filled template."
+                "rationale": "N/A \u2014 this is a not-found test. Per the rubric, when wikipedia_search returns no article, no template is logged and Template fidelity does not apply. The agent correctly logged a negative entry with notes=null instead."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
-                "score": 3,
-                "rationale": "The agent sent one wikipedia_search call with query 'Hollow Creek Settlement', targeting the article the delegation named. The tool returned an error (no article found), and the agent accepted this result at face value without re-querying or attempting to override it. The response correctly reflects the tool's negative outcome."
+                "score": null,
+                "rationale": "N/A \u2014 this is a not-found test. Per the rubric, on the not-found test there is no article to accept or redirect to interpret. The agent sent a well-aimed query and received the tool's error response, which is the correct outcome."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The reply is exactly one line: 'No Wikipedia article was found for that topic.' This matches the per-test context requirement for the correct reply on a not-found test. No extra narration, no mid-workflow commentary, no article content or genealogical assertions appear."
+                "rationale": "The agent's reply is exactly 'No Wikipedia article was found for that topic.' \u2014 one line as required by the not-found test specification. No extra narration, no article content, no characterization. Correct per the rubric's step-2 line for not-found cases."
               }
             ],
-            "judge_cost_usd": 0.007396999999999999,
+            "judge_cost_usd": 0.0072959999999999995,
             "duration_ms": 7557.334420998814,
             "error": null,
-            "input_tokens": 3675,
+            "input_tokens": 3729,
             "cached_input_tokens": 4770,
-            "output_tokens": 649
+            "output_tokens": 618
           },
           "started_at": 1793041793.4683824,
           "ended_at": 1793041818.6132386
@@ -3062,37 +3062,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with query 'Albert Einstein', received the correct article, and returned the filled template with no fabricated content. All facts in the reply (birth/death dates, nationality, key contributions, emigration) match the tool's extract exactly. The response correctly reflects that no project exists and returns the template as instructed."
+            "rationale": "The agent called wikipedia_search with query 'Albert Einstein', received the correct article, and returned the filled template with the exact extract and URL from the tool response. No fabricated content was added. The response correctly reflects what the tool returned."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required actions: called wikipedia_search for Albert Einstein, received the response, and returned the filled template (title, extract, source URL) as the reply. The per-test context confirms this is the correct and complete response when no research project exists. No omissions."
+            "rationale": "The agent completed the required task: it called wikipedia_search for Albert Einstein and returned the filled template as the reply. The per-test context specifies this is the correct and complete response when there is no research project, and the agent did exactly that."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call used query 'Albert Einstein', which matches the expected_args pattern '~Einstein' and correctly targets the person named in the delegation. The research_log_append call was rejected with 'no_project' reason, which is the expected behavior for this test scenario and not a tool-argument error."
+            "rationale": "The wikipedia_search call used query 'Albert Einstein', which matches the expected_args pattern '~Einstein' and correctly targets the person named in the delegation. The query is well-aimed and retrieved the correct article."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received the response, and returned the filled template as the reply (no file changes, as expected). The template contains the H1 'Albert Einstein', the exact extract from the tool response, and the source URL. No facts are asserted beyond what the tool returned. This is the correct behavior for the no-project path."
+            "rationale": "The agent called wikipedia_search, received the response, and returned the filled template with the article title as H1, the exact extract from the tool response, and the source URL. No facts were asserted beyond what the tool returned. The per-test context confirms this is the correct behavior when there is no project."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'Albert Einstein' directly targets the person named in the delegation. The returned title 'Albert Einstein' matches the query exactly, and the agent accepted it at face value without re-querying or remarking on any discrepancy. The response was taken correctly."
+            "rationale": "The query 'Albert Einstein' directly targets the person named in the delegation. The returned title 'Albert Einstein' matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The response was taken correctly."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "Per the per-test context, on the no-project test the reply should be the filled template itself, which is exactly what was returned. The agent did not add mid-workflow narration, characterizations of the article, or genealogical assertions. The template is the complete and correct reply for this path."
+            "rationale": "The per-test context specifies that on the no-project path, the reply should be the filled template itself, not a one-line confirmation. The agent returned exactly that: the template with H1, extract, and source URL, with no additional narration or summary. This is the correct and complete response for this scenario."
           }
         ],
         "review_dimensions": [
@@ -3100,37 +3100,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with query 'Albert Einstein', received the correct article, and returned the filled template with no fabricated content. All facts in the reply (birth/death dates, nationality, key contributions, emigration) match the tool's extract exactly. The response correctly reflects that no project exists and returns the template as instructed."
+            "rationale": "The agent called wikipedia_search with query 'Albert Einstein', received the correct article, and returned the filled template with the exact extract and URL from the tool response. No fabricated content was added. The response correctly reflects what the tool returned."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed all required actions: called wikipedia_search for Albert Einstein, received the response, and returned the filled template (title, extract, source URL) as the reply. The per-test context confirms this is the correct and complete response when no research project exists. No omissions."
+            "rationale": "The agent completed the required task: it called wikipedia_search for Albert Einstein and returned the filled template as the reply. The per-test context specifies this is the correct and complete response when there is no research project, and the agent did exactly that."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call used query 'Albert Einstein', which matches the expected_args pattern '~Einstein' and correctly targets the person named in the delegation. The research_log_append call was rejected with 'no_project' reason, which is the expected behavior for this test scenario and not a tool-argument error."
+            "rationale": "The wikipedia_search call used query 'Albert Einstein', which matches the expected_args pattern '~Einstein' and correctly targets the person named in the delegation. The query is well-aimed and retrieved the correct article."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received the response, and returned the filled template as the reply (no file changes, as expected). The template contains the H1 'Albert Einstein', the exact extract from the tool response, and the source URL. No facts are asserted beyond what the tool returned. This is the correct behavior for the no-project path."
+            "rationale": "The agent called wikipedia_search, received the response, and returned the filled template with the article title as H1, the exact extract from the tool response, and the source URL. No facts were asserted beyond what the tool returned. The per-test context confirms this is the correct behavior when there is no project."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'Albert Einstein' directly targets the person named in the delegation. The returned title 'Albert Einstein' matches the query exactly, and the agent accepted it at face value without re-querying or remarking on any discrepancy. The response was taken correctly."
+            "rationale": "The query 'Albert Einstein' directly targets the person named in the delegation. The returned title 'Albert Einstein' matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The response was taken correctly."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "Per the per-test context, on the no-project test the reply should be the filled template itself, which is exactly what was returned. The agent did not add mid-workflow narration, characterizations of the article, or genealogical assertions. The template is the complete and correct reply for this path."
+            "rationale": "The per-test context specifies that on the no-project path, the reply should be the filled template itself, not a one-line confirmation. The agent returned exactly that: the template with H1, extract, and source URL, with no additional narration or summary. This is the correct and complete response for this scenario."
           }
         ]
       },
@@ -3514,45 +3514,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with query 'Albert Einstein', received the correct article, and returned the filled template with no fabricated content. All facts in the reply (birth/death dates, nationality, key contributions, emigration) match the tool's extract exactly. The response correctly reflects that no project exists and returns the template as instructed."
+                "rationale": "The agent called wikipedia_search with query 'Albert Einstein', received the correct article, and returned the filled template with the exact extract and URL from the tool response. No fabricated content was added. The response correctly reflects what the tool returned."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent completed all required actions: called wikipedia_search for Albert Einstein, received the response, and returned the filled template (title, extract, source URL) as the reply. The per-test context confirms this is the correct and complete response when no research project exists. No omissions."
+                "rationale": "The agent completed the required task: it called wikipedia_search for Albert Einstein and returned the filled template as the reply. The per-test context specifies this is the correct and complete response when there is no research project, and the agent did exactly that."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call used query 'Albert Einstein', which matches the expected_args pattern '~Einstein' and correctly targets the person named in the delegation. The research_log_append call was rejected with 'no_project' reason, which is the expected behavior for this test scenario and not a tool-argument error."
+                "rationale": "The wikipedia_search call used query 'Albert Einstein', which matches the expected_args pattern '~Einstein' and correctly targets the person named in the delegation. The query is well-aimed and retrieved the correct article."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received the response, and returned the filled template as the reply (no file changes, as expected). The template contains the H1 'Albert Einstein', the exact extract from the tool response, and the source URL. No facts are asserted beyond what the tool returned. This is the correct behavior for the no-project path."
+                "rationale": "The agent called wikipedia_search, received the response, and returned the filled template with the article title as H1, the exact extract from the tool response, and the source URL. No facts were asserted beyond what the tool returned. The per-test context confirms this is the correct behavior when there is no project."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'Albert Einstein' directly targets the person named in the delegation. The returned title 'Albert Einstein' matches the query exactly, and the agent accepted it at face value without re-querying or remarking on any discrepancy. The response was taken correctly."
+                "rationale": "The query 'Albert Einstein' directly targets the person named in the delegation. The returned title 'Albert Einstein' matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The response was taken correctly."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "Per the per-test context, on the no-project test the reply should be the filled template itself, which is exactly what was returned. The agent did not add mid-workflow narration, characterizations of the article, or genealogical assertions. The template is the complete and correct reply for this path."
+                "rationale": "The per-test context specifies that on the no-project path, the reply should be the filled template itself, not a one-line confirmation. The agent returned exactly that: the template with H1, extract, and source URL, with no additional narration or summary. This is the correct and complete response for this scenario."
               }
             ],
-            "judge_cost_usd": 0.007377999999999999,
+            "judge_cost_usd": 0.007152,
             "duration_ms": 8123.123097990174,
             "error": null,
-            "input_tokens": 3571,
+            "input_tokens": 3625,
             "cached_input_tokens": 4770,
-            "output_tokens": 666
+            "output_tokens": 610
           },
           "started_at": 1793041781.4888744,
           "ended_at": 1793041805.7427657
@@ -3580,37 +3580,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the correct query 'Schuylkill County, Pennsylvania', received a valid response, and logged it accurately. The logged entry's notes contain the article title as H1, the full extract from the tool response, and the source URL. No fabricated content was added beyond what the tool returned. The response is factually correct."
+            "rationale": "The agent called wikipedia_search with the query 'Schuylkill County, Pennsylvania', received accurate information about the county (its location in Pennsylvania, its history as a coal mining center, the county seat of Pottsville, and immigration patterns), and logged the result with the exact extract provided by the tool. No fabricated content was added beyond what the tool returned. The logged entry's notes follow the template structure with the article title as H1, the full extract, and the source URL."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed the full task: it called wikipedia_search for the requested topic, received the response, and logged the entry to research.json. The file changes summary confirms one log entry was added. Nothing required by the delegation was omitted."
+            "rationale": "The delegation asked to look up Schuylkill County, Pennsylvania on Wikipedia. The agent completed this task by calling wikipedia_search with the appropriate query, receiving the response, and logging it to the research log. The task was fully addressed with no omissions."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='Schuylkill County, Pennsylvania', which matches the expected_args pattern '~Schuylkill' and targets the correct article. The research_log_append call passed all required arguments correctly including projectPath, query object with title, outcome='positive', resultsExamined=1, notes with the filled template, and tool='wikipedia_search'. All arguments are semantically correct."
+            "rationale": "The wikipedia_search call passed the query 'Schuylkill County, Pennsylvania', which matches the expected_args pattern '~Schuylkill' and targets the correct article. The matched.kind is 'predicate' (not 'fixture_not_found'), indicating successful tool invocation. The research_log_append call used the correct projectPath and properly structured the log entry with the tool name 'wikipedia_search', outcome 'positive', and the filled template in notes."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes follow the template exactly: article title as H1 ('# Schuylkill County, Pennsylvania'), the full extract from the tool response, and the source URL in markdown link format. No facts were asserted beyond what the tool returned. The logged entry matches the expected template structure."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template: the article title as H1 ('# Schuylkill County, Pennsylvania'), the full extract from the tool response, and the source URL. No facts were asserted beyond what the tool returned. The reply is a brief confirmation line ('Saved the Wikipedia summary to the research log.') without restating the entry's contents."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'Schuylkill County, Pennsylvania' targets the exact article requested in the delegation. The returned title matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The single response was taken correctly as the article's identity."
+            "rationale": "The query 'Schuylkill County, Pennsylvania' targets the article the delegation named. The returned title 'Schuylkill County, Pennsylvania' matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The single response was taken as the correct article."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of content appears in the reply. The article content is correctly placed in the log entry's notes, not in the reply."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of the content appears in the reply. The article content is held in the log entry's notes, not duplicated in chat."
           }
         ],
         "review_dimensions": [
@@ -3618,37 +3618,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the correct query 'Schuylkill County, Pennsylvania', received a valid response, and logged it accurately. The logged entry's notes contain the article title as H1, the full extract from the tool response, and the source URL. No fabricated content was added beyond what the tool returned. The response is factually correct."
+            "rationale": "The agent called wikipedia_search with the query 'Schuylkill County, Pennsylvania', received accurate information about the county (its location in Pennsylvania, its history as a coal mining center, the county seat of Pottsville, and immigration patterns), and logged the result with the exact extract provided by the tool. No fabricated content was added beyond what the tool returned. The logged entry's notes follow the template structure with the article title as H1, the full extract, and the source URL."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed the full task: it called wikipedia_search for the requested topic, received the response, and logged the entry to research.json. The file changes summary confirms one log entry was added. Nothing required by the delegation was omitted."
+            "rationale": "The delegation asked to look up Schuylkill County, Pennsylvania on Wikipedia. The agent completed this task by calling wikipedia_search with the appropriate query, receiving the response, and logging it to the research log. The task was fully addressed with no omissions."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='Schuylkill County, Pennsylvania', which matches the expected_args pattern '~Schuylkill' and targets the correct article. The research_log_append call passed all required arguments correctly including projectPath, query object with title, outcome='positive', resultsExamined=1, notes with the filled template, and tool='wikipedia_search'. All arguments are semantically correct."
+            "rationale": "The wikipedia_search call passed the query 'Schuylkill County, Pennsylvania', which matches the expected_args pattern '~Schuylkill' and targets the correct article. The matched.kind is 'predicate' (not 'fixture_not_found'), indicating successful tool invocation. The research_log_append call used the correct projectPath and properly structured the log entry with the tool name 'wikipedia_search', outcome 'positive', and the filled template in notes."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes follow the template exactly: article title as H1 ('# Schuylkill County, Pennsylvania'), the full extract from the tool response, and the source URL in markdown link format. No facts were asserted beyond what the tool returned. The logged entry matches the expected template structure."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template: the article title as H1 ('# Schuylkill County, Pennsylvania'), the full extract from the tool response, and the source URL. No facts were asserted beyond what the tool returned. The reply is a brief confirmation line ('Saved the Wikipedia summary to the research log.') without restating the entry's contents."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'Schuylkill County, Pennsylvania' targets the exact article requested in the delegation. The returned title matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The single response was taken correctly as the article's identity."
+            "rationale": "The query 'Schuylkill County, Pennsylvania' targets the article the delegation named. The returned title 'Schuylkill County, Pennsylvania' matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The single response was taken as the correct article."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of content appears in the reply. The article content is correctly placed in the log entry's notes, not in the reply."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of the content appears in the reply. The article content is held in the log entry's notes, not duplicated in chat."
           }
         ]
       },
@@ -4075,45 +4075,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the correct query 'Schuylkill County, Pennsylvania', received a valid response, and logged it accurately. The logged entry's notes contain the article title as H1, the full extract from the tool response, and the source URL. No fabricated content was added beyond what the tool returned. The response is factually correct."
+                "rationale": "The agent called wikipedia_search with the query 'Schuylkill County, Pennsylvania', received accurate information about the county (its location in Pennsylvania, its history as a coal mining center, the county seat of Pottsville, and immigration patterns), and logged the result with the exact extract provided by the tool. No fabricated content was added beyond what the tool returned. The logged entry's notes follow the template structure with the article title as H1, the full extract, and the source URL."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent completed the full task: it called wikipedia_search for the requested topic, received the response, and logged the entry to research.json. The file changes summary confirms one log entry was added. Nothing required by the delegation was omitted."
+                "rationale": "The delegation asked to look up Schuylkill County, Pennsylvania on Wikipedia. The agent completed this task by calling wikipedia_search with the appropriate query, receiving the response, and logging it to the research log. The task was fully addressed with no omissions."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call passed query='Schuylkill County, Pennsylvania', which matches the expected_args pattern '~Schuylkill' and targets the correct article. The research_log_append call passed all required arguments correctly including projectPath, query object with title, outcome='positive', resultsExamined=1, notes with the filled template, and tool='wikipedia_search'. All arguments are semantically correct."
+                "rationale": "The wikipedia_search call passed the query 'Schuylkill County, Pennsylvania', which matches the expected_args pattern '~Schuylkill' and targets the correct article. The matched.kind is 'predicate' (not 'fixture_not_found'), indicating successful tool invocation. The research_log_append call used the correct projectPath and properly structured the log entry with the tool name 'wikipedia_search', outcome 'positive', and the filled template in notes."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes follow the template exactly: article title as H1 ('# Schuylkill County, Pennsylvania'), the full extract from the tool response, and the source URL in markdown link format. No facts were asserted beyond what the tool returned. The logged entry matches the expected template structure."
+                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template: the article title as H1 ('# Schuylkill County, Pennsylvania'), the full extract from the tool response, and the source URL. No facts were asserted beyond what the tool returned. The reply is a brief confirmation line ('Saved the Wikipedia summary to the research log.') without restating the entry's contents."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'Schuylkill County, Pennsylvania' targets the exact article requested in the delegation. The returned title matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The single response was taken correctly as the article's identity."
+                "rationale": "The query 'Schuylkill County, Pennsylvania' targets the article the delegation named. The returned title 'Schuylkill County, Pennsylvania' matches the query exactly, and the agent accepted it at face value without remarking on any discrepancy or re-querying. The single response was taken as the correct article."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of content appears in the reply. The article content is correctly placed in the log entry's notes, not in the reply."
+                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, no characterization of the article, no summary or quote of the content appears in the reply. The article content is held in the log entry's notes, not duplicated in chat."
               }
             ],
-            "judge_cost_usd": 0.008031,
+            "judge_cost_usd": 0.008445000000000001,
             "duration_ms": 8611.357278001378,
             "error": null,
-            "input_tokens": 4019,
+            "input_tokens": 4073,
             "cached_input_tokens": 4770,
-            "output_tokens": 707
+            "output_tokens": 779
           },
           "started_at": 1793041788.6485336,
           "ended_at": 1793041810.5031986
@@ -4141,37 +4141,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'Kirchenbuch', received the article summary, and logged it with the filled template. The logged notes preserve the exact extract from the tool response, including Unicode characters (Kirchenb\u00fccher). No fabricated material or unsupported claims appear in the logged entry. The response is factually correct given the tool response."
+            "rationale": "The agent called wikipedia_search for 'Kirchenbuch', received accurate information about German church books (parish registers for baptisms, marriages, burials), and logged the complete extract verbatim with proper attribution to Wikipedia. No fabricated material or unsupported claims. The logged notes preserve Unicode characters (Kirchenb\u00fccher) correctly and match the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed the full task: it called wikipedia_search for the requested topic (Kirchenbuch), received the response, and logged the summary to the research log via research_log_append. The delegation asked to 'look up Kirchenbuch on Wikipedia' and the agent fulfilled that request entirely. No required steps were omitted."
+            "rationale": "The delegation asked to look up Kirchenbuch on Wikipedia to understand what German church books are. The agent successfully retrieved and logged the Wikipedia article, which directly answers the question by explaining that Kirchenb\u00fccher are parish registers recording vital events. The task is complete."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The research_log_append call received the correct projectPath, query object with the returned title, outcome='positive', resultsExamined=1, and the filled template in notes. All critical identifiers and arguments are correct; no fixture_not_found errors occurred."
+            "rationale": "The wikipedia_search call passed query='Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The research_log_append call used correct projectPath, query object with matching title, outcome='positive', resultsExamined=1, and notes containing the filled template. All arguments are semantically correct and match expectations."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract, title as H1, and source URL. The logged notes match the tool response exactly (verified by test_log_notes_match_template per the per-test context). No facts are asserted beyond what the tool response supports. The brief confirmation reply ('Saved the Wikipedia summary to the research log.') is the correct caller-facing line."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract and source attribution. The logged notes match the tool response exactly (including Unicode preservation). No facts are asserted beyond what the tool response supports. The response is correct."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The agent sent one wikipedia_search call with query='Kirchenbuch', targeting the exact article the delegation named. The returned title 'Kirchenbuch' matches the query, and the agent accepted it at face value without re-querying or remarking on any discrepancy. The response was taken correctly as the article's identity."
+            "rationale": "The query 'Kirchenbuch' directly targets the article the delegation named. The returned title 'Kirchenbuch' is accepted as the article's identity. The agent proceeds with the response at face value without remarking on any discrepancy or re-querying. The query-to-response path is clean and correct."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is held in the logged entry's notes, not duplicated in the reply. No mid-workflow narration, characterization of the article, or extra sentences appear. The response is maximally economical."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is not restated, summarized, or quoted in the reply\u2014it appears only in the logged research entry. No mid-workflow narration or characterization is present."
           }
         ],
         "review_dimensions": [
@@ -4179,37 +4179,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'Kirchenbuch', received the article summary, and logged it with the filled template. The logged notes preserve the exact extract from the tool response, including Unicode characters (Kirchenb\u00fccher). No fabricated material or unsupported claims appear in the logged entry. The response is factually correct given the tool response."
+            "rationale": "The agent called wikipedia_search for 'Kirchenbuch', received accurate information about German church books (parish registers for baptisms, marriages, burials), and logged the complete extract verbatim with proper attribution to Wikipedia. No fabricated material or unsupported claims. The logged notes preserve Unicode characters (Kirchenb\u00fccher) correctly and match the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent completed the full task: it called wikipedia_search for the requested topic (Kirchenbuch), received the response, and logged the summary to the research log via research_log_append. The delegation asked to 'look up Kirchenbuch on Wikipedia' and the agent fulfilled that request entirely. No required steps were omitted."
+            "rationale": "The delegation asked to look up Kirchenbuch on Wikipedia to understand what German church books are. The agent successfully retrieved and logged the Wikipedia article, which directly answers the question by explaining that Kirchenb\u00fccher are parish registers recording vital events. The task is complete."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The research_log_append call received the correct projectPath, query object with the returned title, outcome='positive', resultsExamined=1, and the filled template in notes. All critical identifiers and arguments are correct; no fixture_not_found errors occurred."
+            "rationale": "The wikipedia_search call passed query='Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The research_log_append call used correct projectPath, query object with matching title, outcome='positive', resultsExamined=1, and notes containing the filled template. All arguments are semantically correct and match expectations."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract, title as H1, and source URL. The logged notes match the tool response exactly (verified by test_log_notes_match_template per the per-test context). No facts are asserted beyond what the tool response supports. The brief confirmation reply ('Saved the Wikipedia summary to the research log.') is the correct caller-facing line."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract and source attribution. The logged notes match the tool response exactly (including Unicode preservation). No facts are asserted beyond what the tool response supports. The response is correct."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The agent sent one wikipedia_search call with query='Kirchenbuch', targeting the exact article the delegation named. The returned title 'Kirchenbuch' matches the query, and the agent accepted it at face value without re-querying or remarking on any discrepancy. The response was taken correctly as the article's identity."
+            "rationale": "The query 'Kirchenbuch' directly targets the article the delegation named. The returned title 'Kirchenbuch' is accepted as the article's identity. The agent proceeds with the response at face value without remarking on any discrepancy or re-querying. The query-to-response path is clean and correct."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is held in the logged entry's notes, not duplicated in the reply. No mid-workflow narration, characterization of the article, or extra sentences appear. The response is maximally economical."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is not restated, summarized, or quoted in the reply\u2014it appears only in the logged research entry. No mid-workflow narration or characterization is present."
           }
         ]
       },
@@ -4635,45 +4635,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the query 'Kirchenbuch', received the article summary, and logged it with the filled template. The logged notes preserve the exact extract from the tool response, including Unicode characters (Kirchenb\u00fccher). No fabricated material or unsupported claims appear in the logged entry. The response is factually correct given the tool response."
+                "rationale": "The agent called wikipedia_search for 'Kirchenbuch', received accurate information about German church books (parish registers for baptisms, marriages, burials), and logged the complete extract verbatim with proper attribution to Wikipedia. No fabricated material or unsupported claims. The logged notes preserve Unicode characters (Kirchenb\u00fccher) correctly and match the tool response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent completed the full task: it called wikipedia_search for the requested topic (Kirchenbuch), received the response, and logged the summary to the research log via research_log_append. The delegation asked to 'look up Kirchenbuch on Wikipedia' and the agent fulfilled that request entirely. No required steps were omitted."
+                "rationale": "The delegation asked to look up Kirchenbuch on Wikipedia to understand what German church books are. The agent successfully retrieved and logged the Wikipedia article, which directly answers the question by explaining that Kirchenb\u00fccher are parish registers recording vital events. The task is complete."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call passed query='Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The research_log_append call received the correct projectPath, query object with the returned title, outcome='positive', resultsExamined=1, and the filled template in notes. All critical identifiers and arguments are correct; no fixture_not_found errors occurred."
+                "rationale": "The wikipedia_search call passed query='Kirchenbuch', which matches the expected_args pattern '~Kirchenbuch' exactly. The research_log_append call used correct projectPath, query object with matching title, outcome='positive', resultsExamined=1, and notes containing the filled template. All arguments are semantically correct and match expectations."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract, title as H1, and source URL. The logged notes match the tool response exactly (verified by test_log_notes_match_template per the per-test context). No facts are asserted beyond what the tool response supports. The brief confirmation reply ('Saved the Wikipedia summary to the research log.') is the correct caller-facing line."
+                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract and source attribution. The logged notes match the tool response exactly (including Unicode preservation). No facts are asserted beyond what the tool response supports. The response is correct."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The agent sent one wikipedia_search call with query='Kirchenbuch', targeting the exact article the delegation named. The returned title 'Kirchenbuch' matches the query, and the agent accepted it at face value without re-querying or remarking on any discrepancy. The response was taken correctly as the article's identity."
+                "rationale": "The query 'Kirchenbuch' directly targets the article the delegation named. The returned title 'Kirchenbuch' is accepted as the article's identity. The agent proceeds with the response at face value without remarking on any discrepancy or re-querying. The query-to-response path is clean and correct."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is held in the logged entry's notes, not duplicated in the reply. No mid-workflow narration, characterization of the article, or extra sentences appear. The response is maximally economical."
+                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is not restated, summarized, or quoted in the reply\u2014it appears only in the logged research entry. No mid-workflow narration or characterization is present."
               }
             ],
-            "judge_cost_usd": 0.008537,
+            "judge_cost_usd": 0.008226,
             "duration_ms": 8080.83685200836,
             "error": null,
-            "input_tokens": 4315,
+            "input_tokens": 4369,
             "cached_input_tokens": 4770,
-            "output_tokens": 749
+            "output_tokens": 676
           },
           "started_at": 1793041762.55017,
           "ended_at": 1793041788.6323545
@@ -4701,37 +4701,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'W\u00fcrttemberg', received the article summary, and logged it via research_log_append with the exact extract and title from the tool response. No fabricated material or unsupported claims appear in the logged notes. The response correctly attributes the content to Wikipedia via the source link."
+            "rationale": "The agent called wikipedia_search with the query 'W\u00fcrttemberg', received the correct article, and logged the full extract verbatim with proper attribution to Wikipedia. No fabricated material or unsupported claims. The logged notes preserve all special characters (\u00fc, \u00f6, \u00df) and German terminology exactly as returned by the tool."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The delegation asked to look up W\u00fcrttemberg on Wikipedia for a family tracing context. The agent completed this task by calling wikipedia_search, receiving the article, and logging it to the research log. The user's mention of tracing a family that left in the 1840s is context, not a separate request requiring emigration research or a plan\u2014the agent correctly stopped after logging the summary."
+            "rationale": "The agent completed the delegated task: looked up W\u00fcrttemberg on Wikipedia and logged the summary. The user's mention of tracing a family that left in the 1840s was context for the request, not a separate task requiring emigration research or records lists. The agent correctly stopped after logging the encyclopedia summary."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='W\u00fcrttemberg', which matches the expected_args pattern '~rttemberg' semantically and targets the correct article. The research_log_append call included all required fields (projectPath, query, title, outcome, resultsExamined, notes, tool) with correct values derived from the tool response. No critical identifiers were wrong and no fixture_not_found errors occurred."
+            "rationale": "The wikipedia_search call passed query='W\u00fcrttemberg', which matches the expected_args pattern '~rttemberg' semantically and targets the correct article. The research_log_append call correctly structured the logged entry with the returned title, full extract, URL source, and appropriate metadata (outcome: positive, resultsExamined: 1, tool: wikipedia_search)."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received the response, and logged one entry whose notes contain the filled template with the H1 '# W\u00fcrttemberg' and the complete extract from the tool response, followed by the source link. The logged content matches what the tool returned without adding unsupported facts. The reply confirms the action with a single line."
+            "rationale": "The agent called wikipedia_search, received the response, and logged one entry whose notes are the filled template with the H1 '# W\u00fcrttemberg' and the complete extract from the tool response. The reply is a brief confirmation ('Saved the Wikipedia summary to the research log.') without asserting facts absent from the tool response."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'W\u00fcrttemberg' targets the article the delegation named. The returned title 'W\u00fcrttemberg' is accepted as the article's identity and used in the logged notes. The agent proceeded at face value with the single response without re-querying or remarking on any discrepancy."
+            "rationale": "The query 'W\u00fcrttemberg' targets the article the delegation named. The returned title 'W\u00fcrttemberg' is accepted at face value and used as the H1 in the logged notes. No re-querying, override of the title, or remarks on query-versus-title differences occurred."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, characterization of the article, or restatement of content appears in the reply. The article content is correctly held in the log entry's notes, not duplicated in the response."
+            "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, characterization of the article, or restatement of content appears. The article content is correctly placed in the log entry's notes, not in the reply."
           }
         ],
         "review_dimensions": [
@@ -4739,37 +4739,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'W\u00fcrttemberg', received the article summary, and logged it via research_log_append with the exact extract and title from the tool response. No fabricated material or unsupported claims appear in the logged notes. The response correctly attributes the content to Wikipedia via the source link."
+            "rationale": "The agent called wikipedia_search with the query 'W\u00fcrttemberg', received the correct article, and logged the full extract verbatim with proper attribution to Wikipedia. No fabricated material or unsupported claims. The logged notes preserve all special characters (\u00fc, \u00f6, \u00df) and German terminology exactly as returned by the tool."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The delegation asked to look up W\u00fcrttemberg on Wikipedia for a family tracing context. The agent completed this task by calling wikipedia_search, receiving the article, and logging it to the research log. The user's mention of tracing a family that left in the 1840s is context, not a separate request requiring emigration research or a plan\u2014the agent correctly stopped after logging the summary."
+            "rationale": "The agent completed the delegated task: looked up W\u00fcrttemberg on Wikipedia and logged the summary. The user's mention of tracing a family that left in the 1840s was context for the request, not a separate task requiring emigration research or records lists. The agent correctly stopped after logging the encyclopedia summary."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='W\u00fcrttemberg', which matches the expected_args pattern '~rttemberg' semantically and targets the correct article. The research_log_append call included all required fields (projectPath, query, title, outcome, resultsExamined, notes, tool) with correct values derived from the tool response. No critical identifiers were wrong and no fixture_not_found errors occurred."
+            "rationale": "The wikipedia_search call passed query='W\u00fcrttemberg', which matches the expected_args pattern '~rttemberg' semantically and targets the correct article. The research_log_append call correctly structured the logged entry with the returned title, full extract, URL source, and appropriate metadata (outcome: positive, resultsExamined: 1, tool: wikipedia_search)."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received the response, and logged one entry whose notes contain the filled template with the H1 '# W\u00fcrttemberg' and the complete extract from the tool response, followed by the source link. The logged content matches what the tool returned without adding unsupported facts. The reply confirms the action with a single line."
+            "rationale": "The agent called wikipedia_search, received the response, and logged one entry whose notes are the filled template with the H1 '# W\u00fcrttemberg' and the complete extract from the tool response. The reply is a brief confirmation ('Saved the Wikipedia summary to the research log.') without asserting facts absent from the tool response."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'W\u00fcrttemberg' targets the article the delegation named. The returned title 'W\u00fcrttemberg' is accepted as the article's identity and used in the logged notes. The agent proceeded at face value with the single response without re-querying or remarking on any discrepancy."
+            "rationale": "The query 'W\u00fcrttemberg' targets the article the delegation named. The returned title 'W\u00fcrttemberg' is accepted at face value and used as the H1 in the logged notes. No re-querying, override of the title, or remarks on query-versus-title differences occurred."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, characterization of the article, or restatement of content appears in the reply. The article content is correctly held in the log entry's notes, not duplicated in the response."
+            "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, characterization of the article, or restatement of content appears. The article content is correctly placed in the log entry's notes, not in the reply."
           }
         ]
       },
@@ -5196,45 +5196,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the query 'W\u00fcrttemberg', received the article summary, and logged it via research_log_append with the exact extract and title from the tool response. No fabricated material or unsupported claims appear in the logged notes. The response correctly attributes the content to Wikipedia via the source link."
+                "rationale": "The agent called wikipedia_search with the query 'W\u00fcrttemberg', received the correct article, and logged the full extract verbatim with proper attribution to Wikipedia. No fabricated material or unsupported claims. The logged notes preserve all special characters (\u00fc, \u00f6, \u00df) and German terminology exactly as returned by the tool."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked to look up W\u00fcrttemberg on Wikipedia for a family tracing context. The agent completed this task by calling wikipedia_search, receiving the article, and logging it to the research log. The user's mention of tracing a family that left in the 1840s is context, not a separate request requiring emigration research or a plan\u2014the agent correctly stopped after logging the summary."
+                "rationale": "The agent completed the delegated task: looked up W\u00fcrttemberg on Wikipedia and logged the summary. The user's mention of tracing a family that left in the 1840s was context for the request, not a separate task requiring emigration research or records lists. The agent correctly stopped after logging the encyclopedia summary."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call passed query='W\u00fcrttemberg', which matches the expected_args pattern '~rttemberg' semantically and targets the correct article. The research_log_append call included all required fields (projectPath, query, title, outcome, resultsExamined, notes, tool) with correct values derived from the tool response. No critical identifiers were wrong and no fixture_not_found errors occurred."
+                "rationale": "The wikipedia_search call passed query='W\u00fcrttemberg', which matches the expected_args pattern '~rttemberg' semantically and targets the correct article. The research_log_append call correctly structured the logged entry with the returned title, full extract, URL source, and appropriate metadata (outcome: positive, resultsExamined: 1, tool: wikipedia_search)."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received the response, and logged one entry whose notes contain the filled template with the H1 '# W\u00fcrttemberg' and the complete extract from the tool response, followed by the source link. The logged content matches what the tool returned without adding unsupported facts. The reply confirms the action with a single line."
+                "rationale": "The agent called wikipedia_search, received the response, and logged one entry whose notes are the filled template with the H1 '# W\u00fcrttemberg' and the complete extract from the tool response. The reply is a brief confirmation ('Saved the Wikipedia summary to the research log.') without asserting facts absent from the tool response."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'W\u00fcrttemberg' targets the article the delegation named. The returned title 'W\u00fcrttemberg' is accepted as the article's identity and used in the logged notes. The agent proceeded at face value with the single response without re-querying or remarking on any discrepancy."
+                "rationale": "The query 'W\u00fcrttemberg' targets the article the delegation named. The returned title 'W\u00fcrttemberg' is accepted at face value and used as the H1 in the logged notes. No re-querying, override of the title, or remarks on query-versus-title differences occurred."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, characterization of the article, or restatement of content appears in the reply. The article content is correctly held in the log entry's notes, not duplicated in the response."
+                "rationale": "The reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, characterization of the article, or restatement of content appears. The article content is correctly placed in the log entry's notes, not in the reply."
               }
             ],
-            "judge_cost_usd": 0.008524,
+            "judge_cost_usd": 0.008418,
             "duration_ms": 9327.157952997368,
             "error": null,
-            "input_tokens": 4452,
+            "input_tokens": 4506,
             "cached_input_tokens": 4770,
-            "output_tokens": 719
+            "output_tokens": 687
           },
           "started_at": 1793041762.556517,
           "ended_at": 1793041801.2545948
@@ -5262,37 +5262,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'the surname O'Brien', received a valid response about the O'Brien surname, and logged it correctly via research_log_append. The logged notes match the template format with the article title, extract, and source URL. No fabricated material or unsupported claims are present."
+            "rationale": "The agent called wikipedia_search with the query 'the surname O'Brien', received a valid response about the O'Brien surname, and logged it correctly via research_log_append. The logged notes match the template format with the Wikipedia extract and proper source attribution. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The delegation asked to look up the surname O'Brien on Wikipedia. The agent completed this task by calling wikipedia_search with an appropriate query, receiving the article, and logging it to the research log. All required work was performed."
+            "rationale": "The delegation asked to look up the surname O'Brien on Wikipedia. The agent completed this task by calling wikipedia_search with an appropriate query, receiving the article summary, and logging it to the research log via research_log_append. All required actions were performed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call used query 'the surname O'Brien', which matches the expected_args pattern '~O'Brien' semantically. The research_log_append call correctly passed projectPath, query object with the returned title, outcome, resultsExamined, notes in template format, and tool identifier. All arguments are appropriate and match expectations."
+            "rationale": "The wikipedia_search call used query 'the surname O'Brien' which matches the expected_args pattern '~O'Brien' (substring match). The research_log_append call was made with correct projectPath, query object, outcome, resultsExamined, notes, and tool fields. All arguments align with what was expected."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes are the filled template with the article title 'O'Brien (surname)', the extract from Wikipedia, and the source URL. The logged content matches the template structure. No facts were asserted beyond what the tool response provided."
+            "rationale": "The agent called wikipedia_search, received a response with title 'O'Brien (surname)', extract, and url, and logged one entry whose notes contain the filled template with the Wikipedia extract and proper markdown source link. The logged content matches what the tool returned without inventing additional facts."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'the surname O'Brien' targeted the correct article about the O'Brien surname. The returned title 'O'Brien (surname)' was accepted at face value and used in the log entry. The agent did not re-query or override the returned title, following correct behavior for handling Wikipedia redirects and formal titles."
+            "rationale": "The query 'the surname O'Brien' targets the article the delegation asked for. The returned title 'O'Brien (surname)' is accepted and used in the log entry without questioning or re-querying. The agent correctly follows the redirect/formal title pattern expected by the rubric."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, article characterization, or extra sentences are present. The article content is correctly placed in the log entry's notes, not in the reply."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No additional narration, article content, or characterization appears in the reply."
           }
         ],
         "review_dimensions": [
@@ -5300,37 +5300,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'the surname O'Brien', received a valid response about the O'Brien surname, and logged it correctly via research_log_append. The logged notes match the template format with the article title, extract, and source URL. No fabricated material or unsupported claims are present."
+            "rationale": "The agent called wikipedia_search with the query 'the surname O'Brien', received a valid response about the O'Brien surname, and logged it correctly via research_log_append. The logged notes match the template format with the Wikipedia extract and proper source attribution. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The delegation asked to look up the surname O'Brien on Wikipedia. The agent completed this task by calling wikipedia_search with an appropriate query, receiving the article, and logging it to the research log. All required work was performed."
+            "rationale": "The delegation asked to look up the surname O'Brien on Wikipedia. The agent completed this task by calling wikipedia_search with an appropriate query, receiving the article summary, and logging it to the research log via research_log_append. All required actions were performed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call used query 'the surname O'Brien', which matches the expected_args pattern '~O'Brien' semantically. The research_log_append call correctly passed projectPath, query object with the returned title, outcome, resultsExamined, notes in template format, and tool identifier. All arguments are appropriate and match expectations."
+            "rationale": "The wikipedia_search call used query 'the surname O'Brien' which matches the expected_args pattern '~O'Brien' (substring match). The research_log_append call was made with correct projectPath, query object, outcome, resultsExamined, notes, and tool fields. All arguments align with what was expected."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes are the filled template with the article title 'O'Brien (surname)', the extract from Wikipedia, and the source URL. The logged content matches the template structure. No facts were asserted beyond what the tool response provided."
+            "rationale": "The agent called wikipedia_search, received a response with title 'O'Brien (surname)', extract, and url, and logged one entry whose notes contain the filled template with the Wikipedia extract and proper markdown source link. The logged content matches what the tool returned without inventing additional facts."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'the surname O'Brien' targeted the correct article about the O'Brien surname. The returned title 'O'Brien (surname)' was accepted at face value and used in the log entry. The agent did not re-query or override the returned title, following correct behavior for handling Wikipedia redirects and formal titles."
+            "rationale": "The query 'the surname O'Brien' targets the article the delegation asked for. The returned title 'O'Brien (surname)' is accepted and used in the log entry without questioning or re-querying. The agent correctly follows the redirect/formal title pattern expected by the rubric."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, article characterization, or extra sentences are present. The article content is correctly placed in the log entry's notes, not in the reply."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No additional narration, article content, or characterization appears in the reply."
           }
         ]
       },
@@ -5756,45 +5756,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the query 'the surname O'Brien', received a valid response about the O'Brien surname, and logged it correctly via research_log_append. The logged notes match the template format with the article title, extract, and source URL. No fabricated material or unsupported claims are present."
+                "rationale": "The agent called wikipedia_search with the query 'the surname O'Brien', received a valid response about the O'Brien surname, and logged it correctly via research_log_append. The logged notes match the template format with the Wikipedia extract and proper source attribution. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The delegation asked to look up the surname O'Brien on Wikipedia. The agent completed this task by calling wikipedia_search with an appropriate query, receiving the article, and logging it to the research log. All required work was performed."
+                "rationale": "The delegation asked to look up the surname O'Brien on Wikipedia. The agent completed this task by calling wikipedia_search with an appropriate query, receiving the article summary, and logging it to the research log via research_log_append. All required actions were performed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call used query 'the surname O'Brien', which matches the expected_args pattern '~O'Brien' semantically. The research_log_append call correctly passed projectPath, query object with the returned title, outcome, resultsExamined, notes in template format, and tool identifier. All arguments are appropriate and match expectations."
+                "rationale": "The wikipedia_search call used query 'the surname O'Brien' which matches the expected_args pattern '~O'Brien' (substring match). The research_log_append call was made with correct projectPath, query object, outcome, resultsExamined, notes, and tool fields. All arguments align with what was expected."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes are the filled template with the article title 'O'Brien (surname)', the extract from Wikipedia, and the source URL. The logged content matches the template structure. No facts were asserted beyond what the tool response provided."
+                "rationale": "The agent called wikipedia_search, received a response with title 'O'Brien (surname)', extract, and url, and logged one entry whose notes contain the filled template with the Wikipedia extract and proper markdown source link. The logged content matches what the tool returned without inventing additional facts."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'the surname O'Brien' targeted the correct article about the O'Brien surname. The returned title 'O'Brien (surname)' was accepted at face value and used in the log entry. The agent did not re-query or override the returned title, following correct behavior for handling Wikipedia redirects and formal titles."
+                "rationale": "The query 'the surname O'Brien' targets the article the delegation asked for. The returned title 'O'Brien (surname)' is accepted and used in the log entry without questioning or re-querying. The agent correctly follows the redirect/formal title pattern expected by the rubric."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No mid-workflow narration, article characterization, or extra sentences are present. The article content is correctly placed in the log entry's notes, not in the reply."
+                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the required return contract precisely. No additional narration, article content, or characterization appears in the reply."
               }
             ],
-            "judge_cost_usd": 0.007647000000000001,
+            "judge_cost_usd": 0.0075509999999999996,
             "duration_ms": 8537.725382993813,
             "error": null,
-            "input_tokens": 3865,
+            "input_tokens": 3919,
             "cached_input_tokens": 4770,
-            "output_tokens": 661
+            "output_tokens": 631
           },
           "started_at": 1793041762.544065,
           "ended_at": 1793041793.4448357
@@ -5823,7 +5823,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'the potato famine', received the article 'Great Famine (Ireland)' with its extract and URL, and logged the result with the correct returned title as the H1. The logged notes contain the exact extract from the tool response with proper attribution via the source URL. No fabricated material or unsupported claims are present."
+            "rationale": "The agent called wikipedia_search with query 'the potato famine', received the article 'Great Famine (Ireland)' with its extract and URL, and logged the result with the correct returned title as the H1. The logged notes contain the exact extract from the tool response with proper attribution via the source URL. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
@@ -5841,19 +5841,19 @@
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract and source URL. The logged H1 is '# Great Famine (Ireland)' \u2014 the returned title, not the query. The reply is a brief confirmation ('Saved the Wikipedia summary to the research log.') without asserting facts absent from the tool response."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract and source URL. The logged H1 is '# Great Famine (Ireland)' \u2014 the returned title, not the query. The reply is a brief confirmation ('Saved the Wikipedia summary to the research log.') without restating article content. No facts are asserted beyond what the tool response supports."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'the potato famine' targets the article the delegation asked for. The returned title 'Great Famine (Ireland)' is accepted at face value and used as the H1 in the logged notes. Following the redirect from the query phrasing to the formal article title is correct behavior, not a discrepancy to flag."
+            "rationale": "The query 'the potato famine' targets the article the delegation named. The returned title 'Great Famine (Ireland)' is accepted at face value and used as the H1 in the logged notes. Following the redirect from the user's phrasing to the formal Wikipedia title is correct behavior. No re-querying or title override occurred."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is in the log entry's notes, not in the reply. No mid-workflow narration, characterization of the article, or restatement of content appears in the response."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. No mid-workflow narration, article characterization, or genealogical significance claims appear. The article content is correctly held in the log entry's notes, not duplicated in the reply."
           }
         ],
         "review_dimensions": [
@@ -5861,7 +5861,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the query 'the potato famine', received the article 'Great Famine (Ireland)' with its extract and URL, and logged the result with the correct returned title as the H1. The logged notes contain the exact extract from the tool response with proper attribution via the source URL. No fabricated material or unsupported claims are present."
+            "rationale": "The agent called wikipedia_search with query 'the potato famine', received the article 'Great Famine (Ireland)' with its extract and URL, and logged the result with the correct returned title as the H1. The logged notes contain the exact extract from the tool response with proper attribution via the source URL. No fabricated material or unsupported claims are present."
           },
           {
             "source": "base",
@@ -5879,19 +5879,19 @@
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract and source URL. The logged H1 is '# Great Famine (Ireland)' \u2014 the returned title, not the query. The reply is a brief confirmation ('Saved the Wikipedia summary to the research log.') without asserting facts absent from the tool response."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract and source URL. The logged H1 is '# Great Famine (Ireland)' \u2014 the returned title, not the query. The reply is a brief confirmation ('Saved the Wikipedia summary to the research log.') without restating article content. No facts are asserted beyond what the tool response supports."
           },
           {
             "source": "rubric",
             "name": "Tool query and response interpretation",
             "score": 3,
-            "rationale": "The query 'the potato famine' targets the article the delegation asked for. The returned title 'Great Famine (Ireland)' is accepted at face value and used as the H1 in the logged notes. Following the redirect from the query phrasing to the formal article title is correct behavior, not a discrepancy to flag."
+            "rationale": "The query 'the potato famine' targets the article the delegation named. The returned title 'Great Famine (Ireland)' is accepted at face value and used as the H1 in the logged notes. Following the redirect from the user's phrasing to the formal Wikipedia title is correct behavior. No re-querying or title override occurred."
           },
           {
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is in the log entry's notes, not in the reply. No mid-workflow narration, characterization of the article, or restatement of content appears in the response."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. No mid-workflow narration, article characterization, or genealogical significance claims appear. The article content is correctly held in the log entry's notes, not duplicated in the reply."
           }
         ]
       },
@@ -6317,7 +6317,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the query 'the potato famine', received the article 'Great Famine (Ireland)' with its extract and URL, and logged the result with the correct returned title as the H1. The logged notes contain the exact extract from the tool response with proper attribution via the source URL. No fabricated material or unsupported claims are present."
+                "rationale": "The agent called wikipedia_search with query 'the potato famine', received the article 'Great Famine (Ireland)' with its extract and URL, and logged the result with the correct returned title as the H1. The logged notes contain the exact extract from the tool response with proper attribution via the source URL. No fabricated material or unsupported claims are present."
               },
               {
                 "source": "base",
@@ -6335,27 +6335,27 @@
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract and source URL. The logged H1 is '# Great Famine (Ireland)' \u2014 the returned title, not the query. The reply is a brief confirmation ('Saved the Wikipedia summary to the research log.') without asserting facts absent from the tool response."
+                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the article extract and source URL. The logged H1 is '# Great Famine (Ireland)' \u2014 the returned title, not the query. The reply is a brief confirmation ('Saved the Wikipedia summary to the research log.') without restating article content. No facts are asserted beyond what the tool response supports."
               },
               {
                 "source": "rubric",
                 "name": "Tool query and response interpretation",
                 "score": 3,
-                "rationale": "The query 'the potato famine' targets the article the delegation asked for. The returned title 'Great Famine (Ireland)' is accepted at face value and used as the H1 in the logged notes. Following the redirect from the query phrasing to the formal article title is correct behavior, not a discrepancy to flag."
+                "rationale": "The query 'the potato famine' targets the article the delegation named. The returned title 'Great Famine (Ireland)' is accepted at face value and used as the H1 in the logged notes. Following the redirect from the user's phrasing to the formal Wikipedia title is correct behavior. No re-querying or title override occurred."
               },
               {
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is in the log entry's notes, not in the reply. No mid-workflow narration, characterization of the article, or restatement of content appears in the response."
+                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. No mid-workflow narration, article characterization, or genealogical significance claims appear. The article content is correctly held in the log entry's notes, not duplicated in the reply."
               }
             ],
-            "judge_cost_usd": 0.008412,
+            "judge_cost_usd": 0.008506,
             "duration_ms": 9315.885197996977,
             "error": null,
-            "input_tokens": 4330,
+            "input_tokens": 4384,
             "cached_input_tokens": 4770,
-            "output_tokens": 721
+            "output_tokens": 729
           },
           "started_at": 1793041810.5414484,
           "ended_at": 1793041833.105907
@@ -6383,25 +6383,25 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the correct query, received accurate information about the Naturalization Act of 1906, and logged the response verbatim with proper attribution. The logged notes preserve the extract exactly as returned by the tool, including em dashes and parenthetical explanations. No fabricated material or unsupported claims are present."
+            "rationale": "The agent called wikipedia_search with the query 'Naturalization Act of 1906', received the correct article, and logged the response verbatim without fabrication. The logged notes preserve the extract exactly as returned by the tool, including em dashes and parenthetical details. No unsupported claims were made."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent fully addressed the delegation's request to look up the Naturalization Act of 1906 on Wikipedia. It called the appropriate tool, received the article summary, logged it to the research log, and confirmed completion. All required actions were performed."
+            "rationale": "The agent completed the delegated task: it looked up the Naturalization Act of 1906 on Wikipedia, logged the summary to the research log, and returned the appropriate confirmation. The delegation required one article lookup and logging, both of which were performed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='Naturalization Act of 1906', which matches the expected_args predicate of ~Naturalization. The research_log_append call included all required fields (projectPath, query, outcome, resultsExamined, notes, tool) with correct values. No critical arguments were wrong and no fixture_not_found errors occurred."
+            "rationale": "The wikipedia_search call passed query='Naturalization Act of 1906', which matches the expected_args predicate ~Naturalization. The research_log_append call correctly structured the log entry with the returned title, extract, URL, and metadata. All critical identifiers and arguments are correct."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the H1 '# Naturalization Act of 1906' and the full extract verbatim. The reply confirms the save without restating article content. Nothing in the reply asserts facts absent from the tool response."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the H1 'Naturalization Act of 1906' (the returned title) and the extract verbatim, including em dashes and parenthetical explanations. The source URL is properly cited. No facts absent from the tool response were asserted."
           },
           {
             "source": "rubric",
@@ -6413,7 +6413,7 @@
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. No mid-workflow narration, characterization of the article, or restatement of content appears in the reply. The article content is correctly placed in the log entry's notes, not in the reply."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is not restated, summarized, or quoted in the reply; it appears only in the logged research entry, as required."
           }
         ],
         "review_dimensions": [
@@ -6421,25 +6421,25 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The agent called wikipedia_search with the correct query, received accurate information about the Naturalization Act of 1906, and logged the response verbatim with proper attribution. The logged notes preserve the extract exactly as returned by the tool, including em dashes and parenthetical explanations. No fabricated material or unsupported claims are present."
+            "rationale": "The agent called wikipedia_search with the query 'Naturalization Act of 1906', received the correct article, and logged the response verbatim without fabrication. The logged notes preserve the extract exactly as returned by the tool, including em dashes and parenthetical details. No unsupported claims were made."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The agent fully addressed the delegation's request to look up the Naturalization Act of 1906 on Wikipedia. It called the appropriate tool, received the article summary, logged it to the research log, and confirmed completion. All required actions were performed."
+            "rationale": "The agent completed the delegated task: it looked up the Naturalization Act of 1906 on Wikipedia, logged the summary to the research log, and returned the appropriate confirmation. The delegation required one article lookup and logging, both of which were performed."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wikipedia_search call passed query='Naturalization Act of 1906', which matches the expected_args predicate of ~Naturalization. The research_log_append call included all required fields (projectPath, query, outcome, resultsExamined, notes, tool) with correct values. No critical arguments were wrong and no fixture_not_found errors occurred."
+            "rationale": "The wikipedia_search call passed query='Naturalization Act of 1906', which matches the expected_args predicate ~Naturalization. The research_log_append call correctly structured the log entry with the returned title, extract, URL, and metadata. All critical identifiers and arguments are correct."
           },
           {
             "source": "rubric",
             "name": "Template fidelity",
             "score": 3,
-            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the H1 '# Naturalization Act of 1906' and the full extract verbatim. The reply confirms the save without restating article content. Nothing in the reply asserts facts absent from the tool response."
+            "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the H1 'Naturalization Act of 1906' (the returned title) and the extract verbatim, including em dashes and parenthetical explanations. The source URL is properly cited. No facts absent from the tool response were asserted."
           },
           {
             "source": "rubric",
@@ -6451,7 +6451,7 @@
             "source": "rubric",
             "name": "Reply economy",
             "score": 3,
-            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. No mid-workflow narration, characterization of the article, or restatement of content appears in the reply. The article content is correctly placed in the log entry's notes, not in the reply."
+            "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is not restated, summarized, or quoted in the reply; it appears only in the logged research entry, as required."
           }
         ]
       },
@@ -6878,25 +6878,25 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search with the correct query, received accurate information about the Naturalization Act of 1906, and logged the response verbatim with proper attribution. The logged notes preserve the extract exactly as returned by the tool, including em dashes and parenthetical explanations. No fabricated material or unsupported claims are present."
+                "rationale": "The agent called wikipedia_search with the query 'Naturalization Act of 1906', received the correct article, and logged the response verbatim without fabrication. The logged notes preserve the extract exactly as returned by the tool, including em dashes and parenthetical details. No unsupported claims were made."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The agent fully addressed the delegation's request to look up the Naturalization Act of 1906 on Wikipedia. It called the appropriate tool, received the article summary, logged it to the research log, and confirmed completion. All required actions were performed."
+                "rationale": "The agent completed the delegated task: it looked up the Naturalization Act of 1906 on Wikipedia, logged the summary to the research log, and returned the appropriate confirmation. The delegation required one article lookup and logging, both of which were performed."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The wikipedia_search call passed query='Naturalization Act of 1906', which matches the expected_args predicate of ~Naturalization. The research_log_append call included all required fields (projectPath, query, outcome, resultsExamined, notes, tool) with correct values. No critical arguments were wrong and no fixture_not_found errors occurred."
+                "rationale": "The wikipedia_search call passed query='Naturalization Act of 1906', which matches the expected_args predicate ~Naturalization. The research_log_append call correctly structured the log entry with the returned title, extract, URL, and metadata. All critical identifiers and arguments are correct."
               },
               {
                 "source": "rubric",
                 "name": "Template fidelity",
                 "score": 3,
-                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the H1 '# Naturalization Act of 1906' and the full extract verbatim. The reply confirms the save without restating article content. Nothing in the reply asserts facts absent from the tool response."
+                "rationale": "The agent called wikipedia_search, received a response, and logged one entry whose notes contain the filled template with the H1 'Naturalization Act of 1906' (the returned title) and the extract verbatim, including em dashes and parenthetical explanations. The source URL is properly cited. No facts absent from the tool response were asserted."
               },
               {
                 "source": "rubric",
@@ -6908,15 +6908,15 @@
                 "source": "rubric",
                 "name": "Reply economy",
                 "score": 3,
-                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. No mid-workflow narration, characterization of the article, or restatement of content appears in the reply. The article content is correctly placed in the log entry's notes, not in the reply."
+                "rationale": "The agent's reply is exactly one line: 'Saved the Wikipedia summary to the research log.' This matches the return contract precisely. The article content is not restated, summarized, or quoted in the reply; it appears only in the logged research entry, as required."
               }
             ],
-            "judge_cost_usd": 0.008138,
+            "judge_cost_usd": 0.008067,
             "duration_ms": 8265.746356002637,
             "error": null,
-            "input_tokens": 4276,
+            "input_tokens": 4330,
             "cached_input_tokens": 4770,
-            "output_tokens": 677
+            "output_tokens": 652
           },
           "started_at": 1793041801.273797,
           "ended_at": 1793041829.8431349
@@ -6970,5 +6970,5 @@
       "research_log_append": "24ed5ff26aef7df24ac4ba47088a646f5f2445f1d70177c2dd62bc8944ebc78c"
     }
   },
-  "judge_render_hash": "87d458173e4cd34a626222fac36b1c3cc622954eab42ac21b2eb01b7546624e1"
+  "judge_render_hash": "41057644ab5e5097b146a5bbc3c77ff20ead97815fbe4d3e85abd1e5d2c27339"
 }
