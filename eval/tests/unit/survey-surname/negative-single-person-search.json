@@ -5,10 +5,11 @@
     "name": "Negative: single-person census search handed back to search-records",
     "type": "negative",
     "description": "A request to find one person's census record is not a surname survey. The agent should recognize this and hand back to search-records without calling any tool, logging nothing and writing no file.",
-    "tags": ["routing", "negative", "direct-arm"]
+    "tags": ["routing", "negative", "hand-back", "direct-arm"]
   },
   "negative": {
-    "correct_skill": [],
+    "correct_skill": ["search-records"],
+    "grade_on_invariant": true,
     "explanation": "The user is asking to find one person's census record, not to tabulate every household of a surname across a place's censuses. survey-surname handles multi-household surveys; a single-person record lookup belongs to search-records."
   },
   "input": {

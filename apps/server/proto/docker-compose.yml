@@ -269,6 +269,9 @@ services:
       # off. DEV_LOGIN is the opt-in no template may set (U11); a literal, so no host
       # variable at `up` time switches it.
       DEV_LOGIN: "true"
+      # #3987: unset or false, POST /api/projects/{id}/files answers 404 and /auth/config
+      # carries no `uploads` key; anything but true/false refuses to start.
+      UPLOADS_ENABLED: ${UPLOADS_ENABLED:-}
       PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:8085}
       WEB_ORIGIN: ${WEB_ORIGIN:-}
       SESSION_SECRET: ${SESSION_SECRET:-}
