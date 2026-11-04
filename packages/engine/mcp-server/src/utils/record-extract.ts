@@ -1015,6 +1015,100 @@ function marriageYearOf(gx: SimplifiedGedcomX): number | undefined {
   return undefined;
 }
 
+/** The birth years a record's stated age allows. `date` is the repo's standard
+ *  range text, which `question-state`'s `yearsOf` and the date helpers read. */
+export interface BirthRange {
+  from: number;
+  to: number;
+  date: string;
+}
+
+/**
+ * The birth range an age implies: the event year less the age, less one, to the
+ * event year less the age (lead, 2026-11-02). Whole-year ages only: "6 months",
+ * "74 yrs 6 mos" and "6/12" name a finer span this two-year window would
+ * misstate, so they give null. No enumeration-day table: the window already
+ * contains the true birth year whichever side of the day the person fell.
+ */
+export function birthRangeFromAge(age: unknown, eventDate: unknown): BirthRange | null {
+  const m = String(age ?? "").match(/^\s*(\d{1,3})\s*(?:y|yr|yrs|year|years)?\.?\s*$/i);
+  const y = String(eventDate ?? "").match(/\b(\d{4})\b/);
+  if (!m || !y) return null;
+  const years = Number(m[1]);
+  if (years > 120) return null;
+  const to = Number(y[1]) - years;
+  return { from: to - 1, to, date: `Bet ${to - 1} and ${to}` };
+}
+
+/** A birth date that is a bare year (optionally "abt."): the indexer's own
+ *  arithmetic. A date with a month or day is written on the record, so it is
+ *  stated and gets no range. */
+const BARE_YEAR = /^\s*(?:abt\.?|about|circa|ca?\.)?\s*\d{4}\s*$/i;
+
+const EVENT_FACT: Record<string, RegExp> = {
+  census: /census/i,
+  marriage: /marriage/i,
+  death: /death/i,
+  burial: /burial|cremation/i,
+  christening: /christening|baptism/i,
+  draft_registration: /draft|militaryservice/i,
+};
+
+/** The year of the record's own event for one persona: census day, death,
+ *  burial, marriage. The persona's facts first, then the couple's. */
+function eventDateFor(
+  person: SimplifiedPerson,
+  recordType: RecordType,
+  gx: SimplifiedGedcomX,
+): string | undefined {
+  const dated = (f: SimplifiedFact) => /\d{4}/.test(String(f.standard_date ?? f.date ?? ""));
+  const own = (person.facts ?? []).filter(dated);
+  const couple = (gx.relationships ?? []).flatMap((r) => r.facts ?? []).filter(dated);
+  const wanted = EVENT_FACT[recordType];
+  const pick =
+    (wanted && [...own, ...couple].find((f) => wanted.test(String(f.type ?? "")))) ??
+    own.find((f) => !/birth|residence|age/i.test(String(f.type ?? ""))) ??
+    couple[0];
+  return pick ? String(pick.standard_date ?? pick.date) : undefined;
+}
+
+/**
+ * The rule for one persona: an age and no full birth date give a birth range,
+ * whatever bare year the index carries beside the age. A persona whose Birth
+ * fact states a day or a month gets none. Any record type.
+ */
+export function personaBirthRange(
+  person: SimplifiedPerson,
+  age: unknown,
+  recordType: RecordType,
+  gx: SimplifiedGedcomX,
+): BirthRange | null {
+  const statedBirth = (person.facts ?? []).some(
+    (f) => /birth/i.test(String(f.type ?? "")) && f.date && !BARE_YEAR.test(String(f.date)),
+  );
+  if (statedBirth) return null;
+  const event = eventDateFor(person, recordType, gx);
+  return event ? birthRangeFromAge(age, event) : null;
+}
+
+/** Persona id → the birth range its indexed age implies (`personaBirthRange`),
+ *  or undefined when no persona has one. record_read returns it beside the
+ *  document, never inside it; the eval mock calls this same function. */
+export function birthRangesFor(
+  doc: SimplifiedGedcomX,
+  indexFields: Record<string, { age?: string }> | undefined,
+): Record<string, string> | undefined {
+  if (!indexFields) return undefined;
+  const recordType = detectRecordType(doc);
+  const out: Record<string, string> = {};
+  for (const p of doc.persons ?? []) {
+    const age = indexFields[p.id ?? ""]?.age;
+    const range = age ? personaBirthRange(p, age, recordType, doc) : null;
+    if (p.id && range) out[p.id] = range.date;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 export function extractRecord(
   doc: ExtractDocument,
   opts: ExtractOptions,
@@ -1294,24 +1388,36 @@ export function extractRecord(
         ((recordType === "census" && bareYear) || recordType === "death" || recordType === "burial") ||
         (factType === "birth" && recordType === "marriage" && bareYear && yearIsMarriageMinusAge(f.date, party.fields?.age));
 
-      if (yearIsDerived && f.date && (f.place || f.standard_place)) {
+      // A stated age and no full birth date make the birth a range from the
+      // age, whatever bare year the index carries (lead, 2026-11-02).
+      // A marriage index's bare year the age does NOT explain stays stated
+      // (genealogist ruling 2026-09-30): there the year is not the indexer's
+      // subtraction, so the age does not displace it.
+      const range =
+        factType === "birth" && age && (recordType !== "marriage" || yearIsMarriageMinusAge(f.date, age))
+          ? personaBirthRange(p, age, recordType, gx)
+          : null;
+      const fdate = range ? range.date : f.date;
+      const derived = yearIsDerived || range !== null;
+
+      if (derived && fdate && (f.place || f.standard_place)) {
         const placeExtra: Partial<ExtractedAssertion> = { place: f.place };
         if (f.standard_place) placeExtra.standard_place = f.standard_place;
         push(party, "birth", String(f.place ?? f.standard_place ?? ""), placeExtra);
-        push(party, "birth", String(f.date), {
-          date: f.date,
+        push(party, "birth", String(fdate), {
+          date: fdate,
           record_basis: "inferred",
           date_certainty: "approximate",
         });
         continue;
       }
 
-      const value = f.value ?? f.date ?? f.place ?? "";
+      const value = range ? range.date : (f.value ?? f.date ?? f.place ?? "");
       const extra: Partial<ExtractedAssertion> = {};
-      if (f.date) extra.date = f.date;
+      if (fdate) extra.date = fdate;
       if (f.place) extra.place = f.place;
       if (f.standard_place) extra.standard_place = f.standard_place;
-      if (yearIsDerived && f.date) {
+      if (derived && fdate) {
         extra.record_basis = "inferred";
         extra.date_certainty = "approximate";
       }
