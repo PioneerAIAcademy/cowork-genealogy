@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a public beta, February to July 2027
 
-**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). W3's viewer data, uploads and download are implemented in the web tier. E2's settings, links and uploads list are implemented in the tool server; its connector `project_list` is not. The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
+**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). W3's viewer data, uploads, download and OpenRouter linking are implemented in the web tier. E2's settings, links and uploads list are implemented in the tool server; its connector `project_list` is not. The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
 
 ## What this is
 
@@ -379,7 +379,7 @@ Either way, the research skill's first line says that without an `Agent` tool, r
   - the FamilySearch redirect setting, at the loopback (P0.4), and the sign-in budget;
   - `PGSSLROOTCERT=/etc/pki/tls/certs/ca-bundle.crt` on the web tier: AL2023's system bundle as a file, not libpq's `system` keyword, overriding the RDS bundle its `01-web.config` pins;
   - the transcription switch, off, on the tools tier.
-- **Before the dress rehearsal:** the uploads setting. **In January:** `FEEDBACK_URL` and the limits.
+- **Before the dress rehearsal:** the uploads setting and `OPENROUTER_LINKING_ENABLED`, on the web tier (#3988). **In January:** `FEEDBACK_URL` and the limits.
 - **Before gate 4's sign-in:** the redirect setting moves from the loopback to the beta's https redirect (P0.4).
 - **Once FamilySearch's approval is in writing:** the transcription switch goes on (gate 4).
 - **When the matcher service is turned on:** `MATCHER_URL` and `MATCHER_API_KEY`, on the tools tier.

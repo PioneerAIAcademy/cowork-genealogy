@@ -186,7 +186,7 @@ async def test_a_mismatched_state_is_refused_before_any_exchange(openrouter):
         query = dict(parse_qsl(parts.query))
         query["state"] = "not-the-state"
         r = await c.get(f"{parts.path}?{urlencode(query)}")
-    assert r.status_code == 400 and "mismatch" in r.text
+    assert r.status_code == 400 and "does not match" in r.text
     assert store.openrouter_keys == {} and openrouter.exchanges == []
 
 
@@ -200,6 +200,9 @@ async def test_a_callback_with_no_state_or_no_code_is_refused(openrouter):
         query = dict(parse_qsl(urlsplit(callback).query))
         r2 = await c.get("/openrouter/callback", params={"state": query["state"]})
     assert (r1.status_code, r2.status_code) == (400, 400)
+    assert "does not match" in r1.text
+    # A matching state with no code is the patron cancelling, not a mismatch.
+    assert "cancelled or denied" in r2.text and "does not match" not in r2.text
     assert store.openrouter_keys == {} and openrouter.exchanges == []
 
 
@@ -209,7 +212,7 @@ async def test_a_missing_state_cookie_is_refused(openrouter):
         callback = await start_link(c, openrouter)
     async with make_client(store, FakeQueue()) as fresh:  # signed in, but never started a link
         r = await fresh.get(callback)
-    assert r.status_code == 400 and "Missing or invalid" in r.text
+    assert r.status_code == 400 and "missing or has expired" in r.text
     assert store.openrouter_keys == {} and openrouter.exchanges == []
 
 
@@ -228,10 +231,15 @@ async def test_a_state_cookie_another_user_started_is_refused(openrouter):
 
 
 async def test_a_familysearch_state_cookie_does_not_validate_as_an_openrouter_one(openrouter):
-    """Own name and own salt: the FamilySearch cookie's payload, signed under "fs-oauth",
-    is refused even when presented under the OpenRouter cookie's name."""
-    fs_cookie = auth.oauth_state_cookie("verifier", "s" * 22, None)
+    """Own name and own salt: a COMPLETE OpenRouter payload (uid, verifier, state) signed
+    under the FamilySearch salt is refused, so only the salt can be what refuses it."""
+    from itsdangerous import URLSafeTimedSerializer
+
+    fs_cookie = URLSafeTimedSerializer(auth.session_secret(), salt=auth.FS_OAUTH_SALT).dumps(
+        {"uid": USER_A.id, "verifier": "verifier", "state": "s" * 22})
     assert auth.read_openrouter_state_cookie(fs_cookie) is None
+    assert auth.FS_OAUTH_SALT != auth.OR_OAUTH_SALT
+    assert auth.read_oauth_state_cookie(auth.openrouter_state_cookie(USER_A.id, "v", "st", None)) is None
     assert auth.OR_OAUTH_COOKIE != auth.FS_OAUTH_COOKIE
     store = FakeStore()
     async with make_client(store, FakeQueue()) as c:
@@ -265,7 +273,7 @@ async def test_a_failed_exchange_stores_nothing_and_logs_the_status_only(monkeyp
     async with make_client(store, FakeQueue()) as c:
         r = await c.get(await start_link(c, fake))
     assert r.status_code == 502 and store.openrouter_keys == {}
-    assert f"status={status}" in caplog.text
+    assert f"outcome=refused reason={status}" in caplog.text
     assert BODY_SECRET not in caplog.text and BODY_SECRET not in r.text
 
 
@@ -289,7 +297,8 @@ async def test_an_unreachable_openrouter_is_a_failed_exchange(monkeypatch, caplo
     async with make_client(store, FakeQueue()) as c:
         r = await c.get(await start_link(c, fake))
     assert r.status_code == 502 and store.openrouter_keys == {}
-    assert "status=no_response" in caplog.text
+    assert "outcome=not_sent reason=ConnectError" in caplog.text
+    assert "may have created a key" not in r.text  # never sent: no key can exist
 
 
 # ── unlinking ────────────────────────────────────────────────────────────────────
@@ -380,3 +389,128 @@ async def test_every_openrouter_route_needs_a_session(method, path, openrouter):
     async with make_client(FakeStore(), FakeQueue(), user=None) as c:
         r = await c.request(method, path)
     assert r.status_code == 401
+
+
+# ── review fixes: secrets, decryptability, lost responses, refusals as pages, the prefix ──
+
+
+@pytest.mark.parametrize("missing", ["SESSION_SECRET", "FS_TOKEN_ENC_KEY"])
+def test_linking_on_refuses_to_start_on_a_default_secret_even_over_http(monkeypatch, missing):
+    """An http compose tier with linking on stores real keys: the dev defaults must not do."""
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    monkeypatch.delenv(missing)
+    with pytest.raises(RuntimeError, match=f"(?s)OPENROUTER_LINKING_ENABLED is on.*{missing}"):
+        auth.preflight()
+    monkeypatch.setenv("OPENROUTER_LINKING_ENABLED", "false")
+    auth.preflight()  # off, the dev-login tier still starts on the defaults
+
+
+async def test_a_key_written_under_another_enc_key_is_not_linked(monkeypatch):
+    store = FakeStore()
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "an-older-key-" + "x" * 20)
+    store.openrouter_keys[USER_A.id] = auth.encrypt(KEY)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "the-current-key-" + "y" * 20)
+    async with make_client(store, FakeQueue()) as c:
+        assert (await c.get("/openrouter")).json() == {"linked": False}
+
+
+async def test_a_failed_store_write_is_a_page_that_names_the_orphan_key(openrouter, caplog):
+    class BrokenStore(FakeStore):
+        async def set_openrouter_key(self, user_id: str, key_enc: str) -> None:
+            raise OSError("postgres went away")
+
+    store = BrokenStore()
+    async with make_client(store, FakeQueue()) as c:
+        r = await c.get(await start_link(c, openrouter))
+        dropped = auth.OR_OAUTH_COOKIE not in c.cookies
+    assert r.status_code == 503 and "text/html" in r.headers["content-type"]
+    assert "could not be saved" in r.text and auth.OPENROUTER_KEY_LABEL in r.text
+    assert dropped and "error=OSError" in caplog.text and KEY not in caplog.text
+
+
+async def test_a_response_lost_after_the_key_was_minted_is_ambiguous(monkeypatch, caplog):
+    fake = FakeOpenRouter()
+
+    def mint_then_drop(request: httpx.Request) -> httpx.Response:
+        fake.handler(request)  # OpenRouter processed it and minted a key...
+        raise httpx.ReadError("connection reset", request=request)  # ...and the answer was lost
+
+    monkeypatch.setattr(auth, "exchange_openrouter_code", functools.partial(
+        auth.exchange_openrouter_code, transport=httpx.MockTransport(mint_then_drop)))
+    store = FakeStore()
+    async with make_client(store, FakeQueue()) as c:
+        r = await c.get(await start_link(c, fake))
+    assert r.status_code == 502 and store.openrouter_keys == {}
+    assert "outcome=ambiguous reason=ReadError" in caplog.text
+    assert "may have created a key" in r.text and auth.OPENROUTER_KEY_LABEL in r.text
+
+
+async def test_the_exchange_has_one_total_deadline(monkeypatch):
+    import asyncio
+
+    async def slow(request: httpx.Request) -> httpx.Response:
+        await asyncio.sleep(5)
+        return httpx.Response(200, json={"key": KEY})
+
+    assert auth.OPENROUTER_EXCHANGE_TIMEOUT_S < 60  # under the edge's idle timeout
+    monkeypatch.setattr(auth, "OPENROUTER_EXCHANGE_TIMEOUT_S", 0.05)
+    result = await auth.exchange_openrouter_code("c", "v", transport=httpx.MockTransport(slow))
+    assert (result.outcome, result.reason, result.key) == ("ambiguous", "deadline", None)
+
+
+@pytest.mark.parametrize("case", ["signed-out", "blocked"])
+async def test_a_refused_session_at_the_callback_is_a_page_that_drops_the_state(openrouter, case):
+    """A top-level navigation gets a page, not FastAPI JSON, and the state cookie goes."""
+    store = FakeStore()
+    async with make_client(store, FakeQueue()) as c:
+        callback = await start_link(c, openrouter)
+        if case == "signed-out":
+            c.cookies.delete(auth.COOKIE_NAME)
+        else:
+            store.block(USER_A.id)
+        r = await c.get(callback)
+        dropped = auth.OR_OAUTH_COOKIE not in c.cookies
+    assert r.status_code == (401 if case == "signed-out" else 403)
+    assert "text/html" in r.headers["content-type"] and dropped
+    assert store.openrouter_keys == {} and openrouter.exchanges == []
+
+
+async def test_the_next_route_survives_when_the_host_is_public_url(openrouter):
+    """RelativeSelfRedirects makes the callback's own-host redirect relative; it must keep
+    the ``#/...`` route (the FamilySearch callback lost it the same way)."""
+    async with make_client(FakeStore(), FakeQueue()) as c:
+        callback = await start_link(c, openrouter, "#/openrouter")
+        r = await c.get(callback, headers={"Host": "127.0.0.1:8085"})
+    assert r.headers["location"] == "/#/openrouter"
+
+
+PREFIX = "/service/genealogy/web"
+
+
+async def test_under_a_prefix_the_callback_url_and_the_cookie_scope_carry_it(monkeypatch, openrouter):
+    monkeypatch.setenv("PUBLIC_URL", f"https://edge.test{PREFIX}")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    store = FakeStore()
+    async with make_client(store, FakeQueue()) as c:
+        r = await c.get("/openrouter/link")
+        query = dict(parse_qsl(urlsplit(r.headers["location"]).query))
+        set_cookie = r.headers["set-cookie"].lower()
+        assert query["callback_url"].startswith(f"https://edge.test{PREFIX}/openrouter/callback?state=")
+        assert f"path={PREFIX}" in set_cookie and "httponly" in set_cookie and "secure" in set_cookie
+        assert "samesite=lax" in set_cookie
+        # The test client is http, so it would not send a Secure cookie back: present it by hand.
+        cookie = r.headers["set-cookie"].split(";")[0].split("=", 1)[1]
+        c.cookies.set(auth.OR_OAUTH_COOKIE, cookie)
+        # The edge strips the prefix before the tier sees the path (U28).
+        done = await c.get(local(openrouter.authorize(r.headers["location"])).removeprefix(PREFIX))
+    deleted = done.headers["set-cookie"].lower()
+    assert done.status_code == 307 and auth.decrypt(store.openrouter_keys[USER_A.id]) == KEY
+    assert f"{auth.OR_OAUTH_COOKIE}=" in deleted and "max-age=0" in deleted and f"path={PREFIX}" in deleted
+
+
+def test_the_spa_can_never_shadow_the_openrouter_routes():
+    from web import spa
+
+    assert "openrouter" in spa.RESERVED

@@ -58,6 +58,7 @@ import re
 import secrets
 import sys
 import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -112,6 +113,9 @@ OR_OAUTH_MAX_AGE = 600
 OPENROUTER_AUTH_URL = "https://openrouter.ai/auth"
 OPENROUTER_KEYS_URL = "https://openrouter.ai/api/v1/auth/keys"
 OPENROUTER_KEY_LABEL = "Genealogy research beta"
+# The exchange's total deadline: under the edge's 60 s idle timeout (ALB and DTM), so the
+# patron sees our answer, never an edge 504 while the key is stored behind it.
+OPENROUTER_EXCHANGE_TIMEOUT_S = 20.0
 
 # FamilySearch endpoints (packages/engine/mcp-server/src/auth/config.ts).
 FS_AUTHORIZE_URL = "https://ident.familysearch.org/cis-web/oauth2/v3/authorization"
@@ -188,41 +192,31 @@ def allowed_emails() -> set[str]:
     return {e.lower() for e in re.split(r"[,\s]+", _env("ALLOWED_EMAILS")) if e}
 
 
-def chat_enabled() -> bool:
-    """``GENEALOGY_CHAT``: on when unset, empty or ``true``, off when ``false`` (any case).
-    Any other value raises, so a typo never silently turns the chat off or on."""
-    raw = _env("GENEALOGY_CHAT").lower()
-    if raw in ("", "true"):
-        return True
-    if raw == "false":
-        return False
-    raise RuntimeError(f"GENEALOGY_CHAT is {_env('GENEALOGY_CHAT')!r}: set it to true or false, or leave it unset")
-
-
-def uploads_setting() -> bool | None:
-    """``UPLOADS_ENABLED`` (#3987): None when unset or empty, else ``true``/``false`` in any
-    case. Any other value raises: the tools tier's rule (``envSwitch``,
-    ``hosted-config-env.ts``), so the two tiers cannot read one setting two ways."""
-    raw = _env("UPLOADS_ENABLED").lower()
+def _switch(name: str) -> bool | None:
+    """A strict switch: None when unset or empty, else ``true``/``false`` in any case. Any
+    other value raises, so a typo never silently turns a feature on or off. The tools tier's
+    rule (``envSwitch``, ``hosted-config-env.ts``), so the two tiers read a setting one way."""
+    raw = _env(name).lower()
     if raw == "":
         return None
     if raw in ("true", "false"):
         return raw == "true"
-    raise RuntimeError(f"UPLOADS_ENABLED is {_env('UPLOADS_ENABLED')!r}: set it to true or false, or leave it unset")
+    raise RuntimeError(f"{name} is {_env(name)!r}: set it to true or false, or leave it unset")
+
+
+def chat_enabled() -> bool:
+    """``GENEALOGY_CHAT``: on when unset, empty or ``true``, off when ``false``."""
+    return _switch("GENEALOGY_CHAT") is not False
+
+
+def uploads_setting() -> bool | None:
+    """``UPLOADS_ENABLED`` (#3987): None when unset or empty, else the switch."""
+    return _switch("UPLOADS_ENABLED")
 
 
 def openrouter_linking_enabled() -> bool:
-    """``OPENROUTER_LINKING_ENABLED`` (#3988): off when unset or empty, else ``true``/``false``
-    in any case. Any other value raises, as ``GENEALOGY_CHAT`` and ``UPLOADS_ENABLED`` do."""
-    raw = _env("OPENROUTER_LINKING_ENABLED").lower()
-    if raw in ("", "false"):
-        return False
-    if raw == "true":
-        return True
-    raise RuntimeError(
-        f"OPENROUTER_LINKING_ENABLED is {_env('OPENROUTER_LINKING_ENABLED')!r}: set it to true or false, "
-        "or leave it unset"
-    )
+    """``OPENROUTER_LINKING_ENABLED`` (#3988): on only when ``true``."""
+    return _switch("OPENROUTER_LINKING_ENABLED") is True
 
 
 def max_users() -> int | None:
@@ -291,22 +285,23 @@ def preflight() -> None:
 
     - FamilySearch enabled with no readable client config: named error, not a silent
       fall-through to dev-login.
-    - On an https PUBLIC_URL (a deployed host), or with FamilySearch sign-in on at any
-      scheme (a grant is real whatever the scheme, e.g. an http loopback PUBLIC_URL): a default or
-      empty SESSION_SECRET forges every session and the OAuth state; a default or empty
-      FS_TOKEN_ENC_KEY encrypts every grant under a public string. Only http with
-      FamilySearch off (compose's dev-login tier) may start on the defaults.
+    - On an https PUBLIC_URL (a deployed host), or with FamilySearch sign-in or OpenRouter
+      linking on at any scheme (a grant or a key is real whatever the scheme, e.g. an http
+      loopback PUBLIC_URL): a default or empty SESSION_SECRET forges every session and the
+      OAuth state; a default or empty FS_TOKEN_ENC_KEY encrypts every grant and key under a
+      public string. Only http with both off (compose's dev-login tier) may start on the
+      defaults.
     - ``GENEALOGY_CHAT`` or ``OPENROUTER_LINKING_ENABLED`` other than true/false, or
       ``GENEALOGY_MAX_USERS`` other than a positive integer, at any scheme.
     """
     base_path()
     chat_enabled()
-    openrouter_linking_enabled()
+    or_on = openrouter_linking_enabled()
     max_users()
     fs_on = familysearch_enabled()
     if fs_on:
         client_id()
-    if not (is_https() or fs_on):
+    if not (is_https() or fs_on or or_on):
         return
     problems = []
     for name, dev in (("SESSION_SECRET", DEV_SESSION_SECRET), ("FS_TOKEN_ENC_KEY", DEV_FS_TOKEN_ENC_KEY)):
@@ -314,7 +309,8 @@ def preflight() -> None:
             problems.append(f"  {name} is unset or the development default; set it to a random secret")
     if problems:
         why = (f"PUBLIC_URL is {public_url()} (a deployed host)" if is_https()
-               else "FAMILYSEARCH_WEB_ENABLED is on (patron grants are stored)")
+               else "FAMILYSEARCH_WEB_ENABLED is on (patron grants are stored)" if fs_on
+               else "OPENROUTER_LINKING_ENABLED is on (patron OpenRouter keys are stored)")
         raise RuntimeError(f"Refusing to start: {why}, but\n" + "\n".join(problems))
 
 
@@ -325,8 +321,32 @@ def _session_serializer() -> URLSafeTimedSerializer:
     return URLSafeTimedSerializer(session_secret(), salt="wb-session")
 
 
-def _oauth_serializer() -> URLSafeTimedSerializer:
-    return URLSafeTimedSerializer(session_secret(), salt="fs-oauth")
+# Each OAuth flow's state cookie signs under its own salt, so one flow's cookie never
+# validates as another's (#3988).
+FS_OAUTH_SALT = "fs-oauth"
+OR_OAUTH_SALT = "or-oauth"
+
+
+def _state_cookie(salt: str, payload: dict[str, Any], next_route: str | None) -> str:
+    """A flow's signed state cookie; ``next`` kept only when it is a safe SPA route."""
+    if next_route and SAFE_NEXT_RE.match(next_route):
+        payload = {**payload, "next": next_route}
+    return URLSafeTimedSerializer(session_secret(), salt=salt).dumps(payload)
+
+
+def _read_state_cookie(salt: str, token: str | None, max_age: int,
+                       required: tuple[str, ...] = ()) -> dict[str, Any] | None:
+    """The payload, or None for a missing, forged, expired or non-dict cookie, or one whose
+    ``required`` keys are not all non-empty strings."""
+    if not token:
+        return None
+    try:
+        data = URLSafeTimedSerializer(session_secret(), salt=salt).loads(token, max_age=max_age)
+    except BadSignature:
+        return None
+    if not isinstance(data, dict) or not all(isinstance(data.get(k), str) and data[k] for k in required):
+        return None
+    return data
 
 
 def session_cookie_value(user_id: str, *, iat: float | None = None) -> str:
@@ -349,47 +369,21 @@ def cookie_kwargs() -> dict[str, Any]:
 
 
 def oauth_state_cookie(verifier: str, state: str, next_route: str | None) -> str:
-    payload = {"verifier": verifier, "state": state}
-    if next_route and SAFE_NEXT_RE.match(next_route):
-        payload["next"] = next_route
-    return _oauth_serializer().dumps(payload)
+    return _state_cookie(FS_OAUTH_SALT, {"verifier": verifier, "state": state}, next_route)
 
 
 def read_oauth_state_cookie(token: str | None) -> dict[str, Any] | None:
-    if not token:
-        return None
-    try:
-        data = _oauth_serializer().loads(token, max_age=FS_OAUTH_MAX_AGE)
-    except BadSignature:
-        return None
-    return data if isinstance(data, dict) else None
-
-
-def _openrouter_serializer() -> URLSafeTimedSerializer:
-    # Its own salt: under "fs-oauth" a FamilySearch state cookie would validate here.
-    return URLSafeTimedSerializer(session_secret(), salt="or-oauth")
+    return _read_state_cookie(FS_OAUTH_SALT, token, FS_OAUTH_MAX_AGE)
 
 
 def openrouter_state_cookie(uid: str, verifier: str, state: str, next_route: str | None) -> str:
     """The OpenRouter link's state: the session's uid, the PKCE verifier and the state the
     callback URL carries back. ``next`` as for FamilySearch, validated on the way in and out."""
-    payload = {"uid": uid, "verifier": verifier, "state": state}
-    if next_route and SAFE_NEXT_RE.match(next_route):
-        payload["next"] = next_route
-    return _openrouter_serializer().dumps(payload)
+    return _state_cookie(OR_OAUTH_SALT, {"uid": uid, "verifier": verifier, "state": state}, next_route)
 
 
 def read_openrouter_state_cookie(token: str | None) -> dict[str, Any] | None:
-    """The payload, or None for a missing, forged, expired or malformed cookie."""
-    if not token:
-        return None
-    try:
-        data = _openrouter_serializer().loads(token, max_age=OR_OAUTH_MAX_AGE)
-    except BadSignature:
-        return None
-    if not isinstance(data, dict) or not all(isinstance(data.get(k), str) and data[k] for k in ("uid", "verifier", "state")):
-        return None
-    return data
+    return _read_state_cookie(OR_OAUTH_SALT, token, OR_OAUTH_MAX_AGE, ("uid", "verifier", "state"))
 
 
 def redirect_target(next_route: Any) -> str:
@@ -562,32 +556,50 @@ def openrouter_authorize_url(challenge: str, state: str) -> str:
     })
 
 
-async def exchange_openrouter_code(
-    code: str, verifier: str, *, transport: Any = None
-) -> tuple[str | None, int | None]:
-    """Code + verifier -> ``(key, None)``; ``(None, status)`` on a non-200 or a 200 with no
-    key; ``(None, None)`` when no response came back. Never returns the body: the caller
-    logs the status only. ``transport`` is for tests."""
+@dataclass(frozen=True)
+class OpenRouterExchange:
+    """One code exchange. ``outcome``: ``ok`` (``key`` set); ``refused`` (a response, but a
+    non-200 or no key: ``reason`` is the status); ``not_sent`` (the connection never opened,
+    so no key was minted); ``ambiguous`` (sent, but no usable response arrived within the
+    deadline: OpenRouter may have minted a key we never received). Never the body."""
+    outcome: str
+    key: str | None = None
+    reason: str = ""
+
+
+async def exchange_openrouter_code(code: str, verifier: str, *, transport: Any = None) -> OpenRouterExchange:
+    """Code + verifier -> an ``OpenRouterExchange``. The whole call, client construction
+    included, runs under ONE deadline, ``OPENROUTER_EXCHANGE_TIMEOUT_S``: httpx's own
+    ``timeout=`` is per phase and its read timer restarts on every chunk, so a slow drip
+    could otherwise outlast the edge's 60 s idle timeout (as ``refresh_tokens`` guards).
+    ``transport`` is for tests."""
+    import asyncio
+
     import httpx
 
     extra: dict[str, Any] = {"transport": transport} if transport is not None else {}
     try:
-        async with httpx.AsyncClient(timeout=30, **extra) as client:
-            resp = await client.post(
-                OPENROUTER_KEYS_URL,
-                json={"code": code, "code_verifier": verifier, "code_challenge_method": "S256"},
-                headers={"Accept": "application/json"},
-            )
-    except httpx.HTTPError:
-        return None, None
-    if resp.status_code != 200:
-        return None, resp.status_code
-    try:
-        body = resp.json()
-    except ValueError:
-        return None, resp.status_code
-    key = body.get("key") if isinstance(body, dict) else None
-    return (key, None) if isinstance(key, str) and key.strip() else (None, resp.status_code)
+        async with asyncio.timeout(OPENROUTER_EXCHANGE_TIMEOUT_S):
+            async with httpx.AsyncClient(timeout=OPENROUTER_EXCHANGE_TIMEOUT_S, **extra) as client:
+                resp = await client.post(
+                    OPENROUTER_KEYS_URL,
+                    json={"code": code, "code_verifier": verifier, "code_challenge_method": "S256"},
+                    headers={"Accept": "application/json"},
+                )
+                try:
+                    body = resp.json()
+                except ValueError:
+                    body = None
+    except TimeoutError:
+        return OpenRouterExchange("ambiguous", reason="deadline")
+    except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
+        return OpenRouterExchange("not_sent", reason=type(exc).__name__)
+    except httpx.HTTPError as exc:
+        return OpenRouterExchange("ambiguous", reason=type(exc).__name__)
+    key = body.get("key") if resp.status_code == 200 and isinstance(body, dict) else None
+    if isinstance(key, str) and key.strip():
+        return OpenRouterExchange("ok", key=key)
+    return OpenRouterExchange("refused", reason=str(resp.status_code))
 
 
 def expires_at_from(token_json: dict[str, Any]) -> datetime:

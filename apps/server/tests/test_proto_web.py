@@ -2690,6 +2690,9 @@ async def test_a_trailing_slash_redirect_stays_under_the_prefix_and_relative(mon
     ("http://h.test:8085/x", "h.test", PREFIX, "http://h.test:8085/x"),
     ("/already/relative", "h.test", PREFIX, "/already/relative"),
     ("http://h.test/x", None, PREFIX, "http://h.test/x"),
+    # #3988: the callback's SPA route survives.
+    ("http://h.test/#/openrouter", "h.test", "", "/#/openrouter"),
+    ("http://h.test/?a=1#/s/x", "h.test", PREFIX, f"{PREFIX}/?a=1#/s/x"),
 ])
 def test_self_redirects_become_root_relative_under_the_prefix_and_others_are_untouched(location, host, base, want):
     assert app._relative_self_location(location, host, base) == want
