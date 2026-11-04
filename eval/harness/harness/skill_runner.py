@@ -274,7 +274,8 @@ _UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
 DIRECT_DISPATCH_PROMPT = """\
 You are relaying one message to a subagent. Do exactly this, and nothing else:
 
-1. Call the Agent tool with subagent_type "{agent}".
+1. Call the Agent tool with subagent_type "{agent}" and a `description` of a few
+   words naming the task. The Agent tool rejects a call without one.
 2. Pass, as the `prompt`, the text between the DELEGATION markers below — copied
    character for character. Do not summarise, reword, soften, add to, or omit any
    part of it. Do not include the markers themselves.
