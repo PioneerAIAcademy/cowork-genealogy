@@ -16,7 +16,7 @@
         "Barsebäck parish death register, Elena Asmundsdotter died 23 April 1745, age approximately 64 (born c. 1681), recorded as \"barnfödd i Henckelstorp\" (born as a child in Henckelstorp).",
         "Svensk Ortförteckning (Swedish gazetteer): Henckelstorp is a farm area belonging to Västra Karaby parish, Malmöhus county."
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f2",
