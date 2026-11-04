@@ -78,11 +78,14 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
     (Playwright boots `next dev`), so the production build was run locally —
     see the PR.
 
-  Post-upgrade audits: `pnpm audit` — **20 findings (3 low / 9 moderate /
-  8 high)**; `pnpm audit --prod` — **15 (3 low / 4 moderate / 8 high)**. Every
-  remaining row is one of the five packages this sweep could not clear
-  (electron ×12, extract-zip ×2, glob, minimatch, zod 3.x), all recorded under
-  Deferred with the issue that owns each.
+  Post-upgrade audits (re-measured 2026-11-05): `pnpm audit` — **18 findings
+  (3 low / 7 moderate / 8 high)**; `pnpm audit --prod` — **15 (3 low /
+  4 moderate / 8 high)**. Every remaining row is one of the five packages this
+  sweep could not clear (electron ×12, extract-zip ×2, glob, minimatch,
+  zod 3.x), all recorded under Deferred with the issue that owns each. (An
+  earlier run on 2026-11-04 reported 20 / 9-moderate; two moderate advisories
+  left the GitHub advisory DB between the runs — same package set, so nothing in
+  this PR changed.)
 
 - **vitest / @vitest/mocker** (MODERATE ×2) — root pnpm workspace, dev-only.
   **Fixed 2026-11-04** by the sweep above: all four workspace members now
