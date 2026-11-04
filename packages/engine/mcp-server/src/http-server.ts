@@ -480,13 +480,48 @@ export function connectorConfig(baseConfig: AppConfig, caller: ConnectorCaller):
   };
 }
 
-/** The tool a body names, for the log line only. `-` when it names none. */
-function toolNameOf(body: unknown): string {
+/**
+ * The tool a body names, for the log line only. `-` when it names none.
+ *
+ * SANITIZED, because this is the only caller-controlled field on E1's audit
+ * line and that line is newline-delimited `key=value`. The SDK types a tool
+ * name as a plain string, so a newline survives parsing, and an admitted
+ * caller could otherwise end the real record early and append a second,
+ * fully-formed `ev=tool_call` attributed to another user id. Every other field
+ * on the line is server- or database-sourced.
+ *
+ * Anything outside a tool name's own alphabet becomes `?`, so the value stays
+ * one token on one line and is never silently dropped.
+ */
+export function toolNameOf(body: unknown): string {
   if (typeof body !== "object" || body === null) return "-";
   const msg = body as { method?: unknown; params?: unknown };
-  if (msg.method !== "tools/call") return typeof msg.method === "string" ? msg.method : "-";
-  const name = (msg.params as { name?: unknown } | undefined)?.name;
-  return typeof name === "string" ? name : "-";
+  const named =
+    msg.method === "tools/call"
+      ? (msg.params as { name?: unknown } | undefined)?.name
+      : msg.method;
+  if (typeof named !== "string" || named === "") return "-";
+  // A tool name is `[a-z_]`, and a JSON-RPC method adds `/`; cap the length so
+  // a long value cannot push the rest of the line out of a log viewer.
+  return named.slice(0, 64).replace(/[^A-Za-z0-9_./-]/g, "?");
+}
+
+/**
+ * Which of a call's FamilySearch statuses the audit line keeps.
+ *
+ * The FIRST failing one, not the last written. One tool makes many
+ * FamilySearch requests -- `person_read` fans out over relatives and
+ * transcribes memories five at a time -- so last-write-wins would let any
+ * later 200 erase a 401 from partway through, and because those requests run
+ * concurrently, which status survived would be a race rather than a fact.
+ * `tests/utils/fs-fetch.test.ts` records that E3's session-end rule keys on
+ * this value, so the refusal is the part worth keeping.
+ */
+export function keptFamilySearchStatus(current: number | null, next: number): number {
+  if (current === null) return next;
+  // A failure already recorded stands; a first failure replaces a success.
+  if (current >= 400) return current;
+  return next >= 400 ? next : current;
 }
 
 /** `<issuer>/.well-known/oauth-protected-resource/mcp`, the URL a 401 names. */
@@ -664,7 +699,7 @@ async function handleMcpPost(
       userId: caller.userId,
       config: connectorConfig(options.baseConfig, caller),
       recordFamilySearchStatus: (status) => {
-        familySearchStatus = status;
+        familySearchStatus = keptFamilySearchStatus(familySearchStatus, status);
       },
     });
   }

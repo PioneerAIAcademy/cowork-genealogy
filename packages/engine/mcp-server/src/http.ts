@@ -204,15 +204,12 @@ if (issuer !== undefined && !isPlainHttpUrl(issuer)) {
 // fire at all in the documented default (OAUTH_ISSUER unset) -- so the one
 // configuration everyone runs was the one configuration unprotected.
 //
-// Here the equivalent of "FamilySearch sign-in is on" is: this tier is wired
-// to decrypt real patron tokens, i.e. a Postgres store with the beta schema.
-// An issuer being set at all is the other signal. Case-insensitive, because
-// URL schemes are.
-// Loopback is a developer's own machine; any other host an issuer names is a
-// deployment other people reach. The first version tested `https://` only --
-// case-sensitively, against a scheme that is not -- so an `HTTPS://` issuer,
-// and every non-loopback `http://` one, started on the public key.
-function issuerIsLoopback(url: string): boolean {
+// Loopback is a developer's own machine; any other host one of these URLs
+// names is a deployment other people reach. The first version tested
+// `https://` only -- case-sensitively, against a scheme that is not -- so an
+// `HTTPS://` issuer, and every non-loopback `http://` one, started on the
+// public key.
+function isLoopbackUrl(url: string): boolean {
   try {
     const host = new URL(url).hostname.toLowerCase();
     return host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host === "::1";
@@ -220,12 +217,27 @@ function issuerIsLoopback(url: string): boolean {
     return false;
   }
 }
-if (fsTokenEncKey === DEV_FS_TOKEN_ENC_KEY && issuer !== undefined && !issuerIsLoopback(issuer)) {
+
+// BOTH public URLs this tier can be given, not just the issuer. OAUTH_ISSUER
+// is documented as unset by default, so a guard keyed on it alone cannot fire
+// in the configuration the handoff tells an operator to deploy -- which is how
+// the worst case gets through: a real key on web and worker, none on tools, no
+// issuer, every connector call then decrypting to null and answering the
+// deliberately-opaque 401 for every patron, forever. WEB_PUBLIC_URL is the
+// other marker of a deployment people reach, and compose leaves both unset, so
+// a developer's `make proto-up` is untouched. The worker refuses the default
+// key outright (`grants.key_mode`, worker.py); this is the tools tier's
+// nearest equivalent.
+const publicUrls = [issuer, baseConfig.webPublicUrl].filter(
+  (url): url is string => typeof url === "string" && url !== "",
+);
+const deploymentUrl = publicUrls.find((url) => !isLoopbackUrl(url));
+if (fsTokenEncKey === DEV_FS_TOKEN_ENC_KEY && deploymentUrl !== undefined) {
   process.stderr.write(
-    `http: FS_TOKEN_ENC_KEY is unset while OAUTH_ISSUER names a non-loopback ` +
-      `authorization server (${issuer}), so every stored FamilySearch token would ` +
-      `be encrypted under a key that is public in this repository. Set ` +
-      `FS_TOKEN_ENC_KEY to the value the web and worker tiers use.\n`,
+    `http: FS_TOKEN_ENC_KEY is unset while this tier is configured with a ` +
+      `non-loopback public URL (${deploymentUrl}), so every stored FamilySearch ` +
+      `token would be encrypted under a key that is public in this repository. ` +
+      `Set FS_TOKEN_ENC_KEY to the value the web and worker tiers use.\n`,
   );
   process.exit(2);
 }

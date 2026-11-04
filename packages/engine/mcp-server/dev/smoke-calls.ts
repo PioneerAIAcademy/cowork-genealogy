@@ -165,8 +165,17 @@ function reauth(res: CallResult, ctx: SmokeCtx): Expectation {
   // hands it to FamilySearch and the refusal comes back as a 401 the tools word
   // their own way. Demanding only the first shape fails every FamilySearch row
   // on any host without a token.
+  // The LOCAL-principal wording must NEVER pass. CLAUDE.md calls binding LOCAL
+  // in a hosted entrypoint the cross-patron impersonation the Principal
+  // parameter exists to prevent, and this smoke is the only check that drives
+  // the real entrypoint, so nothing else would catch that regression. It has
+  // to be excluded explicitly: HOSTED_REAUTH_INSTRUCTION itself ends "(Do not
+  // call the login tool: ...)", so `/login tool/i` matches BOTH wordings and
+  // cannot tell them apart.
+  const localWording = /not logged in to FamilySearch/i.test(res.text);
   const ok =
     res.isError &&
+    !localWording &&
     (carries(res, HOSTED_REAUTH_INSTRUCTION) || /\b401\b/.test(res.text) || /login tool/i.test(res.text));
   return {
     ok,

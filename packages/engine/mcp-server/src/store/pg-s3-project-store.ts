@@ -1044,18 +1044,20 @@ export class PgS3ProjectStore implements ProjectStore {
     // A connector write (E1). The DOOR's ownership check admits two users
     // racing on the same fresh id -- it sees no row for either -- so the FIRST
     // WRITE has to decide. `DO NOTHING` alone silently lets the loser write
-    // into the winner's project, so read the owner back on the SAME connection
-    // and refuse if it is not ours.
-    const db = this.db();
-    await db.query(
-      "INSERT INTO projects (project_id, owner_id) VALUES ($1, $2) ON CONFLICT (project_id) DO NOTHING",
+    // into the winner's project.
+    //
+    // ONE statement, not an INSERT followed by a SELECT. Outside a transaction
+    // `this.db()` is the POOL, so a second query can be served by a different
+    // backend; the no-op `DO UPDATE` makes the conflicting row visible to
+    // `RETURNING` on the same statement, which is the only form that is
+    // correct whether or not a transaction is open.
+    const claimed = await this.db().query<{ owner_id: string | null }>(
+      `INSERT INTO projects (project_id, owner_id) VALUES ($1, $2)
+         ON CONFLICT (project_id) DO UPDATE SET owner_id = projects.owner_id
+       RETURNING owner_id`,
       [this.projectId, this.ownerId],
     );
-    const owner = await db.query<{ owner_id: string | null }>(
-      "SELECT owner_id FROM projects WHERE project_id = $1",
-      [this.projectId],
-    );
-    const actual = owner.rows[0]?.owner_id ?? null;
+    const actual = claimed.rows[0]?.owner_id ?? null;
     if (actual !== this.ownerId) {
       throw new Error(`project '${this.projectId}' belongs to another account`);
     }

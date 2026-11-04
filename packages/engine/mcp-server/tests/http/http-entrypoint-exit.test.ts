@@ -163,9 +163,39 @@ describe("build/http.js connector door environment (E1, issue #3984)", () => {
   ])("exits 2 on a %s OAUTH_ISSUER with no FS_TOKEN_ENC_KEY", async (_label, OAUTH_ISSUER) => {
     const r = await runHttp({ ...BASE, OAUTH_ISSUER });
     expect(r.code, r.stderr).toBe(2);
-    expect(r.stderr).toMatch(/FS_TOKEN_ENC_KEY is unset while OAUTH_ISSUER names a non-loopback/);
+    expect(r.stderr).toMatch(/FS_TOKEN_ENC_KEY is unset while this tier is configured with a/);
     // The refusal must not print the key it is complaining about.
     expect(r.stderr).not.toMatch(/dev-insecure-fs-token-key/);
+  }, TEST_TIMEOUT_MS);
+
+  // OAUTH_ISSUER is documented as unset by default, so a guard keyed on it
+  // alone cannot fire in the configuration the handoff tells an operator to
+  // deploy. WEB_PUBLIC_URL is the other marker of a deployment people reach.
+  it.each([
+    ["https", "https://beta.example"],
+    ["non-loopback http", "http://beta.example"],
+  ])(
+    "exits 2 on a %s WEB_PUBLIC_URL with no FS_TOKEN_ENC_KEY and NO issuer",
+    async (_label, WEB_PUBLIC_URL) => {
+      const r = await runHttp({ ...BASE, WEB_PUBLIC_URL });
+      expect(r.code, r.stderr).toBe(2);
+      expect(r.stderr).toMatch(/FS_TOKEN_ENC_KEY is unset while this tier is configured with a/);
+      expect(r.stderr).not.toMatch(/dev-insecure-fs-token-key/);
+    },
+    TEST_TIMEOUT_MS,
+  );
+
+  // The other direction: a developer's own machine must still start on the
+  // development key, which is the whole reason the fallback exists. Both
+  // public URLs loopback, and both unset, are that machine.
+  it.each([
+    ["both unset", {}],
+    ["a loopback issuer", { OAUTH_ISSUER: "http://127.0.0.1:1837" }],
+    ["a loopback web origin", { WEB_PUBLIC_URL: "http://localhost:5173" }],
+  ])("starts on the development key with %s", async (_label, extra) => {
+    const r = await runHttp({ ...BASE, ...(extra as Record<string, string>) }, /connector door:/);
+    expect(r.stderr, r.stderr).toMatch(/fs-token-key=default/);
+    expect(r.stderr).not.toMatch(/FS_TOKEN_ENC_KEY is unset while/);
   }, TEST_TIMEOUT_MS);
 
   // It is interpolated into a WWW-Authenticate header value, so a control

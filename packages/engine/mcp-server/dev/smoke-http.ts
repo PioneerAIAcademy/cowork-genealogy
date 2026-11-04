@@ -264,6 +264,12 @@ try {
 
   if (connectorEnabled) {
     stage = "seed connector rows";
+    // Armed BEFORE the first insert, not after the last. Each of these three
+    // statements autocommits, so a throw on the second or third used to leave
+    // the committed `users` row behind with nothing to delete it -- and the id
+    // is a fresh randomUUID() every run, so the strays accumulated unseen.
+    // Teardown of a row that was never written is a no-op.
+    connectorSeeded = true;
     await db.query(SEED_USER_SQL, [connectorUserId, `${connectorUserId}@smoke.invalid`]);
     // The host's FamilySearch token when there is one, so a connector run can
     // reach upstream; otherwise a placeholder, which decrypts fine and is
@@ -273,7 +279,6 @@ try {
       encrypt(bearer || "no-familysearch-token-on-this-host", fsTokenEncKey),
     ]);
     await db.query(SEED_CONNECTOR_TOKEN_SQL, [connectorTokenSha256, connectorUserId]);
-    connectorSeeded = true;
   }
 
   stage = "client one connect";

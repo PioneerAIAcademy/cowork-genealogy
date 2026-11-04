@@ -428,10 +428,20 @@ if (!DSN || !ENDPOINT) {
         // the body, and a claim that never happened leaves the project free.
         expect(created.text, "A's create must actually claim the project").not.toContain('"isError":true');
 
+        // The canary has to be a string A's project ACTUALLY contains, or the
+        // "reads nothing" half cannot fail. Prove it is one by reading it back
+        // as A first: the same assertion that must hold for B is shown here to
+        // be false for A, so a regression that let B's refusal carry A's
+        // payload -- or that moved the owner check after the store read --
+        // reddens this test instead of passing it.
+        const mine = await connCall(a.token, "project_context", { projectPath });
+        expect(mine.status, mine.text).toBe(200);
+        expect(mine.text, "the canary must be in A's own project").toContain("Alpha");
+
         // B names the same project: refused, and reads nothing.
         const read = await connCall(b.token, "project_context", { projectPath });
         expect(read.status, read.text).toBe(403);
-        expect(read.text).not.toContain("E1 isolation");
+        expect(read.text).not.toContain("Alpha");
       });
 
       it("a call naming another user's project writes NOTHING", async () => {
