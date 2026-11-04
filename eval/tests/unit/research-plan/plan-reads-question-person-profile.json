@@ -4,13 +4,14 @@
     "skill": "research-plan",
     "name": "A parentage question about an imported relative reads that relative's FamilySearch profile before planning",
     "type": "positive",
-    "description": "Issue #2208, shape of alpha report #3244. The project subject is Bridget Kerrigan (I1); her father Thomas (I2, ark ZZKR-TH2) was imported as a relative, so HIS parents never reached the project tree. q_001 asks who his parents were and its rationale says none are documented in the tree. FamilySearch already proposes a pair (Patrick Kerrigan and Mary Gallagher) and holds an attached 1842 baptism naming both (fixture person-read-kerrigan-proposed-parents). The plan must read ZZKR-TH2 before writing, and test that pair rather than search from scratch. GRADING: the read-before-write is deterministic (`profile-reread` tag -> test_research_plan_reads_question_person_profile, which reads the call log, so narrating a check cannot pass); the judge grades what the plan did with what the read returned. Every tree person carries an `ark`, the shape project_create writes; only this scenario and plan-subject-from-tree do (its twin, ut_research_plan_subj, asks about the subject, whose re-read is forbidden).",
+    "description": "Issue #2208, shape of alpha report #3244. The project subject is Bridget Kerrigan (I1); her father Thomas (I2, ark ZZKR-TH2) was imported as a relative, so HIS parents never reached the project tree. q_001 asks who his parents were and its rationale says none are documented in the tree. FamilySearch already proposes a pair (Patrick Kerrigan and Mary Gallagher) and holds an attached 1842 baptism naming both (fixture person-read-kerrigan-proposed-parents). The plan must read ZZKR-TH2 before writing, and test that pair rather than search from scratch. GRADING: the read-before-write is deterministic (`profile-reread` tag -> test_research_plan_reads_question_person_profile, which reads the call log, so narrating a check cannot pass); the judge grades what the plan did with what the read returned. Every tree person carries an `ark`, the shape project_create writes (its twin, ut_research_plan_subj, asks about the subject, whose re-read is forbidden).",
     "tags": [
       "planning",
       "profile-reread",
       "research-plan-new-plan-for-q-001",
       "new-plan-items-planned-status",
       "issue-2208",
+      "fs-hints-first",
       "direct-arm"
     ]
   },
