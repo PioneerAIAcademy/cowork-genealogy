@@ -8,8 +8,7 @@ A question about the project's subject, whose tree entry carries an `ark`. Synth
 `project_create` builds the starting tree from the subject's full FamilySearch read, so a
 question about the subject is planned from the project tree. Re-reading her profile repeats
 the fetch and the memory OCR, and on a large profile it spills. Every person carries an
-`ark`, the shape `project_create` writes; this and `plan-reads-question-person-profile` are
-the only research-plan scenarios where one does.
+`ark`, the shape `project_create` writes.
 
 ## Notes for reviewers
 
