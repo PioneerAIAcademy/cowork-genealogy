@@ -48,9 +48,13 @@ SCHEMAS_DIR = REPO_ROOT / "docs/specs/schemas"
 # interpreter (issue #2684). One definition, two import paths.
 from .outcomes import (  # noqa: E402,F401
     RunlogAssemblyError,
+    _DIMENSION_RANK,
     _modal_with_tiebreak_down,
     _OUTCOME_RANK,
+    aggregate_dimensions,
     aggregate_per_run_outcome,
+    consequential,
+    refresh_test_entry_outcome,
     suppressed_failure,
     unexpected_pass,
 )
@@ -194,160 +198,7 @@ def _wall_clock_ms_from_runs(run_dicts: list[dict[str, Any]]) -> float:
     return max(0.0, (max(ends) - min(starts)) * 1000.0)
 
 
-# ---- Aggregation helpers -------------------------------------------------
-
-
-# None (N/A) ranks above pass so it never wins a tie against a real score.
-# All-null buckets are handled separately in aggregate_dimensions and don't
-# rely on this rank.
-_DIMENSION_RANK = {1: 1, 2: 2, 3: 3, None: 4}
-
-
-def aggregate_dimensions(
-    runs: list[SingleRun], *, include_validator_failed: bool = False
-) -> list[dict[str, Any]]:
-    """Modal per-dimension score across runs (ties resolve down).
-
-    A dimension may have score=None (N/A): the Tool Arguments base
-    dimension on a run with zero MCP tool calls, any rubric dimension the
-    fixture never exercised, and since #2196 Correctness/Completeness on a
-    correctly-routed negative test, where the harness usually truncates the
-    transcript at the hand-off (measured: not on 4 of the 47 runs it fires
-    on, where the 1 is real - see flag_routing_negative_judge_fail). All-None buckets aggregate to None; mixed
-    buckets fall back to standard modal logic with None ranking above pass
-    so a real score wins any tie.
-
-    Runs that FAILED a validator are excluded (#2057): they are graded now,
-    but their scores stay out of the modal so committed baselines do not
-    shift. Their per-run scores remain in `runs[].judge.dimensions`.
-
-    `include_validator_failed=True` lifts that exclusion. It exists for ONE
-    caller — `assemble_test_entry` building `review_dimensions`, the rows a
-    human annotates — and must never feed `aggregated_dimensions`, which is
-    what the baseline readers (`skill_gate`, the dashboards) consume.
-    """
-    if not runs:
-        return []
-    bucket: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for r in runs:
-        # A validator-failing run is now GRADED (#2057) but stays out of the
-        # modal: letting defective runs into the aggregate would move every
-        # committed baseline at once, so the next gate-skill comparison would
-        # be against a shifted goalpost. The per-run scores remain in
-        # runs[].judge.dimensions. On committed data this disjunct is a no-op
-        # (every validator-failing run there was already judge-skipped), so
-        # test_aggregate_excludes_a_validator_failing_run is what pins it.
-        #
-        # `is False`, not `not r.validators.passed` as issue #2057 words it:
-        # ValidatorResult.passed is `bool | None`, and None means validators
-        # never reached a verdict (the _aborted_entry path) rather than that
-        # one failed. Truthiness would drop an unknown-but-graded run from the
-        # aggregate too, which is wider than the ruling. Unreachable today —
-        # compute_validators_passed returns a bool, and every None-valued run
-        # is aborted and so already excluded by judge.skipped — so this is
-        # about intent surviving the next reader, and
-        # test_aggregate_still_counts_a_run_whose_validators_are_unknown fails
-        # if it is ever simplified back.
-        if r.judge.skipped:
-            continue
-        if r.validators.passed is False and not include_validator_failed:
-            continue
-        for d in r.judge.dimensions:
-            key = (d.get("source", ""), d.get("name", ""))
-            bucket.setdefault(key, []).append(d)
-
-    aggregated: list[dict[str, Any]] = []
-    for key, dims in bucket.items():
-        scores = [d.get("score") for d in dims]
-        if all(s is None for s in scores):
-            modal = None
-        else:
-            modal = _modal_with_tiebreak_down(scores, _DIMENSION_RANK)
-        modal_dim = next(d for d in dims if d.get("score") == modal)
-        aggregated.append(
-            {
-                "source": key[0],
-                "name": key[1],
-                "score": modal,
-                "rationale": modal_dim.get("rationale", ""),
-            }
-        )
-    return aggregated
-
-
 # ---- Activated derivation (spec §6) --------------------------------------
-
-
-class _RunView:
-    """The slice of a committed run dict that the aggregators read.
-
-    `assemble_test_entry` aggregates `SingleRun` objects it has just built; a
-    regrade only ever holds the committed JSON. Rebuilding a whole `SingleRun`
-    from that JSON would mean supplying a dozen fields no aggregator looks at,
-    and would raise on any log written before one of them existed. This exposes
-    exactly the four attributes `aggregate_dimensions` and the outcome sort
-    touch, so a field added to `SingleRun` later cannot silently change what a
-    rebuild aggregates.
-    """
-
-    __slots__ = ("outcome", "judge", "validators")
-
-    def __init__(self, run: dict[str, Any]) -> None:
-        judge = run.get("judge") or {}
-        validators = run.get("validators") or {}
-        self.outcome = run.get("outcome") or ""
-        self.judge = JudgeResult(
-            skipped=bool(judge.get("skipped")),
-            dimensions=judge.get("dimensions") or [],
-            judge_cost_usd=0.0,
-        )
-        # `.get("passed")` absent -> None, not False: `aggregate_dimensions`
-        # drops a run only on `is False`, and None means validators never
-        # reached a verdict rather than that one failed.
-        self.validators = ValidatorResult(
-            passed=validators.get("passed"), results=validators.get("results") or []
-        )
-
-
-def refresh_test_entry_outcome(entry: dict[str, Any]) -> str | None:
-    """Recompute a committed test entry's derived fields from its own `runs[]`.
-
-    Returns the entry's outcome after the rebuild, or None when it has no runs.
-
-    A regrade rewrites `runs[].judge.dimensions` and `runs[].outcome` and
-    everything derived from them goes stale in the same write. Before this
-    existed `judge_regrade` refreshed `outcome` alone, so a regraded entry
-    could read `outcome: "fail"` beside an `outcome_summary` still reporting
-    `per_run_outcomes: ["pass"]` and the pre-regrade dimension scores. That is
-    not cosmetic: `skill_gate` and the dashboards read `aggregated_dimensions`,
-    so a stale summary scores the suite against the grading it just replaced.
-
-    The derivation mirrors `assemble_test_entry` exactly — same aggregator,
-    same outcome-first sort, same `review_dimensions` fallback — because any
-    second ranking here would make a regraded entry disagree with a freshly
-    run one. `flaky` is included: it is derived from `per_run_outcomes` and
-    went stale with it.
-    """
-    runs = entry.get("runs") or []
-    if not runs:
-        return None
-    views = [_RunView(r) for r in runs]
-    per_run_outcomes = [v.outcome for v in views]
-    outcome = aggregate_per_run_outcome(per_run_outcomes)
-
-    by_outcome = sorted(views, key=lambda v: v.outcome != outcome)
-    aggregated_dims = aggregate_dimensions(by_outcome)
-    review_dims = aggregated_dims or aggregate_dimensions(
-        by_outcome, include_validator_failed=True
-    )
-
-    entry["outcome"] = outcome
-    entry["flaky"] = len(set(per_run_outcomes)) > 1
-    summary = entry.setdefault("outcome_summary", {})
-    summary["per_run_outcomes"] = per_run_outcomes
-    summary["aggregated_dimensions"] = aggregated_dims
-    summary["review_dimensions"] = review_dims
-    return outcome
 
 
 def derive_activated(
