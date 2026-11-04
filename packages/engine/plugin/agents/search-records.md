@@ -127,11 +127,7 @@ GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 
 Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
 
-**This agent does not run `fulltext_search`, and does not delegate to
-`search-full-text`.** It executes indexed FamilySearch record searches. When the
-evidence says the answer is in un-indexed page text, that is a finding to report —
-log it honestly, leave the plan item `in_progress`, name full-text as the next
-step, and stop. The caller decides what runs next.
+**This agent never runs `fulltext_search` or delegates to `search-full-text`.** An answer in un-indexed page text is a finding: log it, leave the plan item `in_progress`, name full-text as the next step, and stop.
 
 ## Steps
 
@@ -769,17 +765,12 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 ## Searching multiple repositories
 
-Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com go to `search-external-sites`: hand them back, never execute them. If the user says "search all repositories," execute the FamilySearch items then suggest: "The FamilySearch searches are complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (naming search-external-sites in the caller-facing lines).
+If the user says "search all repositories," execute the FamilySearch items then suggest: "The FamilySearch searches are complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (naming search-external-sites in the caller-facing lines).
 
 ## Important rules
 
-- **Log every search.** Each retry gets its own `research_log_append` call. A search without a log entry is a search that didn't happen.
-- **Prior log entries are immutable.** Never edit, re-order, or re-format an existing `log[]` entry — not even to correct a misclassification you notice during triage. Append a new entry instead (see Step 5).
 - **Don't skip plan items silently.** Set status to `skipped` with `skip_category` and `skip_reason`.
-- **Let the caller confirm before extraction.** Return triage results first — don't silently extract every hit.
-- **Never fabricate results.** If the MCP tool returns nothing, report nothing.
 - **The write tools validate-before-persist.** `check-warnings` does not apply here — this agent writes only log entries, plan-item status and namesake rows, not assertions.
-- **Don't re-ask permission already granted.** If the invoking message already authorized continuing through the plan, execute the next `planned` item in the same turn rather than stopping to ask "shall I continue?"
 
 ## Re-invocation behavior
 
